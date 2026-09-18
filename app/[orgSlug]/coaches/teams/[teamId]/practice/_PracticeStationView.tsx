@@ -36,9 +36,6 @@ type Props = {
   round: number | null;
   /** The reader is tagged on this station, so the screen greets them rather than describing it. */
   isMine: boolean;
-  /** "4:12" / "+1:20", already formatted by the run screen so both clocks always agree. */
-  clock: string | null;
-  clockOver: boolean;
   nameOf: (playerId: string) => string;
   onBack: () => void;
   /**
@@ -93,7 +90,11 @@ function presentNow({ station, block, rotating, grid, round, nameOf }: StationFa
   return { label: 'At this station', players: ids.map(nameOf).filter(Boolean).join(' · ') };
 }
 
-/** Who arrives at this station after the round on screen, in the order they come. */
+/**
+ * Who arrives at this station after the round on screen, in the order they come — BY ROUND, never
+ * by the plan's clock (P10): "6:10 p.m." was the round's planned start, and the rotation happens
+ * when the coach taps, not when the plan said.
+ */
 type Arrival = { when: string; who: string };
 
 function arrivals({ station, block, grid, round, nameOf }: StationFacts): Arrival[] {
@@ -105,7 +106,7 @@ function arrivals({ station, block, grid, round, nameOf }: StationFacts): Arriva
     const here = r.cells.filter(c => c.stationId === station.id);
     if (here.length === 0) continue;
     out.push({
-      when: r.startLabel ?? `Round ${r.round}`,
+      when: `Round ${r.round}`,
       who: here.map(c => {
         const players = groups.find(g => g.id === c.groupId)?.playerIds ?? [];
         const names = players.map(nameOf).filter(Boolean).join(' · ');
@@ -136,18 +137,14 @@ function everyoneHasBeenThrough({ station, block, grid }: StationFacts): boolean
 }
 
 export default function PracticeStationView(props: Props) {
-  const { station, stationIndex, block, rotating, round, grid, isMine, clock, clockOver, nameOf } = props;
+  const { station, stationIndex, block, rotating, round, grid, isMine, nameOf } = props;
   const name = station.name.trim() || `Station ${stationIndex + 1}`;
   // ONE resolver, shared with the run screen's block view and the printed sheet, so the three can
   // never disagree about what this station is teaching.
   const { description, goal, coachingPoints: points } = resolveStationTeaching(station, block);
 
-  /**
-   * ⚠ Memoised against the ROUND, not the clock. `clock` changes once a second for the whole time
-   * this screen is open; these three walk every round in the rotation and look up a name per
-   * player. Recomputing them on each tick would be a full scan of the carousel per second to
-   * render a number that is already sitting in a different paragraph.
-   */
+  // Memoised against the round: these three walk every round in the rotation and look up a name
+  // per player, and they need redoing only when the round on screen changes.
   const facts: StationFacts = useMemo(
     () => ({ station, block, rotating, grid, round, nameOf }),
     [station, block, rotating, grid, round, nameOf],
@@ -174,13 +171,6 @@ export default function PracticeStationView(props: Props) {
           <p className={styles.ppStNowL}>{rotating ? 'With you now' : 'Who’s at it'}</p>
           <p className={styles.ppStNowG}>{here.label}</p>
           {here.players && <p className={styles.ppStNowP}>{here.players}</p>}
-          {clock && (
-            <p className={styles.ppStNowT} data-over={clockOver ? 'over' : undefined}>
-              {rotating
-                ? (clockOver ? `${clock} — they were due to rotate` : `${clock} until they rotate`)
-                : (clockOver ? `${clock} over` : `${clock} left`)}
-            </p>
-          )}
         </div>
       )}
 

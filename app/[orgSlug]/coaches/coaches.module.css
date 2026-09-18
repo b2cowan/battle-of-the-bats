@@ -10061,8 +10061,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    Each row is a grid: the gutter cell, then the block. The gutter's right border is the spine;
    rows stack with no gap so it reads as one line down the page. */
 .ppTl { display: flex; flex-direction: column; min-width: 0; margin-top: 0.4rem; }
-/* The gutter's width is ONE property on the timeline: the row's column and the drag gap's read it,
-   and so does the now-marker's dot (below), which sits on the spine at the column's right edge —
+/* The gutter's width is ONE property on the timeline: the row's column and the drag gap's read it —
    the two bands that widen it set it here, one place each. */
 .ppTl { --pp-gutter-w: 5.5rem; }
 .ppTlRow { display: grid; grid-template-columns: var(--pp-gutter-w) minmax(0, 1fr); min-width: 0; }
@@ -10073,23 +10072,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   white-space: nowrap;
 }
 .ppTlGutter small { display: block; font-size: var(--type-label); color: var(--text-tertiary); }
-/* The now-marker (practices re-evaluation stage 5, P9, 2026-09-17): on the block whose PLANNED
-   window holds the clock, during the run window, the gutter gains a third line — "now" over the
-   clock, in the olive data face — and the spine's dot is filled beside it. The word and the time
-   are two lines because "now · 5:37 p.m." is wider than the gutter and a clock never drops its
-   period. A read: it opens nothing, scrolls nothing, writes nothing. */
-.ppTlGutterNow {
-  display: block; margin-top: 0.3rem; font-size: var(--type-label); font-weight: 700;
-  letter-spacing: 0.02em; color: var(--home-olive, var(--logic-lime)); line-height: 1.35;
-}
-/* The dot is the ROW's, centred on the spine (the gutter's right border): hung off the gutter it
-   spilled 7px past the gutter's box, which the layout sweep rightly reads as overflow. */
-.ppTlRow:has(> .ppTlGutter[data-now='now']) { position: relative; }
-.ppTlRow:has(> .ppTlGutter[data-now='now'])::before {
-  content: ''; position: absolute; left: calc(var(--pp-gutter-w) - 5px); top: 1.15rem; width: 12px; height: 12px;
-  border-radius: 50%; background: var(--home-olive, var(--logic-lime));
-  border: 2px solid var(--home-paper, var(--bg)); z-index: 1; pointer-events: none;
-}
 /* The reorder pair under the time (owner, 2026-09-15 — it had been the open head's, so a shut row
    could not be moved without opening it). Right-aligned with the clock; the negative right margin
    sets the glyphs, not the buttons' boxes, on the clock's right edge; the negative bottom margin
@@ -10330,7 +10312,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
      66px and had 5rem until the pair arrived (owner, 2026-09-15) — the block gives up 12px for it
      rather than stacking the pair, which would have made every row ~75px taller. */
   .ppTl { --pp-gutter-w: 5.75rem; }
-  .ppTlRow:has(> .ppTlGutter[data-now='now'])::before { top: 1.05rem; }
   .ppTlGutter { font-size: var(--type-label); padding: 0.75rem 0.4rem 0.75rem 0; }
   .ppTlClosed { padding-left: 0.75rem; }
   .ppTlGhost { padding-left: 0.75rem; }
@@ -10402,30 +10383,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   margin: 0.5rem 0 0; font-family: var(--font-data); font-size: var(--type-label); font-weight: 700;
   letter-spacing: 0.12em; text-transform: uppercase; color: var(--home-olive, var(--logic-lime));
 }
-/* A clock, not an alarm (D26). Tabular so the digits don't dance while it counts. */
-.ppRunClock {
-  margin: 0.3rem 0 0; font-family: var(--font-data);
-  font-size: clamp(2.375rem, 11vw, 2.875rem); font-weight: 700; line-height: 1;
-  letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-}
-.ppRunOf {
-  margin: 0.35rem 0 0; font-family: var(--font-data); font-size: var(--type-support);
-  letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-tertiary);
-}
-.ppRunClock[data-over='over'], .ppRunOf[data-over='over'] { color: var(--warning); }
-/* OUTSIDE the run window the counter goes and the screen states what it knows (stage 5, P3):
-   the eyebrow "Planned for" (the clock's own label face) over the fact — "Tue, Sep 15 · 5:01 p.m."
-   with the window or "The clock starts 2:21 p.m." beneath. Never "Ran": the product only knows
-   what was planned. */
-.ppRunFact {
-  margin: 0.35rem 0 0; font-size: 1.375rem; font-weight: 700; line-height: 1.3;
-  letter-spacing: -0.01em; color: var(--text-primary);
-}
-.ppRunFact small { display: block; margin-top: 0.15rem; font-size: var(--type-body); font-weight: 400; letter-spacing: 0; color: var(--text-secondary); }
-/* The eyebrow sits a touch lower than the clock's label — the fact has no clock above it to hang from. */
-.ppRunFactLbl { margin-top: 0.6rem; }
-
 /* ⚠ PRIMARY, not secondary (review finding, 2026-08-18). The semantic sweep folded this in with the
    80%-white tier and it landed a step BELOW .ppRunGoal sitting right beside it — on cream, 15.06:1
    down to 9.03:1. This screen is read at ARM'S LENGTH IN SUNLIGHT and its own header block says in
@@ -10450,25 +10407,13 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   border-radius: 999px; padding: 0.3rem 0.7rem;
 }
 
-/* The rotation-due HEAD (stage 5, P7 keeps it as it was): "→ Move the groups on / Coaches stay
-   where they are", amber. Overrun goes amber and WAITS — nothing rotates by itself; the moves
-   themselves are the rows beneath, never a sentence. */
-.ppRunWhere {
-  display: grid; grid-template-columns: 2.75rem minmax(0, 1fr); gap: 0.7rem; align-items: baseline;
-  margin-top: 0.7rem; padding: 0.65rem 0.75rem; border-radius: 10px;
-  border: 1px solid rgba(var(--warning-rgb), 0.4); background: rgba(var(--warning-rgb), 0.08);
-}
-.ppRunWhereG { font-size: var(--type-heading); font-weight: 900; color: var(--warning); overflow-wrap: anywhere; }
-.ppRunWhereS { margin: 0; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
-.ppRunWhereM { margin: 0.15rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
-
 /* ── ONE list, keyed by STATION (practices re-evaluation stage 5, owner ruling P7, 2026-09-17) ──
    One row per station — the group letter(s) where the eye lands first, the station, who runs it
    on its own line, View/Open — and the row IS the door to that station; the separate Stations
    list is gone for a rotating stop. ONE component, two faces: `data-face="rotation"` carries the
    letter column; `data-face="station"` (a non-rotating block with stations) has none. Six rows
    for six stations, not twelve; 56px rows on the field (the screen's own floor), no swipe, no drag.
-   Due: `data-due` tints the row amber and its letter is the one that ARRIVES next round. */
+   No "due" face: the field has no clock (P10) — "Rotate now" simply shows the next round. */
 .ppRunList { margin-top: 0.25rem; display: flex; flex-direction: column; gap: 0.5rem; }
 .ppRunRow {
   display: grid; grid-template-columns: 2.75rem minmax(0, 1fr) auto; gap: 0.7rem; align-items: center;
@@ -10488,8 +10433,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .ppRunRowS { display: block; margin: 0; font-size: var(--type-heading); font-weight: 700; line-height: 1.25; color: var(--text-primary); overflow-wrap: anywhere; }
 .ppRunRowM { display: block; margin: 0.15rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
 .ppRunRowGo { font-size: var(--type-support); font-weight: 700; color: var(--home-olive, var(--logic-lime)); white-space: nowrap; }
-.ppRunRow[data-due='due'] { border-color: rgba(var(--warning-rgb), 0.4); background: rgba(var(--warning-rgb), 0.08); }
-.ppRunRow[data-due='due'] .ppRunRowG { color: var(--warning); }
 /* A sitting-out group is one line under the list, in the grid's own words ("D sits round 3 out") —
    the same meta line as the staff line (.ppRunMeta). */
 
@@ -10574,8 +10517,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .ppStNowG { margin: 0; font-size: var(--type-heading); font-weight: 800; color: var(--text-primary); }
 .ppStNowP { margin: 0.25rem 0 0; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
-.ppStNowT { margin: 0.4rem 0 0; font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
-.ppStNowT[data-over='over'] { color: var(--warning); }
 .ppStBlock { margin-top: 0.9rem; }
 .ppStLbl {
   margin: 0 0 0.3rem; font-size: var(--type-label); font-weight: 700; letter-spacing: 0.1em;

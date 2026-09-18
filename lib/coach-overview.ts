@@ -86,6 +86,8 @@ export type AnchorAction =
 export type AnchorAnswer =
   | 'take_attendance'
   | 'open_schedule'
+  /** The field door as the quiet link beside "Open the plan" — on any day (P10 revised, 2026-09-17). */
+  | 'run_practice'
   | 'add_event'
   | 'view_tournaments'
   | 'not_yet'
@@ -217,8 +219,10 @@ function eventActions(
         ...(attendanceOutstanding ? ['take_attendance' as const] : []),
         ...(canSchedule ? ['open_schedule' as const] : []),
       ];
+      // The field door is on every planned practice, any day; the day decides only its weight —
+      // the one thing on the day, the quiet link beside the plan otherwise.
       if (prep.practicePlan === 'run' && canSchedule) return { primary: 'run_practice', answers: quiet };
-      if (prep.practicePlan === 'planned' && canSchedule) return { primary: 'open_plan', answers: quiet };
+      if (prep.practicePlan === 'planned' && canSchedule) return { primary: 'open_plan', answers: ['run_practice', ...quiet] };
       if (prep.practicePlan === 'none' && canWritePracticePlans(caps)) return { primary: 'plan_practice', answers: quiet };
       // A coach who can neither read nor write the plan keeps the card as it was.
     }

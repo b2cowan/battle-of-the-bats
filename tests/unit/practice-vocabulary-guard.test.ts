@@ -115,12 +115,31 @@ describe('the printed sheet\'s where-line reads the stored arrival time through 
   });
 });
 
-describe('the field screen outside the window states what was PLANNED — never that it ran (stage 5, P3 · D4)', () => {
-  const src = read(RUN_PAGE)
+describe('the field screen has NO CLOCK (stage 5, P10) and never claims the practice ran (D4)', () => {
+  const strip = (src: string) => src
     .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\{\/\*[\s\S]*?\*\/\}/g, '').replace(/^\s*\/\/.*$/gm, '');
+  const src = strip(read(RUN_PAGE));
+  const station = strip(read(STATION_VIEW));
 
-  it('the eyebrow is "Planned for"', () => {
-    assert.ok(src.includes('>Planned for</p>'));
+  it('nothing ticks, nothing counts down, nothing is "over" or "due" — the coach is the clock', () => {
+    for (const file of [src, station]) {
+      assert.doesNotMatch(file, /setInterval|Date\.now\(\)|nowMs|anchorMs|useMinuteClock/, 'a clock on the field screen was ruled out (P10)');
+      for (const word of ['Over by', 'Rotation due', 'Until they rotate', 'Left of', 'Planned for', 'The clock starts', 'until they rotate', 'were due to rotate', 'Move the groups on']) {
+        assert.ok(!file.includes(word), `"${word}" is the counter's vocabulary — it went with the counter`);
+      }
+    }
+  });
+  it('the plan\'s length is stated as information, from the lib\'s one wording', () => {
+    assert.ok(src.includes('runStepLengthLabel(step)'), '"15 min" / "10 min a round" / "Rest of practice"');
+  });
+  it('always opens on the first stop and holds nothing between opens — no storage of any kind', () => {
+    for (const file of [src, station]) {
+      assert.doesNotMatch(file, /sessionStorage|localStorage|fl\.practice-run\./, 'the field is a plain reader: it opens at the top every time (P10 revised)');
+    }
+  });
+  it('everyone has Back / Next — a helper gets the line naming who moves the team, never fewer buttons', () => {
+    assert.ok(src.includes('these buttons move only your screen'), 'the helper line says what the buttons do');
+    assert.ok(!src.includes('canAdvance ?'), 'the buttons are never conditional on the reader');
   });
   it('no surface on the field claims the practice happened', () => {
     for (const claim of ['>Ran ', 'Was run', 'Took place', 'Ran on', 'Completed']) {

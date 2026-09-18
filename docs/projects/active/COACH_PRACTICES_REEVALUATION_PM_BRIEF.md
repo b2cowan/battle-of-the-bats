@@ -364,3 +364,25 @@ field. Verified: 4,152 unit tests, the rendered check on 23 documents, the layou
 widths, a Playwright probe on the fixture inside and outside the window; the printed sheet read back from the plan
 page's own Print button. **Walk:** the "QA walk · 5" tab on the hub — 26 steps in six parts (the paper · the field
 inside the window · outside it · the doors · the now-marker · the station's label) — ledger §201.
+
+### P10 — the field has no clock (owner, 2026-09-17, after the walk; built the same day)
+
+**What changed.** Run practice no longer keeps time. The big countdown, the amber "Over by", the "Rotation due"
+head and the "Planned for" face outside the window are gone. Each stop shows the plan's length as plain
+information — *15 min*, *10 min a round*, *Rest of practice* — under the block's name, and everything else the
+screen already offered: the words, the coaching points, who runs it, who's in it, which group is at which station
+this round, what's next, and the two buttons. The screen opens on the first block every time. A station's screen
+loses "4:12 until they rotate"; "Coming to you" reads by round.
+
+**Revised the same session, on the owner's word.** *Run practice is on every planned practice, any day* — before,
+during or after — from the Practice plans card and rows, the Overview, the Schedule panel and the plan page. On
+the day it is the green button; any other day it sits beside **Open the plan**. *It always lands on the first
+block* — nothing is remembered between opens; after a reload you tap forward. *Helpers get the same buttons* —
+Back, Next block, Rotate now move only their own phone — with a line above them naming the coach who moves the
+whole team (without a clock, a helper's phone had no way off block 1).
+
+**Why.** A practice never runs to the plan's minute — the tees went long, so the next round gets seven minutes
+instead of ten — and a phone counting down at the coach is arguing with the person who is actually deciding. The
+product's value at the field is the information for the practice; the coach is the clock.
+
+**And the plan page's "now" marker went with it** (owner, same session). The sheet is a plan, never a clock.

@@ -7,12 +7,10 @@ import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
-import { scheduleDayLabel, scheduleTimeLabel } from '@/lib/family-schedule-format';
-import { isInRunWindow, practiceLengthMinutes, runWindowOpensAt } from '@/lib/practice-state';
 import {
-  blockOwnPeople, blockRotates, buildRunSteps, computeBlockClocks, computeRotation, formatClockMs, formatDuration,
-  formatRunClock, namesWholeTeam, resolvePracticePlanTagNames, resolveStationTeaching, rotationByStation,
-  runRemainingSeconds, runStepAt, soleStationOf, stationLabel,
+  blockOwnPeople, blockRotates, buildRunSteps, computeRotation, formatDuration,
+  namesWholeTeam, resolvePracticePlanTagNames, resolveStationTeaching, rotationByStation,
+  runStepLengthLabel, soleStationOf, stationLabel,
   type PracticePlan, type PracticePlanBlock, type PracticeStation, type RotationGrid, type RunStep,
 } from '@/lib/rep-practice-plan';
 import PracticeStationView from '../../_PracticeStationView';
@@ -24,6 +22,16 @@ import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
 /**
  * The field run screen (Practice Plans 1b) — 6:25 PM, sun, gloves, twelve kids.
  *
+ * ⚠ THERE IS NO CLOCK ON THIS SCREEN (owner ruling 2026-09-17, practices re-evaluation stage 5,
+ * P10). It used to count — a big countdown per stop, amber once it ran over, a "Rotation due"
+ * state, the cursor re-anchored to every tap, a ±3h window outside which the counter gave way to
+ * "Planned for …". All of it went in one ruling: a practice never runs to the plan's minute, the
+ * block before this one went long and the coach is shortening this one on the fly, and a screen
+ * reading "+2:37:53 · OVER BY" is arguing with the person it was built for. What this screen offers
+ * is the INFORMATION for the practice — the stop the coach is on, what it is, who runs it, who is
+ * in it, where the groups are, what comes next — and the coach is the clock. The plan's length for
+ * a stop is shown as plain information ("15 min", "10 min a round"), never counted down.
+ *
  * ⚠ NOTHING IS WRITTEN HERE (D4). No ticks, no "✓ ran it", no elapsed-time store, no completion
  * flag — not even locally in a way that could later be persisted. Attendance is the one field-time
  * write a coach with twelve kids reliably finishes, it is already built, and a second one gets
@@ -34,9 +42,7 @@ import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
  * ⚠ NO SWIPE, NO DRAG, NO LONG-PRESS. Gloves defeat all three and a swipe collides with the
  * browser's own back gesture. Two buttons, both above 56px.
  *
- * ⚠ NO SOUND, NO VIBRATION, NO AUTO-ADVANCE. The clock counts, overrun goes amber, and the screen
- * WAITS. The cursor moves only when a human taps it — including when the planned clock has long
- * since passed, because a drill that is going well should be allowed to run long.
+ * ⚠ NO SOUND, NO VIBRATION, NO AUTO-ADVANCE. The cursor moves only when a human taps it.
  *
  * ⚠ NO WAKE LOCK. There is no precedent for that API anywhere in this codebase; it is an explicit
  * fast-follow, not something to add quietly under time pressure.
@@ -45,20 +51,25 @@ import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
  * assistant can run a station without a new capability key. There are no writes on this screen, so
  * there is no write gate to get wrong.
  *
- * ⚠ OUTSIDE THE RUN WINDOW THE COUNTER GOES (practices re-evaluation stage 5, owner ruling P3,
- * 2026-09-17). The clock is right inside ±3h of the start and meaningless outside it — five days
- * before it read "122:36:04 · LEFT OF 20 MIN", two days after "+44:33:48 · OVER BY". Outside the
- * window the clock block is the FACT in its place: "Planned for · Tue, Sep 15 · 5:01 p.m." with
- * the window beneath, or before a practice "The clock starts 2:21 p.m." (the hub's one window,
- * `RUN_WINDOW_MS`). Never "Ran": nothing is written at the field, so nothing can know. The block,
- * its words, Back and Next stay — a coach may page through on the couch, and nothing is recorded.
+ * ⚠ THE SCREEN ALWAYS OPENS ON THE FIRST STOP, ON ANY DAY (owner, 2026-09-17, P10 revised in the
+ * same session). It used to land on whichever stop the planned clock said was running — the same
+ * wrong premise as the counter — and, for an hour, remembered the stop and the chosen station per
+ * tab (D28). Both went: the field is a plain reader that opens at the top every time, before,
+ * during or after the practice, and holds nothing between opens. After a reload the coach taps
+ * forward. Nothing about the practice is written (D4).
+ *
+ * ⚠ EVERYONE GETS BACK / NEXT, HELPERS INCLUDED (the same revision). Phase 4 gave a helper the
+ * sentence instead of the buttons because the clock landed them on the right stop and a button
+ * that looked like it moved everybody was worse than none. With no clock the buttons are the only
+ * way to move, and they only ever move THIS screen — so a helper keeps the line naming who calls
+ * the rotation, above the same buttons, and the line says the buttons move their screen only.
  *
  * ⚠ A ROTATION IS ONE LIST, KEYED BY STATION (P7) — `rotationByStation`, the board's own re-key,
  * never the round's cells by group: one row per station with the group letter(s) that are THERE
- * (or, due, the letter(s) that ARRIVE), each row the door to that station; "nobody" for a station
- * a hand-arranged round leaves empty; a sitting-out group one line under the list. The separate
- * Stations list is gone for a rotating stop; a non-rotating block with stations keeps its list on
- * the same row component without the letter column.
+ * this round, each row the door to that station; "nobody" for a station a hand-arranged round
+ * leaves empty; a sitting-out group one line under the list. "Rotate now" shows the next round.
+ * The separate Stations list is gone for a rotating stop; a non-rotating block with stations keeps
+ * its list on the same row component without the letter column.
  *
  * ⚠ "WHOLE TEAM" (P5) is a SET comparison against the active roster the route already returns,
  * never a count — and a plain block says who runs it (P6): the paper's own staff · players line,
@@ -137,26 +148,11 @@ export default function CoachPracticeRunPage({
   const [loadError, setLoadError] = useState('');
 
   /**
-   * The cursor. `stepIndex` is where the coach is; `anchorMs` is when the stop on screen started.
-   *
-   * ⚠ THE ANCHOR IS THE OWNER'S RULING (2026-08-01). Null means "use the PLANNED start", which is
-   * what makes opening a phone mid-practice land on the right block with the right number. The
-   * moment the coach taps, the stop is re-anchored to *now* and gets its full planned length —
-   * so a practice that started eight minutes late does not spend the rest of the night claiming
-   * every remaining block is overdue.
+   * The cursor: which stop is on screen. Null until the plan arrives, then the remembered stop for
+   * this tab (below) or the first. The coach owns it from there — it never moves on its own.
    */
   const [stepIndex, setStepIndex] = useState<number | null>(null);
-  const [anchorMs, setAnchorMs] = useState<number | null>(null);
-  const [nowMs, setNowMs] = useState(0);
   const [stationId, setStationId] = useState<string | null>(null);
-
-  // Ticks once a second. Started in an effect (never in the initial state) so the server and the
-  // first client render agree — a clock seeded with Date.now() during SSR is a hydration mismatch.
-  useEffect(() => {
-    setNowMs(Date.now());
-    const timer = setInterval(() => setNowMs(Date.now()), 1000);
-    return () => clearInterval(timer);
-  }, []);
 
   const loadSeqRef = useRef(0);
   const load = useCallback(async () => {
@@ -196,42 +192,19 @@ export default function CoachPracticeRunPage({
     [data],
   );
   const blocks = useMemo(() => plan?.blocks ?? [], [plan]);
-  const eventStartsAt = data?.event.startsAt ?? null;
-  const eventEndsAt = data?.event.endsAt ?? null;
+  const steps = useMemo(() => buildRunSteps(blocks), [blocks]);
 
-  const steps = useMemo(
-    () => buildRunSteps(blocks, eventStartsAt, eventEndsAt),
-    [blocks, eventStartsAt, eventEndsAt],
-  );
-
-  // Open on the stop the PLANNED clock says is running — once, then the coach owns the cursor.
+  // Opens on the first stop once the plan arrives — every time, on any day (P10 revised).
   useEffect(() => {
-    if (stepIndex !== null || steps.length === 0) return;
-    setStepIndex(runStepAt(steps, Date.now()));
+    if (stepIndex === null && steps.length > 0) setStepIndex(0);
   }, [steps, stepIndex]);
 
-  // The block clocks, walked ONCE and shared with the rotation grid — never a second copy of how
-  // "rest of practice" advances the running clock. Indexed BY POSITION, matching buildRunSteps:
-  // block ids are client-minted and not guaranteed unique, so a Map keyed on them could hand one
-  // block another's start time.
-  const clocks = useMemo(
-    () => computeBlockClocks(blocks, eventStartsAt, eventEndsAt),
-    [blocks, eventStartsAt, eventEndsAt],
-  );
-
-  const gridFor = useCallback((block: PracticePlanBlock, blockIndex: number): RotationGrid | null => {
+  const gridFor = useCallback((block: PracticePlanBlock): RotationGrid | null => {
     if (!blockRotates(block) || !block.rotation) return null;
-    return computeRotation(
-      block.rotation, block.stations, block.duration.minutes ?? null,
-      clocks[blockIndex]?.startMs,
-    );
-  }, [clocks]);
+    return computeRotation(block.rotation, block.stations, block.duration.minutes ?? null);
+  }, []);
 
-  /**
-   * ⚠ A MAP, not a scan. This screen re-renders every second for ninety minutes, and a rotation
-   * round asks for a dozen names each time — a linear `.find` per name would be a few thousand
-   * pointless comparisons a minute on the phone in the coach's hand.
-   */
+  /** ⚠ A MAP, not a scan — a rotation round asks for a dozen names, and every tap re-reads them. */
   const rosterById = useMemo(
     () => new Map((data?.roster ?? []).map(p => [p.id, p])),
     [data?.roster],
@@ -246,91 +219,33 @@ export default function CoachPracticeRunPage({
   const nextStep: RunStep | null = steps[index + 1] ?? null;
   const block = step ? blocks[step.blockIndex] ?? null : null;
 
-  // `nowMs` is 0 until the tick effect runs, and a clock measured against that would read as a
-  // wild number for one frame. Nothing clock-shaped renders until it is real.
-  const clockReady = nowMs > 0;
-  /**
-   * Outside the run window (P3) — decided from the same clock the screen counts on, and only once
-   * it is real (0 is outside every window). The ONE window, both edges: three hours before the
-   * start to three hours after the END (or the start, with no end) — a four-hour practice keeps its
-   * counter to the last minute. Outside it there is no clock at all: no counter, no "over", no
-   * rotation due, on this screen or the station's — the fact stands where the clock was.
-   */
-  const outsideWindow = clockReady && !!eventStartsAt && !isInRunWindow(eventStartsAt, nowMs, eventEndsAt);
-  const anchor = anchorMs ?? step?.startMs ?? 0;
-  const remaining = step && clockReady && !outsideWindow ? runRemainingSeconds(step.minutes, anchor, nowMs) : null;
-  const clock = remaining == null ? null : formatRunClock(remaining);
-  const over = remaining != null && remaining < 0;
-
-  /** Move the cursor, and re-anchor: from this moment, this stop gets its full planned length. */
+  /** Move the cursor. It moves this screen and records nothing (D4 · D26). */
   const go = useCallback((delta: number) => {
-    setStepIndex(current => {
-      const from = current ?? 0;
-      return Math.min(steps.length - 1, Math.max(0, from + delta));
-    });
-    setAnchorMs(Date.now());
+    setStepIndex(current => Math.min(steps.length - 1, Math.max(0, (current ?? 0) + delta)));
   }, [steps.length]);
 
   const rotating = !!block && blockRotates(block);
-  /**
-   * ⚠ MEMOISED, and it matters more than it looks. `computeRotation` walks groups × rounds, builds
-   * the plain-language statements, and formats a clock label per round — each of which constructs
-   * an `Intl.DateTimeFormat`. Called straight from the render body it would redo all of that once
-   * a second, for every second of the block.
-   */
-  const grid = useMemo(
-    () => (block && step ? gridFor(block, step.blockIndex) : null),
-    [block, step, gridFor],
-  );
+  // Memoised: `computeRotation` walks groups × rounds and builds the plain-language statements;
+  // it needs redoing only when the block on screen changes.
+  const grid = useMemo(() => (block ? gridFor(block) : null), [block, gridFor]);
   const staysInBlock = !!nextStep && !!step && nextStep.blockIndex === step.blockIndex;
   const advance: Advance = {
     label: staysInBlock ? 'Rotate now' : 'Next block',
     disabled: !nextStep,
   };
-  // A rotation that has run past its interval AND still has a round to go: the screen says so and
-  // waits. It never rotates by itself.
-  const rotationDue = over && staysInBlock && step?.round != null;
 
-  // Memoised because the restore effect below depends on it — a fresh [] every render would make
-  // that effect re-run on every tick of the clock.
   const stations = useMemo(() => block?.stations ?? [], [block]);
   const openStation = stations.find(s => s.id === stationId) ?? null;
   const openStationIndex = stations.findIndex(s => s.id === stationId);
 
-  /**
-   * A station chosen on this device stays chosen for the rest of the practice (D28).
-   *
-   * ⚠ This is a UI PREFERENCE, not a record of the practice, and it is deliberately per-tab and
-   * per-event: it says *which station I am standing at*, never what happened at it. D4's rule —
-   * nothing about the practice is written at the field — is untouched.
-   */
-  const stationKey = `fl.practice-run.station.${eventId}`;
-  // Restored ONCE, after the plan arrives — not on every render, and never again after the coach
-  // has started moving around the practice themselves.
-  const restoredRef = useRef(false);
-  useEffect(() => {
-    if (restoredRef.current || stations.length === 0) return;
-    restoredRef.current = true;
-    try {
-      const saved = sessionStorage.getItem(stationKey);
-      if (saved && stations.some(s => s.id === saved)) setStationId(saved);
-    } catch { /* private mode / storage disabled — the picker still works */ }
-  }, [stationKey, stations]);
-
-  const chooseStation = useCallback((id: string | null) => {
-    setStationId(id);
-    try {
-      if (id) sessionStorage.setItem(stationKey, id);
-      else sessionStorage.removeItem(stationKey);
-    } catch { /* nothing to keep, nothing to lose */ }
-  }, [stationKey]);
+  // Which station is open — this screen's own state, held for this open only (D28's per-tab
+  // memory went with the P10 revision: the field holds nothing between opens).
+  const chooseStation = useCallback((id: string | null) => setStationId(id), []);
 
   /**
-   * Everything below re-derives only when the PLAN or the CURSOR moves — never on the clock tick.
+   * Everything below re-derives only when the PLAN or the CURSOR moves.
    *
-   * ⚠ These live above the render guards on purpose: hooks cannot sit after an early return, and
-   * computing them inline further down (where they read more naturally) is exactly what would put
-   * a fresh Map and two array walks on every second of a ninety-minute practice.
+   * ⚠ These live above the render guards on purpose: hooks cannot sit after an early return.
    */
   const attendanceByPlayer = useMemo(
     () => new Map((data?.attendance ?? []).map(a => [a.playerId, a.status])),
@@ -362,34 +277,13 @@ export default function CoachPracticeRunPage({
   );
   /**
    * The rotation TURNED to its stations (P7) — the board's own re-key, one column per named
-   * station — and the row this stop reads: the running round, or, once the rotation is due, the
-   * NEXT round (where everyone is going). `stepRound` is 1-based, so it indexes the next round
-   * directly. A group the coach arranged to SIT that round out (D14) has no cell; it is named
-   * under the list, never left off as if it had been forgotten.
+   * station — and the row this stop reads: the round on screen (`stepRound` is 1-based). A group
+   * the coach arranged to SIT that round out (D14) has no cell; it is named under the list, never
+   * left off as if it had been forgotten.
    */
   const stepRound = step?.round ?? null;
   const turned = useMemo(() => (grid && block ? rotationByStation(grid, block.stations) : null), [grid, block]);
-  const shownRow = turned && stepRound != null ? turned.rows[rotationDue ? stepRound : stepRound - 1] ?? null : null;
-
-  /**
-   * The fact's words (P3) are constants per event, so they are built once — `outsideWindow` (above)
-   * and `beforeWindow` are the only two things that move, and they flip at most twice in a screen's
-   * life, never per tick.
-   */
-  const opensAt = useMemo(() => runWindowOpensAt(eventStartsAt), [eventStartsAt]);
-  const beforeWindow = outsideWindow && opensAt != null && nowMs < opensAt;
-  const fact = useMemo(() => {
-    if (!eventStartsAt) return null;
-    const length = practiceLengthMinutes(eventStartsAt, eventEndsAt);
-    return {
-      // "Tue, Sep 15 · 5:01 p.m." — the plan sheet's own first line, the org's clock.
-      when: `${scheduleDayLabel(eventStartsAt)} · ${scheduleTimeLabel(eventStartsAt)}`,
-      // Under it, after a practice: the window it was planned for — "5:01 p.m.–6:31 p.m. · 90 min".
-      window: eventEndsAt && length != null ? `${scheduleTimeLabel(eventStartsAt)}–${scheduleTimeLabel(eventEndsAt)} · ${length} min` : '',
-      // Before it: when the clock starts — the one window every door opens on.
-      opens: opensAt != null ? `The clock starts ${formatClockMs(opensAt)}` : '',
-    };
-  }, [eventStartsAt, eventEndsAt, opensAt]);
+  const shownRow = turned && stepRound != null ? turned.rows[stepRound - 1] ?? null : null;
 
   // ── Render ──
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
@@ -411,7 +305,7 @@ export default function CoachPracticeRunPage({
           quiet
           icon={<ClipboardList size={22} />}
           headline="Practice plans aren’t enabled for you"
-          description="The field screen walks through a practice one block at a time — what’s running now, who’s where, and how long is left."
+          description="The field screen walks through a practice one block at a time — what’s on now, who runs it, and who’s where."
           blocker="Ask your head coach to give you schedule access."
         />
       </div>
@@ -436,56 +330,38 @@ export default function CoachPracticeRunPage({
     );
   }
 
-  // A running clock needs a start time; there is no honest way to invent one.
-  if (steps.length === 0) {
-    return (
-      <div className={styles.page}>
-        {backToPlan}
-        <CoachEmptyState
-          quiet
-          icon={<ClipboardList size={22} />}
-          headline="This practice has no start time"
-          description="The running clock is worked out from when the practice starts, so the field screen needs one."
-          blocker="Add a start time to this practice on the schedule, and this screen works straight away."
-          secondaryAction={{ href: `${base}/schedule?event=${eventId}`, label: 'Open it on the schedule' }}
-        />
-      </div>
-    );
-  }
-
   if (!step || !block) return null;
 
   /**
-   * ⚠ A HELPER DOES NOT DRIVE THE PRACTICE (Phase 4, frame H3).
+   * ⚠ A HELPER DOES NOT DRIVE THE PRACTICE (Phase 4, frame H3) — but they do drive their own phone.
    *
-   * Everything on this screen is client state and writes nothing (D4), so this is not a permission —
-   * it is honesty. A parent volunteer running the tee does not decide when all three groups rotate,
-   * and handing them a button that looks like it moves everybody would be worse than no button.
+   * Everything on this screen is client state and writes nothing (D4), so the buttons are not a
+   * permission: "Next block" on a parent volunteer's phone moves that phone. Phase 4 withheld the
+   * buttons because the clock landed a helper on the right stop; with the clock gone (P10) the
+   * buttons are the only way to move, so everyone has them. What a helper does NOT have is the
+   * authority to move the team — so above their buttons a line names who does, and says plainly
+   * that these buttons move their screen only. Never a disabled control: a greyed-out "Rotate now"
+   * is a screen telling someone off for a thing they were never able to do.
    *
-   * ⚠ It must NOT be a disabled control either: an amber "rotation due" state above a greyed-out
-   * "Rotate now" is a screen telling someone off for not doing a thing they were never able to do.
-   * They get a sentence naming who does it — which is information they can act on, by looking up.
-   *
-   * `!== false` deliberately: a response cached from before this field existed still gets controls.
+   * `!== false` deliberately: a response cached from before this field existed reads as a coach.
    */
-  const canAdvance = data?.canAdvance !== false;
-  const whoAdvances = data?.headCoachName?.trim()
-    ? `${data.headCoachName.trim()} moves everyone on.`
-    : 'Your coach moves everyone on.';
+  const isHelper = data?.canAdvance === false;
+  const whoAdvances = `${data?.headCoachName?.trim() || 'Your coach'} moves everyone on — these buttons move only your screen.`;
 
-  const actionRow = canAdvance ? (
-    <div className={styles.ppRunActions}>
-      <button type="button" className={styles.ppRunSecondary} disabled={index === 0} onClick={() => go(-1)}>
-        Back
-      </button>
-      {advance.disabled ? (
-        <Link href={planHref} className={styles.ppRunPrimary}>Back to the plan</Link>
-      ) : (
-        <button type="button" className={styles.ppRunPrimary} onClick={() => go(1)}>{advance.label}</button>
-      )}
-    </div>
-  ) : (
-    <p className={styles.ppRunHandedOff}>{whoAdvances}</p>
+  const actionRow = (
+    <>
+      {isHelper && <p className={styles.ppRunHandedOff}>{whoAdvances}</p>}
+      <div className={styles.ppRunActions}>
+        <button type="button" className={styles.ppRunSecondary} disabled={index === 0} onClick={() => go(-1)}>
+          Back
+        </button>
+        {advance.disabled ? (
+          <Link href={planHref} className={styles.ppRunPrimary}>Back to the plan</Link>
+        ) : (
+          <button type="button" className={styles.ppRunPrimary} onClick={() => go(1)}>{advance.label}</button>
+        )}
+      </div>
+    </>
   );
 
   if (openStation) {
@@ -499,21 +375,19 @@ export default function CoachPracticeRunPage({
           grid={grid}
           round={step.round}
           isMine={isViewersStation(openStation.staff, data?.viewerName ?? null)}
-          // Null outside the run window — the station view then says nothing about time either.
-          clock={clock}
-          clockOver={over}
           nameOf={nameOf}
           onBack={() => chooseStation(null)}
           actions={
             /* The same tap as on the block screen, so a station coach never has to back out to a
-               list to move the round on. It moves the screen and records nothing.
-               ⚠ A helper gets the sentence instead — see `canAdvance` above. */
-            !canAdvance ? (
-              <p className={styles.ppRunHandedOff}>{whoAdvances}</p>
-            ) : advance.disabled ? null : (
-              <div className={styles.ppRunActions}>
-                <button type="button" className={styles.ppRunPrimary} onClick={() => go(1)}>{advance.label}</button>
-              </div>
+               list to move the round on. It moves the screen and records nothing. A helper's line
+               sits above it — see `isHelper` above. */
+            advance.disabled ? null : (
+              <>
+                {isHelper && <p className={styles.ppRunHandedOff}>{whoAdvances}</p>}
+                <div className={styles.ppRunActions}>
+                  <button type="button" className={styles.ppRunPrimary} onClick={() => go(1)}>{advance.label}</button>
+                </div>
+              </>
             )
           }
         />
@@ -535,12 +409,12 @@ export default function CoachPracticeRunPage({
     resolveStationTeaching(soleStation ?? {}, block);
 
   /**
-   * ONE row, two faces (P7): with `letters` it is the rotation's row — the group letter(s) at (or
-   * arriving at) this station, two stacked when two share, "nobody" when none — and without them
+   * ONE row, two faces (P7): with `letters` it is the rotation's row — the group letter(s) at this
+   * station, two stacked when two share, "nobody" when none — and without them
    * it is the station list's row. Either way the row is the door to that station, and the
    * viewer's own says so. A called function, never a component declared in the render body.
    */
-  function renderStationRow(station: PracticeStation, index: number, letters: string[] | null, due: boolean) {
+  function renderStationRow(station: PracticeStation, index: number, letters: string[] | null) {
     const mine = isViewersStation(station.staff, data?.viewerName ?? null);
     const staffLine = station.staff?.length ? station.staff.join(' · ') : '';
     const meta = `${staffLine}${mine ? `${staffLine ? ' — ' : ''}that’s you` : ''}`;
@@ -551,7 +425,6 @@ export default function CoachPracticeRunPage({
         className={styles.ppRunRow}
         data-face={letters ? 'rotation' : 'station'}
         data-mine={mine ? 'mine' : undefined}
-        data-due={due ? 'due' : undefined}
         onClick={() => chooseStation(station.id)}
       >
         {letters && (
@@ -577,14 +450,6 @@ export default function CoachPracticeRunPage({
       {blockPlayers.map(name => <span key={name} className={styles.ppRunChip}>{name}</span>)}
     </span>
   ) : null;
-
-  // What the small line under the clock says. Read top to bottom: the most specific state wins.
-  let clockLabel: string;
-  if (rotationDue) clockLabel = 'Rotation due';
-  else if (over) clockLabel = 'Over by';
-  else if (step.round != null) clockLabel = 'Until they rotate';
-  else if (step.restOfPractice) clockLabel = 'Left of practice';
-  else clockLabel = `Left of ${step.minutes} min`;
 
   // The one quiet line at the foot — the thing a coach actually reads mid-drill.
   let upNext: ReactNode;
@@ -618,45 +483,26 @@ export default function CoachPracticeRunPage({
         </div>
 
         <h1 className={styles.ppRunTitle}>{block.title.trim() || `Block ${step.blockIndex + 1}`}</h1>
-        {step.round != null && <p className={styles.ppRunRound}>Round {step.round} of {step.rounds}</p>}
+        {/* The plan's length for this stop, as information (P10): "Round 2 of 3 · 10 min a round",
+            "15 min", "Rest of practice". Never a countdown — the coach is the clock. */}
+        {(step.round != null || runStepLengthLabel(step)) && (
+          <p className={styles.ppRunRound}>
+            {step.round != null && `Round ${step.round} of ${step.rounds}`}
+            {step.round != null && runStepLengthLabel(step) && ' · '}
+            {runStepLengthLabel(step)}
+          </p>
+        )}
 
-        {outsideWindow && fact ? (
-          /* The fact where the clock was (P3) — what the product knows: when it was planned for. */
-          <>
-            <p className={`${styles.ppRunOf} ${styles.ppRunFactLbl}`}>Planned for</p>
-            <p className={styles.ppRunFact}>
-              {fact.when}
-              {(beforeWindow ? fact.opens : fact.window) && <small>{beforeWindow ? fact.opens : fact.window}</small>}
-            </p>
-          </>
-        ) : clock ? (
-          <>
-            <p className={styles.ppRunClock} data-over={over ? 'over' : undefined}>{clock}</p>
-            <p className={styles.ppRunOf} data-over={over ? 'over' : undefined}>{clockLabel}</p>
-          </>
-        ) : clockReady ? (
-          <p className={styles.ppRunOf}>{step.restOfPractice ? 'Runs to the end' : 'No length set'}</p>
-        ) : null}
-
-        {/* ── A rotation: ONE list keyed by station (P7) — who is at each, or who arrives next ── */}
+        {/* ── A rotation: ONE list keyed by station (P7) — who is at each this round ── */}
         {rotating && grid && turned && step.round != null && (
           <>
-            {rotationDue && (
-              <div className={styles.ppRunWhere} data-due="due">
-                <span className={styles.ppRunWhereG} aria-hidden>→</span>
-                <div>
-                  <p className={styles.ppRunWhereS}>Move the groups on</p>
-                  <p className={styles.ppRunWhereM}>Coaches stay where they are</p>
-                </div>
-              </div>
-            )}
             <div className={styles.ppRunList}>
               {stations.map((station, i) => {
                 // The row's letters come from the station's COLUMN, found by id — an unnamed station
                 // is not a stop in the arithmetic (no column, nobody sent there: "nobody"), but the
                 // coach standing at it still needs the door.
                 const col = turned.stations.findIndex(s => s.id === station.id);
-                return renderStationRow(station, i, (col >= 0 ? shownRow?.cells[col] ?? [] : []).map(shortGroupLabel), rotationDue);
+                return renderStationRow(station, i, (col >= 0 ? shownRow?.cells[col] ?? [] : []).map(shortGroupLabel));
               })}
             </div>
             {shownRow && shownRow.out.length > 0 && (
@@ -705,7 +551,7 @@ export default function CoachPracticeRunPage({
         {step.round == null && stations.length > 0 && (
           <div className={styles.ppRunStations}>
             <p className={styles.ppRunStationsLbl}>Stations</p>
-            {stations.map((station, i) => renderStationRow(station, i, null, false))}
+            {stations.map((station, i) => renderStationRow(station, i, null))}
           </div>
         )}
 

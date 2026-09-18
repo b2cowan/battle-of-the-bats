@@ -12,13 +12,12 @@ import {
   MAX_BLOCKS, MAX_COACHING_POINTS, MAX_DESCRIPTION_LEN, MAX_MINUTES, MAX_SHORT_TEXT_LEN,
   MAX_STATIONS_PER_BLOCK, MAX_TEXT_LEN, MAX_TITLE_LEN,
   arrangeGroup, blockAsksForTeaching, blockRotates, collapseSoleStation, computeRotation, defaultIntervalMinutes,
-  describeRounds, describeSplit, forgetArrangement, formatClockMs, formatDuration, newPracticePlanId, practiceKitBag,
+  describeRounds, describeSplit, forgetArrangement, formatDuration, newPracticePlanId, practiceKitBag,
   resolveStationTeaching, mergedTagNames, rotationByStation, settlePlanLevels, splitBlockIntoStations, stationLabel,
-  plannedBlockAt, soleStationOf, stationWalk, tagNamesById, unplacedPlayers, walkBlockClocks,
+  soleStationOf, stationWalk, tagNamesById, unplacedPlayers, walkBlockClocks,
   type BlockClock, type PracticePlan, type PracticePlanBlock,
   type PracticeRotation, type PracticeStation,
 } from '@/lib/rep-practice-plan';
-import { isInRunWindow } from '@/lib/practice-state';
 import PracticeGroupsRoom from '@/components/coaches/PracticeGroupsRoom';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import {
@@ -1479,7 +1478,7 @@ function PromoteDialog({
  *     untouched here.
  */
 function BlockCard({
-  block, index, blockCount, clock, blockStartMs, nowLabel = null, open, focusTitle, openDoors, readOnly, withoutPeople, solo,
+  block, index, blockCount, clock, blockStartMs, open, focusTitle, openDoors, readOnly, withoutPeople, solo,
   restTakenElsewhere, roster, notRepliedIds,
   staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag, nameOf,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
@@ -1491,8 +1490,6 @@ function BlockCard({
   blockCount: number;
   clock?: BlockClock;
   blockStartMs?: number;
-  /** "5:37 p.m." while THIS block's planned window holds the clock, during the run window (P9); null otherwise. */
-  nowLabel?: string | null;
   open: boolean;
   /** The circuit editor: the block ALONE on a sheet — no collapse, no bin, no clock, no drag; the
    *  header's Retire is the only way out (stage 4, L9). */
@@ -1582,13 +1579,9 @@ function BlockCard({
   const gutter = (
     <div ref={setHandleRef} {...(canDrag ? handleListeners : {})}
       className={`${styles.ppTlGutter}${canDrag ? ` ${styles.ppTlGutterHandle}` : ''}`}
-      data-lifted={isDragging ? 'on' : undefined} data-now={nowLabel ? 'now' : undefined}>
+      data-lifted={isDragging ? 'on' : undefined}>
       {clock ? clock.startLabel : gutterLength || '—'}
       {clock && <small>{block.duration.restOfPractice ? 'rest' : gutterLength || 'no length'}</small>}
-      {/* The now-marker (stage 5, P9): a third line on the running block, the spine's dot filled —
-          by the plan, never by a tap. The word and the clock on two lines: "now · 5:37 p.m." is
-          wider than the gutter, and the clock keeps its period everywhere a coach reads one. */}
-      {nowLabel && <span className={styles.ppTlGutterNow}>now<br />{nowLabel}</span>}
       {canDrag && (
         <span className={styles.ppTlMove} onMouseDown={e => e.stopPropagation()}>
           <button type="button" className={styles.ppMoveBtn} aria-label={`Move ${label} up`}
@@ -2091,13 +2084,6 @@ interface Props {
   onChangePlanTags?: (next: string[]) => void;
   eventStartsAt: string;
   eventEndsAt: string | null;
-  /**
-   * The page's minute clock (stage 5, P9) — so the gutter can say "now · 5:37" on the block whose
-   * PLANNED window holds it, during the run window only. Absent (the template and circuit editors,
-   * which have no clock) the marker never shows. A read, never a write: it opens nothing, scrolls
-   * nothing, touches no autosave and no open-block rule — a viewer without write sees it too.
-   */
-  nowMs?: number;
   readOnly: boolean;
   /**
    * ⚠ Editing a TEMPLATE, not a practice: no roster, no staff, no groups, no "just for tonight".
@@ -2119,7 +2105,7 @@ export default function PracticePlanEditor({
   staffTags = [], onCreateStaffTag, equipmentTags = [], onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   focusManage, onFocusTagsChanged,
-  eventStartsAt, eventEndsAt, nowMs, readOnly, withoutPeople = false, onStartFrom,
+  eventStartsAt, eventEndsAt, readOnly, withoutPeople = false, onStartFrom,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
   /**
@@ -2241,19 +2227,9 @@ export default function PracticePlanEditor({
   );
   const clockByBlock = useMemo(() => new Map(walk.clocks.map(c => [c.blockId, c])), [walk]);
   const nextStartLabel = walk.nextStartLabel;
-  /**
-   * The now-marker (stage 5, P9): which block's PLANNED window holds the clock — from the SAME walk
-   * the gutter draws its start times from, against the page's minute clock — and only while the run
-   * window is open (the hub's one window; outside it the sheet is a plan, not a clock). Null is
-   * "no marker": before the first block, once the planned end has passed, in a template (no
-   * clock), or on a plan with no start time. The label is the org's clock, as every gutter time is.
-   */
-  const nowAt = useMemo(() => {
-    if (nowMs == null || !eventStartsAt || !isInRunWindow(eventStartsAt, nowMs, eventEndsAt)) return null;
-    const index = plannedBlockAt(walk.clocks, nowMs);
-    if (index == null) return null;
-    return { index, label: formatClockMs(nowMs) };
-  }, [nowMs, eventStartsAt, walk]);
+  // ⚠ NO NOW-MARKER (owner, 2026-09-17, with the P10 no-clock ruling). Stage 5's P9 put "now" over
+  // the clock in the running block's gutter, by the PLAN — and the plan's clock is exactly the
+  // thing P10 ruled does not know where the practice is. The sheet is a plan, never a clock.
 
   /** Which block (if any) already claims "rest of practice" — D13 allows exactly one per plan. */
   const restBlockId = plan.blocks.find(b => b.duration.restOfPractice)?.id ?? null;
@@ -2962,7 +2938,6 @@ export default function PracticePlanEditor({
             clock={clockByBlock.get(block.id)}
             // From the SAME clock walk as the gutter — never a second copy of the arithmetic.
             blockStartMs={clockByBlock.get(block.id)?.startMs}
-            nowLabel={nowAt?.index === i ? nowAt.label : null}
             open={soloBlock || openId === block.id}
             solo={soloBlock}
             focusTitle={freshId === block.id}

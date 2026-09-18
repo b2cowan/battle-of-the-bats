@@ -964,19 +964,6 @@ export function computeBlockClocks(
 }
 
 /**
- * Which block's PLANNED window holds the clock — the index into the walk, or null when none does
- * (before the first block, after the planned end, or a block whose end cannot be known). The
- * sheet's now-marker (stage 5, P9) reads this against the page's minute clock: it is the plan's
- * now, never a tap's — the field screen is anchored by the coach's taps and may disagree by the
- * minutes they are behind, and the sheet is the one saying "by the plan". Indexed BY POSITION
- * (block ids are client-minted and not guaranteed unique).
- */
-export function plannedBlockAt(clocks: readonly BlockClock[], nowMs: number): number | null {
-  const i = clocks.findIndex(c => c.startMs <= nowMs && c.endMs != null && nowMs < c.endMs);
-  return i >= 0 ? i : null;
-}
-
-/**
  * Does a block's player list mean the WHOLE TEAM (stage 5, P5)? Yes when it names nobody — the
  * plan page's own word for an empty list — and yes when the named set is exactly the active
  * roster: twelve names out of twelve IS the whole team tonight, and twelve chips at arm's length
@@ -1508,14 +1495,17 @@ export function stationWalk(stations: readonly PracticeStation[], stationId: str
 /**
  * ONE stop on the run screen: a block, or a single round inside a rotating block.
  *
- * The run screen's whole job is "what's happening now, and when does it change", so the ninety
- * minutes are flattened into a list of stops and the screen is a cursor over it. A rotation is
- * therefore NOT a mode the coach enters and leaves (D26) — it is simply a stretch of the same
- * list where several consecutive stops share a block.
+ * The run screen's whole job is "what's happening now, and what comes next", so the practice is
+ * flattened into a list of stops and the screen is a cursor over it. A rotation is therefore NOT a
+ * mode the coach enters and leaves (D26) — it is simply a stretch of the same list where several
+ * consecutive stops share a block.
  *
- * ⚠ NOTHING HERE IS EVER STORED (D4). A step is derived from the plan and the event's start time
- * on every render; there is no "where did we get to" record, no elapsed-time store, and no
- * completion flag. `startMs` is the PLANNED instant, not an observed one.
+ * ⚠ NOTHING HERE IS EVER STORED (D4). A step is derived from the plan on every render; there is no
+ * "where did we get to" record, no elapsed-time store, and no completion flag.
+ *
+ * ⚠ A STOP HAS NO CLOCK (owner ruling 2026-09-17, stage 5 P10). It used to carry its planned start
+ * instant so the screen could count down from it; the counter is gone and so is the instant. The
+ * plan's LENGTH stays, as information — "15 min", "10 min a round" — never as a countdown.
  */
 export interface RunStep {
   blockId: string;
@@ -1525,10 +1515,8 @@ export interface RunStep {
   round: number | null;
   /** How many rounds this block's rotation has; 0 when it isn't one. */
   rounds: number;
-  /** How long this stop is planned to run. Null when it genuinely can't be known. */
+  /** How long this stop is planned to run. Null when the plan doesn't say. */
   minutes: number | null;
-  /** The stop's planned start as a real instant (epoch ms). */
-  startMs: number;
   /** True for the single "rest of practice" block. */
   restOfPractice: boolean;
 }
@@ -1541,35 +1529,12 @@ export interface RunStep {
  * isn't computable yet — no groups, no stations, no interval — degrades to a single plain stop
  * rather than vanishing from the run, because a half-written block is still ninety seconds of a
  * real practice and the coach still has to get past it.
- *
- * A "rest of practice" block's length is the time to the event's END, which is the only honest
- * number available; with no end time it stays null and the screen shows no clock rather than
- * inventing one (D13).
  */
-export function buildRunSteps(
-  blocks: readonly PracticePlanBlock[],
-  eventStartsAt: string | null | undefined,
-  eventEndsAt: string | null | undefined,
-): RunStep[] {
-  // The SAME clock walk the builder, the summary and the printed sheet use — never a second copy
-  // of how "rest of practice" advances the cursor. An earlier duplicate of that arithmetic had
-  // already drifted once, and the sheet and the screen disagreed about when a block started.
-  //
-  // ⚠ Indexed BY POSITION, not by block id. `computeBlockClocks` returns one entry per block in
-  // order, and ids are client-minted with no uniqueness enforced anywhere — keying a Map on them
-  // meant two blocks that happened to share an id silently collapsed onto one clock, giving the
-  // earlier block the later one's start time.
-  const clocks = computeBlockClocks(blocks, eventStartsAt, eventEndsAt);
-  if (clocks.length === 0) return [];
-  const endMs = eventEndsAt ? new Date(eventEndsAt).getTime() : NaN;
-
+export function buildRunSteps(blocks: readonly PracticePlanBlock[]): RunStep[] {
   const steps: RunStep[] = [];
   blocks.forEach((block, blockIndex) => {
-    const clock = clocks[blockIndex];
-    if (!clock) return;
-
     if (blockRotates(block) && block.rotation) {
-      const grid = computeRotation(block.rotation, block.stations, block.duration.minutes ?? null, clock.startMs);
+      const grid = computeRotation(block.rotation, block.stations, block.duration.minutes ?? null);
       if (grid.rounds > 0 && grid.intervalMinutes) {
         for (let r = 0; r < grid.rounds; r++) {
           steps.push({
@@ -1578,26 +1543,18 @@ export function buildRunSteps(
             round: r + 1,
             rounds: grid.rounds,
             minutes: grid.intervalMinutes,
-            startMs: clock.startMs + r * grid.intervalMinutes * 60_000,
             restOfPractice: false,
           });
         }
         return;
       }
     }
-
-    // FLOOR, never round: the same "never invent precision" rule `defaultIntervalMinutes` follows.
-    // Rounding up would let the countdown claim time that the practice does not actually have.
-    const minutes = block.duration.restOfPractice
-      ? (!Number.isNaN(endMs) && endMs > clock.startMs ? Math.floor((endMs - clock.startMs) / 60_000) : null)
-      : (block.duration.minutes ?? null);
     steps.push({
       blockId: block.id,
       blockIndex,
       round: null,
       rounds: 0,
-      minutes,
-      startMs: clock.startMs,
+      minutes: block.duration.restOfPractice ? null : (block.duration.minutes ?? null),
       restOfPractice: !!block.duration.restOfPractice,
     });
   });
@@ -1605,65 +1562,14 @@ export function buildRunSteps(
 }
 
 /**
- * Which stop the PLANNED clock says is running at `nowMs` — where the screen opens.
- *
- * This is what makes opening a phone mid-practice useful: the coach lands on the block that is
- * actually running rather than at the top of a list they then have to tap through. Before the
- * practice it answers the first stop; after it, the last. Returns -1 for an empty plan.
- *
- * ⚠ A TIE GOES TO THE EARLIER STOP, and that is the whole subtlety here. Two stops share a start
- * instant exactly when the first of them cannot advance the clock — a "rest of practice" block on
- * an event with no end time, or a block whose minutes were never filled in. Those are precisely
- * the stops that are still running (their length is unbounded, not zero), so preferring the later
- * one would skip the coach straight past the block actually in front of them and start the next
- * block's countdown from a time that has already gone.
+ * The plan's length for a stop, as the run screen states it: "10 min a round" for a rotation's
+ * round, "15 min" for a timed block, "Rest of practice" for the one that runs to the end, and
+ * nothing at all when the plan never said. Information, not a countdown (P10).
  */
-export function runStepAt(steps: readonly RunStep[], nowMs: number): number {
-  if (steps.length === 0) return -1;
-  let index = 0;
-  for (let i = 1; i < steps.length; i++) {
-    // Strictly later, so a shared start instant never displaces the stop that owns it.
-    if (steps[i].startMs <= nowMs && steps[i].startMs > steps[index].startMs) index = i;
-  }
-  return index;
-}
-
-/**
- * Seconds left in a stop that began at `anchorMs`. Negative once it has run over; null when the
- * stop has no known length, so the screen can show nothing rather than a made-up number.
- *
- * ⚠ THE ANCHOR IS THE WHOLE DESIGN (owner ruling 2026-08-01). On open it is the stop's PLANNED
- * start, so a practice running to time reads true. The moment the coach taps — "Next block" or
- * "Rotate now" — the caller re-anchors to that instant and the stop gets its full planned length
- * from there. A practice that starts eight minutes late therefore does not spend the rest of the
- * night showing every block as overdue, which is what anchoring purely to the schedule would do.
- */
-export function runRemainingSeconds(
-  minutes: number | null | undefined,
-  anchorMs: number,
-  nowMs: number,
-): number | null {
-  if (minutes == null) return null;
-  return minutes * 60 - Math.floor((nowMs - anchorMs) / 1000);
-}
-
-/**
- * "12:40" · "0:07" · "+1:20" — the clock as it reads at arm's length, in tabular numerals.
- *
- * Overrun is a plain "+", never a colour word or an alarm: a drill that is going well should be
- * allowed to run long, and the screen's job is to stop pretending it isn't (D26). Hours appear
- * only if a stop somehow runs past sixty minutes, so the common case stays two groups of digits.
- */
-export function formatRunClock(seconds: number): string {
-  const over = seconds < 0;
-  const total = Math.abs(Math.trunc(seconds));
-  const hours = Math.floor(total / 3600);
-  const mins = Math.floor((total % 3600) / 60);
-  const secs = total % 60;
-  const body = hours > 0
-    ? `${hours}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-    : `${mins}:${String(secs).padStart(2, '0')}`;
-  return over ? `+${body}` : body;
+export function runStepLengthLabel(step: RunStep): string {
+  if (step.restOfPractice) return "Rest of practice";
+  if (step.minutes == null) return "";
+  return step.round != null ? `${step.minutes} min a round` : `${step.minutes} min`;
 }
 
 // ── Reuse helpers (copy-from-previous) ─────────────────────────────────────────

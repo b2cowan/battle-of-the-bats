@@ -16,7 +16,7 @@ import { canManageSchedule, canWritePracticePlans } from '@/lib/coach-capabiliti
 import { splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
 import { parsePracticePlansSection } from '@/lib/practice-plans-address';
 import {
-  practiceHasPlan, practicePlanState, practiceFitLabel, practiceRecapLine, isInRunWindow,
+  practiceHasPlan, practicePlanState, practiceFitLabel, practiceRecapLine,
   practiceLengthMinutes,
 } from '@/lib/practice-state';
 import { calendarDaysBetween, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
@@ -256,12 +256,11 @@ export default function CoachesPracticePlansPage({
 
   const renderRow = (e: RepTeamEvent, past: boolean) => {
     const planned = practiceHasPlan(e);
-    // "Run practice" is offered only around the practice itself, and only once there is a plan to
-    // run — the Schedule's slide-over and the plan page's toolbar offer the same door off the same
-    // condition (one window, every door — stage 5, P3 · P4, 2026-09-17; before that the Schedule
-    // offered it on any date). The card has already claimed the first such practice; this catches
-    // a second one inside the same window.
-    const inRunWindow = planned && isInRunWindow(e.startsAt, nowMs, e.endsAt);
+    // "Run practice" is offered on EVERY planned practice, past or future (owner, 2026-09-17, on
+    // the P10 no-clock ruling: with no timer there is nothing for a window to protect — the field
+    // is a reader, and a coach may walk a plan before, during or after it). The Schedule's
+    // slide-over and the plan page's toolbar offer the same door off the same condition: a plan
+    // with at least one block. Only the WEIGHT reads the day — the card's lime, below.
     // Two halves, two vocabularies (D3): above the line the room is a planner, below it a record.
     // "Open" is the record's door — a past practice, or a coach who cannot write plans — and it is
     // the quiet one; the working doors keep their weight.
@@ -287,7 +286,7 @@ export default function CoachesPracticePlansPage({
         // The room's one lime lives on the card now (D1) — no row carries it.
         primaryLabel={null}
         // Beside the row, never inside it — the row stays one control (§3.6).
-        beside={inRunWindow ? <Link href={`${base}/practice/${e.id}/run`} className={styles.gdEntryBtn}>Run practice</Link> : undefined}
+        beside={planned ? <Link href={`${base}/practice/${e.id}/run`} className={styles.gdEntryBtn}>Run practice</Link> : undefined}
       />
     );
   };
@@ -309,10 +308,12 @@ export default function CoachesPracticePlansPage({
     ].filter(Boolean).join(' · ');
     const planHref = `${base}/practice/${e.id}`;
     const runHref = `${planHref}/run`;
-    // The state decides the action. No plan → Plan this practice (for a coach who may); plan set
-    // → Open the plan; on the day → Run practice, with the plan as the quiet link. A coach who
-    // cannot write plans is never shown a lime they cannot earn: an unplanned practice offers
-    // "Open" quietly, read-only.
+    // The state decides the WEIGHT, never whether the door exists. No plan → Plan this practice
+    // (for a coach who may); plan set → Open the plan, with Run practice as the quiet link; on the
+    // day → Run practice, with the plan as the quiet link. The field door is on every planned
+    // practice on any day (P10 revised, 2026-09-17); the day decides only which of the two is the
+    // one thing. A coach who cannot write plans is never shown a lime they cannot earn: an
+    // unplanned practice offers "Open" quietly, read-only.
     const primary = state === 'run'
       ? { href: runHref, label: 'Run practice', icon: <Play size={15} aria-hidden /> }
       : state === 'planned'
@@ -322,7 +323,9 @@ export default function CoachesPracticePlansPage({
           : null;
     const answers = state === 'run'
       ? [{ href: planHref, label: 'Open the plan' }]
-      : primary ? [] : [{ href: planHref, label: 'Open' }];
+      : state === 'planned'
+        ? [{ href: runHref, label: 'Run practice' }]
+        : primary ? [] : [{ href: planHref, label: 'Open' }];
     // The state chip rides the answers slot: the meta row's right side, beside the quiet links.
     const chip = state === 'none' ? (
       <span className={styles.lineupFrontChip} data-tone="warn">

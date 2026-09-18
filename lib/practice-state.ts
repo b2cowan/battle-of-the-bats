@@ -11,7 +11,9 @@
  * ⚠ ONE run window. "Run practice" is offered for three hours either side of the start — clock
  * arithmetic on absolute instants, so there is no date boundary and no timezone to get wrong. The
  * hub's card, the hub's rows and the Overview read the same constant; a second window anywhere
- * would let one screen offer the field door while another still says "plan it".
+ * would let one screen offer the field door while another still says "plan it". ⚠ The window is
+ * about which DOOR to offer today; the field screen itself has no clock (stage 5, P10) and reads
+ * the same on any day.
  *
  * ⚠ Nothing here records what HAPPENED. `run` means "the window is open and there is a plan to
  * run", never "the practice was run" — "planned, never done" (`lib/rep-practice-plan.ts` rule 2).
@@ -45,18 +47,6 @@ export function isInRunWindow(startsAt: string, nowMs: number, endsAt?: string |
   const endMs = endsAt ? new Date(endsAt).getTime() : NaN;
   const last = Number.isFinite(endMs) && endMs > startMs ? endMs : startMs;
   return nowMs >= startMs - RUN_WINDOW_MS && nowMs <= last + RUN_WINDOW_MS;
-}
-
-/**
- * The instant the run window OPENS for a practice — its start less the one constant above — as
- * epoch ms, or null when the start is not a time. The run screen's face before a practice says
- * "The clock starts 2:21 p.m." from this (stage 5, P3); it is the same window every door reads,
- * never a second one.
- */
-export function runWindowOpensAt(startsAt: string | null | undefined): number | null {
-  if (!startsAt) return null;
-  const ms = new Date(startsAt).getTime();
-  return Number.isFinite(ms) ? ms - RUN_WINDOW_MS : null;
 }
 
 /**

@@ -426,13 +426,15 @@ describe('resolveOverviewAnchor — the button is the first thing NOT DONE', () 
       assert.equal(d?.primary, 'plan_practice');
       assert.deepEqual(d?.answers, ['take_attendance', 'open_schedule']);
     });
-    it('plan set → Open the plan; attendance drops out of the answers once taken', () => {
-      assert.equal(practice({ practicePlan: 'planned', attendanceTaken: false })?.primary, 'open_plan');
+    it('plan set → Open the plan, with Run practice as the quiet door on ANY day; attendance drops out once taken', () => {
+      const d = practice({ practicePlan: 'planned', attendanceTaken: false });
+      assert.equal(d?.primary, 'open_plan');
+      assert.deepEqual(d?.answers, ['run_practice', 'take_attendance', 'open_schedule']);
       const taken = practice({ practicePlan: 'planned', attendanceTaken: true });
       assert.equal(taken?.primary, 'open_plan');
-      assert.deepEqual(taken?.answers, ['open_schedule']);
+      assert.deepEqual(taken?.answers, ['run_practice', 'open_schedule']);
     });
-    it('inside the run window → Run practice', () => {
+    it('on the day → Run practice is the one thing (the day decides the weight, never the door)', () => {
       assert.equal(practice({ practicePlan: 'run' })?.primary, 'run_practice');
     });
     it('a coach who cannot write plans keeps the attendance card for an unplanned practice', () => {

@@ -1101,22 +1101,20 @@ export default function CoachPracticePlanPage({
                   The blank page has no toolbar and no disabled Print: its one action is the
                   first block, inside the sheet. "Start this plan from…" moved into the sheet
                   too, as the ghost row's quiet alternative. What stays up here is what a
-                  written plan earns: the promotion and the paper — and, INSIDE THE RUN WINDOW
-                  ONLY, the field door.
+                  written plan earns: the promotion, the paper, and the field door.
                   ⚠ "Run practice" left this page on 2026-09-14 because the builder offered it at
-                  ANY date and the run screen then counted the days. It is back (practices
-                  re-evaluation stage 5, owner ruling P4, 2026-09-17) on the one rule every door
-                  now reads — at least one block, ±3h of the start (`practicePlanState`, from the
-                  minute clock this page already runs for "How it went") — as the toolbar's FIRST
-                  control and the page's one lime: the ghost row's "+ Add a block" is quiet once a
-                  block exists. Outside the window the toolbar is exactly what it was. */}
+                  ANY date and the run screen then counted the days. It came back window-gated
+                  (stage 5, P4) and is now on the toolbar on ANY day (owner, 2026-09-17, with the
+                  P10 no-clock ruling — the run screen no longer counts anything, so a coach may
+                  walk the plan before, during or after the practice). Always FIRST; the page's
+                  one lime on the day (`practicePlanState` 'run', from the minute clock this page
+                  already runs for "How it went") and a plain button otherwise — the day decides
+                  the weight, never the door. */}
               {hasBlocks && (
                 <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
-                  {runState === 'run' && (
-                    <Link href={`${base}/practice/${eventId}/run`} className={styles.btnPrimary} data-testid="run-practice">
-                      <Play size={14} aria-hidden /> Run practice
-                    </Link>
-                  )}
+                  <Link href={`${base}/practice/${eventId}/run`} className={runState === 'run' ? styles.btnPrimary : styles.btnSecondary} data-testid="run-practice">
+                    <Play size={14} aria-hidden /> Run practice
+                  </Link>
                   {/* Explicit promotion, never automatic — the "Save to my drills…" bargain, one
                       level up. */}
                   {canWrite && (
@@ -1211,10 +1209,6 @@ export default function CoachPracticePlanPage({
                   onChangePlanTags={savePlanTags}
                   eventStartsAt={event?.startsAt ?? ''}
                   eventEndsAt={event?.endsAt ?? null}
-                  // The sheet's now-marker (stage 5, P9): the page's minute clock, handed down so
-                  // the gutter can say which block's PLANNED window holds it. The template and
-                  // circuit editors pass none and never show it.
-                  nowMs={nowMs}
                   readOnly={!canWrite}
                   // ⚠ ONE control, THREE sources (frame 05; P3 C2 added the third) — never a
                   // second door. Offered on the blank page when there is anything at all to

@@ -3,7 +3,7 @@ import { describe, it } from 'node:test';
 import {
   RUN_WINDOW_MS, practiceHasPlan, isInRunWindow, practicePlanState,
   practiceFitLabel, practiceLengthMinutes, practiceRecapLine,
-  practicePlanFit, practicePlannedLabel, practiceRemainderLabel, practiceStarted, runWindowOpensAt,
+  practicePlanFit, practicePlannedLabel, practiceRemainderLabel, practiceStarted,
 } from '../../lib/practice-state.ts';
 import { emptyPracticePlan, sanitizePracticePlan, summarizePracticePlan, type PracticePlan } from '../../lib/rep-practice-plan.ts';
 
@@ -156,23 +156,8 @@ describe('practiceStarted — the start time has passed (stage 1, D7)', () => {
   });
 });
 
-describe('runWindowOpensAt — the run screen’s "The clock starts" (stage 5, P3)', () => {
-  it('is the start less the ONE window constant — the same instant every door opens on', () => {
-    const start = at(5 * H);
-    assert.equal(runWindowOpensAt(start), NOW + 5 * H - RUN_WINDOW_MS);
-    // The window opens exactly when isInRunWindow first says yes.
-    assert.equal(isInRunWindow(start, runWindowOpensAt(start)! - 1), false);
-    assert.equal(isInRunWindow(start, runWindowOpensAt(start)!), true);
-  });
-  it('has no answer without a start, or for a start that is not a time', () => {
-    assert.equal(runWindowOpensAt(null), null);
-    assert.equal(runWindowOpensAt(''), null);
-    assert.equal(runWindowOpensAt('not a date'), null);
-  });
-});
-
 describe('the run window has BOTH edges — three hours after the END, not the start (/review, stage 5)', () => {
-  it('a four-hour practice keeps its doors and its field clock to the last minute', () => {
+  it('a four-hour practice keeps its doors to the last minute', () => {
     const start = at(-3.5 * H);            // started three and a half hours ago
     const end = at(0.5 * H);               // ends in half an hour
     assert.equal(isInRunWindow(start, NOW), false, 'by the start alone the window shut half an hour ago');

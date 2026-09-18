@@ -1573,8 +1573,9 @@ practice stores and nothing writes at the field.
 | P7 | One row per station — letter(s) · station · who runs it · View — each row the door; "nobody" for an empty station; a sitting-out group one line under the list; due: the amber head and the arriving letter per row. The Stations list goes; the coach's name gets its own line. | Build as drawn |
 | P8 | A station on paper is a labelled block — name with "Run by" beside it; Setup · Equipment · Tonight as lines; the points as a list — never a prose run, never columns; a bare station stays one line. | Build as drawn |
 | P9 | "now · 5:37" in the running block's gutter with the spine's dot filled, during the window, by the plan; opens, scrolls, writes nothing; gone when the planned practice ends; the same at 768. | Build as drawn |
+| **P10** | **The field screen has NO CLOCK — and neither has the sheet (P9 reversed).** The countdown, "Over by", "Rotation due" and the amber head, the tap re-anchor, the outside-window "Planned for" face and the no-start-time dead-end all go; the screen opens on the first stop and remembers the stop per tab; the plan's length stays as information ("15 min", "10 min a round", "Rest of practice"); the station view's "coming to you" reads by round. The DOORS keep their on-the-day window. | **Ruled in chat 2026-09-17, after the §201 walk — §8.8** |
 
-Ruled by paste-back in chat, 2026-09-17, all nine "Build as drawn"; the owner asked for the build prompt in the same message.
+Ruled by paste-back in chat, 2026-09-17, all nine "Build as drawn"; the owner asked for the build prompt in the same message. **P10 came after the walk, on the built screen (§8.8) — it supersedes the clock half of P3 and the "due" half of P7.**
 
 ### 8.1 Where the line is
 
@@ -1740,3 +1741,80 @@ Schedule section 118 (126), the toolbar 37 (38).
 **Not this stage, found on the way:** the lineups page still holds its once-per-mount game-day snapshot (the
 recorded gap; the Schedule's is closed). The `coach-schedule` screen carries two pre-existing `list-ground` findings
 at 768/1440 from the list-family rule that landed with `1a36e462` — its row list, which this build does not touch.
+
+### 8.8 P10 · The field has no clock — RULED and BUILT 2026-09-17 (owner, in chat, on the built screen)
+
+**The ruling, in the owner's words:** *"I don't think we should be running a practice timer automatically, these never
+run exactly on time and the main thing we offer is the information for the practice … we could plan for a station
+with 10 minute intervals but the one before it went long so we have to shorten it on the fly to 7 minute intervals.
+I say we just remove the timer and let them use the 'run practice' to refer to the station they are on, what they
+have to do, who will be there, etc."* The screenshot that prompted it read **"+2:37:53 · OVER BY"** on the last block.
+
+**Why it is right, from the code:** the clock was the spine of the screen, not a feature of it — the counter, the
+amber overrun, the "Rotation due" head with the *arriving* letters, the re-anchor on every tap (the 2026-08-01
+anchor ruling), the ±3h window that swapped in "Planned for" (P3), the "no start time" dead-end, and the per-second
+render that a dozen memo comments were defending against. Every one of those existed to make a countdown honest,
+and the countdown's premise — that the plan's minute is where the practice is — is the thing the owner rejected.
+Removing the counter and leaving the rest would have been the tidy-up this repo's rules warn about (a "due" state
+with nothing to make it due). So the whole layer went.
+
+**What a coach sees now.** Run practice is the plan one stop at a time: the block's name; under it, in the round's
+own lime line, **"Round 2 of 3 · 10 min a round"** / **"15 min"** / **"Rest of practice"** — the plan's number as
+information, never counted down; the words, the coaching points, who runs it · who is in it; the rotation's one
+list keyed by station showing who is **there this round** (Rotate now shows the next round — the coach decides when
+a round is done); "Up next"; Back / Next block / Rotate now; the attendance fold. **It opens on the first stop, every
+time, on any day** (revised the same session — see below; the first cut remembered the stop per tab). It reads the
+same whenever it is opened. The station view loses "4:12 until they rotate"; its "Coming to you" reads **"Round 2 ·
+Group B — …"** rather than a planned clock time.
+
+**Revised the same session (owner, in chat): "since we have removed the timer, I should be able to run a practice
+at any time (before, during, or after its scheduled time) and it should always land on the initial run practice
+page."** Three things followed from that sentence:
+- **The door is on every planned practice, any day.** The hub card, the hub's rows (past practices too), the
+  Overview's card, the Schedule panel and the plan page's toolbar all offer Run practice on one condition — a plan
+  with at least one block. The ±3h window survives ONLY as weight: on the day Run practice is the lime (the card's
+  and the Overview's "one thing", the toolbar's green first control); any other day it is the plain button beside
+  "Open the plan". The day decides which of two doors is the one thing; it never decides whether a door exists.
+- **It always lands on the first stop.** The first cut's per-tab memory of the stop went, and with it D28's
+  per-tab memory of the chosen station (it would have restored only when the landing block happened to hold that
+  station — a half-alive feature is worse than none). The field is a plain reader that holds nothing between
+  opens; after a reload the coach taps forward. Nothing is written (D4).
+- **Everyone gets Back / Next — helpers included.** Phase 4 withheld the buttons from a helper because the clock
+  landed them on the right stop and a button that looked like it moved everybody was worse than none. With no
+  clock a helper's phone had no way off block 1 — a gap the no-clock ruling opened. The buttons are back for
+  everyone (they only ever move the phone they are on), and the helper keeps the line naming who moves the team,
+  now above the buttons and saying what they do: "Sam Assistant moves everyone on — these buttons move only your
+  screen."
+
+**What was deleted, by name (so nothing grows back under another label):** `nowMs` and its 1s interval,
+`anchorMs`, `runStepAt`, `runRemainingSeconds`, `formatRunClock`, `RunStep.startMs`, `runWindowOpensAt`
+(the run screen's alone), the outside-window fact block and `.ppRunFact*`, `.ppRunClock`/`.ppRunOf`, the
+`.ppRunWhere*` head, `data-due` on the rows, `.ppStNowT` and the station view's `clock`/`clockOver` props,
+the "This practice has no start time" empty state (`buildRunSteps(blocks)` no longer needs a start). Added:
+`runStepLengthLabel` (the one wording for the plan's length on the field) and the per-tab step key
+`fl.practice-run.step.{eventId}`. The vocabulary guard now FAILS on `setInterval`/`Date.now()`/`nowMs`/`anchorMs`
+in the run page or the station view, and on any of the counter's words ("Over by", "Rotation due", "Until they
+rotate", "Left of", "Planned for", "The clock starts", "were due to rotate", "Move the groups on").
+
+**P9 went too (owner, same session: "yes remove the now marker then commit").** The plan page's "now" over
+"5:37 p.m." in the running block's gutter rested on the same premise as the counter — the plan's clock knows
+where the practice is — so it is gone: the gutter line, the spine's filled dot, the editor's minute-clock prop,
+the block-window lookup and its tests, and the help sentence describing it. The sheet is a plan, never a clock.
+The plan page keeps its minute clock for "How it went" and for the toolbar's weight. §8.0's P9 row stands as the
+ruling it was; this paragraph is its reversal.
+
+**Verification:** unit — `buildRunSteps` without a start, `runStepLengthLabel`'s four faces, the guard's new
+assertions (no tick, no counter words, NO storage of any kind on the field, the helper line present and the buttons
+never conditional), the Overview resolver's answers (Run practice the quiet door on any day, the one thing on the
+day); `practice-run` · `practice-state` · `practice-vocabulary-guard` · `coach-overview` 135/135. `typecheck`: no errors in any
+file this change touches (the tree carried a peer's in-flight `practice_plan_sent` errors at the time — theirs, not
+this change's). Focused lint: 0 errors; the two `set-state-in-effect` warnings are the pre-existing restore
+pattern (the old file carried three). `check:spelling` green. **/docs done in the same work** — the run article's
+summary, both paragraphs, the rotation subtopic ("You're the clock"), the timer and started-late FAQs and their
+search terms; "timer"/"countdown" kept as keywords on purpose so a coach looking for one lands on the article that
+says there isn't one.
+
+**The §201 walk's parts B (due), C (the two faces outside the window), D (the doors on the day and not a week
+out) and E (the now-marker) are superseded by this ruling**; the rest of that walk stands. The help's two practice articles say the new
+thing in the same work (Run practice on any day, green on the day; opens on the first block every time; a helper's
+buttons).

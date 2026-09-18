@@ -28,7 +28,7 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import { MapPin, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList, Pencil, Trash2 } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
-import { practicePlanState } from '@/lib/practice-state';
+import { practiceHasPlan } from '@/lib/practice-state';
 import { useMinuteClock } from '@/lib/use-minute-clock';
 import { buildPostgameDraft, postgameDraftHref } from '@/lib/postgame-draft';
 import { playerDisplayName } from '@/lib/coach-roster-name';
@@ -2791,12 +2791,13 @@ export default function CoachesSchedulePage({
                 the practices shelf on the closed-season page, which reaches a year-aware read
                 route rather than this one.
 
-                ⚠ ONE WINDOW, EVERY DOOR (practices re-evaluation stage 5, owner ruling P3,
-                2026-09-17). "Run practice →" is offered on exactly the hub card's condition —
-                at least one block, and inside ±3h of the start (`practicePlanState`, the one
-                constant in `lib/practice-state.ts`) — from the minute clock above. It used to be
-                offered whenever a plan ROW existed: five days out, and on a plan holding only a
-                goal, which the run screen then answered with "There's no plan to run yet". */}
+                ⚠ ONE CONDITION, EVERY DOOR. "Run practice →" is offered on exactly the hub's
+                condition — at least one block (`practiceHasPlan`) — on ANY day (owner, 2026-09-17,
+                with the P10 no-clock ruling: the field is a reader, so there is nothing for a
+                window to protect). It used to be offered whenever a plan ROW existed — on a plan
+                holding only a goal, which the run screen then answered with "There's no plan to
+                run yet" — and for a day it was window-gated (stage 5, P3) to keep a countdown
+                honest. The window survives only as the hub card's and the Overview's WEIGHT. */}
             {selectedEvent.eventType === 'practice' && (
               <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
                 <h4 className={styles.formSectionTitle}>Practice plan</h4>
@@ -2807,7 +2808,7 @@ export default function CoachesSchedulePage({
                       {selectedEvent.practicePlan.goal ? ` — ${selectedEvent.practicePlan.goal}` : ''}
                     </p>
                     <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
-                      {practicePlanState(selectedEvent, nowMs) === 'run' && (
+                      {practiceHasPlan(selectedEvent) && (
                         <Link href={`${base}/practice/${selectedEvent.id}/run`} className={styles.btnSecondary}>
                           Run practice →
                         </Link>
