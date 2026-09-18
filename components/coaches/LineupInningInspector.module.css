@@ -1,0 +1,135 @@
+/* LineupInningInspector — the inning-first lens over a lineup (Coach Lineups Deep Dive F12,
+   Phase 4, 2026-09-18). One Question over the builder: the field roles as a row list, the idle
+   lines under it, and — only while a role is open — the facts behind it. Tokens only, no colour
+   literals; warm-gate safe. The rows are CoachRow (the F-17 recipe): nothing here restyles a row's
+   ground, so no rule races the recipe at equal specificity — the open/clash state paints the role
+   CODE and the title word, the way the grid paints its cell's outline. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+/* ⚠ Nothing in the scroll pane may SHRINK. The role list paints `overflow: hidden` (the recipe's
+   frame), which makes it a scroll container — and a flex child that is a scroll container has a
+   `min-height: auto` of ZERO, so it shrank to fit the pane and quietly clipped LF/CF/RF while the
+   pane itself had nothing left to scroll (owner caught it on the first look, 2026-09-18: "why don't
+   I see other positions?"). Content height for every child; the pane does the scrolling. */
+.body > * { flex: none; }
+
+/* The inning heading as a DOOR — rendered inside the grid's <th>, so it inherits the heading's
+   ink, face and centring and adds only the affordance: a pointer, a hover tint, a focus ring, and
+   the tap floor the grid keeps through 768. The number and the coverage figure keep their block
+   layout (the grid's own rule targets `th > span`, which this wrapper would otherwise defeat). */
+.headDoor {
+  display: block;
+  width: 100%;
+  min-height: 2.2rem;
+  padding: 0.15rem 0.2rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: center;
+  cursor: pointer;
+}
+.headDoor > span { display: block; }
+.headDoor:hover { background: var(--home-olive-soft, rgba(255,255,255,0.08)); }
+.headDoor:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
+@media (max-width: 768px) {
+  .headDoor { min-height: var(--tap-min, 44px); }
+}
+
+/* Prev / next inning — the lens moves along the game without closing. */
+.nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.nav button {
+  min-height: var(--tap-min, 44px);
+}
+
+/* The role code — the row's ANCHOR, not a marker. The position is what this list is a list OF;
+   the player is the answer beside it. So the code reads a step above the name (larger, data
+   face, heaviest weight) in a fixed column so P / 1B / CF line up as one. The first cut had the
+   code small at the edge and the name bold, and the owner read it as a list of players with a
+   pointless player-picker beside each. */
+.code {
+  display: inline-block;
+  min-width: 2.9rem;
+  font-family: var(--font-data);
+  font-size: 1.2rem;
+  line-height: 1;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--text-primary);
+}
+.code[data-state="open"] { color: var(--warning); }
+.code[data-state="clash"] { color: var(--danger); }
+
+/* The title word on an open row — "Open" in the same ink the grid gives an open cell. */
+.openWord { color: var(--warning); }
+.clashWord { color: var(--danger); }
+
+/* A proven cause reads in the warning ink; a plain "Eligible now" list stays tertiary. */
+.cause { color: var(--warning); }
+.clashCaption { color: var(--danger); }
+
+/* ── The picker's trigger (D9): the row's door WORD, beside the row — "Change ⌄" / "Assign ⌄" /
+   "Keep one ⌄". It opens SublinedChoice's menu variant: the money chooser's floating list, hung
+   from this word's right edge, over the panel — it never pushes the table down (an in-place fold
+   was built first and the owner rejected it on sight). The list's rows and their toned trail are
+   the recipe's own classes in the coaches module; this module styles only the trigger. */
+.menuTrigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  cursor: pointer;
+}
+.menuTrigger:hover { color: var(--text-primary); background: var(--home-olive-soft, rgba(255,255,255,0.08)); }
+.menuTrigger:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
+.menuTrigger[aria-expanded="true"] { color: var(--text-primary); }
+
+/* The people under the roles wear the same row recipe as the roles: an EMPTY spacer in the code
+   column (the DH/EH/OF code for an "Also" row) so the names line up with the holders above — a dot
+   was tried and the owner read it as a stray mark — the chart's words as the caption, and the
+   Decide / Move word beside. */
+/* Why this is a draft check — the facts card. */
+.why {
+  border: 1px solid var(--border-2);
+  border-left: 3px solid var(--warning);
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.why h3 {
+  margin: 0;
+  font-size: var(--type-body);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.fact {
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.fact strong { color: var(--text-primary); }
+.whyNote {
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}

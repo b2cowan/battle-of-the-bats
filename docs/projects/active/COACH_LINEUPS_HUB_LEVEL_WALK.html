@@ -1,0 +1,446 @@
+<title>Lineups Reads Like Practice Plans</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding:44px 22px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code{font-family:var(--mono);font-size:.88em;background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:16ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.bar{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink)}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+.signin{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:9px}
+.signin h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.route{font-size:14px;color:var(--ink-soft)}
+.parthead{margin-top:46px;border-top:2px solid var(--ink);padding-top:13px;display:flex;flex-direction:column;gap:5px}
+.parthead .eyebrow{color:var(--olive)}
+.parthead h2{font-family:var(--disp);font-weight:700;font-size:29px;line-height:1.05;margin:0;text-wrap:balance}
+.parthead p{font-size:14.5px;color:var(--ink-soft);max-width:70ch;margin-top:4px}
+.steps{display:flex;flex-direction:column;gap:15px;margin-top:19px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.4ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:4px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.think{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.tag.ask{border-color:var(--brick);color:var(--brick);background:var(--brick-soft)}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:17px;height:17px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:2px;text-decoration:none}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:4px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="flag"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft);padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.out{width:100%;min-height:190px;font:12.5px/1.6 var(--mono)}
+.toastwrap{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding:30px 15px 70px} h1{font-size:36px} }
+</style>
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §206 · Coaches portal → Lineups</p>
+  <h1>Lineups reads like Practice plans</h1>
+  <p class="lede">The Lineups room now opens the way the Practice plans room does: the portal's
+    underlined tab row, a <b>Next game</b> card on top carrying the page's one bright button, rows
+    that are plain doors, and a <b>Needs lineup</b> count that counts only what is ahead. The
+    League / Tournament / Scrimmage chips are gone by your ruling. The fastest way to fail this walk
+    is to find anything on the Lineups page that the Practice plans page next to it would not do.</p>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout">Copy findings</button>
+  <button class="btn ghost" id="resetall">Reset</button>
+</div>
+
+<div class="signin">
+  <h2>Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+  </dl>
+  <p class="route"><b>Route:</b> UAT Test Team → <b>Lineups</b>, with <b>Practice plans</b> open in a
+    second tab to compare against. Parts A–C on a desktop window; Part D at phone width.</p>
+  <div class="tip"><b>Before you start: make sure the team has a game ahead of it.</b> The fixture's
+    games may all be in the past, and a room with nothing coming up shows no card and no count —
+    honestly, but it gives you nothing to check. If <b>Upcoming games</b> is empty, go to
+    <b>Schedule</b> and add a league game a few days out (any opponent, any time). One more, starting
+    <b>right now</b>, gives Part B a live game to look at.</div>
+</div>
+
+<!-- ══════════════ PART A ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part A</p>
+  <h2>The room at a glance</h2>
+  <p>Lineups, on the <b>Games</b> tab. Hold the Practice plans page beside it.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="A1">
+  <div class="step-head"><span class="num">A1</span><div class="step-t"><h3>The tabs are the portal's tab row, and each one is an address</h3></div></div>
+  <div class="step-body">
+    <p class="why">The dark two-button pill is gone. <b>Games · Templates</b> now read as the same
+      underlined row Practice plans, Money, Insights and Skills &amp; Goals wear.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a1a"><label for="a1a">The tab row looks like the Practice plans one — underline under <b>Games</b>, no filled pill</label></div>
+      <div class="chk"><input type="checkbox" id="a1b"><label for="a1b">Click <b>Templates</b>: the address bar gains <code>?section=templates</code>, and the browser's <b>Back</b> button returns you to Games<span class="hintline">Before, the tab was page state written into the URL by hand — Back did nothing and a middle-click opened nothing.</span></label></div>
+      <div class="chk"><input type="checkbox" id="a1c"><label for="a1c">No <b>All / League / Tournament</b> chips anywhere on the Games tab</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A2">
+  <div class="step-head"><span class="num">A2</span><div class="step-t"><h3>The Next game card</h3></div></div>
+  <div class="step-body">
+    <p class="why">The nearest game ahead is the card, exactly as the nearest practice is on Practice
+      plans: kicker, how far away it is, the date and time as the headline, the opponent and field
+      beneath, the readiness chip on that line's right, and the page's one bright button.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a2a"><label for="a2a"><b>NEXT GAME</b> on the left of the kicker line, <b>In N days</b> / <b>Tomorrow</b> / <b>Today</b> on its right</label></div>
+      <div class="chk"><input type="checkbox" id="a2b"><label for="a2b">The headline is the day and time (<i>Fri, Sep 25 · 6:00 p.m.</i>); the line under it says <b>vs</b> or <b>@</b> the opponent, then the field</label></div>
+      <div class="chk"><input type="checkbox" id="a2c"><label for="a2c">The chip on that line reads the game's true state — <b>Not started</b>, <b>Draft</b>, <b>Ready</b> or <b>Needs review</b></label></div>
+      <div class="chk"><input type="checkbox" id="a2d"><label for="a2d">The bright button says <b>Build lineup</b> when the game has no lineup or a draft, and <b>Open lineup</b> once it is Ready or Needs review<span class="hintline">The state decides the weight of the door, never whether it exists.</span></label></div>
+      <div class="chk"><input type="checkbox" id="a2e"><label for="a2e">That game does <b>not</b> appear again in the list below the card</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A3">
+  <div class="step-head"><span class="num">A3</span><div class="step-t"><h3>The rows are doors, and the past reads as a record</h3></div></div>
+  <div class="step-body">
+    <p class="why">The one bright button lives on the card; no row carries it. Above the band the room
+      is a builder, below it a record — the same two vocabularies Practice plans uses.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a3a"><label for="a3a">No row has a lime button. An upcoming game ends in plain <b>Build lineup →</b> (still needs one) or <b>Open lineup →</b></label></div>
+      <div class="chk"><input type="checkbox" id="a3b"><label for="a3b">Under <b>Recent games</b>, a game that never had a lineup wears a grey <b>No lineup</b> chip and a quiet <b>Open</b> — not "Not started", not "Build lineup"</label></div>
+      <div class="chk"><input type="checkbox" id="a3c"><label for="a3c">A past game with an amber <b>Needs review</b> keeps its chip and ends in <b>Open lineup →</b></label></div>
+      <div class="chk"><input type="checkbox" id="a3d"><label for="a3d">No <b>Game day</b> pill on any row (unless a game is live right now — Part B)</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="A4">
+  <div class="step-head"><span class="num">A4</span><div class="step-t"><h3>Needs lineup counts what is ahead</h3></div></div>
+  <div class="step-body">
+    <p class="why">The count used to include every game in the past that never got a lineup — a
+      coach in September was told a game in May still needed one. It now counts upcoming games only,
+      the fix Practice plans got for the same defect.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="a4a"><label for="a4a">The <b>⚠ Needs lineup N</b> chip appears only when an upcoming game (the card's included) has no lineup or a draft — and is absent otherwise, even with lineup-less games in the past</label></div>
+      <div class="chk"><input type="checkbox" id="a4b"><label for="a4b">N equals the card (if it needs one) plus the upcoming rows ending in <b>Build lineup</b></label></div>
+      <div class="chk"><input type="checkbox" id="a4c"><label for="a4c">Toggle it on: the <b>Recent games</b> band disappears entirely, and only the rows still needing a lineup remain under Upcoming</label></div>
+      <div class="chk"><input type="checkbox" id="a4d"><label for="a4d">Build the last one (or mark it Ready) with the toggle still on: the chip stays so you can turn it off, and the page says <b>All caught up</b></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART B ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part B</p>
+  <h2>Game day</h2>
+  <p>Needs a game inside its live window — from two hours before it starts to three hours after it
+    ends. A game added on the Schedule starting <b>now</b> is one.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="B1">
+  <div class="step-head"><span class="num">B1</span><div class="step-t"><h3>The live game is the card, and the console is its door</h3></div></div>
+  <div class="step-body">
+    <p class="why">On Practice plans the card turns to <b>Run practice</b> inside the practice's window.
+      Here it turns to the game-day console — even for a game that started an hour ago and would
+      otherwise sit under Recent.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="b1a"><label for="b1a">The card's kicker reads <b>● Game day</b> with <b>Today</b> on the right, and its accent is the live green rather than olive</label></div>
+      <div class="chk"><input type="checkbox" id="b1b"><label for="b1b">The bright button reads <b>Open game day</b>; <b>Open lineup</b> sits beside the chip as the quiet link</label></div>
+      <div class="chk"><input type="checkbox" id="b1c"><label for="b1c">Both doors go where they say — the console, and the lineup builder</label></div>
+      <div class="chk"><input type="checkbox" id="b1d"><label for="b1d">If a <b>second</b> game is live at the same time (a doubleheader), that one's row keeps the <b>Game day</b> pill; otherwise no row has one<span class="hintline">The card can carry one game. The pill on a row is for the second, never a column of them.</span></label></div>
+      <div class="chk"><input type="checkbox" id="b1e"><label for="b1e">Leave the tab open past the window's end (or set the game's end time back on the Schedule and return): within a minute the card is back to <b>Next game</b> for the game after it, and the pill is gone</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART C ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part C</p>
+  <h2>Templates</h2>
+  <p>The <b>Templates</b> tab. The list, rename, delete and apply are unchanged; where the create
+    lives and where the editor lands you are not.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="C1">
+  <div class="step-head"><span class="num">C1</span><div class="step-t"><h3>New template is in the header, the hint line is gone</h3></div></div>
+  <div class="step-body">
+    <p class="why">Every hub puts its one create in the page header. The bar above the list that held
+      "Reusable base lineups…" beside the button is deleted; the empty state still teaches what a
+      template is.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c1a"><label for="c1a"><b>+ New template</b> sits in the header, right of the title, in the same place Practice plans → Templates puts its create</label></div>
+      <div class="chk"><input type="checkbox" id="c1b"><label for="c1b">No sentence sits between the tab row and the list</label></div>
+      <div class="chk"><input type="checkbox" id="c1c"><label for="c1c">Each row still has <b>Apply</b>, rename and delete, and the name opens the template</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C2">
+  <div class="step-head"><span class="num">C2</span><div class="step-t"><h3>Applying a template still moves the game to Draft on the Games tab</h3><div class="tags"><span class="tag ask">Writes</span></div></div></div>
+  <div class="step-body">
+    <p class="why">The apply picker lists the season's games from the same read the Games tab uses, and
+      what it writes shows there without a reload.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c2a"><label for="c2a"><b>Apply</b> opens the game picker; pick your upcoming game and confirm</label></div>
+      <div class="chk"><input type="checkbox" id="c2b"><label for="c2b">The "Applied … to …" notice appears above the templates list</label></div>
+      <div class="chk"><input type="checkbox" id="c2c"><label for="c2c">Click <b>Games</b>: that game's chip now reads <b>Draft</b> — on the card if it is the next game, on its row otherwise — and its button still says <b>Build lineup</b><span class="hintline">A written lineup is always a draft until you mark it Ready in the builder (the Deep Dive's rule).</span></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="C3">
+  <div class="step-head"><span class="num">C3</span><div class="step-t"><h3>The editor comes back to Templates, and a tab switch closes a rename</h3></div></div>
+  <div class="step-body">
+    <p class="why">Now that Templates is an address, the template editor can land on it instead of
+      dropping you on the Games list.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="c3a"><label for="c3a">Open a template: the editor's back link in the header reads <b>Templates</b> and returns to the Templates tab</label></div>
+      <div class="chk"><input type="checkbox" id="c3b"><label for="c3b"><b>+ New template</b> → save one: you land on the Templates tab with it in the list, not on Games</label></div>
+      <div class="chk"><input type="checkbox" id="c3c"><label for="c3c">Start renaming a template, click <b>Games</b>, click <b>Templates</b>: the rename box is closed and the name is unchanged</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ══════════════ PART D ══════════════ -->
+<div class="parthead">
+  <p class="eyebrow">Part D</p>
+  <h2>On a phone</h2>
+  <p>Narrow the window to about 390px, or open it on your phone. Both tabs.</p>
+</div>
+<div class="steps">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>Games at phone width</h3><div class="tags"><span class="tag phone">390px</span></div></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1a"><label for="d1a">The card stacks the way the Practice plans card does — kicker line, headline, the button, then the meta line with the chip — and nothing is cut off</label></div>
+      <div class="chk"><input type="checkbox" id="d1b"><label for="d1b">The <b>Needs lineup</b> chip (when present) sits on its own line under the card and is comfortable to tap</label></div>
+      <div class="chk"><input type="checkbox" id="d1c"><label for="d1c">Rows are cards; the page never scrolls sideways</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>Templates at phone width</h3><div class="tags"><span class="tag phone">390px</span></div></div></div>
+  <div class="step-body">
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2a"><label for="d2a">The create collapses to a lime <b>+</b> in the title line's corner, beside the <b>?</b> — the way Practice plans → Templates does it</label></div>
+      <div class="chk"><input type="checkbox" id="d2b"><label for="d2b">Tapping it opens the new-template editor; the editor's <b>Templates</b> back link is there at this width too</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" data-v="flag" aria-pressed="false">Flag</button></div>
+    <textarea placeholder="Notes…"></textarea>
+  </div>
+</article>
+
+</div>
+
+<footer>
+  <p><b>§206</b> · Lineups reads like Practice plans · Owner QA Ledger</p>
+  <p>Press <b>Copy findings</b> and paste the result back into the chat.</p>
+</footer>
+
+<textarea id="out" class="out" readonly></textarea>
+
+<div class="toastwrap" id="toastwrap" hidden><span class="toast" id="toast"></span></div>
+
+</div>
+
+<script>
+(function(){
+  var KEY='fl-qa-206-lineups-hub-level';
+  var state={};
+  try{ state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ state={}; }
+  function save(s){ try{ localStorage.setItem(KEY, JSON.stringify(s)); }catch(e){} }
+
+  var boxes=[].slice.call(document.querySelectorAll('.chk input'));
+  var areas=[].slice.call(document.querySelectorAll('.step textarea'));
+  var out=document.getElementById('out');
+
+  boxes.forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  areas.forEach(function(t,i){ if(state['t_'+i]) t.value=state['t_'+i]; });
+  [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+    var v=state['v_'+st.dataset.step];
+    if(v){ st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); }); }
+  });
+
+  function paint(){
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=boxes.length;
+    document.getElementById('fillbar').style.width=(boxes.length?done/boxes.length*100:0)+'%';
+    boxes.forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      st.classList.toggle('done', bs.length>0 && bs.every(function(b){return b.checked;}));
+    });
+    build();
+  }
+
+  function build(){
+    var lines=['OWNER QA §206 — Lineups reads like Practice plans','Fixture: UAT Test Team · built on dev 2026-09-18',''];
+    [].slice.call(document.querySelectorAll('.step')).forEach(function(st){
+      var id=st.dataset.step;
+      var title=st.querySelector('h3').textContent.trim();
+      var bs=[].slice.call(st.querySelectorAll('.chk input'));
+      var v=state['v_'+id]||'';
+      var ta=st.querySelector('textarea');
+      var note=ta&&ta.value.trim()?ta.value.trim():'';
+      var head=id+'  '+title;
+      if(v) head+='   ['+v.toUpperCase()+']';
+      if(bs.length) head+='   '+bs.filter(function(b){return b.checked;}).length+'/'+bs.length;
+      lines.push(head);
+      bs.forEach(function(b){
+        var lab=b.closest('.chk').querySelector('label');
+        var hint=lab.querySelector('.hintline');
+        var txt=lab.textContent;
+        if(hint) txt=txt.replace(hint.textContent,'');
+        lines.push('   ['+(b.checked?'x':' ')+'] '+txt.replace(/\s+/g,' ').trim());
+      });
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+    });
+    var done=boxes.filter(function(b){return b.checked;}).length;
+    var flags=[].slice.call(document.querySelectorAll('.step')).filter(function(st){return state['v_'+st.dataset.step]==='flag';}).map(function(st){return st.dataset.step;});
+    lines.push('---');
+    lines.push('Checked '+done+' of '+boxes.length+'.');
+    lines.push(flags.length?('FLAGGED: '+flags.join(', ')):'No steps flagged.');
+    out.value=lines.join('\n');
+  }
+
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(state); paint(); }); });
+  areas.forEach(function(t,i){ t.addEventListener('input',function(){ state['t_'+i]=t.value; save(state); build(); }); });
+  [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'); var id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save(state);
+      st.querySelectorAll('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; setTimeout(function(){ w.hidden=true; },1600);
+  }
+  document.getElementById('copyout').addEventListener('click',function(){
+    build();
+    if(navigator.clipboard&&navigator.clipboard.writeText){
+      navigator.clipboard.writeText(out.value).then(function(){toast('Copied');},function(){ out.select(); toast('Select and copy'); });
+    } else { out.select(); toast('Select and copy'); }
+  });
+  document.getElementById('resetall').addEventListener('click',function(){
+    if(!confirm('Clear every tick, verdict and note on this walk?')) return;
+    state={}; save(state);
+    boxes.forEach(function(b){ b.checked=false; });
+    areas.forEach(function(t){ t.value=''; });
+    [].slice.call(document.querySelectorAll('.vbtn')).forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    paint(); toast('Reset');
+  });
+
+  paint();
+})();
+</script>

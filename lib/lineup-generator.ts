@@ -18,12 +18,14 @@
 // rather than aborting the inning — the analysis layer surfaces the hole to the coach.
 //
 // Pitching (P2): one sport position (GenerateOptions.pitcherPosition, e.g. 'P') is governed by a
-// separate pitcher depth chart, not the Best/Never ratings. Among on-field players (fairness/bench
-// runs FIRST, unchanged) the mound goes to an eligible pitcher — under their per-game innings cap —
-// chosen by rank (competitive leads with the ace; balanced/development spread the load). A capped
-// pitcher is never pushed past their limit; if no under-cap pitcher is available the mound is left
-// BLANK (surfaced like any unfillable spot). Teams with no pitcher depth chart set up fall back to
-// filling the mound like any other position (pre-P2 behavior, so unadopted auto-fill still works).
+// separate pitcher depth chart, not the Best/Never ratings. An eligible pitcher is reserved before
+// the bench rotation runs, then takes the mound under their per-game innings cap. The pitcher is
+// chosen by rank (competitive leads with the ace; balanced/development spread the load). A pitcher
+// assigned more than one inning always works one uninterrupted stint: after they leave the mound,
+// Auto-fill will not return them later in the game. A capped pitcher is never pushed past their
+// limit; if no under-cap pitcher is available the mound is left BLANK (surfaced like any unfillable
+// spot). Teams with no pitcher depth chart set up fall back to filling the mound like any other
+// position (pre-P2 behavior, so unadopted auto-fill still works).
 //
 // The on-field positions to assign are passed in per call (GenerateOptions.fieldPositions),
 // sourced from the team's Sport Pack — the generator stays sport-neutral and never hard-codes
@@ -43,6 +45,44 @@ function shuffle<T>(arr: T[]): T[] {
 
 export type PositionPolicy = 'competitive' | 'balanced' | 'development';
 export type FillMode = 'empty' | 'regenerate';
+
+// Auto-fill rationale (Phase 3, D6/D7 — Coach Lineups Deep Dive). A cell's reason is only ever one
+// of these three; anything not covered (e.g. a mound filled from several eligible arms) simply
+// carries no reason rather than a guessed one. 'best'/'rotated' cover every non-pitcher placement
+// because pickForPosition has exactly two outcomes: the pos is in the player's ranked list, or it
+// isn't — checking prefRankOf after the fact is equivalent to asking pickForPosition itself, so the
+// picking functions below stay untouched.
+export type PlacementReason =
+  | { kind: 'best'; rank: number }  // rank is 1-based for display ("Best 1")
+  | { kind: 'rotated' }
+  | { kind: 'only_pitcher' };
+
+export function describePlacementReason(reason: PlacementReason): string {
+  switch (reason.kind) {
+    case 'best': return `Best ${reason.rank}`;
+    case 'rotated': return 'Rotated';
+    case 'only_pitcher': return 'Only eligible pitcher';
+  }
+}
+
+/** One generate call's "why" for the cells it actually wrote. Not part of the lineup and never
+ *  persisted with it (D6/D7's "nonpersistent" — a reload or a manual edit has no way to
+ *  reconstruct these, which is the point). */
+export interface GenerationRationale {
+  /** playerId → inning(string) → the position written there and why. A caller should only trust a
+   *  reason while the cell's live value still equals `position` — that's what makes a manual edit
+   *  retire the explanation without this module needing to hear about the edit. */
+  cellReasons: Map<string, Record<string, { position: string; reason: PlacementReason }>>;
+  /** Innings where the mound was left BLANK because no eligible pitcher remained under cap — the
+   *  one blank-cell reason this pass explains (D7); every other open role stays unexplained. */
+  pitcherCappedInnings: Set<number>;
+}
+
+export interface GenerateResult {
+  /** playerId → inning(string) → position. Only field positions + Bench are written. */
+  assignment: Map<string, Record<string, string>>;
+  rationale: GenerationRationale;
+}
 
 export interface GeneratorPlayer {
   playerId: string;
@@ -104,8 +144,8 @@ export interface GenerateOptions {
 
 const norm = (s: string | null | undefined) => (s ?? '').toUpperCase().trim();
 
-/** Returns playerId → { inning(string) → position }. Only field positions + Bench are written. */
-export function generateLineup(opts: GenerateOptions): Map<string, Record<string, string>> {
+/** Returns the assignment plus this call's Auto-fill rationale (see GenerationRationale). */
+export function generateLineup(opts: GenerateOptions): GenerateResult {
   const {
     players, inningCount, policy, fillMode, fieldPositions, pitcherPosition,
     maxInningsPerPosition = null, pitcherInningsCap = null, minInningsPerPlayer = null,
@@ -116,6 +156,13 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
   // Inning range to WRITE (default = every inning). Out-of-range innings are preserved + counted.
   const fillFrom = Math.max(1, opts.fillFrom ?? 1);
   const fillTo = Math.min(inningCount, opts.fillTo ?? inningCount);
+
+  const rationale: GenerationRationale = { cellReasons: new Map(), pitcherCappedInnings: new Set() };
+  const recordReason = (playerId: string, inning: number, position: string, reason: PlacementReason) => {
+    let m = rationale.cellReasons.get(playerId);
+    if (!m) { m = {}; rationale.cellReasons.set(playerId, m); }
+    m[String(inning)] = { position, reason };
+  };
 
   const result = new Map<string, Record<string, string>>();
   for (const p of players) {
@@ -152,6 +199,93 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
   // when it isn't (pitching not set up yet), the mound fills like any other position (pre-P2).
   const teamHasPitchers = !!pitcherPosition && players.some(p => p.pitcher);
 
+  // Pitching is the only position with a continuity rule. Reserve future cap space for cells the
+  // coach has already set (including read-only innings outside a partial fill), then keep one
+  // active pitcher on the mound for a single block. Once that block ends, the player is closed out
+  // and cannot be selected for a second Auto-fill stint later in the game.
+  const totalPitchingCount = new Map<string, number>(players.map(p => [
+    p.playerId,
+    pitcherPosition
+      ? Object.values(result.get(p.playerId) ?? {}).filter(pos => pos === pitcherPosition).length
+      : 0,
+  ]));
+  const pitcherCount = players.filter(p => {
+    if (!p.pitcher || (pitcherPosition && neverOf.get(p.playerId)!.has(pitcherPosition))) return false;
+    const cap = effectivePitchCap(p);
+    return cap == null || cap > 0;
+  }).length;
+  const balancedStintTarget = Math.max(1, Math.ceil(inningCount / Math.max(1, pitcherCount)));
+  const closedPitchers = new Set<string>();
+  let activePitcherId: string | null = null;
+  let activePitcherStint = 0;
+  let activePitcherTarget = 0;
+
+  const stintTarget = (p: GeneratorPlayer, startInning: number) => {
+    const cap = effectivePitchCap(p);
+    const currentTotal = totalPitchingCount.get(p.playerId) ?? 0;
+    const ownRemainingCapacity = cap == null ? Infinity : Math.max(0, cap - currentTotal);
+    const remainingOpenMoundSlots = pitcherPosition
+      ? Array.from({ length: Math.max(0, fillTo - startInning) }, (_, index) => startInning + index + 1)
+          .filter(future => !players.some(candidate => result.get(candidate.playerId)?.[String(future)] === pitcherPosition))
+          .length
+      : 0;
+    const otherCapacity = players
+      .filter(candidate =>
+        candidate.playerId !== p.playerId
+        && candidate.pitcher
+        && !closedPitchers.has(candidate.playerId)
+        && (!pitcherPosition || !neverOf.get(candidate.playerId)!.has(pitcherPosition)),
+      )
+      .reduce((sum, candidate) => {
+        const candidateCap = effectivePitchCap(candidate);
+        if (candidateCap == null) return Infinity;
+        return sum + Math.max(0, candidateCap - (totalPitchingCount.get(candidate.playerId) ?? 0));
+      }, 0);
+    // If the remaining pitchers cannot cover every later open mound inning, lengthen this block
+    // now. That avoids exhausting a high-cap pitcher early and needing to return them after a gap.
+    const minimumForCoverage = 1 + Math.max(0, remainingOpenMoundSlots - otherCapacity);
+    const policyTarget = competitive ? inningCount : balancedStintTarget;
+    return Math.min(1 + ownRemainingCapacity, Math.max(policyTarget, minimumForCoverage));
+  };
+  const recordPitcherForInning = (pitcherId: string | null, inning: number) => {
+    if (!teamHasPitchers) return;
+    if (pitcherId && pitcherId === activePitcherId) {
+      activePitcherStint++;
+      return;
+    }
+    if (activePitcherId) closedPitchers.add(activePitcherId);
+    activePitcherId = pitcherId;
+    activePitcherStint = pitcherId ? 1 : 0;
+    const next = pitcherId ? players.find(p => p.playerId === pitcherId) : undefined;
+    activePitcherTarget = next ? stintTarget(next, inning) : 0;
+  };
+
+  // If a fill-empty run sits between two coach-set innings for the same pitcher, bridge that gap
+  // instead of creating P / blank / P. A locked Bench/field role, another locked pitcher, or an
+  // out-of-range blank breaks the bridge; manual decisions remain untouched.
+  const bridgeLengthToFixedPitch = (playerId: string, fromInning: number): number | null => {
+    if (!pitcherPosition) return null;
+    for (let future = fromInning + 1; future <= inningCount; future++) {
+      const futureKey = String(future);
+      const ownCell = result.get(playerId)?.[futureKey] ?? '';
+      if (ownCell && ownCell !== pitcherPosition) return null;
+      const fixedPitcher = players.find(p => result.get(p.playerId)?.[futureKey] === pitcherPosition)?.playerId;
+      if (fixedPitcher) return fixedPitcher === playerId ? future - fromInning : null;
+      if (future < fillFrom || future > fillTo) return null;
+    }
+    return null;
+  };
+  const canStartBeforeFixedPitch = (p: GeneratorPlayer, fromInning: number) => {
+    if (!pitcherPosition) return true;
+    const futureFixed = Array.from({ length: inningCount - fromInning }, (_, index) => fromInning + index + 1)
+      .find(future => result.get(p.playerId)?.[String(future)] === pitcherPosition);
+    if (!futureFixed) return true;
+    const bridgeLength = bridgeLengthToFixedPitch(p.playerId, fromInning);
+    if (bridgeLength == null) return false;
+    const cap = effectivePitchCap(p);
+    return cap == null || cap - (totalPitchingCount.get(p.playerId) ?? 0) >= bridgeLength;
+  };
+
   for (let inn = 1; inn <= inningCount; inn++) {
     const key = String(inn);
     const inRange = inn >= fillFrom && inn <= fillTo;
@@ -162,6 +296,7 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
     const lockedPositions = new Set<string>();
     const lockedPlayers = new Set<string>();
     const lockedBench = new Set<string>();
+    let lockedPitcherId: string | null = null;
     if (fillMode === 'empty' || !inRange) {
       for (const p of players) {
         const cur = result.get(p.playerId)![key] ?? '';
@@ -175,18 +310,63 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
         } else if (fieldSet.has(cur)) {
           lockedPositions.add(cur);
           bump(p.playerId, cur);
+          if (pitcherPosition && cur === pitcherPosition && !lockedPitcherId) lockedPitcherId = p.playerId;
         }
       }
     }
 
     // Out-of-range inning: we've counted what's there; write nothing. Carry the sit set forward so
     // the next in-range inning's no-back-to-back logic sees who sat here.
-    if (!inRange) { lastBench = new Set(lockedBench); continue; }
+    if (!inRange) {
+      lastBench = new Set(lockedBench);
+      recordPitcherForInning(lockedPitcherId, inn);
+      continue;
+    }
 
     const available = players.filter(p => !lockedPlayers.has(p.playerId));
     const openPositions = fieldPositions.filter(pos => !lockedPositions.has(pos));
     const onFieldNeeded = Math.min(openPositions.length, available.length);
     const benchNeeded = available.length - onFieldNeeded;
+
+    // Decide the mound before choosing the bench. The active pitcher is protected from sitting or
+    // being spent at another position, which is what makes continuity a guarantee rather than a
+    // preference that the fairness rotation can accidentally undo.
+    let plannedPitcher: GeneratorPlayer | undefined;
+    if (teamHasPitchers && pitcherPosition && openPositions.includes(pitcherPosition)) {
+      const canPitchNow = (p: GeneratorPlayer) => {
+        if (!p.pitcher || neverOf.get(p.playerId)!.has(pitcherPosition)) return false;
+        const cap = effectivePitchCap(p);
+        return cap == null || (totalPitchingCount.get(p.playerId) ?? 0) < cap;
+      };
+      const active = activePitcherId ? available.find(p => p.playerId === activePitcherId) : undefined;
+      const bridgeLength = active ? bridgeLengthToFixedPitch(active.playerId, inn) : null;
+      const activeCap = active ? effectivePitchCap(active) : null;
+      const activeCapacity = !active || activeCap == null
+        ? Infinity
+        : activeCap - (totalPitchingCount.get(active.playerId) ?? 0);
+      const shouldBridge = bridgeLength != null && activeCapacity >= bridgeLength;
+      const freshPitchers = shuffle(available.filter(p =>
+        p.playerId !== activePitcherId
+        && !closedPitchers.has(p.playerId)
+        && canPitchNow(p)
+        && canStartBeforeFixedPitch(p, inn),
+      ));
+      if (
+        active
+        && canPitchNow(active)
+        && (activePitcherStint < activePitcherTarget || shouldBridge || freshPitchers.length === 0)
+      ) {
+        plannedPitcher = active;
+      } else {
+        if (activePitcherId) closedPitchers.add(activePitcherId);
+        activePitcherId = null;
+        activePitcherStint = 0;
+        activePitcherTarget = 0;
+        plannedPitcher = freshPitchers.length
+          ? pickPitcher(freshPitchers, policy, pitcherPosition, playedCount)
+          : undefined;
+      }
+    }
 
     // Who sits: fewest sits so far first (balance); among those, players who did NOT sit
     // last inning first (avoid back-to-back). Shuffle BEFORE the stable sort so fully-tied
@@ -214,7 +394,9 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
     //      protected from sitting again, even if that means an A-squad player sits;
     //   3) A-squad protection is best-effort (prioritized = they barely sit; balanced_sits = even).
     const hardNoBackToBack = competitive && noBackToBackSits;
-    const benchProtect = (p: GeneratorPlayer) => mustPlay(p) || (hardNoBackToBack && lastBench.has(p.playerId));
+    const isPlannedPitcher = (p: GeneratorPlayer) => p.playerId === plannedPitcher?.playerId;
+    const benchProtect = (p: GeneratorPlayer) =>
+      isPlannedPitcher(p) || mustPlay(p) || (hardNoBackToBack && lastBench.has(p.playerId));
     // Only 'prioritized' changes WHO sits: non-A-squad sit first, then the fair order. 'balanced_sits'
     // keeps the plain even-bench sort — A-squad still get their best spots (pickForPosition) and the
     // no-back-to-back protection above, but the bench itself rotates evenly across everyone.
@@ -229,13 +411,13 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
     // If protections leave too few to bench, relax in reverse-priority: first drop the no-back-to-back
     // + A-squad guards (bench from everyone except mustPlay), then, only if still short, the floor.
     if (benched.size < benchNeeded) {
-      for (const p of shuffle(available.filter(p => !mustPlay(p))).sort(sortFn)) {
+      for (const p of shuffle(available.filter(p => !isPlannedPitcher(p) && !mustPlay(p))).sort(sortFn)) {
         if (benched.size >= benchNeeded) break;
         benched.add(p.playerId);
       }
     }
     if (benched.size < benchNeeded) {
-      for (const p of shuffle(available).sort(sortFn)) {
+      for (const p of shuffle(available.filter(p => !isPlannedPitcher(p))).sort(sortFn)) {
         if (benched.size >= benchNeeded) break;
         benched.add(p.playerId);
       }
@@ -255,19 +437,23 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
     // spent on a field slot before the mound is filled), then every position somebody on the field
     // rates Best, then the rest. Before this, positions filled in the sport's listed order, so a
     // coach's one rated shortstop could be handed catcher — unrated, listed earlier — and "Best
-    // spots first" was only usually true. Stable within each tier; Development keeps the plain
-    // order because it reads no ratings.
+    // spots first" was only usually true. Stable within each tier; Development ignores the rating
+    // tiers but still moves the mound first when a pitcher depth chart is active.
     // Development reads no ratings (see the header comment), so it skips this entirely rather than
     // building an onField/tier pass it would only throw away. Tiers are computed once per position
     // up front — not inside the sort comparator, which Array.sort would otherwise call on every
     // comparison — since a position's tier depends only on itself, not on what it's compared against.
-    let fillOrder = openPositions;
+    let fillOrder = [...openPositions];
     if (policy !== 'development') {
       const onField = [...unassigned.values()];
       const ratedHere = (pos: string) => onField.some(p => prefRankOf.get(p.playerId)?.has(pos) && !neverOf.get(p.playerId)!.has(pos));
       const tierOf = (pos: string) => (pos === pitcherPosition ? 0 : ratedHere(pos) ? 1 : 2);
       const tierByPos = new Map(openPositions.map(pos => [pos, tierOf(pos)]));
       fillOrder = [...openPositions].sort((a, b) => tierByPos.get(a)! - tierByPos.get(b)!);
+    } else if (teamHasPitchers && pitcherPosition) {
+      // Development ignores ratings, but the reserved pitcher must still be assigned before they
+      // can be consumed by another field position.
+      fillOrder.sort((a, b) => Number(b === pitcherPosition) - Number(a === pitcherPosition));
     }
     for (const pos of fillOrder) {
       // Hard filters: 'never' positions, plus the P3 rotation cap (max innings at one non-mound
@@ -277,6 +463,7 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
       const eligible = shuffle([...unassigned.values()].filter(p => !neverOf.get(p.playerId)!.has(pos) && !overRotationCap(p)));
       if (eligible.length === 0) continue; // no eligible player → leave blank, keep filling the rest
       let pick: GeneratorPlayer | undefined;
+      let soloEligiblePitcher = false;
       if (teamHasPitchers && pos === pitcherPosition) {
         // Pitcher slot: the mound goes to an eligible pitcher still under their effective innings
         // cap, chosen by rank/spread. If none is available (all at their cap, or benched/absent
@@ -285,9 +472,12 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
         const eligiblePitchers = eligible.filter(p => {
           if (!p.pitcher) return false;
           const cap = effectivePitchCap(p);
-          return cap == null || playedCount(p.playerId, pos) < cap;
+          return cap == null || (totalPitchingCount.get(p.playerId) ?? 0) < cap;
         });
-        pick = eligiblePitchers.length ? pickPitcher(eligiblePitchers, policy, pos, playedCount) : undefined;
+        pick = plannedPitcher && eligiblePitchers.some(p => p.playerId === plannedPitcher.playerId)
+          ? plannedPitcher
+          : undefined;
+        soloEligiblePitcher = eligiblePitchers.length === 1;
       } else {
         // Non-pitcher position, or a team with no pitcher depth chart set up yet (pre-P2 behavior:
         // the mound fills like any other position so auto-fill still works before pitching is used).
@@ -297,10 +487,25 @@ export function generateLineup(opts: GenerateOptions): Map<string, Record<string
       result.get(pick.playerId)![key] = pos;
       unassigned.delete(pick.playerId);
       bump(pick.playerId, pos);
+      if (pitcherPosition && pos === pitcherPosition) {
+        totalPitchingCount.set(pick.playerId, (totalPitchingCount.get(pick.playerId) ?? 0) + 1);
+        if (soloEligiblePitcher) recordReason(pick.playerId, inn, pos, { kind: 'only_pitcher' });
+      } else {
+        // Same tiers pickForPosition itself branches on: development never reads ratings, and the
+        // other two policies can only land a player on a rank they hold (see the type's comment).
+        const rank = prefRankOf.get(pick.playerId)?.get(pos);
+        recordReason(pick.playerId, inn, pos, policy !== 'development' && rank !== undefined ? { kind: 'best', rank: rank + 1 } : { kind: 'rotated' });
+      }
     }
+
+    const actualPitcher = players.find(p => result.get(p.playerId)?.[key] === pitcherPosition)?.playerId ?? null;
+    if (teamHasPitchers && pitcherPosition && openPositions.includes(pitcherPosition) && !actualPitcher) {
+      rationale.pitcherCappedInnings.add(inn);
+    }
+    recordPitcherForInning(actualPitcher, inn);
   }
 
-  return result;
+  return { assignment: result, rationale };
 }
 
 /** Choose a player for one open position from an already-shuffled, never-filtered pool.
@@ -453,14 +658,16 @@ function scoreLineup(assignment: Map<string, Record<string, string>>, opts: Gene
 }
 
 /** Run several randomized passes and keep the highest-scoring lineup. Re-running still varies
- *  (each pass is randomized), so the coach can re-roll and always gets a vetted-best result. */
-export function generateBestLineup(opts: GenerateOptions, candidateCount = 16): Map<string, Record<string, string>> {
+ *  (each pass is randomized), so the coach can re-roll and always gets a vetted-best result. The
+ *  winning pass's own rationale travels with it — each pass generates its own, so a losing pass's
+ *  reasons are simply discarded along with the rest of that candidate. */
+export function generateBestLineup(opts: GenerateOptions, candidateCount = 16): GenerateResult {
   const passes = Math.max(1, Math.min(40, candidateCount));
-  let best: Map<string, Record<string, string>> | null = null;
+  let best: GenerateResult | null = null;
   let bestScore = -Infinity;
   for (let i = 0; i < passes; i++) {
     const candidate = generateLineup(opts);
-    const s = scoreLineup(candidate, opts);
+    const s = scoreLineup(candidate.assignment, opts);
     if (s > bestScore) { bestScore = s; best = candidate; }
   }
   return best ?? generateLineup(opts);

@@ -2,13 +2,14 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useDismissable } from '@/lib/overlay-hooks';
-import { ListOrdered, CalendarDays, X, Undo2, Redo2, Printer, Check } from 'lucide-react';
+import { ListOrdered, CalendarDays, X, Undo2, Redo2, Printer } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { useOrg } from '@/lib/org-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import type { PositionPolicy } from '@/lib/lineup-generator';
@@ -21,6 +22,7 @@ import { formatInOrgZone } from '@/lib/timezone';
 import {
   LINEUP_POSITIONS, buildLineupRows, renumberBattingOrder, sortLineupRows, type LineupPlayerRow,
 } from '@/lib/lineup-grid';
+import { analyzeLineup } from '@/lib/lineup-analysis';
 import LineupEditor from '../_LineupEditor';
 import styles from '../../../../coaches.module.css';
 import type {
@@ -87,6 +89,17 @@ export default function CoachLineupBuilderPage({
   const [lineupDirty, setLineupDirty] = useState(false);
   const [lineupError, setLineupError] = useState('');
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
+  // Persisted Draft/Ready (mig 304, Phase 2 D1) — the honest badge shown outside the builder.
+  // Every ordinary save resets this to 'draft' server-side; markLineupDirty() mirrors that locally
+  // the instant an edit happens, so the UI never shows "Ready" for the ~900ms until autosave lands.
+  const [lineupStatus, setLineupStatus] = useState<'draft' | 'ready'>('draft');
+  const [lineupReadyAt, setLineupReadyAt] = useState<string | null>(null);
+  const [markingReady, setMarkingReady] = useState(false);
+  const [readyError, setReadyError] = useState('');
+  function markLineupDirty() {
+    setLineupDirty(true);
+    setLineupStatus('draft');
+  }
 
   // Attendance is loaded READ-ONLY here (edited on the Schedule) — used only to flag lineup ↔
   // attendance mismatches. The lineup and attendance are independent: neither auto-changes the other.
@@ -103,7 +116,7 @@ export default function CoachLineupBuilderPage({
     setLineupRows(s.rows);
     setLineupMode(s.mode);
     setLineupInningCount(s.innings);
-    setLineupDirty(true);
+    markLineupDirty();
   }
   function undoLineup() {
     if (lineupHistory.undo.length === 0) return;
@@ -204,6 +217,9 @@ export default function CoachLineupBuilderPage({
       });
       setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(seedPlayers, entries, mode)), mode));
       setLineupHistory({ undo: [], redo: [] });
+      setLineupStatus(data.lineup?.status ?? 'draft');
+      setLineupReadyAt(data.lineup?.readyAt ?? null);
+      setReadyError('');
     } catch (e: unknown) {
       if (isStale()) return;
       setLoadError(errorMessage(e, 'Could not load this lineup'));
@@ -287,7 +303,7 @@ export default function CoachLineupBuilderPage({
       if (e) return { ...row, starter: e.starter, battingOrder: e.battingOrder != null ? String(e.battingOrder) : '', inningPositions: { ...e.inningPositions } };
       return { ...row, starter: t.lineupMode === 'everyone_bats', battingOrder: '', inningPositions: {} };
     })), t.lineupMode));
-    setLineupDirty(true);
+    markLineupDirty();
     setTemplatesOpen(false);
     setLineupNotice(skipped > 0
       ? `Loaded “${t.name}” — skipped ${skipped} player${skipped === 1 ? '' : 's'} no longer on the roster.`
@@ -323,14 +339,14 @@ export default function CoachLineupBuilderPage({
         .map(p => ({ player: p, battingOrder: '', starter: lineupMode === 'everyone_bats', inningPositions: {}, notes: '' }));
       return added.length === 0 ? rows : renumberBattingOrder([...rows, ...added], lineupMode);
     });
-    setLineupDirty(true);
+    markLineupDirty();
   }
   function removePlayersFromLineup(ids: string[]) {
     const idSet = new Set(ids);
     if (!lineupRows.some(r => idSet.has(r.player.id))) return;
     pushLineupUndo();
     setLineupRows(rows => renumberBattingOrder(rows.filter(r => !idSet.has(r.player.id)), lineupMode));
-    setLineupDirty(true);
+    markLineupDirty();
   }
 
   async function handleLineupSave(): Promise<boolean> {
@@ -367,6 +383,29 @@ export default function CoachLineupBuilderPage({
     }
   }
 
+  // A dirty grid is saved first — marking ready must check the lineup as it IS, not as it was
+  // before the coach's last few taps (same reasoning as the practice plan's "Send to staff").
+  async function handleMarkReady() {
+    if (markingReady) return;
+    setMarkingReady(true);
+    setReadyError('');
+    try {
+      if (lineupDirty) {
+        const saved = await handleLineupSave();
+        if (!saved) { setReadyError('Save the lineup before marking it ready.'); return; }
+      }
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/lineup`, { method: 'PATCH' });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error ?? 'Could not mark this lineup ready');
+      setLineupStatus('ready');
+      setLineupReadyAt(d.lineup?.readyAt ?? new Date().toISOString());
+    } catch (e: unknown) {
+      setReadyError(errorMessage(e, 'Could not mark this lineup ready'));
+    } finally {
+      setMarkingReady(false);
+    }
+  }
+
   function buildPosterOptions() {
     if (!event || lineupRows.length === 0) return null;
     const settings: OrgPdfSettings = { ...DEFAULT_PDF_SETTINGS, ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}) };
@@ -391,9 +430,28 @@ export default function CoachLineupBuilderPage({
       settings,
     };
   }
+  // Print preflight (plan §5.5): a still-open lineup can still be printed, but the coach is told
+  // exactly which roles are open first rather than discovering blank boxes at the field. Only the
+  // dugout poster shows field positions — the batting-order card is unaffected by an open role, so
+  // it prints without this check.
+  async function confirmPrintIfOpen(): Promise<boolean> {
+    const printAnalysis = analyzeLineup(
+      lineupRows.map(r => ({ playerId: r.player.id, inningPositions: r.inningPositions })),
+      lineupInningCount, sportPack.fieldPositions,
+    );
+    if (!printAnalysis.hasConflicts && printAnalysis.missingFieldPositions.length === 0) return true;
+    return confirm({
+      title: 'Print with open roles?',
+      message: printAnalysis.hasConflicts
+        ? 'This lineup still has a position clash — the poster will print exactly what’s in the grid.'
+        : `${printAnalysis.missingFieldPositions.length} ${sportPack.periodLabel.toLowerCase()}${printAnalysis.missingFieldPositions.length === 1 ? '' : 's'} still ${printAnalysis.missingFieldPositions.length === 1 ? 'has' : 'have'} an open role: ${printAnalysis.missingFieldPositions.map(m => `${sportPack.periodLabel} ${m.inning} (${m.positions.join(', ')})`).join(' · ')}. The poster will print those boxes blank.`,
+      confirmText: 'Print anyway', cancelText: 'Keep working', tone: 'warning',
+    });
+  }
   async function handleLineupPoster() {
     const opts = buildPosterOptions();
     if (!opts || !event) return;
+    if (!(await confirmPrintIfOpen())) return;
     setLineupPdfOpen(false);
     await downloadLineupPoster(buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'lineup', scope: event.name || opts.teamName }, 'pdf'), opts);
   }
@@ -503,10 +561,49 @@ export default function CoachLineupBuilderPage({
     </div>
   );
 
+  // Undo / Redo / Print + Templates — ALL of the editor's surface-specific extras, together in the
+  // toolbar (owner, 2026-09-18). Undo/Redo/Print used to live in a bar docked to the viewport; that
+  // bar is retired (the same "a docked bar is only earned by real content" ruling the practice plan
+  // and the schedule's attendance list already followed on 2026-09-14) now that these three become
+  // ordinary toolbar buttons and the save word floats as the same pill every other coach screen
+  // uses. Print reuses the auto-fill/Templates popover recipe (`lineupAutoWrap`/`lineupAutoMenu`)
+  // rather than a bar-specific menu of its own.
+  const toolbarExtras = (
+    <>
+      <button type="button" className={styles.footerIconBtn} aria-label="Undo" title="Undo" disabled={lineupHistory.undo.length === 0} onClick={undoLineup}><Undo2 size={18} /></button>
+      <button type="button" className={styles.footerIconBtn} aria-label="Redo" title="Redo" disabled={lineupHistory.redo.length === 0} onClick={redoLineup}><Redo2 size={18} /></button>
+      <div className={styles.lineupAutoWrap} ref={pdfRef}>
+        <button type="button" className={styles.footerIconBtn} aria-label="Print" title="Print" disabled={lineupRows.length === 0}
+          onClick={() => { setLineupPdfOpen(v => !v); setTemplatesOpen(false); }} aria-expanded={lineupPdfOpen}>
+          <Printer size={18} />
+        </button>
+        {lineupPdfOpen && (
+          <div className={styles.lineupAutoMenu}>
+            <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
+              <strong>Dugout poster</strong>
+              <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank boxes to pen in at the field</span>
+            </button>
+            <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
+              <strong>Batting order card</strong>
+              <span>Large-type order for the scorekeeper or dugout</span>
+            </button>
+            {lineupNotes.trim() && (
+              <label className={styles.lineupPdfNotesToggle}>
+                <input type="checkbox" checked={pdfIncludeNotes} onChange={e => setPdfIncludeNotes(e.target.checked)} />
+                <span>Print lineup notes on the poster</span>
+              </label>
+            )}
+          </div>
+        )}
+      </div>
+      {templatesControl}
+    </>
+  );
+
   return (
-    // The docked action bar is out of flow on phones, so the page reserves its height — otherwise
-    // the last player row ends up hidden behind it at the bottom of the scroll.
-    <div className={`${styles.page} ${styles.pageWide} ${lineupRows.length > 0 ? styles.lineupDockedPage : ''}`}>
+    // .savePillPage reserves room for the floating SaveStatusPill so it never overlaps the
+    // grid's last row or the notes field.
+    <div className={`${styles.page} ${styles.pageWide} ${lineupRows.length > 0 ? styles.savePillPage : ''}`}>
       {header}
       <UnsavedChangesGuard active={lineupDirty} />
 
@@ -539,71 +636,43 @@ export default function CoachLineupBuilderPage({
           <LineupEditor
             roster={attendanceRows.map(r => r.player)}
             rows={lineupRows}
-            onRowsChange={updater => { setLineupRows(updater); setLineupDirty(true); }}
+            onRowsChange={updater => { setLineupRows(updater); markLineupDirty(); }}
             lineupMode={lineupMode}
-            onLineupModeChange={m => { setLineupMode(m); setLineupDirty(true); }}
+            onLineupModeChange={m => { setLineupMode(m); markLineupDirty(); }}
             inningCount={lineupInningCount}
-            onInningCountChange={n => { setLineupInningCount(n); setLineupDirty(true); }}
+            onInningCountChange={n => { setLineupInningCount(n); markLineupDirty(); }}
             sportPack={sportPack}
             seasonCaps={lineupSeasonCaps}
             gameRules={gameRules}
-            onGameRulesChange={g => { setGameRules(g); setLineupDirty(true); }}
+            onGameRulesChange={g => { setGameRules(g); markLineupDirty(); }}
             defaultPolicy={defaultPolicy}
             addLabel="Add to lineup"
             notInHeading="Not in the lineup"
             onBeforeMutate={pushLineupUndo}
             onNotice={setLineupNotice}
             notice={lineupNotice}
-            controlsExtra={templatesControl}
+            controlsExtra={toolbarExtras}
+            readyState={{
+              status: lineupStatus,
+              readyAtLabel: lineupReadyAt ? formatInOrgZone(lineupReadyAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : null,
+              onMarkReady: handleMarkReady,
+              marking: markingReady,
+              error: readyError || undefined,
+            }}
           />
 
           {lineupRows.length > 0 && (
             <textarea className={styles.textarea} rows={2} value={lineupNotes}
-              onChange={e => { setLineupNotes(e.target.value); setLineupDirty(true); }}
+              onChange={e => { setLineupNotes(e.target.value); markLineupDirty(); }}
               placeholder="Lineup notes (opponent scouting, reminders) — can be printed on the dugout poster" maxLength={1000} style={{ marginTop: '1rem' }} />
           )}
 
-          {/* Chunk C: docked above the bottom nav on phones rather than sitting at the end of the
-              page. This bar carries Undo — the control a coach reaches for immediately after a
-              mis-tap — and on a 12 × 7 grid the page is ~1700px tall, so "at the end" meant
-              unreachable without scrolling the whole grid. (It was already marked sticky, but its
-              container ends exactly where it does, so it had no travel and never stuck.) */}
+          {/* The autosave word floats at the window's foot (owner, 2026-09-18) — Undo, Redo and
+              Print now live in the toolbar above, so this bar would otherwise hold nothing but
+              the save word, which is exactly the shape the practice plan, the plan-template
+              editor and the schedule's attendance list already carry as a pill (2026-09-14). */}
           {lineupRows.length > 0 && (
-            <div className={`${styles.attendanceFooter} ${styles.lineupDockedFooter}`}>
-              <div className={styles.lineupFooterTools}>
-                <button type="button" className={styles.footerIconBtn} aria-label="Undo" title="Undo" disabled={lineupHistory.undo.length === 0} onClick={undoLineup}><Undo2 size={18} /></button>
-                <button type="button" className={styles.footerIconBtn} aria-label="Redo" title="Redo" disabled={lineupHistory.redo.length === 0} onClick={redoLineup}><Redo2 size={18} /></button>
-                <div className={styles.lineupPdfWrap} ref={pdfRef}>
-                  <button type="button" className={styles.footerIconBtn} aria-label="Print" title="Print" disabled={lineupRows.length === 0}
-                    onClick={() => { setLineupPdfOpen(v => !v); setTemplatesOpen(false); }} aria-expanded={lineupPdfOpen}>
-                    <Printer size={18} />
-                  </button>
-                  {lineupPdfOpen && (
-                    <div className={styles.lineupPdfMenu}>
-                      <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
-                        <strong>Dugout poster</strong>
-                        <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank boxes to pen in at the field</span>
-                      </button>
-                      <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
-                        <strong>Batting order card</strong>
-                        <span>Large-type order for the scorekeeper or dugout</span>
-                      </button>
-                      {lineupNotes.trim() && (
-                        <label className={styles.lineupPdfNotesToggle}>
-                          <input type="checkbox" checked={pdfIncludeNotes} onChange={e => setPdfIncludeNotes(e.target.checked)} />
-                          <span>Print lineup notes on the poster</span>
-                        </label>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-              <span className={styles.saveStatus} aria-live="polite">
-                {lineupError
-                  ? <button type="button" className={styles.saveRetry} onClick={handleLineupSave}>Couldn’t save · Retry</button>
-                  : (lineupSaving || lineupDirty) ? 'Saving…' : <><Check size={13} /> Saved</>}
-              </span>
-            </div>
+            <SaveStatusPill saving={lineupSaving} dirty={lineupDirty} error={lineupError} onRetry={handleLineupSave} />
           )}
         </>
       )}

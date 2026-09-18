@@ -439,7 +439,21 @@ const SITES: Site[] = [
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/lineups/page.tsx', occurrence: 0,
-    screen: 'Lineups', variant: 'standard', helpHost: 'masthead', actions: null,
+    screen: 'Lineups (the Games tab, and the "not turned on for you" early return)',
+    variant: 'standard', helpHost: 'masthead', actions: null,
+  },
+  {
+    // The Templates tab became a VIEW of its own when the hub was brought level with the Practice
+    // plans room (owner ask 2026-09-18) — the same split as `_PlanTemplatesView`. Its one create
+    // moved from a bar above the list (with a hint line) into the header, per house rule 4; it
+    // keeps the title line's corner on a phone and drops for a coach who cannot build.
+    file: 'app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupTemplatesView.tsx', occurrence: 0,
+    screen: 'Lineups → Templates',
+    variant: 'standard', helpHost: 'masthead',
+    actions: {
+      from: 'inline', slot: 'action', holds: 'New template (the one create; opens the template editor)',
+      phoneHidden: '!canBuildLineups', phoneInTitleRow: 'true',
+    },
   },
   {
     file: 'app/[orgSlug]/coaches/teams/[teamId]/lineups/[eventId]/page.tsx', occurrence: 0,

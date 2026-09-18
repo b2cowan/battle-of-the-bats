@@ -454,8 +454,9 @@ test('P1 #9 — lineup controls clear the 44px tap floor at 360px, by computed s
   expect(Math.abs(geometry!.gap), 'the pinned columns must abut exactly').toBeLessThanOrEqual(1);
 
   // The page's bottom clearance. The coaches shell used to reserve for the fixed bottom nav TWICE,
-  // leaving a band of dead space under every page; trimming it has to keep clearing the lineup's
-  // sticky action bar, which hangs below the content flow and is the tightest case in the portal.
+  // leaving a band of dead space under every page — checked generically here since the lineup page
+  // no longer has a docked action bar of its own (retired 2026-09-18; Undo/Redo/Print moved into
+  // the toolbar and the save word now floats as the same pill every other coach screen uses).
   // Measured in DOCUMENT coordinates so the assertion doesn't depend on where the page is scrolled.
   const clearance = await page.evaluate(() => {
     const mainEl = document.querySelector('main[class*="coachesMain"]') as HTMLElement | null;
@@ -476,39 +477,28 @@ test('P1 #9 — lineup controls clear the 44px tap floor at 360px, by computed s
   expect(clearance!, 'content must never end underneath the bottom nav').toBeGreaterThanOrEqual(0);
   expect(clearance!, 'and must not sit above a band of dead space').toBeLessThanOrEqual(96);
 
-  // ⚠ Undo has to be reachable AT EVERY SCROLL DEPTH. The bar was marked sticky but its container
-  // ends where it does, so it had no travel and was invisible until the page was scrolled to the
-  // very bottom — on the portal's most tap-heavy screen, with a ~1700px page. Docked now; this
-  // asserts it stays put, stays tappable, and that the last player row still clears it.
-  const dock = await page.evaluate(async () => {
-    const readings: { top: number; inView: boolean; hitIsUndo: boolean; w: number; h: number }[] = [];
-    const max = document.documentElement.scrollHeight - window.innerHeight;
-    for (const pct of [0, 0.5, 1]) {
-      window.scrollTo(0, Math.round(max * pct));
-      await new Promise(r => setTimeout(r, 250));
-      const bar = document.querySelector('[class*="lineupDockedFooter"]') as HTMLElement | null;
-      const undo = document.querySelector('button[aria-label="Undo"]') as HTMLElement | null;
-      if (!bar || !undo) return null;
-      const br = bar.getBoundingClientRect();
-      const ur = undo.getBoundingClientRect();
-      const hit = document.elementFromPoint(ur.x + ur.width / 2, ur.y + ur.height / 2);
-      readings.push({
-        top: Math.round(br.top),
-        inView: br.top >= 0 && br.bottom <= window.innerHeight + 1,
-        hitIsUndo: hit === undo || undo.contains(hit as Node),
-        w: Math.round(ur.width),
-        h: Math.round(ur.height),
-      });
+  // Undo/Redo/Print used to live in a bar docked to the viewport, so "reachable" meant "stays
+  // pinned at every scroll depth" on a ~1700px page. They now sit in the toolbar near the top of
+  // the page beside Auto-fill (owner, 2026-09-18 — the same "a docked bar is only earned by real
+  // content" ruling the practice plan and attendance list already followed), so the thing worth
+  // proving is that all three are present, correctly sized, and unobstructed — not that they hold
+  // still, which no longer applies now that they scroll with ordinary content.
+  const toolbarButtons = await page.evaluate(() => {
+    const readings: { label: string; w: number; h: number; hit: boolean }[] = [];
+    for (const label of ['Undo', 'Redo', 'Print']) {
+      const btn = document.querySelector(`button[aria-label="${label}"]`) as HTMLElement | null;
+      if (!btn) continue;
+      const r = btn.getBoundingClientRect();
+      const hitEl = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
+      readings.push({ label, w: Math.round(r.width), h: Math.round(r.height), hit: hitEl === btn || btn.contains(hitEl as Node) });
     }
     return readings;
   });
-  expect(dock, 'the docked action bar and its Undo control must exist').not.toBeNull();
-  for (const r of dock!) {
-    expect(r.inView, 'the action bar must be on screen at every scroll depth').toBe(true);
-    expect(r.hitIsUndo, 'nothing may cover Undo').toBe(true);
-    expect(Math.min(r.w, r.h), 'Undo must clear the tap floor').toBeGreaterThanOrEqual(TAP_MIN);
+  expect(toolbarButtons.map(b => b.label), 'Undo, Redo and Print must all be reachable in the toolbar').toEqual(['Undo', 'Redo', 'Print']);
+  for (const b of toolbarButtons) {
+    expect(Math.min(b.w, b.h), `${b.label} must clear the tap floor`).toBeGreaterThanOrEqual(TAP_MIN);
+    expect(b.hit, `nothing may cover ${b.label}`).toBe(true);
   }
-  expect(new Set(dock!.map(r => r.top)).size, 'the bar must not move as the page scrolls').toBe(1);
 
   // Attendance controls answer to the SAME number (the 36 vs 44 disagreement, settled).
   await open(page, `${base()}/schedule`);
@@ -519,49 +509,62 @@ test('P1 #9 — lineup controls clear the 44px tap floor at 360px, by computed s
   }
 });
 
-test('D-C10/D-C11 — the order view exists at full size and every control clears the floor', async ({ page }) => {
+test('D8 — two views of one lineup, and on a phone the batting number is a full-size handle', async ({ page }) => {
   await page.setViewportSize(PHONE);
   await signIn(page, HEAD_EMAIL);
   await open(page, `${base()}/lineups/${gameEventId}`);
 
-  // D-C11: the three tabs name the questions they answer; "Lineup" is not one of them.
+  // Build it on Lineup, read it on Playing time. The Batting order view is gone — the grid
+  // carries reorder and remove at every width now.
   const tabs = main(page).getByRole('tab');
-  await expect(tabs.filter({ hasText: /^Positions$/ })).toHaveCount(1);
+  await expect(tabs).toHaveCount(2);
+  await expect(tabs.filter({ hasText: /^Lineup$/ })).toHaveCount(1);
   await expect(tabs.filter({ hasText: /^Playing time$/ })).toHaveCount(1);
-  await expect(tabs.filter({ hasText: /^Batting order$/ })).toHaveCount(1);
+  await expect(tabs.filter({ hasText: /Batting order/ })).toHaveCount(0);
 
   await ensureLineupRows(page);
 
-  await tabs.filter({ hasText: /^Batting order$/ }).click();
-  for (const label of [/Move .* up/, /Move .* down/, /Drag to reorder/]) {
-    const control = main(page).getByRole('button', { name: label }).first();
-    await expect(control).toBeVisible({ timeout: 15_000 });
-    const box = await control.boundingBox();
-    expect(box!.width).toBeGreaterThanOrEqual(TAP_MIN);
-    expect(box!.height).toBeGreaterThanOrEqual(TAP_MIN);
+  // Every row's number is the handle, 44px both ways, in the pinned column.
+  const handles = main(page).getByRole('button', { name: /Hold to move, tap for options/ });
+  await expect(handles.first()).toBeVisible({ timeout: 15_000 });
+  const box = await handles.first().boundingBox();
+  expect(box!.width).toBeGreaterThanOrEqual(TAP_MIN);
+  expect(box!.height).toBeGreaterThanOrEqual(TAP_MIN);
+
+  // A tap (not a hold) opens the row-actions sheet, and its three verbs clear the floor too.
+  await handles.first().click();
+  const sheet = main(page).getByRole('dialog', { name: /^Options for / });
+  await expect(sheet).toBeVisible();
+  for (const label of [/^Move down$/, /^Remove from lineup$/]) {
+    const control = sheet.getByRole('button', { name: label });
+    const b = await control.boundingBox();
+    expect(b!.height, `${label} must clear the tap floor`).toBeGreaterThanOrEqual(TAP_MIN);
   }
+  // The first row cannot move up — the sheet says so rather than silently no-oping.
+  await expect(sheet.getByRole('button', { name: /^Move up$/ })).toBeDisabled();
+  await sheet.getByRole('button', { name: /^Cancel$/ }).click();
+  await expect(sheet).toHaveCount(0);
 });
 
-test('the owner requirement — a reorder persists into Positions, and positions travel with the PLAYER', async ({ page }) => {
+test('the owner requirement — a reorder from the row sheet keeps the positions with the PLAYER', async ({ page }) => {
   await page.setViewportSize(PHONE);
   await signIn(page, HEAD_EMAIL);
   await open(page, `${base()}/lineups/${gameEventId}`);
 
   await ensureLineupRows(page);
 
-  const tabs = main(page).getByRole('tab');
   // Give the player currently batting 2nd a position, so we can prove it follows them.
-  const secondCell = main(page).locator('tbody tr').nth(1).locator('select[aria-label*="position for"]').first();
+  const secondRow = main(page).locator('tbody tr').nth(1);
+  const secondCell = secondRow.locator('select[aria-label*="position for"]').first();
   await expect(secondCell).toBeVisible({ timeout: 30_000 });
   const secondPlayerLabel = await secondCell.getAttribute('aria-label');
   await secondCell.selectOption('SS');
 
-  // Move them up one in the order view.
-  await tabs.filter({ hasText: /^Batting order$/ }).click();
-  await main(page).getByRole('button', { name: /Move .* up/ }).nth(1).click();
+  // Tap their number, move them up one.
+  await secondRow.getByRole('button', { name: /Hold to move, tap for options/ }).click();
+  await main(page).getByRole('dialog', { name: /^Options for / }).getByRole('button', { name: /^Move up$/ }).click();
 
-  // Back on Positions: the reorder is already there, and SS came with the player.
-  await tabs.filter({ hasText: /^Positions$/ }).click();
+  // The reorder is in the grid, and SS came with the player.
   const movedCell = main(page).locator(`select[aria-label="${secondPlayerLabel}"]`).first();
   await expect(movedCell).toHaveValue('SS');
   const rowIndex = await main(page).locator('tbody tr').evaluateAll(

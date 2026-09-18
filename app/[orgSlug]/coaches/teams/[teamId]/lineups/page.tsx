@@ -1,74 +1,92 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import {
-  ListOrdered, ArrowRight, CheckCircle2, TriangleAlert, CalendarPlus,
-  Plus, Pencil, Trash2, Check, X, ClipboardCheck, HelpCircle,
+  ListOrdered, ArrowRight, CheckCircle2, TriangleAlert, CalendarPlus, HelpCircle, Play,
 } from 'lucide-react';
+import type { LineupBadge } from '@/lib/lineup-analysis';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
-import { useConfirm } from '@/components/coaches/ConfirmProvider';
-import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { canManageSchedule } from '@/lib/coach-capabilities';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachEventListRow from '@/components/coaches/CoachEventListRow';
-import { CoachRowList, CoachRowBand, CoachRow } from '@/components/coaches/CoachRowList';
+import { CoachRowList, CoachRowBand } from '@/components/coaches/CoachRowList';
+import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import styles from '../../../coaches.module.css';
 import { gameDayEntryHref } from '@/lib/coach-game-day';
-import { splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
-import { formatInOrgZone, formatOrgDayMonth } from '@/lib/timezone';
-import type { RepTeamEvent, RepTeamLineupTemplate, RepRosterPlayer, RepTeamLineupEntry } from '@/lib/types';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import { isMirroredEvent, splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
+import { parseLineupsSection } from '@/lib/lineups-address';
+import { calendarDaysBetween, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
+import { useMinuteClock } from '@/lib/use-minute-clock';
+import LineupsTabs from './_LineupsTabs';
+import LineupTemplatesView, { gameTitle } from './_LineupTemplatesView';
+import type { RepTeamEvent } from '@/lib/types';
+
+/**
+ * ── The Lineups room (brought level with the Practice plans room, owner ask 2026-09-18) ────────
+ *
+ * The Practice plans hub was built as "the Lineups treatment applied to the more frequent tool"
+ * (2026-08-15) and then moved on — a next-practice card on top, the portal's hub tab row, no lime
+ * on a row, the "needs" count fixed to upcoming only — while this hub kept the older shape. This
+ * is that room's shape applied back: the two most-used game and practice instruments now read as
+ * one recipe.
+ *
+ * **The room is a HUB for two things** — the season's games and the template library — as tabs
+ * (Games · Templates; Games the landing; `?section=`), and it opens on the NEXT GAME as one card
+ * carrying the room's one lime by state: Build lineup · Open lineup · Open game day (inside the
+ * game's live window). Below the line the past reads as a record — "No lineup · Open", never
+ * "Build lineup" — and the rows carry no lime at all.
+ *
+ * ⚠ The League / Tournament / Scrimmage scope chips are GONE (owner ruling 2026-09-18). They
+ * appeared only for a team with two game types, the list is short and chronological with the
+ * opponent on every row, and the question they answered belongs to Insights' record scope. The
+ * "Needs lineup" chip is the room's whole filter, and it appears only when something needs one.
+ *
+ * ⚠ NO new API. `lineupStatusByEvent` rides the events read (the Lineups Deep Dive, 2026-09-18),
+ * so the card, the chips and the count are computed from the list this page already fetches.
+ *
+ * ⚠ Which SEASON is on screen — the team's LIVE one, always. A team with no live season lands on
+ * its closed-season page, where "The games you played" is a shelf, so this page has nothing to say
+ * about a finished season and does not render for one. No page here learns a year.
+ */
 
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
-// Games-tab scope filter chips — a chip only renders when the team actually has games of that
-// type (data honesty: no dead filters).
-const TYPE_CHIPS = [
-  { key: 'league_game', label: 'League' },
-  { key: 'tournament_game', label: 'Tournament' },
-  { key: 'scrimmage', label: 'Scrimmage' },
-] as const;
 
-// Weekday only — the row's date tile already carries the day number and month directly beside this
-// line, so repeating them spent the card's scarcest resource on something already on screen (and on
-// a phone it pushed the time onto a second line). The weekday earns its place; the tile has no room
-// for it. One string at every width: redundancy is redundancy on desktop too.
+// Weekday + time only — the row's date tile already carries the day number and month directly
+// beside this line, so repeating them spent the card's scarcest resource on something already on
+// screen (and on a phone it pushed the time onto a second line).
 //
 // ⚠ Both format in the ORG's zone (corrected 2026-08-15). These were bare `toLocaleDateString` /
 // `toLocaleTimeString` calls — the reader's clock, not the field's — which is precisely what
 // `lib/timezone.ts` was written to stop. A coach reading this from another province was being told
 // the wrong start time.
-function formatWeekday(value: string) {
-  return formatInOrgZone(value, { weekday: 'short' });
-}
-function formatTime(value: string) {
-  return formatInOrgZone(value, { hour: 'numeric', minute: '2-digit' });
-}
-function gameTitle(e: RepTeamEvent) {
-  if (e.opponent) return `${e.homeAway === 'away' ? '@' : 'vs'} ${e.opponent}`;
-  return e.name || 'Game';
+const clock = (iso: string) => formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit' });
+function rowMeta(startsAt: string) {
+  return `${formatInOrgZone(startsAt, { weekday: 'short' })} · ${clock(startsAt)}`;
 }
 
 export default function CoachesLineupsPage({
   params: paramsPromise,
-  searchParams: searchParamsPromise,
 }: {
   params: Promise<{ orgSlug: string; teamId: string }>;
-  searchParams: Promise<{ tab?: string }>;
 }) {
   const { orgSlug, teamId } = use(paramsPromise);
-  const initialSearch = use(searchParamsPromise);
+  const searchParams = useSearchParams();
+  const section = parseLineupsSection(searchParams.get('section'));
   const { assignments, loading: ctxLoading } = useCoaches();
-  const confirm = useConfirm();
   const { openHelp } = useHelpDrawer();
   // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
   // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
   // flag, and a closed season no longer renders this screen at all.
   const page = useCoachSeasonPage(orgSlug, teamId);
-  // Clock snapshot, once per mount (render must stay pure) — see the schedule page's twin note.
-  const [gameDayNowMs] = useState(() => Date.now());
+  // The card's lime and the rows' game-day doors are decided by the live window, so the clock is
+  // re-read once a minute — a tab left open through an afternoon must not keep offering the
+  // console for a game that ended, or miss it for one that started. (It was a once-per-mount
+  // snapshot while only the row pill read it; the card makes the drift visible.)
+  const nowMs = useMinuteClock();
   const assignment = assignments.find(a => a.teamId === teamId);
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const sportPack = getSportPack(assignment?.teamSport ?? DEFAULT_SPORT);
@@ -94,30 +112,10 @@ export default function CoachesLineupsPage({
   const [recent, setRecent] = useState<RepTeamEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // Per-game lineup readiness (true = a lineup is saved) from the events read's bulk
-  // lineupSetEventIds — definitive for every listed game, no per-game probing.
-  const [ready, setReady] = useState<Record<string, boolean>>({});
-
-  // Tabs (Games | Templates) + Games-tab filters. The tab is deep-linkable via ?tab=templates —
-  // seeded from the server-provided searchParams so no effect / no hydration mismatch.
-  const [tab, setTab] = useState<'games' | 'templates'>(initialSearch.tab === 'templates' ? 'templates' : 'games');
-  const [filterType, setFilterType] = useState<string>('all');
+  // Per-game lineup readiness (Not started / Draft / Ready / Needs review) from the events read's
+  // bulk lineupStatusByEvent — definitive for every listed game, no per-game probing.
+  const [lineupStatus, setLineupStatus] = useState<Record<string, LineupBadge>>({});
   const [needsOnly, setNeedsOnly] = useState(false);
-
-  // ── Templates manager ──
-  const [templates, setTemplates] = useState<RepTeamLineupTemplate[]>([]);
-  const [templatesLoading, setTemplatesLoading] = useState(true);
-  const [templatesError, setTemplatesError] = useState('');
-  const [notice, setNotice] = useState('');
-  const [renamingId, setRenamingId] = useState<string | null>(null);
-  const [renameValue, setRenameValue] = useState('');
-  const [renameBusy, setRenameBusy] = useState(false);
-  // The template whose "apply to a game" picker is open (null = closed).
-  const [applyTemplate, setApplyTemplate] = useState<RepTeamLineupTemplate | null>(null);
-  const [applyBusyGameId, setApplyBusyGameId] = useState<string | null>(null);
-  // Nav-hide + body-scroll-lock while the apply-template picker is open (Coach Portal Batch 1,
-  // Phase 1.2-1.6 sweep) — this page had no scroll lock at all before; the hook adds one.
-  useOverlayOpen(!!applyTemplate);
 
   /**
    * ⚠ Guarded against a stale response landing on the wrong TEAM (added 2026-08-15). This page does
@@ -135,7 +133,7 @@ export default function CoachesLineupsPage({
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
       if (!res.ok) throw new Error('Games could not be loaded');
-      const data: { events?: RepTeamEvent[]; lineupSetEventIds?: string[] } = await res.json();
+      const data: { events?: RepTeamEvent[]; lineupStatusByEvent?: Record<string, LineupBadge> } = await res.json();
       // ⚠ Keeps its own `cancelled` filter even though the split helper drops them too: `games` is
       // also what builds the readiness map below, and widening that set here would be a silent
       // second change riding along with the extraction.
@@ -146,14 +144,14 @@ export default function CoachesLineupsPage({
       if (isStale()) return;
       setUpcoming(split.upcoming);
       setRecent(split.recent);
-      if (data.lineupSetEventIds) {
-        // Field present ⇒ the server let us see lineups; membership is definitive per game.
-        const setIds = new Set(data.lineupSetEventIds);
-        setReady(Object.fromEntries(games.map(g => [g.id, setIds.has(g.id)])));
+      if (data.lineupStatusByEvent) {
+        // Field present ⇒ the server let us see lineups; a missing entry means "not started".
+        const byEvent = data.lineupStatusByEvent;
+        setLineupStatus(Object.fromEntries(games.map(g => [g.id, byEvent[g.id] ?? 'not_started'])));
       } else {
         // Field omitted ⇒ lineup visibility denied server-side (stale client capabilities) —
-        // show no readiness badges rather than asserting a false "Not set" on every game.
-        setReady({});
+        // show no readiness badges rather than asserting a false "Not started" on every game.
+        setLineupStatus({});
       }
     } catch (e) {
       if (!isStale()) setError(e instanceof Error ? e.message : 'Games could not be loaded');
@@ -162,158 +160,16 @@ export default function CoachesLineupsPage({
     }
   }, [orgSlug, teamId]);
 
-  const loadTemplates = useCallback(async (isStale: () => boolean = () => false) => {
-    setTemplatesLoading(true);
-    setTemplatesError('');
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates`);
-      if (!res.ok) throw new Error();
-      const data = await res.json();
-      if (!isStale()) setTemplates(data.templates ?? []);
-    } catch {
-      if (!isStale()) setTemplatesError('Templates couldn’t be loaded — refresh to try again.');
-    } finally {
-      if (!isStale()) setTemplatesLoading(false);
-    }
-  }, [orgSlug, teamId]);
-
   // Wait for the assignments context to resolve before deciding whether to fetch — otherwise the
   // fail-open `canLineups` default would fire the fetch for an assistant whose access is revoked.
+  // ONCE per team, whichever tab the coach lands on (the Practice plans room's idiom): the
+  // Templates tab's apply picker lists these same games, so it never fetches the season again.
   useEffect(() => {
     if (ctxLoading || !canLineups) return;
     let cancelled = false;
-    const isStale = () => cancelled;
-    void Promise.resolve().then(() => load(isStale));
-    void Promise.resolve().then(() => loadTemplates(isStale));
+    void Promise.resolve().then(() => load(() => cancelled));
     return () => { cancelled = true; };
-  }, [ctxLoading, canLineups, load, loadTemplates]);
-
-  function switchTab(next: 'games' | 'templates') {
-    setTab(next);
-    // A pane switch is a context switch: close any in-progress rename and clear the pane-scoped
-    // notice so Templates feedback doesn't hang over the Games list.
-    setRenamingId(null);
-    setNotice('');
-    // Keep the URL shareable without triggering a navigation.
-    try {
-      const url = new URL(window.location.href);
-      if (next === 'templates') url.searchParams.set('tab', 'templates');
-      else url.searchParams.delete('tab');
-      window.history.replaceState(null, '', url.toString());
-    } catch { /* ignore */ }
-  }
-
-  // ── Template actions ──
-  function startRename(t: RepTeamLineupTemplate) {
-    setRenamingId(t.id);
-    setRenameValue(t.name);
-    setNotice('');
-  }
-  async function saveRename(id: string) {
-    const name = renameValue.trim();
-    if (!name) return;
-    setRenameBusy(true);
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name }),
-      });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(d.error ?? 'Could not rename');
-      }
-      setTemplates(list => list.map(t => t.id === id ? { ...t, name } : t).sort((a, b) => a.name.localeCompare(b.name)));
-      setRenamingId(null);
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : 'Could not rename the template');
-    } finally {
-      setRenameBusy(false);
-    }
-  }
-
-  async function deleteTemplate(t: RepTeamLineupTemplate) {
-    if (!(await confirm({
-      title: 'Delete template?',
-      message: `Delete the saved template “${t.name}”? This can't be undone.`,
-      confirmText: 'Delete', cancelText: 'Keep', tone: 'warning',
-    }))) return;
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates/${t.id}`, { method: 'DELETE' });
-      if (!res.ok) throw new Error('Could not delete');
-      setTemplates(list => list.filter(x => x.id !== t.id));
-      setNotice(`Deleted “${t.name}”.`);
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : 'Could not delete the template');
-    }
-  }
-
-  // Apply the open template onto a chosen game. Loads the game's lineup to (a) know if one already
-  // exists (overwrite-aware confirm) and (b) map the template onto the game's current roster. The
-  // lineup and template are the only things written — attendance is untouched.
-  async function applyToGame(game: RepTeamEvent) {
-    const t = applyTemplate;
-    if (!t) return;
-    setApplyBusyGameId(game.id);
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${game.id}/lineup`);
-      if (!res.ok) throw new Error('Could not open that game');
-      const data: {
-        players?: RepRosterPlayer[];
-        lineup?: { notes?: string | null; rulesOverride?: unknown } | null;
-        entries?: RepTeamLineupEntry[];
-      } = await res.json();
-      const rosterIds = new Set((data.players ?? []).map(p => p.id));
-      const hasLineup = (data.entries ?? []).some(en => Object.values(en.inningPositions ?? {}).some(Boolean));
-
-      const ok = await confirm(hasLineup ? {
-        title: 'Overwrite this lineup?',
-        message: `${gameTitle(game)} already has a lineup. Replace it with “${t.name}”?`,
-        confirmText: 'Overwrite', cancelText: 'Keep current', tone: 'warning',
-      } : {
-        title: 'Apply template?',
-        message: `Apply “${t.name}” to ${gameTitle(game)}?`,
-        confirmText: 'Apply', cancelText: 'Cancel',
-      });
-      if (!ok) { setApplyBusyGameId(null); return; }
-
-      // Map the template onto the game's CURRENT roster — silently skip players no longer rostered.
-      const mapped = t.entries
-        .filter(e => rosterIds.has(e.playerId))
-        .map(e => ({ playerId: e.playerId, battingOrder: e.battingOrder, starter: e.starter, inningPositions: e.inningPositions }));
-      const skipped = t.entries.length - mapped.length;
-      if (mapped.length === 0) {
-        setNotice(`None of “${t.name}”'s players are on ${gameTitle(game)}'s roster — nothing applied.`);
-        setApplyBusyGameId(null);
-        setApplyTemplate(null);
-        return;
-      }
-      const put = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${game.id}/lineup`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          lineupMode: t.lineupMode,
-          inningCount: t.inningCount,
-          notes: data.lineup?.notes ?? '',
-          rulesOverride: data.lineup?.rulesOverride ?? null,
-          entries: mapped,
-        }),
-      });
-      if (!put.ok) {
-        const d = await put.json().catch(() => ({ error: put.statusText }));
-        throw new Error(d.error ?? 'Could not apply the template');
-      }
-      setReady(prev => ({ ...prev, [game.id]: true }));
-      setNotice(skipped > 0
-        ? `Applied “${t.name}” to ${gameTitle(game)} — skipped ${skipped} player${skipped === 1 ? '' : 's'} no longer on the roster.`
-        : `Applied “${t.name}” to ${gameTitle(game)}.`);
-      setApplyTemplate(null);
-    } catch (e) {
-      setNotice(e instanceof Error ? e.message : 'Could not apply the template');
-    } finally {
-      setApplyBusyGameId(null);
-    }
-  }
+  }, [ctxLoading, canLineups, load]);
 
   if (ctxLoading) return <div className={styles.loadingState}>Loading…</div>;
   if (!page.hasAccess) {
@@ -354,82 +210,162 @@ export default function CoachesLineupsPage({
     );
   }
 
-  // ── Games-tab filtering (design log 2026-07-08: scope chips + one "Needs lineup" toggle) ──
   const allGames = [...upcoming, ...recent];
-  const typeChips = TYPE_CHIPS.filter(c => allGames.some(e => e.eventType === c.key));
-  const inScope = (e: RepTeamEvent) => filterType === 'all' || e.eventType === filterType;
-  // needsTotal decides whether the toggle exists at all; needsInScope is the count it shows.
-  const needsTotal = allGames.filter(e => ready[e.id] === false).length;
-  const needsInScope = allGames.filter(e => inScope(e) && ready[e.id] === false).length;
-  const matchesFilters = (e: RepTeamEvent) => inScope(e) && (!needsOnly || ready[e.id] === false);
-  const upcomingShown = upcoming.filter(matchesFilters);
-  const recentShown = recent.filter(matchesFilters);
-  // The Games pane's single lime action: the nearest visible upcoming game without a lineup (no
-  // qualifying game → no lime on this pane; lime is earned).
-  const primaryGameId = upcomingShown.find(e => ready[e.id] === false)?.id ?? null;
 
-  const renderRow = (e: RepTeamEvent, action: string) => {
-    const r = ready[e.id];
-    const isPrimary = e.id === primaryGameId;
+  // The template library — the pane moved whole into its own view. It draws the room's header
+  // with its own action ("New template") and the tab row under it.
+  if (section === 'templates') {
+    return (
+      <LineupTemplatesView
+        orgSlug={orgSlug}
+        teamId={teamId}
+        sportPack={sportPack}
+        canBuildLineups={!!canBuildLineups}
+        games={allGames}
+        lineupStatus={lineupStatus}
+        // The server always resets a written lineup to Draft (readiness is a deliberate coach act).
+        onApplied={gameId => setLineupStatus(prev => ({ ...prev, [gameId]: 'draft' }))}
+      />
+    );
+  }
+
+  /**
+   * THE CARD's game: today's, if a game is inside its live window — even one that started an hour
+   * ago and so sits in `recent` — otherwise the nearest upcoming one. The card is that row
+   * promoted; it is left out of the lists below so nothing appears twice.
+   */
+  const cardEvent = allGames.find(e => gameDayEntryHref(orgSlug, teamId, e, nowMs) !== null) ?? upcoming[0] ?? null;
+  // "Needs lineup" = Not started or Draft (F02 §5.1) — Needs review already has content and its
+  // own proven-issue marker, so it doesn't count as "still needs a lineup built".
+  const needsLineup = (e: RepTeamEvent) => {
+    const s = lineupStatus[e.id];
+    return s === 'not_started' || s === 'draft';
+  };
+  // needsTotal decides whether the filter exists at all; the chip shows the same count. UPCOMING
+  // only (the Practice plans room's D2): a coach in September was being told a game in May still
+  // needed a lineup. A past game with no lineup is a record, not work.
+  const needsTotal = upcoming.filter(needsLineup).length;
+  // The card's game never repeats in a list. The filter is the COUNT's filter — upcoming only:
+  // with it on, the past half goes, so the rows shown plus the card, if it needs one, are exactly
+  // the number on the chip.
+  const notCard = (list: RepTeamEvent[]) => list.filter(e => e.id !== cardEvent?.id);
+  const upcomingShown = notCard(needsOnly ? upcoming.filter(needsLineup) : upcoming);
+  const recentShown = needsOnly ? [] : notCard(recent);
+
+  const badgeChip: Record<LineupBadge, { tone: 'ok' | 'warn' | 'mute'; label: string; icon?: React.ReactNode }> = {
+    not_started: { tone: 'mute', label: 'Not started' },
+    draft: { tone: 'mute', label: 'Draft' },
+    needs_review: { tone: 'warn', label: 'Needs review', icon: <TriangleAlert size={13} aria-hidden /> },
+    ready: { tone: 'ok', label: 'Ready', icon: <CheckCircle2 size={13} aria-hidden /> },
+  };
+
+  const renderRow = (e: RepTeamEvent, past: boolean) => {
+    const status = lineupStatus[e.id];
+    const needs = needsLineup(e);
+    // Two halves, two vocabularies (the Practice plans room's D3): above the band the room is a
+    // builder, below it a record. "Open" is the record's door — a past game that never had a
+    // lineup — and it is the quiet one; the working doors keep their weight.
+    const action = past
+      ? (status === 'not_started' ? 'Open' : 'Open lineup')
+      : (needs && canBuildLineups ? 'Build lineup' : 'Open lineup');
     // Game-Day Mode entry (P1): inside a game's live window the row gains a sibling `Game day`
-    // link (the row itself keeps one destination — the builder). Absent outside the window; the
-    // finished-season half of this condition is gone with the read-only branches (2026-08-18),
-    // since this hub is not rendered for a season that has ended.
-    const gameDayHref = gameDayEntryHref(orgSlug, teamId, e, gameDayNowMs);
-    // Shared with the Practice plans hub (2026-08-15) — the row's date tile formats in the org's
-    // zone inside the component, so the two hubs cannot drift onto different clocks.
+    // link (the row itself keeps one destination — the builder). The card carries the live game's
+    // console door, so this reaches a row only for a SECOND game live at the same time — a
+    // tournament doubleheader — never as a column of pills.
+    const gameDayHref = gameDayEntryHref(orgSlug, teamId, e, nowMs);
     return (
       <CoachEventListRow
         key={e.id}
         href={`${base}/lineups/${e.id}`}
         startsAt={e.startsAt}
         title={gameTitle(e)}
-        meta={`${formatWeekday(e.startsAt)} · ${formatTime(e.startsAt)}`}
-        chip={
-          r === true ? { tone: 'ok', label: 'Lineup set', icon: <CheckCircle2 size={13} aria-hidden /> }
-          : r === false ? { tone: 'warn', label: 'Not set', icon: <TriangleAlert size={13} aria-hidden /> }
-          : null
-        }
+        meta={rowMeta(e.startsAt)}
+        // A past game that never had a lineup is a record: "No lineup", never "Not started".
+        chip={status
+          ? (past && status === 'not_started' ? { tone: 'mute', label: 'No lineup' } : badgeChip[status])
+          : null}
         action={action}
-        primaryLabel={isPrimary ? 'Build lineup' : null}
-        // Beside the row, never inside it — the row keeps one destination (the builder).
+        quietAction={action === 'Open'}
+        // The room's one lime lives on the card — no row carries it.
+        primaryLabel={null}
         beside={gameDayHref ? <Link href={gameDayHref} className={styles.gdEntryBtn}>Game day</Link> : undefined}
       />
     );
   };
 
-  const noGames = !loading && !error && upcoming.length === 0 && recent.length === 0;
-  const noMatches = !loading && !error && !noGames && upcomingShown.length === 0 && recentShown.length === 0;
-  const pickerGames = allGames;
+  /** The next-game card — the Practice plans room's next-practice card, on this hub. */
+  const renderCard = (e: RepTeamEvent) => {
+    const status = lineupStatus[e.id];
+    const gameDayHref = gameDayEntryHref(orgSlug, teamId, e, nowMs);
+    const days = Math.max(0, calendarDaysBetween(new Date(nowMs), new Date(e.startsAt)));
+    const headline = days === 0
+      ? `Today · ${clock(e.startsAt)}`
+      : `${formatInOrgZone(e.startsAt, { weekday: 'short', month: 'short', day: 'numeric' })} · ${clock(e.startsAt)}`;
+    // On a mirrored tournament game the event's NAME is the tournament, and the title has already
+    // taken the opponent — so name it here or it disappears entirely.
+    const meta = [
+      gameTitle(e),
+      isMirroredEvent(e) ? e.name : null,
+      e.location,
+    ].filter(Boolean).join(' · ');
+    const lineupHref = `${base}/lineups/${e.id}`;
+    // The state decides the WEIGHT, never whether the door exists. Nothing built yet → Build
+    // lineup; built → Open lineup; inside the live window → Open game day, with the lineup as the
+    // quiet link. A coach who cannot build is never shown a lime they cannot earn.
+    const primary = gameDayHref
+      ? { href: gameDayHref, label: 'Open game day', icon: <Play size={15} aria-hidden /> }
+      : needsLineup(e) && !canBuildLineups
+        ? null
+        : { href: lineupHref, label: needsLineup(e) ? 'Build lineup' : 'Open lineup', icon: null };
+    const answers = gameDayHref
+      ? [{ href: lineupHref, label: 'Open lineup' }]
+      : primary ? [] : [{ href: lineupHref, label: 'Open' }];
+    // The state chip rides the answers slot: the meta row's right side, beside the quiet links.
+    // Absent when the server withheld readiness — never a guessed "Not started".
+    const chip = status ? badgeChip[status] : null;
+    return (
+      <CoachOneThingCard
+        kind={gameDayHref ? 'game_day' : 'next_game'}
+        tone={gameDayHref ? 'live' : 'work'}
+        kicker={gameDayHref ? <><span className={styles.oneLiveDot} aria-hidden>●</span> Game day</> : 'Next game'}
+        when={relativeDayLabel(days)}
+        headline={headline}
+        primary={primary && (
+          <Link href={primary.href} className={`btn btn-lime ${styles.onePrimary}`}>
+            {primary.icon}{primary.label} <ArrowRight size={15} aria-hidden />
+          </Link>
+        )}
+        meta={meta}
+        answers={(
+          <>
+            {chip && (
+              <span className={styles.lineupFrontChip} data-tone={chip.tone}>
+                {chip.icon}{chip.label}
+              </span>
+            )}
+            {answers.map(a => (
+              <Link key={a.label} href={a.href} className={styles.oneAnswer}>
+                {a.label} <ArrowRight size={13} aria-hidden />
+              </Link>
+            ))}
+          </>
+        )}
+      />
+    );
+  };
+
+  const noGames = !loading && !error && allGames.length === 0;
+  // "All caught up" only when the filter finds nothing AND the card is not itself the match.
+  const cardNeedsLineup = !!cardEvent && needsLineup(cardEvent);
+  const noMatches = !loading && !error && !noGames && needsOnly
+    && upcomingShown.length === 0 && !cardNeedsLineup;
 
   return (
     <div className={styles.page}>
       {header}
+      <LineupsTabs base={base} active="games" />
 
-      {notice && <p className={styles.lineupNotice} style={{ marginBottom: '1rem' }}>{notice}</p>}
-
-      {/* ── Games | Templates tabs (Roster list⇄depth segmented idiom) ── */}
-      <div className={`${styles.segChoice} ${styles.lineupTabs}`} role="group" aria-label="Lineups sections" style={{ marginBottom: '1.15rem' }}>
-        <button
-          type="button"
-          aria-pressed={tab === 'games'}
-          className={`${styles.segBtn} ${tab === 'games' ? styles.segBtnActive : ''}`}
-          onClick={() => switchTab('games')}
-        >
-          Games
-        </button>
-        <button
-          type="button"
-          aria-pressed={tab === 'templates'}
-          className={`${styles.segBtn} ${tab === 'templates' ? styles.segBtnActive : ''}`}
-          onClick={() => switchTab('templates')}
-        >
-          Templates
-        </button>
-      </div>
-
-      {/* ── Games tab ── */}
-      {tab === 'games' && (loading ? (
+      {loading ? (
         <div className={styles.loadingState}>Loading games…</div>
       ) : error ? (
         <p className={styles.errorText}>{error}</p>
@@ -450,64 +386,45 @@ export default function CoachesLineupsPage({
         />
       ) : (
         <>
-          <div className={styles.lineupFilterBar} role="group" aria-label="Filter games">
-            <button
-              type="button"
-              aria-pressed={filterType === 'all'}
-              className={`${styles.lineupFilterChip} ${filterType === 'all' ? styles.lineupFilterChipActive : ''}`}
-              onClick={() => setFilterType('all')}
-            >
-              {filterType === 'all' && <Check size={12} aria-hidden />} All
-            </button>
-            {typeChips.map(c => (
-              <button
-                key={c.key}
-                type="button"
-                aria-pressed={filterType === c.key}
-                className={`${styles.lineupFilterChip} ${filterType === c.key ? styles.lineupFilterChipActive : ''}`}
-                onClick={() => setFilterType(c.key)}
-              >
-                {filterType === c.key && <Check size={12} aria-hidden />} {c.label}
-              </button>
-            ))}
-            {/* Stays mounted while toggled on even at zero — otherwise saving the last missing
-                lineup would unmount the only control that can turn the filter back off. */}
-            {(needsTotal > 0 || needsOnly) && (
+          {cardEvent && renderCard(cardEvent)}
+
+          {/* Stays mounted while toggled on even at zero — otherwise saving the last missing
+              lineup would unmount the only control that can turn the filter back off. */}
+          {(needsTotal > 0 || needsOnly) && (
+            <div className={styles.lineupFilterBar} role="group" aria-label="Filter games">
               <button
                 type="button"
                 aria-pressed={needsOnly}
                 className={`${styles.lineupFilterChip} ${styles.lineupFilterNeeds} ${needsOnly ? styles.lineupFilterNeedsActive : ''}`}
                 onClick={() => setNeedsOnly(v => !v)}
               >
-                <TriangleAlert size={12} aria-hidden /> Needs lineup <b className={styles.lineupFilterCount}>{needsInScope}</b>
+                <TriangleAlert size={12} aria-hidden /> Needs lineup <b className={styles.lineupFilterCount}>{needsTotal}</b>
               </button>
-            )}
-          </div>
+            </div>
+          )}
 
           {/* ONE frame for both halves (standard §3.10, F-27): "Upcoming games" and "Recent
               games" are band rows inside it. data-sandbox-tour: the beat the demo's "count the
               lineups" step rings — the games still waiting behind the one lineup already saved —
-              now anchors on the whole list. Inert off a demo org. */}
+              anchors on the whole list. Inert off a demo org. */}
           {(upcomingShown.length > 0 || recentShown.length > 0) && (
             <CoachRowList label="Games" className={styles.hubRowList} data-sandbox-tour="lineups-upcoming">
               {upcomingShown.length > 0 && (
                 <>
                   <CoachRowBand id="lineups-upcoming">Upcoming games</CoachRowBand>
-                  {upcomingShown.map(e => renderRow(e, 'Build lineup'))}
+                  {upcomingShown.map(e => renderRow(e, false))}
                 </>
               )}
               {recentShown.length > 0 && (
                 <>
                   <CoachRowBand id="lineups-recent">Recent games</CoachRowBand>
-                  {recentShown.map(e => renderRow(e, 'Open lineup'))}
+                  {recentShown.map(e => renderRow(e, true))}
                 </>
               )}
             </CoachRowList>
           )}
           {noMatches && (
-            <p className={styles.lineupFilterNoMatch}>
-              {needsOnly ? 'All caught up — every game here has a lineup.' : 'No games match this filter.'}
-            </p>
+            <p className={styles.lineupFilterNoMatch}>All caught up — every game here has a lineup.</p>
           )}
 
           {/* Season read-outs live in the Insights hub (2026-07-08 consolidation). */}
@@ -515,120 +432,6 @@ export default function CoachesLineupsPage({
             <Link href={`${base}/history`}>Season insights <ArrowRight size={13} aria-hidden /></Link>
           </p>
         </>
-      ))}
-
-      {/* ── Templates tab ── */}
-      {tab === 'templates' && (
-        <section aria-label="Templates">
-          {templatesLoading ? (
-            <div className={styles.loadingState}>Loading templates…</div>
-          ) : templatesError ? (
-            <p className={styles.errorText}>{templatesError}</p>
-          ) : templates.length === 0 ? (
-            <CoachEmptyState
-              compact
-              icon={<ClipboardCheck size={20} aria-hidden />}
-              headline="No templates yet"
-              description="A template is a reusable “base” lineup with no game attached — your usual order, a rain-day rotation, the arrangement you run at tournaments."
-              payoff="Apply one to any game in a tap and it maps onto that game’s current roster, quietly skipping anyone who has left the team — so you’re not rebuilding the same lineup every week."
-              primaryAction={canBuildLineups ? { label: 'New template', icon: <Plus size={15} aria-hidden />, href: `${base}/lineups/templates/new` } : undefined}
-              secondaryAction={{ label: 'How templates work', icon: <HelpCircle size={15} aria-hidden />, onClick: () => openHelp(helpRequest) }}
-            />
-          ) : (
-            <>
-              <div className={styles.lineupTplHeader}>
-                <p className={styles.lineupTplHint}>Reusable “base” lineups you can apply to any game.</p>
-                {canBuildLineups && (
-                  <Link href={`${base}/lineups/templates/new`} className="btn btn-lime btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <Plus size={15} /> New template
-                  </Link>
-                )}
-              </div>
-              {/* The templates as a row list (standard §3.10, F-28): the same frame as the games
-                  list; the name is the link (§3.6 — a row that navigates has the name as the link),
-                  the three controls sit in the trail and clear the tap floor at ≤ 768. */}
-              <CoachRowList label="Templates">
-                {templates.map(t => (
-                  renamingId === t.id ? (
-                    <CoachRow
-                      key={t.id}
-                      as="static"
-                      title={
-                      <span className={styles.lineupTplRename}>
-                        <input
-                          className={styles.input}
-                          value={renameValue}
-                          onChange={e => setRenameValue(e.target.value)}
-                          onKeyDown={e => { if (e.key === 'Enter') saveRename(t.id); if (e.key === 'Escape') setRenamingId(null); }}
-                          maxLength={80}
-                          autoFocus
-                          aria-label="Template name"
-                        />
-                        <button type="button" className={styles.lineupTplIconBtn} aria-label="Save name" disabled={!renameValue.trim() || renameBusy} onClick={() => saveRename(t.id)}>
-                          <Check size={16} />
-                        </button>
-                        <button type="button" className={styles.lineupTplIconBtn} aria-label="Cancel rename" onClick={() => setRenamingId(null)}>
-                          <X size={16} />
-                        </button>
-                      </span>
-                      }
-                    />
-                  ) : (
-                    <CoachRow
-                      key={t.id}
-                      as="static"
-                      title={<Link href={`${base}/lineups/templates/${t.id}`} className={`${styles.lineupTplName} ${styles.rowTapLink}`}>{t.name}</Link>}
-                      caption={`${t.lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · ${t.inningCount} ${sportPack.periodLabelPlural.toLowerCase()} · ${t.entries.length} player${t.entries.length === 1 ? '' : 's'}`}
-                      trail={
-                        <div className={styles.lineupTplActions}>
-                          <button type="button" className={styles.btnSecondary} disabled={pickerGames.length === 0} title={pickerGames.length === 0 ? 'Add a game first' : undefined} onClick={() => { setNotice(''); setApplyTemplate(t); }}>
-                            Apply
-                          </button>
-                          <button type="button" className={styles.lineupTplIconBtn} aria-label={`Rename ${t.name}`} title="Rename" onClick={() => startRename(t)}>
-                            <Pencil size={15} />
-                          </button>
-                          <button type="button" className={styles.lineupTplIconBtn} aria-label={`Delete ${t.name}`} title="Delete" onClick={() => deleteTemplate(t)}>
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      }
-                    />
-                  )
-                ))}
-              </CoachRowList>
-            </>
-          )}
-        </section>
-      )}
-
-      {/* ── Apply-to-game picker ── */}
-      {applyTemplate && (
-        <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (() => applyBusyGameId ? null : setApplyTemplate(null))?.(); }}>
-          <div className={styles.modal} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title={<>Apply &ldquo;{applyTemplate.name}&rdquo; to&hellip;</>} onClose={() => setApplyTemplate(null)} closeIconSize={18} closeAriaLabel="Close" />
-            <p className={styles.bodyNote} style={{ margin: '0 0 0.75rem' }}>Pick a game. You&apos;ll confirm before anything is overwritten.</p>
-            {/* A row that is a BUTTON (it applies the template), on the same recipe as the games
-                list — `CoachRow as="button"` is the row-list component's own second face, not a
-                branch bolted onto the navigation row. Inset: the modal paints the ground. The
-                org-zone clock is shared with the hub's rows through the same formatter. */}
-            <CoachRowList inset label="Games">
-              {pickerGames.map(g => (
-                <CoachRow
-                  key={g.id}
-                  as="button"
-                  disabled={!!applyBusyGameId}
-                  onClick={() => applyToGame(g)}
-                  lead={formatOrgDayMonth(g.startsAt)}
-                  leadKind="date"
-                  title={gameTitle(g)}
-                  caption={`${formatWeekday(g.startsAt)} · ${formatTime(g.startsAt)}`}
-                  trail={ready[g.id] === true ? <span className={styles.lineupFrontChip} data-tone="ok"><CheckCircle2 size={13} aria-hidden /> Has lineup</span> : undefined}
-                  door={{ label: applyBusyGameId === g.id ? 'Applying…' : 'Apply', icon: <ArrowRight size={14} aria-hidden /> }}
-                />
-              ))}
-            </CoachRowList>
-          </div>
-        </div>
       )}
     </div>
   );

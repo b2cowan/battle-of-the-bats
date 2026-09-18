@@ -3138,8 +3138,13 @@ export default function CoachesSchedulePage({
                             {hasLineup ? 'A quick look — build and edit on the Lineups page.' : 'No lineup set for this game yet.'}
                           </p>
                         </div>
+                        {/* This is a quick look — "build and edit on the Lineups page" above already
+                            says so — so it claims only what it can see from these rows: whether
+                            anything is saved. The honest Not started/Draft/Ready/Needs review badge
+                            (F02) belongs to the hub, the builder and the Overview, which actually run
+                            the analysis; a plain "has content" fact is exactly right here. */}
                         <span className={styles.lineupFrontChip} data-tone={hasLineup ? 'ok' : 'warn'}>
-                          {hasLineup ? <><CheckCircle2 size={13} aria-hidden /> Lineup set</> : <><CircleSlash size={13} aria-hidden /> Not set</>}
+                          {hasLineup ? <><CheckCircle2 size={13} aria-hidden /> Has a lineup</> : <><CircleSlash size={13} aria-hidden /> No lineup yet</>}
                         </span>
                       </div>
 

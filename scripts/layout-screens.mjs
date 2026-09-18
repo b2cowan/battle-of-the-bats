@@ -178,6 +178,9 @@ export const SCREENS = [
     path: (c) => `${team(c)}/history?section=attendance&player=${c.receiptPlayerId}` },
   { id: 'coach-roster',      session: 'coach', path: (c) => `${team(c)}/roster`,      ready: 'h1' },
   { id: 'coach-lineups',     session: 'coach', path: (c) => `${team(c)}/lineups`,     ready: 'h1' },
+  // The Templates tab is a real address since the hub was brought level with the Practice plans
+  // room (2026-09-18); before that it was page state and was never swept at any width.
+  { id: 'coach-lineups-templates', session: 'coach', path: (c) => `${team(c)}/lineups?section=templates`, ready: 'h1' },
   { id: 'coach-depth-chart', session: 'coach', path: (c) => `${team(c)}/depth-chart`, ready: 'h1' },
 
   /**

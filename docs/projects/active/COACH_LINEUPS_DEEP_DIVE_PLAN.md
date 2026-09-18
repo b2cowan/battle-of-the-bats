@@ -1,8 +1,8 @@
 # Coach Lineups Deep Dive — Implementation Plan
 
-**Status:** Assessment complete; mockup and recommendations ready for owner review (2026-09-18). No production code changed.
+**Status:** Phase 0/1/2 built (2026-09-18): factual readiness/coverage analysis, exact conflict/open-cell cues, solid table/control treatment, per-inning coverage, playing-time decision support, the persisted Draft/Ready handoff (mig 304, dev-only/PROD-OWED), the Setup/Auto-fill toolbar hierarchy, the footer's move to the shared floating save pill, and print preflight for open roles. D1–D5 (§10) all approved on the recommended path. Phase 3 is now fully built too: the Playing-time upgrade landed alongside Phase 1 (D4), and its remaining piece — per-cell Auto-fill rationale — is built per D6/D7 (2026-09-18): a hover/focus tooltip names why Auto-fill placed a player (`Best 1`, `Rotated`, `Only eligible pitcher`), and the mound's open-role message names a proven pitching-cap cause when that's why it's blank. Statically verified + full unit suite green (4244 tests, +34 for this and prior work); an owner browser walk is still owed. Phase 4's inning inspector (D5) built the same day (see §6 Phase 4 · Implemented; walk owed — hub QA part H); its Sport Pack vocabulary half stays open. **D8 (2026-09-18, owner question on review): the three views became two** — the Batting order tab is retired, the grid's number is the phone's drag handle and row-actions door (see §10 D8; walk owed — hub QA part I). Where this document says "three views" below, it is describing the product as assessed, not as built.
 **Companion brief:** `COACH_LINEUPS_DEEP_DIVE_PM_BRIEF.md`
-**Review hub:** `COACH_LINEUPS_DEEP_DIVE_HUB.html`
+**Review hub:** `COACH_LINEUPS_DEEP_DIVE_HUB.html` — published at https://claude.ai/artifact/DkLKncrdzh5eyZbPhsE33b (Mockup / PM Brief / Full Assessment / Decisions / QA Walk tabs; republish this same file path for any future revision)
 
 ## 1. Outcome
 
@@ -29,6 +29,14 @@ Reviewed:
 - the saved production lineup for Milton Bats U13 Purple vs Brampton Gold at 10:00 a.m. on September 19, 2026 (read-only query on 2026-09-18).
 
 No data was changed. Browser verification remains owner-run under the repository workflow.
+
+### 2.1 Approved addendum — consecutive pitching stints (implemented 2026-09-18)
+
+Auto-fill now treats pitching as the only continuity-constrained position. When it assigns a player more than one inning at `P`, those innings form one uninterrupted stint; it cannot generate `P → Bench → P` or `P → field position → P`. The active pitcher is reserved before bench and field rotation, then retired from pitching selection after leaving the mound.
+
+Competitive mode keeps its ace-first behaviour and existing caps. Balanced and Development still spread pitching, but do so in consecutive blocks instead of alternating pitchers inning by inning. `Fill empty spots` bridges writable gaps between coach-set pitching innings when caps allow, preserves locked manual assignments, and reserves cap space for fixed pitching innings elsewhere in the game. No continuity rule applies to any other position.
+
+Focused regression coverage exercises all three modes, bench-heavy seven-inning games, the editor's best-of-candidates path, pitching caps, writable partial-fill gaps, locked `P → SS → P` risk, and the absence of continuity rules for non-pitching positions.
 
 ## 3. What is already strong
 
@@ -176,6 +184,8 @@ The coach marks the lineup ready. The hub and game-day surface show who marked i
 
 ### Phase 0 — Shared truth model and regression tests (P0)
 
+- **Implemented addendum:** Auto-fill produces one consecutive pitching block per player, protects the active pitcher from the bench/field rotation, honours fixed-cell cap reservations, and applies no equivalent rule to other positions.
+- **Implemented core:** the shared analysis now returns Not started / Draft / Needs review / Coverage complete, all missing field roles, player decision counts, and proven position clashes. The editor treats an open role as a factual draft check and never attributes it to Never without eligibility evidence.
 - Introduce a pure lineup validation/readiness model shared by builder, hub, game day, print preflight, and tests.
 - Inputs include assignments, participating players, Sport Pack roles, player preferences/Never states, pitcher profiles, and resolved game rules.
 - Emit typed issues with severity, player, inning, role, and proven cause; never compose causal copy from missing information.
@@ -184,9 +194,11 @@ The coach marks the lineup ready. The hub and game-day surface show who marked i
 
 ### Phase 1 — Readability and actionable positions grid (P0/P1)
 
+- **Implemented core:** positions and playing-time frames paint an opaque card ground; headings and controls use stronger semantic ink; blank cells read Open; started innings expose field-role coverage; exact clash/open controls are styled and described; coverage checks jump directly to their inning; Playing time now shows Field, Bench, pitching/cap usage, and player attention.
 - Paint solid card grounds on positions and playing-time frames.
 - Align table heading type, ink, density, borders, and pinned cells with the approved standard.
 - Restyle toolbar and cell selects with opaque grounds and stronger borders; replace `-` with `Open`.
+  - ⚖ **Reversed for the CELL on owner review (2026-09-18):** the blank cell reads `—` again — "Open" truncated to "Opei" in the narrow select and read like a position code, the opposite of what a blank should do; the amber outline carries the state. "Open" stays the word wherever there is room for it: the inning inspector, the coverage checks, the cell's accessible description.
 - Add inning fill status, exact issue-cell styling, jump/focus actions, and the blank/Bench legend.
 - Keep existing responsive behaviour and measure warm/dark themes at desktop, 768, 640, 390, and 361 widths.
 
@@ -200,13 +212,21 @@ The coach marks the lineup ready. The hub and game-day surface show who marked i
 
 ### Phase 3 — Coach analysis (P1)
 
-- Upgrade Playing time with Field/Bench figures, labelled attention states, pitching used/cap, and issue-to-inning links.
-- Add focus/tap rationale for Auto-fill placements and genuinely unfillable roles.
-- Preserve season-level trend analysis in Insights; link there rather than duplicating it.
+- ✅ **Built in Phase 1:** Playing time Field/Bench figures, labelled attention states, pitching used/cap, and issue-to-inning links (D4).
+- ✅ **Already satisfied (pre-existing):** season-level trend analysis stays in Insights; the hub's "Season insights" link predates this project.
+- ✅ **Built (2026-09-18) — Auto-fill rationale, per D6/D7:**
+  - Tag each cell Auto-fill places with a short reason at generation time: `Best <rank>` (competitive/balanced rank match), `Rotated` (least-played pick, no rank match), or `Only eligible pitcher` (mound, single eligible arm). `generateBestLineup` runs several randomized candidates and keeps the highest-scoring one — the reason map must travel with that winning candidate specifically, not be reconstructed after the fact.
+  - When the mound is left blank because no eligible pitcher remains under cap, tag it `Open — no eligible pitcher under cap` (D7: pitcher slot only; every other blank field position keeps today's plain `Open` wording — no general "why is this position blank" reasoning engine in this pass).
+  - Surface the reason through the same hover-title / `aria-describedby` pattern already on every cell for open-role and clash messages (D6) — no new tap/popover component.
+  - **Accepted limitation from D6:** a native `title` tooltip has no touch equivalent. A coach on a phone/tablet without an external keyboard will not see a per-cell reason — only the existing pre-generation mode summary sentence and the per-inning issue panel. This is a known tradeoff of the faster option, not an oversight.
+  - Rationale is held only in memory for the lineup as currently generated — never persisted to the saved lineup. Reopening a previously saved lineup, or manually editing any cell, shows no rationale until the coach runs Auto-fill or Reshuffle again (matches the plan's original "nonpersistent explanations" language).
+  - Regression coverage: one reason case per tier (competitive Best-rank match, balanced rotation pick, sole-eligible pitcher, capped-pitcher blank) alongside the existing generator suite.
+  - **Fixed same day:** a short-a-pitcher roster can leave the mound open for most of the game, and the open-role list originally repeated one identical block per inning (owner screenshot: six near-identical "No eligible pitcher..." cards pushing the grid below the fold). Innings sharing the exact same open roles AND the exact same proven cause now collapse into one line covering the span (`formatInningRanges` — "Innings 2–7 each have..."); the "Review" button jumps to the first inning in the group, which (via the Phase 4 door) opens straight into that inning's inspector.
 
 ### Phase 4 — Inning inspector and sport vocabulary (P2)
 
-- Add the inning-first assignment drawer.
+- **Implemented (2026-09-18, the inspector half):** `components/coaches/LineupInningInspector.tsx` (+ its module stylesheet) over a pure lens in `lib/lineup-inning.ts` (`inspectInning`, `inningChoiceChanges`, `standingFor`; 13 unit tests in `tests/unit/lineup-inning.test.ts`, including the production inning-7 shape). Opened from every inning heading (`InningHeadingDoor`, rendered inside the grid's own `<th>` so the `data-lineup-inning` scroll anchor is unchanged) and from "Review inning N" (which now opens the lens on that inning and still scrolls the grid beneath it). One `QuestionShell` over the builder: prev/next inning · the Sport Pack's field roles as a `CoachRowList` (the role code as the row's anchor — large, its own column, first at every width; the holder; a depth-chart fact only where there is one — Best N / Never on their chart, nothing for a plain available player; on a charted mound the rank and innings used of cap; the control's resting label is the action — Change… / Assign… / Keep one… — never the name) · Bench / Open / Also lines · and, once the inning is started and a role is open, a "Why this is a draft check" card (per undecided player: pitching used/cap, standing at each open role). The only causes it names are the two the inputs prove — every idle player Never here; every idle pitcher at cap (plus no idle player / no idle pitcher). **D9 (owner review the same afternoon):** the door word beside each role (Change / Assign / Keep one) opens `SublinedChoice` in a new `menu` variant — the money chooser's own floating list, hung from the word's right edge, sized for its rows (`listWidth`, viewport-capped), opening UPWARD when the room below is short, never pushing the table (an in-place fold was built first and rejected by the owner on sight); the control gained an optional per-option `trail` (text + tone) rendered in its live-hint slot (`convWhatOptLive[data-tone]` — three rules added beside the recipe) and a `triggerClassName`; **and every player named under the roles has a door** (owner's third look: "it tells me who is open but gives me no way to action it") — the Bench / Open lines are rows (`CoachRowBand` + `CoachRow`) whose menu is `playerChoiceChanges`: an undecided player's *Decide* (`bench`, or `take:<code>` — the holder SITS, stated in the option, so the inning ends whole rather than handing the open decision to the displaced player), a benched player's *Move* (the same position list); each candidate is a name, a sub-line in the chart's own words (Pitcher P2 · 2 of 4 innings used · Best 1B, 3B, LF · Never C / No positions rated yet) and a coloured pill only about THIS role (Best N · Never · At cap · Doesn't pitch; on the mound the rank), grouped Open → On the Bench → On the field · swap (charted mound: Pitchers → At cap → Not on the pitching chart → swap); a candidate's current position is never shown (it is on the grid behind); a filled role's fold ends with "Leave open", a clash's with "Keep". The native select and its one-line suffixes are gone. Every pick applies through one editor mutation (`applyInningChanges`) so Undo steps back one gesture; a Never pick is allowed and named, not blocked. Deliberately NOT built from the mockup: the "Suggested resolution" line (a matching guess) and a confirm on a Never pick (F07's override marker). Verified: typecheck, lint, the static gates, and a read-only Playwright probe at 1440 and 390 (door 44px on the phone, nine 44px selects, no horizontal overflow, Escape closes). Owner walk: hub QA part H.
+- Add the inning-first assignment drawer. ✅
 - Source selectable roles from the Sport Pack and retire the hard-coded diamond list before enabling another sport.
 
 ## 7. Data and API impact
@@ -239,15 +259,20 @@ If the owner declines the migration, use derived labels only and call the comple
 - Open roles name the inning and roles without guessing a cause.
 - A proven Never/cap/conflict issue names the player, inning, rule, and resolution target.
 - The coach can answer who sits most, whether anyone sits consecutively, and each pitcher's cap headroom from Playing time.
+- Every multi-inning pitcher created by Auto-fill appears in one consecutive block; a pitcher never returns after a Bench or field-position inning.
 - Editing a ready lineup visibly returns it to Draft.
 
-## 10. Decisions requested
+## 10. Decisions requested — ALL APPROVED on the recommended path (owner, 2026-09-18)
 
-1. **D1 — Readiness:** approve explicit Draft/Ready state with ready-by/time (recommended), or use derived Not started/Draft/Complete with no migration.
-2. **D2 — Draft checks:** approve neutral open-role checks during editing and warnings only for proven violations / ready attempts (recommended).
-3. **D3 — Toolbar hierarchy:** approve Auto-fill as the primary action with its mode visible; Setup/Reshuffle/Templates remain secondary (recommended).
-4. **D4 — Playing time:** include per-game pitching cap headroom here while season trends remain in Insights (recommended).
-5. **D5 — Inning inspector:** accept as Phase 4 follow-on after the truth/readability work (recommended), rather than expanding phase 1.
+1. **D1 — Readiness:** ✅ explicit Draft/Ready state with ready-by/time. Built as migration 304 (`status`/`ready_at`/`ready_by` on `rep_team_lineups`) — dev-only, PROD-OWED.
+2. **D2 — Draft checks:** ✅ neutral open-role checks during editing, warnings reserved for proven violations. Built in Phase 0/1.
+3. **D3 — Toolbar hierarchy:** ✅ Auto-fill primary with its mode visible; Format/Innings grouped under a labelled Setup cluster; Reshuffle/Templates secondary. Built.
+4. **D4 — Playing time:** ✅ per-game pitching cap headroom shown; season trends stay in Insights. Built in Phase 1.
+5. **D5 — Inning inspector:** ✅ deferred past Phase 0/1/2, then built the same day as Phase 4 (see §6 Phase 4 · Implemented). The Sport Pack vocabulary half (retiring the hard-coded diamond list in the grid cell) stays open.
+6. **D6 — Auto-fill rationale display (2026-09-18):** ✅ hover/focus tooltip reusing the existing per-cell description pattern; no dedicated tap/popover component. Accepted tradeoff: a touch-only coach will not get a per-cell reason (see Phase 3).
+7. **D7 — Blank-cell reason granularity (2026-09-18):** ✅ the pitcher slot only; every other blank field position keeps the existing generic "Open" wording rather than a full reasoning engine.
+8. **D8 — Two tabs, not three (owner question on review, 2026-09-18):** ✅ approved from the hub mockup (screen 6, desktop + true-size phone) and built the same day. The Batting order view is retired: the builder is **Lineup** (order, positions, who's in) and **Playing time**, at every width, as the portal's segmented control (`segChoice`, sized to its labels; full-width 44px on a phone — the strip ruling relayed the same day). The reason the third view existed — a phone could not drag inside the sideways-scrolling grid — is answered in the grid: at touch widths (≤768) the batting number is a 44px handle in the pinned column; the touch sensor lifts a row after a **hold** (250ms, 5px tolerance) so hold and swipe are told apart by time rather than direction, a mouse still lifts after 6px; a plain **tap** opens a row-actions sheet (Move up · Move down · Remove from lineup · Cancel — the `lineupAutoMenu` phone recipe, so the ↑ ↓ × the order view carried are one tap away instead of one tab away, and nobody is stranded if press-and-hold misbehaves on a given phone). The desktop grid is untouched (grip + ×). Gone with the view: its "usual positions" subtitle and the "drag above this line" bench cut (the Start checkbox does that job at every width). Help article updated. UAT smoke tests rewritten (two tabs; handle 44px; sheet opens on tap; a reorder from the sheet keeps positions with the player) — green at 360px. `check:layout` on both editor screens: the two findings this change would have introduced were fixed in passing (the shared toolbar height's two-class selector outranked the phone floor on Format/Innings; the cells' sr-only descriptions were absolutely positioned against the viewport and scrolled the whole page sideways by 300px at 390 — the scroller is now their containing block). Owner walk: hub QA part I.
+9. **D9 — The inspector's picker (owner review of the built panel, 2026-09-18):** ✅ three looks in one afternoon. (i) The native select beside each role echoed the name and crammed "· Bench · Best 2 · C" into one line, and the list clipped LF/CF/RF — fixed. (ii) Redrawn to the money chooser's recipe; the first build folded the candidates open UNDER the row and the owner rejected it on sight ("can't this open as a dropdown and not push the whole table down?") — rebuilt as `SublinedChoice`'s new `menu` variant, a floating list hung from the door word that never moves the rows, with a toned trail in the chooser's live-hint slot; a candidate's current position is never shown; the swap group stays, last. (iii) "It tells me who is open but gives me no way to action it" — the Bench / Open lines became rows with *Decide* / *Move* menus (Bench this inning, or take a position with the holder sitting). Walk: hub QA part H.
 
 ## 11. Out of scope
 

@@ -1217,3 +1217,12 @@ sequential; each is independently shippable.
   in the standard slot — Notification settings and Mark all read — both `.headerBtnLabel`
   icon-only on phones in the right-pinned row, no primary, nothing phone-hidden. Logged in the
   guard's `SITES`. The feed body stays shared with the admin page; only the frame is the coach's.
+
+- **2026-09-18** — **A page header for the Lineups Templates tab** (`app/[orgSlug]/coaches/teams/
+  [teamId]/lineups/_LineupTemplatesView.tsx`, the Lineups hub brought level with the Practice plans
+  room, owner ask). The Templates pane moved out of the hub page into a view of its own — the same
+  split as `_PlanTemplatesView` — and its one create, "New template", moved from a bar above the
+  list (with a hint line nobody needed once a template existed) into the header per house rule 4:
+  `actionsPhoneInTitleRow` so it keeps the title line's corner on a phone, `actionsPhoneHidden`
+  for a coach who cannot build. The hub's own header is unchanged (no actions). Logged in the
+  guard's `SITES`.

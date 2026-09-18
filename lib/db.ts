@@ -13,6 +13,7 @@ import { moneyInEntryDescription } from './coach-money-in';
 import { resolveAwardTypeMergeCollisions } from './rep-award-occasion';
 import { dropLegacyLineupProfileKeys } from './lineup-profile';
 import { formatPlayerFirstLast } from './player-name';
+import { analyzeLineup, deriveLineupBadge, type LineupBadge } from './lineup-analysis';
 import {
   DERIVED_INCOME_LINE_KINDS, LINE_KIND_ACTUAL_SOURCE, normalizeBudgetLineKind,
 } from './coach-budget-totals';
@@ -4142,8 +4143,12 @@ export async function getCoachTeamMilestones(
     // row alone isn't enough, because opening the builder auto-seeds every player into the batting
     // order with no positions and saving that writes a row. Counting rows would have marked the
     // step done for a coach who never assigned a single position — the exact false "done" this
-    // milestone exists to avoid. Fails soft: an error here reads as "no lineup yet".
-    getRepTeamLineupSetEventIds(programYearId).catch(e => {
+    // milestone exists to avoid. Fails soft: an error here reads as "no lineup yet". Empty
+    // fieldPositions is fine — this only reads the not_started/other split, which doesn't consult
+    // fieldPositions (this call site has no sport to hand in, and doesn't need one).
+    getRepTeamLineupReadinessByEvent(programYearId, []).then(
+      byEvent => Object.keys(byEvent).filter(id => byEvent[id] !== 'not_started'),
+    ).catch(e => {
       console.error('[getCoachTeamMilestones] lineup query failed (treated as not started):', e?.message);
       return [] as string[];
     }),
@@ -6210,6 +6215,9 @@ function mapRepTeamLineup(r: any): RepTeamLineup {
     notes: r.notes ?? null,
     rulesOverride: (r.rules_override ?? null) as LineupRulesOverride | null,
     updatedBy: r.updated_by ?? null,
+    status: (r.status ?? 'draft') as 'draft' | 'ready',
+    readyAt: r.ready_at ?? null,
+    readyBy: r.ready_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -6337,32 +6345,59 @@ export async function getRepTeamLineupAttendanceMismatchEventIds(programYearId: 
   return mismatch;
 }
 
-// Event ids (within a program year) whose saved lineup actually places at least one player in an
-// inning — the same "lineup is set" definition the Lineups front door's readiness chips use.
-// Bulk (two queries) so list surfaces can flag every game without per-game lineup probes.
-export async function getRepTeamLineupSetEventIds(programYearId: string): Promise<string[]> {
+// Per-event honest readiness (within a program year): Not started / Draft / Ready / Needs review —
+// replaces the old "any nonblank cell = set" boolean (F02). Ready means a coach actually marked it
+// ready AND nothing has proven a conflict since; Draft covers everything in between. Bulk (two
+// queries + in-memory analysis) so list surfaces can badge every game without per-game probes.
+export async function getRepTeamLineupReadinessByEvent(
+  programYearId: string,
+  fieldPositions: string[],
+): Promise<Record<string, LineupBadge>> {
   const { data: lineups, error: lErr } = await supabaseAdmin
     .from('rep_team_lineups')
-    .select('id, event_id')
+    .select('id, event_id, inning_count, status')
     .eq('program_year_id', programYearId);
   if (lErr) throw lErr;
-  if (!lineups || lineups.length === 0) return [];
-  const eventByLineup = new Map<string, string>(lineups.map(l => [l.id as string, l.event_id as string]));
+  if (!lineups || lineups.length === 0) return {};
 
   const { data: entries, error: eErr } = await supabaseAdmin
     .from('rep_team_lineup_entries')
-    .select('lineup_id, inning_positions')
+    .select('lineup_id, player_id, inning_positions')
     .in('lineup_id', lineups.map(l => l.id));
   if (eErr) throw eErr;
 
-  const set = new Set<string>();
+  const entriesByLineup = new Map<string, { playerId: string; inningPositions: Record<string, string> }[]>();
   for (const row of entries ?? []) {
-    const eventId = eventByLineup.get(row.lineup_id as string);
-    if (!eventId || set.has(eventId)) continue;
-    const positions = (row.inning_positions ?? {}) as Record<string, string>;
-    if (Object.values(positions).some(Boolean)) set.add(eventId);
+    const arr = entriesByLineup.get(row.lineup_id as string) ?? [];
+    arr.push({
+      playerId: row.player_id as string,
+      inningPositions: (row.inning_positions ?? {}) as Record<string, string>,
+    });
+    entriesByLineup.set(row.lineup_id as string, arr);
   }
-  return [...set];
+
+  const result: Record<string, LineupBadge> = {};
+  for (const l of lineups) {
+    const rows = entriesByLineup.get(l.id as string) ?? [];
+    const analysis = analyzeLineup(rows, l.inning_count as number, fieldPositions);
+    result[l.event_id as string] = deriveLineupBadge(analysis, (l.status as 'draft' | 'ready') ?? 'draft');
+  }
+  return result;
+}
+
+// The dedicated "mark ready" write path — the ONLY place status ever becomes 'ready'. The caller
+// (the lineup route's PATCH handler) re-checks eligibility against freshly-read data immediately
+// before calling this; this function does not re-validate, so it must never be reachable directly
+// from a request body.
+export async function markRepTeamLineupReady(lineupId: string, userId: string): Promise<RepTeamLineup> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_lineups')
+    .update({ status: 'ready', ready_at: new Date().toISOString(), ready_by: userId })
+    .eq('id', lineupId)
+    .select()
+    .single();
+  if (error) throw error;
+  return mapRepTeamLineup(data);
 }
 
 export async function upsertRepTeamLineup(fields: {
@@ -6386,6 +6421,13 @@ export async function upsertRepTeamLineup(fields: {
     notes: fields.notes?.trim() || null,
     updated_by: fields.updatedBy ?? null,
     updated_at: new Date().toISOString(),
+    // This is the ordinary save path — every call here is a coach-initiated change to the header
+    // or (via the same PUT) the grid, so it always drops a Ready lineup back to Draft (plan §7:
+    // "every assignment, order, mode, inning-count... edit clears readiness atomically"). Only
+    // markRepTeamLineupReady sets 'ready'.
+    status: 'draft',
+    ready_at: null,
+    ready_by: null,
   };
   // Only touch rules_override when the caller provides it, so a plain grid save preserves the
   // per-game cap override rather than clearing it (upsert SETs only the columns in the payload).

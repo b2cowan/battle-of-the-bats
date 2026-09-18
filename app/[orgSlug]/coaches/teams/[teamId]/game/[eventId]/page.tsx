@@ -585,7 +585,7 @@ export default function CoachGameConsolePage({
     const seeded: GridRow[] = players.map((p, i) => ({
       playerId: p.id, battingOrder: i + 1, starter: true, inningPositions: {}, notes: null,
     }));
-    const generated = generateBestLineup({
+    const { assignment: generated } = generateBestLineup({
       players: players.map(p => {
         const prefs = playerPositionPrefs(p, sportPack.pitcherPosition);
         return {

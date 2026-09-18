@@ -2966,8 +2966,8 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Building lineups & reusable templates (Premium)',
       summary: 'Set who plays where once, then reuse it game to game — and let game sheets, attendance and Insights read from it.',
-      keywords: ['lineups', 'lineup', 'build lineup', 'playing order', 'batting order', 'field positions', 'who plays where', 'templates', 'auto-fill', 'game sheet', 'needs lineup', 'reorder batting order', 'drag to reorder', 'move a player up', 'change the batting order', 'positions tab', 'batting order tab', 'print lineup', 'dugout poster', 'batting order card', 'undo', 'save lineup'],
-      searchText: 'lineups lineup build a lineup playing order batting order field positions who plays where period by period inning by inning game sheet print attendance insights playing time fairness templates reusable base lineup apply template auto-fill generate lineup needs lineup not set games tab templates tab no games yet add a game schedule first assistant coach lineup access batting order tab positions tab playing time tab three views drag to reorder press and hold move a player up or down bench cut line nine player ball swap someone in positions follow the player saves automatically no save button where is the save button saving saved couldnt save retry undo redo mis-tap print lineup dugout poster batting order card paper lineup sheet print lineup notes',
+      keywords: ['lineups', 'lineup', 'build lineup', 'playing order', 'batting order', 'field positions', 'who plays where', 'templates', 'auto-fill', 'game sheet', 'needs lineup', 'reorder batting order', 'drag to reorder', 'move a player up', 'change the batting order', 'hold the number', 'tap the number', 'row options', 'remove a player from the lineup', 'lineup tab', 'playing time tab', 'print lineup', 'dugout poster', 'batting order card', 'undo', 'save lineup'],
+      searchText: 'lineups lineup build a lineup playing order batting order field positions who plays where period by period inning by inning game sheet print attendance insights playing time fairness templates reusable base lineup apply template auto-fill generate lineup needs lineup not set games tab templates tab no games yet add a game schedule first assistant coach lineup access lineup tab playing time tab two views drag to reorder press and hold hold the number tap the number move up move down remove from lineup move a player up or down start checkbox nine player ball swap someone in positions follow the player saves automatically no save button where is the save button saving saved couldnt save retry undo redo mis-tap print lineup dugout poster batting order card paper lineup sheet print lineup notes',
       content: (
         <>
           <p>A <strong>lineup</strong> is your playing order and field positions for one game, set period by period. Open <strong>Lineups</strong> in the Season menu — the <strong>Games</strong> tab lists every game on your schedule, each marked <strong>Lineup set</strong> or <strong>Not set</strong>, so you can see at a glance what still needs doing before the weekend.</p>
@@ -2976,17 +2976,16 @@ const coachesHelp: HelpPageContent = {
       ),
       subtopics: [
         {
-          id: 'lineups-three-views',
-          title: 'Inside a game: three views of one lineup',
+          id: 'lineups-two-views',
+          title: 'Inside a game: build it, then read it',
           content: (
             <>
-              <p>Each answers a different question, and they&rsquo;re all the same lineup:</p>
+              <p>Two views of the same lineup:</p>
               <HelpDefs>
-                <HelpDef term="Batting order">Who bats when. A plain list: <strong>press and hold a row and drag it</strong> where you want, or use the arrows. In 9-player ball the batting nine sit above a line with the bench below; drag someone across it and they swap in.</HelpDef>
-                <HelpDef term="Positions">Who plays where, period by period. This is where the page opens.</HelpDef>
+                <HelpDef term="Lineup">Who bats when and who plays where, period by period. This is where the page opens. The batting order is the first column: on a laptop, drag the grip beside a number; on a phone, <strong>hold the number</strong> and drag it, or <strong>tap the number</strong> for Move up, Move down and Remove from lineup. In 9-player ball the Start checkbox puts someone in the batting nine or on the bench.</HelpDef>
                 <HelpDef term="Playing time">Where the innings are going.</HelpDef>
               </HelpDefs>
-              <p>Changes carry across all three, and a player&rsquo;s positions <strong>follow the player</strong> when you move them in the order — nothing gets left behind in the slot they were in.</p>
+              <p>A player&rsquo;s positions <strong>follow the player</strong> when you move them in the order — nothing gets left behind in the slot they were in.</p>
             </>
           ),
         },

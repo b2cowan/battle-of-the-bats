@@ -50,6 +50,13 @@ export interface SublinedOption<T extends string> {
   sub: string;
   /** Draws a `.convWhatGroup` header above this option when it differs from the option before it. Omit for an ungrouped run. */
   group?: string;
+  /**
+   * A short coloured word on the option's right — the money chooser's live hint ("1 overdue ·
+   * $97.09") in the same `.convWhatOptLive` slot, olive by default. `tone` turns it into a warning
+   * (amber), a danger (red) or a quiet aside (tertiary). Added for the inning inspector's picker
+   * (D9, 2026-09-18): "Best 3" · "Never" · "At cap" · "Doesn't pitch".
+   */
+  trail?: { text: string; tone?: 'good' | 'warn' | 'bad' | 'quiet' };
 }
 
 export default function SublinedChoice<T extends string>({
@@ -62,6 +69,8 @@ export default function SublinedChoice<T extends string>({
   id,
   variant = 'field',
   showClosedSub = false,
+  triggerClassName,
+  listWidth = 400,
 }: {
   /**
    * ⚠⚠ THE ACCESSIBLE NAME ONLY — THIS RENDERS NO VISIBLE TEXT. Every caller draws its own
@@ -78,13 +87,27 @@ export default function SublinedChoice<T extends string>({
   placeholder?: string;
   disabled?: boolean;
   id: string;
-  /** 'field' (default) is the bold olive "answer this" money-conversation look. 'toolbar' matches a plain `.select` sitting in a row of report filters. */
-  variant?: 'field' | 'toolbar';
+  /**
+   * 'field' (default) is the bold olive "answer this" money-conversation look. 'toolbar' matches a
+   * plain `.select` sitting in a row of report filters. 'menu' (D9, 2026-09-18) is an ACTION
+   * picker rather than a value field: the caller keeps `value` null so the trigger always reads
+   * its `placeholder` ("Change"), the list is sized for its own content (`listWidth`, capped to the
+   * viewport) and anchored to the trigger's RIGHT edge — a trigger that sits at the end of a row
+   * would otherwise open a list as narrow as its own word — and it opens UPWARD when the room
+   * below is short, so a trigger low on the screen is not handed a two-row slit. The trigger's
+   * look comes from the caller (`triggerClassName`), because a menu's trigger is the row's own
+   * door word, not a field.
+   */
+  variant?: 'field' | 'toolbar' | 'menu';
   /** Toolbar filters name their qualifier in the closed state too ("Changeup speed · latest result"), muted, so the field says what it's showing without opening the list. */
   showClosedSub?: boolean;
+  /** Replaces the variant's trigger classes outright — required in practice for `variant="menu"`. */
+  triggerClassName?: string;
+  /** `variant="menu"` only: the list's width in px before the viewport caps it. */
+  listWidth?: number;
 }) {
   const [open, setOpen] = useState(false);
-  const [rect, setRect] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [rect, setRect] = useState<{ top?: number; bottom?: number; left: number; width: number; maxHeight?: number } | null>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
 
   /* Outside press closes the list, in the CAPTURE phase, so the press it closes on still reaches
@@ -139,9 +162,9 @@ export default function SublinedChoice<T extends string>({
       <button
         type="button"
         id={id}
-        className={variant === 'toolbar'
+        className={triggerClassName ?? (variant === 'toolbar'
           ? `${styles.select} ${styles.devToolbarControl} ${styles.convChoiceToolbarField}`
-          : `${styles.convWhatField} ${chosen ? '' : styles.convWhatFieldEmpty}`}
+          : `${styles.convWhatField} ${chosen ? '' : styles.convWhatFieldEmpty}`)}
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={label}
@@ -149,7 +172,19 @@ export default function SublinedChoice<T extends string>({
         onClick={() => {
           if (!open) {
             const r = wrapRef.current?.getBoundingClientRect();
-            setRect(r ? { top: r.bottom + 4, left: r.left, width: r.width } : null);
+            if (!r) setRect(null);
+            else if (variant !== 'menu') setRect({ top: r.bottom + 4, left: r.left, width: r.width });
+            else {
+              // A menu is sized for its rows, hung from the trigger's right edge, and flips above
+              // it when the room below would hand the coach a slit to scroll through.
+              const gutter = 8;
+              const width = Math.min(listWidth, window.innerWidth - gutter * 2);
+              const left = Math.max(gutter, Math.min(r.right - width, window.innerWidth - width - gutter));
+              const below = window.innerHeight - r.bottom - 4 - gutter;
+              const above = r.top - 4 - gutter;
+              if (below >= 240 || below >= above) setRect({ top: r.bottom + 4, left, width, maxHeight: Math.max(160, below) });
+              else setRect({ bottom: window.innerHeight - r.top + 4, left, width, maxHeight: Math.max(160, above) });
+            }
           }
           setOpen(o => !o);
         }}
@@ -158,12 +193,12 @@ export default function SublinedChoice<T extends string>({
           {chosen ? chosen.name : placeholder}
           {chosen && showClosedSub && chosen.sub && <span className={styles.convChoiceClosedSub}> · {chosen.sub}</span>}
         </span>
-        <ChevronDown size={15} className={variant === 'toolbar' ? styles.convChoiceToolbarCaret : styles.convWhatCaret} aria-hidden />
+        <ChevronDown size={15} className={variant === 'field' ? styles.convWhatCaret : styles.convChoiceToolbarCaret} aria-hidden />
       </button>
       {open && rect && (
         <div
           className={styles.convWhatList}
-          style={{ top: rect.top, left: rect.left, width: rect.width }}
+          style={{ top: rect.top, bottom: rect.bottom, left: rect.left, width: rect.width, maxHeight: rect.maxHeight }}
           role="listbox"
           aria-label={label}
         >
@@ -186,6 +221,7 @@ export default function SublinedChoice<T extends string>({
                       <span className={styles.convWhatOptName}>{o.name}</span>
                       {o.sub && <span className={styles.convWhatOptSub}>{o.sub}</span>}
                     </span>
+                    {o.trail && <span className={styles.convWhatOptLive} data-tone={o.trail.tone}>{o.trail.text}</span>}
                   </button>
                 </Fragment>
               );

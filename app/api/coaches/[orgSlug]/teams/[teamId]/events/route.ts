@@ -7,7 +7,7 @@ import {
   getActiveRepProgramYear,
   getRepTeamEvents,
   getRepTeamLineupAttendanceMismatchEventIds,
-  getRepTeamLineupSetEventIds,
+  getRepTeamLineupReadinessByEvent,
   createRepTeamEvent,
   createRepTeamEvents,
   getRepTeamTagLibrary,
@@ -27,6 +27,7 @@ import {
 } from '@/lib/coach-recurrence';
 import { EVENT_NAME_PREFIX } from '@/lib/coach-schedule-vocab';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -57,7 +58,7 @@ export const GET = withObservability(async (req: Request,
   const { orgSlug, teamId } = await params;
   const resolved = await resolveCoachTeamRead(orgSlug, teamId);
   if ('error' in resolved) return resolved.error;
-  const { ctx, capabilities, programYear } = resolved;
+  const { ctx, team, capabilities, programYear } = resolved;
   // READ half of the 2026-08-03 split: a helper may see the schedule they are turning up to.
   const denied = denyUnless(canViewSchedule(capabilities), 'You do not have access to the schedule.');
   if (denied) return denied;
@@ -82,12 +83,14 @@ export const GET = withObservability(async (req: Request,
 
   const events = await getRepTeamEvents(programYear.id, { from, to, type });
   // Lineup flags, only for coaches who can see lineups (they're only actionable for them):
-  // mismatch = saved lineup disagrees with attendance; set = the game has a real saved lineup
-  // (powers the Lineups page's readiness chips + "Needs lineup" filter without N+1 probes).
-  const [lineupMismatchEventIds, lineupSetEventIds] = capabilities.lineups
+  // mismatch = saved lineup disagrees with attendance; statusByEvent = the honest Not started /
+  // Draft / Ready / Needs review badge (F02 — replaces the old "any nonblank cell = set" boolean),
+  // powering the Lineups page's chips, the schedule and Overview's flags, and the "Needs lineup"
+  // filter, all without N+1 probes.
+  const [lineupMismatchEventIds, lineupStatusByEvent] = capabilities.lineups
     ? await Promise.all([
         getRepTeamLineupAttendanceMismatchEventIds(programYear.id),
-        getRepTeamLineupSetEventIds(programYear.id),
+        getRepTeamLineupReadinessByEvent(programYear.id, getSportPack(team.sport ?? DEFAULT_SPORT).fieldPositions),
       ])
     : [[], null];
   // Tags: the team's game-tag library (for the chip picker) + which tags each returned event
@@ -98,9 +101,9 @@ export const GET = withObservability(async (req: Request,
     getRepTeamEventTagsMap(events.map(e => e.id)),
     getRepEventAwardCountsMap(events.map(e => e.id)),
   ]);
-  // lineupSetEventIds is OMITTED (not []) when the caller can't see lineups, so a client with a
+  // lineupStatusByEvent is OMITTED (not {}) when the caller can't see lineups, so a client with a
   // stale capability cache can tell "no lineup visibility" apart from "no lineups saved" and
-  // render no readiness badges instead of a false "Not set" on every game.
+  // render no readiness badges instead of a false "Not started" on every game.
   return NextResponse.json({
     events,
     programYear,
@@ -108,7 +111,7 @@ export const GET = withObservability(async (req: Request,
     tags,
     tagsByEventId,
     awardCountByEventId,
-    ...(lineupSetEventIds ? { lineupSetEventIds } : {}),
+    ...(lineupStatusByEvent ? { lineupStatusByEvent } : {}),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events' });
 

@@ -6,6 +6,7 @@ import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { lineupsHref } from '@/lib/lineups-address';
 import {
   buildLineupRows, renumberBattingOrder, sortLineupRows, type LineupPlayerRow,
 } from '@/lib/lineup-grid';
@@ -108,7 +109,7 @@ export default function TemplateBuilderPage({
         const d = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(d.error ?? 'Could not save the template');
       }
-      router.push(`${base}/lineups`);
+      router.push(lineupsHref(base, 'templates'));
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not save the template');
       setSaving(false);
@@ -127,7 +128,7 @@ export default function TemplateBuilderPage({
       <CoachPageHeader
         icon={ListOrdered}
         title={isNew ? 'New template' : 'Edit template'}
-        backTo={{ href: `${base}/lineups`, label: 'All lineups' }}
+        backTo={{ href: lineupsHref(base, 'templates'), label: 'Templates' }}
         actions={canLineups && !loading && !loadError ? (
           /* ⚠ A SAVE, NOT A CREATE — but it takes the header's primary geometry all the same,
              because the slot is what decides the size (plan §2.6, swept in Phase 4b). The inline

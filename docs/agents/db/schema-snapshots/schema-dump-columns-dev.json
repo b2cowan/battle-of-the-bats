@@ -14832,6 +14832,33 @@
     "ordinal_position": 12
   },
   {
+    "table_name": "rep_team_lineups",
+    "column_name": "status",
+    "data_type": "text",
+    "udt_name": "text",
+    "is_nullable": "NO",
+    "column_default": "'draft'::text",
+    "ordinal_position": 13
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "ready_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
+    "table_name": "rep_team_lineups",
+    "column_name": "ready_by",
+    "data_type": "uuid",
+    "udt_name": "uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 15
+  },
+  {
     "table_name": "rep_team_measurable_types",
     "column_name": "id",
     "data_type": "uuid",

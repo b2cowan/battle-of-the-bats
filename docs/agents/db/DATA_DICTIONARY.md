@@ -2401,6 +2401,7 @@ moment it lands.
 1. **One lineup per event (`UNIQUE(event_id)`) + upsert** (`onConflict: 'event_id'`, [lib/db.ts:4793](../../../lib/db.ts#L4793)) — a second save replaces the header in place.
 2. **Coach-only single endpoint** (`events/[eventId]/lineup`); lineups are allowed only for game event types (`league_game|tournament_game|scrimmage`).
 3. **`updated_by` = last writer, not creator** (overwritten every save; there is no `created_by`).
+4. **`status` resets to `'draft'` on EVERY ordinary save** (`upsertRepTeamLineup` unconditionally sets `status`/`ready_at`/`ready_by` back to draft/null/null; mig 304) — only `markRepTeamLineupReady` (the lineup route's `PATCH`, "mark ready" only) ever writes `'ready'`. There is deliberately no manual "revert to draft" action; the only way back to Draft is another edit.
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -2426,6 +2427,13 @@ moment it lands.
 
 <!-- dict:col:rep_team_lineups.rules_override -->
 **`rules_override`** (jsonb, nullable; mig 172) — Lineup Intelligence P3 **per-game override** of the season-default innings caps (`rep_program_years.lineup_settings`), for a game that plays by different rules (e.g. a tournament). Set in the Auto-fill popover's "Game rules" group and persisted so it sticks to that game. **App-enforced shape (`lib/lineup-caps.ts`, NO DB CHECK)**: `{ maxInningsPerPosition, pitcherMaxInnings, minInningsPerPlayer }` — any subset; a missing/null key falls back to the season default. Null column = use season defaults for everything.
+
+<!-- dict:col:rep_team_lineups.status -->
+**`status`** (text, NOT NULL, default `'draft'`; CHECK `draft|ready`; mig 304) — the coach-marked Draft/Ready handoff (Coach Lineups Deep Dive Phase 2, owner-approved D1, 2026-09-18). Replaces the old "any nonblank cell = set" boolean (`lib/lineup-analysis.ts`'s `deriveLineupBadge` is the only place that turns this + a fresh `analyzeLineup()` pass into the four-state badge — `not_started / draft / needs_review / ready` — shown to a coach; a proven position conflict always reads `needs_review` regardless of `status`). See gotcha 4.
+
+<!-- dict:col:rep_team_lineups.ready_at -->
+<!-- dict:col:rep_team_lineups.ready_by -->
+**`ready_at`** (timestamptz, nullable; CHECK `status <> 'ready' OR ready_at IS NOT NULL`) **/ `ready_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — when and who marked it ready. `ready_by` may go null on account deletion without `status` itself changing (same nullable-on-delete convention as `updated_by`, gotcha 3) — `status` alone is the fact of record, never `ready_by`'s presence.
 
 ### `rep_team_lineup_entries`
 <!-- dict:table:rep_team_lineup_entries -->

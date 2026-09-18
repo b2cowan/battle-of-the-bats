@@ -1827,6 +1827,12 @@ export interface RepTeamLineup {
   notes: string | null;
   rulesOverride: LineupRulesOverride | null; // P3 per-game cap override (mig 172)
   updatedBy: string | null;
+  // Coach-marked readiness (mig 304). `status` resets to 'draft' on every ordinary save — only the
+  // dedicated mark-ready write path sets 'ready'. readyBy may go null on account deletion without
+  // status changing (same convention as updatedBy); status alone is the fact.
+  status: 'draft' | 'ready';
+  readyAt: string | null;
+  readyBy: string | null;
   createdAt: string;
   updatedAt: string;
 }

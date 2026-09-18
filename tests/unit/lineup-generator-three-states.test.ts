@@ -21,7 +21,7 @@ function roster(overrides: Record<string, Partial<GeneratorPlayer>> = {}): Gener
   return ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'].map(id => player(id, overrides[id]));
 }
 function run(players: GeneratorPlayer[], policy: PositionPolicy, inningCount = 1, fieldPositions = FIELD) {
-  return generateLineup({ players, inningCount, policy, fillMode: 'regenerate', fieldPositions, pitcherPosition: null });
+  return generateLineup({ players, inningCount, policy, fillMode: 'regenerate', fieldPositions, pitcherPosition: null }).assignment;
 }
 const at = (grid: Map<string, Record<string, string>>, id: string, inning = 1) => grid.get(id)?.[String(inning)];
 const whoAt = (grid: Map<string, Record<string, string>>, pos: string, inning = 1) =>

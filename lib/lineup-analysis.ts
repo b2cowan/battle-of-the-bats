@@ -17,6 +17,7 @@ export interface InningFill {
   inning: number;
   onField: number;      // players assigned a real fielding position (not Bench / blank)
   benched: number;      // players explicitly on the bench this inning
+  unassigned: number;   // players without a field/Bench decision yet
 }
 
 export interface PlayerFairPlay {
@@ -36,6 +37,27 @@ export interface UnfilledFieldPositions {
   positions: string[];
 }
 
+/** The factual state of a saved or in-progress grid. Draft means work exists but decisions or
+ * required field roles remain open; Needs review is reserved for a proven clash, not a guess.
+ * This is an ELIGIBILITY signal ("is there anything left to fill in or fix right now") — it is
+ * NOT the badge shown to a coach outside the builder. That badge also depends on whether a coach
+ * has explicitly marked the lineup ready (see LineupBadge / deriveLineupBadge below): a lineup can
+ * be coverage-complete (`readiness === 'ready'`) for a while before anyone marks it Ready, and it
+ * stays Ready only until the next edit reopens it. */
+export type LineupReadiness = 'not_started' | 'draft' | 'needs_review' | 'ready';
+
+/** The four states shown to a coach anywhere OUTSIDE the builder — the games hub, the team
+ * Overview, the schedule's lineup peek. Unlike LineupReadiness this is never invented from
+ * coverage alone: 'ready' here means a coach actually pressed "Mark ready" and nothing has
+ * touched the lineup since (the persisted `status` column, mig 304). */
+export type LineupBadge = 'not_started' | 'draft' | 'needs_review' | 'ready';
+
+export function deriveLineupBadge(analysis: LineupAnalysis, persistedStatus: 'draft' | 'ready'): LineupBadge {
+  if (!analysis.hasAssignments) return 'not_started';
+  if (analysis.hasConflicts) return 'needs_review';
+  return persistedStatus === 'ready' ? 'ready' : 'draft';
+}
+
 export interface LineupAnalysis {
   conflicts: LineupConflict[];
   conflictInnings: Set<number>;
@@ -46,6 +68,10 @@ export interface LineupAnalysis {
   benchSpread: { min: number; max: number } | null;
   /** Fillable-but-empty field positions per inning (empty unless fieldPositions was supplied). */
   unfilledFieldPositions: UnfilledFieldPositions[];
+  /** Every missing required field role, including a short-roster inning with no idle player. */
+  missingFieldPositions: UnfilledFieldPositions[];
+  readiness: LineupReadiness;
+  hasAssignments: boolean;
 }
 
 export interface AnalyzableRow {
@@ -62,18 +88,22 @@ export function analyzeLineup(
   const conflictInnings = new Set<number>();
   const inningFill: InningFill[] = [];
   const unfilledFieldPositions: UnfilledFieldPositions[] = [];
+  const missingFieldPositions: UnfilledFieldPositions[] = [];
   const fieldList = fieldPositions ?? [];
+  let hasAssignments = false;
 
   for (let inn = 1; inn <= inningCount; inn++) {
     const key = String(inn);
     const counts = new Map<string, number>();
     let onField = 0;
     let benched = 0;
+    let unassigned = 0;
     let idle = 0; // benched OR blank — a player who could have covered an open spot
     for (const r of rows) {
       const pos = r.inningPositions[key] ?? '';
-      if (pos === BENCH_POSITION) { benched++; idle++; continue; }
-      if (!pos) { idle++; continue; }
+      if (pos === BENCH_POSITION) { hasAssignments = true; benched++; idle++; continue; }
+      if (!pos) { idle++; unassigned++; continue; }
+      hasAssignments = true;
       onField++;
       counts.set(pos, (counts.get(pos) ?? 0) + 1);
     }
@@ -85,11 +115,14 @@ export function analyzeLineup(
     }
     // A required field position with no holder, while a player sits idle, is a fillable hole
     // (typically a "Never" constraint left no eligible player) — worth flagging to the coach.
-    if (fieldList.length && idle > 0) {
+    if (fieldList.length) {
       const empty = fieldList.filter(fp => !counts.has(fp));
-      if (empty.length) unfilledFieldPositions.push({ inning: inn, positions: empty });
+      if (empty.length) {
+        missingFieldPositions.push({ inning: inn, positions: empty });
+        if (idle > 0) unfilledFieldPositions.push({ inning: inn, positions: empty });
+      }
     }
-    inningFill.push({ inning: inn, onField, benched });
+    inningFill.push({ inning: inn, onField, benched, unassigned });
   }
 
   const fairPlay: PlayerFairPlay[] = rows.map(r => {
@@ -113,6 +146,15 @@ export function analyzeLineup(
   const benchSpread = benchCounts.length
     ? { min: Math.min(...benchCounts), max: Math.max(...benchCounts) }
     : null;
+  const hasOpenRoles = missingFieldPositions.length > 0;
+  const hasOpenDecisions = fairPlay.some(f => f.unassigned > 0);
+  const readiness: LineupReadiness = !hasAssignments
+    ? 'not_started'
+    : conflicts.length > 0
+      ? 'needs_review'
+      : hasOpenRoles || hasOpenDecisions
+        ? 'draft'
+        : 'ready';
 
   return {
     conflicts,
@@ -122,5 +164,8 @@ export function analyzeLineup(
     hasConflicts: conflicts.length > 0,
     benchSpread,
     unfilledFieldPositions,
+    missingFieldPositions,
+    readiness,
+    hasAssignments,
   };
 }

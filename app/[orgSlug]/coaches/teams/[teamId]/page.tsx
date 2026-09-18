@@ -39,7 +39,8 @@ import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
-import { fieldNounFor } from '@/lib/sports';
+import { fieldNounFor, getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { analyzeLineup, deriveLineupBadge, type LineupBadge } from '@/lib/lineup-analysis';
 import { gameDayEntryHref, isInGameDayWindow, toGameDayEventShape } from '@/lib/coach-game-day';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
@@ -236,8 +237,8 @@ export default function TeamOverviewPage({
   })();
   // Active players with no guardian email (blocks dues reminders + announcements) → Roster nudge.
   const [missingEmailCount, setMissingEmailCount] = useState(0);
-  // Whether the next game already has a lineup set → Next-up tile flag (null = unknown / not a game).
-  const [nextLineupReady, setNextLineupReady] = useState<boolean | null>(null);
+  // The next game's honest lineup state → Next-up tile flag (null = unknown / not a game).
+  const [nextLineupBadge, setNextLineupBadge] = useState<LineupBadge | null>(null);
   const [duesOutstanding, setDuesOutstanding] = useState<number | null>(null);
   const [duesOverdueCount, setDuesOverdueCount] = useState(0);
   // Players who have paid NOTHING toward their dues (zero-paid) — distinct from "overdue".
@@ -573,19 +574,25 @@ export default function TeamOverviewPage({
     return () => { cancelled = true; };
   }, [loading, isClosedTeam, orgSlug, teamId]);
 
-  // Next-game lineup readiness for the "Next up" tile — only when the next event is a game.
-  // "Ready" = at least one player has a position assigned in the saved lineup.
+  // Next-game lineup readiness for the "Next up" tile — only when the next event is a game. The
+  // same honest Not started / Draft / Ready / Needs review the hub and schedule use (F02) — a
+  // coach must actually mark it ready for this to read Ready, not just save one cell.
   useEffect(() => {
-    setNextLineupReady(null);
+    setNextLineupBadge(null);
     if (!nextEvent || !GAME_EVENT_TYPES.includes(nextEvent.eventType)) return;
     const eventId = nextEvent.id;
+    const sportPack = getSportPack(assignments.find(a => a.teamId === teamId)?.teamSport ?? DEFAULT_SPORT);
     let cancelled = false;
     fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${nextEvent.id}/lineup`)
       .then(res => (res.ok ? res.json() : null))
       .then(json => {
         if (cancelled || !json) return;
-        const entries = (json.entries ?? []) as { inningPositions?: Record<string, string> }[];
-        setNextLineupReady(entries.some(e => Object.values(e.inningPositions ?? {}).some(Boolean)));
+        const entries = (json.entries ?? []) as { playerId: string; inningPositions?: Record<string, string> }[];
+        const analysis = analyzeLineup(
+          entries.map(e => ({ playerId: e.playerId, inningPositions: e.inningPositions ?? {} })),
+          json.lineup?.inningCount ?? sportPack.defaultPeriodCount, sportPack.fieldPositions,
+        );
+        setNextLineupBadge(deriveLineupBadge(analysis, json.lineup?.status ?? 'draft'));
       })
       .catch(() => {})
       // ⚠ `.finally`, not the success path: a 403 (no lineup access) resolves to a null body and a
@@ -976,7 +983,7 @@ export default function TeamOverviewPage({
       // Completion now means "this team has saved a lineup this season" (from /milestones), not
       // "the NEXT event has one" — the old next-game-scoped check read null whenever the next
       // event was a practice, so a coach who HAD built lineups was shown an unfinished step.
-      // `nextLineupReady` still drives the Next-up tile's per-game flag; it just no longer decides
+      // `nextLineupBadge` still drives the Next-up tile's per-game flag; it just no longer decides
       // whether this step is done.
       detail: milestones?.hasLineup
         ? 'Lineup saved'
@@ -1180,11 +1187,15 @@ export default function TeamOverviewPage({
             : 'scheduled ahead',
           href: `${base}/schedule`,
           tone: nextEvent ? 'default' : 'muted',
-          // "Set / Not set", matching the anchor's chip above and the Lineups hub's own row flags.
-          // This tile said "Lineup ready" while the card said "Lineup set" about the SAME lineup,
-          // on the same screen — one fact needs one word (owner 2026-08-12).
-          flag: (nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType) && nextLineupReady !== null)
-            ? (nextLineupReady ? { text: 'Lineup set', tone: 'ok' } : { text: 'Lineup not set', tone: 'warn' })
+          // The same four-state vocabulary as the Lineups hub and the anchor card below (F02) — one
+          // fact needs one word (owner 2026-08-12), and the word is now honest about Draft vs Ready.
+          flag: (nextEvent && GAME_EVENT_TYPES.includes(nextEvent.eventType) && nextLineupBadge !== null)
+            ? {
+                not_started: { text: 'Lineup not started', tone: 'warn' as const },
+                draft: { text: 'Lineup draft', tone: 'warn' as const },
+                needs_review: { text: 'Lineup needs review', tone: 'warn' as const },
+                ready: { text: 'Lineup ready', tone: 'ok' as const },
+              }[nextLineupBadge]
             : null,
         };
       }
@@ -1639,7 +1650,9 @@ export default function TeamOverviewPage({
       && setupStats.activeRosterCount === 0 && setupStats.eventCount === 0,
     // Game prep (owner 2026-08-12) — so the button is the first thing NOT DONE rather than
     // whatever this coach happens to be allowed to do. See the input's own note for the defect.
-    lineupReady: nextLineupReady,
+    // "Ready" here means a coach actually marked the lineup ready (F02) — a saved draft still
+    // prompts this step, which is more honest than the old any-cell-filled reading.
+    lineupReady: nextLineupBadge === 'ready',
     attendanceTaken,
     gameDayOpen,
     practicePlan: nextPracticePlan,
@@ -1864,12 +1877,17 @@ export default function TeamOverviewPage({
             body: <><TriangleAlert size={13} aria-hidden /> Attendance not taken</> });
     }
     // Only once the read has landed — `null` is "not known yet", and a card that guesses about the
-    // lineup is the whole defect this row exists to remove.
-    if (nextLineupReady !== null) {
+    // lineup is the whole defect this row exists to remove. Only Ready (a coach's own act, F02)
+    // reads as done; Draft and Needs review still prompt the coach the same as Not started.
+    if (nextLineupBadge !== null) {
       const lineupHref = chipCaps.lineups ? anchorHref('build_lineup') : null;
-      prepChips.push(nextLineupReady
-        ? { key: 'lineup', state: 'done', href: lineupHref, body: <><CheckCircle2 size={13} aria-hidden /> Lineup set</> }
-        : { key: 'lineup', state: 'todo', href: lineupHref, body: <><TriangleAlert size={13} aria-hidden /> Lineup not set</> });
+      prepChips.push(nextLineupBadge === 'ready'
+        ? { key: 'lineup', state: 'done', href: lineupHref, body: <><CheckCircle2 size={13} aria-hidden /> Lineup ready</> }
+        : nextLineupBadge === 'needs_review'
+          ? { key: 'lineup', state: 'todo', href: lineupHref, body: <><TriangleAlert size={13} aria-hidden /> Lineup needs review</> }
+          : nextLineupBadge === 'draft'
+            ? { key: 'lineup', state: 'todo', href: lineupHref, body: <><TriangleAlert size={13} aria-hidden /> Lineup still a draft</> }
+            : { key: 'lineup', state: 'todo', href: lineupHref, body: <><TriangleAlert size={13} aria-hidden /> Lineup not started</> });
     }
     // ⚠ "10 of 12 in" alone hides WHY the other two are missing — two who said they are out and two
     // who never answered are different mornings, and one of each is a third. So the gap is accounted

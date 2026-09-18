@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-18T15:15:34.713Z",
+  "generated": "2026-09-18T18:35:04.713Z",
   "entries": {
     "coach-practice-record|768|tap-floor|button·Help: Practice plan": {
       "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
@@ -2493,33 +2493,13 @@
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-lineups|361|tap-floor|button·Games": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|361|tap-floor|button·Templates": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|390|tap-floor|button·Games": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|390|tap-floor|button·Templates": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "coach-lineups|768|tap-floor|button·Games": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
-    },
     "coach-lineups|768|tap-floor|button·Help: Lineups": {
       "reason": null,
       "detail": "34px tall (floor 44)"
     },
-    "coach-lineups|768|tap-floor|button·Templates": {
-      "reason": null,
-      "detail": "36px tall (floor 44)"
+    "coach-lineups-templates|768|tap-floor|button·Help: Lineups": {
+      "reason": "Shared coach-portal chrome (sidebar nav, masthead, sign-out), at its grandfathered portal-wide desktop size. Not new and not this screen's: the identical control is already baselined on every other coach screen. It appears here as a NEW key only because coach-fundraisers / coach-payment-requests / coach-allocations had no rendered coverage at all until 2026-08-13. The Lineups → Templates screen joined the sweep on 2026-09-18 when the tab became a real address; the control is the hub's own \"?\" on a second tab.",
+      "detail": "34px tall (floor 44)"
     },
     "coach-overview|768|tap-floor|button·Help: Premium Coaches Portal": {
       "reason": null,
@@ -2757,6 +2737,10 @@
       "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
       "detail": "34px tall (floor 44)"
     },
+    "coach-lineup-template|768|control-width|button·Help: Lineup templates": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. This is the SAME control as the tap-floor entry beside it (the page header's help \"?\", shared portal chrome), first measured under this key on 2026-09-18 when the D8 two-tabs sweep re-measured the template editor — the width rule had never been run against this screen id since it was born.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
     "coach-development-template|768|tap-floor|button·Help: Plan templates": {
       "reason": "DEFERRED, not accepted — SHARED PORTAL CHROME, and it must not be closed one screen at a time. The help \"?\" is the page header's right-corner anchor on EVERY coaches screen (2026-08-11 ruling: help has one findable home portal-wide), so it measures 34px at 768 on all of them, and the identical finding is already recorded at 768 on coach-commitment, coach-payables and coach-transactions with the same standing. The 641-768 pass (owner ruling 2026-08-27, mockups approved) raised every control these six drill-ins OWN and deliberately left this one alone: the standing precedent from the commitment page is that the shared header and toolbar land on every screen id at once or it is not the fix. Its home is the portal-wide touch-debt project (docs/projects/active/COACH_TOUCH_TARGET_DEBT_PLAN.md), where the header/toolbar family is ONE decision across ~28 screens. Do NOT raise it here.",
       "detail": "34px tall (floor 44)"
@@ -2867,6 +2851,10 @@
     },
     "coach-lineups|768|control-width|button·Help: Lineups": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-lineups-templates|768|control-width|button·Help: Lineups": {
+      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. The Lineups → Templates screen joined the sweep on 2026-09-18 when the tab became a real address; the control is the hub's own \"?\" on a second tab.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-practice-plans|768|control-width|button·Help: Practice plans": {

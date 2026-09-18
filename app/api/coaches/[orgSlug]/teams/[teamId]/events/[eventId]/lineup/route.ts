@@ -9,6 +9,7 @@ import {
   getRepTeamEventById,
   getRepTeamLineupEntries,
   getRepTeamLineupForEvent,
+  markRepTeamLineupReady,
   replaceRepTeamLineupEntries,
   upsertRepTeamLineup,
 } from '@/lib/db';
@@ -17,6 +18,8 @@ import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
+import { analyzeLineup } from '@/lib/lineup-analysis';
+import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
 const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
@@ -241,3 +244,38 @@ export const PUT = withObservability(async (req: Request,
     );
   }
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/lineup' });
+
+// Mark ready (Phase 2, D1): the ONLY request path that can set status='ready'. Re-checks the
+// CURRENTLY SAVED lineup fresh from the database — never trusts the client's in-memory analysis —
+// so a coach cannot mark ready a lineup that has open roles or an unresolved conflict, even if
+// their own screen is stale.
+export const PATCH = withObservability(async (_req: Request,
+  { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
+  const { orgSlug, teamId, eventId } = await params;
+  const resolved = await resolveCoachContext(orgSlug, teamId, eventId);
+  if ('error' in resolved) return resolved.error!;
+  const { ctx, team, assignment, programYear, event } = resolved;
+  const denied = denyUnless(assignment.capabilities.lineups, 'You do not have access to lineups.');
+  if (denied) return denied;
+
+  const lineup = await getRepTeamLineupForEvent(eventId);
+  if (!lineup) {
+    return NextResponse.json({ error: 'Build the lineup before marking it ready' }, { status: 400 });
+  }
+  const entries = await getRepTeamLineupEntries(lineup.id);
+  const sportPack = getSportPack(team.sport ?? DEFAULT_SPORT);
+  const analysis = analyzeLineup(
+    entries.map(e => ({ playerId: e.playerId, inningPositions: e.inningPositions })),
+    lineup.inningCount,
+    sportPack.fieldPositions,
+  );
+  if (analysis.readiness !== 'ready') {
+    return NextResponse.json(
+      { error: 'This lineup still has open roles or an issue to resolve before it can be marked ready.' },
+      { status: 409 },
+    );
+  }
+
+  const updated = await markRepTeamLineupReady(lineup.id, ctx.user.id);
+  return NextResponse.json({ lineup: updated, event });
+}, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/lineup#ready' });
