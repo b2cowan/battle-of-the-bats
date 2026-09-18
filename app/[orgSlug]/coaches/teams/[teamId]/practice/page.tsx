@@ -256,11 +256,11 @@ export default function CoachesPracticePlansPage({
 
   const renderRow = (e: RepTeamEvent, past: boolean) => {
     const planned = practiceHasPlan(e);
-    // "Run practice" is offered on EVERY planned practice, past or future (owner, 2026-09-17, on
-    // the P10 no-clock ruling: with no timer there is nothing for a window to protect — the field
-    // is a reader, and a coach may walk a plan before, during or after it). The Schedule's
-    // slide-over and the plan page's toolbar offer the same door off the same condition: a plan
-    // with at least one block. Only the WEIGHT reads the day — the card's lime, below.
+    // ⚠ NO "Run practice" ON A ROW (owner, 2026-09-18: "the 2 clicks to click into the practice and
+    // run is sufficient and will remove a lot of clutter"). For a day every planned row carried the
+    // field door beside it and the list read as a column of lime pills. The shortcut lives on the
+    // NEXT-PRACTICE card alone (here and its twin on the Overview); every other practice is two
+    // taps — open the plan, then Run practice, first in its toolbar on any day.
     // Two halves, two vocabularies (D3): above the line the room is a planner, below it a record.
     // "Open" is the record's door — a past practice, or a coach who cannot write plans — and it is
     // the quiet one; the working doors keep their weight.
@@ -285,8 +285,6 @@ export default function CoachesPracticePlansPage({
         note={past ? practiceRecapLine(e.practiceRecap) : null}
         // The room's one lime lives on the card now (D1) — no row carries it.
         primaryLabel={null}
-        // Beside the row, never inside it — the row stays one control (§3.6).
-        beside={planned ? <Link href={`${base}/practice/${e.id}/run`} className={styles.gdEntryBtn}>Run practice</Link> : undefined}
       />
     );
   };

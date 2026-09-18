@@ -1814,6 +1814,16 @@ summary, both paragraphs, the rotation subtopic ("You're the clock"), the timer 
 search terms; "timer"/"countdown" kept as keywords on purpose so a coach looking for one lands on the article that
 says there isn't one.
 
+**Revised once more, 2026-09-18 (owner, on a screenshot of the hub: "I don't think we need the 'run practice' on
+every practice on the screen … the 2 clicks to click into the practice and 'run' is sufficient and will remove a lot
+of clutter. the run practice shortcut on the top 'next practice' is likely the only one that needs quick access").**
+The rows lost the door — for a day every planned row carried a lime "Run practice" pill and the list read as a
+column of them — and so did the practice's panel on the Schedule, the same per-practice surface one screen over.
+The shortcut lives on the **next-practice card alone** (the hub's, and its twin on the Overview — the lime on the
+day, the quiet link beside "Open the plan" otherwise); every other practice is **two taps**: open the plan, then
+Run practice, first in its toolbar on any day. "Any day" stands; "every surface" does not. The help's two
+articles say so. `.gdEntryBtn` keeps its other reader (the Schedule's game-day pill).
+
 **The §201 walk's parts B (due), C (the two faces outside the window), D (the doors on the day and not a week
 out) and E (the now-marker) are superseded by this ruling**; the rest of that walk stands. The help's two practice articles say the new
 thing in the same work (Run practice on any day, green on the day; opens on the first block every time; a helper's

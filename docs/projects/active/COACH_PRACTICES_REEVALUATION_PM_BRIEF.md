@@ -386,3 +386,8 @@ instead of ten — and a phone counting down at the coach is arguing with the pe
 product's value at the field is the information for the practice; the coach is the clock.
 
 **And the plan page's "now" marker went with it** (owner, same session). The sheet is a plan, never a clock.
+
+**Trimmed the next morning (owner, 2026-09-18).** The rows on Practice plans and the practice's panel on the
+Schedule no longer carry a Run practice button — a column of green pills for practices in October and last May
+was clutter. Any practice can still be run on any day: open its plan, tap Run practice (two taps). The shortcut
+stays where it earns its place — the **Next practice** card, here and on the Overview.

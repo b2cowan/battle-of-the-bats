@@ -28,7 +28,6 @@ import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/Coa
 import { MapPin, Video, FileText, Link2, ExternalLink, StickyNote, ClipboardList, Pencil, Trash2 } from 'lucide-react';
 import { isValidResourceUrl, MAX_EVENT_RESOURCES } from '@/lib/rep-event-resources';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
-import { practiceHasPlan } from '@/lib/practice-state';
 import { useMinuteClock } from '@/lib/use-minute-clock';
 import { buildPostgameDraft, postgameDraftHref } from '@/lib/postgame-draft';
 import { playerDisplayName } from '@/lib/coach-roster-name';
@@ -2791,13 +2790,14 @@ export default function CoachesSchedulePage({
                 the practices shelf on the closed-season page, which reaches a year-aware read
                 route rather than this one.
 
-                ⚠ ONE CONDITION, EVERY DOOR. "Run practice →" is offered on exactly the hub's
-                condition — at least one block (`practiceHasPlan`) — on ANY day (owner, 2026-09-17,
-                with the P10 no-clock ruling: the field is a reader, so there is nothing for a
-                window to protect). It used to be offered whenever a plan ROW existed — on a plan
-                holding only a goal, which the run screen then answered with "There's no plan to
-                run yet" — and for a day it was window-gated (stage 5, P3) to keep a countdown
-                honest. The window survives only as the hub card's and the Overview's WEIGHT. */}
+                ⚠ NO "Run practice →" HERE (owner, 2026-09-18). This panel is one practice's
+                surface, like a row on the Practice plans hub, and the field door left every
+                per-practice surface at once: the shortcut lives on the next-practice card alone
+                (the hub's and the Overview's), and every other practice is two taps — Open the
+                plan, then Run practice, first in the plan's toolbar on any day. Before that it was
+                offered on any plan ROW (a goal-only plan got "There's no plan to run yet"), then
+                window-gated (stage 5, P3), then on any planned practice (P10) — three answers in
+                a week, all to a question the plan page already answers. */}
             {selectedEvent.eventType === 'practice' && (
               <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
                 <h4 className={styles.formSectionTitle}>Practice plan</h4>
@@ -2808,11 +2808,6 @@ export default function CoachesSchedulePage({
                       {selectedEvent.practicePlan.goal ? ` — ${selectedEvent.practicePlan.goal}` : ''}
                     </p>
                     <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
-                      {practiceHasPlan(selectedEvent) && (
-                        <Link href={`${base}/practice/${selectedEvent.id}/run`} className={styles.btnSecondary}>
-                          Run practice →
-                        </Link>
-                      )}
                       <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
                         Open the plan →
                       </Link>
