@@ -1742,7 +1742,7 @@ Schedule section 118 (126), the toolbar 37 (38).
 recorded gap; the Schedule's is closed). The `coach-schedule` screen carries two pre-existing `list-ground` findings
 at 768/1440 from the list-family rule that landed with `1a36e462` — its row list, which this build does not touch.
 
-### 8.8 P10 · The field has no clock — RULED and BUILT 2026-09-17 (owner, in chat, on the built screen)
+### 8.8 P10 · The field has no clock — RULED and BUILT 2026-09-17 (owner, in chat, on the built screen) · COMMITTED `ab4e6f4a` 2026-09-17 · §202 walk owed
 
 **The ruling, in the owner's words:** *"I don't think we should be running a practice timer automatically, these never
 run exactly on time and the main thing we offer is the information for the practice … we could plan for a station
