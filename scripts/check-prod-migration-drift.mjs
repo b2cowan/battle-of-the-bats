@@ -68,9 +68,16 @@ function apiQuery(ref, sql) {
         },
       },
       res => {
-        let d = '';
-        res.on('data', c => (d += c));
+        const chunks = [];
+        res.on('data', c => chunks.push(c));
         res.on('end', () => {
+          // Buffer chunks and decode once at the end — decoding each chunk separately (the
+          // former `let d=''; d += c` pattern) mis-decodes a multi-byte UTF-8 character (an
+          // emoji, say) whenever it straddles a chunk boundary, producing a false "divergent
+          // CHECK constraint" report on data that is actually byte-identical (found 2026-09-18
+          // on chat_message_reactions_emoji_check: prod round-tripped correctly, dev did not,
+          // purely from where a ❤️'s bytes happened to split across two TCP chunks).
+          const d = Buffer.concat(chunks).toString('utf8');
           if (res.statusCode < 200 || res.statusCode >= 300) {
             reject(new Error(`HTTP ${res.statusCode} from project ${ref}: ${d.slice(0, 200)}`));
             return;

@@ -42910,6 +42910,114 @@
         "column_default": "now()"
       },
       {
+        "table_name": "rep_team_circuit_tags",
+        "pos": 1,
+        "column_name": "circuit_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_circuit_tags",
+        "pos": 2,
+        "column_name": "tag_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_circuit_tags",
+        "pos": 3,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "pos": 1,
+        "column_name": "id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": "gen_random_uuid()"
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "pos": 2,
+        "column_name": "org_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "pos": 3,
+        "column_name": "team_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "pos": 4,
+        "column_name": "name",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "NO",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "pos": 5,
+        "column_name": "block",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
+        "is_nullable": "NO",
+        "column_default": "'{}'::jsonb"
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "pos": 6,
+        "column_name": "is_active",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "true"
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "pos": 7,
+        "column_name": "created_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "pos": 8,
+        "column_name": "created_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "pos": 9,
+        "column_name": "updated_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "NO",
+        "column_default": "now()"
+      },
+      {
         "table_name": "rep_team_coaches",
         "pos": 1,
         "column_name": "id",
@@ -43257,6 +43365,15 @@
         "column_name": "scope_player_ids",
         "data_type": "ARRAY",
         "udt_name": "_uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_evaluation_sessions",
+        "pos": 13,
+        "column_name": "scope_attempts",
+        "data_type": "jsonb",
+        "udt_name": "jsonb",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -43680,6 +43797,51 @@
         "column_name": "practice_recap",
         "data_type": "text",
         "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 34,
+        "column_name": "practice_plan_sent_at",
+        "data_type": "timestamp with time zone",
+        "udt_name": "timestamptz",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 35,
+        "column_name": "practice_plan_sent_by",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 36,
+        "column_name": "practice_plan_sent_audience",
+        "data_type": "text",
+        "udt_name": "text",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 37,
+        "column_name": "practice_plan_sent_count",
+        "data_type": "smallint",
+        "udt_name": "int2",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
+        "table_name": "rep_team_events",
+        "pos": 38,
+        "column_name": "practice_plan_sent_email",
+        "data_type": "boolean",
+        "udt_name": "bool",
         "is_nullable": "YES",
         "column_default": null
       },
@@ -44647,15 +44809,6 @@
         "column_default": "'{}'::text[]"
       },
       {
-        "table_name": "rep_team_measurable_types",
-        "pos": 19,
-        "column_name": "replaced_by_id",
-        "data_type": "uuid",
-        "udt_name": "uuid",
-        "is_nullable": "YES",
-        "column_default": null
-      },
-      {
         "table_name": "rep_team_money_in",
         "pos": 1,
         "column_name": "id",
@@ -45500,6 +45653,15 @@
         "udt_name": "timestamptz",
         "is_nullable": "NO",
         "column_default": "now()"
+      },
+      {
+        "table_name": "rep_team_tags",
+        "pos": 9,
+        "column_name": "user_id",
+        "data_type": "uuid",
+        "udt_name": "uuid",
+        "is_nullable": "YES",
+        "column_default": null
       },
       {
         "table_name": "rep_team_tournament_registrations",
@@ -50095,14 +50257,14 @@
         "table_name": "rep_development_goal_reviews",
         "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_development_goal_reviews_goal_team_fkey"
       },
       {
         "table_name": "rep_development_goal_reviews",
         "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_development_goal_reviews_goal_team_fkey"
       },
       {
@@ -50340,14 +50502,14 @@
         "table_name": "rep_evaluation_not_assessed",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_evaluation_not_assessed_player_team_fkey"
       },
       {
         "table_name": "rep_evaluation_not_assessed",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_evaluation_not_assessed_player_team_fkey"
       },
       {
@@ -50382,14 +50544,14 @@
         "table_name": "rep_evaluation_not_assessed",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_evaluation_not_assessed_session_team_fkey"
       },
       {
         "table_name": "rep_evaluation_not_assessed",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_evaluation_not_assessed_session_team_fkey"
       },
       {
@@ -50403,14 +50565,14 @@
         "table_name": "rep_evaluation_not_assessed",
         "column_name": "measurable_type_id",
         "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
       },
       {
         "table_name": "rep_evaluation_not_assessed",
         "column_name": "measurable_type_id",
         "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
       },
       {
@@ -50669,20 +50831,13 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
@@ -50691,6 +50846,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_tryout_registrations",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
       {
@@ -50711,14 +50873,14 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -50753,34 +50915,27 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
@@ -50789,6 +50944,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
+        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
+      },
+      {
+        "table_name": "rep_player_continuity_links",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
       },
       {
@@ -51040,14 +51202,14 @@
         "table_name": "rep_player_notes",
         "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_notes_goal_team_fkey"
       },
       {
         "table_name": "rep_player_notes",
         "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_notes_goal_team_fkey"
       },
       {
@@ -51061,20 +51223,13 @@
         "table_name": "rep_player_notes",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_notes_player_team_fkey"
       },
       {
         "table_name": "rep_player_notes",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_notes_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_notes",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_notes_player_team_fkey"
       },
@@ -51083,6 +51238,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
+        "constraint_name": "rep_player_notes_player_team_fkey"
+      },
+      {
+        "table_name": "rep_player_notes",
+        "column_name": "team_id",
+        "foreign_table": "rep_roster_players",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_notes_player_team_fkey"
       },
       {
@@ -51103,20 +51265,13 @@
         "table_name": "rep_player_observations",
         "column_name": "goal_id",
         "foreign_table": "rep_player_development_goals",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_observations_goal_team_fkey"
       },
       {
         "table_name": "rep_player_observations",
         "column_name": "goal_id",
         "foreign_table": "rep_player_development_goals",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_player_development_goals",
         "foreign_column": "id",
         "constraint_name": "rep_player_observations_goal_team_fkey"
       },
@@ -51125,6 +51280,13 @@
         "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
         "foreign_column": "team_id",
+        "constraint_name": "rep_player_observations_goal_team_fkey"
+      },
+      {
+        "table_name": "rep_player_observations",
+        "column_name": "team_id",
+        "foreign_table": "rep_player_development_goals",
+        "foreign_column": "id",
         "constraint_name": "rep_player_observations_goal_team_fkey"
       },
       {
@@ -51138,14 +51300,14 @@
         "table_name": "rep_player_observations",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_observations_player_team_fkey"
       },
       {
         "table_name": "rep_player_observations",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_observations_player_team_fkey"
       },
       {
@@ -51166,20 +51328,13 @@
         "table_name": "rep_player_observations",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
+        "foreign_column": "id",
         "constraint_name": "rep_player_observations_session_team_fkey"
       },
       {
         "table_name": "rep_player_observations",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_observations_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_observations_session_team_fkey"
       },
@@ -51192,10 +51347,10 @@
       },
       {
         "table_name": "rep_player_observations",
-        "column_name": "measurable_type_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "kind",
-        "constraint_name": "rep_player_observations_skill_fkey"
+        "column_name": "team_id",
+        "foreign_table": "rep_team_evaluation_sessions",
+        "foreign_column": "team_id",
+        "constraint_name": "rep_player_observations_session_team_fkey"
       },
       {
         "table_name": "rep_player_observations",
@@ -51213,16 +51368,16 @@
       },
       {
         "table_name": "rep_player_observations",
-        "column_name": "team_id",
+        "column_name": "measurable_type_id",
         "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "id",
+        "foreign_column": "kind",
         "constraint_name": "rep_player_observations_skill_fkey"
       },
       {
         "table_name": "rep_player_observations",
         "column_name": "team_id",
         "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "kind",
+        "foreign_column": "id",
         "constraint_name": "rep_player_observations_skill_fkey"
       },
       {
@@ -51234,6 +51389,13 @@
       },
       {
         "table_name": "rep_player_observations",
+        "column_name": "team_id",
+        "foreign_table": "rep_team_measurable_types",
+        "foreign_column": "kind",
+        "constraint_name": "rep_player_observations_skill_fkey"
+      },
+      {
+        "table_name": "rep_player_observations",
         "column_name": "metric_kind",
         "foreign_table": "rep_team_measurable_types",
         "foreign_column": "id",
@@ -51243,14 +51405,14 @@
         "table_name": "rep_player_observations",
         "column_name": "metric_kind",
         "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "team_id",
+        "foreign_column": "kind",
         "constraint_name": "rep_player_observations_skill_fkey"
       },
       {
         "table_name": "rep_player_observations",
         "column_name": "metric_kind",
         "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "kind",
+        "foreign_column": "team_id",
         "constraint_name": "rep_player_observations_skill_fkey"
       },
       {
@@ -51450,6 +51612,41 @@
         "constraint_name": "rep_team_award_types_team_id_fkey"
       },
       {
+        "table_name": "rep_team_circuit_tags",
+        "column_name": "circuit_id",
+        "foreign_table": "rep_team_circuits",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_circuit_tags_circuit_id_fkey"
+      },
+      {
+        "table_name": "rep_team_circuit_tags",
+        "column_name": "tag_id",
+        "foreign_table": "rep_team_tags",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_circuit_tags_tag_id_fkey"
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "column_name": "created_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_circuits_created_by_fkey"
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "column_name": "org_id",
+        "foreign_table": "organizations",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_circuits_org_id_fkey"
+      },
+      {
+        "table_name": "rep_team_circuits",
+        "column_name": "team_id",
+        "foreign_table": "rep_teams",
+        "foreign_column": "id",
+        "constraint_name": "rep_team_circuits_team_id_fkey"
+      },
+      {
         "table_name": "rep_team_coaches",
         "column_name": "org_id",
         "foreign_table": "organizations",
@@ -51623,6 +51820,13 @@
         "foreign_table": "rep_team_events",
         "foreign_column": "id",
         "constraint_name": "rep_team_events_parent_event_id_fkey"
+      },
+      {
+        "table_name": "rep_team_events",
+        "column_name": "practice_plan_sent_by",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_events_practice_plan_sent_by_fkey"
       },
       {
         "table_name": "rep_team_events",
@@ -51913,13 +52117,6 @@
       },
       {
         "table_name": "rep_team_measurable_types",
-        "column_name": "replaced_by_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "id",
-        "constraint_name": "rep_team_measurable_types_replaced_by_id_fkey"
-      },
-      {
-        "table_name": "rep_team_measurable_types",
         "column_name": "team_id",
         "foreign_table": "rep_teams",
         "foreign_column": "id",
@@ -52197,6 +52394,13 @@
         "foreign_table": "rep_teams",
         "foreign_column": "id",
         "constraint_name": "rep_team_tags_team_id_fkey"
+      },
+      {
+        "table_name": "rep_team_tags",
+        "column_name": "user_id",
+        "foreign_table": null,
+        "foreign_column": null,
+        "constraint_name": "rep_team_tags_user_id_fkey"
       },
       {
         "table_name": "rep_team_tournament_registrations",
@@ -55401,6 +55605,36 @@
         "indexdef": "CREATE INDEX rep_team_award_types_team_idx ON public.rep_team_award_types USING btree (team_id, is_active, sort_order)"
       },
       {
+        "tablename": "rep_team_circuit_tags",
+        "indexname": "rep_team_circuit_tags_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_circuit_tags_pkey ON public.rep_team_circuit_tags USING btree (circuit_id, tag_id)"
+      },
+      {
+        "tablename": "rep_team_circuit_tags",
+        "indexname": "rep_team_circuit_tags_tag_idx",
+        "indexdef": "CREATE INDEX rep_team_circuit_tags_tag_idx ON public.rep_team_circuit_tags USING btree (tag_id)"
+      },
+      {
+        "tablename": "rep_team_circuits",
+        "indexname": "rep_team_circuits_name_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_circuits_name_uniq ON public.rep_team_circuits USING btree (team_id, lower(btrim(name))) WHERE is_active"
+      },
+      {
+        "tablename": "rep_team_circuits",
+        "indexname": "rep_team_circuits_org_idx",
+        "indexdef": "CREATE INDEX rep_team_circuits_org_idx ON public.rep_team_circuits USING btree (org_id)"
+      },
+      {
+        "tablename": "rep_team_circuits",
+        "indexname": "rep_team_circuits_pkey",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_circuits_pkey ON public.rep_team_circuits USING btree (id)"
+      },
+      {
+        "tablename": "rep_team_circuits",
+        "indexname": "rep_team_circuits_team_idx",
+        "indexdef": "CREATE INDEX rep_team_circuits_team_idx ON public.rep_team_circuits USING btree (team_id, is_active)"
+      },
+      {
         "tablename": "rep_team_coaches",
         "indexname": "rep_team_coaches_pkey",
         "indexdef": "CREATE UNIQUE INDEX rep_team_coaches_pkey ON public.rep_team_coaches USING btree (id)"
@@ -55817,11 +56051,6 @@
       },
       {
         "tablename": "rep_team_measurable_types",
-        "indexname": "rep_team_measurable_types_replaced_by_idx",
-        "indexdef": "CREATE INDEX rep_team_measurable_types_replaced_by_idx ON public.rep_team_measurable_types USING btree (replaced_by_id) WHERE (replaced_by_id IS NOT NULL)"
-      },
-      {
-        "tablename": "rep_team_measurable_types",
         "indexname": "rep_team_measurable_types_team_idx",
         "indexdef": "CREATE INDEX rep_team_measurable_types_team_idx ON public.rep_team_measurable_types USING btree (team_id, is_active, sort_order)"
       },
@@ -56049,6 +56278,11 @@
         "tablename": "rep_team_tags",
         "indexname": "rep_team_tags_team_idx",
         "indexdef": "CREATE INDEX rep_team_tags_team_idx ON public.rep_team_tags USING btree (team_id, kind)"
+      },
+      {
+        "tablename": "rep_team_tags",
+        "indexname": "rep_team_tags_team_user_uniq",
+        "indexdef": "CREATE UNIQUE INDEX rep_team_tags_team_user_uniq ON public.rep_team_tags USING btree (team_id, user_id) WHERE (user_id IS NOT NULL)"
       },
       {
         "tablename": "rep_team_tournament_registrations",
@@ -58484,6 +58718,30 @@
         "check_clause": null
       },
       {
+        "kind": "RLS",
+        "table_name": "rep_team_circuit_tags",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_circuits",
+        "detail": "rep_team_circuits_block_check",
+        "check_clause": "(jsonb_typeof(block) = 'object'::text)"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_circuits",
+        "detail": "rep_team_circuits_name_check",
+        "check_clause": "((char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 120))"
+      },
+      {
+        "kind": "RLS",
+        "table_name": "rep_team_circuits",
+        "detail": "ENABLED",
+        "check_clause": null
+      },
+      {
         "kind": "CHECK",
         "table_name": "rep_team_coaches",
         "detail": "rep_team_coaches_coach_role_check",
@@ -58564,6 +58822,18 @@
       {
         "kind": "CHECK",
         "table_name": "rep_team_evaluation_sessions",
+        "detail": "rep_team_evaluation_sessions_scope_attempts_needs_scope_check",
+        "check_clause": "((scope_attempts IS NULL) OR (scope_metric_ids IS NOT NULL))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_evaluation_sessions",
+        "detail": "rep_team_evaluation_sessions_scope_attempts_object_check",
+        "check_clause": "((scope_attempts IS NULL) OR (jsonb_typeof(scope_attempts) = 'object'::text))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_evaluation_sessions",
         "detail": "rep_team_evaluation_sessions_scope_whole_check",
         "check_clause": "(((scope_metric_ids IS NULL) AND (scope_player_ids IS NULL)) OR ((scope_metric_ids IS NOT NULL) AND (scope_player_ids IS NOT NULL)))"
       },
@@ -58602,6 +58872,12 @@
         "table_name": "rep_team_events",
         "detail": "rep_team_events_home_away_check",
         "check_clause": "(home_away = ANY (ARRAY['home'::text, 'away'::text, 'neutral'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_events",
+        "detail": "rep_team_events_practice_plan_sent_audience_check",
+        "check_clause": "(practice_plan_sent_audience = ANY (ARRAY['named'::text, 'coaches'::text, 'staff'::text]))"
       },
       {
         "kind": "CHECK",
@@ -58822,12 +59098,6 @@
       {
         "kind": "CHECK",
         "table_name": "rep_team_measurable_types",
-        "detail": "rep_team_measurable_types_replaced_is_retired_check",
-        "check_clause": "((replaced_by_id IS NULL) OR (is_active = false))"
-      },
-      {
-        "kind": "CHECK",
-        "table_name": "rep_team_measurable_types",
         "detail": "rep_team_measurable_types_skill_shape_check",
         "check_clause": "((kind <> 'skill'::text) OR ((aim = 'record'::text) AND (headline = 'last'::text) AND (attempts_per_session = 1) AND (range_from IS NULL) AND (range_to IS NULL)))"
       },
@@ -58992,6 +59262,12 @@
         "table_name": "rep_team_tags",
         "detail": "rep_team_tags_name_check",
         "check_clause": "((char_length(btrim(name)) >= 1) AND (char_length(btrim(name)) <= 40))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_tags",
+        "detail": "rep_team_tags_user_is_staff_team_tag",
+        "check_clause": "((user_id IS NULL) OR ((kind = 'staff'::text) AND (team_id IS NOT NULL)))"
       },
       {
         "kind": "RLS",
