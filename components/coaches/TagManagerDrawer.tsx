@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { X } from 'lucide-react';
 import Link from 'next/link';
 import TagManagerList, { type TagManagerListHandle, type TagManagerPolicy } from '@/components/coaches/TagManagerList';
+export type { TagManagerPolicy };
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { ComboTag } from '@/components/coaches/TagSearchCombobox';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';

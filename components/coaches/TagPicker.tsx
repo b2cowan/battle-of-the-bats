@@ -1,5 +1,5 @@
 'use client';
-import TagSearchCombobox, { type ComboTag, type TagManageConfig } from './TagSearchCombobox';
+import TagSearchCombobox, { type ComboPerson, type ComboTag, type TagManageConfig } from './TagSearchCombobox';
 import styles from '../../app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -31,11 +31,16 @@ export interface PickableTag {
   name: string;
   /** null = a club-wide shared tag. A coach may use it but never rename or retire it. */
   teamId?: string | null;
+  /** 'staff' only (mig 303): the person this word IS, or null/absent for a word that is nobody. */
+  userId?: string | null;
 }
+
+/** The staff picker's person — the combobox's own shape, one name (mig 303). */
+export type PickablePerson = ComboPerson;
 
 export default function TagPicker({
   all, selected, onChange, onCreate, disabled, single, label, emptyHint, placeholder,
-  adoptNames, onAdopt, manage, onManageChanged, autoFocus,
+  adoptNames, onAdopt, manage, onManageChanged, autoFocus, people, onPickPerson,
 }: {
   all: readonly PickableTag[];
   selected: readonly string[];
@@ -55,6 +60,10 @@ export default function TagPicker({
   onManageChanged?: () => void;
   /** Passed straight through to `TagSearchCombobox` — focuses the search box on mount. */
   autoFocus?: boolean;
+  /** The staff picker's "People on this team" group (mig 303) — omit on every other library. */
+  people?: readonly PickablePerson[];
+  /** Mints a word linked to a person who has none yet — absent on a read-only surface. */
+  onPickPerson?: (person: PickablePerson) => Promise<PickableTag | null>;
 }) {
   return (
     <div className={styles.ppField}>
@@ -63,6 +72,8 @@ export default function TagPicker({
         library={all as readonly ComboTag[]}
         selectedIds={[...selected]}
         onChange={onChange}
+        people={people}
+        onPickPerson={onPickPerson}
         onCreate={onCreate as ((name: string) => Promise<ComboTag | null>) | undefined}
         disabled={disabled}
         single={single}

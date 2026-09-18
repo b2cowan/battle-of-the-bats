@@ -252,6 +252,9 @@ describe('billing rail — a cancelled subscription stops working', () => {
       'requireStaffManagerMembership', // lib/coach-membership.ts        → requireStaffGate → getAuthContext (requireOrgSlug: true)
       // Development lifecycle Phase 2 (2026-09-13): the per-player development writes' shared gate.
       'resolveDevelopmentPlayerContext', // lib/development-player-route.ts → getAuthContext (requireOrgSlug: true)
+      // A station knows who runs it (2026-09-17): the practice plan's GET/PUT/PATCH and its
+      // "Send to staff" route share ONE context, extracted so the second could not re-type the chain.
+      'resolvePracticePlanRouteContext', // lib/practice-plan-route-context.ts:24 → getAuthContext (requireOrgSlug: true)
     ];
 
     // ⚠ SCOPE LIMIT, STATED SO IT IS NOT MISTAKEN FOR COVERAGE: only `[orgSlug]` routes. The FREE

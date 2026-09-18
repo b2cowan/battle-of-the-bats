@@ -1,7 +1,7 @@
 'use client';
-import { use, useCallback, useEffect, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
-import { BookMarked, CalendarDays, ClipboardList, Library, NotebookPen, Play, Printer, Ruler, Telescope, X } from 'lucide-react';
+import { BookMarked, CalendarDays, ClipboardList, Library, NotebookPen, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
@@ -16,7 +16,7 @@ import {
 } from '@/lib/export';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { canWriteDevelopment } from '@/lib/coach-capabilities';
-import { formatInOrgZone } from '@/lib/timezone';
+import { formatInOrgZone, orgDayKey } from '@/lib/timezone';
 import { formatStoredClock } from '@/lib/utils';
 import { useMinuteClock } from '@/lib/use-minute-clock';
 import {
@@ -27,7 +27,7 @@ import {
   MAX_RECAP_LEN,
   blockOwnPeople, blockRotates, computeBlockClocks, computeRotation, copyPracticePlanForReuse, emptyPracticePlan, rotationByStation,
   formatDuration, isPracticePlanEmpty, newPracticePlanId, practiceKitBag, resolvePracticePlanTagNames,
-  resolveStationTeaching, soleStationOf, stationLabel, tagNamesById,
+  resolveStationTeaching, soleStationOf, stationLabel, tagNamesById, levelsForStaffTags, practicePlanLevels,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
@@ -44,9 +44,11 @@ import PracticePlanEditor, {
 import type { DrillInput, RepTeamDrill } from '@/lib/rep-drills';
 import type { CircuitInput, RepTeamCircuit } from '@/lib/rep-circuits';
 import type { PracticeWeekScoutingBridge } from '@/lib/coach-opponent-nudge';
-import type { PickableTag } from '@/components/coaches/TagPicker';
+import type { PickablePerson, PickableTag } from '@/components/coaches/TagPicker';
+import PracticeSendSheet, { type SendSheetChoice } from '../_PracticeSendSheet';
+import { AUDIENCE_SENT_LABEL, practiceDayLabel, type PracticeStaffPerson } from '@/lib/practice-plan-send';
 import styles from '../../../../coaches.module.css';
-import type { RepAttendanceStatus, RepTeamEvaluationSession, RepTeamEvent } from '@/lib/types';
+import type { PracticePlanSentStamp, RepAttendanceStatus, RepTeamEvaluationSession, RepTeamEvent } from '@/lib/types';
 
 type PreviousPlan = {
   eventId: string;
@@ -110,6 +112,12 @@ type LoadState = {
   canWrite: boolean;
   canViewFocus: boolean;
   canViewAttendance: boolean;
+  /** The reader's own id (mig 303) — with each staff tag's `userId`, what decides "mine" here and in the send sheet. */
+  viewerUserId?: string;
+  /** The season's staff as people — the pickers' first group and the send sheet's audiences. */
+  staffPeople?: PracticeStaffPerson[];
+  /** The last "Send to staff" (mig 303), for the toolbar's sent state — null until the first. */
+  sent?: PracticePlanSentStamp | null;
 };
 
 const errorMessage = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
@@ -162,6 +170,15 @@ const fmtDate = (iso: string) =>
 const fmtTime = (iso: string) => formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit', hour12: true });
 /** "Tue, May 5" — the sheet's first line, which is about THIS week, not a year. */
 const fmtDay = (iso: string) => formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric' });
+/** "Tuesday" / "Sep 29" — the send's title, the word a coach uses at the field (see `practiceDayLabel`). */
+const fmtWeekday = (iso: string) => formatInOrgZone(iso, { weekday: 'long' });
+const fmtShortDate = (iso: string) => formatInOrgZone(iso, { month: 'short', day: 'numeric' });
+
+/** "4:12 p.m." today; "Sep 16, 4:12 p.m." on another day — the sent state's clock, in the org's day. */
+function sentWhenLabel(iso: string, nowMs: number): string {
+  const sameDay = orgDayKey(iso) === orgDayKey(new Date(nowMs).toISOString());
+  return sameDay ? fmtTime(iso) : `${fmtShortDate(iso)}, ${fmtTime(iso)}`;
+}
 
 export default function CoachPracticePlanPage({
   params: paramsPromise,
@@ -233,8 +250,9 @@ export default function CoachPracticePlanPage({
   const [pastLoading, setPastLoading] = useState(false);
   const [pastError, setPastError] = useState('');
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
+  const [sendOpen, setSendOpen] = useState(false);
   // Same shared overlay stack as every other sheet in the portal (nav-hide + body-scroll lock).
-  useOverlayOpen(copyOpen || saveTemplateOpen);
+  useOverlayOpen(copyOpen || saveTemplateOpen || sendOpen);
   /**
    * THE DOCKED LIBRARY (practices re-evaluation stage 4, owner ruling L5, 2026-09-16 — A).
    *
@@ -288,6 +306,61 @@ export default function CoachPracticePlanPage({
   // laptop through the evening grows the box at the start, not on the next reload.
   const nowMs = useMinuteClock();
 
+  /**
+   * The staff picker's "pick a person" path (mig 303): mint the team's word for them, linked. The
+   * word defaults to their name; the manager renames it to "Jen" in one press if the coach prefers.
+   */
+  const pickStaffPerson = useCallback(
+    (person: PickablePerson) => createStaffTag(person.name, { userId: person.userId }),
+    [createStaffTag],
+  );
+
+  /**
+   * The reader's own levels (mig 303) — by IDENTITY: their staff tag(s), matched by id at every
+   * level through the one reader's walk. Never a name. The editor's marks and the strip read it.
+   */
+  const mineTags = useMemo(() => {
+    const me = data?.viewerUserId;
+    return new Set(staffTags.filter(t => t.userId != null && t.userId === me).map(t => t.id));
+  }, [data?.viewerUserId, staffTags]);
+  const mine = useMemo(() => levelsForStaffTags(plan, mineTags), [plan, mineTags]);
+
+  /**
+   * "You're on …" (ruling G): the reader's blocks and stations in practice order, each with the
+   * block's planned clock and a jump to its row. Empty for a reader not named on this plan — and
+   * then nothing renders.
+   */
+  const youreOn = useMemo(() => {
+    if (mine.blockIds.length === 0 && mine.stationIds.length === 0) return [];
+    const clocks = computeBlockClocks(plan.blocks, data?.event?.startsAt, data?.event?.endsAt);
+    return practicePlanLevels(plan, mineTags).flatMap(l => {
+      const time = clocks[l.index]?.startLabel ?? null;
+      const href = `#block-${l.block.id}`;
+      const stations = l.stations.filter(s => s.mine);
+      return [
+        ...(l.mine ? [{ key: l.block.id, href, time, label: l.title, detail: null as string | null }] : []),
+        ...(stations.length > 0 ? [{ key: `${l.block.id}:stations`, href, time, label: l.title, detail: stations.map(s => s.label).join(' · ') }] : []),
+      ];
+    });
+  }, [mine, mineTags, plan, data?.event?.startsAt, data?.event?.endsAt]);
+
+  /**
+   * The people (mig 303) with each one's word read off the FRESH tag library, not the first
+   * GET's snapshot: a link made in "Manage staff…" reloads `staffTags` (`onStaffTagsChanged`),
+   * and the sheet's "Named in this plan" and the picker's group must see it at once — the route
+   * re-reads both when it sends, and the number the coach read must be the number that goes
+   * (/review, 2026-09-18).
+   */
+  const staffPeople = useMemo<PracticeStaffPerson[]>(() => {
+    const tagByUser = new Map(staffTags.filter(t => t.userId).map(t => [t.userId as string, t.id]));
+    return (data?.staffPeople ?? []).map(p => ({ ...p, tagId: tagByUser.get(p.userId) ?? null }));
+  }, [data?.staffPeople, staffTags]);
+  /** The picker's people: the wire shape narrowed to what the dropdown prints. */
+  const staffPeopleForPicker = useMemo<PickablePerson[]>(
+    () => staffPeople.map(p => ({ userId: p.userId, name: p.name, kindWord: p.kindWord, tagId: p.tagId })),
+    [staffPeople],
+  );
+
   // Team-resolved PDF settings (D4: team look → club look → defaults) — optional; the
   // sheet falls back to defaults. Cleanup-guarded so a slow response for a previous team
   // can never land as this team's branding.
@@ -338,6 +411,9 @@ export default function CoachPracticePlanPage({
   const planSig = JSON.stringify(plan);
   const planSigRef = useRef(planSig);
   useEffect(() => { planSigRef.current = planSig; }, [planSig]);
+  // Read by "Send to staff" at press time — a dirty plan is saved before it goes.
+  const dirtyRef = useRef(dirty);
+  useEffect(() => { dirtyRef.current = dirty; }, [dirty]);
 
   const handleSave = useCallback(async (): Promise<boolean> => {
     if (!data?.canWrite) return true;
@@ -376,6 +452,32 @@ export default function CoachPracticePlanPage({
       setSaving(false);
     }
   }, [data?.canWrite, orgSlug, teamId, eventId, plan]);
+
+  /**
+   * "Send to staff" — one POST; the route decides the recipients with the same rule the sheet
+   * previewed, dispatches the bell + push (and the coach's email when ticked), and stamps the
+   * practice. The stamp comes back and the toolbar's sent state reads it.
+   */
+  const sendToStaff = useCallback(async (choice: SendSheetChoice): Promise<{ ok: boolean; error?: string }> => {
+    // The route reads the plan from the database. A keystroke inside the autosave's second, or a
+    // save still in flight, would send the plan as it WAS while the sheet previewed the plan as
+    // it is — so a dirty plan is saved first, and a save that fails stops the send (/review).
+    if (dirtyRef.current) {
+      const saved = await handleSave();
+      if (!saved) return { ok: false, error: 'The plan hasn’t saved yet — try again in a moment.' };
+    }
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/practice-plan/send`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(choice),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) return { ok: false, error: json.error ?? 'Could not send the plan.' };
+      setData(d => (d ? { ...d, sent: json.sent ?? d.sent ?? null } : d));
+      return { ok: true };
+    } catch (e: unknown) {
+      return { ok: false, error: errorMessage(e, 'Could not send the plan.') };
+    }
+  }, [orgSlug, teamId, eventId, handleSave]);
 
   // Autosave ~0.9s after the last change — the portal's established "no Save button" posture.
   //
@@ -1125,6 +1227,15 @@ export default function CoachPracticePlanPage({
                   <button type="button" className={styles.btnSecondary} onClick={handlePrint}>
                     <Printer size={14} aria-hidden /> Print the sheet
                   </button>
+                  {/* "Send to staff" (COACH_PRACTICE_WHO_RUNS_IT, 2026-09-17) — the explicit act the
+                      autosaving plan has no other "done" for (F04). A secondary button: the sheet's
+                      first block (or, in the window, Run practice) keeps the page's one lime. Only
+                      for a writer, only with blocks, and only when there is a staff to send to. */}
+                  {canWrite && (data.staffPeople?.length ?? 0) > 1 && (
+                    <button type="button" className={styles.btnSecondary} onClick={() => setSendOpen(true)} data-testid="send-to-staff">
+                      <Send size={14} aria-hidden /> Send to staff
+                    </button>
+                  )}
                   {/* The docked library's quiet toggle (stage 4, L5), at the toolbar's right end — pressed
                       while docked. ABSENT below a 1,156px working column, not disabled: a 1,366 laptop
                       never sees it and keeps the sheet. On the blank page (no toolbar yet) the ghost
@@ -1136,6 +1247,20 @@ export default function CoachPracticePlanPage({
                     </button>
                   )}
                 </div>
+              )}
+              {/* The sent state (mig 303's stamp) — the last send, whoever pressed it, as a fact under
+                  the toolbar: who, which audience, which channels, when. Re-sending is always allowed
+                  and needs no reason (ruling H deferred "changed since you sent it"). */}
+              {hasBlocks && data.sent && (
+                <p className={styles.ppSentLine} data-testid="sent-to-staff">
+                  <b>Sent to {data.sent.count ?? 0}</b>
+                  {data.sent.audience && <> ({AUDIENCE_SENT_LABEL[data.sent.audience]})</>}
+                  {' · '}{data.sent.email ? 'bell, push and email' : 'bell and push'}
+                  {' · '}{sentWhenLabel(data.sent.at, nowMs)}
+                  {canWrite && (data.staffPeople?.length ?? 0) > 1 && (
+                    <button type="button" className={styles.ppLinkBtn} onClick={() => setSendOpen(true)}>Send again</button>
+                  )}
+                </p>
               )}
 
               {/* ── THE PAIR (L5): the sheet, and beside it — docked, on a wide desktop — the library
@@ -1155,6 +1280,23 @@ export default function CoachPracticePlanPage({
                     </Link>
                   )}
                 </div>
+
+                {/* ── "You're on …" (COACH_PRACTICE_WHO_RUNS_IT, ruling G) — ONLY when the reader is
+                    named on this plan, decided by identity (mig 303). One support-size line under the
+                    where-line: each entry is their block, or their station under its block, in
+                    practice order, and a jump to that row. Never an empty strip; never on paper. */}
+                {youreOn.length > 0 && (
+                  <div className={styles.ppYoureOn} data-testid="youre-on">
+                    <span className={styles.ppYoureOnLabel}>You&rsquo;re on</span>
+                    {youreOn.map(e => (
+                      <a key={e.key} href={e.href} className={styles.ppYoureOnItem}>
+                        {e.time && <span className={styles.ppYoureOnTime}>{e.time}</span>}
+                        {e.label}
+                        {e.detail && <span className={styles.ppYoureOnDetail}> › {e.detail}</span>}
+                      </a>
+                    ))}
+                  </div>
+                )}
 
                 {/* ── The provenance line (D14, frame 05) ──
                     ⚠ It is doing real work, not decoration: without it a coach reasonably fears that
@@ -1203,6 +1345,10 @@ export default function CoachPracticePlanPage({
                   onCreateFocusTag={canWrite ? createFocusTag : undefined}
                   staffTags={staffTags}
                   onCreateStaffTag={canWrite ? createStaffTag : undefined}
+                  staffPeople={staffPeopleForPicker}
+                  onPickStaffPerson={canWrite ? pickStaffPerson : undefined}
+                  viewerBlockIds={mine.blockIds}
+                  viewerStationIds={mine.stationIds}
                   equipmentTags={equipmentTags}
                   onCreateEquipmentTag={canWrite ? createEquipmentTag : undefined}
                   planTagIds={planTagIds}
@@ -1366,6 +1512,24 @@ export default function CoachPracticePlanPage({
             <div className={styles.ppPickList}>{renderPickList()}</div>
           </div>
         </div>
+      )}
+
+      {/* ── "Send to staff" — exactly ONE question: who (and whether your email goes with it) ── */}
+      {sendOpen && data && event && (
+        <PracticeSendSheet
+          teamId={teamId}
+          people={staffPeople}
+          staffTags={staffTags}
+          plan={plan}
+          viewerUserId={data.viewerUserId ?? ''}
+          message={{
+            dayLabel: practiceDayLabel(event.startsAt, nowMs, { weekday: fmtWeekday, shortDate: fmtShortDate }),
+            startLabel: fmtTime(event.startsAt),
+            arriveLabel: event.arrivalTime ? formatStoredClock(event.arrivalTime) : null,
+          }}
+          onSend={sendToStaff}
+          onClose={() => setSendOpen(false)}
+        />
       )}
 
       {/* ── "Save as template…" (frame 04) — exactly ONE question: the name ── */}

@@ -29,7 +29,7 @@ import {
   circuitToBlock, pointStationsAtDrills, tickRowsFor, fromDrillsLine, blockToCircuitShape,
   type CircuitInput, type RepTeamCircuit, type TickRow,
 } from '@/lib/rep-circuits';
-import TagPicker, { type PickableTag } from '@/components/coaches/TagPicker';
+import TagPicker, { type PickablePerson, type PickableTag } from '@/components/coaches/TagPicker';
 import PracticeTagPicker from '@/components/coaches/PracticeTagPicker';
 import type { TagManageConfig } from '@/components/coaches/TagSearchCombobox';
 import { CoachingPointsField, FieldLabel, OPEN_DOOR, TeachingFields, type TeachingDoor } from '@/components/coaches/PracticeFields';
@@ -323,7 +323,7 @@ type DoorProps = Omit<TeachingDoor, 'show'>;
  */
 function StationFields({
   station, block, sole, isRotation, readOnly, withoutPeople, doors,
-  staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag,
+  staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, equipmentTags, onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   nameOf, onPatch, onOpenPicker, onDetach, onSwapDrill, onPromote,
 }: {
@@ -340,6 +340,9 @@ function StationFields({
   doors?: (door: StationDoor) => TeachingDoor;
   staffTags: PickableTag[];
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
+  /** The staff picker's "People on this team" group (mig 303) — absent on a read-only surface. */
+  staffPeople?: readonly PickablePerson[];
+  onPickStaffPerson?: (person: PickablePerson) => Promise<PickableTag | null>;
   equipmentTags: PickableTag[];
   onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
   staffManage?: TagManageConfig;
@@ -419,9 +422,10 @@ function StationFields({
           <FieldLabel onRemove={staff.onRemove} removeLabel={staff.removeLabel}>{staffLabel}</FieldLabel>
           <PracticeTagPicker all={staffTags} ids={station.staffTagIds ?? []}
             legacyNames={station.staff} disabled={readOnly} onCreate={onCreateStaffTag}
+            people={staffPeople} onPickPerson={onPickStaffPerson}
             manage={staffManage} onManageChanged={onStaffTagsChanged}
             onChange={next => onPatch({ staffTagIds: next })}
-            emptyHint="No staff yet — type a name to add your first one."
+            emptyHint="No staff yet — pick someone on the team, or type a name."
             autoFocus={staff.autoFocus} />
         </div>
       )}
@@ -501,13 +505,20 @@ function StationFields({
  * FRAME holding the door (a button named by its content) and the pair beside its "Open ›" — an
  * arrow can't sit inside the door, because a button can't hold a button.
  */
+/** The small olive "you" beside a block or station that is the reader's (mig 303). */
+function YouMark() {
+  return <span className={styles.ppYouMark} aria-label="Yours">you</span>;
+}
+
 function StationColumns({
-  blockId, stations, readOnly, staffTags, onOpen, onMove, onAdd,
+  blockId, stations, readOnly, staffTags, mineStations, onOpen, onMove, onAdd,
 }: {
   blockId: string;
   stations: PracticeStation[];
   readOnly: boolean;
   staffTags: PickableTag[];
+  /** The reader's own stations, by identity — the "you" mark and the olive edge. */
+  mineStations: ReadonlySet<string>;
   onOpen: (stationId: string) => void;
   onMove: (stationId: string, delta: number) => void;
   onAdd: () => void;
@@ -517,11 +528,12 @@ function StationColumns({
       {stations.map((station, i) => {
         const who = mergedTagNames(station.staff, station.staffTagIds, staffTags);
         const label = stationLabel(station, i);
+        const mine = mineStations.has(station.id);
         return (
-          <div key={station.id} className={styles.ppStCol}>
+          <div key={station.id} id={`station-${station.id}`} className={styles.ppStCol} data-mine={mine ? 'mine' : undefined}>
             <button type="button" className={styles.ppStColDoor} onClick={() => onOpen(station.id)}>
               <span className={station.name.trim() ? styles.ppStColName : `${styles.ppStColName} ${styles.ppTlUntitled}`}>
-                {label}
+                {label}{mine && <YouMark />}
               </span>
               {who.length > 0 && <span className={styles.ppStColLine}>{who.join(' · ')}</span>}
               {station.note && <span className={styles.ppStColNote}>Tonight: {station.note}</span>}
@@ -647,7 +659,7 @@ function GapTarget({ index, startLabel, blockCount }: { index: number; startLabe
  */
 function StationModal({
   block, station, readOnly, withoutPeople,
-  staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag,
+  staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, equipmentTags, onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   nameOf, onPatch, onDelete, onStep, onClose, onOpenPicker, onDetach, onSwapDrill, onPromote,
 }: {
@@ -657,6 +669,9 @@ function StationModal({
   withoutPeople: boolean;
   staffTags: PickableTag[];
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
+  /** The staff picker's "People on this team" group (mig 303) — absent on a read-only surface. */
+  staffPeople?: readonly PickablePerson[];
+  onPickStaffPerson?: (person: PickablePerson) => Promise<PickableTag | null>;
   equipmentTags: PickableTag[];
   onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
   staffManage?: TagManageConfig;
@@ -704,7 +719,7 @@ function StationModal({
           <StationFields
             station={station} block={block} sole={false} isRotation={isRotation}
             readOnly={readOnly} withoutPeople={withoutPeople}
-            staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
+            staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
             equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
             staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
             equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
@@ -1480,7 +1495,7 @@ function PromoteDialog({
 function BlockCard({
   block, index, blockCount, clock, blockStartMs, open, focusTitle, openDoors, readOnly, withoutPeople, solo,
   restTakenElsewhere, roster, notRepliedIds,
-  staffTags, onCreateStaffTag, equipmentTags, onCreateEquipmentTag, nameOf,
+  staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, mineBlocks, mineStations, equipmentTags, onCreateEquipmentTag, nameOf,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   onOpen, onClose, onOpenDoor, onCloseDoor, onMove, onDelete, onPatch, onOpenPicker, onAddStation, onDetachStation,
   onSwapStation, onPromoteStation, onPromoteBlock, onPromoteCircuit, onOpenStation, onPatchStation, onMoveStation, onOpenGroups,
@@ -1509,6 +1524,12 @@ function BlockCard({
   notRepliedIds: ReadonlySet<string>;
   staffTags: PickableTag[];
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
+  /** The staff picker's "People on this team" group (mig 303) — absent on a read-only surface. */
+  staffPeople?: readonly PickablePerson[];
+  onPickStaffPerson?: (person: PickablePerson) => Promise<PickableTag | null>;
+  /** The reader's own blocks and stations, by identity — the "you" marks. */
+  mineBlocks: ReadonlySet<string>;
+  mineStations: ReadonlySet<string>;
   equipmentTags: PickableTag[];
   onCreateEquipmentTag?: (name: string) => Promise<PickableTag | null>;
   staffManage?: TagManageConfig;
@@ -1622,8 +1643,11 @@ function BlockCard({
       stationCount >= 2 ? `${stationCount} stations` : null,
       withoutPeople || stationCount > 0 ? null : playerCount > 0 ? `${playerCount} player${playerCount === 1 ? '' : 's'}` : 'Whole team',
     ].filter(Boolean).join(' · ');
+    // The reader's block (mig 303): its own staff, or — when the station is the block — that
+    // station's. A block whose people live on its stations wears the mark on the columns, not here.
+    const mine = mineBlocks.has(block.id) || (!!sole && mineStations.has(sole.id));
     return (
-      <div className={styles.ppTlRow}>
+      <div className={styles.ppTlRow} id={`block-${block.id}`}>
         {gutter}
         {/* The row's accessible name is its CONTENT — title, first line, watching for, who — with a
             hidden "Open" verb in front; an aria-label would replace all of that with the title
@@ -1633,6 +1657,7 @@ function BlockCard({
           <span className={styles.ppTlTitle}>
             {block.title || <span className={styles.ppTlUntitled}>{label}</span>}
             {isRotation && <span className={styles.ppShapeTag}><Repeat size={11} aria-hidden /> Rotation</span>}
+            {mine && <YouMark />}
           </span>
           {firstLine && <span className={styles.ppTlDesc}>{firstLine}</span>}
           {watchingFor && <span className={styles.ppTlWatch}><b>Watching for:</b> {watchingFor}</span>}
@@ -1835,9 +1860,10 @@ function BlockCard({
             <FieldLabel onRemove={staffDoor.onRemove} removeLabel={staffDoor.removeLabel}>Staff</FieldLabel>
             <PracticeTagPicker all={staffTags} ids={block.staffTagIds ?? []}
               legacyNames={block.staff} disabled={readOnly} onCreate={onCreateStaffTag}
+              people={staffPeople} onPickPerson={onPickStaffPerson}
               manage={staffManage} onManageChanged={onStaffTagsChanged}
               onChange={next => onPatch({ staffTagIds: next })}
-              emptyHint="No staff yet — type a name to add your first one."
+              emptyHint="No staff yet — pick someone on the team, or type a name."
               /* A block that already carries a drill (its own card, own fields) can push this
                  door well down the sheet — opening it with no signal left the field off the
                  top of the screen (owner catch, 2026-09-15). Focusing it here scrolls it into
@@ -1903,7 +1929,7 @@ function BlockCard({
             station={sole} block={block} sole isRotation={false}
             readOnly={readOnly} withoutPeople={withoutPeople}
             doors={stationDoor}
-            staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
+            staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
             equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
             staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
             equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
@@ -1938,6 +1964,7 @@ function BlockCard({
               stations={stations}
               readOnly={readOnly}
               staffTags={staffTags}
+              mineStations={mineStations}
               onOpen={onOpenStation}
               onMove={onMoveStation}
               onAdd={() => onAddStation()}
@@ -2096,6 +2123,15 @@ interface Props {
    * block: once a coach has written one, copying a template over it is no longer a start.
    */
   onStartFrom?: () => void;
+  /**
+   * The season's staff as people (mig 303) — the staff pickers' first group — and how to mint a
+   * word linked to one; absent on a read-only surface, the template room and the circuit editor.
+   */
+  staffPeople?: readonly PickablePerson[];
+  onPickStaffPerson?: (person: PickablePerson) => Promise<PickableTag | null>;
+  /** The reader's own blocks and stations, decided server-side by identity — the "you" marks. */
+  viewerBlockIds?: readonly string[];
+  viewerStationIds?: readonly string[];
 }
 
 export default function PracticePlanEditor({
@@ -2106,8 +2142,12 @@ export default function PracticePlanEditor({
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   focusManage, onFocusTagsChanged,
   eventStartsAt, eventEndsAt, readOnly, withoutPeople = false, onStartFrom,
+  staffPeople = [], onPickStaffPerson, viewerBlockIds, viewerStationIds,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
+  // The reader's own levels (mig 303), as the rows keep them.
+  const mineBlocks = useMemo(() => new Set(viewerBlockIds ?? []), [viewerBlockIds]);
+  const mineStations = useMemo(() => new Set(viewerStationIds ?? []), [viewerStationIds]);
   /**
    * The THREE callers' shapes, decided once (stage 4): the practice (everything), the template
    * (`withoutPeople` — no roster, staff, groups, "just for tonight") and the circuit editor
@@ -2947,7 +2987,8 @@ export default function PracticePlanEditor({
             restTakenElsewhere={!layout.restOffered || (restBlockId != null && restBlockId !== block.id)}
             roster={roster}
             notRepliedIds={notRepliedIds}
-            staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
+            staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
+            mineBlocks={mineBlocks} mineStations={mineStations}
             equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
             staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
             equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
@@ -3119,7 +3160,7 @@ export default function PracticePlanEditor({
           station={openStationRow}
           readOnly={readOnly}
           withoutPeople={withoutPeople}
-          staffTags={staffTags} onCreateStaffTag={onCreateStaffTag}
+          staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
           equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
           staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
           equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}

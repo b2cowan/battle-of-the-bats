@@ -1,16 +1,10 @@
 import { NextResponse } from 'next/server';
-import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
-  getCoachingAssignmentsForUser,
-  getRepTeam,
-  getActiveRepProgramYear,
-  getRepTeamEventById,
   getRepTeamEventAttendance,
   getRepTeamEventsWithPracticePlans,
   hasRepTeamPastSeasonPracticePlans,
   getRepTeamEvaluationSessionsForEvent,
   getRepRosterPlayers,
-  getRepTeamStaffForYear,
   getRepTeamDevelopmentGoalsForPlayers,
   getDrillsForTeam,
   getRepTeamCircuits,
@@ -23,6 +17,7 @@ import {
   updateRepTeamEventPracticeRecap,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { resolvePracticePlanRouteContext } from '@/lib/practice-plan-route-context';
 import { getScoutingBridgeForPractice } from '@/lib/coach-opponent-nudge';
 import {
   denyUnless, canManageSchedule, canViewSchedule, canWritePracticePlans, canReadPastPracticePlans,
@@ -31,6 +26,8 @@ import {
 import {
   MAX_RECAP_LEN, sanitizePracticePlan,
 } from '@/lib/rep-practice-plan';
+import { staffPeopleFromMembers, stripStaffPersonForWire } from '@/lib/practice-plan-staff';
+import { getTeamStaffPanelList } from '@/lib/coach-membership';
 import { MAX_TAGS_PER_ITEM, uniqueIds } from '@/lib/rep-drills';
 
 /**
@@ -55,47 +52,8 @@ import { MAX_TAGS_PER_ITEM, uniqueIds } from '@/lib/rep-drills';
  * one event id. It accepts no `scope` parameter and touches no recurrence machinery, so a
  * "this & future"/"all" edit can never reach a plan and overwrite a season of thinking.
  */
-async function resolveContext(orgSlug: string, teamId: string, eventId: string) {
-  const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return { error: unauthorized() };
-  if (ctx.org.slug !== orgSlug) return { error: forbidden() };
-
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx.org.id) {
-    return { error: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
-  }
-
-  const [assignments, programYear] = await Promise.all([
-    getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id),
-    getActiveRepProgramYear(teamId),
-  ]);
-  const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
-  if (!programYear) {
-    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  }
-
-  const event = await getRepTeamEventById(eventId);
-  if (!event || event.programYearId !== programYear.id) {
-    return { error: NextResponse.json({ error: 'Event not found' }, { status: 404 }) };
-  }
-
-  // ⚠ A practice plan is a PRACTICE concept, and that has to be enforced here rather than left to
-  // the fact that only a practice renders a link to this screen. Without it a typed URL (or any
-  // later caller) could hang the whole stations/rotation/groups model off a game or a tournament.
-  // "A plan on a team event or a pre-game warm-up" is an explicit fast-follow in the plan doc, not
-  // something that should arrive by accident — widening this is a deliberate decision, one line here.
-  if (event.eventType !== 'practice') {
-    return {
-      error: NextResponse.json(
-        { error: 'Practice plans belong to practices. This event isn’t one.' },
-        { status: 400 },
-      ),
-    };
-  }
-
-  return { ctx, team, assignment, programYear, event };
-}
+/** The GET/PUT/PATCH context — shared with `…/practice-plan/send` (`lib/practice-plan-route-context.ts`). */
+const resolveContext = resolvePracticePlanRouteContext;
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
@@ -131,7 +89,7 @@ export const GET = withObservability(async (_req: Request,
   const playersPromise = getRepRosterPlayers(programYear.id)
     .then(all => all.filter(p => p.status === 'active'));
   const [
-    players, goals, attendance, previousEvents, sessions, staff, drills, circuits,
+    players, goals, attendance, previousEvents, sessions, members, drills, circuits,
     templates, focusTags, staffTags, equipmentTags, eventTagMap, scoutingBridge, hasPastSeasonPlans,
   ] = await Promise.all([
     playersPromise,
@@ -154,7 +112,10 @@ export const GET = withObservability(async (_req: Request,
     canViewMeasurables(caps)
       ? getRepTeamEvaluationSessionsForEvent(eventId, teamId, programYear.id)
       : Promise.resolve([]),
-    getRepTeamStaffForYear(programYear.id, ctx.org.id),
+    // The staff as MEMBERSHIPS (the access truth since mig 245), identities resolved ONCE here —
+    // the picker's people, the send sheet's audiences and the helper's head-coach line all read
+    // this one list (a second identity resolution per read was the /simplify catch, 2026-09-18).
+    getTeamStaffPanelList(teamId, ctx.org.id),
     // The picker's source: this team's own drills PLUS the club's shared set, active only — a
     // retired drill must never be offered while building a practice. Non-fatal for the same reason
     // as the previous-plans read above: on a database without migration 218 the table doesn't
@@ -225,16 +186,16 @@ export const GET = withObservability(async (_req: Request,
   );
 
   /**
-   * The reader's OWN staff name, so the field screen can pick out the station they're tagged on
-   * ("Craig · Jen — that's you", D28) without asking them who they are.
-   *
-   * ⚠ This is a MATCH ON A LABEL, not an identity claim. Staff on a plan are free text (§10.3),
-   * so this can miss — a coach who typed "Craig" while the account says "Craig Whitfield" simply
-   * doesn't get their station pre-picked, and the picker still lists every station. It can never
-   * do the reverse and grant anything: the name is used for emphasis only, and every station is
-   * readable by anyone who can read the plan at all.
+   * The season's staff as PEOPLE (mig 303) — the picker's first group, the send sheet's audiences
+   * — in the wire shape (no addresses). The reader decides "mine" for themselves from the same
+   * facts every screen has (`viewerUserId` + each staff tag's `userId`, through
+   * `practicePlanLevels`): one owner of that answer, the client, because the send sheet has to
+   * answer it for every OTHER recipient anyway. Identity, never a name — the label match this
+   * replaced ("Craig" ≠ "Craig Whitfield", a blank display name never matched;
+   * COACH_PRACTICE_WHO_RUNS_IT_PLAN F01) is gone with no fallback (decision E). Emphasis only,
+   * never a grant.
    */
-  const viewerName = staff.find(s => s.userId === ctx.user.id)?.displayName ?? null;
+  const staffPeople = staffPeopleFromMembers(members, staffTags);
 
   /**
    * The tag ids on this practice, narrowed to the 'focus' vocabulary.
@@ -285,7 +246,12 @@ export const GET = withObservability(async (_req: Request,
     drills,
     // The same read gate as `drills`, for the same reason: a circuit carries no people (L9).
     circuits,
-    viewerName,
+    // The reader's own id: what decides "mine" on every screen, and what the send sheet excludes
+    // exactly as the route will (without it the sheet counted the sender while five went — probe).
+    viewerUserId: ctx.user.id,
+    staffPeople: staffPeople.map(stripStaffPersonForWire),
+    /** The last "Send to staff" (mig 303), for the toolbar's sent state — null until the first. */
+    sent: event.practicePlanSent,
     canWrite: canWritePracticePlans(caps),
     canViewFocus: showFocus,
     canViewAttendance: showAttendance,
@@ -305,7 +271,7 @@ export const GET = withObservability(async (_req: Request,
      * "rotation due" state with no action and no explanation. Falls back to null rather than to a
      * guess: an invented name on the one line a helper would act on is worse than a vaguer sentence.
      */
-    headCoachName: staff.find(s => s.coachRole === 'head_coach')?.displayName ?? null,
+    headCoachName: members.find(m => m.coachRole === 'head_coach')?.displayName ?? null,
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/practice-plan' });
 

@@ -294,6 +294,8 @@ const DELEGATED_HANDLERS: { call: RegExp; file: string; fn: string }[] = [
   { call: /coachTagCollectionRoutes\s*\(/, file: TAG_ROUTE_FACTORY, fn: 'coachTagCollectionRoutes' },
   { call: /coachTagItemRoutes\s*\(/, file: TAG_ROUTE_FACTORY, fn: 'coachTagItemRoutes' },
   { call: /coachTagMergeRoute\s*\(/, file: TAG_ROUTE_FACTORY, fn: 'coachTagMergeRoute' },
+  // A station knows who runs it (mig 303): the staff library's "this word IS this person" verb.
+  { call: /coachTagPersonRoute\s*\(/, file: TAG_ROUTE_FACTORY, fn: 'coachTagPersonRoute' },
 ];
 
 /** The body of `const VERB = …` inside one exported factory function. */

@@ -100,9 +100,12 @@ function useTeamTagLibrary(
    * created" and leaves the coach's typing in place. The server answers 409 on a name that already
    * exists (case-insensitively), which is the guard that makes "Hitting" and "hitting" impossible.
    */
-  const createTag = useCallback(async (name: string): Promise<PickableTag | null> => {
+  const createTag = useCallback(async (name: string, opts?: { userId?: string }): Promise<PickableTag | null> => {
+    // `userId` (staff only, mig 303): mint the word already linked to a person — the picker's
+    // "People on this team" path. The route proves the person is on the team's staff.
     const res = await fetch(base, {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name }),
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(opts?.userId ? { name, userId: opts.userId } : { name }),
     });
     if (!res.ok) return null;
     const json = await res.json();

@@ -9,10 +9,13 @@ import {
   deleteRepTeamTag,
   mergeRepTeamTags,
   getRepTeamTagUsageCounts,
+  setRepTeamTagUser,
 } from './db';
+import { getPracticeStaffPeople, isOnTeamStaff, stripStaffPersonForWire } from './practice-plan-staff';
+import type { PracticeStaffPerson } from './practice-plan-send';
 import { withObservability } from './observability';
 import {
-  denyUnless, canManageSchedule, canViewMoney, canWriteMoney, canViewDevelopmentGoals,
+  denyUnless, canManageSchedule, canViewMoney, canWriteMoney, canViewDevelopmentGoals, canViewSchedule,
   type CoachCapabilities,
 } from './coach-capabilities';
 import { resolveCoachTeamRead } from './coach-team-read';
@@ -71,6 +74,17 @@ export interface CoachTagRouteConfig {
    */
   repointForMerge?: (teamId: string, winnerTagId: string, loserTagId: string) => Promise<void>;
   repointForDelete?: (teamId: string, tagId: string) => Promise<void>;
+  /**
+   * 'staff' ONLY (mig 303): a tag in this library can BE a person — two HOOKS, the same shape as
+   * the repoint pair above, so the shared factory never learns what a person is. `list` feeds the
+   * GET's `people` (asked for with `?people=1` — the manager wants them, the picker's own
+   * dropdown refresh does not); `isOnStaff` is the proof every write runs before it links a word
+   * to someone. Linking itself is its own verb (`coachTagPersonRoute`), never a shape of PATCH.
+   */
+  people?: {
+    list: (teamId: string, orgId: string, tags: readonly { id: string; userId?: string | null }[]) => Promise<PracticeStaffPerson[]>;
+    isOnStaff: (orgId: string, teamId: string, userId: string) => Promise<boolean>;
+  };
 }
 
 type TeamParams = { params: Promise<{ orgSlug: string; teamId: string }> };
@@ -150,6 +164,7 @@ export const STAFF_TAG_LIBRARY = {
   repointForMerge: (teamId, winnerTagId, loserTagId) =>
     repointTeamPlansOnMerge(teamId, 'staff', winnerTagId, loserTagId),
   repointForDelete: (teamId, tagId) => repointTeamPlansOnDelete(teamId, 'staff', tagId),
+  people: { list: getPracticeStaffPeople, isOnStaff: isOnTeamStaff },
 } as const satisfies Omit<CoachTagRouteConfig, 'route'>;
 
 export const EQUIPMENT_TAG_LIBRARY = {
@@ -174,6 +189,13 @@ export const EQUIPMENT_TAG_LIBRARY = {
  */
 const resolveLiveTeamContext = resolveLiveCoachTeamContext;
 
+/** The one-person-per-tag-per-team index (mig 303) — told apart from the NAME index by its name,
+ *  because both raise the same 23505 and the coach needs the right sentence. */
+function isPersonCollision(error: unknown): boolean {
+  const e = error as { code?: string; message?: string; details?: string } | null;
+  return e?.code === '23505' && `${e.message ?? ''} ${e.details ?? ''}`.includes('rep_team_tags_team_user_uniq');
+}
+
 /** The unique index on (team, kind, lower(name)) turned into a sentence a coach can act on. */
 function tagWriteError(error: unknown, name: string, fallback: string): NextResponse {
   if ((error as { code?: string })?.code === '23505') {
@@ -196,7 +218,7 @@ function readTagName(body: unknown): { name: string } | { error: NextResponse } 
 
 /** `/tags` — GET the library, POST to mint one. */
 export function coachTagCollectionRoutes(config: CoachTagRouteConfig) {
-  const GET = withObservability(async (_req: Request, { params }: TeamParams) => {
+  const GET = withObservability(async (req: Request, { params }: TeamParams) => {
     const { orgSlug, teamId } = await params;
 
     // ⚠ ONE posture for every library now (P2, 2026-08-16): the team's WORKING season. The fork
@@ -222,7 +244,17 @@ export function coachTagCollectionRoutes(config: CoachTagRouteConfig) {
     const counts = config.kind === 'staff' || config.kind === 'equipment'
       ? await countTeamPlanTagUsage(teamId, config.kind)
       : await getRepTeamTagUsageCounts(teamId, config.kind, tags.map(t => t.id));
-    return NextResponse.json({ tags: tags.map(t => ({ ...t, count: counts[t.id] ?? 0 })) });
+    // The season's staff as people (mig 303) — only the library whose words can BE people carries
+    // them, only when asked (`?people=1`: the manager; the picker's per-keystroke refresh is not
+    // made to resolve every identity), only their wire shape (no addresses leave this route), and
+    // ⚠ only to a reader who can open the PLAN (`canViewSchedule`): this library's own read gate
+    // admits a development-only assistant so the focus rail can name a tag, and that reader must
+    // not learn the staff's identities and roles through a word list (/review, 2026-09-18).
+    const wantPeople = new URL(req.url).searchParams.get('people') === '1';
+    const people = config.people && wantPeople && canViewSchedule(capabilities)
+      ? (await config.people.list(teamId, orgId, tags)).map(stripStaffPersonForWire)
+      : undefined;
+    return NextResponse.json({ tags: tags.map(t => ({ ...t, count: counts[t.id] ?? 0 })), ...(people ? { people } : {}) });
   }, { route: config.route });
 
   const POST = withObservability(async (req: Request, { params }: TeamParams) => {
@@ -233,8 +265,18 @@ export function coachTagCollectionRoutes(config: CoachTagRouteConfig) {
     const denied = denyUnless(config.canWrite(assignment.capabilities), config.writeDenied);
     if (denied) return denied;
 
-    const parsed = readTagName(await req.json().catch(() => ({})));
+    const body = await req.json().catch(() => ({}));
+    const parsed = readTagName(body);
     if ('error' in parsed) return parsed.error;
+
+    // Mint a word that IS a person (mig 303) — the picker's "People on this team" path. Proved
+    // against the season's staff like the PATCH below; a 409 here means this person is already one
+    // of the team's words (the picker should have offered that one instead of minting).
+    let userId: string | null = null;
+    if (config.people && body && typeof body === 'object' && typeof (body as { userId?: unknown }).userId === 'string') {
+      userId = (body as { userId: string }).userId;
+      if (!(await config.people.isOnStaff(ctx.org.id, teamId, userId))) return notOnStaff();
+    }
 
     // The cap counts the team's OWN tags — the club's shared set must not eat a team's allowance.
     const existing = await getRepTeamTags(teamId, config.kind);
@@ -250,12 +292,16 @@ export function coachTagCollectionRoutes(config: CoachTagRouteConfig) {
 
     try {
       const tag = await createRepTeamTag({
-        orgId: ctx.org.id, teamId, kind: config.kind, name: parsed.name, createdBy: ctx.user.id,
+        orgId: ctx.org.id, teamId, kind: config.kind, name: parsed.name, createdBy: ctx.user.id, userId,
       });
       return NextResponse.json({ tag });
     } catch (error: unknown) {
       // ⚠ A 409 here is the case-insensitive unique index working — it is what makes "Hitting" and
-      // "hitting" impossible rather than merely discouraged.
+      // "hitting" impossible rather than merely discouraged. (With a person: the one-person-per-
+      // team index — the same 409, a different sentence.)
+      if (userId && isPersonCollision(error)) {
+        return NextResponse.json({ error: 'That person is already one of your staff names.' }, { status: 409 });
+      }
       return tagWriteError(error, parsed.name, 'Could not save tag');
     }
   }, { route: config.route });
@@ -318,6 +364,46 @@ export function coachTagItemRoutes(config: CoachTagRouteConfig) {
   }, { route: config.route });
 
   return { PATCH, DELETE };
+}
+
+/** The one sentence for a person who is not on this team's staff — the POST and the person route share it. */
+const notOnStaff = () => NextResponse.json({ error: 'That person isn’t on this team’s staff.' }, { status: 400 });
+
+/**
+ * `/tags/[tagId]/person` — PUT `{ userId: string | null }`: this word IS this person (or nobody).
+ *
+ * Its own verb (mig 303), not a shape of PATCH: the manager's row renames OR links, never both in
+ * one request, and a PATCH that guessed the act from which keys happened to be present would have
+ * picked silently when both were. Only a library with `people` hooks mounts it. The person must be
+ * on THIS team's staff this season — the column is a bare FK to auth.users and would hold anyone.
+ */
+export function coachTagPersonRoute(config: CoachTagRouteConfig) {
+  const PUT = withObservability(async (req: Request, { params }: TagParams) => {
+    const { orgSlug, teamId, tagId } = await params;
+    if (!config.people) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    const resolved = await resolveLiveTeamContext(orgSlug, teamId);
+    if ('error' in resolved) return resolved.error!;
+    const denied = denyUnless(config.canWrite(resolved.assignment.capabilities), config.writeDenied);
+    if (denied) return denied;
+
+    const body = await req.json().catch(() => ({})) as { userId?: unknown };
+    const userId = body.userId === null ? null : typeof body.userId === 'string' ? body.userId : undefined;
+    if (userId === undefined) return NextResponse.json({ error: 'userId must be a person or null' }, { status: 400 });
+    if (userId && !(await config.people.isOnStaff(resolved.ctx.org.id, teamId, userId))) return notOnStaff();
+
+    try {
+      const updated = await setRepTeamTagUser(tagId, teamId, userId);
+      if (!updated) return NextResponse.json({ error: 'Tag not found' }, { status: 404 });
+      return NextResponse.json({ tag: updated });
+    } catch (error: unknown) {
+      if (isPersonCollision(error)) {
+        return NextResponse.json({ error: 'That person is already one of your staff names — unlink them there first, or merge the two.' }, { status: 409 });
+      }
+      return NextResponse.json({ error: error instanceof Error ? error.message : 'Could not link that person' }, { status: 400 });
+    }
+  }, { route: config.route });
+
+  return { PUT };
 }
 
 /**

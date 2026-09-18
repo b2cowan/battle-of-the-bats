@@ -1,7 +1,7 @@
 'use client';
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import { Pencil, Trash2, GitMerge, RotateCcw } from 'lucide-react';
-import type { ComboTag } from '@/components/coaches/TagSearchCombobox';
+import { Pencil, Trash2, GitMerge, RotateCcw, User } from 'lucide-react';
+import type { ComboPerson, ComboTag } from '@/components/coaches/TagSearchCombobox';
 import AwardIconPicker from '@/components/coaches/AwardIconPicker';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -46,6 +46,10 @@ export interface TagManagerListHandle {
 export interface TagManagerPolicy {
   /** The row carries an emoji, and rename edits name + icon together (awards only). */
   icon?: boolean;
+  /** Staff only (mig 303): each word says WHO it is — or "a name only" — with Link / Unlink; the
+   *  list asks the library for its people (`?people=1`) and PUTs `{tagId}/person`. Declared by
+   *  the host, never inferred from the GET's shape — the file's own two-knob contract. */
+  people?: boolean;
   /** 'orphan' (default): delete always removes the tag outright, used or not — the label falls
    *  off whatever it was on. 'merge-or-retire' (awards, R2): an UNUSED chip still deletes
    *  outright, but a USED one refuses a bare delete and offers Merge or Retire instead — an
@@ -75,8 +79,14 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
   teamId, tags, itemNoun, basePath, countNoun, showSummary = true, policy, onChanged, onFullyDismiss,
 }, ref) {
   const hasIcon = !!policy?.icon;
+  const hasPeople = !!policy?.people;
   const inUseRemove = policy?.inUseRemove ?? 'orphan';
   const [fresh, setFresh] = useState<ComboTag[] | null>(null);
+  /** The season's staff as people (mig 303) — asked for only under `policy.people`; null until they
+   *  arrive, so the first paint says nothing rather than "Someone no longer on the staff" for a frame. */
+  const [people, setPeople] = useState<ComboPerson[] | null>(null);
+  const [linkingId, setLinkingId] = useState<string | null>(null);
+  const [linkTargetId, setLinkTargetId] = useState('');
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameDraft, setRenameDraft] = useState('');
   const [renameEmoji, setRenameEmoji] = useState<string | null>(null);
@@ -101,12 +111,40 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
   /** The list's own read of its library — counts included, un-starveable by any host. */
   async function reload() {
     try {
-      const res = await fetch(basePath);
+      const res = await fetch(hasPeople ? `${basePath}?people=1` : basePath);
       if (!res.ok) return; // keep whatever we have; unknown counts stay unknown, never claimed
       const data = await res.json().catch(() => null);
       if (data && Array.isArray(data.tags)) setFresh(data.tags as ComboTag[]);
+      if (data && Array.isArray(data.people)) setPeople(data.people as ComboPerson[]);
     } catch {
       /* offline etc. — the prop keeps the list usable; the delete sentence claims no count */
+    }
+  }
+
+  /** Link a word to a person, or unlink it (`userId: null`) — the staff library's PATCH verb. */
+  async function setPerson(tag: ComboTag, userId: string | null) {
+    if (inFlightRef.current) return;
+    inFlightRef.current = true;
+    setError('');
+    setBusyId(tag.id);
+    try {
+      const res = await fetch(`${basePath}/${tag.id}/person`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({ error: res.statusText }));
+        throw new Error(d.error ?? (userId ? 'Link failed' : 'Unlink failed'));
+      }
+      setLinkingId(null);
+      void reload();
+      onChanged();
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : (userId ? 'Link failed' : 'Unlink failed'));
+    } finally {
+      inFlightRef.current = false;
+      setBusyId(null);
     }
   }
   useEffect(() => {
@@ -128,6 +166,7 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
     if (confirmState) { setConfirmState(null); return true; }
     if (renamingId) { setRenamingId(null); return true; }
     if (mergingId) { setMergingId(null); return true; }
+    if (linkingId) { setLinkingId(null); return true; }
     return false;
   }
   useImperativeHandle(ref, () => ({ dismissOneLayer }));
@@ -138,7 +177,7 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
   useEffect(() => {
     function onKey(e: KeyboardEvent) {
       if (e.key !== 'Escape') return;
-      if (confirmState || renamingId || mergingId) {
+      if (confirmState || renamingId || mergingId || linkingId) {
         e.stopPropagation();
         e.preventDefault();
         dismissOneLayer();
@@ -151,11 +190,12 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
     window.addEventListener('keydown', onKey, true);
     return () => window.removeEventListener('keydown', onKey, true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [confirmState, renamingId, mergingId, onFullyDismiss]);
+  }, [confirmState, renamingId, mergingId, linkingId, onFullyDismiss]);
 
   function startRename(tag: ComboTag) {
     setError('');
     setMergingId(null);
+    setLinkingId(null);
     setRenamingId(tag.id);
     setRenameDraft(tag.name);
     setRenameEmoji(tag.emoji ?? null);
@@ -244,8 +284,67 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
   function startMerge(tag: ComboTag) {
     setError('');
     setRenamingId(null);
+    setLinkingId(null);
     setMergingId(tag.id);
     setMergeTargetId('');
+  }
+
+  function startLink(tag: ComboTag) {
+    setError('');
+    setRenamingId(null);
+    setMergingId(null);
+    setLinkingId(tag.id);
+    setLinkTargetId('');
+  }
+
+  /**
+   * The row's second line for the staff library (mig 303): who this word IS, or "a name only",
+   * with the one control that changes it. The people not yet linked to another word are what
+   * "Link to a person…" offers — one person per word per team.
+   */
+  function renderPersonLine(tag: ComboTag) {
+    if (!hasPeople || !people) return null;
+    const linked = tag.userId ? people.find(p => p.userId === tag.userId) : null;
+    if (linkingId === tag.id) {
+      const free = people.filter(p => !p.tagId || p.tagId === tag.id);
+      return (
+        <div className={styles.tagDrawerPerson}>
+          <select
+            className={`${styles.select} ${styles.tagDrawerRename}`}
+            value={linkTargetId}
+            onChange={e => setLinkTargetId(e.target.value)}
+            autoFocus
+          >
+            <option value="">Who is &ldquo;{tag.name}&rdquo;?</option>
+            {free.map(p => <option key={p.userId} value={p.userId}>{p.name} · {p.kindWord}</option>)}
+          </select>
+          <div className={styles.tagDrawerActions}>
+            <button type="button" className={styles.btnSecondary} disabled={busyId === tag.id || !linkTargetId} onClick={() => void setPerson(tag, linkTargetId)}>Link</button>
+            <button type="button" className={styles.btnGhost} disabled={busyId === tag.id} onClick={() => setLinkingId(null)}>Cancel</button>
+          </div>
+        </div>
+      );
+    }
+    // Two faces: a person (linked to someone on the staff, or to someone who has since left —
+    // still a person, not a word), or a word.
+    return (
+      <div className={styles.tagDrawerPerson}>
+        {tag.userId ? (
+          <>
+            <User size={12} aria-hidden className={styles.tagComboPerson} />
+            <span>{linked ? <><b>{linked.name}</b> · {linked.kindWord}</> : 'Someone no longer on the staff'}</span>
+            <button type="button" className={styles.ppLinkBtn} disabled={!!busyId} onClick={() => void setPerson(tag, null)}>Unlink</button>
+          </>
+        ) : (
+          <>
+            <span className={styles.tagDrawerPersonOnly}>A name only</span>
+            {people.some(p => !p.tagId) && (
+              <button type="button" className={styles.ppLinkBtn} disabled={!!busyId} onClick={() => startLink(tag)}>Link to a person…</button>
+            )}
+          </>
+        )}
+      </div>
+    );
   }
 
   async function doMerge(loser: ComboTag, winner: ComboTag) {
@@ -518,6 +617,7 @@ const TagManagerList = forwardRef<TagManagerListHandle, {
                   <span className={`${styles.tagDrawerUse} ${tag.count === 0 ? styles.tagDrawerUseZero : ''}`}>
                     {tag.count == null ? '' : tag.count === 0 ? 'not used yet' : fmtCount(tag.count)}
                   </span>
+                  {renderPersonLine(tag)}
                   <span className={styles.tagDrawerActions}>
                     <button type="button" title="Rename" aria-label={`Rename ${tag.name}`} disabled={!!busyId} onClick={() => startRename(tag)}><Pencil size={15} aria-hidden /></button>
                     {own.length > 1 && (

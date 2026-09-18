@@ -22,8 +22,8 @@ import { normalizeGuardianEmail } from './guardian-email';
  * unsubscribed" before a send) fetch it once with `getFamilySuppressionList` and hand it
  * back in — the guard still runs, it just does not re-query per recipient.
  *
- * ⚠ WHO IS STILL OUTSIDE THIS DOOR, and why (audited 2026-08-18, recounted 2026-08-26 — the count
- * is the point, so correct it here if you change one):
+ * ⚠ WHO IS STILL OUTSIDE THIS DOOR, and why (audited 2026-08-18, recounted 2026-08-26, one added
+ * 2026-09-17 — the count is the point, so correct it here if you change one):
  *  - **Dues reminders (4 senders).** Deliberate. Transactional — a family cannot mute a bill by
  *    unsubscribing from club announcements (owner ruling 2026-08-18). They identify their sender
  *    but skip the suppression check ON PURPOSE. Do not "fix" them by routing them through here.
@@ -38,6 +38,15 @@ import { normalizeGuardianEmail } from './guardian-email';
  *    no org to key against. Closing it needs its own per-team opt-out record — an owner
  *    decision, not a re-route. Until then a paid coach's announcement honours an unsubscribe
  *    and the free-tier one does not, which is the inconsistency to weigh.
+ *  - **The practice plan a coach sends to the STAFF (1 sender — `…/practice-plan/send`,
+ *    `lib/practice-plan-email.ts`).** Deliberate, and NOT family mail at all: it goes to the
+ *    team's staff, a colleague addressing colleagues about tonight, only when the coach ticks
+ *    "Also email them" (owner ruling J, 2026-09-17). On the dues-reminder ground — it skips the
+ *    per-event email preference AND the master pause on purpose — and with the same two
+ *    boundaries: it names the coach as the sender and its footer says why it arrived. No
+ *    unsubscribe: it is not a subscription. Do not route it here (this door is keyed on
+ *    families); do not route it through `notify()`'s email channel (that would make it a
+ *    preference).
  */
 
 /** PostgREST caps an unbounded read at 1000 rows and says nothing about it. Under-reading HERE

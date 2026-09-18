@@ -128,11 +128,48 @@ async function repointTeamDrills(
     if (updateError) throw updateError;
   }
 }
+/**
+ * A staff merge carries the PERSON (mig 303, decision C): a linked loser folded into an unlinked
+ * winner keeps its identity, because the coach merged "Jen O." into "Jen" meaning they are one
+ * person — losing the link would silently break "that's you" on every plan that used the loser.
+ * Two DIFFERENT people are refused, by sentence, before anything is destroyed.
+ *
+ * ⚠ Runs inside the merge's before-destructive slot (see `mergeRepTeamTags`), so the loser still
+ * exists and still holds the person — and the partial unique index (one person per tag per team)
+ * would refuse the winner taking it. The loser is unlinked first, then the winner linked. If the
+ * RPC then fails, the loser survives as a word without its person: recoverable in the manager,
+ * never data loss — the same posture as the jsonb walk beside it.
+ */
+async function carryStaffPersonOnMerge(winnerTagId: string, loserTagId: string): Promise<void> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags').select('id, user_id').in('id', [winnerTagId, loserTagId]);
+  if (error) throw error;
+  const winner = data?.find(r => r.id === winnerTagId);
+  const loser = data?.find(r => r.id === loserTagId);
+  if (!loser?.user_id) return;
+  if (winner?.user_id && winner.user_id !== loser.user_id) {
+    throw new Error('Those two names are linked to different people — unlink one of them first.');
+  }
+  // Each write is conditioned on what was just read (check-then-act): a person-link made on
+  // either word between the read and these writes is refused by the sentence, never clobbered.
+  const unlink = await supabaseAdmin.from('rep_team_tags').update({ user_id: null })
+    .eq('id', loserTagId).eq('user_id', loser.user_id).select('id');
+  if (unlink.error) throw unlink.error;
+  if (!unlink.data?.length) throw new Error('That name’s person just changed — reload and try the merge again.');
+  const link = await supabaseAdmin.from('rep_team_tags').update({ user_id: loser.user_id })
+    .eq('id', winnerTagId).is('user_id', null).select('id');
+  if (link.error) throw link.error;
+  if (!link.data?.length) throw new Error('That name’s person just changed — reload and try the merge again.');
+}
+
 /** Every plan pick pointing at the loser now points at the winner (dedup'd against an existing pick). */
 export async function repointTeamPlansOnMerge(
   teamId: string, kind: RepTagKind, winnerTagId: string, loserTagId: string,
 ): Promise<void> {
   if (kind !== 'staff' && kind !== 'equipment') return;
+  // The person first: it is the one step that can REFUSE, and a refusal must come before any plan
+  // has been rewritten toward a merge that is not going to happen.
+  if (kind === 'staff') await carryStaffPersonOnMerge(winnerTagId, loserTagId);
   const toWinner = (id: string) => (id === loserTagId ? winnerTagId : id);
   await repointTeamPlans(teamId, kind, toWinner);
   await repointTeamTemplates(teamId, kind, toWinner);

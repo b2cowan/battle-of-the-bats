@@ -7906,6 +7906,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .tagComboDotOrg { background: rgba(var(--blueprint-blue-rgb), 0.6); border: 1px solid rgba(var(--blueprint-blue-rgb), 0.75); }
 .tagComboDotOwn { background: rgba(var(--logic-lime-rgb), 0.6); border: 1px solid rgba(var(--logic-lime-rgb), 0.75); }
 .tagComboCount { color: var(--text-tertiary); font-size: var(--type-support); flex-shrink: 0; }
+/* The staff picker's people group (mig 303): a quiet group label, the person mark on a row and on a
+   chip that IS someone, and the team's word for them when it differs from their name. */
+.tagComboGroup { padding: 0.45rem 0.6rem 0.2rem; font-size: var(--type-label); letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-tertiary); font-weight: 700; }
+.tagComboGroup + .tagComboGroup { border-top: 1px solid var(--border-2); margin-top: 0.2rem; }
+.tagComboPerson { color: var(--logic-lime); flex-shrink: 0; }
+.tagComboWord { color: var(--text-tertiary); font-size: var(--type-support); }
 .tagComboCreate { color: var(--logic-lime); border-top: 1px solid var(--border-2); font-weight: 600; }
 .tagComboEmpty { padding: 0.45rem 0.6rem; font-size: var(--type-support); color: var(--text-tertiary); }
 .tagComboLegend { display: flex; gap: 1rem; flex-wrap: wrap; font-size: var(--type-support); color: var(--text-tertiary); margin-top: 0.5rem; align-items: center; }
@@ -10872,6 +10878,57 @@ span.libCardMain { cursor: default; }
 .ppProvenance svg { flex: none; margin-top: 0.15rem; color: var(--blueprint-light); }
 .ppProvenance strong { color: var(--text-primary); font-weight: 700; }
 
+/* ── A station knows who runs it (mig 303, 2026-09-17) ──
+   The "You're on …" line under the where-line (ruling G): one support-size line, only for a reader
+   named on the plan, each entry a jump to its row. The "you" mark on a block row and a station
+   column. The sent state under the toolbar. The send sheet's three audiences. */
+.ppYoureOn {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem 0.9rem;
+  margin: 0 0 0.9rem; padding: 0.55rem 0.8rem;
+  border-radius: 10px;
+  border: 1px solid rgba(var(--home-olive-rgb, var(--logic-lime-rgb)), 0.35);
+  background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.08));
+  font-size: var(--type-support); line-height: 1.4;
+}
+.ppYoureOnLabel { font-size: var(--type-label); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--home-olive, var(--logic-lime)); }
+.ppYoureOnItem { color: var(--text-primary); font-weight: 600; text-decoration: none; min-height: 32px; display: inline-flex; align-items: center; gap: 0.4rem; }
+.ppYoureOnItem:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ppYoureOnTime { font-family: var(--font-data); font-weight: 500; color: var(--home-olive, var(--logic-lime)); font-variant-numeric: tabular-nums; white-space: nowrap; }
+/* On a phone each entry takes its own line, so a station list wraps under its block's clock rather
+   than the clock splitting across two lines beside it (the probe's 390 read). */
+@media (max-width: 640px) { .ppYoureOnItem { flex: 1 1 100%; flex-wrap: wrap; } }
+.ppYoureOnDetail { color: var(--text-secondary); font-weight: 400; }
+.ppYouMark {
+  display: inline-block; font-family: var(--font-data);
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; line-height: 1.3;
+  color: var(--home-olive, var(--logic-lime)); border: 1px solid rgba(var(--home-olive-rgb, var(--logic-lime-rgb)), 0.5);
+  border-radius: 4px; padding: 0.05rem 0.3rem; margin-left: 0.4rem; vertical-align: middle;
+  background: var(--home-card, transparent);
+}
+.ppStCol[data-mine='mine'] { border-color: rgba(var(--home-olive-rgb, var(--logic-lime-rgb)), 0.5); box-shadow: inset 3px 0 0 var(--home-olive, var(--logic-lime)); }
+.ppSentLine { margin: -0.3rem 0 0.9rem; font-size: var(--type-support); color: var(--text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.35rem; }
+.ppSentLine b { color: var(--text-primary); font-weight: 600; }
+.ppSendAudiences { display: flex; flex-direction: column; gap: 0.5rem; margin: 0 0 0.75rem; padding: 0; border: 0; }
+.ppSendAudience, .ppSendEmail {
+  display: grid; grid-template-columns: 1.25rem 1fr; gap: 0.15rem 0.6rem; align-items: start;
+  padding: 0.65rem 0.75rem; border-radius: 10px; cursor: pointer;
+  border: 1px solid var(--home-line-strong, var(--border-2)); background: var(--home-card, var(--white-8));
+}
+.ppSendAudience[data-on='on'], .ppSendEmail[data-on='on'] { border-color: var(--home-olive, var(--logic-lime)); box-shadow: inset 0 0 0 1px var(--home-olive, var(--logic-lime)); }
+.ppSendAudience input, .ppSendEmail input { grid-row: 1 / span 3; margin: 0.2rem 0 0; width: 1.05rem; height: 1.05rem; accent-color: var(--home-olive, var(--logic-lime)); }
+.ppSendEmail { margin: 0 0 0.9rem; }
+.ppSendAudienceName { font-size: var(--type-body); font-weight: 600; color: var(--text-primary); }
+.ppSendAudienceCount { font-family: var(--font-data); font-weight: 500; color: var(--text-tertiary); margin-left: 0.4rem; font-variant-numeric: tabular-nums; }
+.ppSendAudienceWho { font-size: var(--type-support); color: var(--text-secondary); line-height: 1.4; }
+.ppSendAudienceOnly { font-size: var(--type-support); color: var(--home-amber, var(--warning)); line-height: 1.4; }
+.ppSendPreview {
+  margin: 0 0 0.9rem; padding: 0.65rem 0.8rem; border-radius: 10px;
+  border: 1px dashed var(--home-line-strong, var(--border-2)); background: var(--home-paper, transparent);
+}
+.ppSendPreview b { display: block; font-weight: 600; color: var(--text-primary); margin: 0.15rem 0 0.1rem; }
+.ppSendPreview p { margin: 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.45; }
+.ppSendPreviewLabel { display: block; font-size: var(--type-label); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-tertiary); }
+
 /* The practice-week scouting bridge (Scouting Book P3) — the game-week nudge's lime-spined
    card shape (.scoutNudge), grown one quiet line taller for the book line + observation. */
 .ppScoutBridge {
@@ -13753,7 +13810,7 @@ button.gdChip[aria-pressed='true'] {
 .tagDrawerWho { font-size: var(--type-support); color: var(--text-tertiary); margin: 0.15rem 0 0.6rem; }
 .tagDrawerRows { flex: 1; overflow-y: auto; margin: 0 -0.35rem; padding: 0 0.35rem; }
 .tagDrawerRow {
-  display: flex; align-items: center; gap: 0.5rem;
+  display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;
   min-height: 44px;
   padding: 0.2rem 0;
   border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.08));
@@ -13765,6 +13822,17 @@ button.gdChip[aria-pressed='true'] {
 /* An unused word stands out — it is the one Delete removes with nothing to lose. */
 .tagDrawerUseZero { color: var(--home-amber, var(--warning)); }
 .tagDrawerRename { flex: 1; min-width: 0; }
+/* The staff library's second line (mig 303): who this word IS, or "a name only" — wraps under the
+   name · count · actions row (order pushes it past the actions), the link control on the same line. */
+.tagDrawerPerson { order: 10; flex-basis: 100%; display: flex; align-items: center; gap: 0.5rem; padding: 0 0 0.35rem; font-size: var(--type-support); color: var(--text-secondary); }
+.tagDrawerPerson b { font-weight: 600; color: var(--text-primary); }
+.tagDrawerPersonOnly { color: var(--home-amber, var(--warning)); }
+/* The link-styled button the practice screens share (mig 303): the drawer's Link / Unlink and the
+   toolbar's Send again. */
+.ppLinkBtn { display: inline-flex; align-items: center; background: none; border: 0; padding: 0.35rem 0.25rem; min-height: 32px; color: var(--home-olive, var(--logic-lime)); font-weight: 700; font-size: var(--type-support); cursor: pointer; }
+.ppLinkBtn:disabled { opacity: 0.5; cursor: not-allowed; }
+/* The tap floor on a phone or tablet — the rendered gate caught "Send again" at 32px (review, 2026-09-18). */
+@media (max-width: 768px) { .ppLinkBtn { min-height: var(--tap-min, 44px); } }
 .tagDrawerActions { display: flex; gap: 2px; flex-shrink: 0; align-items: center; }
 .tagDrawerActions > button {
   min-width: 36px; min-height: 36px;

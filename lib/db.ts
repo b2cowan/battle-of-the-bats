@@ -20,7 +20,7 @@ import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
 import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForPayment, type PlanPiece } from './payable-plan';
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
 import { blockToCircuitShape } from './rep-circuits';
@@ -5743,9 +5743,49 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     sourceTournamentGameId: r.source_tournament_game_id ?? null,
     // Degrades to null pre-migration, like practicePlan above.
     familySharedAt: r.family_shared_at ?? null,
+    // The last "Send to staff" (mig 303) — degrades to null pre-migration, like practicePlan above.
+    practicePlanSent: r.practice_plan_sent_at
+      ? {
+          at: r.practice_plan_sent_at,
+          by: r.practice_plan_sent_by ?? null,
+          audience: r.practice_plan_sent_audience ?? null,
+          count: r.practice_plan_sent_count ?? null,
+          email: r.practice_plan_sent_email === true,
+        }
+      : null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
+}
+
+/**
+ * Stamp the practice with its last "Send to staff" (mig 303) — the `family_shared_at` idiom:
+ * the last send only, overwritten by the next one. Season-scoped at the write like the recap
+ * writer above it. Deliberately does NOT touch `updated_at`: sending the plan is not editing it,
+ * and a later "changed since you sent it" (deferred, decision H) would need that stamp honest.
+ */
+export async function stampRepTeamEventPracticePlanSent(
+  eventId: string,
+  teamId: string,
+  programYearId: string,
+  stamp: { by: string; audience: PracticePlanSendAudience; count: number; email: boolean },
+): Promise<RepTeamEvent | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .update({
+      practice_plan_sent_at: new Date().toISOString(),
+      practice_plan_sent_by: stamp.by,
+      practice_plan_sent_audience: stamp.audience,
+      practice_plan_sent_count: stamp.count,
+      practice_plan_sent_email: stamp.email,
+    })
+    .eq('id', eventId)
+    .eq('team_id', teamId)
+    .eq('program_year_id', programYearId)
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamEvent(data) : null;
 }
 
 export async function getRepTeamEvents(
@@ -6533,10 +6573,36 @@ function mapRepTeamTag(r: any): RepTeamTag {
     teamId: r.team_id,
     kind: r.kind,
     name: r.name,
+    // Degrades to null pre-migration (303) — a library read on a database without the column
+    // must not throw, and "unlinked" is the honest reading of "the column isn't there".
+    userId: r.user_id ?? null,
     createdBy: r.created_by ?? null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
+}
+
+/**
+ * Link a 'staff' tag to a person, or unlink it (mig 303). Scoped by team_id like every other tag
+ * write here, so the club's shared words (team_id NULL) can never be made into a person — the
+ * CHECK constraint refuses it too, and this is the sentence rather than the 23514.
+ *
+ * ⚠ The caller proves the person is on THIS team's staff this season before calling — the column
+ * is a bare FK to auth.users and would happily hold a stranger. Returns null when no team row
+ * matched (a 404 for the route), and throws the partial-unique 23505 when this person already IS
+ * another of the team's words (one person per tag per team).
+ */
+export async function setRepTeamTagUser(id: string, teamId: string, userId: string | null): Promise<RepTeamTag | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_tags')
+    .update({ user_id: userId })
+    .eq('id', id)
+    .eq('team_id', teamId)
+    .eq('kind', 'staff')
+    .select()
+    .maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamTag(data) : null;
 }
 
 /**
@@ -6588,6 +6654,9 @@ export async function createRepTeamTag(fields: {
   kind: RepTagKind;
   name: string;
   createdBy?: string | null;
+  /** 'staff' only (mig 303): mint the word already linked to a person — the picker's "pick a
+   *  person" path. The caller proves the person is on the team's staff. */
+  userId?: string | null;
 }): Promise<RepTeamTag> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_tags')
@@ -6597,6 +6666,7 @@ export async function createRepTeamTag(fields: {
       kind: fields.kind,
       name: fields.name.trim(),
       created_by: fields.createdBy ?? null,
+      ...(fields.userId ? { user_id: fields.userId } : {}),
     })
     .select()
     .single();

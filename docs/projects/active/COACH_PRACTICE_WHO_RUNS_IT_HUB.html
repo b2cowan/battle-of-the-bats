@@ -1,0 +1,802 @@
+<title>A Station Knows Who Runs It</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* ── Hub chrome — the owner-approved project-hub template (docs/agents/design/PROJECT_HUB_TEMPLATE.html).
+   A different ground from the frames on purpose, so the frames read as specimens. ── */
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--ask:#6b4f1d;--ask-soft:#f6efe0;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions{display:flex;gap:8px}.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}.hubactions button[aria-pressed=true]{background:var(--lime);color:#1c2417;border-color:var(--lime)}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+main.hubsection{padding:0 0 36px;min-height:400px}
+.screenhead{max-width:900px;margin:26px auto 6px;padding:0 24px}
+.screenhead .eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.screenhead p{font-size:15px;max-width:70ch}.screenhead h1:focus{outline:0}
+.legendbar{max-width:900px;margin:0 auto 10px;padding:0 24px;font-size:12px;color:var(--muted);line-height:2}
+.facebar{max-width:900px;margin:0 auto;padding:0 24px;display:flex;gap:6px}
+.facebar button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 12px;min-height:40px;font-size:13px}
+.facebar button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.intent{max-width:900px;margin:14px auto 0;padding:14px 24px;font-size:13px;color:var(--muted)}.intent strong{color:var(--ink)}
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0 18px}.docpage th,.docpage td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}.docpage th{background:var(--soft);font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+.tablewrap{overflow-x:auto}
+.docpage ul,.docpage ol{padding-left:20px}.docpage li{margin-bottom:6px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}.tag.inherited{background:#e8eef2;border-color:#b6cfdb}
+.ask{margin:18px auto 0;padding:18px 20px 16px;border-left:3px solid var(--ask);background:var(--ask-soft);border-radius:0 8px 8px 0;max-width:76ch}
+.ask .qn{font-family:'IBM Plex Mono',ui-monospace,monospace;font-size:12px;color:var(--ask);letter-spacing:.04em}
+.ask h3{font-size:18px;font-weight:650;line-height:1.3;margin:4px 0 8px;color:var(--ink)}
+.ask p{font-size:15px;line-height:1.55;color:#3a4336;margin:0 0 6px}
+.ask .rides{font-size:13.5px;color:var(--muted);margin-top:8px}.ask .rides b{color:#3a4336;font-weight:600}
+.ruling{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.ruling button{border:1px solid #cdbf9c;background:#fff;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.ruling button[aria-pressed=true]{background:var(--lime);border-color:#b9d88c;font-weight:700}
+.ask textarea.note{width:100%;border:1px solid #cdbf9c;border-radius:6px;padding:8px 10px;margin-top:8px;resize:vertical;font-size:13.5px;background:#fff}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace;background:#fff}
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px;line-height:1.6}.signin code{font-size:12px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}.qapart h3{margin-top:0}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px;border-top:1px solid var(--soft)}.qastep:first-of-type{border-top:0}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical;font-size:13.5px}
+#qaOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace;background:#fff}
+.mk{display:inline-block;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px/1.4 system-ui,sans-serif;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:17px}.dialogbody{padding:25px}
+
+/* ── The frames: the portal's own materials (warm palette, Inter · Barlow Condensed · IBM Plex Mono) at 1440 and 390. ── */
+.fitwrap{width:calc(100% - 48px);max-width:1440px;margin:10px auto 0;overflow:hidden}
+.fitwrap.scroll{overflow-x:auto}
+.fitwrap.pair{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;overflow:visible}
+.frame{--p-paper:#F8F4ED;--p-card:#FFFFFF;--p-ink:#241E15;--p-soft:#4A4235;--p-dim:#615A54;--p-line:rgba(70,55,30,.12);--p-line2:rgba(70,55,30,.20);--p-olive:#57651E;--p-olive-soft:rgba(87,101,30,.10);--p-live:#B03A22;--p-live-soft:rgba(176,58,34,.10);--p-lime:#D9F99D;--p-gold:#835006;--p-gold-soft:rgba(131,80,6,.10);--p-blue:#134FD3;
+  width:1440px;background:var(--p-paper);color:var(--p-ink);font:14px/1.45 Inter,system-ui,sans-serif;border:1px solid #c6cebc;border-radius:12px;overflow:hidden;box-shadow:0 12px 36px #2732210a;transform-origin:top left;
+  background-image:linear-gradient(rgba(70,55,30,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(70,55,30,.045) 1px,transparent 1px);background-size:40px 40px}
+.frame.phone{width:390px;border-radius:18px;margin:10px auto 0;transform:none}
+.frame.panel{width:440px;border-radius:12px;margin:10px auto 0;transform:none}
+.frame *{box-sizing:border-box}
+.frame .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.topstrip{height:48px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 16px;gap:14px}
+.topstrip .logo{width:24px;height:24px;background:#241E15;border-radius:4px;position:relative;flex-shrink:0}.topstrip .logo::after{content:'';position:absolute;left:7px;top:6px;border:6px solid transparent;border-left:9px solid var(--p-lime)}
+.topstrip .wm{font:700 14px 'IBM Plex Mono',monospace;letter-spacing:.04em;white-space:nowrap}.topstrip .wm span{color:var(--p-dim);font-weight:500;font-size:11px;letter-spacing:.14em;margin-left:14px;padding-left:14px;border-left:1px solid var(--p-line2)}
+.topstrip .ws{margin-left:auto;border:1px solid var(--p-line2);border-radius:20px;padding:6px 14px;font:600 11px 'IBM Plex Mono',monospace;letter-spacing:.12em}
+.topstrip .bell{width:26px;height:20px;position:relative;margin-right:10px;color:var(--p-soft);font-size:15px}.topstrip .bell i{position:absolute;right:-2px;top:-7px;background:var(--p-live);color:#fff;font:700 9px/1 Inter;border-radius:8px;padding:2px 4px;font-style:normal}
+.phone .topstrip{padding:0 14px}.phone .topstrip .wm span{display:none}.phone .topstrip .ws{display:none}.phone .topstrip .bell{margin-left:auto;margin-right:4px}
+.teamhead{height:60px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 32px;gap:20px}
+.teamhead h1{font:700 17px/1.2 Inter,sans-serif;margin:0;letter-spacing:-.2px}.teamhead .tm{font:500 11.5px 'IBM Plex Mono',monospace;color:var(--p-olive);letter-spacing:.02em}.teamhead .tm b{color:var(--p-ink)}
+.teamhead .next{margin-left:auto;text-align:right;font:600 12px Inter}.teamhead .next small{display:block;font:600 9px 'IBM Plex Mono',monospace;letter-spacing:.14em;color:var(--p-dim)}
+.phone .teamhead{height:auto;padding:12px 16px;flex-wrap:wrap;gap:4px 12px}.phone .teamhead .next{display:none}
+.body{display:flex;min-height:820px}
+.sb{width:220px;background:var(--p-card);border-right:1px solid var(--p-line);padding:14px 14px 0;flex-shrink:0}
+.sb .sel{border:1px solid var(--p-line2);border-radius:6px;padding:9px 12px;font-weight:600;font-size:14px;display:flex;justify-content:space-between;margin-bottom:12px}
+.sb .grp{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.16em;color:var(--p-dim);padding:12px 12px 4px}
+.sb a{display:flex;align-items:center;gap:10px;padding:9px 12px;color:var(--p-soft);text-decoration:none;font-weight:500;font-size:14px;border-left:3px solid transparent;margin-left:-14px;padding-left:23px}
+.sb a i{width:15px;height:15px;border:1.6px solid currentColor;border-radius:3px;display:inline-block;opacity:.75;font-style:normal}
+.sb a.on{background:var(--p-olive-soft);color:var(--p-olive);border-left-color:var(--p-olive);font-weight:600}
+.pg{flex:1;padding:28px 130px 40px;min-width:0}
+.phone .pg{padding:18px 16px 90px}
+.pgtitle{display:flex;align-items:center;gap:12px;margin-bottom:6px}.pgtitle .ico{width:32px;height:32px;border:1px solid var(--p-line2);border-radius:50%;background:var(--p-olive-soft);display:grid;place-items:center;color:var(--p-olive);font-size:14px;flex-shrink:0}
+.pgtitle h2{font:700 21px/1 'Barlow Condensed',Inter,sans-serif;margin:0;letter-spacing:.01em}
+.whenline{font-size:13.5px;color:var(--p-soft);margin:0 0 4px}.whenline b{color:var(--p-ink);font-weight:600}.whenline .amber{color:var(--p-gold)}
+.whereline{font-size:13px;color:var(--p-dim);margin:0 0 14px}
+.phone .whenline b{display:block}
+/* the toolbar — secondary buttons; the sheet keeps the one lime */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 18px}
+.btn2{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:7px 13px;border:1px solid var(--p-line2);border-radius:7px;background:var(--p-card);font-weight:600;font-size:13.5px;color:var(--p-ink)}
+.btn2 i{font-style:normal;color:var(--p-dim);font-size:13px}
+.btnlime{display:inline-flex;align-items:center;gap:7px;min-height:38px;padding:7px 14px;border:1px solid #b9d88c;border-radius:7px;background:var(--p-lime);font-weight:600;font-size:13.5px;color:#1e2a0f}
+.sentline{font-size:12.5px;color:var(--p-soft);margin-left:auto}.sentline b{font-weight:600;color:var(--p-ink)}.sentline a{color:var(--p-olive);font-weight:700;text-decoration:none;margin-left:6px}
+.phone .sentline{margin-left:0;width:100%}
+/* "You're on …" — one support-size line under the where-line, only when the viewer is named */
+.youre{display:flex;gap:8px 14px;flex-wrap:wrap;align-items:baseline;padding:10px 14px;margin:0 0 16px;border:1px solid rgba(87,101,30,.3);background:var(--p-olive-soft);border-radius:8px;font-size:13px}
+.youre .lbl{font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--p-olive)}
+.youre a{color:var(--p-ink);text-decoration:none;font-weight:600}.youre a .t{font:500 12px 'IBM Plex Mono',monospace;color:var(--p-olive);margin-right:6px}.youre a .in{color:var(--p-soft);font-weight:400}
+.youmark{display:inline-block;font:700 9.5px/1.3 'IBM Plex Mono',monospace;letter-spacing:.1em;text-transform:uppercase;color:var(--p-olive);border:1px solid rgba(87,101,30,.45);border-radius:4px;padding:1px 5px;margin-left:6px;vertical-align:middle;background:var(--p-card)}
+/* the sheet: a goal, a description, the timeline (gutter + row) */
+.sheet{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:22px 26px 18px}
+.phone .sheet{padding:16px 14px 12px}
+.goal{font:700 19px/1.2 'Barlow Condensed',Inter,sans-serif;margin:0 0 4px}.desc{font-size:13.5px;color:var(--p-soft);margin:0 0 18px;max-width:70ch}
+.tl{display:flex;flex-direction:column}
+.row{display:grid;grid-template-columns:78px 1fr;gap:0 16px;padding:12px 0;border-top:1px solid var(--p-line)}.row:first-child{border-top:0}
+.phone .row{grid-template-columns:58px 1fr;gap:0 10px}
+.gut{font:600 14px/1.2 'IBM Plex Mono',monospace;color:var(--p-ink)}.gut small{display:block;font:500 11px 'IBM Plex Mono',monospace;color:var(--p-dim);margin-top:2px}
+.rowbody .ttl{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.shape{font:500 10.5px 'IBM Plex Mono',monospace;color:var(--p-soft);border:1px solid var(--p-line2);border-radius:10px;padding:1px 8px}
+.rowbody .first{font-size:13.5px;color:var(--p-soft);margin-top:2px}.rowbody .watch{font-size:13px;color:var(--p-soft);margin-top:2px}.rowbody .watch b{font-weight:600;color:var(--p-ink)}
+.rowbody .meta{font:500 12px 'IBM Plex Mono',monospace;color:var(--p-dim);margin-top:5px}
+.stcols{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:12px}
+.phone .stcols{grid-template-columns:1fr}
+.stcol{border:1px solid var(--p-line);border-radius:8px;padding:10px 12px;background:var(--p-paper);font-size:13px}
+.stcol.mine{border-color:rgba(87,101,30,.45);box-shadow:inset 3px 0 0 var(--p-olive)}
+.stcol .nm{font-weight:600;font-size:14px;display:flex;align-items:center;gap:6px;flex-wrap:wrap}.stcol .who{color:var(--p-soft);margin-top:2px}.stcol .fst{color:var(--p-dim);margin-top:2px;font-size:12.5px}.stcol .open{display:block;color:var(--p-olive);font-weight:700;margin-top:6px;font-size:13px}
+/* a sheet (station editor) on the phone, with the picker open */
+.sheetp{padding:14px 16px 24px}
+.sheetp h3{font:700 19px/1.2 'Barlow Condensed',Inter,sans-serif;margin:0 0 2px}.sheetp .crumb{font:500 11px 'IBM Plex Mono',monospace;color:var(--p-dim);letter-spacing:.08em;margin-bottom:14px}
+.fld{margin-bottom:14px}.fld label{display:block;font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--p-soft);margin-bottom:6px}
+.inp{border:1px solid var(--p-line2);border-radius:6px;background:var(--p-card);min-height:42px;padding:9px 12px;font-size:14.5px}
+.chips{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid rgba(87,101,30,.45);background:var(--p-olive-soft);color:var(--p-olive);border-radius:14px;padding:4px 10px;font-size:13px;font-weight:600}
+.chip .x{opacity:.7;font-weight:400}
+.chip.word{border-color:var(--p-line2);background:var(--p-card);color:var(--p-ink);font-weight:500}
+.person{display:inline-grid;place-items:center;width:15px;height:15px;border-radius:50%;background:var(--p-olive);color:#fff;font:700 9px/1 Inter;flex-shrink:0}
+.dd{border:1px solid var(--p-line2);border-radius:8px;background:var(--p-card);margin-top:6px;box-shadow:0 10px 30px rgba(36,30,21,.14);overflow:hidden}
+.dd .grp{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--p-dim);padding:10px 14px 4px;display:flex;justify-content:space-between;align-items:center}
+.dd .opt{display:flex;align-items:center;gap:10px;min-height:44px;padding:8px 14px;font-size:14.5px;border-top:1px solid var(--p-line)}
+.dd .opt .kind{margin-left:auto;font:500 11px 'IBM Plex Mono',monospace;color:var(--p-dim);white-space:nowrap}.dd .opt.on{background:var(--p-olive-soft)}.dd .opt .tick{color:var(--p-olive);font-weight:700}
+.dd .opt.create{color:var(--p-olive);font-weight:700}
+.dd .opt .only{font-size:12px;color:var(--p-dim);margin-left:auto;white-space:nowrap}
+/* the tag manager drawer (One Tag Idiom) */
+.drawer{padding:18px 20px 22px}
+.drawer h3{font:700 19px/1.2 'Barlow Condensed',Inter,sans-serif;margin:0 0 2px}.drawer .sub2{font-size:13px;color:var(--p-soft);margin-bottom:14px}
+.trow{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:11px 0;border-top:1px solid var(--p-line);align-items:center}.trow:first-of-type{border-top:0}
+.trow .tn{font-weight:600;font-size:15px;display:flex;align-items:center;gap:8px}.trow .tw{font-size:12.5px;color:var(--p-soft);grid-column:1}.trow .tw b{color:var(--p-ink);font-weight:600}.trow .tw.only{color:var(--p-gold)}
+.trow .kebab{grid-row:1/3;color:var(--p-dim);font-weight:700;letter-spacing:.1em;padding:6px 8px;border:1px solid var(--p-line2);border-radius:6px;font-size:13px;background:var(--p-card)}
+.trow .lnk{grid-column:1;font-size:13px;color:var(--p-olive);font-weight:700;margin-top:2px}
+/* send-to-staff sheet */
+.ssheet{padding:18px 20px 22px}
+.ssheet h3{font:700 19px/1.2 'Barlow Condensed',Inter,sans-serif;margin:0 0 2px}.ssheet .sub2{font-size:13px;color:var(--p-soft);margin-bottom:14px}
+.aud{display:grid;grid-template-columns:22px 1fr;gap:2px 10px;padding:12px 12px;border:1px solid var(--p-line2);border-radius:8px;margin-bottom:8px;background:var(--p-card)}
+.aud.on{border-color:var(--p-olive);box-shadow:inset 0 0 0 1px var(--p-olive)}
+.aud .rad{width:18px;height:18px;border:2px solid var(--p-line2);border-radius:50%;margin-top:2px;grid-row:1/4}.aud.on .rad{border-color:var(--p-olive);background:radial-gradient(circle,var(--p-olive) 45%,transparent 50%)}
+.aud .an{font-weight:600;font-size:15px}.aud .an span{font:500 12px 'IBM Plex Mono',monospace;color:var(--p-dim);margin-left:8px}
+.aud .aw{font-size:13px;color:var(--p-soft)}.aud .no{font-size:12.5px;color:var(--p-gold)}
+.prev{border:1px dashed var(--p-line2);border-radius:8px;padding:12px 14px;margin:14px 0 16px;background:var(--p-paper)}
+.prev .pl{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--p-dim);margin-bottom:6px}
+.prev b{display:block;font-weight:600;margin-bottom:2px}.prev p{font-size:13.5px;color:var(--p-soft);margin:0}
+.alsomail{display:grid;grid-template-columns:22px 1fr;gap:2px 10px;padding:10px 12px;border:1px solid var(--p-line2);border-radius:8px;margin:0 0 16px;background:var(--p-card)}.alsomail .cb{width:18px;height:18px;border:2px solid var(--p-line2);border-radius:4px;margin-top:2px;grid-row:1/3}.alsomail.on .cb{border-color:var(--p-olive);background:var(--p-olive);box-shadow:inset 0 0 0 3px #fff}.alsomail .an{font-weight:600;font-size:15px}.alsomail .aw{font-size:12.5px;color:var(--p-soft)}
+.mail{padding:14px 16px 20px;background:#fff}.mail .mh{font-size:12.5px;color:var(--p-dim);border-bottom:1px solid var(--p-line);padding-bottom:8px;margin-bottom:12px}.mail .mh b{display:block;color:var(--p-ink);font-size:14.5px;margin-bottom:2px}.mail h4{font:700 20px/1.2 'Barlow Condensed',Inter,sans-serif;margin:0 0 6px}.mail p{font-size:14px;color:var(--p-soft);margin:0 0 10px}.mail .ol{border:1px solid var(--p-line);border-radius:8px;padding:6px 12px;margin:0 0 12px}.mail .ol div{display:grid;grid-template-columns:44px 1fr;gap:0 10px;padding:6px 0;border-top:1px solid var(--p-line);font-size:13.5px}.mail .ol div:first-child{border-top:0}.mail .ol .t{font:600 12.5px 'IBM Plex Mono',monospace;color:var(--p-ink)}.mail .ol small{display:block;color:var(--p-soft);font-size:12.5px}.mail .ol small.me{color:var(--p-olive);font-weight:600}.mail .cta{display:inline-block;background:var(--p-lime);border:1px solid #b9d88c;border-radius:7px;padding:9px 14px;font-weight:600;font-size:14px;margin:2px 0 12px}.mail .ft{font-size:11.5px;color:var(--p-dim);border-top:1px solid var(--p-line);padding-top:8px}
+.sactions{display:flex;gap:8px;align-items:center}.sactions .cancel{margin-left:auto;color:var(--p-olive);font-weight:700;font-size:14px}
+/* notifications — the bell page row, the push banner, the coach card row */
+.lock{background:#1b1f1a;padding:48px 14px 60px;border-radius:0;color:#fff;text-align:center}
+.lock .clock{font:300 64px/1 Inter;letter-spacing:-2px}.lock .date{font-size:15px;opacity:.8;margin-bottom:26px}
+.push{background:rgba(255,255,255,.94);color:#1b1f1a;border-radius:16px;padding:12px 14px;text-align:left;display:grid;grid-template-columns:30px 1fr auto;gap:4px 10px}
+.push .app{width:30px;height:30px;background:#241E15;border-radius:7px;grid-row:1/3;position:relative}.push .app::after{content:'';position:absolute;left:10px;top:9px;border:6px solid transparent;border-left:9px solid #D9F99D}
+.push .pt{font-weight:600;font-size:14px}.push .pb{font-size:13.5px;color:#3a3a3a;grid-column:2/4}.push .pw{font-size:12px;color:#777}
+.nlist{padding:12px 16px}
+.nrow{display:grid;grid-template-columns:34px 1fr;gap:2px 12px;padding:12px 0;border-top:1px solid var(--p-line)}.nrow:first-child{border-top:0}
+.nrow .ni{width:34px;height:34px;border-radius:50%;background:var(--p-olive-soft);color:var(--p-olive);display:grid;place-items:center;font-size:15px;grid-row:1/4}
+.nrow .nt{font-weight:600;font-size:14.5px}.nrow .nb{font-size:13.5px;color:var(--p-soft)}.nrow .nw{font:500 11.5px 'IBM Plex Mono',monospace;color:var(--p-dim);margin-top:2px}
+.nrow.unread .nt::before{content:'';display:inline-block;width:7px;height:7px;background:var(--p-live);border-radius:50%;margin-right:7px;vertical-align:middle}
+.dayhd{font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--p-dim);padding:14px 0 6px}
+.prefrow{display:grid;grid-template-columns:1fr auto auto auto;gap:14px;align-items:center;padding:11px 0;border-top:1px solid var(--p-line);font-size:14px}
+.prefrow .pn{font-weight:600}.prefrow .pd{font-size:12.5px;color:var(--p-soft);grid-column:1}
+.sw{width:36px;height:20px;border-radius:10px;background:var(--p-line2);position:relative}.sw::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff}.sw.on{background:var(--p-olive)}.sw.on::after{left:18px}
+.swl{font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.12em;color:var(--p-dim);text-align:center;display:block;margin-bottom:3px}
+/* the field — the run screen's rotation list (stage 5 P7 shape) and the station view eyebrow */
+.run{padding:14px 16px 24px}
+.run .rhead{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:2px}.run .rhead h3{font:700 22px/1.1 'Barlow Condensed',Inter,sans-serif;margin:0}.run .rhead .rt{font:600 15px 'IBM Plex Mono',monospace}
+.run .rsub{font-size:13px;color:var(--p-soft);margin-bottom:12px}
+.rr{display:grid;grid-template-columns:44px 1fr auto;gap:0 10px;align-items:center;min-height:56px;padding:8px 0;border-top:1px solid var(--p-line)}.rr:first-child{border-top:0}
+.rr .lt{font:700 22px/1 'IBM Plex Mono',monospace;color:var(--p-ink);text-align:center}.rr .lt small{display:block;font-size:11px;color:var(--p-dim);font-weight:500}
+.rr .rn{font-weight:600;font-size:15.5px}.rr .rw{font-size:13px;color:var(--p-soft)}.rr .rw b{color:var(--p-olive);font-weight:700}
+.rr .view{color:var(--p-olive);font-weight:700;font-size:14px;padding:8px 6px}
+.rr.mine{box-shadow:inset 3px 0 0 var(--p-olive);padding-left:10px}
+.stview{margin:18px 0 0;border:1px solid var(--p-line);border-radius:10px;background:var(--p-card);padding:14px 16px}
+.stview .eb{font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--p-olive);margin-bottom:2px}.stview h4{font:700 24px/1.1 'Barlow Condensed',Inter,sans-serif;margin:0 0 6px}
+.stview p{font-size:14px;color:var(--p-soft);margin:0 0 6px}.stview .lbl{font:700 10.5px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--p-soft);display:block;margin-top:8px}
+.bigbtn{margin-top:14px;min-height:52px;border-radius:9px;background:var(--p-lime);border:1px solid #b9d88c;display:grid;place-items:center;font-weight:700;font-size:16px}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}.fitwrap{width:calc(100% - 20px)}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>A station knows who runs it — project hub</strong><br><small>Ruled A–K and built on dev 2026-09-17 · QA walk §203 owed (the QA Walk tab) · commit on the owner's word · migration 303 to prod before the promote</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Drawn 2026-09-17 on this hub — six screens; ruled A–K as recommended 2026-09-17 (owner, in chat)">Design</li>
+    <li class="stage done" title="Plan + PM brief written 2026-09-17: COACH_PRACTICE_WHO_RUNS_IT_PLAN.md / _PM_BRIEF.md; §10 build record added the same day">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-17 after fe2d8244 (stage 5) and ab4e6f4a (P10); migration 303 on dev; unit 18/18 new + full suite green; typecheck 0; verify:changed green; rendered probe on the UAT fixture at 390 and 1440">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage current" title="Owner QA walk §203 — the QA Walk tab on this hub (sign in as the UAT head coach)">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="viewToggle" aria-pressed="false">Phone width</button><button type="button" id="fitToggle" aria-pressed="true">Fit to window</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions (A–K)</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk · §203</button>
+</nav>
+
+<!-- ═══════════════════════════ MOCKUP ═══════════════════════════ -->
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Screens" id="walkNav">
+    <a href="#s-plan">1 · The plan, as Jen reads it</a>
+    <a href="#s-picker">2 · Staff picker — people first</a>
+    <a href="#s-manager">3 · Manager — who is this</a>
+    <a href="#s-send">4 · Send to staff</a>
+    <a href="#s-notify">5 · What Jen receives</a>
+    <a href="#s-field">6 · The field, by identity</a>
+  </nav>
+
+  <!-- 1 · THE PLAN PAGE ─ whole screen, before and after, as the assistant -->
+  <section class="screen" id="s-plan">
+    <div class="screenhead"><div class="eyebrow">1 · The plan page · whole screen · before / after</div><h1 tabindex="-1">Tuesday's plan, as Jen (assistant coach) reads it on the way to the field</h1>
+      <p>The reading surface. Today nothing on it says which stations are Jen's <button class="fl" type="button" data-finding="F03" data-here="Every station column prints its staff line the same way for every reader. Jen finds her stations by reading for her own name.">F03</button>. After: one support-size line under the where-line, only because Jen is named on this plan, and a small <em>you</em> mark on the rows and columns that are hers. The sheet is not pushed down: the strip is one line, and it is absent for anyone not named.</p></div>
+    <div class="legendbar"><span class="mk" data-k="new" data-note="The “You're on …” strip and the you marks. Everything else on this screen is today's plan page (stage 1–4 as built).">New</span> <span class="mk" data-k="re" data-note="Reads differently for a stated reason.">Restyled</span> <span class="mk" data-k="un" data-note="Drawn unchanged so a build cannot drop it by accident.">Unchanged</span> · toggle Before / After; Phone width shows the after face at 390.</div>
+    <div class="facebar" data-faces="s-plan"><button type="button" data-face="before" aria-pressed="false">Before (today)</button><button type="button" data-face="after" aria-pressed="true">After</button></div>
+
+    <div class="fitwrap desk"><div class="frame" data-face="before" hidden>
+      <div class="topstrip"><div class="logo"></div><div class="wm">RIVERDALE RIDGE <span>COACHES</span></div><div class="bell">🔔<i>2</i></div><div class="ws">JEN OKAFOR</div></div>
+      <div class="teamhead"><h1>Riverdale Ridge U13</h1><span class="tm">2026 SEASON · <b>Assistant coach</b></span><div class="next"><small>NEXT</small>Tue Sep 22 · Practice · 6:00 p.m.</div></div>
+      <div class="body"><nav class="sb"><div class="sel">Riverdale Ridge U13 <span>⌄</span></div><div class="grp">TEAM</div><a><i></i>Overview</a><a><i></i>Schedule</a><a class="on"><i></i>Practice</a><a><i></i>Roster</a><a><i></i>Skills &amp; Goals</a><a><i></i>Insights</a><div class="grp">TALK</div><a><i></i>Chat</a><a><i></i>Notifications</a></nav>
+      <div class="pg">
+        <div class="pgtitle"><div class="ico">▤</div><h2>PRACTICE PLAN</h2></div>
+        <p class="whenline"><b>Tuesday, September 22</b> · 6:00–7:30 p.m. · 90 min · 90 of 90 min planned</p>
+        <p class="whereline">Arrive 5:45 p.m. · Riverdale Fields 2</p>
+        <div class="toolbar"><span class="btn2"><i>⎙</i> Print the sheet</span></div>
+        <div class="sheet">
+          <p class="goal">Quick feet, clean first touch</p><p class="desc">Short, sharp evening — the circuit is the practice. Keep the ball on the ground and the tempo up; the game at the end is the reward.</p>
+          <div class="tl">
+            <div class="row"><div class="gut">6:00<small>10 min</small></div><div class="rowbody"><div class="ttl">Warm-up</div><div class="first">Dynamic stretch in two lines, then rondo 5v2 in the two grids.</div><div class="meta">Whole team</div></div></div>
+            <div class="row"><div class="gut">6:10<small>45 min</small></div><div class="rowbody"><div class="ttl">Skills circuit <span class="shape">↻ Rotation</span></div><div class="first">Six stations, groups move every 15. Coaches stay where they are.</div><div class="watch"><b>Watching for:</b> first touch away from pressure</div><div class="meta">6 stations · groups A–F</div>
+              <div class="stcols">
+                <div class="stcol"><div class="nm">Close control</div><div class="who">Jen · Sam</div><div class="fst">Cone weave, both feet, sole rolls on the turn.</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Footwork ladder</div><div class="who">Jen</div><div class="fst">Two ladders side by side; icky shuffle, in-in-out-out.</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Finishing</div><div class="who">Craig</div><div class="fst">Lay-off and strike from the edge of the D.</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Passing gates</div><div class="who">Adam</div><div class="fst">Six gates, two touches max, count gates in 90 s.</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">1v1 to goal</div><div class="who">Priya</div><div class="fst">Attacker from the wing, defender recovers from the post.</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Keeper work</div><div class="who">Craig</div><div class="fst">Low dives, then cut-backs.</div><span class="open">Open ›</span></div>
+              </div></div></div>
+            <div class="row"><div class="gut">6:55<small>rest</small></div><div class="rowbody"><div class="ttl">Small-sided game</div><div class="first">Two teams of six, keepers rotate every five. Two-touch in the middle third.</div><div class="meta">Whole team · Jen · Craig</div></div></div>
+          </div>
+        </div>
+      </div></div>
+    </div></div>
+
+    <div class="fitwrap desk"><div class="frame" data-face="after">
+      <div class="topstrip"><div class="logo"></div><div class="wm">RIVERDALE RIDGE <span>COACHES</span></div><div class="bell">🔔<i>3</i></div><div class="ws">JEN OKAFOR</div></div>
+      <div class="teamhead"><h1>Riverdale Ridge U13</h1><span class="tm">2026 SEASON · <b>Assistant coach</b></span><div class="next"><small>NEXT</small>Tue Sep 22 · Practice · 6:00 p.m.</div></div>
+      <div class="body"><nav class="sb"><div class="sel">Riverdale Ridge U13 <span>⌄</span></div><div class="grp">TEAM</div><a><i></i>Overview</a><a><i></i>Schedule</a><a class="on"><i></i>Practice</a><a><i></i>Roster</a><a><i></i>Skills &amp; Goals</a><a><i></i>Insights</a><div class="grp">TALK</div><a><i></i>Chat</a><a><i></i>Notifications</a></nav>
+      <div class="pg">
+        <div class="pgtitle"><div class="ico">▤</div><h2>PRACTICE PLAN</h2></div>
+        <p class="whenline"><b>Tuesday, September 22</b> · 6:00–7:30 p.m. · 90 min · 90 of 90 min planned <span class="mk" data-k="un" data-note="The where-line as stage 1 built it. Untouched.">Unchanged</span></p>
+        <p class="whereline">Arrive 5:45 p.m. · Riverdale Fields 2</p>
+        <div class="youre"><span class="lbl">You're on</span>
+          <a><span class="t">6:10</span>Skills circuit <span class="in">› Close control · Footwork ladder</span></a>
+          <a><span class="t">6:55</span>Small-sided game <span class="in">· whole block</span></a>
+          <span class="mk" data-k="new" data-note="One support-size line, only when the viewer's linked staff tag is on this plan — never an empty strip, never on paper. Each entry jumps to its row. In practice order; a station lists under its block. Absent for the head coach unless they tagged themselves; absent for Dana the manager.">New</span>
+          <button class="fl fix" type="button" data-finding="F03" data-here="Jen sees her two stations and her block without reading for her name. Decision G rules where this sits.">fixes F03</button>
+        </div>
+        <div class="toolbar"><span class="btn2"><i>⎙</i> Print the sheet</span></div>
+        <div class="sheet">
+          <p class="goal">Quick feet, clean first touch</p><p class="desc">Short, sharp evening — the circuit is the practice. Keep the ball on the ground and the tempo up; the game at the end is the reward.</p>
+          <div class="tl">
+            <div class="row"><div class="gut">6:00<small>10 min</small></div><div class="rowbody"><div class="ttl">Warm-up</div><div class="first">Dynamic stretch in two lines, then rondo 5v2 in the two grids.</div><div class="meta">Whole team</div></div></div>
+            <div class="row"><div class="gut">6:10<small>45 min</small></div><div class="rowbody"><div class="ttl">Skills circuit <span class="shape">↻ Rotation</span></div><div class="first">Six stations, groups move every 15. Coaches stay where they are.</div><div class="watch"><b>Watching for:</b> first touch away from pressure</div><div class="meta">6 stations · groups A–F</div>
+              <div class="stcols">
+                <div class="stcol mine"><div class="nm">Close control <span class="youmark">you</span></div><div class="who">Jen · Sam</div><div class="fst">Cone weave, both feet, sole rolls on the turn.</div><span class="open">Open ›</span></div>
+                <div class="stcol mine"><div class="nm">Footwork ladder <span class="youmark">you</span> <span class="mk" data-k="new" data-note="The you mark: decided server-side by identity — Jen's account is linked to the tag “Jen”, and that tag is on this station. Not a name match. A column with a shared station (Jen · Sam) marks for both of them.">New</span></div><div class="who">Jen</div><div class="fst">Two ladders side by side; icky shuffle, in-in-out-out.</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Finishing</div><div class="who">Craig</div><div class="fst">Lay-off and strike from the edge of the D.</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Passing gates</div><div class="who">Adam</div><div class="fst">Six gates, two touches max, count gates in 90 s.</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">1v1 to goal</div><div class="who">Priya</div><div class="fst">Attacker from the wing, defender recovers from the post.</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Keeper work</div><div class="who">Craig</div><div class="fst">Low dives, then cut-backs.</div><span class="open">Open ›</span></div>
+              </div></div></div>
+            <div class="row"><div class="gut">6:55<small>rest</small></div><div class="rowbody"><div class="ttl">Small-sided game <span class="youmark">you</span></div><div class="first">Two teams of six, keepers rotate every five. Two-touch in the middle third.</div><div class="meta">Whole team · Jen · Craig</div></div></div>
+          </div>
+        </div>
+      </div></div>
+    </div></div>
+
+    <div class="fitwrap phone" hidden><div class="frame phone">
+      <div class="topstrip"><div class="logo"></div><div class="wm">RIVERDALE RIDGE</div><div class="bell">🔔<i>3</i></div></div>
+      <div class="teamhead"><h1>Riverdale Ridge U13</h1><span class="tm">2026 SEASON · <b>Assistant coach</b></span></div>
+      <div class="pg">
+        <div class="pgtitle"><div class="ico">▤</div><h2>PRACTICE PLAN</h2></div>
+        <p class="whenline"><b>Tuesday, September 22</b> 6:00–7:30 p.m. · 90 min</p>
+        <p class="whereline">Arrive 5:45 p.m. · Riverdale Fields 2</p>
+        <div class="youre"><span class="lbl">You're on</span>
+          <a><span class="t">6:10</span>Skills circuit <span class="in">› Close control · Footwork ladder</span></a>
+          <a><span class="t">6:55</span>Small-sided game <span class="in">· whole block</span></a>
+          <span class="mk" data-k="new" data-note="At 390 the strip is two wrapped lines. This is the phone-before-practice read the owner described.">New</span>
+        </div>
+        <div class="toolbar"><span class="btn2"><i>⎙</i> Print the sheet</span></div>
+        <div class="sheet">
+          <p class="goal">Quick feet, clean first touch</p><p class="desc">Short, sharp evening — the circuit is the practice.</p>
+          <div class="tl">
+            <div class="row"><div class="gut">6:00<small>10 min</small></div><div class="rowbody"><div class="ttl">Warm-up</div><div class="first">Dynamic stretch in two lines, then rondo 5v2.</div><div class="meta">Whole team</div></div></div>
+            <div class="row"><div class="gut">6:10<small>45 min</small></div><div class="rowbody"><div class="ttl">Skills circuit <span class="shape">↻ Rotation</span></div><div class="first">Six stations, groups move every 15.</div><div class="meta">6 stations · groups A–F</div>
+              <div class="stcols">
+                <div class="stcol mine"><div class="nm">Close control <span class="youmark">you</span></div><div class="who">Jen · Sam</div><span class="open">Open ›</span></div>
+                <div class="stcol mine"><div class="nm">Footwork ladder <span class="youmark">you</span></div><div class="who">Jen</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Finishing</div><div class="who">Craig</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Passing gates</div><div class="who">Adam</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">1v1 to goal</div><div class="who">Priya</div><span class="open">Open ›</span></div>
+                <div class="stcol"><div class="nm">Keeper work</div><div class="who">Craig</div><span class="open">Open ›</span></div>
+              </div></div></div>
+            <div class="row"><div class="gut">6:55<small>rest</small></div><div class="rowbody"><div class="ttl">Small-sided game <span class="youmark">you</span></div><div class="first">Two teams of six, keepers rotate.</div><div class="meta">Whole team · Jen · Craig</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+    <div class="intent"><strong>Design intent:</strong> the sheet stays the page. The strip earns its one line by being personal (it exists only when the reader is named) and by being a door (each entry jumps). Nothing else on the plan page moves; the head coach's page gains only the toolbar button on screen 4.</div>
+  </section>
+
+  <!-- 2 · THE STAFF PICKER -->
+  <section class="screen" id="s-picker" hidden>
+    <div class="screenhead"><div class="eyebrow">2 · The station's Staff field · phone 390, true size</div><h1 tabindex="-1">Who runs this station — people on this team first, then words</h1>
+      <p>D12 (2026-07-31) ruled "team coaches offered automatically; anyone else created on the spot". The second half shipped as the staff tag library; the first half was never built <button class="fl" type="button" data-finding="F02" data-here="The dropdown today lists the team's staff words alphabetically with “+ Create”. It does not know who is on the staff list.">F02</button>. Picking a person mints a linked tag — the word stays the coach's ("Jen"), the identity rides underneath. Adam, the outside instructor, is a word, exactly as today.</p></div>
+    <div class="legendbar">Open the Artifact on a phone for this one — the dropdown is sized for a thumb under a tablet keyboard.</div>
+    <div class="fitwrap pair">
+      <div class="frame phone">
+        <div class="topstrip"><div class="logo"></div><div class="wm">RIVERDALE RIDGE</div><div class="bell">🔔</div></div>
+        <div class="sheetp">
+          <div class="crumb">SKILLS CIRCUIT · STATION 2 OF 6</div><h3>Footwork ladder</h3>
+          <div class="fld"><label>What you're doing</label><div class="inp">Two ladders side by side; icky shuffle, in-in-out-out.</div></div>
+          <div class="fld"><label>Staff <span class="mk" data-k="re" data-note="The same PracticeTagPicker. What changes: selected people wear the person mark; the dropdown gains a first group. Read-resolve, write-whole still holds — nothing is rewritten by opening it.">Restyled</span></label>
+            <div class="inp"><div class="chips"><span class="chip"><span class="person">J</span>Jen <span class="x">×</span></span><span style="color:var(--p-dim)">|</span></div></div>
+            <div class="dd">
+              <div class="grp">People on this team <span class="mk" data-k="new" data-note="Every staff member THIS season, head coach first, each with their word (the stored staff kind, mig 288). Picking one selects their linked tag — minting it if the team has none yet. No account is created, no access changes: a tag is a label, never a grant (D12).">New</span></div>
+              <div class="opt"><span class="person">S</span>Sam Whitfield<span class="kind">Head coach</span></div>
+              <div class="opt on"><span class="person">J</span>Jen Okafor <span class="tick">✓</span><span class="kind">Assistant coach</span></div>
+              <div class="opt"><span class="person">C</span>Craig Dubois<span class="kind">Assistant coach</span></div>
+              <div class="opt"><span class="person">O</span>Omar Haddad<span class="kind">Assistant coach</span></div>
+              <div class="opt"><span class="person">P</span>Priya Raman<span class="kind">Helper</span></div>
+              <div class="opt"><span class="person">D</span>Dana Lee<span class="kind">Team manager</span></div>
+              <div class="opt"><span class="person">M</span>Marcus Hill<span class="kind">Team treasurer</span></div>
+              <div class="grp">Words <span class="mk" data-k="un" data-note="The team's other staff tags — the outside instructor, the PD coach — as today. “+ Create” still mints a plain word for anyone without an account.">Unchanged</span></div>
+              <div class="opt">Adam<span class="only">a name only</span></div>
+              <div class="opt">PD coach<span class="only">a name only</span></div>
+              <div class="opt create">+ Create a new name…</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="intent"><strong>Design intent:</strong> the person is the default answer to "who runs this", the word is the exception — the reverse of today. The kind word beside each name is the same word on the staff list, so the coach recognizes the list.</div>
+  </section>
+
+  <!-- 3 · THE MANAGER -->
+  <section class="screen" id="s-manager" hidden>
+    <div class="screenhead"><div class="eyebrow">3 · The staff tag manager (One Tag Idiom drawer) · true size</div><h1 tabindex="-1">Fix the old names once — "Jen" becomes Jen</h1>
+      <p>A team with fifteen practices of typed names does not retype anything. Each row says who it is, or that it is a name only; one control links a word to a person, and every plan that used the word is honest from then on. Merge and retire behave as today (the plan-walk that re-points staff ids already exists); a merge carries the link (decision C).</p></div>
+    <div class="fitwrap pair">
+      <div class="frame panel">
+        <div class="drawer">
+          <h3>Staff</h3><div class="sub2">The names your plans use for who runs a station. 7 in use.</div>
+          <div class="trow"><div class="tn"><span class="person">J</span>Jen</div><span class="kebab">⋯</span><div class="tw"><b>Jen Okafor</b> · Assistant coach · on 14 practices <span class="mk" data-k="new" data-note="Who this word IS — the linked account's name and staff word — and the usage count the manager already shows. The count is unchanged (One Tag Idiom P0).">New</span></div><div class="lnk">Unlink</div></div>
+          <div class="trow"><div class="tn"><span class="person">C</span>Craig</div><span class="kebab">⋯</span><div class="tw"><b>Craig Dubois</b> · Assistant coach · on 9 practices</div><div class="lnk">Unlink</div></div>
+          <div class="trow"><div class="tn"><span class="person">S</span>Sam</div><span class="kebab">⋯</span><div class="tw"><b>Sam Whitfield</b> · Head coach · on 11 practices</div><div class="lnk">Unlink</div></div>
+          <div class="trow"><div class="tn"><span class="person">P</span>Priya</div><span class="kebab">⋯</span><div class="tw"><b>Priya Raman</b> · Helper · on 3 practices</div><div class="lnk">Unlink</div></div>
+          <div class="trow"><div class="tn">Adam</div><span class="kebab">⋯ <span class="mk" data-k="un" data-note="Rename · Merge into… · Retire — the drawer's menu as today.">Unchanged</span></span><div class="tw only">A name only · on 6 practices</div><div class="lnk">Link to a person… <span class="mk" data-k="new" data-note="Offers the season's staff not yet linked. Adam is an outside instructor with no account, so on this team the coach leaves him a word. The line is there so a coach whose “Jen O.” is a word sees the fix in one glance.">New</span></div></div>
+          <div class="trow"><div class="tn">Jen O.</div><span class="kebab">⋯</span><div class="tw only">A name only · on 2 practices</div><div class="lnk">Link to a person… <button class="fl fix" type="button" data-finding="F01" data-here="“Jen O.” was typed on two spring practices before the library existed. Linking it to Jen Okafor — or merging it into “Jen”, which carries the link — makes those two plans say “that's you” for Jen on the field.">fixes F01</button></div></div>
+          <div class="trow"><div class="tn">PD coach</div><span class="kebab">⋯</span><div class="tw only">A name only · on 2 practices</div><div class="lnk">Link to a person…</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="intent"><strong>Design intent:</strong> the manager is where a team's history gets fixed, once. "A name only" is a plain fact, in the gold tone the product uses for "worth a look", never an error.</div>
+  </section>
+
+  <!-- 4 · SEND TO STAFF -->
+  <section class="screen" id="s-send" hidden>
+    <div class="screenhead"><div class="eyebrow">4 · Send to staff · the head coach's toolbar, the sheet, the sent state</div><h1 tabindex="-1">Three audiences, each honest about who it reaches</h1>
+      <p>The plan autosaves; there is no "done" for the system to detect <button class="fl" type="button" data-finding="F04" data-here="The toolbar today: Save as template… · Print the sheet · Library. Nothing here tells anyone the plan is ready.">F04</button>. So the send is a button, and it asks one thing: who. The three audiences are built on the five staff words the coach already reads on their own staff list; the first is the one that needs the link, and it says so when a word has no account. One more choice under the audiences: <em>Also email them</em> — the coach’s own email, sent whatever the person’s notification settings say, because the coach chose to send it.</p></div>
+    <div class="legendbar">Phone width shows the sheet at 390 (it opens as a bottom sheet there).</div>
+    <div class="fitwrap desk"><div class="frame">
+      <div class="topstrip"><div class="logo"></div><div class="wm">RIVERDALE RIDGE <span>COACHES</span></div><div class="bell">🔔</div><div class="ws">SAM WHITFIELD</div></div>
+      <div class="teamhead"><h1>Riverdale Ridge U13</h1><span class="tm">2026 SEASON · <b>Head coach</b></span><div class="next"><small>NEXT</small>Tue Sep 22 · Practice · 6:00 p.m.</div></div>
+      <div class="body"><nav class="sb"><div class="sel">Riverdale Ridge U13 <span>⌄</span></div><div class="grp">TEAM</div><a><i></i>Overview</a><a><i></i>Schedule</a><a class="on"><i></i>Practice</a><a><i></i>Roster</a><a><i></i>Skills &amp; Goals</a><a><i></i>Insights</a><a><i></i>Money</a><div class="grp">TALK</div><a><i></i>Chat</a><a><i></i>Notifications</a></nav>
+      <div class="pg">
+        <div class="pgtitle"><div class="ico">▤</div><h2>PRACTICE PLAN</h2></div>
+        <p class="whenline"><b>Tuesday, September 22</b> · 6:00–7:30 p.m. · 90 min · 90 of 90 min planned</p>
+        <p class="whereline">Arrive 5:45 p.m. · Riverdale Fields 2</p>
+        <div class="toolbar"><span class="btn2"><i>▣</i> Save as template…</span><span class="btn2"><i>⎙</i> Print the sheet</span><span class="btn2" style="border-color:var(--p-olive)"><i>➤</i> Send to staff <span class="mk" data-k="new" data-note="A secondary button beside the promotion and the paper — the sheet's first block keeps the one lime (stage 1, D5). Only with blocks; only for a writer. Opens the sheet drawn below.">New</span></span><span class="btn2" style="margin-left:auto"><i>▦</i> Library</span></div>
+        <div style="display:grid;grid-template-columns:1fr 440px;gap:24px;align-items:start">
+          <div>
+            <div class="sheet" style="opacity:.55">
+              <p class="goal">Quick feet, clean first touch</p><p class="desc">Short, sharp evening — the circuit is the practice.</p>
+              <div class="tl">
+                <div class="row"><div class="gut">6:00<small>10 min</small></div><div class="rowbody"><div class="ttl">Warm-up</div><div class="meta">Whole team</div></div></div>
+                <div class="row"><div class="gut">6:10<small>45 min</small></div><div class="rowbody"><div class="ttl">Skills circuit <span class="shape">↻ Rotation</span></div><div class="meta">6 stations · groups A–F</div></div></div>
+                <div class="row"><div class="gut">6:55<small>rest</small></div><div class="rowbody"><div class="ttl">Small-sided game</div><div class="meta">Whole team · Jen · Craig</div></div></div>
+              </div>
+            </div>
+            <div class="toolbar" style="margin-top:22px"><span class="btn2"><i>▣</i> Save as template…</span><span class="btn2"><i>⎙</i> Print the sheet</span><span class="btn2"><i>➤</i> Send to staff</span><span class="sentline"><b>Sent to 3</b> (named in the plan) · bell, push and email · 4:12 p.m. <a>Send again</a> <span class="mk" data-k="new" data-note="The sent state after a send — who, which audience, which channels, when, from the stamp columns on the practice (the “shared with families at / by” idiom). Sending again is always allowed and needs no reason. “Changed since you sent it” is decision H — recommended deferred, because the only stamp that could drive it moves on any schedule edit.">New</span></span></div>
+          </div>
+          <div class="frame panel" style="margin:0;width:auto;box-shadow:0 18px 50px rgba(36,30,21,.22)">
+            <div class="ssheet">
+              <h3>Send to staff</h3><div class="sub2">A bell and a push, with a link to this plan. Never you; never someone whose access doesn't include the schedule.</div>
+              <div class="aud on"><span class="rad"></span><div class="an">Named in this plan <span>3</span> <span class="mk" data-k="new" data-note="Everyone whose LINKED staff tag is on any block or station. The default whenever it reaches anyone (decision B). The line under it names the words with no account so an outside instructor never looks like a delivery — and nudges the coach to the manager for a word that should be a person.">New</span></div><div class="aw">Jen Okafor · Craig Dubois · Priya Raman</div><div class="no">Adam — a name only, not sent</div></div>
+              <div class="aud"><span class="rad"></span><div class="an">Coaches and helpers <span>4</span> <span class="mk" data-k="new" data-note="Head coach, assistant coaches and helpers — the people who will be on the field. Omar is an assistant not named on this plan, so he appears here and not above. Decision A is whether helpers belong in this option.">New</span></div><div class="aw">Jen Okafor · Craig Dubois · Omar Haddad · Priya Raman</div></div>
+              <div class="aud"><span class="rad"></span><div class="an">Everyone on staff <span>6</span></div><div class="aw">Jen · Craig · Omar · Priya · Dana Lee (manager) · Marcus Hill (treasurer)</div></div>
+              <div class="prev"><div class="pl">As Jen will read it</div><b>Tuesday's practice plan is ready</b><p>You're on Close control and Footwork ladder. Arrive by 5:45 p.m. for 6:00 p.m.</p></div>
+              <div class="alsomail on"><span class="cb"></span><div class="an">Also email them <span class="mk" data-k="new" data-note="Off by default, remembered with the audience. When on, every person in the chosen audience gets an email from the coach — with the plan outline and their rows marked — REGARDLESS of their notification settings or a paused account: this is Sam addressing colleagues about team business, the same ground a dues reminder (transactional, owner ruling 2026-08-18) and an @mention (pierces the pause) stand on. The bell and push still follow each person’s settings. Decision J.">New</span></div><div class="aw">An email from you with the outline and their stations, whatever their notification settings.</div></div>
+              <div class="sactions"><span class="btnlime">Send to 3</span><span class="cancel">Cancel</span></div>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div></div>
+    <div class="fitwrap phone" hidden><div class="frame phone">
+      <div class="topstrip"><div class="logo"></div><div class="wm">RIVERDALE RIDGE</div><div class="bell">🔔</div></div>
+      <div class="ssheet">
+        <h3>Send to staff</h3><div class="sub2">A bell and a push, with a link to this plan. Never you; never someone whose access doesn't include the schedule.</div>
+        <div class="aud on"><span class="rad"></span><div class="an">Named in this plan <span>3</span></div><div class="aw">Jen Okafor · Craig Dubois · Priya Raman</div><div class="no">Adam — a name only, not sent</div></div>
+        <div class="aud"><span class="rad"></span><div class="an">Coaches and helpers <span>4</span></div><div class="aw">Jen · Craig · Omar · Priya</div></div>
+        <div class="aud"><span class="rad"></span><div class="an">Everyone on staff <span>6</span></div><div class="aw">Jen · Craig · Omar · Priya · Dana (manager) · Marcus (treasurer)</div></div>
+        <div class="prev"><div class="pl">As Jen will read it</div><b>Tuesday's practice plan is ready</b><p>You're on Close control and Footwork ladder. Arrive by 5:45 p.m. for 6:00 p.m.</p></div>
+        <div class="alsomail on"><span class="cb"></span><div class="an">Also email them</div><div class="aw">An email from you with the outline and their stations, whatever their notification settings.</div></div>
+        <div class="sactions"><span class="btnlime">Send to 3</span><span class="cancel">Cancel</span></div>
+      </div>
+    </div></div>
+    <div class="intent"><strong>Design intent:</strong> the sheet answers "who" and shows the answer by name before Send — a count alone would hide a treasurer in "Everyone". The preview is one recipient's real message, so the coach reads what Jen will read. The sheet remembers the team's last choice.</div>
+  </section>
+
+  <!-- 5 · WHAT JEN RECEIVES -->
+  <section class="screen" id="s-notify" hidden>
+    <div class="screenhead"><div class="eyebrow">5 · What Jen receives · the push, the bell, the setting · phone 390</div><h1 tabindex="-1">"You're on Close control and Footwork ladder"</h1>
+      <p>One message per person, so it can name their stations — the thing the link makes possible. The tap opens the plan page (screen 1), never the run screen. Push on by default because it is time-sensitive; the platform’s own email channel stays off unless Jen turns it on — and separately, when the coach ticks <em>Also email them</em>, Jen gets the coach’s email regardless (third phone) <button class="fl" type="button" data-finding="F05" data-here="The catalogue has no practice event today. Explicit-recipient dispatch already exists (it is how “assistant coach joined” reaches a head coach) and does not require org membership.">F05</button> <button class="fl" type="button" data-finding="F07" data-here="The bell row is the guaranteed floor. The push banner drawn here depends on the Android push diagnosis being re-tested before ship.">F07</button>.</p></div>
+    <div class="fitwrap pair">
+      <div class="frame phone">
+        <div class="lock"><div class="clock">4:12</div><div class="date">Tuesday, September 22</div>
+          <div class="push"><div class="app"></div><div class="pt">Tuesday's practice plan is ready</div><div class="pw">now</div><div class="pb">You're on Close control and Footwork ladder. Arrive by 5:45 p.m. for 6:00 p.m. <span class="mk" data-k="new" data-note="The push, personalized. A recipient not named on the plan reads “Read it before 6:00 p.m.” instead. Times through the house clock (“5:45 p.m.”).">New</span></div></div>
+        </div>
+        <div class="nlist">
+          <div class="dayhd">Today</div>
+          <div class="nrow unread"><div class="ni">▤</div><div class="nt">Tuesday's practice plan is ready <span class="mk" data-k="new" data-note="The bell row on the coach Notifications page — a new event type, in the Know zone (a read, not a decision), with the plan icon. Tapping it opens the plan page.">New</span></div><div class="nb">You're on Close control and Footwork ladder. Arrive by 5:45 p.m. for 6:00 p.m.</div><div class="nw">4:12 p.m. · Riverdale Ridge U13</div></div>
+          <div class="nrow"><div class="ni">💬</div><div class="nt">Craig mentioned you in Staff chat</div><div class="nb">“@Jen can you bring the second ladder?”</div><div class="nw">Yesterday · Riverdale Ridge U13</div></div>
+          <div class="nrow"><div class="ni">📅</div><div class="nt">Saturday's game moved to 11:00 a.m.</div><div class="nb">vs Lakeside — field 3, same place.</div><div class="nw">Monday · Riverdale Ridge U13</div></div>
+        </div>
+      </div>
+      <div class="frame phone">
+        <div class="topstrip"><div class="logo"></div><div class="wm">ACCOUNT</div></div>
+        <div class="nlist">
+          <div class="dayhd">Notifications · as a coach</div>
+          <div class="prefrow" style="border-top:0;padding-top:4px"><div></div><span class="swl">BELL</span><span class="swl">PUSH</span><span class="swl">EMAIL</span></div>
+          <div class="prefrow"><div class="pn">Weekly team insights</div><span class="sw on"></span><span class="sw on"></span><span class="sw"></span><div class="pd">Your team's Sunday week-in-review.</div></div>
+          <div class="prefrow"><div class="pn">Practice plan sent <span class="mk" data-k="new" data-note="The coach card on Account › Notifications gains one row (decision D: bell on, push on, email off by default). Jen can turn email on here; the head coach cannot turn it off for her.">New</span></div><span class="sw on"></span><span class="sw on"></span><span class="sw"></span><div class="pd">A coach sent you the practice plan to read before practice — with the stations you're running.</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="fitwrap pair"><div class="frame phone"><div class="topstrip"><div class="logo" style="background:#888"></div><div class="wm">MAIL</div></div><div class="mail"><div class="mh"><b>Tuesday’s practice plan — Riverdale Ridge U13</b>FieldLogicHQ for Sam Whitfield · to Jen · 4:12 p.m.</div><h4>Tuesday’s practice plan is ready</h4><p>Sam sent you the plan for <b>Tuesday, September 22 · 6:00–7:30 p.m.</b> at Riverdale Fields 2. You’re on <b>Close control</b> and <b>Footwork ladder</b>. Arrive by 5:45 p.m. <span class="mk" data-k="new" data-note="The email names the coach as the sender and opens with the two facts: what’s mine, when to be there. Decision K: it also carries the outline below, so an assistant on a train can read the shape of the evening without signing in; the whole sheet stays behind the button.">New</span></p><div class="ol"><div><span class="t">6:00</span><span>Warm-up<small>Whole team</small></span></div><div><span class="t">6:10</span><span>Skills circuit · 6 stations<small class="me">Close control — Jen · Sam · you</small><small class="me">Footwork ladder — Jen · you</small><small>Finishing — Craig · Passing gates — Adam · 1v1 to goal — Priya · Keeper work — Craig</small></span></div><div><span class="t">6:55</span><span>Small-sided game<small class="me">Whole team · Jen · Craig · you</small></span></div></div><span class="cta">Open the plan</span><div class="ft">Sam sent this to you directly as staff of Riverdale Ridge U13 — it isn’t affected by your notification settings. <span class="mk" data-k="new" data-note="Says plainly why it arrived, so nobody reads it as the platform ignoring their settings. No unsubscribe link: this is a colleague’s message, not a subscription — the same footing as a dues reminder.">New</span></div></div></div></div>
+    <div class="intent"><strong>Design intent:</strong> the message carries the two facts an assistant needs — what's mine, when to be there — and nothing else. The setting is one row on the card that already exists.</div>
+  </section>
+
+  <!-- 6 · THE FIELD -->
+  <section class="screen" id="s-field" hidden>
+    <div class="screenhead"><div class="eyebrow">6 · The run screen · stage 5's P7 shape, unchanged · phone 390</div><h1 tabindex="-1">"That's you" — now by identity, on every row that is Jen's</h1>
+      <p>Stage 5 (ruled 2026-09-17, building now) makes the rotation one list keyed by station with "that's you" on the viewer's row. That shape is drawn here unchanged. What this project swaps is the <em>reason</em> a row says it: today a whole-string, case-insensitive match of the tag's name against a member-list field that is often blank <button class="fl" type="button" data-finding="F01" data-here="Today's rule: a station is Jen's if a resolved staff name equals her member display name exactly. “Jen” ≠ “Jen Okafor”; a blank display name never matches anything. The route's own comment calls it “a match on a label, not an identity claim”.">F01</button>; after, the server says which blocks and stations carry a tag linked to the viewer's account.</p></div>
+    <div class="fitwrap pair">
+      <div class="frame phone">
+        <div class="run">
+          <div class="rhead"><h3>Skills circuit</h3><span class="rt mono">6:25</span></div>
+          <div class="rsub">Round 2 of 3 · next move 6:40 · <span class="mk" data-k="un" data-note="Stage 5 P7 as ruled: one list keyed by station — letter · station · who · View. Nothing here is restyled by this project.">Unchanged</span></div>
+          <div class="rr mine"><div class="lt">B</div><div><div class="rn">Close control</div><div class="rw">Jen · Sam — <b>that's you</b> <button class="fl fix" type="button" data-finding="F01" data-here="Says “that's you” because the tag “Jen” is linked to Jen's account and is on this station — with a blank member display name, with the tag spelled however the coach likes. Sam sees the same row say “that's you” on his phone.">fixes F01</button></div></div><span class="view">View ›</span></div>
+          <div class="rr mine"><div class="lt">C</div><div><div class="rn">Footwork ladder</div><div class="rw">Jen — <b>that's you</b></div></div><span class="view">View ›</span></div>
+          <div class="rr"><div class="lt">D</div><div><div class="rn">Finishing</div><div class="rw">Craig</div></div><span class="view">View ›</span></div>
+          <div class="rr"><div class="lt">E</div><div><div class="rn">Passing gates</div><div class="rw">Adam</div></div><span class="view">View ›</span></div>
+          <div class="rr"><div class="lt">F</div><div><div class="rn">1v1 to goal</div><div class="rw">Priya</div></div><span class="view">View ›</span></div>
+          <div class="rr"><div class="lt">A</div><div><div class="rn">Keeper work</div><div class="rw">Craig</div></div><span class="view">View ›</span></div>
+          <div class="stview"><div class="eb">You're running <span class="mk" data-k="re" data-note="The station view's eyebrow — “You're running” vs “Station” — reads the same identity answer. One label, as stage 5 already has it; only what decides it changes.">Restyled</span></div><h4>Footwork ladder</h4><p>Two ladders side by side; icky shuffle, in-in-out-out.</p><span class="lbl">Watching for</span><p>Knees up, eyes forward — not at the rungs.</p><span class="lbl">With you now</span><p>Group C · Avery · Blake · Devon · Emerson</p></div>
+          <div class="bigbtn">Rotate now</div>
+        </div>
+      </div>
+    </div>
+    <div class="intent"><strong>Design intent:</strong> no new marks on the field. The row already knows how to say "that's you"; this makes it true. Decision E: the old name match is deleted rather than kept as a fallback — a fallback that works for some hides the missing link from everyone.</div>
+  </section>
+</section>
+
+<!-- ═══════════════════════════ DECISIONS ═══════════════════════════ -->
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions A–K</h1>
+  <p class="sub">Each has a recommendation. Press the answer, add a note if the shape should differ, then "Build the paste-back" and paste it into chat. Answers stay in this browser only.</p>
+
+  <div class="ask" data-q="A"><div class="qn">A · Audience</div><h3>Do helpers belong in "Coaches and helpers"?</h3><p>The product defines a helper as "runs a station at practice. Sees the plan and the players in front of them." A practice plan is the one thing a helper is for.</p><div class="rides"><b>Recommendation:</b> yes. <b>If no:</b> the option reads "Coaches" (head + assistants) and a helper is reached only by "Named in this plan" or "Everyone on staff".</div></div>
+  <div class="ask" data-q="B"><div class="qn">B · Default</div><h3>Which audience is selected when the sheet opens?</h3><p>"Named in this plan" whenever it reaches at least one person; otherwise "Coaches and helpers". After the first send, the sheet remembers the team's last choice.</p><div class="rides"><b>What rides on it:</b> a Tuesday habit is one tap. <b>Alternative:</b> always open on "Coaches and helpers" — simpler, but it makes the personalized message the second choice.</div></div>
+  <div class="ask" data-q="C"><div class="qn">C · Merge</div><h3>When a linked word is merged into an unlinked one, does the link carry across?</h3><p>The coach merged "Jen O." into "Jen" because they are one person. Losing the identity on the way would silently break "that's you" on every plan that used the loser. The reverse merge (unlinked into linked) keeps the winner's link either way.</p><div class="rides"><b>Recommendation:</b> carry it. <b>Edge:</b> two linked words for two different people merged together — refuse with a sentence ("Jen and Craig are different people"), never pick one.</div></div>
+  <div class="ask" data-q="D"><div class="qn">D · Channels</div><h3>Bell on, push on by default, email off by default?</h3><p>Time-sensitive, so push defaults on (like chat mentions and score updates). Email stays off unless the person turns it on in Account › Notifications — a practice plan two hours out is a phone thing.</p><div class="rides"><b>Caveat:</b> Android push on production has an open diagnosis; the bell + deep link is the floor. Re-test the device before ship.</div></div>
+  <div class="ask" data-q="E"><div class="qn">E · Fallback</div><h3>Delete the name match, or keep it as a fallback for unlinked words?</h3><p>Keeping it means "that's you" keeps working for the teams where the spelling happens to line up — and nobody on those teams ever learns the link exists. Deleting it means the honest path is the only path: the "a name only" line and the manager's link control.</p><div class="rides"><b>Recommendation:</b> delete it.</div></div>
+  <div class="ask" data-q="F"><div class="qn">F · Order</div><h3>Build the link first, then the strip, then Send — all after the Stage 5 commit?</h3><p>Send's best audience needs the link. The five files this lands on are the five Stage 5 is rewriting; the row component it introduces is what the "you" mark rides on.</p><div class="rides"><b>Alternative:</b> ship Send alone first with two audiences (no "Named") — faster, but it ships the message without the sentence that makes it worth sending.</div></div>
+  <div class="ask" data-q="G"><div class="qn">G · Placement</div><h3>"You're on …" — under the where-line, above the sheet, only when the viewer is named?</h3><p>One support-size line, absent for anyone not named, never an empty strip, never on paper. The sheet stays the page (screen 1, before/after).</p><div class="rides"><b>Alternatives weighed:</b> a mark on the rows alone (no strip — but then a phone reader still scrolls to find them); a strip for everyone with "You're not on a station" (noise for the manager).</div></div>
+  <div class="ask" data-q="H"><div class="qn">H · Changed since</div><h3>Show "Changed since you sent it" on the toolbar?</h3><p>The practice has no plan-only "last edited" stamp; its general one moves on any schedule edit (moving the start time would light the line). A true version needs a plan-only stamp — small, but a second stamp to keep honest.</p><div class="rides"><b>Recommendation:</b> defer. Re-send is the answer; revisit if coaches ask for it.</div></div>
+  <div class="ask" data-q="I"><div class="qn">I · The stamp</div><h3>Store the last send on the practice (four columns), not a history table?</h3><p>When, by whom, which audience, how many — the same idiom as "shared with families at / by". Nothing reads a history of sends; the toolbar reads the last one.</p><div class="rides"><b>If a history is wanted later</b> (who was sent what, when — for a dispute), it is a small table then; nothing here prevents it.</div></div>
+
+  <div class="ask" data-q="J"><div class="qn">J · Email</div><h3>“Also email them” sends the coach’s email regardless of the person’s notification settings and a paused account?</h3><p>The owner’s ask (2026-09-17): an explicit action by the coach, so it bypasses opt-outs. The ground it stands on already exists twice: a dues reminder skips the family opt-out because a bill is transactional (owner ruling 2026-08-18), and an @mention pierces the master pause because a person addressed you. The bell and push keep following each person’s settings — only the email the coach chose to send is exempt.</p><div class="rides"><b>Recommendation:</b> yes, with two boundaries drawn in: the email names the coach as the sender and its footer says why it arrived; and it is off by default, remembered with the audience, so it is always a choice the coach made this time or last time. <b>What it is not:</b> a way for the platform to email staff — only this button, only this audience.</div></div>
+  <div class="ask" data-q="K"><div class="qn">K · The email’s body</div><h3>Does the email carry the plan’s outline, or only the message?</h3><p>The outline — times, blocks, stations, who — with the reader’s rows marked, then a button to the whole plan. An assistant on a train reads the shape of the evening without signing in; the drills, coaching points and groups stay behind the button (they are the sheet, and the sheet is the app).</p><div class="rides"><b>Alternative:</b> the message and the button only — simpler, and it makes the email a doorbell rather than a document. <b>Not proposed:</b> the whole sheet in the email — it is the printed page, and it names children.</div></div>
+
+  <button class="button primary" type="button" id="buildSummary" style="margin-top:20px">Build the paste-back</button>
+  <textarea id="summaryOut" rows="14" readonly hidden></textarea>
+
+  <h2 style="margin-top:36px">Rulings this project stands on</h2>
+  <div id="decisionRows"></div>
+</section>
+
+<!-- ═══════════════════════════ PM BRIEF ═══════════════════════════ -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>A station knows who runs it</h1>
+  <p class="sub">Drawn 2026-09-17, awaiting rulings A–I. Builds after the Stage 5 practices commit lands.</p>
+  <h2>What a coach can do that they couldn't before</h2>
+  <ul>
+    <li><b>Tag a station with a person, not just a word.</b> The Staff picker on a block or station opens with the team's own people first — head coach, assistants, helpers, manager, treasurer, each with their word — and picking one links the tag to their account. The tag still reads as the coach's own label ("Craig"); outside instructors stay a plain word, exactly as today.</li>
+    <li><b>Fix the old names once.</b> In the staff tag manager, "Jen" can be linked to Jen with one control; every practice already written that says "Jen" then knows who that is.</li>
+    <li><b>Send the plan to the right people.</b> A <b>Send to staff</b> button on a finished plan offers three audiences — <i>Named in this plan</i> · <i>Coaches and helpers</i> · <i>Everyone on staff</i> — each showing who it reaches by name, with a preview of the message. Managers and treasurers stop receiving practice plans unless the coach chooses "Everyone". The toolbar then says when and to whom it went; sending again is always allowed.</li>
+    <li><b>Email them too, when it matters.</b> A tick on the same sheet sends the coach’s own email — the message, the outline with their rows marked, a button to the plan — to everyone in the audience, whatever their notification settings say. It is the coach’s explicit act, on the same footing as a dues reminder; the email names the coach and says why it arrived.</li>
+  </ul>
+  <h2>What an assistant sees that they didn't before</h2>
+  <ul>
+    <li>A phone notification the moment the coach sends it — <i>"Tuesday's practice plan is ready — you're on Footwork ladder and Close control. Arrive by 5:45 p.m. for 6:00 p.m."</i> — that opens the plan.</li>
+    <li>On the plan, a quiet <b>"You're on …"</b> line under the title listing their blocks and stations in order, each a jump; those rows wear a small <b>you</b> mark. Nobody else's plan page changes.</li>
+    <li>On the field, "that's you" / "You're running" fires <b>reliably</b> on every station and block that is theirs. Today it works only when the tag's spelling exactly equals a member-list field that is often blank — it fails silently for most teams and nobody knows.</li>
+  </ul>
+  <h2>Why it matters</h2>
+  <p>The practice plan is the one document a whole staff shares in the hour before a practice. Today the only way an assistant learns a plan exists is to go looking, and the only way they learn which station is theirs is to read for their own name. The notification closes the first gap; the identity link closes the second — and makes the notification worth sending, because it can name their stations.</p>
+  <h2>What was deliberately not proposed, and why</h2>
+  <ul>
+    <li><b>An automatic reminder before every practice.</b> A scheduled send is a second decision (a cron, a quiet-hours policy, what "before" means); the button is the one the coach controls.</li>
+    <li><b>Marking "you" on the printed sheet.</b> Paper is for everyone at the table.</li>
+    <li><b>Any change to what a helper or assistant can open.</b> A tag is a label, never a grant — the 2026-07-31 ruling holds. Linking gives a person nothing they couldn't already read.</li>
+    <li><b>Keeping the old name-matching as a fallback.</b> It would keep working for some teams and hide from everyone that the link was missing.</li>
+  </ul>
+  <h2>Customer impact</h2>
+  <p>Every team with more than one adult on staff, every practice. The coach's cost is one button and, once, linking a few tags. The assistant's benefit is the difference between "there's a plan somewhere" and "I'm on Footwork ladder at 6:10, here's the sheet".</p>
+  <h2>Priority</h2>
+  <p>After the Stage 5 build commits (it rewrites the same screens); before the next practices-area work. The link is the first half to build — the send's best audience depends on it.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A linked assistant opens a plan they are named on and sees the "You're on …" line without hunting; on the field every one of their stations says "that's you" — by identity, with a blank member name.</li>
+    <li>"Named in this plan" reaches exactly the linked people on the plan and lists the unlinked words as not sent; a manager receives nothing unless "Everyone" was chosen.</li>
+    <li>The push arrives on the owner's Android device (the open diagnosis re-tested before ship).</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════ FULL PLAN ═══════════════════════════ -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>A station knows who runs it — plan</h1>
+  <p class="sub">Read-only walk of the code on 2026-09-17. The file <code>docs/projects/active/COACH_PRACTICE_WHO_RUNS_IT_PLAN.md</code> is the record; this tab is the same content, readable.</p>
+  <div class="note"><strong>Build gate.</strong> The Stage 5 (Paper &amp; the field) build must be committed first — this lands on the same five files it is rewriting: the plan page, the run page, the station view, the editor, and the plan module. Written against Stage 5's ruled shape (P7's one list keyed by station), not the tree on 2026-09-17.</div>
+
+  <h2>1 · Assessment</h2>
+  <p>Two asks on 2026-09-17: notify the staff when a plan is written so they can prepare before the start time; and link the staff tags on stations to real portal users so an assistant on a phone sees the whole practice and which blocks and stations are theirs. Widened on the second exchange to three audiences — everyone on staff · all coaches · everyone named in the plan.</p>
+  <p>Read from the code, they are one project with a fixed order: <b>the identity link is the load-bearing half.</b> "That's you" on the run screen is a name match against an optional field, so it already fails silently for the most natural inputs; D12's "team coaches offered automatically" was never built. Without the link, "named in the plan" would have to guess by name, and the notification could only say "go read it".</p>
+
+  <h2>2 · Scope</h2>
+  <p><b>In:</b> staff tags can be people (one person per tag per team); the picker offers the season's staff first and mints a linked tag on pick; the manager links/unlinks a word; the plan and run screens decide "yours" by identity; a "You're on …" strip for a named viewer; Send to staff with three audiences, a sent stamp, and a new notification type (bell + push, personalized).</p>
+  <p><b>Out:</b> a scheduled reminder (a cron, not a button); "you" on paper; links on org-shared staff tags; any change to a helper's access (a tag is a label, never a grant — D12); chat as the channel.</p>
+
+  <h2>4 · Findings</h2>
+  <p><strong>F01 — "That's you" is a label match against an optional field.</strong> The run page compares each resolved staff name with the viewer's member display name, whole string, case-insensitively. That field is nullable and UI-only. "Craig" never equals "Craig Whitfield"; a blank display name can never match. The route's own comment: "a MATCH ON A LABEL, not an identity claim … this can miss."</p>
+  <p><strong>F02 — D12's "team coaches offered automatically" was never built.</strong> The staff library is a plain word list; the picker knows nothing about the team's staff. The plan read already loads the staff list (for the viewer's name and the head coach's) and never hands it to the picker.</p>
+  <p><strong>F03 — The plan page — the reading surface — has no "yours" marking at all.</strong> Only the run screen and its station view mark the viewer's station. The plan page prints every staff line identically. Stage 5 P7 marks every rotation row on the run screen, which is right for the field; the phone-before-practice read happens on the plan page.</p>
+  <p><strong>F04 — There is no "done" moment; a notification must be an explicit act.</strong> The plan autosaves about a second after the last change. Nothing distinguishes "paused" from "finished". The send is a button; it can never be inferred from a save.</p>
+  <p><strong>F05 — The notification system can already reach exactly these people.</strong> Explicit-recipient dispatch resolves through the account, not org membership — the same path "assistant coach joined" uses — so a standalone coach portal and a non-member assistant are reachable. The catalogue is typed as total records, so a new type fails typecheck until every list carries it. Demo orgs are silenced inside dispatch.</p>
+  <p><strong>F06 — Five staff words exist, ruled "a label that gates nothing."</strong> Head coach, assistant coach, team manager, team treasurer, helper (stored since the staff-access pass; derived for older rows). Addressing a notification by the word is not access control — a manager left off the list can still open the plan — so it sits inside the ruling; but it is the first place the word decides anything beyond the row. Said here so it is a decision, not a drift.</p>
+  <p><strong>F08 — Email today is either a preference or a suppression list; a coach’s addressed email is a third thing.</strong> The notification pipeline’s email channel is per-person, per-event, default off. Family email runs through one guarded door that honours an opt-out list and appends an unsubscribe — and dues reminders deliberately stay outside it because a bill is transactional (owner ruling 2026-08-18). A coach pressing Send is neither: a colleague addressing colleagues about tonight. It goes through the plain sender, names the coach, skips the preference and the pause on purpose, and is recorded as such.</p>
+  <p><strong>F07 — Push to Android on production has an open diagnosis.</strong> Bell works; OS push unproven on the owner's installed app; the self-serve device test is on prod. Re-run it before this ships.</p>
+
+  <h2>5 · The proposal</h2>
+  <h3>5.1 The link</h3>
+  <ul>
+    <li>A staff tag may carry <b>one person</b> (team tags only; never org-shared). The name stays the coach's word; the identity is the id. Still a label, never a grant.</li>
+    <li><b>Picker:</b> "People on this team" first — every staff member this season with their word — then the team's other words, then "+ Create". Picking a person selects (or mints) their linked tag. Finishes D12.</li>
+    <li><b>Manager:</b> each row shows who it is or "a name only"; "Link to a person…" / "Unlink". Merge carries the link (C).</li>
+    <li><b>"Mine" by identity, server-side:</b> the plan read says which blocks and stations carry a tag linked to the viewer. The run screen and station view read that; the name match is deleted (E).</li>
+  </ul>
+  <h3>5.2 "You're on …"</h3>
+  <p>Under the where-line, above the sheet, only when the viewer is named: one line per block/station in practice order, each a jump; the rows wear a small "you" mark. Absent otherwise; absent on paper (G).</p>
+  <h3>5.3 Send to staff</h3>
+  <ul>
+    <li>A <b>Send to staff</b> button in the plan's toolbar (secondary; the sheet keeps the one lime). Only with blocks; only for a writer.</li>
+    <li>A sheet: who (three audiences, each listing names and count), a preview as one recipient reads it, Send. <b>Named in this plan</b> (linked tags on any block or station; "Adam — a name only, not sent") · <b>Coaches and helpers</b> · <b>Everyone on staff</b>. Never the sender; never someone whose access excludes the schedule. Remembers the team's last choice (B).</li>
+    <li>Sent state on the toolbar: "Sent to 3 (named in the plan) · 4:12 p.m. · Send again". Re-send always allowed. "Changed since" deferred (H). Stamp = four columns on the practice (I).</li>
+    <li><b>Also email them</b> (off by default, remembered): every person in the audience gets the coach’s email — the message, the outline with their rows marked, a button to the plan — sent whatever their notification settings say and whether or not their account is paused (J, K). The email names the coach and says why it arrived.</li>
+    <li>The notification: title "Tuesday's practice plan is ready"; body personalized ("You're on Footwork ladder and Close control. Arrive by 5:45 p.m. for 6:00 p.m." / "Read it before 6:00 p.m."); deep link to the plan page. Bell on, push on by default, email off (D). One row on the coach card in Account › Notifications.</li>
+  </ul>
+
+  <h2>6 · Decisions</h2>
+  <p>A–K on the Decisions tab, each with a recommendation. The paste-back updates §6 of the plan file and then the build prompt is written.</p>
+
+  <h2>7 · What the build must fit (technical)</h2>
+  <ul>
+    <li><b>Same five files as Stage 5:</b> the plan page (toolbar, strip), the run page (row → identity), the station view ("You're running" → identity), the editor (picker's people group; the you mark on station columns and the block row), the plan module (a levels-for-user walk beside the tag-name resolver), the coach stylesheet.</li>
+    <li><b>Migration</b> (next free number; check before writing): a nullable person on staff tags, restricted to staff kind and team tags, one person per tag per team; the sent-stamp columns on the practice (at, by, audience, count, emailed). Dictionary + snapshots in the same change. The SQL merge function needs nothing — staff merges already go through the plan-walk module, where the carry is one update.</li>
+    <li><b>Tag routes:</b> the staff library's PATCH accepts a person (validated against this season's staff — a link to a stranger is refused); the GET carries the person and their word per tag.</li>
+    <li><b>Picker:</b> the shared combobox gains an optional grouped "people" list; the practice picker passes it for staff only.</li>
+    <li><b>Plan read:</b> viewer block ids, viewer station ids, the sent stamp, and the staff list with their words + linked tag + whether they can read the plan. The viewer-name field is removed.</li>
+    <li><b>New send route</b> on the practice plan: takes the audience; computes recipients (season staff × can view schedule × audience × not the sender); one dispatch per recipient; writes the stamp; returns count and names. Reads no year — not a history endpoint.</li>
+    <li><b>Notification type</b> across the typed catalogues (label, description, push-default set, category "know"), the icon map, and the coach card.</li>
+    <li><b>The email</b> (when ticked): the plain sender, not the notification pipeline’s email channel and not the family door — deliberately outside both the per-event preference and the master pause (J). Subject “Tuesday’s practice plan — Riverdale Ridge U13”; the personalized line, the outline with the reader’s rows marked, an “Open the plan” button, a footer naming the coach and the reason. Recorded in the sent stamp’s channels.</li>
+    <li><b>Copy:</b> times through the house clock; the spelling gate covers the new strings.</li>
+    <li><b>Tests:</b> the audience rule against a mixed fixture (head, two assistants, manager, treasurer, helper, one assistant without schedule access, one unlinked word, the sender) pinning each exact recipient set; the levels-for-user walk (block and station levels; legacy free-text yields nothing); the merge carry; the catalogue's total records (typecheck). Rendered gate on the plan page at 390/768/1440 with the strip present and absent.</li>
+  </ul>
+
+  <h2>8 · Sizing (after Stage 5)</h2>
+  <div class="tablewrap"><table><thead><tr><th>Piece</th><th>Size</th></tr></thead><tbody>
+    <tr><td>Link column + manager link control + picker people group</td><td>M</td></tr>
+    <tr><td>Server-side "mine" + run screen / station view swap</td><td>S</td></tr>
+    <tr><td>"You're on …" strip + you marks</td><td>S–M</td></tr>
+    <tr><td>Notification type + coach card row</td><td>S</td></tr>
+    <tr><td>Send sheet + route + stamp + sent state</td><td>M</td></tr>
+    <tr><td>Tests, help articles, demo check next cycle</td><td>S</td></tr>
+  </tbody></table></div>
+
+  <h2>10 · Built as (2026-09-17)</h2>
+  <p>Built in the ruled order on the tree after stage 5 and P10, beside two peer sessions (coordinated by message; their files untouched). As drawn: the "You're on …" line under the where-line with the block's clock and a jump per entry; the <b>you</b> marks on shut rows and station columns; the picker's "People on this team" ahead of "Other names"; the manager's "who is this" line with Link / Unlink; the field's "that's you" and "You're running" by identity; Send to staff as a secondary toolbar button; the sheet's three audiences by name and count with the "names only, not sent" line, "Also email them", a real recipient's preview; the sent line under the toolbar; the coach card's "Practice plans" row. Departures flagged: the strip sits inside the sheet's head (where the where-line actually is); "Named" with nobody says which nobody; a sentence ending on the house clock adds no second period. The rendered probe on the UAT fixture found two things, both fixed: the preview counted the sender (the reader's own id now rides the plan) and the strip's clock split at 390. Verified: 18/18 new unit + the full suite green after P10 landed; typecheck 0; verify:changed green (migration 303's dev-only divergences accepted into the parity baseline until the prod apply); dictionary + snapshots at watermark #303. Owed: /docs on three articles, /review and /simplify at hand-off, the Android push re-test, the sandbox's unlinked circuit (a /demos question).</p>
+
+  <h2>9 · Verification (for the build session)</h2>
+  <ol>
+    <li>Focused checks + typecheck (shared modules are touched).</li>
+    <li>Unit: audience rule, levels-for-user, merge carry.</li>
+    <li>Rendered: the plan page with and without the strip; the send sheet at 390; the run row's "that's you" for a linked assistant.</li>
+    <li>Migration applied to dev before the code; dictionary + snapshots refreshed.</li>
+    <li>Owner QA walk (ledger § at the next free number at build time; this hub's QA tab unhidden then).</li>
+    <li>Help articles for the plan page, the run screen and Notifications; the demos pass decides whether the sandbox's circuit gets linked tags.</li>
+  </ol>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection docpage" hidden>
+  <div class="eyebrow">Owner QA walk · ledger §203 · as of 2026-09-17</div>
+  <h1>A station knows who runs it — QA walk</h1>
+  <div class="signin"><strong>Sign in as</strong> — URL: <code>http://localhost:3000</code> (dev server up) · Head coach: <code>uat-coach@uat-test-org.local</code> · Assistant for the identity and bell checks: <code>uat-asst-money@uat-test-org.local</code> · Helper: <code>uat-helper@uat-test-org.local</code> · Password: the shared UAT password in <code>.env.local</code> (<code>UAT_COACH_PASSWORD</code>) — keep it private · Org / team: <code>uat-test-org</code> / <strong>UAT Test Team</strong>, the practice <strong>"UAT probe practice"</strong> (Practice → the probe row). Identities are pinned, never figures: the probe practice's clocks move with the seed.</div>
+  <p class="note"><strong>Two things to know before you start.</strong> (1) The fixture's plan names its staff as <em>old free text</em> ("Jordan Helper · Sam Assistant · UAT Coach") — those are words, not people, and by ruling E they mark nothing; part A links a word to you and part C puts it on a station, which is what makes parts C–E light up. (2) On dev the coach's email is only actually sent when the mail key is set — part F reads the sent line and the server log, not an inbox.</p>
+  <div class="qaprogress" id="qaCount"></div>
+  <div id="qaParts"></div>
+  <button class="button primary" type="button" id="buildQA">Build paste-back summary</button>
+  <textarea id="qaOut" rows="10" readonly hidden></textarea>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* hub tabs */
+const HUBS=['mockup','decisions','brief','plan','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));try{localStorage.setItem('wr-hub',which)}catch(e){}if(which==='mockup')fitAll()}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+/* phone / desktop — a screen with both shows the chosen one; a screen with only phone frames keeps them */
+let phone=false;try{phone=localStorage.getItem('wr-phone')==='1'}catch(e){}
+function paintView(){document.querySelectorAll('.screen').forEach(s=>{const d=[...s.querySelectorAll('.fitwrap.desk')],p=s.querySelector('.fitwrap.phone');if(!d.length)return;if(p){d.forEach(x=>x.hidden=phone);p.hidden=!phone}else{d.forEach(x=>x.hidden=false)}paintFaces(s)});$('viewToggle').setAttribute('aria-pressed',String(phone));$('viewToggle').textContent=phone?'Desktop width':'Phone width';fitAll()}
+$('viewToggle').onclick=()=>{phone=!phone;try{localStorage.setItem('wr-phone',phone?'1':'0')}catch(e){}paintView()};
+
+/* before / after — per screen; the phone frame is always the after face */
+const faces={};
+function paintFaces(s){const bar=s.querySelector('.facebar');if(!bar)return;const cur=faces[s.id]||'after';bar.querySelectorAll('[data-face]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.face===cur)));if(!phone)s.querySelectorAll('.fitwrap.desk').forEach(w=>{const f=w.querySelector('.frame');w.hidden=f.dataset.face!==cur;f.hidden=false})}
+document.querySelectorAll('.facebar [data-face]').forEach(b=>b.onclick=()=>{const s=b.closest('.screen');faces[s.id]=b.dataset.face;paintFaces(s);fitAll()});
+
+/* true size / fit — 1440 frames scale to the window in fit mode; 390 and panel frames are always true size */
+let fit=true;try{fit=localStorage.getItem('wr-fit')!=='0'}catch(e){}
+function fitAll(){document.querySelectorAll('.fitwrap.desk').forEach(w=>{const f=w.querySelector('.frame');if(!f||w.hidden)return;w.classList.toggle('scroll',!fit);if(fit){const k=Math.min(1,w.clientWidth/1440);f.style.transform='scale('+k+')';w.style.height=(f.offsetHeight*k)+'px'}else{f.style.transform='';w.style.height=''}});$('fitToggle').setAttribute('aria-pressed',String(fit));$('fitToggle').textContent=fit?'Fit to window':'True size (1440)'}
+$('fitToggle').onclick=()=>{fit=!fit;try{localStorage.setItem('wr-fit',fit?'1':'0')}catch(e){}fitAll()};
+window.addEventListener('resize',fitAll);
+
+/* screen router */
+function showScreen(){const id=location.hash.slice(1)||'s-plan';const known=[...document.querySelectorAll('.screen')].some(el=>el.id===id);const target=known?id:'s-plan';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==target);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+target?'page':'false'));document.getElementById(target)?.querySelector('h1')?.focus({preventScroll:true});paintView()}
+window.addEventListener('hashchange',showScreen);
+
+/* explanations behind every highlight */
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+  F01:{t:'“That’s you” is a label match against an optional field',now:'The run page decides a station is the viewer’s when a resolved staff name equals the viewer’s member display name — whole string, case-insensitive. That field is nullable and used for display only. “Craig” never equals “Craig Whitfield”; a blank display name can never match anything. The plan route’s own comment calls it “a MATCH ON A LABEL, not an identity claim … this can miss.” It grants nothing, so it never fails dangerously — it just fails quietly.',fix:'A staff tag can carry one person. The plan read says which blocks and stations carry a tag linked to the viewer’s account; the run screen, the station view and the plan page read that. The name match is deleted (decision E).'},
+  F02:{t:'D12’s “team coaches offered automatically” was never built',now:'The staff library is a plain word list. The picker lists the team’s words alphabetically with “+ Create” and knows nothing about who is on the staff list — even though the plan read already loads that list for other reasons.',fix:'The dropdown opens with “People on this team” — every staff member this season with their word — and picking one selects or mints their linked tag. Words stay for anyone without an account.'},
+  F03:{t:'The plan page — the reading surface — has no “yours” marking',now:'Only the run screen and its station view mark the viewer’s station. On the plan page every station column prints its staff line the same way for every reader; an assistant finds their stations by reading for their own name.',fix:'One support-size “You’re on …” line under the where-line, only when the viewer is named, each entry a jump; a small you mark on their rows and columns. Absent otherwise; absent on paper.'},
+  F04:{t:'There is no “done” moment; a notification must be an explicit act',now:'The plan autosaves about a second after the last change — the portal’s no-Save-button posture. Nothing distinguishes “paused typing” from “finished writing”.',fix:'A Send to staff button on the toolbar. The coach decides the plan is readable; a half-written plan never goes out because a keystroke paused.'},
+  F05:{t:'The notification system can already reach exactly these people',now:'The catalogue has no practice event. Explicit-recipient dispatch exists and resolves through the account rather than org membership — the path “assistant coach joined” uses — so a standalone portal’s assistants are reachable. The catalogues are typed as total records; demo orgs are silenced inside dispatch.',fix:'One new type, “Practice plan sent”, in every catalogue; one dispatch per recipient so the body can name their stations; a row on the coach card in Account › Notifications.'},
+  F07:{t:'Push to Android on production has an open diagnosis',now:'Bell rows work; OS push on the owner’s installed app was unproven at the last test (2026-07-04). The self-serve “Test this device” tool is on prod.',fix:'Bell + deep link is the guaranteed floor. Re-run the device test before this ships; the push is the reason it is on by default.'},
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and reads differently for a stated reason. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+/* the asks — Build as recommended / Change it / Not now + a note, kept in this browser */
+const KEY='wr-decisions-v1';let state={};try{state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){state={}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}}
+const BUILD=[['keep','As recommended'],['reshape','Change it — note below'],['later','Not now']];
+document.querySelectorAll('.ask[data-q]').forEach(ask=>{const q=ask.dataset.q;const wrap=document.createElement('div');wrap.className='ruling';wrap.setAttribute('role','group');wrap.setAttribute('aria-label','Your answer to '+q);
+  BUILD.forEach(c=>{const b=document.createElement('button');b.type='button';b.textContent=c[1];b.dataset.v=c[0];b.setAttribute('aria-pressed',String(state['a-'+q]===c[0]));b.onclick=()=>{state['a-'+q]=state['a-'+q]===c[0]?undefined:c[0];if(state['a-'+q]===undefined)delete state['a-'+q];save();wrap.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(state['a-'+q]===x.dataset.v)))};wrap.appendChild(b)});
+  const note=document.createElement('textarea');note.className='note';note.rows=1;note.placeholder='The shape you want, or why this one holds';note.value=state['n-'+q]||'';note.oninput=()=>{state['n-'+q]=note.value;if(!note.value)delete state['n-'+q];save()};
+  ask.appendChild(wrap);ask.appendChild(note)});
+$('buildSummary').onclick=()=>{const lines=['A station knows who runs it — decisions A–K — '+new Date().toISOString().slice(0,10),''];document.querySelectorAll('.ask[data-q]').forEach(a=>{const q=a.dataset.q;const h=a.querySelector('h3').textContent.trim();const ans=state['a-'+q];const label=ans?BUILD.find(c=>c[0]===ans)[1]:'no answer';lines.push('['+(ans?'x':' ')+'] '+q+' — '+h);lines.push('    -> '+label+(state['n-'+q]?' — '+state['n-'+q].replace(/\s+/g,' ').trim():''))});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+
+/* rulings this project stands on; A–I are appended here once pasted back */
+const DECISIONS=[
+  {date:'2026-09-17 · in chat, after the Stage 5 commit: "Build as recommended (A–K)"',ask:'A–K — helpers in "Coaches and helpers"; "Named in this plan" the default when it reaches anyone, then the team’s last choice; a merge carries the person (two different people refused); bell on, push on, email off by default; the name match deleted, no fallback; link → strip → send; the strip under the where-line only when named; "changed since you sent it" deferred; the sent stamp as columns on the practice; "Also email them" bypasses the person’s settings and the pause; the email carries the outline',ruling:'accepted',label:'Accepted · built on dev 2026-09-17',why:'All eleven taken as recommended and built the same day, after fe2d8244 (stage 5) and ab4e6f4a (P10). Three build-time departures, flagged in the plan’s §10: the strip sits inside the sheet’s head because that is where the where-line lives on the built page; "Named" with nobody says which nobody ("Only you are linked on this plan so far."); a sentence that ends on the house clock adds no second period. The rendered probe found and fixed two things: the sheet’s preview counted the sender while the route did not (the reader’s own id now rides the plan), and the strip’s clock split across two lines on a phone.'},
+  {date:'2026-07-31 · Practice Plans, D12',ask:'Staff on a station are tags — team coaches offered automatically, anyone else created on the spot; a tag is a label, never a grant',ruling:'inherited',label:'Inherited · half built',why:'The tag library shipped (mig 266). "Team coaches offered automatically" did not — this project finishes it, and keeps the second half of the ruling exactly: linking a tag to a person gives that person nothing they could not already open.'},
+  {date:'2026-07-31 · Practice Plans, D29 · D30',ask:'A non-coach helper gets in by invitation and sign-in, never a shareable link; a Helper is a preset of existing grants, not a third role',ruling:'inherited',label:'Inherited · binding',why:'Nothing here creates a link, a role or a grant. The audiences address people who already have a door; anyone whose access excludes the schedule is excluded from every audience because the deep link would refuse them.'},
+  {date:'2026-09-10 · Staff access pass 2 (mig 288)',ask:'The staff kind is a stored word that chooses a starting bundle, a row label and an email — and gates nothing',ruling:'inherited',label:'Inherited · first use beyond the row',why:'"Coaches and helpers" and "Everyone on staff" address by the word. That is not access control (a manager not sent the plan can still open it), so it sits inside the ruling — recorded here because it is the first place the word decides anything beyond what is printed on a row.'},
+  {date:'2026-09-14 · Practices re-evaluation, stage 1 D5',ask:'The plan page carries one lime — the sheet’s first block; the toolbar is secondary buttons',ruling:'inherited',label:'Inherited · binding',why:'"Send to staff" is a secondary button beside "Save as template…" and "Print the sheet". It never becomes the page’s action.'},
+  {date:'2026-09-17 · Practices re-evaluation, stage 5 P7',ask:'The run screen’s rotation is one list keyed by station, with "that’s you" on the viewer’s own row',ruling:'inherited',label:'Inherited · building now',why:'Drawn here unchanged. This project changes only what decides the row is the viewer’s — identity instead of a name match — after the Stage 5 build is committed.'},
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
+
+/* ---- QA walk §203 — one checkbox per step, state in this browser; PIN identities, never figures ---- */
+const QA_PARTS=[
+  {id:'A',title:'Link a word to a person — the manager (head coach)',steps:[
+    'Open the probe practice’s plan; open the Skills circuit block and one of its stations; on the Staff field press “Manage staff…” — the drawer lists the team’s words, each with a second line: “A name only · Link to a person…”.',
+    'Press “Link to a person…” on “Coach Bob” (or any word) and choose “UAT Coach · Head coach” → Link — the line now reads “UAT Coach · Head coach” with an Unlink beside it; the count and the ⋯ actions are as before.',
+    'Press Unlink, then link it again — both directions work and nothing else on the row changes.',
+    'Try to link a SECOND word to the same person — the sentence says that person is already one of your staff names (one person per word per team).',
+  ]},
+  {id:'B',title:'The picker’s people group (head coach)',steps:[
+    'In a station’s Staff field, click into the search box: the dropdown opens with “People on this team” — every staff member this season with their word (Head coach, Assistant coach, Helper …) — then “Other names” with the plain words, then the door “Manage staff…”.',
+    'Pick “UAT Helper” — a chip “UAT Helper” appears wearing the small person mark; the drawer now shows that word linked to UAT Helper · Helper (a linked word is minted on the spot, no second step).',
+    'Type “jen” or part of a person’s name — the people group filters; a linked word never appears twice (as a person AND under Other names).',
+    'A word nobody is linked to (“Sam Assistant”, an outside instructor you invent) still works exactly as before — typed, created with “+ Create”, a plain chip.',
+  ]},
+  {id:'C',title:'“You’re on …” on the plan page (head coach, then the phone)',steps:[
+    'Put YOUR linked word on two stations of the Skills circuit and on the Small-sided game block’s Staff. Under the sheet’s where-line a line appears: “YOU’RE ON” · the circuit’s clock · “Skills circuit › <your two stations>” · the game’s clock · “Small-sided game”. Each entry jumps to its row.',
+    'The shut Small-sided game row wears a small olive “you”; open the circuit — the two columns wear “you” and an olive left edge; the third column and Warm-up carry nothing.',
+    'At phone width (390) each entry of the line sits on its own row and the clock never splits across two lines.',
+    'Remove your word from every station and the block — the line is GONE (never an empty strip); the marks are gone; the paper (Print the sheet) never shows a “you” either way.',
+    'Sign in as the assistant (uat-asst-money) and open the same plan — no line, no marks (they are on nobody’s station); link their word and put it on one station as the head coach — their page shows the line with only that station.',
+  ]},
+  {id:'D',title:'The field — “that’s you” by identity',steps:[
+    'With your word on two circuit stations and the game block: Run practice → Next block to the circuit — the two rows read “<your word> — that’s you” with Open; the others read View; Rotate now twice — the same two rows say it each round.',
+    'Open one of yours — the station view’s eyebrow reads “YOU’RE RUNNING” (a station that is not yours reads “Station”).',
+    'Next block to the game — the line under the words reads “<your word> — that’s you · Whole team”.',
+    'As the assistant with their word on ONE station — only that row says “that’s you”; a blank member display name changes nothing (identity, not a name).',
+  ]},
+  {id:'E',title:'Send to staff — the sheet, the bell, the setting',steps:[
+    'On the plan page (a plan with blocks): the toolbar carries “Send to staff” beside Print the sheet — a plain button; Run practice keeps the lime on the day.',
+    'Open it: three choices, each listing WHO by name with a count — “Named in this plan” (the linked people on the plan; under it “Jordan Helper · Sam Assistant — names only, not sent” — the free-text words), “Coaches and helpers” (head, assistants, helpers), “Everyone on staff”. You are never listed. “UAT Assistant (treasurer only)” — whose access excludes the schedule — is in NO list.',
+    'With nobody linked on the plan but you, “Named in this plan” reads “Only you are linked on this plan so far.” and Send is disabled on it; pick Coaches and helpers.',
+    'The preview names one real recipient — “As UAT Assistant (money) will read it” — and its body reads “Read it before <start>.” (or “You’re on <their stations>. Arrive by … for …” once their word is on a station). No “p.m..”.',
+    'Send to N → the sheet closes and a line under the toolbar reads “Sent to N (coaches and helpers) · bell and push · <time> · Send again”. Reload — it is still there. Send again works without a reason.',
+    'Sign in as the assistant: the bell shows “Thursday’s practice plan is ready” (the weekday within the week; a short date beyond it) with the same body; tapping it opens the PLAN page, not the run screen. Account › Notifications → the coach card has a “Practice plans” row (bell and push on) whose blurb says an email the coach chooses to send arrives whatever you set.',
+    'Reopen the sheet as the head coach — it remembers your last audience.',
+  ]},
+  {id:'F',title:'Also email them (ruling J)',steps:[
+    'Tick “Also email them” and Send — the sent line reads “bell, push and email”. The tick is remembered with the audience next time.',
+    'On dev with the mail key set: the assistant’s inbox has “Thursday’s practice plan — UAT Test Team” from FieldLogicHQ, opening “UAT Coach sent you the plan for <day> · <time> at <place>”, the outline (times · blocks · stations · who) with THEIR rows marked “· you”, an “Open the plan” button, and a footer “UAT Coach sent this to you directly as staff of UAT Test Team — it isn’t affected by your notification settings.” No unsubscribe link. Without the key: the server log shows the send skipped and the line above still records the choice.',
+    'Ruling check, one checkbox per option: ◻ the email bypassing settings and the pause is right as built · ◻ change it — say what.',
+  ]},
+  {id:'G',title:'The merge carries the person (ruling C)',steps:[
+    'In Manage staff…, merge a word that IS you into an unlinked word — the winner now reads linked to you; every plan that used the loser now names the winner.',
+    'Link two words to two DIFFERENT people and merge one into the other — refused: “Those two names are linked to different people — unlink one of them first.” Nothing was destroyed (both words still there, both still linked).',
+  ]},
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('wr-qa-v1')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('wr-qa-v1',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> <span>${esc(s)}</span></label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button type="button" data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildQA').onclick=()=>{const c=qaCounts();const lines=['A station knows who runs it — QA walk §203 — '+new Date().toISOString().slice(0,10),`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('qaOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+
+/* start */
+let startHub='mockup';try{startHub=localStorage.getItem('wr-hub')||'mockup'}catch(e){}
+if(!HUBS.includes(startHub))startHub='mockup';
+showHub(startHub);showScreen();
+</script>

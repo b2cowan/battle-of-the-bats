@@ -1,7 +1,7 @@
 'use client';
 import { useMemo, useRef, useState } from 'react';
-import { Settings2, X } from 'lucide-react';
-import TagManagerDrawer from '@/components/coaches/TagManagerDrawer';
+import { Settings2, User, X } from 'lucide-react';
+import TagManagerDrawer, { type TagManagerPolicy } from '@/components/coaches/TagManagerDrawer';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { claimEscape } from './escapeOwnership';
 
@@ -21,6 +21,17 @@ export interface ComboTag {
   /** Awards only — undefined for every other library. false = retired (TagManagerList's
    *  merge-or-retire policy groups it below the active rows with a Restore control). */
   isActive?: boolean;
+  /** Staff only (mig 303) — the person this word IS. A chip wears the person mark when set. */
+  userId?: string | null;
+}
+
+/** One of the team's staff for the picker's "People on this team" group (mig 303) — `tagId` is this
+ *  team's word for them when one exists; picking selects it, else mints one linked (`onPickPerson`). */
+export interface ComboPerson {
+  userId: string;
+  name: string;
+  kindWord: string;
+  tagId: string | null;
 }
 
 /**
@@ -49,6 +60,8 @@ export interface TagManageConfig {
    * borrowing "tags". One grammar — "Manage {what the field holds}…" — never free-hand names.
    */
   door?: string;
+  /** The drawer's per-library knobs — the staff library declares `people` here (see `TagManagerPolicy`). */
+  policy?: TagManagerPolicy;
 }
 
 /** The money-tag manage WORDS — six call sites, one spelling (Q6: one door, one title). Spread
@@ -59,7 +72,7 @@ export const MONEY_TAG_MANAGE = { title: 'Money tags', itemNoun: 'expense' } as 
 export const GAME_TAG_MANAGE = { title: 'Game tags', itemNoun: 'game' } as const;
 /** The practice vocabularies' manage WORDS (P3) — same one-spelling home as the money const. */
 export const FOCUS_TAG_MANAGE = { title: 'Focus tags', itemNoun: 'drill, template or focus area' } as const;
-export const STAFF_TAG_MANAGE = { title: 'Staff', itemNoun: 'plan', door: 'Manage staff…' } as const;
+export const STAFF_TAG_MANAGE = { title: 'Staff', itemNoun: 'plan', door: 'Manage staff…', policy: { people: true } } as const;
 export const EQUIPMENT_TAG_MANAGE = { title: 'Equipment', itemNoun: 'plan or drill', door: 'Manage equipment…' } as const;
 /** Awards join the idiom (Part B) — not through this combobox (R3: the chip row stays the
  *  picker), but through the same door/drawer words every other library uses. */
@@ -102,6 +115,8 @@ export default function TagSearchCombobox({
   manage,
   onManageChanged,
   autoFocus = false,
+  people,
+  onPickPerson,
 }: {
   library: readonly ComboTag[];
   selectedIds: string[];
@@ -135,6 +150,15 @@ export default function TagSearchCombobox({
   manage?: TagManageConfig;
   /** The host's library refresh after a drawer act — REQUIRED with `manage` (see the doc above). */
   onManageChanged?: () => void;
+  /**
+   * The staff picker's FIRST group (mig 303; finishes Practice Plans D12, "team coaches offered
+   * automatically"): every staff member this season with their word, ahead of the team's other
+   * words. Picking a person whose word exists selects it; picking one with none mints it linked
+   * (`onPickPerson`) — a word, still, never a grant. A linked word lists ONLY here, as the person,
+   * never again under the words below it.
+   */
+  people?: readonly ComboPerson[];
+  onPickPerson?: (person: ComboPerson) => Promise<ComboTag | null>;
 }) {
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
@@ -191,12 +215,23 @@ export default function TagSearchCombobox({
   const byId = useMemo(() => new Map(lib.map(t => [t.id, t])), [lib]);
   const q = query.trim().toLowerCase();
 
+  // The people group: everyone not already picked (by their word), filtered on their name OR their
+  // word — a coach who types "jen" finds Jen Okafor whether her tag says "Jen" or "Coach O".
+  const peopleRows = useMemo(() => {
+    if (!people?.length) return [];
+    const tagName = (id: string | null) => (id ? byId.get(id)?.name.toLowerCase() ?? '' : '');
+    return people.filter(p =>
+      !(p.tagId && selectedIds.includes(p.tagId))
+      && (!q || p.name.toLowerCase().includes(q) || tagName(p.tagId).includes(q)));
+  }, [people, byId, selectedIds, q]);
+  const personTagIds = useMemo(() => new Set((people ?? []).map(p => p.tagId).filter((id): id is string => !!id)), [people]);
+
   const matches = useMemo(
     () => lib
-      .filter(t => !selectedIds.includes(t.id) && t.name.toLowerCase().includes(q))
+      .filter(t => !selectedIds.includes(t.id) && !personTagIds.has(t.id) && t.name.toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, 8),
-    [lib, selectedIds, q],
+    [lib, selectedIds, personTagIds, q],
   );
   const exact = lib.some(t => t.name.toLowerCase() === q);
   const canCreate = !!onCreate && q.length > 0 && !exact;
@@ -206,8 +241,11 @@ export default function TagSearchCombobox({
       : []),
     [adoptNames, onAdopt, q],
   );
-  // Keyboard order mirrors the rendered order: matches → create → adopt rows → the manage door.
-  const createIdx = matches.length;
+  // Keyboard order mirrors the rendered order: people → matches → create → adopt rows → the door.
+  const matchStart = peopleRows.length;
+  const createIdx = matchStart + matches.length;
+  // The two group labels read only when BOTH groups show — people over one list is not two headings.
+  const showGroupLabels = matches.length > 0 || canCreate || adoptable.length > 0;
   const adoptStart = createIdx + (canCreate ? 1 : 0);
   const manageIdx = adoptStart + adoptable.length;
   const optionCount = manageIdx + (manage ? 1 : 0);
@@ -218,6 +256,22 @@ export default function TagSearchCombobox({
     setActiveIdx(-1);
     if (!single) inputRef.current?.focus();
     else setOpen(false);
+  }
+
+  /** A person: their word if the team has one, else mint one linked to them and pick that. */
+  async function pickPerson(person: ComboPerson) {
+    if (person.tagId && byId.has(person.tagId)) { selectTag(person.tagId); return; }
+    if (!onPickPerson || creating) return;
+    setCreating(true);
+    try {
+      const tag = await onPickPerson(person);
+      if (tag) {
+        setFresh(prev => (prev && !prev.some(t => t.id === tag.id) ? [...prev, tag] : prev));
+        selectTag(tag.id);
+      }
+    } finally {
+      setCreating(false);
+    }
   }
 
   function removeTag(id: string) {
@@ -259,7 +313,8 @@ export default function TagSearchCombobox({
       setActiveIdx(i => Math.max(i - 1, 0));
     } else if (e.key === 'Enter') {
       e.preventDefault();
-      if (activeIdx >= 0 && activeIdx < matches.length) selectTag(matches[activeIdx].id);
+      if (activeIdx >= 0 && activeIdx < matchStart) void pickPerson(peopleRows[activeIdx]);
+      else if (activeIdx >= matchStart && activeIdx < matchStart + matches.length) selectTag(matches[activeIdx - matchStart].id);
       else if (activeIdx === createIdx && canCreate) createTag();
       else if (activeIdx >= adoptStart && activeIdx < adoptStart + adoptable.length) void onAdopt?.(adoptable[activeIdx - adoptStart]);
       else if (activeIdx === manageIdx && manage) openManager();
@@ -301,6 +356,8 @@ export default function TagSearchCombobox({
                     2026-09-15); this dot is what used to be the chip's whole fill colour — the
                     same dot the dropdown's own rows below already wear. */}
                 <span className={`${styles.tagComboDot} ${isOrg ? styles.tagComboDotOrg : styles.tagComboDotOwn}`} aria-hidden />
+                {/* The person mark (mig 303): this word IS someone on the staff. */}
+                {tag.userId && <User size={11} aria-label="Linked to a person" className={styles.tagComboPerson} />}
                 {tag.name}
                 {!disabled && (
                   <button type="button" className={styles.tagComboChipX} aria-label={`Remove ${tag.name}`} onClick={() => removeTag(tag.id)}>
@@ -327,8 +384,35 @@ export default function TagSearchCombobox({
             onBlur={() => setTimeout(() => setOpen(false), 150)}
             onKeyDown={onKeyDown}
           />
-          {open && (query.length > 0 || matches.length > 0 || adoptable.length > 0 || !!manage) && (
+          {open && (query.length > 0 || peopleRows.length > 0 || matches.length > 0 || adoptable.length > 0 || !!manage) && (
             <div className={`${styles.tagComboDropdown} ${dropUp ? styles.tagComboDropdownUp : ''}`}>
+              {peopleRows.length > 0 && (
+                /* The people first (mig 303). The group labels read only when both groups show,
+                   so a picker with people and no other words is not two headings over one list. */
+                <>
+                  {showGroupLabels && <div className={styles.tagComboGroup}>People on this team</div>}
+                  {peopleRows.map((p, i) => (
+                    <button
+                      type="button"
+                      key={`person-${p.userId}`}
+                      className={`${styles.tagComboOpt} ${i === activeIdx ? styles.tagComboOptActive : ''}`}
+                      onMouseDown={e => e.preventDefault()}
+                      onClick={() => void pickPerson(p)}
+                      disabled={!p.tagId && !onPickPerson}
+                    >
+                      <span className={styles.tagComboOptName}>
+                        <User size={12} aria-hidden className={styles.tagComboPerson} />
+                        {p.name}
+                        {p.tagId && byId.get(p.tagId) && byId.get(p.tagId)!.name.toLowerCase() !== p.name.toLowerCase() && (
+                          <span className={styles.tagComboWord}>“{byId.get(p.tagId)!.name}”</span>
+                        )}
+                      </span>
+                      <span className={styles.tagComboCount}>{p.kindWord}</span>
+                    </button>
+                  ))}
+                  {showGroupLabels && <div className={styles.tagComboGroup}>Other names</div>}
+                </>
+              )}
               {matches.map((t, i) => {
                 const isOrg = t.teamId === null;
                 const n = countById?.[t.id];
@@ -336,7 +420,7 @@ export default function TagSearchCombobox({
                   <button
                     type="button"
                     key={t.id}
-                    className={`${styles.tagComboOpt} ${i === activeIdx ? styles.tagComboOptActive : ''}`}
+                    className={`${styles.tagComboOpt} ${matchStart + i === activeIdx ? styles.tagComboOptActive : ''}`}
                     onMouseDown={e => e.preventDefault()}
                     onClick={() => selectTag(t.id)}
                   >
@@ -371,7 +455,7 @@ export default function TagSearchCombobox({
                   + Create “{name}” (from an old record)
                 </button>
               ))}
-              {matches.length === 0 && !canCreate && adoptable.length === 0 && !manage && (
+              {peopleRows.length === 0 && matches.length === 0 && !canCreate && adoptable.length === 0 && !manage && (
                 <div className={styles.tagComboEmpty}>No matching tags</div>
               )}
               {manage && (
@@ -423,6 +507,7 @@ export default function TagSearchCombobox({
           title={manage.title}
           itemNoun={manage.itemNoun}
           countNoun={manage.countNoun}
+          policy={manage.policy}
           onClose={() => setManagerOpen(false)}
           onChanged={onManageChanged ?? (() => {})}
         />

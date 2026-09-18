@@ -1829,3 +1829,64 @@ export function collectPracticePlanTagIds(plan: PracticePlan, kind: 'staff' | 'e
   repointPracticePlanTags(plan, kind, id => { seen.add(id); return id; });
   return seen;
 }
+
+/**
+ * THE READER'S WALK of a plan's levels — one block per entry, its stations under it, each level
+ * saying whether it is ONE PERSON's (mig 303): a level is theirs when its staff tag ids include a
+ * tag linked to them. This is what decides "that's you" on the field, "You're on …" on the plan,
+ * the send's "you're on Close control" and the email's marked rows — one walk, read four ways
+ * (`/simplify`, 2026-09-18: it had been written four times), never a name.
+ *
+ * ⚠ A legacy free-text `staff` list (pre-266) marks NOTHING, on purpose (decision E): the name
+ * match this replaced worked for whichever teams happened to spell a tag like a member field and
+ * hid from every team that the link was missing. The honest path for an old word is the manager's
+ * "Link to a person…", after which it is an id like any other.
+ *
+ * A block's own staff marks the BLOCK (the whole-team stop Jen runs); a station's marks the
+ * STATION. A station inside a block does not mark the block — the row reads "6 stations", and the
+ * strip names the station under its block. ⚠ EXCEPT the sole station, which IS the block (D1;
+ * `soleStationOf`): its staff marks the block and it lists no stations of its own — a coach who
+ * deleted a circuit down to one station, leaving a name at both levels, must read ONE entry, not
+ * "Warm-up and Station 1" (/review, 2026-09-18). `repointPracticePlanTags` is the WRITER's walk of
+ * the same levels; the two stay separate because one rewrites and one only reads.
+ */
+export interface PracticePlanLevel {
+  block: PracticePlanBlock;
+  index: number;
+  /** The block's title, or "Block N" — the one fallback every reader prints. */
+  title: string;
+  mine: boolean;
+  stations: { station: PracticeStation; index: number; label: string; mine: boolean }[];
+}
+
+export function practicePlanLevels(
+  plan: PracticePlan | null | undefined,
+  mineTagIds: ReadonlySet<string>,
+): PracticePlanLevel[] {
+  if (!plan) return [];
+  const hit = (ids: readonly string[] | undefined) => mineTagIds.size > 0 && !!ids?.some(id => mineTagIds.has(id));
+  return plan.blocks.map((block, index) => {
+    const sole = soleStationOf(block);
+    return {
+      block,
+      index,
+      title: block.title.trim() || `Block ${index + 1}`,
+      mine: hit(block.staffTagIds) || (!!sole && hit(sole.staffTagIds)),
+      stations: sole ? [] : (block.stations ?? []).map((station, si) => ({
+        station, index: si, label: stationLabel(station, si), mine: hit(station.staffTagIds),
+      })),
+    };
+  });
+}
+
+/** The reader's levels as two id lists — the shape the screens keep in a Set. */
+export function levelsForStaffTags(
+  plan: PracticePlan | null | undefined,
+  mineTagIds: ReadonlySet<string>,
+): { blockIds: string[]; stationIds: string[] } {
+  const levels = practicePlanLevels(plan, mineTagIds);
+  return {
+    blockIds: levels.filter(l => l.mine).map(l => l.block.id),
+    stationIds: levels.flatMap(l => l.stations.filter(s => s.mine).map(s => s.station.id)),
+  };
+}

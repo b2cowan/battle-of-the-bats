@@ -135,11 +135,16 @@ function OrgCard({ card }: { card: NotificationCard }) {
 }
 
 function CoachCard({ card }: { card: NotificationCard }) {
-  // The weekly digest is the coach card's only row. 'tryout_offer_response' used to sit beside it
-  // (gated by R4 on the tryouts capability) and was removed 2026-08-26 with the tryout decision
-  // emails: it fired when a family answered an offer email, and nothing sends one any more. A
-  // settings page must not advertise a toggle for an event that can never arrive.
-  const eventTypes = useMemo<NotificationEventType[]>(() => ['coach_insights_digest'], []);
+  // Two rows: the weekly digest, and the practice plan a coach sends to the staff (mig 303).
+  // 'tryout_offer_response' used to sit here (gated by R4 on the tryouts capability) and was
+  // removed 2026-08-26 with the tryout decision emails: it fired when a family answered an offer
+  // email, and nothing sends one any more. A settings page must not advertise a toggle for an
+  // event that can never arrive.
+  //
+  // ⚠ The practice-plan row governs the BELL and the PUSH only. When the sending coach ticks
+  // "Also email them", that email is the coach's own act and arrives whatever these switches say
+  // (owner ruling J, 2026-09-17 — the dues-reminder ground); the row's blurb says so.
+  const eventTypes = useMemo<NotificationEventType[]>(() => ['coach_insights_digest', 'practice_plan_sent'], []);
   const groups = useMemo<PreferenceGroup[]>(
     () => [
       {
@@ -147,6 +152,11 @@ function CoachCard({ card }: { card: NotificationCard }) {
         blurb: 'Your Sunday “week in review.” Turn Push off to stop the weekly phone alert.',
         eventTypes: ['coach_insights_digest'],
         lead: true,
+      },
+      {
+        label: 'Practice plans',
+        blurb: 'When a coach sends you the practice plan, with the stations you’re running. An email the coach chooses to send arrives whatever you set here.',
+        eventTypes: ['practice_plan_sent'],
       },
     ],
     [],

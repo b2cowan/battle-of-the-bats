@@ -34,6 +34,7 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   champions_crowned:                 'Champions crowned',
   tournament_announcement:           'Tournament announcement',
   coach_insights_digest:             'Weekly team insights',
+  practice_plan_sent:                'Practice plan sent',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -59,6 +60,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   champions_crowned:                 'A tournament’s playoffs are complete — the champion(s) are crowned and the final results are in.',
   tournament_announcement:           'An organizer posts a day-of announcement (like a rain delay or schedule shift) with the notify option on.',
   coach_insights_digest:             'Your team’s Sunday week-in-review — the top Insights findings, only when something stood out.',
+  practice_plan_sent:                'A coach sent you the practice plan to read before practice — with the stations you’re running.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -158,6 +160,10 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   // The weekly digest's whole point is reach — push ON by default, weekly cadence, and it is
   // only ever sent when something actually fired (quiet weeks send nothing).
   'coach_insights_digest',
+  // "Read this before 6:00 p.m." — time-sensitive by construction, and only ever sent because a
+  // coach pressed Send to staff. (The coach's own EMAIL is a separate explicit act outside this
+  // pipeline — lib/practice-plan-email.ts — so the email channel here stays off.)
+  'practice_plan_sent',
 ]);
 
 /**
@@ -219,6 +225,8 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   assistant_coach_joined:             'know',
   house_league_registration_new:      'know',
   coach_insights_digest:              'know',
+  // A coach sent the practice plan — a read, not a decision to make.
+  practice_plan_sent:                 'know',
   // A family's own team news — informational, never a decision to make.
   family_game_update:                 'know',
   // Talk — conversation (moves to the Chat tab in P3)

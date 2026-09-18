@@ -8,7 +8,7 @@ import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import {
-  blockOwnPeople, blockRotates, buildRunSteps, computeRotation, formatDuration,
+  blockOwnPeople, blockRotates, buildRunSteps, computeRotation, formatDuration, levelsForStaffTags,
   namesWholeTeam, resolvePracticePlanTagNames, resolveStationTeaching, rotationByStation,
   runStepLengthLabel, soleStationOf, stationLabel,
   type PracticePlan, type PracticePlanBlock, type PracticeStation, type RotationGrid, type RunStep,
@@ -85,7 +85,8 @@ type RunData = {
    *  for this read-only screen. Optional so a cached response from before this shipped still works. */
   staffTags?: PickableTag[];
   equipmentTags?: PickableTag[];
-  viewerName: string | null;
+  /** The reader's own id (mig 303) — with each staff tag's `userId`, what decides "that's you". */
+  viewerUserId?: string;
   canViewAttendance: boolean;
   /**
    * May this viewer move the practice on? False for a HELPER (Phase 4) — they run one station and
@@ -113,12 +114,11 @@ function shortGroupLabel(name: string): string {
   return candidate.length <= 3 ? candidate : candidate.slice(0, 2).toUpperCase();
 }
 
-/** Which stations the reader is tagged on, matched case-insensitively against their own name. */
-function isViewersStation(staff: string[] | undefined, viewerName: string | null): boolean {
-  if (!viewerName?.trim() || !staff?.length) return false;
-  const me = viewerName.trim().toLowerCase();
-  return staff.some(s => s.trim().toLowerCase() === me);
-}
+/*
+ * ⚰ `isViewersStation(staff, viewerName)` — a whole-string, case-insensitive NAME match against the
+ * member display name — was DELETED here (COACH_PRACTICE_WHO_RUNS_IT, decision E). "That's you" is
+ * now the server's `viewerStationIds`/`viewerBlockIds`: a staff tag that IS this person, by id.
+ */
 
 /** The one place that decides what the big button says and does. */
 type Advance = { label: string; disabled: boolean };
@@ -265,6 +265,18 @@ export default function CoachPracticeRunPage({
   // holder — the sole station when the station is the block, else the block.
   const ownPeople = useMemo(() => (block ? blockOwnPeople(block) : undefined), [block]);
   const blockStaff = useMemo(() => (block ? (soleStationOf(block) ?? block).staff ?? [] : []), [block]);
+  // "Mine", by IDENTITY (mig 303): the staff tags whose person is the reader, matched by id at
+  // every level through the one reader's walk — never a name. The sole-station block reads the
+  // station's answer, the same holder the staff line reads.
+  const mine = useMemo(() => {
+    const me = data?.viewerUserId;
+    const mineTags = new Set((data?.staffTags ?? []).filter(t => t.userId != null && t.userId === me).map(t => t.id));
+    return levelsForStaffTags(data?.plan, mineTags);
+  }, [data?.viewerUserId, data?.staffTags, data?.plan]);
+  const mineStations = useMemo(() => new Set(mine.stationIds), [mine]);
+  const mineBlocks = useMemo(() => new Set(mine.blockIds), [mine]);
+  const blockIsMine = !!block && (mineBlocks.has(block.id) || (!!soleStationOf(block) && mineStations.has(soleStationOf(block)!.id)));
+  const blockStaffLine = blockStaff.length > 0 ? `${blockStaff.join(' · ')}${blockIsMine ? ' — that’s you' : ''}` : blockIsMine ? 'that’s you' : '';
   const blockPlayers = useMemo(
     () => (ownPeople ?? []).map(nameOf).filter(Boolean),
     [ownPeople, nameOf],
@@ -374,7 +386,7 @@ export default function CoachPracticeRunPage({
           rotating={rotating}
           grid={grid}
           round={step.round}
-          isMine={isViewersStation(openStation.staff, data?.viewerName ?? null)}
+          isMine={mineStations.has(openStation.id)}
           nameOf={nameOf}
           onBack={() => chooseStation(null)}
           actions={
@@ -415,7 +427,7 @@ export default function CoachPracticeRunPage({
    * viewer's own says so. A called function, never a component declared in the render body.
    */
   function renderStationRow(station: PracticeStation, index: number, letters: string[] | null) {
-    const mine = isViewersStation(station.staff, data?.viewerName ?? null);
+    const mine = mineStations.has(station.id);
     const staffLine = station.staff?.length ? station.staff.join(' · ') : '';
     const meta = `${staffLine}${mine ? `${staffLine ? ' — ' : ''}that’s you` : ''}`;
     return (
@@ -512,8 +524,8 @@ export default function CoachPracticeRunPage({
                 ))}
               </p>
             )}
-            {blockStaff.length > 0 && (
-              <p className={styles.ppRunMeta}><b>{blockStaff.join(' · ')}</b></p>
+            {blockStaffLine && (
+              <p className={styles.ppRunMeta}><b>{blockStaffLine}</b></p>
             )}
           </>
         )}
@@ -536,10 +548,10 @@ export default function CoachPracticeRunPage({
             {/* Who runs it · who is in it (P5 · P6): "UAT Coach · Whole team", or the coach's few
                 as chips. One quiet line under the words; a block whose people live on its stations
                 says only who runs it. */}
-            {(blockStaff.length > 0 || people) && (
+            {(blockStaffLine || people) && (
               <div className={styles.ppRunMeta}>
-                {blockStaff.length > 0 && <b>{blockStaff.join(' · ')}</b>}
-                {blockStaff.length > 0 && people && ' · '}
+                {blockStaffLine && <b>{blockStaffLine}</b>}
+                {blockStaffLine && people && ' · '}
                 {people}
               </div>
             )}

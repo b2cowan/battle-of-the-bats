@@ -1,6 +1,6 @@
 'use client';
 import { useMemo } from 'react';
-import TagPicker, { type PickableTag } from './TagPicker';
+import TagPicker, { type PickablePerson, type PickableTag } from './TagPicker';
 import type { TagManageConfig } from './TagSearchCombobox';
 
 /**
@@ -24,7 +24,7 @@ import type { TagManageConfig } from './TagSearchCombobox';
  */
 export default function PracticeTagPicker({
   label, all, ids, legacyNames, onChange, onCreate, disabled, emptyHint,
-  manage, onManageChanged, autoFocus,
+  manage, onManageChanged, autoFocus, people, onPickPerson,
 }: {
   /** Omit when a caller prints its own heading above (e.g. to slot other content between the
       heading and this picker) — TagPicker only renders the label span when one is given. */
@@ -42,6 +42,9 @@ export default function PracticeTagPicker({
   onManageChanged?: () => void;
   /** Passed straight through to `TagPicker` — focuses the search box on mount. */
   autoFocus?: boolean;
+  /** The staff field's "People on this team" group (mig 303) — staff only; equipment passes none. */
+  people?: readonly PickablePerson[];
+  onPickPerson?: (person: PickablePerson) => Promise<PickableTag | null>;
 }) {
   const resolvedIds = useMemo(() => {
     const known = new Set(ids);
@@ -76,6 +79,8 @@ export default function PracticeTagPicker({
       manage={manage}
       onManageChanged={onManageChanged}
       autoFocus={autoFocus}
+      people={people}
+      onPickPerson={onPickPerson}
     />
   );
 }

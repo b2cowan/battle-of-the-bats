@@ -1699,8 +1699,25 @@ export interface RepTeamEvent {
    * visibility setting is for, and a per-game share must not publish one sideways.
    */
   familySharedAt: string | null;
+  /**
+   * When the practice plan was last SENT to the staff (mig 303, "Send to staff"), or null — the
+   * last send only, with who sent it, which audience and how many, and whether the coach's own
+   * email went with the bell and push. The `family_shared_at` idiom on the practice.
+   */
+  practicePlanSent: PracticePlanSentStamp | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/** The three audiences a coach can send a practice plan to — see `lib/practice-plan-send.ts`. */
+export type PracticePlanSendAudience = 'named' | 'coaches' | 'staff';
+
+export interface PracticePlanSentStamp {
+  at: string;
+  by: string | null;
+  audience: PracticePlanSendAudience | null;
+  count: number | null;
+  email: boolean;
 }
 
 /**
@@ -1885,6 +1902,12 @@ export interface RepTeamTag {
    * clean).
    */
   count?: number;
+  /**
+   * 'staff' kind, team tags only (mig 303): the portal user this word IS. A label, never a grant —
+   * linking gives the person nothing; it decides "that's you" on the field, the "You're on …" line
+   * on the plan, and who "Named in this plan" reaches. One person per tag per team.
+   */
+  userId?: string | null;
   createdBy: string | null;
   createdAt: string;
   updatedAt: string;
@@ -3036,7 +3059,14 @@ export type NotificationEventType =
   // Insights weekly digest — the Sunday "week in review" sent to a rep team's coaches, built
   // per-recipient from what that coach's capabilities allow (quiet week ⇒ no send). Defaults
   // push ON. TS-union change only (no DB CHECK on event_type).
-  | 'coach_insights_digest';
+  | 'coach_insights_digest'
+  // A coach pressed "Send to staff" on a practice plan (mig 303). Reaches the chosen audience of the
+  // team's staff — never the sender, never someone whose access excludes the schedule — one
+  // dispatch per person so the body can name THEIR stations. Push ON by default (it is
+  // time-sensitive: read this before 6:00 p.m.); the pipeline's email channel stays off — the
+  // coach's own email is a separate, explicit act (`lib/practice-plan-email.ts`). TS-union change
+  // only (no DB CHECK on event_type).
+  | 'practice_plan_sent';
 
 export interface AppNotification {
   id: string;
