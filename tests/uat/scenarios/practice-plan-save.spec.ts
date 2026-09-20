@@ -37,10 +37,14 @@ test.describe('Practice plan — autosave', () => {
     await expect(title).toBeVisible();
     await title.fill('Warm up');
 
-    // The status pill is the coach's only feedback. It must settle on "Saved".
+    // The status pill is the coach's only feedback. It must settle on "Saved". The pill is
+    // transient (2026-09-20): the WORD "Saved" is cleared ~2.8s after the save lands, but the
+    // pill's data-state outlives the fade — so the word proves a save started and the attribute
+    // proves it finished, without a race against the fade.
     const status = page.locator('[class*="saveStatus"]');
+    const pill = page.locator('[class*="savePill"][data-state]'); // the page root wears savePillPage too
     await expect(status).toContainText('Saving', { timeout: 5_000 });
-    await expect(status).toContainText('Saved', { timeout: 20_000 });
+    await expect(pill).toHaveAttribute('data-state', 'saved', { timeout: 20_000 });
 
     // eslint-disable-next-line no-console
     console.log('PUT calls:', JSON.stringify(calls, null, 2));

@@ -9441,12 +9441,24 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    taskbar until the page was scrolled to its very end. Desktop pins the bar to the viewport's
    foot, offset by the sidebar; the phone block below keeps it above the bottom nav. The page
    clears the bar's height at both. */
-/* ── The floating save pill (2026-09-14) ─────────────────────────────────────
+/* ── The floating save pill (2026-09-14; TRANSIENT since 2026-09-20) ─────────
    The autosave word alone, at the window's foot: bottom-right on desktop, above the bottom nav
    on a phone. Fixed to the VIEWPORT on purpose — inside a scrolling slide-over a sticky foot
    only ever showed at the end of the list, and on the desktop page the sticky never engaged.
    `.saveStatus` inside it is the same span every autosave surface renders, so the words, the
-   tick and the Retry button read identically everywhere. */
+   tick and the Retry button read identically everywhere.
+
+   ⚠ It is there only while it has something to say (owner ruling 2026-09-20, phone re-evaluation
+   stage 0 · A3 — revised the same day). The morning's answer put the word in the page's TITLE ROW
+   so it would never sit over the lineup grid's last cells or the practice sheet's last line on a
+   phone; the title row is pinned nowhere, so the word scrolled away exactly when a coach deep in
+   the grid wanted it. Now: a save landing shows "✓ Saved", lingers, fades and is gone; ONLY an
+   error persists (Retry is a button). `data-phase` is the component's word on that — `hidden`
+   is opacity 0 rather than `display: none` so the live region inside stays in the accessibility
+   tree and a screen reader hears the next state; the layout sweep already reads opacity 0 as
+   not visible. `.savePillPage` stays: the pill is transient but it shows exactly while a coach is
+   editing, and a coach editing the LAST row is at max scroll — where the corner it lands in is that
+   row (/review 2026-09-20, after a first pass deleted the padding as "nothing to clear at rest"). */
 .savePill {
   position: fixed;
   right: 1.25rem;
@@ -9454,7 +9466,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   z-index: 250;   /* under the bottom nav (300), over the sheet and the slide-over */
   display: inline-flex;
   align-items: center;
-  /* Sized to the shell's `--save-pill-h`, which `.savePillPage` clears — one owner. */
   min-height: var(--save-pill-h, 2.25rem);
   padding: 0.4rem 0.8rem;
   border-radius: 999px;
@@ -9462,11 +9473,17 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   background: var(--card-bg);
   box-shadow: 0 6px 18px -8px rgba(0,0,0,0.45);
   pointer-events: none;   /* the word never blocks a tap on what is under it… */
+  opacity: 1;
+  transition: opacity 0.3s ease;
 }
 .savePill .saveStatus { margin-left: 0; }
 .savePill[data-state='error'] { pointer-events: auto; border-color: var(--danger); }   /* …but Retry is a button */
-/* A page carrying the pill leaves it a corner to sit in, so the sheet's last line is never under it. */
+.savePill[data-phase='fading'],
+.savePill[data-phase='hidden'] { opacity: 0; }
+/* A page carrying the pill leaves it a corner to sit in, so the sheet's last line is never under it
+   while the word is up. Sized to the shell's `--save-pill-h` — one owner. */
 .savePillPage { padding-bottom: calc(var(--save-pill-h, 2.25rem) + 1.25rem); }
+@media (prefers-reduced-motion: reduce) { .savePill { transition: none; } }
 @media (max-width: 900px) {
   .savePill { right: 0.75rem; bottom: calc(var(--coach-foot-clear) + 0.6rem); }
 }
