@@ -255,7 +255,9 @@ describe('a closed season leaves one door in BOTH navs', () => {
       'the bar must collapse to the single closed-season door.',
     );
     assert.match(
-      BOTTOM, /seasonFinished \? null : MORE_SECTIONS\.map\(/,
+      // The sheet's body — the hot tiles and the grouped rows (phone re-evaluation stage 0 · A1,
+      // 2026-09-20) — renders inside ONE season gate; this is that gate's opening.
+      BOTTOM, /seasonFinished \? null : \(\s*<>\s*\{hotTiles\.length/,
       'the More SHEET must close too. This is the half that was missed once: the bar is what a '
       + 'reviewer looks at, and the sheet is eleven more doors into live instruments on a season '
       + 'that has ended.',
@@ -372,5 +374,27 @@ describe('the layout sweep still measures the folded doors', () => {
       'the sweep seeds a different set of group headings than the rail actually renders. Every '
       + 'heading it misses is a group that stays folded during the sweep, so its rows are measured '
       + 'by nothing.');
+  });
+});
+
+/**
+ * The phone sheet's HOT ROW (phone re-evaluation stage 0 · A1, owner 2026-09-20) is a shortcut,
+ * not a regrouping: three tiles at the top of the sheet, each of which is still an item in its
+ * own `MORE_SECTIONS` group. A key in `HOT_KEYS` that no group lists would be a door the two
+ * navs disagree about — the exact drift the parity assertions above exist to catch, one level
+ * down. Read from the source like everything else here.
+ */
+describe('the phone sheet\'s hot row is a shortcut, never a regrouping', () => {
+  const keysIn = (marker: string) => {
+    const start = BOTTOM.indexOf(marker);
+    assert.notEqual(start, -1, `could not find ${marker}`);
+    const end = BOTTOM.indexOf('\n];', start);
+    return [...BOTTOM.slice(start, end).matchAll(/'(\/[a-z-]+)'/g)].map((m) => m[1]);
+  };
+  it('every hot key is a More section item', () => {
+    const hot = keysIn('const HOT_KEYS');
+    const listed = keysIn('const MORE_SECTIONS');
+    assert.equal(hot.length, 3, 'three tiles, as drawn — a fourth is a design decision, not a tweak');
+    for (const key of hot) assert.ok(listed.includes(key), `${key} is a hot tile but not a More section item`);
   });
 });

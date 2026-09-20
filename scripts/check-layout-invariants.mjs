@@ -796,6 +796,38 @@ function probeInPage(opts) {
     }
   }
 
+  // ── Field floor (phone re-evaluation stage 0 · A4, owner 2026-09-20) ───────────────────────
+  //
+  // A surface read STANDING UP — the game console, the run screen, the event sheet's attendance
+  // list — declares `data-field-floor`. Inside it nothing readable is under 12px (the ladder's
+  // `support` step) and a `data-field-key` (the position a coach looks for) is at least 14px.
+  // The ladder is untouched: the surfaces remap their two smallest steps to support in CSS, and
+  // this rule is what stops a future declaration reintroducing a 10px word at the fence. Measured
+  // before the rule: 66 of the console's 122 words at 10–11px.
+  if (wanted('field-floor')) {
+    const seen = new Set();
+    for (const surface of Array.from(root.querySelectorAll('[data-field-floor]'))) {
+      if (!visible(surface)) continue;
+      for (const el of Array.from(surface.querySelectorAll('*'))) {
+        if (!visible(el) || isExempt(el)) continue;
+        const ownText = Array.from(el.childNodes)
+          .filter((n) => n.nodeType === 3)
+          .map((n) => n.textContent.trim())
+          .join(' ')
+          .trim();
+        if (!ownText) continue;
+        const size = parseFloat(getComputedStyle(el).fontSize);
+        const floor = el.closest('[data-field-key]') ? 14 : 12;
+        if (size < floor - 0.5) {
+          const sig = `${sigOf(el)}·${Math.round(size)}px`;
+          if (seen.has(sig)) continue;
+          seen.add(sig);
+          add('field-floor', sig, `${Math.round(size)}px on a surface read standing up (floor ${floor}px${floor === 14 ? ' — the value a coach looks for' : ''})`);
+        }
+      }
+    }
+  }
+
   // ── R6 · nothing usable may hide under fixed chrome ────────────────────────
   //
   // ⚠ THIS RULE IS DELIBERATELY CONSERVATIVE, and the reason is worth keeping. A first version

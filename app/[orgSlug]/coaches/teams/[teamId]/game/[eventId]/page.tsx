@@ -871,7 +871,7 @@ export default function CoachGameConsolePage({
     const fieldCounts = new Map(analysis.fairPlay.map(f => [f.playerId, f.onField]));
     return (
       <div className={styles.page}>
-        <div className={styles.gdPage}>
+        <div className={styles.gdPage} data-field-floor>
           <div className={styles.gdBar}>
             {backLink}
             <b>Game recap</b>
@@ -963,7 +963,9 @@ export default function CoachGameConsolePage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.gdPage}>
+      {/* data-field-floor (owner 2026-09-20, stage 0 · A4): read standing up — nothing under 12px
+          inside, the position at 14; the sweep's `field-floor` rule holds it. */}
+      <div className={styles.gdPage} data-field-floor>
         <div className={styles.gdBar}>
           {backLink}
           <span className={styles.gdLivePill}>GAME DAY</span>
@@ -1104,7 +1106,7 @@ export default function CoachGameConsolePage({
                         {pitched} of {cap} {sportPack.periodLabelPlural.toLowerCase()} pitched
                       </span>
                     )}
-                    <span className={styles.gdPos}>{pos}</span>
+                    <span className={styles.gdPos} data-field-key>{pos}</span>
                   </button>
                 );
               })}
@@ -1118,7 +1120,7 @@ export default function CoachGameConsolePage({
                 >
                   <span className={styles.gdNum} />
                   <span className={styles.gdName}>Open — {pos}</span>
-                  <span className={styles.gdPos}>{pos}</span>
+                  <span className={styles.gdPos} data-field-key>{pos}</span>
                 </button>
               ))}
             </div>

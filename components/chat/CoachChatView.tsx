@@ -280,19 +280,21 @@ export default function CoachChatView() {
                   : undefined
               }
               topBanner={nudge}
-              iconBefore={<MessageSquare size={14} aria-hidden />}
+              // Back on the LEFT on a phone (owner 2026-09-20, phone re-evaluation stage 0 · A2): it
+              // leads the header where every other phone screen keeps its way back, in the slot the
+              // room icon otherwise takes; the "?" stays alone at the right. Desktop keeps the icon.
+              iconBefore={multi && !isDesktop ? (
+                <button
+                  type="button"
+                  className={styles.backBtn}
+                  onClick={() => setSelected(null)}
+                  aria-label="Back to your chats"
+                >
+                  <ChevronLeft size={18} aria-hidden /> <span className={styles.backBtnLabel}>Rooms</span>
+                </button>
+              ) : <MessageSquare size={14} aria-hidden />}
               headerRight={
                 <span className={styles.headerActions}>
-                  {multi && !isDesktop && (
-                    <button
-                      type="button"
-                      className={styles.backBtn}
-                      onClick={() => setSelected(null)}
-                      aria-label="Back to your chats"
-                    >
-                      <ChevronLeft size={18} aria-hidden /> <span className={styles.backBtnLabel}>Rooms</span>
-                    </button>
-                  )}
                   {chatHelp}
                 </span>
               }

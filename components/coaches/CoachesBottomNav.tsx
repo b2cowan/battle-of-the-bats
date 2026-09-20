@@ -1,5 +1,5 @@
 'use client';
-import { useState, useRef, useEffect, Fragment } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -92,6 +92,23 @@ const MORE_SECTIONS: { header: string; items: MoreItem[] }[] = [
   ] },
 ];
 const ALL_MORE_KEYS = MORE_SECTIONS.flatMap(s => s.items.map(i => i.key));
+
+/**
+ * THE HOT ROW — a SHORTCUT, not a regrouping (owner ruling 2026-09-20, phone re-evaluation
+ * stage 0 · A1). The three tools a coach reaches for most on a phone in-season sit as tiles at
+ * the top of the sheet, one tap from anywhere; each is still listed in its own group in
+ * `MORE_SECTIONS` above (that literal is what the nav-groups guard reads, and it is unchanged),
+ * and the sheet simply does not repeat a hot key inside its group. Measured before: the three
+ * were two taps and a scroll away inside a 210px popover that showed eight of sixteen rows.
+ * ⚠ Every key here MUST be a `MORE_SECTIONS` item — a tile is a door, and a door the groups do
+ * not list is exactly the drift the guard exists to catch (`coach-nav-groups.test.ts` pins it).
+ */
+const HOT_KEYS = [
+  '/practice',
+  '/lineups',
+  '/development',
+];
+const MORE_ITEM_BY_KEY = new Map(MORE_SECTIONS.flatMap(s => s.items.map(i => [i.key, i] as const)));
 
 /** Badge text for an unread count — the bar shows five of these (chat tab, More tab, the
  *  Notifications row, and both of their accessible names), and a "10" that renders where "9+"
@@ -247,7 +264,13 @@ export default function CoachesBottomNav() {
         </button>
 
         {moreOpen && (
+          <>
+            {/* The page behind the sheet — a tap on it closes the sheet (A1). Inside `moreRef` on
+                purpose: `useDismissable` treats a tap inside the ref as "not outside", so the
+                scrim closes itself here rather than relying on the outside-click path. */}
+            <div className={styles.sheetScrim} aria-hidden onClick={() => setMoreOpen(false)} />
           <div className={styles.dropdown} role="menu">
+            <span className={styles.sheetGrab} aria-hidden />
             {/* Notifications — the mobile home for a feed that had no phone door at all (Chunk B,
                 P1 #4). FIRST in the sheet, matching the admin shell's placement, and opening the
                 full page rather than the desktop bell's panel (see the hook comment above). The
@@ -274,8 +297,14 @@ export default function CoachesBottomNav() {
             )}
 
             {/* Team switcher — only earns its place with 2+ entries (mirrors the tournament
-                switcher). A team with no live season keeps its own quiet group and lands on
-                Season's End, which is where its nav's first slot points too. */}
+                switcher). ONE list under one header (stage 0 walk, 2026-09-20): a team with no
+                live season sits in the same list carrying its season's NAME as a quiet qualifier
+                — the words the desktop dropdown already uses for it — and still lands on Season's
+                End, which is where its nav's first slot points too. It used to be its own
+                "No live season" group: a desktop optgroup label transplanted onto a phone, where a
+                second uppercase header over a single row read like a warning and cost ~35px of a
+                sheet whose job is the tools beneath. The current team is tinted and carries no
+                chevron — "you are here", not a door; the others keep theirs. */}
             {assignments.length + closedAssignments.length > 1 && (
               <>
                 <div className={styles.dropSectionLabel}>Your teams</div>
@@ -287,34 +316,35 @@ export default function CoachesBottomNav() {
                       href={`${base}/teams/${a.teamId}`}
                       className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
                       role="menuitem"
+                      aria-current={active ? 'true' : undefined}
                     >
                       {a.teamColor && (
                         <span style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0 }} />
                       )}
-                      <span>{a.teamName}</span>
-                      <ChevronRight size={14} className={styles.dropChevron} />
+                      <span className={styles.dropItemName}>{a.teamName}</span>
+                      {!active && <ChevronRight size={14} className={styles.dropChevron} />}
                     </Link>
                   );
                 })}
-                {closedAssignments.length > 0 && (
-                  <>
-                    <div className={styles.dropSectionLabel}>No live season</div>
-                    {closedAssignments.map(a => (
-                      <Link
-                        key={a.teamId}
-                        href={`${base}/teams/${a.teamId}/season-end`}
-                        className={`${styles.dropItem} ${currentTeamId === a.teamId ? styles.dropActive : ''}`}
-                        role="menuitem"
-                      >
-                        {a.teamColor && (
-                          <span style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0, opacity: 0.7 }} />
-                        )}
-                        <span>{a.teamName}</span>
-                        <ChevronRight size={14} className={styles.dropChevron} />
-                      </Link>
-                    ))}
-                  </>
-                )}
+                {closedAssignments.map(a => {
+                  const active = currentTeamId === a.teamId;
+                  return (
+                    <Link
+                      key={a.teamId}
+                      href={`${base}/teams/${a.teamId}/season-end`}
+                      className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
+                      role="menuitem"
+                      aria-current={active ? 'true' : undefined}
+                    >
+                      {a.teamColor && (
+                        <span style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0, opacity: 0.7 }} />
+                      )}
+                      <span className={styles.dropItemName}>{a.teamName}</span>
+                      <span className={styles.dropItemMeta}>{a.programYearName}</span>
+                      {!active && <ChevronRight size={14} className={styles.dropChevron} />}
+                    </Link>
+                  );
+                })}
                 <div className={styles.dropDivider} />
               </>
             )}
@@ -341,6 +371,30 @@ export default function CoachesBottomNav() {
                   </Link>
                 );
               };
+              // A1: the hot three as tiles, then each group with its remaining rows. A group left
+              // with ONE row pairs with the next such group side by side (Season · Progress, Money
+              // · Communication) so the sheet fits sixteen entries at 844 with no inner scroll;
+              // a group with more rows takes two columns of its own (Team).
+              const hotTiles = HOT_KEYS
+                .map(key => MORE_ITEM_BY_KEY.get(key))
+                .filter((i): i is MoreItem => !!i && navVisible(i.label));
+              const groups = MORE_SECTIONS
+                .map(section => ({ header: section.header, items: section.items.filter(i => navVisible(i.label) && !HOT_KEYS.includes(i.key)) }))
+                .filter(g => g.items.length > 0);
+              const rows: { header: string; items: MoreItem[] }[][] = [];
+              for (const g of groups) {
+                const prev = rows[rows.length - 1];
+                if (g.items.length === 1 && prev && prev.length === 1 && prev[0].items.length === 1) prev.push(g);
+                else rows.push([g]);
+              }
+              const renderGroup = (g: { header: string; items: MoreItem[] }) => (
+                <div key={g.header} className={styles.dropSection}>
+                  <div className={styles.dropSectionLabel}>{g.header}</div>
+                  <div className={styles.dropGrid} data-cols={g.items.length > 1 ? 2 : 1}>
+                    {g.items.map(renderMoreItem)}
+                  </div>
+                </div>
+              );
               return (
                 <>
                   {/* ⚠⚠ **THE SHEET CLOSES WITH THE SEASON, and this line is why the phone is not
@@ -354,21 +408,38 @@ export default function CoachesBottomNav() {
                       ⚠ `coach-nav-groups.test.ts` cannot catch this: it compares the two navs'
                       LIVE-season label sets, which are identical either way. The closed-season
                       assertion beside it is what holds this. */}
-                  {seasonFinished ? null : MORE_SECTIONS.map(section => {
-                    const items = section.items.filter(i => navVisible(i.label));
-                    if (!items.length) return null;
-                    return (
-                      <Fragment key={section.header}>
-                        <div className={styles.dropSectionLabel}>{section.header}</div>
-                        {items.map(renderMoreItem)}
-                      </Fragment>
-                    );
-                  })}
+                  {seasonFinished ? null : (
+                    <>
+                      {hotTiles.length > 0 && (
+                        <div className={styles.hotTiles} role="group" aria-label="Most used">
+                          {hotTiles.map(({ key, icon: Icon, label }) => {
+                            const href = `${teamBase}${key}`;
+                            const active = pathname.startsWith(href);
+                            return (
+                              <Link
+                                key={key}
+                                href={href}
+                                className={`${styles.hotTile} ${active ? styles.dropActive : ''}`}
+                                role="menuitem"
+                              >
+                                <Icon size={20} />
+                                <span>{label}</span>
+                              </Link>
+                            );
+                          })}
+                        </div>
+                      )}
+                      {rows.map(pair => pair.length === 2
+                        ? <div key={pair[0].header} className={styles.dropPair}>{pair.map(renderGroup)}</div>
+                        : renderGroup(pair[0]))}
+                    </>
+                  )}
                   <div className={styles.dropDivider} />
                 </>
               );
             })()}
 
+            <div className={styles.dropGrid} data-cols="2">
             <Link
               href={`${base}/help`}
               className={styles.dropItem}
@@ -403,7 +474,9 @@ export default function CoachesBottomNav() {
                   account page — one name for one action everywhere a customer reads it. */}
               <span>Sign out</span>
             </button>
+            </div>
           </div>
+          </>
         )}
       </div>
     </nav>

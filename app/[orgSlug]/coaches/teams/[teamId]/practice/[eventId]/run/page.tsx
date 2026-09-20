@@ -410,7 +410,7 @@ export default function CoachPracticeRunPage({
     const rosterIds = (data?.roster ?? []).map(p => p.id);
     return (
       <div className={styles.page}>
-        <div className={styles.ppRunPage}>
+        <div className={styles.ppRunPage} data-field-floor>
           <div className={styles.ppRunBar}>
             <Link href={planHref} className={styles.ppRunBackLink}>
               <ArrowLeft size={13} aria-hidden /> Plan
@@ -630,7 +630,9 @@ export default function CoachPracticeRunPage({
 
   return (
     <div className={styles.page}>
-      <div className={styles.ppRunPage}>
+      {/* data-field-floor (owner 2026-09-20, stage 0 · A4): the field's screen is read standing up —
+          nothing under 12px inside; the sweep's `field-floor` rule holds it. */}
+      <div className={styles.ppRunPage} data-field-floor>
         <div className={styles.ppRunBar}>
           {/* "← Blocks" — one level up is the list, not the plan (W4); the plan's door is on the
               list's own bar. A button: it moves this screen and records nothing. */}

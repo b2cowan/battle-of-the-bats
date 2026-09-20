@@ -1,6 +1,7 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { ArrowLeftRight, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { resolveLiveSeason, resolveClosedSeason } from '@/lib/coach-season-view';
@@ -80,6 +81,14 @@ function CoachTeamHeaderInner({
   const { assignments, closedAssignments } = useCoaches();
   const headerRef = useRef<HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
+  // ONE IDENTITY LINE AT REST ON A PHONE (owner ruling 2026-09-20, phone re-evaluation stage 0 · A2).
+  // Two facts about the page under the bar, read from the address: is this the team's Overview
+  // (keeps the two-line masthead and the scroll collapse), and is this an open chat room (no
+  // masthead at ≤640 — the room header is the identity there). Both are CSS classes gated at ≤640
+  // in the stylesheet, never a JS media query, so the server and the first client frame agree.
+  const pathname = usePathname() ?? '';
+  const onOverview = /\/coaches\/teams\/[^/]+\/?$/.test(pathname);
+  const onChat = /\/coaches\/teams\/[^/]+\/chat(?:\/|$)/.test(pathname);
   // Once per GAME, on-device (the portal's one dismiss idiom) — a new game week mints a new
   // event id, so the nudge returns for the next opponent without any expiry bookkeeping.
   // Called unconditionally (rules of hooks); the placeholder key is never written.
@@ -234,7 +243,7 @@ function CoachTeamHeaderInner({
       /* -1: never in the tab order, but focusable as the landing spot when a collapse hides the
          control that had focus (see the effect above). */
       tabIndex={-1}
-      className={`${styles.teamHeader}${collapsed ? ` ${styles.teamHeaderCollapsed}` : ''}`}
+      className={`${styles.teamHeader}${collapsed ? ` ${styles.teamHeaderCollapsed}` : ''}${onOverview ? '' : ` ${styles.teamHeaderPhoneRest}`}${onChat ? ` ${styles.teamHeaderPhoneChat}` : ''}`}
     >
       <div className={styles.teamHeaderRow}>
         <div className={styles.teamHeaderLeft}>

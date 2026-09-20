@@ -2500,7 +2500,16 @@ export default function CoachesSchedulePage({
       {/* ── Detail slide-over ─────────────────────────────────────────────── */}
       {selectedEvent && (
         <div className={`${styles.modalOverlay} ${styles.slideOverScrim}`} onPointerDown={e => { if (e.target === e.currentTarget) (requestCloseSlideOver)?.(); }}>
-          <div className={`${styles.slideOver}${activeSlideTab === 'lineup' ? ` ${styles.slideOverWide}` : ''}`} onClick={e => e.stopPropagation()}>
+          {/* A modal sheet, declared as one (role + aria-modal) the way the newer RoomShell and
+              QuestionShell sheets are: the page behind it is inert by declaration, and the layout
+              sweep narrows to the sheet instead of reporting the rows it covers as hidden. */}
+          <div
+            className={`${styles.slideOver}${activeSlideTab === 'lineup' ? ` ${styles.slideOverWide}` : ''}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label={selectedEvent.name}
+            onClick={e => e.stopPropagation()}
+          >
             <div className={styles.modalHeader}>
               <button className={styles.modalBackBtn} aria-label="Back" onClick={requestCloseSlideOver}><ArrowLeft size={20} /></button>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
@@ -2973,8 +2982,9 @@ export default function CoachesSchedulePage({
             const filteredRows = attendanceFilter === 'all'
               ? attendanceRows
               : attendanceRows.filter(row => row.status === attendanceFilter);
+            // data-field-floor: a surface read standing up — the sweep holds its type floor (A4).
             return (
-            <div className={styles.attendanceSection}>
+            <div className={styles.attendanceSection} data-field-floor>
               <div className={styles.attendanceHeader}>
                 <h3 className={styles.attendanceTitle}>Attendance</h3>
                 <div className={styles.attendanceBulkActions}>

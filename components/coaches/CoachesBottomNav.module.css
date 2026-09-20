@@ -260,6 +260,19 @@
   }
 
   .dropItem:has(.dropCount) .dropChevron { margin-left: 0; }
+  /* A switcher row: the team's name ellipsizes rather than wraps, and a team with no live season
+     carries its season's NAME as a quiet trailing qualifier (stage 0 walk, 2026-09-20 — it
+     replaced a second "No live season" section header). */
+  .dropItemName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dropItemMeta {
+    margin-left: auto;
+    flex-shrink: 0;
+    font-size: var(--type-support);
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.45);
+    font-family: var(--font-data);
+  }
+  .dropItem:has(.dropItemMeta) .dropChevron { margin-left: 0; }
 
   .dropDivider {
     height: 1px;
@@ -274,6 +287,84 @@
     from { opacity: 0; transform: translateY(12px); }
     to   { opacity: 1; transform: translateY(0); }
   }
+
+  /* ── THE SHEET (owner ruling 2026-09-20, phone re-evaluation stage 0 · A1) ──────────────────
+     `.dropdown` was a 210px popover anchored to the More tab — a desktop dropdown drawn at the
+     bottom of a phone: half the page showed through beside it and eight of its sixteen rows sat
+     under its own fold. It is now a full-width sheet rising from the bar over a scrim, with the
+     hot three as tiles on top and the groups below in two columns where the labels are short, so
+     every entry is on screen at 844 for a one-team coach (a small scroll remains at 780 or with
+     the team switcher's rows). The rules above still apply — these override what changes and come
+     later in the source at the same specificity, so they win.
+     ⚠ `.moreWrap` goes `position: static` here so the sheet's containing block is the NAV (the
+     nearest positioned ancestor), which is full-width; the sheet stays inside `moreRef`'s DOM so
+     `useDismissable` keeps treating a tap in it as inside. The scrim is positioned the same way
+     — `position: fixed` would be contained by the nav's backdrop-filter and is avoided. */
+  .moreWrap { position: static; }
+  .sheetScrim {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 100vh;
+    background: rgba(13, 17, 26, 0.45); /* token-exempt: scrim over the page, dark skin */
+  }
+  .dropdown {
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    min-width: 0;
+    border-radius: 18px 18px 0 0;
+    border-bottom: 0;
+    padding: 6px 14px 10px;
+    max-height: calc(100dvh - var(--bottom-nav-height, 72px) - env(safe-area-inset-bottom, 0px) - 12px);
+  }
+  .sheetGrab {
+    display: block;
+    width: 38px;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(255, 255, 255, 0.25);
+    margin: 4px auto 6px;
+  }
+  .hotTiles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    padding: 4px 0 8px;
+  }
+  /* 6px gap + 8px side padding (were 8 / 10): at 360 the third of a 332px sheet is 106px, and
+     "Practice plans" at 12px bold needs ~85px of it on ONE line — measured, not eyeballed. */
+  .hotTile {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    min-height: 64px;
+    padding: 10px 8px 9px;
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.05);
+    color: rgba(255, 255, 255, 0.85);
+    text-decoration: none;
+    font-size: var(--type-support);
+    font-weight: 700;
+    line-height: 1.15;
+  }
+  .hotTile.dropActive { background: rgba(79, 163, 224, 0.12); color: var(--blueprint-light); }
+  .dropSection { padding-top: 2px; }
+  /* minmax(0, 1fr), not 1fr: a bare 1fr floors at min-content, so at 360 "Tournaments" + icon +
+     chevron (174px) widened its column and squeezed Insights to 147. Equal halves, always. */
+  .dropPair { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 10px; }
+  .dropGrid[data-cols="2"] { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: 10px; }
+  .dropGrid .dropItem { padding: 0.7rem 0.5rem; min-height: var(--tap-min, 44px); }
+  /* ⚠ NO CHEVRON ON A HALF-WIDTH ROW (stage 0 walk, 2026-09-20). Side by side in a grid the rows
+     already read as doors, and the chevron plus its gap is 26px a 160px column cannot spare:
+     "Email families" needs 107px and had 91 at 360 / 104 at 390 — it wrapped at BOTH widths.
+     The label is the one the desktop nav, the page title and the help articles all use; the
+     column gives, not the word. Full-width rows (Notifications, the switcher) keep theirs. */
+  .dropPair .dropChevron, .dropGrid[data-cols="2"] .dropChevron { display: none; }
+  .dropSectionLabel { padding: 0.45rem 0.5rem 0.1rem; }
 
   /* ── Warm portal overrides (gated) ──────────────────────────────────────────
      The globals.css token flip warms every var()-driven colour (active tab, dots, logout
@@ -301,9 +392,20 @@
     box-shadow: 0 -8px 32px rgba(var(--home-line-rgb), 0.24), 0 0 0 1px rgba(var(--home-line-rgb), 0.5);
   }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropSectionLabel { color: var(--text-tertiary); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItemMeta { color: var(--text-tertiary); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem { color: var(--text-secondary); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropItem:hover { background: var(--home-olive-soft); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropActive { background: var(--home-olive-soft); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropDivider { background: var(--home-line); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .dropLogout:hover { background: var(--home-live-soft); }
+  /* The sheet's own pieces in the warm skin (A1) — the scrim, the grab, the tiles. */
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sheetScrim { background: rgba(36, 30, 21, 0.28); } /* token-exempt: scrim over the warm page */
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sheetGrab { background: rgba(var(--home-line-rgb), 0.9); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .hotTile {
+    border-color: var(--home-line);
+    background: rgba(var(--home-paper-rgb), 0.9);
+    color: var(--text-primary);
+  }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .hotTile svg { color: var(--home-olive); }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .hotTile.dropActive { background: var(--home-olive-soft); }
 }

@@ -1,6 +1,466 @@
 {
-  "generated": "2026-09-18T18:35:04.713Z",
+  "generated": "2026-09-20T12:48:22.144Z",
   "entries": {
+    "coach-team-hub|361|tap-floor|a·10 of 12 in": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|361|tap-floor|a·Lineup needs review": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|361|tap-floor|a·1 late": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|361|tap-floor|a·1 out": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|361|tap-floor|a·Season insights →": {
+      "reason": "The Overview foot link (\"Season insights →\", 22px) as it stood before the phone re-evaluation — a STAGE 1 item (the walk records it beside the tiles: the Overview at phone width is redrawn there), surfaced as a NEW key on 2026-09-20 only because the screen was re-baselined on game day. Nothing in stage 0 touched it.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-team-hub|361|content-overflow|span·Tournaments": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "content spills 6px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-team-hub|390|tap-floor|a·10 of 12 in": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|390|tap-floor|a·Lineup needs review": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|390|tap-floor|a·1 late": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|390|tap-floor|a·1 out": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|390|tap-floor|a·Season insights →": {
+      "reason": "The Overview foot link (\"Season insights →\", 22px) as it stood before the phone re-evaluation — a STAGE 1 item (the walk records it beside the tiles: the Overview at phone width is redrawn there), surfaced as a NEW key on 2026-09-20 only because the screen was re-baselined on game day. Nothing in stage 0 touched it.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-team-hub|390|content-overflow|span·Tournaments": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "content spills 13px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-team-hub|768|tap-floor|button·Help: Premium Coaches Portal": {
+      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (surfaced as a NEW key on 2026-09-20 only because the Overview was re-baselined on game day). Closes with the portal-wide touch-debt project.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-team-hub|768|control-width|button·Help: Premium Coaches Portal": {
+      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (surfaced as a NEW key on 2026-09-20 only because the Overview was re-baselined on game day). Closes with the portal-wide touch-debt project.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-team-hub|768|tap-floor|a·10 of 12 in": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|768|tap-floor|a·Lineup needs review": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|768|tap-floor|a·1 late": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|768|tap-floor|a·1 out": {
+      "reason": "The Overview game-day card as it stood before the phone re-evaluation — surfaced as NEW keys on 2026-09-20 only because the fixture had not been on game day when the screen was last baselined. The four state chips are 32px doors and the TOURNAMENTS tile label runs into its arrow: both are STAGE 1 of the re-evaluation (walk Q 1.1 tiles → rows, Q 1.2 doors to 44px), drawn and ruled next; nothing in stage 0 touched this card.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-team-hub|768|tap-floor|a·Season insights →": {
+      "reason": "The Overview foot link (\"Season insights →\", 22px) as it stood before the phone re-evaluation — a STAGE 1 item (the walk records it beside the tiles: the Overview at phone width is redrawn there), surfaced as a NEW key on 2026-09-20 only because the screen was re-baselined on game day. Nothing in stage 0 touched it.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|a·Search UAT Fields · 1 in Google Maps": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·+ Add final score": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit details": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Cancel event": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Delete": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Attendance": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Lineup": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Scouting": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·All in": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Reset": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|a·Season attendance": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·All 12": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·In: 10": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Late: 1": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Out: 1": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·No reply: 0": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #1 Avery Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #2 Blake Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #3 Casey Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #4 Devon Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #5 Emerson Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #6 Frankie Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #7 Gray Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #8 Harper Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #9 Indigo Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #10 Jules Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #11 Kai Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|tap-floor|button·Edit attendance for #12 Logan Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|361|contrast|span·Out·rgb(176, 58, 34)on230,217,208": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "4.41:1 (needs 4.5:1) — rgb(176, 58, 34) on rgb(230, 217, 208) at 12px"
+    },
+    "coach-schedule-attendance|390|tap-floor|a·Search UAT Fields · 1 in Google Maps": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·+ Add final score": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit details": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Cancel event": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Delete": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Attendance": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Lineup": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Scouting": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·All in": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Reset": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|a·Season attendance": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·All 12": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·In: 10": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Late: 1": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Out: 1": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·No reply: 0": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #1 Avery Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #2 Blake Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #3 Casey Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #4 Devon Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #5 Emerson Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #6 Frankie Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #7 Gray Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #8 Harper Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #9 Indigo Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #10 Jules Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #11 Kai Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|tap-floor|button·Edit attendance for #12 Logan Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|390|contrast|span·Out·rgb(176, 58, 34)on230,217,208": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "4.41:1 (needs 4.5:1) — rgb(176, 58, 34) on rgb(230, 217, 208) at 12px"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Help: Schedule": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|control-width|button·Help: Schedule": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·List": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Week": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Month": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "28px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|a·Search UAT Fields · 1 in Google Maps": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "21px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·+ Add final score": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "40px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Share": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit details": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Cancel event": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Delete": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Attendance": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Lineup": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Scouting": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·All in": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Reset": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|a·Season attendance": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "32px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·All 12": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·In: 10": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Late: 1": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Out: 1": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·No reply: 0": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "24px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #1 Avery Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #2 Blake Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #3 Casey Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #4 Devon Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #5 Emerson Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #6 Frankie Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #7 Gray Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #8 Harper Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #9 Indigo Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #10 Jules Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #11 Kai Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|tap-floor|button·Edit attendance for #12 Logan Test": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "27px tall (floor 44)"
+    },
+    "coach-schedule-attendance|768|list-ground|list·Schedule": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "a framed list inside a painted <main class=\"coaches-module__9yF9NW__coachesMain\"> (rgb(248, 244, 237)) — two painters; pass `inset` and let the card paint"
+    },
+    "coach-schedule-attendance|768|contrast|span·Out·rgb(176, 58, 34)on230,217,208": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "4.41:1 (needs 4.5:1) — rgb(176, 58, 34) on rgb(230, 217, 208) at 12px"
+    },
+    "coach-schedule-attendance|1440|list-ground|list·Schedule": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "a framed list inside a painted <main class=\"coaches-module__9yF9NW__coachesMain\"> (rgb(248, 244, 237)) — two painters; pass `inset` and let the card paint"
+    },
+    "coach-schedule-attendance|1440|contrast|span·Out·rgb(176, 58, 34)on230,217,208": {
+      "reason": "The event sheet had never been a measured screen — it became one with the phone re-evaluation (stage 0 · A4, 2026-09-20) so its attendance list, a surface read standing up, can hold the field floor. Every control under the tap floor here (the sheet tabs, All in / Reset, the count chips, Edit RSVP, Edit / Cancel / Delete, the maps link) is the sheet as it stood before the re-evaluation, not a stage-0 change; the sheet is redrawn by stage 2 (the walk Q 2.3 — its order follows the day), which is where these are argued and fixed. The Out chip contrast (4.41:1) and the framed-list ground are the same standing populations the other coach screens carry. Nothing on the field floor itself is open: no text under 12px inside the list.",
+      "detail": "4.41:1 (needs 4.5:1) — rgb(176, 58, 34) on rgb(230, 217, 208) at 12px"
+    },
     "coach-practice-record|768|tap-floor|button·Help: Practice plan": {
       "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
       "detail": "34px tall (floor 44)"
@@ -2585,34 +3045,6 @@
       "reason": null,
       "detail": "38px tall (floor 44)"
     },
-    "coach-team-hub|361|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|361|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|390|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|390|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|768|tap-floor|button·Help: Premium Coaches Portal": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-team-hub|768|tap-floor|button·Skip this step": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "coach-team-hub|768|tap-floor|button·Take the 2-minute tour": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "coach-tryouts|361|tap-floor|a·Open day-of check-in": {
       "reason": null,
       "detail": "42px tall (floor 44)"
@@ -2705,27 +3137,11 @@
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
-    "coach-team-hub|361|tap-floor|a·Season insights →": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-team-hub|768|tap-floor|button·Season setup, 4 of 5 done": {
-      "reason": "2026-08-11 header pass: standard portal control at its unchanged compact size, re-keyed by the shared-header migration (moved into the actions slot / gained a real accessible name) or newly added for help-parity on Money panels. ≤640px clears the 44px floor via the header grid’s min-height; the ≥768px control height is the portal-wide grandfathered decision the pass deliberately did not take (COACH_PAGE_HEADER_CONSISTENCY_PLAN.md). RE-KEYED AGAIN 2026-08-25 (page-title band ruling): the chip took a phone SYMBOL form (ring only) and its aria-label now carries the count, which is its accessible name. Same control, same unchanged 32px at ≥768. At ≤640 it clears the 44px floor via the header grid — verified 44px at 361/390/640.",
-      "detail": "32px tall (floor 44)"
-    },
     "coach-overview|390|tap-floor|a·Season insights →": {
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
     "coach-overview|768|tap-floor|a·Season insights →": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-team-hub|390|tap-floor|a·Season insights →": {
-      "reason": null,
-      "detail": "21px tall (floor 44)"
-    },
-    "coach-team-hub|768|tap-floor|a·Season insights →": {
       "reason": null,
       "detail": "21px tall (floor 44)"
     },
@@ -2838,10 +3254,6 @@
       "detail": "34px wide (floor 44) — icon-only control"
     },
     "coach-overview|768|control-width|button·Help: Premium Coaches Portal": {
-      "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-team-hub|768|control-width|button·Help: Premium Coaches Portal": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help “?”, a drag grip, a pager) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },

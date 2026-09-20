@@ -839,6 +839,49 @@
      (`.teamHeaderStatus`, owner ruling 2026-08-24). Kept because a tablet still shows it. */
   .teamHeaderStackKey { max-width: 10ch; }
 }
+/* ── ONE IDENTITY LINE AT REST ON A PHONE (owner ruling 2026-09-20, phone re-evaluation stage 0 ·
+   A2). Every team screen except Overview wears the masthead as a single 36px line from the first
+   frame — team name · record · the "?" — and keeps that ONE form through scroll, so the bar never
+   changes shape under a thumb. Overview (the team's own page) keeps the two lines and the scroll
+   collapse above. Measured before: 59px pinned on every screen, over a page that names itself
+   20px below. The desktop is untouched — the 2026-08-19 ruling that it never collapses stands.
+   ⚠ The "?" keeps its 44px tap target (the ≤640 floor above) and the row stays 36px because the
+   button's vertical margins are negative: the hit area overhangs the bar's edges by 4px each way
+   rather than growing the bar. The sweep still measures a 44px control. ⚠ But the DISC is drawn
+   34px inside that 44px box (stage 0 walk, 2026-09-20): a transparent 5px border with the fill
+   clipped to the padding box, and the ghost hairline re-drawn as an inset shadow on the same
+   token. Painting the full 44px circle put its top 4px above the viewport — the bar is pinned at
+   the top — so the owner saw a "?" with its crown sliced off. The overhang is now invisible,
+   which is what an overhang has to be.
+   ⚠ Over an open CHAT ROOM the masthead does not render at all — the room header is the identity
+   there, and two stacked headers cost 120px above the first message. The published
+   `--coach-header-h` follows to 0, which is exactly what the chat wrapper's height calc wants.
+   These sit AFTER the ≤900 collapse rules on purpose: same specificity, later source, so the rest
+   form wins over `.teamHeaderCollapsed` when both classes are present. */
+@media (max-width: 640px) {
+  .teamHeaderPhoneRest { min-height: 36px; padding-top: 0; padding-bottom: 0; justify-content: center; }
+  .teamHeaderPhoneRest .teamHeaderRow { min-height: 36px; gap: 0.6rem; }
+  .teamHeaderPhoneRest .teamHeaderLeft { flex-direction: row; align-items: baseline; gap: 0.5rem; min-width: 0; }
+  .teamHeaderPhoneRest .teamHeaderName { font-size: var(--type-body); }
+  .teamHeaderPhoneRest .teamHeaderMeta { display: flex; margin-top: 0; }
+  .teamHeaderPhoneRest .teamHeaderMeta > span:not(.teamHeaderRecord) { display: none; }
+  .teamHeaderPhoneRest .teamHeaderMeta > span + span::before { content: none; margin-right: 0; }
+  .teamHeaderPhoneRest .teamHeaderRight { display: flex; }
+  .teamHeaderPhoneRest .teamHeaderHelp button {
+    margin-top: -4px;
+    margin-bottom: -4px;
+    border: 5px solid transparent;
+    background-clip: padding-box;
+    box-shadow: inset 0 0 0 1px var(--border-2);
+  }
+  /* ⚠ The clip is restated under the warm gate on purpose. The warm skin sets the ghost button's
+     `background` SHORTHAND (globals.css, specificity 0,3,1), and a shorthand silently resets
+     background-clip to border-box — measured: the disc still painted all 44px, with the hairline
+     drawn 5px inside it. Same declaration, one more selector, so the warm portal (the default)
+     clips the fill like the dark one. */
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .teamHeaderPhoneRest .teamHeaderHelp button { background-clip: padding-box; }
+  .teamHeaderPhoneChat { display: none; }
+}
 
 /* ⚠ THE SEPARATOR COULD STILL BE ORPHANED, AND THE RULE ABOVE SAYS IT CANNOT — read it again:
    it reasons about a segment being ABSENT (drawn between siblings, never punctuated into a
@@ -11620,8 +11663,11 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
 .gdPage { max-width: 30rem; margin: 0 auto; display: flex; flex-direction: column; gap: 0.65rem; }
 
 .gdBar {
-  display: flex; align-items: center; gap: 0.75rem;
-  font-family: var(--font-data); font-size: var(--type-label); letter-spacing: 0.06em;
+  /* At the field floor (A4) the label step resolves to support inside the console; the tracking
+     comes down a notch and the row may wrap so "← SCHEDULE · GAME DAY · ✓ SAVED" never spills a
+     390px screen (it did by 10px at 0.06em). */
+  display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; row-gap: 0.25rem;
+  font-family: var(--font-data); font-size: var(--type-label); letter-spacing: 0.04em;
   text-transform: uppercase; color: var(--text-tertiary); padding-bottom: 0.2rem;
 }
 .gdBar b { color: var(--text-primary); font-weight: 700; }
@@ -11634,7 +11680,7 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
 .gdBack:hover { color: var(--text-primary); }
 .gdLivePill {
   background: var(--home-live, var(--danger)); color: rgba(255, 247, 242, 0.98); font-weight: 700;
-  letter-spacing: 0.12em; padding: 0.35em 0.7em; border-radius: 999px;
+  letter-spacing: 0.08em; padding: 0.35em 0.7em; border-radius: 999px;
 }
 
 .gdHandedOff { margin: 0; text-align: center; font-size: var(--type-body); line-height: 1.5; color: var(--text-tertiary); }
@@ -11676,23 +11722,28 @@ button.gdChip[aria-pressed='true'] {
   color: var(--home-olive, var(--logic-lime));
   border-color: var(--home-olive, var(--logic-lime)); font-weight: 600;
 }
-.gdScoreRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; margin-top: 0.7rem; }
+.gdScoreRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; row-gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
 .gdScore { background: none; border: none; padding: 0; cursor: pointer; text-align: left; min-height: var(--tap-min, 44px); }
 .gdScore:disabled { cursor: default; }
 .gdScoreLbl {
   display: block; font-family: var(--font-data); font-size: var(--type-token); font-weight: 600;
   letter-spacing: 0.12em; color: var(--text-tertiary);
+  /* One line: at the field floor (A4) the token step resolves to support inside the console and
+     "US — THEM" no longer fits the score block's content width without this. */
+  white-space: nowrap;
 }
 .gdScoreVal {
   font-family: var(--font-data); font-size: var(--type-display); font-weight: 700; line-height: 1.1;
   font-variant-numeric: tabular-nums; color: var(--text-primary);
 }
 .gdScoreDash { color: var(--text-tertiary); font-weight: 400; }
-.gdPeriod { display: flex; align-items: center; gap: 0.45rem; }
+/* The stepper group may drop under the score on a narrow phone rather than spill (A4 widened its
+   chip by a step); `margin-left: auto` keeps it at the right edge either way. */
+.gdPeriod { display: flex; align-items: center; gap: 0.35rem; margin-left: auto; }
 .gdPeriodChip {
   background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime));
-  font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.04em;
-  border-radius: 999px; padding: 0.45em 0.8em; white-space: nowrap;
+  font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.02em;
+  border-radius: 999px; padding: 0.45em 0.7em; white-space: nowrap;
 }
 .gdStepper {
   width: var(--tap-min, 44px); height: var(--tap-min, 44px); border-radius: 9px;
@@ -11735,8 +11786,22 @@ button.gdChip[aria-pressed='true'] {
   border-radius: 6px; padding: 0.35em 0.55em;
 }
 .gdWarn[data-tone="red"] { color: var(--home-live, var(--danger)); background: var(--home-live-soft, rgba(217,72,43,0.12)); }
+/* ── THE FIELD FLOOR (owner ruling 2026-09-20, phone re-evaluation stage 0 · A4) ─────────────
+   A surface read STANDING UP — the game console, the run screen, the event sheet's attendance
+   list — may not set anything a coach reads below the ladder's `support` step (12px), and the
+   value a coach looks for (a position) sits at `body` (14px). The eight-step ladder is untouched
+   and no ninth size is minted: inside these three roots the two smallest steps RESOLVE to
+   support, so every declaration in them stays on-ladder and simply lands one step up. Measured
+   before: 66 of the console's 122 words at 10–11px, on the one screen read in daylight at arm's
+   length. The layout sweep's `field-floor` rule reads the same roots (`data-field-floor`) so a
+   future declaration cannot reintroduce a 10px word at the fence. */
+.gdPage, .ppRunPage, .attendanceSection {
+  --type-label: var(--type-support);
+  --type-token: var(--type-support);
+}
 .gdPos {
-  font-family: var(--font-data); font-size: var(--type-label); font-weight: 700;
+  /* `body`, not `label`: the position is the thing a coach looks for at the fence (A4). */
+  font-family: var(--font-data); font-size: var(--type-body); font-weight: 700;
   background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime));
   border-radius: 6px; padding: 0.35em 0.6em;
 }
