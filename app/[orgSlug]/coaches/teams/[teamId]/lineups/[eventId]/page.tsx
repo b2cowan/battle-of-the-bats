@@ -15,9 +15,9 @@ import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import type { PositionPolicy } from '@/lib/lineup-generator';
 import {
   downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, buildFilename,
-  fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings, type LineupPosterPlayer,
+  fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings, type LineupPosterPlayer, type LineupPosterOrientation,
 } from '@/lib/export';
-import { playerDisplayName } from '@/lib/coach-roster-name';
+import { playerDisplayName, playerName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   LINEUP_POSITIONS, buildLineupRows, renumberBattingOrder, sortLineupRows, type LineupPlayerRow,
@@ -44,6 +44,16 @@ function fmtTime(iso: string) {
 }
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
+}
+
+// The poster's turn is a PER-DEVICE preference, not a per-lineup fact: a clipboard coach picks
+// portrait once and never sees landscape again unless they ask (owner decision D1, 2026-09-19).
+// First-time default is portrait (D2) — most coaches carry a clipboard, and the taller rows are
+// the better pen sheet at seven or nine innings. Same store as the library sort order: local to
+// the browser, read once on mount, and the sheet still prints if storage is unavailable.
+const POSTER_ORIENTATION_KEY = 'flhq-coach-poster-orientation';
+function readPosterOrientation(): LineupPosterOrientation {
+  try { return localStorage.getItem(POSTER_ORIENTATION_KEY) === 'landscape' ? 'landscape' : 'portrait'; } catch { return 'portrait'; }
 }
 
 export default function CoachLineupBuilderPage({
@@ -76,6 +86,18 @@ export default function CoachLineupBuilderPage({
   const [lineupRows, setLineupRows] = useState<LineupPlayerRow[]>([]);
   const [lineupPdfOpen, setLineupPdfOpen] = useState(false);
   const [pdfIncludeNotes, setPdfIncludeNotes] = useState(false);
+  const [posterOrientation, setPosterOrientation] = useState<LineupPosterOrientation>('portrait');
+  // Read after mount — storage is a per-viewer convenience the server cannot see, so the first
+  // client render must match the server's; the remembered turn arrives one commit later, long
+  // before the Print menu can open. Once per mount, cannot cascade — the library sort's shape.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setPosterOrientation(readPosterOrientation());
+  }, []);
+  function choosePosterOrientation(next: LineupPosterOrientation) {
+    setPosterOrientation(next);
+    try { localStorage.setItem(POSTER_ORIENTATION_KEY, next); } catch { /* no storage — this print still uses the choice */ }
+  }
   const [templatesOpen, setTemplatesOpen] = useState(false);
   const [templates, setTemplates] = useState<RepTeamLineupTemplate[]>([]);
   const [newTemplateName, setNewTemplateName] = useState('');
@@ -411,7 +433,13 @@ export default function CoachLineupBuilderPage({
     const settings: OrgPdfSettings = { ...DEFAULT_PDF_SETTINGS, ...(pdfSettings && Object.keys(pdfSettings).length > 0 ? pdfSettings : {}) };
     const players: LineupPosterPlayer[] = sortLineupRows(lineupRows).map(row => {
       const isSub = lineupMode === 'nine_player' && !row.starter;
-      return { battingOrder: isSub ? '' : row.battingOrder, name: playerDisplayName(row.player), isSub, inningPositions: row.inningPositions };
+      return {
+        battingOrder: isSub ? '' : row.battingOrder,
+        number: row.player.playerNumber ? String(row.player.playerNumber) : '',
+        name: playerName(row.player),
+        isSub,
+        inningPositions: row.inningPositions,
+      };
     });
     return {
       teamName: assignment?.teamName ?? teamId,
@@ -422,6 +450,8 @@ export default function CoachLineupBuilderPage({
       inningCount: lineupInningCount,
       players,
       legend: buildPositionLegend(LINEUP_POSITIONS.filter(p => p && p !== 'Bench')),
+      orientation: posterOrientation,
+      orderLabel: sportPack.orderLabel,
       includeNotes: pdfIncludeNotes,
       notes: lineupNotes,
       // The whole resolved identity — crest, club name, footer, date stamp — not just the
@@ -444,7 +474,7 @@ export default function CoachLineupBuilderPage({
       title: 'Print with open roles?',
       message: printAnalysis.hasConflicts
         ? 'This lineup still has a position clash — the poster will print exactly what’s in the grid.'
-        : `${printAnalysis.missingFieldPositions.length} ${sportPack.periodLabel.toLowerCase()}${printAnalysis.missingFieldPositions.length === 1 ? '' : 's'} still ${printAnalysis.missingFieldPositions.length === 1 ? 'has' : 'have'} an open role: ${printAnalysis.missingFieldPositions.map(m => `${sportPack.periodLabel} ${m.inning} (${m.positions.join(', ')})`).join(' · ')}. The poster will print those boxes blank.`,
+        : `${printAnalysis.missingFieldPositions.length} ${sportPack.periodLabel.toLowerCase()}${printAnalysis.missingFieldPositions.length === 1 ? '' : 's'} still ${printAnalysis.missingFieldPositions.length === 1 ? 'has' : 'have'} an open role: ${printAnalysis.missingFieldPositions.map(m => `${sportPack.periodLabel} ${m.inning} (${m.positions.join(', ')})`).join(' · ')}. The poster will print those cells blank.`,
       confirmText: 'Print anyway', cancelText: 'Keep working', tone: 'warning',
     });
   }
@@ -579,12 +609,23 @@ export default function CoachLineupBuilderPage({
         </button>
         {lineupPdfOpen && (
           <div className={styles.lineupAutoMenu}>
-            <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
-              <strong>Dugout poster</strong>
-              <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank boxes to pen in at the field</span>
-            </button>
+            {/* ONE document with a turn, not two documents (owner D1, 2026-09-19): the row prints,
+                the switch beneath it picks the sheet's orientation and remembers it on this device.
+                The portal's own segmented control (segChoice) as a pair of pressed/unpressed toggle
+                buttons — two Tab stops that read their state, no arrow-key contract. It sits BESIDE
+                the row's button rather than inside it — a button cannot hold buttons. */}
+            <div className={styles.lineupPdfPoster}>
+              <button type="button" className={styles.lineupPdfItem} onClick={handleLineupPoster}>
+                <strong>Dugout poster</strong>
+                <span>Positions by {sportPack.periodLabel.toLowerCase()} — blank cells to pen in at the field</span>
+              </button>
+              <div className={`${styles.segChoice} ${styles.lineupPdfOrient}`} role="group" aria-label="Poster orientation">
+                <button type="button" aria-pressed={posterOrientation === 'landscape'} className={`${styles.segBtn} ${posterOrientation === 'landscape' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('landscape')}>Landscape · wall</button>
+                <button type="button" aria-pressed={posterOrientation === 'portrait'} className={`${styles.segBtn} ${posterOrientation === 'portrait' ? styles.segBtnActive : ''}`} onClick={() => choosePosterOrientation('portrait')}>Portrait · clipboard</button>
+              </div>
+            </div>
             <button type="button" className={styles.lineupPdfItem} onClick={handleBattingCard}>
-              <strong>Batting order card</strong>
+              <strong>{sportPack.orderLabel} card</strong>
               <span>Large-type order for the scorekeeper or dugout</span>
             </button>
             {lineupNotes.trim() && (

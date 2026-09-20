@@ -36,7 +36,7 @@ import { ROSTER_WALL_HEADERS, ROSTER_PRIVATE_HEADINGS, rosterContactHeaders } fr
 
 // ── Recording fakes ──────────────────────────────────────────────────────────
 
-interface TextCall { str: string; page: number; x?: number; y?: number; w?: number }
+interface TextCall { str: string; page: number; x?: number; y?: number; w?: number; size?: number; align?: string }
 
 class MockDoc {
   orientation: 'portrait' | 'landscape';
@@ -45,7 +45,8 @@ class MockDoc {
   texts: TextCall[] = [];
   images: { x: number; y: number; w: number; h: number }[] = [];
   setPageCalls: number[] = [];
-  /** Hand-marked pen boxes (Working-sheets pass) — the only roundedRect this engine draws. */
+  /** Hand-marked pen boxes (Working-sheets pass) — the only OUTLINED roundedRect this engine
+   *  draws. A FILLED one is the poster's HOME / AWAY pill (2026-09-19), not a pen target. */
   boxes: { x: number; y: number }[] = [];
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   constructor(opts: any) { this.orientation = opts.orientation; }
@@ -74,7 +75,13 @@ class MockDoc {
   line(x1: number, y1: number, x2: number, y2: number) { this.lines.push({ x1, y1, x2, y2 }); }
   /** The bracket dashes a losers-bracket connector; the table engine never calls this. */
   setLineDashPattern() {}
-  roundedRect(x: number, y: number) { this.boxes.push({ x, y }); }
+  /** FILLED rounded rects — the poster's HOME / AWAY pill. Recorded apart from the pen boxes so
+   *  "the pill is drawn" is assertable and "no pen box" stays meaningful (/review, 2026-09-20). */
+  pills: { x: number; y: number; w: number; h: number }[] = [];
+  roundedRect(x: number, y: number, w?: number, h?: number, _rx?: number, _ry?: number, style?: string) {
+    if (style === 'F') this.pills.push({ x, y, w: w ?? 0, h: h ?? 0 });
+    else this.boxes.push({ x, y });
+  }
   addPage() { this.pages += 1; this.currentPage = this.pages; }
   setPage(n: number) { this.currentPage = n; this.setPageCalls.push(n); }
   text(str: string | string[], ..._rest: unknown[]) {
@@ -86,7 +93,10 @@ class MockDoc {
     const xx = typeof _rest[0] === 'number' ? (_rest[0] as number) : 0;
     (Array.isArray(str) ? str : [str]).forEach((line, i) =>
       // and the run's width IN THE FACE IT WAS DRAWN, so a heading that overruns its column is assertable.
-      this.texts.push({ str: line, page: this.currentPage, x: xx, y: yy + i * 4.2, w: this.getTextWidth(line) }));
+      // and the SIZE it was set in, so "the inning numerals are no smaller than the cells" is a fact.
+      // …and the alignment, because for a CENTRED run x is the anchor, not the left edge — a
+      // right-edge check that ignores that overstates by half the run (/review, 2026-09-20).
+      this.texts.push({ str: line, page: this.currentPage, x: xx, y: yy + i * 4.2, w: this.getTextWidth(line), size: this.fontSize, align: (_rest[2] as { align?: string } | undefined)?.align }));
   }
   font: 'normal' | 'bold' = 'normal';
   splitWidths: number[] = [];
@@ -1483,11 +1493,13 @@ describe('a state the filter row does not offer still prints the screen’s word
 // connector draws. The bracket fixtures below therefore carry BOTH the team and its note.
 
 const posterPlayer = (
-  order: string, name: string, innings: Record<string, string> = {}, isSub = false,
-): LineupPosterPlayer => ({ battingOrder: order, name, isSub, inningPositions: innings });
+  order: string, name: string, innings: Record<string, string> = {}, isSub = false, number = '',
+): LineupPosterPlayer => ({ battingOrder: order, number, name, isSub, inningPositions: innings });
 
+// The shape the lineup screen sends since 2026-09-19: the jersey number in its own field, the
+// name without it. (It used to send "#12 Player 1" as one string.)
 const NINE = Array.from({ length: 9 }, (_, i) =>
-  posterPlayer(String(i + 1), `#${i + 2} Player ${i + 1}`, { '1': 'P', '2': 'C' }));
+  posterPlayer(String(i + 1), `Player ${i + 1}`, { '1': 'P', '2': 'C' }, false, String(i + 2)));
 
 const posterOpts = (over: Partial<LineupPosterOptions> = {}): LineupPosterOptions => ({
   teamName: 'Riverdale Ridge U13 AA',
@@ -1507,8 +1519,12 @@ const posterOpts = (over: Partial<LineupPosterOptions> = {}): LineupPosterOption
   ...over,
 });
 
-/** jsPDF-constructor stand-in: every `new` hands back the one recording doc. */
-const inject = (doc: MockDoc) => class { constructor() { return doc; } };
+/** jsPDF-constructor stand-in: every `new` hands back the one recording doc — which ADOPTS the
+ *  orientation the builder asked for, so a portrait poster is measured on a portrait page. */
+const inject = (doc: MockDoc) => class {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  constructor(opts?: any) { if (opts?.orientation) doc.orientation = opts.orientation; return doc; }
+};
 
 describe('the poster and the card say whose paper they are', () => {
   // They took only an accent colour and a branding flag, so they were the ONLY documents in
@@ -1537,12 +1553,12 @@ describe('the poster and the card say whose paper they are', () => {
     }
   });
 
-  it('names the club on both, and carries a real footer', () => {
+  it('names the team on both, and carries a real footer', () => {
     for (const build of [buildLineupPosterDoc, buildBattingOrderCardDoc]) {
       const doc = new SizingMockDoc({ orientation: 'landscape' });
       build(inject(doc), posterOpts());
       const drawn = doc.texts.map(t => t.str).join('\n');
-      assert.ok(drawn.includes('Riverdale Ridge U13 AA'), 'no identity line');
+      assert.ok(drawn.includes('Riverdale Ridge U13 AA'), 'no team name');
       assert.ok(/Riverdale Minor Ball/.test(drawn), 'the footer lost the club line');
       assert.ok(/Exported: /.test(drawn), 'the footer lost the date stamp');
       assert.ok(/Generated by FieldLogicHQ/.test(drawn), 'the footer lost the branding line');
@@ -1555,6 +1571,61 @@ describe('the poster and the card say whose paper they are', () => {
       posterOpts({ settings: settings({ headerLine1: 'Riverdale Ridge U13 AA' }) }));
     assert.equal(doc.images.length, 0);
     assert.ok(doc.texts.some(t => t.str === 'Riverdale Ridge U13 AA'));
+  });
+
+  // ⚠ Team paper ALWAYS stamps the team's name as its identity line, and the matchup headline
+  // opens with the same words — so every team's poster and card printed its own name twice,
+  // 8mm apart, and the club's name nowhere (owner note 2, 2026-09-19).
+  it('prints the team name ONCE — the identity line is not repeated above the headline', () => {
+    for (const build of [buildLineupPosterDoc, buildBattingOrderCardDoc]) {
+      const doc = new SizingMockDoc({ orientation: 'landscape' });
+      build(inject(doc), posterOpts());
+      assert.equal(count(doc, 'Riverdale Ridge U13 AA'), 1, 'the team name is on the page twice');
+    }
+  });
+
+  it('still names the CLUB above the headline when the identity is genuinely something else', () => {
+    // Club paper — should either document ever be generated with it — keeps its line.
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts({ settings: settings({ headerLine1: 'Riverdale Minor Ball' }) }));
+    assert.ok(doc.texts.some(t => t.str === 'Riverdale Minor Ball'), 'the club line was dropped');
+    assert.equal(count(doc, 'Riverdale Ridge U13 AA'), 1);
+  });
+});
+
+describe('the matchup headline: names in bold, the separator in the accent', () => {
+  // "Team   vs   Opponent" was ONE bold 20pt string, so "vs" read as a third name (owner note 3).
+  const run = (doc: MockDoc, str: string) => doc.texts.find(t => t.str === str);
+
+  it('draws "vs" as its own run, smaller than the names', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts());
+    const team = run(doc, 'Riverdale Ridge U13 AA');
+    const vs = run(doc, 'vs');
+    const opp = run(doc, 'Harborview Herons');
+    assert.ok(team && vs && opp, 'the headline is not drawn in three runs');
+    assert.ok(vs!.size! < team!.size!, '"vs" is set as large as the names');
+    assert.equal(team!.y, opp!.y, 'the ordinary matchup does not sit on one line');
+    assert.ok(team!.x! < vs!.x! && vs!.x! < opp!.x!, 'the runs are out of order');
+  });
+
+  it('reads "@" for an away game', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts({ homeAway: 'away' }));
+    assert.ok(run(doc, '@'), 'an away game did not print "@"');
+    assert.ok(!run(doc, 'vs'));
+  });
+
+  it('marks HOME or AWAY on the date line, and nothing for a neutral site', () => {
+    for (const [homeAway, mark] of [['home', 'HOME'], ['away', 'AWAY'], ['neutral', '']] as const) {
+      const doc = new SizingMockDoc({ orientation: 'landscape' });
+      buildLineupPosterDoc(inject(doc), posterOpts({ homeAway }));
+      assert.equal(!!run(doc, 'HOME'), mark === 'HOME', `${homeAway}: HOME mark wrong`);
+      assert.equal(!!run(doc, 'AWAY'), mark === 'AWAY', `${homeAway}: AWAY mark wrong`);
+      // The mark is a FILLED pill — drawn when there is a mark, never an outlined pen box.
+      assert.equal(doc.pills.length, mark ? 1 : 0, `${homeAway}: pill count`);
+      assert.equal(doc.boxes.length, 0, 'the mark drew a pen box');
+    }
   });
 });
 
@@ -1578,6 +1649,8 @@ describe('a name that does not fit shrinks — it is never silently cut', () => 
     buildBattingOrderCardDoc(inject(doc), posterOpts({ opponent: LONG }));
     const head = doc.texts.filter(t => t.str.includes('Harborview')).map(t => t.str).join(' ');
     assert.ok(!head.includes('…'), `the headline was truncated: ${head}`);
+    const all = doc.texts.map(t => t.str).join(' ').replace(/\s+/g, ' ');
+    assert.ok(all.includes(LONG), 'the opponent lost its tail');
   });
 
   it('keeps the ordinary matchup on ONE line — shrinking is a fallback, not the default', () => {
@@ -1587,13 +1660,72 @@ describe('a name that does not fit shrinks — it is never silently cut', () => 
       'a short matchup should not wrap');
   });
 
-  it('shrinks a long player name rather than clipping it in the batter column', () => {
+  it('shrinks a long player name rather than clipping it in the player column', () => {
     const doc = new SizingMockDoc({ orientation: 'landscape' });
     buildLineupPosterDoc(inject(doc), posterOpts({
-      players: [posterPlayer('1', '#10 Priya Balasubramanian', { '1': 'P' }), ...NINE.slice(1)],
+      players: [posterPlayer('1', 'Priya Balasubramanian', { '1': 'P' }, false, '10'), ...NINE.slice(1)],
     }));
-    assert.ok(doc.texts.some(t => t.str === '#10 Priya Balasubramanian'),
-      'the batter name was clipped instead of shrunk');
+    assert.ok(doc.texts.some(t => t.str === 'Priya Balasubramanian'),
+      'the player name was clipped instead of shrunk');
+  });
+});
+
+describe('Order · No. · Player — the jersey number is a column, not a prefix', () => {
+  // "#2 Blake Test" sat in a column headed "#" whose value was the batting slot: two different
+  // numbers sharing one symbol on every row, and no column a coach could run a finger down
+  // (owner note 1, 2026-09-19).
+  it('heads the grid Order / No. / Player and prints the number as its own run', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts());
+    for (const h of ['Order', 'No.', 'Player']) assert.ok(count(doc, h) === 1, `no "${h}" heading`);
+    assert.ok(!doc.texts.some(t => t.str === 'Batter' || t.str === '#'), 'the old headings are still drawn');
+    assert.ok(doc.texts.some(t => t.str === '2'), 'the jersey number is not its own run');
+    assert.ok(!doc.texts.some(t => /^#\d/.test(t.str)), 'a name still carries its number as a prefix');
+  });
+
+  it('drops the No. column entirely when nobody has a number — and the name takes its width', () => {
+    const withNumbers = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(withNumbers), posterOpts());
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts({
+      players: NINE.map(p => ({ ...p, number: '' })),
+    }));
+    assert.equal(count(doc, 'No.'), 0, 'an empty column printed its heading');
+    // The name now starts where the number column used to (Order + 3mm padding), and the innings
+    // start where they did — the 11mm went to the name, not to a blank strip.
+    const nameX = (d: MockDoc) => d.texts.find(t => t.str === 'Player 1')!.x!;
+    const inn1X = (d: MockDoc) => d.texts.find(t => t.str === '1' && t.align === 'center')!.x!;
+    assert.ok(nameX(doc) < nameX(withNumbers) - 10, `the name did not move left: ${nameX(doc)} vs ${nameX(withNumbers)}`);
+    assert.equal(inn1X(doc), inn1X(withNumbers), 'the innings moved when the No. column vanished');
+  });
+
+  it('sets the inning numerals no smaller than the positions they head', () => {
+    // They were 9.5pt over 12–14pt cells — the smallest type on the grid (owner note 4).
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts());
+    // '7' is also a batting slot and a jersey number in this fixture; the header run is the
+    // topmost one.
+    const numeral = doc.texts.filter(t => t.str === '7').sort((a, b) => (a.y ?? 0) - (b.y ?? 0))[0];
+    const cell = doc.texts.find(t => t.str === 'P');
+    assert.ok(numeral && cell);
+    assert.ok(numeral!.size! >= cell!.size!, `numerals ${numeral!.size}pt under ${cell!.size}pt cells`);
+  });
+
+  it('the card still prints "#12 Name" as one label — its shape is not reopened', () => {
+    const doc = new SizingMockDoc({ orientation: 'portrait' });
+    buildBattingOrderCardDoc(inject(doc), posterOpts());
+    assert.ok(doc.texts.some(t => t.str === '#2 Player 1'), 'the card lost the number');
+  });
+
+  it('titles the card with the sport\'s own order word', () => {
+    // Hard-coded "BATTING ORDER" for a basketball team, while the screen said "Playing order"
+    // (owner note 9).
+    const doc = new SizingMockDoc({ orientation: 'portrait' });
+    buildBattingOrderCardDoc(inject(doc), posterOpts({ orderLabel: 'Playing order' }));
+    assert.ok(count(doc, 'PLAYING ORDER') === 1 && count(doc, 'BATTING ORDER') === 0);
+    const dflt = new SizingMockDoc({ orientation: 'portrait' });
+    buildBattingOrderCardDoc(inject(dflt), posterOpts());
+    assert.equal(count(dflt, 'BATTING ORDER'), 1, 'the default is no longer the diamond');
   });
 });
 
@@ -1607,16 +1739,17 @@ describe('an unassigned inning is left empty — the ruled cell IS the box', () 
   it('draws NO box in an unassigned inning', () => {
     const doc = new SizingMockDoc({ orientation: 'landscape' });
     buildLineupPosterDoc(inject(doc), posterOpts({
-      inningCount: 2, players: [posterPlayer('1', '#2 A', { '1': 'P' })],
+      inningCount: 2, players: [posterPlayer('1', 'A', { '1': 'P' }, false, '2')],
     }));
     assert.equal(doc.rects.length, 0,
       'a box was drawn inside a grid cell that is already a box');
+    assert.equal(doc.boxes.length, 0);
   });
 
   it('draws no box where a position is assigned either', () => {
     const doc = new SizingMockDoc({ orientation: 'landscape' });
     buildLineupPosterDoc(inject(doc), posterOpts({
-      inningCount: 2, players: [posterPlayer('1', '#2 A', { '1': 'P', '2': 'C' })],
+      inningCount: 2, players: [posterPlayer('1', 'A', { '1': 'P', '2': 'C' }, false, '2')],
     }));
     assert.equal(doc.rects.length, 0);
   });
@@ -1626,7 +1759,7 @@ describe('an unassigned inning is left empty — the ruled cell IS the box', () 
     // "BN" = decided, and the answer is that they sit.
     const doc = new SizingMockDoc({ orientation: 'landscape' });
     buildLineupPosterDoc(inject(doc), posterOpts({
-      inningCount: 2, players: [posterPlayer('1', '#2 A', { '1': 'P', '2': 'Bench' })],
+      inningCount: 2, players: [posterPlayer('1', 'A', { '1': 'P', '2': 'Bench' }, false, '2')],
     }));
     assert.ok(doc.texts.some(t => t.str === 'BN'));
     assert.ok(!doc.texts.some(t => t.str === ''), 'an empty inning drew a text run');
@@ -1663,7 +1796,7 @@ describe('the poster and card use the page they were given', () => {
   it('spreads a nine-player poster past the old 13mm-per-row ceiling', () => {
     const doc = new SizingMockDoc({ orientation: 'landscape' });
     buildLineupPosterDoc(inject(doc), posterOpts());
-    assert.ok(rowPitch(doc, /^#\d+ Player/) > 13, 'the grid still stops short of the page');
+    assert.ok(rowPitch(doc, /^Player \d$/) > 13, 'the grid still stops short of the page');
   });
 
   it('spreads a nine-batter card past the old 18mm-per-row ceiling', () => {
@@ -1673,11 +1806,98 @@ describe('the poster and card use the page they were given', () => {
   });
 });
 
+describe('the poster turns for the clipboard — one document, not two', () => {
+  // Landscape was the only shape; clipboards are portrait (owner decision D1 / note 7,
+  // 2026-09-19). The geometry reads the page it is given: taller rows, narrower innings.
+  const rowPitch = (doc: MockDoc) => {
+    const ys = doc.texts.filter(t => /^Player \d$/.test(t.str)).map(t => t.y ?? 0).sort((a, b) => a - b);
+    return (ys[ys.length - 1] - ys[0]) / 8;
+  };
+
+  it('defaults to landscape so every existing caller prints what it printed', () => {
+    const doc = new SizingMockDoc({ orientation: 'portrait' });
+    buildLineupPosterDoc(inject(doc), posterOpts());
+    assert.equal(doc.orientation, 'landscape');
+  });
+
+  it('lays the same lineup out on a portrait page, with taller rows', () => {
+    const land = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(land), posterOpts());
+    const port = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(port), posterOpts({ orientation: 'portrait' }));
+    assert.equal(port.orientation, 'portrait');
+    assert.ok(rowPitch(port) > rowPitch(land) * 1.3, `portrait rows ${rowPitch(port).toFixed(1)}mm vs landscape ${rowPitch(land).toFixed(1)}mm`);
+  });
+
+  it('shrinks the position codes to the twelve-inning portrait cell — and draws nothing past the margin', () => {
+    // ⚠ The tight column is inning TWELVE. A fixture that only fills innings 1 and 2 never puts a
+    // code there, and a right-edge check that skips code runs skips the very runs this guards
+    // (/review, 2026-09-20). Every inning carries the widest code the sheet prints.
+    const everyInning = Object.fromEntries(Array.from({ length: 12 }, (_, i) => [String(i + 1), 'CF']));
+    const players = NINE.map(p => ({ ...p, inningPositions: everyInning }));
+    // The cap measures the WIDEST code the sheet can print, not the widest it happens to. The
+    // fake's glyphs are narrower than Helvetica's, so a two-letter code never trips it here; a
+    // three-letter legend code does, in portrait only (landscape's cells have the room).
+    const legend = [{ code: 'CF', label: 'Center field' }, { code: 'UTL', label: 'Utility' }];
+    const land = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(land), posterOpts({ players, legend, inningCount: 12 }));
+    const port = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(port), posterOpts({ players, legend, inningCount: 12, orientation: 'portrait' }));
+    const code = (d: MockDoc) => d.texts.filter(t => t.str === 'CF');
+    assert.equal(code(port).length, 9 * 12, 'a code went missing on the portrait sheet');
+    // Portrait's rows are taller (which would GROW the type) but its innings are ~10mm wide — the
+    // width cap has to win, so the portrait code is no larger than landscape's and fits its cell.
+    const innW = (215.9 - 2 * 13 - (11 + 10 + 48)) / 12;
+    assert.ok(code(port)[0].size! < code(land)[0].size!, `portrait codes ${code(port)[0].size}pt were not capped below landscape's ${code(land)[0].size}pt`);
+    for (const t of code(port)) assert.ok(t.w! <= innW - 3, `"CF" at ${t.size}pt is ${t.w}mm in a ${innW.toFixed(1)}mm cell`);
+    // And nothing — codes included — reaches the printer's edge. Right edge honours the anchor.
+    const rightEdge = (t: TextCall) => t.align === 'center' ? t.x! + t.w! / 2 : t.align === 'right' ? t.x! : t.x! + t.w!;
+    const overrun = port.texts.find(t => rightEdge(t) > 215.9 - 13 + 0.01);
+    assert.ok(!overrun, `"${overrun?.str}" runs past the portrait margin`);
+  });
+
+  it('prints everything the landscape sheet prints', () => {
+    const land = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(land), posterOpts({ includeNotes: true, notes: 'Shade left.' }));
+    const port = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(port), posterOpts({ orientation: 'portrait', includeNotes: true, notes: 'Shade left.' }));
+    const words = (doc: MockDoc) => doc.texts.map(t => t.str).sort();
+    assert.deepEqual(words(port), words(land));
+    // Equal sets prove nothing if BOTH sheets dropped the same thing — pin what must be there.
+    for (const must of ['NOTES', 'Shade left.', 'HOME', 'Riverdale Summer Classic', 'Blank = fill in at the field']) {
+      assert.ok(words(port).some(w => w.includes(must)), `the portrait sheet lost "${must}"`);
+    }
+  });
+});
+
+describe('subs sit below a rule on the poster (9-player mode)', () => {
+  // They printed as ordinary rows with "(sub)" after the name, striped like the rest, so the
+  // order and the bench ran together (owner note 6). Now the same separation the card makes.
+  const withSubs = () => posterOpts({
+    players: [...NINE, posterPlayer('', 'Ruby Ferreira', { '4': 'RF' }, true, '14'), posterPlayer('', 'Marcus Ng', {}, true, '15')],
+  });
+
+  it('labels the section and drops the per-row "(sub)" suffix', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), withSubs());
+    assert.equal(count(doc, 'Subs'), 1, 'no Subs label, or one per sub');
+    assert.ok(doc.texts.some(t => t.str === 'Ruby Ferreira'), 'the sub lost their name');
+    assert.ok(!doc.texts.some(t => /\(sub\)/.test(t.str)), 'the old suffix is still printed');
+    assert.ok(doc.texts.some(t => t.str === 'RF'), 'a sub\'s inning cells were dropped');
+  });
+
+  it('draws no Subs label when everyone bats', () => {
+    const doc = new SizingMockDoc({ orientation: 'landscape' });
+    buildLineupPosterDoc(inject(doc), posterOpts());
+    assert.equal(count(doc, 'Subs'), 0);
+  });
+});
+
 describe('the batting card is a card an umpire can use', () => {
   it('names the starting position for each batter', () => {
     const doc = new SizingMockDoc({ orientation: 'portrait' });
     buildBattingOrderCardDoc(inject(doc), posterOpts({
-      players: [posterPlayer('1', '#2 A', { '1': 'SS' })],
+      players: [posterPlayer('1', 'A', { '1': 'SS' }, false, '2')],
     }));
     assert.ok(doc.texts.some(t => t.str === 'SS'), 'the card printed no position');
     assert.ok(doc.texts.some(t => t.str === 'POS'), 'the position column has no heading');
@@ -1686,7 +1906,7 @@ describe('the batting card is a card an umpire can use', () => {
   it('leaves the position blank rather than inventing one when inning 1 is unset', () => {
     const doc = new SizingMockDoc({ orientation: 'portrait' });
     buildBattingOrderCardDoc(inject(doc), posterOpts({
-      players: [posterPlayer('1', '#2 A', { '2': 'SS' })],
+      players: [posterPlayer('1', 'A', { '2': 'SS' }, false, '2')],
     }));
     assert.ok(!doc.texts.some(t => t.str === 'SS'),
       'the card read a position from the wrong inning');
@@ -1696,12 +1916,13 @@ describe('the batting card is a card an umpire can use', () => {
     // Reported as missing; it was not. The brief's fixture simply had no subs in it.
     const doc = new SizingMockDoc({ orientation: 'portrait' });
     buildBattingOrderCardDoc(inject(doc), posterOpts({
-      players: [...NINE, posterPlayer('', '#14 Ruby Ferreira', {}, true)],
+      players: [...NINE, posterPlayer('', 'Ruby Ferreira', {}, true, '14')],
     }));
     assert.ok(doc.texts.some(t => t.str === 'Subs'));
-    assert.ok(doc.texts.some(t => t.str.includes('Ruby Ferreira')));
+    assert.ok(doc.texts.some(t => t.str.includes('#14 Ruby Ferreira')));
   });
 });
+
 
 // ── The bracket ─────────────────────────────────────────────────────────────
 

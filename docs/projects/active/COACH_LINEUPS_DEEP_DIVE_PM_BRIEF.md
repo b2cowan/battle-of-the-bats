@@ -82,6 +82,18 @@ The owner's question on review: if the grid already reorders players, why is the
 
 **What to test on a real phone** (hub QA part I): hold must lift, swipe must scroll, every time. If it ever lifts when you meant to scroll, the fix is the hold time — not a third tab.
 
+## Built (2026-09-20) — The dugout poster reviewed, and a portrait sheet for the clipboard
+
+The owner printed a lineup and asked what would make the poster read better, and whether it could come in portrait for a clipboard. Review as an Artifact (https://claude.ai/artifact/HEpyKsW8SNhi5WZ14S8Vif); every recommendation approved and built the next day.
+
+- **Print → Dugout poster now carries a switch: Landscape · wall or Portrait · clipboard.** Your pick is remembered on that device; first time out it is portrait. Same document, turned — for twelve players the rows go from 12 mm to 17 mm, half again the room for a pen. Past nine innings the portrait cells tighten to about 10 mm and landscape stays one tap away.
+- **The poster reads cleaner:** the team name once with the crest beside it; "vs" quieter and in the team colour; a **HOME** or **AWAY** mark on the date line; jersey numbers in their own **No.** column (Order · No. · Player); inning numerals as big as the cells; striping that actually prints; and in 9-player ball a clear rule between the order and the **Subs**.
+- Nothing about building the lineup changes; the open-roles check still runs and now says "cells", not "boxes".
+- Basketball and hockey teams' paper stops saying "Batter" — the card takes the sport's own order word.
+- The batting order card keeps its one-page shape; it only picks up the shared header and the sport word.
+
+**What to test (QA §208):** print both orientations for a 7- and a 12-inning lineup, an away game, and a 9-player lineup with subs; confirm the switch is remembered after a reload; hand the portrait sheet to a coach with a clipboard.
+
 ## Recommended delivery
 
 1. Shared validation/readiness model plus regression tests.

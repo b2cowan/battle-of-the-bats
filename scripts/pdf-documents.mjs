@@ -1095,8 +1095,10 @@ export async function buildDocuments() {
     ['RF', 'Bench', 'RF', 'RF', '3B', '3B', '3B'], ['Bench', 'RF', '2B', 'LF', '1B', '1B', ''],
     ['', '3B', '1B', 'C', 'P', 'SS', '2B'], ['Bench', 'Bench', 'Bench', 'Bench', '', '', '1B'],
   ];
+  // The shape the lineup screen sends since 2026-09-19: the jersey number in its own field, the
+  // name without it (the poster prints Order · No. · Player; the card composes '#12 Name').
   const batter = (i, innings) => ({
-    battingOrder: String(i + 1), name: `#${i + 2} ${full(i)}`, isSub: false,
+    battingOrder: String(i + 1), number: String(i + 2), name: full(i), isSub: false,
     inningPositions: Object.fromEntries(LINEUP_POS[i].slice(0, innings).map((p, n) => [String(n + 1), p])),
   });
   const lineupBase = () => ({
@@ -1130,6 +1132,30 @@ export async function buildDocuments() {
         ...lineupBase(), settings, includeNotes: false, opponent: null,
         players: LINEUP_POS.slice(0, 9).map((_, i) => batter(i, 7)),
       })],
+      // The clipboard sheet (owner D1/D2, 2026-09-19): the same document turned. Twelve
+      // players, seven innings, notes on — the ordinary case, and the one the screen defaults to.
+      ['portrait', (name, settings) => downloadLineupPoster(name, {
+        ...lineupBase(), settings, includeNotes: true, orientation: 'portrait',
+        players: LINEUP_POS.map((_, i) => batter(i, 7)),
+        notes: 'Herons bunt early with runners on. Their #4 pulls everything — shade the left side.',
+      })],
+      // Portrait at its tightest: twelve innings on the narrow page (~10mm cells) with a long
+      // matchup — the case that decides whether portrait can be offered without a caveat.
+      ['portrait-twelve-innings', (name, settings) => downloadLineupPoster(name, {
+        ...lineupBase(), settings, includeNotes: false, orientation: 'portrait', inningCount: 12,
+        teamName: 'Riverdale Ridge Thunderbirds U13 AA Select',
+        opponent: 'Harborview Herons Athletic Association',
+        players: LINEUP_POS.slice(0, 9).map((_, i) => batter(i, 12)),
+      })],
+      // 9-player ball, away: nine in the order and two subs below the rule, '@' in the headline.
+      ['nine-player-subs-away', (name, settings) => downloadLineupPoster(name, {
+        ...lineupBase(), settings, includeNotes: false, homeAway: 'away',
+        players: [
+          ...LINEUP_POS.slice(0, 9).map((_, i) => batter(i, 7)),
+          { battingOrder: '', number: '14', name: 'Ruby Ferreira', isSub: true, inningPositions: { '4': 'RF', '5': 'RF' } },
+          { battingOrder: '', number: '15', name: 'Marcus Ng', isSub: true, inningPositions: {} },
+        ],
+      })],
     ],
   });
 
@@ -1144,8 +1170,8 @@ export async function buildDocuments() {
       ...lineupBase(), settings,
       players: [
         ...LINEUP_POS.map((_, i) => batter(i, 7)),
-        { battingOrder: '', name: '#14 Ruby Ferreira', isSub: true, inningPositions: {} },
-        { battingOrder: '', name: '#15 Marcus Ng', isSub: true, inningPositions: {} },
+        { battingOrder: '', number: '14', name: 'Ruby Ferreira', isSub: true, inningPositions: {} },
+        { battingOrder: '', number: '15', name: 'Marcus Ng', isSub: true, inningPositions: {} },
       ],
     }),
     edgeCases: [

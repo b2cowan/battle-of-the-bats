@@ -2673,22 +2673,33 @@ export function buildPositionLegend(codes: string[]): { code: string; label: str
 export interface LineupPosterPlayer {
   /** Batting slot number as a string ('' for a 9-player-mode bench/sub with no slot). */
   battingOrder: string;
-  /** Display name, e.g. "#12 Jane Smith". */
+  /**
+   * Jersey number WITHOUT the "#" ('' or absent when the player has none). Printed in its own
+   * column (owner, 2026-09-19). It used to be folded into `name` as "#12 Jane Smith", under a
+   * column headed "#" whose value was the batting slot — two different numbers sharing one
+   * symbol on every row, and no column a coach could run a finger down.
+   */
+  number?: string;
+  /** Display name WITHOUT the number, e.g. "Jane Smith". */
   name: string;
-  /** True for a 9-player-mode non-starter (rendered after the order, tagged "sub"). */
+  /** True for a 9-player-mode non-starter (rendered after the order, below the Subs rule). */
   isSub: boolean;
-  /** inning(string) → position code. '' = blank (prints an empty box); 'Bench' = sit. */
+  /** inning(string) → position code. '' = blank (prints an empty cell); 'Bench' = sit. */
   inningPositions: Record<string, string>;
 }
+
+/** The poster's turn: landscape for the dugout wall, portrait for the clipboard. */
+export type LineupPosterOrientation = 'landscape' | 'portrait';
 
 export interface LineupPosterOptions {
   teamName: string;
   opponent?: string | null;
-  /** Drives the matchup separator: 'away' → "@", everything else → "vs". */
+  /** Drives the matchup separator ('away' → "@", everything else → "vs") and the HOME / AWAY
+   *  mark on the date line (neutral prints no mark). */
   homeAway?: 'home' | 'away' | 'neutral' | null;
   /** Pre-formatted date/time line, e.g. "Sat, Jun 28, 2026 · 10:00 a.m." */
   dateLabel: string;
-  /** Shown on the batting-order card (not the poster). */
+  /** Shown on the date line after the HOME / AWAY mark. */
   eventName?: string;
   inningCount: number;
   players: LineupPosterPlayer[];
@@ -2696,6 +2707,20 @@ export interface LineupPosterOptions {
   /** When set, the coach's lineup notes print at the foot of the poster (e.g. opponent scouting). */
   includeNotes?: boolean;
   notes?: string | null;
+  /**
+   * Poster only (the card is always portrait). Defaults to landscape — the shape the poster
+   * has always come in — so every existing caller prints what it printed. The lineup screen
+   * passes the coach's remembered choice, whose FIRST-TIME default is portrait (owner decision
+   * D2, 2026-09-19: most coaches carry a clipboard, and the taller rows are the better pen
+   * sheet at seven or nine innings).
+   */
+  orientation?: LineupPosterOrientation;
+  /**
+   * The Sport Pack's word for the order — "Batting order" / "Playing order" — which titles the
+   * card. Defaults to "Batting order". The poster's own headings are sport-neutral by
+   * construction (Order · No. · Player).
+   */
+  orderLabel?: string;
   /**
    * The RESOLVED identity — crest, whose paper this is, footer, date stamp, accent (D4).
    *
@@ -2710,6 +2735,11 @@ export interface LineupPosterOptions {
 /** Matchup separator: away games read "@ Opponent", home/neutral read "vs Opponent". */
 function matchupSeparator(homeAway?: 'home' | 'away' | 'neutral' | null): string {
   return homeAway === 'away' ? '@' : 'vs';
+}
+
+/** "#12 Jane Smith" — the one-string form the card and the subs line still print. */
+function posterPlayerLabel(p: LineupPosterPlayer): string {
+  return p.number ? `#${p.number} ${p.name}` : p.name;
 }
 
 const clampNum = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
@@ -2738,8 +2768,8 @@ function sizeLadder(top: number, floor: number): number[] {
  * Sets the chosen size on the doc and returns the string to draw.
  *
  * The grid sibling of `fitHeadline` — a table cell can't wrap without moving every row, so it
- * shrinks instead. Without this a long name like "#10 Priya Balasubramanian" printed clipped
- * in a fixed-width column that had two whole sizes of headroom available.
+ * shrinks instead. Without this a long name like "Priya Balasubramanian" printed clipped in a
+ * fixed-width column that had two whole sizes of headroom available.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function fitCell(doc: any, text: string, maxW: number, sizes: number[]): string {
@@ -2780,14 +2810,168 @@ function fitHeadline(doc: any, text: string, maxW: number, sizes: number[], maxL
   return { size, lines };
 }
 
+/** The headline's size ladder — shared by the one-string and the segmented forms. */
+const MATCHUP_SIZES = sizeLadder(20, 13);
+/** The separator ("vs" / "@") is set at this fraction of the names' size, in the accent. */
+const MATCHUP_SEP_RATIO = 0.6;
+/** Air either side of the separator, mm. */
+const MATCHUP_SEP_GAP = 2.5;
+
 /**
- * Build the dugout-wall poster (landscape): team/opponent/date header, a
- * batting-order × innings grid with empty boxes for blank cells, and a position
- * legend along the bottom. Returns the jsPDF doc (caller saves it).
+ * The matchup headline both documents lead with — DRAWN IN SEGMENTS: the two names in bold
+ * ink, the "vs" / "@" between them smaller and in the accent (owner note 3, 2026-09-19). It
+ * used to be one bold string, "Team   vs   Opponent", and the separator read as a third name.
+ *
+ * Fit follows `fitHeadline`'s rule exactly — shrink through the ladder, and only once the floor
+ * still will not fit, wrap; never truncate. When it wraps, the team takes the first line alone
+ * and the separator leads the opponent on the next, which may itself run to a second line.
+ * Returns the baseline y of the LAST line drawn, so the caller advances from there.
+ */
+function drawMatchupHeadline(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  doc: any, team: string, sep: string, opponent: string | null | undefined,
+  x: number, y: number, maxW: number, accent: { r: number; g: number; b: number },
+): number {
+  const ink = () => doc.setTextColor(15, 15, 25);
+  const bold = (size: number) => { doc.setFont('helvetica', 'bold'); doc.setFontSize(size); };
+  const sepFace = (size: number) => { doc.setFont('helvetica', 'normal'); doc.setFontSize(size * MATCHUP_SEP_RATIO); };
+  const drawName = (s: string, size: number, nx: number, ny: number) => { bold(size); ink(); doc.text(s, nx, ny); };
+  const drawSep = (size: number, sx: number, sy: number) => {
+    sepFace(size); doc.setTextColor(accent.r, accent.g, accent.b); doc.text(sep, sx, sy);
+  };
+
+  if (!opponent) {
+    bold(MATCHUP_SIZES[0]);
+    const head = fitHeadline(doc, team, maxW, MATCHUP_SIZES);
+    const lead = head.size * 0.42;
+    head.lines.forEach((line, i) => drawName(line, head.size, x, y + i * lead));
+    return y + (head.lines.length - 1) * lead;
+  }
+
+  for (const size of MATCHUP_SIZES) {
+    bold(size);
+    const wTeam = doc.getTextWidth(team);
+    const wOpp = doc.getTextWidth(opponent);
+    sepFace(size);
+    const wSep = doc.getTextWidth(sep);
+    if (wTeam + MATCHUP_SEP_GAP + wSep + MATCHUP_SEP_GAP + wOpp <= maxW) {
+      drawName(team, size, x, y);
+      drawSep(size, x + wTeam + MATCHUP_SEP_GAP, y);
+      drawName(opponent, size, x + wTeam + MATCHUP_SEP_GAP + wSep + MATCHUP_SEP_GAP, y);
+      return y;
+    }
+  }
+
+  // The floor still doesn't hold it on one line → the team alone, then "vs" leading the
+  // opponent, wrapped to at most two lines. Only a single WORD wider than the page can still
+  // be cut, and then only its tail.
+  const size = MATCHUP_SIZES[MATCHUP_SIZES.length - 1];
+  const lead = size * 0.42;
+  bold(size);
+  drawName(fitText(doc, team, maxW), size, x, y);
+  sepFace(size);
+  const wSep = doc.getTextWidth(sep);
+  const oppX = x + wSep + MATCHUP_SEP_GAP;
+  const oppW = maxW - wSep - MATCHUP_SEP_GAP;
+  bold(size);
+  const wrapped: string[] = doc.splitTextToSize(opponent, oppW);
+  const lines = wrapped.slice(0, 2);
+  if (wrapped.length > 2) lines[1] = fitText(doc, lines[1], oppW);
+  const ly = y + lead;
+  drawSep(size, x, ly);
+  lines.forEach((line, i) => drawName(line, size, oppX, ly + i * lead));
+  return ly + (lines.length - 1) * lead;
+}
+
+/**
+ * The band the poster and the card open with: the crest, then the matchup headline BESIDE it
+ * (owner note 2, 2026-09-19). Returns the baseline of the headline's last line and the x the
+ * lines below it should start from.
+ *
+ * ⚠ THE IDENTITY TEXT LINE IS GONE ON TEAM PAPER, AND THAT IS THE POINT. Team paper always
+ * stamps the TEAM'S NAME as its identity line (`applyTeamLook`), and the matchup headline
+ * opens with the same words — so every team's poster and card printed its own name twice, 8mm
+ * apart, and the club's name nowhere (it is cleared on team paper). The name is drawn ABOVE
+ * the headline only when it is genuinely something else — club paper, should either document
+ * ever be generated with it — so the helper stays honest about whose paper it is.
+ */
+function drawMatchupBand(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  doc: any, opts: LineupPosterOptions, m: number, top: number, pageW: number,
+  accent: { r: number; g: number; b: number },
+): { y: number; x: number } {
+  const settings = opts.settings;
+  const logoW = drawLogoSlot(doc, settings, m, top);
+  const x = logoW > 0 ? m + logoW + 4 : m;
+  const maxW = pageW - m - x;
+  const identity = (settings.headerLine1 ?? '').trim();
+  const duplicate = identity.toLowerCase() === opts.teamName.trim().toLowerCase();
+  let y = top;
+  if (identity && !duplicate) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(80, 80, 100);
+    doc.text(fitText(doc, identity, maxW), x, y + 4.5);
+    y += 7;
+  }
+  // With no line above it the headline's baseline sits three-quarters down the crest slot, so
+  // a one-line matchup and a 12mm crest read as one band.
+  const headY = identity && !duplicate ? y + 6 : y + 9;
+  const last = drawMatchupHeadline(doc, opts.teamName, matchupSeparator(opts.homeAway), opts.opponent, x, headY, maxW, accent);
+  return { y: Math.max(last, top + LOGO_SLOT_H - 2), x };
+}
+
+/**
+ * The date line under the headline: the date, then a HOME / AWAY mark, then the event name
+ * (owner note 3, 2026-09-19 — the bench wants to know who bats first; a neutral site prints no
+ * mark). The mark is a small FILLED pill so it survives a grey photocopy; it is not a pen
+ * target and draws nothing a coach writes into.
+ */
+function drawDateLine(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  doc: any, opts: LineupPosterOptions, x: number, y: number, maxW: number,
+  accent: { r: number; g: number; b: number }, accentText: number[],
+): void {
+  const grey = () => { doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(85, 85, 105); };
+  const mark = opts.homeAway === 'home' ? 'HOME' : opts.homeAway === 'away' ? 'AWAY' : '';
+  const pillW = 13.5;
+  let cx = x;
+  if (opts.dateLabel) {
+    grey();
+    // The date gives way before the mark does: it is fitted to the width LEFT after the pill, so
+    // a long date can shorten itself but never push HOME / AWAY off the line (/review, 2026-09-20).
+    const label = fitText(doc, opts.dateLabel, maxW - (mark ? pillW + 3 : 0));
+    doc.text(label, cx, y);
+    cx += doc.getTextWidth(label) + 3;
+  }
+  if (mark && cx + pillW <= x + maxW) {
+    const pillH = 4.6;
+    doc.setFillColor(accent.r, accent.g, accent.b);
+    doc.roundedRect(cx, y - 3.4, pillW, pillH, 1, 1, 'F');
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(7);
+    doc.setTextColor(accentText[0], accentText[1], accentText[2]);
+    doc.text(mark, cx + pillW / 2, y - 1.1, { align: 'center', baseline: 'middle' });
+    cx += pillW + 3;
+  }
+  if (opts.eventName && cx < x + maxW - 8) {
+    grey();
+    doc.text(fitText(doc, `·  ${opts.eventName}`, x + maxW - cx), cx, y);
+  }
+}
+
+/**
+ * Build the dugout-wall poster: crest + matchup + date header, an order × innings grid with
+ * empty cells for blank innings, and a position legend along the bottom. Landscape for the
+ * wall, portrait for the clipboard — ONE document turned, not two (owner decision D1,
+ * 2026-09-19); the geometry below reads the page it was given. Returns the jsPDF doc (caller
+ * saves it).
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions): any {
-  const doc = new jsPDFClass({ orientation: 'landscape', unit: 'mm', format: 'letter' });
+  const orientation: LineupPosterOrientation = opts.orientation ?? 'landscape';
+  const portrait = orientation === 'portrait';
+  const doc = new jsPDFClass({ orientation, unit: 'mm', format: 'letter' });
   const pageW = doc.internal.pageSize.getWidth();
   const pageH = doc.internal.pageSize.getHeight();
   const M = POSTER_MARGIN;
@@ -2800,23 +2984,9 @@ export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions)
   doc.setFillColor(accent.r, accent.g, accent.b);
   doc.rect(0, 0, pageW, 4, 'F');
 
-  // Whose paper this is — drawn quietly ABOVE the matchup: the coach's eye wants the matchup
-  // first, but a poster that ends up on a tournament noticeboard has to say which club it
-  // came from.
-  const identityBottom = drawQuietIdentity(doc, settings, M, 7, pageW);
-
-  // The matchup — the headline of the page. The date moved to its own line below, so the
-  // opponent gets the FULL width rather than surrendering a fixed 60mm strip to a clock.
-  const title = opts.opponent
-    ? `${opts.teamName}   ${matchupSeparator(opts.homeAway)}   ${opts.opponent}`
-    : opts.teamName;
-  let y = drawMatchupHeadline(doc, title, M, identityBottom + 8, pageW);
-
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10.5);
-  doc.setTextColor(85, 85, 105);
-  const dateLine = [opts.dateLabel, opts.eventName].filter(Boolean).join('  ·  ');
-  if (dateLine) { y += 6; doc.text(fitText(doc, dateLine, pageW - 2 * M), M, y); }
+  const band = drawMatchupBand(doc, opts, M, 7, pageW, accent);
+  let y = band.y + 6.5;
+  drawDateLine(doc, opts, band.x, y, pageW - M - band.x, accent, headText);
 
   y += 3.5;
   doc.setDrawColor(accent.r, accent.g, accent.b);
@@ -2838,17 +3008,23 @@ export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions)
   const notesReserve = notesLines.length ? notesLines.length * 4 + 7 : 0;
 
   // ── Grid geometry ─────────────────────────────────────────────────────────
-  const gridTop = y + 5;
+  const gridTop = y + 4;
   const legendReserve = 18 + notesReserve; // legend + branding (+ optional notes) below the grid
   const gridBottom = pageH - M - legendReserve;
   const gridArea = gridBottom - gridTop;
 
   const inningCount = Math.max(1, opts.inningCount); // defensive: UI constrains to 1–12
-  const colNumW = 13;
-  const colNameW = 56;
-  const innW = (pageW - 2 * M - colNumW - colNameW) / inningCount;
+  // Order · No. · Player. The jersey column is printed only when somebody HAS a number — an
+  // empty column would repeat nothing but its own heading — and its width goes back to the
+  // name when it is absent. Portrait gives the innings the width the names give up.
+  const hasNumbers = opts.players.some(p => p.number);
+  const colOrderW = portrait ? 11 : 12;
+  const colNoW = hasNumbers ? (portrait ? 10 : 11) : 0;
+  const colNameW = (portrait ? 48 : 52) + (hasNumbers ? 0 : (portrait ? 10 : 11));
+  const colsW = colOrderW + colNoW + colNameW;
+  const innW = (pageW - 2 * M - colsW) / inningCount;
   const totalW = pageW - 2 * M;
-  const headerRowH = 9;
+  const headerRowH = 10;
   const n = Math.max(1, opts.players.length);
   // ⚠ NO UPPER CAP (owner decision 3): rows take the room the sheet actually has. The old
   // 13mm ceiling meant a nine-player lineup — the ordinary case — stopped two-thirds down and
@@ -2860,44 +3036,75 @@ export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions)
   // Row-invariant, so built once rather than per player.
   const nameLadder = sizeLadder(scaled(10, 13), 7.5);
   const orderSize = scaled(12, 16);
-  const positionSize = scaled(11, 14);
+  const numberSize = scaled(11, 13);
+  // …and the position codes no wider than the cell they sit in: at twelve innings on a portrait
+  // page an inning is ~10mm, and a row-scaled 14pt "CF" filled one edge to edge (seen on the
+  // rendered sheet, 2026-09-20). Measured against the widest code the sheet can print.
+  const codes = [...opts.legend.map(l => l.code), 'BN'];
+  const widestCode = (size: number) => {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(size);
+    return Math.max(...codes.map(c => doc.getTextWidth(c)));
+  };
+  let positionSize = scaled(11, 14);
+  while (positionSize > 9 && widestCode(positionSize) > innW - 3) positionSize -= 0.5;
 
-  const colNameX = M + colNumW;
-  const innX = (i: number) => M + colNumW + colNameW + innW * i; // left of inning i (0-based)
+  const colNoX = M + colOrderW;
+  const colNameX = colNoX + colNoW;
+  const innX = (i: number) => M + colsW + innW * i; // left of inning i (0-based)
 
   // ── Header row ────────────────────────────────────────────────────────────
   doc.setFillColor(accent.r, accent.g, accent.b);
   doc.rect(M, gridTop, totalW, headerRowH, 'F');
   doc.setTextColor(headText[0], headText[1], headText[2]);
   doc.setFont('helvetica', 'bold');
-  doc.setFontSize(9.5);
+  doc.setFontSize(8.5);
   const hMid = gridTop + headerRowH / 2;
-  doc.text('#', M + colNumW / 2, hMid, { align: 'center', baseline: 'middle' });
-  doc.text('Batter', colNameX + 3, hMid, { align: 'left', baseline: 'middle' });
+  doc.text('Order', M + colOrderW / 2, hMid, { align: 'center', baseline: 'middle' });
+  if (hasNumbers) doc.text('No.', colNoX + colNoW / 2, hMid, { align: 'center', baseline: 'middle' });
+  doc.text('Player', colNameX + 3, hMid, { align: 'left', baseline: 'middle' });
+  // The numerals a coach scans across to find "inning 4" — at least as large as the positions
+  // they head (owner note 4). They were 9.5pt over 12–14pt cells: the smallest type on the grid.
+  doc.setFontSize(positionSize);
   for (let i = 0; i < inningCount; i++) {
     doc.text(String(i + 1), innX(i) + innW / 2, hMid, { align: 'center', baseline: 'middle' });
   }
 
   // ── Body: zebra fills + text ──────────────────────────────────────────────
+  const firstSub = opts.players.findIndex(p => p.isSub);
   opts.players.forEach((p, k) => {
     const top = gridTop + headerRowH + k * bodyRowH;
     const mid = top + bodyRowH / 2;
     if (k % 2 === 1) {
-      doc.setFillColor(247, 247, 250);
+      // ~6% grey. The old 3% (247) printed as white on most office lasers, so the striping a
+      // wide grid relies on vanished on paper (owner note 5). Neutral, never a tint of the
+      // accent: colour under a pencilled "SS" reads as a correction.
+      doc.setFillColor(242, 242, 246);
       doc.rect(M, top, totalW, bodyRowH, 'F');
     }
-    // batting number
+    // batting number — or, on the first row below the rule, the word for the section
     if (p.battingOrder) {
       doc.setTextColor(20, 20, 30);
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(orderSize);
-      doc.text(p.battingOrder, M + colNumW / 2, mid, { align: 'center', baseline: 'middle' });
+      doc.text(p.battingOrder, M + colOrderW / 2, mid, { align: 'center', baseline: 'middle' });
+    } else if (k === firstSub) {
+      doc.setTextColor(110, 110, 132);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(7);
+      doc.text('Subs', M + colOrderW / 2, mid, { align: 'center', baseline: 'middle' });
+    }
+    // jersey number — its own column, a shade quieter than the order
+    if (hasNumbers && p.number) {
+      doc.setTextColor(70, 70, 90);
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(numberSize);
+      doc.text(p.number, colNoX + colNoW / 2, mid, { align: 'center', baseline: 'middle' });
     }
     // name — shrinks through two steps before it will ever clip a kid's name
-    doc.setFont('helvetica', p.isSub ? 'normal' : 'bold');
-    doc.setTextColor(p.isSub ? 90 : 20, p.isSub ? 90 : 20, p.isSub ? 110 : 30);
-    const nm = p.isSub ? `${p.name}  (sub)` : p.name;
-    const drawn = fitCell(doc, nm, colNameW - 5, nameLadder);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(20, 20, 30);
+    const drawn = fitCell(doc, p.name, colNameW - 5, nameLadder);
     doc.text(drawn, colNameX + 3, mid, { align: 'left', baseline: 'middle' });
     // innings — Bench → "BN"; an unassigned inning is left EMPTY, because the ruled grid cell
     // is already the box.
@@ -2923,22 +3130,24 @@ export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions)
 
   // ── Grid lines (drawn over fills/text; thin enough not to obscure) ─────────
   doc.setDrawColor(30, 30, 40);
-  // horizontal: top, header/body split, each body row, bottom
+  // horizontal: top, header/body split, each body row, bottom — and a HEAVY rule above the
+  // first sub (9-player mode), the same separation the card makes at its foot (owner note 6).
   const hLines: number[] = [gridTop, gridTop + headerRowH];
   for (let k = 1; k <= opts.players.length; k++) hLines.push(gridTop + headerRowH + k * bodyRowH);
   hLines.forEach((ly, idx) => {
-    doc.setLineWidth(idx === 0 || idx === hLines.length - 1 ? 0.8 : 0.3);
+    const heavy = idx === 0 || idx === hLines.length - 1 || (firstSub > 0 && idx === firstSub + 1);
+    doc.setLineWidth(heavy ? 0.8 : 0.3);
     doc.line(M, ly, M + totalW, ly);
   });
-  // vertical: outer + structural separators (after #, after Batter) + inning dividers
+  // vertical: outer + structural separators (after Order, after No., after Player) + inning dividers
   for (let i = 0; i <= inningCount; i++) {
     const vx = innX(i);
     doc.setLineWidth(i === inningCount ? 0.8 : 0.3);
     doc.line(vx, gridTop, vx, gridEnd);
   }
   doc.setLineWidth(0.8); doc.line(M, gridTop, M, gridEnd);              // left edge
-  doc.setLineWidth(0.6); doc.line(colNameX, gridTop, colNameX, gridEnd); // after #
-  doc.line(colNameX + colNameW, gridTop, colNameX + colNameW, gridEnd);  // after Batter
+  doc.setLineWidth(0.6); doc.line(colNoX, gridTop, colNoX, gridEnd);    // after Order
+  if (hasNumbers) doc.line(colNameX, gridTop, colNameX, gridEnd);       // after No.
 
   // ── Legend (kept above any notes block) ────────────────────────────────────
   // ⚠ TWO LINES BY CONSTRUCTION, not by wrapping. As one wrapped string this broke mid-phrase
@@ -2998,58 +3207,9 @@ function drawPosterFooter(doc: any, settings: OrgPdfSettings, m: number, pageW: 
 }
 
 /**
- * The QUIET identity strap the poster and the card carry: crest, club name, second line —
- * drawn small and grey ABOVE the matchup, because on these two documents the matchup is the
- * headline and the club is context. Returns the y below the strap.
- *
- * ⚠ Deliberately NOT `drawIdentityBand`. That band is the primary heading of the documents it
- * serves (bold 14pt, near-black, its own divider) and it draws at the module `MARGIN`; these
- * two use their own margins and want the club to sit UNDER the matchup in emphasis. This is a
- * second, quieter variant — but there is exactly ONE copy of it, which is the part that
- * matters. It was briefly two, and they had already drifted (only one clamped the club name
- * to the page width).
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function drawQuietIdentity(doc: any, settings: OrgPdfSettings, m: number, top: number, pageW: number): number {
-  const logoW = drawLogoSlot(doc, settings, m, top);
-  const tx = logoW > 0 ? m + logoW + 4 : m;
-  if (settings.headerLine1) {
-    doc.setFont('helvetica', 'bold');
-    doc.setFontSize(10);
-    doc.setTextColor(80, 80, 100);
-    doc.text(fitText(doc, settings.headerLine1, pageW - m - tx), tx, top + 5);
-  }
-  if (settings.headerLine2) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(8);
-    doc.setTextColor(125, 125, 145);
-    doc.text(fitText(doc, settings.headerLine2, pageW - m - tx), tx, top + 9.5);
-  }
-  return Math.max(
-    logoW > 0 ? top + LOGO_SLOT_H : 0,
-    settings.headerLine2 ? top + 11 : settings.headerLine1 ? top + 6.5 : top,
-  );
-}
-
-/**
- * The matchup headline both documents lead with: shrink through the ladder, wrap only if the
- * floor size still will not fit, never truncate (owner decision 4). Returns the y of the LAST
- * line drawn, so the caller advances from there.
- */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function drawMatchupHeadline(doc: any, title: string, m: number, y: number, pageW: number): number {
-  doc.setFont('helvetica', 'bold');
-  doc.setTextColor(15, 15, 25);
-  const head = fitHeadline(doc, title, pageW - 2 * m, sizeLadder(20, 13));
-  doc.setFontSize(head.size);
-  const lead = head.size * 0.42;
-  head.lines.forEach((line, i) => doc.text(line, m, y + i * lead));
-  return y + (head.lines.length - 1) * lead;
-}
-
-/**
- * Build the stripped batting-order card (portrait): team/opponent/date and a
- * large-type batting order for the scorekeeper / dugout. Subs listed at the foot.
+ * Build the stripped batting-order card (portrait): crest + matchup + date and a large-type
+ * order for the scorekeeper / dugout. Subs listed at the foot. ⚠ ONE FULL PAGE by owner
+ * ruling (decision 6, 2026-08-25) — do not re-open the page-shape question on the way past.
  */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function buildBattingOrderCardDoc(jsPDFClass: any, opts: LineupPosterOptions): any {
@@ -3058,33 +3218,26 @@ export function buildBattingOrderCardDoc(jsPDFClass: any, opts: LineupPosterOpti
   const pageH = doc.internal.pageSize.getHeight();
   const M = 18;
   const settings = opts.settings;
-  const accent = hexToRgb(settings.accentColor || '#1e293b');
+  const accentHex = settings.accentColor || '#1e293b';
+  const accent = hexToRgb(accentHex);
+  const headText = isDark(accentHex) ? [255, 255, 255] : [20, 20, 30];
 
   doc.setFillColor(accent.r, accent.g, accent.b);
   doc.rect(0, 0, pageW, 5, 'F');
 
   // Whose paper this is — a card is handed to an UMPIRE and to the opposing coach, so it is
-  // the more public of the two, and it carried no club identity at all until this pass.
-  const identityBottom = drawQuietIdentity(doc, settings, M, 10, pageW);
-
-  // Left-aligned with the identity above it rather than centred, so a two-line matchup stays
-  // a block.
-  const title = opts.opponent
-    ? `${opts.teamName} ${matchupSeparator(opts.homeAway)} ${opts.opponent}`
-    : opts.teamName;
-  let y = drawMatchupHeadline(doc, title, M, identityBottom + 9, pageW);
-
-  y += 6;
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(10.5);
-  doc.setTextColor(90, 90, 110);
-  doc.text(fitText(doc, [opts.dateLabel, opts.eventName].filter(Boolean).join('  ·  '), pageW - 2 * M), M, y);
+  // the more public of the two. The crest sits beside the matchup, the same band as the poster.
+  const band = drawMatchupBand(doc, opts, M, 10, pageW, accent);
+  let y = band.y + 6.5;
+  drawDateLine(doc, opts, band.x, y, pageW - M - band.x, accent, headText);
 
   y += 9;
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(12);
   doc.setTextColor(accent.r, accent.g, accent.b);
-  doc.text('BATTING ORDER', M, y);
+  // The Sport Pack's own word — "BATTING ORDER" for a diamond, "PLAYING ORDER" for a court
+  // (owner note 9). It was hard-coded to the diamond for every sport.
+  doc.text((opts.orderLabel || 'Batting order').toUpperCase(), M, y);
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8);
   doc.setTextColor(140, 140, 160);
@@ -3110,7 +3263,7 @@ export function buildBattingOrderCardDoc(jsPDFClass: any, opts: LineupPosterOpti
     const top = listTop + k * rowH;
     const mid = top + rowH / 2;
     if (k % 2 === 1) {
-      doc.setFillColor(247, 247, 250);
+      doc.setFillColor(242, 242, 246);
       doc.rect(M, top, pageW - 2 * M, rowH, 'F');
     }
     doc.setTextColor(accent.r, accent.g, accent.b);
@@ -3118,7 +3271,7 @@ export function buildBattingOrderCardDoc(jsPDFClass: any, opts: LineupPosterOpti
     doc.setFontSize(16);
     doc.text(p.battingOrder, M + 4, mid, { align: 'left', baseline: 'middle' });
     doc.setTextColor(20, 20, 30);
-    doc.text(fitCell(doc, p.name, pageW - 2 * M - numW - posW - 6, sizeLadder(15, 9)), M + numW, mid, { align: 'left', baseline: 'middle' });
+    doc.text(fitCell(doc, posterPlayerLabel(p), pageW - 2 * M - numW - posW - 6, sizeLadder(15, 9)), M + numW, mid, { align: 'left', baseline: 'middle' });
     // Where they START (owner decision 2, option A) — the umpire's copy names the position,
     // which is the one fact the old card omitted entirely. Read from the first inning; a
     // lineup that hasn't assigned one yet simply leaves it blank rather than inventing one.
@@ -3145,7 +3298,7 @@ export function buildBattingOrderCardDoc(jsPDFClass: any, opts: LineupPosterOpti
     doc.text('Subs', M, sy + 6);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(40, 40, 55);
-    doc.text(fitText(doc, subs.map(s => s.name).join(',  '), pageW - 2 * M - 18), M + 16, sy + 6);
+    doc.text(fitText(doc, subs.map(posterPlayerLabel).join(',  '), pageW - 2 * M - 18), M + 16, sy + 6);
   }
 
   drawPosterFooter(doc, settings, M, pageW, pageH);
