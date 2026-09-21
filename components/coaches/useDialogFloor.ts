@@ -72,26 +72,39 @@ const openFloors: symbol[] = [];
  * `document.activeElement` in the effect recorded the dialog's OWN input and "returned" focus to
  * a detached node on close (found on "Save as template…", practices stage 2, 2026-09-15; every
  * floor with an autoFocus field had it). Reading it at render time is refused by the hooks lint
- * (refs during render), so the floor keeps a two-deep focus history from one document listener:
- * when the panel already holds focus as it arms, the opener is the element focused just before.
+ * (refs during render), so the floor keeps a short focus history from one document listener.
+ *
+ * ⚠ AND SOMETIMES NOTHING HAS FOCUS. A dialog opened from a `CoachToolbarMenu` item is opened by
+ * a button that UNMOUNTS on select (the menu closes), so `document.activeElement` is `<body>` when
+ * the floor arms — and the menu's own rescue yields to a self-focusing dialog, by design. A
+ * two-deep history recorded `<body>` as the opener and handed focus to nowhere on close (/review
+ * of the event form's move onto the floor, 2026-09-21). So the history is a few entries deep and
+ * the opener is the NEWEST element it still finds in the document, outside the panel: for a mouse
+ * that is the menu's trigger one step back; for a keyboard that walked three items, three steps.
  */
-let focusedNow: HTMLElement | null = null;
-let focusedBefore: HTMLElement | null = null;
+const FOCUS_HISTORY_DEPTH = 6;
+const focusHistory: HTMLElement[] = []; // oldest first
 let focusHistoryArmed = false;
 function armFocusHistory(): void {
   if (focusHistoryArmed || typeof document === 'undefined') return;
   focusHistoryArmed = true;
   document.addEventListener('focusin', event => {
     const target = event.target instanceof HTMLElement ? event.target : null;
-    if (target === focusedNow) return;
-    focusedBefore = focusedNow;
-    focusedNow = target;
+    if (!target || target === focusHistory[focusHistory.length - 1]) return;
+    focusHistory.push(target);
+    if (focusHistory.length > FOCUS_HISTORY_DEPTH) focusHistory.shift();
   }, true);
 }
 function openerOf(panel: HTMLElement | null): HTMLElement | null {
   const active = document.activeElement as HTMLElement | null;
-  if (panel && active && panel.contains(active)) return focusedBefore;
-  return active;
+  const inside = Boolean(panel && active && panel.contains(active));
+  const bare = !active || active === document.body || active === document.documentElement;
+  if (!inside && !bare) return active;
+  for (let i = focusHistory.length - 1; i >= 0; i--) {
+    const el = focusHistory[i];
+    if (el.isConnected && !(panel && panel.contains(el))) return el;
+  }
+  return bare ? null : active;
 }
 // Armed when the module loads in the browser — a floor that mounts only while open would
 // otherwise arm it in the same commit as its own autoFocus, one `focusin` too late.

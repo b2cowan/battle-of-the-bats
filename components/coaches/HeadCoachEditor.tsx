@@ -93,8 +93,6 @@ export default function HeadCoachEditor({ teamId, initialCoach, initialCoachEmai
         </p>
       </div>
 
-      <p className={styles.formHint}>* Required</p>
-
       <label className={styles.field}>
         <span className={styles.label}>Head coach name *</span>
         <input

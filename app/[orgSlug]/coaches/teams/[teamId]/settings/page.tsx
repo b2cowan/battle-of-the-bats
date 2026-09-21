@@ -16,6 +16,7 @@ import {
 } from '@/lib/dues-credits';
 import type { LineupSettings } from '@/lib/types';
 import type { ScheduleVisibility } from '@/lib/family-access';
+import { ARRIVAL_PRESET_MINUTES, arrivalPresetLabel } from '@/lib/coach-arrival';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -36,6 +37,8 @@ interface SettingsData {
    *  absent (never locked), exactly like `clubBook`. Moved here from the Roster page's retired
    *  "Team family access" card (2026-09-12). */
   scheduleVisibility: { value: ScheduleVisibility; canEdit: boolean } | null;
+  /** The team's arrival habit (mig 307): minutes before a game / a practice a new event starts at. */
+  arrivalDefaults: { game: number | null; practice: number | null; canEdit: boolean };
   /** Null when this coach has no money access — the server omits the figures entirely. */
   money: {
     autoRemindersEnabled: boolean; creditApplication: string; defaultPlayerCreditPercent?: number;
@@ -102,6 +105,38 @@ export default function TeamSettingsPage({
   const [shareError, setShareError] = useState('');
   const [savingVisibility, setSavingVisibility] = useState(false);
   const [visibilityError, setVisibilityError] = useState('');
+  const [savingArrival, setSavingArrival] = useState<'game' | 'practice' | null>(null);
+  const [arrivalError, setArrivalError] = useState('');
+  const [arrivalMsg, setArrivalMsg] = useState('');
+
+  /**
+   * The arrival habit (mig 307, Arrival & Places D2) — optimistic like the visibility switch: the
+   * dropdown is the answer to the question the coach just asked; a failure re-reads the server.
+   */
+  async function changeArrivalDefault(kind: 'game' | 'practice', raw: string) {
+    const next = raw === '' ? null : Number(raw);
+    setSavingArrival(kind);
+    setArrivalError('');
+    setArrivalMsg('');
+    setData(prev => prev ? { ...prev, arrivalDefaults: { ...prev.arrivalDefaults, [kind]: next } } : prev);
+    try {
+      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ arrivalDefaults: { [kind]: next } }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json.error ?? 'Could not save the arrival default.');
+      const saved = json.arrivalDefaults as { game: number | null; practice: number | null } | undefined;
+      if (saved) setData(prev => prev ? { ...prev, arrivalDefaults: { ...prev.arrivalDefaults, ...saved } } : prev);
+      setArrivalMsg('Saved');
+    } catch (e) {
+      setArrivalError(e instanceof Error ? e.message : 'Could not save the arrival default.');
+      await load();
+    } finally {
+      setSavingArrival(null);
+    }
+  }
 
   /**
    * Money group. These two settings used to live at the bottom of the dues page, where a
@@ -660,6 +695,58 @@ export default function TeamSettingsPage({
                 </div>
               </div>
             </form>
+          </CoachCollapseSection>
+        )}
+
+        {/* ── Schedule: the arrival habit (mig 307) — set once, every new game / practice starts there ── */}
+        {showTeamGroups && data.arrivalDefaults && (
+          <CoachCollapseSection
+            sectionId="schedule"
+            title="Schedule"
+            defaultOpen={false}
+            meta={[
+              data.arrivalDefaults.game ? `Games: ${arrivalPresetLabel(data.arrivalDefaults.game)}` : null,
+              data.arrivalDefaults.practice ? `Practices: ${arrivalPresetLabel(data.arrivalDefaults.practice)}` : null,
+            ].filter(Boolean).join(' · ') || 'No arrival default'}
+          >
+            <p className={styles.settingWho}>
+              When the team is expected before a game or a practice. Every new one starts here — change it on any
+              event, and nothing already on the calendar moves.
+            </p>
+            <div className={styles.settingRows}>
+              {([
+                { key: 'game' as const, label: 'Arrive before a game', hint: 'Games and tournament games. Blank asks nothing.' },
+                { key: 'practice' as const, label: 'Arrive before a practice', hint: 'Blank asks nothing.' },
+              ]).map(row => (
+                <div key={row.key} className={styles.settingRow}>
+                  <div className={styles.settingRowMain}>
+                    <label className={styles.settingRowLabel} htmlFor={`arrival-${row.key}`}>{row.label}</label>
+                    <span className={styles.settingRowDesc}>{row.hint}</span>
+                  </div>
+                  <div className={styles.settingRowCtl}>
+                    <select
+                      id={`arrival-${row.key}`}
+                      className={styles.select}
+                      style={{ minWidth: 190, minHeight: 44 }}
+                      value={data.arrivalDefaults[row.key] ?? ''}
+                      disabled={!data.arrivalDefaults.canEdit || savingArrival === row.key}
+                      onChange={e => void changeArrivalDefault(row.key, e.target.value)}
+                    >
+                      <option value="">None</option>
+                      {ARRIVAL_PRESET_MINUTES.map(m => <option key={m} value={m}>{arrivalPresetLabel(m)}</option>)}
+                    </select>
+                  </div>
+                </div>
+              ))}
+              {(arrivalMsg || arrivalError) && (
+                <div className={styles.settingRow}>
+                  <div className={styles.settingRowMain}>
+                    {arrivalMsg && <span className={styles.settingRowSaved} role="status">{arrivalMsg}</span>}
+                    {arrivalError && <span className={styles.errorText} role="alert">{arrivalError}</span>}
+                  </div>
+                </div>
+              )}
+            </div>
           </CoachCollapseSection>
         )}
 

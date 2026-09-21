@@ -169,7 +169,7 @@ export default function GiveAwardModal({
             <p className={styles.formHint}>For: <strong>{eventContext.label}</strong></p>
           ) : (
             <div className={styles.formSection}>
-              <h4 className={styles.formSectionTitle}>Tournament or occasion (optional)</h4>
+              <h4 className={styles.formSectionTitle}>Tournament or occasion</h4>
               <input
                 className={styles.input}
                 value={tournamentLabel}
@@ -242,7 +242,7 @@ export default function GiveAwardModal({
           </div>
 
           <div className={styles.formSection}>
-            <h4 className={styles.formSectionTitle}>Note (optional)</h4>
+            <h4 className={styles.formSectionTitle}>Note</h4>
             <textarea
               className={styles.textarea}
               value={note}

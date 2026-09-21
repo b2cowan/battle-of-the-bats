@@ -21,7 +21,7 @@ import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
 import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForPayment, type PlanPiece } from './payable-plan';
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
 import { blockToCircuitShape } from './rep-circuits';
@@ -3254,6 +3254,9 @@ function mapRepTeam(r: any): RepTeam {
     shareClubBook: r.share_club_book === true,
     // Team paper look (mig 259) — {} and null both mean "fully inherited".
     pdfLook: r.pdf_settings && Object.keys(r.pdf_settings).length > 0 ? r.pdf_settings : null,
+    // The arrival habit (mig 307) — absent pre-migration reads as "asks nothing".
+    arrivalBeforeGameMin: typeof r.arrival_before_game_min === 'number' ? r.arrival_before_game_min : null,
+    arrivalBeforePracticeMin: typeof r.arrival_before_practice_min === 'number' ? r.arrival_before_practice_min : null,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
   };
@@ -3450,9 +3453,14 @@ export async function updateRepTeam(teamId: string, fields: {
   description?: string | null;
   color?: string | null;
   isArchived?: boolean;
+  /** Minutes from `ARRIVAL_PRESET_MINUTES` or null; the CHECK on the column refuses anything else. */
+  arrivalBeforeGameMin?: number | null;
+  arrivalBeforePracticeMin?: number | null;
 }): Promise<RepTeam> {
   const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (fields.name !== undefined) patch.name = fields.name;
+  if (fields.arrivalBeforeGameMin !== undefined) patch.arrival_before_game_min = fields.arrivalBeforeGameMin;
+  if (fields.arrivalBeforePracticeMin !== undefined) patch.arrival_before_practice_min = fields.arrivalBeforePracticeMin;
   if (fields.sport !== undefined) patch.sport = fields.sport;
   if (fields.division !== undefined) patch.division = fields.division;
   if (fields.description !== undefined) patch.description = fields.description;
@@ -5731,6 +5739,7 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     endsAt: r.ends_at ?? null,
     location: r.location ?? null,
     locationAddress: r.location_address ?? null,
+    placeId: r.place_id ?? null,
     arrivalTime: r.arrival_time ?? null,
     fieldNumber: r.field_number ?? null,
     uniform: r.uniform ?? null,
@@ -5840,6 +5849,8 @@ export interface CreateRepTeamEventFields {
   endsAt?: string | null;
   location?: string | null;
   locationAddress?: string | null;
+  /** The place the location was picked from (mig 307) — proved to be this team's by the route. */
+  placeId?: string | null;
   arrivalTime?: string | null;
   fieldNumber?: string | null;
   uniform?: string | null;
@@ -5870,6 +5881,7 @@ export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Prom
       ends_at: wallClockStringToUtc(fields.endsAt) ?? null,
       location: fields.location ?? null,
       location_address: fields.locationAddress ?? null,
+      place_id: fields.placeId ?? null,
       arrival_time: fields.arrivalTime ?? null,
       field_number: fields.fieldNumber ?? null,
       uniform: fields.uniform ?? null,
@@ -5905,6 +5917,7 @@ export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Pro
       ends_at: wallClockStringToUtc(f.endsAt) ?? null,
       location: f.location ?? null,
       location_address: f.locationAddress ?? null,
+      place_id: f.placeId ?? null,
       arrival_time: f.arrivalTime ?? null,
       field_number: f.fieldNumber ?? null,
       uniform: f.uniform ?? null,
@@ -5932,6 +5945,7 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   endsAt?: string | null;
   location?: string | null;
   locationAddress?: string | null;
+  placeId?: string | null;
   arrivalTime?: string | null;
   fieldNumber?: string | null;
   uniform?: string | null;
@@ -5952,6 +5966,7 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   if (fields.endsAt !== undefined)      patch.ends_at = wallClockStringToUtc(fields.endsAt);
   if (fields.location !== undefined)    patch.location = fields.location;
   if (fields.locationAddress !== undefined) patch.location_address = fields.locationAddress;
+  if (fields.placeId !== undefined)     patch.place_id = fields.placeId;
   if (fields.arrivalTime !== undefined) patch.arrival_time = fields.arrivalTime;
   if (fields.fieldNumber !== undefined) patch.field_number = fields.fieldNumber;
   if (fields.uniform !== undefined)     patch.uniform = fields.uniform;
@@ -8949,6 +8964,145 @@ export async function updateRepTeamCircuit(
     .from('rep_team_circuits').select(CIRCUIT_SELECT).eq('id', data.id).single();
   if (readErr) throw readErr;
   return mapRepTeamCircuit(full);
+}
+
+// ── Places (Arrival & Places, migration 307) ──
+// A per-team book of the places the team goes. Shaped like the tag book: the team's own rows,
+// counts and last-used from the events that link to each, one name per team case-insensitively.
+
+const PLACE_SELECT = 'id, org_id, team_id, name, address, field_number, note, created_by, created_at, updated_at';
+
+function mapRepTeamPlace(r: any): RepTeamPlace {
+  return {
+    id: r.id,
+    orgId: r.org_id,
+    teamId: r.team_id,
+    name: r.name,
+    address: r.address ?? null,
+    fieldNumber: r.field_number ?? null,
+    note: r.note ?? null,
+    createdBy: r.created_by ?? null,
+    createdAt: r.created_at,
+    updatedAt: r.updated_at,
+  };
+}
+
+/**
+ * The team's book, MOST RECENTLY USED FIRST (the picker's order — a place the team was at last
+ * week is the one it is most likely typing), then by name for the never-used. `count` and
+ * `lastUsedAt` come from the events linked to each place, in one pass over the team's link column.
+ */
+export async function getRepTeamPlaces(teamId: string): Promise<RepTeamPlace[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_places').select(PLACE_SELECT).eq('team_id', teamId);
+  if (error) throw error;
+  const places = (data ?? []).map(mapRepTeamPlace);
+  if (!places.length) return [];
+  const { data: links, error: linkErr } = await supabaseAdmin
+    .from('rep_team_events')
+    .select('place_id, starts_at')
+    .eq('team_id', teamId)
+    .not('place_id', 'is', null);
+  if (linkErr) throw linkErr;
+  const count: Record<string, number> = {};
+  const last: Record<string, string> = {};
+  for (const l of links ?? []) {
+    const id = l.place_id as string;
+    count[id] = (count[id] ?? 0) + 1;
+    if (!last[id] || (l.starts_at ?? '') > last[id]) last[id] = l.starts_at;
+  }
+  return places
+    .map(p => ({ ...p, count: count[p.id] ?? 0, lastUsedAt: last[p.id] ?? null }))
+    .sort((a, b) => {
+      if (a.lastUsedAt && b.lastUsedAt) return b.lastUsedAt.localeCompare(a.lastUsedAt);
+      if (a.lastUsedAt) return -1;
+      if (b.lastUsedAt) return 1;
+      return a.name.localeCompare(b.name);
+    });
+}
+
+export async function getRepTeamPlaceById(id: string, teamId: string): Promise<RepTeamPlace | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_places').select(PLACE_SELECT).eq('id', id).eq('team_id', teamId).maybeSingle();
+  // ⚠ Check `error` before believing an empty result (the circuit helper's lesson).
+  if (error) throw error;
+  return data ? mapRepTeamPlace(data) : null;
+}
+
+export async function createRepTeamPlace(fields: {
+  orgId: string; teamId: string; name: string;
+  address?: string | null; fieldNumber?: string | null; note?: string | null; createdBy?: string | null;
+}): Promise<RepTeamPlace> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_places')
+    .insert({
+      org_id: fields.orgId,
+      team_id: fields.teamId,
+      name: fields.name.trim(),
+      address: fields.address?.trim() || null,
+      field_number: fields.fieldNumber?.trim() || null,
+      note: fields.note?.trim() || null,
+      created_by: fields.createdBy ?? null,
+    })
+    .select(PLACE_SELECT)
+    .single();
+  if (error) throw error;
+  return mapRepTeamPlace(data);
+}
+
+/** Scoped update — the caller has already proved the place is this team's. */
+export async function updateRepTeamPlace(
+  id: string, teamId: string,
+  fields: { name?: string; address?: string | null; fieldNumber?: string | null; note?: string | null },
+): Promise<RepTeamPlace | null> {
+  const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
+  if (fields.name !== undefined) patch.name = fields.name.trim();
+  if (fields.address !== undefined) patch.address = fields.address?.trim() || null;
+  if (fields.fieldNumber !== undefined) patch.field_number = fields.fieldNumber?.trim() || null;
+  if (fields.note !== undefined) patch.note = fields.note?.trim() || null;
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_places').update(patch).eq('id', id).eq('team_id', teamId).select(PLACE_SELECT).maybeSingle();
+  if (error) throw error;
+  return data ? mapRepTeamPlace(data) : null;
+}
+
+/**
+ * The offer a place edit makes (D6): rewrite the NAME and ADDRESS copy on the team's UPCOMING events
+ * at this place. The diamond is per-game (a park has six) and is never rewritten; past events keep
+ * what they had — the record of where the team WAS is not edited from the book.
+ */
+export async function updateUpcomingEventsForPlace(
+  placeId: string, teamId: string, fields: { location: string; locationAddress: string | null },
+): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_events')
+    .update({ location: fields.location, location_address: fields.locationAddress, updated_at: new Date().toISOString() })
+    .eq('team_id', teamId)
+    .eq('place_id', placeId)
+    .gte('starts_at', new Date().toISOString())
+    .select('id');
+  if (error) throw error;
+  return data?.length ?? 0;
+}
+
+/** How many of the team's events, and how many still to come, are linked to a place. */
+export async function getRepTeamPlaceUsage(placeId: string, teamId: string): Promise<{ total: number; upcoming: number }> {
+  const now = new Date().toISOString();
+  const { count: total, error } = await supabaseAdmin
+    .from('rep_team_events').select('id', { count: 'exact', head: true }).eq('team_id', teamId).eq('place_id', placeId);
+  if (error) throw error;
+  const { count: upcoming, error: upErr } = await supabaseAdmin
+    .from('rep_team_events').select('id', { count: 'exact', head: true }).eq('team_id', teamId).eq('place_id', placeId).gte('starts_at', now);
+  if (upErr) throw upErr;
+  return { total: total ?? 0, upcoming: upcoming ?? 0 };
+}
+
+/** Removing a place leaves its events' text alone — the FK sets their link to null (mig 307). */
+export async function deleteRepTeamPlace(id: string, teamId: string): Promise<boolean> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_places').delete().eq('id', id).eq('team_id', teamId).select('id').maybeSingle();
+  if (error) throw error;
+  return !!data;
 }
 
 // ── Evaluation Sessions (slice 3B — migration 190) ──

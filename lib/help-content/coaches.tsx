@@ -261,7 +261,7 @@ const coachesHelp: HelpPageContent = {
             <li>Edit or remove any event with the pencil and trash icons.</li>
           </ol>
           <p>Events list in date order so your whole season reads top to bottom.</p>
-          <p><strong>Premium Coaches Portal adds:</strong> more event types (games — with a <strong>This is a scrimmage</strong> box for the ones that shouldn&apos;t count — tournament games, team events, and multi-day tournaments), <strong>List / Week / Month</strong> calendar views, game-day details (arrival/call time, field/diamond #, uniform) with a tap-to-open map link, <strong>Repeat weekly</strong> (see every date before you create it, and give each game its own opponent), <strong>Import</strong> (bring a whole season in from a spreadsheet or a league email), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar. See <strong>Set up a repeating practice or league schedule</strong> and <strong>Bring a schedule in from a spreadsheet</strong> below.</p>
+          <p><strong>Premium Coaches Portal adds:</strong> more event types (games — with a <strong>This is a scrimmage</strong> box for the ones that shouldn&apos;t count — tournament games, team events, and multi-day tournaments), <strong>List / Week / Month</strong> calendar views, game-day details (arrival time, field/diamond #, uniform) with a tap-to-open map link, <strong>Repeat weekly</strong> (see every date before you create it, and give each game its own opponent), <strong>Import</strong> (bring a whole season in from a spreadsheet or a league email), attendance taken straight from each event, and syncing your schedule to your phone&apos;s calendar. See <strong>Set up a repeating practice or league schedule</strong> and <strong>Bring a schedule in from a spreadsheet</strong> below.</p>
         </>
       ),
     },
@@ -2562,13 +2562,16 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Tournaments, games & calendar views (Premium)',
       summary: 'On Premium your schedule handles every event type, spreads multi-day tournaments across all their days, and keeps tournament games grouped under their tournament.',
-      keywords: ['premium schedule', 'tournament', 'multi-day tournament', 'tournament game', 'calendar view', 'week view', 'month view', 'game slot', 'event types', 'scrimmage', 'this is a scrimmage', 'mark a game as a scrimmage', 'exhibition game', 'friendly'],
-      searchText: 'premium schedule calendar list week month view multi day tournament spans every day date range day 1 of 3 add event types game tournament game this is a scrimmage scrimmage box practice team event tournament which tournament attach group game slot orphaned loose all day event sorts first nested add game phone mobile month view colored strips plus more N more day list tap open',
+      keywords: ['premium schedule', 'tournament', 'multi-day tournament', 'tournament game', 'calendar view', 'week view', 'month view', 'game slot', 'event types', 'scrimmage', 'this is a scrimmage', 'mark a game as a scrimmage', 'exhibition game', 'friendly',
+        // The Add Event form (consistency pass, 2026-09-21): what it asks, and where the rest went.
+        'add event', 'add game', 'add practice', 'add a game', 'add a practice', 'date', 'start time', 'end time', 'home away', 'opponent', 'more', 'where is uniform', 'where is the address', 'wrong event type', 'change event type', 'arrive before', 'arrival', 'places', 'saved location', 'venue'],
+      searchText: 'premium schedule calendar list week month view multi day tournament spans every day date range day 1 of 3 add event types game tournament game this is a scrimmage scrimmage box practice team event tournament which tournament attach group game slot orphaned loose all day event sorts first nested add game phone mobile month view colored strips plus more N more day list tap open add event form add game add practice date once start time end time arrival time location recent opponent home away dropdown more field uniform address tags links name notes wrong type picked the wrong kind change the type cancel and pick again add game button',
       content: (
         <>
           <p>On <strong>Premium Coaches Portal</strong>, your <strong>Schedule</strong> grows from the free practice/game/event list into a full team calendar with <strong>List</strong>, <strong>Week</strong>, and <strong>Month</strong> views and more event types: games (tick <strong>This is a scrimmage</strong> on any game that shouldn&apos;t count toward your record), tournament games, practices, team events, and multi-day tournaments.</p>
           <p>On a phone, the <strong>Month</strong> view shows each day&apos;s events as small colored strips (up to three); if a day has more, tap <strong>&ldquo;+ N more&rdquo;</strong> to open that day&apos;s full list.</p>
           <p><strong>Multi-day tournaments span the calendar.</strong> Give a <strong>Tournament</strong> a start and end date and it shows on <em>every</em> day it runs — each day in the week view is labelled &ldquo;Day 1/3&rdquo;, &ldquo;Day 2/3&rdquo;, and the month view shows it as one connected run (later days carry a small &ldquo;&rsaquo;&rdquo; marker). In the list it reads as a date range (e.g. &ldquo;Jul 1–3&rdquo;). All-day tournaments sort to the top of each day, above your timed games and practices.</p>
+          <p><strong>Adding an event.</strong> Pick the kind from <strong>Add Event</strong> and the form opens as <em>Add Game</em>, <em>Add Practice</em>, <em>Add Tournament</em> or <em>Add Team Event</em> — the kind is set when you choose it, so if you picked the wrong one, cancel and pick again. A game or practice asks for the <strong>date once</strong>, then a start time and an end time (a practice needs its end; a game&rsquo;s is optional), how long before to <strong>arrive</strong>, the <strong>location</strong> (one of your places, or just type it), and — for a game — the opponent and <strong>Home / Away</strong>. Everything else (field or diamond, uniform, tags, links, a custom name, notes) waits under <strong>More</strong>.</p>
           <p><strong>Tournament games stay grouped under their tournament.</strong> When you add an event, <strong>Game (Tournament)</strong> sits tucked under <strong>Tournament</strong> in the picker. Adding one asks <strong>which tournament</strong> it belongs to and files it there, so you never end up with a loose game tied to nothing. You can also open a tournament and use <strong>+ Add game</strong> to drop a game straight onto its days. If you haven&apos;t created a tournament yet, the form points you to add one first.</p>
         </>
       ),
@@ -2602,6 +2605,18 @@ const coachesHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'faq-premium-wrong-event-type',
+          question: 'I picked the wrong event type — how do I change it?',
+          answerText: 'Cancel and pick again from Add Event. The kind is set the moment you choose it from that menu, so the form itself has no type to switch; if you have not typed anything yet, cancelling asks nothing. Once an event is saved its kind is fixed — remove it and add it again as the right kind.',
+          keywords: ['wrong event type', 'change event type', 'change a practice to a game', 'change a game to a practice', 'event type picker', 'where did the event type go'],
+          answer: (
+            <>
+              <p><strong>Cancel and pick again</strong> from <strong>Add Event</strong>. The kind is set the moment you choose it from that menu, so the form itself has no type to switch; if you haven&rsquo;t typed anything yet, cancelling asks nothing.</p>
+              <p>Once an event is saved its kind is fixed — remove it and add it again as the right kind.</p>
+            </>
+          ),
+        },
+        {
           id: 'faq-premium-add-tournament-game',
           question: 'How do I add games to a tournament?',
           answerText: 'Two ways. From the Add Event menu pick Game (Tournament) — it sits nested under Tournament — and choose which tournament it belongs to. Or open the tournament and use + Add game, which files the game under it automatically and drops it on the tournament’s days. Either way the game stays grouped under its tournament rather than floating loose. If you have not created a tournament yet, the form prompts you to add one first.',
@@ -2618,18 +2633,18 @@ const coachesHelp: HelpPageContent = {
     {
       id: 'recipe-game-day-details',
       group: 'Premium Coaches Portal',
-      heading: 'Game-day details: arrival, field, uniform, tags, awards, links & the map (Premium)',
-      summary: 'Add an arrival/call time, diamond/field number, uniform, your own game tags, player awards, and resource links to an event — and split the place name from a street address that powers a tap-to-open map.',
-      keywords: ['arrival time', 'call time', 'be there by', 'field number', 'diamond number', 'uniform', 'jersey', 'location', 'address', 'google maps', 'map link', 'recent locations', 'links', 'attach link', 'resources', 'tags', 'tag a game', 'game tags', 'manage tags', 'merge tags', 'rename tag', 'filter by tag', 'record by tag', 'awards', 'give an award', 'mvp', 'best hitter', 'hustle award', 'award types', 'manage awards', 'retire award',
+      heading: 'Game-day details: arrival, places, field, uniform, tags, awards, links & the map (Premium)',
+      summary: 'Say how long before to arrive, keep the places your team goes (address and usual diamond come with the pick), add a diamond, uniform, your own game tags, player awards, and links to an event — and get a tap-to-open map from the place’s address.',
+      keywords: ['arrival time', 'arrival', 'arrive before', 'how long before', 'lead time', 'call time', 'be there by', 'field number', 'diamond number', 'uniform', 'jersey', 'location', 'places', 'place book', 'saved location', 'saved locations', 'venue', 'venues', 'add a place', 'manage places', 'address', 'google maps', 'map link', 'recent locations', 'links', 'attach link', 'resources', 'tags', 'tag a game', 'game tags', 'manage tags', 'merge tags', 'rename tag', 'filter by tag', 'record by tag', 'awards', 'give an award', 'mvp', 'best hitter', 'hustle award', 'award types', 'manage awards', 'retire award',
         // Chunk D Slice 3 — printable certificates live off the awards report.
         'certificate', 'certificates', 'print certificate', 'print certificates', 'print awards',
         'award certificate', 'awards night', 'banquet', 'year end party', 'pizza party', 'printable award'],
-      searchText: 'arrival call time be there by field diamond number uniform jersey what to wear home whites location place name street address google maps open in maps map link recent locations chips tap to fill calendar export ics spreadsheet excel csv arrival field uniform columns game day details premium links attach link resource drill video rules page field map flyer youtube google doc url open in new tab tags tag a game rivalry top team autocomplete create new tag chip picker manage tags rename merge delete tag library filter by tag vs tag record how are we doing insights awards give an award mvp best hitter hustle award award icon emoji picker manage award types retire award restore award who is earning it leaderboard print certificate certificates awards night banquet year end pizza party letter landscape team colour full name signature line background graphics',
+      searchText: 'arrival how long before 45 minutes before an hour before a specific time arrive by call time be there by team default arrive before a game arrive before a practice field diamond number uniform jersey what to wear home whites location place places place book saved location venue add a place manage places find a place type to find address usual diamond note park behind the arena street address google maps open in maps map link recent locations calendar export ics spreadsheet excel csv arrival field uniform columns game day details premium more section more field uniform tags links notes where is uniform where is the address links attach link resource drill video rules page field map flyer youtube google doc url open in new tab tags tag a game rivalry top team autocomplete create new tag chip picker manage tags rename merge delete tag library filter by tag vs tag record how are we doing insights awards give an award mvp best hitter hustle award award icon emoji picker manage award types retire award restore award who is earning it leaderboard print certificate certificates awards night banquet year end pizza party letter landscape team colour full name signature line background graphics',
       content: (
         <>
-          <p>When you add or edit an event on the <strong>Premium</strong> schedule, a few optional details make game day smoother. Leave any of them blank if you don&apos;t need them.</p>
+          <p>When you add or edit an event on the <strong>Premium</strong> schedule, a few optional details make game day smoother. <strong>Arrival</strong> sits with the date and times and <strong>Location</strong> is one of your places; the rest are under <strong>More</strong> at the foot of the form. Leave any of them blank if you don&apos;t need them.</p>
           <HelpDefs>
-            <HelpDef term="Arrival / call time">A &ldquo;be there by&rdquo; time separate from the start (e.g. arrive 5:15 for a 6:00 game). Shows on the event and travels with the calendar export.</HelpDef>
+            <HelpDef term="Arrival">How long before the start the team should be there — pick <strong>15 minutes</strong> to <strong>2 hours before</strong> (the clock shows beside each), or <strong>A specific time…</strong>. It reads as &ldquo;Arrive by 5:15 p.m.&rdquo; on the event and travels with the calendar export. Move the start and a preset moves with it; a specific time stays put. <strong>Team settings &rarr; Schedule</strong> sets what every new game or practice starts at.</HelpDef>
             <HelpDef term="Field / Diamond #">Which specific diamond or field at the venue (e.g. &ldquo;Diamond 2&rdquo;), shown right beside the location.</HelpDef>
             <HelpDef term="Uniform">Games only — what to wear, e.g. &ldquo;Home whites.&rdquo;</HelpDef>
           </HelpDefs>
@@ -2639,11 +2654,17 @@ const coachesHelp: HelpPageContent = {
       subtopics: [
         {
           id: 'event-details-location',
-          title: 'Location: name vs. address',
+          title: 'Location: the places your team keeps',
           content: (
             <>
-              <p><em>Location</em> is the place name a coach recognizes (&ldquo;Sherwood Park&rdquo;) — it&apos;s what shows on the schedule. <em>Address</em> is an optional street address that powers the map. On the event, the location becomes a tappable <strong>open-in-Google-Maps</strong> link that uses the address when you&apos;ve added one (and searches the name if you haven&apos;t).</p>
-              <p><strong>Recent locations.</strong> Under the location box, a row of <strong>Recent</strong> chips shows places your team has already used — tap one to fill in both the name and its saved address in a single tap.</p>
+              <p>A <strong>place</strong> is somewhere your team goes, kept once: its name, its street address (which powers the map), the diamond or field you usually play on there, and a note that shows on every event held there (&ldquo;park behind the arena&rdquo;). Type into <strong>Location</strong> to find one — your places list most-recently-used first — and pick it: the address and usual diamond come with it.</p>
+              <ul>
+                <li><strong>Somewhere new?</strong> Type the name and choose <strong>＋ Add &hellip; as a place</strong>: a small sheet asks for the address, the usual diamond and a note. Only the name is required.</li>
+                <li><strong>A one-off away park</strong> can simply be typed. It saves as text and creates nothing — it just has no address until you add it as a place.</li>
+                <li><strong>The diamond is per game.</strong> A park has six and a tournament moves you between them, so <strong>Field / Diamond #</strong> under <strong>More</strong> starts from the place&rsquo;s usual and can be changed for any one game.</li>
+                <li><strong>Manage places&hellip;</strong> is the last row of the list. Edit a place&rsquo;s address and it offers to update the upcoming events held there; past events keep what they had. Removing a place leaves every event&rsquo;s location as written.</li>
+              </ul>
+              <p>On the event, the location is a tappable <strong>open-in-Google-Maps</strong> link that uses the place&rsquo;s address (and searches the name if there isn&apos;t one). A team with a season behind it opens with its places already there — every location it has used, from its own history.</p>
             </>
           ),
         },
@@ -2750,10 +2771,10 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-arrival-vs-start',
           question: 'What’s the difference between arrival time and start time?',
-          answerText: 'Start (and end) is when the game or practice actually runs. Arrival / call time is an optional earlier "be there by" time for warm-up or check-in. Both show on the event, and the arrival time is included in the calendar export so families see it.',
+          answerText: 'Start (and end) is when the game or practice actually runs. Arrival is how long before the start the team should be there for warm-up or check-in — pick 45 minutes, an hour, or a specific time. It shows on the event as "Arrive by 5:15 p.m." and is included in the calendar export so families see it. Team settings → Schedule sets what every new game or practice starts at.',
           keywords: ['arrival time', 'call time', 'start time', 'be there by', 'warm up'],
           answer: (
-            <p><strong>Start</strong> (and end) is when the game or practice actually runs. <strong>Arrival / call time</strong> is an optional earlier &ldquo;be there by&rdquo; time for warm-up or check-in. Both show on the event, and the arrival time rides along in the calendar export so families see it.</p>
+            <p><strong>Start</strong> (and end) is when the game or practice actually runs. <strong>Arrival</strong> is how long before the start the team should be there for warm-up or check-in — pick <strong>45 minutes</strong>, <strong>an hour</strong>, or <strong>a specific time</strong>. It shows on the event as &ldquo;Arrive by 5:15 p.m.&rdquo; and rides along in the calendar export so families see it. <strong>Team settings &rarr; Schedule</strong> sets what every new game or practice starts at.</p>
           ),
         },
       ],
@@ -2841,7 +2862,7 @@ const coachesHelp: HelpPageContent = {
       searchText: 'repeat weekly repeating recurring event every tuesday weekly practice series round robin league schedule different opponent each week per date opponent bye week skip a week remove a date preview before saving edit this and future all occurrences delete series how many games will it create weekly scrimmage repeating scrimmage',
       content: (
         <>
-          <p>Tick <strong>Repeat weekly</strong> on a practice, game or team event, then set the day, the time and the first and last dates. (A game with <strong>This is a scrimmage</strong> ticked repeats too — a standing weekly scrimmage against a partner club is a series like any other.)</p>
+          <p>Tick <strong>Repeat weekly</strong> on a practice, game or team event, then set the day, the times and the last date — the first date starts as the day you opened the form on. (A game with <strong>This is a scrimmage</strong> ticked repeats too — a standing weekly scrimmage against a partner club is a series like any other.)</p>
           <p><strong>You then see the actual list of dates</strong> it will create — not a summary sentence. For games, type the opponent beside each date; for practices it&rsquo;s just the dates. Nothing is saved until you tap the button at the bottom, which names exactly how many events you&rsquo;re about to add.</p>
           <ul>
             <li><strong>A different opponent every week</strong> is the normal case for a league, so each date has its own box. Leave one blank and that game simply names itself.</li>
@@ -5257,7 +5278,7 @@ const coachesHelp: HelpPageContent = {
       group: 'Premium Coaches Portal',
       heading: 'Team settings (Premium)',
       summary: 'Your division, how your printed documents look, the season you are in, the lineup rules Auto-fill follows, how dues behave, who can see your schedule, book sharing, and — for a standalone team — your link to a club or league.',
-      keywords: ['team settings', 'settings', 'setting', 'tags', 'tag libraries', 'manage tags', 'merge tags', 'rename tag', 'manage awards', 'merge awards', 'retire award', 'award types', 'division', 'change division', 'edit division', 'age group', 'lineup rules', 'lineup settings', 'innings cap', 'pitching cap', 'pitch count', 'arm care', 'max innings', 'minimum innings', 'min play', 'playing time rule', 'rotation', 'auto-fill', 'autofill', 'auto fill rules', 'season status', 'season name', 'start next season', 'parent organization', 'link org', 'join a club', 'transfer team', 'club admin', 'where do i change', 'team options', 'configure team', 'money settings', 'dues settings', 'automatic dues reminders', 'reminders toggle', 'where is the reminders toggle', 'turn off reminder emails', 'stop reminder emails', 'credits reduce', 'credit setting', 'where did the dues settings go', 'settings groups', 'collapsed settings', 'sections are closed', 'share our book', 'club shared book', 'sharing', 'schedule visibility', 'who can see my schedule', 'staff only', 'public link', 'families setting', 'hide schedule', 'public schedule', 'where is schedule visibility', 'how your documents look', 'documents look', 'team crest', 'crest', 'team logo', 'logo on pdf', 'logo on roster', 'accent colour', 'accent color', 'footer line', 'pdf branding', 'document branding', 'customize pdf', 'club look', 'use club look', 'paper', 'printed documents'],
+      keywords: ['team settings', 'settings', 'setting', 'arrive before a game', 'arrive before a practice', 'arrival default', 'schedule settings', 'tags', 'tag libraries', 'manage tags', 'merge tags', 'rename tag', 'manage awards', 'merge awards', 'retire award', 'award types', 'division', 'change division', 'edit division', 'age group', 'lineup rules', 'lineup settings', 'innings cap', 'pitching cap', 'pitch count', 'arm care', 'max innings', 'minimum innings', 'min play', 'playing time rule', 'rotation', 'auto-fill', 'autofill', 'auto fill rules', 'season status', 'season name', 'start next season', 'parent organization', 'link org', 'join a club', 'transfer team', 'club admin', 'where do i change', 'team options', 'configure team', 'money settings', 'dues settings', 'automatic dues reminders', 'reminders toggle', 'where is the reminders toggle', 'turn off reminder emails', 'stop reminder emails', 'credits reduce', 'credit setting', 'where did the dues settings go', 'settings groups', 'collapsed settings', 'sections are closed', 'share our book', 'club shared book', 'sharing', 'schedule visibility', 'who can see my schedule', 'staff only', 'public link', 'families setting', 'hide schedule', 'public schedule', 'where is schedule visibility', 'how your documents look', 'documents look', 'team crest', 'crest', 'team logo', 'logo on pdf', 'logo on roster', 'accent colour', 'accent color', 'footer line', 'pdf branding', 'document branding', 'customize pdf', 'club look', 'use club look', 'paper', 'printed documents'],
       searchText: 'team settings screen collapsed groups closed until you open them each group shows what it is set to tags tag libraries money tags game tags focus tags staff equipment awards rename merge delete tag shared by your club manage tags manage awards drawer retire award merge instead division age group change division club admin manages division standalone team how your documents look team crest logo accent colour color footer line printed pdf paper roster dues lineup poster branding customize preview upload crest square image use your team colour back to your club look inherited club look head coach only season name status active complete start next season rollover lineup rules season defaults auto-fill max innings at one position rotation pitching innings cap arm care per pitcher player own pitcher cap stricter wins minimum innings per player everyone plays leave blank to turn off override for a single game auto-fill menu money group automatic dues reminders 30 days 7 days see an example credits reduce last payment first next payment first settle at season end where did the dues settings go moved from player dues money access view only sharing schedule visibility who can see games and practices staff only families public link public team page shows the schedule moved from roster team family access card club shared book scouting book parent organization link to a club or league recognition transfer team invited by your organization manage organization link premium coaches portal where do i change my division where are lineup caps where is the reminders toggle turn off reminder emails',
       content: (
         <>
@@ -5299,6 +5320,13 @@ const coachesHelp: HelpPageContent = {
           title: 'Lineup rules',
           content: (
             <p><strong>Lineup rules</strong> are season defaults that game-day <strong>Auto-fill</strong> follows — a cap on innings at one position (which forces rotation), a default pitching cap, and a minimum number of innings for every player. <strong>Leave a field blank to turn that rule off</strong>, and you can override any of them for a single game from the Auto-fill menu. A player&rsquo;s own pitching cap still applies on top of the season default, and <strong>the stricter of the two always wins</strong> — a season cap can never loosen a limit you set on an individual arm.</p>
+          ),
+        },
+        {
+          id: 'premium-team-settings-schedule',
+          title: 'Schedule',
+          content: (
+            <p><strong>Arrive before a game</strong> and <strong>Arrive before a practice</strong> are the team&rsquo;s habit — 15 minutes to 2 hours before, or none. Every new game or practice starts with it as its <strong>Arrival</strong>, and any event can change its own. Changing the habit later moves nothing already on the calendar.</p>
           ),
         },
         {

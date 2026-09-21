@@ -425,7 +425,7 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
             )}
 
             {!isTest && (
-              field('Descriptors to choose from (optional)', 'metric-descriptors',
+              field('Descriptors to choose from', 'metric-descriptors',
                 <textarea id="metric-descriptors" className={shared.textarea} rows={4} value={draft.descriptors}
                   onChange={e => set('descriptors', e.target.value)}
                   placeholder={'With support — coach guides the setup\nWith a reminder — one verbal cue\nIndependently — without a cue'} />,

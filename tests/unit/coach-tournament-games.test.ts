@@ -22,6 +22,7 @@ function event(overrides: Partial<RepTeamEvent> = {}): RepTeamEvent {
     endsAt: null,
     location: null,
     locationAddress: null,
+    placeId: null,
     arrivalTime: null,
     fieldNumber: null,
     uniform: null,

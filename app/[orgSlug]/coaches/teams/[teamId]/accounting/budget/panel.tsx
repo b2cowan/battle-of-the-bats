@@ -4082,8 +4082,6 @@ export function BudgetPlanPanel({
           >
             <CoachModalHeader title={editingLine ? 'Edit Budget Line' : 'Add Budget Line'} onClose={closeLineModal} />
 
-            <p className={styles.formHint}>* Required</p>
-
             {/* WHICH WAY THE MONEY GOES — the ONE question this form asks about what a line is
                 (mig 280). Amounts stay positive either way; the stored kind carries the sign, and
                 the stored kind is worked out from the ITEM below rather than asked here.
@@ -4494,7 +4492,7 @@ export function BudgetPlanPanel({
                     ) : (
                       <>
                         <span className={styles.periodColWhen}>{SPLIT_MODE_COLUMN[form.splitMode]}</span>
-                        <span className={styles.periodColLabel}>Label (optional)</span>
+                        <span className={styles.periodColLabel}>Label</span>
                       </>
                     )}
                     <span className={styles.periodColAmount}>
@@ -4560,7 +4558,7 @@ export function BudgetPlanPanel({
                   const nameField = (
                     <label className={styles.periodFieldLabel}>
                       <span className={styles.periodFieldLabelText}>
-                        {form.splitMode === 'names' ? 'Name' : 'Label (optional)'}
+                        {form.splitMode === 'names' ? 'Name' : 'Label'}
                       </span>
                       <input
                         className={styles.input}

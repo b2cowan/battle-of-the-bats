@@ -35,7 +35,10 @@ import { useMinuteClock } from '@/lib/use-minute-clock';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import TagSearchCombobox, { GAME_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
-import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import QuestionShell from '@/components/coaches/QuestionShell';
+import ArrivalSelect from '@/components/coaches/ArrivalSelect';
+import PlaceCombobox from '@/components/coaches/PlaceCombobox';
+import { arrivalAfterStartChange, arrivalClockFor } from '@/lib/coach-arrival';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
 import {
@@ -74,6 +77,7 @@ import type {
   RepEventType,
   RepEventResource,
   RepTeamTag,
+  RepTeamPlace,
   RepTeamAwardType,
   RepPlayerAward,
 } from '@/lib/types';
@@ -143,11 +147,6 @@ const ADD_MENU: { type: RepEventType; nested?: boolean }[] = [
   { type: 'team_event' },
 ];
 
-// Event-type picker order (colored pills that replace the type <select>). Tournament games are
-// created through their parent Tournament, so they aren't a top-level pill — the picker only
-// carries one if the form is *already* that type (opened via the nested add-menu / editing).
-const EVENT_TYPE_PILLS: RepEventType[] = ['external_tournament', 'league_game', 'practice', 'team_event'];
-
 const GAME_EVENT_TYPES = COACH_GAME_EVENT_TYPES as RepEventType[];
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -169,6 +168,28 @@ function addHoursLocal(dtLocal: string, hours: number): string {
 /** Default start time for a brand-new event: the viewed day at 6:00 PM (round, :00 minutes). */
 const DEFAULT_EVENT_HOUR = '18:00';
 
+/**
+ * A one-off event asks the date ONCE — Date · Start time · End time — the same shape the repeating
+ * branch always had (owner ruling 2026-09-21, the event-form consistency pass). `startsAt` /
+ * `endsAt` stay canonical: the save, the guards, the tournament prefill and the mirrored facts all
+ * read them unchanged. The three visible pieces are the form's EXISTING `startDate` / `startTime`
+ * / `endTime` (the repeat branch's own), seeded from the datetimes here wherever the form is built,
+ * and recomposed by `setWhen` on every edit — so a native input's clear button empties one piece
+ * and Save greys, without the other pieces vanishing from the screen.
+ * ⚠ Known limit, accepted: an end on the NEXT day (23:00–01:00) is recomposed same-day when edited.
+ * Youth-team events do not cross midnight; the repeat branch already assumed same-day.
+ */
+function withWhenPieces(f: EventForm): EventForm {
+  return { ...f, startDate: f.startsAt.slice(0, 10), startTime: f.startsAt.slice(11, 16), endTime: f.endsAt.slice(11, 16) };
+}
+function composeWhen(f: EventForm): EventForm {
+  return {
+    ...f,
+    startsAt: f.startDate && f.startTime ? `${f.startDate}T${f.startTime}` : '',
+    endsAt: f.startDate && f.endTime ? `${f.startDate}T${f.endTime}` : '',
+  };
+}
+
 type ViewMode = 'list' | 'week' | 'month';
 
 interface EventForm {
@@ -179,6 +200,8 @@ interface EventForm {
   endsAt: string;
   location: string;
   locationAddress: string;
+  /** The place the location was picked from (mig 307); null for free text. */
+  placeId: string | null;
   arrivalTime: string;
   fieldNumber: string;
   uniform: string;
@@ -219,6 +242,7 @@ const BLANK_FORM: EventForm = {
   endsAt: '',
   location: '',
   locationAddress: '',
+  placeId: null,
   arrivalTime: '',
   fieldNumber: '',
   uniform: '',
@@ -308,6 +332,7 @@ function eventToForm(e: RepTeamEvent): EventForm {
     endsAt: toLocalInput(e.endsAt),
     location: e.location ?? '',
     locationAddress: e.locationAddress ?? '',
+    placeId: e.placeId ?? null,
     arrivalTime: e.arrivalTime ?? '',
     fieldNumber: e.fieldNumber ?? '',
     uniform: e.uniform ?? '',
@@ -728,6 +753,9 @@ export default function CoachesSchedulePage({
   // Coach Tags (Phase 1, game tags only): the team's tag library + which tags each event already
   // carries, both returned alongside the events fetch (no per-event round trip).
   const [teamTags, setTeamTags] = useState<RepTeamTag[]>([]);
+  // The place book and the team's arrival habit (mig 307) ride the events read.
+  const [places, setPlaces] = useState<RepTeamPlace[]>([]);
+  const [arrivalDefaults, setArrivalDefaults] = useState<{ game: number | null; practice: number | null }>({ game: null, practice: null });
   const [tagsByEventId, setTagsByEventId] = useState<Record<string, string[]>>({});
   const [tagError, setTagError] = useState('');
   // Player Awards (Phase 2): the team's award-type library, every award given this season
@@ -888,6 +916,8 @@ export default function CoachesSchedulePage({
       setMismatchIds(new Set<string>(data.lineupMismatchEventIds ?? []));
       setTeamTags(data.tags ?? []);
       setTagsByEventId(data.tagsByEventId ?? {});
+      setPlaces(Array.isArray(data.places) ? data.places : []);
+      if (data.arrivalDefaults) setArrivalDefaults({ game: data.arrivalDefaults.game ?? null, practice: data.arrivalDefaults.practice ?? null });
       // Tryout sessions are projected onto the calendar as read-only markers. Non-fatal: if this
       // fails the schedule still works, tryout dates just won't show.
       // Tryout markers + real tournament games are both optional read-only overlays keyed only on
@@ -1040,11 +1070,13 @@ export default function CoachesSchedulePage({
     } catch { /* ignore malformed params */ }
   }, [loading, canAddEvents]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Nav-hide + body-scroll-lock while a full-screen modal (detail, add/edit, or the day-list
-  // sheet) is open — folded onto the shared CoachesOverlayProvider (Coach Portal Batch 1,
-  // Phase 1.2-1.6 sweep) so this page's lock travels with the same lifecycle as every other
-  // sheet-owning surface instead of a bespoke local effect.
-  const anyModalOpen = !!selectedEvent || showAddForm || !!daySheet;
+  // Nav-hide + body-scroll-lock while a full-screen modal (detail or the day-list sheet) is open —
+  // folded onto the shared CoachesOverlayProvider (Coach Portal Batch 1, Phase 1.2-1.6 sweep) so
+  // this page's lock travels with the same lifecycle as every other sheet-owning surface instead
+  // of a bespoke local effect. ⚠ NOT the add/edit form: it stands in QuestionShell, which registers
+  // its own overlay — counting it here as well double-incremented the shared counter on the
+  // expenses panel once, and the nav stayed hidden after the form closed.
+  const anyModalOpen = !!selectedEvent || !!daySheet;
   useOverlayOpen(anyModalOpen);
 
   const attendanceSig = () => JSON.stringify(attendanceRows.map(r => [r.player.id, r.status, r.note]));
@@ -1152,14 +1184,21 @@ export default function CoachesSchedulePage({
     // Games default to "Home" so the printout "@/vs" and the win/loss side are never left blank.
     // `overrides` (e.g. a tournament game-slot's parent + name) are folded into the baseline too,
     // so a pre-seeded form doesn't read as "unsaved" before the coach touches anything.
-    const blank = {
+    const seeded = withWhenPieces({
       ...BLANK_FORM,
       eventType: type,
       homeAway: needsOpponent(type) ? 'home' : '',
       startsAt: defaultStart,
       endsAt: addHoursLocal(defaultStart, 2),
       ...overrides,
-    };
+    });
+    // The team's arrival habit (mig 307, D2): a new game or practice STARTS at the team default,
+    // measured from the seeded start. The event's own arrivalTime is the record from here on —
+    // changing the default later moves nothing already on the calendar.
+    const lead = needsOpponent(type) ? arrivalDefaults.game : type === 'practice' ? arrivalDefaults.practice : null;
+    const blank = seeded.arrivalTime || !lead
+      ? seeded
+      : { ...seeded, arrivalTime: arrivalClockFor(seeded.startTime, lead) ?? '' };
     setForm(blank);
     setOccurrenceOpponents({});
     setRemovedDates(new Set());
@@ -1196,10 +1235,14 @@ export default function CoachesSchedulePage({
       if (!id) return { ...f, parentEventId: '' };
       const t = events.find(e => e.id === id);
       const next: EventForm = { ...f, parentEventId: id };
+      // Re-seed the Date · Start · End pieces only when the date actually moved — a tournament
+      // with no start date leaves whatever the coach has typed alone (/review 2026-09-21: a
+      // cleared piece empties the datetime, and re-seeding from it would blank the other piece).
       if (t?.startsAt) {
         const time = f.startsAt.slice(11, 16) || DEFAULT_EVENT_HOUR;
         next.startsAt = `${dayStr(t.startsAt)}T${time}`;
         next.endsAt = addHoursLocal(next.startsAt, 2);
+        return withWhenPieces(next);
       }
       return next;
     });
@@ -1245,12 +1288,27 @@ export default function CoachesSchedulePage({
     return f.name.trim() || deriveGameName(f.eventType, f.opponent, f.homeAway) || EVENT_NAME_PREFIX[f.eventType];
   }
 
-  // Changing the start keeps the end 2 hours later, unless the coach has set a custom end.
-  function setStartsAt(value: string) {
+  // A piece changes, both datetimes recompose — from BOTH branches. The repeat branch's First date /
+  // Start time / End time are the same three fields, so they write through here too; a coach who
+  // ticks Repeat weekly, edits, and unticks it must see and save the same time (/review 2026-09-21
+  // — the branch used to write the pieces directly and the one-off save read the stale datetime).
+  // One-off only: changing the start keeps the end 2 hours later, unless the coach has set a custom
+  // end (the rule the old Starts picker carried). A series never auto-fills its end.
+  function setWhen(patch: Partial<Pick<EventForm, 'startDate' | 'startTime' | 'endTime'>>) {
     setForm(f => {
-      const prevAutoEnd = f.startsAt ? addHoursLocal(f.startsAt, 2) : '';
-      const endIsAuto = f.endsAt === '' || f.endsAt === prevAutoEnd;
-      return { ...f, startsAt: value, endsAt: endIsAuto && value ? addHoursLocal(value, 2) : f.endsAt };
+      const next = composeWhen({ ...f, ...patch });
+      // Arrival as a lead time (D1): a PRESET arrival moves with the start; a specific time stays.
+      if ('startTime' in patch) next.arrivalTime = arrivalAfterStartChange(f.startTime, next.startTime, f.arrivalTime);
+      const series = needsRecurrence(f.eventType) && f.isRecurring;
+      if (!series && !('endTime' in patch) && next.startsAt) {
+        const prevAutoEnd = f.startsAt ? addHoursLocal(f.startsAt, 2) : '';
+        const endIsAuto = f.endsAt === '' || f.endsAt === prevAutoEnd;
+        if (endIsAuto) {
+          const auto = addHoursLocal(next.startsAt, 2);
+          return { ...next, endsAt: auto, endTime: auto.slice(11, 16) };
+        }
+      }
+      return next;
     });
   }
 
@@ -1266,10 +1324,11 @@ export default function CoachesSchedulePage({
     // location is not held at a greyed Save for a field they never touched; the seed is on
     // screen, editable, and part of what they save (/review, 2026-09-14).
     if (event.eventType === 'practice' && !f.endsAt && f.startsAt) f.endsAt = addHoursLocal(f.startsAt, 2);
-    setForm(f);
+    const seeded = withWhenPieces(f);
+    setForm(seeded);
     setOccurrenceOpponents({});
     setRemovedDates(new Set());
-    setFormBaseline({ form: f, occurrenceOpponents: {}, removed: [] });
+    setFormBaseline({ form: seeded, occurrenceOpponents: {}, removed: [] });
     setEditingEventId(event.id);
     // Batch 4: editing a mirrored tournament game opens the form in restricted mode — the
     // organizer's facts render as context, only the coach's own fields are editable.
@@ -1316,20 +1375,11 @@ export default function CoachesSchedulePage({
   // Recent locations this team has already used — a free, zero-infra suggestion list so a coach
   // can reuse a regular field in one tap (most-recent first, de-duped by name, capped). Each
   // carries its remembered address so a chip refills both the name and the map address.
-  const recentLocations = (() => {
-    const seen = new Set<string>();
-    const out: { name: string; address: string }[] = [];
-    for (const e of [...events].sort((a, b) => (b.startsAt ?? '').localeCompare(a.startsAt ?? ''))) {
-      const name = e.location?.trim();
-      if (!name) continue;
-      const key = name.toLowerCase();
-      if (seen.has(key)) continue;
-      seen.add(key);
-      out.push({ name, address: e.locationAddress?.trim() ?? '' });
-      if (out.length >= 12) break;
-    }
-    return out;
-  })();
+  // ⚰ `recentLocations` (→ 2026-09-21): the Recent chips under Location, derived from past events.
+  // They carried the address of the MOST RECENT event with that name — usually nothing — and never
+  // the diamond. The place book (mig 307) is the list now, most recently used first, in the picker.
+  // The place the open form's location came from, for the diamond hint under More.
+  const formPlace = form.placeId ? places.find(p => p.id === form.placeId) ?? null : null;
   const addingTournamentGame = form.eventType === 'tournament_game' && !editingEventId;
   // Block saving an orphaned game slot: a new tournament game must have a parent. (A parent set
   // via the in-detail "+ Add game" shortcut counts even if its tournament is cancelled and so
@@ -1346,10 +1396,14 @@ export default function CoachesSchedulePage({
    * would read "no end set" on a practice that has one — so it is refused here, in words, rather
    * than saved and discovered on the sheet.
    */
-  const practiceEndMissing = form.eventType === 'practice'
-    && (recurringSeries ? !form.endTime : !form.endsAt);
+  // Both branches show the same End time field, so "missing" reads that piece; "before the start"
+  // compares the composed datetimes on a one-off (an end can sit on the next day) and only when
+  // both exist — a cleared Date empties both and must not read as an end before its start.
+  const practiceEndMissing = form.eventType === 'practice' && !form.endTime;
   const practiceEndBeforeStart = form.eventType === 'practice' && !practiceEndMissing
-    && (recurringSeries ? form.endTime <= form.startTime : form.endsAt <= form.startsAt);
+    && (recurringSeries
+      ? form.endTime <= form.startTime
+      : Boolean(form.startsAt && form.endsAt) && form.endsAt <= form.startsAt);
   const practiceEndInvalid = practiceEndMissing || practiceEndBeforeStart;
   // A resource row blocks save only if it has content but is incomplete/has a bad URL; fully-empty
   // rows are fine (dropped on save).
@@ -1359,7 +1413,7 @@ export default function CoachesSchedulePage({
   });
   const recurrenceNoun = EVENT_LABELS[form.eventType].toLowerCase();
 
-  // Drives the "Add details (optional)" disclosure (Batch 2, P0 #8). `hasEventDetails` is read on
+  // Drives the "More — …" disclosure (Batch 2, P0 #8; relabelled 2026-09-21). `hasEventDetails` is read on
   // mount only, so editing an event that already carries any of these opens the group; the summary
   // keeps a collapsed group honest about what's inside — especially a link error that blocks Save.
   const eventDetailCount = [
@@ -1385,6 +1439,7 @@ export default function CoachesSchedulePage({
   const mirroredGameHref = selectedEvent?.sourceTournamentGameId
     ? tournamentGames.find(g => g.id === selectedEvent.sourceTournamentGameId)?.href ?? null
     : null;
+
   /**
    * ⚠ EVERY TAB RIDES A GRANT (staff access review, 2026-09-10). Attendance used to be seeded
    * unconditionally and Lineup pushed on any game, so a schedule-only helper met both tabs, a
@@ -1534,6 +1589,7 @@ export default function CoachesSchedulePage({
         endsAt: form.endsAt || null,
         location: form.location.trim() || null,
         locationAddress: form.locationAddress.trim() || null,
+        placeId: form.placeId,
         opponent: form.opponent.trim() || null,
         homeAway: form.homeAway || null,
         isScrimmage: form.eventType === 'league_game' && form.isScrimmage,
@@ -1652,6 +1708,7 @@ export default function CoachesSchedulePage({
         description: form.description.trim() || null,
         location: form.location.trim() || null,
         locationAddress: form.locationAddress.trim() || null,
+        placeId: form.placeId,
         arrivalTime: form.arrivalTime || null,
         fieldNumber: form.fieldNumber.trim() || null,
         uniform: form.uniform.trim() || null,
@@ -2568,6 +2625,10 @@ export default function CoachesSchedulePage({
                 {selectedEvent.uniform && <span>Uniform: {selectedEvent.uniform}</span>}
               </p>
             )}
+            {/* The place's note (mig 307) — "park behind the arena" — read off the book by the link. */}
+            {selectedEvent.placeId && places.find(p => p.id === selectedEvent.placeId)?.note && (
+              <p className={styles.slideOverMeta}>{places.find(p => p.id === selectedEvent.placeId)?.note}</p>
+            )}
 
             {/* Final score — the headline fact of a played game lives in the header, not behind a
                 tab. W/L/T is always derived from the two numbers (no manual override).
@@ -3180,46 +3241,34 @@ export default function CoachesSchedulePage({
       )}
 
       {/* ── Add / edit event modal ─────────────────────────────────────────── */}
+      {/* Stands in QuestionShell since the consistency pass (owner ruling 2026-09-21): the dialog
+          floor (role, label, Escape, the Tab trap, focus restore), the shared overlay (a full-screen
+          sheet ≤640 with no opt-in) and the busy-gated close all come from the shell — this form was
+          the last hand-built modal on the portal, which is how it drifted a private width and a pill
+          radius nothing else wore. ⚠ NO EVENT-TYPE PICKER IN HERE. Every door already chose the type
+          (the Add Event menu, the practice hub's ?add=practice, a tournament's game slot); the title
+          carries it with the type's colour dot, and a wrong pick is Cancel + pick again. `changeEventType`
+          survives for the one in-form hop that remains ("Create a tournament first"). */}
       {showAddForm && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (requestDiscardForm)?.(); }}>
-          <div className={`${styles.modal} ${styles.eventFormModal} ${styles.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
-            <CoachModalHeader title={<>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</>} onClose={requestDiscardForm} />
-
+        <QuestionShell
+          open
+          wide
+          busy={saving}
+          onClose={() => { void requestDiscardForm(); }}
+          ariaLabel={`${editingEventId ? 'Edit' : 'Add'} ${EVENT_LABELS[form.eventType]}`}
+          title={
+            <span className={styles.modalTitleMark}>
+              {editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}
+              <span className={styles.eventTypeDot} style={{ background: EVENT_COLORS[form.eventType] }} aria-hidden />
+            </span>
+          }
+        >
             <div className={`${styles.formBody} ${styles.formBodyTight}`}>
-              {/* Legend for the per-field * markers below —
-                  most fields on this form are optional, so only the few that block Save are flagged. */}
-              <p className={styles.formHint}>* Required</p>
-
-              {/* Type — changeable on add (keeps shared fields); fixed once an event exists. */}
-              {!editingEventId && (
-                <div className={styles.field}>
-                  <label className={styles.label}>Event type</label>
-                  <div className={styles.eventTypePicker} role="group" aria-label="Event type">
-                    {(form.eventType === 'tournament_game' ? [...EVENT_TYPE_PILLS, 'tournament_game' as RepEventType] : EVENT_TYPE_PILLS).map(t => {
-                      const active = form.eventType === t;
-                      return (
-                        <button
-                          key={t}
-                          type="button"
-                          className={`${styles.eventTypeOption} ${active ? styles.eventTypeOptionActive : ''}`}
-                          style={active ? { borderColor: EVENT_COLORS[t], background: `color-mix(in srgb, ${EVENT_COLORS[t]} 10%, transparent)` } : undefined}
-                          aria-pressed={active}
-                          onClick={() => changeEventType(t)}
-                        >
-                          <span className={styles.eventTypeDot} style={{ background: EVENT_COLORS[t] }} />
-                          {EVENT_LABELS[t]}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
 
               {/* TOURNAMENT — a tournament game must belong to a tournament, so a coach can't
                   create an orphaned, parent-less game slot. */}
               {addingTournamentGame && (
                 <section className={styles.formSection}>
-                  <h4 className={styles.formSectionTitle}>Tournament</h4>
                   {/* WI-2B: real FieldLogicHQ tournament games now appear on the schedule on their own,
                       so this hand-entered slot is for a tournament run somewhere else. */}
                   <p className={styles.formHint} style={{ marginTop: 0 }}>
@@ -3255,7 +3304,6 @@ export default function CoachesSchedulePage({
               {/* Editing an existing tournament game: show which tournament it belongs to. */}
               {form.eventType === 'tournament_game' && editingEventId && !editingMirrored && (
                 <section className={styles.formSection}>
-                  <h4 className={styles.formSectionTitle}>Tournament</h4>
                   <p className={styles.formHint}>
                     Part of {events.find(e => e.id === form.parentEventId)?.name ?? 'a tournament'}.
                   </p>
@@ -3284,18 +3332,14 @@ export default function CoachesSchedulePage({
                   </section>
                   <section className={styles.formSection}>
                     <h4 className={styles.formSectionTitle}>Your game-day plan</h4>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Arrival / call time</label>
-                      <input className={styles.input} type="time" value={form.arrivalTime} onChange={e => setForm(f => ({ ...f, arrivalTime: e.target.value }))} />
-                      <p className={styles.formHint}>A &ldquo;be there by&rdquo; time before the start — shows on the event and the calendar export.</p>
-                    </div>
+                    <ArrivalSelect startTime={form.startTime} value={form.arrivalTime} onChange={v => setForm(f => ({ ...f, arrivalTime: v }))} />
                   </section>
                 </>
               ) : (
               <>
-              {/* WHEN */}
+              {/* WHEN — no heading: the labels beneath say it (the consistency pass flattened the
+                  When / Where / Who boxes and dropped the words that repeated their own fields). */}
               <section className={styles.formSection}>
-                <h4 className={styles.formSectionTitle}>When</h4>
                 {/* Repeat-weekly lives here (above the date layout), NOT inside a branch — toggling it
                     flips `recurringSeries`, which swaps the date layout below; keeping the checkbox in
                     one stable slot means it never remounts (no lost focus) as that swap happens. */}
@@ -3327,12 +3371,12 @@ export default function CoachesSchedulePage({
                       </div>
                       <div className={styles.field}>
                         <label className={styles.label}>Start time *</label>
-                        <input className={styles.input} type="time" value={form.startTime} onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} />
+                        <input className={styles.input} type="time" value={form.startTime} onChange={e => setWhen({ startTime: e.target.value })} />
                       </div>
                       <div className={styles.field}>
                         {/* A practice needs an end (stage 1, D9) — every occurrence carries this one. */}
                         <label className={styles.label}>End time{form.eventType === 'practice' ? ' *' : ''}</label>
-                        <input className={styles.input} type="time" value={form.endTime} onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} />
+                        <input className={styles.input} type="time" value={form.endTime} onChange={e => setWhen({ endTime: e.target.value })} />
                         {/* Say why Save is grey, both ways — a bare asterisk is not a reason. */}
                         {practiceEndMissing && (
                           <p className={styles.formHint} role="alert">A practice needs an end time.</p>
@@ -3342,18 +3386,15 @@ export default function CoachesSchedulePage({
                         )}
                       </div>
                       <div className={styles.field}>
-                        <label className={styles.label}>Arrival time</label>
-                        <input className={styles.input} type="time" value={form.arrivalTime} onChange={e => setForm(f => ({ ...f, arrivalTime: e.target.value }))} />
-                      </div>
-                      <div className={styles.field}>
                         <label className={styles.label}>First date *</label>
-                        <input className={styles.input} type="date" value={form.startDate} onChange={e => setForm(f => ({ ...f, startDate: e.target.value }))} />
+                        <input className={styles.input} type="date" value={form.startDate} onChange={e => setWhen({ startDate: e.target.value })} />
                       </div>
                       <div className={styles.field}>
                         <label className={styles.label}>Last date *</label>
                         <input className={styles.input} type="date" value={form.endDate} onChange={e => setForm(f => ({ ...f, endDate: e.target.value }))} />
                       </div>
                     </div>
+                    <ArrivalSelect startTime={form.startTime} value={form.arrivalTime} onChange={v => setForm(f => ({ ...f, arrivalTime: v }))} />
                     {/* Chunk C (P1 #6) — the occurrences, as rows, BEFORE any of them exist.
                         This replaced a one-line summary that was honest about the dates and
                         silent about the fact that one opponent was about to be stamped onto
@@ -3409,15 +3450,23 @@ export default function CoachesSchedulePage({
                   </>
                 ) : (
                   <>
-                    <div className={styles.formSectionGrid}>
+                    {/* The date ONCE (owner, 2026-09-21) — Date · Start time · End time, the shape the
+                        repeat branch above already asks in. Two datetime pickers had the coach type
+                        the same date twice. See `withWhenPieces` / `setWhen` for how the pieces and
+                        the canonical datetimes stay in step. */}
+                    <div className={styles.formSectionGrid3}>
                       <div className={styles.field}>
-                        <label className={styles.label}>Starts *</label>
-                        <input className={styles.input} type="datetime-local" value={form.startsAt} onChange={e => setStartsAt(e.target.value)} />
+                        <label className={styles.label}>Date *</label>
+                        <input className={styles.input} type="date" value={form.startDate} onChange={e => setWhen({ startDate: e.target.value })} />
+                      </div>
+                      <div className={styles.field}>
+                        <label className={styles.label}>Start time *</label>
+                        <input className={styles.input} type="time" value={form.startTime} onChange={e => setWhen({ startTime: e.target.value })} />
                       </div>
                       <div className={styles.field}>
                         {/* A practice needs an end (stage 1, D9) — the plan is built against it. */}
-                        <label className={styles.label}>Ends{form.eventType === 'practice' ? ' *' : ''}</label>
-                        <input className={styles.input} type="datetime-local" value={form.endsAt} onChange={e => setForm(f => ({ ...f, endsAt: e.target.value }))} />
+                        <label className={styles.label}>End time{form.eventType === 'practice' ? ' *' : ''}</label>
+                        <input className={styles.input} type="time" value={form.endTime} onChange={e => setWhen({ endTime: e.target.value })} />
                         {/* Say why Save is grey, both ways — a bare asterisk is not a reason. */}
                         {practiceEndMissing && (
                           <p className={styles.formHint} role="alert">A practice needs an end time.</p>
@@ -3427,71 +3476,51 @@ export default function CoachesSchedulePage({
                         )}
                       </div>
                     </div>
-                    <div className={styles.field}>
-                      <label className={styles.label}>Arrival / call time</label>
-                      <input className={styles.input} type="time" value={form.arrivalTime} onChange={e => setForm(f => ({ ...f, arrivalTime: e.target.value }))} />
-                      <p className={styles.formHint}>A &ldquo;be there by&rdquo; time before the start — shows on the event and the calendar export.</p>
-                    </div>
+                    <ArrivalSelect startTime={form.startTime} value={form.arrivalTime} onChange={v => setForm(f => ({ ...f, arrivalTime: v }))} />
                   </>
                 )}
               </section>
 
               {/* WHERE — the place NAME plus tap-to-fill "recent" chips. The field/diamond # and
-                  street address moved into "Add details" (Batch 2, P0 #8): they matter on game day
+                  street address moved into the "More" disclosure (Batch 2, P0 #8): they matter on game day
                   but they don't belong in the four things every event needs. */}
               <section className={styles.formSection}>
-                <h4 className={styles.formSectionTitle}>Where</h4>
                 <div className={styles.field}>
-                  <label className={styles.label}>Location</label>
-                  <input
-                    className={styles.input}
-                    value={form.location}
-                    onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                    placeholder="e.g. Sherwood Park"
+                  <label className={styles.label} htmlFor="event-location">Location</label>
+                  {/* The place book's door (mig 307, D4): find a place, add one inline, or just type. Picking
+                      fills the address and the usual diamond; the Recent chips that stood here retired. */}
+                  <PlaceCombobox
+                    basePath={`/api/coaches/${orgSlug}/teams/${teamId}/places`}
+                    places={places}
+                    value={{ location: form.location, locationAddress: form.locationAddress, fieldNumber: form.fieldNumber, placeId: form.placeId }}
+                    onChange={next => setForm(f => ({ ...f, ...next }))}
+                    onPlacesChanged={moved => { void fetchEvents(); if (moved) setSaveError(''); }}
                   />
                 </div>
-                {recentLocations.length > 0 && (
-                  <div className={styles.locationChips}>
-                    <span className={styles.locationChipsLabel}>Recent:</span>
-                    {recentLocations.slice(0, 6).map(loc => (
-                      <button
-                        key={loc.name}
-                        type="button"
-                        className={`${styles.locationChip} ${form.location.trim().toLowerCase() === loc.name.toLowerCase() ? styles.locationChipActive : ''}`}
-                        onClick={() => setForm(f => ({ ...f, location: loc.name, locationAddress: loc.address }))}
-                        title={loc.address || undefined}
-                      >
-                        {loc.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
               </section>
 
               {/* WHO — games only */}
               {needsOpponent(form.eventType) && (
                 <section className={styles.formSection}>
-                  <h4 className={styles.formSectionTitle}>Who</h4>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Opponent</label>
-                    <input className={styles.input} value={form.opponent} onChange={e => setForm(f => ({ ...f, opponent: e.target.value }))} placeholder="Team name" />
-                  </div>
-                  <div className={styles.field}>
-                    <label className={styles.label}>Home / Away</label>
-                    <div className={styles.segChoice} role="group" aria-label="Home or away">
-                      {HOME_AWAY_CHOICES.map(c => (
-                        <button
-                          key={c.value}
-                          type="button"
-                          className={`${styles.segBtn} ${form.homeAway === c.value ? styles.segBtnActive : ''}`}
-                          onClick={() => setForm(f => ({ ...f, homeAway: c.value }))}
-                        >
-                          {c.label}
-                        </button>
-                      ))}
+                  <div className={styles.formSectionGrid}>
+                    <div className={styles.field}>
+                      <label className={styles.label} htmlFor="event-opponent">Opponent</label>
+                      <input id="event-opponent" className={styles.input} value={form.opponent} onChange={e => setForm(f => ({ ...f, opponent: e.target.value }))} placeholder="Team name" />
                     </div>
-                    <p className={styles.formHint}>Sets your dugout printout (&ldquo;@&rdquo; vs &ldquo;vs&rdquo;) and which side your win/loss counts on.</p>
+                    <div className={styles.field}>
+                      {/* A one-value form field is a dropdown (owner convention 2026-08-22) — this was
+                          the portal's last segmented row inside a form. */}
+                      <label className={styles.label} htmlFor="event-home-away">Home / Away</label>
+                      <select id="event-home-away" className={styles.select} value={form.homeAway} onChange={e => setForm(f => ({ ...f, homeAway: e.target.value }))}>
+                        {/* An imported game can hold no side (a blank Home/Away cell). Without this row the
+                            browser paints "Home" over an empty value — the old segmented control showed
+                            nothing selected, and so does this (/review 2026-09-21). */}
+                        {!form.homeAway && <option value="">—</option>}
+                        {HOME_AWAY_CHOICES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
+                      </select>
+                    </div>
                   </div>
+                  <p className={styles.formHint}>Sets your dugout printout (&ldquo;@&rdquo; vs &ldquo;vs&rdquo;) and which side your win/loss counts on.</p>
                   {/* "This is a scrimmage" — ONE line, the same shape as Repeat weekly, no hint under it
                       (owner, 2026-09-20: "this is a scrimmage is enough"). A Game only (D3); on add and
                       on edit, before or after a result; what it means lives in the help article. */}
@@ -3513,8 +3542,8 @@ export default function CoachesSchedulePage({
                   is mount-only, so editing an event that already carries any of these opens the
                   group once and never fights the coach's own toggle afterwards. */}
               <CoachFormDisclosure
-                label="Add details (optional)"
-                title="Details"
+                label={needsOpponent(form.eventType) ? 'More — field, uniform, tags, links, notes' : 'More — field, address, links, notes'}
+                title="More"
                 meta={eventDetailsSummary}
                 defaultOpen={hasEventDetails}
               >
@@ -3540,16 +3569,22 @@ export default function CoachesSchedulePage({
                     </div>
                   )}
                 </div>
-                {/* Address is part of WHERE, which the organizer owns on a mirrored game. */}
-                {!editingMirrored && (
+                {/* The diamond came from the place (D8): say so, and that changing it here is this game's own. */}
+                {formPlace?.fieldNumber && form.fieldNumber.trim() === formPlace.fieldNumber && (
+                  <p className={styles.formHint}>{formPlace.fieldNumber} is {formPlace.name}&rsquo;s usual — change it above for this game only.</p>
+                )}
+                {/* Address LEFT this form (D8): a place carries it. The one case it still shows is an
+                    event from before the book that holds an address and no place — read it, edit it,
+                    or pick a place and let the book carry it from now on. Never on a mirrored game. */}
+                {!editingMirrored && !form.placeId && form.locationAddress.trim() !== '' && (
                   <div className={styles.field}>
                     <label className={styles.label}>Address</label>
                     <input
                       className={styles.input}
                       value={form.locationAddress}
                       onChange={e => setForm(f => ({ ...f, locationAddress: e.target.value }))}
-                      placeholder="Street address — powers the “open in Maps” link"
                     />
+                    <p className={styles.formHint}>From before places — pick or add a place above and the book carries the address from now on.</p>
                   </div>
                 )}
                 {/* TAGS — a coach's own vocabulary ("Rivalry", "Top in the province"); games only.
@@ -3684,12 +3719,12 @@ export default function CoachesSchedulePage({
                       // Name the real count: a removed bye week means eleven, not twelve.
                       : recurringSeries && keptDates.length
                         ? `Add ${keptDates.length} ${recurrenceNoun}${keptDates.length === 1 ? '' : 's'}`
-                        : 'Save Event'}
+                        // The title's verb, in the portal's sentence case: "Add game", "Add practice".
+                        : `Add ${recurrenceNoun}`}
                 </button>
               </div>
             )}
-          </div>
-        </div>
+        </QuestionShell>
       )}
 
 

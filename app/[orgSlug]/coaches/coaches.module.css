@@ -4772,7 +4772,7 @@ a.oneChip:hover { border-color: currentColor; }
 
    `.modalFlushFooter` is kept above as a no-op for the panels that already declare it; it now
    asserts what would happen anyway. Do not re-introduce the padding on a modal with a footer. */
-.modal:has(.modalFooter) { padding-bottom: 0; }
+.modal:has(.modalFooter, .editScope) { padding-bottom: 0; }
 .modal:has(.modalFooter) .modalFooter { margin-bottom: 0; }
 /* ⚠ AND THE SLIDE-OVERS (2026-09-01, owner screenshot: the dues drawer's Notes field clipped
    behind Save). The automatic rule above named `.modal` and the drawers are `.slideOver` — same
@@ -4785,21 +4785,16 @@ a.oneChip:hover { border-color: currentColor; }
 .slideOver:has(.modalFooter) { padding-bottom: 0; }
 .slideOver:has(.modalFooter) .modalFooter { margin-bottom: 0; }
 
-/* Event form modal — a touch wider so the date/time pickers have room. Its flush-footer
-   handling now comes from `.modalFlushFooter` above (it was the first surface to need it).
-   Centered like every other dialog (owner decision 2026-07-13: all pop-up modals open
-   centered for consistency — previously this one docked right to sit over the event detail
-   slide-over, which read as modals "jumping" between center and right). */
-.eventFormModal { max-width: 600px; }
+/* ⚰ `.eventFormModal` (2026-07-13 → 2026-09-21). The event form's private 600px width; it stands in
+   QuestionShell's `wide` (640, below) now, like every other form that needs the room. Its
+   centering decision (owner 2026-07-13: every dialog opens centered) is the shell's default. */
 /* modalWide — a QuestionShell that carries two columns or a control beside a long label (the
    session sheet's roster in two columns, its steppers beside "60-yd sprint · seconds · lower is the
    aim"; drawn at 640 in the development lifecycle re-evaluation, stage 2). Width only — everything
    else is the one modal. ≤640 the overlay is a full-screen sheet and the width is moot. */
 .modalWide { max-width: 640px; }
-/* Rounded (pill) footer actions — scoped to the event modal so the rest of the app's square
-   buttons are untouched. */
-.eventFormModal .modalFooter .btnPrimary,
-.eventFormModal .modalFooter .btnGhost { border-radius: 999px; }
+/* ⚰ The event modal's pill-radius footer buttons (→ 2026-09-21): the one form whose Save was
+   round. Every footer wears the portal's square buttons. */
 
 /* Scrolling-body modal (Add Expense / Add Payable): when the form is taller than the window, the
    FIELDS scroll and the footer stays pinned BELOW them, so the last field (Tags) never hides
@@ -4979,18 +4974,26 @@ a.oneChip:hover { border-color: currentColor; }
   overflow-wrap: anywhere;
 }
 
-/* ── Grouped event form (When / Where / Who) ───────────────────────────────── */
+/* ── Grouped form (the event form's When / Where / Who; every open CoachFormDisclosure) ───── */
 /* padding-bottom lets the last field (Notes) scroll clear of the sticky Save footer. */
 .formBody { display: flex; flex-direction: column; gap: 0.85rem; padding-bottom: 2.5rem; }
+/* ⚠ FLAT — NO FILL, NO BORDER, NO PADDING (owner ruling 2026-09-21, the event-form consistency
+   pass). This used to be a filled, bordered card (olive-soft on paper; in the dark gate the same
+   token is blueprint-blue at 18% — the "blue background" the owner remembered). A card inside a
+   card put every input on a tinted ground, the one shape the 2026-07-30 ruling and the Staff
+   screen's 2026-09 pass had already retired, and it was the only form on the portal drawn that
+   way. Groups now separate by SPACE (the sibling rule below), the way band headings do. Same rule
+   draws the open disclosure, the Give Award sheet and the paste-a-roster sheet — all four flattened
+   together on purpose, so none is left as the odd one out. */
 .formSection {
-  background: var(--home-olive-soft, rgba(255,255,255,0.025));
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.08));
-  border-radius: 8px;
-  padding: 0.8rem 0.85rem;
   display: flex;
   flex-direction: column;
   gap: 0.7rem;
 }
+/* The gap between groups, on top of .formBody's own — a flat group still needs to read as one. */
+.formBody > .formSection + .formSection,
+.formBody > .formSection + .discToggle,
+.formBody > .discToggle + .formSection { margin-top: 0.45rem; }
 .formSectionTitle {
   margin: 0;
   font-size: var(--type-label);
@@ -5000,9 +5003,12 @@ a.oneChip:hover { border-color: currentColor; }
   color: var(--text-tertiary);
 }
 .formSectionGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.7rem; }
-/* A labelled sub-group INSIDE an already-boxed section (e.g. Tags/Links within the event form's
-   "Add details" disclosure). Same heading language as .formSection, no second border — nesting one
-   bordered card inside another reads as a mistake. */
+/* Date · Start time · End time on one row (the event form asks the date ONCE, owner 2026-09-21).
+   The date takes the wider track; ≤640 it spans the row and the two times share the second. */
+.formSectionGrid3 { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 0.7rem; }
+/* A labelled sub-group INSIDE a section (Tags / Links within the event form's "More" disclosure).
+   Same heading language as .formSection; its own title and the flex gap are all that group it —
+   the section it sits in has been flat since 2026-09-21, and it was never boxed. */
 .formSubGroup { display: flex; flex-direction: column; gap: 0.7rem; }
 
 /* ── Progressive disclosure (CoachFormDisclosure) ──────────────────────────
@@ -5141,48 +5147,23 @@ a.oneChip:hover { border-color: currentColor; }
 .bulkDropTitle { margin: 0; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
 .bulkDropSub { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); max-width: 28ch; line-height: 1.45; }
 
-/* Event-type picker — tap-to-choose colored pills that replace the type <select>. Each is an
-   individually-rounded chip with its event-color dot; the active chip rings in its own color
-   (inline-styled from EVENT_COLORS). Wraps to as many rows as it needs. */
-.eventTypePicker { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.eventTypeOption {
-  display: inline-flex; align-items: center; gap: 0.4rem;
-  padding: 0.42rem 0.8rem;
-  background: var(--white-05);
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
-  border-radius: 999px;
-  color: var(--text-primary);
-  font-size: var(--type-body); font-weight: 600;
-  cursor: pointer;
-}
-.eventTypeOption:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); }
-.eventTypeOptionActive { border-width: 1.5px; }
+/* ⚰ `.eventTypePicker` · `.eventTypeOption` · `.eventTypeOptionActive` (→ 2026-09-21). The in-form
+   event-type pills. Every door into the form already chose the type (the Add Event menu, the practice
+   hub, a tournament's game slot), so the row asked a question the title had answered. The dot lives
+   on: it is the type's mark after the form's title. */
 .eventTypeDot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+/* A modal title carrying one mark after its text (the event form's type dot). */
+.modalTitleMark { display: inline-flex; align-items: center; gap: 0.5rem; }
 
-/* Tap-to-fill "recent locations" chips (themed replacement for the native datalist popup). */
-.locationChips { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
-.locationChipsLabel {
-  font-size: var(--type-support); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em;
-  color: var(--text-tertiary); margin-right: 0.1rem;
-}
-.locationChip {
-  background: var(--white-05);
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
-  border-radius: 999px;
-  color: var(--text-secondary);
-  padding: 0.26rem 0.7rem;
-  font-size: var(--type-support);
-  cursor: pointer;
-  transition: background 0.1s, border-color 0.1s;
-}
-.locationChip:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); border-color: var(--home-line-strong, rgba(255,255,255,0.25)); }
-.locationChipActive {
-  background: rgba(var(--logic-lime-rgb), 0.16);
-  border-color: var(--logic-lime);
-  color: var(--logic-lime);
-}
+/* ⚰ `.locationChips` · `.locationChipsLabel` · `.locationChip` · `.locationChipActive` (→ 2026-09-21,
+   Arrival & Places D4). The "Recent" chips under Location, derived from past events. They carried
+   the address of the MOST RECENT event with that name — measured on both databases the day they
+   retired: not one event held an address — and never the diamond. The place book (mig 307) is the
+   list now, most recently used first, inside the Location picker (`PlaceCombobox`, which wears the
+   tag combobox's rules below). */
+
 /* ── Coach tag picker (autocomplete-or-create chips, Coach Tags Phase 1) ──────
-   Mirrors .locationChip's tap-to-fill idiom, but chips here are multi-select
+   Mirrored the retired Recent-location chips' tap-to-fill idiom, but chips here are multi-select
    (a game can carry several tags) so the active state means "applied", not
    "the one value" — same lime-tint treatment either way. */
 .tagPickerRow { display: flex; gap: 0.5rem; align-items: center; }
@@ -5379,6 +5360,8 @@ a.oneChip:hover { border-color: currentColor; }
 /* Form grids collapse to one column at the content breakpoint (migrated 520→640). */
 @media (max-width: 640px) {
   .formSectionGrid { grid-template-columns: 1fr; }
+  .formSectionGrid3 { grid-template-columns: 1fr 1fr; }
+  .formSectionGrid3 > :first-child { grid-column: 1 / -1; }
   /* Event Links rows (label + url side-by-side) stack so neither input squashes. */
   .resourceRow { flex-wrap: wrap; }
   .resourceRow .input:first-child,
@@ -9084,10 +9067,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive,
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .segBtnActive:hover { background: var(--home-ink); color: var(--home-paper); }
 
-/* Event-type picker in warm: dark ink text on cream, soft olive hover (the white-alpha defaults
-   are invisible on paper). The active chip keeps its inline event-color ring. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .eventTypeOption { border-color: var(--home-line-strong); color: var(--text-primary); }
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .eventTypeOption:hover { background: var(--home-olive-soft); }
 
 /* ── Warm coaches portal (TH-5) — org-vs-own MONEY chips ──────────────────
    ⚠ NARROWED 2026-09-15: this rescue used to cover the tag-picker chips too, back when a chip's

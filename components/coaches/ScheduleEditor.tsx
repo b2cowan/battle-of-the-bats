@@ -421,8 +421,6 @@ function EventForm({
         ))}
       </div>
 
-      <p className={styles.formHint}>* Required</p>
-
       <input
         className={styles.input}
         placeholder={form.eventType === 'game' ? 'Game title (e.g. League game)' : 'Title (e.g. Practice)'}

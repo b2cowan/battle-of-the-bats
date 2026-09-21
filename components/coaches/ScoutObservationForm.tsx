@@ -159,7 +159,7 @@ export default function ScoutObservationForm({ tags, heading, onSave, filter }: 
       />
       <div className={styles.scoutLogRow}>
         <label className={styles.scoutLogField}>
-          <span className={styles.scoutLogLabel}>Tag <em>(optional)</em></span>
+          <span className={styles.scoutLogLabel}>Tag</span>
           <select
             className={styles.select}
             value={tag ?? ''}

@@ -14,10 +14,12 @@ import {
   getRepTeamEventTagsMap,
   setRepTeamEventTagsOfKind,
   getRepEventAwardCountsMap,
+  getRepTeamPlaces,
 } from '@/lib/db';
 import type { RepEventType } from '@/lib/types';
 import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
+import { resolvePlaceId } from '@/lib/rep-event-places';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canViewSchedule, canManageSchedule } from '@/lib/coach-capabilities';
 import { syncTournamentGameMirrorSafely } from '@/lib/rep-tournament-game-mirror';
@@ -101,10 +103,13 @@ export const GET = withObservability(async (req: Request,
   // Tags: the team's game-tag library (for the chip picker) + which tags each returned event
   // already carries (for chip display without a per-event fetch). Both gate on the same
   // `schedule` capability already required for this whole route.
-  const [tags, tagsByEventId, awardCountByEventId] = await Promise.all([
+  // The place book rides the same read (mig 307) — the form's Location picker and the event
+  // page's note both want it, and this route is already the schedule's one round trip.
+  const [tags, tagsByEventId, awardCountByEventId, places] = await Promise.all([
     getRepTeamTagLibrary(teamId, 'game', ctx.org.id),
     getRepTeamEventTagsMap(events.map(e => e.id)),
     getRepEventAwardCountsMap(events.map(e => e.id)),
+    getRepTeamPlaces(teamId),
   ]);
   // lineupStatusByEvent is OMITTED (not {}) when the caller can't see lineups, so a client with a
   // stale capability cache can tell "no lineup visibility" apart from "no lineups saved" and
@@ -116,6 +121,9 @@ export const GET = withObservability(async (req: Request,
     tags,
     tagsByEventId,
     awardCountByEventId,
+    places,
+    // The team's arrival habit (mig 307) — what a NEW game / practice's Arrival starts at.
+    arrivalDefaults: { game: team.arrivalBeforeGameMin, practice: team.arrivalBeforePracticeMin },
     ...(lineupStatusByEvent ? { lineupStatusByEvent } : {}),
     ...(lineupOpenInningsByEvent ? { lineupOpenInningsByEvent } : {}),
   });
@@ -140,6 +148,7 @@ export const POST = withObservability(async (req: Request,
     endsAt = null,
     location = null,
     locationAddress = null,
+    placeId = null,
     arrivalTime = null,
     fieldNumber = null,
     uniform = null,
@@ -153,6 +162,8 @@ export const POST = withObservability(async (req: Request,
   // `scrimmageFlagFor`, which the db layer applies again on write.
   const isScrimmage = scrimmageFlagFor(body.eventType, body.isScrimmage);
   const resources = sanitizeResources(body.resources);
+  // The place link, proved to be this team's (mig 307) — a stray id is dropped, the text stays.
+  const validPlaceId = (await resolvePlaceId(team.id, placeId)) ?? null;
 
   if (!eventType || !name?.trim()) {
     return NextResponse.json({ error: 'eventType and name are required' }, { status: 400 });
@@ -226,6 +237,7 @@ export const POST = withObservability(async (req: Request,
         endsAt: endTime ? `${occ.date}T${endTime}` : null,
         location: location?.trim() || null,
         locationAddress: locationAddress?.trim() || null,
+        placeId: validPlaceId,
         arrivalTime: arrivalTime?.trim() || null,
         fieldNumber: fieldNumber?.trim() || null,
         uniform: isGame ? (uniform?.trim() || null) : null,
@@ -273,6 +285,7 @@ export const POST = withObservability(async (req: Request,
     endsAt: endsAt || null,
     location: location?.trim() || null,
     locationAddress: locationAddress?.trim() || null,
+    placeId: validPlaceId,
     arrivalTime: arrivalTime?.trim() || null,
     fieldNumber: fieldNumber?.trim() || null,
     uniform: uniform?.trim() || null,

@@ -1943,6 +1943,10 @@ The **franchise / rep-team module**: a club's competitive ("rep"/travel) teams, 
 <!-- dict:col:rep_teams.share_club_book -->
 **`share_club_book`** (bool, NOT NULL, default false; **mig 227**; partial index `idx_rep_teams_org_share_club_book ON (org_id) WHERE share_club_book`) — Club Shared Book: the **head coach's half of the two-key switch** (`notes`-gated), and also the **RECIPROCITY key** — a team reads its siblings' shared books only while this is true for **itself** (owner ruling §8 Q2, enforced server-side in `resolveClubBookAccess`, never in the client). True = this team's book line, observations and per-opponent record become readable by the org's OTHER sharing teams, labelled with team + writer. **Read-only in both directions**: no cross-team edit or delete exists anywhere (`lib/coach-club-book*.ts` contain no mutation; asserted by `tests/unit/coach-history-endpoint-guard.test.ts`). Turning it off hides this team's content from siblings on their **next read** — nothing was ever copied. **Lives on the team, not the season**: a book spans years, exactly like `schedule_visibility` above. **Never crosses `org_id`** — every club-layer read is org-filtered, with an adversarial two-org fixture in `tests/unit/coach-club-book.test.ts`. Mapped as `=== true` so a pre-migration row reads FALSE (fails closed). _Writes:_ the `shareClubBook` branch of [app/api/coaches/[orgSlug]/teams/[teamId]/route.ts](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/route.ts) PATCH, which re-checks the org switch + plan on every call.
 
+<!-- dict:col:rep_teams.arrival_before_game_min -->
+<!-- dict:col:rep_teams.arrival_before_practice_min -->
+**`arrival_before_game_min`** / **`arrival_before_practice_min`** (integer, nullable; CHECK `IN (15, 30, 45, 60, 90, 120)` or NULL; **mig 307**) — the **team's arrival habit** (Arrival & Places D2): minutes before a game (league + tournament games) / a practice that a NEW event's Arrival starts at. NULL = the team asks nothing (Arrival starts at None). ⚠ A SEED, NOT A LINK: `openAddForm` writes `rep_team_events.arrival_time` from it at open time and the event's own clock is the record from then on — changing the habit later moves nothing already on the calendar. Team-scoped, not season-scoped (a habit). Two columns rather than a `coach_settings` key, deliberately (every jsonb write is a read-modify-write of one shared bag). The seven values mirror `ARRIVAL_PRESET_MINUTES` (`lib/coach-arrival.ts`); anything else on the wire normalises to NULL before the CHECK sees it. _Reads/writes:_ the team GET/PATCH (`arrivalDefaults`, gated `canManageSchedule`), the events GET (carried to the form). Mapped onto `RepTeam.arrivalBeforeGameMin` / `.arrivalBeforePracticeMin`.
+
 <!-- dict:col:rep_teams.pdf_settings -->
 **`pdf_settings`** (jsonb, NOT NULL, default `'{}'`; **mig 259**) — the **team layer of document branding** (PDF Export Quality decision 7, owner 2026-08-21): `{ logoDataUrl?, accentColor?, footerText? }`, written by the coaches-portal "How your documents look" card. Every key optional — **an absent key inherits the club's** (`organizations.pdf_settings`) at resolve time; `{}` = fully inherited ("Use club look" writes `{}` back). `logoDataUrl` is a **pre-normalized PNG/JPEG data URL** (client downscales to ≤256px; server re-validates format + ~300 KB cap in the PUT). Resolution is server-side ONLY ([lib/export/resolve-pdf-settings.ts](../../../lib/export/resolve-pdf-settings.ts)): team field → club field → default; team crest → club logo → none; the NAME on team paper is always the team's name and is **not stored here** (not a setting). **Lives on the team, not the season** — a crest outlasts a program year, like `schedule_visibility`/`share_club_book` above. Mapped as `RepTeam.pdfLook` (null when `{}`). _Writes:_ head coach only, on plans with `pdf_template_settings` (Tournament Plus+ orgs and the standalone Premium portal), via [app/api/coaches/[orgSlug]/teams/[teamId]/pdf-settings/route.ts](../../../app/api/coaches/%5BorgSlug%5D/teams/%5BteamId%5D/pdf-settings/route.ts) PUT (whole-object replace).
 
@@ -2278,6 +2282,9 @@ moment it lands.
 
 <!-- dict:col:rep_team_events.arrival_time -->
 **`arrival_time`** (text, nullable; mig 160) — game-day detail: a "be there by" clock time as `HH:mm` (24h), same day as `starts_at`. No CHECK; shape is UI-enforced. Shown on the event detail + folded into the ICS export description. Tier-2 game-day field.
+
+<!-- dict:col:rep_team_events.place_id -->
+**`place_id`** (FK → `rep_team_places.id` ON DELETE SET NULL, nullable; **mig 307**, partial index `rep_team_events_place_idx`) — the **place this event's location was picked from**, or null for a free-typed location (Arrival & Places D6). ⚠ A LINK, NOT THE RECORD: `location` / `location_address` / `field_number` stay the event's own COPY — editing a place never rewrites a past event (the PATCH route *offers* to rewrite name + address on UPCOMING events; the diamond is per-game and never pushed); removing a place nulls the link and leaves the text. Seeded by mig 307 for every non-mirrored event whose location matched a place by trimmed, case-folded name (dev 170 / prod ≈118 rows). A mirrored game (`source_tournament_game_id`) never carries one — the organizer's venue is not the team's place. _Writes:_ events POST/PATCH (`resolvePlaceId` proves the id is this team's, else null), the import (`matchPlace` by name). _Reads:_ the schedule read (the picker), the event page (the place's note).
 
 <!-- dict:col:rep_team_events.field_number -->
 **`field_number`** (text, nullable; mig 160) — game-day detail: the diamond/field label *within* the `location` (e.g. "Diamond 2"). Free text, no FK (mirrors `location`'s no-FK stance). Appended to the location label in the detail + the ICS `LOCATION`. Tier-2 game-day field.
@@ -3105,6 +3112,48 @@ moment it lands.
 <!-- dict:col:rep_player_measurables.corrected_at -->
 <!-- dict:col:rep_player_measurables.corrected_by -->
 **`corrected_from`** (numeric(8,3), nullable) / **`corrected_at`** (timestamptz, nullable) / **`corrected_by`** (FK → `auth.users.id` SET NULL, nullable) — the correction record (gotcha 9; mig 295). CHECK `rep_player_measurables_correction_whole_check`: `corrected_from` and `corrected_at` are both set or both NULL (`corrected_by` is outside the CHECK so a deleted user's SET NULL never violates it). NULL = never corrected.
+
+### `rep_team_places`
+<!-- dict:table:rep_team_places -->
+
+**Purpose:** the **place book** — a per-team library of the places the team goes: the name a coach recognises, the street address that powers the map link, the diamond or field the team usually plays on there, and a note that shows on every event held there ("park behind the arena"). Added by migration 307 (Arrival & Places, owner rulings D4–D9, 2026-09-21). **⚠ PROD-OWED with the promote, BEFORE the code (the migration-040 lesson); the seed is a data step registered in `MANUAL_PROD_STEPS.json`.**
+
+**Gotchas (read first):**
+1. **Shaped like `rep_team_tags` (mig 181):** TEAM-scoped and NOT program-year-scoped (a team's places cross its seasons — the archive ruling), `team_id` NOT NULL (no org-shared places; the admin's `org_venues` library stays admin's), one name per team case-insensitively (`rep_team_places_name_uniq` on `(team_id, lower(btrim(name)))` — the picker finds by name, so "Sherwood Park" and "sherwood park" are one), the tag book's RLS (read: org members + assigned coaches; write: assigned coaches + org admins). Every route runs service-role and gates on `canManageSchedule`; the policies are the closed direct door.
+2. **An event that picks a place keeps its OWN COPY** of name / address / diamond (`rep_team_events.location` / `location_address` / `field_number`) plus `place_id` as the link. Editing a place's name or address never rewrites a past event; the PATCH route OFFERS (`updateUpcoming: true`) to rewrite name + address on the team's UPCOMING linked events (`updateUpcomingEventsForPlace`). **The diamond is never pushed** — a park has six and a tournament moves you between them; `applyPlaceToEvent` fills the event's field only when it has none.
+3. **A free-typed location is still a location** (D5): text with no place saves as text and creates no row. "Add … as a place" is offered in the picker, never forced.
+4. **Seeded from history** (D7): mig 307 turned every team's distinct `lower(btrim(location))` over its non-mirrored events into a place — the spelling on the most recent event, the most recent non-empty address (there were NONE on either database on 2026-09-21), the most common non-empty field — and linked the matching events. Idempotent (ON CONFLICT on the name index; the link UPDATE touches only unlinked events). Counts: dev 32 places / 170 linked; prod ≈16 / ≈118.
+5. **The import matches by name** (D9): a row whose location matches a place takes its `place_id`, its address when the sheet has none, its field when the sheet has none (`matchPlace`, `lib/coach-places.ts`).
+6. **Delete is a real DELETE**, not a retire — the FK sets every linked event's `place_id` NULL and the text stays. Cap 100 per team, enforced in-process at POST.
+7. **"Most recently used first"** is computed at read time from the linked events (`getRepTeamPlaces` — `count` + `lastUsedAt` on the GET only), never stored.
+
+<!-- dict:col:rep_team_places.id -->
+**`id`** (uuid, PK, default `gen_random_uuid()`).
+
+<!-- dict:col:rep_team_places.org_id -->
+**`org_id`** (FK → `organizations.id`, NOT NULL, CASCADE) — tenant scope.
+
+<!-- dict:col:rep_team_places.team_id -->
+**`team_id`** (FK → `rep_teams.id`, **NOT NULL**, CASCADE) — the owning team (gotcha 1).
+
+<!-- dict:col:rep_team_places.name -->
+**`name`** (text, NOT NULL; CHECK `1–120` chars) — the place name a coach recognises; unique per team, case-insensitive.
+
+<!-- dict:col:rep_team_places.address -->
+**`address`** (text, nullable; CHECK ≤200) — the street address that powers the map link; copied onto an event when picked.
+
+<!-- dict:col:rep_team_places.field_number -->
+**`field_number`** (text, nullable; CHECK ≤40) — the diamond / field the team USUALLY plays on here; copied onto an event only when the event has none (gotcha 2).
+
+<!-- dict:col:rep_team_places.note -->
+**`note`** (text, nullable; CHECK ≤160) — shown on every event held here ("park behind the arena"); read through the link, never copied.
+
+<!-- dict:col:rep_team_places.created_by -->
+**`created_by`** (FK → `auth.users.id` ON DELETE SET NULL, nullable) — who added it; NULL for the seeded rows.
+
+<!-- dict:col:rep_team_places.created_at -->
+<!-- dict:col:rep_team_places.updated_at -->
+**`created_at`** / **`updated_at`** (timestamptz, NOT NULL, default `now()`).
 
 ### `rep_team_evaluation_sessions`
 <!-- dict:table:rep_team_evaluation_sessions -->

@@ -4589,9 +4589,6 @@ export function PlayerDuesPanel({
                 on the expense.
               </p>
             )}
-            <p className={styles.formHint} style={{ marginBottom: '0.6rem' }}>
-              * Required
-            </p>
             <div className={styles.formGrid} style={{ gap: '0.6rem', marginBottom: '0.6rem' }}>
               <div>
                 <label className={styles.label} htmlFor="credit-amount">Amount *</label>

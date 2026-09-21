@@ -5,9 +5,11 @@ import {
   getRepTeam,
   getActiveRepProgramYear,
   getRepTeamEvents,
+  getRepTeamPlaces,
   createRepTeamEvent,
   updateRepTeamEvent,
 } from '@/lib/db';
+import { matchPlace } from '@/lib/coach-places';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageSchedule } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
@@ -85,6 +87,8 @@ export const POST = withObservability(async (req: Request,
   // before matching, because that is the day the coach's spreadsheet means — a raw UTC slice would
   // put every evening game on the wrong date.
   const liveEvents = await getRepTeamEvents(programYear.id);
+  // The team's place book (mig 307): a row whose location matches a place by name takes its link.
+  const places = await getRepTeamPlaces(team.id);
   const existing: ExistingScheduleEvent[] = liveEvents.map(e => {
     const zoned = utcToZonedInputs(e.startsAt);
     return {
@@ -140,8 +144,13 @@ export const POST = withObservability(async (req: Request,
         // Likewise the time: with no time cell there is nothing to move the game to, and
         // `startsAt` would otherwise resolve to midnight.
         if (row.time.trim()) changes.startsAt = r.startsAt;
+        // A row whose location is one of the team's places takes the link, and the place's address
+        // and usual field where the sheet is silent (D9) — a whole imported season map-linked at once.
+        const place = matchPlace(places, row.location);
         if (row.location.trim()) changes.location = row.location.trim();
+        if (place) changes.placeId = place.id;
         if (row.address.trim()) changes.locationAddress = row.address.trim();
+        else if (place?.address) changes.locationAddress = place.address;
         if (row.arrival.trim()) changes.arrivalTime = row.arrival.trim();
         if (row.field.trim()) changes.fieldNumber = row.field.trim();
         if (row.uniform.trim()) changes.uniform = row.uniform.trim();
@@ -167,9 +176,10 @@ export const POST = withObservability(async (req: Request,
           name: r.name,
           startsAt: r.startsAt,
           location: row.location.trim() || null,
-          locationAddress: row.address.trim() || null,
+          locationAddress: row.address.trim() || matchPlace(places, row.location)?.address || null,
+          placeId: matchPlace(places, row.location)?.id ?? null,
           arrivalTime: row.arrival.trim() || null,
-          fieldNumber: row.field.trim() || null,
+          fieldNumber: row.field.trim() || matchPlace(places, row.location)?.fieldNumber || null,
           uniform: row.uniform.trim() || null,
           opponent: r.opponent,
           homeAway: (r.homeAway as 'home' | 'away' | 'neutral' | null) ?? null,

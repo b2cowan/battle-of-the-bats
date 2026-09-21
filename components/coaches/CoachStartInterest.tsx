@@ -86,8 +86,6 @@ export default function CoachStartInterest({ defaultName = '', defaultEmail = ''
           commitment, and your free Coaches Portal stays free.
         </p>
 
-        <p className={styles.formHint}>* Required</p>
-
         <label className={styles.field}>
           <span className={styles.label}>Your name *</span>
           <input className={styles.input} type="text" value={name} maxLength={120} onChange={e => { setName(e.target.value); setSaved(false); }} />

@@ -12,6 +12,7 @@ import {
 import { getEntitledTeamMembership, resolveMembershipCapabilities } from '@/lib/coach-membership';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { normalizeLineupSettings } from '@/lib/lineup-caps';
+import { normalizeArrivalDefault } from '@/lib/coach-arrival';
 import type { Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteScoutingSummary, canViewMoney, canManageSchedule } from '@/lib/coach-capabilities';
@@ -156,6 +157,16 @@ export const GET = withObservability(async (_req: Request,
           openingBalanceFrom: await getSeasonName(programYear.openingBalanceFromYearId),
         }
       : null,
+    /**
+     * The team's arrival habit (mig 307, Arrival & Places D2): minutes before a game / a practice
+     * that a NEW event starts from. Served to everyone who can read the team (the Add Event form
+     * seeds from it); editing is a schedule act. A team setting, not a season one.
+     */
+    arrivalDefaults: {
+      game: team.arrivalBeforeGameMin,
+      practice: team.arrivalBeforePracticeMin,
+      canEdit: canManageSchedule(assignment.capabilities),
+    },
     // Assistant Coaches: the caller's effective capability set + their role, so the client can
     // hide/disable ungranted areas (defense-in-depth — the routes also enforce server-side).
     coachRole: assignment.coachRole,
@@ -229,6 +240,19 @@ export const PATCH = withObservability(async (req: Request,
     }
     await setScheduleVisibility({ repTeamId: teamId, visibility: visibility as ScheduleVisibility });
     return NextResponse.json({ ok: true, scheduleVisibility: visibility });
+  }
+
+  // The arrival habit (mig 307) — a schedule act. Each key is one of the seven answers or null;
+  // anything else reads as null rather than 400ing, because the CHECK on the column is the last word.
+  if ('arrivalDefaults' in body) {
+    const denied = denyUnless(canManageSchedule(assignment.capabilities), 'Only coaches who manage the schedule can change arrival defaults.');
+    if (denied) return denied;
+    const raw = body.arrivalDefaults && typeof body.arrivalDefaults === 'object' ? body.arrivalDefaults : {};
+    const patch: { arrivalBeforeGameMin?: number | null; arrivalBeforePracticeMin?: number | null } = {};
+    if ('game' in raw) patch.arrivalBeforeGameMin = normalizeArrivalDefault(raw.game);
+    if ('practice' in raw) patch.arrivalBeforePracticeMin = normalizeArrivalDefault(raw.practice);
+    const updated = await updateRepTeam(teamId, patch);
+    return NextResponse.json({ ok: true, arrivalDefaults: { game: updated.arrivalBeforeGameMin, practice: updated.arrivalBeforePracticeMin } });
   }
 
   // Lineup season-default caps (P3) — an OPERATIONAL setting, gated on the lineups capability

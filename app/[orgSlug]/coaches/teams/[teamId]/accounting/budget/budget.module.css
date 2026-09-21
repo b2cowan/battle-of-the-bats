@@ -1250,7 +1250,19 @@
    shape. Desktop only: at ≤640 every field already carries its own stacked label.
    D3 — one grounds story: the date fields (this sheet's `.input`) take the portal's standard
    field ground, matching the shared amount input beside them. */
-.planEditor { gap: 0.6rem; }
+/* ⚠ THE TINTED SURFACE D1 WAS DRAWN AGAINST CAME FROM `.formSection` — until 2026-09-21, when the
+   event-form consistency pass flattened that shared rule (owner ruling: the boxes come off the event
+   form, every open disclosure, Give an award and Paste a roster). This editor was not on that list,
+   and its approved drawing IS the tint: rows on one tinted surface, a hairline repeat tray, white
+   installment cards on the phone. So the surface lives here now, byte-for-byte what the shared rule
+   used to give, until the owner rules on this fifth surface (/review, 2026-09-21). */
+.planEditor {
+  gap: 0.6rem;
+  background: var(--home-olive-soft, rgba(255,255,255,0.025));
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.08));
+  border-radius: 8px;
+  padding: 0.8rem 0.85rem;
+}
 .planEditorTools { display: flex; gap: 0.4rem; align-items: center; }
 
 .planColHead {

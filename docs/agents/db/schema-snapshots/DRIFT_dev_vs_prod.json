@@ -1,12 +1,12 @@
 {
   "generated": "2026-09-21",
-  "total": 5,
+  "total": 35,
   "counts": {
-    "tables": 0,
-    "columns": 2,
-    "indexes": 0,
-    "constraints": 0,
-    "rls": 3
+    "tables": 1,
+    "columns": 15,
+    "indexes": 5,
+    "constraints": 5,
+    "rls": 9
   },
   "items": [
     {
@@ -22,11 +22,131 @@
       "sig": ""
     },
     {
+      "key": "check:only-dev:rep_team_places.rep_team_places_address_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_places.rep_team_places_field_number_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_places.rep_team_places_name_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_team_places.rep_team_places_note_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_teams.rep_teams_arrival_before_game_min_check",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_teams.rep_teams_arrival_before_practice_min_check",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_events.is_scrimmage",
       "sig": ""
     },
     {
+      "key": "column:only-dev:rep_team_events.place_id",
+      "sig": ""
+    },
+    {
       "key": "column:only-dev:rep_team_events.practice_plan_sent_to",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.address",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.created_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.created_by",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.field_number",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.name",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.note",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.org_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.team_id",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_places.updated_at",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_teams.arrival_before_game_min",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_teams.arrival_before_practice_min",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_events.rep_team_events_place_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_places.rep_team_places_created_by_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_places.rep_team_places_org_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_places.rep_team_places_pkey",
+      "sig": ""
+    },
+    {
+      "key": "constraint:only-dev:rep_team_places.rep_team_places_team_id_fkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_events_place_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_places_name_uniq",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_places_org_idx",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_places_pkey",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:rep_team_places_team_idx",
+      "sig": ""
+    },
+    {
+      "key": "table:only-dev:rep_team_places",
       "sig": ""
     }
   ]

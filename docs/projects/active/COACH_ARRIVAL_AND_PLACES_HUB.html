@@ -1,0 +1,539 @@
+<title>Arrival & Places</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --doc-bg: #ECEDF1; --doc-panel: #F7F7F9; --doc-ink: #1B1D23; --doc-muted: #5C6070; --doc-line: rgba(27,29,35,0.12);
+    --doc-accent: #57651E; --doc-on: rgba(87,101,30,0.16); --doc-warn: #835006; --doc-focus: #134FD3;
+    --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54;
+    --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+    --home-lime: #D9F99D; --home-lime-ink: #241E15; --home-fill: rgba(70,55,30,0.08); --evt-game: #34662A;
+    --type-heading: 16px; --type-body: 14px; --type-support: 12px; --type-label: 11px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-focus:#7FA3FF; } }
+  :root[data-theme="dark"] { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-focus:#7FA3FF; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--doc-bg); color: var(--doc-ink); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding-block: 28px 64px; padding-inline: 20px; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, monospace; }
+  /* hub chrome */
+  .hubbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px 24px; padding:14px 20px; background:var(--doc-ink); color:var(--doc-bg); }
+  .hubbar .t { margin-right:auto; } .hubbar .t strong { display:block; font-size:15px; } .hubbar .t small { color: color-mix(in srgb, var(--doc-bg) 75%, transparent); font-size:12px; }
+  .stages { display:flex; flex-wrap:wrap; gap:4px; list-style:none; margin:0; padding:0; }
+  .stages li { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:5px 10px; border-radius:999px; color: color-mix(in srgb, var(--doc-bg) 55%, transparent); white-space:nowrap; cursor:default; }
+  .stages li.current { color:var(--doc-ink); background:var(--doc-accent); }
+  .hubactions button { min-height:40px; padding:7px 12px; border:1px solid color-mix(in srgb, var(--doc-bg) 40%, transparent); border-radius:6px; background:transparent; color:var(--doc-bg); font:inherit; font-size:13px; cursor:pointer; }
+  .hubactions button[aria-pressed="true"] { background:var(--doc-bg); color:var(--doc-ink); }
+  .hubtabs { display:flex; gap:22px; overflow:auto; white-space:nowrap; padding:0 20px; background:var(--doc-panel); border-bottom:1px solid var(--doc-line); }
+  .hubtabs button { min-height:46px; padding:9px 0; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--doc-muted); font:inherit; font-size:14px; cursor:pointer; }
+  .hubtabs button[aria-pressed="true"] { border-bottom-color:var(--doc-accent); color:var(--doc-ink); font-weight:700; }
+  button:focus-visible { outline:2px solid var(--doc-focus); outline-offset:2px; }
+  /* header */
+  .head { display:grid; gap:8px; max-width:72ch; margin-bottom:24px; }
+  .eyebrow { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-muted); }
+  h1 { margin:0; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.01em; text-wrap:balance; }
+  .lede { margin:0; color:var(--doc-muted); max-width:66ch; } .lede strong { color:var(--doc-ink); font-weight:600; }
+  .tag { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; padding:2px 6px; border-radius:4px; border:1px solid var(--doc-line); color:var(--doc-muted); }
+  .tag.new { color:var(--doc-accent); border-color:var(--doc-accent); } .tag.call { color:var(--doc-warn); border-color:var(--doc-warn); }
+  /* specimens */
+  .row { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(420px,100%),1fr)); gap:28px; align-items:start; margin-bottom:36px; }
+  .spec { display:grid; gap:10px; justify-items:start; }
+  .spec-cap { display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; font-size:13px; color:var(--doc-muted); }
+  .spec-cap b { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-ink); }
+  .stage { position:relative; width:600px; max-width:100%; container-type:inline-size; }
+  .stage.narrow { width: 440px; } .stage.phone { width: 390px; }
+  .frame { width:100%; background:var(--home-card); color:var(--home-ink); border:1px solid var(--home-line-strong); border-radius:12px; padding:22px; font-family:Inter,system-ui,sans-serif; font-size:var(--type-body); line-height:1.4; box-shadow:0 1px 2px rgba(70,55,30,.05), 0 10px 30px rgba(20,15,10,.14); display:flex; flex-direction:column; gap:14px; }
+  .fhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .ftitle { display:inline-flex; align-items:center; gap:10px; margin:0; font-size:var(--type-heading); font-weight:700; }
+  .fx { color:var(--home-dim); font-size:18px; line-height:1; }
+  .dot { width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
+  .hint { margin:0; font-size:var(--type-support); color:var(--home-dim); line-height:1.4; }
+  .hint b { color:var(--home-ink); font-weight:600; }
+  .lbl { display:block; font-size:var(--type-support); font-weight:600; color:var(--home-dim); text-transform:uppercase; letter-spacing:.04em; }
+  .field { display:flex; flex-direction:column; gap:5px; }
+  .input { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--home-paper); border:1px solid var(--home-line-strong); border-radius:6px; padding:8px 12px; color:var(--home-ink); min-height:36px; }
+  .input.ph { color:var(--home-dim); } .input svg { flex:0 0 auto; color:var(--home-dim); }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:11px; } .grid3 { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:11px; }
+  .chk { display:inline-flex; align-items:center; gap:7px; font-weight:600; }
+  .box { width:15px; height:15px; border:1.5px solid var(--home-line-strong); border-radius:3px; background:var(--home-card); }
+  .group { display:flex; flex-direction:column; gap:11px; } .group + .group { margin-top:8px; }
+  .disc { display:flex; align-items:center; gap:7px; padding:9px 11px; border:1px dashed var(--home-line-strong); border-radius:8px; color:var(--home-olive); font-weight:600; }
+  .foot { display:flex; justify-content:flex-end; gap:8px; margin:6px -22px -22px; padding:14px 22px; border-top:1px solid var(--home-line); }
+  .btn { padding:7px 14px; border-radius:6px; font-weight:700; background:var(--home-lime); color:var(--home-lime-ink); }
+  .btn2 { padding:6px 12px; border-radius:6px; font-weight:600; border:1px solid var(--home-line-strong); background:var(--home-paper); color:var(--home-ink); }
+  .ghost { padding:5px 8px; color:var(--home-dim); }
+  .ct { margin:0; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--home-dim); }
+  .ghead { display:flex; justify-content:space-between; align-items:baseline; }
+  .linkq { font-size:var(--type-support); color:var(--home-dim); }
+  /* the open list (the tag combobox's list, reused) */
+  .list { position:relative; background:var(--home-card); border:1px solid var(--home-line-strong); border-radius:8px; box-shadow:0 8px 24px rgba(20,15,10,.14); overflow:hidden; margin-top:-2px; }
+  .list .grp { padding:8px 12px 4px; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--home-dim); }
+  .opt { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:9px 12px; }
+  .opt .n { font-weight:600; } .opt .s { display:block; font-size:var(--type-support); color:var(--home-dim); font-weight:400; }
+  .opt.on { background:var(--home-fill); }
+  .opt .live { font-size:var(--type-support); color:var(--home-olive); white-space:nowrap; }
+  .opt.door { border-top:1px solid var(--home-line); color:var(--home-olive); font-weight:600; }
+  .opt.add { color:var(--home-olive); font-weight:600; }
+  .picked { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .picked .x { color:var(--home-dim); }
+  .chips { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+  .chip { padding:4px 11px; border:1px solid var(--home-line-strong); border-radius:999px; background:var(--home-paper); color:var(--home-ink-soft); font-size:var(--type-support); }
+  .srow { display:grid; grid-template-columns:1fr auto; gap:10px; align-items:center; padding:10px 0; border-bottom:1px solid var(--home-line); }
+  .srow:last-child { border-bottom:0; } .srow .n { font-weight:600; } .srow .s { font-size:var(--type-support); color:var(--home-dim); }
+  .srow .acts { display:flex; gap:10px; font-size:var(--type-support); color:var(--home-olive); font-weight:600; }
+  .setrow { display:grid; grid-template-columns:1fr auto; gap:14px; align-items:center; padding:10px 0; border-bottom:1px solid var(--home-line); }
+  .setrow .n { font-weight:600; } .setrow .s { font-size:var(--type-support); color:var(--home-dim); }
+  .region { border-radius:8px; outline:2px solid transparent; outline-offset:4px; transition:outline-color .15s; }
+  .region.lit { outline-color:var(--doc-focus); }
+  .mk { position:absolute; left:-14px; transform:translateX(-100%); width:26px; height:26px; border-radius:6px; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; background:var(--doc-ink); color:var(--doc-bg); border:0; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .mk.lit { background:var(--doc-focus); color:#fff; }
+  @media (max-width:700px) { .mk { left:auto; right:-6px; transform:none; } }
+  @container (max-width:420px) { .frame { padding:18px; } .foot { margin:6px -18px -18px; padding:14px 18px; } .grid2 { grid-template-columns:1fr; } .grid3 { grid-template-columns:1fr 1fr; } .grid3 > :first-child { grid-column:1/-1; } }
+  /* notes + docs */
+  .notes { display:grid; gap:12px; margin-top:8px; }
+  .note { display:grid; grid-template-columns:34px 1fr; gap:14px; padding:16px 18px; background:var(--doc-panel); border:1px solid var(--doc-line); border-radius:10px; cursor:pointer; }
+  .note.lit { background:var(--doc-on); border-color:var(--doc-accent); }
+  .note .n { width:26px; height:26px; border-radius:6px; background:var(--doc-ink); color:var(--doc-bg); font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; margin-top:2px; }
+  .note h3 { margin:0 0 4px; font-size:16px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .note p { margin:0; color:var(--doc-muted); max-width:78ch; } .note p + p { margin-top:6px; } .note p b { color:var(--doc-ink); font-weight:600; } .note .rec { color:var(--doc-ink); }
+  h2.sec { font-size:20px; margin:36px 0 12px; }
+  .doc { max-width:78ch; margin:0 auto; padding-block:28px 56px; padding-inline:20px; }
+  .doc h1 { font-size:24px; margin-bottom:4px; } .doc h2 { font-size:18px; margin:28px 0 8px; } .doc p, .doc li { color:var(--doc-ink); } .doc ul { padding-left:22px; } .doc li { margin:4px 0; } .doc .meta { color:var(--doc-muted); font-size:13px; margin:0 0 16px; }
+  .drow { border:1px solid var(--doc-line); border-radius:10px; background:var(--doc-panel); padding:14px 16px; margin-bottom:10px; }
+  .drow .dh { display:flex; justify-content:space-between; gap:12px; align-items:baseline; } .drow .dh strong { font-size:15px; } .drow p { margin:6px 0 0; color:var(--doc-muted); }
+  .signin { border:1px solid var(--doc-line); background:var(--doc-panel); border-radius:10px; padding:14px 18px; font-size:13.5px; margin:0 0 20px; }
+  .signin b { font-family:"IBM Plex Mono",monospace; font-weight:500; }
+  .qaprogress { font-weight:700; margin:0 0 14px; }
+  .qapart { border:1px solid var(--doc-line); border-radius:10px; background:var(--doc-panel); padding:16px 18px; margin-bottom:14px; }
+  .qapart h3 { margin:0 0 6px; } .qapart .where { margin:0 0 8px; color:var(--doc-muted); font-size:13px; }
+  .qastep { display:flex; gap:10px; align-items:flex-start; padding:7px 0; font-size:14px; }
+  .qastep input { width:20px; height:20px; accent-color:var(--doc-accent); margin-top:1px; flex-shrink:0; }
+  .verdict { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; font-size:13px; }
+  .verdict button { border:1px solid var(--doc-line); background:var(--doc-bg); color:var(--doc-ink); border-radius:6px; padding:7px 11px; min-height:38px; font:inherit; font-size:13px; cursor:pointer; }
+  .verdict button[aria-pressed="true"] { background:var(--doc-on); border-color:var(--doc-accent); font-weight:700; }
+  .qapart textarea { width:100%; border:1px solid var(--doc-line); border-radius:6px; padding:8px 10px; margin-top:8px; resize:vertical; background:var(--doc-bg); color:var(--doc-ink); font:inherit; font-size:13.5px; }
+  .qaactions { display:flex; gap:10px; flex-wrap:wrap; margin-top:8px; }
+  .qaactions button { border:1px solid var(--doc-line); background:var(--doc-ink); color:var(--doc-bg); border-radius:6px; padding:9px 14px; min-height:40px; font:inherit; font-size:13px; font-weight:600; cursor:pointer; }
+  #summaryOut { width:100%; border:1px solid var(--doc-line); border-radius:8px; padding:12px; margin-top:12px; background:var(--doc-bg); color:var(--doc-ink); font:12px/1.5 "IBM Plex Mono",monospace; min-height:220px; }
+  .tbl { overflow-x:auto; } table { border-collapse:collapse; width:100%; font-size:14px; } th, td { text-align:left; padding:8px 10px 8px 0; border-bottom:1px solid var(--doc-line); vertical-align:top; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+
+<div class="hubbar">
+  <div class="t"><strong>Arrival & Places — project hub</strong><small>Ruled 2026-09-21 (D1–D9 as drawn) · built on dev the same day · QA walk §214 owed</small></div>
+  <ul class="stages" aria-label="Project lifecycle">
+    <li class="done" title="Mockup published 2026-09-21 (this artifact, v1); ruled the same day">Design</li>
+    <li class="done" title="COACH_ARRIVAL_AND_PLACES_PLAN.md + PM brief, 2026-09-21">Plan</li>
+    <li class="done" title="Built on dev 2026-09-21 — mig 307 applied to dev; typecheck + verify:changed clean">Build</li>
+    <li class="current" title="/review offered 2026-09-21">Review</li>
+    <li title="Owner QA walk §214">QA</li>
+    <li title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phoneToggle" aria-pressed="false">Phone width</button></div>
+</div>
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">Coaches portal · Schedule · Add Event form · proposal · 2026-09-21</div>
+    <h1>Where to be, and when to be there</h1>
+    <p class="lede">Two asks from the first look at the rebuilt form: <strong>arrival should default to before the game, not to now</strong>, and <strong>a place should remember its address and diamond</strong>. Both are drawn here on the same form, with the pushback stated where I have one. Click a marker to light its note.</p>
+  </header>
+
+  <h2 class="sec" style="margin-top:0">1 · Arrival — a question of “how long before”, not a clock</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Closed</b> the resting state on a new game <span class="tag new">restyled</span></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field region" data-r="1">
+            <span class="lbl">Arrival</span>
+            <div class="input">45 minutes before <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+            <p class="hint"><b>Arrive by 5:15 p.m.</b> — shows on the game and on families’ calendars.</p>
+          </div>
+          <button class="mk" data-n="1" aria-label="Note 1">1</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>Open</b> the list — the way a coach says it</div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field">
+            <span class="lbl">Arrival</span>
+            <div class="input">45 minutes before <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 18l6-6-6-6" transform="rotate(90 12 12)"/></svg></div>
+            <div class="list region" data-r="2">
+              <div class="opt"><span class="n">None</span></div>
+              <div class="opt"><span class="n">15 minutes before</span><span class="live">5:45 p.m.</span></div>
+              <div class="opt"><span class="n">30 minutes before</span><span class="live">5:30 p.m.</span></div>
+              <div class="opt on"><span class="n">45 minutes before</span><span class="live">5:15 p.m.</span></div>
+              <div class="opt"><span class="n">1 hour before</span><span class="live">5:00 p.m.</span></div>
+              <div class="opt"><span class="n">1½ hours before</span><span class="live">4:30 p.m.</span></div>
+              <div class="opt"><span class="n">2 hours before</span><span class="live">4:00 p.m.</span></div>
+              <div class="opt door"><span class="n">A specific time…</span></div>
+            </div>
+          </div>
+          <button class="mk" data-n="2" aria-label="Note 2">2</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>A specific time</b> the escape, opened where it should be</div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field region" data-r="3">
+            <span class="lbl">Arrival</span>
+            <div class="grid2">
+              <div class="input">A specific time <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <div class="input">05:00 PM <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+            </div>
+            <p class="hint">Starts at an hour before the game — change it to anything.</p>
+          </div>
+          <button class="mk" data-n="3" aria-label="Note 3">3</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>Team Settings</b> the team’s own habit, set once <span class="tag new">accepted</span></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:0; padding-block:14px">
+          <p class="ct" style="margin-bottom:6px">Game day</p>
+          <div class="setrow region" data-r="4"><div><div class="n">Arrive before a game</div><div class="s">Every new game starts with this; change it on any game.</div></div><div class="input" style="min-width:170px">45 minutes before ▾</div></div>
+          <div class="setrow"><div><div class="n">Arrive before a practice</div><div class="s">Blank means practices ask nothing.</div></div><div class="input ph" style="min-width:170px">None ▾</div></div>
+          <button class="mk" data-n="4" aria-label="Note 4">4</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">2 · Location — a place the team keeps</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Picked</b> a place carries its address and diamond <span class="tag new">new</span></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field region" data-r="5">
+            <span class="lbl">Location</span>
+            <div class="input picked"><span><b>Sherwood Park</b><span class="s" style="display:block;font-size:12px;color:var(--home-dim)">1200 Sherwood Dr · Diamond 2</span></span><span class="x">✕</span></div>
+          </div>
+          <button class="mk" data-n="5" aria-label="Note 5">5</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>Typing</b> find it, or add it, or just type it</div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field">
+            <span class="lbl">Location</span>
+            <div class="input">Mill<span style="margin-right:auto;color:var(--home-dim)">|</span></div>
+            <div class="list region" data-r="6">
+              <div class="grp">Your places</div>
+              <div class="opt on"><span class="n">Millennium Place<span class="s">2000 Premier Way · Rink B</span></span><span class="live">6 events</span></div>
+              <div class="opt"><span class="n">Mill Woods Rec Centre<span class="s">7207 28 Ave</span></span><span class="live">2 events</span></div>
+              <div class="opt add"><span class="n">＋ Add “Mill…” as a place</span></div>
+              <div class="opt door"><span class="n">Manage places…</span></div>
+            </div>
+          </div>
+          <button class="mk" data-n="6" aria-label="Note 6">6</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Add a place</b> the small sheet, four things <span class="tag new">new</span></div>
+      <div class="stage narrow">
+        <div class="frame">
+          <div class="fhead"><h3 class="ftitle">Add a place</h3><span class="fx">✕</span></div>
+          <div class="group region" data-r="7">
+            <div class="field"><span class="lbl">Name *</span><div class="input">Millennium Place</div></div>
+            <div class="field"><span class="lbl">Address</span><div class="input ph">Street address — powers the “open in Maps” link</div></div>
+            <div class="grid2">
+              <div class="field"><span class="lbl">Field / Diamond</span><div class="input ph">e.g. Diamond 2</div></div>
+              <div class="field"><span class="lbl">Note</span><div class="input ph">e.g. park behind the arena</div></div>
+            </div>
+          </div>
+          <div class="foot"><span class="ghost">Cancel</span><span class="btn">Add place</span></div>
+          <button class="mk" data-n="7" aria-label="Note 7">7</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>Manage places</b> the book, with what each one holds</div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:4px">
+          <div class="fhead"><h3 class="ftitle">Places</h3><span class="fx">✕</span></div>
+          <div class="region" data-r="8">
+            <div class="srow"><div><div class="n">Sherwood Park</div><div class="s">1200 Sherwood Dr · Diamond 2 · on 14 events</div></div><div class="acts"><span>Edit</span><span>Remove</span></div></div>
+            <div class="srow"><div><div class="n">UAT Fields</div><div class="s">No address yet · on 9 events</div></div><div class="acts"><span>Edit</span><span>Remove</span></div></div>
+            <div class="srow"><div><div class="n">Millennium Place</div><div class="s">2000 Premier Way · Rink B · on 6 events</div></div><div class="acts"><span>Edit</span><span>Remove</span></div></div>
+            <div class="srow"><div><div class="n">Broadmoor Arena</div><div class="s">2100 Oak St · on 1 event</div></div><div class="acts"><span>Edit</span><span>Remove</span></div></div>
+          </div>
+          <p class="hint" style="margin-top:8px">Editing an address asks whether to update the upcoming events at that place.</p>
+          <button class="mk" data-n="8" aria-label="Note 8">8</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">3 · The whole form, with both</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>After</b> Add Game — the form you approved this morning, plus the two changes</div>
+      <div class="stage" id="afterStage">
+        <div class="frame">
+          <div class="fhead"><h3 class="ftitle">Add Game <span class="dot" style="background:var(--evt-game)"></span></h3><span class="fx">✕</span></div>
+          <div class="group">
+            <span class="chk"><span class="box"></span>Repeat weekly</span>
+            <div class="grid3">
+              <div class="field"><span class="lbl">Date *</span><div class="input">2026-09-21 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div></div>
+              <div class="field"><span class="lbl">Start time *</span><div class="input">06:00 PM</div></div>
+              <div class="field"><span class="lbl">End time</span><div class="input">08:00 PM</div></div>
+            </div>
+            <div class="field region" data-r="1b">
+              <span class="lbl">Arrival</span>
+              <div class="input">45 minutes before <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <p class="hint"><b>Arrive by 5:15 p.m.</b> — shows on the game and on families’ calendars.</p>
+            </div>
+          </div>
+          <div class="group">
+            <div class="field region" data-r="5b">
+              <span class="lbl">Location</span>
+              <div class="input picked"><span><b>Sherwood Park</b><span style="display:block;font-size:12px;color:var(--home-dim)">1200 Sherwood Dr · Diamond 2</span></span><span class="x">✕</span></div>
+            </div>
+          </div>
+          <div class="group">
+            <div class="grid2">
+              <div class="field"><span class="lbl">Opponent</span><div class="input ph">Team name</div></div>
+              <div class="field"><span class="lbl">Home / Away</span><div class="input">Home <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            </div>
+            <p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p>
+            <span class="chk"><span class="box"></span>This is a scrimmage</span>
+          </div>
+          <div class="group region" data-r="9">
+            <div class="ghead"><p class="ct">More</p><span class="linkq">Hide</span></div>
+            <div class="grid2">
+              <div class="field"><span class="lbl">Field / Diamond #</span><div class="input">Diamond 2</div></div>
+              <div class="field"><span class="lbl">Uniform</span><div class="input ph">e.g. Home whites</div></div>
+            </div>
+            <p class="hint">Diamond 2 is Sherwood Park’s usual — change it here for this game only.</p>
+            <div class="field"><span class="lbl">Tags</span><div class="input ph">Type to find or create a tag…</div></div>
+          </div>
+          <div class="foot"><span class="ghost">Cancel</span><span class="btn">Add game</span></div>
+          <button class="mk" data-n="9" aria-label="Note 9">9</button>
+        </div>
+      </div>
+      <p class="hint" style="color:var(--doc-muted);font-size:13px">The Address field leaves More: a place carries it, and a free-typed location still gets one by saving the place. The Recent chips retire into the picker’s list.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">What each marker proposes</h2>
+  <div class="notes" aria-label="Notes">
+    <div class="note" data-n="1" tabindex="0"><span class="n">1</span><div><h3>Arrival asks “how long before”, as a dropdown <span class="tag new">restyled</span></h3><p>A coach thinks “be there 45 minutes early”, not “5:15”. The stored value stays the clock time families already see (“Arrive by 5:15 p.m.”), so nothing downstream changes — the calendar export, the game-day header, the event page. The control derives its state: if the arrival is exactly 45 minutes before the start, it reads “45 minutes before”.</p><p class="rec"><b>The pushback on pills:</b> a one-value form field is a dropdown here (your 08-22 convention), and it happens to be the better shape for this one — four pills hold four answers and the fifth still needs the clock; the list holds seven and the escape without crowding the row.</p></div></div>
+    <div class="note" data-n="2" tabindex="0"><span class="n">2</span><div><h3>The list shows the clock beside each answer <span class="tag new">new</span></h3><p>“45 minutes before · 5:15 p.m.” — the coach sees what families will read before choosing. Change the start time later and an arrival that was a preset follows it (the same “follows unless you set your own” rule the end time already has); a specific time stays put.</p></div></div>
+    <div class="note" data-n="3" tabindex="0"><span class="n">3</span><div><h3>“A specific time…” opens an hour before the game <span class="tag new">new</span></h3><p>This is the literal fix for the screenshot: the clock picker opened at the time of day you were sitting at (9:05 a.m.). Choosing a specific time now starts the clock at start − 1 hour, so the picker opens in the right neighbourhood and one tap adjusts it.</p></div></div>
+    <div class="note" data-n="4" tabindex="0"><span class="n">4</span><div><h3>Defaulting every new game to “1 hour before” — a team setting, not a hard rule <span class="tag new">accepted</span></h3><p>A hard default puts a promise on every family’s calendar the coach never made (“Arrive by 5:00” on a game where the coach meant nothing by it). A team’s habit is real, though, and it should be set once: <b>Team Settings → Game day → Arrive before a game / a practice</b>. New games start with it; any game can change it. Blank until the team says otherwise.</p><p class="rec"><b>Recommendation:</b> ship the dropdown now, and the team default with it — it is one row in Settings and it is what makes “1 hour before” the resting state for the teams that want it, without deciding for the ones that don’t.</p></div></div>
+    <div class="note" data-n="5" tabindex="0"><span class="n">5</span><div><h3>A place is a thing the team keeps — name, address, usual diamond, a note <span class="tag new">new</span></h3><p>Today a location is three loose strings on each event, and the Recent chips carry whatever address the <b>most recent</b> event with that name happened to have — usually nothing — and never the diamond. A place book fixes the cause: pick “Sherwood Park” and its address and Diamond 2 come with it. The picker is the tag picker’s grammar (type to find, add inline, a Manage door inside), so nothing new to learn.</p><p class="rec"><b>Not a modal-first button:</b> a button that opens a chooser is one more door before the field. Typing into the field is the door.</p></div></div>
+    <div class="note" data-n="6" tabindex="0"><span class="n">6</span><div><h3>Find it, add it, or just type it <span class="tag new">new</span></h3><p>The list shows the team’s places, most recently used first, with how many events sit at each. Typing a name that isn’t there offers <b>＋ Add “…” as a place</b> (the small sheet at 7). And a coach who just wants to type “Kanata Rec Centre” for a one-off away game still can — a free-typed location saves as text exactly as today, with no place created. <b>Manage places…</b> is the last row, where minting lives.</p></div></div>
+    <div class="note" data-n="7" tabindex="0"><span class="n">7</span><div><h3>Adding a place asks four things, three optional <span class="tag new">new</span></h3><p>Name, address (the map link), the usual field or diamond, and a note that shows on the event (“park behind the arena”). Only the name is required, so adding a place is never slower than typing a location was.</p></div></div>
+    <div class="note" data-n="8" tabindex="0"><span class="n">8</span><div><h3>The book opens already filled <span class="tag new">accepted</span></h3><p>On first use, a team’s places are seeded from its own history — every distinct location it has ever used, with the best address and the most common diamond it recorded. Editing a place’s address asks whether to update the upcoming events at that place; past events keep what they had. Removing a place leaves its events’ text alone (they were always a copy).</p><p class="rec"><b>The call:</b> seed from history (recommended — the book is never empty for a team that has a season behind it) or start empty and let the Recent list do the seeding one pick at a time.</p></div></div>
+    <div class="note" data-n="9" tabindex="0"><span class="n">9</span><div><h3>The diamond stays per-game; the address leaves More <span class="tag new">restyled</span></h3><p>A park has six diamonds and a tournament puts you on a different one each game, so <b>Field / Diamond #</b> stays under More, pre-filled from the place and changeable for this game only (the hint says so). <b>Address</b> comes out of More: a place carries it, a mirrored tournament game shows the organizer’s, and a free-typed location gets one by saving the place — three fields for one street address was the noise the form just shed.</p></div></div>
+  </div>
+</div>
+</section>
+
+<section id="hub-brief" hidden>
+  <div class="doc">
+    <h1>PM Brief — Arrival & Places (proposed)</h1>
+    <p class="meta">Ruled 2026-09-21 (D1–D9 as drawn) · built on dev the same day</p>
+    <h2>What a coach sees differently</h2>
+    <ul>
+      <li><b>Arrival</b> on a game or practice is a dropdown of “how long before” — 15 minutes to 2 hours, with the clock shown beside each — and “A specific time…” for anything else, opening an hour before the game rather than at the time of day you happen to be sitting at. Families see exactly what they see today: “Arrive by 5:15 p.m.”</li>
+      <li><b>Team Settings gains “Arrive before a game / a practice”</b> — set once, and every new event starts there. Blank until the team says otherwise.</li>
+      <li><b>Location becomes a place the team keeps.</b> Type to find one of your places or add one inline (name, address, usual diamond, a note); picking it fills the address and diamond. A free-typed one-off location still works exactly as today. Recent chips retire into the picker’s list; Manage places lives inside it.</li>
+      <li>Under More, the diamond stays changeable per game (pre-filled from the place); the Address field goes — the place carries it.</li>
+    </ul>
+    <h2>Why it matters</h2>
+    <p>Arrival and location are the two things a coach types on <em>every</em> game, and both were asking the question the wrong way round: a clock instead of a lead time, and three loose strings instead of the place the team actually goes to. The map link — the reason the address exists — only worked when a coach retyped the address, which is why it mostly didn’t.</p>
+    <h2>What it touches</h2>
+    <ul>
+      <li>The event form (both changes), Team Settings (one row), the event page and game-day header (unchanged — same stored values), the schedule import (a row whose location matches a place takes its address), help articles for the schedule and game-day details.</li>
+      <li>Data: a per-team place book (new), seeded from each team’s history once; events keep their own copy of name/address/diamond so nothing already recorded changes.</li>
+    </ul>
+    <h2>Trade-offs</h2>
+    <ul>
+      <li>Dropdown over pills for arrival — one shape across every form; the fifth case needs the clock either way.</li>
+      <li>No hard “1 hour before” on every game — the team default is where that belongs; a game a coach never touched should not promise a family a time.</li>
+      <li>Editing a place’s address does not silently rewrite past events; it offers to update upcoming ones.</li>
+    </ul>
+    <h2>Size</h2>
+    <p>Arrival: small, client only. Places: medium — a table and its API, the picker and two small sheets, the history seed, the import match, help.</p>
+  </div>
+</section>
+
+<section id="hub-decisions" hidden>
+  <div class="doc">
+    <h1>Decisions to rule</h1>
+    <p class="meta">All nine accepted as drawn, 2026-09-21.</p>
+    <div class="drow"><div class="dh"><strong>D1 · Arrival is a dropdown of lead times, not a pill row</strong><span class="tag new">accepted</span></div><p>Your 08-22 convention, and the better shape here (seven answers plus the escape). Pills were your suggestion — this is the pushback.</p></div>
+    <div class="drow"><div class="dh"><strong>D2 · No hard default of “1 hour before” on every new game; a Team Settings default instead</strong><span class="tag new">accepted</span></div><p>Ship the setting with the dropdown (recommended) — or ship the dropdown alone and leave arrival blank until chosen, or hard-default 1 hour on games for every team.</p></div>
+    <div class="drow"><div class="dh"><strong>D3 · “A specific time…” opens at start − 1 hour</strong><span class="tag new">accepted</span></div><p>The literal fix for the picker opening at the current time of day.</p></div>
+    <div class="drow"><div class="dh"><strong>D4 · A place book per team, reached by typing into Location (not a button that opens a chooser)</strong><span class="tag new">accepted</span></div><p>The tag picker’s grammar: find, add inline, Manage inside. A modal-first button is one more door before the field.</p></div>
+    <div class="drow"><div class="dh"><strong>D5 · A free-typed location is still allowed and creates no place</strong><span class="tag new">accepted</span></div><p>A one-off away park should not have to join the book. “Add as a place” is offered, never forced.</p></div>
+    <div class="drow"><div class="dh"><strong>D6 · Events keep their own copy of name / address / diamond, linked to the place</strong><span class="tag new">accepted</span></div><p>Nothing already recorded changes. Editing a place’s address offers to update upcoming events at it; past events keep what they had; removing a place leaves its events’ text alone.</p></div>
+    <div class="drow"><div class="dh"><strong>D7 · The book is seeded from the team’s history on first use</strong><span class="tag new">accepted</span></div><p>Recommended — a team with a season behind it opens a full book. The alternative is an empty book filled one pick at a time.</p></div>
+    <div class="drow"><div class="dh"><strong>D8 · Address leaves More; the diamond stays there, per game</strong><span class="tag new">accepted</span></div><p>A place carries the address; a park has many diamonds and a tournament moves you between them.</p></div>
+    <div class="drow"><div class="dh"><strong>D9 · The schedule import matches a row’s location to a place by name and takes its address</strong><span class="tag new">accepted</span></div><p>Small, and it makes a whole imported season map-linked at once. Could be a follow-on.</p></div>
+  </div>
+</section>
+
+<section id="hub-plan" hidden>
+  <div class="doc">
+    <h1>Full plan — Arrival as a lead time, and a place the team keeps</h1>
+    <p class="meta">Ruled 2026-09-21 · built on dev 2026-09-21 · source: docs/projects/active/COACH_ARRIVAL_AND_PLACES_PLAN.md</p>
+    <h2>Why</h2>
+    <p>Two asks from the first look at the rebuilt form. What the code did: the Recent chips carried the address of the most recent event with that name (usually blank — on 2026-09-21 <b>not one event on either database held an address</b>) and never the diamond; the org venue library is admin-only; arrival is a clock the native picker opens at the current time of day.</p>
+    <h2>What was built</h2>
+    <ul>
+      <li><b>Migration 307</b> — the place book table (per team, one name per team case-insensitively, the tag book's access rules), a link from each event to its place (the event keeps its own copy of name / address / diamond), the team's two arrival habits (minutes, from the same seven answers), and the <b>seed</b>: every team's distinct location became a place and every matching event was linked (dev 32 places / 170 events; prod ≈16 / ≈118). Applied to dev; <b>prod-owed with the promote, before the code</b>.</li>
+      <li><b>Arrival</b> — a dropdown of lead times with the clock beside each and "A specific time…" opening an hour before the start; a preset follows a start change, a specific time stays; new games and practices start at the team default. The stored value is unchanged, so the event page, the game-day header and the calendar export read exactly as before.</li>
+      <li><b>Team Settings → Schedule</b> — "Arrive before a game / a practice", saved on change.</li>
+      <li><b>Location</b> — type to find a place (most recently used first, with event counts), add one inline (name, address, usual diamond, note), Manage places inside the list; a free-typed location still saves as text. Picking fills the address and the diamond (the diamond only when the game has none). The Recent chips retired; the Address field left the form except on an event from before the book that holds one with no place.</li>
+      <li><b>More → Field / Diamond #</b> says when it is the place's usual and that changing it is this game's own.</li>
+      <li><b>Manage places</b> — edit (with the offer to update upcoming events' name and address; never the diamond, never a past event) and remove (events keep their text).</li>
+      <li><b>The event page</b> shows the place's note under the location.</li>
+      <li><b>The import</b> matches a row's location to a place and takes its address and diamond where the sheet is silent.</li>
+      <li><b>Help</b> — the game-day-details article's Arrival term and its Location sub-topic ("the places your team keeps"), the schedule article's Adding-an-event paragraph, a Schedule sub-topic under Team settings; search words for places, venues, arrive before.</li>
+    </ul>
+    <h2>Verification</h2>
+    <p>Typecheck clean; the changed-files gate clean (unit suite incl. 11 new tests on the arrival maths and the place rules, spelling, CSS, dictionary, migrations parity with the dev-only divergence accepted as prod-owed); rendered check on the schedule clean (the settings screen's 24 new findings are all on the documents-look card and the help button — not this pass's). Owner walk §214 on the QA tab.</p>
+    <h2>Not built, on purpose</h2>
+    <ul><li>No org-level venue library for coaches.</li><li>No merge of two places (rename covers a spelling; the unique name blocks a duplicate).</li><li>No arrival default on tournaments or team events.</li></ul>
+  </div>
+</section>
+
+<section id="hub-qa" hidden>
+  <div class="doc">
+    <h1>QA Walk §214 — Arrival & Places</h1>
+    <p class="meta">Tick as you go; ticks, verdicts and notes stay in this browser. "Build summary" makes plain text to paste back into chat.</p>
+    <div class="signin"><strong>Sign in as</strong> (dev only — keep this page private)<br>URL <b>http://localhost:3000</b> · account <b>uat-coach@uat-test-org.local</b> · password <b>UATPassword2026!</b> · org <b>uat-test-org</b> · team <b>UAT Test Team</b> → <b>Schedule</b>. Part H needs a small spreadsheet; Part B is <b>Team settings → Schedule</b>.</div>
+    <p class="qaprogress" id="qaCount">Checked 0 of 0</p>
+    <div id="qaParts"></div>
+    <div class="qaactions"><button type="button" id="buildSummary">Build summary</button><button type="button" id="clearQA">Clear this walk</button></div>
+    <textarea id="summaryOut" hidden aria-label="QA summary to paste back"></textarea>
+  </div>
+</section>
+
+<script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var HUBS = ['mockup', 'brief', 'plan', 'decisions', 'qa'];
+    function showHub(w) { HUBS.forEach(function (h) { var s = $('hub-' + h); if (s) s.hidden = (h !== w); }); document.querySelectorAll('[data-hub]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-hub') === w)); }); try { history.replaceState(null, '', '#' + w); } catch (e) {} window.dispatchEvent(new Event('resize')); }
+    document.querySelectorAll('[data-hub]').forEach(function (b) { b.addEventListener('click', function () { showHub(b.getAttribute('data-hub')); }); });
+    var initial = (location.hash || '').slice(1); if (HUBS.indexOf(initial) > -1) showHub(initial);
+    var phone = $('phoneToggle'), after = $('afterStage');
+    if (phone && after) phone.addEventListener('click', function () { var on = phone.getAttribute('aria-pressed') !== 'true'; phone.setAttribute('aria-pressed', String(on)); after.classList.toggle('phone', on); window.dispatchEvent(new Event('resize')); });
+    var lit = null;
+    var MAP = { '1': ['1', '1b'], '2': ['2'], '3': ['3'], '4': ['4'], '5': ['5', '5b'], '6': ['6'], '7': ['7'], '8': ['8'], '9': ['9'] };
+    function setLit(n) { var same = (n === lit); document.querySelectorAll('.lit').forEach(function (el) { el.classList.remove('lit'); }); lit = same ? null : n; if (!lit) return; document.querySelectorAll('[data-n="' + lit + '"]').forEach(function (el) { el.classList.add('lit'); }); (MAP[lit] || []).forEach(function (r) { document.querySelectorAll('[data-r="' + r + '"]').forEach(function (el) { el.classList.add('lit'); }); }); }
+    function place() { document.querySelectorAll('.stage').forEach(function (stage) { stage.querySelectorAll('.mk').forEach(function (b) { var r = stage.querySelector('[data-r="' + b.getAttribute('data-n') + '"], [data-r="' + b.getAttribute('data-n') + 'b"]'); if (!r) return; var top = 0, el = r; while (el && el !== stage) { top += el.offsetTop; el = el.offsetParent; } b.style.top = (top + Math.max(0, (Math.min(r.offsetHeight, 40) - 26) / 2)) + 'px'; }); }); }
+    place(); window.addEventListener('resize', place); if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    document.querySelectorAll('.mk').forEach(function (b) { b.addEventListener('click', function () { setLit(b.getAttribute('data-n')); var note = document.querySelector('.note[data-n="' + b.getAttribute('data-n') + '"]'); if (note && lit) note.scrollIntoView({ behavior: 'smooth', block: 'center' }); }); });
+    document.querySelectorAll('.note').forEach(function (nt) { nt.addEventListener('click', function () { setLit(nt.getAttribute('data-n')); }); nt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLit(nt.getAttribute('data-n')); } }); });
+
+    /* ── QA walk §214 ── */
+    var QA_PARTS = [
+      { id: 'A', title: 'Arrival on a game', where: 'Schedule → Add Event → Game', steps: [
+        'Arrival reads "None" under the date and times; no clock picker on the form.',
+        'Open it: None · 15 · 30 · 45 minutes · 1 hour · 1½ hours · 2 hours before, each with its clock (5:15 p.m. beside 45 minutes for a 6:00 start) · A specific time….',
+        'Pick "45 minutes before" → the line under it reads "Arrive by 5:15 p.m. — shows on the event and the calendar export."',
+        'Change the Start time to 7:00 PM → the arrival follows to "Arrive by 6:15 p.m."',
+        'Pick "A specific time…" → a clock input appears beside it, already at 6:00 PM (an hour before). Set it to 6:10 PM; change the start to 7:30 → it stays 6:10.',
+        'Add the game → the event reads "Arrive by 6:10 p.m."; open Edit → Arrival reads "A specific time" with 06:10 PM.',
+        'Add a Practice → the same control; a 12:30 AM start greys "1 hour before" and above (they would be yesterday).',
+      ]},
+      { id: 'B', title: 'The team default', where: 'Team settings → Schedule', steps: [
+        'A new "Schedule" section, closed, whose summary reads "No arrival default".',
+        'Set "Arrive before a game" to 45 minutes before → "Saved"; the summary reads "Games: 45 minutes before".',
+        'Add Event → Game: Arrival opens already at "45 minutes before · 5:15 p.m." — Add Event → Practice: still None.',
+        'Set "Arrive before a practice" to 30 minutes; a new practice starts at 30 minutes before.',
+        'An event added BEFORE the default was set is unchanged.',
+        'Sign in as a helper without schedule access (uat-helper@) → the section shows but the dropdowns are disabled.',
+      ]},
+      { id: 'C', title: 'The seeded book', where: 'Add Event → Game → Location', steps: [
+        'Click into Location → the list opens under "Your places" with the team\'s places, most recently used first, each with "N events" on the right (the seed made them from the team\'s history).',
+        'Pick one → its name fills the field; the address/diamond line under the field is absent (seeded places carry no address yet).',
+        'Type "Manage places…" — the last row — → the Places sheet lists every place with "No address yet · on N events".',
+      ]},
+      { id: 'D', title: 'Add a place', where: 'Add Event → Game → Location', steps: [
+        'Type "Millennium Place" → the list offers "＋ Add “Millennium Place” as a place".',
+        'Choose it → the Add a place sheet opens with the name filled; enter an address, Diamond 2, and the note "park behind the arena" → Add place.',
+        'Back on the form: Location reads Millennium Place; under it "address · Diamond 2".',
+        'Open More: Field / Diamond # is pre-filled "Diamond 2" with "Diamond 2 is Millennium Place’s usual — change it above for this game only." Change it to Diamond 5 → the hint disappears; there is NO Address field in More.',
+        'Add the game → on the event, the location is a map link that opens the address; the note "park behind the arena" reads under the location line.',
+        'Add another game, type "Mill" → Millennium Place is offered with its address and "1 event"; pick it → Diamond 2 again.',
+      ]},
+      { id: 'E', title: 'Free text is still a location', where: 'Add Event → Practice → Location', steps: [
+        'Type "Kanata Rec Centre" and do NOT pick or add → close the list (Escape) → the form keeps the text.',
+        'Save → the practice shows "Kanata Rec Centre" with a map link that searches the name.',
+        'Manage places… does NOT list it — nothing was created.',
+        'Edit that practice → Location holds the text; More has no Address field.',
+      ]},
+      { id: 'F', title: 'Edit a place', where: 'Location → Manage places… → Edit', steps: [
+        'Edit Millennium Place → change the address → a box "Also update the N upcoming events at this place" appears (N = the games from Part D that are still ahead), unticked, with the sentence about past events and diamonds.',
+        'Tick it → Save changes → the notice reads "Saved Millennium Place — N upcoming events updated"; open one of those games: the new address.',
+        'A game at that place dated in the PAST (add one at a past date first) keeps the old address.',
+        'Edit again and change only the note → the box is disabled (nothing to push).',
+      ]},
+      { id: 'G', title: 'Remove a place', where: 'Manage places… → Remove', steps: [
+        'Remove Millennium Place → the confirm names its event count and says the events keep their location as written.',
+        'Confirm → the games still read "Millennium Place" with their address; typing "Mill" no longer offers it.',
+      ]},
+      { id: 'H', title: 'The import matches places', where: 'Schedule → Import', steps: [
+        'Add a place "Bell Park" with an address and Diamond 3 (Part D).',
+        'Import a sheet with one row: a League Game, Location "Bell Park", no address, no field → the created game carries Bell Park\'s address and "Diamond 3", and its event page maps to the address.',
+        'A row with its own Field cell ("Diamond 1") keeps Diamond 1.',
+      ]},
+      { id: 'I', title: 'Phone width', where: 'Add Event → Game at 390px (or on your phone)', steps: [
+        'Arrival is a full-width dropdown; "A specific time…" puts the clock input under it, not beside.',
+        'The place list opens under Location (or above it when the field sits low in the sheet) and is scrollable; picking closes it.',
+        'The Add a place sheet is a full-screen sheet; Manage places likewise; Escape closes the topmost one only.',
+      ]},
+      { id: 'J', title: 'Help', where: 'Help → Game-day details / Team settings', steps: [
+        'Game-day details defines "Arrival" as how long before, and its Location sub-topic is "Location: the places your team keeps".',
+        'Team settings help has a "Schedule" answer for the two arrival defaults.',
+        'Searching help for "places" and "arrive before" finds those articles.',
+      ]},
+    ];
+    var KEY = 'qa-214-arrival-places';
+    var qa = {};
+    try { qa = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { qa = {}; }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(qa)); } catch (e) {} }
+    function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function counts() { var c = 0, t = 0; QA_PARTS.forEach(function (p) { p.steps.forEach(function (_, i) { t++; if (qa[p.id + '-' + i]) c++; }); }); return { c: c, t: t }; }
+    function paintCount() { $('qaCount').textContent = 'Checked ' + counts().c + ' of ' + counts().t; }
+    function draw() {
+      $('qaParts').innerHTML = QA_PARTS.map(function (p) {
+        return '<div class="qapart"><h3>Part ' + p.id + ' · ' + esc(p.title) + '</h3><p class="where">' + esc(p.where) + '</p>' +
+          p.steps.map(function (st, i) { return '<label class="qastep"><input type="checkbox" id="qa-' + p.id + '-' + i + '" data-step="' + p.id + '-' + i + '"' + (qa[p.id + '-' + i] ? ' checked' : '') + '> <span>' + esc(st) + '</span></label>'; }).join('') +
+          '<div class="verdict">Verdict:' + ['pass', 'issue', 'call'].map(function (v) { return '<button type="button" data-verdict="' + p.id + '" data-value="' + v + '" aria-pressed="' + (qa['verdict-' + p.id] === v) + '">' + (v === 'pass' ? 'Pass' : v === 'issue' ? 'Issue' : 'Needs a call') + '</button>'; }).join('') + '</div>' +
+          '<label>Notes<textarea id="qa-notes-' + p.id + '" data-notes="' + p.id + '" rows="2" placeholder="Anything worth recording">' + esc(qa['notes-' + p.id] || '') + '</textarea></label></div>';
+      }).join('');
+      paintCount();
+    }
+    draw();
+    $('qaParts').addEventListener('change', function (e) { var t = e.target; if (t.dataset.step) { qa[t.dataset.step] = t.checked; save(); paintCount(); } if (t.dataset.notes) { qa['notes-' + t.dataset.notes] = t.value; save(); } });
+    $('qaParts').addEventListener('click', function (e) { var b = e.target.closest('[data-verdict]'); if (!b) return; qa['verdict-' + b.dataset.verdict] = b.dataset.value; save(); b.parentNode.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
+    $('buildSummary').addEventListener('click', function () { var k = counts(); var lines = ['QA walk §214 — Arrival & Places', 'Checked ' + k.c + ' of ' + k.t, '']; QA_PARTS.forEach(function (p) { lines.push('Part ' + p.id + ' · ' + p.title + ' — verdict: ' + (qa['verdict-' + p.id] || 'unset')); p.steps.forEach(function (st, i) { lines.push('  [' + (qa[p.id + '-' + i] ? 'x' : ' ') + '] ' + st); }); if (qa['notes-' + p.id]) lines.push('  Notes: ' + qa['notes-' + p.id]); lines.push(''); }); var out = $('summaryOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select(); });
+    $('clearQA').addEventListener('click', function () { if (!confirm('Clear every tick, verdict and note for this walk?')) return; qa = {}; save(); draw(); $('summaryOut').hidden = true; });
+  })();
+</script>

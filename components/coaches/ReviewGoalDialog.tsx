@@ -86,12 +86,12 @@ export default function ReviewGoalDialog({
               <input className={styles.input} type="date" value={reviewedOn} onChange={e => setReviewedOn(e.target.value)} required />
             </label>
             <label className={`${styles.field} ${styles.formGridFull}`}>
-              <span className={styles.label}>How it’s going (optional)</span>
+              <span className={styles.label}>How it’s going</span>
               <textarea className={styles.textarea} rows={3} maxLength={600} value={note} placeholder="What you’re seeing, and what to try next"
                 onChange={e => setNote(e.target.value)} />
             </label>
             <label className={styles.field}>
-              <span className={styles.label}>Next review (optional)</span>
+              <span className={styles.label}>Next review</span>
               <input className={styles.input} type="date" value={nextReviewOn} onChange={e => setNextReviewOn(e.target.value)} />
               {suggested && !nextReviewOn && (
                 <span className={styles.formHint}>

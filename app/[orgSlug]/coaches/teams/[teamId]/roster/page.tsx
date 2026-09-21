@@ -854,10 +854,9 @@ export default function RosterPage({
               {addedInRun > 0 && <span className={styles.discToggleMeta}>{addedInRun} added</span>}
             </CoachModalHeader>
 
-            {/* Legend for the per-field * markers below —
-                most fields on this form are optional, so only the few that block Save are flagged. */}
+            {/* The bulk door, on the first line — the "* Required" legend that used to lead it came off
+                every form on 2026-09-21 (the asterisk on a label is the whole signal). */}
             <p className={styles.formHint}>
-              * Required ·{' '}
               <button
                 type="button"
                 className={`${styles.linkBtn} ${styles.linkBtnAccent}`}

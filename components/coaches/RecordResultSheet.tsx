@@ -156,7 +156,7 @@ export default function RecordResultSheet({
               </div>
             </div>
             <label className={`${styles.field} ${styles.formGridFull}`}>
-              <span className={styles.label}>Note (optional)</span>
+              <span className={styles.label}>Note</span>
               <input className={styles.input} type="text" value={note} maxLength={MAX_READING_NOTE_LEN} placeholder='e.g. "after warm-up, turf"'
                 onChange={e => setNote(e.target.value)} />
             </label>

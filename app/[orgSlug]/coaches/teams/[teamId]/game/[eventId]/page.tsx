@@ -1377,7 +1377,7 @@ export default function CoachGameConsolePage({
               <span className={styles.gdMomentCount}>{momentBody.length} / {GAME_MOMENT_MAX}</span>
             </div>
 
-            <p className={styles.gdGroupLbl}>About a player? (optional)</p>
+            <p className={styles.gdGroupLbl}>About a player?</p>
             <div className={styles.gdTagPick}>
               {data.players.map(p => (
                 <button

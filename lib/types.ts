@@ -1092,6 +1092,41 @@ export interface RepTeam {
    * (lib/export/resolve-pdf-settings.ts); nothing should read this raw to build a document.
    */
   pdfLook: { logoDataUrl?: string; accentColor?: string; footerText?: string } | null;
+  /**
+   * The team's arrival habit (mig 307, Arrival & Places D2): how many minutes before a game / a
+   * practice the team is expected, from the same seven answers the form's Arrival dropdown offers
+   * (`ARRIVAL_PRESET_MINUTES` in lib/coach-arrival.ts). `null` = the team asks nothing and a new
+   * event's Arrival starts at None. Lives on the TEAM, not the season: a habit, not a fact about a
+   * year. A new event is SEEDED from it at open time — the event's own `arrivalTime` is the record,
+   * so changing the default later moves nothing already on the calendar.
+   */
+  arrivalBeforeGameMin: number | null;
+  arrivalBeforePracticeMin: number | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+/**
+ * A place the team keeps (mig 307, Arrival & Places D4–D8): the name a coach recognises, the street
+ * address that powers the map link, the diamond or field the team usually plays on there, and a
+ * note that shows on the event ("park behind the arena"). Per team, crossing seasons. An event
+ * that picks a place keeps its OWN copy of name / address / diamond (`RepTeamEvent.location`,
+ * `.locationAddress`, `.fieldNumber`) plus `placeId` as the link — editing a place never rewrites
+ * a past event; the route offers to update upcoming ones.
+ */
+export interface RepTeamPlace {
+  id: string;
+  orgId: string;
+  teamId: string;
+  name: string;
+  address: string | null;
+  fieldNumber: string | null;
+  note: string | null;
+  /** Present on the library GET only: how many of the team's events are linked to this place. */
+  count?: number;
+  /** Present on the library GET only: the start of the most recent linked event, for "recent first". */
+  lastUsedAt?: string | null;
+  createdBy: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -1644,8 +1679,10 @@ export interface RepTeamEvent {
   description: string | null;
   startsAt: string;
   endsAt: string | null;
-  location: string | null;          // human-readable place NAME (shows on schedule + chips)
+  location: string | null;          // human-readable place NAME (shows on schedule + the place picker)
   locationAddress: string | null;   // optional street address (mig 161) — powers the Maps link
+  /** The place this event's location was picked from (mig 307), or null for a free-typed one. */
+  placeId: string | null;
   // Game-day detail (mig 160), all optional / UI-shaped free text:
   arrivalTime: string | null;   // "be there by" clock time, HH:mm (same day as startsAt)
   fieldNumber: string | null;   // diamond/field label within the location, e.g. "Diamond 2"

@@ -17,6 +17,7 @@ import { orgDayKey } from '@/lib/timezone';
 import { moveRepSessionDate } from '@/lib/development-session-move';
 import { sanitizeResources } from '@/lib/rep-event-resources';
 import { resolveValidTagIds } from '@/lib/rep-event-tags';
+import { resolvePlaceId } from '@/lib/rep-event-places';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageSchedule, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
@@ -173,6 +174,8 @@ export const PATCH = withObservability(async (req: Request,
   if (body.endsAt !== undefined)      fields.endsAt = body.endsAt || null;
   if (body.location !== undefined)    fields.location = body.location?.trim() || null;
   if (body.locationAddress !== undefined) fields.locationAddress = body.locationAddress?.trim() || null;
+  // The place link (mig 307): proved to be this team's, else cleared — the text above is the record.
+  if (body.placeId !== undefined)     fields.placeId = (await resolvePlaceId(teamId, body.placeId)) ?? null;
   if (body.arrivalTime !== undefined) fields.arrivalTime = body.arrivalTime?.trim() || null;
   if (body.fieldNumber !== undefined) fields.fieldNumber = body.fieldNumber?.trim() || null;
   if (body.uniform !== undefined)     fields.uniform = body.uniform?.trim() || null;

@@ -140,7 +140,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, source_entry_id (uuid) �
 - Indexes: rep_cost_allocations_budget_line_idx, rep_cost_allocations_org_id_idx, rep_cost_allocations_source_entry_id_idx
 
 ### rep_development_goal_reviews
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_roster_players.id NOT NULL, player_id (uuid) → rep_roster_players.team_id NOT NULL, goal_id (uuid) → rep_player_development_goals.team_id NOT NULL, reviewed_on NOT NULL, status NOT NULL, note, next_review_on, evidence_measurable_ids, evidence_observation_ids, created_by (uuid), created_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_roster_players.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, goal_id (uuid) → rep_player_development_goals.team_id NOT NULL, reviewed_on NOT NULL, status NOT NULL, note, next_review_on, evidence_measurable_ids, evidence_observation_ids, created_by (uuid), created_at
 - Indexes: rep_development_goal_reviews_goal_idx, rep_development_goal_reviews_org_idx, rep_development_goal_reviews_player_idx, rep_development_goal_reviews_team_idx
 
 ### rep_document_templates
@@ -164,7 +164,7 @@ id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, player_id (
 - Indexes: idx_rep_dues_payouts_year_player, rep_dues_payouts_accounting_entry_id_idx, rep_dues_payouts_org_id_idx, rep_dues_payouts_player_id_idx, rep_dues_payouts_team_id_idx
 
 ### rep_evaluation_not_assessed
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_roster_players.id NOT NULL, session_id (uuid) → rep_team_evaluation_sessions.id NOT NULL, player_id (uuid) → rep_roster_players.team_id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.team_id NOT NULL, reason, created_by (uuid), created_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_roster_players.id NOT NULL, session_id (uuid) → rep_team_evaluation_sessions.team_id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.team_id NOT NULL, reason, created_by (uuid), created_at
 - Indexes: rep_evaluation_not_assessed_org_idx, rep_evaluation_not_assessed_player_idx, rep_evaluation_not_assessed_team_idx, rep_evaluation_not_assessed_type_idx, rep_evaluation_not_assessed_uniq
 
 ### rep_fundraiser_credit_plan
@@ -192,7 +192,7 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_player_awards_event_idx, rep_player_awards_once_per_game_uniq, rep_player_awards_once_per_general_occasion_uniq, rep_player_awards_org_idx, rep_player_awards_player_idx, rep_player_awards_team_idx, rep_player_awards_type_idx
 
 ### rep_player_continuity_links
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, current_roster_id (uuid) → rep_roster_players.team_id, current_registration_id (uuid) → rep_tryout_registrations.id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.team_id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_tryout_registrations.team_id NOT NULL, current_roster_id (uuid) → rep_roster_players.team_id, current_registration_id (uuid) → rep_tryout_registrations.team_id, prior_roster_id (uuid) → rep_roster_players.id, prior_registration_id (uuid) → rep_tryout_registrations.id, status, confidence NOT NULL, decided_by (uuid), decided_at, created_at, updated_at, carry_status, carry_decided_by (uuid), carry_decided_at
 - Indexes: rep_player_continuity_links_confirmed_uniq, rep_player_continuity_links_org_idx, rep_player_continuity_links_pair_uniq, rep_player_continuity_links_prior_idx, rep_player_continuity_links_team_idx
 
 ### rep_player_development_goals
@@ -216,11 +216,11 @@ id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_t
 - Indexes: rep_player_measurables_org_idx, rep_player_measurables_player_idx, rep_player_measurables_session_attempt_uniq, rep_player_measurables_session_idx, rep_player_measurables_team_idx, rep_player_measurables_type_idx
 
 ### rep_player_notes
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_player_development_goals.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, noted_on NOT NULL, body NOT NULL, goal_id (uuid) → rep_player_development_goals.id, event_id (uuid) → rep_team_events.id, created_by (uuid), created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_player_development_goals.id NOT NULL, player_id (uuid) → rep_roster_players.team_id NOT NULL, noted_on NOT NULL, body NOT NULL, goal_id (uuid) → rep_player_development_goals.team_id, event_id (uuid) → rep_team_events.id, created_by (uuid), created_at, updated_at
 - Indexes: rep_player_notes_event_idx, rep_player_notes_goal_idx, rep_player_notes_org_idx, rep_player_notes_player_idx, rep_player_notes_team_idx
 
 ### rep_player_observations
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_player_development_goals.team_id NOT NULL, player_id (uuid) → rep_roster_players.team_id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.team_id NOT NULL, metric_kind → rep_team_measurable_types.team_id, observed_on NOT NULL, note, descriptor, goal_id (uuid) → rep_player_development_goals.team_id, session_id (uuid) → rep_team_evaluation_sessions.id, created_by (uuid), created_at, updated_at
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_team_evaluation_sessions.id NOT NULL, player_id (uuid) → rep_roster_players.id NOT NULL, measurable_type_id (uuid) → rep_team_measurable_types.kind NOT NULL, metric_kind → rep_team_measurable_types.team_id, observed_on NOT NULL, note, descriptor, goal_id (uuid) → rep_player_development_goals.id, session_id (uuid) → rep_team_evaluation_sessions.id, created_by (uuid), created_at, updated_at
 - Indexes: rep_player_observations_goal_idx, rep_player_observations_org_idx, rep_player_observations_player_idx, rep_player_observations_session_idx, rep_player_observations_team_idx, rep_player_observations_type_idx
 
 ### rep_player_tryout_baselines
@@ -284,8 +284,8 @@ event_id (uuid) → rep_team_events.id NOT NULL, tag_id (uuid) → rep_team_tags
 - Indexes: rep_team_event_tags_tag_idx
 
 ### rep_team_events
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb), source_tournament_game_id (uuid), practice_plan (jsonb), family_shared_at, family_shared_by (uuid), practice_recap, practice_plan_sent_at, practice_plan_sent_by (uuid), practice_plan_sent_audience, practice_plan_sent_count, practice_plan_sent_email (boolean), practice_plan_sent_to, is_scrimmage (boolean)
-- Indexes: rep_team_events_family_shared_idx, rep_team_events_org_id_idx, rep_team_events_parent_idx, rep_team_events_recurrence_parent_id_idx, rep_team_events_src_basic_event_uq, rep_team_events_src_tournament_game_uq, rep_team_events_team_id_idx, rep_team_events_year_idx
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb), source_tournament_game_id (uuid), practice_plan (jsonb), family_shared_at, family_shared_by (uuid), practice_recap, practice_plan_sent_at, practice_plan_sent_by (uuid), practice_plan_sent_audience, practice_plan_sent_count, practice_plan_sent_email (boolean), practice_plan_sent_to, is_scrimmage (boolean), place_id (uuid) → rep_team_places.id
+- Indexes: rep_team_events_family_shared_idx, rep_team_events_org_id_idx, rep_team_events_parent_idx, rep_team_events_place_idx, rep_team_events_recurrence_parent_id_idx, rep_team_events_src_basic_event_uq, rep_team_events_src_tournament_game_uq, rep_team_events_team_id_idx, rep_team_events_year_idx
 
 ### rep_team_expense_tags
 expense_id (uuid) → rep_team_expenses.id NOT NULL, tag_id (uuid) → rep_team_tags.id NOT NULL, created_at
@@ -347,6 +347,10 @@ id (uuid), team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizat
 id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, request_type NOT NULL, amount (numeric) NOT NULL, description NOT NULL, payment_method, notes, status, denial_reason, budget_line_id (uuid) → org_budget_lines.id, accounting_entry_id (uuid) → accounting_entries.id, created_by (uuid) NOT NULL, reviewed_by (uuid), reviewed_at, created_at, updated_at, program_year_id (uuid) → rep_program_years.id NOT NULL, budget_category_id (uuid) → budget_categories.id, budget_item_id (uuid) → budget_items.id, money_in_meaning
 - Indexes: rep_team_payment_requests_accounting_entry_id_idx, rep_team_payment_requests_budget_category_idx, rep_team_payment_requests_budget_item_idx, rep_team_payment_requests_budget_line_id_idx, rep_team_payment_requests_org_status_idx, rep_team_payment_requests_program_year_id_idx, rep_team_payment_requests_program_year_idx, rep_team_payment_requests_team_status_idx
 
+### rep_team_places
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, name NOT NULL, address, field_number, note, created_by (uuid), created_at, updated_at
+- Indexes: rep_team_places_name_uniq, rep_team_places_org_idx, rep_team_places_team_idx
+
 ### rep_team_plan_template_tags
 template_id (uuid) → rep_team_plan_templates.id NOT NULL, tag_id (uuid) → rep_team_tags.id NOT NULL, created_at
 - Indexes: rep_team_plan_template_tags_tag_idx
@@ -368,7 +372,7 @@ id (uuid), tournament_team_id (uuid) → teams.id NOT NULL, rep_team_id (uuid) �
 - Indexes: rep_team_tournament_registrations_org_idx, rep_team_tournament_registrations_rep_team_idx, rep_team_tournament_registrations_tournament_team_unique
 
 ### rep_teams
-id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, family_calendar_token_hash, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb)
+id (uuid), org_id (uuid) → organizations.id NOT NULL, name NOT NULL, slug NOT NULL, sport, division, description, color, is_archived (boolean), created_at, updated_at, group_id (uuid) → rep_team_groups.id, family_calendar_token_hash, schedule_visibility, share_club_book (boolean), pdf_settings (jsonb), arrival_before_game_min (integer), arrival_before_practice_min (integer)
 - Indexes: idx_rep_teams_org_share_club_book, rep_teams_family_calendar_token_uniq, rep_teams_group_id_idx, rep_teams_org_id_slug_key
 
 ### rep_tryout_evaluator_sessions
@@ -756,11 +760,11 @@ user_id (uuid) NOT NULL, theme, created_at, updated_at, coach_tour_dismissed_at,
 
 ## Tables by count
 
-Total: **182 tables** across 10 modules.
+Total: **183 tables** across 10 modules.
 
 - Tournament: 17 tables
 - League: 8 tables
-- Rep Teams: 69 tables
+- Rep Teams: 70 tables
 - Standalone Team Workspace: 6 tables
 - Accounting: 9 tables
 - Stripe / Billing: 1 tables

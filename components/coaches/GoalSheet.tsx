@@ -75,7 +75,7 @@ export default function GoalSheet({
               autoFocus onChange={e => setFocus(e.target.value)} />
           </label>
           <label className={`${styles.field} ${styles.formGridFull}`}>
-            <span className={styles.label}>Note (optional)</span>
+            <span className={styles.label}>Note</span>
             <input className={styles.input} type="text" value={note} maxLength={280} placeholder="One short note the player would be happy to read"
               onChange={e => setNote(e.target.value)} />
           </label>
@@ -87,7 +87,7 @@ export default function GoalSheet({
               defaultOpen={!!(initial.success || initial.tagId)}
             >
               <label className={styles.field}>
-                <span className={styles.label}>What would success look like? (optional)</span>
+                <span className={styles.label}>What would success look like?</span>
                 <input className={styles.input} type="text" value={success} maxLength={280} placeholder="e.g. sets feet without a cue in the partner drill"
                   onChange={e => setSuccess(e.target.value)} />
               </label>
@@ -98,7 +98,7 @@ export default function GoalSheet({
                   onChange={next => setTagId(next[0] ?? null)}
                   onCreate={onCreateTag}
                   single
-                  label="Focus tag (optional)"
+                  label="Focus tag"
                   placeholder="Group it with a focus word…"
                   emptyHint="No focus words yet — type one to make your team’s first."
                   manage={{ ...FOCUS_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/focus-tags` }}

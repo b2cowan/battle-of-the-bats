@@ -1,0 +1,823 @@
+<title>Add Event Form Review</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  /* ── Document chrome (NOT product UI): cool grey ground so the warm frames read as specimens ── */
+  :root {
+    --doc-bg: #ECEDF1;
+    --doc-panel: #F7F7F9;
+    --doc-ink: #1B1D23;
+    --doc-muted: #5C6070;
+    --doc-line: rgba(27, 29, 35, 0.12);
+    --doc-accent: #57651E;
+    --doc-accent-soft: rgba(87, 101, 30, 0.12);
+    --doc-warn: #835006;
+    --doc-warn-soft: rgba(131, 80, 6, 0.10);
+    --doc-on: rgba(87, 101, 30, 0.16);
+    --doc-focus: #134FD3;
+
+    /* ── FieldLogicHQ warm portal tokens (from app/globals.css) — the frames are drawn in these ── */
+    --home-paper: #F8F4ED;
+    --home-card: #FFFFFF;
+    --home-ink: #241E15;
+    --home-ink-soft: #4A4235;
+    --home-dim: #615A54;
+    --home-line: rgba(70, 55, 30, 0.12);
+    --home-line-strong: rgba(70, 55, 30, 0.20);
+    --home-olive: #57651E;
+    --home-olive-soft: rgba(87, 101, 30, 0.10);
+    --home-lime: #D9F99D;
+    --home-lime-ink: #241E15;
+    --home-fill: rgba(70, 55, 30, 0.08);
+    --evt-tournament: #B45309;
+    --evt-game: #34662A;
+    --evt-practice: #7B4B6E;
+    --evt-team: #67625A;
+    --type-heading: 16px;
+    --type-body: 14px;
+    --type-support: 12px;
+    --type-label: 11px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --doc-bg: #17191F;
+      --doc-panel: #1F2229;
+      --doc-ink: #E8E9EE;
+      --doc-muted: #9A9EAD;
+      --doc-line: rgba(232, 233, 238, 0.14);
+      --doc-accent: #B7C96A;
+      --doc-accent-soft: rgba(183, 201, 106, 0.14);
+      --doc-warn: #E0A85A;
+      --doc-warn-soft: rgba(224, 168, 90, 0.12);
+      --doc-on: rgba(183, 201, 106, 0.20);
+      --doc-focus: #7FA3FF;
+    }
+  }
+  :root[data-theme="dark"] {
+    --doc-bg: #17191F;
+    --doc-panel: #1F2229;
+    --doc-ink: #E8E9EE;
+    --doc-muted: #9A9EAD;
+    --doc-line: rgba(232, 233, 238, 0.14);
+    --doc-accent: #B7C96A;
+    --doc-accent-soft: rgba(183, 201, 106, 0.14);
+    --doc-warn: #E0A85A;
+    --doc-warn-soft: rgba(224, 168, 90, 0.12);
+    --doc-on: rgba(183, 201, 106, 0.20);
+    --doc-focus: #7FA3FF;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--doc-bg);
+    color: var(--doc-ink);
+    font-family: Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+    font-size: 15px;
+    line-height: 1.5;
+  }
+  .wrap { max-width: 1320px; margin: 0 auto; padding-block: 32px 64px; padding-inline: 20px; }
+  .mono { font-family: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, monospace; }
+
+  /* ── Header ── */
+  .head { display: grid; gap: 8px; max-width: 72ch; margin-bottom: 28px; }
+  .eyebrow { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-muted); }
+  h1 { margin: 0; font-size: 28px; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; text-wrap: balance; }
+  .lede { margin: 0; color: var(--doc-muted); max-width: 66ch; }
+  .lede strong { color: var(--doc-ink); font-weight: 600; }
+  .legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 6px; font-size: 13px; color: var(--doc-muted); }
+  .legend .k { display: inline-flex; align-items: center; gap: 6px; }
+  .tag { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; padding: 2px 6px; border-radius: 4px; border: 1px solid var(--doc-line); color: var(--doc-muted); }
+  .tag.new { color: var(--doc-accent); border-color: var(--doc-accent); }
+  .tag.gone { text-decoration: line-through; }
+  .tag.call { color: var(--doc-warn); border-color: var(--doc-warn); }
+
+  /* ── Specimen pair ── */
+  .pair { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(600px, 100%), 1fr)); gap: 28px; align-items: start; }
+  .spec { display: grid; gap: 10px; justify-items: start; }
+  .spec-cap { display: flex; align-items: baseline; gap: 10px; font-size: 13px; color: var(--doc-muted); }
+  .spec-cap b { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-ink); }
+  .stage { position: relative; width: 600px; max-width: 100%; }
+
+  /* ── The modal frame — TRUE SIZE, real portal tokens. This is product UI: Inter, 6px radii, lime CTA ── */
+  .frame {
+    width: 100%;
+    background: var(--home-card);
+    color: var(--home-ink);
+    border: 1px solid var(--home-line-strong);
+    border-radius: 12px;
+    padding: 24px;
+    font-family: Inter, system-ui, sans-serif;
+    font-size: var(--type-body);
+    line-height: 1.4;
+    box-shadow: 0 1px 2px rgba(70, 55, 30, 0.05), 0 10px 30px rgba(20, 15, 10, 0.18);
+    display: flex; flex-direction: column; gap: 14px;
+  }
+  .frame.before { border-color: rgba(87, 101, 30, 0.30); }
+  .fhead { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+  .ftitle { display: inline-flex; align-items: center; gap: 10px; margin: 0; font-size: var(--type-heading); font-weight: 700; }
+  .fx { color: var(--home-dim); font-size: 18px; line-height: 1; }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; }
+  .hint { margin: 0; font-size: var(--type-support); color: var(--home-dim); line-height: 1.4; }
+  .lbl { display: block; font-size: var(--type-support); font-weight: 600; color: var(--home-dim); text-transform: uppercase; letter-spacing: 0.04em; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .input { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--home-paper); border: 1px solid var(--home-line-strong); border-radius: 6px; padding: 8px 12px; color: var(--home-ink); min-height: 36px; }
+  .input.ph { color: var(--home-dim); }
+  .input svg { flex: 0 0 auto; color: var(--home-dim); }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+  .grid3 { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 11px; }
+  .chk { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; }
+  .box { width: 15px; height: 15px; border: 1.5px solid var(--home-line-strong); border-radius: 3px; background: var(--home-card); }
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 7px 13px; border: 1px solid var(--home-line-strong); border-radius: 999px; background: var(--home-paper); font-weight: 600; }
+  .pill.on { border: 1.5px solid var(--evt-game); background: rgba(52, 102, 42, 0.10); }
+  .card { background: var(--home-olive-soft); border: 1px solid var(--home-line-strong); border-radius: 8px; padding: 13px 14px; display: flex; flex-direction: column; gap: 11px; }
+  .ct { margin: 0; font-size: var(--type-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--home-dim); }
+  .chips { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+  .chips .lbl { display: inline; margin-right: 2px; }
+  .chip { padding: 4px 11px; border: 1px solid var(--home-line-strong); border-radius: 999px; background: var(--home-paper); color: var(--home-ink-soft); font-size: var(--type-support); }
+  .seg { display: inline-flex; border: 1px solid var(--home-line-strong); border-radius: 7px; overflow: hidden; width: fit-content; }
+  .seg span { padding: 7px 16px; background: var(--home-paper); color: var(--home-dim); font-weight: 600; border-right: 1px solid var(--home-line); }
+  .seg span:last-child { border-right: 0; }
+  .seg span.on { background: var(--home-lime); color: var(--home-lime-ink); }
+  .disc { display: flex; align-items: center; gap: 7px; padding: 9px 11px; border: 1px dashed var(--home-line-strong); border-radius: 8px; color: var(--home-olive); font-weight: 600; }
+  .foot { display: flex; justify-content: flex-end; gap: 8px; margin: 6px -24px -24px; padding: 16px 24px; border-top: 1px solid var(--home-line); }
+  .btn { padding: 7px 14px; border-radius: 6px; font-weight: 700; background: var(--home-lime); color: var(--home-lime-ink); }
+  .btn.pillr { border-radius: 999px; padding: 8px 18px; }
+  .ghost { padding: 5px 8px; color: var(--home-dim); }
+  .ghost.pillr { padding: 8px 14px; }
+  .group { display: flex; flex-direction: column; gap: 11px; }
+  .group + .group { margin-top: 8px; }
+  .region { border-radius: 8px; transition: outline-color 0.15s, box-shadow 0.15s; outline: 2px solid transparent; outline-offset: 4px; }
+  .region.lit { outline-color: var(--doc-focus); box-shadow: 0 0 0 6px rgba(19, 79, 211, 0.10); }
+
+  /* ── Markers — rounded squares in the left gutter of each frame; click one and its note lights ── */
+  .mk {
+    position: absolute; left: -14px; transform: translateX(-100%);
+    width: 26px; height: 26px; border-radius: 6px;
+    font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--doc-ink); color: var(--doc-bg); border: 0; cursor: pointer;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+  }
+  .mk.gone { background: transparent; color: var(--doc-ink); border: 1.5px dashed var(--doc-ink); }
+  .mk:focus-visible { outline: 2px solid var(--doc-focus); outline-offset: 2px; }
+  .mk.lit { background: var(--doc-focus); color: #fff; border-color: var(--doc-focus); }
+  @media (max-width: 700px) {
+    .mk { left: auto; right: -6px; transform: none; }
+    .grid3 { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── Notes ── */
+  .notes { margin-top: 40px; display: grid; gap: 14px; }
+  .notes h2 { margin: 0 0 4px; font-size: 20px; }
+  .note { display: grid; grid-template-columns: 34px 1fr; gap: 14px; padding: 16px 18px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+  .note:hover { border-color: var(--doc-muted); }
+  .note.lit { background: var(--doc-on); border-color: var(--doc-accent); }
+  .note:focus-visible { outline: 2px solid var(--doc-focus); outline-offset: 2px; }
+  .note .n { width: 26px; height: 26px; border-radius: 6px; background: var(--doc-ink); color: var(--doc-bg); font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; justify-content: center; margin-top: 2px; }
+  .note h3 { margin: 0 0 4px; font-size: 16px; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+  .note p { margin: 0; color: var(--doc-muted); max-width: 78ch; }
+  .note p + p { margin-top: 6px; }
+  .note p b { color: var(--doc-ink); font-weight: 600; }
+  .note .rec { color: var(--doc-ink); }
+
+  /* ── Sweep + optional ── */
+  .two { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(420px, 100%), 1fr)); gap: 28px; margin-top: 40px; align-items: start; }
+  .panel { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px 20px; }
+  .panel h2 { margin: 0 0 6px; font-size: 18px; }
+  .panel p { margin: 0 0 10px; color: var(--doc-muted); max-width: 66ch; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; }
+  th, td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--doc-line); vertical-align: top; }
+  th { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-muted); font-weight: 500; }
+  td.c { color: var(--doc-muted); }
+  .tbl { overflow-x: auto; }
+  .stage.small { width: 100%; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+
+  /* ── Hub chrome ── */
+  .hubbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; padding: 14px 20px; background: var(--doc-ink); color: var(--doc-bg); }
+  .hubbar .t { margin-right: auto; }
+  .hubbar .t strong { display: block; font-size: 15px; }
+  .hubbar .t small { color: color-mix(in srgb, var(--doc-bg) 75%, transparent); font-size: 12px; }
+  .stages { display: flex; flex-wrap: wrap; gap: 4px; list-style: none; margin: 0; padding: 0; }
+  .stages li { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; padding: 5px 10px; border-radius: 999px; color: color-mix(in srgb, var(--doc-bg) 55%, transparent); cursor: default; white-space: nowrap; }
+  .stages li.done { color: var(--doc-bg); background: color-mix(in srgb, var(--doc-bg) 18%, transparent); }
+  .stages li.current { color: var(--doc-ink); background: var(--doc-accent); }
+  .hubactions button { min-height: 40px; padding: 7px 12px; border: 1px solid color-mix(in srgb, var(--doc-bg) 40%, transparent); border-radius: 6px; background: transparent; color: var(--doc-bg); font: inherit; font-size: 13px; cursor: pointer; }
+  .hubactions button[aria-pressed="true"] { background: var(--doc-bg); color: var(--doc-ink); }
+  .hubtabs { display: flex; gap: 22px; overflow: auto; white-space: nowrap; padding: 0 20px; background: var(--doc-panel); border-bottom: 1px solid var(--doc-line); }
+  .hubtabs button { min-height: 46px; padding: 9px 0; border: 0; border-bottom: 3px solid transparent; background: transparent; color: var(--doc-muted); font: inherit; font-size: 14px; cursor: pointer; }
+  .hubtabs button[aria-pressed="true"] { border-bottom-color: var(--doc-accent); color: var(--doc-ink); font-weight: 700; }
+  .hubtabs button:focus-visible, .hubactions button:focus-visible { outline: 2px solid var(--doc-focus); outline-offset: 2px; }
+  /* Phone width: the AFTER stage narrows to 390 and the frame reflows the way the product does
+     ≤640 (container query, so the document chrome around it is untouched). */
+  .stage { container-type: inline-size; }
+  .stage.phone { width: 390px; }
+  @container (max-width: 420px) {
+    .frame { padding: 18px; border-radius: 0; }
+    .foot { margin: 6px -18px -18px; padding: 14px 18px; }
+    .grid2 { grid-template-columns: 1fr; }
+    .grid3 { grid-template-columns: 1fr 1fr; }
+    .grid3 > :first-child { grid-column: 1 / -1; }
+  }
+  /* ── Doc pages (PM brief, plan, decisions, QA) ── */
+  .doc { max-width: 78ch; margin: 0 auto; padding-block: 28px 56px; padding-inline: 20px; }
+  .doc h1 { font-size: 24px; margin-bottom: 4px; }
+  .doc h2 { font-size: 18px; margin: 28px 0 8px; }
+  .doc h3 { font-size: 15px; margin: 18px 0 6px; }
+  .doc p, .doc li { color: var(--doc-ink); }
+  .doc ul, .doc ol { padding-left: 22px; }
+  .doc li { margin: 4px 0; }
+  .doc .meta { color: var(--doc-muted); font-size: 13px; margin: 0 0 16px; }
+  .doc table { margin: 10px 0 18px; }
+  .doc td { color: var(--doc-ink); }
+  .doc code { font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12.5px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 4px; padding: 1px 5px; }
+  .drow { border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-panel); padding: 14px 16px; margin-bottom: 10px; }
+  .drow .dh { display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .drow .dh strong { font-size: 15px; }
+  .drow p { margin: 6px 0 0; color: var(--doc-muted); }
+  .signin { border: 1px solid var(--doc-line); background: var(--doc-panel); border-radius: 10px; padding: 14px 18px; font-size: 13.5px; margin: 0 0 20px; }
+  .signin b { font-family: "IBM Plex Mono", ui-monospace, monospace; font-weight: 500; }
+  .qaprogress { font-weight: 700; margin: 0 0 14px; }
+  .qapart { border: 1px solid var(--doc-line); border-radius: 10px; background: var(--doc-panel); padding: 16px 18px; margin-bottom: 14px; }
+  .qapart h3 { margin: 0 0 6px; }
+  .qapart .where { margin: 0 0 8px; color: var(--doc-muted); font-size: 13px; }
+  .qastep { display: flex; gap: 10px; align-items: flex-start; padding: 7px 0; font-size: 14px; }
+  .qastep input { width: 20px; height: 20px; accent-color: var(--doc-accent); margin-top: 1px; flex-shrink: 0; }
+  .verdict { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 10px; font-size: 13px; }
+  .verdict button { border: 1px solid var(--doc-line); background: var(--doc-bg); color: var(--doc-ink); border-radius: 6px; padding: 7px 11px; min-height: 38px; font: inherit; font-size: 13px; cursor: pointer; }
+  .verdict button[aria-pressed="true"] { background: var(--doc-on); border-color: var(--doc-accent); font-weight: 700; }
+  .qapart textarea { width: 100%; border: 1px solid var(--doc-line); border-radius: 6px; padding: 8px 10px; margin-top: 8px; resize: vertical; background: var(--doc-bg); color: var(--doc-ink); font: inherit; font-size: 13.5px; }
+  .qaactions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+  .qaactions button { border: 1px solid var(--doc-line); background: var(--doc-ink); color: var(--doc-bg); border-radius: 6px; padding: 9px 14px; min-height: 40px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  #summaryOut { width: 100%; border: 1px solid var(--doc-line); border-radius: 8px; padding: 12px; margin-top: 12px; background: var(--doc-bg); color: var(--doc-ink); font: 12px/1.5 "IBM Plex Mono", ui-monospace, monospace; min-height: 220px; }
+  @media (max-width: 600px) { .hubbar { padding: 11px 14px; } .hubtabs { padding: 0 14px; } }
+</style>
+<div class="hubbar">
+  <div class="t"><strong>Add Event form — consistency pass</strong><small>Ruled 2026-09-21 · built on dev · reviewed (5 findings fixed) · help synced · QA walk §212 owed</small></div>
+  <ul class="stages" aria-label="Project lifecycle">
+    <li class="done" title="Mockup published 2026-09-21 (this artifact, v1)">Design</li>
+    <li class="done" title="COACH_EVENT_FORM_CONSISTENCY_PLAN.md + PM brief, 2026-09-21">Plan</li>
+    <li class="done" title="Built on dev 2026-09-21 — typecheck + verify:changed clean">Build</li>
+    <li class="done" title="/review 2026-09-21 — 1 High + 3 Medium + 1 Low confirmed, all fixed; /docs synced">Review</li>
+    <li class="current" title="Owner QA walk §212">QA</li>
+    <li title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phoneToggle" aria-pressed="false">Phone width</button></div>
+</div>
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+<section id="hub-mockup">
+
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">Coaches portal · Schedule · design review · 2026-09-21</div>
+    <h1>The Add Event form, held against the rest of the portal</h1>
+    <p class="lede">Ruled as drawn on 2026-09-21, and built the same day. Left is the form as it shipped before; right is the same form with every drift against a standing rule removed — <strong>nothing new invented</strong>, only the shapes the newer forms already use. Both frames are drawn at the modal's real 600px width. Click any numbered marker (or note below) to see where it applies.</p>
+    <div class="legend">
+      <span class="k"><span class="tag new">changed</span> follows a rule the newer forms already keep</span>
+      <span class="k"><span class="tag call">your call</span> a judgment, not a rule</span>
+      <span class="k"><span class="tag">unchanged</span> deliberately left as is</span>
+    </div>
+  </header>
+
+  <div class="pair">
+    <!-- ───────────── BEFORE ───────────── -->
+    <div class="spec">
+      <div class="spec-cap"><b>Before</b> as it ships today (warm theme)</div>
+      <div class="stage">
+        <div class="frame before" aria-label="Add Game form, before">
+          <div class="fhead">
+            <h3 class="ftitle">Add Game</h3>
+            <span class="fx">✕</span>
+          </div>
+
+          <p class="hint region" data-r="2">* Required</p>
+          <button class="mk" data-n="2" aria-label="Note 2">2</button>
+
+          <div class="field region" data-r="1">
+            <span class="lbl">Event type</span>
+            <div class="pills">
+              <span class="pill"><span class="dot" style="background: var(--evt-tournament)"></span>Tournament</span>
+              <span class="pill on"><span class="dot" style="background: var(--evt-game)"></span>Game</span>
+              <span class="pill"><span class="dot" style="background: var(--evt-practice)"></span>Practice</span>
+              <span class="pill"><span class="dot" style="background: var(--evt-team)"></span>Team Event</span>
+            </div>
+          </div>
+          <button class="mk" data-n="1" aria-label="Note 1">1</button>
+
+          <section class="card region" data-r="3">
+            <h4 class="ct">When</h4>
+            <span class="chk"><span class="box"></span>Repeat weekly</span>
+            <div class="grid2">
+              <div class="field"><span class="lbl">Starts *</span><div class="input">2026-09-21 06:00 PM <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div></div>
+              <div class="field"><span class="lbl">Ends</span><div class="input">2026-09-21 08:00 PM <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div></div>
+            </div>
+            <div class="field region" data-r="6">
+              <span class="lbl">Arrival / call time</span>
+              <div class="input ph">--:-- -- <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+              <p class="hint">A “be there by” time before the start — shows on the event and the calendar export.</p>
+            </div>
+          </section>
+          <button class="mk" data-n="3" aria-label="Note 3">3</button>
+          <button class="mk" data-n="6" aria-label="Note 6">6</button>
+
+          <section class="card region" data-r="3b">
+            <h4 class="ct">Where</h4>
+            <div class="field"><span class="lbl">Location</span><div class="input ph">e.g. Sherwood Park</div></div>
+            <div class="chips"><span class="lbl">Recent:</span><span class="chip">UAT Fields</span></div>
+          </section>
+
+          <section class="card region" data-r="3c">
+            <h4 class="ct">Who</h4>
+            <div class="field"><span class="lbl">Opponent</span><div class="input ph">Team name</div></div>
+            <div class="field region" data-r="5">
+              <span class="lbl">Home / Away</span>
+              <div class="seg"><span class="on">Home</span><span>Away</span><span>Neutral</span></div>
+              <p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p>
+            </div>
+            <span class="chk"><span class="box"></span>This is a scrimmage</span>
+          </section>
+          <button class="mk" data-n="5" aria-label="Note 5">5</button>
+
+          <div class="disc region" data-r="7">＋ Add details (optional)</div>
+          <button class="mk" data-n="7" aria-label="Note 7">7</button>
+
+          <div class="foot region" data-r="4"><span class="ghost pillr">Cancel</span><span class="btn pillr">Save Event</span></div>
+          <button class="mk" data-n="4" aria-label="Note 4">4</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ───────────── AFTER ───────────── -->
+    <div class="spec">
+      <div class="spec-cap"><b>After</b> the same form, on the portal's own rules</div>
+      <div class="stage" id="afterStage">
+        <div class="frame" aria-label="Add Game form, after">
+          <div class="fhead region" data-r="1">
+            <h3 class="ftitle">Add Game <span class="dot" style="background: var(--evt-game)" title="Game"></span></h3>
+            <span class="fx">✕</span>
+          </div>
+          <button class="mk" data-n="1" aria-label="Note 1">1</button>
+          <button class="mk gone" data-n="2" style="top: 58px" aria-label="Note 2">2</button>
+          <button class="mk gone" data-n="8" style="top: 94px" aria-label="Note 8">8</button>
+
+          <div class="group region" data-r="3">
+            <span class="chk"><span class="box"></span>Repeat weekly</span>
+            <div class="grid2">
+              <div class="field"><span class="lbl">Starts *</span><div class="input">2026-09-21 06:00 PM <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div></div>
+              <div class="field"><span class="lbl">Ends</span><div class="input">2026-09-21 08:00 PM <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div></div>
+            </div>
+            <div class="field region" data-r="6">
+              <span class="lbl">Arrival time</span>
+              <div class="input ph">--:-- -- <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+              <p class="hint">A “be there by” time before the start — shows on the event and the calendar export.</p>
+            </div>
+          </div>
+          <button class="mk" data-n="3" aria-label="Note 3">3</button>
+          <button class="mk" data-n="6" aria-label="Note 6">6</button>
+
+          <div class="group region" data-r="3b">
+            <div class="field"><span class="lbl">Location</span><div class="input ph">e.g. Sherwood Park</div></div>
+            <div class="chips"><span class="lbl">Recent</span><span class="chip">UAT Fields</span></div>
+          </div>
+
+          <div class="group region" data-r="3c">
+            <div class="grid2">
+              <div class="field"><span class="lbl">Opponent</span><div class="input ph">Team name</div></div>
+              <div class="field region" data-r="5"><span class="lbl">Home / Away</span><div class="input">Home <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            </div>
+            <p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p>
+            <span class="chk"><span class="box"></span>This is a scrimmage</span>
+          </div>
+          <button class="mk" data-n="5" aria-label="Note 5">5</button>
+
+          <div class="disc region" data-r="7">＋ More — field, uniform, tags, links, notes</div>
+          <button class="mk" data-n="7" aria-label="Note 7">7</button>
+
+          <div class="foot region" data-r="4"><span class="ghost">Cancel</span><span class="btn">Add game</span></div>
+          <button class="mk" data-n="4" aria-label="Note 4">4</button>
+        </div>
+      </div>
+      <p class="hint" style="color: var(--doc-muted); font-size: 13px; margin-top: 4px;">The form is ~250px shorter for a Game. On a phone that is the difference between Opponent above the fold and below it.</p>
+    </div>
+  </div>
+
+  <!-- ───────────── NOTES ───────────── -->
+  <section class="notes" aria-label="Notes">
+    <h2>What changes, and why</h2>
+
+    <div class="note" data-n="1" tabindex="0">
+      <span class="n">1</span>
+      <div>
+        <h3>The event type is asked twice <span class="tag new">changed</span></h3>
+        <p>Every door into this form has already chosen the type: the <b>Add Event</b> menu lists Tournament / Game / Practice / Team Event, the practice hub opens it as a practice, and a tournament opens it as a tournament game. The title then says “Add Game” — and the pill row asks again. Neither pills nor a dropdown is the answer; <b>the question is already answered</b>.</p>
+        <p class="rec"><b>Proposed:</b> remove the row. The title carries the type, with the event's colour mark beside it (the same mark the schedule row and the menu wear). Picked the wrong type? Cancel and pick again — one tap, and the discard guard only asks if you've typed something.</p>
+      </div>
+    </div>
+
+    <div class="note" data-n="2" tabindex="0">
+      <span class="n">2</span>
+      <div>
+        <h3>“* Required” is the first thing a coach reads <span class="tag new">changed</span></h3>
+        <p>The asterisk convention was ruled on 2026-08-25 as carrying the whole signal on its own — plain, in the label's ink. The forms built since (Record money, Add a goal, Record a result, Record an observation, Give an award) carry no legend. Here the legend explains a marker that sits on one field, <b>Starts</b>, which opens pre-filled — so it announces a requirement the coach never meets empty.</p>
+        <p class="rec"><b>Proposed:</b> drop it. Seven older forms still carry the same line (Add Player, Add Budget Line, dues credit, the head-coach editor, the free schedule editor, the interest form, the installment plan) — sweep them in the same pass so the portal keeps one rule.</p>
+      </div>
+    </div>
+
+    <div class="note" data-n="3" tabindex="0">
+      <span class="n">3</span>
+      <div>
+        <h3>The boxed, tinted sections — the “blue background” <span class="tag new">changed</span></h3>
+        <p>When / Where / Who each sit in a filled, bordered card inside the modal. In the warm theme the fill is olive; <b>in dark mode the same box tints blueprint-blue</b> — that is the blue you remember. Either way it is a card inside a card, and the inputs then sit on a tinted ground (the same shape the Staff screen dropped this month). The rest of the portal's forms are flat: eyebrow labels, fields, space between groups. And the section words repeat the labels beneath them — “Where” over a field called Location, “Who” over Opponent — in a second grey-caps size so close to the field labels that they read as one level.</p>
+        <p class="rec"><b>Proposed:</b> flatten. Keep the grouping as a wider gap; drop the fill, the border and the headings. The one CSS rule behind these boxes also draws the open “More” disclosure, the Give Award sheet and the paste-a-roster sheet — change it once and all four agree.</p>
+      </div>
+    </div>
+
+    <div class="note" data-n="4" tabindex="0">
+      <span class="n">4</span>
+      <div>
+        <h3>Round buttons and a Title Case label <span class="tag new">changed</span></h3>
+        <p>This is the only form in the portal whose footer buttons are pills — the stylesheet says so in as many words (“scoped to the event modal so the rest of the app's square buttons are untouched”). And “Save Event” is the portal's one Title Case save; everything else is sentence case (“Save changes”, “Add it”, “Save result”, “Record money”).</p>
+        <p class="rec"><b>Proposed:</b> the ordinary square buttons, and the verb from the title: <b>Add game</b> / Add practice / Add tournament; editing keeps “Save changes”. A repeating series already names its count (“Add 11 games”).</p>
+      </div>
+    </div>
+
+    <div class="note" data-n="5" tabindex="0">
+      <span class="n">5</span>
+      <div>
+        <h3>Home / Away as a segmented row <span class="tag call">your call</span></h3>
+        <p>By the 2026-08-22 ruling a form field that picks one value is a dropdown, and every sibling pick on the money and roster forms (method, position, who raised it) is one. Drawn that way here, beside Opponent, it also lets the two game questions share a row. The honest counter-argument: three fixed words that will never grow, and “Away” is one tap today versus two.</p>
+        <p class="rec"><b>Proposed:</b> the dropdown, for one shape across every form — but this is the one item where the rule and the screen can reasonably disagree.</p>
+      </div>
+    </div>
+
+    <div class="note" data-n="6" tabindex="0">
+      <span class="n">6</span>
+      <div>
+        <h3>One field, two names <span class="tag new">changed</span></h3>
+        <p>The same time is labelled “Arrival / call time” on a one-off event and “Arrival time” on a repeating one, on the same form. The one-spelling rule is about words, but the principle is the same: a thing has one name.</p>
+        <p class="rec"><b>Proposed:</b> “Arrival time” everywhere on the form. The hint under it stays — it is the one place a coach learns families see it.</p>
+      </div>
+    </div>
+
+    <div class="note" data-n="7" tabindex="0">
+      <span class="n">7</span>
+      <div>
+        <h3>“Add details (optional)” <span class="tag new">changed</span></h3>
+        <p>The other disclosures name what is inside them — “More — success, tag”, “More — payee, tags, notes” — so a coach knows where Uniform went without opening it. And “(optional)” is the tag the 2026-08-26 ruling retired: the dashed line and the plus already say it.</p>
+        <p class="rec"><b>Proposed:</b> “More — field, uniform, tags, links, notes” on a game; “More — field, address, links, notes” otherwise.</p>
+      </div>
+    </div>
+
+    <div class="note" data-n="8" tabindex="0">
+      <span class="n">8</span>
+      <div>
+        <h3>Under the hood: it is not standing on the shared modal <span class="tag new">changed</span></h3>
+        <p>Twenty forms stand in the portal's one modal shell; this one is hand-built. The visible cost is the drift above — a private width (600px, beside the shell's 520 and 640), the private pill radius. The invisible cost: <b>Escape does not close it, focus is not trapped or returned, and a screen reader is never told it is a dialog</b> — the floor every other form got, and the event slide-over on this very page got on 2026-09-20.</p>
+        <p class="rec"><b>Proposed:</b> stand it in the shared shell (the wide, scrolling variant). That is what keeps it from drifting again.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="two">
+    <div class="panel">
+      <h2>Optional — ask the date once <span class="tag call">your call</span></h2>
+      <p>Separate from the consistency pass, so it can be ruled on its own. Today a one-off game asks for a date twice (Starts and Ends each carry one), while the repeat branch already asks the way people think: which day, what time, until when. The same shape for a one-off event would look like this. A multi-day tournament keeps its own Start date / End date.</p>
+      <div class="stage small">
+        <div class="frame" style="padding: 18px; gap: 11px; box-shadow: none;">
+          <div class="grid3">
+            <div class="field"><span class="lbl">Date *</span><div class="input">2026-09-21 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div></div>
+            <div class="field"><span class="lbl">Start time *</span><div class="input">06:00 PM</div></div>
+            <div class="field"><span class="lbl">End time</span><div class="input">08:00 PM</div></div>
+          </div>
+          <div class="field"><span class="lbl">Arrival time</span><div class="input ph">--:-- --</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>Where the same fixes land elsewhere</h2>
+      <p>Each item above is a rule, so it reaches past this one form. This is the sweep the pass would carry, so the portal ends with one shape rather than one fixed screen.</p>
+      <div class="tbl">
+        <table>
+          <thead><tr><th>Note</th><th>Also touches</th><th>Effort</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">2</td><td>Add Player · Add Budget Line · dues credit · head-coach editor · free schedule editor · interest form · installment plan</td><td class="c">one line each</td></tr>
+            <tr><td class="mono">3</td><td>Open “More” disclosures on every form · Give an award · Paste a roster</td><td class="c">one CSS rule</td></tr>
+            <tr><td class="mono">7</td><td>Give an award (“Note (optional)”, “Tournament or occasion (optional)”) · Add a goal (“Note (optional)”, “success (optional)”)</td><td class="c">labels only</td></tr>
+            <tr><td class="mono">4 · 8</td><td>This form only</td><td class="c">the real work</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+</section>
+<section id="hub-brief" hidden>
+  <div class="doc">
+    <h1>PM Brief — the Add Event form looks like the rest of the portal</h1>
+    <p class="meta">Ruled 2026-09-21 · built on dev the same day · plan on the Full Plan tab</p>
+    <h2>What a coach sees differently</h2>
+    <p>Open <b>Add Event → Game</b> on the Premium schedule.</p>
+    <ul>
+      <li>The form opens on the fields, not on a legend. No "* Required" line; no row of event-type pills. The title says <b>Add Game</b> with the game's colour dot beside it — the same dot the schedule row and the Add Event menu use. Picked the wrong type? Cancel, pick again.</li>
+      <li><b>Date · Start time · End time</b> on one row, then <b>Arrival time</b>. Before, the date was typed twice (once inside Starts, once inside Ends). The repeating form already asked it this way.</li>
+      <li>The When / Where / Who boxes are gone. The same fields sit flat on the sheet, in groups separated by space — the way Record money, Add a goal and every other form in the portal reads. (The "blue background" was this box in dark mode; olive in the warm theme. Same box.)</li>
+      <li><b>Opponent</b> and <b>Home / Away</b> share a row; Home / Away is a dropdown like every other pick in the portal. The "@ vs vs" hint sits under the row. "This is a scrimmage" is unchanged.</li>
+      <li>The optional group is named for what it holds — <b>More — field, uniform, tags, links, notes</b> — instead of "Add details (optional)".</li>
+      <li>The footer is the ordinary square buttons: <b>Cancel · Add game</b> (Add practice, Add tournament, Add team event; a repeating series still says "Add 11 games"; editing still says Save changes).</li>
+      <li>Escape closes the form, focus returns to where you were, and a screen reader is told it is a dialog — the floor every other form already had.</li>
+    </ul>
+    <p>Net: the Game form is roughly 250px shorter; on a phone, Opponent is above the fold.</p>
+    <h2>What else it touches</h2>
+    <ul>
+      <li>The <b>same rule</b> that drew the tinted boxes draws the open "More" group on every form, the Give Award sheet and the paste-a-roster sheet — all four flatten together, so nothing is left as the odd one out.</li>
+      <li>The "* Required" line comes off the six other forms that still carried it (Add Player, Add Budget Line, dues credit, the head-coach editor, the free schedule editor, the interest form).</li>
+      <li>"(optional)" tags come off the premium forms that still had them (Give an award, Add a goal, Record a result, Review a goal, the skill/test definition sheet, the game console's "About a player?", the scouting note, the budget period grid). The free-tier editors keep their older "+ Add … (optional)" panels — a separate call.</li>
+      <li>The help articles say <b>Arrival time</b> where they said "Arrival / call time" (searching "call time" still finds them).</li>
+    </ul>
+    <h2>Why it matters</h2>
+    <p>A coach meets this form more than any other on the portal — every game, every practice. It was the one form still speaking an older visual language, and every difference cost either space (the pills, the legend, the boxes) or a small doubt (is this the same product?). The pass spends no new design; it applies rulings already in force.</p>
+    <h2>Trade-offs</h2>
+    <ul>
+      <li>Changing the type mid-form now means Cancel + re-pick (one tap; the discard guard only asks if something was typed). Chosen over keeping a whole row on every open.</li>
+      <li>An event that crosses midnight (23:00–01:00) is recomposed same-day if edited. Youth-team events do not cross midnight; the repeating branch already assumed this.</li>
+      <li>Home / Away as a dropdown is one more tap for an away game than the segmented row was. Ruled for one shape across every form.</li>
+    </ul>
+    <h2>How to test</h2>
+    <p>The QA Walk tab (§212 in the Owner QA Ledger).</p>
+  </div>
+</section>
+<section id="hub-plan" hidden>
+  <div class="doc">
+    <h1>Full plan — the Add / Edit Event form, held to the portal's own form rules</h1>
+    <p class="meta">Ruled 2026-09-21 (all nine items) · built on dev 2026-09-21 · source: <code>docs/projects/active/COACH_EVENT_FORM_CONSISTENCY_PLAN.md</code></p>
+    <h2>1. Why</h2>
+    <p>The event form was built before several standing rulings and drifted against each of them: "a one-value form field is a dropdown" (08-22), "one plain asterisk — mark the few required, never the many optional" (08-25/26), "never a filled CTA on a panel tinted with its own hue" (07-30, and the Staff screen's 09 drop of the tinted panel), the List · Room · Question shell (twenty forms stand in it; this one was hand-built), and the portal's sentence-case, square-button footer. A screenshot read ("blue background", "* Required first", "pills or a dropdown?") was the trigger; the review widened it to eight items and one optional idea.</p>
+    <h2>2. Decisions</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>#</th><th>Item</th><th>Ruling</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">1</td><td>Event type picker inside the form</td><td>Removed. Every door already chooses the type (the Add Event menu, the practice hub, a tournament's game slot). The title carries it with the type's colour dot. Wrong pick → Cancel and pick again.</td></tr>
+        <tr><td class="mono">2</td><td>"* Required" legend</td><td>Dropped here and on the six sibling forms that still carried it. The asterisk is the whole signal.</td></tr>
+        <tr><td class="mono">3</td><td>Boxed, tinted When / Where / Who</td><td>Flattened at the one CSS rule: no fill, border or padding; groups separate by space; the three headings dropped (they repeated the labels beneath). Every open disclosure, Give Award and Paste-a-roster flatten with it. Headings that carry information stay (From the organizer / Your game-day plan).</td></tr>
+        <tr><td class="mono">4</td><td>Pill footer, "Save Event"</td><td>The private width and pill radius retired. Square buttons; the title's verb in sentence case — Add game / Add practice / Add tournament / Add team event; editing keeps "Save changes"; a series keeps "Add 11 games".</td></tr>
+        <tr><td class="mono">5</td><td>Home / Away segmented row</td><td>A dropdown, beside Opponent on one row; the hint under the row.</td></tr>
+        <tr><td class="mono">6</td><td>"Arrival / call time" vs "Arrival time"</td><td>One name, Arrival time, on all three branches. Help keeps "call time" as a search keyword.</td></tr>
+        <tr><td class="mono">7</td><td>"Add details (optional)"</td><td>"More — field, uniform, tags, links, notes" on a game; "More — field, address, links, notes" otherwise. The premium "(optional)" pile swept in the same pass.</td></tr>
+        <tr><td class="mono">8</td><td>Hand-built modal</td><td>Stands in the shared question shell (wide): dialog role and label, Escape, Tab trap, focus restore, the full-screen sheet ≤640, busy-gated close. The page's own overlay-lock line stops counting the form (the shell registers it).</td></tr>
+        <tr><td class="mono">9</td><td>Ask the date once (optional)</td><td>Accepted. Date · Start time · End time for a one-off event; a multi-day tournament keeps Start date / End date.</td></tr>
+      </tbody>
+    </table></div>
+    <h2>3. How "date once" is built</h2>
+    <p>The two datetime values stay canonical — the save, the guards, the tournament prefill and the mirrored facts read them unchanged. The three visible pieces are the form's existing date / start-time / end-time fields (the repeat branch's own): seeded from the datetimes wherever the form is built, and recomposed on every edit. The "end follows the start by two hours unless the coach set a custom end" rule survives. Clearing a piece leaves the others on screen and greys Save. Toggling Repeat weekly now opens with First date pre-filled. <b>Known limit, accepted:</b> an event ending the next day (23:00–01:00) is recomposed same-day when edited.</p>
+    <h2>4. The sweep</h2>
+    <ul>
+      <li><b>Legend removals:</b> Add Player (keeps the "Adding several? Paste a list →" line), Add Budget Line, dues credit, head-coach editor, free schedule editor, interest form.</li>
+      <li><b>Flattened by the one rule:</b> open disclosures everywhere, Give an award, Paste a roster.</li>
+      <li><b>"(optional)" labels, premium forms:</b> Give an award (2), Add a goal (3), Record a result, Review a goal (2), the skill/test definition sheet, the game console's "About a player?", the scouting note, the budget period grid (2 + one accessible name). Out of scope: the free portal's older "+ Add … (optional)" panels.</li>
+      <li><b>Help:</b> the game-day-details term and FAQ say Arrival time; the schedule article's Premium line says "arrival time".</li>
+      <li><b>Retired:</b> the event modal's private width and pill-radius rule, the in-form type-picker styles and their warm overrides, the pill list constant. The dot survives as the title mark. The sticky scope chooser now lands flush the way the footer does (it used to rely on the retired class).</li>
+      <li><b>New:</b> a three-column grid for Date · Start · End (≤640 the date spans the row, the two times share the next); a title-with-mark style.</li>
+    </ul>
+    <h2>5. Verification</h2>
+    <ul>
+      <li>Typecheck clean; the changed-files gate clean (spelling, dictionary, CSS selectors, contrast, the unit suite).</li>
+      <li>The schedule smoke UAT drives recurrence through the API, not the form's controls — no locator changes.</li>
+      <li>Browser: the QA Walk tab (§212).</li>
+    </ul>
+    <h2>7. /review findings (2026-09-21) — all fixed</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Sev</th><th>Finding</th><th>Fix</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">High</td><td>Repeat weekly ON → edit the time → OFF showed the edited time and saved the pre-toggle one; a cleared piece left Save enabled off the stale value.</td><td>Every date/time piece writes through one recompose, in both branches; the +2h auto-end stays a one-off rule.</td></tr>
+        <tr><td class="mono">Medium</td><td>A dialog opened from a toolbar menu returned focus to nowhere on close (the menu item unmounts on select).</td><td>The shared dialog floor remembers a few more focus steps and returns to the newest one still on the page — the menu's button. Every menu-opened dialog benefits.</td></tr>
+        <tr><td class="mono">Medium</td><td>Picking a tournament with no start date could blank a typed piece after another was cleared.</td><td>Pieces re-seed only when the date actually moved.</td></tr>
+        <tr><td class="mono">Medium</td><td>An imported game with no side painted "Home" over an empty value.</td><td>A "—" row renders while unset; saving untouched still sends no side.</td></tr>
+        <tr><td class="mono">High</td><td>Blast radius: the bill's payment-schedule editor also stood on the section rule, and its approved drawing IS the tint.</td><td>Its surface moved onto its own class unchanged. <b>Open for the owner (§8).</b></td></tr>
+        <tr><td class="mono">Low</td><td>Clearing the Date on a practice said "needs an end time".</td><td>The message reads the End time field the coach can see.</td></tr>
+      </tbody>
+    </table></div>
+    <h2>8. Open for the owner</h2>
+    <p>The bill's payment-schedule editor is now the portal's one remaining tinted form section (its own approved drawing from 2026-08-29). Flatten it under the same ruling, or keep it as the one place where rows-on-a-surface was the design? Not decided here.</p>
+    <h2>6. Not built, on purpose</h2>
+    <ul>
+      <li>No "change the type inside the form" affordance — the door is one tap away.</li>
+      <li>No custom calendar glyph on this form — it lives in the budget module; adopting it here is a shared-primitive move for its own session.</li>
+      <li>The free-tier editors' "(optional)" idiom.</li>
+    </ul>
+  </div>
+</section>
+<section id="hub-decisions" hidden>
+  <div class="doc">
+    <h1>Decisions</h1>
+    <p class="meta">What the owner ruled, and on what. Appended as rulings happen; never edited after.</p>
+    <div class="drow"><div class="dh"><strong>Remove the event-type picker from the form</strong><span class="tag new">accepted</span></div><p>2026-09-21 — every door already chooses the type; the title carries it with the colour dot. Neither pills nor a dropdown: the question was already answered.</p></div>
+    <div class="drow"><div class="dh"><strong>Drop the "* Required" legend, here and on the six siblings</strong><span class="tag new">accepted</span></div><p>2026-09-21 — the asterisk carries the whole signal (08-25); the forms built since carry no legend.</p></div>
+    <div class="drow"><div class="dh"><strong>Flatten the tinted section boxes, at the CSS rule</strong><span class="tag new">accepted</span></div><p>2026-09-21 — a card inside a card, olive on paper and blueprint-blue in dark; the headings repeated the labels. Open disclosures, Give Award and Paste-a-roster flatten with it.</p></div>
+    <div class="drow"><div class="dh"><strong>Square footer buttons; "Add game" in sentence case</strong><span class="tag new">accepted</span></div><p>2026-09-21 — the only pill footer on the portal, and the only Title Case save.</p></div>
+    <div class="drow"><div class="dh"><strong>Home / Away becomes a dropdown</strong><span class="tag new">accepted</span></div><p>2026-09-21 — presented as a judgment call (three fixed words; one more tap for Away); ruled for one shape across every form.</p></div>
+    <div class="drow"><div class="dh"><strong>One name: Arrival time</strong><span class="tag new">accepted</span></div><p>2026-09-21 — the same field carried two labels on one form.</p></div>
+    <div class="drow"><div class="dh"><strong>"More — field, uniform, tags, links, notes"</strong><span class="tag new">accepted</span></div><p>2026-09-21 — the other disclosures name what they hold; "(optional)" is the retired tag.</p></div>
+    <div class="drow"><div class="dh"><strong>Stand the form in the shared question shell</strong><span class="tag new">accepted</span></div><p>2026-09-21 — the last hand-built modal; brings Escape, focus, the Tab trap and the dialog role, and stops the next drift.</p></div>
+    <div class="drow"><div class="dh"><strong>Ask the date once (optional idea)</strong><span class="tag new">accepted</span></div><p>2026-09-21 — Date · Start time · End time for a one-off event, the repeat branch's own shape. Presented separately so it could be ruled alone; accepted with the rest.</p></div>
+  </div>
+</section>
+<section id="hub-qa" hidden>
+  <div class="doc">
+    <h1>QA Walk §212 — the Add Event form, consistency pass</h1>
+    <p class="meta">Tick as you go; ticks, verdicts and notes stay in this browser. "Build summary" makes plain text to paste back into chat.</p>
+    <div class="signin">
+      <strong>Sign in as</strong> (dev only — keep this page private)<br>
+      URL <b>http://localhost:3000</b> · account <b>uat-coach@uat-test-org.local</b> · password <b>UATPassword2026!</b> · org <b>uat-test-org</b> · team <b>UAT Test Team</b> → <b>Schedule</b>.<br>
+      Part H's free-tier editor needs the standalone free coach fixture (Coaches → your free team's Schedule); Part H's interest form is <b>/coaches/start</b> on the marketing site.
+    </div>
+    <p class="qaprogress" id="qaCount">Checked 0 of 0</p>
+    <div id="qaParts"></div>
+    <div class="qaactions"><button type="button" id="buildSummary">Build summary</button><button type="button" id="clearQA">Clear this walk</button></div>
+    <textarea id="summaryOut" hidden aria-label="QA summary to paste back"></textarea>
+  </div>
+</section><script>
+  (function () {
+    var lit = null;
+    function setLit(n) {
+      var same = (n === lit);
+      document.querySelectorAll('.lit').forEach(function (el) { el.classList.remove('lit'); });
+      lit = same ? null : n;
+      if (!lit) return;
+      document.querySelectorAll('[data-n="' + lit + '"]').forEach(function (el) { el.classList.add('lit'); });
+      var map = { '1': ['1'], '2': ['2'], '3': ['3', '3b', '3c'], '4': ['4'], '5': ['5'], '6': ['6'], '7': ['7'], '8': [] };
+      (map[lit] || []).forEach(function (r) {
+        document.querySelectorAll('[data-r="' + r + '"]').forEach(function (el) { el.classList.add('lit'); });
+      });
+    }
+    /* Markers sit beside the region they annotate — measured, not guessed. */
+    function place() {
+      document.querySelectorAll('.stage').forEach(function (stage) {
+        stage.querySelectorAll('.mk:not(.gone)').forEach(function (b) {
+          var r = stage.querySelector('[data-r="' + b.getAttribute('data-n') + '"]');
+          if (!r) return;
+          var top = 0, el = r;
+          while (el && el !== stage) { top += el.offsetTop; el = el.offsetParent; }
+          b.style.top = (top + Math.max(0, (Math.min(r.offsetHeight, 40) - 26) / 2)) + 'px';
+        });
+      });
+    }
+    place();
+    window.addEventListener('resize', place);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    document.querySelectorAll('.mk').forEach(function (b) {
+      b.addEventListener('click', function () {
+        setLit(b.getAttribute('data-n'));
+        var note = document.querySelector('.note[data-n="' + b.getAttribute('data-n') + '"]');
+        if (note && lit) note.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      });
+    });
+    document.querySelectorAll('.note').forEach(function (nt) {
+      nt.addEventListener('click', function () { setLit(nt.getAttribute('data-n')); });
+      nt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLit(nt.getAttribute('data-n')); } });
+    });
+  })();
+</script>
+
+<script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var HUBS = ['mockup', 'brief', 'plan', 'decisions', 'qa'];
+    function showHub(which) {
+      HUBS.forEach(function (h) { var s = $('hub-' + h); if (s) s.hidden = (h !== which); });
+      document.querySelectorAll('[data-hub]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-hub') === which)); });
+      try { history.replaceState(null, '', '#' + which); } catch (e) {}
+      window.dispatchEvent(new Event('resize'));
+    }
+    document.querySelectorAll('[data-hub]').forEach(function (b) { b.addEventListener('click', function () { showHub(b.getAttribute('data-hub')); }); });
+    var initial = (location.hash || '').slice(1);
+    if (HUBS.indexOf(initial) > -1) showHub(initial);
+
+    var phone = $('phoneToggle'), after = $('afterStage');
+    if (phone && after) phone.addEventListener('click', function () {
+      var on = phone.getAttribute('aria-pressed') !== 'true';
+      phone.setAttribute('aria-pressed', String(on));
+      after.classList.toggle('phone', on);
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    /* ── QA walk ── */
+    var QA_PARTS = [
+      { id: 'A', title: 'Add a game', where: 'Schedule → Add Event → Game (desktop, warm theme)', steps: [
+        'The form opens on the fields: no "* Required" line, no row of event-type pills.',
+        'The title reads "Add Game" with a green dot after it.',
+        'Date · Start time · End time sit on one row; Arrival time under them with its hint.',
+        'No When / Where / Who boxes or headings — flat fields, a wider gap between the groups.',
+        'Location, then the Recent chips (no colon after "Recent").',
+        'Opponent and Home / Away share a row; Home / Away is a dropdown (Home · Away · Neutral, Home preselected); the "@ vs vs" hint sits under the row; "This is a scrimmage" below it.',
+        'The collapsed group reads "＋ More — field, uniform, tags, links, notes"; open it — flat, titled "More", with a Hide link.',
+        'Footer: Cancel and a square lime "Add game" — no pill shapes.',
+        'Change the start time → the end time moves to two hours later. Set a custom end, then change the start again → the end stays.',
+        'Save → the game appears on the day and at the time you set; open it and the times read back correctly.',
+      ]},
+      { id: 'B', title: 'Add a practice', where: 'Schedule → Add Event → Practice', steps: [
+        'The title dot is the practice colour; End time carries the asterisk; no Opponent row.',
+        'Clear End time → "A practice needs an end time." appears and Add practice greys.',
+        'Set the end before the start → "The end needs to be after the start." and Add practice greys.',
+        'Fix it and save.',
+      ]},
+      { id: 'C', title: 'Tournaments', where: 'Schedule → Add Event → Tournament, then its game slot', steps: [
+        'A multi-day tournament still asks Start date / End date (unchanged); the button reads "Add tournament".',
+        'Add a game to that tournament: no "Tournament" heading above "Which tournament? *"; the date jumps to the tournament\'s day; the button reads "Add tournament game".',
+        'Open a game an organizer runs (a mirrored game): "From the organizer" and "Your game-day plan" keep their headings; the field is labelled "Arrival time".',
+      ]},
+      { id: 'D', title: 'Editing', where: 'Any existing game → pencil / Edit', steps: [
+        'The title reads "Edit Game" with the dot; there is no type row; the button reads "Save changes".',
+        'The date and both times read back from the saved event.',
+        'Edit one occurrence of a repeating series → the "Apply your changes to:" chooser sits flush at the foot with no empty band under it.',
+        'If the schedule holds an imported game with no side (a blank Home/Away column on import): open it → Home / Away reads "—", not "Home"; pick a side and it saves.',
+      ]},
+      { id: 'E', title: 'Repeat weekly', where: 'Add Event → Game → tick Repeat weekly', steps: [
+        'The fields swap to Day of week / Start time / End time / Arrival time / First date / Last date; First date is already the day you opened on.',
+        'Set a Last date → the occurrence rows appear; remove one; the button counts the rest ("Add 3 games").',
+        'Untick Repeat weekly → the one-off Date · Start · End row returns with the date intact.',
+        'Tick Repeat weekly again, change the Start time and the First date, untick → the one-off row shows the changed date and time; save → the saved game carries them (not the earlier ones).',
+        'While repeating, clear the Start time → untick → Start time is blank and the button greys until you set it.',
+      ]},
+      { id: 'F', title: 'Keyboard and phone', where: 'Same form, then at 390px wide (or on your phone)', steps: [
+        'Escape closes an untouched form; type something first → Escape asks before discarding.',
+        'Tab from the last control wraps back inside the form; after closing (Escape or Cancel), focus is back on the Add Event button — the menu you opened it from.',
+        'Open Add Event with the keyboard, arrow to Practice, Enter → after closing, focus is back on Add Event too.',
+        'At phone width the form is a full-screen sheet; Date spans its row and the two times share the next; Opponent and Home / Away stack; the footer stays reachable.',
+      ]},
+      { id: 'G', title: 'The four surfaces the one rule also draws', where: 'Schedule, Roster', steps: [
+        'Give an award (a game\'s Awards) — the sections are flat; "Tournament or occasion" and "Note" carry no "(optional)".',
+        'Roster → Add player — no "* Required" line; the "Adding several? Paste a list →" line still leads.',
+        'Roster → paste a list — "Columns we look for" sits flat, no box.',
+        'Any form\'s open "More" group — flat, titled, with a Hide link.',
+      ]},
+      { id: 'H', title: 'The legend sweep', where: 'Money and the free portal', steps: [
+        'Money → Budget → Add Budget Line — no "* Required" line; the asterisks on the labels remain.',
+        'Money → Dues → a family\'s credit form — no "* Required" line.',
+        'Team → Settings → head coach editor — no "* Required" line.',
+        'A free-tier team\'s Schedule (the free editor) — no "* Required" line (the rest of that form is unchanged).',
+        '/coaches/start — the interest form has no "* Required" line.',
+        'Money → Bills → Add a bill → Payment schedule: the schedule editor still sits on its tinted surface (its own approved drawing) — this is the one tinted form section left, and whether it should flatten too is an open call (plan §8).',
+      ]},
+      { id: 'I', title: 'The "(optional)" sweep', where: 'Development, a game console, scouting, the budget grid', steps: [
+        'A player → Skills & Goals → Add a goal: "Note", "What would success look like?", "Focus tag" — no tags.',
+        'Record a result: "Note" — no tag. Review a goal: "How it\'s going", "Next review" — no tags.',
+        'Define a skill (not a test): "Descriptors to choose from" — no tag.',
+        'Game console → a moment: "About a player?" — no tag. Opponents → a scouting note: "Tag" — no tag.',
+        'Budget line → split into periods: the column reads "Label".',
+      ]},
+      { id: 'J', title: 'Help', where: 'Help → Schedule / Game-day details', steps: [
+        'The game-day-details article defines "Arrival time" (not "Arrival / call time"); the FAQ answer matches.',
+        'Searching help for "call time" still finds that article.',
+      ]},
+    ];
+    var KEY = 'qa-212-event-form';
+    var qa = {};
+    try { qa = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { qa = {}; }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(qa)); } catch (e) {} }
+    function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function counts() { var c = 0, t = 0; QA_PARTS.forEach(function (p) { p.steps.forEach(function (_, i) { t++; if (qa[p.id + '-' + i]) c++; }); }); return { c: c, t: t }; }
+    function paintCount() { var k = counts(); $('qaCount').textContent = 'Checked ' + k.c + ' of ' + k.t; }
+    function draw() {
+      $('qaParts').innerHTML = QA_PARTS.map(function (p) {
+        return '<div class="qapart"><h3>Part ' + p.id + ' · ' + esc(p.title) + '</h3><p class="where">' + esc(p.where) + '</p>' +
+          p.steps.map(function (s, i) { return '<label class="qastep"><input type="checkbox" id="qa-' + p.id + '-' + i + '" data-step="' + p.id + '-' + i + '"' + (qa[p.id + '-' + i] ? ' checked' : '') + '> <span>' + esc(s) + '</span></label>'; }).join('') +
+          '<div class="verdict">Verdict:' + ['pass', 'issue', 'call'].map(function (v) { return '<button type="button" data-verdict="' + p.id + '" data-value="' + v + '" aria-pressed="' + (qa['verdict-' + p.id] === v) + '">' + (v === 'pass' ? 'Pass' : v === 'issue' ? 'Issue' : 'Needs a call') + '</button>'; }).join('') + '</div>' +
+          '<label>Notes<textarea id="qa-notes-' + p.id + '" data-notes="' + p.id + '" rows="2" placeholder="Anything worth recording">' + esc(qa['notes-' + p.id] || '') + '</textarea></label></div>';
+      }).join('');
+      paintCount();
+    }
+    draw();
+    $('qaParts').addEventListener('change', function (e) {
+      var t = e.target;
+      if (t.dataset.step) { qa[t.dataset.step] = t.checked; save(); paintCount(); }
+      if (t.dataset.notes) { qa['notes-' + t.dataset.notes] = t.value; save(); }
+    });
+    $('qaParts').addEventListener('click', function (e) {
+      var b = e.target.closest('[data-verdict]');
+      if (!b) return;
+      qa['verdict-' + b.dataset.verdict] = b.dataset.value; save();
+      b.parentNode.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); });
+    });
+    $('buildSummary').addEventListener('click', function () {
+      var k = counts();
+      var lines = ['QA walk §212 — Add Event form consistency pass', 'Checked ' + k.c + ' of ' + k.t, ''];
+      QA_PARTS.forEach(function (p) {
+        lines.push('Part ' + p.id + ' · ' + p.title + ' — verdict: ' + (qa['verdict-' + p.id] || 'unset'));
+        p.steps.forEach(function (s, i) { lines.push('  [' + (qa[p.id + '-' + i] ? 'x' : ' ') + '] ' + s); });
+        if (qa['notes-' + p.id]) lines.push('  Notes: ' + qa['notes-' + p.id]);
+        lines.push('');
+      });
+      var out = $('summaryOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
+    });
+    $('clearQA').addEventListener('click', function () { if (!confirm('Clear every tick, verdict and note for this walk?')) return; qa = {}; save(); draw(); $('summaryOut').hidden = true; });
+  })();
+</script>
