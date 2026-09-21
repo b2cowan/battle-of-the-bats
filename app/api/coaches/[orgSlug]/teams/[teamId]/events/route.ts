@@ -87,12 +87,16 @@ export const GET = withObservability(async (req: Request,
   // Draft / Ready / Needs review badge (F02 — replaces the old "any nonblank cell = set" boolean),
   // powering the Lineups page's chips, the schedule and Overview's flags, and the "Needs lineup"
   // filter, all without N+1 probes.
-  const [lineupMismatchEventIds, lineupStatusByEvent] = capabilities.lineups
+  const [lineupMismatchEventIds, lineupReadiness] = capabilities.lineups
     ? await Promise.all([
         getRepTeamLineupAttendanceMismatchEventIds(programYear.id),
         getRepTeamLineupReadinessByEvent(programYear.id, getSportPack(team.sport ?? DEFAULT_SPORT).fieldPositions),
       ])
     : [[], null];
+  const lineupStatusByEvent = lineupReadiness?.statusByEvent ?? null;
+  // D11: beside the badge, how many innings still need a decision — a Ready lineup may carry open
+  // innings the coach means to fill at the field, and the hub's chip says so ("Ready · 3 open").
+  const lineupOpenInningsByEvent = lineupReadiness?.openInningsByEvent ?? null;
   // Tags: the team's game-tag library (for the chip picker) + which tags each returned event
   // already carries (for chip display without a per-event fetch). Both gate on the same
   // `schedule` capability already required for this whole route.
@@ -112,6 +116,7 @@ export const GET = withObservability(async (req: Request,
     tagsByEventId,
     awardCountByEventId,
     ...(lineupStatusByEvent ? { lineupStatusByEvent } : {}),
+    ...(lineupOpenInningsByEvent ? { lineupOpenInningsByEvent } : {}),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events' });
 

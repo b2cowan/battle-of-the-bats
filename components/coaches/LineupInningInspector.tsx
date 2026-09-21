@@ -4,6 +4,8 @@ import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import QuestionShell from './QuestionShell';
 import { CoachRowList, CoachRowBand, CoachRow } from './CoachRowList';
 import SublinedChoice, { type SublinedOption } from './SublinedChoice';
+import { LineupStateMark, type LineupMarkState } from './LineupCheck';
+import check from './LineupCheck.module.css';
 import {
   inspectInning, inningChoiceChanges, playerChoiceChanges, standingFor,
   type InningCandidate, type InningPlayer, type InningRole, type OpenRoleCause,
@@ -23,6 +25,10 @@ import s from './LineupInningInspector.module.css';
  * them. This is a SECOND LENS over the same saved assignments — nothing is stored twice: every
  * pick here is the same cell edit the grid makes (autosaved, undoable, and it returns a Ready
  * lineup to Draft exactly as a grid edit does).
+ *
+ * It opens from an inning heading on the grid, or from a row of the Lineup check (`LineupCheck`,
+ * 2026-09-18) — then it carries a way back to the check, and the header wears the inning's status
+ * mark so paging prev/next reads the game's state at a glance.
  *
  * What it shows, in order: prev/next inning · the sport's field roles as one row list — the ROLE
  * is the row's anchor (large, its own column, first at every width), the player the answer, and
@@ -54,6 +60,9 @@ export interface LineupInningInspectorProps {
   inning: number | null;
   inningCount: number;
   onClose: () => void;
+  /** Present when the lens was opened from the Lineup check: the way back to it (and where the
+   *  phone's header arrow goes). Absent from an inning heading — the X is the only way out. */
+  onBack?: () => void;
   onNavigate: (inning: number) => void;
   rows: LineupPlayerRow[];
   sportPack: { fieldPositions: string[]; pitcherPosition: string | null; periodLabel: string };
@@ -107,7 +116,7 @@ const atCap = (p: InningPlayer) => p.pitcherCap != null && p.pitchedInnings >= p
 type Pick = SublinedOption<string>;
 
 export default function LineupInningInspector({
-  inning, inningCount, onClose, onNavigate, rows, sportPack, pitcherCapFor, onApply,
+  inning, inningCount, onClose, onBack, onNavigate, rows, sportPack, pitcherCapFor, onApply,
 }: LineupInningInspectorProps) {
   const { fieldPositions, pitcherPosition, periodLabel } = sportPack;
   const open = inning != null;
@@ -290,6 +299,15 @@ export default function LineupInningInspector({
   // the lens — the facts card appears once the inning is started and a role is still open.
   const started = lens.assignedCount > 0 || lens.bench.length > 0 || lens.elsewhere.length > 0;
   const showWhy = started && lens.openRoles.length > 0;
+  // The status symbol in the header (owner, 2026-09-18): the inning's state at a glance as the
+  // coach pages through — a cross on a clash, a warning while a role or a player is undecided,
+  // a check once the field is full. An untouched inning has nothing to say yet, so no mark.
+  const hasClash = roles.some(r => r.holders.length > 1);
+  const mark: { state: LineupMarkState; label: string } | null = hasClash
+    ? { state: 'bad', label: 'Position clash' }
+    : !started ? null
+      : lens.openRoles.length > 0 || lens.undecided.length > 0 ? { state: 'warn', label: 'Needs a decision' }
+        : { state: 'ok', label: 'Every role covered' };
   /** One player's standing across the open field roles, Best and Never named, "available" folded. */
   function standingWords(openRoles: { code: string; standing: string; bestRank: number | null }[]): string[] {
     const best = openRoles.filter(r => r.standing === 'best');
@@ -311,13 +329,18 @@ export default function LineupInningInspector({
     <QuestionShell
       open={open}
       onClose={onClose}
+      onBack={onBack}
       ariaLabel={`${roleWord} — who is at each position`}
       title={roleWord}
       subtitle={status}
+      headerExtra={mark && <LineupStateMark state={mark.state} label={mark.label} inHeader />}
       scroll
       wide
     >
       <div className={`${coach.scrollPane} ${s.body}`}>
+        {onBack && (
+          <button type="button" className={check.back} onClick={onBack}>‹ Lineup check</button>
+        )}
         <nav className={s.nav} aria-label={`Other ${periodLabel.toLowerCase()}s`}>
           <button type="button" className={coach.btnSecondary} disabled={inning <= 1} onClick={() => onNavigate(inning - 1)}>
             {inning > 1 ? `‹ ${periodLabel} ${inning - 1}` : `First ${periodLabel.toLowerCase()}`}

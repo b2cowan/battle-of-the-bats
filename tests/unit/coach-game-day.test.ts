@@ -18,6 +18,7 @@ import {
   consoleMode,
   deriveGameResult,
   gameDayWindow,
+  gameHasStarted,
   GAME_DAY_ASSUMED_DURATION_MS,
   GAME_DAY_LINGERS_AFTER_MS,
   GAME_DAY_OPENS_BEFORE_MS,
@@ -92,6 +93,25 @@ describe('gameDayWindow', () => {
 
   it('an unparseable start yields NO window, not a NaN-anchored one', () => {
     assert.equal(gameDayWindow(game({ startsAt: 'garbage' })), null);
+  });
+});
+
+describe('gameHasStarted — the one clock behind the lineup Ready rule (D11d)', () => {
+  // Game time is the START, not the live window's opening two hours earlier: the window is when
+  // the console is useful, game time is when the plan stops being a plan.
+  const table: [string, number, boolean][] = [
+    ['the evening before', STARTS_MS - 20 * HOUR, false],
+    ['inside the live window, before first pitch', STARTS_MS - HOUR, false],
+    ['1ms before', STARTS_MS - 1, false],
+    ['exactly at game time', STARTS_MS, true],
+    ['mid-game', STARTS_MS + HOUR, true],
+    ['long after', STARTS_MS + 30 * 24 * HOUR, true],
+  ];
+  for (const [label, nowMs, expected] of table) {
+    it(label, () => assert.equal(gameHasStarted(game(), nowMs), expected));
+  }
+  it('an unparseable start never counts as started (the ordinary reset applies)', () => {
+    assert.equal(gameHasStarted({ startsAt: 'not a date' }, STARTS_MS + HOUR), false);
   });
 });
 

@@ -18,7 +18,8 @@ import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { denyUnless, redactRoster } from '@/lib/coach-capabilities';
-import { analyzeLineup } from '@/lib/lineup-analysis';
+import { analyzeLineup, canMarkLineupReady } from '@/lib/lineup-analysis';
+import { gameHasStarted } from '@/lib/coach-game-day';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
@@ -234,6 +235,10 @@ export const PUT = withObservability(async (req: Request,
       notes: notes || null,
       rulesOverride,
       updatedBy: ctx.user.id,
+      // D11d: an edit BEFORE game time reopens the plan (Ready → Draft); an edit AT OR AFTER game
+      // time is the game — a substitution from Game-Day Mode comes through this same PUT — and
+      // must not un-ready the plan the coach took to the field.
+      keepReadiness: gameHasStarted(event, Date.now()),
     });
     const savedEntries = await replaceRepTeamLineupEntries(lineup.id, rows);
     return NextResponse.json({ lineup, entries: savedEntries, event });
@@ -246,9 +251,10 @@ export const PUT = withObservability(async (req: Request,
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/events/[eventId]/lineup' });
 
 // Mark ready (Phase 2, D1): the ONLY request path that can set status='ready'. Re-checks the
-// CURRENTLY SAVED lineup fresh from the database — never trusts the client's in-memory analysis —
-// so a coach cannot mark ready a lineup that has open roles or an unresolved conflict, even if
-// their own screen is stale.
+// CURRENTLY SAVED lineup fresh from the database — never trusts the client's in-memory analysis.
+// The gate is WRONGNESS, not emptiness (D11, 2026-09-20): an empty lineup has nothing to mark and
+// a proven clash blocks; open roles and undecided players are the coach's plan for the field and
+// never block — the badge carries their count instead.
 export const PATCH = withObservability(async (_req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string; eventId: string }> },) => {
   const { orgSlug, teamId, eventId } = await params;
@@ -269,9 +275,11 @@ export const PATCH = withObservability(async (_req: Request,
     lineup.inningCount,
     sportPack.fieldPositions,
   );
-  if (analysis.readiness !== 'ready') {
+  if (!canMarkLineupReady(analysis)) {
     return NextResponse.json(
-      { error: 'This lineup still has open roles or an issue to resolve before it can be marked ready.' },
+      { error: analysis.hasConflicts
+        ? 'Resolve the position clash before marking this lineup ready.'
+        : 'Build the lineup before marking it ready.' },
       { status: 409 },
     );
   }

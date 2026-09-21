@@ -18,6 +18,7 @@ export default function CoachModalHeader({
   title,
   subtitle,
   onClose,
+  onBack,
   children,
   titleTag: TitleTag = 'h3',
   closeIconSize = 16,
@@ -31,6 +32,9 @@ export default function CoachModalHeader({
    */
   subtitle?: ReactNode;
   onClose: () => void;
+  /** Where the phone's back arrow goes when the modal has a view BEHIND it (the lineup check
+   *  behind an inning) — the X still closes. Absent, the arrow closes, as it always has. */
+  onBack?: () => void;
   children?: ReactNode;
   titleTag?: 'h2' | 'h3';
   closeIconSize?: number;
@@ -38,7 +42,7 @@ export default function CoachModalHeader({
 }) {
   return (
     <div className={`${styles.modalHeader} ${subtitle ? styles.modalHeaderStacked : ''}`}>
-      <button className={styles.modalBackBtn} aria-label="Back" onClick={onClose}><ArrowLeft size={20} /></button>
+      <button className={styles.modalBackBtn} aria-label="Back" onClick={onBack ?? onClose}><ArrowLeft size={20} /></button>
       {/* The title keeps its own element when there is no subtitle, so every existing caller's
           markup is byte-identical to before; only the two-line form gets a wrapper. */}
       {subtitle ? (

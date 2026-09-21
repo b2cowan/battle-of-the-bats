@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { analyzeLineup, deriveLineupBadge, BENCH_POSITION } from '../../lib/lineup-analysis.ts';
+import { analyzeLineup, deriveLineupBadge, canMarkLineupReady, inningsNeedingDecision, BENCH_POSITION } from '../../lib/lineup-analysis.ts';
 
 describe('lineup readiness analysis', () => {
   const positions = ['P', 'C'];
@@ -86,5 +86,73 @@ describe('deriveLineupBadge (Phase 2, D1 — the persisted Draft/Ready handoff)'
     // the case the server-side re-check (the PATCH mark-ready route) and this derivation both guard.
     assert.equal(deriveLineupBadge(analysis, 'ready'), 'needs_review');
     assert.equal(deriveLineupBadge(analysis, 'draft'), 'needs_review');
+  });
+});
+
+describe('canMarkLineupReady (D11 — the gate is wrongness, never emptiness)', () => {
+  const positions = ['P', 'C', '1B'];
+
+  it('an empty grid has nothing to mark', () => {
+    const analysis = analyzeLineup([{ playerId: 'A', inningPositions: {} }], 3, positions);
+    assert.equal(canMarkLineupReady(analysis), false);
+  });
+
+  it('a proven clash blocks', () => {
+    const analysis = analyzeLineup([
+      { playerId: 'A', inningPositions: { '1': 'P' } },
+      { playerId: 'B', inningPositions: { '1': 'P' } },
+    ], 1, positions);
+    assert.equal(canMarkLineupReady(analysis), false);
+  });
+
+  it('open roles, undecided players and untouched innings never block — the coach fills them at the field', () => {
+    // Innings 1–2 done, 3 pencilled (one player), 4 untouched: the owner's own lineup shape.
+    const analysis = analyzeLineup([
+      { playerId: 'A', inningPositions: { '1': 'P', '2': 'C', '3': 'P' } },
+      { playerId: 'B', inningPositions: { '1': 'C', '2': 'P' } },
+      { playerId: 'C', inningPositions: { '1': '1B', '2': '1B' } },
+    ], 4, positions);
+    assert.equal(analysis.readiness, 'draft'); // still incomplete as a coverage fact …
+    assert.equal(canMarkLineupReady(analysis), true); // … and still the coach's to mark
+  });
+
+  it('a covered lineup can be marked, as before', () => {
+    const analysis = analyzeLineup([
+      { playerId: 'A', inningPositions: { '1': 'P' } },
+      { playerId: 'B', inningPositions: { '1': 'C' } },
+      { playerId: 'C', inningPositions: { '1': '1B' } },
+    ], 1, positions);
+    assert.equal(canMarkLineupReady(analysis), true);
+  });
+});
+
+describe('inningsNeedingDecision (D11 — the count Ready carries with it)', () => {
+  const positions = ['P', 'C'];
+
+  it('counts a started inning with an open role, one with an undecided player, and the untouched innings — each once', () => {
+    const analysis = analyzeLineup([
+      { playerId: 'A', inningPositions: { '1': 'P', '2': 'P', '3': 'P' } },
+      { playerId: 'B', inningPositions: { '1': 'C', '2': BENCH_POSITION } },   // inning 2: C open, 3: undecided
+    ], 5, positions);
+    // 1 whole · 2 open role · 3 undecided (B blank) + C open · 4–5 untouched
+    assert.deepEqual(inningsNeedingDecision(analysis), [2, 3, 4, 5]);
+  });
+
+  it('a clash inning counts even when every player is decided and every role held', () => {
+    const analysis = analyzeLineup([
+      { playerId: 'A', inningPositions: { '1': 'P', '2': 'P' } },
+      { playerId: 'B', inningPositions: { '1': 'P', '2': 'C' } },
+      { playerId: 'C', inningPositions: { '1': 'C', '2': BENCH_POSITION } },
+    ], 2, positions);
+    assert.deepEqual(inningsNeedingDecision(analysis), [1]);
+  });
+
+  it('is empty for a fully decided lineup', () => {
+    const analysis = analyzeLineup([
+      { playerId: 'A', inningPositions: { '1': 'P', '2': BENCH_POSITION } },
+      { playerId: 'B', inningPositions: { '1': 'C', '2': 'P' } },
+      { playerId: 'C', inningPositions: { '1': BENCH_POSITION, '2': 'C' } },
+    ], 2, positions);
+    assert.deepEqual(inningsNeedingDecision(analysis), []);
   });
 });

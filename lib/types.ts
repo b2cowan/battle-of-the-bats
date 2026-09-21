@@ -1824,8 +1824,11 @@ export interface RepTeamLineup {
   notes: string | null;
   rulesOverride: LineupRulesOverride | null; // P3 per-game cap override (mig 172)
   updatedBy: string | null;
-  // Coach-marked readiness (mig 304). `status` resets to 'draft' on every ordinary save — only the
-  // dedicated mark-ready write path sets 'ready'. readyBy may go null on account deletion without
+  // Coach-marked readiness (mig 304). `status` resets to 'draft' on every ordinary save made before
+  // the event's start time; at or after it the save leaves readiness alone (D11d — a game-day
+  // substitution is the game, not a reopened plan). Only the dedicated mark-ready write path sets
+  // 'ready', and it requires no clash and at least one assignment — NOT full coverage, so a 'ready'
+  // lineup may hold blank cells on purpose (D11). readyBy may go null on account deletion without
   // status changing (same convention as updatedBy); status alone is the fact.
   status: 'draft' | 'ready';
   readyAt: string | null;

@@ -58,6 +58,31 @@ export function deriveLineupBadge(analysis: LineupAnalysis, persistedStatus: 'dr
   return persistedStatus === 'ready' ? 'ready' : 'draft';
 }
 
+/**
+ * Whether a coach may mark this lineup Ready (D11, 2026-09-20): the gate is WRONGNESS, never
+ * emptiness. An empty grid has nothing to hand off (that alone is the whole of the one-cell-
+ * accident protection F02 asked for) and a proven clash is wrong; open roles and undecided
+ * players are the coach's own plan — filled at the field — and never block. The server's PATCH
+ * re-checks this against the saved lineup; the builder shows the button from the same rule.
+ */
+export function canMarkLineupReady(analysis: LineupAnalysis): boolean {
+  return analysis.hasAssignments && !analysis.hasConflicts;
+}
+
+/**
+ * The innings that still need a decision — a clash, a required role with no holder, or a player
+ * with no field/Bench decision. This is the count Ready carries with it ("Mark ready · 3 innings
+ * open", "Ready · 3 open") so a bare Ready never hides a gap; it is the same set the builder's
+ * Lineup check lists row by row (a started inning with open work, and the untouched innings).
+ */
+export function inningsNeedingDecision(analysis: LineupAnalysis): number[] {
+  const open = new Set<number>();
+  for (const c of analysis.conflicts) open.add(c.inning);
+  for (const m of analysis.missingFieldPositions) open.add(m.inning);
+  for (const fill of analysis.inningFill) if (fill.unassigned > 0) open.add(fill.inning);
+  return [...open].sort((x, y) => x - y);
+}
+
 export interface LineupAnalysis {
   conflicts: LineupConflict[];
   conflictInnings: Set<number>;

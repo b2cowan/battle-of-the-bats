@@ -1,0 +1,68 @@
+/* LineupCheck — the lineup's one status mark and the summary Question behind the builder's strip
+   (owner, 2026-09-18: "a single banner telling me I have issues in multiple innings, then I click
+   it to see a modal"). Tokens only; the rows are CoachRow (the F-17 recipe) and nothing here
+   restyles a row's ground. */
+
+/* The status symbol — the same round mark on the builder's strip, this check's header and the
+   inning lens's header: a check when every role is covered, a warning while roles or decisions
+   are open, a cross on a proven clash. The word beside it carries the meaning; the mark is what
+   the eye reads first. */
+.mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 50%;
+}
+.mark[data-state="ok"] { color: var(--success); background: rgba(var(--success-rgb), 0.14); }
+.mark[data-state="warn"] { color: var(--warning); background: rgba(var(--warning-rgb), 0.16); }
+.mark[data-state="bad"] { color: var(--danger); background: rgba(var(--danger-rgb), 0.14); }
+
+/* In a modal header the mark sits against the X (the header is space-between; the auto margin
+   takes the free space so the two sit together at the right edge). */
+.headerMark { margin-left: auto; margin-right: 0.5rem; }
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+/* Content height for every child; the scroll pane does the scrolling (the inning lens's lesson —
+   a list that is a scroll container shrinks to zero inside a flex pane). */
+.body > * { flex: none; }
+
+/* The way back to the check from an inning — above the inning's own prev / next, quiet. */
+.back {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  min-height: var(--tap-min, 44px);
+  padding: 0 0.25rem;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.back:hover { color: var(--text-primary); }
+.back:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
+
+/* The pattern note on the Innings band — the one shared fact said once ("P open in all 6"). */
+.bandNote {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--warning);
+}
+
+.note {
+  margin: -0.4rem 0.25rem 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}

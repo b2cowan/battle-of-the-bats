@@ -218,8 +218,9 @@ export default function LineupTemplatesView({
         const d = await put.json().catch(() => ({ error: put.statusText }));
         throw new Error(d.error ?? 'Could not apply the template');
       }
-      // The server always resets a written lineup to Draft (readiness is a deliberate coach act) —
-      // the hub moves the game optimistically, matching what a reload would show.
+      // Before game time the server resets a written lineup to Draft (readiness is a deliberate coach
+      // act); the hub decides from the same clock whether to move the game (D11d keeps Ready once
+      // the game has started), matching what a reload would show.
       onApplied(game.id);
       setNotice(skipped > 0
         ? `Applied “${t.name}” to ${gameTitle(game)} — skipped ${skipped} player${skipped === 1 ? '' : 's'} no longer on the roster.`

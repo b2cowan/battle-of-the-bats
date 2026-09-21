@@ -129,6 +129,19 @@ export function isInGameDayWindow(event: GameDayEventShape, nowMs: number): bool
   return windowHolds(window, nowMs);
 }
 
+/**
+ * Whether game time has arrived: `now` is at or past the event's start. This is the ONE clock
+ * behind the lineup's Ready rule (D11d, 2026-09-20) — an edit before game time reopens the plan
+ * (Ready → Draft); an edit at or after it is the game itself and leaves the plan Ready. Deliberately
+ * the start time and not the live window's opening (two hours earlier): the window is when the
+ * console is USEFUL, game time is when the plan stops being a plan. Unparseable start → false, so a
+ * bad row falls to the ordinary reset rather than silently keeping a stale Ready.
+ */
+export function gameHasStarted(event: Pick<GameDayEventShape, 'startsAt'>, nowMs: number): boolean {
+  const startsMs = new Date(event.startsAt).getTime();
+  return !Number.isNaN(startsMs) && nowMs >= startsMs;
+}
+
 /** Whether an already-computed window holds the instant — for a caller that keeps the windows
  *  and only moves the clock (the Schedule's season list, once a minute). Inclusive both ends. */
 export function windowHolds(window: { opensAtMs: number; closesAtMs: number }, nowMs: number): boolean {

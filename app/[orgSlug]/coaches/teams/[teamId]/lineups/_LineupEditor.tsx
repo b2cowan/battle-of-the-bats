@@ -7,7 +7,7 @@
 // — lives here so it's written once and both surfaces stay in lock-step.
 import { useState, useRef, useEffect } from 'react';
 import { useDismissable } from '@/lib/overlay-hooks';
-import { X, ChevronUp, ChevronDown, GripVertical, Shuffle } from 'lucide-react';
+import { X, ChevronUp, ChevronDown, ChevronRight, GripVertical, Shuffle } from 'lucide-react';
 import {
   DndContext, closestCenter, MouseSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -18,7 +18,8 @@ import { CSS } from '@dnd-kit/utilities';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
 import LineupInningInspector, { InningHeadingDoor } from '@/components/coaches/LineupInningInspector';
-import { analyzeLineup, deriveLineupBadge } from '@/lib/lineup-analysis';
+import LineupCheck, { LineupStateMark, type LineupCheckInning, type LineupMarkState } from '@/components/coaches/LineupCheck';
+import { analyzeLineup, deriveLineupBadge, canMarkLineupReady, inningsNeedingDecision } from '@/lib/lineup-analysis';
 import { generateBestLineup, describePlacementReason, type PositionPolicy, type FillMode, type GenerationRationale } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
 import { resolveLineupCaps, normalizeRulesOverride } from '@/lib/lineup-caps';
@@ -167,8 +168,19 @@ export interface LineupEditorProps {
   onNotice?: (msg: string) => void;
   /** Slot for surface-specific controls (e.g. the game builder's Templates popover). */
   controlsExtra?: React.ReactNode;
-  /** A message to show in the insights strip (parent-owned, e.g. template-load result). */
+  /** A message to show above the grid (parent-owned, e.g. template-load result). */
   notice?: string;
+  /**
+   * The Schedule's attendance against this lineup (game builder only): who is marked in but not
+   * placed, who is placed but marked Out, and the parent's one-tap fixes. Listed in the Lineup
+   * check behind the status strip — the strip names them, nothing changes until a button is tapped.
+   */
+  attendance?: {
+    comingNotInLineup: RepRosterPlayer[];
+    outButInLineup: RepRosterPlayer[];
+    onAddComing: () => void;
+    onRemoveOut: () => void;
+  };
   /**
    * The persisted Draft/Ready handoff (mig 304, Phase 2 D1) — game lineups only. Undefined for the
    * template editor, which has no "ready for game day" concept; the readiness strip then falls
@@ -181,6 +193,9 @@ export interface LineupEditorProps {
     onMarkReady: () => void;
     marking: boolean;
     error?: string;
+    /** D11d: game time has arrived — an edit is the game now, not a reopened plan, so the strip
+     *  stops promising that an edit returns the lineup to Draft. The page owns the clock. */
+    gameStarted?: boolean;
   };
 }
 
@@ -188,7 +203,7 @@ export default function LineupEditor(props: LineupEditorProps) {
   const {
     roster, rows, onRowsChange, lineupMode, onLineupModeChange, inningCount, onInningCountChange,
     sportPack, seasonCaps, gameRules, onGameRulesChange, defaultPolicy = 'balanced',
-    addLabel, notInHeading, onBeforeMutate, onNotice, controlsExtra, notice, readyState,
+    addLabel, notInHeading, onBeforeMutate, onNotice, controlsExtra, notice, readyState, attendance,
   } = props;
   const confirm = useConfirm();
 
@@ -222,9 +237,12 @@ export default function LineupEditor(props: LineupEditorProps) {
   useEffect(() => {
     if (rowActionsFor !== null) rowSheetRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true });
   }, [rowActionsFor]);
-  // The inning inspector (Phase 4, F12): the inning-first lens over the grid, opened from an inning
-  // heading or a coverage check's "Review inning N". null = closed.
-  const [inspectedInning, setInspectedInning] = useState<number | null>(null);
+  // ONE lens over the lineup, two views (owner, 2026-09-18): the Lineup check — everything still
+  // waiting on the coach, behind the status strip — and the inning inspector (Phase 4, F12), the
+  // inning-first lens over the grid. An inning opened FROM the check remembers it, so the lens
+  // carries a way back; opened from an inning heading, the X is the way out. null = closed.
+  type Lens = { view: 'check' } | { view: 'inning'; inning: number; fromCheck: boolean };
+  const [lens, setLens] = useState<Lens | null>(null);
   const autoFillLabel = { competitive: 'Competitive', balanced: 'Balanced', development: 'Development' }[autoPolicy];
   // Keep the auto-fill policy in sync when the parent changes its pre-pick (e.g. a game loads).
   const policyInitRef = useRef(false);
@@ -264,24 +282,66 @@ export default function LineupEditor(props: LineupEditorProps) {
   // draft check rather than a speculative explanation about eligibility.
   const openRoleInnings = analysis.missingFieldPositions.filter(u => assignedInnings.has(u.inning));
   const openRolesByInning = new Map(openRoleInnings.map(issue => [issue.inning, issue.positions]));
-  // Group innings that share the exact same open roles AND the exact same proven cause (D7) into
-  // one line — a roster short a second arm can leave the mound open for most of the game, and that
-  // reads as one fact ("innings 2-7"), not the same sentence repeated six times.
-  const openRoleGroups: { key: string; positions: string[]; pitcherCapped: boolean; innings: number[] }[] = [];
-  {
-    const byKey = new Map<string, (typeof openRoleGroups)[number]>();
-    for (const issue of openRoleInnings) {
-      const pitcherCapped = !!sportPack.pitcherPosition && issue.positions.includes(sportPack.pitcherPosition) && rationale.pitcherCappedInnings.has(issue.inning);
-      const key = `${issue.positions.join(',')}|${pitcherCapped}`;
-      const existing = byKey.get(key);
-      if (existing) existing.innings.push(issue.inning);
-      else {
-        const group = { key, positions: issue.positions, pitcherCapped, innings: [issue.inning] };
-        byKey.set(key, group);
-        openRoleGroups.push(group);
-      }
+  const period = sportPack.periodLabel;
+  const periodLc = period.toLowerCase();
+  // ── What the lineup still needs, inning by inning — the rows of the Lineup check. A started
+  // inning earns a row for a proven clash, an open role or an undecided player; the innings nobody
+  // has started are ONE row (they are not six problems, they are one fact: not started yet). The
+  // one cause a row may name is the generator's proven one (D7: no eligible pitcher under the cap);
+  // every other open role stays a neutral fact, per F01, and the lens explains it role by role.
+  const checkInnings: LineupCheckInning[] = [];
+  const untouchedInnings: number[] = [];
+  for (let inning = 1; inning <= inningCount; inning++) {
+    if (!assignedInnings.has(inning)) {
+      if (analysis.hasAssignments) untouchedInnings.push(inning);
+      continue;
     }
+    const clashes = analysis.conflicts.filter(c => c.inning === inning).map(c => c.position);
+    const open = openRolesByInning.get(inning) ?? [];
+    const undecided = analysis.inningFill[inning - 1]?.unassigned ?? 0;
+    if (clashes.length === 0 && open.length === 0 && undecided === 0) continue;
+    const parts: string[] = [];
+    if (clashes.length) parts.push(`Two players at ${clashes.join(' and ')}`);
+    if (open.length) {
+      const capped = !!sportPack.pitcherPosition && open.includes(sportPack.pitcherPosition) && rationale.pitcherCappedInnings.has(inning);
+      parts.push(`${open.join(', ')} open${capped ? ' · no eligible pitcher under the innings cap' : ''}`);
+    }
+    if (undecided) parts.push(`${undecided} player${undecided === 1 ? '' : 's'} undecided`);
+    checkInnings.push({ inning, state: clashes.length ? 'bad' : 'warn', caption: parts.join(' · ') });
   }
+  const untouched = untouchedInnings.length
+    ? { label: untouchedInnings.length === 1 ? `${period} ${untouchedInnings[0]}` : `${period}s ${formatInningRanges(untouchedInnings)}`, first: untouchedInnings[0] }
+    : null;
+  // The one shared fact across the open-role innings, said once ("P open in all 6") — the reason
+  // six identical cards used to stack above the grid.
+  const patternNote = (() => {
+    if (openRoleInnings.length < 2) return null;
+    const shared = openRoleInnings[0].positions.filter(p => openRoleInnings.every(i => i.positions.includes(p)));
+    return shared.length ? `${shared.join(', ')} open in all ${openRoleInnings.length}` : null;
+  })();
+  const unevenBench = analysis.benchSpread && analysis.benchSpread.max - analysis.benchSpread.min > 1 ? analysis.benchSpread : null;
+  const comingNames = attendance?.comingNotInLineup.map(playerDisplayName) ?? [];
+  const outNames = attendance?.outButInLineup.map(playerDisplayName) ?? [];
+  const hasAttendanceIssue = comingNames.length > 0 || outNames.length > 0;
+  // The strip is a DOOR whenever the check has a row to show — the fair-play note included
+  // (`/review`, 2026-09-19: excluding it as "a reading, not a decision" left a covered lineup
+  // with a lopsided bench reading ✓ and no way to open the check that listed it; the old page
+  // showed that line unconditionally).
+  const checkHasRows = checkInnings.length > 0 || untouched != null || hasAttendanceIssue || unevenBench != null;
+  // The last row cleared from inside the check (the Out player removed, the last role assigned
+  // through the lens and back) closes it: the coach lands on the strip, which now reads ✓. The
+  // shell's `open` is derived so an empty check never paints; the effect retires the stale lens
+  // state so a later edit that reopens a row does not reopen the check uninvited — and seats
+  // focus on the strip, because the button that opened the check is a plain <div> by then and
+  // the floor's restore has nothing to land on.
+  const checkIsEmpty = !checkHasRows;
+  const stripRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!checkIsEmpty || lens?.view !== 'check') return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- retiring a lens the data has closed
+    setLens(null);
+    stripRef.current?.focus({ preventScroll: true });
+  }, [checkIsEmpty, lens]);
   const conflictsByCell = new Set(analysis.conflicts.map(conflict => `${conflict.inning}:${conflict.position}`));
   const effectiveCaps = resolveLineupCaps(
     seasonCaps ?? null,
@@ -309,27 +369,83 @@ export default function LineupEditor(props: LineupEditorProps) {
   };
   // Two vocabularies over the SAME eligibility signal (analysis.readiness): the template editor has
   // no persisted ready concept, so it keeps the old coverage-only wording; a game lineup shows the
-  // real Draft/Ready badge (readyState present) and offers "Mark ready" once coverage allows it.
+  // real Draft/Ready badge (readyState present) and offers "Mark ready" whenever nothing is WRONG
+  // (D11: a clash blocks, an empty grid has nothing to mark; open work never blocks — it rides on
+  // the button and on the Ready strip's sentence instead).
   const badge = readyState ? deriveLineupBadge(analysis, readyState.status) : analysis.readiness;
-  const readinessCopy = readyState ? {
-    not_started: { label: 'Not started', detail: 'Choose positions or Auto-fill to begin.' },
+  // The innings still needing a decision — the shared count the hub chip also carries, so the
+  // button here and "Ready · 3 open" on the games list never disagree.
+  const openInnings = inningsNeedingDecision(analysis);
+  const openInningsLabel = openInnings.length
+    ? `${openInnings.length === 1 ? period : `${period}s`} ${formatInningRanges(openInnings)} open — fill ${openInnings.length === 1 ? 'it' : 'them'} on game day`
+    : null;
+  // ── The strip's one sentence: what is waiting, named — the check's rows in prose. Each inning
+  // is counted ONCE, under its row's leading fact (a clash outranks its open roles), so an inning
+  // with both never reads as two innings (`/review`, 2026-09-19). Split in two so the Ready strip
+  // can say the inning facts in one compact span and still name the rest (a mismatch, an uneven
+  // bench) beside it. ──
+  const { inningWaiting, otherWaiting } = (() => {
+    const inningWaiting: string[] = [];
+    const otherWaiting: string[] = [];
+    const where = (lead: string, innings: number[]) => innings.length === 1 ? `${lead} in ${periodLc} ${innings[0]}` : `${lead} in ${innings.length} ${periodLc}s`;
+    const clashRows = checkInnings.filter(r => r.state === 'bad').map(r => r.inning);
+    const openRows = checkInnings.filter(r => r.state === 'warn' && openRolesByInning.has(r.inning)).map(r => r.inning);
+    const undecidedRows = checkInnings.filter(r => r.state === 'warn' && !openRolesByInning.has(r.inning)).map(r => r.inning);
+    if (clashRows.length) inningWaiting.push(where(clashRows.length === 1 ? 'Position clash' : 'Position clashes', clashRows));
+    if (openRows.length) inningWaiting.push(where('Open roles', openRows));
+    if (undecidedRows.length) inningWaiting.push(where('Players undecided', undecidedRows));
+    if (untouched) inningWaiting.push(`${untouched.label} not started`);
+    if (unevenBench) otherWaiting.push(`Uneven bench time — players sit between ${unevenBench.min} and ${unevenBench.max} ${periodLc}s`);
+    if (outNames.length) otherWaiting.push(outNames.length === 1 ? `${outNames[0]} is marked Out but still in the lineup` : `${outNames.length} players marked Out are still in the lineup`);
+    if (comingNames.length) otherWaiting.push(comingNames.length === 1 ? `${comingNames[0]} is marked in but not in the lineup` : `${comingNames.length} players marked in aren’t in the lineup`);
+    return { inningWaiting, otherWaiting };
+  })();
+  const waiting = [...inningWaiting, ...otherWaiting].join(' · ');
+  const withWaiting = (lead: string) => waiting ? `${lead} · ${waiting}` : lead;
+  const strip: { label: string; detail: string } = readyState ? {
+    not_started: { label: 'Not started', detail: withWaiting('Choose positions or Auto-fill to begin') },
     draft: {
       label: 'Draft',
       detail: analysis.readiness === 'ready'
-        ? 'Every role is covered — mark it ready when you’re confident in it.'
-        : openRoleInnings.length ? `${openRoleInnings.length} ${sportPack.periodLabel.toLowerCase()}${openRoleInnings.length === 1 ? '' : 's'} still need coverage.` : 'Some player decisions are still open.',
+        ? withWaiting('Every role is covered — mark it ready when you’re confident in it')
+        : waiting || 'Some player decisions are still open',
     },
-    needs_review: { label: 'Needs review', detail: 'Resolve the highlighted position clashes before game day.' },
+    needs_review: { label: 'Needs review', detail: waiting },
+    // Ready with open spots (D11): the coach's word, then the innings they mean to fill at the
+    // field as one span, then anything else waiting. The edit-returns-to-Draft promise is only
+    // made while it is true — before game time.
     ready: {
       label: 'Ready',
-      detail: readyState.readyAtLabel ? `Marked ready · ${readyState.readyAtLabel}. Any edit returns this to Draft.` : 'Marked ready. Any edit returns this to Draft.',
+      detail: [
+        readyState.readyAtLabel ? `Marked ready · ${readyState.readyAtLabel}` : 'Marked ready',
+        openInningsLabel,
+        ...otherWaiting,
+      ].filter(Boolean).join(' · ') + (readyState.gameStarted ? '' : '. An edit before game time returns this to Draft'),
     },
   }[badge] : {
-    not_started: { label: 'Not started', detail: 'Choose positions or Auto-fill to begin.' },
-    draft: { label: 'Draft', detail: openRoleInnings.length ? `${openRoleInnings.length} inning${openRoleInnings.length === 1 ? '' : 's'} still need coverage.` : 'Some player decisions are still open.' },
-    needs_review: { label: 'Needs review', detail: 'Resolve the highlighted position clashes before game day.' },
-    ready: { label: 'Coverage complete', detail: 'Every player has a decision and each required role is covered.' },
+    not_started: { label: 'Not started', detail: 'Choose positions or Auto-fill to begin' },
+    draft: { label: 'Draft', detail: waiting || 'Some player decisions are still open' },
+    needs_review: { label: 'Needs review', detail: waiting },
+    // withWaiting here too: a covered template can still carry an uneven bench, and the mark
+    // beside the word warns about it — the sentence must name what the mark is warning about.
+    ready: { label: 'Coverage complete', detail: withWaiting('Every player has a decision and each required role is covered') },
   }[analysis.readiness];
+  // The status symbol (owner, 2026-09-18): a cross on a proven clash, a warning while anything
+  // waits, a check once every role is covered — none until there is work to read. On a lineup the
+  // coach has MARKED ready the check is their word (D11c, owner 2026-09-20): it answers "am I done
+  // here?", and the open innings are named in the sentence beside it, never hidden by the mark.
+  const stripMark: { state: LineupMarkState; label: string } | null = badge === 'needs_review'
+    ? { state: 'bad', label: 'Position clash' }
+    : readyState && badge === 'ready' ? { state: 'ok', label: 'Marked ready' }
+      : checkHasRows ? { state: 'warn', label: 'Needs a decision' }
+        : analysis.readiness === 'ready' ? { state: 'ok', label: 'Every role covered' }
+          : null;
+  const inningsWaiting = checkInnings.length + untouchedInnings.length;
+  const mismatches = outNames.length + comingNames.length;
+  const checkSubtitle = [
+    inningsWaiting > 0 ? `${inningsWaiting} ${periodLc}${inningsWaiting === 1 ? ' needs' : 's need'} a decision` : null,
+    mismatches > 0 ? `${mismatches} attendance mismatch${mismatches === 1 ? '' : 'es'}` : null,
+  ].filter(Boolean).join(' · ');
   const pitcherCapFor = (row: LineupPlayerRow) => {
     const playerCap = row.player.lineupProfile?.pitcher?.maxInnings ?? null;
     const teamCap = effectiveCaps.pitcherInningsCap;
@@ -339,11 +455,11 @@ export default function LineupEditor(props: LineupEditorProps) {
   };
   const hasPlayerAttention = analysis.fairPlay.some(f => f.consecutiveBench || f.unassigned > 0);
 
-  // "Review inning N" opens the inspector ON that inning (the review is the lens) and still
+  // A row of the check opens the inspector ON that inning (the review is the lens) and still
   // scrolls the grid to it underneath, so closing the lens leaves the coach at the right column.
   function focusInning(inning: number) {
     setView('lineup');
-    setInspectedInning(inning);
+    setLens({ view: 'inning', inning, fromCheck: true });
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLElement>(`[data-lineup-inning="${inning}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
     });
@@ -572,17 +688,37 @@ export default function LineupEditor(props: LineupEditorProps) {
       </div>
 
       {view === 'lineup' && (<>
-        <div className={styles.lineupReadiness} data-state={badge}>
-          <span className={styles.lineupReadinessState}>{readinessCopy.label}</span>
-          <p>{readinessCopy.detail}</p>
-          {openRoleInnings[0] && (
-            <button type="button" className={styles.lineupIssueJump} onClick={() => focusInning(openRoleInnings[0].inning)}>
-              Review inning {openRoleInnings[0].inning}
+        {/* THE STATUS STRIP — the one thing between the views and Setup (owner, 2026-09-18: "7
+            rows above the lineup on the main page is not a good user experience"). The state,
+            its mark, one sentence naming what is waiting — and, while anything is, the whole strip
+            is the DOOR into the Lineup check. The attendance strip and the per-inning cards that
+            used to stack here are that check's rows now. */}
+        <div ref={stripRef} tabIndex={-1} className={styles.lineupReadiness} data-state={badge}>
+          {checkHasRows ? (
+            <button type="button" className={styles.lineupReadinessDoor} onClick={() => setLens({ view: 'check' })} aria-haspopup="dialog">
+              {stripMark && <LineupStateMark state={stripMark.state} label={stripMark.label} />}
+              <span className={styles.lineupReadinessState}>{strip.label}</span>
+              <span className={styles.lineupReadinessDetail}>{strip.detail}.</span>
+              <span className={styles.lineupReadinessGo}>Review<ChevronRight size={15} aria-hidden /></span>
             </button>
+          ) : (
+            <div className={styles.lineupReadinessDoor}>
+              {stripMark && <LineupStateMark state={stripMark.state} label={stripMark.label} />}
+              <span className={styles.lineupReadinessState}>{strip.label}</span>
+              <span className={styles.lineupReadinessDetail}>{strip.detail}.</span>
+            </div>
           )}
-          {readyState && analysis.readiness === 'ready' && readyState.status === 'draft' && (
-            <button type="button" className={styles.btnPrimary} disabled={readyState.marking} onClick={readyState.onMarkReady} style={{ marginTop: '0.5rem' }}>
-              {readyState.marking ? 'Marking ready…' : 'Mark lineup ready'}
+          {/* Mark ready sits BESIDE the door, never inside it, and is offered whenever nothing is
+              WRONG (D11): open innings never block — the button carries their count, so the coach
+              cannot press it without reading what is still open; an attendance mismatch warns,
+              it never blocks. A clash or an empty grid hides it. */}
+          {readyState && canMarkLineupReady(analysis) && readyState.status === 'draft' && (
+            <button type="button" className={`${styles.btnPrimary} ${styles.lineupReadinessMark}`} disabled={readyState.marking} onClick={readyState.onMarkReady}>
+              {readyState.marking
+                ? 'Marking ready…'
+                : openInnings.length
+                  ? `Mark ready · ${openInnings.length} ${periodLc}${openInnings.length === 1 ? '' : 's'} open`
+                  : 'Mark lineup ready'}
             </button>
           )}
           {readyState?.error && <p className={styles.errorText}>{readyState.error}</p>}
@@ -701,31 +837,7 @@ export default function LineupEditor(props: LineupEditorProps) {
             {controlsExtra}
           </div>
 
-        {(notice || analysis.hasConflicts || openRoleInnings.length > 0 || (analysis.benchSpread && (analysis.benchSpread.max - analysis.benchSpread.min) > 1)) && (
-          <div className={styles.lineupInsights}>
-            {notice && <p className={styles.lineupNotice}>{notice}</p>}
-            {analysis.hasConflicts && (
-              <p className={`${styles.lineupWarn} ${styles.lineupWarnClash}`}>⚠ Position clash: {analysis.conflicts.map(c => `two at ${c.position} in inning ${c.inning}`).join(' · ')}</p>
-            )}
-            {openRoleGroups.map(group => (
-              <p key={group.key} className={styles.lineupDraftCheck}>
-                {group.innings.length === 1 ? (
-                  <strong>{sportPack.periodLabel} {group.innings[0]}</strong>
-                ) : (
-                  <strong>{sportPack.periodLabel}s {formatInningRanges(group.innings)}</strong>
-                )}
-                {' '}{group.innings.length === 1 ? 'has' : 'each have'} {group.positions.length} open role{group.positions.length === 1 ? '' : 's'}: {group.positions.join(', ')}.
-                {/* D7: the one blank-cell cause this pass will name — every other open role stays
-                    a neutral fact, per F01, rather than a guess. */}
-                {group.pitcherCapped && ' No eligible pitcher was available under the innings cap.'}
-                <button type="button" onClick={() => focusInning(group.innings[0])}>Review {sportPack.periodLabel.toLowerCase()} {group.innings[0]}</button>
-              </p>
-            ))}
-            {analysis.benchSpread && (analysis.benchSpread.max - analysis.benchSpread.min) > 1 && (
-              <p className={styles.lineupWarn}>⚠ Uneven bench time — players sit between {analysis.benchSpread.min} and {analysis.benchSpread.max} innings.</p>
-            )}
-          </div>
-        )}
+        {notice && <p className={styles.lineupNotice}>{notice}</p>}
 
         {rows.length === 0 ? (
           <div className={styles.attendanceEmpty}>
@@ -759,7 +871,7 @@ export default function LineupEditor(props: LineupEditorProps) {
                         <th key={inning} className={styles.lineupColInning} data-lineup-inning={inning} style={clash ? { color: 'var(--danger)' } : undefined}>
                           <InningHeadingDoor
                             inning={inning} periodLabel={sportPack.periodLabel} clash={clash} title={headTitle}
-                            onOpen={() => setInspectedInning(inning)}
+                            onOpen={() => setLens({ view: 'inning', inning, fromCheck: false })}
                             coverage={assignedInnings.has(inning) && <small className={openRoles ? styles.lineupCoverageOpen : styles.lineupCoverageComplete}>{filled}/{sportPack.fieldPositions.length}</small>}
                           />
                         </th>
@@ -801,11 +913,27 @@ export default function LineupEditor(props: LineupEditorProps) {
           </div>
         )}
 
+        <LineupCheck
+          open={lens?.view === 'check' && !checkIsEmpty}
+          onClose={() => setLens(null)}
+          state={stripMark?.state ?? 'warn'}
+          stateLabel={stripMark?.label}
+          subtitle={checkSubtitle}
+          periodLabel={period}
+          attendance={attendance && { coming: comingNames, out: outNames, onAddComing: attendance.onAddComing, onRemoveOut: attendance.onRemoveOut }}
+          innings={checkInnings}
+          untouched={untouched}
+          patternNote={patternNote}
+          benchSpread={unevenBench}
+          onOpenInning={focusInning}
+          onOpenPlayingTime={() => { setLens(null); setView('summary'); }}
+        />
         <LineupInningInspector
-          inning={rows.length ? inspectedInning : null}
+          inning={rows.length && lens?.view === 'inning' ? lens.inning : null}
           inningCount={inningCount}
-          onClose={() => setInspectedInning(null)}
-          onNavigate={setInspectedInning}
+          onClose={() => setLens(null)}
+          onBack={lens?.view === 'inning' && lens.fromCheck ? () => setLens(checkIsEmpty ? null : { view: 'check' }) : undefined}
+          onNavigate={inning => setLens(l => ({ view: 'inning', inning, fromCheck: l?.view === 'inning' && l.fromCheck }))}
           rows={rows}
           sportPack={sportPack}
           pitcherCapFor={pitcherCapFor}

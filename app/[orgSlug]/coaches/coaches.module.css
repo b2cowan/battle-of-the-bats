@@ -7143,19 +7143,17 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   padding: 0.12rem 0.45rem; border-radius: 5px; border: 1px solid var(--border-2);
 }
 
-/* Lineup checks + fair-play hints above the grid */
-.lineupInsights {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-  margin: 0.25rem 0 0.6rem;
-}
+/* THE STATUS STRIP — the one thing between the lineup's views and Setup (owner, 2026-09-18: "a
+   single banner telling me that I have issues in multiple innings, then I click it to see a
+   modal"). The card holds the door (`lineupReadinessDoor` — a <button> while the Lineup check
+   has a row to show, a plain <div> otherwise) and, beside it, Mark ready and any error. The
+   per-inning cards and the attendance strip that used to stack under it are the check's rows. */
 .lineupReadiness {
   display: flex;
   align-items: center;
   gap: 0.55rem;
   flex-wrap: wrap;
-  padding: 0.65rem 0.75rem;
+  padding: 0.25rem 0.35rem;
   margin: 0 0 0.75rem;
   background: var(--card-bg);
   border: 1px solid var(--border-2);
@@ -7164,6 +7162,25 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .lineupReadiness[data-state="draft"] { border-color: rgba(var(--warning-rgb), 0.42); }
 .lineupReadiness[data-state="needs_review"] { border-color: rgba(var(--danger-rgb), 0.46); }
 .lineupReadiness[data-state="ready"] { border-color: rgba(var(--success-rgb), 0.42); }
+.lineupReadinessDoor {
+  flex: 1 1 18rem;
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  min-width: 0;
+  margin: 0;
+  padding: 0.4rem 0.4rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  text-align: left;
+  color: inherit;
+}
+button.lineupReadinessDoor { cursor: pointer; }
+button.lineupReadinessDoor:hover { background: var(--home-olive-soft, var(--white-5)); }
+button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
 .lineupReadinessState {
   flex: 0 0 auto;
   font-size: var(--type-token);
@@ -7175,43 +7192,15 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .lineupReadiness[data-state="draft"] .lineupReadinessState { color: var(--warning); }
 .lineupReadiness[data-state="needs_review"] .lineupReadinessState { color: var(--danger); }
 .lineupReadiness[data-state="ready"] .lineupReadinessState { color: var(--success); }
-.lineupReadiness p { flex: 1 1 14rem; margin: 0; color: var(--text-secondary); font-size: var(--type-support); }
-.lineupIssueJump,
-.lineupDraftCheck button {
-  flex: 0 0 auto;
-  min-height: 30px;
-  padding: 0.2rem 0.5rem;
-  border: 1px solid var(--border-2);
-  border-radius: 5px;
-  background: var(--card-bg);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: var(--type-support);
-  font-weight: 700;
-  cursor: pointer;
-}
-.lineupIssueJump:hover,
-.lineupDraftCheck button:hover { border-color: var(--text-secondary); }
-/* The grid is a touch surface through 768 and so is the strip above it: the jump that opens the
-   inning inspector takes the tap floor there (check:layout, 2026-09-18 — 30px at 361/390/768). */
+.lineupReadinessDetail { flex: 1 1 14rem; min-width: 0; color: var(--text-secondary); font-size: var(--type-support); }
+/* The door's word, last on the strip (the row recipe's worded door, K-19). */
+.lineupReadinessGo { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.2rem; font-size: var(--type-support); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
+.lineupReadinessMark { flex: 0 0 auto; margin: 0.15rem 0.3rem 0.15rem 0; }
+.lineupReadiness .errorText { flex: 1 1 100%; margin: 0 0.4rem 0.3rem; }
+/* The strip is a touch surface through 768 like the grid under it. */
 @media (max-width: 768px) {
-  .lineupIssueJump,
-  .lineupDraftCheck button { min-height: var(--tap-min, 44px); }
+  button.lineupReadinessDoor { min-height: var(--tap-min, 44px); }
 }
-.lineupDraftCheck {
-  display: flex;
-  align-items: center;
-  gap: 0.45rem;
-  flex-wrap: wrap;
-  margin: 0;
-  padding: 0.55rem 0.65rem;
-  background: var(--card-bg);
-  border: 1px solid rgba(var(--warning-rgb), 0.35);
-  border-radius: 7px;
-  color: var(--text-secondary);
-  font-size: var(--type-support);
-}
-.lineupDraftCheck strong { color: var(--text-primary); }
 .lineupHint {
   margin: 0;
   font-size: var(--type-support);
@@ -7219,20 +7208,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .lineupHint a { color: var(--blueprint-light); text-decoration: none; }
 .lineupHint a:hover { text-decoration: underline; }
-.lineupWarn {
-  margin: 0;
-  font-size: var(--type-support);
-  font-weight: 600;
-  color: var(--warning);
-}
-
-/* Warm coaches portal (dev-gated) — ratified TH-5 ①: a POSITION CLASH is the one hard error,
-   so under warm both its cues go live-red (the column-header number already uses --danger→
-   --home-live inline; this unifies the prose). Dark keeps the amber prose (unchanged dark
-   builder). Soft warnings (couldn't-fill, uneven bench) stay on plain .lineupWarn = amber. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .lineupWarnClash {
-  color: var(--home-live);
-}
 
 .lineupControls {
   display: flex;
@@ -7341,7 +7316,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   .lineupControls .select,
   .lineupControls .btnSecondary,
   .lineupControls .btnPrimary,
-  .lineupReconcileActions button { min-height: var(--tap-min, 44px); }
+  .lineupReadiness .btnPrimary { min-height: var(--tap-min, 44px); }
 }
 
 .lineupTableWrap {
@@ -7458,14 +7433,21 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .lineupNotPlayingName svg { color: var(--danger); flex-shrink: 0; }
+/* Add to lineup / Add to template — the row's one control, on the not-playing panel's tinted
+   ground. The ink is the primary text, not the accent: the accent's olive read 4.35:1 on the
+   panel's tint plus the button's own (the rendered sweep, 2026-09-19); the border keeps the
+   accent. Floored at the touch widths like every control the grid keeps. */
 .lineupAddBackBtn {
   flex-shrink: 0; font-size: var(--type-support); font-weight: 700;
   padding: 0.3rem 0.65rem; border-radius: 6px;
   border: 1px solid rgba(var(--blueprint-blue-rgb),0.4);
   background: rgba(var(--blueprint-blue-rgb),0.12);
-  color: var(--blueprint-light); cursor: pointer;
+  color: var(--text-primary); cursor: pointer;
 }
 .lineupAddBackBtn:hover { background: rgba(var(--blueprint-blue-rgb),0.2); }
+@media (max-width: 768px) {
+  .lineupAddBackBtn { min-height: var(--tap-min, 44px); }
+}
 
 .lineupPlayerCell small {
   display: block;
@@ -7713,7 +7695,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 @media (max-width: 768px) {
   .lineupOnScheduleLink { min-height: var(--tap-min, 44px); }
 }
-.lineupReconcileActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 0.5rem 0 0.4rem; }
 .lineupNotPlayingTag { font-style: normal; font-size: var(--type-support); color: var(--warning); }
 .lineupPeekFooter { margin-top: 1.1rem; display: flex; justify-content: flex-end; }
 

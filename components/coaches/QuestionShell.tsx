@@ -36,9 +36,11 @@ import { useDialogFloor } from './useDialogFloor';
 export default function QuestionShell({
   open,
   onClose,
+  onBack,
   ariaLabel,
   title,
   subtitle,
+  headerExtra,
   busy = false,
   scroll = false,
   wide = false,
@@ -48,10 +50,14 @@ export default function QuestionShell({
   open: boolean;
   /** The consumer's guarded closer. Never called while `busy`. */
   onClose: () => void;
+  /** A view BEHIND this one — the phone's back arrow goes there instead of closing. */
+  onBack?: () => void;
   /** Names the question for assistive tech — "Edit the amount Avery Test raised". */
   ariaLabel: string;
   title: ReactNode;
   subtitle?: ReactNode;
+  /** One mark between the title and the X — the lineup lens's status symbol. Not a slot for controls. */
+  headerExtra?: ReactNode;
   busy?: boolean;
   scroll?: boolean;
   /** The 640px variant (`modalWide`) — for a form with two columns or a control beside a long label. */
@@ -101,9 +107,12 @@ export default function QuestionShell({
             title={title}
             subtitle={subtitle}
             onClose={requestClose}
+            onBack={onBack && !busy ? onBack : undefined}
             titleTag="h2"
             closeIconSize={18}
-          />
+          >
+            {headerExtra}
+          </CoachModalHeader>
           {children}
         </div>
       </div>

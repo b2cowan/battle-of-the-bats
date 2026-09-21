@@ -16,7 +16,7 @@ import { CoachRowList, CoachRowBand } from '@/components/coaches/CoachRowList';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import styles from '../../../coaches.module.css';
-import { gameDayEntryHref } from '@/lib/coach-game-day';
+import { gameDayEntryHref, gameHasStarted } from '@/lib/coach-game-day';
 import { isMirroredEvent, splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
 import { parseLineupsSection } from '@/lib/lineups-address';
 import { calendarDaysBetween, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
@@ -115,6 +115,9 @@ export default function CoachesLineupsPage({
   // Per-game lineup readiness (Not started / Draft / Ready / Needs review) from the events read's
   // bulk lineupStatusByEvent — definitive for every listed game, no per-game probing.
   const [lineupStatus, setLineupStatus] = useState<Record<string, LineupBadge>>({});
+  // D11: how many innings each lineup still leaves for the field — a Ready lineup may carry
+  // open innings on purpose, and its chip says so ("Ready · 3 open") rather than a bare Ready.
+  const [lineupOpen, setLineupOpen] = useState<Record<string, number>>({});
   const [needsOnly, setNeedsOnly] = useState(false);
 
   /**
@@ -133,7 +136,7 @@ export default function CoachesLineupsPage({
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events`);
       if (!res.ok) throw new Error('Games could not be loaded');
-      const data: { events?: RepTeamEvent[]; lineupStatusByEvent?: Record<string, LineupBadge> } = await res.json();
+      const data: { events?: RepTeamEvent[]; lineupStatusByEvent?: Record<string, LineupBadge>; lineupOpenInningsByEvent?: Record<string, number> } = await res.json();
       // ⚠ Keeps its own `cancelled` filter even though the split helper drops them too: `games` is
       // also what builds the readiness map below, and widening that set here would be a silent
       // second change riding along with the extraction.
@@ -148,10 +151,12 @@ export default function CoachesLineupsPage({
         // Field present ⇒ the server let us see lineups; a missing entry means "not started".
         const byEvent = data.lineupStatusByEvent;
         setLineupStatus(Object.fromEntries(games.map(g => [g.id, byEvent[g.id] ?? 'not_started'])));
+        setLineupOpen(data.lineupOpenInningsByEvent ?? {});
       } else {
         // Field omitted ⇒ lineup visibility denied server-side (stale client capabilities) —
         // show no readiness badges rather than asserting a false "Not started" on every game.
         setLineupStatus({});
+        setLineupOpen({});
       }
     } catch (e) {
       if (!isStale()) setError(e instanceof Error ? e.message : 'Games could not be loaded');
@@ -223,8 +228,14 @@ export default function CoachesLineupsPage({
         canBuildLineups={!!canBuildLineups}
         games={allGames}
         lineupStatus={lineupStatus}
-        // The server always resets a written lineup to Draft (readiness is a deliberate coach act).
-        onApplied={gameId => setLineupStatus(prev => ({ ...prev, [gameId]: 'draft' }))}
+        // Before game time the server resets a written lineup to Draft (readiness is a deliberate
+        // coach act); at or after it the write is the game and Ready stands (D11d) — mirror the
+        // same clock here so the row never flips to a word the server did not write.
+        onApplied={gameId => {
+          const game = allGames.find(g => g.id === gameId);
+          if (game && gameHasStarted(game, nowMs)) return;
+          setLineupStatus(prev => ({ ...prev, [gameId]: 'draft' }));
+        }}
       />
     );
   }
@@ -258,6 +269,17 @@ export default function CoachesLineupsPage({
     needs_review: { tone: 'warn', label: 'Needs review', icon: <TriangleAlert size={13} aria-hidden /> },
     ready: { tone: 'ok', label: 'Ready', icon: <CheckCircle2 size={13} aria-hidden /> },
   };
+  // A Ready lineup with innings still open says so — "Ready · 3 open" — on a game still to be
+  // played (D11b); once the game is over the count was a to-do and the to-do is done, so a past
+  // game reads a bare Ready (D11d).
+  const chipFor = (e: RepTeamEvent, past: boolean) => {
+    const status = lineupStatus[e.id];
+    if (!status) return null;
+    if (past && status === 'not_started') return { tone: 'mute' as const, label: 'No lineup' };
+    const open = lineupOpen[e.id] ?? 0;
+    if (status === 'ready' && !past && open > 0) return { ...badgeChip.ready, label: `Ready · ${open} open` };
+    return badgeChip[status];
+  };
 
   const renderRow = (e: RepTeamEvent, past: boolean) => {
     const status = lineupStatus[e.id];
@@ -281,9 +303,7 @@ export default function CoachesLineupsPage({
         title={gameTitle(e)}
         meta={rowMeta(e.startsAt)}
         // A past game that never had a lineup is a record: "No lineup", never "Not started".
-        chip={status
-          ? (past && status === 'not_started' ? { tone: 'mute', label: 'No lineup' } : badgeChip[status])
-          : null}
+        chip={chipFor(e, past)}
         action={action}
         quietAction={action === 'Open'}
         // The room's one lime lives on the card — no row carries it.
@@ -295,7 +315,6 @@ export default function CoachesLineupsPage({
 
   /** The next-game card — the Practice plans room's next-practice card, on this hub. */
   const renderCard = (e: RepTeamEvent) => {
-    const status = lineupStatus[e.id];
     const gameDayHref = gameDayEntryHref(orgSlug, teamId, e, nowMs);
     const days = Math.max(0, calendarDaysBetween(new Date(nowMs), new Date(e.startsAt)));
     const headline = days === 0
@@ -322,7 +341,7 @@ export default function CoachesLineupsPage({
       : primary ? [] : [{ href: lineupHref, label: 'Open' }];
     // The state chip rides the answers slot: the meta row's right side, beside the quiet links.
     // Absent when the server withheld readiness — never a guessed "Not started".
-    const chip = status ? badgeChip[status] : null;
+    const chip = chipFor(e, false);
     return (
       <CoachOneThingCard
         kind={gameDayHref ? 'game_day' : 'next_game'}

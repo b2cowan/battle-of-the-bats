@@ -17,12 +17,14 @@ import {
   downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, buildFilename,
   fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings, type LineupPosterPlayer, type LineupPosterOrientation,
 } from '@/lib/export';
-import { playerDisplayName, playerName } from '@/lib/coach-roster-name';
+import { playerName } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   LINEUP_POSITIONS, buildLineupRows, renumberBattingOrder, sortLineupRows, type LineupPlayerRow,
 } from '@/lib/lineup-grid';
 import { analyzeLineup } from '@/lib/lineup-analysis';
+import { gameHasStarted } from '@/lib/coach-game-day';
+import { useMinuteClock } from '@/lib/use-minute-clock';
 import LineupEditor from '../_LineupEditor';
 import styles from '../../../../coaches.module.css';
 import type {
@@ -112,15 +114,20 @@ export default function CoachLineupBuilderPage({
   const [lineupError, setLineupError] = useState('');
   const [pdfSettings, setPdfSettings] = useState<OrgPdfSettings | null>(null);
   // Persisted Draft/Ready (mig 304, Phase 2 D1) — the honest badge shown outside the builder.
-  // Every ordinary save resets this to 'draft' server-side; markLineupDirty() mirrors that locally
-  // the instant an edit happens, so the UI never shows "Ready" for the ~900ms until autosave lands.
+  // Before game time every ordinary save resets this to 'draft' server-side; markLineupDirty()
+  // mirrors that locally the instant an edit happens, so the UI never shows "Ready" for the ~900ms
+  // until autosave lands. At or after game time (D11d) neither side resets it: the edit is the
+  // game, not a reopened plan — the same clock the server reads (`gameHasStarted`), read here to
+  // the minute so a tab left open through first pitch changes its mind at the right moment.
   const [lineupStatus, setLineupStatus] = useState<'draft' | 'ready'>('draft');
   const [lineupReadyAt, setLineupReadyAt] = useState<string | null>(null);
   const [markingReady, setMarkingReady] = useState(false);
   const [readyError, setReadyError] = useState('');
+  const nowMs = useMinuteClock();
+  const gameStarted = !!event && gameHasStarted(event, nowMs);
   function markLineupDirty() {
     setLineupDirty(true);
-    setLineupStatus('draft');
+    if (!gameStarted) setLineupStatus('draft');
   }
 
   // Attendance is loaded READ-ONLY here (edited on the Schedule) — used only to flag lineup ↔
@@ -371,7 +378,22 @@ export default function CoachLineupBuilderPage({
     markLineupDirty();
   }
 
-  async function handleLineupSave(): Promise<boolean> {
+  /**
+   * ⚠ Every lineup PUT from this page goes through ONE promise chain (the Game-Day console's own
+   * guard, `/review` 2026-08-04; found missing HERE by `/review` 2026-09-20 on D11): two PUTs have
+   * no server-side ordering, and Mark ready used to fire its own save while the debounced autosave
+   * could still be in flight — the earlier PUT then landed AFTER the PATCH and reset the row the
+   * coach had just marked to Draft, in front of them. Chained, the mark waits for every save that
+   * was already going, and the newest body always writes last.
+   */
+  const saveChainRef = useRef<Promise<boolean>>(Promise.resolve(true));
+  function handleLineupSave(): Promise<boolean> {
+    const run = () => saveLineupNow();
+    const next = saveChainRef.current.then(run, run);
+    saveChainRef.current = next;
+    return next;
+  }
+  async function saveLineupNow(): Promise<boolean> {
     if (!event) return true;
     const sigAtSave = lineupSig();
     setLineupSaving(true);
@@ -393,8 +415,15 @@ export default function CoachLineupBuilderPage({
         const d = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(d.error ?? 'Lineup save failed');
       }
-      await res.json().catch(() => ({}));
-      if (lineupSigRef.current === sigAtSave) setLineupDirty(false);
+      const saved: { lineup?: { status?: 'draft' | 'ready'; readyAt?: string | null } } = await res.json().catch(() => ({}));
+      // Both write-backs are signature-guarded: an edit made while this PUT was in flight has its
+      // own save coming, and THAT response is the one that speaks for the grid as it is now.
+      if (lineupSigRef.current === sigAtSave) {
+        setLineupDirty(false);
+        // The server decides what a save does to Ready (reset before game time, kept after) —
+        // take its word so the strip never shows a status the row does not hold.
+        if (saved.lineup?.status) { setLineupStatus(saved.lineup.status); setLineupReadyAt(saved.lineup.readyAt ?? null); }
+      }
       setLineupNotice('');
       return true;
     } catch (e: unknown) {
@@ -407,19 +436,20 @@ export default function CoachLineupBuilderPage({
 
   // A dirty grid is saved first — marking ready must check the lineup as it IS, not as it was
   // before the coach's last few taps (same reasoning as the practice plan's "Send to staff").
+  // Either way the mark waits for the save chain, so a PUT that was already in flight can never
+  // land after the PATCH and quietly undo it.
   async function handleMarkReady() {
     if (markingReady) return;
     setMarkingReady(true);
     setReadyError('');
     try {
-      if (lineupDirty) {
-        const saved = await handleLineupSave();
-        if (!saved) { setReadyError('Save the lineup before marking it ready.'); return; }
-      }
+      const saved = lineupDirty ? await handleLineupSave() : await saveChainRef.current.catch(() => false);
+      if (!saved) { setReadyError('Save the lineup before marking it ready.'); return; }
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/lineup`, { method: 'PATCH' });
-      const d = await res.json().catch(() => ({}));
+      const d: { error?: string; lineup?: { status?: 'draft' | 'ready'; readyAt?: string | null } } = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(d.error ?? 'Could not mark this lineup ready');
-      setLineupStatus('ready');
+      // The row as the server now holds it — the same trust the save path gives its response.
+      setLineupStatus(d.lineup?.status ?? 'ready');
       setLineupReadyAt(d.lineup?.readyAt ?? new Date().toISOString());
     } catch (e: unknown) {
       setReadyError(errorMessage(e, 'Could not mark this lineup ready'));
@@ -545,11 +575,12 @@ export default function CoachLineupBuilderPage({
   const outButInLineup = attendanceRows.filter(r => r.status === 'absent' && lineupRowIds.has(r.player.id));
 
   // ⚠ THE ATTENDANCE RAIL WAS REMOVED HERE (owner, 2026-08-13) — it showed an In / Out / No-reply
-  // headcount beside the grid. What still reports attendance on this page is the mismatch strip
-  // above, and it reports the two states that need a DECISION: marked in but unplaced, and placed
-  // but marked Out. A player who is Out and also not in the lineup needs nothing done, which is
-  // why counting them earned less than the 300px it cost. Attendance is still edited on the
-  // Schedule; this page has only ever read it.
+  // headcount beside the grid. What still reports attendance on this page is the editor's status
+  // strip and the Lineup check behind it (the mismatch strip that stood here went into that check
+  // on 2026-09-18), and it reports the two states that need a DECISION: marked in but unplaced,
+  // and placed but marked Out. A player who is Out and also not in the lineup needs nothing done,
+  // which is why counting them earned less than the 300px it cost. Attendance is still edited on
+  // the Schedule; this page has only ever read it.
 
   // The Templates popover, injected into the editor's controls row via `controlsExtra`.
   const templatesControl = (
@@ -643,7 +674,7 @@ export default function CoachLineupBuilderPage({
 
   return (
     // .savePillPage reserves room for the floating SaveStatusPill so it never overlaps the
-    // grid's last row or the notes field.
+    // grid's last row or the notes field while the word is up.
     <div className={`${styles.page} ${styles.pageWide} ${lineupRows.length > 0 ? styles.savePillPage : ''}`}>
       {header}
       <UnsavedChangesGuard active={lineupDirty} />
@@ -654,26 +685,6 @@ export default function CoachLineupBuilderPage({
         <p className={styles.errorText}>{loadError}</p>
       ) : (
         <>
-          {(comingNotInLineup.length > 0 || outButInLineup.length > 0) && (
-            <div className={styles.lineupPeekWarn} role="status" style={{ marginBottom: '1rem' }}>
-              {comingNotInLineup.length > 0 && <p>⚠ Marked in but not in the lineup: {comingNotInLineup.map(r => playerDisplayName(r.player)).join(', ')}.</p>}
-              {outButInLineup.length > 0 && <p>⚠ In the lineup but marked Out: {outButInLineup.map(r => playerDisplayName(r.player)).join(', ')}.</p>}
-              <div className={styles.lineupReconcileActions}>
-                {comingNotInLineup.length > 0 && (
-                  <button type="button" className={styles.btnSecondary} onClick={() => addPlayersToLineup(comingNotInLineup.map(r => r.player.id))}>
-                    Add {comingNotInLineup.length} coming {comingNotInLineup.length === 1 ? 'player' : 'players'}
-                  </button>
-                )}
-                {outButInLineup.length > 0 && (
-                  <button type="button" className={styles.btnSecondary} onClick={() => removePlayersFromLineup(outButInLineup.map(r => r.player.id))}>
-                    Remove {outButInLineup.length} Out {outButInLineup.length === 1 ? 'player' : 'players'}
-                  </button>
-                )}
-              </div>
-              <span>Nothing changes until you tap a button — or fix the attendance on the Schedule if that&apos;s what&apos;s wrong.</span>
-            </div>
-          )}
-
           <LineupEditor
             roster={attendanceRows.map(r => r.player)}
             rows={lineupRows}
@@ -693,12 +704,19 @@ export default function CoachLineupBuilderPage({
             onNotice={setLineupNotice}
             notice={lineupNotice}
             controlsExtra={toolbarExtras}
+            attendance={{
+              comingNotInLineup: comingNotInLineup.map(r => r.player),
+              outButInLineup: outButInLineup.map(r => r.player),
+              onAddComing: () => addPlayersToLineup(comingNotInLineup.map(r => r.player.id)),
+              onRemoveOut: () => removePlayersFromLineup(outButInLineup.map(r => r.player.id)),
+            }}
             readyState={{
               status: lineupStatus,
               readyAtLabel: lineupReadyAt ? formatInOrgZone(lineupReadyAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : null,
               onMarkReady: handleMarkReady,
               marking: markingReady,
               error: readyError || undefined,
+              gameStarted,
             }}
           />
 
@@ -708,10 +726,10 @@ export default function CoachLineupBuilderPage({
               placeholder="Lineup notes (opponent scouting, reminders) — can be printed on the dugout poster" maxLength={1000} style={{ marginTop: '1rem' }} />
           )}
 
-          {/* The autosave word floats at the window's foot (owner, 2026-09-18) — Undo, Redo and
-              Print now live in the toolbar above, so this bar would otherwise hold nothing but
-              the save word, which is exactly the shape the practice plan, the plan-template
-              editor and the schedule's attendance list already carry as a pill (2026-09-14). */}
+          {/* The autosave word, a transient pill at the window's foot (owner 2026-09-20, revising
+              that morning's title-row home: the title row is pinned nowhere, so the word scrolled
+              away exactly when a coach deep in the grid wanted it). It appears on an edit, says
+              "Saved" and fades; only an error stays. */}
           {lineupRows.length > 0 && (
             <SaveStatusPill saving={lineupSaving} dirty={lineupDirty} error={lineupError} onRetry={handleLineupSave} />
           )}
