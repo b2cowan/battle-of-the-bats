@@ -359,6 +359,19 @@ a.chooserChoice:hover { background: var(--home-raise, rgba(255, 255, 255, 0.05))
   color: var(--text-tertiary);
 }
 
+/* Points at Total when a month/undated cell left lines out (owner ruling 2026-09-21) — the panel
+   used to hand over every line in the row regardless of the cell tapped, so nothing needed to say
+   "there's more"; now that a cell shows only its own lines, this is the one pointer to where the
+   rest of the season went. Never rendered on Total's own panel — `moreCount` is 0 there. */
+.chooserHint {
+  margin: 0.6rem 0 0;
+  padding: 0.4rem 0.6rem;
+  background: rgba(var(--blueprint-blue-rgb), 0.08);
+  border-radius: 6px;
+  font-size: var(--type-support);
+  color: var(--primary-light);
+}
+
 /* ── the content breakpoint ──────────────────────────────────────────────── */
 /* 640 only (with 900 reserved for the shell) — the two canonical breakpoints.
    The grid does NOT reflow: it is a comparison, so it keeps its columns and scrolls.

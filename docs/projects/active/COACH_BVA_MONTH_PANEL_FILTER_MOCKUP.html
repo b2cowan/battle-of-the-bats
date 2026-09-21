@@ -1,0 +1,676 @@
+<title>Budget Line Filter</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+  :root {
+    --paper: #F8F4ED;
+    --card: #FFFFFF;
+    --ink: #241E15;
+    --ink-soft: #4A4235;
+    --dim: #615A54;
+    --line: rgba(70,55,30,0.12);
+    --line-strong: rgba(70,55,30,0.20);
+    --olive: #57651E;
+    --danger: #B03A22;
+    --success: #34662A;
+    --amber: #835006;
+    --radius: 12px;
+    --now-tint: rgba(87,101,30,0.07);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #1C1712;
+      --card: #262019;
+      --ink: #F3EDE3;
+      --ink-soft: #C9BFAF;
+      --dim: #948A79;
+      --line: rgba(243,237,227,0.10);
+      --line-strong: rgba(243,237,227,0.18);
+      --olive: #9CB44A;
+      --danger: #E2735A;
+      --success: #6FCB6A;
+      --amber: #E0A73E;
+      --now-tint: rgba(156,180,74,0.10);
+    }
+  }
+  :root[data-theme="dark"] {
+    --paper: #1C1712;
+    --card: #262019;
+    --ink: #F3EDE3;
+    --ink-soft: #C9BFAF;
+    --dim: #948A79;
+    --line: rgba(243,237,227,0.10);
+    --line-strong: rgba(243,237,227,0.18);
+    --olive: #9CB44A;
+    --danger: #E2735A;
+    --success: #6FCB6A;
+    --amber: #E0A73E;
+    --now-tint: rgba(156,180,74,0.10);
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Inter', system-ui, sans-serif;
+    padding-inline: 20px;
+    padding-block: 40px 80px;
+    display: flex;
+    justify-content: center;
+  }
+  main { width: 100%; max-width: 900px; display: flex; flex-direction: column; gap: 2.75rem; }
+
+  h1 { font-size: 1.5rem; font-weight: 800; margin: 0 0 0.4rem; letter-spacing: -0.01em; }
+  h2 { font-size: 1.05rem; font-weight: 700; margin: 0 0 0.2rem; }
+  .kicker {
+    font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.09em;
+    color: var(--dim); margin: 0 0 0.5rem;
+  }
+  .lede { font-size: 0.92rem; line-height: 1.6; color: var(--ink-soft); max-width: 62ch; margin: 0; }
+
+  header.top { display: flex; flex-direction: column; gap: 0.75rem; }
+
+  /* ── legend ─────────────────────────────────────────────────────── */
+  .legend {
+    display: flex; flex-wrap: wrap; gap: 1.1rem; align-items: center;
+    padding: 0.75rem 1rem; border: 1px solid var(--line); border-radius: 10px;
+    background: var(--card); font-size: 0.78rem; color: var(--ink-soft);
+  }
+  .legend .item { display: flex; align-items: center; gap: 0.45rem; }
+  .dot { width: 15px; height: 15px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.62rem; font-weight: 800; color: #fff; flex-shrink: 0; }
+  .dot.problem { background: var(--danger); }
+  .dot.fixed { background: var(--success); }
+  .dot.info { background: var(--amber); }
+  .legend .hint { color: var(--dim); font-size: 0.76rem; margin-left: auto; }
+
+  /* ── the one rule ───────────────────────────────────────────────── */
+  .rule {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1.1rem 1.3rem; display: flex; flex-direction: column; gap: 0.8rem;
+  }
+  .rule .ruleTitle { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--olive); }
+  .ruleRows { display: flex; flex-direction: column; gap: 0.55rem; }
+  .ruleRow { display: grid; grid-template-columns: 1fr auto 1fr; gap: 0.7rem; align-items: center; font-size: 0.85rem; }
+  .ruleRow .level { color: var(--ink-soft); }
+  .ruleRow .level strong { color: var(--ink); font-weight: 700; }
+  .ruleRow .arrow { color: var(--dim); font-size: 0.78rem; text-align: center; white-space: nowrap; }
+  @media (max-width: 560px) {
+    .ruleRow { grid-template-columns: 1fr; text-align: left; }
+    .ruleRow .arrow { text-align: left; }
+  }
+  .ruleDoors { display: flex; gap: 0.6rem; flex-wrap: wrap; font-size: 0.78rem; color: var(--dim); border-top: 1px solid var(--line); padding-top: 0.7rem; }
+  .ruleDoors b { color: var(--ink); font-weight: 700; }
+
+  /* ── a small standalone item context strip (scenario 2) ─────────── */
+  .itemStrip {
+    display: flex; align-items: center; gap: 0.9rem; flex-wrap: wrap;
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 0.7rem 1rem; font-size: 0.82rem; color: var(--ink-soft);
+  }
+  .itemStrip .name { font-weight: 700; color: var(--ink); }
+  .itemStrip .seg { display: flex; align-items: center; gap: 0.3rem; }
+  .itemStrip .seg .amt { font-variant-numeric: tabular-nums; color: var(--ink); }
+
+  /* ── section shell ──────────────────────────────────────────────── */
+  section { display: flex; flex-direction: column; gap: 0.9rem; }
+  section .section-head { display: flex; flex-direction: column; gap: 0.15rem; }
+
+  /* ── grid excerpt ───────────────────────────────────────────────── */
+  .gridCard {
+    background: var(--card); border: 1px solid var(--line); border-radius: var(--radius);
+    padding: 1rem 1rem 0.85rem; overflow-x: auto;
+  }
+  table.grid { border-collapse: collapse; width: 100%; font-size: 0.82rem; font-variant-numeric: tabular-nums; min-width: 560px; }
+  table.grid th, table.grid td { padding: 0.42rem 0.55rem; text-align: right; white-space: nowrap; }
+  table.grid th.lead, table.grid td.lead { text-align: left; }
+  table.grid thead th {
+    font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
+    color: var(--dim); border-bottom: 1px solid var(--line-strong); padding-bottom: 0.55rem;
+  }
+  table.grid td.total, table.grid th.total { border-left: 1px solid var(--line-strong); font-weight: 700; }
+  tr.band th { padding-top: 0.7rem; font-size: 0.68rem; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.07em; color: var(--dim); border-bottom: 1px solid var(--line); padding-bottom: 0.4rem; }
+  tr.cat th.lead { font-weight: 800; color: var(--ink); }
+  tr.cat td, tr.cat th { font-weight: 800; border-top: 1px solid var(--line); padding-top: 0.55rem; }
+  tr.line th.lead { font-weight: 400; color: var(--ink-soft); padding-left: 1.25rem; }
+  tr.line td, tr.line th { color: var(--ink-soft); }
+  .chev { display: inline-block; width: 0.8em; color: var(--dim); }
+  .nil { color: var(--dim); opacity: 0.55; }
+  .nowcol { background: var(--now-tint); }
+
+  .tapCell { position: relative; display: inline-flex; align-items: center; gap: 0.3rem; }
+  .tapVal {
+    border-bottom: 1px dashed var(--line-strong); color: var(--olive); cursor: default; font-weight: inherit;
+  }
+  tr.cat .tapVal { font-weight: 800; }
+  .ring {
+    position: absolute; inset: -0.4rem -0.6rem; border: 1.5px dashed var(--amber); border-radius: 7px; pointer-events: none;
+  }
+  .gridNote { font-size: 0.74rem; color: var(--dim); margin: 0.7rem 0 0; }
+
+  /* ── flags (clickable annotations) ─────────────────────────────── */
+  .flag {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 17px; height: 17px; border-radius: 50%; border: none; cursor: pointer;
+    font-size: 0.64rem; font-weight: 800; color: #fff; flex-shrink: 0;
+    font-family: inherit; padding: 0; line-height: 1;
+  }
+  .flag.problem { background: var(--danger); }
+  .flag.fixed { background: var(--success); }
+  .flag.info { background: var(--amber); }
+  .flag:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+  .flag:hover { filter: brightness(1.1); }
+
+  .chip {
+    display: inline-flex; align-items: center; gap: 0.35rem;
+    font-size: 0.72rem; font-weight: 600; border-radius: 999px; padding: 0.2rem 0.55rem 0.2rem 0.3rem;
+    background: none; border: 1px solid; cursor: pointer; font-family: inherit;
+  }
+  .chip.problem { color: var(--danger); border-color: var(--danger); }
+  .chip.fixed { color: var(--success); border-color: var(--success); }
+  .chip.unchanged { color: var(--dim); border-color: var(--line-strong); }
+  .chip:focus-visible { outline: 2px solid var(--olive); outline-offset: 2px; }
+  .chip .glyph {
+    width: 14px; height: 14px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+    font-size: 0.58rem; font-weight: 800; color: #fff; flex-shrink: 0;
+  }
+  .chip.problem .glyph { background: var(--danger); }
+  .chip.fixed .glyph { background: var(--success); }
+  .chip.unchanged .glyph { background: var(--dim); }
+
+  /* ── comparison panels ──────────────────────────────────────────── */
+  .compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.35rem; align-items: start; }
+  .panelWrap { display: flex; flex-direction: column; gap: 0.55rem; }
+  .panelLabel { display: flex; align-items: center; gap: 0.5rem; }
+  .panelLabel .bar { width: 22px; height: 3px; border-radius: 2px; }
+  .panelWrap.today .bar { background: var(--danger); }
+  .panelWrap.proposed .bar { background: var(--success); }
+  .panelLabel .word { font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; }
+  .panelWrap.today .word { color: var(--danger); }
+  .panelWrap.proposed .word { color: var(--success); }
+  .panelLabel .sub { font-size: 0.78rem; color: var(--dim); }
+
+  .modal {
+    background: var(--card); border: 1px solid var(--line-strong); border-radius: var(--radius);
+    padding: 1.25rem 1.3rem 1.15rem; box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+  }
+  .modalHead { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.85rem; gap: 0.6rem; }
+  .modalTitle { font-size: 0.98rem; font-weight: 700; margin: 0; }
+  .modalX { color: var(--dim); font-size: 1rem; line-height: 1; flex-shrink: 0; }
+
+  .planFigure { display: flex; align-items: baseline; gap: 0.4rem; margin: 0 0 0.65rem; font-size: 0.8rem; color: var(--dim); }
+  .planFigure strong { font-size: 1.05rem; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+  ul.lines { list-style: none; margin: 0; padding: 0; }
+  ul.lines li { display: flex; justify-content: space-between; align-items: baseline; gap: 0.8rem;
+    padding: 0.55rem 0; border-top: 1px solid var(--line); font-size: 0.85rem; }
+  ul.lines li:first-child { border-top: none; }
+  ul.lines .who { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+  ul.lines .when { font-size: 0.72rem; color: var(--dim); display: flex; align-items: center; gap: 0.35rem; }
+  ul.lines .amt { font-variant-numeric: tabular-nums; flex-shrink: 0; display: flex; align-items: center; gap: 0.35rem; }
+
+  .totalHint {
+    margin: 0.7rem 0 0; padding: 0.45rem 0.6rem; background: var(--now-tint); border-radius: 6px;
+    font-size: 0.76rem; color: var(--olive); display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;
+  }
+
+  .foot { margin: 0.75rem 0 0; font-size: 0.74rem; color: var(--dim); line-height: 1.5; display: flex; align-items: flex-start; gap: 0.4rem; flex-wrap: wrap; }
+
+  /* ── explain bar (shared dialog for every flag/chip) ───────────── */
+  .explainBar {
+    position: fixed; left: 50%; bottom: 18px; transform: translateX(-50%) translateY(0);
+    width: min(560px, calc(100% - 32px)); background: var(--ink); color: var(--paper);
+    border-radius: 12px; padding: 0.95rem 1.05rem; box-shadow: 0 10px 30px rgba(0,0,0,0.28);
+    z-index: 50; display: flex; gap: 0.8rem; align-items: flex-start;
+    transition: transform 0.16s ease, opacity 0.16s ease; opacity: 1;
+  }
+  .explainBar[hidden] { display: flex; opacity: 0; transform: translateX(-50%) translateY(12px); pointer-events: none; }
+  .explainBar .mark { width: 22px; height: 22px; border-radius: 50%; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    font-size: 0.72rem; font-weight: 800; color: #fff; margin-top: 0.05rem; }
+  .explainBar .body { display: flex; flex-direction: column; gap: 0.2rem; }
+  .explainBar .eTitle { font-size: 0.82rem; font-weight: 700; }
+  .explainBar .eText { font-size: 0.8rem; line-height: 1.5; color: rgba(248,244,237,0.82); }
+  .explainBar .close { margin-left: auto; background: none; border: none; color: rgba(248,244,237,0.6);
+    font-size: 0.95rem; cursor: pointer; padding: 0.1rem 0.2rem; flex-shrink: 0; }
+  .explainBar .close:hover { color: var(--paper); }
+
+  /* ── closing summary ────────────────────────────────────────────── */
+  .summary { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 1.25rem 1.4rem; display: flex; flex-direction: column; gap: 1rem; }
+  .summaryCols { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; }
+  .summaryCols h3 { font-size: 0.78rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; margin: 0 0 0.55rem; }
+  .summaryCols.stay h3 { color: var(--dim); }
+  .summaryCols .change h3 { color: var(--olive); }
+  ul.sList { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 0.45rem; }
+  ul.sList li { font-size: 0.85rem; line-height: 1.5; color: var(--ink-soft); padding-left: 1.05rem; position: relative; }
+  ul.sList li::before { content: '–'; position: absolute; left: 0; color: var(--dim); }
+  .change ul.sList li::before { content: '→'; color: var(--olive); }
+  .reco { font-size: 0.85rem; line-height: 1.6; color: var(--ink); border-top: 1px solid var(--line); padding-top: 0.9rem; }
+
+  @media (max-width: 640px) {
+    body { padding-block: 28px 90px; }
+    main { gap: 2.1rem; }
+    .modal { padding: 1.1rem 1.05rem; }
+    .legend .hint { margin-left: 0; width: 100%; }
+  }
+</style>
+
+<main>
+  <header class="top">
+    <p class="kicker">Money by Month &middot; category panel</p>
+    <h1>One rule for every figure you tap</h1>
+    <p class="lede">
+      Today, tapping <em>any</em> month's figure &mdash; on a category row or a single item &mdash;
+      opens the identical whole-season list, no matter which month you actually tapped. The
+      revision below narrows a month tap to that month's own items, and moves "show me
+      everything" to the one place it belongs: the Total column, which currently does nothing
+      when tapped at all.
+    </p>
+  </header>
+
+  <div class="rule">
+    <span class="ruleTitle">The one rule</span>
+    <div class="ruleRows">
+      <div class="ruleRow">
+        <span class="level"><strong>Category</strong> figure &mdash; the sum of its items</span>
+        <span class="arrow">tap a month &rarr; only that month's items</span>
+        <span class="level"><strong>Item</strong> figure &mdash; the sum of its budget lines</span>
+      </div>
+      <div class="ruleRow">
+        <span class="level">A category is an aggregate of items</span>
+        <span class="arrow">same rule, one level down &darr;</span>
+        <span class="level">An item is an aggregate of budget lines</span>
+      </div>
+    </div>
+    <p class="ruleDoors"><b>Any month</b> &mdash; only what's actually scheduled that month, whichever level you're looking at. <b>Total</b> &mdash; everything, unfiltered, for the season.</p>
+  </div>
+
+  <div class="legend">
+    <span class="item"><span class="dot problem">!</span> a problem with today's panel</span>
+    <span class="item"><span class="dot fixed">&#10003;</span> what the fix changes</span>
+    <span class="item"><span class="dot info">i</span> for context</span>
+    <span class="hint">tap any marker for the explanation</span>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>Where this opens from</h2>
+      <p class="lede">The Expenses band of the Budget vs. Actual report, Team Gear expanded. Balls, dated February 1st, is the only item that's actually February's money.</p>
+    </div>
+    <div class="gridCard">
+      <table class="grid">
+        <thead>
+          <tr>
+            <th class="lead">Category / line</th>
+            <th>Jan&nbsp;'27</th>
+            <th class="nowcol">Feb&nbsp;'27</th>
+            <th>Mar&nbsp;'27</th>
+            <th>Apr&nbsp;'27</th>
+            <th>May&nbsp;'27</th>
+            <th>Jun&nbsp;'27</th>
+            <th class="total">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr class="band"><th class="lead" colspan="8">Expenses</th></tr>
+
+          <tr class="cat">
+            <th class="lead"><span class="chev">&#9656;</span>Facilities</th>
+            <td>$600</td><td class="nowcol"><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td class="total">$3,200</td>
+          </tr>
+
+          <tr class="cat">
+            <th class="lead"><span class="chev">&#9662;</span>Team Gear</th>
+            <td><span class="nil">&mdash;</span></td>
+            <td class="nowcol">
+              <span class="tapCell">
+                <span class="ring" aria-hidden="true"></span>
+                <span class="tapVal">$400</span>
+                <button class="flag info" data-key="grid" aria-label="Why this cell is highlighted">i</button>
+              </span>
+            </td>
+            <td><span class="nil">&mdash;</span></td>
+            <td>$200</td>
+            <td>$400</td>
+            <td><span class="nil">&mdash;</span></td>
+            <td class="total">
+              <span class="tapCell">
+                <span class="tapVal">$1,870</span>
+                <button class="flag info" data-key="grid-total" aria-label="What tapping Total does now">i</button>
+              </span>
+            </td>
+          </tr>
+          <tr class="line">
+            <th class="lead">Balls</th>
+            <td><span class="nil">&mdash;</span></td><td class="nowcol">$400</td><td><span class="nil">&mdash;</span></td>
+            <td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td class="total">$400</td>
+          </tr>
+          <tr class="line">
+            <th class="lead">Coach &amp; staff apparel</th>
+            <td><span class="nil">&mdash;</span></td><td class="nowcol"><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td><span class="nil">&mdash;</span></td><td>$400</td><td><span class="nil">&mdash;</span></td>
+            <td class="total">$400</td>
+          </tr>
+          <tr class="line">
+            <th class="lead">Game Changer</th>
+            <td><span class="nil">&mdash;</span></td><td class="nowcol"><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td class="total">$70</td>
+          </tr>
+          <tr class="line">
+            <th class="lead">Pop up net</th>
+            <td><span class="nil">&mdash;</span></td><td class="nowcol"><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td class="total">$100</td>
+          </tr>
+          <tr class="line">
+            <th class="lead">Sponsor plaques</th>
+            <td><span class="nil">&mdash;</span></td><td class="nowcol"><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td class="total">$200</td>
+          </tr>
+          <tr class="line">
+            <th class="lead">Team Banner</th>
+            <td><span class="nil">&mdash;</span></td><td class="nowcol"><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td>$200</td><td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td class="total">$200</td>
+          </tr>
+          <tr class="line">
+            <th class="lead">Team Swag</th>
+            <td><span class="nil">&mdash;</span></td><td class="nowcol"><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td class="total">$500</td>
+          </tr>
+
+          <tr class="cat">
+            <th class="lead"><span class="chev">&#9656;</span>Uniforms</th>
+            <td><span class="nil">&mdash;</span></td><td class="nowcol"><span class="nil">&mdash;</span></td><td>$350</td>
+            <td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td><td><span class="nil">&mdash;</span></td>
+            <td class="total">$350</td>
+          </tr>
+        </tbody>
+      </table>
+      <p class="gridNote">Showing Jan&ndash;Jun 2027 of a longer season &mdash; Total is always the whole season, which is why some items' totals don't appear in any visible month.</p>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Scenario 1 &mdash; tapping Team Gear's February figure</h2>
+      <p class="lede">One item genuinely belongs to February. Six don't.</p>
+    </div>
+    <div class="compare">
+      <div class="panelWrap today">
+        <div class="panelLabel"><span class="bar"></span><span class="word">Today</span><span class="sub">every item in the category</span></div>
+        <div class="modal">
+          <div class="modalHead"><h3 class="modalTitle">Team Gear &middot; February 2027</h3><span class="modalX">&times;</span></div>
+          <p class="planFigure"><strong>$400.00</strong> planned</p>
+          <ul class="lines">
+            <li><span class="who">Balls<span class="when">Currently Feb 1</span></span><span class="amt">$400.00</span></li>
+            <li><span class="who">Coach &amp; staff apparel<span class="when">Currently May 1</span></span><span class="amt">$400.00</span></li>
+            <li><span class="who">Game Changer<span class="when">Currently Oct 1</span></span><span class="amt">$70.00</span></li>
+            <li><span class="who">Pop up net<span class="when">Currently Nov 1</span></span><span class="amt">$100.00</span></li>
+            <li><span class="who">Sponsor plaques<span class="when">Currently Aug 1</span></span><span class="amt">$200.00</span></li>
+            <li><span class="who">Team Banner<span class="when">Currently Apr 1</span></span><span class="amt">$200.00</span></li>
+            <li><span class="who">Team Swag<span class="when">Currently Jul 1</span></span>
+              <span class="amt">$500.00
+                <button class="flag problem" data-key="s1-today" aria-label="Why this is confusing">!</button>
+              </span>
+            </li>
+          </ul>
+          <p class="foot">7 budget lines are shown as one row. Amounts are each line's whole-season total, not this column's share. Open one to change its payment dates.
+            <button class="chip problem" data-key="s1-today"><span class="glyph">!</span>doesn't match the $400 header</button>
+          </p>
+        </div>
+      </div>
+
+      <div class="panelWrap proposed">
+        <div class="panelLabel"><span class="bar"></span><span class="word">Proposed</span><span class="sub">only items with money in February</span></div>
+        <div class="modal">
+          <div class="modalHead"><h3 class="modalTitle">Team Gear &middot; February 2027</h3><span class="modalX">&times;</span></div>
+          <p class="planFigure"><strong>$400.00</strong> planned</p>
+          <ul class="lines">
+            <li><span class="who">Balls<span class="when">Currently Feb 1</span></span>
+              <span class="amt">$400.00
+                <button class="flag fixed" data-key="s1-proposed" aria-label="What changed">&#10003;</button>
+              </span>
+            </li>
+          </ul>
+          <p class="totalHint">6 more items are budgeted this season &rarr; tap Total to see them
+            <button class="flag info" data-key="s1-hint" aria-label="Why this line is here">i</button>
+          </p>
+          <p class="foot">Amount shown is this line's whole-season total.
+            <button class="chip unchanged" data-key="s1-unchanged"><span class="glyph">i</span>still the full-season amount</button>
+            Open it to change its payment dates.
+          </p>
+        </div>
+      </div>
+
+      <div class="panelWrap proposed">
+        <div class="panelLabel"><span class="bar"></span><span class="word">Proposed &mdash; tap Total instead</span><span class="sub">the escape hatch: everything, unfiltered</span></div>
+        <div class="modal">
+          <div class="modalHead"><h3 class="modalTitle">Team Gear &middot; Whole season
+            <button class="flag info" data-key="s1-total" aria-label="Why this panel exists">i</button></h3><span class="modalX">&times;</span></div>
+          <p class="planFigure"><strong>$1,870.00</strong> planned for the season</p>
+          <ul class="lines">
+            <li><span class="who">Balls<span class="when">Currently Feb 1</span></span><span class="amt">$400.00</span></li>
+            <li><span class="who">Coach &amp; staff apparel<span class="when">Currently May 1</span></span><span class="amt">$400.00</span></li>
+            <li><span class="who">Game Changer<span class="when">Currently Oct 1</span></span><span class="amt">$70.00</span></li>
+            <li><span class="who">Pop up net<span class="when">Currently Nov 1</span></span><span class="amt">$100.00</span></li>
+            <li><span class="who">Sponsor plaques<span class="when">Currently Aug 1</span></span><span class="amt">$200.00</span></li>
+            <li><span class="who">Team Banner<span class="when">Currently Apr 1</span></span><span class="amt">$200.00</span></li>
+            <li><span class="who">Team Swag<span class="when">Currently Jul 1</span></span><span class="amt">$500.00</span></li>
+          </ul>
+          <p class="foot">7 budget lines are shown as one row. Amounts are each line's whole-season total, not this column's share. Open one to change its payment dates.</p>
+        </div>
+      </div>
+    </div>
+    <p class="lede" style="font-size:0.78rem;">The middle panel renders only Balls &mdash; the other six don't appear at all, the same way tapping a single item's own figure works today. The panel on the right is today's "everything" list, still there, just reached by tapping Total instead of by accident on every month.</p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Scenario 2 &mdash; the same rule, one item's own budget lines</h2>
+      <p class="lede">A single item can itself stand for more than one budget line. "Practice jerseys" is one row in the grid but two separate purchases behind it.</p>
+    </div>
+    <div class="itemStrip">
+      <span class="name">Practice jerseys</span>
+      <span class="seg">Set 1 &mdash; <span class="amt">$180.00</span> &middot; Mar 1</span>
+      <span class="seg">Set 2 (replacements) &mdash; <span class="amt">$70.00</span> &middot; Jun 1</span>
+      <span class="seg">Season total <span class="amt">$250.00</span></span>
+    </div>
+    <div class="compare">
+      <div class="panelWrap today">
+        <div class="panelLabel"><span class="bar"></span><span class="word">Today</span><span class="sub">both of the item's lines, any month</span></div>
+        <div class="modal">
+          <div class="modalHead"><h3 class="modalTitle">Practice jerseys &middot; March 2027</h3><span class="modalX">&times;</span></div>
+          <p class="planFigure"><strong>$180.00</strong> planned</p>
+          <ul class="lines">
+            <li><span class="who">Set 1<span class="when">Currently Mar 1</span></span><span class="amt">$180.00</span></li>
+            <li><span class="who">Set 2 (replacements)<span class="when">Currently Jun 1</span></span>
+              <span class="amt">$70.00
+                <button class="flag problem" data-key="s2-today" aria-label="Why this is confusing">!</button>
+              </span>
+            </li>
+          </ul>
+          <p class="foot">2 budget lines are shown as one row. Amounts are each line's whole-season total, not this column's share. Open one to change its payment dates.</p>
+        </div>
+      </div>
+
+      <div class="panelWrap proposed">
+        <div class="panelLabel"><span class="bar"></span><span class="word">Proposed</span><span class="sub">only this item's March line</span></div>
+        <div class="modal">
+          <div class="modalHead"><h3 class="modalTitle">Practice jerseys &middot; March 2027</h3><span class="modalX">&times;</span></div>
+          <p class="planFigure"><strong>$180.00</strong> planned</p>
+          <ul class="lines">
+            <li><span class="who">Set 1<span class="when">Currently Mar 1</span></span>
+              <span class="amt">$180.00
+                <button class="flag fixed" data-key="s2-proposed" aria-label="What changed">&#10003;</button>
+              </span>
+            </li>
+          </ul>
+          <p class="totalHint">1 more line is budgeted this season &rarr; tap Total to see it</p>
+          <p class="foot">Amount shown is this line's whole-season total. Open it to change its payment dates.</p>
+        </div>
+      </div>
+
+      <div class="panelWrap proposed">
+        <div class="panelLabel"><span class="bar"></span><span class="word">Proposed &mdash; tap Total</span><span class="sub">both lines, on request</span></div>
+        <div class="modal">
+          <div class="modalHead"><h3 class="modalTitle">Practice jerseys &middot; Whole season
+            <button class="flag info" data-key="s2-total" aria-label="Why this panel exists">i</button></h3><span class="modalX">&times;</span></div>
+          <p class="planFigure"><strong>$250.00</strong> planned for the season</p>
+          <ul class="lines">
+            <li><span class="who">Set 1<span class="when">Currently Mar 1</span></span><span class="amt">$180.00</span></li>
+            <li><span class="who">Set 2 (replacements)<span class="when">Currently Jun 1</span></span><span class="amt">$70.00</span></li>
+          </ul>
+          <p class="foot">2 budget lines are shown as one row. Amounts are each line's whole-season total, not this column's share. Open one to change its payment dates.</p>
+        </div>
+      </div>
+    </div>
+    <p class="lede" style="font-size:0.78rem;">The same three doors as Scenario 1 &mdash; one level down. Tapping March or June on this exact row would have shown both lines today; each now renders only its own line (the other isn't there at all), and Total still shows both.</p>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Scenario 3 &mdash; two items sharing a month</h2>
+      <p class="lede">Tournament Fees, tapping May: Provincials entry and Regional entry are both May money; Playoff bus is September's.</p>
+    </div>
+    <div class="compare">
+      <div class="panelWrap today">
+        <div class="panelLabel"><span class="bar"></span><span class="word">Today</span><span class="sub">every item in the category</span></div>
+        <div class="modal">
+          <div class="modalHead"><h3 class="modalTitle">Tournament Fees &middot; May 2027</h3><span class="modalX">&times;</span></div>
+          <p class="planFigure"><strong>$850.00</strong> planned</p>
+          <ul class="lines">
+            <li><span class="who">Provincials entry<span class="when">Currently May 1</span></span><span class="amt">$600.00</span></li>
+            <li><span class="who">Regional entry<span class="when">Currently May 15</span></span><span class="amt">$250.00</span></li>
+            <li><span class="who">Playoff bus<span class="when">Currently Sep 1</span></span>
+              <span class="amt">$300.00
+                <button class="flag problem" data-key="s3-today" aria-label="Why this is confusing">!</button>
+              </span>
+            </li>
+          </ul>
+          <p class="foot">3 budget lines are shown as one row. Amounts are each line's whole-season total, not this column's share. Open one to change its payment dates.</p>
+        </div>
+      </div>
+
+      <div class="panelWrap proposed">
+        <div class="panelLabel"><span class="bar"></span><span class="word">Proposed</span><span class="sub">only items with money in May</span></div>
+        <div class="modal">
+          <div class="modalHead"><h3 class="modalTitle">Tournament Fees &middot; May 2027</h3><span class="modalX">&times;</span></div>
+          <p class="planFigure"><strong>$850.00</strong> planned</p>
+          <ul class="lines">
+            <li><span class="who">Provincials entry<span class="when">Currently May 1</span></span><span class="amt">$600.00</span></li>
+            <li><span class="who">Regional entry<span class="when">Currently May 15</span></span>
+              <span class="amt">$250.00
+                <button class="flag fixed" data-key="s3-proposed" aria-label="What changed">&#10003;</button>
+              </span>
+            </li>
+          </ul>
+          <p class="totalHint">1 more item is budgeted this season &rarr; tap Total to see it</p>
+          <p class="foot">2 budget lines are shown as one row. Amounts are each line's whole-season total, not this column's share.
+            <button class="chip unchanged" data-key="s3-unchanged"><span class="glyph">i</span>wording adjusts on its own</button>
+            Open one to change its payment dates.
+          </p>
+        </div>
+      </div>
+
+      <div class="panelWrap proposed">
+        <div class="panelLabel"><span class="bar"></span><span class="word">Proposed &mdash; tap Total</span><span class="sub">all three, on request</span></div>
+        <div class="modal">
+          <div class="modalHead"><h3 class="modalTitle">Tournament Fees &middot; Whole season</h3><span class="modalX">&times;</span></div>
+          <p class="planFigure"><strong>$1,150.00</strong> planned for the season</p>
+          <ul class="lines">
+            <li><span class="who">Provincials entry<span class="when">Currently May 1</span></span><span class="amt">$600.00</span></li>
+            <li><span class="who">Regional entry<span class="when">Currently May 15</span></span><span class="amt">$250.00</span></li>
+            <li><span class="who">Playoff bus<span class="when">Currently Sep 1</span></span><span class="amt">$300.00</span></li>
+          </ul>
+          <p class="foot">3 budget lines are shown as one row. Amounts are each line's whole-season total, not this column's share. Open one to change its payment dates.</p>
+        </div>
+      </div>
+    </div>
+    <p class="lede" style="font-size:0.78rem;">Playoff bus doesn't render at all in the middle panel. Two lines left &mdash; the "N budget lines" sentence already counts whatever's listed, so its wording needed no change. Total, on the right, is the same three-item list Today showed by accident on every month &mdash; now it's a door, not a default.</p>
+  </section>
+
+  <div class="summary">
+    <div class="summaryCols">
+      <div class="stay">
+        <h3>Stays exactly the same</h3>
+        <ul class="sList">
+          <li>The figure at the top of the panel &mdash; still that column's total, category or item.</li>
+          <li>Each item's amount &mdash; still its whole-season total, never divided by month.</li>
+          <li>The "Currently &lt;date&gt;" line under each item.</li>
+          <li>The edit link into an item's payment dates, for coaches who can write.</li>
+          <li>Read-only assistants see the same narrower list; nothing about access changes.</li>
+        </ul>
+      </div>
+      <div class="change">
+        <h3>What changes</h3>
+        <ul class="sList">
+          <li>A month figure now lists only what's actually scheduled that month &mdash; at the category level (which items) and, the same way, at the item level (which of its own budget lines).</li>
+          <li>The Total column becomes tappable and takes over "show me everything" &mdash; today's whole-season list doesn't go away, it just moves to the one figure built to mean the whole season.</li>
+          <li>An item split across several months still appears under each of those months, same as today.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="reco">One rule, applied consistently instead of two behaviours pretending to be one &mdash; a category figure and an item figure are both just aggregates, so they open the same way. Nothing about how budget items are stored needs to move. If this reads right, it's a small build.</p>
+  </div>
+</main>
+
+<div class="explainBar" id="explainBar" hidden role="dialog" aria-live="polite" aria-label="Annotation detail">
+  <span class="mark" id="explainMark">!</span>
+  <div class="body">
+    <span class="eTitle" id="explainTitle"></span>
+    <span class="eText" id="explainText"></span>
+  </div>
+  <button class="close" id="explainClose" aria-label="Close">&times;</button>
+</div>
+
+<script>
+  const NOTES = {
+    'grid': { kind: 'info', title: 'The control in question', text: "Tapping any month's figure on a category row opens a panel meant to explain that figure. Right now the panel ignores which month you tapped — every month opens the identical full list of items in the category." },
+    'grid-total': { kind: 'info', title: 'Total becomes a real door', text: "Today this figure does nothing when tapped — it's just bold text. Under the new rule it opens the exact list Today's panel currently shows on every month: every item, whole-season amounts, no month filter." },
+    's1-today': { kind: 'problem', title: "Doesn't match the $400 header", text: 'Six of these seven items are budgeted for other months — May, October, November, August, April, July. Only Balls is actually February’s money, but the list doesn’t say which one that is.' },
+    's1-proposed': { kind: 'fixed', title: 'Only February’s item is listed', text: 'The list now narrows to items with money scheduled in February — here, just Balls. The header and the list agree.' },
+    's1-unchanged': { kind: 'info', title: 'Still the whole-season total', text: 'Balls’ full budget happens to be one payment on Feb 1, so its season total and its February figure match. An item paid across several months would still show its full-season amount here, exactly like today — this proposal never fakes a monthly split.' },
+    's1-total': { kind: 'info', title: 'The escape hatch', text: 'Same seven items, same whole-season amounts Today shows — the only difference is you asked for it by tapping Total, instead of getting it no matter which month you meant to look at.' },
+    's1-hint': { kind: 'info', title: 'Worth adding, open to cutting', text: 'Not part of your ask — flagging it because once the other six items just disappear, nothing on screen points to Total. This one line is the proposed fix for that: cheap, and easy to drop if you’d rather the panel stay silent about what it isn’t showing.' },
+    's2-today': { kind: 'problem', title: "Doesn't match the $180 header", text: 'Set 2 is June’s money, not March’s — it has nothing to do with the $180 tapped here. This is the identical bug as Scenario 1, one level down: an item figure is an aggregate of its own budget lines, and today it ignores the month exactly the way a category figure does.' },
+    's2-proposed': { kind: 'fixed', title: 'Only March’s line is listed', text: 'Set 2 drops off because it isn’t March’s money. The header and the list agree, the same way Scenario 1’s does.' },
+    's2-total': { kind: 'info', title: 'Same door, one level down', text: 'Tapping this item’s Total shows both of its lines — the same "everything" door Scenario 1 opens for a whole category, just scoped to one item’s own budget lines.' },
+    's3-today': { kind: 'problem', title: 'Lists an unrelated item', text: 'Playoff bus is budgeted for September, not May — it has nothing to do with the $850 tapped here, but it’s mixed in with the two items that do.' },
+    's3-proposed': { kind: 'fixed', title: 'Narrows to May’s two items', text: 'Provincials entry and Regional entry are both scheduled in May and add up to exactly $850. Playoff bus drops off the list because September isn’t the month that was tapped.' },
+    's3-unchanged': { kind: 'info', title: 'Wording adjusts on its own', text: 'The panel already says "N budget lines are shown as one row," counting whatever’s listed — so narrowing the list from three items to two needed no new copy.' },
+  };
+
+  const bar = document.getElementById('explainBar');
+  const mark = document.getElementById('explainMark');
+  const titleEl = document.getElementById('explainTitle');
+  const textEl = document.getElementById('explainText');
+  const closeBtn = document.getElementById('explainClose');
+
+  function showNote(key) {
+    const note = NOTES[key];
+    if (!note) return;
+    mark.className = 'mark';
+    mark.style.background = note.kind === 'problem' ? 'var(--danger)' : note.kind === 'fixed' ? 'var(--success)' : 'var(--amber)';
+    mark.textContent = note.kind === 'problem' ? '!' : note.kind === 'fixed' ? '✓' : 'i';
+    titleEl.textContent = note.title;
+    textEl.textContent = note.text;
+    bar.hidden = false;
+  }
+  function hideBar() { bar.hidden = true; }
+
+  document.querySelectorAll('.flag, .chip').forEach(function (btn) {
+    btn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      showNote(btn.getAttribute('data-key'));
+    });
+  });
+  closeBtn.addEventListener('click', hideBar);
+  document.addEventListener('keydown', function (e) { if (e.key === 'Escape') hideBar(); });
+</script>

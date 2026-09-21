@@ -12,6 +12,7 @@ import {
   /* ⚠ `scheduledForward` LEFT WITH THE SENTENCE THAT QUOTED IT — the forward derivation is now
      read inside the notes module, so the grid no longer calls it directly. */
   formatMonthBare, monthYearBands, MONTH_WINDOW, formatMonthLong, MONEY_LENSES, lensReadsSpendingGrid,
+  monthKeyOf,
   type MonthGrid, type MonthKey, type MoneyLens, type GridPlanLine, type GridLineResult,
   type GridCategoryResult, type MoneyRowDirection, type PanelDoor, type PanelSubject,
   type RevenueGroupKey,
@@ -165,6 +166,15 @@ function fmtDay(d: string | null) {
 }
 
 /**
+ * Where the plan panel's Total door files — the whole season, no month filter.
+ *
+ * ⚠ NOT SHARED WITH THE LIB, unlike `UNDATED_CELL`. Every other reader of a month key (the export,
+ * the server rollup, `check:money-report`) only ever deals in a real month or "no date yet" — this
+ * sentinel exists purely for the plan panel's own `when` state and would mean nothing to them.
+ */
+const SEASON_CELL = 'whole-season';
+
+/**
  * What one record's two lines say, and it depends on WHOSE panel this is (owner-found 2026-08-25).
  *
  * ⚠⚠ A GROUP'S PANEL IS NOT ITS ROW'S PANEL WITH MORE RECORDS IN IT. Open one family and the title
@@ -312,8 +322,20 @@ export default function MoneyMonthGrid({
    * screen told a coach which they would get, and category rows and the whole revenue band were
    * simply dead under Budget. Now every plan figure opens this, and the edit door lives INSIDE it —
    * so the chooser's old job is just the case where the list has more than one row.
+   *
+   * ⚠⚠ A MONTH CELL NOW SHOWS ONLY ITS OWN MONTH'S LINES, AND TOTAL IS THE ESCAPE HATCH
+   * (owner ruling 2026-09-21). This used to hand every cell the SAME unfiltered list — a category's
+   * every item, or an item's every budget line, whichever month you tapped — because the only data
+   * a plan line carries is a whole-season total and a list of dates, and nothing narrowed the list
+   * by what was actually tapped. `linesFor` does that narrowing from those dates alone; no payload
+   * change was needed. `moreCount` is what is left out, so the panel can point at Total rather than
+   * silently going quiet about the rest of the season.
    */
-  const [plan, setPlan] = useState<{ title: string; when: string; figure: number | null; lines: GridPlanLine[] } | null>(null);
+  const [plan, setPlan] = useState<{
+    title: string; when: string; figure: number | null; lines: GridPlanLine[];
+    /** Lines left out of this panel because they don't touch this month — 0 on Total's own panel. */
+    moreCount: number;
+  } | null>(null);
 
   /* ⚠⚠ THE MONTHS ARE WINDOWED; THE TOTALS ARE NOT (owner ruling 2026-08-21). A repeating cost
      stretches this grid past any screen — fifteen columns the day it was found — and `Total`,
@@ -493,6 +515,22 @@ export default function MoneyMonthGrid({
   }
 
   /**
+   * Narrows a row's full set of budget lines down to the ones behind ONE cell (owner ruling
+   * 2026-09-21). A line's only schedule is its own `dates` — there is no per-month split to read —
+   * so a line belongs to a month cell when one of its dates falls in that month, to the undated
+   * cell when it has none, and to Total (unfiltered) always.
+   *
+   * ⚠ THE SAME FUNCTION AT BOTH GRAINS. A category cell hands this every item's lines; an item cell
+   * hands it just its own. Which lines are "this cell's" is decided identically either way — a
+   * category figure and an item figure are both just aggregates one level apart.
+   */
+  function linesFor(lines: GridPlanLine[], when: string): GridPlanLine[] {
+    if (when === SEASON_CELL) return lines;
+    if (when === UNDATED_CELL) return lines.filter(l => l.dates.length === 0);
+    return lines.filter(l => l.dates.some(d => monthKeyOf(d) === when));
+  }
+
+  /**
    * What a PLAN figure does when a coach taps it — the Budget lens's twin of `drill`, and the same
    * promise: the tap DESCRIBES the number, it never navigates away from it.
    *
@@ -508,19 +546,25 @@ export default function MoneyMonthGrid({
    * id, found nothing and returned silently, is impossible now: every door is built from a real
    * `GridPlanLine.id`.
    *
-   * ⚠ NOTHING PRETENDS TO BE TAPPABLE. No plan lines behind the figure — a spend-only row, or a
-   * revenue group whose plan is a dues schedule rather than a budget line — and no affordance
-   * appears, exactly as on the record lenses.
+   * ⚠⚠ A MONTH CELL USED TO HAND OVER EVERY LINE REGARDLESS OF MONTH, AND `Total` DID NOTHING AT ALL
+   * (owner ruling 2026-09-21). `allLines` is always the row's whole set; `linesFor` narrows it to
+   * this cell before anything else happens, so `lines.length === 0` — and therefore whether the
+   * figure is tappable at all — is judged on what THIS cell actually holds, not on the row's season
+   * total. Nothing pretends to be tappable: a month with no scheduled line opens nothing, exactly as
+   * a spend-only row always has.
    */
   function planPanel(
-    who: string, lines: GridPlanLine[], when: string, figure: number | null,
+    who: string, allLines: GridPlanLine[], when: string, figure: number | null,
   ): { onClick?: () => void; title?: string } {
+    const lines = linesFor(allLines, when);
     if (lines.length === 0) return {};
     return {
-      onClick: () => setPlan({ title: who, when, figure, lines }),
+      onClick: () => setPlan({ title: who, when, figure, lines, moreCount: allLines.length - lines.length }),
       title: when === UNDATED_CELL
         ? `See the budget lines behind ${who} with no date yet`
-        : `See the budget lines behind ${who}`,
+        : when === SEASON_CELL
+          ? `See every budget line behind ${who}`
+          : `See the budget lines behind ${who}`,
     };
   }
 
@@ -710,7 +754,15 @@ export default function MoneyMonthGrid({
             );
           })}
           <td className={`${styles.num} ${styles.totalCol}`}>
-            {cellNode(lensTotal(cat.total, lens, band), { emphasis: lens === 'difference' ? 'signed' : undefined })}
+            {/* ⚠⚠ TOTAL IS THE ESCAPE HATCH NOW (owner ruling 2026-09-21) — the one door left for
+                "show me the whole category", now that a month cell shows only its own month. The
+                figure passed is always the season's PLANNED money, never `lensTotal`: the same "the
+                word follows the CELL, not the lens" rule the undated column already keeps, because
+                Total's whole point here is the plan, whatever lens happens to be on. */}
+            {cellNode(lensTotal(cat.total, lens, band), {
+              emphasis: lens === 'difference' ? 'signed' : undefined,
+              ...(lensReadsPlan(lens) ? planPanel(label, categoryPlanLines(cat.lines), SEASON_CELL, cat.total.budget) : {}),
+            })}
           </td>
         </tr>
 
@@ -774,7 +826,12 @@ export default function MoneyMonthGrid({
                 );
               })}
               <td className={`${styles.num} ${styles.totalCol}`}>
-                {cellNode(lensTotal(line.total, lens, band))}
+                {/* Same escape hatch as the category row's Total, one level down — this item's own
+                   budget lines, unfiltered, whatever lens is on. See the category row for why. */}
+                {cellNode(lensTotal(line.total, lens, band),
+                  lensReadsPlan(lens)
+                    ? planPanel(line.description, line.planLines ?? [], SEASON_CELL, line.total.budget)
+                    : {})}
               </td>
             </tr>
           );
@@ -1102,7 +1159,8 @@ export default function MoneyMonthGrid({
           <div className={shared.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
             <div className={shared.modalHeader}>
               <h3 className={shared.modalTitle}>
-                {plan.title} · {plan.when === UNDATED_CELL ? 'no date yet' : formatMonthLong(plan.when)}
+                {plan.title} · {plan.when === UNDATED_CELL ? 'no date yet'
+                  : plan.when === SEASON_CELL ? 'whole season' : formatMonthLong(plan.when)}
               </h3>
               <button className={shared.modalCloseBtn} onClick={() => setPlan(null)} aria-label="Close"><X size={16} /></button>
             </div>
@@ -1122,13 +1180,19 @@ export default function MoneyMonthGrid({
                 Difference that cell opened a panel reading "$3,200.00 difference — plan against what
                 the season has spent" over a figure with nothing netted against it. A coach reads a
                 plain budget total as an overspend. The word follows the CELL: the undated column is
-                always plan money, whatever lens is on. */}
+                always plan money, whatever lens is on.
+
+                ⚠ AND NOW TOTAL JOINS UNDATED IN THAT RULE (owner ruling 2026-09-21). It is passed
+                the row's `.budget`, never `lensTotal`, for the identical reason: Total's whole job
+                here is "the season's plan", so it reads as plan money under Difference too. */}
             {plan.figure != null && (
               <p className={styles.chooserSub}>
                 <strong>{fmt(plan.figure)}</strong>{' '}
-                {lens === 'difference' && plan.when !== UNDATED_CELL
-                  ? 'difference — plan against what the season has spent'
-                  : 'planned'}
+                {plan.when === SEASON_CELL
+                  ? 'planned for the season'
+                  : lens === 'difference' && plan.when !== UNDATED_CELL
+                    ? 'difference — plan against what the season has spent'
+                    : 'planned'}
               </p>
             )}
             <ul className={styles.chooserList}>
@@ -1165,15 +1229,23 @@ export default function MoneyMonthGrid({
               })}
             </ul>
             {/* ⚠⚠ THIS USED TO CLAIM THE LINES *MAKE UP* THE TAPPED FIGURE, AND THAT IS FALSE
-                (adversarial review, 2026-09-04). The figure is one COLUMN's slice — April's share, or
-                the undated share — while a line carries its WHOLE-SEASON total and may be spread over
-                several months; a category row's panel lists every item in the category besides. So
-                "$1,734" would open a list reading "$5,200" beside a sentence insisting they were the
-                same money. The figures are right; the claim was not. The panel now says what the
-                amounts ARE and asserts no arithmetic a reader can disprove in their head.
+                (adversarial review, 2026-09-04). A line carries its WHOLE-SEASON total, not a
+                month's share of it — so even now that the list is narrowed to this cell's own
+                lines, a single-payment line's amount can still outrun a Difference figure, or a
+                line split across several dates within one month still shows its full total. The
+                panel says what the amounts ARE and asserts no arithmetic a reader can disprove.
                 ⚠ IF THIS EVER NEEDS A MONTH'S SHARE PER LINE, that is a payload change —
                 `GridPlanLine` carries a season total and a list of dates, and no per-month split.
-                Do not fake it by dividing. */}
+                Do not fake it by dividing.
+                ⚠⚠ "EVERY ITEM IN THE CATEGORY BESIDES" IS GONE (owner ruling 2026-09-21) — `lines`
+                is `linesFor`'s output now, narrowed to this cell; what got left out is `moreCount`,
+                surfaced below rather than rendered as rows nobody asked for. */}
+            {plan.moreCount > 0 && (
+              <p className={styles.chooserHint}>
+                {plan.moreCount === 1 ? '1 more line is' : `${plan.moreCount} more lines are`} budgeted
+                this season — tap Total to see {plan.moreCount === 1 ? 'it' : 'them'}.
+              </p>
+            )}
             <p className={styles.chooserFoot}>
               {plan.lines.length === 1
                 ? 'Amount shown is this line’s whole-season total.'
