@@ -75,6 +75,12 @@ export const POST = withObservability(async (req: Request,
   const window: 30 | 7 | undefined = body.window === 30 ? 30 : body.window === 7 ? 7 : undefined;
   const preview = body.preview === true;
   const playerId: string | null = typeof body.playerId === 'string' && body.playerId ? body.playerId : null;
+  // A wave and a family are two different sends with two different rules (the wave honours the
+  // team's toggle and its window; the family ignores both). No caller asks for both, and a body
+  // that did would have to be answered by picking one silently — refuse instead (/review 2026-09-21).
+  if (window !== undefined && playerId) {
+    return NextResponse.json({ error: 'Send either an automatic wave or one family’s reminder, not both.' }, { status: 400 });
+  }
 
   // ⚠ "REMIND THIS FAMILY", UNBOUNDED (owner ruling 2026-09-21). `daysAhead: null` means no
   // installment is excluded for being too far away — the ONLY filters left are "unpaid" and "this

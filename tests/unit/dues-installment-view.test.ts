@@ -16,9 +16,11 @@ import {
   focusInstallmentColumn,
   nextUnpaidInstallment,
   familiesOwingOn,
+  DUE_REMINDER_DAYS_AHEAD,
   type ViewableInstallment,
 } from '../../lib/dues-installment-view';
 import { allocateDuesPayments } from '../../lib/dues-payments';
+import { readCode } from './_source-code.ts';
 
 const TODAY = '2026-08-14';
 
@@ -286,6 +288,25 @@ describe('focusInstallmentColumn — the one installment a coach can act on', ()
     const s = [inst(1, 100, '2026-09-01'), inst(2, 100, '2026-10-01')];
     const cols = buildInstallmentColumns([{ installments: s, coverage: covered(s, 200) }], TODAY);
     assert.equal(focusInstallmentColumn(cols), null);
+  });
+});
+
+describe('DUE_REMINDER_DAYS_AHEAD — the bulk window the screens quote', () => {
+  // The number lives once in code, but a coach reads it in prose: the Send-due-reminders
+  // confirmation and the preview modal both say "next N days". If the constant moves, every
+  // sentence that quotes it must move with it — this is the guard the retired
+  // chaseableInstallment test used to be, pinned to the copy rather than to a function.
+  it('is quoted verbatim by every customer-facing sentence that describes the bulk send', () => {
+    const phrase = `next ${DUE_REMINDER_DAYS_AHEAD} days`;
+    for (const rel of [
+      'components/coaches/DuesReminderPreviewModal.tsx',
+      'app/[orgSlug]/coaches/teams/[teamId]/accounting/dues/panel.tsx',
+    ]) {
+      assert.ok(
+        readCode(rel).includes(phrase),
+        `${rel} no longer says "${phrase}" — either the window moved without the copy, or the copy was reworded without the constant.`,
+      );
+    }
   });
 });
 

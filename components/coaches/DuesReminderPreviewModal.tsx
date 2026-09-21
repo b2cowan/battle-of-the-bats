@@ -50,6 +50,7 @@ export default function DuesReminderPreviewModal({
   real?:
     | 'loading'
     | 'failed'
+    | { refused: true; message: string }
     | { empty: true; reason: 'skippedRecent' | 'settled' }
     | { subject: string; html: string; to: string | null; missingEmail: boolean; guardianHidden: boolean };
   onClose: () => void;
@@ -66,6 +67,7 @@ export default function DuesReminderPreviewModal({
   const family = variant === 'family';
   const realLetter = real && typeof real === 'object' && 'subject' in real ? real : null;
   const realEmpty = real && typeof real === 'object' && 'empty' in real ? real : null;
+  const realRefused = real && typeof real === 'object' && 'refused' in real ? real : null;
   // One call to the template; only the window and the sample rows differ by variant. Built even
   // when `real` will be shown instead — it's a few strings, and the fallback on a failed fetch
   // needs it ready rather than computed mid-render.
@@ -165,6 +167,11 @@ export default function DuesReminderPreviewModal({
         {real === 'loading' ? (
           <p style={{ margin: 0, fontSize: '0.83rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
             Loading the actual email…
+          </p>
+        ) : realRefused ? (
+          // The route said no, in its own words — never a sample dressed as a network blip.
+          <p role="status" style={{ margin: 0, fontSize: '0.83rem', color: 'var(--danger-light)' }}>
+            {realRefused.message}
           </p>
         ) : realEmpty ? (
           <p style={{ margin: 0, fontSize: '0.83rem', color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>

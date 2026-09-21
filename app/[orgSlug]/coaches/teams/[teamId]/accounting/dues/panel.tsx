@@ -584,6 +584,7 @@ export function PlayerDuesPanel({
   const [realEmailPreview, setRealEmailPreview] = useState<
     | 'loading'
     | 'failed'
+    | { refused: true; message: string }
     | { empty: true; reason: 'skippedRecent' | 'settled' }
     | { subject: string; html: string; to: string | null; missingEmail: boolean; guardianHidden: boolean }
     | null
@@ -1755,7 +1756,15 @@ export function PlayerDuesPanel({
       });
       const data = await res.json().catch(() => null);
       if (token !== realEmailPreviewToken.current) return;
-      if (!res.ok || !data) { setRealEmailPreview('failed'); return; }
+      // A refusal (403 when money access was revoked since the page loaded, 404 when the season
+      // ended) says WHY, in the route's own words — a sample under "couldn't load" would dress a
+      // permission problem as a network blip (/review 2026-09-21). Only a lost or unreadable
+      // response falls back to the sample.
+      if (!data) { setRealEmailPreview('failed'); return; }
+      if (!res.ok) {
+        setRealEmailPreview({ refused: true, message: typeof data.error === 'string' && data.error ? data.error : 'The preview could not be loaded.' });
+        return;
+      }
       setRealEmailPreview(data.subject && data.html
         ? {
           subject: data.subject,
@@ -3872,6 +3881,10 @@ export function PlayerDuesPanel({
                           {selected.player.guardianEmail
                             ? <>It goes to <strong>{selected.player.guardianEmail}</strong></>
                             : <>It goes to the guardian email on file for this family</>}
+                          {/* `remainingAmount` is always on the dues payload (the GET writes `toSend ?? amount`
+                              for every row), so the `?? amount` never fires today — it is the type's
+                              optionality, not a second rule. If a caller ever builds these rows by hand,
+                              the honest figure is `installmentToSend(inst, coverage)`, not the face value. */}
                           {' '}and asks for <strong>{fmt(nextInstallment.remainingAmount ?? nextInstallment.amount)}</strong>
                           {' '}({nextInstallment.dueDate < tournamentToday() ? 'was due' : 'due'} {fmtDate(nextInstallment.dueDate)}).
                           {!selected.player.guardianEmail && <> If there isn’t one, nothing sends and you’ll be told.</>}
