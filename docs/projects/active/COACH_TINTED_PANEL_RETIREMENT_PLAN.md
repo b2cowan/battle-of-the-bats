@@ -3,7 +3,7 @@
 **Status:** RULED 2026-09-21 (owner: *"remove this blue tinted panel from the app altogether so we have
 consistency in formatting throughout"*; D1–D3 as drawn — the whole coaches-portal list in one pass;
 D4 the family/public pages as a second wave). **BUILT ON DEV 2026-09-21** — CSS only, no migration.
-Owner QA walk §215 owed. Commit owed.
+Owner QA walk §215 owed. **Committed `ae946dbb` 2026-09-21.**
 **Hub:** `docs/projects/active/COACH_TINTED_PANEL_RETIREMENT_HUB.html` ·
 https://claude.ai/artifact/Rj3qtLWpPXDQGUTPnmzBxF (Mockup · Everywhere the tint paints · Decisions ·
 Full Plan · QA Walk). **PM brief:** `COACH_TINTED_PANEL_RETIREMENT_PM_BRIEF.md`.
