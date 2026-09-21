@@ -152,10 +152,10 @@ export function buildOpponentBook(opts: {
     aliasKeysByOwner.set(target.normalizedName, list);
   }
 
-  const groups = new Map<string, { meetings: OpponentMeeting[]; spellings: string[] }>();
+  const groups = new Map<string, { meetings: OpponentMeeting[]; spellings: string[]; playedSpellings: string[] }>();
   const ensureGroup = (key: string) => {
     let g = groups.get(key);
-    if (!g) { g = { meetings: [], spellings: [] }; groups.set(key, g); }
+    if (!g) { g = { meetings: [], spellings: [], playedSpellings: [] }; groups.set(key, g); }
     return g;
   };
 
@@ -163,11 +163,20 @@ export function buildOpponentBook(opts: {
     const normalized = normalizeOpponentName(e.opponent);
     if (!normalized || e.status === 'cancelled') continue;
     const key = keyForNormalized.get(normalized) ?? normalized;
+    // The group (hence the book PAGE) exists the moment a real, uncancelled game is scheduled —
+    // a coach can open a brand-new opponent's page and start writing notes before ever playing
+    // them. Only whether this game is a COUNTED "meeting" (record/streak/last-meeting) waits on
+    // it having actually happened; the page itself must not.
+    const g = ensureGroup(key);
+    // Every spelling feeds the fallback name (an as-yet-unplayed opponent has no other source),
+    // but events arrive newest-STARTS_AT-first, which puts the furthest-future scheduled game
+    // ahead of a recently PLAYED one — `playedSpellings` keeps "most recent spelling" meaning
+    // most recently met, not merely most recently typed into the schedule.
+    g.spellings.push(e.opponent as string);
     const result = resolveResult(e);
     // A meeting is a game that happened: started in the past, or already has a result.
     if (Date.parse(e.startsAt) >= nowMs && result === null) continue;
-    const g = ensureGroup(key);
-    g.spellings.push(e.opponent as string);
+    g.playedSpellings.push(e.opponent as string);
     g.meetings.push({
       eventId: e.id,
       name: e.name,
@@ -204,9 +213,11 @@ export function buildOpponentBook(opts: {
     entries.push({
       key,
       aliasKeys: aliasKeysByOwner.get(key) ?? [],
-      // Events arrive newest-first, so spellings[0] is the MOST RECENT spelling — the one
-      // an un-minted opponent should wear (a minted row's display_name always wins).
-      displayName: minted?.displayName ?? g.spellings[0] ?? key,
+      // Events arrive newest-STARTS_AT-first, so playedSpellings[0] is the spelling from the
+      // most recently MET game — the one an un-minted opponent should wear (a minted row's
+      // display_name always wins). Falls back to spellings[0] — a future game's own spelling —
+      // only when there is no played meeting to take it from yet.
+      displayName: minted?.displayName ?? g.playedSpellings[0] ?? g.spellings[0] ?? key,
       opponentId: minted?.id ?? null,
       summary: minted?.summary ?? null,
       lastNoteUpdatedAt: minted?.lastNoteUpdatedAt ?? null,

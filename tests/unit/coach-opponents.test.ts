@@ -136,6 +136,49 @@ describe('buildOpponentBook', () => {
     assert.deepEqual(entries[0].record, { wins: 0, losses: 0, ties: 0 });
   });
 
+  it('a brand-new opponent whose ONLY event is a not-yet-played future game still gets a page — the Scouting tab must be reachable before the first meeting, not only after it', () => {
+    const entries = buildOpponentBook({
+      nowIso: NOW,
+      opponents: [],
+      aliases: [],
+      events: [game({ id: 'future', opponent: 'Brampton Gold', startsAt: '2026-06-28T22:00:00Z' })],
+    });
+    assert.equal(entries.length, 1);
+    assert.equal(entries[0].key, 'brampton gold');
+    assert.equal(entries[0].displayName, 'Brampton Gold');
+    // The game itself still isn't a "meeting" — no record, streak or last-meeting yet.
+    assert.deepEqual(entries[0].meetings, []);
+    assert.equal(entries[0].lastMeeting, null);
+    assert.deepEqual(entries[0].record, { wins: 0, losses: 0, ties: 0 });
+  });
+
+  it('displayName takes the most recently PLAYED spelling, not merely the one sorted first (a future game sorts ahead of a played one in the newest-starts_at-first fetch)', () => {
+    const entries = buildOpponentBook({
+      nowIso: NOW,
+      opponents: [],
+      aliases: [],
+      events: [
+        // Fed in the same newest-starts_at-first order the DB fetch returns: the future
+        // rematch (later starts_at) arrives BEFORE the already-played game. Same opponent
+        // (normalizes identically) typed slightly differently the second time around.
+        game({ id: 'future-rematch', opponent: 'newmarket hawks', startsAt: '2026-06-28T22:00:00Z' }),
+        game({ id: 'played', opponent: 'Newmarket Hawks', startsAt: '2026-06-01T22:00:00Z', teamScore: 4, opponentScore: 1, result: 'win' }),
+      ],
+    });
+    assert.equal(entries.length, 1);
+    assert.equal(entries[0].displayName, 'Newmarket Hawks');
+  });
+
+  it('a cancelled-only future game still yields no entry at all', () => {
+    const entries = buildOpponentBook({
+      nowIso: NOW,
+      opponents: [],
+      aliases: [],
+      events: [game({ id: 'gone', opponent: 'Brampton Gold', startsAt: '2026-06-28T22:00:00Z', status: 'cancelled' })],
+    });
+    assert.equal(entries.length, 0);
+  });
+
   it('folds aliased spellings into the owning opponent and keeps its display name + summary', () => {
     const opp = minted({ id: 'opp-1', summary: 'Beatable when we run early.' });
     const entries = buildOpponentBook({
