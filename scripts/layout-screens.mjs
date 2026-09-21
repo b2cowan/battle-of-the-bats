@@ -214,7 +214,13 @@ export const SCREENS = [
   // header (the autosave word lives there since A3) and the list's type floor.
   // Scoped to the open slide-over: the page behind it is what the sheet covers, and measuring its
   // rows as "hidden behind chrome" reports the sheet doing its job.
-  { id: 'coach-schedule-attendance', session: 'coach', ready: '[data-field-floor]', scope: '[class*="slideOverScrim"]',
+  // ⚠ SCOPED BY ITS DECLARATION, NOT A CLASS. The scope used to be `[class*="slideOverScrim"]` —
+  // a class whose rule was retired on 2026-07-28 and whose reference therefore rendered as the word
+  // "undefined", so the selector matched nothing and the sweep FELL BACK TO THE WHOLE PAGE for
+  // seven weeks (a non-matching scope is silently `document.body` — see `measure`). Found by
+  // `check:css-selectors` direction C, 2026-09-21. The sheet declares itself a modal dialog; a
+  // scope on that declaration cannot go stale the way a class name can.
+  { id: 'coach-schedule-attendance', session: 'coach', ready: '[data-field-floor]', scope: '[role="dialog"][aria-modal="true"]',
     path: (c) => `${team(c)}/schedule?event=${c.gameEventId}&tab=attendance` },
   /* ⚠ ATTENDANCE MOVED INTO THE INSIGHTS PORTAL (P1, 2026-08-18) — `/attendance` is now a permanent
      redirect, and this entry addresses the TAB. It stays here rather than moving down to the

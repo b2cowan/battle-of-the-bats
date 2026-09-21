@@ -2726,7 +2726,7 @@ export function BudgetVsActualPanel({
   );
 
   return (
-    <div className={`${shared.page} ${shared.pageWide} ${styles.page}`}>
+    <div className={`${shared.page} ${shared.pageWide}`}>
       {/* ⚰ The "Back to Money" row that stood here is GONE (back-in-header ruling, 2026-08-26).
           It was one of the TWO surviving hand-written copies of the retired back-link style — the
           shared-component pass missed both because they never imported the component. It rendered

@@ -180,7 +180,7 @@ export default function AdminSchedulePage({
   const curWeek  = weekKey(cursorDate + 'T00:00:00');
 
   function renderListView() {
-    if (!events.length) return <div className={styles.emptyStateState}>No events yet.</div>;
+    if (!events.length) return <div className={styles.emptyState}>No events yet.</div>;
     const grouped: Record<string, RepTeamEvent[]> = {};
     for (const e of events) { const mk = monthKey(e.startsAt); (grouped[mk] ??= []).push(e); }
     return Object.entries(grouped).sort(([a], [b]) => a.localeCompare(b)).map(([mk, evts]) => {

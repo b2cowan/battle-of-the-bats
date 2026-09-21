@@ -161,7 +161,7 @@ export default function GiveAwardModal({
   return (
     <>
     <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (onClose)?.(); }}>
-      <div className={`${styles.modal} ${styles.sheetOnMobile}`} onClick={e => e.stopPropagation()}>
+      <div className={styles.modal} onClick={e => e.stopPropagation()}>
         <CoachModalHeader title={editing ? 'Edit award' : 'Give an award'} onClose={onClose} />
 
         <div className={styles.formBody}>

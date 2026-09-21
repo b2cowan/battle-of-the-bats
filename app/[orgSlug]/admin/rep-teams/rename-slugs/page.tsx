@@ -304,8 +304,7 @@ function TeamSlugRow({
           New URL Slug
         </label>
         <input
-          className={`${styles.input}${error ? ` ${styles.inputError ?? ''}` : ''}`}
-          style={error ? { borderColor: '#f87171' } : undefined}
+          className={`${styles.input}${error ? ` ${styles.inputError}` : ''}`}
           type="text"
           value={value}
           onChange={e => onChange(e.target.value)}

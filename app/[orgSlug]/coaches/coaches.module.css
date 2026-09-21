@@ -48,9 +48,11 @@
      • .modalFlushFooter       a modal tall enough to SCROLL: kills the sticky footer's bottom
                                bleed (which otherwise hides the form's last ~1.5rem on a
                                desktop) and drops the panel's own bottom padding to match.
-     • .sheetOnMobile          PRE-FLIP name, now a no-op alias — full-height bottom-sheet
-                               is the DEFAULT .modalOverlay presentation @640 (Coach Portal
-                               Batch 1 D1, 2026-07-28). Opt OUT with .centeredOnMobile.
+     • .sheetOnMobile          ⚰ GONE (2026-09-21) — the PRE-FLIP opt-in name; full-height
+                               bottom-sheet is the DEFAULT .modalOverlay presentation @640
+                               (Coach Portal Batch 1 D1, 2026-07-28). Its "no-op alias" rule
+                               never survived the flip and its last six callers were
+                               removed by the orphan sweep. Opt OUT with .centeredOnMobile.
      • .stickyActionBar        safe-area sticky footer (env(safe-area-inset-bottom))
    Existing instances that already embody these: .lineupTableWrap (scrollX),
    .rosterTable reflow (tableAsCards), .modalFooter/.editScope/
@@ -6508,9 +6510,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    Batch 1 — polarity flip, D1, 2026-07-28). Before this, a modal had to opt IN via
    .sheetOnMobile/.slideOverScrim to sit above the bottom nav — that "safety is opt-in" shape
    is exactly how modals shipped unsafe. Every .modalOverlay now gets the full-screen, safe
-   treatment automatically; .sheetOnMobile/.slideOverScrim are kept as NO-OP aliases so none
-   of their existing adopters need to change (nothing below keys off those two class names
-   any more — they do nothing, but removing them isn't required either).
+   treatment automatically. ⚰ .sheetOnMobile/.slideOverScrim were meant to stay as NO-OP aliases
+   so adopters need not change — but the alias rules did not survive, and for seven weeks seven
+   callers asked for classes that did not exist (harmless here, because the aliases did nothing;
+   the same shape stacked Budget Plan's toolbar). `check:css-selectors` direction C now fails on
+   that, and the sweep of 2026-09-21 removed every caller. Do not reintroduce either name.
    Two opt-OUTs, both still forced to z-index 400 so neither can ever sit under the nav:
      • .centeredOnMobile — new modifier for short dialogs that should stay a small centered
        card (confirms, icon pickers, upload dialogs). Falls through to the base .modalOverlay/

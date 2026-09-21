@@ -632,7 +632,7 @@ export default function CoachStaffSheet({
   };
 
   return (
-    <div className={`${shared.modalOverlay} ${shared.sheetOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) closeUnlessBusy(); }}>
+    <div className={shared.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) closeUnlessBusy(); }}>
       <div
         ref={panelRef}
         tabIndex={-1}

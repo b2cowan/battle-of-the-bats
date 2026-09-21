@@ -490,7 +490,6 @@ export default function AdminResultsPage() {
         actions={(
           <>
             <ExportMenu
-              className={styles.resultsExportMenu}
               formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
               onExportCSV={handleExportCSV}

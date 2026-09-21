@@ -216,7 +216,7 @@ export default async function ErrorGroupDetailPage({
                 <pre className={styles.pre}>{f.body}</pre>
               </CollapsibleCard>
             ))}
-            <Link href="/platform-admin/feedback?status=all" className={styles.issueLink}>Open Feedback →</Link>
+            <Link href="/platform-admin/feedback?status=all">Open Feedback →</Link>
           </div>
         </>
       )}

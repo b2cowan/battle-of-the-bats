@@ -2468,7 +2468,7 @@ export default function CoachesSchedulePage({
 
       {/* ── Detail slide-over ─────────────────────────────────────────────── */}
       {selectedEvent && (
-        <div className={`${styles.modalOverlay} ${styles.slideOverScrim}`} onPointerDown={e => { if (e.target === e.currentTarget) (requestCloseSlideOver)?.(); }}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (requestCloseSlideOver)?.(); }}>
           {/* A modal sheet, declared as one (role + aria-modal) the way the newer RoomShell and
               QuestionShell sheets are: the page behind it is inert by declaration, and the layout
               sweep narrows to the sheet instead of reporting the rows it covers as hidden. */}
@@ -3015,7 +3015,7 @@ export default function CoachesSchedulePage({
                       {/* Current status — same icon + colour as the filter chips. */}
                       <span className={styles.attendanceStatusBadge} data-status={row.status} title={cur.label}>
                         <StatusIcon size={14} />
-                        <span className={styles.attendanceStatusBadgeLabel}>{cur.label}</span>
+                        <span>{cur.label}</span>
                       </span>
                       {row.note && !editing && (
                         <span className={styles.attendanceNoteFlag} title={row.note} aria-label="Has a note">
@@ -3181,7 +3181,7 @@ export default function CoachesSchedulePage({
 
       {/* ── Add / edit event modal ─────────────────────────────────────────── */}
       {showAddForm && (
-        <div className={`${styles.modalOverlay} ${styles.sheetOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (requestDiscardForm)?.(); }}>
+        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (requestDiscardForm)?.(); }}>
           <div className={`${styles.modal} ${styles.eventFormModal} ${styles.modalFlushFooter}`} onClick={e => e.stopPropagation()}>
             <CoachModalHeader title={<>{editingEventId ? 'Edit' : 'Add'} {EVENT_LABELS[form.eventType]}</>} onClose={requestDiscardForm} />
 

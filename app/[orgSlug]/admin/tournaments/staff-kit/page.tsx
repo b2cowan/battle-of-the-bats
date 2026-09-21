@@ -132,7 +132,7 @@ export default function StaffKitPage() {
                         {copied === surface.key ? <Check size={13} /> : <Copy size={13} />}
                         <span>{copied === surface.key ? 'Copied' : 'Copy'}</span>
                       </button>
-                      <a href={url} target="_blank" rel="noopener noreferrer" className={`btn btn-ghost btn-data ${styles.openLink}`} aria-label={`Open the ${surface.title} screen`}>
+                      <a href={url} target="_blank" rel="noopener noreferrer" className="btn btn-ghost btn-data" aria-label={`Open the ${surface.title} screen`}>
                         <ExternalLink size={13} />
                         <span>Open</span>
                       </a>

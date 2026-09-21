@@ -369,7 +369,7 @@ export default async function PricingPage() {
       <section className={styles.clubSection} id="early-access">
         <div className="container">
           <div className={styles.clubInner}>
-            <div className={styles.clubText}>
+            <div>
               <p className="font-mono text-xs uppercase tracking-widest text-logic-lime mb-3">Coming Soon</p>
               <h2 className={styles.clubTitle}>League Plus and Club — what&apos;s coming next</h2>
               <p className={styles.clubSub}>We&apos;re finishing the workflows before opening self-serve checkout. Here&apos;s what they cover.</p>

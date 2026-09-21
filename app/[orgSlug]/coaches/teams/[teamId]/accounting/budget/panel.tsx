@@ -3726,7 +3726,13 @@ export function BudgetPlanPanel({
                     <span className={`${styles.planBadgeEst} ${styles.ladderBadge}`}>Preview</span>
                   </th>
                   <td className={styles.schedCell}>
-                    <span className={styles.schedChip}>{trial?.date ? formatMonthLabel(trial.date.slice(0, 7) as MonthKey) : NO_DATE_LABEL}</span>
+                    {/* The same When chip and the same two inks the saved rows wear (owner ruling
+                        2026-09-04): dated stays quiet, "No date yet" takes the amber. `.schedChip`
+                        never existed — this chip rendered bare until `check:css-selectors` C
+                        (2026-09-21). Not <WhenChip>: that reads a saved line; the trial is not one. */}
+                    <span className={`${styles.whenChip} ${trial?.date ? styles.whenChipSet : styles.whenChipNone}`}>
+                      {trial?.date ? formatMonthLabel(trial.date.slice(0, 7) as MonthKey) : NO_DATE_LABEL}
+                    </span>
                   </td>
                   <td>{fmt(periodView.trial.total)}</td>
                   <td />

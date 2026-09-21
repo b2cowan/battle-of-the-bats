@@ -896,7 +896,7 @@ export default function CoachGameConsolePage({
                 </span>
               )}
             </div>
-            <p className={styles.gdMeta}>{startLine}{event.status === 'cancelled' ? ' · Cancelled' : ''}</p>
+            <p>{startLine}{event.status === 'cancelled' ? ' · Cancelled' : ''}</p>
           </div>
 
           {/* The Scouting Book capture door (rider): quiet line, never a modal; skipping never

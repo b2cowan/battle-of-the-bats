@@ -191,7 +191,7 @@ export default function PastYearDetailPage({
       </div>
 
       {/* Tabs */}
-      <div className={styles.tabs} style={{ marginBottom: '1.5rem' }}>
+      <div className={styles.tabs}>
         {(['roster', 'schedule', 'coaches', 'documents'] as Tab[]).map(t => (
           <button
             key={t}

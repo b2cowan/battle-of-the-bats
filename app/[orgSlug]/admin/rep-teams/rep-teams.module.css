@@ -74,6 +74,33 @@
   font-size: 0.9rem;
 }
 
+/* ── Tabs — the history year page's Roster · Schedule & Results · Coaches · Documents ─────────
+   ⚠ THESE THREE NAMES WERE REFERENCED FROM THE DAY THE PAGE WAS WRITTEN (2026-05-11) AND NEVER
+   DECLARED — four browser-default buttons in a row on a live admin screen, for four months, found
+   by `check:css-selectors` direction C (2026-09-21). The recipe is the org-admin's own: the
+   accounting page's D3 tab row (`accounting.module.css` `.tabRow/.tab/.tabActive`), copied rather
+   than imported across feature modules. The 1.5rem the page used to set inline lives here. */
+.tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 1.5rem;
+}
+.tab {
+  padding: 0.5rem 1.1rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--white-40, rgba(255,255,255,0.4));
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.tab:hover { color: var(--white-70, rgba(255,255,255,0.7)); }
+.tabActive { color: var(--blueprint-blue); border-bottom-color: var(--blueprint-blue); }
+
 /* ── Team card grid ───────────────────────────────────────────────────────── */
 .teamGrid {
   display: grid;
@@ -251,6 +278,11 @@
   outline: none;
   border-color: rgba(var(--blueprint-blue-rgb), 0.5);
 }
+/* The invalid state the rename-slugs form asked for from the day it was written and never got —
+   it drew the red border INLINE with a raw hex beside a `styles.inputError ?? ''` hedge (found by
+   `check:css-selectors` direction C, 2026-09-21). The rule now exists on the module's own danger
+   token; the hedge and the inline colour are gone. */
+.inputError, .inputError:focus { border-color: rgba(var(--danger-rgb), 0.6); }
 .textarea { resize: vertical; min-height: 70px; }
 
 .hint {

@@ -1607,7 +1607,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                               <div className={styles.gamesList}>
                                 {poolDateGroups[date].map(game => renderGameCard(
                                   game,
-                                  styles.playoffRow,
+                                  '',
                                   <span className="badge badge-primary">{fanGameLabel(game.bracketCode)}</span>
                                 ))}
                               </div>
@@ -1627,7 +1627,7 @@ export default function ScheduleContent({ orgSlug, tournamentSlug, isPreview = f
                   <div className={styles.gamesList}>
                     {byDate[date].map(game => renderGameCard(
                       game,
-                      game.isPlayoff ? styles.playoffRow : '',
+                      '',
                       game.isPlayoff
                         ? <span className="badge badge-primary">{fanGameLabel(game.bracketCode)}</span>
                         : null

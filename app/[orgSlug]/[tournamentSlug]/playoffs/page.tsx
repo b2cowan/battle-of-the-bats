@@ -200,7 +200,7 @@ export default async function PlayoffsPage({
                 )}
 
                 {/* Seed list */}
-                <div className={styles.seedBlock}>
+                <div>
                   <h3 className={styles.blockTitle}>Seeding</h3>
                   <ol className={styles.seedList}>
                     {div.seeds.map((s, idx) => {
@@ -236,7 +236,7 @@ export default async function PlayoffsPage({
 
                 {/* Matchups — locked/live games, then today's still-undecided rounds (A7) */}
                 {(div.matchups.length > 0 || div.pending.length > 0) && (
-                  <div className={styles.matchupBlock}>
+                  <div>
                     <h3 className={styles.blockTitle}>{div.pending.length > 0 ? 'Matchups' : 'Opening matchups'}</h3>
                     <div className={styles.matchupGrid}>
                       {div.matchups.map(m => {

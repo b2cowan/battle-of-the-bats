@@ -1610,7 +1610,6 @@ export default function AdminSchedulePage() {
                   title={isDisabled ? `No ${label.toLowerCase()} games` : undefined}
                   className={[
                     s.filterChip,
-                    styles.scheduleStatusChip,
                     key === 'scheduled' ? styles.scheduleStatusScheduled : '',
                     chipMod ? (s as Record<string, string>)[chipMod] : '',
                     isActive ? s.chipActive : '',
@@ -1941,7 +1940,7 @@ export default function AdminSchedulePage() {
               .map(div => ({ div, divGames: filtered.filter(g => g.divisionId === div.id) }))
               .filter(({ divGames }) => divGames.length > 0)
               .map(({ div, divGames }) => (
-                <div key={div.id} className={styles.allDivisionSection}>
+                <div key={div.id}>
                   <div className={styles.allDivisionHeader}>
                     <span className={styles.allDivisionName}>{div.name}</span>
                     <span className={styles.allDivisionCount}>{divGames.length}</span>

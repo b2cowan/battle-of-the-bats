@@ -5,9 +5,9 @@ import styles from '@/components/coaches/CoachTournamentRecord.module.css';
 export default function CoachTournamentRecordNotFound() {
   return (
     <div className={styles.page}>
-      <div className={`card ${styles.statusCard}`}>
+      <div className="card">
         <h1 className={styles.title}>Tournament record not found</h1>
-        <p className={styles.statusDesc}>
+        <p>
           This record is not linked to your signed-in coach account, or it no longer exists.
         </p>
         <Link href={COACHES_TOURNAMENTS_PATH} className="btn btn-ghost btn-sm">
