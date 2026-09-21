@@ -397,7 +397,8 @@ button{font:inherit;color:inherit}
     <li class="stage done" title="Stage 0 drawn 19 Sep 2026; ruled 20 Sep 2026 — A1–A4 build as drawn (owner paste-back)">Stage 0 ruled 20 Sep</li>
     <li class="stage done" title="Stage 0 built on dev 20 Sep 2026; §208 walked 25/25 the same day; committed 92a204ab (the transient Saved pill d30ad45b)">Stage 0 built · walked · committed 20 Sep</li>
     <li class="stage done" title="Stage 1 drawn 20 Sep 2026; ruled 21 Sep — B1, B3, B4 build as drawn; B2 = B (one line everywhere)">Stage 1 ruled 21 Sep</li>
-    <li class="stage current" title="Stage 1 built on dev 21 Sep 2026 — typecheck, unit 4,277, lint, verify:changed, layout sweep; walk §210 owed">Built 21 Sep · walk owed</li>
+    <li class="stage done" title="Stage 1 built on dev 21 Sep 2026; /review + /docs the same day; §210 walked 24/24, all four parts PASS; committed ff0068bb">Stage 1 built · walked · committed 21 Sep</li>
+    <li class="stage current" title="Stage 2 · Schedule is next — drawn on its own tab">Stage 2 next</li>
     <li class="stage" title="—">Reviewed</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -407,7 +408,7 @@ button{font:inherit;color:inherit}
   <button type="button" class="tab" role="tab" data-tab="stage0" aria-selected="false" aria-controls="tab-stage0">0 · The shell<span class="st built">ruled 20 Sep · A1–A4 as drawn</span><span class="st built">committed 92a204ab · 20 Sep</span><span class="st dim">stations 0 · 3 (half) · 5 · the pill everywhere</span></button>
   <button type="button" class="tab" role="tab" data-tab="qa0" aria-selected="false" aria-controls="tab-qa0">QA walk · 0<span class="st built">§208 walked 25/25 · 20 Sep</span></button>
   <button type="button" class="tab" role="tab" data-tab="stage1" aria-selected="false" aria-controls="tab-stage1">1 · The first screen<span class="st built">ruled 21 Sep · B1 B3 B4 as drawn · B2 = B</span><span class="st built">built on dev 21 Sep</span><span class="st dim">the switcher · the masthead both ways · rows · doors · B5 the rows’ ground (open)</span></button>
-  <button type="button" class="tab" role="tab" data-tab="qa1" aria-selected="false" aria-controls="tab-qa1">QA walk · 1<span class="st">§210 owed · 24 steps</span></button>
+  <button type="button" class="tab" role="tab" data-tab="qa1" aria-selected="false" aria-controls="tab-qa1">QA walk · 1<span class="st built">§210 walked 24/24 · PASS · 21 Sep</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
 </nav>
@@ -1909,7 +1910,7 @@ button{font:inherit;color:inherit}
 <!-- ═══════════════════════════════ QA WALK · 1 ═══════════════════════════════ -->
 <div class="prop qa" id="tab-qa1" role="tabpanel" hidden>
   <header class="phead">
-    <div class="eyebrow">QA walk · stage 1 · The first screen · ledger §210</div>
+    <div class="eyebrow">QA walk · stage 1 · The first screen · ledger §210 · ✅ walked 21 Sep 2026 — 24/24, all four parts PASS · committed ff0068bb</div>
     <h1>Walk the first screen on a phone</h1>
     <p class="lede">Twenty-four steps in four parts. Tick each one as you go (they are remembered on this device), give each part a verdict, and paste the summary back into the chat at the end. <b>Do parts A–D on an actual phone</b> — the tap targets and the fold are the point, and a narrowed browser window has neither a thumb nor a bar at the bottom of a real screen.</p>
     <div class="signin">
@@ -2027,7 +2028,7 @@ button{font:inherit;color:inherit}
   <table>
     <tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr>
     <tr><td>0 The shell</td><td>More as a sheet; the masthead at rest; no masthead over a chat room; Saved’s home; the field floor; the ring named</td><td>A1–A4</td><td>Ruled 20 Sep as drawn · built 20 Sep · A3 revised on the desktop read · §208 walked 25/25 · committed 92a204ab</td></tr>
-    <tr><td>1 The first screen</td><td>The switcher on the team name; the masthead both ways (A the ask · B recommended); Overview tiles as rows; the card’s facts and doors</td><td>B1–B4 (Q 1.1, 1.2 + two from the §208 walk)</td><td><b>Drawn 20 Sep · ruled 21 Sep (B1 · B3 · B4 as drawn, B2 = B) · built on dev 21 Sep · walk §210 owed</b></td></tr>
+    <tr><td>1 The first screen</td><td>The switcher on the team name; the masthead both ways (A the ask · B recommended); Overview tiles as rows; the card’s facts and doors</td><td>B1–B4 (Q 1.1, 1.2 + two from the §208 walk)</td><td><b>Drawn 20 Sep · ruled 21 Sep (B1 · B3 · B4 as drawn, B2 = B) · built 21 Sep · §210 walked 24/24 PASS · committed ff0068bb 21 Sep</b></td></tr>
     <tr><td>2 Schedule</td><td>Today first; week and month; the event sheet’s order</td><td>Q 2.1–2.3</td><td>—</td></tr>
     <tr><td>3 Game week</td><td>The builder’s setup fold; the icon row</td><td>Q 4.1, 4.2</td><td>—</td></tr>
     <tr><td>4 Practice week &amp; skills</td><td>The plan’s one-row toolbar; recording rows, Next player, docked tally; the “+”</td><td>Q 6.1, 7.1, 7.2</td><td>—</td></tr>

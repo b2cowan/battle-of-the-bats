@@ -1,6 +1,6 @@
 # PM brief — Coaching from a phone
 
-**Date:** 2026-09-19 · **Plan:** `COACH_MOBILE_EXPERIENCE_PLAN.md` · **Hub (mockup · plan · brief · QA walks):** `COACH_MOBILE_EXPERIENCE_HUB.html`, published as a Claude Artifact · **Priority:** high — the phone is how most coaches will use the Premium portal in-season · **State:** walked and drawn 19 Sep 2026; stage 0 ruled, built, walked (§208 · Coaching from a phone, 25/25) and committed 20 Sep; **stage 1 drawn 20 Sep, ruled 21 Sep (B1 · B3 · B4 as drawn, B2 = B) and BUILT ON DEV 21 Sep; §210 walked 21 Sep, 24/24, all four parts pass — commit owed; stage 2 (the Schedule) next.**
+**Date:** 2026-09-19 · **Plan:** `COACH_MOBILE_EXPERIENCE_PLAN.md` · **Hub (mockup · plan · brief · QA walks):** `COACH_MOBILE_EXPERIENCE_HUB.html`, published as a Claude Artifact · **Priority:** high — the phone is how most coaches will use the Premium portal in-season · **State:** walked and drawn 19 Sep 2026; stage 0 ruled, built, walked (§208 · Coaching from a phone, 25/25) and committed 20 Sep; **stage 1 drawn 20 Sep, ruled 21 Sep (B1 · B3 · B4 as drawn, B2 = B) and BUILT ON DEV 21 Sep; §210 walked 21 Sep, 24/24, all four parts pass — committed ff0068bb 21 Sep; stage 2 (the Schedule) next.**
 
 ## What we are proposing
 A staged re-shaping of the Premium Coaches Portal for phones. Not a redesign: every screen, word, door and figure stays. What changes is the *container* each one sits in at phone width, so a coach with one thumb reaches the day's tool in one tap and reads the day's facts on the first screen.
