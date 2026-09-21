@@ -1,18 +1,20 @@
 'use client';
 import { useState, useEffect, useCallback, use } from 'react';
-import { Calendar, ChevronLeft, ChevronRight, X, Trophy, Swords, Shield, Dumbbell, Users } from 'lucide-react';
+import { Calendar, ChevronLeft, ChevronRight, X, Trophy, Shield, Dumbbell, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import styles from '../../../../../rep-teams.module.css';
 import type { RepTeamEvent, RepEventType } from '@/lib/types';
+import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { tournamentToday } from '@/lib/timezone';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
+// A scrimmage is a Game with `isScrimmage` set (mig 306), so it wears the game's colour and icon;
+// the WORD comes from the box (see the detail pill below).
 const EVENT_COLORS: Record<RepEventType, string> = {
   external_tournament: '#f97316',
   tournament_game:     '#f59e0b',
-  scrimmage:           '#3b82f6',
   league_game:         '#22c55e',
   practice:            '#a855f7',
   team_event:          '#6b7280',
@@ -21,8 +23,7 @@ const EVENT_COLORS: Record<RepEventType, string> = {
 const EVENT_LABELS: Record<RepEventType, string> = {
   external_tournament: 'Tournament',
   tournament_game:     'Game (Tournament)',
-  scrimmage:           'Scrimmage',
-  league_game:         'League Game',
+  league_game:         'Game',
   practice:            'Practice',
   team_event:          'Team Event',
 };
@@ -30,7 +31,6 @@ const EVENT_LABELS: Record<RepEventType, string> = {
 const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
   external_tournament: Trophy,
   tournament_game:     Trophy,
-  scrimmage:           Swords,
   league_game:         Shield,
   practice:            Dumbbell,
   team_event:          Users,
@@ -94,7 +94,10 @@ function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => voi
 }
 
 function WLTWidget({ events }: { events: RepTeamEvent[] }) {
-  const games = events.filter(e => e.eventType === 'league_game' && e.result && e.status !== 'cancelled');
+  // The record rule: a Game that is not a scrimmage (the box, mig 306) with a result. Tournament
+  // games are counted by the coach's own record too, but this widget predates them and keeps its
+  // league-only read — a wider change than this project's.
+  const games = events.filter(e => e.eventType === 'league_game' && !e.isScrimmage && e.result && e.status !== 'cancelled');
   const w = games.filter(e => e.result === 'win').length;
   const l = games.filter(e => e.result === 'loss').length;
   const t = games.filter(e => e.result === 'tie').length;
@@ -320,7 +323,7 @@ export default function AdminSchedulePage({
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
                 {(() => { const Icon = EVENT_ICONS[selectedEvent.eventType]; return <Icon size={16} style={{ color: EVENT_COLORS[selectedEvent.eventType] }} />; })()}
                 <span className={styles.eventTypePill} style={{ background: EVENT_COLORS[selectedEvent.eventType] + '22', color: EVENT_COLORS[selectedEvent.eventType] }}>
-                  {EVENT_LABELS[selectedEvent.eventType]}
+                  {selectedEvent.isScrimmage ? SCRIMMAGE_LABEL : EVENT_LABELS[selectedEvent.eventType]}
                 </span>
               </div>
               <button className={styles.modalCloseBtn} onClick={() => setSelectedEvent(null)}><X size={18} /></button>

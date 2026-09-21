@@ -1,6 +1,7 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
+import { readStoredEventKind } from './coach-schedule-vocab';
 import { tallyResults } from './coach-season-record';
 import type { MastheadEvent, MastheadRecord } from './coach-masthead-status';
 
@@ -62,11 +63,13 @@ export async function getCoachMastheadFeed(opts: CoachMastheadFeedOpts): Promise
         .select('program_year_id, result, status')
         .in('program_year_id', yearIds)
         .in('event_type', WRAPPED_RECORD_EVENT_TYPES)
+        // Half the rule is the kind list; the other half is the scrimmage box (mig 306).
+        .eq('is_scrimmage', false)
         .not('result', 'is', null),
       activeYearId
         ? supabaseAdmin
             .from('rep_team_events')
-            .select('id, event_type, starts_at, opponent, name')
+            .select('id, event_type, is_scrimmage, starts_at, opponent, name')
             .eq('program_year_id', activeYearId)
             .eq('status', 'scheduled')
             // Same window the Overview's own "next up" uses: scheduled, and not already started.
@@ -96,7 +99,7 @@ export async function getCoachMastheadFeed(opts: CoachMastheadFeedOpts): Promise
     const next: MastheadEvent | null = nextRow
       ? {
           id: nextRow.id,
-          eventType: nextRow.event_type,
+          ...readStoredEventKind(nextRow),
           startsAt: nextRow.starts_at,
           opponent: nextRow.opponent ?? null,
           name: nextRow.name ?? '',

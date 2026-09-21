@@ -690,11 +690,19 @@ describe('the look-back layer', () => {
       + 'and wrong in the direction nobody checks.',
     );
     assert.match(
-      summaryBlock, /WLT_CATEGORIES\s*\n?\s*\.map\(/,
-      'the competition split must be DERIVED from WLT_CATEGORIES, not hand-listed. Writing the '
-      + 'three keys out again recreates exactly the "convention two files must agree by hand" that '
-      + '`lib/coach-season-record.ts` exists to end — and the page\'s own label lookup reads that '
-      + 'list, so a hand-written server copy is the two halves already disagreeing.',
+      summaryBlock, /byCompetition:\s*splitByCompetition\(games\)/,
+      'the competition split must be the SHARED `splitByCompetition` (lib/coach-season-record.ts), '
+      + 'never a hand-listed map. Writing the three keys out again recreates exactly the "convention '
+      + 'two files must agree by hand" that module exists to end — the Insights Results report draws '
+      + 'the same helper, so a hand-written server copy is the two halves already disagreeing. (It '
+      + 'read WLT_CATEGORIES until 2026-09-20, when a scrimmage became a box on a Game rather than a '
+      + 'kind; /simplify folded the two remaining copies into the helper the same day.)',
+    );
+    assert.match(
+      summaryBlock, /overall:\s*tallyResults\(counted\)/,
+      'the headline record is tallied over the games that COUNT (`countsTowardRecord`), never over '
+      + 'every decided game — this route used to count scrimmages while the masthead an inch above '
+      + 'it did not (found 2026-09-20).',
     );
 
     const practices = code(routeOf('season-practices'));
@@ -778,8 +786,8 @@ describe('the look-back layer', () => {
   });
 
   /**
-   * ⚠⚠ **ONE EVENT VOCABULARY IN THE COACH PORTAL.** A shield is a league game, a trophy a
-   * tournament, swords a scrimmage, a dumbbell a practice — the marks a coach reads every week on
+   * ⚠⚠ **ONE EVENT VOCABULARY IN THE COACH PORTAL.** A shield is a game (scrimmage or not — the
+   * word is a chip, mig 306), a trophy a tournament, a dumbbell a practice — the marks a coach reads every week on
    * their own schedule. The closed-season page borrows them rather than inventing a second set,
    * which would be worst possible place to teach one: it is the page opened least often.
    *

@@ -36,7 +36,8 @@ import { canConfigureTeam, canManageStaff, hasNoTeamRecordAccess, hasRecordAcces
 import { isInRunWindow, practicePlanState } from '@/lib/practice-state';
 import { nextOpenEvent } from '@/lib/coach-next-event';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
-import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
+import { tallyResults, formatRecord } from '@/lib/coach-season-record';
+import { countsTowardRecord } from '@/lib/season-wrapped';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
@@ -46,8 +47,7 @@ import { gameDayEntryHref, isInGameDayWindow, toGameDayEventShape } from '@/lib/
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
-import { isMirroredEvent } from '@/lib/coach-tournament-games';
-import { EVENT_WORD } from '@/lib/coach-schedule-vocab';
+import { isMirroredEvent, COACH_GAME_EVENT_TYPES as GAME_EVENT_TYPES } from '@/lib/coach-tournament-games';
 import { isNeverPaidPlayer } from '@/lib/dues-status';
 import { moneySectionHref } from '@/lib/coach-money-links';
 import CoachLoading from '@/components/coaches/CoachLoading';
@@ -55,7 +55,6 @@ import styles from '../../coaches.module.css';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachBar, kit } from '@/components/coaches/kit';
 import type { RepRosterPlayer, RepTeamEvent, RepEventType } from '@/lib/types';
 
-const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 
 /**
  * Coach-scoped (NOT team-scoped) onboarding preferences — a coach with three teams decides once.
@@ -280,10 +279,6 @@ export default function TeamOverviewPage({
   const [playingTime, setPlayingTime] = useState<PlayingTimeSummary | null>(null);
   // Open development goals → the Playing time slot's fallback when a coach has no lineup access.
   const [openGoalCount, setOpenGoalCount] = useState<number | null>(null);
-  // The coach's remembered record scope (League / Tournament / Scrimmage), set on Insights and read
-  // by every surface that shows a record — so the board's glance and the Insights band can never
-  // report different numbers for the same season.
-  const [wltScope, setWltScope] = useState<Record<string, boolean> | null>(null);
   // Winding-down cue (Batch 3, P1 f5-1): when the season quietly stops, say so — once.
   const [lastPastEventAt, setLastPastEventAt] = useState<string | null>(null);
   const [seasonCueDismissed, setSeasonCueDismissed] = useState(false);
@@ -450,11 +445,6 @@ export default function TeamOverviewPage({
   useEffect(() => {
     if (!loading && !isClosedTeam) void Promise.resolve().then(loadSetup);
   }, [loading, isClosedTeam, loadSetup]);
-
-  // Hydrate the remembered record scope (per team). Read-only here — Insights owns setting it.
-  useEffect(() => {
-    void Promise.resolve().then(() => setWltScope(readWltPreference(teamId)));
-  }, [teamId]);
 
   // Hydrate skipped optional steps (per team). Best-effort — never breaks the page.
   const skipStorageKey = `coach-setup-skipped:${teamId}`;
@@ -1104,28 +1094,20 @@ export default function TeamOverviewPage({
       case 'record': {
         // The record moved OUT of its own half-width band and into the board (D5): a name and a
         // date range were taking full page width while six real numbers floated beside dead space.
-        // The League/Tournament/Scrimmage scope chips live on Insights — a configuration control is
-        // not a glanceable fact (owner ruling 2026-07-30) — but the coach's CHOICE still governs
-        // this number, or the glance here and the band there would report different seasons.
-        const scope = wltScope ?? {};
-        const decided = finalizedGames.filter(e => scope[e.eventType]);
+        // ONE rule decides what counts — `countsTowardRecord`: games and tournament games, never a
+        // scrimmage (a Game with the box ticked since mig 306). This tile used to read a per-device
+        // "count scrimmages" preference that no control had written since 2026-09-02, and carried a
+        // "choose them in Insights" branch no coach could reach (owner ruling D4, 2026-09-20).
+        const decided = finalizedGames.filter(countsTowardRecord);
         const tally = tallyResults(decided);
-        const countedLabels = WLT_CATEGORIES.filter(c => scope[c.key]).map(c => c.label);
-        // A coach who has switched every category OFF has not played no games — they have chosen to
-        // count none. Saying "No games yet · fills in as you finalize scores" to a team mid-season
-        // would be a confident falsehood, and the setting that caused it lives on another page.
-        const noneCounted = wltScope !== null && countedLabels.length === 0;
         return {
           key, label: 'Record', icon: Trophy,
-          value: setupLoading || wltScope === null ? '…'
-            : noneCounted ? 'Not counted'
-              : decided.length === 0 ? 'No games yet'
-                : formatRecord(tally),
-          sub: noneCounted ? 'No game types selected — choose them in Insights'
-            : decided.length === 0 ? 'Fills in as you finalize scores'
-              : countedLabels.join(' + '),
+          value: setupLoading ? '…'
+            : decided.length === 0 ? 'No games yet'
+              : formatRecord(tally),
+          sub: decided.length === 0 ? 'Fills in as you finalize scores' : 'Scrimmages left out',
           href: `${base}/history`,
-          tone: noneCounted || decided.length === 0 ? 'muted' : 'default',
+          tone: decided.length === 0 ? 'muted' : 'default',
           pips: decided.slice(-5).map(e => ({ result: e.result ?? '' })),
         };
       }
@@ -1545,7 +1527,7 @@ export default function TeamOverviewPage({
   // A scrimmage-only season would satisfy hasFinalizedGame but produce an empty Wrapped
   // (scrimmages are excluded from the canonical record) — the cue's "unlocks your Season
   // Wrapped" promise must only be made when a real-competition game was played.
-  const hasRealFinalizedGame = finalizedGames.some(e => e.eventType !== 'scrimmage');
+  const hasRealFinalizedGame = finalizedGames.some(countsTowardRecord);
   // The winding-down PREDICATE. Whether it WINS the anchor slot is the resolver's call — this is
   // only "is the evidence strong enough to say it at all". Note it is a strict superset of the
   // in-season lull's condition, which is exactly why the two used to contradict each other.

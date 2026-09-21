@@ -1,0 +1,679 @@
+<title>A Scrimmage Is a Flag</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600;700&display=swap">
+<style>
+/* ── Hub chrome — the owner-approved project-hub template (docs/agents/design/PROJECT_HUB_TEMPLATE.html).
+   A different ground from the frames on purpose, so the frames read as specimens. ── */
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--ask:#6b4f1d;--ask-soft:#f6efe0;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px;text-wrap:balance}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions{display:flex;gap:8px}.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}.hubactions button[aria-pressed=true]{background:var(--lime);color:#1c2417;border-color:var(--lime)}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+main.hubsection{padding:0 0 36px;min-height:400px}
+.screenhead{max-width:900px;margin:26px auto 6px;padding:0 24px}
+.screenhead .eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.screenhead p{font-size:15px;max-width:70ch}.screenhead h1:focus{outline:0}
+.legendbar{max-width:900px;margin:0 auto 10px;padding:0 24px;font-size:12px;color:var(--muted);line-height:2}
+.facebar{max-width:900px;margin:0 auto;padding:0 24px;display:flex;gap:6px}
+.facebar button{border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 12px;min-height:40px;font-size:13px}
+.facebar button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.intent{max-width:900px;margin:14px auto 0;padding:14px 24px;font-size:13px;color:var(--muted)}.intent strong{color:var(--ink)}
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:13.5px;margin:8px 0 18px}.docpage th,.docpage td{border:1px solid var(--line);padding:8px 10px;vertical-align:top;text-align:left}.docpage th{background:var(--soft);font-size:12px;letter-spacing:.4px;text-transform:uppercase}
+.tablewrap{overflow-x:auto}
+.docpage ul,.docpage ol{padding-left:20px}.docpage li{margin-bottom:6px}
+.docpage code{font:500 12.5px 'IBM Plex Mono',ui-monospace,monospace;background:#eceee6;padding:1px 5px;border-radius:4px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}.tag.proposed{background:var(--ask-soft);border-color:#cdbf9c;color:var(--ask)}
+.ruling{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.ruling button{border:1px solid #cdbf9c;background:#fff;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.ruling button[aria-pressed=true]{background:var(--lime);border-color:#b9d88c;font-weight:700}
+.decisionrow textarea.note{width:100%;border:1px solid #cdbf9c;border-radius:6px;padding:8px 10px;margin-top:8px;resize:vertical;font-size:13.5px;background:#fff}
+#rulingOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace;background:#fff}
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px;line-height:1.6}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}.qapart h3{margin-top:0}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px;border-top:1px solid var(--soft)}.qastep:first-of-type{border-top:0}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical;font-size:13.5px}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace;background:#fff}
+.mk{display:inline-block;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px/1.4 system-ui,sans-serif;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:17px}.dialogbody{padding:25px}
+
+/* ── The frames: the portal's own materials (warm palette, Inter · Barlow Condensed · IBM Plex Mono) at 1440 and 390. ── */
+.fitwrap{width:calc(100% - 48px);max-width:1440px;margin:10px auto 0;overflow:hidden}
+.fitwrap.scroll{overflow-x:auto}
+.fitwrap.pair{display:flex;gap:24px;justify-content:center;flex-wrap:wrap;overflow:visible;align-items:flex-start}
+.pairlabel{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.frame{--p-paper:#F8F4ED;--p-card:#FFFFFF;--p-ink:#241E15;--p-soft:#4A4235;--p-dim:#615A54;--p-line:rgba(70,55,30,.12);--p-line2:rgba(70,55,30,.20);--p-olive:#57651E;--p-olive-soft:rgba(87,101,30,.10);--p-live:#B03A22;--p-lime:#D9F99D;--p-gold:#835006;--p-gold-soft:rgba(131,80,6,.10);--p-blue:#134FD3;--p-win:#34662A;--p-plum:#7B4B6E;--p-rust:#B45309;--p-slate:#67625A;
+  width:1440px;background:var(--p-paper);color:var(--p-ink);font:14px/1.45 Inter,system-ui,sans-serif;border:1px solid #c6cebc;border-radius:12px;overflow:hidden;box-shadow:0 12px 36px #2732210a;transform-origin:top left;
+  background-image:linear-gradient(rgba(70,55,30,.045) 1px,transparent 1px),linear-gradient(90deg,rgba(70,55,30,.045) 1px,transparent 1px);background-size:40px 40px}
+.frame.phone{width:390px;border-radius:18px;margin:10px auto 0;transform:none}
+.frame.panel{width:520px;border-radius:12px;margin:0;transform:none;background-image:none;background:var(--p-card)}
+.frame.panel.narrow{width:400px}
+.frame *{box-sizing:border-box}
+.frame .mono{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.teamhead{height:64px;background:var(--p-card);border-bottom:1px solid var(--p-line);display:flex;align-items:center;padding:0 32px;gap:20px}
+.teamhead h1{font:700 17px/1.2 Inter,sans-serif;margin:0;letter-spacing:-.2px}.teamhead .tm{font:500 11.5px 'IBM Plex Mono',monospace;color:var(--p-dim);letter-spacing:.06em;margin-top:3px}
+.teamhead .next{margin-left:auto;text-align:right;font:600 12.5px Inter}.teamhead .next small{display:block;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.16em;color:var(--p-dim)}
+.teamhead .help{width:36px;height:36px;border:1px solid var(--p-line2);border-radius:50%;display:grid;place-items:center;font-weight:700;color:var(--p-soft);background:var(--p-card)}
+.phone .teamhead{height:auto;padding:12px 16px;gap:4px 12px}.phone .teamhead .next{display:none}
+.body{display:flex;min-height:640px}
+.sb{width:220px;background:var(--p-card);border-right:1px solid var(--p-line);padding:14px 14px 0;flex-shrink:0}
+.sb .sel{border:1px solid var(--p-line2);border-radius:6px;padding:9px 12px;font-weight:600;font-size:14px;display:flex;justify-content:space-between;margin-bottom:12px}
+.sb .grp{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.16em;color:var(--p-dim);padding:12px 12px 4px}
+.sb a{display:flex;align-items:center;gap:10px;padding:9px 12px;color:var(--p-soft);text-decoration:none;font-weight:500;font-size:14px;border-left:3px solid transparent;margin-left:-14px;padding-left:23px}
+.sb a i{width:15px;height:15px;border:1.6px solid currentColor;border-radius:3px;display:inline-block;opacity:.75;font-style:normal}
+.sb a.on{background:var(--p-olive-soft);color:var(--p-olive);border-left-color:var(--p-olive);font-weight:600}
+.phone .sb{display:none}
+.pg{flex:1;padding:28px 60px 40px;min-width:0}
+.phone .pg{padding:18px 14px 90px}
+.pgtop{display:flex;align-items:center;gap:12px;margin-bottom:14px;flex-wrap:wrap}
+.pgtop .ico{width:40px;height:40px;border:1px solid var(--p-line2);border-radius:50%;background:var(--p-olive-soft);display:grid;place-items:center;color:var(--p-olive);flex-shrink:0}
+.pgtop h2{font:700 24px/1 'Barlow Condensed',Inter,sans-serif;margin:0;letter-spacing:.01em}
+.pgtop .acts{margin-left:auto;display:flex;gap:10px;align-items:center}
+.phone .pgtop .acts{margin-left:0;width:100%}
+.btn2{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:8px 14px;border:1px solid var(--p-line2);border-radius:7px;background:var(--p-card);font-weight:600;font-size:14px;color:var(--p-ink)}
+.btnlime{display:inline-flex;align-items:center;gap:7px;min-height:40px;padding:8px 15px;border:1px solid #b9d88c;border-radius:7px;background:var(--p-lime);font-weight:700;font-size:14px;color:#1e2a0f}
+.views{display:inline-flex;border:1px solid var(--p-line2);border-radius:7px;overflow:hidden;margin:0 0 20px}
+.views span{padding:8px 16px;font-weight:500;color:var(--p-soft);font-size:14px}.views span.on{background:var(--p-olive-soft);color:var(--p-ink);font-weight:600}
+.phone .views{margin-bottom:14px}
+/* the list — the row recipe: mark · date column · record read · trail */
+.card{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;overflow:hidden}
+.mhead{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--p-soft);padding:10px 16px;background:var(--p-paper);border-bottom:1px solid var(--p-line)}
+.erow{display:grid;grid-template-columns:22px 176px 1fr auto;gap:0 14px;align-items:center;min-height:46px;padding:0 16px;border-top:1px solid var(--p-line);font-size:14.5px}
+.erow:first-of-type{border-top:0}
+.erow .mark{display:grid;place-items:center;height:20px}.erow .mark svg{width:14px;height:14px}
+.erow .lead{font:400 14px 'IBM Plex Mono',monospace;color:var(--p-soft);letter-spacing:-.01em;white-space:nowrap}
+.erow .ttl{font-weight:400;color:var(--p-ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.erow .ttl .opp{color:var(--p-soft)}
+.erow .trail{display:flex;gap:10px;align-items:center;justify-content:flex-end;white-space:nowrap}
+.erow .score{font:600 14.5px 'IBM Plex Mono',monospace}.erow .res{font:700 11.5px 'IBM Plex Mono',monospace;letter-spacing:.08em}
+.erow .aw{font:600 12px 'IBM Plex Mono',monospace;color:var(--p-gold)}
+.res.win{color:var(--p-win)}
+.chip{display:inline-flex;align-items:center;font:600 10.5px/1 'IBM Plex Mono',monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--p-dim);border:1px solid var(--p-line2);border-radius:4px;padding:3px 6px;background:var(--p-card)}
+.phone .erow{grid-template-columns:22px 1fr auto;min-height:52px;padding:6px 12px;font-size:14px}
+.phone .erow .lead{grid-column:2;grid-row:2;font-size:12px}
+.phone .erow .ttl{grid-column:2;grid-row:1}
+.phone .erow .trail{grid-column:3;grid-row:1/3;gap:6px}
+.phone .erow .mark{grid-row:1/3}
+/* menus, pills, forms */
+.menu{width:236px;border:1px solid var(--p-line2);border-radius:8px;background:var(--p-card);box-shadow:0 10px 30px rgba(36,30,21,.12);padding:6px;font-size:14px}
+.menu div{display:flex;align-items:center;gap:10px;padding:9px 10px;border-radius:5px}.menu div.nest{padding-left:26px;color:var(--p-soft)}
+.menu .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.pillrow{display:flex;gap:8px;flex-wrap:wrap}
+.tpill{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--p-line2);border-radius:20px;padding:8px 14px;font-weight:600;font-size:13.5px;background:var(--p-card)}
+.tpill .dot{width:9px;height:9px;border-radius:50%}
+.tpill.on{border-color:var(--p-win);background:rgba(52,102,42,.10)}
+.mhd{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--p-line)}
+.mhd h3{font:700 20px/1 'Barlow Condensed',Inter,sans-serif;margin:0}.mhd .x{width:32px;height:32px;border:1px solid var(--p-line2);border-radius:50%;display:grid;place-items:center;color:var(--p-soft)}
+.mbody{padding:18px 22px 22px}
+.sect{font:700 11px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:var(--p-dim);margin:18px 0 10px}.sect:first-child{margin-top:0}
+.fld{margin-bottom:14px}.fld label{display:block;font-weight:600;font-size:13px;margin-bottom:6px}
+.inp{border:1px solid var(--p-line2);border-radius:7px;padding:10px 12px;font-size:14px;background:var(--p-card);color:var(--p-dim);min-height:42px;display:flex;align-items:center}
+.inp.filled{color:var(--p-ink)}
+.seg{display:inline-flex;border:1px solid var(--p-line2);border-radius:7px;overflow:hidden}.seg span{padding:9px 16px;font-size:14px;font-weight:500;color:var(--p-soft)}.seg span.on{background:var(--p-olive-soft);color:var(--p-ink);font-weight:600}
+.hint{font-size:12.5px;color:var(--p-dim);margin:6px 0 0;line-height:1.45}
+.fld label.chk,.chk{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;padding:2px 0;margin:2px 0 0;font-weight:500}.chk b{white-space:nowrap}
+.chk .box{width:18px;height:18px;border:1.5px solid var(--p-soft);border-radius:4px;flex-shrink:0;background:var(--p-card);display:grid;place-items:center;color:#fff;font-size:12px;font-weight:800}
+.chk .box.on{background:var(--p-olive);border-color:var(--p-olive)}
+.chk b{font-weight:500;font-size:14px}
+.locknote{display:flex;gap:10px;align-items:center;padding:10px 12px;border:1px dashed var(--p-line2);border-radius:8px;color:var(--p-dim);font-size:13px;margin-bottom:14px}
+.dhd{display:flex;align-items:center;gap:10px;padding:16px 22px;border-bottom:1px solid var(--p-line)}
+.dhd .kind{display:inline-flex;align-items:center;font:600 11px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;border-radius:5px;padding:5px 8px}
+.dhd h3{font:700 18px/1.2 Inter,sans-serif;margin:0 0 0 4px;flex:1}
+.dhd .btns{display:flex;gap:8px}
+.dmeta{padding:14px 22px 6px;font-size:14px;color:var(--p-soft)}.dmeta b{color:var(--p-ink);font-weight:600}
+/* the echo grid */
+.echo{max-width:1180px;margin:10px auto 0;padding:0 24px;display:grid;grid-template-columns:repeat(auto-fit,minmax(340px,1fr));gap:18px}
+.ecard{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px}
+.ecard h3{margin:0 0 4px;font-size:15px}.ecard .where{font-size:12px;color:var(--muted);margin:0 0 12px}
+.spec{border:1px solid #c6cebc;border-radius:9px;padding:12px 14px;background:#F8F4ED;color:#241E15;font:13.5px/1.45 Inter,system-ui,sans-serif;margin-top:8px}
+.spec .lbl{font:700 9.5px 'IBM Plex Mono',monospace;letter-spacing:.16em;text-transform:uppercase;color:#615A54;margin:0 0 6px}
+.tile{display:flex;flex-direction:column;gap:2px}.tile .k{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:#615A54}.tile .v{font:700 26px/1 'Barlow Condensed',Inter,sans-serif}.tile .s{font-size:12.5px;color:#4A4235}
+.splits{display:flex;gap:16px;flex-wrap:wrap;align-items:center}.splits span{display:inline-flex;align-items:center;gap:6px;font-size:13.5px}.splits svg{width:13px;height:13px}.splits b{font:600 14px 'IBM Plex Mono',monospace}.splits .q{color:#615A54;font-size:12px}
+.sheet{width:100%;border-collapse:collapse;font:12.5px 'IBM Plex Mono',monospace}.sheet th,.sheet td{border:1px solid rgba(70,55,30,.2);padding:4px 8px;text-align:left;white-space:nowrap}.sheet th{background:#fff;font-weight:600}
+.cell{width:150px;border:1px solid rgba(70,55,30,.2);border-radius:6px;padding:6px;background:#fff}.cell .n{font:600 11px 'IBM Plex Mono',monospace;color:#615A54;margin-bottom:6px}
+.cdot{display:block;font:500 11px Inter;padding:3px 6px;border-radius:4px;margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#fff}
+.cdot.outline{background:transparent;border:1.5px solid var(--c);color:var(--c)}
+.mast{display:flex;justify-content:space-between;align-items:center}.mast .n{font-weight:700;font-size:15px}.mast .nx{text-align:right;font:600 12.5px Inter}.mast .nx small{display:block;font:700 9px 'IBM Plex Mono',monospace;letter-spacing:.16em;color:#615A54}
+.bkrow{display:grid;grid-template-columns:auto 1fr auto auto;gap:12px;align-items:center;font-size:13.5px}.bkrow .exh{font:700 10px 'IBM Plex Mono',monospace;letter-spacing:.1em;border:1px solid rgba(70,55,30,.3);border-radius:4px;padding:2px 5px;color:#615A54}
+.moderow{display:flex;gap:8px}.moderow span{border:1px solid rgba(70,55,30,.2);border-radius:20px;padding:6px 12px;font-size:13px;background:#fff}.moderow span.on{background:rgba(87,101,30,.12);border-color:#57651E;font-weight:600}
+
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}.fitwrap{width:calc(100% - 24px)}.echo{padding:0 12px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>A scrimmage is a flag, not a kind of game — project hub</strong><br><small>Round 4 · 2026-09-21 — built · simplified · reviewed (1 Critical + 4 Medium fixed before the walk) · help synced · the QA walk is owed (tab at the right)</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Drawn 2026-09-20 · owner ruled “the flag”, then D1–D6 as recommended, the same day">Design</li>
+    <li class="stage done" title="COACH_SCRIMMAGE_IS_A_FLAG_PLAN.md + PM brief written 2026-09-20">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-20 · migration 306 applied to dev and verified (prod owed, WITH the promote)">Build</li>
+    <li class="stage done" title="/simplify + /review 2026-09-21 — one Critical (Season Wrapped counted scrimmages) and four Mediums confirmed and fixed before the walk">Review</li>
+    <li class="stage current" title="Walk owed — §211 in the Owner QA Ledger; 20 steps in eight parts on the QA Walk tab">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button><button type="button" id="fitToggle" aria-pressed="true">Fit to window</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<!-- ═══════════════════════════════ MOCKUP ═══════════════════════════════ -->
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <a href="#s-list">1 · The Schedule</a>
+    <a href="#s-add">2 · Adding a game</a>
+    <a href="#s-form">3 · The game form</a>
+    <a href="#s-edit">4 · Editing one</a>
+    <a href="#s-echo">5 · Where it echoes</a>
+  </nav>
+
+  <!-- ── 1 · THE SCHEDULE — whole screen, before / after ── -->
+  <section class="screen" id="s-list">
+    <div class="screenhead">
+      <div class="eyebrow">1 · The Schedule · whole screen</div>
+      <h1 tabindex="-1">Two scrimmages and a league game, before and after</h1>
+      <p>Your screenshot, redrawn with one more row (a league game) so all three shapes sit together. The data does not change — the two Brampton games are still scrimmages afterwards, because the migration turns every stored scrimmage into a Game with the box ticked. What changes is how a row says it.</p>
+    </div>
+    <div class="legendbar">Tags: <span class="mk" data-k="new" data-note="Not in the product today.">New</span> <span class="mk" data-k="re" data-note="Exists today, changes shape or wording.">Restyled</span> <span class="mk" data-k="un" data-note="Exists today, drawn unchanged so the build cannot drop it.">Unchanged</span> · red flags are findings, green chips are their fixes — every one opens on click.</div>
+    <div class="facebar" data-faces="s-list"><button type="button" data-face="before" aria-pressed="false">Before (today)</button><button type="button" data-face="after" aria-pressed="true">After</button></div>
+
+    <div class="fitwrap desk"><div class="frame" data-face="before" hidden>
+      <header class="teamhead"><div><h1>Milton Bats U13 Purple</h1><div class="tm">2027 SEASON</div></div><div class="next"><small>NEXT</small>Mon 6:00 p.m. practice</div><div class="help">?</div></header>
+      <div class="body">
+        <aside class="sb"><div class="sel">Milton Bats U13 Purple <span>▾</span></div><div class="grp">SQUAD</div><a><i></i>Overview</a><a><i></i>Roster</a><div class="grp">SEASON</div><a class="on"><i></i>Schedule</a><a><i></i>Practice plans</a><a><i></i>Lineups</a><a><i></i>Insights</a><div class="grp">MONEY</div><a><i></i>Money</a></aside>
+        <main class="pg">
+          <div class="pgtop"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><h2>Schedule</h2><div class="acts"><span class="btnlime">+ Add Event ▾</span><span class="btn2">⤒ Import</span></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><div class="views"><span class="on">List</span><span>Week</span><span>Month</span></div><span class="btn2" style="margin-bottom:20px">⤓ Export</span></div>
+          <div class="card">
+            <div class="mhead">September 2026</div>
+            <div class="erow"><span class="mark" style="color:var(--p-blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5L18 3h3v3l-3.5 3.5M5 14l-2 2 3 3 2-2"/></svg></span><span class="lead">Sep 19 · 10:00 a.m.</span><span class="ttl">Scrimmage vs Brampton Gold <button class="fl" data-finding="F05" data-here="This row’s name was written by the product at save time: “Scrimmage vs Brampton Gold”. The next row is the same kind of game from the same form and reads differently.">F05</button></span><span class="trail"><span class="aw">🏆 1</span><span class="score">5–3</span><span class="res win">WIN</span></span></div>
+            <div class="erow"><span class="mark" style="color:var(--p-blue)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5L18 3h3v3l-3.5 3.5M5 14l-2 2 3 3 2-2"/></svg></span><span class="lead">Sep 19 · 1:00 p.m.</span><span class="ttl">Scrimmage<span class="opp"> · @ Brampton Gold</span></span><span class="trail"><span class="aw">🏆 1</span><span class="score">8–3</span><span class="res win">WIN</span></span></div>
+            <div class="erow"><span class="mark" style="color:var(--p-plum)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M3 10l7-7M14 21l7-7"/></svg></span><span class="lead">Sep 21 · 6:00 p.m.</span><span class="ttl">Practice</span><span class="trail"></span></div>
+            <div class="erow"><span class="mark" style="color:var(--p-win)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="lead">Sep 26 · 6:30 p.m.</span><span class="ttl">League Game vs Oakville Royals <button class="fl" data-finding="F04" data-here="The only counted non-tournament kind is “League Game”. A friendly the coach wants in the record has to be filed here and called a league game.">F04</button></span><span class="trail"><span class="chip" style="text-transform:none;letter-spacing:0">2–1 vs them</span></span></div>
+          </div>
+        </main>
+      </div>
+    </div></div>
+
+    <div class="fitwrap desk"><div class="frame" data-face="after">
+      <header class="teamhead"><div><h1>Milton Bats U13 Purple</h1><div class="tm">2027 SEASON</div></div><div class="next"><small>NEXT</small>Mon 6:00 p.m. practice</div><div class="help">?</div></header>
+      <div class="body">
+        <aside class="sb"><div class="sel">Milton Bats U13 Purple <span>▾</span></div><div class="grp">SQUAD</div><a><i></i>Overview</a><a><i></i>Roster</a><div class="grp">SEASON</div><a class="on"><i></i>Schedule</a><a><i></i>Practice plans</a><a><i></i>Lineups</a><a><i></i>Insights</a><div class="grp">MONEY</div><a><i></i>Money</a></aside>
+        <main class="pg">
+          <div class="pgtop"><div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><h2>Schedule</h2><div class="acts"><span class="btnlime">+ Add Event ▾</span><span class="btn2">⤒ Import</span></div></div>
+          <div style="display:flex;justify-content:space-between;align-items:center"><div class="views"><span class="on">List</span><span>Week</span><span>Month</span></div><span class="btn2" style="margin-bottom:20px">⤓ Export</span></div>
+          <div class="card">
+            <div class="mhead">September 2026</div>
+            <div class="erow"><span class="mark" style="color:var(--p-win)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="lead">Sep 19 · 10:00 a.m.</span><span class="ttl">vs Brampton Gold <span class="mk" data-k="re" data-note="The mark is the game’s shield in the game’s colour — one kind, one mark. The swords icon and the blue token retire (D6). The name lost its kind word and reads “vs Brampton Gold” (D2); the migration rewrote it because it exactly matched the old auto-shape “Scrimmage vs Brampton Gold”.">Restyled</span></span><span class="trail"><span class="chip">Scrimmage <span class="mk" data-k="new" data-note="The word, beside the score, whenever the box is ticked. Muted on purpose: it says “left out of the record”, and a coach who wants it counted unticks one box. It carries no colour, so it cannot be confused with a result.">New</span></span><span class="aw">🏆 1</span><span class="score">5–3</span><span class="res win">WIN</span></span></div>
+            <div class="erow"><span class="mark" style="color:var(--p-win)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="lead">Sep 19 · 1:00 p.m.</span><span class="ttl">@ Brampton Gold <button class="fl fix" data-finding="F05" data-here="Both Brampton rows now read the same way: the auto-name knows home from away (“@” for away, “vs” for home), and an edit that changes the opponent or the side re-derives an auto-shaped name instead of leaving the bare kind word behind.">fixes F05</button></span><span class="trail"><span class="chip">Scrimmage</span><span class="aw">🏆 1</span><span class="score">8–3</span><span class="res win">WIN</span></span></div>
+            <div class="erow"><span class="mark" style="color:var(--p-plum)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M6.5 6.5l11 11M21 21l-1-1M3 3l1 1M18 22l4-4M2 6l4-4M3 10l7-7M14 21l7-7"/></svg></span><span class="lead">Sep 21 · 6:00 p.m.</span><span class="ttl">Practice <span class="mk" data-k="un" data-note="Practices, tournaments and team events are untouched by this project — their kind, mark, colour and lock on edit all stay.">Unchanged</span></span><span class="trail"></span></div>
+            <div class="erow"><span class="mark" style="color:var(--p-win)"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="lead">Sep 26 · 6:30 p.m.</span><span class="ttl">vs Oakville Royals <button class="fl fix" data-finding="F04" data-here="A Game, unticked. No word claims it is a league game; it counts because the box is empty. A non-league friendly the coach wants counted is filed exactly the same way.">fixes F04</button></span><span class="trail"><span class="chip" style="text-transform:none;letter-spacing:0">2–1 vs them</span></span></div>
+          </div>
+        </main>
+      </div>
+    </div></div>
+  </section>
+
+  <!-- ── 2 · ADDING A GAME — the menu and the pills ── -->
+  <section class="screen" id="s-add" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">2 · Adding a game</div>
+      <h1 tabindex="-1">Four things to add, not five</h1>
+      <p>The Add Event menu and the kind pills at the top of the form are the two places a coach chooses a kind. “Scrimmage” leaves both; “League Game” becomes “Game” (D1). The nested tournament game stays where it is.</p>
+    </div>
+    <div class="fitwrap pair">
+      <div><p class="pairlabel">Before (today)</p>
+        <div class="frame panel narrow"><div class="mbody">
+          <span class="btnlime">+ Add Event ▾</span>
+          <div class="menu" style="margin-top:8px">
+            <div><span class="dot" style="background:var(--p-rust)"></span>Tournament</div>
+            <div class="nest"><span class="dot" style="background:var(--p-gold)"></span>Game (Tournament)</div>
+            <div><span class="dot" style="background:var(--p-blue)"></span>Scrimmage</div>
+            <div><span class="dot" style="background:var(--p-win)"></span>League Game <button class="fl" data-finding="F04" data-here="The menu offers two kinds of game whose only real difference is whether the result counts.">F04</button></div>
+            <div><span class="dot" style="background:var(--p-plum)"></span>Practice</div>
+            <div><span class="dot" style="background:var(--p-slate)"></span>Team Event</div>
+          </div>
+          <div class="sect" style="margin-top:22px">Event type · in the form</div>
+          <div class="pillrow"><span class="tpill"><span class="dot" style="background:var(--p-rust)"></span>Tournament</span><span class="tpill on"><span class="dot" style="background:var(--p-win)"></span>League Game</span><span class="tpill"><span class="dot" style="background:var(--p-blue)"></span>Scrimmage</span><span class="tpill"><span class="dot" style="background:var(--p-plum)"></span>Practice</span><span class="tpill"><span class="dot" style="background:var(--p-slate)"></span>Team Event</span></div>
+        </div></div>
+      </div>
+      <div><p class="pairlabel">After</p>
+        <div class="frame panel narrow"><div class="mbody">
+          <span class="btnlime">+ Add Event ▾</span>
+          <div class="menu" style="margin-top:8px">
+            <div><span class="dot" style="background:var(--p-rust)"></span>Tournament</div>
+            <div class="nest"><span class="dot" style="background:var(--p-gold)"></span>Game (Tournament)</div>
+            <div><span class="dot" style="background:var(--p-win)"></span>Game <span class="mk" data-k="re" data-note="“League Game” → “Game” (D1). Same stored kind, same colour, same everything; the word “League” stops being asserted by the product. Scrimmage is no longer a menu item — it is a box on this form.">Restyled</span></div>
+            <div><span class="dot" style="background:var(--p-plum)"></span>Practice</div>
+            <div><span class="dot" style="background:var(--p-slate)"></span>Team Event</div>
+          </div>
+          <div class="sect" style="margin-top:22px">Event type · in the form</div>
+          <div class="pillrow"><span class="tpill"><span class="dot" style="background:var(--p-rust)"></span>Tournament</span><span class="tpill on"><span class="dot" style="background:var(--p-win)"></span>Game</span><span class="tpill"><span class="dot" style="background:var(--p-plum)"></span>Practice</span><span class="tpill"><span class="dot" style="background:var(--p-slate)"></span>Team Event</span></div>
+          <p class="hint" style="margin-top:14px">Four pills on a phone instead of five — one fewer wrap on a 390px screen.</p>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 3 · THE GAME FORM — the checkbox ── -->
+  <section class="screen" id="s-form" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">3 · The game form · Who</div>
+      <h1 tabindex="-1">One box under Home / Away</h1>
+      <p>The checkbox lives in the Who section, right under the side the game is played on — the two facts a coach settles together. One line, no explanation under it (owner, 2026-09-20): a coach knows what a scrimmage is, and the help article carries the definition for anyone who wants it.</p>
+    </div>
+    <div class="fitwrap pair">
+      <div><p class="pairlabel">Before (today) · Add League Game</p>
+        <div class="frame panel"><div class="mhd"><h3>Add League Game</h3><span class="x">×</span></div><div class="mbody">
+          <div class="sect">Who</div>
+          <div class="fld"><label>Opponent</label><div class="inp filled">Brampton Gold</div></div>
+          <div class="fld"><label>Home / Away</label><div class="seg"><span>Home</span><span class="on">Away</span><span>Neutral</span></div><p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p></div>
+          <div class="sect">Name</div>
+          <div class="fld"><div class="inp">Auto: League Game vs opponent</div></div>
+        </div></div>
+      </div>
+      <div><p class="pairlabel">After · Add Game</p>
+        <div class="frame panel"><div class="mhd"><h3>Add Game <span class="mk" data-k="re" data-note="The modal title reads the kind’s label, so it follows D1.">Restyled</span></h3><span class="x">×</span></div><div class="mbody">
+          <div class="sect">Who</div>
+          <div class="fld"><label>Opponent</label><div class="inp filled">Brampton Gold</div></div>
+          <div class="fld"><label>Home / Away</label><div class="seg"><span>Home</span><span class="on">Away</span><span>Neutral</span></div><p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p></div>
+          <div class="fld"><label class="chk"><span class="box on">✓</span><b>This is a scrimmage</b> <span class="mk" data-k="new" data-note="The decision, as a property of the game — one line, the same shape as “Repeat weekly” in this form (owner, 2026-09-20: “this is a scrimmage is enough”). Available on add and on edit, for a Game only (D3). Ticking it after a result is in moves the game out of the record immediately; unticking brings it back. What a scrimmage means lives in the help article, not under the box.">New</span></label></div>
+          <div class="sect">Name</div>
+          <div class="fld"><div class="inp">Auto: @ Brampton Gold <span class="mk" data-k="re" data-note="The auto-name drops the kind word and learns home/away: “@ Brampton Gold” here because Away is chosen (D2). A name the coach types wins, as today.">Restyled</span></div></div>
+        </div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 4 · EDITING ONE — the lock, and the drawer ── -->
+  <section class="screen" id="s-edit" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">4 · Editing one · the drawer and the edit form</div>
+      <h1 tabindex="-1">The kind stays locked; the box does not</h1>
+      <p>Opening a game from the schedule shows its drawer; Edit opens the same form as Add. Today the form hides the kind on edit and offers nothing in its place — which is how an upgraded coach ends up with a season of scrimmages they cannot fix. After, the kind is still fixed (that lock is right for practices, tournaments and series) and the box is simply there.</p>
+    </div>
+    <div class="fitwrap pair">
+      <div><p class="pairlabel">Before (today)</p>
+        <div class="frame panel">
+          <div class="dhd"><span style="color:var(--p-blue)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/><path d="M14.5 6.5L18 3h3v3l-3.5 3.5M5 14l-2 2 3 3 2-2"/></svg></span><span class="kind" style="background:rgba(19,79,211,.12);color:var(--p-blue)">Scrimmage</span><h3>Scrimmage · @ Brampton Gold</h3><div class="btns"><span class="btn2">Edit</span></div></div>
+          <div class="dmeta"><b>Sat Sep 19 · 1:00 p.m.</b> · Brampton Sports Park · Diamond 2</div>
+          <div class="mhd" style="margin-top:14px;border-top:1px solid var(--p-line)"><h3>Edit Scrimmage</h3><span class="x">×</span></div>
+          <div class="mbody">
+            <div class="locknote">Event type — not shown on edit <button class="fl" data-finding="F01" data-here="The kind pills render only when adding. On edit there is no control, and the save route ignores a kind even if one were sent. A scrimmage that should have been a league game — or every game an upgraded Free coach owns — stays a scrimmage for good.">F01</button> <button class="fl" data-finding="F02" data-here="This is the screen the upgrade’s note assumed the coach could use to “reclassify”. There is nothing here to use.">F02</button></div>
+            <div class="sect">Who</div>
+            <div class="fld"><label>Opponent</label><div class="inp filled">Brampton Gold</div></div>
+            <div class="fld"><label>Home / Away</label><div class="seg"><span>Home</span><span class="on">Away</span><span>Neutral</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div><p class="pairlabel">After</p>
+        <div class="frame panel">
+          <div class="dhd"><span style="color:var(--p-win)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></span><span class="kind" style="background:rgba(52,102,42,.12);color:var(--p-win)">Game</span><span class="chip">Scrimmage <span class="mk" data-k="new" data-note="The drawer’s kind pill says Game; the Scrimmage chip sits beside it exactly as it does on the row, so the drawer and the list say the same thing.">New</span></span><h3>@ Brampton Gold</h3><div class="btns"><span class="btn2">Edit</span></div></div>
+          <div class="dmeta"><b>Sat Sep 19 · 1:00 p.m.</b> · Brampton Sports Park · Diamond 2</div>
+          <div class="mhd" style="margin-top:14px;border-top:1px solid var(--p-line)"><h3>Edit Game</h3><span class="x">×</span></div>
+          <div class="mbody">
+            <div class="locknote" style="border-style:solid">Event type — fixed once an event exists <span class="mk" data-k="un" data-note="The lock on the kind stays for the kinds that carry structure (a tournament game’s parent, a tournament’s days, a practice’s plan, a series’ children). It no longer matters for games, because the one thing a coach needed to change between two game kinds is now a box.">Unchanged</span></div>
+            <div class="sect">Who</div>
+            <div class="fld"><label>Opponent</label><div class="inp filled">Brampton Gold</div></div>
+            <div class="fld"><label>Home / Away</label><div class="seg"><span>Home</span><span class="on">Away</span><span>Neutral</span></div></div>
+            <div class="fld"><label class="chk"><span class="box on">✓</span><b>This is a scrimmage</b> <button class="fl fix" data-finding="F01" data-here="Editable on every Game, at any time. Untick it and this 8–3 win joins the record, the Scouting Book’s numbers and the Season’s End split the moment it saves.">fixes F01</button> <button class="fl fix" data-finding="F02" data-here="An upgraded coach’s games arrive as Games, unticked, from now on — and the ones already filed as scrimmages can be fixed here, one untick each.">fixes F02</button></label></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── 5 · WHERE IT ECHOES — every reader of the kind, today → after ── -->
+  <section class="screen" id="s-echo" hidden>
+    <div class="screenhead">
+      <div class="eyebrow">5 · Where it echoes</div>
+      <h1 tabindex="-1">Every place that read the kind, and what it reads now</h1>
+      <p>Seven readers. Most are unchanged in what a coach sees — they key on the box instead of the kind. Three change wording because “League” leaves the label, and one (the record tile) loses a sentence about a control that no longer exists.</p>
+    </div>
+    <div class="echo">
+      <div class="ecard"><h3>Team masthead · “Next”</h3><p class="where">Every page, top right</p>
+        <div class="spec"><p class="lbl">Today and after</p><div class="mast"><span class="n">Milton Bats U13 Purple</span><span class="nx"><small>NEXT</small>Sat 1:00 p.m. scrimmage</span></div></div>
+        <p class="meta" style="margin-top:8px">The word “scrimmage” still appears in a sentence when the box is ticked. <span class="mk" data-k="un" data-note="The masthead’s one-word noun comes from a per-event word; a ticked box yields “scrimmage”, an unticked Game yields “game”.">Unchanged</span></p></div>
+      <div class="ecard"><h3>Overview · Record tile</h3><p class="where">Overview board, top row</p>
+        <div class="spec"><p class="lbl">Today</p><div class="tile"><span class="k">Record</span><span class="v">3–1</span><span class="s">League + Tournament <button class="fl" data-finding="F03" data-here="This caption is built from a per-device preference that nothing has written since 2026-09-02. The tile even has a branch reading “No game types selected — choose them in Insights”, which no coach can reach.">F03</button></span></div></div>
+        <div class="spec"><p class="lbl">After</p><div class="tile"><span class="k">Record</span><span class="v">3–1</span><span class="s">Scrimmages left out <button class="fl fix" data-finding="F03" data-here="One sentence, always true. The ghost preference, its reader and the unreachable branch are deleted; the help articles that promised the switch are corrected.">fixes F03</button></span></div></div></div>
+      <div class="ecard"><h3>Season’s End · Results split</h3><p class="where">The closed-season page; Season Wrapped uses the same split</p>
+        <div class="spec"><p class="lbl">Today</p><div class="splits"><span><svg viewBox="0 0 24 24" fill="none" stroke="#34662A" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>League <b>8–4</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="#835006" stroke-width="2.2"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Tournament <b>3–2</b></span><span><svg viewBox="0 0 24 24" fill="none" stroke="#134FD3" stroke-width="2.2" stroke-linecap="round"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2"/></svg>Scrimmage <b>2–1</b></span></div></div>
+        <div class="spec"><p class="lbl">After</p><div class="splits"><span><svg viewBox="0 0 24 24" fill="none" stroke="#34662A" stroke-width="2.2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>Games <b>8–4</b> <span class="mk" data-k="re" data-note="“League” → “Games” (D1). The split is by competition — game, tournament, scrimmage — derived from the kind and the box together.">Restyled</span></span><span><svg viewBox="0 0 24 24" fill="none" stroke="#835006" stroke-width="2.2"><path d="M8 21h8M12 17v4M7 4h10v4a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Tournament <b>3–2</b></span><span class="q">Scrimmages <b style="color:#615A54">2–1</b> · not counted <span class="mk" data-k="re" data-note="Still listed, quieter, and it says so — the same “listed but never counted” rule the Scouting Book already follows.">Restyled</span></span></div></div></div>
+      <div class="ecard"><h3>Scouting Book · a meeting</h3><p class="where">Opponent page, past meetings</p>
+        <div class="spec"><p class="lbl">Today and after</p><div class="bkrow"><span class="mono" style="color:#615A54">Sep 19</span><span>@ Brampton Gold</span><span class="mono">8–3 W</span><span class="exh">EXH</span></div></div>
+        <p class="meta" style="margin-top:8px">Listed with EXH, never counted toward the record vs them. <span class="mk" data-k="un" data-note="The book’s EXH badge and its “counted” flag key on the box instead of the kind; nothing a coach sees changes.">Unchanged</span></p></div>
+      <div class="ecard"><h3>Lineup builder · Auto-fill mode</h3><p class="where">Lineups → a game → Auto-fill</p>
+        <div class="spec"><p class="lbl">Today and after · a scrimmage opens on</p><div class="moderow"><span>Competitive</span><span>Balanced</span><span class="on">Development</span></div></div>
+        <p class="meta" style="margin-top:8px">Tournament → Competitive, scrimmage → Development, game → Balanced. <span class="mk" data-k="un" data-note="The default reads the box first, then the kind. The coach can still change it per game.">Unchanged</span></p></div>
+      <div class="ecard"><h3>Import / Export · “Event Type”</h3><p class="where">Schedule → Export; Import reads the same column</p>
+        <div class="spec"><p class="lbl">Today</p><table class="sheet"><tr><th>Date</th><th>Event Type</th><th>Opponent</th></tr><tr><td>2026-09-19</td><td>Scrimmage</td><td>Brampton Gold</td></tr><tr><td>2026-09-26</td><td>League Game</td><td>Oakville Royals</td></tr></table></div>
+        <div class="spec"><p class="lbl">After</p><table class="sheet"><tr><th>Date</th><th>Event Type</th><th>Opponent</th></tr><tr><td>2026-09-19</td><td>Scrimmage</td><td>Brampton Gold</td></tr><tr><td>2026-09-26</td><td>Game <span class="mk" data-k="re" data-note="One column, two words for the two states of one kind: “Scrimmage” for a ticked Game, “Game” otherwise. The importer reads both, plus “League Game” from an old export, plus “exhibition” and “friendly”. No new column, and a sheet exported last month imports unchanged.">Restyled</span></td><td>Oakville Royals</td></tr></table></div></div>
+      <div class="ecard"><h3>Month view · a day cell</h3><p class="where">Schedule → Month</p>
+        <div style="display:flex;gap:14px;flex-wrap:wrap">
+          <div class="spec" style="flex:1"><p class="lbl">Today</p><div class="cell"><div class="n">19</div><span class="cdot" style="background:#134FD3">Scrimmage vs Br</span><span class="cdot" style="background:#134FD3">Scrimmage</span></div></div>
+          <div class="spec" style="flex:1"><p class="lbl">After</p><div class="cell"><div class="n">19</div><span class="cdot outline" style="--c:#34662A">vs Brampton Go</span><span class="cdot outline" style="--c:#34662A">@ Brampton Gol</span></div><p class="meta" style="margin:8px 0 0">A ticked game is drawn outlined in the game’s colour — a shape cue, not a colour cue — and its title says Scrimmage. <span class="mk" data-k="new" data-note="A 14-character cell has no room for a chip. An outlined chip is a difference in shape, so it survives a colour-blind read; the hover title carries the word (D6).">New</span></p></div>
+        </div></div>
+    </div>
+  </section>
+
+  <footer class="intent" id="intent"></footer>
+</section>
+
+<!-- ═══════════════════════════════ PM BRIEF ═══════════════════════════════ -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>A scrimmage is a flag, not a kind of game</h1>
+  <p class="sub">Owner ruling 2026-09-20: “the flag.”</p>
+  <h2>What changes for the coach</h2>
+  <ul>
+    <li><strong>Adding to the schedule offers four things, not five:</strong> Tournament · <strong>Game</strong> · Practice · Team event. “League Game” and “Scrimmage” are gone as separate choices.</li>
+    <li><strong>A game has a checkbox — “This is a scrimmage.”</strong> Tick it and the game stays on the schedule and in attendance like any other, but is left out of the season record and the Scouting Book’s numbers, and the lineup builder opens on Development. Untick it and it counts again. The box can be changed at any time — before the game, after the score is in, a year later.</li>
+    <li><strong>Rows read “vs Brampton Gold” / “@ Brampton Gold”</strong> instead of “League Game vs Brampton Gold” or “Scrimmage vs Brampton Gold”. A scrimmage carries a small, quiet <strong>Scrimmage</strong> chip beside its score. Existing games whose names were auto-written get the new shape; anything a coach typed is untouched.</li>
+    <li><strong>A weekly scrimmage series</strong> (a standing Tuesday against a partner club) can now be set up with Repeat weekly, like any game.</li>
+    <li><strong>Nothing else moves.</strong> The record still counts games and tournament games; scrimmages are still listed with <strong>EXH</strong> in the Scouting Book; the masthead still says “Sat 1:00 p.m. scrimmage”; import and export still say “Scrimmage” in the Event Type column and still read it.</li>
+  </ul>
+  <h2>Why it matters</h2>
+  <ul>
+    <li><strong>It fixes a trap coaches are already in.</strong> A coach who upgrades from the free portal has every game filed as a scrimmage — permanently outside their record — because the upgrade assumed they could reclassify and the product never let them. With the flag, one untick per game fixes it.</li>
+    <li><strong>It is the coach’s mental model.</strong> “Game vs Brampton — oh, that one’s just a scrimmage” is a decision about a game, not a different kind of event. Asking the coach to pick the kind first, and then locking it forever, was the product’s model leaking onto the screen.</li>
+    <li><strong>It ends a lie.</strong> A rep team’s non-league friendly that the coach wants counted has had nowhere to go but “League Game”. Now it is a Game, unticked.</li>
+    <li><strong>It corrects the help.</strong> Four articles promise a “count scrimmages” switch on Insights that was deleted in a September cleanup; the record has quietly never counted a scrimmage since. The product and the help will say the same thing.</li>
+  </ul>
+  <h2>Customer impact</h2>
+  <p>Every Premium coach who schedules games. Zero data loss: existing scrimmages become games with the box ticked, and their standing in every record, book and report is exactly what it was. The Free tier’s three-kind schedule is untouched. The public demo needs no story change (it seeds no scrimmages). Assistants and helpers see the chip and the checkbox under the same access they have to the schedule today.</p>
+  <h2>Priority</h2>
+  <p>Medium-high, small. A day’s build plus a walk. It sits well before the next release because it carries two tiny migrations (one before the promote, one after) and closes a standing defect for upgraded coaches.</p>
+  <h2>Tradeoffs made</h2>
+  <ul>
+    <li><strong>Game only.</strong> A tournament game does not get the box — the organizer scores those, and a private “doesn’t count” would put two records in disagreement. Deferred until a real case appears.</li>
+    <li><strong>No global “count scrimmages” switch.</strong> The per-game box is the finer instrument; the dead preference is removed rather than rebuilt.</li>
+    <li><strong>The word “League” leaves the label.</strong> Coaches who think of their games as league games still have the word in their team’s context; the product stops asserting it.</li>
+  </ul>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach can turn any Game into a scrimmage and back from the edit form, and the record, masthead, Overview tile, Season’s End split and Scouting Book all agree within one page load.</li>
+    <li>An upgraded Free coach’s games appear as Games, unflagged, counted once results are entered.</li>
+    <li>A spreadsheet exported before the change imports after it with every scrimmage still a scrimmage and every league game a game.</li>
+    <li>No help article describes a control that does not exist.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════════════ FULL PLAN ═══════════════════════════════ -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full assessment</div>
+  <h1>A scrimmage is a flag, not a kind of game — implementation plan</h1>
+  <p class="sub">Source of record: <code>docs/projects/active/COACH_SCRIMMAGE_IS_A_FLAG_PLAN.md</code>. This tab is the same plan, rendered.</p>
+
+  <h2>1 · What the code does today</h2>
+  <p>The coach schedule has six event kinds under a database check: <code>external_tournament · tournament_game · scrimmage · league_game · practice · team_event</code>. Two of them — <code>scrimmage</code> and <code>league_game</code> — carry identical fields: opponent, home/away, score, result, tags, lineup, attendance, arrival time, uniform, field, links. They differ only in what reads them.</p>
+  <h3>F01 — The kind is locked after creation, for every kind, with no stated reason</h3>
+  <p>The type picker renders only when adding, and the event save route never reads a kind from the body, so nothing on the client or the server can change one. No plan or commit records why. The lock is right for the structurally different kinds (a tournament game belongs to a parent; a tournament has days and child games; a practice carries a plan and linked sessions; a repeating series has children) and wrong for League game ↔ Scrimmage, where nothing would break.</p>
+  <h3>F02 — The Free → Premium upgrade files every game as a scrimmage and promises a fix that does not exist</h3>
+  <p>The upgrade maps the Free tier’s <code>game</code> → <code>scrimmage</code> with the note “Free never tracked a result, so no loss; coach can reclassify.” Because of F01 they cannot. An upgraded coach’s whole game history sits outside the record — Overview tile, masthead, Season Wrapped, Season’s End, the Scouting Book — and the only remedy is delete-and-re-add per game.</p>
+  <h3>F03 — “Choose whether scrimmages count” is a ghost</h3>
+  <p>The season-record module still exports a per-device preference and the Overview record tile still reads it, but nothing has written it since 2026-09-02, when the only control (<code>SeasonRecordWidget</code>) was deleted as confirmed-dead code in cleanup tranche 6 (<code>2b45a735</code>). Insights V3 (07-10) had already stopped rendering the checkboxes. Today every surface counts league + tournament and never a scrimmage — and four help articles still tell the coach Insights lets them choose. The Overview tile even has a branch for “No game types selected — choose them in Insights” that no coach can reach.</p>
+  <h3>F04 — “League Game” is the only counted non-tournament kind, so an exhibition the coach wants counted has to lie</h3>
+  <p>A rep team’s non-league friendly that the coach wants in their record has nowhere to go except “League Game”. The importer already treats a bare “Game” as a league game — the product’s own vocabulary knows the word “League” is not load-bearing.</p>
+  <h3>F05 — Two rows, two shapes, one form</h3>
+  <p>“Scrimmage vs Brampton Gold” and “Scrimmage · @ Brampton Gold” are the same kind of game entered twice. The auto-name writes “{Kind} vs {opponent}” regardless of home/away and only at create time; an event whose opponent or side was set on edit keeps its bare kind-name and picks up the display suffix, which <em>is</em> home/away aware.</p>
+  <h3>What the <code>scrimmage</code> kind actually drives</h3>
+  <div class="tablewrap"><table><tr><th>Reader</th><th>Today</th><th>Under the flag</th></tr>
+  <tr><td>Season record — masthead, Overview tile, Insights scoreboard, Season Wrapped, Season’s End, season history, season-results route, club-admin rep history</td><td>scrimmage kind excluded</td><td>ticked box excluded</td></tr>
+  <tr><td>Scouting Book</td><td>EXH badge, not counted, scrimmage count</td><td>same, keyed on the box</td></tr>
+  <tr><td>Lineup builder auto-fill default</td><td>scrimmage → Development</td><td>box → Development</td></tr>
+  <tr><td>Masthead “Next:” word</td><td>“scrimmage”</td><td>box → “scrimmage”</td></tr>
+  <tr><td>Schedule mark</td><td>swords icon, blue</td><td>game shield + muted Scrimmage chip (D6)</td></tr>
+  <tr><td>Auto-name</td><td>“Scrimmage vs X”</td><td>“vs X” / “@ X” (D2)</td></tr>
+  <tr><td>Import / export “Event Type”</td><td>“Scrimmage” written and read</td><td>“Scrimmage” still written for a ticked Game and still read; “Game” and legacy “League Game” read as Game</td></tr>
+  <tr><td>Repeat weekly</td><td>not offered for scrimmages</td><td>offered — it is a Game (D5)</td></tr>
+  <tr><td>Free→Premium upgrade</td><td>game → scrimmage</td><td>game → Game, unticked (F02 fixed)</td></tr>
+  <tr><td>Add menu / kind pills</td><td>Tournament › Game (Tournament) · Scrimmage · League Game · Practice · Team Event</td><td>Tournament › Game (Tournament) · Game · Practice · Team Event</td></tr>
+  </table></div>
+
+  <h2>2 · The model</h2>
+  <p><strong>One kind, one flag.</strong> <code>league_game</code> stays the stored key (renaming an enum value is a migration across every reader for no product value); its label becomes “Game” everywhere a coach reads it (D1). A new column <code>rep_team_events.is_scrimmage boolean NOT NULL DEFAULT false</code> carries the decision. <code>scrimmage</code> leaves the type union and the check.</p>
+  <p><strong>The flag is on Game only</strong> (D3). A tournament game — hand-entered or mirrored from a FieldLogicHQ tournament — does not carry it: the organizer scores it, and a private “doesn’t count” on the coach’s side would put the tournament’s record and the coach’s record in disagreement; the export contract would also need a third word. Deferred, not refused.</p>
+  <div class="note"><strong>What “scrimmage” means, stated once:</strong> listed on the schedule and in attendance like any game; left out of the season record and the Scouting Book’s numbers; lineups open on Development. That sentence is the help article’s definition and the export’s meaning. <strong>The checkbox itself is one line — “This is a scrimmage” — with nothing under it</strong> (owner, 2026-09-20).</div>
+  <p><strong>No global “count scrimmages” switch</strong> (D4). The per-game flag is the finer instrument: a game the coach wants counted is a Game — untick the box. The ghost preference is deleted, the unreachable Overview branch with it, and the help articles say what the product does.</p>
+  <p><strong>Flipping the box is always allowed</strong>, before or after a result, and takes effect immediately — the game moves in or out of the record, the book and the split the moment it saves. No confirm; the help article says so.</p>
+
+  <h2>3 · Owner rulings owed</h2>
+  <p>D1–D6 — see the Decisions tab; each carries the recommendation and the alternative.</p>
+
+  <h2>4 · Build, in order</h2>
+  <h3>4.1 Migrations — expand / contract, no promote-minute choreography</h3>
+  <ul>
+    <li><strong>306 · expand</strong> (safe to apply to prod any time <em>before</em> the promote): add <code>is_scrimmage boolean NOT NULL DEFAULT false</code>. Nothing else. Old code ignores the column.</li>
+    <li><strong>307 · contract</strong> (applied to prod <em>after</em> the promote is live): fold <code>scrimmage</code> rows → <code>league_game</code> + <code>is_scrimmage = true</code>; re-derive names that exactly match the old auto-shape (D2); replace the check without <code>scrimmage</code>.</li>
+    <li><strong>Why two:</strong> the last several releases carried a “this migration goes on MINUTES before the promote, LAST” step that the release record says keeps getting skipped. Expand/contract removes the choreography: between 306 and 307 the new code normalizes a legacy <code>scrimmage</code> row to Game + flag at the read boundary (one line in the row mapper), and every record query already excludes both shapes. On dev both run at once.</li>
+    <li>Dictionary + snapshots in the same unit of work (new column entry, the check entry, a gotcha that the flag is the record rule; <code>refresh:snapshots</code> has a composite-FK bug on the books — verify the events table by hand).</li>
+  </ul>
+  <h3>4.2 The vocabulary</h3>
+  <ul>
+    <li><code>RepEventType</code> loses <code>'scrimmage'</code>; <code>RepTeamEvent</code> gains <code>isScrimmage</code>.</li>
+    <li>Labels: <code>league_game</code> → “Game”; the auto-name prefix drops the kind word for games; a per-event <code>eventWord(e)</code> yields “scrimmage” when ticked (the masthead, the Overview, any sentence).</li>
+    <li><code>deriveGameName</code> → “vs X” / “@ X”; <code>isAutoShapedName</code> recognizes old and new auto shapes so an edit can re-derive without touching a typed name.</li>
+    <li>The import cell parser returns kind + box: “Scrimmage” / “exhibition” / “friendly” → Game + ticked; “Game” / “League Game” / “league” → Game. The export writes “Scrimmage” for a ticked Game and “Game” otherwise — one column, two words, round-trips.</li>
+    <li>Colours / icons drop <code>scrimmage</code>; the <code>--evt-scrimmage</code> token retires from both themes once no reader remains.</li>
+  </ul>
+  <h3>4.3 The record rule</h3>
+  <ul>
+    <li><code>WRAPPED_RECORD_EVENT_TYPES</code> stays and gains its partner <code>countsTowardRecord(e)</code> = kind in the list <em>and</em> not ticked. Every SQL reader adds <code>.eq('is_scrimmage', false)</code> beside its kind filter (two in <code>lib/db.ts</code>, the masthead, the season-results route). Every in-memory reader calls the predicate (season-wrapped, coach-opponents, opponent insights, the digest, the Insights page and results panel, the Overview tile, the winding-down cue, the club-admin rep pages).</li>
+    <li><code>WLT_CATEGORIES</code> becomes competitions keyed by <code>competitionOf(e)</code> → game · tournament · scrimmage, labelled Games · Tournament · Scrimmages; Season’s End’s split reads “Games 8–4 · Tournament 3–2 · Scrimmages 2–1 · not counted”.</li>
+    <li>Delete the ghost: <code>WLT_DEFAULT</code>, <code>readWltPreference</code>, <code>wltStorageKey</code>, the Overview tile’s “no game types selected” branch, the Insights page’s hand-copied localStorage read. The tile’s sub reads “Scrimmages left out”; the Insights caption reads “Games + tournaments”.</li>
+  </ul>
+  <h3>4.4 Screens</h3>
+  <ul>
+    <li><strong>Schedule:</strong> menu and pills lose Scrimmage and say Game; the Who section gains the one-line checkbox (“This is a scrimmage”, no hint) for a Game on add and edit (mirrored games are excluded by kind); the edit-modal title reads “Edit Game”; the drawer’s kind pill reads “Game” with the chip beside it; the list row’s trail carries the chip before the score; month/week cells draw a ticked game outlined; the export writes the two words; leaving the Game kind clears the box; the save body carries the box; a repeating series carries it onto every occurrence.</li>
+    <li><strong>Lineups:</strong> default mode reads the box first, then the kind.</li>
+    <li><strong>Scouting Book, masthead, Season’s End, Wrapped, Insights, Overview:</strong> as 4.3.</li>
+    <li><strong>Club-admin rep pages:</strong> their private label/colour/icon maps drop <code>scrimmage</code> and read the shared vocabulary; their record filters add the box.</li>
+    <li><strong>Free→Premium:</strong> <code>game</code> → Game, unticked; the note corrected.</li>
+  </ul>
+  <h3>4.5 Routes</h3>
+  <ul>
+    <li>Events create: the valid-kind list drops <code>scrimmage</code> (the app-side validator is the belt while the check still admits it between 306 and 307); the box is accepted, coerced, and honoured only on a Game.</li>
+    <li>Events update: accepts the box under the same rule; still refuses a kind.</li>
+    <li>Lineup, game console, game moments, season results: their game-kind lists drop <code>scrimmage</code>; season results adds the box to its record predicate.</li>
+  </ul>
+  <h3>4.6 Help (offer <code>/docs</code> after the build)</h3>
+  <p>Articles to correct: “record does not match” (its premise is gone), the Overview record tile article, the Insights hub search text, the Premium schedule article’s kind list, the tags article, the lineup mode article, the Scouting Book definition — all now say: <em>a game is a game; tick “This is a scrimmage” to keep it on the schedule but out of your record.</em></p>
+  <h3>4.7 Tests, fixtures, gates</h3>
+  <ul>
+    <li>Unit: opponents, season-wrapped, schedule intelligence, opponent insights, game moments, game day, overview, masthead status, finished-season surfaces, club book, development record, the schedule vocab / import tests (new cases for the two words, the home/away auto-name and the typed-name guard). New: <code>countsTowardRecord</code> both ways; <code>competitionOf</code>; the mapper’s legacy normalization.</li>
+    <li>UAT: schedule smoke, lineup smoke, family access boundary; fixtures <code>seed-uat-coach-fixture.mjs</code>, <code>seed-qa-day-fixtures.mjs</code>.</li>
+    <li>Gates: <code>verify:changed</code> (spelling, dictionary), <code>typecheck</code>, <code>check:layout</code>, the history-endpoint guard (no route learns a year), <code>check:demos</code>.</li>
+  </ul>
+  <h3>4.8 Demo</h3>
+  <p>The coach demo seeds league games only and no tour line names a scrimmage; the build’s auto-reseed picks up 306/307 on its own. Whether the shop window should <em>show</em> a scrimmage is a <code>/demos</code> question for the next cycle.</p>
+
+  <h2>5 · Out of scope</h2>
+  <div class="note"><strong>Named so it is not built on the way past:</strong> tournament games carrying the box (D3, deferred) · a team-level “count scrimmages” setting (D4) · changing the kind of an existing event between the remaining kinds · renaming the stored key <code>league_game</code> · the Basic/Free schedule’s three kinds · anything that reads a year.</div>
+
+  <h2>6 · The owner’s walk (written after the build)</h2>
+  <p>UAT coach on <code>uat-test-org</code> / UAT Test Team. Parts: A — add a Game, tick, see the chip and the “vs/@” name · B — edit a folded scrimmage, untick, watch the Overview tile and masthead record move · C — import a sheet with “Scrimmage” and “League Game”, export it back, read the two words · D — the lineup builder opens on Development for a ticked game · E — Scouting Book EXH · F — Season’s End split shows “Scrimmages · not counted” · G — the phone: the box in the sheet, the chip on the row · H — the help says what the product does.</p>
+</section>
+
+<!-- ═══════════════════════════════ DECISIONS ═══════════════════════════════ -->
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens. D1–D6 were ruled in chat on 2026-09-20 (“I agree with your recommendations, go ahead and build”); the option buttons stay so a later change of mind can travel the same way.</p>
+  <div id="decisionRows"></div>
+  <button class="button primary" type="button" id="buildRulings">Build paste-back of my rulings</button>
+  <textarea id="rulingOut" rows="10" readonly hidden></textarea>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<!-- ═══════════════════════════════ QA WALK (hidden until built) ═══════════════════════════════ -->
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow" style="padding:24px 24px 0">Owner QA walk · §211</div>
+  <h1 style="padding:0 24px">A scrimmage is a flag — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="signin"><strong>Sign in as</strong> — URL: <strong>http://localhost:3000</strong> · Account: <strong>uat-coach@uat-test-org.local</strong> · Password: <strong>UATPassword2026!</strong> (dev only — keep this page private) · Org / Team: <strong>uat-test-org / UAT Test Team</strong>. Parts A–F and H at desktop width; part G on an actual phone. As of 2026-09-20 the team holds six decided games (record <strong>3-2-1</strong>) and ONE decided scrimmage (<strong>@ Lakeside, Apr 2, 2–7</strong>) — the figures below are pinned to those rows, not to today's date. Steps that add rows name what to delete at the end.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* ---- hub-level tabs ---- */
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});if(which==='qa')drawQA();document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));if(which==='mockup')fitAll()}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+/* ---- phone / desktop + fit / true size (the 1440 frames only; panels and echo cards are their own size) ---- */
+let phone=false,fit=true;const faces={};
+$('phone').onclick=()=>{phone=!phone;$('phone').setAttribute('aria-pressed',String(phone));$('phone').textContent=phone?'Desktop width':'Phone width';document.querySelectorAll('.fitwrap.desk .frame').forEach(f=>f.classList.toggle('phone',phone));document.querySelectorAll('.screen').forEach(paintFaces);fitAll()};
+$('fitToggle').onclick=()=>{fit=!fit;fitAll()};
+function paintFaces(s){const bar=s.querySelector('.facebar');if(!bar)return;const cur=faces[s.id]||'after';bar.querySelectorAll('[data-face]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.face===cur)));s.querySelectorAll('.fitwrap.desk').forEach(w=>{const f=w.querySelector('.frame');w.hidden=f.dataset.face!==cur;f.hidden=false})}
+document.querySelectorAll('.facebar [data-face]').forEach(b=>b.onclick=()=>{const s=b.closest('.screen');faces[s.id]=b.dataset.face;paintFaces(s);fitAll()});
+function fitAll(){document.querySelectorAll('.fitwrap.desk').forEach(w=>{const f=w.querySelector('.frame');if(!f||w.hidden)return;if(phone){w.classList.remove('scroll');f.style.transform='';w.style.height='';return}w.classList.toggle('scroll',!fit);if(fit){const k=Math.min(1,w.clientWidth/1440);f.style.transform='scale('+k+')';w.style.height=(f.offsetHeight*k)+'px'}else{f.style.transform='';w.style.height=''}});$('fitToggle').setAttribute('aria-pressed',String(fit));$('fitToggle').textContent=fit?'Fit to window':'True size (1440)'}
+window.addEventListener('resize',fitAll);
+
+/* ---- mockup screen router ---- */
+const intents={
+ 's-list':'The whole screen, so the cumulative effect can be judged: three shapes become one, the list gets quieter, and the one new thing (the chip) sits in the trail slot where state already lives. Nothing the screen exists for moved.',
+ 's-add':'Draw the two places a kind is chosen. Removing a choice is the change; the pills also reflow one row shorter on a phone.',
+ 's-form':'The box lives with Home / Away because those are the two facts a coach settles together. One line — the same shape as “Repeat weekly” — with the definition in the help, not under the box.',
+ 's-edit':'The lock on the kind is kept on purpose — it is right for practices, tournaments and series. The box is what a coach actually needed to change, and it is now simply there.',
+ 's-echo':'Every reader of the kind, side by side, so a build cannot drop one. Four are unchanged in what a coach sees; three change a word because “League” leaves the label; one loses a sentence about a control that no longer exists.'
+};
+function showScreen(){const id=location.hash.slice(1)||'s-list';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=intents[id]?'<strong>Design intent:</strong> '+esc(intents[id]):'';const s=document.getElementById(id);if(s){paintFaces(s);s.querySelector('h1')?.focus({preventScroll:true})}fitAll()}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+/* ---- explanations behind every highlight ---- */
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const FINDINGS={
+ F01:{t:'The kind is locked after creation, for every kind, with no stated reason',now:'The type picker renders only when adding an event; on edit there is no control, and the save route ignores a kind even if one is sent. No plan or commit records why. The lock is right for kinds that carry structure (a tournament game’s parent, a tournament’s days and child games, a practice’s plan, a series’ children) and wrong for League game ↔ Scrimmage, which share every field.',fix:'Scrimmage stops being a kind. The one thing a coach needed to change between the two game kinds becomes a checkbox on the Game, editable at any time. The lock on the remaining kinds stays.'},
+ F02:{t:'The Free → Premium upgrade files every game as a scrimmage and promises a fix that does not exist',now:'The upgrade maps the Free tier’s “game” to the scrimmage kind with a code note: “Free never tracked a result, so no loss; coach can reclassify.” Because of F01 they cannot. Every upgraded coach’s game history sits outside the record — Overview tile, masthead, Season Wrapped, Season’s End, the Scouting Book — and the only remedy today is to delete and re-add each game.',fix:'Games arrive as Games, unticked. Any already filed as scrimmages can be fixed from the edit form, one untick each.'},
+ F03:{t:'“Choose whether scrimmages count” is a ghost',now:'The season-record module still exports a per-device preference and the Overview record tile still reads it, but nothing has written it since 2026-09-02, when the only control was deleted as confirmed-dead code (cleanup tranche 6, 2b45a735). Every surface has counted league + tournament and never a scrimmage since — while four help articles still say Insights lets the coach choose, and the tile has an unreachable “No game types selected — choose them in Insights” branch.',fix:'The ghost is deleted rather than rebuilt (D4): the per-game box is the finer instrument. The tile’s caption reads “Scrimmages left out”; the help articles are corrected to say what the product does.'},
+ F04:{t:'“League Game” is the only counted non-tournament kind, so an exhibition the coach wants counted has to lie',now:'A rep team’s non-league friendly that the coach wants in their record has nowhere to go except “League Game”. The importer already treats a bare “Game” as a league game, so the product’s own vocabulary knows the word “League” is not load-bearing.',fix:'The kind is “Game” (D1). Whether it counts is the box, not the word.'},
+ F05:{t:'Two rows, two shapes, one form',now:'“Scrimmage vs Brampton Gold” and “Scrimmage · @ Brampton Gold” are the same kind of game from the same form. The auto-name writes “{Kind} vs {opponent}” regardless of home/away and only at create time; an event whose opponent or side was set on edit keeps its bare kind word and picks up the display suffix instead — which is home/away aware.',fix:'The auto-name learns home/away (“vs X” / “@ X”) and drops the kind word (D2); an edit that changes the opponent or the side re-derives a name that still has the auto-shape. A name the coach typed is never touched, and the contract migration rewrites only names that exactly match the old auto-shape.'}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:'Not in the product today. Click any tag on a screen to read what that element adds and why.',re:'Exists today and changes in shape, wording or place. Each tag’s note says what it was.',un:'Exists today and is drawn here unchanged, so a build cannot drop it by accident.'};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3, #hub-plan strong')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+/* ---- Decisions — the ruling in chat, then D1–D6 open with one button per option ---- */
+const DECISIONS=[
+ {id:'R0',date:'2026-09-20 · in chat',ask:'A per-game flag, or a cheap League ↔ Scrimmage kind switch on edit?',ruling:'accepted',label:'Ruled · “the flag”',why:'Two options were laid out with the honest cost of each — the flag rebuilds the model (a day, two small migrations, the word “League” leaves the label); the switch is two hours and fixes only the upgrade bug. The owner chose the flag.'},
+ {id:'R1',date:'2026-09-20 · in chat, on the round-1 mockup',ask:'The checkbox carries an explanatory hint under it?',ruling:'accepted',label:'Ruled · one line',why:'“We don’t need to take up so much space with the explanation — this is a scrimmage is enough.” The box is one line, the same shape as Repeat weekly; what a scrimmage means lives in the help article.'},
+ {id:'R2',date:'2026-09-20 · in chat',ask:'D1–D6 — the six open rulings',ruling:'accepted',label:'Ruled · “I agree with your recommendations, go ahead and build”',why:'All six accepted as recommended: Game (D1) · “vs X / @ X” with the exact-auto-name rewrite (D2) · Game only (D3) · no count-scrimmages switch, the ghost deleted (D4) · a scrimmage can repeat weekly (D5) · the chip on the row and the outlined month cell (D6). Built on dev the same day; migration 306 applied to dev. The rows below are kept as the record of what each ruling was.'},
+ {id:'R3',date:'2026-09-21 · /simplify + /review',ask:'Anything the build got wrong before the walk?',ruling:'accepted',label:'Found and fixed',why:'One Critical: Season Wrapped and the player season recap built their game lists without the box, so the shareable card would have counted every scrimmage — fixed, and the field is now required so the next builder cannot forget it. Four Mediums fixed: a nameless scrimmage’s name was not folded; an untouched edit could flip an away game a coach had named “vs X” to “@ X”; the Results report’s “vs tag” record counted scrimmages; the database now refuses the box on anything but a Game. Two findings belong to another session’s in-flight work on the same page and were handed to the owner.'},
+ {id:'D1',date:'2026-09-20',ask:'D1 — “League Game” becomes “Game” everywhere a coach reads it (menu, pills, edit title, export word, the Season’s End / Wrapped split says “Games”, the Insights caption).',ruling:'accepted',label:'Ruled · yes',why:'This is the “one game” half of the ask. Keeping “League” would leave F04 standing — a non-league friendly the coach wants counted would still have to be called a league game.',options:['Yes — “Game”','Keep “League Game”','Something else — say what']},
+ {id:'D2',date:'2026-09-20',ask:'D2 — The auto-name drops the kind word and learns home/away (“vs Brampton Gold” / “@ Brampton Gold”); the contract migration rewrites names that EXACTLY match the old auto-shape; a typed name is never touched; an edit that changes opponent or side re-derives an auto-shaped name.',ruling:'accepted',label:'Ruled · yes',why:'Fixes F05 and stops old rows reading “League Game vs X” beside new rows for the rest of a season. The alternative keeps a kind word (“Game vs X”) and skips the rewrite — every old row then differs from every new one anyway.',options:['Yes — “vs X / @ X” + rewrite the exact auto-names','“Game vs X”, no rewrite','Something else — say what']},
+ {id:'D3',date:'2026-09-20',ask:'D3 — Game only. A tournament game (hand-entered or mirrored) does not carry the box.',ruling:'accepted',label:'Ruled · yes',why:'I suggested the opposite in chat. On reflection: the organizer scores a tournament game, and a private “doesn’t count” on the coach’s side puts the tournament’s record and the coach’s in disagreement; the export would also need a third word. Deferred until a real case appears — cheap to add later.',options:['Yes — Game only','Tournament games too','Something else — say what']},
+ {id:'D4',date:'2026-09-20',ask:'D4 — The “count scrimmages” switch is not rebuilt; the ghost preference and its dead branch are deleted; the help is corrected.',ruling:'accepted',label:'Ruled · yes',why:'The switch has not existed since 2026-09-02 (F03). The per-game box is the finer instrument: a game the coach wants counted is a Game — untick it. Rebuilding it as a TEAM setting (not per device) is a real feature with its own mockup, and the box makes it mostly redundant.',options:['Yes — delete the ghost, no switch','Rebuild it as a team setting (separate mockup)','Something else — say what']},
+ {id:'D5',date:'2026-09-20',ask:'D5 — A ticked Game can repeat weekly (a standing Tuesday scrimmage with a partner club); the box rides onto every occurrence.',ruling:'accepted',label:'Ruled · yes',why:'Falls out of the model — it is a Game, and Games repeat. Today scrimmages are the one game kind that cannot.',options:['Yes','No — scrimmages stay one-off','Something else — say what']},
+ {id:'D6',date:'2026-09-20',ask:'D6 — The word on the row is a small muted “Scrimmage” chip in the trail slot whenever the box is ticked; the mark is the game’s shield in the game’s colour; the swords icon and the blue token retire; month/week cells draw a ticked game OUTLINED in the game colour with “Scrimmage” in the title.',ruling:'accepted',label:'Ruled · yes',why:'One kind, one mark. The chip is muted because it means “left out of the record”, not a result; the outline is a shape cue that survives a colour-blind read where a 14-character cell has no room for a word. The alternative keeps a second icon for one kind — the thing being removed.',options:['Yes — chip + outlined cell','Keep a distinct icon for a ticked game','Something else — say what']}
+];
+let rul={};try{rul=JSON.parse(localStorage.getItem('scrimmage-flag-rulings')||'{}')}catch(e){rul={}}
+function saveRul(){try{localStorage.setItem('scrimmage-flag-rulings',JSON.stringify(rul))}catch(e){}}
+function drawDecisions(){$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p>${d.options?`<div class="ruling">${d.options.map(o=>`<button type="button" data-rule="${d.id}" data-opt="${esc(o)}" aria-pressed="${rul[d.id]===o}">${esc(o)}</button>`).join('')}</div><textarea class="note" data-rnote="${d.id}" rows="2" placeholder="Why, if it matters">${esc(rul['note-'+d.id]||'')}</textarea>`:''}</div>`).join('');
+ document.querySelectorAll('[data-rule]').forEach(b=>b.onclick=()=>{rul[b.dataset.rule]=b.dataset.opt;saveRul();drawDecisions()});
+ document.querySelectorAll('[data-rnote]').forEach(t=>t.oninput=()=>{rul['note-'+t.dataset.rnote]=t.value;saveRul()})}
+drawDecisions();
+$('buildRulings').onclick=()=>{const lines=['A scrimmage is a flag — rulings','' ];DECISIONS.filter(d=>d.options).forEach(d=>{lines.push(`${d.id}: ${rul[d.id]||'(not ruled)'}`);if(rul['note-'+d.id])lines.push('   note: '+rul['note-'+d.id])});const out=$('rulingOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+
+/* ---- QA walk — filled in when the walk begins, then the tab is unhidden ---- */
+const QA_PARTS=[
+ {id:'A',title:'Add a Game with the box (desktop)',steps:[
+  'Schedule → Add Event: the menu reads Tournament › Game (Tournament) · Game · Practice · Team Event — no Scrimmage item, and the word “League” appears nowhere.',
+  'Choose Game. The form is titled “Add Game”; the kind pills read Tournament · Game · Practice · Team Event.',
+  'In Who, under Home / Away, there is ONE line: ☐ This is a scrimmage — nothing written under it. Tick it.',
+  'Opponent “Walk Rovers”, side Away, tomorrow at 10:00 a.m. The Name field’s placeholder reads “Auto: @ Walk Rovers”. Leave the name blank and Save.',
+  'The new row: the same shield mark as every other game, the name “@ Walk Rovers”, and a small outlined SCRIMMAGE chip in the trail. Open it — the drawer shows the “Game” pill with the SCRIMMAGE chip beside it.',
+  'Switch to Month: “@ Walk Rovers” is drawn OUTLINED in the game colour (every other game is filled); its hover title ends “· Scrimmage”.'
+ ]},
+ {id:'B',title:'The record does not move — and moves when you say so',steps:[
+  'Overview: the Record tile reads 3-2-1 with “Scrimmages left out” under it; the masthead record reads 3-2-1. (The Apr 2 @ Lakeside 2–7 scrimmage is not in either.)',
+  'Schedule → open “@ Lakeside” (Apr 2, 2–7 LOSS, SCRIMMAGE chip) → Edit → untick This is a scrimmage → Save. The chip leaves the row; the Overview tile AND the masthead now read 3-3-1.',
+  'Edit it again, tick the box, Save. Both read 3-2-1 again and the chip is back. (The record moved the moment you saved — no confirm, no page you had to visit.)',
+  'Season → Insights: the Record stat reads 3-2-1 with “Games + tournaments · scrimmages left out”. Open the Results report: its basis line reads “Games 2-1-1 · Tournament 1-1 · Scrimmages 0-1 (not counted)”, and the @ Lakeside row’s Type column says Scrimmage.',
+  'Season Wrapped (the Overview’s season card, or a player’s season recap line): the record reads 3-2-1 — never 3-3-1. (The review found the card would have counted the scrimmage; this step pins the fix.)'
+ ]},
+ {id:'C',title:'Export and import — two words, one column',steps:[
+  'Schedule → Export. In the Event Type column, @ Lakeside and @ Walk Rovers say “Scrimmage”; the other games say “Game”; no row says “League Game”.',
+  'Schedule → Import, paste two rows with a header (Date · Time · Event Type · Opponent · Home/Away): “2026-10-10 · 10:00 AM · League Game · Walk Import One · H” and “2026-10-11 · 1:00 PM · Scrimmage · Walk Import Two · A”. Both preview as add; after Import, the list shows “vs Walk Import One” with no chip and “@ Walk Import Two” with the SCRIMMAGE chip.'
+ ]},
+ {id:'D',title:'The lineup builder',steps:[
+  'Lineups → open the lineup for @ Lakeside (the scrimmage) → Auto-fill: the Mode starts on Development; the line under the title ends “· Scrimmage”.',
+  'Open the lineup for vs Ridgeview (Apr 4, a Game) → Auto-fill starts on Balanced, and nothing says Scrimmage.'
+ ]},
+ {id:'E',title:'The Scouting Book',steps:[
+  'Insights → Scouting Book → Lakeside: the record vs them is 1-0 (the Apr 10 4–3 win), the line “+ 1 scrimmage listed below — never counted” shows, and the Apr 2 meeting carries EXH.'
+ ]},
+ {id:'F',title:'The other kinds are untouched',steps:[
+  'Add Event → Practice: no scrimmage box anywhere on the form; the same for Team Event and Tournament.',
+  'Edit an existing practice: the kind is still fixed (no kind pills on edit), and there is no box.'
+ ]},
+ {id:'G',title:'The phone (390 wide — an actual phone)',steps:[
+  'Schedule list: the SCRIMMAGE chip sits in the row’s right-hand slot beside the score without pushing the row to a second line.',
+  'Add Event → Game: ☐ This is a scrimmage is one line under Home / Away, box on the left, words beside it.',
+  'The masthead’s NEXT line: with @ Walk Rovers as the next event it ends with the word “scrimmage” (e.g. “Tomorrow 10:00 a.m. scrimmage”).'
+ ]},
+ {id:'H',title:'The help says what the product does — then clean up',steps:[
+  'Help (the “?”) → search “scrimmage”: the new “How do I mark a game as a scrimmage?” answer comes up first; the record article says ONE rule everywhere; NO article says Insights lets you choose, and searching “League Game” finds only the import note that an old sheet’s “League Game” still reads as a game.',
+  'Clean up: delete @ Walk Rovers, vs Walk Import One and @ Walk Import Two. Leave @ Lakeside ticked as a scrimmage.'
+ ]}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('scrimmage-flag-qa')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('scrimmage-flag-qa',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

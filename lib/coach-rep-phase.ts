@@ -7,9 +7,9 @@
 // Design: the anchor ports THIS logic but renders in the operating-tool dashboard
 // card language, never the celebratory TeamHQ hero skin (design_decisions 2026-07-04).
 
-export type CoachRepPhase = 'preseason' | 'in_season' | 'game_day' | 'result';
+import { COACH_GAME_EVENT_TYPES as GAME_EVENT_TYPES } from './coach-tournament-games';
 
-const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
+export type CoachRepPhase = 'preseason' | 'in_season' | 'game_day' | 'result';
 
 export interface RepPhaseInput {
   /** rep_program_years.status ('draft' | 'active' | 'completed' | 'archived') */

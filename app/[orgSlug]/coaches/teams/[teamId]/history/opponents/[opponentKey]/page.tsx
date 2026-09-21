@@ -549,7 +549,7 @@ export default function CoachOpponentCardPage({
                 </span>
                 <span className={styles.scoutMeetingName}>
                   {m.name}
-                  {m.eventType === 'scrimmage' && <span className={styles.scoutExh}>EXH</span>}
+                  {m.isScrimmage && <span className={styles.scoutExh}>EXH</span>}
                 </span>
                 <span className={styles.scoutMeetingDate}>{formatInOrgZone(m.startsAt, { month: 'short', day: 'numeric' })}</span>
               </div>

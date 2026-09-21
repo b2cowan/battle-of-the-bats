@@ -14,6 +14,7 @@ import {
   upsertRepTeamLineup,
 } from '@/lib/db';
 import type { RepLineupMode } from '@/lib/types';
+import { COACH_GAME_EVENT_TYPES as GAME_EVENT_TYPES } from '@/lib/coach-tournament-games';
 import { normalizeRulesOverride } from '@/lib/lineup-caps';
 import { withObservability } from '@/lib/observability';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
@@ -23,7 +24,6 @@ import { gameHasStarted } from '@/lib/coach-game-day';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 
 const VALID_LINEUP_MODES: RepLineupMode[] = ['nine_player', 'everyone_bats'];
-const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 const VALID_POSITIONS = new Set([
   'P', 'C', '1B', '2B', '3B', 'SS', 'LF', 'CF', 'RF', 'OF', 'DH', 'EH', 'Bench',
 ]);
@@ -61,7 +61,7 @@ async function resolveCoachContext(orgSlug: string, teamId: string, eventId: str
   }
 
   if (!GAME_EVENT_TYPES.includes(event.eventType)) {
-    return { error: NextResponse.json({ error: 'Lineups are available for games and scrimmages' }, { status: 400 }) };
+    return { error: NextResponse.json({ error: 'Lineups are available for games' }, { status: 400 }) };
   }
 
   return { ctx, team, assignment, programYear, event };
@@ -104,7 +104,7 @@ export const GET = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Event not found' }, { status: 404 });
   }
   if (!GAME_EVENT_TYPES.includes(event.eventType)) {
-    return NextResponse.json({ error: 'Lineups are available for games and scrimmages' }, { status: 400 });
+    return NextResponse.json({ error: 'Lineups are available for games' }, { status: 400 });
   }
 
   const [players, attendance, lineup] = await Promise.all([

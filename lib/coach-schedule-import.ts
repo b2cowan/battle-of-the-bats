@@ -16,7 +16,7 @@ import { formatTime, endSentence } from './utils';
 // Relative imports WITH the .ts extension so the unit tests can run under plain `node --test`.
 import { getCell, normalizeHeader } from './import/tabular.ts';
 import type { ParsedImportFile } from './import/types.ts';
-import { parseEventTypeCell, parseHomeAwayCell, needsOpponent, EVENT_NAME_PREFIX } from './coach-schedule-vocab.ts';
+import { parseEventTypeCell, parseHomeAwayCell, needsOpponent, EVENT_NAME_PREFIX, deriveGameName } from './coach-schedule-vocab.ts';
 import type { RepEventType } from './types.ts';
 
 /** Upper bound on one intake, mirroring the budget + roster importers. */
@@ -129,6 +129,8 @@ export interface ScheduleRowVerdict {
   /** Resolved values, present only when the row is writable. */
   resolved?: {
     eventType: RepEventType;
+    /** The "Event Type" cell said Scrimmage (or exhibition / friendly) — a Game with the box ticked. */
+    isScrimmage: boolean;
     date: string;
     time: string;
     startsAt: string;
@@ -287,15 +289,16 @@ export function reviewScheduleRows(
       });
     }
 
-    const eventType = parseEventTypeCell(row.eventType);
-    if (!eventType) {
+    const parsedType = parseEventTypeCell(row.eventType);
+    if (!parsedType) {
       return verdict({
         outcome: 'blocked',
         reason: row.eventType.trim()
-          ? `“${row.eventType.trim()}” isn’t an event type we know. Use Practice, League Game, Scrimmage, Tournament or Team Event.`
+          ? `“${row.eventType.trim()}” isn’t an event type we know. Use Game, Scrimmage, Practice, Tournament or Team Event.`
           : 'This row doesn’t say what kind of event it is.',
       });
     }
+    const { type: eventType, isScrimmage } = parsedType;
     if (eventType === 'tournament_game') {
       return verdict({
         outcome: 'blocked',
@@ -307,10 +310,10 @@ export function reviewScheduleRows(
     const homeAway = parseHomeAwayCell(row.homeAway);
     const isGame = needsOpponent(eventType);
     const name = row.name.trim()
-      || (isGame && opponent ? `${EVENT_NAME_PREFIX[eventType]} vs ${opponent}` : EVENT_NAME_PREFIX[eventType]);
+      || (isGame && opponent ? deriveGameName(eventType, opponent, homeAway) : EVENT_NAME_PREFIX[eventType]);
 
     const resolved = {
-      eventType, date, time: time || '00:00',
+      eventType, isScrimmage, date, time: time || '00:00',
       startsAt: `${date}T${time || '00:00'}`,
       name, opponent: isGame ? opponent : null, homeAway: isGame ? homeAway : null,
     };

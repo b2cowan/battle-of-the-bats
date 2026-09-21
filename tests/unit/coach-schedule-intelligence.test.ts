@@ -177,10 +177,15 @@ describe('schedule import — the parser never guesses (P1 #7)', () => {
   });
 
   it('reads the event-type vocabulary the export writes, and refuses the rest', () => {
-    assert.equal(parseEventTypeCell('League Game'), 'league_game');
-    assert.equal(parseEventTypeCell('league_game'), 'league_game');
-    assert.equal(parseEventTypeCell('  practice '), 'practice');
-    assert.equal(parseEventTypeCell('Game (Tournament)'), 'tournament_game');
+    assert.deepEqual(parseEventTypeCell('Game'), { type: 'league_game', isScrimmage: false });
+    // The word the export USED to write, and the stored key — an old sheet still imports.
+    assert.deepEqual(parseEventTypeCell('League Game'), { type: 'league_game', isScrimmage: false });
+    assert.deepEqual(parseEventTypeCell('league_game'), { type: 'league_game', isScrimmage: false });
+    // "Scrimmage" is what a ticked Game exports as — a Game with the box ticked, never a kind.
+    assert.deepEqual(parseEventTypeCell('Scrimmage'), { type: 'league_game', isScrimmage: true });
+    assert.deepEqual(parseEventTypeCell('exhibition'), { type: 'league_game', isScrimmage: true });
+    assert.deepEqual(parseEventTypeCell('  practice '), { type: 'practice', isScrimmage: false });
+    assert.deepEqual(parseEventTypeCell('Game (Tournament)'), { type: 'tournament_game', isScrimmage: false });
     assert.equal(parseEventTypeCell('Bake sale'), null);
     assert.equal(parseHomeAwayCell('H'), 'home');
     assert.equal(parseHomeAwayCell('neutral'), 'neutral');
@@ -231,7 +236,19 @@ describe('schedule import — verdicts', () => {
     const [row] = reviewScheduleRows([base({})], []);
     assert.equal(row.outcome, 'add');
     assert.equal(row.resolved?.startsAt, '2026-09-12T10:00');
-    assert.equal(row.resolved?.name, 'League Game vs Kanata Selects');
+    // The auto-name has no kind word and knows the side (D2, 2026-09-20): "vs X" at home, "@ X" away.
+    assert.equal(row.resolved?.name, 'vs Kanata Selects');
+    assert.equal(row.resolved?.isScrimmage, false);
+  });
+
+  it('an away game auto-names with "@"; a "Scrimmage" cell is a Game with the box ticked', () => {
+    const [away] = reviewScheduleRows([base({ homeAway: 'A' })], []);
+    assert.equal(away.resolved?.name, '@ Kanata Selects');
+    const [scrim] = reviewScheduleRows([base({ eventType: 'Scrimmage' })], []);
+    assert.equal(scrim.outcome, 'add');
+    assert.equal(scrim.resolved?.eventType, 'league_game');
+    assert.equal(scrim.resolved?.isScrimmage, true);
+    assert.equal(scrim.resolved?.name, 'vs Kanata Selects', 'the word is a chip, never the name');
   });
 
   it('updates a same-day, same-opponent game and NAMES the old value', () => {

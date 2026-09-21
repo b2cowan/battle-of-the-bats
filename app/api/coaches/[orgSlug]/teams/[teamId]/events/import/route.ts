@@ -147,6 +147,9 @@ export const POST = withObservability(async (req: Request,
         if (row.uniform.trim()) changes.uniform = row.uniform.trim();
         if (r.opponent !== null) changes.opponent = r.opponent;
         if (r.homeAway !== null) changes.homeAway = r.homeAway as 'home' | 'away' | 'neutral';
+        // The sheet always carries the kind cell (a row cannot resolve without one), and for a Game
+        // that cell IS the scrimmage box — "Scrimmage" ticks it, "Game" clears it.
+        if (r.eventType === 'league_game') changes.isScrimmage = r.isScrimmage;
 
         if (Object.keys(changes).length === 0) {
           results.push({ rowNumber: row.rowNumber, outcome: 'unchanged', eventId: row.matchedEventId });
@@ -170,6 +173,7 @@ export const POST = withObservability(async (req: Request,
           uniform: row.uniform.trim() || null,
           opponent: r.opponent,
           homeAway: (r.homeAway as 'home' | 'away' | 'neutral' | null) ?? null,
+          isScrimmage: r.isScrimmage,
         });
         created += 1;
         results.push({ rowNumber: row.rowNumber, outcome: 'created', eventId: event.id });

@@ -11,37 +11,43 @@
 // Overview — the same failure the comment was written to prevent.
 //
 // A convention that two files must agree by hand is not a single source of truth. This is.
+//
+// ⚰ THE "COUNT SCRIMMAGES" PREFERENCE IS GONE (2026-09-20). `WLT_DEFAULT` / `wltStorageKey` /
+// `readWltPreference` survived here as a per-device switch that NOTHING had written since the
+// 2026-09-02 dead-code sweep deleted its only control — every surface counted league + tournament
+// and never a scrimmage, while the Overview tile still carried a "choose them in Insights" branch
+// and four help articles promised the switch. Since mig 306 a scrimmage is a BOX on a Game, which
+// is the finer instrument: a game the coach wants counted is a Game — untick it (owner ruling D4).
+// The rule is therefore one predicate with no preference behind it: `countsTowardRecord`
+// (lib/season-wrapped.ts). This module keeps the tally, the string, and the by-competition split.
 
-/** Event types that can carry a result. Scrimmages count only when the coach opts in. */
-export const WLT_CATEGORIES = [
-  { key: 'league_game', label: 'League' },
-  { key: 'tournament_game', label: 'Tournament' },
-  { key: 'scrimmage', label: 'Scrimmage' },
-] as const;
-
-/** League + tournament count; scrimmages do not, until the coach says otherwise. */
-export const WLT_DEFAULT: Record<string, boolean> = {
-  league_game: true,
-  tournament_game: true,
-  scrimmage: false,
-};
-
-/** Per-team, device-remembered scope. The coach sets it on Insights; every surface reads it. */
-export function wltStorageKey(teamId: string): string {
-  return `flhq.coachWlt.${teamId}`;
-}
+// Relative WITH the .ts extension, like the vocabulary module — so the unit tests run under plain
+// `node --test` as well as under the resolver.
+import { competitionOf, type Competition } from './season-wrapped.ts';
 
 /**
- * Read the coach's remembered scope. Best-effort by design — a device with no stored preference,
- * or unreadable storage, falls back to the default rather than showing no record at all.
+ * The by-competition split — the three lines Season's End and Wrapped draw under the record.
+ * `scrimmage` is listed so a season's scrimmages are visible, and marked `counted: false` so no
+ * surface can total it into the record by iterating this list.
  */
-export function readWltPreference(teamId: string): Record<string, boolean> {
-  try {
-    const raw = localStorage.getItem(wltStorageKey(teamId));
-    return raw ? { ...WLT_DEFAULT, ...(JSON.parse(raw) as Record<string, boolean>) } : { ...WLT_DEFAULT };
-  } catch {
-    return { ...WLT_DEFAULT };
-  }
+export const COMPETITIONS: readonly { key: Competition; label: string; counted: boolean }[] = [
+  { key: 'game', label: 'Games', counted: true },
+  { key: 'tournament', label: 'Tournament', counted: true },
+  { key: 'scrimmage', label: 'Scrimmages', counted: false },
+] as const;
+
+/**
+ * The record split by competition — one line per competition that has a decided game, in
+ * `COMPETITIONS` order, each carrying its `counted` flag so a renderer can say "not counted" beside
+ * the scrimmage line. Season's End (through its route) and the Insights Results report both draw
+ * this; a season that never scrimmaged shows two lines, not three with a 0-0.
+ */
+export function splitByCompetition<T extends { eventType: string; isScrimmage?: boolean | null; result: string | null }>(
+  games: readonly T[],
+): { key: Competition; label: string; counted: boolean; tally: WltTally }[] {
+  return COMPETITIONS
+    .map(c => ({ key: c.key, label: c.label, counted: c.counted, tally: tallyResults(games.filter(g => competitionOf(g) === c.key)) }))
+    .filter(r => r.tally.w + r.tally.l + r.tally.t > 0);
 }
 
 export interface WltTally { w: number; l: number; t: number }

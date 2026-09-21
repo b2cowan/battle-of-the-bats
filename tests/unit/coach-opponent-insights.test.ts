@@ -14,8 +14,9 @@ function meeting(over: Partial<OpponentMeeting>): OpponentMeeting {
   seq += 1;
   return {
     eventId: over.eventId ?? `m${seq}`,
-    name: 'League Game',
+    name: 'vs Rivals',
     eventType: 'league_game',
+    isScrimmage: false,
     startsAt: '2026-06-01T22:00:00Z',
     programYearId: 'py-2026',
     homeAway: 'home',
@@ -86,7 +87,7 @@ describe('computeOpponentInsights — record-derived lines', () => {
       ...DIAMOND,
       meetings: [
         meeting({}), meeting({}),
-        meeting({ eventType: 'scrimmage', counted: false, teamScore: 0, opponentScore: 9 }),
+        meeting({ isScrimmage: true, counted: false, teamScore: 0, opponentScore: 9 }),
         meeting({ result: null, teamScore: null, opponentScore: null, counted: false }),
       ],
     });

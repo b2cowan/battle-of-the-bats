@@ -175,6 +175,7 @@ export async function assemblePlayerSeasonRecap(
   const teamRecord = computeSeasonWrapped({
     events: events.map(e => ({
       eventType: e.eventType,
+      isScrimmage: e.isScrimmage,
       startsAt: e.startsAt,
       status: e.status,
       result: e.result ?? null,

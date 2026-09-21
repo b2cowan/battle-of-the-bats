@@ -156,9 +156,9 @@ describe('deriveWrappedMomentSlot', () => {
 describe('the D4 test — moments feed nothing', () => {
   const season: Partial<SeasonWrappedInput> = {
     events: [
-      { eventType: 'league_game', startsAt: '2026-05-01T18:00:00Z', status: 'scheduled', result: 'win', teamScore: 5, opponentScore: 2, opponent: 'Thunder', homeAway: 'home' },
-      { eventType: 'league_game', startsAt: '2026-05-08T18:00:00Z', status: 'scheduled', result: 'loss', teamScore: 1, opponentScore: 3, opponent: 'Breeze', homeAway: 'away' },
-      { eventType: 'league_game', startsAt: '2026-05-15T18:00:00Z', status: 'scheduled', result: 'win', teamScore: 4, opponentScore: 3, opponent: 'Thunder', homeAway: 'home' },
+      { eventType: 'league_game', isScrimmage: false, startsAt: '2026-05-01T18:00:00Z', status: 'scheduled', result: 'win', teamScore: 5, opponentScore: 2, opponent: 'Thunder', homeAway: 'home' },
+      { eventType: 'league_game', isScrimmage: false, startsAt: '2026-05-08T18:00:00Z', status: 'scheduled', result: 'loss', teamScore: 1, opponentScore: 3, opponent: 'Breeze', homeAway: 'away' },
+      { eventType: 'league_game', isScrimmage: false, startsAt: '2026-05-15T18:00:00Z', status: 'scheduled', result: 'win', teamScore: 4, opponentScore: 3, opponent: 'Thunder', homeAway: 'home' },
     ],
     attendance: [{ attended: 9, known: 10 }, { attended: 8, known: 10 }],
     awards: [{ playerId: 'p1', typeName: 'Hustle' }],

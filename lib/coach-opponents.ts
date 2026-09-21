@@ -8,11 +8,11 @@
  * then the coach-managed alias map for the tail the normalizer can't catch ("Thunder 12U"
  * IS "Oakville Thunder"). Game rows are never written by this feature.
  *
- * Record tallies route through WRAPPED_RECORD_EVENT_TYPES — the canonical season-record
+ * Record tallies route through `countsTowardRecord` (lib/season-wrapped.ts) — the canonical season-record
  * rule — so the book's "2–1 vs them" can never disagree with Wrapped or Insights one tap
  * away. Scrimmages are listed as meetings but never counted.
  */
-import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
+import { countsTowardRecord } from './season-wrapped';
 import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 import { tallyResults, formatRecord } from './coach-season-record';
 import type { SportPack } from './sports';
@@ -56,6 +56,8 @@ export interface OpponentGameInput {
   id: string;
   name: string;
   eventType: string;
+  /** "This is a scrimmage" (mig 306) — listed in the book with EXH, never counted. */
+  isScrimmage?: boolean | null;
   startsAt: string;
   programYearId: string | null;
   opponent: string | null;
@@ -70,6 +72,8 @@ export interface OpponentMeeting {
   eventId: string;
   name: string;
   eventType: string;
+  /** The scrimmage box — what the EXH badge and `scrimmageCount` read. */
+  isScrimmage: boolean;
   startsAt: string;
   programYearId: string | null;
   homeAway: 'home' | 'away' | 'neutral' | null;
@@ -168,13 +172,14 @@ export function buildOpponentBook(opts: {
       eventId: e.id,
       name: e.name,
       eventType: e.eventType,
+      isScrimmage: e.isScrimmage === true,
       startsAt: e.startsAt,
       programYearId: e.programYearId,
       homeAway: e.homeAway,
       teamScore: e.teamScore,
       opponentScore: e.opponentScore,
       result,
-      counted: WRAPPED_RECORD_EVENT_TYPES.includes(e.eventType) && result !== null,
+      counted: countsTowardRecord(e) && result !== null,
     });
   }
   // Minted rows with no games yet (e.g. a pre-scouted opponent) still get an entry.
@@ -206,7 +211,7 @@ export function buildOpponentBook(opts: {
       summary: minted?.summary ?? null,
       lastNoteUpdatedAt: minted?.lastNoteUpdatedAt ?? null,
       record,
-      scrimmageCount: g.meetings.filter(m => m.eventType === 'scrimmage').length,
+      scrimmageCount: g.meetings.filter(m => m.isScrimmage).length,
       unitFor: counted.reduce((s, m) => s + (m.teamScore ?? 0), 0),
       unitAgainst: counted.reduce((s, m) => s + (m.opponentScore ?? 0), 0),
       streak,

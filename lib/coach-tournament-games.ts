@@ -27,11 +27,12 @@ export { toMinute };
 /**
  * Event types that are a GAME (as opposed to a practice, a team event, or a multi-day tournament
  * container). Exported so the coach surfaces stop re-declaring the same literal — it was written
- * out independently in nine places before this. Distinct from `WRAPPED_RECORD_EVENT_TYPES`
+ * out independently in nine places before this. Distinct from `countsTowardRecord`
  * (lib/season-wrapped.ts), which answers "does this count toward the record" and therefore
- * excludes scrimmages and includes the legacy `external_tournament`.
+ * excludes a scrimmage (a Game with the box ticked, since mig 306) and includes the legacy
+ * `external_tournament`.
  */
-export const COACH_GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
+export const COACH_GAME_EVENT_TYPES = ['league_game', 'tournament_game'];
 
 /**
  * Whether this event is a MIRRORED tournament game — an organizer-owned row (Batch 4). ONE named
@@ -136,7 +137,14 @@ export function acknowledgeSeen(teamId: string, eventId: string, startsAt: strin
 export function opponentSuffix(event: Pick<RepTeamEvent, 'name' | 'opponent' | 'homeAway'>): string {
   const opponent = event.opponent?.trim();
   if (!opponent || event.name.toLowerCase().includes(opponent.toLowerCase())) return '';
-  return ` · ${event.homeAway === 'away' ? '@' : 'vs'} ${opponent}`;
+  return ` · ${sideWord(event.homeAway)} ${opponent}`;
+}
+
+/** "@" away, "vs" at home, neutral or unknown — the one word a matchup reads with. `deriveGameName`
+ *  (the auto-name) and `opponentSuffix` (the display suffix) both read it, so a row's name and its
+ *  suffix can never disagree about the side. */
+export function sideWord(homeAway: string | null | undefined): '@' | 'vs' {
+  return homeAway === 'away' ? '@' : 'vs';
 }
 
 /** An event's full display label — its name plus the matchup suffix when one applies. */

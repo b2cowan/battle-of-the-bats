@@ -600,7 +600,7 @@ body:has([data-chat-fullbleed]) {
      win/loss/tie result badges reuse --success/--danger/--warning, not this set. */
   --evt-external-tournament: #f97316;
   --evt-tournament-game:     #f59e0b;
-  --evt-scrimmage:           #3b82f6;
+  /* (--evt-scrimmage retired 2026-09-20 — a scrimmage is a Game with a box ticked and wears the game's colour; the word is a chip.) */
   --evt-league-game:         #22c55e;
   --evt-practice:            #a855f7;
   --evt-team-event:          #6b7280;
@@ -1012,10 +1012,9 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
 
   /* ── Schedule EVENT_COLORS → warm-legible event palette (Stage 4, round-1 frame 3) ──
      Dark keeps the saturated hues (defined at :root); these warm cousins read on cream
-     and reuse the warm palette so the six event types stay distinguishable. */
+     and reuse the warm palette so the five event kinds stay distinguishable. */
   --evt-external-tournament: var(--home-rust);   /* was #f97316 orange */
   --evt-tournament-game:     var(--home-amber);  /* was #f59e0b amber  */
-  --evt-scrimmage:           var(--home-blue);   /* was #3b82f6 blue   */
   --evt-league-game:         var(--home-win);    /* was #22c55e green  */
   --evt-practice:            var(--home-plum);   /* was #a855f7 purple */
   --evt-team-event:          #67625A;            /* was #6b7280 gray — warm slate, dark enough for legible white chip text (--home-dim was too light) */

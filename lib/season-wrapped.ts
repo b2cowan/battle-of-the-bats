@@ -10,17 +10,54 @@
  * celebration card that disagrees with the Insights page a tap away would be worse than no
  * card, so Wrapped counts EVERY real-competition type — league_game, tournament_game AND
  * the legacy external_tournament — and excludes scrimmages, matching what the Overview's
- * "That's a wrap" headline shows for the same games.
+ * "That's a wrap" headline shows for the same games. Since mig 306 "scrimmage" is a box on a Game
+ * rather than a kind, so the rule is the predicate `countsTowardRecord`, not the kind list alone.
  *
  * Honesty rule (approved mockups): every stat carries its own "earned it" threshold and is
  * null when the season didn't — the card renders fewer tiles, never padded superlatives.
  */
 
-/** Real-competition event types that count toward the record (scrimmage deliberately out). */
+/**
+ * Real-competition event KINDS that count toward the record. Since mig 306 a scrimmage is not a kind
+ * but a Game with `isScrimmage` set, so this list is HALF the rule — `countsTowardRecord` is the
+ * whole of it, and every SQL reader pairs `.in('event_type', WRAPPED_RECORD_EVENT_TYPES)` with
+ * `.eq('is_scrimmage', false)`. (The list still names the legacy `external_tournament` container,
+ * which older seasons scored directly.)
+ */
 export const WRAPPED_RECORD_EVENT_TYPES = ['league_game', 'tournament_game', 'external_tournament'];
+
+/**
+ * THE season-record predicate — the one answer to "does this game count?". A real-competition
+ * kind, and not a scrimmage. Cancelled / unscored rows are the caller's business (they differ per
+ * surface: a schedule lists them, a record does not).
+ */
+export function countsTowardRecord(e: { eventType: string; isScrimmage?: boolean | null }): boolean {
+  return WRAPPED_RECORD_EVENT_TYPES.includes(e.eventType) && !e.isScrimmage;
+}
+
+/**
+ * Which COMPETITION a game belongs to, for the by-competition split Season's End and Wrapped draw:
+ * `game` (a league or exhibition game the coach counts), `tournament`, or `scrimmage` (listed,
+ * never counted). Derived from the kind AND the box together — a scrimmage is a Game the coach
+ * has said not to count, so it is its own line rather than a Game with a footnote.
+ */
+export type Competition = 'game' | 'tournament' | 'scrimmage';
+export function competitionOf(e: { eventType: string; isScrimmage?: boolean | null }): Competition | null {
+  if (e.isScrimmage) return e.eventType === 'league_game' ? 'scrimmage' : null;
+  if (e.eventType === 'league_game') return 'game';
+  if (e.eventType === 'tournament_game' || e.eventType === 'external_tournament') return 'tournament';
+  return null;
+}
 
 export interface WrappedGameInput {
   eventType: string;
+  /**
+   * "This is a scrimmage" — listed, never counted. ⚠ REQUIRED, not optional: when this was optional
+   * the two Wrapped assemblers (`lib/rep-season-wrapped.ts`, `lib/rep-player-season-recap.ts`) built
+   * their inputs without it and every scrimmage a team ever played counted toward the shareable
+   * card's record (/review, 2026-09-21). A builder that forgets the box now fails to compile.
+   */
+  isScrimmage: boolean;
   /** ISO datetime */
   startsAt: string;
   status: string;
@@ -123,7 +160,7 @@ const finalized = (e: WrappedGameInput) => e.result != null && e.status !== 'can
 
 export function computeSeasonWrapped(input: SeasonWrappedInput): SeasonWrappedStats {
   const recordGames = input.events
-    .filter(e => WRAPPED_RECORD_EVENT_TYPES.includes(e.eventType) && finalized(e))
+    .filter(e => countsTowardRecord(e) && finalized(e))
     .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime());
 
   const record = {

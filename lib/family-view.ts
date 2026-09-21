@@ -1,5 +1,6 @@
 import 'server-only';
 import { supabaseAdmin } from './supabase-admin';
+import { countsTowardRecord } from './season-wrapped';
 import {
   isPubliclyVisible,
   isVisibleToFamilies,
@@ -78,12 +79,13 @@ export interface FamilyTeamView {
 }
 
 const EVENT_COLUMNS =
-  'id, event_type, name, starts_at, ends_at, location, location_address, field_number, ' +
+  'id, event_type, is_scrimmage, name, starts_at, ends_at, location, location_address, field_number, ' +
   'arrival_time, opponent, home_away, team_score, opponent_score, result, status';
 
 interface EventRow {
   id: string;
   event_type: string;
+  is_scrimmage: boolean | null;
   name: string;
   starts_at: string;
   ends_at: string | null;
@@ -160,18 +162,16 @@ function findNextUpId(rows: EventRow[]): string | null {
   return upcoming[0]?.id ?? null;
 }
 
-/** Event types that can carry a result. A practice must never reach the win/loss record —
- *  the coach UI only offers scoring on games, but the events API has no server-side type
- *  guard, so a future caller could set one and silently skew a family-facing record. */
-const RESULT_BEARING_TYPES = new Set([
-  'league_game', 'tournament_game', 'scrimmage', 'external_tournament',
-]);
+/* The family's record is THE record — `countsTowardRecord`, the same predicate as the coach's
+   masthead. It used to keep its own kind list here (which counted the old `scrimmage` kind, so a
+   family read a different W-L than the coach); a practice still never reaches it, because the
+   predicate reads the kind before the box. */
 
 function computeRecord(rows: EventRow[]): { wins: number; losses: number; ties: number } {
   let wins = 0, losses = 0, ties = 0;
   for (const row of rows) {
     if (row.status === 'cancelled') continue;
-    if (!RESULT_BEARING_TYPES.has(row.event_type)) continue;
+    if (!countsTowardRecord({ eventType: row.event_type, isScrimmage: row.is_scrimmage })) continue;
     if (row.result === 'win') wins++;
     else if (row.result === 'loss') losses++;
     else if (row.result === 'tie') ties++;

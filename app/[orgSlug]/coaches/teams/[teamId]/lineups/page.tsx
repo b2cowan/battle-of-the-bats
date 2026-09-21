@@ -17,7 +17,7 @@ import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import styles from '../../../coaches.module.css';
 import { gameDayEntryHref, gameHasStarted } from '@/lib/coach-game-day';
-import { isMirroredEvent, splitUpcomingAndRecent } from '@/lib/coach-tournament-games';
+import { isMirroredEvent, splitUpcomingAndRecent, COACH_GAME_EVENT_TYPES as GAME_EVENT_TYPES } from '@/lib/coach-tournament-games';
 import { parseLineupsSection } from '@/lib/lineups-address';
 import { calendarDaysBetween, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
 import { useMinuteClock } from '@/lib/use-minute-clock';
@@ -53,7 +53,6 @@ import type { RepTeamEvent } from '@/lib/types';
  * about a finished season and does not render for one. No page here learns a year.
  */
 
-const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
 
 // Weekday + time only — the row's date tile already carries the day number and month directly
 // beside this line, so repeating them spent the card's scarcest resource on something already on

@@ -2,15 +2,15 @@
 
 **Generated:** 2026-09-21 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 2 divergence(s)** across dev/prod.
+**⚠️ 5 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
-| Columns | 1 | 0 | 0 |
+| Columns | 2 | 0 | 0 |
 | Indexes | 0 | 0 | 0 |
 | Constraints | 0 | 0 | — |
-| RLS / CHECK | 0 | 0 | 0 (RLS state) |
+| RLS / CHECK | 1 | 0 | 0 (RLS state) |
 
 ## Tables
 ### Only in DEV (0)
@@ -20,7 +20,8 @@ _none_
 _none_
 
 ## Columns
-### Only in DEV (1)
+### Only in DEV (2)
+- `rep_team_events.is_scrimmage`
 - `rep_team_events.practice_plan_sent_to`
 
 ### Only in PROD (0)
@@ -50,8 +51,8 @@ _none_
 ### RLS state differs (0)
 _none_
 
-### CHECK only in DEV (0)
-_none_
+### CHECK only in DEV (1)
+- `rep_team_events.rep_team_events_scrimmage_is_a_game_check`
 
 ### CHECK only in PROD (0)
 _none_

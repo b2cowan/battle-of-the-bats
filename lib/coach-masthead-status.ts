@@ -25,6 +25,8 @@ export interface MastheadEvent {
   /** rep_team_events id — the scouting nudge's deep link + once-per-game dismiss key. */
   id: string;
   eventType: string;
+  /** "This is a scrimmage" — what makes the status line say "scrimmage" rather than "game". */
+  isScrimmage: boolean;
   /** ISO datetime. */
   startsAt: string;
   opponent: string | null;

@@ -46,7 +46,7 @@ export const POST = withObservability(async (req: Request,
   }
   // A moment belongs to a GAME. A practice has the run screen; a team event has no bench.
   if (!COACH_GAME_EVENT_TYPES.includes(event.eventType)) {
-    return NextResponse.json({ error: 'Moments belong to games and scrimmages' }, { status: 400 });
+    return NextResponse.json({ error: 'Moments belong to games' }, { status: 400 });
   }
 
   // The tag is validated against THIS season's active roster — a moment filed under a player

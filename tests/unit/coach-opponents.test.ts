@@ -94,7 +94,7 @@ describe('buildOpponentBook', () => {
       events: [
         game({ id: 'g1', opponent: 'Oakville Thunder', startsAt: '2026-06-14T22:00:00Z', teamScore: 5, opponentScore: 3, result: 'win', status: 'scheduled' }),
         game({ id: 'g2', opponent: 'OAKVILLE THUNDER', startsAt: '2026-05-17T22:00:00Z', teamScore: 4, opponentScore: 2, result: 'win' }),
-        game({ id: 'g3', opponent: 'Oakville Thunder', eventType: 'scrimmage', startsAt: '2026-04-26T22:00:00Z', teamScore: 3, opponentScore: 6, result: 'loss' }),
+        game({ id: 'g3', opponent: 'Oakville Thunder', isScrimmage: true, startsAt: '2026-04-26T22:00:00Z', teamScore: 3, opponentScore: 6, result: 'loss' }),
       ],
     });
     assert.equal(entries.length, 1);
@@ -103,7 +103,7 @@ describe('buildOpponentBook', () => {
     assert.deepEqual(e.record, { wins: 2, losses: 0, ties: 0 });
     assert.equal(e.scrimmageCount, 1);
     assert.equal(e.meetings.length, 3); // scrimmage present as a meeting
-    assert.equal(e.meetings.find(m => m.eventType === 'scrimmage')?.counted, false);
+    assert.equal(e.meetings.find(m => m.isScrimmage)?.counted, false);
     assert.equal(e.unitFor, 9); // counted games only: 5 + 4
     assert.equal(e.unitAgainst, 5);
     assert.equal(e.streak, 'W2');
@@ -477,7 +477,8 @@ describe('pickPracticeWeekOpponentGame', () => {
 
   it('a scrimmage is a game — the bridge preps for those too', () => {
     const picked = pickPracticeWeekOpponentGame(PRACTICE, [
-      candidate({ id: 'scrim', eventType: 'scrimmage' }),
+      // A scrimmage is a Game with the box ticked (mig 306); the bridge reads the kind.
+      candidate({ id: 'scrim', eventType: 'league_game' }),
     ], utcDays);
     assert.equal(picked?.id, 'scrim');
   });

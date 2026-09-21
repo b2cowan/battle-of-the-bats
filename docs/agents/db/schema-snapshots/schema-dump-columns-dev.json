@@ -14040,6 +14040,15 @@
     "ordinal_position": 39
   },
   {
+    "table_name": "rep_team_events",
+    "column_name": "is_scrimmage",
+    "data_type": "boolean",
+    "udt_name": "bool",
+    "is_nullable": "NO",
+    "column_default": "false",
+    "ordinal_position": 40
+  },
+  {
     "table_name": "rep_team_expense_tags",
     "column_name": "expense_id",
     "data_type": "uuid",

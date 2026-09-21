@@ -18,9 +18,8 @@
 //    fired; silence is a feature, not a bug.
 //
 // Parity notes (deliberate, reviewed):
-//  • Games scope = the dashboard's WLT DEFAULTS (league + tournament, no
-//    scrimmage). The coach's personal scope toggle lives in localStorage and is
-//    unreadable server-side; defaults are the shared baseline.
+//  • Games scope = the season record's ONE rule (`countsTowardRecord`): a Game or a
+//    tournament game, and not a scrimmage (a Game with the box ticked since mig 306).
 //  • Attendance rows mirror the attendance route: active players only,
 //    untracked players ride along as 0/0 (the engine never judges them).
 //
@@ -63,14 +62,16 @@ import {
 } from './insight-findings';
 import { resolveCoachCapabilities } from './coach-capabilities';
 import type { RepTeamEvent } from './types';
+import { COACH_GAME_EVENT_TYPES } from './coach-tournament-games';
 
 /** One digest per team per window — just under a week so a Sunday job never
  *  skips a team because last Sunday's send was 7 days − a few minutes ago. */
 export const DIGEST_DEDUPE_DAYS = 6;
 export const DIGEST_EVENT_TYPE = 'coach_insights_digest' as const;
 
-// Same category set + defaults as the dashboard scoreboard (WLT_DEFAULT there).
-const DIGEST_GAME_SCOPE = new Set(['league_game', 'tournament_game']);
+// The season record's rule, minus the legacy `external_tournament` container the digest never
+// summarised (it has no opponent or score of its own on a modern season).
+const DIGEST_GAME_SCOPE = new Set<string>(COACH_GAME_EVENT_TYPES);
 
 export interface InsightsDigestSweepOptions {
   /** Narrow the sweep to one org (manual/test runs). */
@@ -106,10 +107,10 @@ function localDateISO(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-/** Dashboard scoreboard math, server-side (WLT defaults; unscored games never count). */
+/** Dashboard scoreboard math, server-side (the record rule; unscored games never count). */
 function buildGamesSummary(events: RepTeamEvent[]): FindingsGameSummary | null {
   const scoped = events
-    .filter(e => DIGEST_GAME_SCOPE.has(e.eventType) && e.status !== 'cancelled' && e.result)
+    .filter(e => DIGEST_GAME_SCOPE.has(e.eventType) && !e.isScrimmage && e.status !== 'cancelled' && e.result)
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
   if (scoped.length === 0) return null;
 

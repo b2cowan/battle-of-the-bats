@@ -20,6 +20,7 @@ import { resolveValidTagIds } from '@/lib/rep-event-tags';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageSchedule, canWriteDevelopment } from '@/lib/coach-capabilities';
 import { isMirroredEvent } from '@/lib/coach-tournament-games';
+import { scrimmageFlagFor } from '@/lib/coach-schedule-vocab';
 import { ORGANIZER_OWNED_API_FIELDS } from '@/lib/tournament-game-mirror';
 import { notifyFamiliesOfGameUpdate } from '@/lib/family-notify';
 import { deriveGameResult, toGameDayEventShape, validateQuietScoreWrite } from '@/lib/coach-game-day';
@@ -123,6 +124,8 @@ export const PATCH = withObservability(async (req: Request,
       resources: body.resources !== undefined ? sanitizeResources(body.resources) : undefined,
       opponent: body.opponent !== undefined ? (body.opponent?.trim() || null) : undefined,
       homeAway: body.homeAway !== undefined ? (body.homeAway || null) : undefined,
+      // The box rides across the series like the opponent does (D5) — a Game only (D3).
+      isScrimmage: body.isScrimmage !== undefined ? scrimmageFlagFor(event.eventType, body.isScrimmage) : undefined,
       arrivalTime: body.arrivalTime !== undefined ? (body.arrivalTime?.trim() || null) : undefined,
       startTime,
       endTime,
@@ -176,6 +179,9 @@ export const PATCH = withObservability(async (req: Request,
   if (body.resources !== undefined)   fields.resources = sanitizeResources(body.resources);
   if (body.opponent !== undefined)    fields.opponent = body.opponent?.trim() || null;
   if (body.homeAway !== undefined)    fields.homeAway = body.homeAway || null;
+  // "This is a scrimmage" (mig 306): a Game only (D3, `scrimmageFlagFor`). Editable at any time,
+  // before or after a result; the effect on the record is immediate.
+  if (body.isScrimmage !== undefined) fields.isScrimmage = scrimmageFlagFor(event.eventType, body.isScrimmage);
   if (body.teamScore !== undefined)     fields.teamScore = body.teamScore != null ? Number(body.teamScore) : null;
   if (body.opponentScore !== undefined) fields.opponentScore = body.opponentScore != null ? Number(body.opponentScore) : null;
 

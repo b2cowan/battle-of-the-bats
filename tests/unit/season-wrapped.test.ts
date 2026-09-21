@@ -11,6 +11,7 @@ function game(overrides: Partial<WrappedGameInput> = {}): WrappedGameInput {
   day += 1;
   return {
     eventType: 'league_game',
+    isScrimmage: false,
     startsAt: `2026-05-${String(day).padStart(2, '0')}T18:00:00Z`,
     status: 'scheduled',
     result: null,
@@ -48,7 +49,7 @@ describe('computeSeasonWrapped — record (the canonical rule)', () => {
         win(),
         win(4, 3, { eventType: 'tournament_game' }),
         loss(1, 2, { eventType: 'external_tournament' }),
-        win(9, 0, { eventType: 'scrimmage' }),                    // excluded: scrimmage
+        win(9, 0, { isScrimmage: true }),                          // excluded: a scrimmage (a Game with the box ticked)
         game(),                                                    // excluded: no result
         win(3, 1, { status: 'cancelled' }),                        // excluded: cancelled
         game({ result: 'tie', teamScore: 2, opponentScore: 2 }),

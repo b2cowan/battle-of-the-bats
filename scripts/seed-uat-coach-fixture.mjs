@@ -423,6 +423,27 @@ if (!liveFinishedRows?.length) {
   ok('live-season finished games already present');
 }
 
+/* One decided SCRIMMAGE (mig 306 — a Game with `is_scrimmage` set), so the owner's walk can see the
+   row's chip, the Scouting Book's EXH, the "Scrimmages · not counted" split and a record that does
+   NOT move: a 2–7 loss vs Lakeside that must leave 3-2-1 exactly where it is. Idempotent on its name. */
+{
+  const { data: scrimRows, error: scrimErr } = await db.from('rep_team_events')
+    .select('id').eq('program_year_id', py.id).eq('name', '@ Lakeside').eq('is_scrimmage', true).limit(1);
+  if (scrimErr) { console.error('✗ scrimmage lookup', scrimErr.message); process.exit(1); }
+  if (!scrimRows?.length) {
+    const ins = await db.from('rep_team_events').insert({
+      program_year_id: py.id, team_id: team.id, org_id: org.id,
+      event_type: 'league_game', is_scrimmage: true, name: '@ Lakeside', opponent: 'Lakeside',
+      home_away: 'away', starts_at: new Date(Date.UTC(py.year, 3, 2, 22, 0)).toISOString(),
+      status: 'scheduled', result: 'loss', team_score: 2, opponent_score: 7,
+    });
+    if (ins.error) { console.error('✗ scrimmage insert', ins.error.message); process.exit(1); }
+    ok('one decided scrimmage seeded (@ Lakeside 2–7, a Game with the box ticked — listed, never counted)');
+  } else {
+    ok('scrimmage already present');
+  }
+}
+
 // ── 11. A saved lineup for it, so the console renders the BOARD ──────────────
 // Without a lineup the console renders its no-lineup fallback instead — a legitimate screen, but
 // the thin one. The board is where the tap targets, the two-column On field / Bench split and the

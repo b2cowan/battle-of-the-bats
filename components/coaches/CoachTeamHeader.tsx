@@ -11,7 +11,7 @@ import {
   mastheadWhen,
   type MastheadGameDayConsole, type MastheadStatus, type MastheadRecord, type MastheadScoutingNudge,
 } from '@/lib/coach-masthead-status';
-import { EVENT_WORD } from '@/lib/coach-schedule-vocab';
+import { eventWord } from '@/lib/coach-schedule-vocab';
 import { formatInOrgZone } from '@/lib/timezone';
 import { useCoachNudgeDismiss } from '@/components/coaches/useCoachNudgeDismiss';
 import { CoachPageHelpSlot } from '@/components/coaches/CoachPageHelpSlot';
@@ -427,7 +427,7 @@ function gameDayWho(event: NonNullable<MastheadStatus>['event']): string {
 
 function nextLabel(status: NonNullable<MastheadStatus>): string {
   const { day, time } = mastheadWhen(status.event.startsAt, status.daysAway);
-  const word = EVENT_WORD[status.event.eventType as RepEventType] ?? 'event';
+  const word = eventWord({ eventType: status.event.eventType as RepEventType, isScrimmage: status.event.isScrimmage });
   return `${day} ${time} ${word}`;
 }
 

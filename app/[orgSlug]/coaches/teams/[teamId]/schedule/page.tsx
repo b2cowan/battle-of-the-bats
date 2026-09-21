@@ -55,8 +55,8 @@ import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib
 import { tournamentToday, formatInOrgZone, orgDayKey, utcToZonedInputs } from '@/lib/timezone';
 import { formatTryoutSessionTime, tryoutSessionDay } from '@/lib/tryout-session-label';
 import {
-  EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES,
-  needsOpponent, needsRecurrence, RECURRABLE_TYPES, deriveGameName,
+  EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES, SCRIMMAGE_LABEL,
+  needsOpponent, needsRecurrence, RECURRABLE_TYPES, deriveGameName, isAutoShapedName, eventTypeCell,
 } from '@/lib/coach-schedule-vocab';
 import { generateWeeklyOccurrences, type RecurrenceOccurrenceInput } from '@/lib/coach-recurrence';
 import ScheduleImportSheet from '@/components/coaches/ScheduleImportSheet';
@@ -133,11 +133,11 @@ const ATTENDANCE_BY_VALUE = Object.fromEntries(
 ) as Record<RepAttendanceStatus, (typeof ATTENDANCE_OPTIONS)[number]>;
 
 // Add-event menu order. Tournament games nest visually under Tournament so a coach sees the
-// relationship (a game slot belongs to a tournament) right where they create one.
+// relationship (a game slot belongs to a tournament) right where they create one. Scrimmage is
+// not an item: it is a box on the Game form (mig 306, owner ruling 2026-09-20).
 const ADD_MENU: { type: RepEventType; nested?: boolean }[] = [
   { type: 'external_tournament' },
   { type: 'tournament_game', nested: true },
-  { type: 'scrimmage' },
   { type: 'league_game' },
   { type: 'practice' },
   { type: 'team_event' },
@@ -146,7 +146,7 @@ const ADD_MENU: { type: RepEventType; nested?: boolean }[] = [
 // Event-type picker order (colored pills that replace the type <select>). Tournament games are
 // created through their parent Tournament, so they aren't a top-level pill — the picker only
 // carries one if the form is *already* that type (opened via the nested add-menu / editing).
-const EVENT_TYPE_PILLS: RepEventType[] = ['external_tournament', 'league_game', 'scrimmage', 'practice', 'team_event'];
+const EVENT_TYPE_PILLS: RepEventType[] = ['external_tournament', 'league_game', 'practice', 'team_event'];
 
 const GAME_EVENT_TYPES = COACH_GAME_EVENT_TYPES as RepEventType[];
 
@@ -185,6 +185,8 @@ interface EventForm {
   resources: RepEventResource[];
   opponent: string;
   homeAway: string;
+  /** "This is a scrimmage" — a Game only; cleared when the kind changes away from Game. */
+  isScrimmage: boolean;
   tagIds: string[];
   parentEventId: string;
   isRecurring: boolean;
@@ -223,6 +225,7 @@ const BLANK_FORM: EventForm = {
   resources: [],
   opponent: '',
   homeAway: '',
+  isScrimmage: false,
   tagIds: [],
   parentEventId: '',
   isRecurring: false,
@@ -311,6 +314,7 @@ function eventToForm(e: RepTeamEvent): EventForm {
     resources: (e.resources ?? []).map(r => ({ ...r })),
     opponent: e.opponent ?? '',
     homeAway: e.homeAway ?? '',
+    isScrimmage: e.isScrimmage,
     parentEventId: e.parentEventId ?? '',
     isRecurring: false, // edit a single occurrence's details; recurrence isn't re-editable here
   };
@@ -539,7 +543,7 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
       ? (dayKey ? fmtTime(event.startsAt) : `${shortDate(dayStr(event.startsAt))} · ${fmtTime(event.startsAt)}`)
       : '';
   }
-  // Opponent safety-net: games auto-name "League Game vs Lady Jays" (opponent already in the name),
+  // Opponent safety-net: games auto-name "vs Lady Jays" / "@ Lady Jays" (opponent already in the name),
   // so only append "vs/@ {opp}" when the opponent is set but NOT already in the name. One shared
   // rule (lib/coach-tournament-games) — the Attendance page names events the same way.
   const oppSuffix = opponentSuffix(event);
@@ -565,6 +569,9 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
       {bookRecord && !cancelled && (
         <span className={styles.scoutRecChip} data-tone="even" title={`Your record vs ${event.opponent}`}>{bookRecord}</span>
       )}
+      {/* The WORD for a scrimmage, whenever the box is ticked — muted on purpose: it says "left out
+          of the record", never a result, and the mark beside the row stays the game's own (D6). */}
+      {event.isScrimmage && <span className={styles.scrimmageChip}>{SCRIMMAGE_LABEL}</span>}
       {cancelled ? (
         <span className={styles.eventChipResult} style={{ color: 'var(--warning)' }}>CANCELLED</span>
       ) : (
@@ -831,7 +838,7 @@ export default function CoachesSchedulePage({
    * it can never disagree. Fails closed while capabilities load. See `lib/coach-schedule-doors.ts`.
    */
   const drawerDoors = scheduleDrawerDoors(page.capabilities, {
-    isGame: !!selectedEvent && ['league_game', 'tournament_game', 'scrimmage'].includes(selectedEvent.eventType),
+    isGame: !!selectedEvent && GAME_EVENT_TYPES.includes(selectedEvent.eventType),
     isLineupEvent: isLineupEvent(selectedEvent),
     hasOpponent: !!selectedEvent?.opponent,
     scoutingAvailable,
@@ -1173,6 +1180,8 @@ export default function CoachesSchedulePage({
       const out: EventForm = { ...f, eventType: next };
       if (!needsOpponent(next)) { out.opponent = ''; out.homeAway = ''; out.uniform = ''; out.tagIds = []; }
       else if (!out.homeAway) { out.homeAway = 'home'; }
+      // The box belongs to a Game only (D3) — a tournament game is scored by its organizer.
+      if (next !== 'league_game') { out.isScrimmage = false; }
       if (!needsRecurrence(next)) { out.isRecurring = false; }
       if (next !== 'tournament_game') { out.parentEventId = ''; }
       return out;
@@ -1233,7 +1242,7 @@ export default function CoachesSchedulePage({
 
   /** Name to persist: the coach's text, or a friendly default so a blank name never blocks a save. */
   function eventNameForSave(f: EventForm): string {
-    return f.name.trim() || deriveGameName(f.eventType, f.opponent) || EVENT_NAME_PREFIX[f.eventType];
+    return f.name.trim() || deriveGameName(f.eventType, f.opponent, f.homeAway) || EVENT_NAME_PREFIX[f.eventType];
   }
 
   // Changing the start keeps the end 2 hours later, unless the coach has set a custom end.
@@ -1247,6 +1256,11 @@ export default function CoachesSchedulePage({
 
   function openEditForm(event: RepTeamEvent) {
     const f = { ...eventToForm(event), tagIds: tagsByEventId[event.id] ?? [] };
+    // A name the PRODUCT wrote ("vs Brampton Gold", or a pre-306 "Scrimmage vs …") opens as the
+    // blank-with-placeholder it was born as, so changing the opponent or the side re-derives it on
+    // save (D2). A name the coach typed is loaded as typed and never touched. Not on a mirrored
+    // game — the organizer owns that name and the form never sends it.
+    if (!isMirroredEvent(event) && isAutoShapedName(event.name, event.eventType, event.opponent, event.homeAway)) f.name = '';
     // A practice needs an end (stage 1, D9). A practice from before that rule opens with its end
     // pre-filled two hours on — the same seed the Add form gives — so a coach changing the
     // location is not held at a greyed Save for a field they never touched; the seed is on
@@ -1358,8 +1372,7 @@ export default function CoachesSchedulePage({
     : eventDetailCount > 0 ? `${eventDetailCount} set` : undefined;
 
   // Tabs for the event slide-over (keeps it short instead of one long stack)
-  const isGameEvent = !!selectedEvent &&
-    ['league_game', 'tournament_game', 'scrimmage'].includes(selectedEvent.eventType);
+  const isGameEvent = !!selectedEvent && GAME_EVENT_TYPES.includes(selectedEvent.eventType);
   // Batch 4: a MIRRORED tournament game. The organizer owns its time, opponent, venue, score,
   // result and whether it happened; the coach owns arrival time, uniform, field, notes, links,
   // tags — and attendance + the lineup, which is the entire point. The API enforces the same
@@ -1523,6 +1536,7 @@ export default function CoachesSchedulePage({
         locationAddress: form.locationAddress.trim() || null,
         opponent: form.opponent.trim() || null,
         homeAway: form.homeAway || null,
+        isScrimmage: form.eventType === 'league_game' && form.isScrimmage,
       };
       const send = (extra: Record<string, unknown> = {}) => fetch(`/api/coaches/${orgSlug}/teams/${teamId}/events/${editingEventId}?scope=${scope}`, {
         method: 'PATCH',
@@ -1644,6 +1658,7 @@ export default function CoachesSchedulePage({
         resources: form.resources,
         opponent: form.opponent.trim() || null,
         homeAway: form.homeAway || null,
+        isScrimmage: form.eventType === 'league_game' && form.isScrimmage,
         parentEventId: form.parentEventId || null,
       };
       // Tags apply to a specific one-off game only — never sent on a recurring series create
@@ -1869,7 +1884,8 @@ export default function CoachesSchedulePage({
       date:      e.startsAt ? e.startsAt.slice(0, 10) : '',
       time:      e.startsAt ? new Date(e.startsAt).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true }) : '',
       arrival:   e.arrivalTime ? fmtClock(e.arrivalTime) : '',
-      eventType: EVENT_LABELS[e.eventType] ?? e.eventType,
+      // "Scrimmage" for a ticked Game, else the kind's label — one column, two words (mig 306).
+      eventType: eventTypeCell(e),
       name:      e.name,
       opponent:  e.opponent ?? '',
       location:  e.location ?? '',
@@ -2160,12 +2176,17 @@ export default function CoachesSchedulePage({
                   const label = span && span.days > 1 ? `${isCont ? '› ' : ''}${e.name}` : e.name;
                   const title = span
                     ? `${e.name} (${shortDate(span.start)}–${shortDate(span.end)})${e.status === 'cancelled' ? ' · cancelled' : ''}`
-                    : (e.status === 'cancelled' ? `${e.name} (cancelled)` : e.name);
+                    : `${e.status === 'cancelled' ? `${e.name} (cancelled)` : e.name}${e.isScrimmage ? ` · ${SCRIMMAGE_LABEL}` : ''}`;
+                  // A ticked game is drawn OUTLINED in the game's colour — a shape cue, not a colour
+                  // cue, because a 14-character cell has no room for the word (D6); the title carries it.
+                  const outlined = e.isScrimmage && e.status !== 'cancelled';
                   return (
                     <button
                       key={e.id}
-                      className={styles.calMonthEventDot}
-                      style={{ background: EVENT_COLORS[e.eventType], ...(e.status === 'cancelled' ? { opacity: 0.55, textDecoration: 'line-through' } : {}) }}
+                      className={`${styles.calMonthEventDot}${outlined ? ` ${styles.calMonthEventDotOutline}` : ''}`}
+                      style={outlined
+                        ? { borderColor: EVENT_COLORS[e.eventType], color: EVENT_COLORS[e.eventType] }
+                        : { background: EVENT_COLORS[e.eventType], ...(e.status === 'cancelled' ? { opacity: 0.55, textDecoration: 'line-through' } : {}) }}
                       title={title}
                       onClick={() => openEvent(e)}
                     >
@@ -2467,6 +2488,8 @@ export default function CoachesSchedulePage({
                 <span className={styles.eventTypePill} style={{ background: `color-mix(in srgb, ${EVENT_COLORS[selectedEvent.eventType]} 13.333%, transparent)`, color: EVENT_COLORS[selectedEvent.eventType] }}>
                   {EVENT_LABELS[selectedEvent.eventType]}
                 </span>
+                {/* The drawer says what the row says — the kind's pill, and the word beside it. */}
+                {selectedEvent.isScrimmage && <span className={styles.scrimmageChip}>{SCRIMMAGE_LABEL}</span>}
                 {selectedEvent.status === 'cancelled' && (
                   <span className={styles.eventTypePill} style={{ background: 'color-mix(in srgb, var(--warning) 13.333%, transparent)', color: 'var(--warning)' }}>Cancelled</span>
                 )}
@@ -3469,6 +3492,15 @@ export default function CoachesSchedulePage({
                     </div>
                     <p className={styles.formHint}>Sets your dugout printout (&ldquo;@&rdquo; vs &ldquo;vs&rdquo;) and which side your win/loss counts on.</p>
                   </div>
+                  {/* "This is a scrimmage" — ONE line, the same shape as Repeat weekly, no hint under it
+                      (owner, 2026-09-20: "this is a scrimmage is enough"). A Game only (D3); on add and
+                      on edit, before or after a result; what it means lives in the help article. */}
+                  {form.eventType === 'league_game' && (
+                    <label className={styles.formCheck}>
+                      <input type="checkbox" checked={form.isScrimmage} onChange={e => setForm(f => ({ ...f, isScrimmage: e.target.checked }))} />
+                      <span>This is a scrimmage</span>
+                    </label>
+                  )}
                 </section>
               )}
               </>
@@ -3600,11 +3632,13 @@ export default function CoachesSchedulePage({
                       className={styles.input}
                       value={form.name}
                       onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
-                      placeholder={needsOpponent(form.eventType) ? `Auto: ${EVENT_NAME_PREFIX[form.eventType]} vs opponent` : `Auto: ${EVENT_NAME_PREFIX[form.eventType]}`}
+                      placeholder={needsOpponent(form.eventType)
+                        ? `Auto: ${deriveGameName(form.eventType, form.opponent || 'opponent', form.homeAway)}`
+                        : `Auto: ${EVENT_NAME_PREFIX[form.eventType]}`}
                     />
                     <p className={styles.formHint}>
                       {needsOpponent(form.eventType)
-                        ? 'Leave blank to name it from the opponent (e.g. “Scrimmage vs Lady Jays”).'
+                        ? 'Leave blank to name it from the opponent (e.g. “vs Lady Jays”, or “@ Lady Jays” away).'
                         : 'Leave blank to use the default name.'}
                     </p>
                   </div>

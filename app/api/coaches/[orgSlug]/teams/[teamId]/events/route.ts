@@ -25,7 +25,8 @@ import {
   generateWeeklyOccurrences, reviewRecurrenceOccurrences,
   type RecurrenceOccurrenceInput,
 } from '@/lib/coach-recurrence';
-import { EVENT_NAME_PREFIX } from '@/lib/coach-schedule-vocab';
+import { deriveGameName, scrimmageFlagFor } from '@/lib/coach-schedule-vocab';
+import { COACH_GAME_EVENT_TYPES } from '@/lib/coach-tournament-games';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 
@@ -148,6 +149,9 @@ export const POST = withObservability(async (req: Request,
     isRecurring = false,
     recurrenceRule = null,
   } = body;
+  // "This is a scrimmage" (mig 306) — a Game only (owner ruling D3, 2026-09-20); the rule lives in
+  // `scrimmageFlagFor`, which the db layer applies again on write.
+  const isScrimmage = scrimmageFlagFor(body.eventType, body.isScrimmage);
   const resources = sanitizeResources(body.resources);
 
   if (!eventType || !name?.trim()) {
@@ -155,7 +159,7 @@ export const POST = withObservability(async (req: Request,
   }
 
   const VALID_TYPES: RepEventType[] = [
-    'external_tournament', 'tournament_game', 'scrimmage', 'league_game', 'practice', 'team_event',
+    'external_tournament', 'tournament_game', 'league_game', 'practice', 'team_event',
   ];
   if (!VALID_TYPES.includes(eventType)) {
     return NextResponse.json({ error: 'Invalid eventType' }, { status: 400 });
@@ -203,7 +207,7 @@ export const POST = withObservability(async (req: Request,
     // occurrence's recurrence_parent_id at it (a real FK target), so "this & future / all" edits
     // and deletes resolve the whole series.
     const anchorId = randomUUID();
-    const isGame = eventType === 'scrimmage' || eventType === 'league_game' || eventType === 'tournament_game';
+    const isGame = COACH_GAME_EVENT_TYPES.includes(eventType);
     const rows = reviewed.accepted.map((occ, i) => {
       // Per-date opponent (Chunk C) with the single-opponent body value as the fallback, so a
       // caller that never opened the preview still behaves exactly as it did before.
@@ -216,7 +220,7 @@ export const POST = withObservability(async (req: Request,
         eventType,
         // A game names itself from ITS OWN opponent, so a series of twelve different opponents
         // reads as twelve different games rather than twelve copies of the first one's title.
-        name: isGame && rowOpponent ? `${EVENT_NAME_PREFIX[type]} vs ${rowOpponent}` : name.trim(),
+        name: isGame && rowOpponent ? deriveGameName(type, rowOpponent, occ.homeAway ?? homeAway ?? null) : name.trim(),
         description: description?.trim() || null,
         startsAt: `${occ.date}T${startTime}`,
         endsAt: endTime ? `${occ.date}T${endTime}` : null,
@@ -228,6 +232,8 @@ export const POST = withObservability(async (req: Request,
         resources: resources.length ? resources : undefined,
         opponent: isGame ? rowOpponent : null,
         homeAway: isGame ? (occ.homeAway ?? homeAway ?? null) : null,
+        // The box rides onto every occurrence — a standing Tuesday scrimmage is a series (D5).
+        isScrimmage,
         isRecurring: true,
         recurrenceRule,
         recurrenceParentId: i === 0 ? null : anchorId,
@@ -273,6 +279,7 @@ export const POST = withObservability(async (req: Request,
     resources: resources.length ? resources : undefined,
     opponent: opponent?.trim() || null,
     homeAway: homeAway || null,
+    isScrimmage,
     parentEventId: parentEventId || null,
   });
 

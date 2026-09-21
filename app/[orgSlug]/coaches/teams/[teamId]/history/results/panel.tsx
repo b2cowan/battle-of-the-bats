@@ -8,10 +8,18 @@ import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import styles from '../../../../coaches.module.css';
 import type { RepTeamEvent, RepTeamTag } from '@/lib/types';
-import { formatRecord } from '@/lib/coach-season-record';
+import { formatRecord, tallyResults, splitByCompetition } from '@/lib/coach-season-record';
+import { competitionOf, countsTowardRecord, type Competition } from '@/lib/season-wrapped';
+import { COACH_GAME_EVENT_TYPES as GAME_EVENT_TYPES, sideWord } from '@/lib/coach-tournament-games';
+import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 
-const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
-const TYPE_LABEL: Record<string, string> = { league_game: 'League', tournament_game: 'Tournament', scrimmage: 'Scrimmage' };
+/** The Type column's word for ONE row — the competition, singular (the split above the table
+ *  says it in the plural). A scrimmage is a Game with the box ticked (mig 306). */
+const TYPE_WORD: Record<Competition, string> = { game: 'Game', tournament: 'Tournament', scrimmage: SCRIMMAGE_LABEL };
+function typeLabel(e: RepTeamEvent): string {
+  const key = competitionOf(e);
+  return key ? TYPE_WORD[key] : 'Game';
+}
 
 /* ⚠ The cross-season TYPE, its two formatters (`acceptanceRate`, `recordText`) and the `Link` /
    `Archive` / `ChevronDown` imports all went with the past-seasons list (2026-08-19). They are named
@@ -19,16 +27,12 @@ const TYPE_LABEL: Record<string, string> = { league_game: 'League', tournament_g
    describes ONE season and no longer models, formats or fetches any other. */
 
 function gameTitle(e: RepTeamEvent) {
-  if (e.opponent) return `${e.homeAway === 'away' ? '@' : 'vs'} ${e.opponent}`;
+  if (e.opponent) return `${sideWord(e.homeAway)} ${e.opponent}`;
   return e.name || 'Game';
 }
-function tally(list: RepTeamEvent[]) {
-  return {
-    w: list.filter(e => e.result === 'win').length,
-    l: list.filter(e => e.result === 'loss').length,
-    t: list.filter(e => e.result === 'tie').length,
-  };
-}
+// One definition of how a record is tallied (lib/coach-season-record) — this file kept a private
+// copy of the arithmetic until 2026-09-20.
+const tally = tallyResults;
 
 /** A type predicate, not a plain boolean filter — so `finalized` (and anything derived from it,
  *  like the trend chart's result strip) carries a non-null `result` in its own TYPE, not just at
@@ -161,9 +165,9 @@ export function ResultsPanel({
   const finalized = events
     .filter(isFinalizedGame)
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
-  const byType = GAME_EVENT_TYPES
-    .map(t => ({ type: t, ...tally(finalized.filter(e => e.eventType === t)) }))
-    .filter(r => r.w + r.l + r.t > 0);
+  // By COMPETITION (game · tournament · scrimmage) — the same split Season's End draws; the
+  // scrimmage line is listed and says it is not counted.
+  const byType = splitByCompetition(finalized);
   const scored = finalized.filter(e => e.teamScore != null && e.opponentScore != null);
   const close = tally(scored.filter(e => Math.abs((e.teamScore ?? 0) - (e.opponentScore ?? 0)) === 1));
   const closeGames = close.w + close.l + close.t;
@@ -194,12 +198,16 @@ export function ResultsPanel({
   const visibleGames = activeTag
     ? finalized.filter(e => (tagsByEventId[e.id] ?? []).includes(activeTag.id))
     : finalized;
-  const tagRecord = activeTag ? tally(visibleGames) : null;
+  // The "vs {tag}" line is a RECORD, so it reads the record rule — a tagged scrimmage is listed in
+  // the rows below and left out of this number, exactly as the untagged split above does
+  // (/review, 2026-09-21).
+  const tagCounted = visibleGames.filter(countsTowardRecord);
+  const tagRecord = activeTag ? tally(tagCounted) : null;
   // Result and score are independent nullable fields (a coach can log a W/L/T with no score
   // entered) — sum only games that actually HAVE both numbers, same guard as `scored` above,
   // so an unscored result can't silently fold into the total as a phantom 0–0.
   const tagRuns = activeTag
-    ? visibleGames
+    ? tagCounted
         .filter(e => e.teamScore != null && e.opponentScore != null)
         .reduce((acc, e) => ({
           rf: acc.rf + (e.teamScore ?? 0),
@@ -236,7 +244,7 @@ export function ResultsPanel({
                 </div>
               ) : (
                 <p className={styles.insightsBasis}>
-                  {byType.map((r, i) => `${i > 0 ? ' · ' : ''}${TYPE_LABEL[r.type]} ${formatRecord(r)}`).join('')}
+                  {byType.map((r, i) => `${i > 0 ? ' · ' : ''}${r.label} ${formatRecord(r.tally)}${r.counted ? '' : ' (not counted)'}`).join('')}
                   {closeGames > 0 && <> · {formatRecord(close)} in one-{scoreUnit} games</>}
                 </p>
               )}
@@ -289,7 +297,7 @@ export function ResultsPanel({
                       <tr key={e.id}>
                         <td className={styles.tdShrink}>{new Date(e.startsAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</td>
                         <td>{gameTitle(e)}</td>
-                        <td className={styles.mutedInline}>{TYPE_LABEL[e.eventType]}</td>
+                        <td className={styles.mutedInline}>{typeLabel(e)}</td>
                         <td><span className={styles.wltPip} data-r={e.result ?? undefined}>{e.result === 'win' ? 'W' : e.result === 'loss' ? 'L' : 'T'}</span></td>
                         <td className={styles.insightsNum}>
                           {e.teamScore != null && e.opponentScore != null ? `${e.teamScore}–${e.opponentScore}` : '—'}

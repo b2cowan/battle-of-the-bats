@@ -13,7 +13,9 @@ import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedN
 import { canReadPastPracticePlans, canViewMoney, canViewSchedule, hasRecordAccess } from '@/lib/coach-capabilities';
 import StartNextSeasonModal from '@/components/coaches/StartNextSeasonModal';
 import { formatInOrgZone, orgDayKey } from '@/lib/timezone';
-import { formatRecord, tallyResults, WLT_CATEGORIES, type WltTally } from '@/lib/coach-season-record';
+import { formatRecord, tallyResults, type WltTally } from '@/lib/coach-season-record';
+import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
+import { countsTowardRecord, type Competition } from '@/lib/season-wrapped';
 import { EventTypeMark } from '@/components/coaches/eventTypeMark';
 import type { RepEventType } from '@/lib/types';
 import CoachLoading from '@/components/coaches/CoachLoading';
@@ -60,6 +62,8 @@ type SeasonGame = {
   eventId: string;
   startsAt: string;
   eventType: string;
+  /** "This is a scrimmage" — listed here, never counted (mig 306). */
+  isScrimmage: boolean;
   name: string;
   opponent: string | null;
   homeAway: 'home' | 'away' | 'neutral' | null;
@@ -71,7 +75,7 @@ type SeasonGame = {
 /** The answer at the top of the Results shelf — computed over EVERY decided game, never the page. */
 type ResultsSummary = {
   overall: WltTally;
-  byType: { type: RepEventType; tally: WltTally }[];
+  byCompetition: { key: Competition; label: string; counted: boolean; tally: WltTally }[];
   home: WltTally;
   away: WltTally;
   /** How many games the home/away pair covers — a neutral site falls into neither. */
@@ -195,14 +199,14 @@ function SeasonMonths<T>({
 }
 
 /**
- * "League" / "Tournament" / "Scrimmage" — the words beside the marks.
- *
- * ⚠ Read from `WLT_CATEGORIES`, the same list that decides what counts toward a record, so the
- * split can never name a competition the record does not count (or miss one it does).
+ * The mark beside each competition line — the schedule's own vocabulary. A scrimmage is a Game
+ * with the box ticked (mig 306), so it wears the game's shield; the WORD beside it says which.
  */
-function competitionLabel(type: RepEventType): string {
-  return WLT_CATEGORIES.find(c => c.key === type)?.label ?? 'Other';
-}
+const COMPETITION_MARK: Record<Competition, RepEventType> = {
+  game: 'league_game',
+  tournament: 'tournament_game',
+  scrimmage: 'league_game',
+};
 
 /** One row of "The roster" — who was on the team that season. */
 type SeasonPlayer = {
@@ -696,11 +700,13 @@ export default function SeasonEndPage({
                 <div className={styles.seasonAnswer}>
                   <p className={styles.seasonAnswerKey}>The season</p>
                   <div className={styles.seasonSplits}>
-                    {resultsSummary.byType.map(r => (
-                      <span key={r.type} className={styles.seasonSplit}>
-                        <EventTypeMark type={r.type} />
-                        <span className={styles.seasonSplitName}>{competitionLabel(r.type)}</span>
+                    {resultsSummary.byCompetition.map(r => (
+                      <span key={r.key} className={styles.seasonSplit}>
+                        <EventTypeMark type={COMPETITION_MARK[r.key]} />
+                        <span className={styles.seasonSplitName}>{r.label}</span>
                         <strong>{formatRecord(r.tally)}</strong>
+                        {/* Listed, never counted — the same rule the Scouting Book's EXH follows. */}
+                        {!r.counted && <span className={styles.seasonSplitName}> · not counted</span>}
                       </span>
                     ))}
                   </div>
@@ -746,7 +752,7 @@ export default function SeasonEndPage({
                 /* Each month carries THAT month's record — the fact a date-sorted list never told
                    anybody, and the reason the month layer earns its place rather than merely
                    shortening the shelf. */
-                factFor={rows => `${rows.length} game${rows.length === 1 ? '' : 's'} · ${formatRecord(tallyResults(rows))}`}
+                factFor={rows => `${rows.length} game${rows.length === 1 ? '' : 's'} · ${formatRecord(tallyResults(rows.filter(countsTowardRecord)))}`}
                 renderRow={g => (
                   <div key={g.eventId} className={styles.seasonRecordRow}>
                     <span className={styles.seasonRecordDate}>
@@ -756,6 +762,7 @@ export default function SeasonEndPage({
                     <span className={styles.seasonRecordMain}>
                       {g.opponent ?? g.name}
                       {g.homeAway === 'away' ? ' (away)' : g.homeAway === 'home' ? ' (home)' : ''}
+                      {g.isScrimmage ? ` · ${SCRIMMAGE_LABEL}` : ''}
                     </span>
                     <span className={styles.seasonRecordScore}>
                       {g.teamScore != null && g.opponentScore != null

@@ -33,6 +33,7 @@ import { resolveCoachCapabilities, type CoachCapabilities, type AssistantCapabil
 import { normalizeGuardianEmail, normalizeGuardianEmailRequired } from './guardian-email';
 import { tournamentToday, addCalendarDays, wallClockStringToUtc, orgDayKey, zonedWallClockToUtc, formatStoredDate } from './timezone';
 import { WRAPPED_RECORD_EVENT_TYPES } from './season-wrapped';
+import { readStoredEventKind, scrimmageFlagFor } from './coach-schedule-vocab';
 import { commitmentStanding, effectivePayerId, type PayableInstallment, type PayablePayment, type CommitmentStanding } from './payable-standing';
 // Re-export so existing import sites (e.g. '@/lib/db') keep working.
 export { computeTournamentStandings } from './tie-breakers';
@@ -5480,7 +5481,7 @@ export async function getRepPlayerAttendanceSummary(
 /** ⚠ EXPORTED so a caller can apply the SAME bucket rule the roll-up applies, rather than
  *  re-typing the list or assuming "anything that isn't a practice is a game". The attendance
  *  route's receipts depend on agreeing with these totals exactly. */
-export const ATTENDANCE_GAME_TYPES = ['league_game', 'tournament_game', 'scrimmage', 'external_tournament'];
+export const ATTENDANCE_GAME_TYPES = ['league_game', 'tournament_game', 'external_tournament'];
 
 export interface RepAttendanceCategoryStat {
   attended: number; // showed up (attending OR late)
@@ -5714,12 +5715,16 @@ export async function getRepPlayerDuesSummary(
 // Team Events
 
 function mapRepTeamEvent(r: any): RepTeamEvent {
+  // A scrimmage is a Game with the box ticked (mig 306); `readStoredEventKind` also folds a row
+  // still carrying the pre-306 kind, so no screen meets a kind the vocabulary no longer has.
+  const { eventType, isScrimmage } = readStoredEventKind(r);
   return {
     id: r.id,
     programYearId: r.program_year_id,
     teamId: r.team_id,
     orgId: r.org_id,
-    eventType: r.event_type,
+    eventType,
+    isScrimmage,
     name: r.name,
     description: r.description ?? null,
     startsAt: r.starts_at,
@@ -5841,6 +5846,8 @@ export interface CreateRepTeamEventFields {
   resources?: RepEventResource[];
   opponent?: string | null;
   homeAway?: 'home' | 'away' | 'neutral' | null;
+  /** "This is a scrimmage" — only honoured on a Game; the routes coerce it, this layer stores it. */
+  isScrimmage?: boolean;
   parentEventId?: string | null;
   isRecurring?: boolean;
   recurrenceRule?: Record<string, unknown> | null;
@@ -5869,6 +5876,7 @@ export async function createRepTeamEvent(fields: CreateRepTeamEventFields): Prom
       resources: fields.resources ?? null,
       opponent: fields.opponent ?? null,
       home_away: fields.homeAway ?? null,
+      is_scrimmage: scrimmageFlagFor(fields.eventType, fields.isScrimmage),
       parent_event_id: fields.parentEventId ?? null,
       is_recurring: fields.isRecurring ?? false,
       recurrence_rule: fields.recurrenceRule ?? null,
@@ -5903,6 +5911,7 @@ export async function createRepTeamEvents(rows: CreateRepTeamEventFields[]): Pro
       resources: f.resources ?? null,
       opponent: f.opponent ?? null,
       home_away: f.homeAway ?? null,
+      is_scrimmage: scrimmageFlagFor(f.eventType, f.isScrimmage),
       parent_event_id: f.parentEventId ?? null,
       is_recurring: f.isRecurring ?? false,
       recurrence_rule: f.recurrenceRule ?? null,
@@ -5929,6 +5938,7 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   resources?: RepEventResource[];
   opponent?: string | null;
   homeAway?: 'home' | 'away' | 'neutral' | null;
+  isScrimmage?: boolean;
   teamScore?: number | null;
   opponentScore?: number | null;
   result?: 'win' | 'loss' | 'tie' | null;
@@ -5948,6 +5958,7 @@ export async function updateRepTeamEvent(eventId: string, fields: {
   if (fields.resources !== undefined)   patch.resources = fields.resources;
   if (fields.opponent !== undefined)    patch.opponent = fields.opponent;
   if (fields.homeAway !== undefined)    patch.home_away = fields.homeAway;
+  if (fields.isScrimmage !== undefined) patch.is_scrimmage = fields.isScrimmage;
   if (fields.teamScore !== undefined)     patch.team_score = fields.teamScore;
   if (fields.opponentScore !== undefined) patch.opponent_score = fields.opponentScore;
   if (fields.result !== undefined)      patch.result = fields.result;
@@ -6081,6 +6092,7 @@ export async function updateRepTeamEventSeries(
     resources?: RepEventResource[];
     opponent?: string | null;
     homeAway?: 'home' | 'away' | 'neutral' | null;
+    isScrimmage?: boolean;
     arrivalTime?: string | null;
     startTime?: string | null; // 'HH:mm' — applied to each occurrence's own date
     endTime?: string | null;   // 'HH:mm' — applied only when provided (empty leaves ends untouched)
@@ -6104,6 +6116,7 @@ export async function updateRepTeamEventSeries(
   if (fields.resources !== undefined)       base.resources = fields.resources;
   if (fields.opponent !== undefined)        base.opponent = fields.opponent;
   if (fields.homeAway !== undefined)        base.home_away = fields.homeAway;
+  if (fields.isScrimmage !== undefined)     base.is_scrimmage = fields.isScrimmage;
   if (fields.arrivalTime !== undefined)     base.arrival_time = fields.arrivalTime;
 
   for (const row of rows ?? []) {
@@ -14249,15 +14262,17 @@ export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryY
       .from('rep_team_events')
       .select('program_year_id, result, status')
       .in('program_year_id', yearIds)
-      // The CANONICAL record rule (lib/season-wrapped.ts): league + tournament + legacy
-      // external_tournament, scrimmage excluded. This tally previously used its own set
-      // (scrimmage in, tournament_game out) and could disagree with the Overview/Wrapped.
+      // The CANONICAL record rule (lib/season-wrapped.ts `countsTowardRecord`): league + tournament
+      // + legacy external_tournament, and NOT a scrimmage — which since mig 306 is a Game with the
+      // box ticked, hence the `is_scrimmage` clause beside the kind list. This tally previously used
+      // its own set (scrimmage in, tournament_game out) and could disagree with the Overview/Wrapped.
       // ⚠ `status` rides along so CANCELLED games can be dropped below. Cancelling an event keeps
       // its row (dimmed + badged) and does NOT clear a score already entered, so without this a
       // called-off game a coach had scored stayed in this record — while Wrapped, Season's End and
       // the masthead all excluded it. One win too many, on the history page only (/review 2026-08-02).
       // Filtered in JS, not as a SQL `.neq`, to match `computeSeasonWrapped`'s predicate exactly.
       .in('event_type', WRAPPED_RECORD_EVENT_TYPES)
+      .eq('is_scrimmage', false)
       .not('result', 'is', null),
     supabaseAdmin
       .from('rep_tryout_registrations')
@@ -14343,6 +14358,7 @@ export async function getRepCurrentSeasonSummary(teamId: string): Promise<RepCur
       // Same canonical record rule as getRepTeamHistory/Wrapped (lib/season-wrapped.ts) —
       // including dropping CANCELLED games that still carry a score (see the sibling above).
       .in('event_type', WRAPPED_RECORD_EVENT_TYPES)
+      .eq('is_scrimmage', false)
       .not('result', 'is', null),
     supabaseAdmin.from('rep_tryout_registrations').select('status').eq('program_year_id', py.id),
   ]);
@@ -14502,27 +14518,31 @@ const OPPONENT_BOOK_EVENT_LIMIT = 1000;
 export async function getRepTeamGameEventsForOpponentBook(
   teamId: string, opts?: { limit?: number },
 ): Promise<{
-  id: string; name: string; eventType: string; startsAt: string; programYearId: string | null;
+  id: string; name: string; eventType: string; isScrimmage: boolean; startsAt: string; programYearId: string | null;
   opponent: string | null; homeAway: 'home' | 'away' | 'neutral' | null;
   teamScore: number | null; opponentScore: number | null;
   result: 'win' | 'loss' | 'tie' | null; status: string;
 }[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
-    .select('id, name, event_type, starts_at, program_year_id, opponent, home_away, team_score, opponent_score, result, status')
+    .select('id, name, event_type, is_scrimmage, starts_at, program_year_id, opponent, home_away, team_score, opponent_score, result, status')
     .eq('team_id', teamId)
     // COACH_GAME_EVENT_TYPES plus legacy `external_tournament`: the wrapped record rule
     // counts those toward the record, so excluding them from the FETCH would make the
     // book's "2–1 vs them" disagree with Wrapped for teams with legacy history — the exact
     // invariant buildOpponentBook promises. Rows without an opponent name are still
     // excluded below (a multi-day container with no opponent can't be attributed anyway).
-    .in('event_type', [...BOOK_GAME_EVENT_TYPES, 'external_tournament'])
+    // `scrimmage` is the pre-306 KIND, kept in the fetch so a row written in the window between the
+    // migration and the deploy still reaches the book (folded by `readStoredEventKind`).
+    .in('event_type', [...BOOK_GAME_EVENT_TYPES, 'external_tournament', 'scrimmage'])
     .not('opponent', 'is', null)
     .order('starts_at', { ascending: false })
     .limit(opts?.limit ?? OPPONENT_BOOK_EVENT_LIMIT);
   if (error) throw error;
   return (data ?? []).map(r => ({
-    id: r.id, name: r.name, eventType: r.event_type, startsAt: r.starts_at,
+    id: r.id, name: r.name,
+    ...readStoredEventKind(r),
+    startsAt: r.starts_at,
     programYearId: r.program_year_id ?? null, opponent: r.opponent ?? null,
     homeAway: r.home_away ?? null, teamScore: r.team_score ?? null,
     opponentScore: r.opponent_score ?? null, result: r.result ?? null, status: r.status,

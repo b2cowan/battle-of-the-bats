@@ -31,7 +31,7 @@ import {
  *   seasonAttendanceLink ↔ the Insights portal's own page gate       (`hasNonMoneyRecordAccess`)
  */
 export interface ScheduleDrawerEvent {
-  /** A league game, tournament game or scrimmage. */
+  /** A Game (scrimmage or not) or a tournament game. */
   isGame: boolean;
   /** An event a lineup can be built for (the page's own `isLineupEvent`). */
   isLineupEvent: boolean;

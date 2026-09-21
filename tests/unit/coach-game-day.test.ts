@@ -128,7 +128,8 @@ describe('isInGameDayWindow — boundaries inclusive, gate by type and status', 
     ['cancelled game, mid-window', game({ status: 'cancelled' }), STARTS_MS + HOUR, false],
     ['a practice, mid-window', game({ eventType: 'practice' }), STARTS_MS + HOUR, false],
     ['a team event, mid-window', game({ eventType: 'team_event' }), STARTS_MS + HOUR, false],
-    ['a scrimmage counts as a game', game({ eventType: 'scrimmage' }), STARTS_MS + HOUR, true],
+    // A scrimmage is a Game with the box ticked (mig 306) — the window reads the kind, so it is in.
+    ['a scrimmage counts as a game', game({ eventType: 'league_game' }), STARTS_MS + HOUR, true],
     ['a tournament game counts', game({ eventType: 'tournament_game' }), STARTS_MS + HOUR, true],
   ];
   for (const [label, event, nowMs, expected] of table) {

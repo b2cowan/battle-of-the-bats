@@ -3115,7 +3115,7 @@ a.oneChip:hover { border-color: currentColor; }
 
    This is the E3 violation the 2026-07-27 `--logic-lime-fixed` decision exists to prevent and the
    Staff panel hit in the same way: a raw structural-brand token is theme-invisible in the warm
-   portal. `--info` is the warm palette's REAL blue (`--home-blue`, already carrying `--evt-scrimmage`)
+   portal. `--info` is the warm palette's REAL blue (`--home-blue`)
    and stays #3B82F6 in dark. The token is not the lever — the recipe that consumes it is. */
 .badgeSponsor   { background: rgba(var(--info-rgb),0.12); color: var(--info); border: 1px solid rgba(var(--info-rgb),0.3); }
 .badgeManual    { background: var(--home-card, rgba(255,255,255,0.08)); color: var(--text-tertiary); border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12)); }
@@ -6186,6 +6186,17 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   color: var(--evt-league-game);
   background: color-mix(in srgb, var(--evt-league-game) 12%, transparent);
 }
+/* "Scrimmage" — the WORD for a ticked Game, in the same trail slot (mig 306, owner ruling D6
+   2026-09-20). Deliberately MUTED and outlined, never a colour: it says "left out of the record",
+   not a result, and the mark beside the row stays the game's own. Also worn by the event drawer's
+   header beside the kind pill, so the drawer and the row say the same thing. */
+.scrimmageChip {
+  font-size: var(--type-token); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+  padding: 0.1rem 0.35rem; border-radius: 4px; white-space: nowrap;
+  color: var(--text-secondary);
+  border: 1px solid var(--border-2);
+  background: transparent;
+}
 
 /* Both note boxes below sit on the shared `.infoBanner` base (applied alongside in the JSX) and
    change ONLY the accent + the tighter in-sheet spacing — rather than re-declaring the tinted
@@ -6331,6 +6342,15 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0.9;
 }
 .calMonthEventDot:hover { opacity: 1; }
+/* A ticked Game (a scrimmage) is drawn OUTLINED in the game's colour — a difference in SHAPE, so it
+   survives a colour-blind read where a 14-character cell has no room for the word (mig 306, D6).
+   The colour itself rides in inline as border + ink, the same token the filled dot uses. */
+.calMonthEventDot.calMonthEventDotOutline {
+  background: transparent;
+  border: 1.5px solid currentColor;
+  padding: 0 3px; /* 1px less each side so the outlined dot is the same height as a filled one */
+  opacity: 1;
+}
 /* Cancelled month chips are faded via inline opacity:0.55 on the WHOLE element, which washes out
    the label AND the fill together — unreadable on cream no matter the text colour. Under warm,
    restore full opacity and give it a muted-neutral chip with dark ink + the strikethrough, so

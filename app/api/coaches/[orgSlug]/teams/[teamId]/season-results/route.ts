@@ -2,7 +2,9 @@ import { NextResponse } from 'next/server';
 import { resolveCoachHistoryReadFromRequest } from '@/lib/coach-team-read';
 import { getRepTeamEvents } from '@/lib/db';
 import { denyUnless, hasRecordAccess, canViewSchedule } from '@/lib/coach-capabilities';
-import { tallyResults, WLT_CATEGORIES } from '@/lib/coach-season-record';
+import { tallyResults, splitByCompetition } from '@/lib/coach-season-record';
+import { countsTowardRecord } from '@/lib/season-wrapped';
+import { COACH_GAME_EVENT_TYPES } from '@/lib/coach-tournament-games';
 import { withObservability } from '@/lib/observability';
 
 /**
@@ -50,7 +52,7 @@ import { withObservability } from '@/lib/observability';
 const MAX_ROWS = 300;
 
 /** The event types that can carry a result — the same three the shared record definition names. */
-const GAME_TYPES = new Set<string>(WLT_CATEGORIES.map(c => c.key));
+const GAME_TYPES = new Set<string>(COACH_GAME_EVENT_TYPES);
 
 export const GET = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
@@ -95,14 +97,23 @@ export const GET = withObservability(async (req: Request,
    * be wrong in the direction nobody checks — quietly a few games short, on a page a coach opens
    * once a year to find out how the season went.
    */
-  const of = (t: string) => games.filter(g => g.eventType === t);
+  /**
+   * ⚠ **THE RECORD IS ONE RULE EVERYWHERE — `countsTowardRecord`.** This headline used to tally
+   * every game on the shelf, scrimmages included, "deliberately unlike Insights" because the
+   * coach's count-scrimmages preference lived in their browser; that preference had no control
+   * writing it since 2026-09-02 and is gone (owner ruling D4, 2026-09-20). So Season's End read
+   * one record while the masthead an inch above it read another. `counted` is what the record,
+   * the home/away split and the scoring line are drawn from; `games` (every decided game, the
+   * scrimmages too) is what the rows and the by-competition split list.
+   */
+  const counted = games.filter(countsTowardRecord);
   /**
    * ⚠ **ONLY GAMES THAT CARRY BOTH NUMBERS.** A result can be recorded with no score at all — a
    * coach who logged a W on the drive home and never went back — and treating that absence as a
    * nil-nil would quietly drag the season's scoring down by a game nobody mis-recorded. The count
    * rides out beside the totals so the page can say what they are drawn from.
    */
-  const withScores = games.filter(g => g.teamScore != null && g.opponentScore != null);
+  const withScores = counted.filter(g => g.teamScore != null && g.opponentScore != null);
   const scored = withScores.reduce((s, g) => s + (g.teamScore ?? 0), 0);
   const allowed = withScores.reduce((s, g) => s + (g.opponentScore ?? 0), 0);
 
@@ -135,12 +146,10 @@ export const GET = withObservability(async (req: Request,
        * ⚠ Tallied over EVERY decided game, not over the truncated page — a record computed from
        * the rows that happened to fit is a different season's record.
        *
-       * ⚠ And over all three game types, deliberately unlike Insights: the coach's
-       * scrimmages-count-or-not preference lives in their browser (`wltStorageKey`), and a server
-       * that guessed at it would print one record here and a different one on the screen next
-       * door. The split below is what lets a coach see the scrimmages separately instead.
+       * ⚠ Over the games that COUNT (`countsTowardRecord`) — the same record as the masthead, the
+       * Overview tile and Insights. Scrimmages are listed in the split below, never in this number.
        */
-      overall: tallyResults(games),
+      overall: tallyResults(counted),
       /**
        * ⚠ **DERIVED FROM `WLT_CATEGORIES`, NOT HAND-LISTED** (`/simplify`, 2026-08-18). This was
        * three literal keys, while the page's own label lookup read the shared list — which is
@@ -148,12 +157,9 @@ export const GET = withObservability(async (req: Request,
        * exists to end, recreated one file away from it. Adding a category there now reaches this
        * split for free, and the split can no longer name a competition the record does not count.
        */
-      byType: WLT_CATEGORIES
-        .map(c => ({ type: c.key, tally: tallyResults(of(c.key)) }))
-        /** A season that never scrimmaged shows two lines, not three with a 0–0. */
-        .filter(r => r.tally.w + r.tally.l + r.tally.t > 0),
-      home: tallyResults(games.filter(g => g.homeAway === 'home')),
-      away: tallyResults(games.filter(g => g.homeAway === 'away')),
+      byCompetition: splitByCompetition(games),
+      home: tallyResults(counted.filter(g => g.homeAway === 'home')),
+      away: tallyResults(counted.filter(g => g.homeAway === 'away')),
       /**
        * ⚠⚠ **HOW MANY GAMES THE HOME/AWAY PAIR ACTUALLY COVERS** (`/review`, 2026-08-18). A game
        * can be at a NEUTRAL site, or have no side recorded at all, and those fall into neither
@@ -162,7 +168,7 @@ export const GET = withObservability(async (req: Request,
        * clause later already discloses exactly this kind of gap; this is the fact that lets the
        * home/away line do the same instead of implying a completeness it does not have.
        */
-      homeAwayKnown: games.filter(g => g.homeAway === 'home' || g.homeAway === 'away').length,
+      homeAwayKnown: counted.filter(g => g.homeAway === 'home' || g.homeAway === 'away').length,
       scored,
       allowed,
       /** How many games those two totals are drawn from — see the note above. */
@@ -175,12 +181,13 @@ export const GET = withObservability(async (req: Request,
        * (330 known < 300 shown reads false), and when it does render it names the cap rather than
        * the season. Both are the "quietly a few short" failure this summary exists to prevent.
        */
-      totalGames: games.length,
+      totalGames: counted.length,
     },
     games: shown.map(e => ({
       eventId: e.id,
       startsAt: e.startsAt,
       eventType: e.eventType,
+      isScrimmage: e.isScrimmage,
       name: e.name || 'Game',
       opponent: e.opponent,
       homeAway: e.homeAway,

@@ -1042,10 +1042,15 @@ export interface RepTeamGroup {
 }
 export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined' | 'withdrawn';
 export type RepRosterStatus = 'active' | 'inactive' | 'released';
+/**
+ * The KINDS of event on a coach schedule. `league_game` is the stored key for what the product
+ * calls a **Game** (label changed 2026-09-20 — the key stays because renaming an enum value is a
+ * migration across every reader for no product value). `scrimmage` is NOT a kind since mig 306:
+ * a scrimmage is a Game with `isScrimmage` set — a decision about a game, not a kind of event.
+ */
 export type RepEventType =
   | 'external_tournament'
   | 'tournament_game'
-  | 'scrimmage'
   | 'league_game'
   | 'practice'
   | 'team_event';
@@ -1672,6 +1677,14 @@ export interface RepTeamEvent {
   practiceRecap: string | null;
   opponent: string | null;
   homeAway: 'home' | 'away' | 'neutral' | null;
+  /**
+   * "This is a scrimmage" (mig 306) — a Game that stays on the schedule and in attendance like any
+   * game but is LEFT OUT of the season record and the Scouting Book's numbers, and whose lineup
+   * opens on Development. Only meaningful on `league_game` (a tournament game is scored by its
+   * organizer and never carries it — owner ruling D3, 2026-09-20); false on every other kind.
+   * Editable at any time, before or after a result; the effect is immediate.
+   */
+  isScrimmage: boolean;
   // Team-relative scoring (mig 158): your team's score vs the opponent's, NOT literal
   // home/away. `result` derives from these; `homeAway` is independent context for splits.
   teamScore: number | null;

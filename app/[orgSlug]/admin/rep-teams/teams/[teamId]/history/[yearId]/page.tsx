@@ -4,7 +4,8 @@ import Link from 'next/link';
 import { Archive, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
-import { WRAPPED_RECORD_EVENT_TYPES } from '@/lib/season-wrapped';
+import { countsTowardRecord } from '@/lib/season-wrapped';
+import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import styles from '../../../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 
@@ -27,9 +28,13 @@ const STATUS_CSS: Record<string, string> = {
 };
 
 const EVENT_TYPE_LABEL: Record<string, string> = {
-  practice: 'Practice', league_game: 'Game', scrimmage: 'Scrimmage',
+  practice: 'Practice', league_game: 'Game', tournament_game: 'Game (Tournament)',
   external_tournament: 'Tournament', team_event: 'Team Event', other: 'Other',
 };
+/** A scrimmage is a Game with the box ticked (mig 306) — the word comes from the box, not the kind. */
+function eventTypeLabel(e: { eventType: string; isScrimmage: boolean }): string {
+  return e.isScrimmage ? SCRIMMAGE_LABEL : (EVENT_TYPE_LABEL[e.eventType] ?? e.eventType);
+}
 
 const RESULT_COLOR: Record<string, string> = {
   win: '#4ade80', loss: '#f87171', tie: 'var(--white-50)',
@@ -121,9 +126,9 @@ export default function PastYearDetailPage({
     );
   }
 
-  // The CANONICAL record rule (lib/season-wrapped.ts) — same set as getRepTeamHistory, so
-  // this detail view can never disagree with the history list one click away.
-  const gameEvents = events.filter(e => WRAPPED_RECORD_EVENT_TYPES.includes(e.eventType));
+  // The CANONICAL record rule (lib/season-wrapped.ts `countsTowardRecord`) — same predicate as
+  // getRepTeamHistory, so this detail view can never disagree with the history list one click away.
+  const gameEvents = events.filter(countsTowardRecord);
   const wins = gameEvents.filter(e => e.result === 'win').length;
   const losses = gameEvents.filter(e => e.result === 'loss').length;
   const ties = gameEvents.filter(e => e.result === 'tie').length;
@@ -266,7 +271,7 @@ export default function PastYearDetailPage({
                         {fmtDate(e.startsAt)}
                       </td>
                       <td className={styles.td} style={{ color: 'var(--white-40)', fontSize: '0.78rem' }}>
-                        {EVENT_TYPE_LABEL[e.eventType] ?? e.eventType}
+                        {eventTypeLabel(e)}
                       </td>
                       <td className={styles.td}>{e.name}</td>
                       <td className={styles.td} style={{ color: 'var(--white-50)' }}>

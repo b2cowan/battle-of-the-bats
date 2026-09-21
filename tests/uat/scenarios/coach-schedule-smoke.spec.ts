@@ -295,7 +295,8 @@ test('C0 — a typed time reads back identically, and a re-save does not shift i
 // ─── 2 · P1 #6 — recurrence with per-date opponents ────────────────────────────
 
 test('P1 #6 — "Repeat weekly" writes N games with N DIFFERENT opponents, minus a removed date', async ({ page }) => {
-  await dropEventsNamed('%League Game vs Capsched%');
+  // The auto-name is "vs X" since mig 306 (it was "League Game vs X"); clear both shapes.
+  await dropEventsNamed('%vs Capsched%');
   await signIn(page, HEAD_EMAIL);
 
   // Four Tuesdays; the coach removed the third (a bye week) and named the rest.

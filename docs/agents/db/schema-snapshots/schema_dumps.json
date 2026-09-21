@@ -14042,6 +14042,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_events",
+        "pos": 40,
+        "column_name": "is_scrimmage",
+        "data_type": "boolean",
+        "udt_name": "bool",
+        "is_nullable": "NO",
+        "column_default": "false"
+      },
+      {
         "table_name": "rep_team_expense_tags",
         "pos": 1,
         "column_name": "expense_id",
@@ -29095,7 +29104,7 @@
         "kind": "CHECK",
         "table_name": "rep_team_events",
         "detail": "rep_team_events_event_type_check",
-        "check_clause": "(event_type = ANY (ARRAY['external_tournament'::text, 'tournament_game'::text, 'scrimmage'::text, 'league_game'::text, 'practice'::text, 'team_event'::text]))"
+        "check_clause": "(event_type = ANY (ARRAY['external_tournament'::text, 'tournament_game'::text, 'league_game'::text, 'practice'::text, 'team_event'::text]))"
       },
       {
         "kind": "CHECK",
@@ -29120,6 +29129,12 @@
         "table_name": "rep_team_events",
         "detail": "rep_team_events_result_check",
         "check_clause": "(result = ANY (ARRAY['win'::text, 'loss'::text, 'tie'::text]))"
+      },
+      {
+        "kind": "CHECK",
+        "table_name": "rep_team_events",
+        "detail": "rep_team_events_scrimmage_is_a_game_check",
+        "check_clause": "((NOT is_scrimmage) OR (event_type = 'league_game'::text))"
       },
       {
         "kind": "CHECK",

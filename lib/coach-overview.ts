@@ -106,7 +106,7 @@ export type AnchorAnswer =
 export interface AnchorInput {
   phase: CoachRepPhase;
   hasNextEvent: boolean;
-  /** The next event is a game (league / tournament / scrimmage), not a practice or team event. */
+  /** The next event is a game (a Game — scrimmage or not — or a tournament game), not a practice or team event. */
   nextIsGame: boolean;
   /**
    * The winding-down predicate, already evaluated by the caller: a real finalized game exists,

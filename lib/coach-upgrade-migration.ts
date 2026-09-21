@@ -103,9 +103,13 @@ function emptySummary(programYearId: string): CoachUpgradeMigrationSummary {
   };
 }
 
+// A Free game arrives as a Game, unticked. It used to arrive as the `scrimmage` KIND "for the coach
+// to reclassify" — which they could not, because a kind was fixed once an event existed — so every
+// upgraded coach's games sat outside their record for good (owner, 2026-09-20). Free never tracked
+// a result, so nothing is counted until the coach scores a game; and the box is theirs to tick.
 const EVENT_TYPE_MAP: Record<'practice' | 'game' | 'event', RepEventType> = {
   practice: 'practice',
-  game: 'scrimmage', // Free never tracked a result, so no loss; coach can reclassify
+  game: 'league_game',
   event: 'team_event',
 };
 

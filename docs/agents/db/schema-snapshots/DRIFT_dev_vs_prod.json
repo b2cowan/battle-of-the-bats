@@ -1,17 +1,29 @@
 {
   "generated": "2026-09-21",
-  "total": 2,
+  "total": 5,
   "counts": {
     "tables": 0,
-    "columns": 1,
+    "columns": 2,
     "indexes": 0,
     "constraints": 0,
-    "rls": 1
+    "rls": 3
   },
   "items": [
     {
+      "key": "check:changed:rep_team_events.rep_team_events_event_type_check",
+      "sig": "(event_type = ANY (ARRAY['external_tournament'::text, 'tournament_game'::text, 'league_game'::text, 'practice'::text, 'team_event'::text])) :: (event_type = ANY (ARRAY['external_tournament'::text, 'tournament_game'::text, 'scrimmage'::text, 'league_game'::text, 'practice'::text, 'team_event'::text]))"
+    },
+    {
       "key": "check:changed:rep_team_events.rep_team_events_practice_plan_sent_audience_check",
       "sig": "(practice_plan_sent_audience = ANY (ARRAY['named'::text, 'coaches'::text, 'staff'::text, 'chosen'::text])) :: (practice_plan_sent_audience = ANY (ARRAY['named'::text, 'coaches'::text, 'staff'::text]))"
+    },
+    {
+      "key": "check:only-dev:rep_team_events.rep_team_events_scrimmage_is_a_game_check",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_team_events.is_scrimmage",
+      "sig": ""
     },
     {
       "key": "column:only-dev:rep_team_events.practice_plan_sent_to",

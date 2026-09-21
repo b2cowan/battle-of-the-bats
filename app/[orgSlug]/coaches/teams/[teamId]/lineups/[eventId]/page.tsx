@@ -24,6 +24,8 @@ import {
 } from '@/lib/lineup-grid';
 import { analyzeLineup } from '@/lib/lineup-analysis';
 import { gameHasStarted } from '@/lib/coach-game-day';
+import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
+import { sideWord } from '@/lib/coach-tournament-games';
 import { useMinuteClock } from '@/lib/use-minute-clock';
 import LineupEditor from '../_LineupEditor';
 import styles from '../../../../coaches.module.css';
@@ -529,11 +531,17 @@ export default function CoachLineupBuilderPage({
   }
 
   const gameTitle = event
-    ? (event.opponent ? `${event.homeAway === 'away' ? '@' : 'vs'} ${event.opponent}` : event.name || 'Game')
+    ? (event.opponent ? `${sideWord(event.homeAway)} ${event.opponent}` : event.name || 'Game')
     : 'Lineup';
-  const gameMeta = event && event.startsAt ? `${fmtDate(event.startsAt)} · ${fmtTime(event.startsAt)}` : '';
-  const defaultPolicy: PositionPolicy = event?.eventType === 'tournament_game' ? 'competitive'
-    : event?.eventType === 'scrimmage' ? 'development' : 'balanced';
+  // A scrimmage says so under the title — its game kind reads the same as any other Game now, so the
+  // word is how a coach knows the auto-fill opened on Development for a reason.
+  const gameMeta = event && event.startsAt
+    ? `${fmtDate(event.startsAt)} · ${fmtTime(event.startsAt)}${event.isScrimmage ? ` · ${SCRIMMAGE_LABEL}` : ''}`
+    : '';
+  // The box first, then the kind: a scrimmage (a Game with "This is a scrimmage" ticked) opens on
+  // Development, a tournament game on Competitive, any other game on Balanced.
+  const defaultPolicy: PositionPolicy = event?.isScrimmage ? 'development'
+    : event?.eventType === 'tournament_game' ? 'competitive' : 'balanced';
 
   // Page-header ruling 2026-08-11: the meta row is BODY content — it renders below the header
   // block, not inside it — and the builder gains the help "?" its practice-plan twin already had.

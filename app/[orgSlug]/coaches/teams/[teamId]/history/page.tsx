@@ -25,6 +25,8 @@ import {
 } from '@/lib/coach-capabilities';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
 import { formatRecord } from '@/lib/coach-season-record';
+import { countsTowardRecord } from '@/lib/season-wrapped';
+import { COACH_GAME_EVENT_TYPES as GAME_EVENT_TYPES } from '@/lib/coach-tournament-games';
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Insights — the REPORTS & ANALYTICS PORTAL (owner-approved mockups 2026-08-18;
@@ -135,12 +137,6 @@ const TABS: readonly TabDef[] = [
   { id: 'scouting', label: 'Scouting Book', gate: canViewScoutingBook, helpLabel: 'Scouting Book', helpAnchor: 'premium-scouting' },
 ];
 
-const GAME_EVENT_TYPES = ['league_game', 'tournament_game', 'scrimmage'];
-// Same categories + defaults + storage key as `lib/coach-season-record.ts`, so the band's
-// record can never disagree with the Overview's record glance. ⚠ Still hand-copied rather than
-// imported — the module exists precisely to end that, and this is the last copy of it.
-const WLT_DEFAULT: Record<string, boolean> = { league_game: true, tournament_game: true, scrimmage: false };
-const WLT_LABEL: Record<string, string> = { league_game: 'League', tournament_game: 'Tournament', scrimmage: 'Scrimmage' };
 
 interface AttendanceRow {
   playerId: string;
@@ -310,7 +306,6 @@ export default function CoachesInsightsPage({
   const loadKey = teamId;
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
   // Record scope mirrors the Overview widget's remembered per-team choice.
-  const [included, setIncluded] = useState<Record<string, boolean>>(WLT_DEFAULT);
 
   /**
    * ONE coordinated load → ONE paint (no staggered pop-in). Each source degrades independently: a
@@ -337,10 +332,6 @@ export default function CoachesInsightsPage({
   ) => {
     setLoading(true);
     setError('');
-    try {
-      const raw = localStorage.getItem(`flhq.coachWlt.${teamId}`);
-      if (raw) setIncluded({ ...WLT_DEFAULT, ...JSON.parse(raw) });
-    } catch { /* ignore unreadable storage */ }
     const api = `/api/coaches/${orgSlug}/teams/${teamId}`;
     const get = async (path: string) => {
       const res = await fetch(`${api}${path}`);
@@ -447,19 +438,19 @@ export default function CoachesInsightsPage({
   }
 
   // ── Scoreboard math (within-season only; unscored games never count) ──
+  // ONE rule for what counts (`countsTowardRecord`): games and tournament games, never a scrimmage
+  // — a Game with the box ticked since mig 306. The per-device "count scrimmages" preference this
+  // band used to read had no control writing it since 2026-09-02 (owner ruling D4, 2026-09-20).
   const finalized = events
     .filter(e => GAME_EVENT_TYPES.includes(e.eventType) && e.status !== 'cancelled' && e.result)
     .sort((a, b) => new Date(b.startsAt).getTime() - new Date(a.startsAt).getTime());
-  const scoped = finalized.filter(e => included[e.eventType]);
+  const scoped = finalized.filter(countsTowardRecord);
   // ⚠ `finalized`/`scoped` are sorted NEWEST first for the tiles above — the momentum chart needs
   // the reverse (oldest → newest) to plot a differential that actually rises left-to-right.
   const momentumSeries = computeSeasonMomentum([...scoped].reverse());
   const record = tally(scoped);
   const scopedGames = record.w + record.l + record.t;
-  const activeLabels = GAME_EVENT_TYPES.filter(t => included[t]).map(t => WLT_LABEL[t]);
-  const scopeCaption = activeLabels.length === 0
-    ? 'No categories selected'
-    : activeLabels.length === GAME_EVENT_TYPES.length ? 'All games' : activeLabels.join(' + ');
+  const scopeCaption = 'Games + tournaments · scrimmages left out';
 
   const last5 = scoped.slice(0, 5).reverse(); // oldest → newest
   let streakCount = 0;

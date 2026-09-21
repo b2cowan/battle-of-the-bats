@@ -56,7 +56,7 @@ export const GET = withObservability(async (_req: Request,
   // A cancelled game still resolves (the deep link renders review mode, never a 404); a
   // practice or team event has no bench to run and is a 400, same rule as the lineup route.
   if (!COACH_GAME_EVENT_TYPES.includes(event.eventType)) {
-    return NextResponse.json({ error: 'Game day is for games and scrimmages' }, { status: 400 });
+    return NextResponse.json({ error: 'Game day is for games' }, { status: 400 });
   }
 
   // Each zone's DATA is gated at the SOURCE (the practice-plan read's rule): no grant, no

@@ -1,5 +1,5 @@
 'use client';
-import { Trophy, Swords, Shield, Dumbbell, Users } from 'lucide-react';
+import { Trophy, Shield, Dumbbell, Users } from 'lucide-react';
 import type { RepEventType } from '@/lib/types';
 import { EVENT_COLORS } from '@/lib/coach-schedule-vocab';
 
@@ -7,8 +7,10 @@ import { EVENT_COLORS } from '@/lib/coach-schedule-vocab';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  * **HOW AN EVENT TYPE LOOKS — the icon and the colour, in ONE place.**
  *
- * A coach reads these four marks every week on their own schedule: a shield is a league game, a
- * trophy is a tournament, swords are a scrimmage, a dumbbell is a practice. Extracted from the
+ * A coach reads these four marks every week on their own schedule: a shield is a game, a trophy
+ * is a tournament, a dumbbell is a practice, two people are a team event. (Swords were a scrimmage
+ * until 2026-09-20 — a scrimmage is a Game with a box ticked now, so it wears the game's shield and
+ * carries the WORD as a chip; one kind, one mark.) Extracted from the
  * schedule page on 2026-08-18, when the closed-season page's Results shelf needed the same
  * vocabulary — and inventing a second one there would have been the worst possible place to do it,
  * since that page is the one a coach opens least often.
@@ -37,7 +39,6 @@ import { EVENT_COLORS } from '@/lib/coach-schedule-vocab';
 export const EVENT_ICONS: Record<RepEventType, React.ElementType> = {
   external_tournament: Trophy,
   tournament_game:     Trophy,
-  scrimmage:           Swords,
   league_game:         Shield,
   practice:            Dumbbell,
   team_event:          Users,
