@@ -862,6 +862,14 @@
   .teamHeaderPhoneRest { min-height: 36px; padding-top: 0; padding-bottom: 0; justify-content: center; }
   .teamHeaderPhoneRest .teamHeaderRow { min-height: 36px; gap: 0.6rem; }
   .teamHeaderPhoneRest .teamHeaderLeft { flex-direction: row; align-items: baseline; gap: 0.5rem; min-width: 0; }
+  /* ⚠ THE NAME ROW MUST BE ALLOWED TO SHRINK (/review of stage 0, 2026-09-20). On the two-line
+     form the name row is a block inside a column and the name's ellipsis works; on this one-line
+     form the row became a flex ITEM, whose default min-width is its content — a nowrap name — so
+     "Riverdale Ridge Raptors U13 AA Black" ran UNDER the record and the "?" at 360, and under the
+     Public site pill at 390. Measured before: name to 273px, the slot starting at 185. min-width:0
+     lets the row shrink and the name's own ellipsis take over; the record never gives. */
+  .teamHeaderPhoneRest .teamHeaderNameRow { min-width: 0; flex: 1 1 auto; flex-wrap: nowrap; }
+  .teamHeaderPhoneRest .teamHeaderMeta { flex-shrink: 0; }
   .teamHeaderPhoneRest .teamHeaderName { font-size: var(--type-body); }
   .teamHeaderPhoneRest .teamHeaderMeta { display: flex; margin-top: 0; }
   .teamHeaderPhoneRest .teamHeaderMeta > span:not(.teamHeaderRecord) { display: none; }

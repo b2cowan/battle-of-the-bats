@@ -57,6 +57,22 @@ const finished = (c) => `/${c.orgSlug}/coaches/teams/${c.finishedTeamId}`;
  * fields, chips and doors — the surface this stage redrew and the one the gate could never see.
  * Tolerant of a sheet with no blocks (an empty template): nothing to open, nothing to fail.
  */
+/**
+ * Open the phone bar's MORE sheet (stage 0 · A1; added by the /review of that stage, 2026-09-20):
+ * the three hot tiles, the paired groups, the Team grid and the switcher had shipped with nothing
+ * in this sweep able to reach them — a gate that never opens the sheet is blind inside it. The
+ * bar is the product's own door: a button named "More" (its accessible name carries the unread
+ * count when there is one). Above 900px the bar is not rendered and the gesture is a no-op; the
+ * entry then measures the Overview it stands on, which the coach-team-hub entry already covers.
+ */
+async function openMoreSheet(page) {
+  const more = page.getByRole('button', { name: /^More\b/ }).first();
+  if (await more.count() === 0 || !(await more.isVisible())) return;
+  await more.click();
+  await page.locator('nav[aria-label="Coaches mobile navigation"] [role="menu"]').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
 async function openFirstBlock(page) {
   const row = page.getByRole('button', { name: /^Open / }).first();
   if (await row.count() === 0) return;
@@ -142,6 +158,18 @@ export const SCREENS = [
     session: 'coach',
     path: team,
     ready: 'h1',
+  },
+  // The More sheet, open (stage 0 · A1): sixteen doors the bar's own gesture reaches and nothing
+  // else does. Scoped to the open sheet so the scrimmed page beneath is not reported as hidden
+  // under it; where the bar does not render (above 900) the scope matches nothing and the entry
+  // falls back to the page — the same Overview coach-team-hub measures.
+  {
+    id: 'coach-team-hub-more',
+    session: 'coach',
+    path: team,
+    ready: 'h1',
+    interact: openMoreSheet,
+    scope: 'nav[aria-label="Coaches mobile navigation"] [role="menu"]',
   },
   {
     id: 'coach-notifications',

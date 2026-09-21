@@ -11,6 +11,7 @@ import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import { useOrg } from '@/lib/org-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
@@ -668,6 +669,13 @@ export default function CoachesSchedulePage({
   const [cursorDate, setCursorDate] = useState(() => tournamentToday());
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
+  // The slide-over is declared a modal dialog (role + aria-modal, stage 0 · A4) — so it stands on
+  // the same floor as RoomShell and QuestionShell (/review 2026-09-20): Escape closes through the
+  // same door as the X (a pending attendance edit is flushed first), Tab stays inside, focus lands
+  // on the panel and returns to the opener. Declaring modal without this told a screen reader the
+  // page behind was inert while keyboard focus could still wander into it.
+  const slideOverRef = useRef<HTMLDivElement | null>(null);
+  useDialogFloor(!!selectedEvent, slideOverRef, { onClose: () => { void requestCloseSlideOver(); } });
   // Mobile month view: a tapped day with >1 event opens this bottom-sheet day list (a single
   // event opens its detail directly). Desktop keeps the in-cell text chips, so this stays null.
   const [daySheet, setDaySheet] = useState<{ dateKey: string; events: RepTeamEvent[] } | null>(null);
@@ -2444,6 +2452,8 @@ export default function CoachesSchedulePage({
               QuestionShell sheets are: the page behind it is inert by declaration, and the layout
               sweep narrows to the sheet instead of reporting the rows it covers as hidden. */}
           <div
+            ref={slideOverRef}
+            tabIndex={-1}
             className={`${styles.slideOver}${activeSlideTab === 'lineup' ? ` ${styles.slideOverWide}` : ''}`}
             role="dialog"
             aria-modal="true"

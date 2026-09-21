@@ -262,6 +262,16 @@ describe('a closed season leaves one door in BOTH navs', () => {
       + 'reviewer looks at, and the sheet is eleven more doors into live instruments on a season '
       + 'that has ended.',
     );
+    // ⚠ The regex above pins only the gate's OPENING (/review 2026-09-20). The grouped rows render
+    // further down the same fragment, so moving `rows.map` outside the ternary — eleven live doors
+    // back on a closed season's phone — would still match it. Slice the gate's fragment and require
+    // BOTH halves inside it.
+    const gateStart = BOTTOM.indexOf('seasonFinished ? null : (');
+    const gateEnd = BOTTOM.indexOf('</>', gateStart);
+    assert.ok(gateStart > 0 && gateEnd > gateStart, 'the sheet renders inside a seasonFinished gate that closes with </>.');
+    const gate = BOTTOM.slice(gateStart, gateEnd);
+    assert.match(gate, /\{hotTiles\.length/, 'the hot tiles render inside the season gate.');
+    assert.match(gate, /\{rows\.map\(/, 'the grouped rows render inside the SAME season gate — not after it.');
   });
 });
 
