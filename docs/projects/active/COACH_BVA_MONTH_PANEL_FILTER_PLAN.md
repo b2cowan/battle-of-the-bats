@@ -1,7 +1,8 @@
 # Money by Month — the plan panel narrows to the cell you tapped
 
-**Status:** BUILT on dev 2026-09-21, uncommitted. No migration. Typecheck clean; `bva-figure-doors-guard`
-and `month-grid-reconcile-guard` unit suites green (both scan this file). Owner QA walk owed.
+**Status:** Committed `a32774c7` 2026-09-21. No migration. Typecheck clean; `bva-figure-doors-guard`
+and `month-grid-reconcile-guard` unit suites green (both scan this file). `/review` (correctness +
+blast-radius lenses): zero confirmed findings. Owner QA walk owed.
 
 ## The problem
 
@@ -38,9 +39,23 @@ open the same way.
   change was needed or made — filtering reads a line's own `dates`, which the payload already
   carried; the report route's per-line `lineDates` map already existed for the "which line's
   dates?" chooser.
-- The Actual/Scheduled/Spending lenses' drill-in panels are untouched — those are already keyed
-  per month server-side (`cellDetails` is keyed `<lens>|<category>|<month>`) and never had this
-  defect. Total stays inert for those lenses, same as before.
+- The Actual/Scheduled/Spending lenses' MONTH panels are untouched — those are already keyed per
+  month server-side (`cellDetails` is keyed `<lens>|<category>|<month>`) and never had this defect.
+  **Their Total door was added in a follow-up the same day** (owner, on the Cash reading: *"these
+  are supposed to be clickable, no?"*) — the first commit had wired Total for the plan lenses alone.
+  Total now opens the season's whole record list on every reading, assembled client-side from the
+  month buckets (one record, one bucket, so nothing double-counts), dated first then undated.
+
+## Follow-ups found on the owner's QA walk (2026-09-21, same day)
+
+- **Escape did not close either panel.** Neither hand-rolled overlay had ever taken the shared
+  dialog floor (`useDialogFloor`: Escape, Tab trap, focus return) that every other coach overlay
+  stands on. Both do now, with `role="dialog"` / `aria-modal`.
+- **A tappable figure's text could not be drag-selected** — a `<button>` swallows the mousedown.
+  `.cellLink` now declares `user-select: text`, for every clickable figure in the report.
+- **Total was inert on the Cash reading** — see above; the rule is one rule on every lens now.
+  Proved against the live fixture: Cash 9 tappable Totals, Scheduled 6, Budget 4; each opens a
+  "· whole season" panel and Escape closes it.
 - Read-only vs. write access: unchanged. Both roles see the same narrower list; only a writer's
   lines render as links into the budget form.
 

@@ -167,11 +167,12 @@ function fmtDay(d: string | null) {
 }
 
 /**
- * Where the plan panel's Total door files — the whole season, no month filter.
+ * Where the Total column's door files — the whole season, no month filter — on BOTH panels: the
+ * plan panel opens every budget line, the records panel every record the season holds.
  *
  * ⚠ NOT SHARED WITH THE LIB, unlike `UNDATED_CELL`. Every other reader of a month key (the export,
  * the server rollup, `check:money-report`) only ever deals in a real month or "no date yet" — this
- * sentinel exists purely for the plan panel's own `when` state and would mean nothing to them.
+ * sentinel exists purely for the two panels' own `when` state and would mean nothing to them.
  */
 const SEASON_CELL = 'whole-season';
 
@@ -434,14 +435,41 @@ export default function MoneyMonthGrid({
   function toggle(key: string) { setExpanded(prev => toggleKey(prev, key)); }
 
   /**
+   * Every record behind a category for the WHOLE SEASON, keyed `<kind>|<categoryKey>` — the record
+   * lenses' half of the Total door (owner, 2026-09-21: *"these are supposed to be clickable, no?"*,
+   * on the Cash reading, after the plan lenses had taken the door alone).
+   *
+   * ⚠ ASSEMBLED FROM THE MONTH BUCKETS, NOT A SECOND FEED. The route files each record exactly once,
+   * under the month its date falls in (or "no date yet"), so gathering every bucket that belongs to
+   * one category is the season's list with nothing counted twice. Read by scanning the keys rather
+   * than walking `grid.months`, so a record the grid's month window cut off (`deriveMonthRange` can
+   * truncate) still reaches the panel — it is in the Total figure, so it belongs in the Total's list.
+   * ⚠ THE OWNER IS EVERYTHING BEFORE THE LAST PIPE: a category key may itself contain one.
+   * Dated records first, in date order; the undated ones (a pledge, a club ask) close the list.
+   */
+  const seasonDetails = useMemo(() => {
+    const byOwner: Record<string, CellDetailItem[]> = {};
+    for (const [key, items] of Object.entries(cellDetails)) {
+      (byOwner[key.slice(0, key.lastIndexOf('|'))] ??= []).push(...items);
+    }
+    for (const items of Object.values(byOwner)) {
+      items.sort((a, b) => (a.date ?? '￿').localeCompare(b.date ?? '￿'));
+    }
+    return byOwner;
+  }, [cellDetails]);
+
+  /**
    * Every record behind ONE cell, filtered to a row when the coach tapped an item's figure.
    *
    * ⚠ THE FILTER IS THE WHOLE MECHANISM (D-2, 2026-08-24). A category's list and its rows' lists are
    * the same records read at two grains — so an item panel narrows the category's list by `row`
    * rather than reading a second map. There is no second map to disagree with.
+   * ⚠ `SEASON_CELL` reads the whole season (above) — the Total column's cell, same filter by row.
    */
   function cellItems(kind: 'actual' | 'scheduled' | 'spending', categoryKey: string, when: string, row?: string) {
-    const all = cellDetails[`${kind}|${categoryKey}|${when}`] ?? [];
+    const all = when === SEASON_CELL
+      ? seasonDetails[`${kind}|${categoryKey}`] ?? []
+      : cellDetails[`${kind}|${categoryKey}|${when}`] ?? [];
     return row ? all.filter(i => i.row === row) : all;
   }
 
@@ -488,7 +516,8 @@ export default function MoneyMonthGrid({
     }
     setDetail({
       // The drawings' own form: whose money, and when. The lens is named by the control that got here.
-      title: `${row?.subject.name ?? cat.label} · ${when === UNDATED_CELL ? 'no date yet' : formatMonthLong(when)}`,
+      title: `${row?.subject.name ?? cat.label} · ${when === UNDATED_CELL ? 'no date yet'
+        : when === SEASON_CELL ? 'whole season' : formatMonthLong(when)}`,
       items,
       totalLabel: spec.totalLabel,
       doors: spec.doors,
@@ -514,7 +543,9 @@ export default function MoneyMonthGrid({
       onClick: () => openDetail(lens, cat, when, row),
       title: when === UNDATED_CELL
         ? `See what makes up ${who} with no date yet`
-        : `See what makes up ${who} in ${formatMonthLong(when)}`,
+        : when === SEASON_CELL
+          ? `See everything behind ${who} this season`
+          : `See what makes up ${who} in ${formatMonthLong(when)}`,
     };
   }
 
@@ -766,13 +797,18 @@ export default function MoneyMonthGrid({
           })}
           <td className={`${styles.num} ${styles.totalCol}`}>
             {/* ⚠⚠ TOTAL IS THE ESCAPE HATCH NOW (owner ruling 2026-09-21) — the one door left for
-                "show me the whole category", now that a month cell shows only its own month. The
-                figure passed is always the season's PLANNED money, never `lensTotal`: the same "the
-                word follows the CELL, not the lens" rule the undated column already keeps, because
-                Total's whole point here is the plan, whatever lens happens to be on. */}
+                "show me the whole category", now that a month cell shows only its own month. ON
+                EVERY LENS: the plan lenses open every budget line, the record lenses every record
+                the season holds (the owner found it wired for the plan alone: *"these are supposed
+                to be clickable, no?"*). The plan figure passed is always the season's PLANNED money,
+                never `lensTotal`: the same "the word follows the CELL, not the lens" rule the undated
+                column already keeps, because Total's whole point there is the plan, whatever lens
+                happens to be on. */}
             {cellNode(lensTotal(cat.total, lens, band), {
               emphasis: lens === 'difference' ? 'signed' : undefined,
-              ...(lensReadsPlan(lens) ? planPanel(label, categoryPlanLines(cat.lines), SEASON_CELL, cat.total.budget) : {}),
+              ...(lensReadsPlan(lens)
+                ? planPanel(label, categoryPlanLines(cat.lines), SEASON_CELL, cat.total.budget)
+                : drill(panelCat, SEASON_CELL, null)),
             })}
           </td>
         </tr>
@@ -838,11 +874,12 @@ export default function MoneyMonthGrid({
               })}
               <td className={`${styles.num} ${styles.totalCol}`}>
                 {/* Same escape hatch as the category row's Total, one level down — this item's own
-                   budget lines, unfiltered, whatever lens is on. See the category row for why. */}
+                   budget lines, or its own records, unfiltered, whatever lens is on. See the
+                   category row for why. */}
                 {cellNode(lensTotal(line.total, lens, band),
                   lensReadsPlan(lens)
                     ? planPanel(line.description, line.planLines ?? [], SEASON_CELL, line.total.budget)
-                    : {})}
+                    : drill(panelCat, SEASON_CELL, row))}
               </td>
             </tr>
           );
