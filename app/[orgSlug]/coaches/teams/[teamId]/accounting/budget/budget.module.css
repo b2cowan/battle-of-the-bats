@@ -1250,19 +1250,13 @@
    shape. Desktop only: at ≤640 every field already carries its own stacked label.
    D3 — one grounds story: the date fields (this sheet's `.input`) take the portal's standard
    field ground, matching the shared amount input beside them. */
-/* ⚠ THE TINTED SURFACE D1 WAS DRAWN AGAINST CAME FROM `.formSection` — until 2026-09-21, when the
-   event-form consistency pass flattened that shared rule (owner ruling: the boxes come off the event
-   form, every open disclosure, Give an award and Paste a roster). This editor was not on that list,
-   and its approved drawing IS the tint: rows on one tinted surface, a hairline repeat tray, white
-   installment cards on the phone. So the surface lives here now, byte-for-byte what the shared rule
-   used to give, until the owner rules on this fifth surface (/review, 2026-09-21). */
-.planEditor {
-  gap: 0.6rem;
-  background: var(--home-olive-soft, rgba(255,255,255,0.025));
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.08));
-  border-radius: 8px;
-  padding: 0.8rem 0.85rem;
-}
+/* ⚠ FLAT (owner ruling 2026-09-21, the tinted-panel retirement). D1's "one tinted surface" came from
+   `.formSection`; when the event-form pass flattened that rule this editor kept the tint on its own
+   class for a day as "the last tinted form section, owner call open" — and the call was: the tint
+   comes off the app altogether. The block is a GROUP of the bill form now: its eyebrow, its two
+   tools, the count, the column heads and the ✓ line bound it, and it separates from the fields above
+   and the More door below by space. Its rows keep the section-sized gap. */
+.planEditor { gap: 0.6rem; }
 .planEditorTools { display: flex; gap: 0.4rem; align-items: center; }
 
 .planColHead {
@@ -1294,16 +1288,11 @@
   border-color: var(--home-line-strong, rgba(255,255,255,0.12));
   border-radius: 6px;
 }
-/* D1: the repeat tray loses its white card too — a hairline tool tray on the section's own tint. */
-.planEditor .repeatBox { background: transparent; }
 /* The reconcile strip is the section's last word; the section's own gap spaces it. */
 .planEditor .reconStrip { margin: 0; }
 
 @media (max-width: 640px) {
   .planColHead { display: none; }
-  /* D1 on the phone: each installment keeps its card (real grouping down here), white on the
-     section's tint instead of tint-on-white-on-tint. */
-  .planEditor .periodInputRow { background: var(--home-card, rgba(255,255,255,0.04)); }
 }
 
 @media (max-width: 768px) {
@@ -1369,9 +1358,6 @@
 
 @media (max-width: 640px) {
   .duesSchedColHead { display: none; }
-  /* The drawer's own card treatment on the labelled group — the shared ≤640 reflow supplies the
-     group itself; only the ground differs on this surface. */
-  .duesScheduleEditor .periodInputRow { background: var(--home-card, rgba(255,255,255,0.04)); }
   /* The desktop's fixed bases must stand down here or they beat the shared reflow's one-class
      `flex: none` on specificity — the fields go back to full-width stacked rows. */
   .duesScheduleEditor .periodFieldLabel,
@@ -1536,7 +1522,8 @@
   margin: 0.6rem 0 0;
   padding: 0.6rem 0.8rem;
   border-radius: 9px;
-  background: var(--home-olive-soft);
+  background: var(--home-card, var(--card-bg));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
   color: var(--text-primary);
   font-size: var(--type-body);
   line-height: 1.45;
@@ -1947,7 +1934,7 @@
     border-radius: 9px;
     padding: 0.65rem 0.7rem;
     margin-bottom: 0.6rem;
-    background: var(--home-olive-soft, rgba(255,255,255,0.02));
+    background: var(--home-card, var(--card-bg));
   }
   .periodGroupHead {
     display: flex;

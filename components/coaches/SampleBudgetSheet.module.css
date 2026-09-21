@@ -9,7 +9,7 @@
   border: 1.5px dashed var(--logic-lime);
   border-radius: 12px;
   padding: 0.9rem 1rem;
-  background: var(--home-olive-soft, rgba(255,255,255,0.03));
+  background: transparent;
 }
 
 .fenceEyebrow {

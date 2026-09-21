@@ -83,7 +83,7 @@
     border-radius: 10px;
     padding: 0.65rem 0.85rem;
     margin-bottom: 0.65rem;
-    background: var(--home-olive-soft, rgba(255,255,255,0.025));
+    background: var(--home-card, var(--card-bg));
   }
   .tableAsCards td {
     display: flex;
@@ -326,7 +326,7 @@
   font-size: var(--type-label);
   font-weight: 650;
   color: var(--home-olive, var(--white-60));
-  background: var(--home-olive-soft, rgba(255,255,255,0.05));
+  background: transparent; border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
   border: 1px solid var(--border-2);
 }
 .scrollXHintIcon { flex-shrink: 0; }
@@ -2935,8 +2935,8 @@ a.oneChip:hover { border-color: currentColor; }
 
 /* ── Badges ─────────────────────────────────────────────────────────────── */
 .setupPanel {
-  background: var(--home-olive-soft, rgba(255,255,255,0.035));
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
+  background: var(--home-card, var(--card-bg));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
   border-radius: 8px;
   padding: 1rem;
   margin-bottom: 1.25rem;
@@ -2986,7 +2986,7 @@ a.oneChip:hover { border-color: currentColor; }
   padding: 0.65rem 0.75rem;
   border: 1px solid var(--border-2);
   border-radius: 8px;
-  background: var(--home-olive-soft, rgba(255,255,255,0.028));
+  background: var(--home-card, var(--card-bg));
   text-decoration: none;
   transition: border-color 0.12s, background 0.12s;
 }
@@ -3564,7 +3564,6 @@ a.oneChip:hover { border-color: currentColor; }
 .tableFoot td {
   border-top: 2px solid var(--home-line-strong, rgba(255, 255, 255, 0.14));
   border-bottom: none;
-  background: var(--home-olive-soft, rgba(255, 255, 255, 0.03));
   padding-top: 0.55rem;
   padding-bottom: 0.6rem;
   /* Was `top`, from the days the footer cells carried captions under their figures (`.footLabel`,
@@ -4183,7 +4182,6 @@ a.oneChip:hover { border-color: currentColor; }
 
 /* A hand-in under its participant: the same row, quieted and stepped in. */
 .driveHandIn td {
-  background: var(--home-olive-soft, rgba(255, 255, 255, 0.03));
   color: var(--text-secondary);
 }
 /* The date leads the row where the participant's name leads theirs — indented to sit under it.
@@ -4313,7 +4311,7 @@ a.oneChip:hover { border-color: currentColor; }
   font-family: var(--font-data, monospace);
   font-size: var(--type-label); font-weight: 700; letter-spacing: 0.02em;
   color: var(--home-olive, var(--text-secondary));
-  background: var(--home-olive-soft, var(--white-8));
+  background: transparent;
   border: 1px solid rgba(var(--home-olive-rgb, 87, 101, 30), 0.35);
   border-radius: 5px;
   padding: 0.1rem 0.42rem;
@@ -4510,7 +4508,7 @@ a.oneChip:hover { border-color: currentColor; }
     border-radius: 10px;
     padding: 0.4rem 0.7rem;
     margin-bottom: 0.4rem;
-    background: var(--home-olive-soft, rgba(255,255,255,0.025));
+    background: var(--home-card, var(--card-bg));
   }
   .rosterTable td {
     display: flex;
@@ -4984,7 +4982,12 @@ a.oneChip:hover { border-color: currentColor; }
    screen's 2026-09 pass had already retired, and it was the only form on the portal drawn that
    way. Groups now separate by SPACE (the sibling rule below), the way band headings do. Same rule
    draws the open disclosure, the Give Award sheet and the paste-a-roster sheet — all four flattened
-   together on purpose, so none is left as the odd one out. */
+   together on purpose, so none is left as the odd one out.
+   ⚠ AND THEN THE TINT LEFT THE WHOLE PORTAL (owner ruling, later the same day): every PANEL that
+   painted --home-olive-soft — Season's End's blocks, the week view's day columns, the attendance
+   rows, the lineup peek, the player page's mini rows, every phone card, the link-a-club card, the
+   bill's schedule editor — is a white card with a hairline on paper or flat inside a form. The
+   token survives ONLY as a STATE fill (selected / on / now / drag-over / active) and on hover. */
 .formSection {
   display: flex;
   flex-direction: column;
@@ -5831,7 +5834,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   align-items: center;
   gap: 0.75rem;
   padding: 0.4rem 0.6rem;
-  background: var(--home-olive-soft, rgba(255,255,255,0.025));
+  background: var(--home-card, var(--card-bg));
   border: 1px solid var(--border-2);
   border-radius: 8px;
 }
@@ -6313,7 +6316,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 
 .calWeekGrid { display: grid; grid-template-columns: repeat(7, minmax(0,1fr)); gap: 0.5rem; overflow-x: auto; }
 .calWeekDay {
-  background: var(--home-olive-soft, rgba(255,255,255,0.02));
+  background: var(--home-card, var(--card-bg));
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.06)); border-radius: 6px; min-width: 110px; overflow: hidden;
 }
 .calWeekDayLabel { font-size: var(--type-support); font-weight: 700; color: var(--text-tertiary); padding: 0.5rem 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); }
@@ -6353,7 +6356,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   border: 1px solid var(--border-2); border-radius: 8px; overflow: hidden;
 }
 .calMonthHeader {
-  background: var(--home-olive-soft, rgba(255,255,255,0.03)); padding: 0.4rem;
+  padding: 0.4rem;
   font-size: var(--type-label); font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--text-tertiary); text-align: center;
 }
@@ -6690,7 +6693,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   align-items: center;
   gap: 0.4rem 0.5rem;
   padding: 0.4rem 0.55rem;
-  background: var(--home-olive-soft, rgba(255,255,255,0.035));
+  background: var(--home-card, var(--card-bg));
   border: 1px solid var(--home-line-strong, rgba(255,255,255,0.07));
   border-radius: 8px;
 }
@@ -6715,7 +6718,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   border: 1px solid var(--white-10);
   border-radius: 8px;
   overflow: hidden;
-  background: var(--home-olive-soft, rgba(255,255,255,0.03));
+  background: transparent;
 }
 
 .attendanceStatusBtn {
@@ -6807,7 +6810,8 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   display: inline-flex; align-items: center; gap: 0.3rem; flex-shrink: 0;
   font-size: var(--type-support); font-weight: 700;
   padding: 0.2rem 0.5rem; border-radius: 999px;
-  border: 1px solid var(--white-10); background: var(--home-olive-soft, rgba(255,255,255,0.03));
+  border: 1px solid var(--white-10);
+  background: transparent;
   color: var(--text-tertiary);
 }
 .attendanceStatusBadge[data-status="attending"] { color: var(--success); border-color: rgba(var(--success-rgb),0.4); background: rgba(var(--success-rgb),0.12); }
@@ -7469,7 +7473,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .lineupNotPlaying {
   margin-top: 0.75rem; padding: 0.6rem 0.7rem;
   border: 1px dashed var(--white-10); border-radius: 8px;
-  background: var(--home-olive-soft, rgba(255,255,255,0.02));
+  background: transparent;
 }
 .lineupNotPlayingHead {
   margin: 0 0 0.5rem; font-size: var(--type-label); font-weight: 800;
@@ -7681,13 +7685,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .lineupPeekEmpty {
   text-align: center; padding: 1.4rem 1rem;
   border: 1px dashed var(--white-10); border-radius: 10px;
-  background: var(--home-olive-soft, rgba(255,255,255,0.02));
+  background: transparent;
 }
 .lineupPeekEmpty p { margin: 0 0 0.9rem; color: var(--text-secondary); font-size: var(--type-body); }
 .lineupPeekStats {
   display: flex; gap: 1.4rem; flex-wrap: wrap;
   padding: 0.7rem 0.9rem; border-radius: 10px;
-  background: var(--home-olive-soft, rgba(255,255,255,0.03)); border: 1px solid var(--white-8);
+  background: var(--home-card, var(--card-bg));border: 1px solid var(--white-8);
 }
 .lineupPeekStats > div { display: flex; flex-direction: column; gap: 0.1rem; }
 .lineupPeekStats b { font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); line-height: 1.1; }
@@ -7844,8 +7848,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 
 .linkCard {
-  background: var(--home-olive-soft, rgba(255,255,255,0.035));
-  border: 1px solid rgba(var(--blueprint-blue-rgb),0.15);
+  background: var(--home-card, var(--card-bg));
+  border: 1px solid var(--home-line, rgba(255,255,255,0.08));
   border-radius: 8px;
   padding: 1rem;
 }
@@ -9544,7 +9548,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .occHead {
   padding: 0.55rem 0.7rem;
   border-bottom: 1px solid var(--border-2);
-  background: var(--home-olive-soft, var(--white-03));
 }
 
 .occCount {
@@ -11029,7 +11032,7 @@ span.libCardMain { cursor: default; }
   cursor: pointer; list-style: none; display: inline-flex; align-items: center; gap: 0.3rem;
   font-size: var(--type-label); color: var(--text-secondary);
   padding: 0.1rem 0.5rem; border-radius: 999px; border: 1px solid var(--white-8);
-  background: var(--home-olive-soft, rgba(255, 255, 255, 0.03));
+  background: transparent;
 }
 .ppRailBadge summary::-webkit-details-marker { display: none; }
 .ppRailBadge summary::before { content: '▸'; font-size: 0.65em; }
@@ -11095,7 +11098,7 @@ span.libCardMain { cursor: default; }
   margin: 0 0 0.9rem; padding: 0.55rem 0.8rem;
   border-radius: 10px;
   border: 1px solid rgba(var(--home-olive-rgb, var(--logic-lime-rgb)), 0.35);
-  background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.08));
+  background: transparent;
   font-size: var(--type-support); line-height: 1.4;
 }
 .ppYoureOnLabel { font-size: var(--type-label); font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--home-olive, var(--logic-lime)); }
@@ -11439,7 +11442,7 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
     position: relative;
     border: 1px solid var(--border-2);
     border-radius: 10px;
-    background: var(--home-olive-soft, rgba(255,255,255,0.025));
+    background: var(--home-card, var(--card-bg));
     margin-bottom: 0.65rem;
   }
   .rowListRow, .rowListRow:has(.rowCaption) {

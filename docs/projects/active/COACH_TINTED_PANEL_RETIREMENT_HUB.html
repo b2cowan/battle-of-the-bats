@@ -1,0 +1,463 @@
+<title>Tinted Panel Retirement</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --doc-bg: #ECEDF1; --doc-panel: #F7F7F9; --doc-ink: #1B1D23; --doc-muted: #5C6070; --doc-line: rgba(27,29,35,0.12);
+    --doc-accent: #57651E; --doc-on: rgba(87,101,30,0.16); --doc-warn: #835006; --doc-focus: #134FD3;
+    --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54;
+    --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+    --home-lime: #D9F99D; --home-lime-ink: #241E15; --home-win: #34662A; --blue18: rgba(30,58,138,0.18); --blue-line: rgba(30,58,138,0.18);
+    --type-heading: 16px; --type-body: 14px; --type-support: 12px; --type-label: 11px;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-focus:#7FA3FF; } }
+  :root[data-theme="dark"] { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-focus:#7FA3FF; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--doc-bg); color: var(--doc-ink); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding-block: 28px 64px; padding-inline: 20px; }
+  .hubbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px 24px; padding:14px 20px; background:var(--doc-ink); color:var(--doc-bg); }
+  .hubbar .t { margin-right:auto; } .hubbar .t strong { display:block; font-size:15px; } .hubbar .t small { color: color-mix(in srgb, var(--doc-bg) 75%, transparent); font-size:12px; }
+  .stages { display:flex; flex-wrap:wrap; gap:4px; list-style:none; margin:0; padding:0; }
+  .stages li { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:5px 10px; border-radius:999px; color: color-mix(in srgb, var(--doc-bg) 55%, transparent); white-space:nowrap; }
+  .stages li.current { color:var(--doc-ink); background:var(--doc-accent); }
+  .hubtabs { display:flex; gap:22px; overflow:auto; white-space:nowrap; padding:0 20px; background:var(--doc-panel); border-bottom:1px solid var(--doc-line); }
+  .hubtabs button { min-height:46px; padding:9px 0; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--doc-muted); font:inherit; font-size:14px; cursor:pointer; }
+  .hubtabs button[aria-pressed="true"] { border-bottom-color:var(--doc-accent); color:var(--doc-ink); font-weight:700; }
+  button:focus-visible { outline:2px solid var(--doc-focus); outline-offset:2px; }
+  .head { display:grid; gap:8px; max-width:72ch; margin-bottom:24px; }
+  .eyebrow { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-muted); }
+  h1 { margin:0; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.01em; text-wrap:balance; }
+  h2.sec { font-size:20px; margin:36px 0 12px; }
+  .lede { margin:0; color:var(--doc-muted); max-width:66ch; } .lede strong { color:var(--doc-ink); font-weight:600; }
+  .tag { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; padding:2px 6px; border-radius:4px; border:1px solid var(--doc-line); color:var(--doc-muted); }
+  .tag.new { color:var(--doc-accent); border-color:var(--doc-accent); } .tag.call { color:var(--doc-warn); border-color:var(--doc-warn); }
+  .row { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(460px,100%),1fr)); gap:28px; align-items:start; margin-bottom:28px; }
+  .spec { display:grid; gap:10px; justify-items:start; }
+  .spec-cap { display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; font-size:13px; color:var(--doc-muted); }
+  .spec-cap b { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-ink); }
+  .stage { position:relative; width:520px; max-width:100%; }
+  .stage.phone { width:390px; } .stage.page { width:640px; }
+  /* product frames — real tokens */
+  .frame { width:100%; background:var(--home-card); color:var(--home-ink); border:1px solid var(--home-line-strong); border-radius:12px; padding:22px; font-family:Inter,system-ui,sans-serif; font-size:var(--type-body); line-height:1.4; box-shadow:0 1px 2px rgba(70,55,30,.05), 0 10px 30px rgba(20,15,10,.14); display:flex; flex-direction:column; gap:13px; }
+  .frame.paper { background:var(--home-paper); box-shadow:none; }
+  .fhead { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin-bottom:2px; }
+  .ftitle { margin:0; font-size:var(--type-heading); font-weight:700; }
+  .fsub { margin:2px 0 0; font-size:var(--type-support); color:var(--home-dim); }
+  .fx { color:var(--home-dim); font-size:18px; line-height:1; }
+  .lbl { display:block; font-size:var(--type-support); font-weight:600; color:var(--home-dim); text-transform:uppercase; letter-spacing:.04em; }
+  .field { display:flex; flex-direction:column; gap:5px; }
+  .input { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--home-paper); border:1px solid var(--home-line-strong); border-radius:6px; padding:7px 11px; color:var(--home-ink); min-height:34px; }
+  .input.ph { color:var(--home-dim); } .input svg { flex:0 0 auto; color:var(--home-dim); }
+  .hint { margin:0; font-size:var(--type-support); color:var(--home-dim); line-height:1.4; }
+  .disc { display:flex; align-items:center; gap:7px; padding:9px 11px; border:1px dashed var(--home-line-strong); border-radius:8px; color:var(--home-olive); font-weight:600; }
+  .foot { display:flex; justify-content:flex-end; gap:8px; margin:4px -22px -22px; padding:14px 22px; border-top:1px solid var(--home-line); }
+  .btn { padding:7px 14px; border-radius:6px; font-weight:700; background:var(--home-lime); color:var(--home-lime-ink); }
+  .ghost { padding:5px 8px; color:var(--home-dim); }
+  /* the payment schedule block */
+  .block { display:flex; flex-direction:column; gap:9px; }
+  .block.tinted { background:var(--home-olive-soft); border:1px solid var(--home-line-strong); border-radius:8px; padding:12px 13px; }
+  .block.dark { background:var(--blue18); border-color:rgba(30,58,138,0.35); }
+  .bhead { display:flex; justify-content:space-between; align-items:baseline; gap:10px; }
+  .bt { margin:0; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--home-dim); }
+  .tools { display:flex; gap:6px; }
+  .tool { padding:4px 9px; border:1px solid var(--home-line); border-radius:6px; font-size:var(--type-support); color:var(--home-ink-soft); }
+  .cols { display:flex; gap:8px; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--home-dim); }
+  .cols .n { width:24px; } .cols .d { flex:1.5; } .cols .a { flex:2; } .cols .x { flex:0 0 26px; }
+  .prow { display:flex; gap:8px; align-items:center; }
+  .prow .num { width:24px; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--home-dim); }
+  .prow .d { flex:1.5; } .prow .a { flex:2; } .prow .x { flex:0 0 26px; text-align:center; color:var(--home-dim); }
+  .recon { display:flex; gap:8px; align-items:flex-start; padding:8px 12px; border-radius:9px; background:rgba(52,102,42,0.12); color:var(--home-win); font-size:var(--type-body); }
+  .recon b { font-weight:700; }
+  /* phone cards */
+  .pcard { border:1px solid var(--home-line); border-radius:9px; padding:10px 11px; display:flex; flex-direction:column; gap:7px; }
+  .pcard.white { background:var(--home-card); } .pcard.tint { background:var(--home-olive-soft); }
+  .pchead { display:flex; justify-content:space-between; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.07em; color:var(--home-dim); }
+  /* season's end panel */
+  .panel { border-radius:8px; padding:16px; }
+  .panel.tint { background:var(--home-olive-soft); border:1px solid var(--blue-line); }
+  .panel.card { background:var(--home-card); border:1px solid var(--home-line); }
+  .panel p { margin:0; } .panel p + p { margin-top:8px; }
+  .occ { border:1px solid var(--home-line-strong); border-radius:8px; overflow:hidden; }
+  .occhead { display:flex; justify-content:space-between; align-items:baseline; padding:9px 11px; border-bottom:1px solid var(--home-line-strong); }
+  .occhead.tint { background:var(--home-olive-soft); }
+  .occrow { display:flex; gap:10px; align-items:center; padding:8px 11px; border-bottom:1px solid var(--home-line); }
+  .occrow:last-child { border-bottom:0; }
+  .occrow .dt { width:64px; font-family:"IBM Plex Mono",monospace; font-size:12px; color:var(--home-ink-soft); }
+  .mk { position:absolute; left:-14px; transform:translateX(-100%); width:26px; height:26px; border-radius:6px; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; background:var(--doc-ink); color:var(--doc-bg); border:0; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .mk.lit { background:var(--doc-focus); color:#fff; }
+  @media (max-width:700px) { .mk { left:auto; right:-6px; transform:none; } }
+  .region { border-radius:8px; outline:2px solid transparent; outline-offset:4px; transition:outline-color .15s; } .region.lit { outline-color:var(--doc-focus); }
+  .notes { display:grid; gap:12px; margin-top:8px; }
+  .note { display:grid; grid-template-columns:34px 1fr; gap:14px; padding:16px 18px; background:var(--doc-panel); border:1px solid var(--doc-line); border-radius:10px; cursor:pointer; }
+  .note.lit { background:var(--doc-on); border-color:var(--doc-accent); }
+  .note .n { width:26px; height:26px; border-radius:6px; background:var(--doc-ink); color:var(--doc-bg); font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; margin-top:2px; }
+  .note h3 { margin:0 0 4px; font-size:16px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .note p { margin:0; color:var(--doc-muted); max-width:78ch; } .note p + p { margin-top:6px; } .note p b { color:var(--doc-ink); font-weight:600; } .note .rec { color:var(--doc-ink); }
+  .doc { max-width:82ch; margin:0 auto; padding-block:28px 56px; padding-inline:20px; }
+  .doc h1 { font-size:24px; margin-bottom:4px; } .doc h2 { font-size:18px; margin:28px 0 8px; } .doc p, .doc li { color:var(--doc-ink); } .doc ul { padding-left:22px; } .doc li { margin:4px 0; } .doc .meta { color:var(--doc-muted); font-size:13px; margin:0 0 16px; }
+  .tbl { overflow-x:auto; } table { border-collapse:collapse; width:100%; font-size:14px; } th, td { text-align:left; padding:8px 10px 8px 0; border-bottom:1px solid var(--doc-line); vertical-align:top; }
+  th { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-muted); font-weight:500; }
+  td.c { color:var(--doc-muted); } td .mono { font-family:"IBM Plex Mono",monospace; font-size:12px; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+
+<div class="hubbar">
+  <div class="t"><strong>Tinted Panel Retirement — project hub</strong><small>Ruled 2026-09-21 (D1–D3 as drawn; D4 a second wave) · built on dev the same day · QA walk §215 owed</small></div>
+  <ul class="stages" aria-label="Project lifecycle"><li class="done" style="color:var(--doc-bg);background:color-mix(in srgb,var(--doc-bg) 18%,transparent)" title="Mockup published 2026-09-21; ruled the same day">Design</li><li class="done" style="color:var(--doc-bg);background:color-mix(in srgb,var(--doc-bg) 18%,transparent)" title="COACH_TINTED_PANEL_RETIREMENT_PLAN.md + PM brief, 2026-09-21">Plan</li><li class="done" style="color:var(--doc-bg);background:color-mix(in srgb,var(--doc-bg) 18%,transparent)" title="Built on dev 2026-09-21 — CSS only; gates clean">Build</li><li class="current" title="/review offered">Review</li><li title="Owner QA walk §215">QA</li><li title="—">Shipped</li></ul>
+</div>
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="inventory" aria-pressed="false">Everywhere the tint paints</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">Coaches portal · the tinted panel · 2026-09-21</div>
+    <h1>The tint comes off — the bill's payment schedule, and everywhere else it paints a panel</h1>
+    <p class="lede">You ruled the tinted panel out of the app for one consistent formatting. This draws the block you asked about first — the <strong>Payment schedule</strong> inside <em>Add a bill</em> — then two more of the same panel elsewhere, so the one rule reads the same on all of them. The second tab lists every place the tint paints a panel today (there are more than the bill). One thing to know: the same colour is also the portal's <strong>"selected / on / now" fill</strong> — that is a state, not a panel, and the drawing keeps it.</p>
+  </header>
+
+  <h2 class="sec" style="margin-top:0">1 · Add a bill — the payment schedule</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Before</b> the block on its tinted, bordered surface (olive on paper; blue in dark mode)</div>
+      <div class="stage">
+        <div class="frame">
+          <div class="fhead"><div><h3 class="ftitle">Add a bill</h3><p class="fsub">Money the team owes but hasn’t paid — nothing moves today</p></div><span class="fx">✕</span></div>
+          <div class="field"><span class="lbl">Description *</span><div class="input ph">e.g. Spring tournament entry, summer dome block</div></div>
+          <div class="field"><span class="lbl">Which item? *</span><div class="input">Tournaments → Entry fees <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          <div class="block tinted region" data-r="1">
+            <div class="bhead"><p class="bt">Payment schedule</p><span class="tools"><span class="tool">Repeat monthly</span><span class="tool">+ Add</span></span></div>
+            <span class="lbl" style="text-transform:none;letter-spacing:0">3 payments</span>
+            <div class="cols"><span class="n"></span><span class="d">Due date *</span><span class="a">Amount ($) *</span><span class="x"></span></div>
+            <div class="prow"><span class="num">#1</span><div class="input d">2026-10-01</div><div class="input a">400.00</div><span class="x">✕</span></div>
+            <div class="prow"><span class="num">#2</span><div class="input d">2026-11-01</div><div class="input a">400.00</div><span class="x">✕</span></div>
+            <div class="prow"><span class="num">#3</span><div class="input d">2026-12-01</div><div class="input a">400.00</div><span class="x">✕</span></div>
+            <div class="recon"><b>✓</b><span><b>3 payments</b>, <b>$1,200.00</b> in total.</span></div>
+          </div>
+          <button class="mk" data-n="1" aria-label="Note 1">1</button>
+          <div class="disc">＋ More — payee, tags, notes</div>
+          <div class="foot"><span class="ghost">Cancel</span><span class="btn">Add a bill</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>After</b> flat — the block is a group of the form, separated by space, its heading and tools where they were <span class="tag new">changed</span></div>
+      <div class="stage" id="afterStage">
+        <div class="frame">
+          <div class="fhead"><div><h3 class="ftitle">Add a bill</h3><p class="fsub">Money the team owes but hasn’t paid — nothing moves today</p></div><span class="fx">✕</span></div>
+          <div class="field"><span class="lbl">Description *</span><div class="input ph">e.g. Spring tournament entry, summer dome block</div></div>
+          <div class="field"><span class="lbl">Which item? *</span><div class="input">Tournaments → Entry fees <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          <div class="block region" data-r="2" style="margin-top:6px">
+            <div class="bhead"><p class="bt">Payment schedule</p><span class="tools"><span class="tool">Repeat monthly</span><span class="tool">+ Add</span></span></div>
+            <span class="lbl" style="text-transform:none;letter-spacing:0">3 payments</span>
+            <div class="cols"><span class="n"></span><span class="d">Due date *</span><span class="a">Amount ($) *</span><span class="x"></span></div>
+            <div class="prow"><span class="num">#1</span><div class="input d">2026-10-01</div><div class="input a">400.00</div><span class="x">✕</span></div>
+            <div class="prow"><span class="num">#2</span><div class="input d">2026-11-01</div><div class="input a">400.00</div><span class="x">✕</span></div>
+            <div class="prow"><span class="num">#3</span><div class="input d">2026-12-01</div><div class="input a">400.00</div><span class="x">✕</span></div>
+            <div class="recon"><b>✓</b><span><b>3 payments</b>, <b>$1,200.00</b> in total.</span></div>
+          </div>
+          <button class="mk" data-n="2" aria-label="Note 2">2</button>
+          <div class="disc" style="margin-top:6px">＋ More — payee, tags, notes</div>
+          <div class="foot"><span class="ghost">Cancel</span><span class="btn">Add a bill</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">2 · The same block on a phone — each installment is a card</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Before</b> white cards on the tint</div>
+      <div class="stage phone">
+        <div class="frame" style="padding:18px">
+          <div class="block tinted" style="padding:11px">
+            <div class="bhead"><p class="bt">Payment schedule</p><span class="tools"><span class="tool">Repeat</span><span class="tool">+ Add</span></span></div>
+            <div class="pcard white"><div class="pchead"><span>Installment 1</span><span>Remove</span></div><div class="field"><span class="lbl">Due date</span><div class="input">2026-10-01</div></div><div class="field"><span class="lbl">Amount ($)</span><div class="input">400.00</div></div></div>
+            <div class="pcard white"><div class="pchead"><span>Installment 2</span><span>Remove</span></div><div class="field"><span class="lbl">Due date</span><div class="input">2026-11-01</div></div><div class="field"><span class="lbl">Amount ($)</span><div class="input">400.00</div></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>After</b> hairline cards on the form’s own white <span class="tag new">changed</span></div>
+      <div class="stage phone">
+        <div class="frame" style="padding:18px">
+          <div class="block region" data-r="3">
+            <div class="bhead"><p class="bt">Payment schedule</p><span class="tools"><span class="tool">Repeat</span><span class="tool">+ Add</span></span></div>
+            <div class="pcard white"><div class="pchead"><span>Installment 1</span><span>Remove</span></div><div class="field"><span class="lbl">Due date</span><div class="input">2026-10-01</div></div><div class="field"><span class="lbl">Amount ($)</span><div class="input">400.00</div></div></div>
+            <div class="pcard white"><div class="pchead"><span>Installment 2</span><span>Remove</span></div><div class="field"><span class="lbl">Due date</span><div class="input">2026-11-01</div></div><div class="field"><span class="lbl">Amount ($)</span><div class="input">400.00</div></div></div>
+          </div>
+          <button class="mk" data-n="3" aria-label="Note 3">3</button>
+        </div>
+      </div>
+      <p class="hint" style="color:var(--doc-muted);font-size:13px">The budget line’s period grid paints its phone cards with the tint itself today; it takes the same hairline-on-white.</p>
+    </div>
+  </div>
+
+  <h2 class="sec">3 · The same panel on a page — Season’s End</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Before</b> a tinted panel with a blue hairline, on the paper ground</div>
+      <div class="stage page">
+        <div class="frame paper">
+          <div class="panel tint region" data-r="4"><p><b>2026 Season</b> is still under way — a season stays live until you close it. When it does, this is where it gets kept: the season’s story, the results, the roster, the practices and how it added up.</p></div>
+          <button class="mk" data-n="4" aria-label="Note 4">4</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>After</b> a white card with a hairline — the Staff screen’s treatment, now the rule <span class="tag new">changed</span></div>
+      <div class="stage page">
+        <div class="frame paper">
+          <div class="panel card region" data-r="5"><p><b>2026 Season</b> is still under way — a season stays live until you close it. When it does, this is where it gets kept: the season’s story, the results, the roster, the practices and how it added up.</p></div>
+          <button class="mk" data-n="5" aria-label="Note 5">5</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">4 · A smaller one on the form you rebuilt this morning — the repeating dates’ header</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Before</b> the list’s header row is tinted</div>
+      <div class="stage">
+        <div class="frame" style="padding:18px">
+          <div class="occ region" data-r="6">
+            <div class="occhead tint"><span style="font-weight:700">4 games</span><span class="hint">Add an opponent to each. Nothing is saved until you tap Add.</span></div>
+            <div class="occrow"><span class="dt">Oct 6</span><div class="input ph" style="flex:1">Opponent</div><span class="fx" style="font-size:14px">✕</span></div>
+            <div class="occrow"><span class="dt">Oct 13</span><div class="input ph" style="flex:1">Opponent</div><span class="fx" style="font-size:14px">✕</span></div>
+          </div>
+          <button class="mk" data-n="6" aria-label="Note 6">6</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>After</b> the header is a row like the rows, a hairline under it <span class="tag new">changed</span></div>
+      <div class="stage">
+        <div class="frame" style="padding:18px">
+          <div class="occ region" data-r="7">
+            <div class="occhead"><span style="font-weight:700">4 games</span><span class="hint">Add an opponent to each. Nothing is saved until you tap Add.</span></div>
+            <div class="occrow"><span class="dt">Oct 6</span><div class="input ph" style="flex:1">Opponent</div><span class="fx" style="font-size:14px">✕</span></div>
+            <div class="occrow"><span class="dt">Oct 13</span><div class="input ph" style="flex:1">Opponent</div><span class="fx" style="font-size:14px">✕</span></div>
+          </div>
+          <button class="mk" data-n="7" aria-label="Note 7">7</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">5 · Add Budget Line — the “add an item” tray <span class="tag new">found after the ruling</span></h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Before</b> the tray is blue-tinted (an accent-blue literal in dark; olive on paper)</div>
+      <div class="stage" style="width:560px">
+        <div class="frame">
+          <div class="fhead"><h3 class="ftitle">Add Budget Line</h3><span class="fx">✕</span></div>
+          <div class="field"><span class="lbl" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--home-ink)">This line is</span><div class="input" style="background:var(--home-olive-soft)">Money the team spends <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          <span class="lbl" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--home-ink)">Category &amp; Item *</span>
+          <div class="block region" data-r="8" style="background:rgba(87,101,30,0.05);border:1px solid rgba(87,101,30,0.18);border-radius:10px;padding:14px">
+            <div style="display:flex;gap:11px"><div class="field" style="flex:2"><span class="lbl">Item name</span><div class="input" style="border-color:var(--home-olive)">Catching Clinics</div></div><div class="field" style="flex:1"><span class="lbl">Suggested $ <span style="font-weight:400;opacity:.7">(optional)</span></span><div class="input ph">0.00</div></div></div>
+            <div class="field"><span class="lbl">Category</span><div class="input">Training <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            <p class="hint">Saved under <b style="color:var(--home-ink)">Money going out</b> — because that is what you are recording. Rename or remove it later from Manage categories &amp; items — but it stays on this side.</p>
+            <div style="display:flex;justify-content:flex-end;gap:8px"><span class="ghost" style="border:1px solid var(--home-line-strong);border-radius:6px;padding:6px 12px;background:var(--home-fill);color:var(--home-ink);font-weight:700">Cancel</span><span class="btn">Add Item</span></div>
+            <p class="hint">This item is saved to this team’s list — no other team will see it unless your club chooses to share it.</p>
+          </div>
+          <button class="mk" data-n="8" aria-label="Note 8">8</button>
+          <p class="hint">This names the line on your plan, your report and your exports. Want it to say something else? Add your own word from the picker above.</p>
+          <div class="foot"><span class="ghost">Cancel</span><span class="btn">Add to Off-Season Training</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>After</b> a hairline tray on the form’s white — like the bill’s “Repeat monthly” tray <span class="tag new">built</span></div>
+      <div class="stage" style="width:560px">
+        <div class="frame">
+          <div class="fhead"><h3 class="ftitle">Add Budget Line</h3><span class="fx">✕</span></div>
+          <div class="field"><span class="lbl" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--home-ink)">This line is</span><div class="input">Money the team spends <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          <span class="lbl" style="text-transform:none;letter-spacing:0;font-size:14px;color:var(--home-ink)">Category &amp; Item *</span>
+          <div class="block region" data-r="9" style="border:1px solid var(--home-line-strong);border-radius:10px;padding:14px">
+            <div style="display:flex;gap:11px"><div class="field" style="flex:2"><span class="lbl">Item name</span><div class="input" style="border-color:var(--home-olive)">Catching Clinics</div></div><div class="field" style="flex:1"><span class="lbl">Suggested $</span><div class="input ph">0.00</div></div></div>
+            <div class="field"><span class="lbl">Category</span><div class="input">Training <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            <p class="hint">Saved under <b style="color:var(--home-ink)">Money going out</b> — because that is what you are recording. Rename or remove it later from Manage categories &amp; items — but it stays on this side.</p>
+            <div style="display:flex;justify-content:flex-end;gap:8px"><span class="ghost">Cancel</span><span class="btn">Add item</span></div>
+            <p class="hint">This item is saved to this team’s list — no other team will see it unless your club chooses to share it.</p>
+          </div>
+          <button class="mk" data-n="9" aria-label="Note 9">9</button>
+          <p class="hint">This names the line on your plan, your report and your exports. Want it to say something else? Add your own word from the picker above.</p>
+          <div class="foot"><span class="ghost">Cancel</span><span class="btn">Add to Off-Season Training</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">What each marker says</h2>
+  <div class="notes">
+    <div class="note" data-n="1" tabindex="0"><span class="n">1</span><div><h3>The bill’s schedule is the last tinted section inside a form</h3><p>It came from the same shared style as the event form’s boxes; when those flattened this morning I kept this one because its August drawing was built on the tint. Your ruling ends that exception.</p></div></div>
+    <div class="note" data-n="2" tabindex="0"><span class="n">2</span><div><h3>Flat, and bounded by what it already had <span class="tag new">changed</span></h3><p>The block keeps its eyebrow heading, its two tools on the right, the count, the column heads and the ✓ line — that is enough to read as one thing without a box. It separates from the fields above and the More door below by <b>space</b>, the same rule the event form’s groups follow now. The ✓ / short / over line keeps its green, amber or red — that is a status, not a panel.</p></div></div>
+    <div class="note" data-n="3" tabindex="0"><span class="n">3</span><div><h3>Phone cards go hairline-on-white <span class="tag new">changed</span></h3><p>Each installment was a white card on the tint; the tint is gone, so the cards keep their hairline and sit on the form’s white. The budget line’s period grid paints its own phone cards with the tint — it takes the same treatment, so the three schedule editors (bill, budget line, dues) agree on a phone.</p></div></div>
+    <div class="note" data-n="4" tabindex="0"><span class="n">4</span><div><h3>On a page, the same panel wears a blue hairline</h3><p>Season’s End frames four of its blocks this way. The Staff screen dropped exactly this treatment on 2026-09 for a plain white card and a hairline, and left Settings and Season’s End “for a separate call” — this is that call.</p></div></div>
+    <div class="note" data-n="5" tabindex="0"><span class="n">5</span><div><h3>A panel on paper becomes a white card with a hairline <span class="tag new">changed</span></h3><p>Two grounds, one rule: inside a white form a section goes flat and separates by space; on the paper page a panel becomes a white card with a hairline. No tinted third surface anywhere.</p></div></div>
+    <div class="note" data-n="6" tabindex="0"><span class="n">6</span><div><h3>Small ones count too</h3><p>The repeating dates’ header on the event form is a tinted row — the last tint on the form you approved this morning. The inventory tab lists the rest of these: attendance rows, the week view’s day columns, the player page’s mini rows, the practice run’s “You’re on” line, the lineup peek, the link-a-club card.</p></div></div>
+    <div class="note" data-n="7" tabindex="0"><span class="n">7</span><div><h3>A header row is a row <span class="tag new">changed</span></h3><p>Same weight, a hairline beneath — it already had the bold count to say it is the header.</p></div></div>
+    <div class="note" data-n="8" tabindex="0"><span class="n">8</span><div><h3>The item-create tray wore its own blue</h3><p>The inventory missed it because it is painted with a literal blue rather than the shared tint — the one place in the coaches portal still blue on the warm look too (it had its own olive override). It also carried “(optional)” on Suggested $ and a Title Case “Add Item”.</p></div></div>
+    <div class="note" data-n="9" tabindex="0"><span class="n">9</span><div><h3>A hairline tray, not fully flat <span class="tag new">built</span></h3><p>It keeps a hairline because it is an inline tool with its <b>own Cancel / Add item</b> inside a form that has a footer of its own — the coach has to see what the inner Cancel cancels. That is exactly the shape the bill editor’s “Repeat monthly” tray has, so the two agree. “Suggested $” loses its tag; “Add item” takes sentence case. The picker is shared by nine forms (every money form, the club tab, the drives and sponsors), so all of them take it at once.</p></div></div>
+  </div>
+</div>
+</section>
+
+<section id="hub-inventory" hidden>
+  <div class="doc">
+    <h1>Everywhere the tint paints</h1>
+    <p class="meta">Measured 2026-09-21 in the coaches portal’s stylesheet: 45 places use the colour as a fill (hover states excluded). They split into two kinds, and only one is a panel.</p>
+    <h2>A · Panels and cards — these flatten</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Where</th><th>What is tinted today</th><th>Proposed</th></tr></thead>
+      <tbody>
+        <tr><td>Add a bill (Money)</td><td>The Payment schedule block; the phone installment cards sit on it</td><td>Flat group; hairline cards on white</td></tr>
+        <tr><td>Budget line (Money)</td><td>The period grid’s phone cards</td><td>Hairline cards on white</td></tr>
+        <tr><td>Season’s End</td><td>Four content panels (blue hairline) and the checklist items</td><td>White cards with a hairline</td></tr>
+        <tr><td>Schedule — Add Event</td><td>The repeating dates’ header row</td><td>A plain header row, hairline under</td></tr>
+        <tr><td>Schedule — week view</td><td>Each day column; the month view’s day-name header</td><td>White column with a hairline; header plain</td></tr>
+        <tr><td>Schedule — attendance</td><td>Each attendance row; the status button group; the status badge</td><td>Hairline rows on white; group and badge keep a hairline, lose the fill</td></tr>
+        <tr><td>Schedule — the event’s lineup peek</td><td>The stats strip and the dashed empty state</td><td>Hairline on white</td></tr>
+        <tr><td>Lineups — builder</td><td>The dashed “not playing” tray</td><td>Dashed hairline on white</td></tr>
+        <tr><td>Practice — run screen</td><td>The “You’re on …” line (olive-bordered callout)</td><td>Keep the olive border, drop the fill</td></tr>
+        <tr><td>Player page</td><td>The mini rows</td><td>Hairline rows on white</td></tr>
+        <tr><td>Roster — phone</td><td>Each player card; every list’s phone cards portal-wide (the shared row recipe and every table-as-cards)</td><td>White cards with a hairline — the drawing the phone pass already ruled (B5)</td></tr>
+        <tr><td>Money tables</td><td>Table footer cells; the drive hand-in row</td><td>A rule above, no fill</td></tr>
+        <tr><td>Link a club</td><td>The card</td><td>White card with a hairline</td></tr>
+        <tr><td>Roster</td><td>The pitch chip; the scroll hint pill</td><td>Hairline chips</td></tr>
+        <tr><td>Every money form (the item picker)</td><td>The “add an item” tray — a literal blue, not the shared tint (found after the ruling)</td><td>Hairline tray on white; no “(optional)”; “Add item”</td></tr>
+      </tbody>
+    </table></div>
+    <h2>B · States — these keep the fill</h2>
+    <p>The same colour is the portal’s “this one is on” fill: a pressed chip, a selected row, the attendance option that is chosen, the game console’s current inning column, the drag target a block is about to drop into, the active option in a menu, an active filter summary. Take the fill off those and a selected thing looks like an unselected one. <b>Kept as drawn.</b></p>
+    <h2>C · The family and public pages</h2>
+    <p>The consumer side (the family view, account, notifications, sign-in, discover, chat, start) paints the tint on about 20 panels of its own. Same rule, second wave — a separate pass with its own drawing, because those screens have their own chrome.</p>
+  </div>
+</section>
+
+<section id="hub-decisions" hidden>
+  <div class="doc">
+    <h1>Decisions to rule</h1>
+    <p class="meta">Ruled 2026-09-21: D1–D3 as drawn; D4 a second wave with its own drawing.</p>
+    <div class="drow" style="border:1px solid var(--doc-line);border-radius:10px;background:var(--doc-panel);padding:14px 16px;margin-bottom:10px"><strong>D1 · The rule has two halves.</strong><p style="margin:6px 0 0;color:var(--doc-muted)">Inside a white form, a section goes flat and separates by space (the event form’s rule). On the paper page, a panel becomes a white card with a hairline (the Staff screen’s rule). No tinted surface anywhere. <span class="tag new">as drawn</span></p></div>
+    <div class="drow" style="border:1px solid var(--doc-line);border-radius:10px;background:var(--doc-panel);padding:14px 16px;margin-bottom:10px"><strong>D2 · State fills stay.</strong><p style="margin:6px 0 0;color:var(--doc-muted)">Selected, on, now, drag-over and active-filter fills keep the colour — a state needs a fill; a panel does not. <span class="tag new">as drawn</span></p></div>
+    <div class="drow" style="border:1px solid var(--doc-line);border-radius:10px;background:var(--doc-panel);padding:14px 16px;margin-bottom:10px"><strong>D3 · Scope of the first pass.</strong><p style="margin:6px 0 0;color:var(--doc-muted)">The whole coaches-portal list on the inventory tab (Part A) in one pass — recommended, so the rule lands once — or the bill block alone now and the rest as a follow-on. <span class="tag new">ruled</span></p></div>
+    <div class="drow" style="border:1px solid var(--doc-line);border-radius:10px;background:var(--doc-panel);padding:14px 16px;margin-bottom:10px"><strong>D4 · The family and public pages.</strong><p style="margin:6px 0 0;color:var(--doc-muted)">Same rule as a second wave with its own drawing, or fold them into this pass. <span class="tag new">ruled</span></p></div>
+  </div>
+</section>
+
+<section id="hub-plan" hidden>
+  <div class="doc">
+    <h1>Full plan — the tinted panel retires</h1>
+    <p class="meta">Ruled 2026-09-21 · built on dev 2026-09-21 (CSS only, no migration) · source: docs/projects/active/COACH_TINTED_PANEL_RETIREMENT_PLAN.md</p>
+    <h2>The rule</h2>
+    <ul><li>Inside a white form, a section goes flat and separates by space.</li><li>On the paper page, a panel becomes a white card with a hairline.</li><li>State fills (selected / on / now / drag-over / active) keep the colour.</li></ul>
+    <h2>What changed</h2>
+    <ul>
+      <li><b>White card + hairline:</b> every phone card portal-wide (the shared row recipe and every table-as-cards), the roster's phone rows, Season's End's four blocks and its checklist items (their blue hairline becomes the house hairline), the link-a-club card, the player page's mini rows, the week view's day columns, the attendance rows, the lineup peek's stats strip, the budget sandbox note.</li>
+      <li><b>Fill off, own border stays:</b> the attendance status group and badge, the lineup builder's "not playing" tray, the lineup peek's empty state, the roster's pitch chip, the practice rail badge, the practice run's "You're on" line (keeps its olive border), the scroll hint (gains a hairline), the sample-budget fence (keeps its dashed lime).</li>
+      <li><b>Fill off, nothing replaces it:</b> money table footers, the drive hand-in row, the month view's day-name header, the repeating-dates header on Add Event.</li>
+      <li><b>The bill's payment schedule:</b> flat — a group of the form; its phone installment cards white with a hairline, and so are the budget line's and the dues editor's (one shared rule now, no per-editor overrides).</li>
+      <li><b>The item picker's "add an item" tray</b> (every money form): a hairline tray on white in place of a literal blue; "Suggested $" without its tag; "Add item".</li>
+    </ul>
+    <h2>Left alone, by kind</h2>
+    <p>The state fills; the game console's identity chips (position, period, who — its own day-of palette, flagged); the dues matrix's pinned-column ground (mechanics); the budget checklist's open-category tint (open is a state); admin surfaces; three dead selectors.</p>
+    <h2>Verification</h2>
+    <p>CSS purity, selector, contrast and spelling gates clean; the full changed-files gate clean. Rendered check clean on attendance, roster, player, lineup builder and payables; Season's End's four findings reproduce with the pre-sweep stylesheet (A/B'd) — pre-existing.</p>
+    <h2>Second wave (D4)</h2>
+    <p>The family and public pages (~20 panels) and the tryout day cards (~14) — same rule, own drawing, own session.</p>
+  </div>
+</section>
+
+<section id="hub-qa" hidden>
+  <div class="doc">
+    <h1>QA Walk §215 — the tinted panel retires</h1>
+    <p class="meta">Tick as you go; ticks, verdicts and notes stay in this browser. "Build summary" makes plain text to paste back into chat.</p>
+    <div class="signin" style="border:1px solid var(--doc-line);background:var(--doc-panel);border-radius:10px;padding:14px 18px;font-size:13.5px;margin:0 0 20px"><strong>Sign in as</strong> (dev only — keep this page private)<br>URL <b>http://localhost:3000</b> · account <b>uat-coach@uat-test-org.local</b> · password <b>UATPassword2026!</b> · org <b>uat-test-org</b> · team <b>UAT Test Team</b>. Walk it in the warm look first, then flip to dark (Account → Appearance) — the tint was blue there.</div>
+    <p class="qaprogress" id="qaCount" style="font-weight:700;margin:0 0 14px">Checked 0 of 0</p>
+    <div id="qaParts"></div>
+    <div class="qaactions" style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px"><button type="button" id="buildSummary">Build summary</button><button type="button" id="clearQA">Clear this walk</button></div>
+    <textarea id="summaryOut" hidden aria-label="QA summary to paste back" style="width:100%;border:1px solid var(--doc-line);border-radius:8px;padding:12px;margin-top:12px;background:var(--doc-bg);color:var(--doc-ink);font:12px/1.5 'IBM Plex Mono',monospace;min-height:220px"></textarea>
+  </div>
+</section>
+<style>
+  .qapart { border:1px solid var(--doc-line); border-radius:10px; background:var(--doc-panel); padding:16px 18px; margin-bottom:14px; }
+  .qapart h3 { margin:0 0 6px; } .qapart .where { margin:0 0 8px; color:var(--doc-muted); font-size:13px; }
+  .qastep { display:flex; gap:10px; align-items:flex-start; padding:7px 0; font-size:14px; }
+  .qastep input { width:20px; height:20px; accent-color:var(--doc-accent); margin-top:1px; flex-shrink:0; }
+  .verdict { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin-top:10px; font-size:13px; }
+  .verdict button, .qaactions button { border:1px solid var(--doc-line); background:var(--doc-bg); color:var(--doc-ink); border-radius:6px; padding:7px 11px; min-height:38px; font:inherit; font-size:13px; cursor:pointer; }
+  .qaactions button { background:var(--doc-ink); color:var(--doc-bg); font-weight:600; }
+  .verdict button[aria-pressed="true"] { background:var(--doc-on); border-color:var(--doc-accent); font-weight:700; }
+  .qapart textarea { width:100%; border:1px solid var(--doc-line); border-radius:6px; padding:8px 10px; margin-top:8px; resize:vertical; background:var(--doc-bg); color:var(--doc-ink); font:inherit; font-size:13.5px; }
+</style>
+
+<script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var HUBS = ['mockup', 'inventory', 'decisions', 'plan', 'qa'];
+    function showHub(w) { HUBS.forEach(function (h) { var s = $('hub-' + h); if (s) s.hidden = (h !== w); }); document.querySelectorAll('[data-hub]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-hub') === w)); }); try { history.replaceState(null, '', '#' + w); } catch (e) {} window.dispatchEvent(new Event('resize')); }
+    document.querySelectorAll('[data-hub]').forEach(function (b) { b.addEventListener('click', function () { showHub(b.getAttribute('data-hub')); }); });
+    var initial = (location.hash || '').slice(1); if (HUBS.indexOf(initial) > -1) showHub(initial);
+    var lit = null;
+    function setLit(n) { var same = (n === lit); document.querySelectorAll('.lit').forEach(function (el) { el.classList.remove('lit'); }); lit = same ? null : n; if (!lit) return; document.querySelectorAll('[data-n="' + lit + '"], [data-r="' + lit + '"]').forEach(function (el) { el.classList.add('lit'); }); }
+    function place() { document.querySelectorAll('.stage').forEach(function (stage) { stage.querySelectorAll('.mk').forEach(function (b) { var r = stage.querySelector('[data-r="' + b.getAttribute('data-n') + '"]'); if (!r) return; var top = 0, el = r; while (el && el !== stage) { top += el.offsetTop; el = el.offsetParent; } b.style.top = (top + 6) + 'px'; }); }); }
+    place(); window.addEventListener('resize', place); if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    document.querySelectorAll('.mk').forEach(function (b) { b.addEventListener('click', function () { setLit(b.getAttribute('data-n')); var note = document.querySelector('.note[data-n="' + b.getAttribute('data-n') + '"]'); if (note && lit) note.scrollIntoView({ behavior: 'smooth', block: 'center' }); }); });
+    document.querySelectorAll('.note').forEach(function (nt) { nt.addEventListener('click', function () { setLit(nt.getAttribute('data-n')); }); nt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLit(nt.getAttribute('data-n')); } }); });
+
+    var QA_PARTS = [
+      { id: 'A', title: 'Add a bill', where: 'Money → Bills → Add a bill', steps: [
+        'The Payment schedule block sits flat on the form — no tinted box, no border around it; its heading, Repeat monthly · + Add, the count and the column heads bound it.',
+        'Repeat monthly → the tray is a white box with a hairline; Build the schedule → the rows appear on the white; the ✓ line keeps its green.',
+        'At phone width each installment is a white card with a hairline (not white-on-tint).',
+        'Money → Budget → a line → split into periods, on a phone: the period cards are white with a hairline too. Dues → a player → the schedule editor: same.',
+        'Money → Budget → Add Budget Line → Category & Item → type a new name → the "add an item" tray is a hairline box on white (not blue, not tinted); "Suggested $" has no "(optional)"; the button reads "Add item". The same tray on Record money and Add a bill.',
+      ]},
+      { id: 'B', title: "Season's End", where: 'Season → Season\'s End (a live season shows the "still under way" block)', steps: [
+        'Every block is a white card with a plain hairline — no tint, no blue edge.',
+        'In dark mode: cards, not blue-tinted panels.',
+      ]},
+      { id: 'C', title: 'Schedule', where: 'Schedule → an event → Attendance; Week view; Add Event → Repeat weekly', steps: [
+        'Attendance rows are white with a hairline; the status button group has no tinted ground; the status badge is a hairline pill.',
+        'Week view: each day column is a white column with a hairline; the month view\'s day-name header row has no fill.',
+        'Add Event → Game → Repeat weekly → set a last date: the occurrences list\'s header row is plain with a hairline under it.',
+        'An event\'s Lineup tab (the peek): the stats strip is a hairline box; the empty state is a dashed hairline box.',
+      ]},
+      { id: 'D', title: 'Phone cards everywhere', where: 'Roster, Money, any list — at 390px', steps: [
+        'Roster on a phone: each player card is white with a hairline.',
+        'Any list that becomes cards on a phone (bills, transactions, the schedule list): white cards with a hairline, not tinted.',
+        'The roster\'s pitch chip and the "scroll for more" hint are hairline pills.',
+      ]},
+      { id: 'E', title: 'Elsewhere', where: 'Player page, Lineups, Practice, Link a club, Explore', steps: [
+        'A player\'s page: the mini rows are hairline rows on white.',
+        'Lineups → builder: the "Not playing" tray is a dashed hairline box with no fill.',
+        'Practice → Run practice: the "You\'re on …" line keeps its olive border with no fill.',
+        'Link a club (standalone team): the card is white with a hairline.',
+        'Explore: the "whole organization" nudge is a white card.',
+      ]},
+      { id: 'F', title: 'What still wears the colour (on purpose)', where: 'Anywhere something is selected', steps: [
+        'A pressed filter chip, a selected attendance option, an active menu item and an active multi-select summary still show the fill — a selected thing still looks selected.',
+        'Game console: the current inning column, a selected row and a pressed chip keep their fill; the position / period / who chips keep theirs (flagged, not swept).',
+      ]},
+    ];
+    var KEY = 'qa-215-tinted-panel';
+    var qa = {}; try { qa = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { qa = {}; }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(qa)); } catch (e) {} }
+    function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    function counts() { var c = 0, t = 0; QA_PARTS.forEach(function (p) { p.steps.forEach(function (_, i) { t++; if (qa[p.id + '-' + i]) c++; }); }); return { c: c, t: t }; }
+    function paintCount() { $('qaCount').textContent = 'Checked ' + counts().c + ' of ' + counts().t; }
+    function draw() { $('qaParts').innerHTML = QA_PARTS.map(function (p) { return '<div class="qapart"><h3>Part ' + p.id + ' · ' + esc(p.title) + '</h3><p class="where">' + esc(p.where) + '</p>' + p.steps.map(function (st, i) { return '<label class="qastep"><input type="checkbox" id="qa-' + p.id + '-' + i + '" data-step="' + p.id + '-' + i + '"' + (qa[p.id + '-' + i] ? ' checked' : '') + '> <span>' + esc(st) + '</span></label>'; }).join('') + '<div class="verdict">Verdict:' + ['pass', 'issue', 'call'].map(function (v) { return '<button type="button" data-verdict="' + p.id + '" data-value="' + v + '" aria-pressed="' + (qa['verdict-' + p.id] === v) + '">' + (v === 'pass' ? 'Pass' : v === 'issue' ? 'Issue' : 'Needs a call') + '</button>'; }).join('') + '</div><label>Notes<textarea id="qa-notes-' + p.id + '" data-notes="' + p.id + '" rows="2" placeholder="Anything worth recording">' + esc(qa['notes-' + p.id] || '') + '</textarea></label></div>'; }).join(''); paintCount(); }
+    draw();
+    $('qaParts').addEventListener('change', function (e) { var t = e.target; if (t.dataset.step) { qa[t.dataset.step] = t.checked; save(); paintCount(); } if (t.dataset.notes) { qa['notes-' + t.dataset.notes] = t.value; save(); } });
+    $('qaParts').addEventListener('click', function (e) { var b = e.target.closest('[data-verdict]'); if (!b) return; qa['verdict-' + b.dataset.verdict] = b.dataset.value; save(); b.parentNode.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
+    $('buildSummary').addEventListener('click', function () { var k = counts(); var lines = ['QA walk §215 — the tinted panel retires', 'Checked ' + k.c + ' of ' + k.t, '']; QA_PARTS.forEach(function (p) { lines.push('Part ' + p.id + ' · ' + p.title + ' — verdict: ' + (qa['verdict-' + p.id] || 'unset')); p.steps.forEach(function (st, i) { lines.push('  [' + (qa[p.id + '-' + i] ? 'x' : ' ') + '] ' + st); }); if (qa['notes-' + p.id]) lines.push('  Notes: ' + qa['notes-' + p.id]); lines.push(''); }); var out = $('summaryOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select(); });
+    $('clearQA').addEventListener('click', function () { if (!confirm('Clear every tick, verdict and note for this walk?')) return; qa = {}; save(); draw(); $('summaryOut').hidden = true; });
+  })();
+</script>

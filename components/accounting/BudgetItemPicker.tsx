@@ -865,7 +865,8 @@ export default function BudgetItemPicker({
                 sit beside a real amount inviting confusion. */}
             {suggestAmount && (
               <div className={styles.field} style={{ flex: 1 }}>
-                <label className={styles.label}>Suggested $ <span className={styles.optional}>(optional)</span></label>
+                {/* No "(optional)" tag — the 08-26 ruling: mark the few required, never the many optional. */}
+                <label className={styles.label}>Suggested $</label>
                 <input
                   className={styles.input}
                   type="number"
@@ -950,7 +951,7 @@ export default function BudgetItemPicker({
               onClick={handleSaveCustomItem}
               disabled={saving || !newItemName.trim() || !newItemCatId}
             >
-              {saving ? 'Saving…' : 'Add Item'}
+              {saving ? 'Saving…' : 'Add item'}
             </button>
           </div>
           <p className={styles.hint}>

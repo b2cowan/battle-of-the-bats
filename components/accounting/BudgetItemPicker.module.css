@@ -242,9 +242,15 @@
 .select option { background: var(--home-card, #1a1f2e); } /* token-exempt: native <select> option bg outside warm gate, no root token */
 
 /* ── Inline add-item form ────────────────────────────────────────────────── */
+/* ⚠ A HAIRLINE TRAY, NO FILL (owner ruling 2026-09-21, the tinted-panel retirement — this was the
+   "blue tinted panel" the owner pointed at on Add Budget Line: an accent-blue literal in dark, an
+   olive tint on paper). It keeps a hairline rather than going fully flat because it is an inline
+   tool tray with its OWN Cancel / Add item inside a form that has a footer of its own — the same
+   shape as the bill editor's "Repeat monthly" tray, and for the same reason: the coach has to see
+   what the inner Cancel cancels. The hairline is the house one, theme-resolved; no literal. */
 .addForm {
-  background: rgba(96,165,250,0.05);
-  border: 1px solid rgba(96,165,250,0.18);
+  background: transparent;
+  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.14));
   border-radius: 10px;
   padding: 1rem;
   display: flex;
@@ -280,14 +286,8 @@
   margin: 0;
 }
 
-/* Warm coaches portal (dev-gated) — the inline add-item panel is tinted with the accent-blue
-   literal directly (rgba(96,165,250,…), not the --blueprint-blue token), so the global token
-   remap can't reach it; it would stay blue on cream. Give it a matching olive tint instead.
-   Additive — dark output unchanged. */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .addForm {
-  background: rgba(var(--home-olive-rgb), 0.05);
-  border-color: rgba(var(--home-olive-rgb), 0.18);
-}
+/* ⚰ The warm-theme olive tint for `.addForm` (→ 2026-09-21): it existed only to keep the blue
+   literal off the cream; with no fill and a token hairline there is nothing to remap. */
 
 /* The one contextual door — the dropdown's last row, opening the categories-and-items dialog
    (owner ruling Q5, 2026-09-09). Paper ground and support ink like the tags combobox's

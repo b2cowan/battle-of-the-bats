@@ -282,7 +282,7 @@
    can't reach (its --white-02 fallback is a literal). Give it a subtle warm inset on paper.
    Additive — dark output unchanged. */
 :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .orgNudge {
-  background: var(--home-olive-soft);
+  background: var(--home-card, var(--card-bg));
 }
 
 /* Warm coaches portal (TH-5) — primary CTA stays ink-on-lime. The lime FILL must be TRUE lime
