@@ -44,6 +44,76 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-21',
+    title: 'A place book for your schedule, scrimmages made simple, and a cleaner first screen on your phone',
+    highlights: [
+      {
+        category: 'new',
+        text: 'On a phone, the coach portal opens cleaner: More slides up as a sheet, every screen keeps one slim team line at the top, and the Overview is six rows that fit on one screen. Have more than one team? Tap the team name to switch.',
+      },
+      {
+        category: 'new',
+        text: 'Your team keeps a book of places. Start typing in Location and pick a park or arena you\'ve used before — the address and usual field fill in — or add a new one on the spot. Every place you\'ve ever scheduled is already in it.',
+      },
+      {
+        category: 'new',
+        text: 'Arrival time is a lead time — 15 minutes to 2 hours before the start, with the clock beside each — and Team settings keeps your usual lead time for games and practices, so every new event starts with it filled in.',
+      },
+      {
+        category: 'new',
+        text: 'A scrimmage is a game with a box ticked. One Game type, one line — "This is a scrimmage" — on add or edit, before or after a score. It stays on the schedule and in attendance, never counts toward your season record, and your record reads the same everywhere it appears.',
+      },
+      {
+        category: 'new',
+        text: 'Mark a lineup Ready with innings still open. Coaches fill a few innings and adjust at the field, so Ready no longer waits for every cell — only a real conflict blocks it. The button counts what\'s open, the Ready strip names the innings, and a change at game time no longer drops it back to Draft.',
+      },
+      {
+        category: 'new',
+        text: 'Send a practice plan to just the people you pick. A fourth choice under Send to staff — tick the names, and the sent line names them — for the assistant who reads it over before the group gets it.',
+      },
+      {
+        category: 'new',
+        text: 'Print the dugout poster in portrait for a clipboard. A Landscape · Portrait switch on the Print menu; the sheet reads Order · No. · Player, names the team once with the crest, and marks HOME or AWAY.',
+      },
+      {
+        category: 'improved',
+        text: 'Adding an event is one form, the same shape for every kind: the date asked once, Home/Away beside Opponent, and the extras (field, uniform, tags, links, notes) tucked under More.',
+      },
+      {
+        category: 'improved',
+        text: 'Your budget starts the month you opened the season, not in January. Open a season in September for winter training and you can budget from September; Fill the season lays out the twelve months from there, and a pasted spreadsheet lands its months in the right year.',
+      },
+      {
+        category: 'improved',
+        text: 'The lineup builder shows one status banner above the grid — one mark, one sentence, one door into the Lineup check — instead of a stack of warnings.',
+      },
+      {
+        category: 'improved',
+        text: 'The autosave word appears only when there\'s something to say — Unsaved changes, Saving…, Saved — and fades after a save. Only an error stays until you deal with it.',
+      },
+      {
+        category: 'improved',
+        text: 'On a practice station, Staff and Players come first, then what they\'ll do — the same order the printed sheet and the field screen already read.',
+      },
+      {
+        category: 'improved',
+        text: 'After a game, Email families opens a blank message again — the pre-written draft is gone — and games are no longer shared one at a time by link. Your public team page is unchanged.',
+      },
+      {
+        category: 'fixed',
+        text: 'The Budget Plan toolbar, the Budget vs Actual Export button, Fundraising\'s section headings and the Club tab\'s overdue count look the way they should again.',
+      },
+      {
+        category: 'fixed',
+        text: 'A long team name no longer runs under the record on a phone.',
+      },
+      {
+        category: 'fixed',
+        text: 'The Staff picker on a practice station no longer gets cut off inside the block.',
+      },
+    ],
+  },
+  {
     date: '2026-09-18',
     title: 'Practice plans, Skills & Goals and lineups, rebuilt — plus host your own team in your tournament',
     highlights: [
