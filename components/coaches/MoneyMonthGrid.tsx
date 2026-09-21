@@ -1,9 +1,10 @@
 'use client';
-import { Fragment, useMemo, useState } from 'react';
+import { Fragment, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, ChevronRight, X, CalendarClock } from 'lucide-react';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import ReportNotes, { NoteText } from '@/components/coaches/ReportNotes';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { monthGridNotesFor } from '@/lib/coach-money-report-notes';
 import {
   buildBandCashFlow, lensCell, lensTotal, lensUndated, lensReadsPlan, balanceShowsMonth,
@@ -336,6 +337,16 @@ export default function MoneyMonthGrid({
     /** Lines left out of this panel because they don't touch this month — 0 on Total's own panel. */
     moreCount: number;
   } | null>(null);
+
+  /* ⚠⚠ THE SHARED DIALOG FLOOR (List · Room · Question, D7) — Escape closes, Tab stays inside, focus
+     lands on the panel and returns to the opener (owner-found 2026-09-21, QA walk on the plan-panel
+     filtering fix: neither of this grid's two hand-rolled overlays had ever taken it, so Escape did
+     nothing on either). See `useDialogFloor` for the mechanism; every other coach overlay in the
+     portal already stands on it. */
+  const detailPanelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(!!detail, detailPanelRef, { onClose: () => setDetail(null) });
+  const planPanelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(!!plan, planPanelRef, { onClose: () => setPlan(null) });
 
   /* ⚠⚠ THE MONTHS ARE WINDOWED; THE TOTALS ARE NOT (owner ruling 2026-08-21). A repeating cost
      stretches this grid past any screen — fifteen columns the day it was found — and `Total`,
@@ -1088,7 +1099,16 @@ export default function MoneyMonthGrid({
           coaches, who can already see every number on this page. */}
       {detail && (
         <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) (() => setDetail(null))?.(); }}>
-          <div className={shared.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
+          <div
+            ref={detailPanelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={detail.title}
+            className={shared.modal}
+            style={{ maxWidth: 460 }}
+            onClick={e => e.stopPropagation()}
+          >
             <div className={shared.modalHeader}>
               <h3 className={shared.modalTitle}>{detail.title}</h3>
               <button className={shared.modalCloseBtn} onClick={() => setDetail(null)} aria-label="Close"><X size={16} /></button>
@@ -1156,7 +1176,16 @@ export default function MoneyMonthGrid({
           server would refuse. */}
       {plan && (
         <div className={`${shared.modalOverlay} ${shared.centeredOnMobile}`} onPointerDown={e => { if (e.target === e.currentTarget) setPlan(null); }}>
-          <div className={shared.modal} style={{ maxWidth: 460 }} onClick={e => e.stopPropagation()}>
+          <div
+            ref={planPanelRef}
+            tabIndex={-1}
+            role="dialog"
+            aria-modal="true"
+            aria-label={plan.title}
+            className={shared.modal}
+            style={{ maxWidth: 460 }}
+            onClick={e => e.stopPropagation()}
+          >
             <div className={shared.modalHeader}>
               <h3 className={shared.modalTitle}>
                 {plan.title} · {plan.when === UNDATED_CELL ? 'no date yet'

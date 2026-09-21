@@ -89,6 +89,13 @@
   cursor: pointer;
   border-radius: 3px;
   text-decoration: none;
+  /* ⚠ WITHOUT THIS A `<button>`'S OWN TEXT CANNOT BE DRAG-SELECTED (owner-found 2026-09-21, on the
+     Total column the plan-panel fix just made tappable). Every browser treats a mousedown on a
+     button as the start of a press, not a selection, so a figure that opens a panel silently lost
+     the one thing every OTHER figure in this report still has: a treasurer copying a number into a
+     spreadsheet. Applies to every `.cellLink`, not only Total — a category or item month figure
+     that already opened a drill-in had the identical gap. */
+  user-select: text;
 }
 .cellLink:hover { border-bottom-style: solid; }
 /* ⚠ A FIGURE THAT OPENS IS A CONTROL, AND ON A TOUCH SCREEN IT CLEARS THE FLOOR BOTH WAYS. The
