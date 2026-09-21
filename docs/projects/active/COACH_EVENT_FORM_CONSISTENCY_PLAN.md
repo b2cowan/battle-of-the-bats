@@ -3,7 +3,7 @@
 **Status:** RULED 2026-09-21 (owner, on the mockup — all eight items as recommended, plus the
 optional "ask the date once"). BUILT ON DEV 2026-09-21. **/review run 2026-09-21 (Standard tier,
 3 lenses): 1 High + 3 Medium + 1 Low confirmed and FIXED, 1 Advisory fixed — see §7.** Help synced
-the same day (/docs). Owner QA walk §212 owed. Commit owed.
+the same day (/docs). Owner QA walk §212 owed. **Committed `aa1421a0` 2026-09-21.**
 **Mockup (the gate, published as an Artifact):** `docs/projects/active/COACH_EVENT_FORM_CONSISTENCY_MOCKUP.html`
 · https://claude.ai/artifact/VzYmNKQ2DTqXRFaPiWKgKx
 **PM brief:** `docs/projects/active/COACH_EVENT_FORM_CONSISTENCY_PM_BRIEF.md`

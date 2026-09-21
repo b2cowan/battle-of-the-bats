@@ -1,6 +1,6 @@
 # Coach Schedule — Arrival as a lead time, and a place the team keeps
 
-**Status:** RULED 2026-09-21 (owner, on the hub — D1–D9 all as recommended). **BUILT ON DEV 2026-09-21** — mig 307 applied to dev (PROD-OWED with the promote, before the code); typecheck + `verify:changed` clean; help synced. Owner QA walk §214 owed. Commit owed (with §212).
+**Status:** RULED 2026-09-21 (owner, on the hub — D1–D9 all as recommended). **BUILT ON DEV 2026-09-21** — mig 307 applied to dev (PROD-OWED with the promote, before the code); typecheck + `verify:changed` clean; help synced. Owner QA walk §214 owed. **Committed `aa1421a0` 2026-09-21** (with §212).
 **Hub (mockup · PM brief · decisions; the plan and QA tabs join it as they exist):**
 `docs/projects/active/COACH_ARRIVAL_AND_PLACES_HUB.html` · https://claude.ai/artifact/GHsg5ucCcPnr9USu3E5std
 **PM brief:** `docs/projects/active/COACH_ARRIVAL_AND_PLACES_PM_BRIEF.md`
