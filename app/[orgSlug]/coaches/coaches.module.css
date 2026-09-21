@@ -11524,6 +11524,19 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
     border-bottom: 1px solid var(--home-line, var(--border-2));
   }
   .rowListPhoneFrame .rowListItem:last-child { border-bottom: 0; }
+  /* ⚠ A BAND INSIDE THE PHONE FRAME KEEPS THE BAND'S RECIPE (owner, 2026-09-21). The ≤640 rule
+     above strips the band to a bare kicker because in the row-CARD form it sits on the page
+     paper between white cards and needs no ground of its own. In the frame it sits on the
+     frame's white — and stripped, "SEPTEMBER 2026" read as one more row. The standard's band
+     (§3.10.5: paper tone, ruled above and below) comes back here exactly as the desktop draws
+     it; a month, "To be scheduled" and the day list's "On …" are the bands this reaches. */
+  .rowListPhoneFrame .rowListBand {
+    padding: 0.4rem 1rem;
+    background: var(--home-paper, var(--surface-2));
+    border-top: 1px solid var(--home-line, var(--border-2));
+    border-bottom: 1px solid var(--home-line, var(--border-2));
+  }
+  .rowListPhoneFrame .rowListBand:first-child { border-top: 0; }
 }
 
 /* The scouting book's own back-link is RETIRED (page-header ruling 2026-08-11): every drill-in
@@ -12258,18 +12271,38 @@ button.gdChip[aria-pressed='true'] {
 /* Game-Day entry on a schedule/lineups row: the row stays one interactive element; the action
    is a sibling link. Lime pill + live dot, the mockup's shape. */
 .eventChipRow { display: flex; align-items: flex-start; gap: 0.4rem; }
-/* min-height matches .gdEntryBtn's own tap floor: previously the row's align-items:stretch gave
-   the chip this height as a side effect of the pill sibling, which is what stretched into an
-   ellipse once the chip wrapped tall in the week view (see the week-view rule above). Stating it
-   directly here keeps the chip's own tap target correct without depending on the pill's height. */
+/* The chip keeps the tap floor as its OWN box: previously the row's align-items:stretch gave the
+   chip this height as a side effect of the pill sibling, which is what stretched into an ellipse
+   once the chip wrapped tall in the week view (see the week-view rule above). Stating it directly
+   here keeps the chip's own tap target correct without depending on the pill's height. */
 .eventChipRow > :first-child { flex: 1 1 auto; min-width: 0; min-height: var(--tap-min, 44px); }
+/* ⚠ THE DRAWN PILL IS SMALL; THE TAP BOX IS NOT (owner, 2026-09-21). It used to carry the 44px
+   floor as its PAINTED height, and on a two-line phone row a lime lozenge half the row's height
+   read as the row's subject rather than its action.
+
+   ⚠⚠ THE LINK'S OWN BOX IS THE FLOOR — THE CHIP IS PAINTED BEHIND IT, NOT THE OTHER WAY ROUND
+   (review, same day). The first cut painted a 28px pill and grew the hit box with an invisible
+   `::after` reaching 8px above and below — and `check:layout`'s tap-floor rule reported it 28px
+   tall at 361/390/768 on every schedule screen, because that rule reads the control's OWN
+   rectangle and nothing else. That is not a gap in the rule: a hit area the gate cannot see is
+   one a thumb cannot rely on either (`.moneyGridExpand` gets away with the idiom only because it
+   is a pointer-width control). So the link is the 44px box, transparent, and `::after` paints the
+   1.75rem lime chip behind the text — same look, a box the gate and the thumb agree on. */
 .gdEntryBtn {
+  position: relative; isolation: isolate;
   flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.4em;
-  background: var(--home-lime, var(--logic-lime)); color: rgba(16, 19, 10, 0.95);
-  border-radius: 999px; font-size: var(--type-label); font-weight: 700; text-decoration: none;
-  padding: 0 0.95em; min-height: var(--tap-min, 44px); white-space: nowrap;
+  color: rgba(16, 19, 10, 0.95);
+  font-size: var(--type-label); font-weight: 700; text-decoration: none;
+  padding: 0 0.7em; min-height: var(--tap-min, 44px); line-height: 1; white-space: nowrap;
 }
 .gdEntryBtn::before { content: "●"; color: var(--home-live, var(--danger)); font-size: 0.7em; }
+/* The chip: centred in the box, the full width of it, behind the words. `inset` is half the
+   difference between the floor and the chip, so the chip stays centred if either token moves. */
+.gdEntryBtn::after {
+  content: ''; position: absolute; z-index: -1;
+  inset: calc((var(--tap-min, 44px) - 1.75rem) / 2) 0;
+  background: var(--home-lime, var(--logic-lime)); border-radius: 999px;
+}
 
 /* The masthead status as a door (Game-Day Mode P1): same layout as the plain status slot, plus
    link affordance. Inherits colors so the bar reads identically whether or not it links. */
