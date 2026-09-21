@@ -10,7 +10,7 @@ import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
 import { denyUnless, canLogScoutingObservation, canViewScoutingBook } from '@/lib/coach-capabilities';
 import { buildOpponentBook } from '@/lib/coach-opponents';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
-import { resolveClubContentKeys } from '@/lib/coach-club-book-server';
+import { resolveClubListExtras } from '@/lib/coach-club-book-server';
 
 /**
  * Opponent Scouting Book — the grouped book list (owner-approved plan
@@ -59,15 +59,17 @@ export const GET = withObservability(async (_req: Request,
    * on a dependency that does not exist until the last step.
    */
   const clubAccess = resolveClubBookAccessFor(ctx.org, team);
-  const clubKeysPromise = scoutingBookAccess && clubAccess.canSeeClubLayer
-    ? resolveClubContentKeys({
+  // The Opponent field's club group (Opponent Picker D5, 2026-09-21) rides the SAME read and the SAME
+  // gate: a non-sharing or non-Club team gets no spellings, exactly as it gets no badge keys.
+  const clubExtrasPromise = scoutingBookAccess && clubAccess.canSeeClubLayer
+    ? resolveClubListExtras({
         orgId: ctx.org.id,
         viewerTeamId: teamId,
         viewerEntries: bookPromise.then(es => es.map(e => ({ key: e.key, aliasKeys: e.aliasKeys }))),
       })
-    : Promise.resolve<string[]>([]);
+    : Promise.resolve({ keys: [] as string[], spellings: [] });
 
-  const [rawEntries, clubKeys] = await Promise.all([bookPromise, clubKeysPromise]);
+  const [rawEntries, { keys: clubKeys, spellings: clubSpellings }] = await Promise.all([bookPromise, clubExtrasPromise]);
 
   // The pooled fields (book line, note timestamp, observation count) are the reduced viewer's
   // wall — same redaction as the single-opponent card. Record, streak and meetings survive:
@@ -78,5 +80,5 @@ export const GET = withObservability(async (_req: Request,
 
   // Deliberately just the entries (+ the club badge keys): tags + writer capabilities belong
   // to the card route, where they are actually consumed — nothing in the list reads them.
-  return NextResponse.json({ opponents: entries, clubKeys });
+  return NextResponse.json({ opponents: entries, clubKeys, clubSpellings });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/opponents' });

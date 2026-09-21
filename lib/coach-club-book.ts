@@ -18,6 +18,7 @@
 import { hasPlanFeature } from './plan-features';
 import { buildOpponentBook } from './coach-opponents';
 import type { OpponentBookEntry, OpponentGameInput } from './coach-opponents';
+import type { ClubPickerSpelling } from './coach-opponent-picker';
 import type {
   OrgPlan, Organization, RepTeam, RepTeamOpponent, RepTeamOpponentObservation,
 } from './types';
@@ -300,6 +301,56 @@ export function clubContentKeys(opts: {
   return [...keys];
 }
 
+// ── The Opponent field's club group (Opponent Picker D5, 2026-09-21) ──────────────────────
+
+/**
+ * The spellings the club's OTHER teams hold notes under, offered in the Opponent field so a sharing
+ * team writes the same spelling its siblings use — and the club layer lights up on the FIRST meeting
+ * instead of after a merge nobody knew to make. This turns the layer's stated blind spot (a
+ * same-club-different-spelling miss shows nothing — there is no cross-team guesser, by design) into
+ * the case that cannot happen, upstream, with no matcher and no club record.
+ *
+ * Only rows WITH content (a book line or observations) — the same test `clubContentKeys` applies,
+ * because a spelling with nothing behind it would light nothing. A spelling the viewer's own book
+ * already answers to (directly or through a merge) is DROPPED: the viewer's row wins, and the picker
+ * would otherwise offer one team twice. Siblings sharing a spelling collapse to one row naming them
+ * all; the display spelling is the first sibling's.
+ */
+export function clubPickerSpellings(opts: {
+  viewerEntries: { key: string; aliasKeys: string[] }[];
+  siblingTeams: { id: string; name: string }[];
+  siblingOpponents: (SiblingOpponentRow & { displayName: string })[];
+  siblingAliases: SiblingAliasRow[];
+  /** Observation totals by sibling opponent id. */
+  observationCounts: Record<string, number>;
+}): ClubPickerSpelling[] {
+  const viewerKeys = new Set<string>();
+  for (const e of opts.viewerEntries) {
+    viewerKeys.add(e.key);
+    for (const a of e.aliasKeys) viewerKeys.add(a);
+  }
+  const teamName = new Map(opts.siblingTeams.map(t => [t.id, t.name]));
+  const aliasesByOpponent = groupAliasesByOpponent(opts.siblingAliases);
+
+  const rows = new Map<string, ClubPickerSpelling>();
+  for (const o of opts.siblingOpponents) {
+    const count = opts.observationCounts[o.id] ?? 0;
+    const hasContent = (o.summary != null && o.summary.trim() !== '') || count > 0;
+    if (!hasContent) continue;
+    const spellings = [o.normalizedName, ...(aliasesByOpponent.get(o.id) ?? [])];
+    if (spellings.some(s => viewerKeys.has(s))) continue;
+    const name = teamName.get(o.teamId);
+    if (!name) continue; // a row whose team is not a sharing sibling never reaches the picker
+    const row = rows.get(o.normalizedName) ?? {
+      key: o.normalizedName, displayName: o.displayName, teamNames: [], observationCount: 0,
+    };
+    if (!row.teamNames.includes(name)) row.teamNames.push(name);
+    row.observationCount += count;
+    rows.set(o.normalizedName, row);
+  }
+  return [...rows.values()].sort((a, b) => a.displayName.localeCompare(b.displayName));
+}
+
 // ── Assembly ────────────────────────────────────────────────────────────────────────────
 
 /**
@@ -455,9 +506,38 @@ export async function buildClubObservationCount(reader: ClubBookReader, opts: {
 }
 
 /**
+ * The list route's two club reads in ONE cheap pass: the badge keys AND the Opponent field's club
+ * spellings come from the same four reads, so the picker costs the route nothing extra.
+ */
+export async function buildClubListExtras(reader: ClubBookReader, opts: {
+  orgId: string;
+  viewerTeamId: string;
+  viewerEntries: { key: string; aliasKeys: string[] }[] | Promise<{ key: string; aliasKeys: string[] }[]>;
+}): Promise<{ keys: string[]; spellings: ClubPickerSpelling[] }> {
+  const siblings = await reader.siblingTeams(opts.orgId, opts.viewerTeamId);
+  if (siblings.length === 0) return { keys: [], spellings: [] };
+  const siblingIds = siblings.map(s => s.id);
+
+  const [siblingOpponents, siblingAliases, observationCounts, viewerEntries] = await Promise.all([
+    reader.opponents(opts.orgId, siblingIds),
+    reader.aliases(opts.orgId, siblingIds),
+    reader.observationCounts(opts.orgId, siblingIds),
+    opts.viewerEntries,
+  ]);
+
+  return {
+    keys: clubContentKeys({ viewerEntries, siblingOpponents, siblingAliases, observationCounts }),
+    spellings: clubPickerSpellings({
+      viewerEntries, siblingTeams: siblings, siblingOpponents, siblingAliases, observationCounts,
+    }),
+  };
+}
+
+/**
  * Which of the viewer's opponent-list rows the club has something to say about — ONE batched
  * lookup for the whole list, resolved into the viewer's key space through their own merges.
- * Returns [] when the club has nothing (or has no other sharing teams).
+ * Returns [] when the club has nothing (or has no other sharing teams). A thin wrapper over
+ * `buildClubListExtras` so the two-org leakage test keeps exercising the assembly that ships.
  */
 export async function buildClubContentKeys(reader: ClubBookReader, opts: {
   orgId: string;
@@ -470,21 +550,5 @@ export async function buildClubContentKeys(reader: ClubBookReader, opts: {
    */
   viewerEntries: { key: string; aliasKeys: string[] }[] | Promise<{ key: string; aliasKeys: string[] }[]>;
 }): Promise<string[]> {
-  const siblings = await reader.siblingTeams(opts.orgId, opts.viewerTeamId);
-  if (siblings.length === 0) return [];
-  const siblingIds = siblings.map(s => s.id);
-
-  const [siblingOpponents, siblingAliases, observationCounts, viewerEntries] = await Promise.all([
-    reader.opponents(opts.orgId, siblingIds),
-    reader.aliases(opts.orgId, siblingIds),
-    reader.observationCounts(opts.orgId, siblingIds),
-    opts.viewerEntries,
-  ]);
-
-  return clubContentKeys({
-    viewerEntries,
-    siblingOpponents,
-    siblingAliases,
-    observationCounts,
-  });
+  return (await buildClubListExtras(reader, opts)).keys;
 }

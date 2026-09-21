@@ -8,10 +8,11 @@ import {
   getRepTeamGameEventsForOpponentBookByTeam,
 } from './db';
 import {
-  buildClubBookBlock, buildClubContentKeys, buildClubObservationCount,
+  buildClubBookBlock, buildClubListExtras, buildClubObservationCount,
   type ClubBookReader, type ClubBookBlock,
 } from './coach-club-book';
 import { captureError } from './observability';
+import type { ClubPickerSpelling } from './coach-opponent-picker';
 
 /**
  * The Club Shared Book's database adapter — and nothing else.
@@ -80,12 +81,14 @@ export function resolveClubObservationCount(opts: {
   );
 }
 
-/** The opponents-list badge keys, in the viewer's own key space. `viewerEntries` may be a
- *  promise so the caller can start this alongside its own reads (see buildClubContentKeys). */
-export function resolveClubContentKeys(opts: {
+/** The opponents-list badge keys AND the Opponent field's club spellings (Opponent Picker D5) — one
+ *  cheap pass, in the viewer's own key space. `viewerEntries` may be a promise so the caller can
+ *  start this alongside its own reads (see buildClubListExtras). Absent on failure, like every
+ *  club read: a sibling's bad row costs the club group, never the schedule. */
+export function resolveClubListExtras(opts: {
   orgId: string;
   viewerTeamId: string;
   viewerEntries: { key: string; aliasKeys: string[] }[] | Promise<{ key: string; aliasKeys: string[] }[]>;
-}): Promise<string[]> {
-  return absentOnFailure(buildClubContentKeys(dbReader, opts), [], 'club-shared-book/list');
+}): Promise<{ keys: string[]; spellings: ClubPickerSpelling[] }> {
+  return absentOnFailure(buildClubListExtras(dbReader, opts), { keys: [], spellings: [] }, 'club-shared-book/list');
 }

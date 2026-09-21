@@ -38,6 +38,8 @@ import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import ArrivalSelect from '@/components/coaches/ArrivalSelect';
 import PlaceCombobox from '@/components/coaches/PlaceCombobox';
+import OpponentCombobox from '@/components/coaches/OpponentCombobox';
+import type { ClubPickerSpelling } from '@/lib/coach-opponent-picker';
 import { arrivalAfterStartChange, arrivalClockFor } from '@/lib/coach-arrival';
 import CoachFormDisclosure from '@/components/coaches/CoachFormDisclosure';
 import type { CoachScheduleTournamentGame } from '@/lib/basic-coach-teams';
@@ -793,21 +795,29 @@ export default function CoachesSchedulePage({
   // opening onto a panel whose data never loads.
   const scoutingAvailable = true;
   const [bookByKey, setBookByKey] = useState<Map<string, OpponentBookEntry>>(new Map());
+  // The same fetch, kept as the LIST too (Opponent Picker, 2026-09-21): the Opponent field reads the
+  // book the row chips read — one endpoint, no second copy of the book on this page. `clubSpellings`
+  // is the club group (D5), [] whenever the club layer is closed (decided server-side).
+  const [bookEntries, setBookEntries] = useState<OpponentBookEntry[]>([]);
+  const [clubSpellings, setClubSpellings] = useState<ClubPickerSpelling[]>([]);
   const loadBook = useCallback(async () => {
     // CLEAR, not just skip: a coach can flip live → archived season on this same mount
     // (?year= re-render, no remount), and a populated map would keep painting record
     // chips onto the frozen calendar.
-    if (!scoutingAvailable) { setBookByKey(new Map()); return; }
+    if (!scoutingAvailable) { setBookByKey(new Map()); setBookEntries([]); setClubSpellings([]); return; }
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/opponents`);
       if (!res.ok) return;
       const data = await res.json();
       const map = new Map<string, OpponentBookEntry>();
-      for (const e of (data.opponents ?? []) as OpponentBookEntry[]) {
+      const list = (data.opponents ?? []) as OpponentBookEntry[];
+      for (const e of list) {
         map.set(e.key, e);
         for (const alias of e.aliasKeys ?? []) map.set(alias, e);
       }
       setBookByKey(map);
+      setBookEntries(list);
+      setClubSpellings(Array.isArray(data.clubSpellings) ? (data.clubSpellings as ClubPickerSpelling[]) : []);
     } catch { /* chips are a convenience, never a blocker */ }
   }, [orgSlug, teamId, scoutingAvailable]);
   useEffect(() => { loadBook(); }, [loadBook]);
@@ -3506,7 +3516,15 @@ export default function CoachesSchedulePage({
                   <div className={styles.formSectionGrid}>
                     <div className={styles.field}>
                       <label className={styles.label} htmlFor="event-opponent">Opponent</label>
-                      <input id="event-opponent" className={styles.input} value={form.opponent} onChange={e => setForm(f => ({ ...f, opponent: e.target.value }))} placeholder="Team name" />
+                      {/* The book's door (Opponent Picker D1–D5, 2026-09-21): type to find an opponent the team has
+                          met, pick to take the book's SPELLING — the game still holds a name and nothing else. */}
+                      <OpponentCombobox
+                        value={form.opponent}
+                        onChange={text => setForm(f => ({ ...f, opponent: text }))}
+                        entries={bookEntries}
+                        clubSpellings={clubSpellings}
+                        onOpen={loadBook}
+                      />
                     </div>
                     <div className={styles.field}>
                       {/* A one-value form field is a dropdown (owner convention 2026-08-22) — this was

@@ -27,6 +27,8 @@ import {
   clubContentKeys,
   buildClubBookBlock,
   buildClubContentKeys,
+  buildClubListExtras,
+  clubPickerSpellings,
   buildClubObservationCount,
   CLUB_TEAM_OBSERVATION_CAP,
   CLUB_TEAM_PREVIEW_COUNT,
@@ -584,5 +586,62 @@ describe('⚠ book content NEVER crosses an organization', () => {
     assert.ok(calls.orgIds.length >= 4, `expected the org-scoped reads, saw ${calls.orgIds.length}`);
     assert.deepEqual([...new Set(calls.orgIds)], ['org-a'],
       'a read that forgets its org is a read that can return another club’s book');
+  });
+});
+
+// ── The Opponent field's club group (Opponent Picker D5, 2026-09-21) ────────────────────
+
+describe('the Opponent field\'s club group — spellings the club holds notes under', () => {
+  const siblingTeams = [{ id: 't-a1', name: '12U A' }, { id: 't-a2', name: '10U' }];
+  const siblingOpponents = [
+    opponent({ id: 'o-a1', teamId: 't-a1', normalizedName: 'oakville thunder', displayName: 'Oakville Thunder', summary: 'Run early on them.' }),
+    opponent({ id: 'o-a2', teamId: 't-a2', normalizedName: 'thunder 12u', displayName: 'Thunder 12U' }),
+    opponent({ id: 'o-a4', teamId: 't-a2', normalizedName: 'airdrie angels', displayName: 'Airdrie Angels' }),
+    opponent({ id: 'o-a5', teamId: 't-a1', normalizedName: 'airdrie angels', displayName: 'AIRDRIE ANGELS', summary: 'Two lefties.' }),
+    opponent({ id: 'o-a6', teamId: 't-a1', normalizedName: 'quiet team', displayName: 'Quiet Team' }),
+    opponent({ id: 'o-zz', teamId: 't-not-sharing', normalizedName: 'stranger', displayName: 'Stranger', summary: 'x' }),
+  ];
+  const siblingAliases = [{ opponentId: 'o-a2', teamId: 't-a2', normalizedAlias: 'oakville thunder' }];
+  const observationCounts = { 'o-a1': 2, 'o-a2': 1, 'o-a4': 3 };
+
+  it('offers only rows WITH content, collapsed across siblings, first sibling\'s spelling, names joined', () => {
+    const rows = clubPickerSpellings({ viewerEntries: [], siblingTeams, siblingOpponents, siblingAliases, observationCounts });
+    assert.deepEqual(rows, [
+      { key: 'airdrie angels', displayName: 'Airdrie Angels', teamNames: ['10U', '12U A'], observationCount: 3 },
+      { key: 'oakville thunder', displayName: 'Oakville Thunder', teamNames: ['12U A'], observationCount: 2 },
+      { key: 'thunder 12u', displayName: 'Thunder 12U', teamNames: ['10U'], observationCount: 1 },
+    ]);
+  });
+  it('drops every spelling the viewer\'s own book already answers to — directly or through a merge', () => {
+    const rows = clubPickerSpellings({
+      viewerEntries: [{ key: 'oakville thunder', aliasKeys: [] }],
+      siblingTeams, siblingOpponents, siblingAliases, observationCounts,
+    });
+    // "thunder 12u" goes too: its ALIAS is the viewer's key, so it is the same team.
+    assert.deepEqual(rows.map(r => r.key), ['airdrie angels']);
+  });
+  it('a row whose team is not a sharing sibling never reaches the picker', () => {
+    const rows = clubPickerSpellings({ viewerEntries: [], siblingTeams, siblingOpponents, siblingAliases, observationCounts });
+    assert.equal(rows.some(r => r.key === 'stranger'), false);
+    assert.equal(rows.some(r => r.key === 'quiet team'), false, 'no content, nothing to light');
+  });
+  it('the shared read hands back keys AND spellings from one pass, org-scoped like the badge', async () => {
+    const calls = { orgIds: [] as string[], methods: [] as string[] };
+    const extras = await buildClubListExtras(twoOrgReader(calls), {
+      orgId: 'org-a', viewerTeamId: 't-a9', viewerEntries: [],
+    });
+    assert.deepEqual(extras.keys.sort(), ['oakville thunder', 'thunder 12u']);
+    assert.deepEqual(extras.spellings.map(s => s.key), ['oakville thunder', 'thunder 12u']);
+    assert.deepEqual(extras.spellings.find(s => s.key === 'oakville thunder')?.teamNames, ['12U A']);
+    assert.equal(calls.orgIds.every(o => o === 'org-a'), true);
+    assert.equal(calls.methods.filter(m => m === 'opponents').length, 1, 'one opponents read feeds both');
+  });
+  it('⚠ the club group never carries another organization\'s spelling', async () => {
+    const extras = await buildClubListExtras(twoOrgReader(), { orgId: 'org-b', viewerTeamId: 't-b9', viewerEntries: [] });
+    const serialized = JSON.stringify(extras);
+    for (const forbidden of ['12U A', '10U', 'Run early', 't-a1', 't-a2']) {
+      assert.equal(serialized.includes(forbidden), false, `org-a's "${forbidden}" reached org-b's picker`);
+    }
+    assert.deepEqual(extras.spellings.map(s => s.teamNames), [['RIVAL CLUB 12U']]);
   });
 });

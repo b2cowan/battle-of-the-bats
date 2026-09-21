@@ -1,0 +1,529 @@
+<title>Opponent Picker</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --doc-bg: #ECEDF1; --doc-panel: #F7F7F9; --doc-ink: #1B1D23; --doc-muted: #5C6070; --doc-line: rgba(27,29,35,0.12);
+    --doc-accent: #57651E; --doc-on: rgba(87,101,30,0.16); --doc-warn: #835006; --doc-bad: #9E3030; --doc-focus: #134FD3;
+    --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54;
+    --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+    --home-lime: #D9F99D; --home-lime-ink: #241E15; --home-fill: rgba(70,55,30,0.08); --evt-game: #34662A;
+    --rec-up: #2F5D2A; --rec-up-bg: rgba(52,102,42,0.12); --rec-down: #8A2E2E; --rec-down-bg: rgba(158,48,48,0.10); --rec-even: #4A4235; --rec-even-bg: rgba(70,55,30,0.10);
+    --type-heading: 16px; --type-body: 14px; --type-support: 12px; --type-label: 11px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-bad:#E28B8B; --doc-focus:#7FA3FF; color-scheme: dark; } }
+  :root[data-theme="dark"] { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-bad:#E28B8B; --doc-focus:#7FA3FF; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--doc-bg); color: var(--doc-ink); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1320px; margin: 0 auto; padding-block: 28px 64px; padding-inline: 20px; }
+  /* hub chrome */
+  .hubbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px 24px; padding:14px 20px; background:var(--doc-ink); color:var(--doc-bg); }
+  .hubbar .t { margin-right:auto; } .hubbar .t strong { display:block; font-size:15px; } .hubbar .t small { color: color-mix(in srgb, var(--doc-bg) 75%, transparent); font-size:12px; }
+  .stages { display:flex; flex-wrap:wrap; gap:4px; list-style:none; margin:0; padding:0; }
+  .stages li { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:5px 10px; border-radius:999px; color: color-mix(in srgb, var(--doc-bg) 55%, transparent); white-space:nowrap; cursor:default; }
+  .stages li.done { color: var(--doc-bg); }
+  .stages li.current { color:var(--doc-ink); background:var(--doc-accent); }
+  .hubactions button { min-height:40px; padding:7px 12px; border:1px solid color-mix(in srgb, var(--doc-bg) 40%, transparent); border-radius:6px; background:transparent; color:var(--doc-bg); font:inherit; font-size:13px; cursor:pointer; }
+  .hubactions button[aria-pressed="true"] { background:var(--doc-bg); color:var(--doc-ink); }
+  .hubtabs { display:flex; gap:22px; overflow:auto; white-space:nowrap; padding:0 20px; background:var(--doc-panel); border-bottom:1px solid var(--doc-line); }
+  .hubtabs button { min-height:46px; padding:9px 0; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--doc-muted); font:inherit; font-size:14px; cursor:pointer; }
+  .hubtabs button[aria-pressed="true"] { border-bottom-color:var(--doc-accent); color:var(--doc-ink); font-weight:700; }
+  button:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--doc-focus); outline-offset:2px; }
+  /* header */
+  .head { display:grid; gap:8px; max-width:72ch; margin-bottom:24px; }
+  .eyebrow { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-muted); }
+  h1 { margin:0; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.01em; text-wrap:balance; }
+  .lede { margin:0; color:var(--doc-muted); max-width:66ch; } .lede strong { color:var(--doc-ink); font-weight:600; }
+  .tag { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; padding:2px 6px; border-radius:4px; border:1px solid var(--doc-line); color:var(--doc-muted); background:transparent; font-weight:500; cursor:default; }
+  .tag.new { color:var(--doc-accent); border-color:var(--doc-accent); } .tag.call { color:var(--doc-warn); border-color:var(--doc-warn); } .tag.today { color:var(--doc-bad); border-color:var(--doc-bad); }
+  button.tag { cursor:pointer; } button.tag:hover { background:var(--doc-on); }
+  /* specimens */
+  .row { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(420px,100%),1fr)); gap:28px; align-items:start; margin-bottom:36px; }
+  .row.wide { grid-template-columns:repeat(auto-fit, minmax(min(560px,100%),1fr)); }
+  .spec { display:grid; gap:10px; justify-items:start; }
+  .spec-cap { display:flex; flex-wrap:wrap; align-items:baseline; gap:10px; font-size:13px; color:var(--doc-muted); }
+  .spec-cap b { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-ink); }
+  .stage { position:relative; width:600px; max-width:100%; container-type:inline-size; }
+  .stage.narrow { width: 440px; } .stage.phone { width: 390px; }
+  .frame { width:100%; background:var(--home-card); color:var(--home-ink); border:1px solid var(--home-line-strong); border-radius:12px; padding:22px; font-family:Inter,system-ui,sans-serif; font-size:var(--type-body); line-height:1.4; box-shadow:0 1px 2px rgba(70,55,30,.05), 0 10px 30px rgba(20,15,10,.14); display:flex; flex-direction:column; gap:14px; }
+  .fhead { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+  .ftitle { display:inline-flex; align-items:center; gap:10px; margin:0; font-size:var(--type-heading); font-weight:700; }
+  .fx { color:var(--home-dim); font-size:18px; line-height:1; }
+  .dot { width:9px; height:9px; border-radius:50%; flex:0 0 auto; }
+  .hint { margin:0; font-size:var(--type-support); color:var(--home-dim); line-height:1.4; }
+  .hint b { color:var(--home-ink); font-weight:600; }
+  .lbl { display:block; font-size:var(--type-support); font-weight:600; color:var(--home-dim); text-transform:uppercase; letter-spacing:.04em; }
+  .field { display:flex; flex-direction:column; gap:5px; }
+  .input { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--home-paper); border:1px solid var(--home-line-strong); border-radius:6px; padding:8px 12px; color:var(--home-ink); min-height:36px; }
+  .input.ph { color:var(--home-dim); } .input svg { flex:0 0 auto; color:var(--home-dim); }
+  .input .caret { margin-right:auto; color:var(--home-dim); font-weight:300; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:11px; } .grid3 { display:grid; grid-template-columns:1.2fr 1fr 1fr; gap:11px; }
+  .chk { display:inline-flex; align-items:center; gap:7px; font-weight:600; }
+  .box { width:15px; height:15px; border:1.5px solid var(--home-line-strong); border-radius:3px; background:var(--home-card); }
+  .group { display:flex; flex-direction:column; gap:11px; } .group + .group { margin-top:8px; }
+  .foot { display:flex; justify-content:flex-end; gap:8px; margin:6px -22px -22px; padding:14px 22px; border-top:1px solid var(--home-line); }
+  .btn { padding:7px 14px; border-radius:6px; font-weight:700; background:var(--home-lime); color:var(--home-lime-ink); }
+  .ghost { padding:5px 8px; color:var(--home-dim); }
+  .ct { margin:0; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--home-dim); }
+  .ghead { display:flex; justify-content:space-between; align-items:baseline; }
+  .linkq { font-size:var(--type-support); color:var(--home-dim); }
+  /* the open list (the tag combobox's list, reused — the same list the Location field opens) */
+  .list { position:relative; background:var(--home-card); border:1px solid var(--home-line-strong); border-radius:8px; box-shadow:0 8px 24px rgba(20,15,10,.14); overflow:hidden; margin-top:-2px; }
+  .list .grp { padding:8px 12px 4px; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--home-dim); }
+  .opt { display:flex; justify-content:space-between; gap:12px; align-items:center; padding:9px 12px; }
+  .opt .n { font-weight:600; } .opt .s { display:block; font-size:var(--type-support); color:var(--home-dim); font-weight:400; }
+  .opt.on { background:var(--home-fill); }
+  .opt .live { font-size:var(--type-support); color:var(--home-olive); white-space:nowrap; }
+  .opt.quiet { color:var(--home-dim); font-size:var(--type-support); padding:10px 12px; } .opt.quiet b { color:var(--home-ink); font-weight:600; }
+  .picked { display:flex; align-items:center; justify-content:space-between; gap:10px; }
+  .picked .x { color:var(--home-dim); }
+  /* the record chip — the book's own chip, drawn the same way here */
+  .rec { font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; padding:2px 7px; border-radius:999px; white-space:nowrap; font-variant-numeric:tabular-nums; }
+  .rec.up { color:var(--rec-up); background:var(--rec-up-bg); } .rec.down { color:var(--rec-down); background:var(--rec-down-bg); } .rec.even { color:var(--rec-even); background:var(--rec-even-bg); }
+  /* the scouting book's row list, as it stands */
+  .brow { display:grid; grid-template-columns:auto 1fr auto; gap:12px; align-items:center; padding:10px 0; border-bottom:1px solid var(--home-line); }
+  .brow:last-child { border-bottom:0; } .brow .n { font-weight:600; } .brow .s { font-size:var(--type-support); color:var(--home-dim); }
+  .dotn { width:8px; height:8px; border-radius:50%; border:1.5px solid var(--home-line-strong); background:transparent; } .dotn.has { background:var(--home-olive); border-color:var(--home-olive); }
+  .split { outline:2px dashed var(--doc-bad); outline-offset:3px; border-radius:6px; }
+  /* the nudge (option) */
+  .nudge { display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; padding:8px 11px; border:1px solid var(--home-line-strong); border-left:3px solid var(--home-olive); border-radius:6px; font-size:var(--type-support); color:var(--home-ink-soft); background:var(--home-paper); }
+  .nudge .act { color:var(--home-olive); font-weight:600; }
+  .region { border-radius:8px; outline:2px solid transparent; outline-offset:4px; transition:outline-color .15s; }
+  .region.lit { outline-color:var(--doc-focus); }
+  .mk { position:absolute; left:-14px; transform:translateX(-100%); width:26px; height:26px; border-radius:6px; font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; background:var(--doc-ink); color:var(--doc-bg); border:0; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.2); }
+  .mk.prob { background:var(--doc-bad); color:#fff; }
+  .mk.lit { background:var(--doc-focus); color:#fff; }
+  @media (max-width:700px) { .mk { left:auto; right:-6px; transform:none; } }
+  @container (max-width:420px) { .frame { padding:18px; } .foot { margin:6px -18px -18px; padding:14px 18px; } .grid2 { grid-template-columns:1fr; } .grid3 { grid-template-columns:1fr 1fr; } .grid3 > :first-child { grid-column:1/-1; } }
+  /* notes + docs */
+  .notes { display:grid; gap:12px; margin-top:8px; }
+  .note { display:grid; grid-template-columns:34px 1fr; gap:14px; padding:16px 18px; background:var(--doc-panel); border:1px solid var(--doc-line); border-radius:10px; cursor:pointer; }
+  .note.lit { background:var(--doc-on); border-color:var(--doc-accent); }
+  .note .n { width:26px; height:26px; border-radius:6px; background:var(--doc-ink); color:var(--doc-bg); font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; margin-top:2px; }
+  .note.prob .n { background:var(--doc-bad); color:#fff; }
+  .note h3 { margin:0 0 4px; font-size:16px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .note p { margin:0; color:var(--doc-muted); max-width:78ch; } .note p + p { margin-top:6px; } .note p b { color:var(--doc-ink); font-weight:600; } .note .rec-line { color:var(--doc-ink); }
+  h2.sec { font-size:20px; margin:36px 0 12px; }
+  .doc { max-width:78ch; margin:0 auto; padding-block:28px 56px; padding-inline:20px; }
+  .doc h1 { font-size:24px; margin-bottom:4px; } .doc h2 { font-size:18px; margin:28px 0 8px; } .doc h3 { font-size:15px; margin:18px 0 6px; } .doc p, .doc li { color:var(--doc-ink); } .doc ul, .doc ol { padding-left:22px; } .doc li { margin:4px 0; } .doc .meta { color:var(--doc-muted); font-size:13px; margin:0 0 16px; }
+  .doc .callout { padding:12px 16px; border-left:3px solid var(--doc-accent); background:var(--doc-panel); border-radius:0 6px 6px 0; margin:14px 0; }
+  .drow { border:1px solid var(--doc-line); border-radius:10px; background:var(--doc-panel); padding:14px 16px; margin-bottom:10px; }
+  .drow .dh { display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap; } .drow .dh strong { font-size:15px; } .drow p { margin:6px 0 0; color:var(--doc-muted); } .drow p b { color:var(--doc-ink); }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+
+<div class="hubbar">
+  <div class="t"><strong>Opponent Picker — project hub</strong><small>Ruled 2026-09-21 (D1–D7 as drawn; D5 in, D6 held) · built on dev the same day · owner QA walk owed</small></div>
+  <ul class="stages" aria-label="Project lifecycle">
+    <li class="done" title="Mockup published 2026-09-21 (this artifact, v1); ruled the same day: “looks good, go for it”">Design</li>
+    <li class="done" title="COACH_OPPONENT_PICKER_PLAN.md + PM brief, 2026-09-21">Plan</li>
+    <li class="done" title="Built on dev 2026-09-21 — typecheck + verify gates clean on the picker’s files; 65 unit tests; smoke-tested at 1280 and 390">Build</li>
+    <li class="current" title="/review offered 2026-09-21">Review</li>
+    <li title="—">QA</li>
+    <li title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phoneToggle" aria-pressed="false">Phone width</button></div>
+</div>
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">Coaches portal · Schedule · Add Game · the Opponent field · proposal · 2026-09-21</div>
+    <h1>The opponent the book already knows</h1>
+    <p class="lede">You asked whether Opponent should join the tags system, since free text can’t stay consistent with the Scouting Book. <strong>The instinct is right and the shelf is wrong:</strong> an opponent is one value that names a record — a place, not a label — and the Location field one row up got exactly that treatment this morning. Drawn here: what happens today and what it costs, the field as a door into the book, and two options I’d rule on separately. Click a marker to light its note; red markers are today’s problem, black ones the proposal.</p>
+  </header>
+
+  <h2 class="sec" style="margin-top:0">1 · Today — a box, and what it costs the book</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Today</b> the Opponent field as it stands <button type="button" class="tag today" data-n="1">free text</button></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="grid2 region" data-r="1">
+            <div class="field"><span class="lbl">Opponent</span><div class="input ph">Team name</div></div>
+            <div class="field"><span class="lbl">Home / Away</span><div class="input">Home <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          </div>
+          <p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p>
+          <button class="mk prob" data-n="1" aria-label="Note 1">1</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>The book</b> the same team, typed two ways <button type="button" class="tag today" data-n="2">the split</button></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:4px">
+          <p class="ct" style="margin-bottom:6px">Scouting Book · Opponents</p>
+          <div class="region" data-r="2">
+            <div class="brow split"><span class="dotn has"></span><div><div class="n">Oakville Thunder</div><div class="s">Last met Jun 14, 2026 · W 5–3 · 2 observations</div></div><span class="rec up">2-1</span></div>
+            <div class="brow"><span class="dotn has"></span><div><div class="n">Leduc Oilers</div><div class="s">Last met Jul 20, 2026 · T 4–4 · 1 observation</div></div><span class="rec even">1-1-1</span></div>
+            <div class="brow split"><span class="dotn"></span><div><div class="n">Thunder 12U</div><div class="s">Last met Aug 9, 2026 · L 2–6</div></div><span class="rec down">0-1</span></div>
+            <div class="brow"><span class="dotn"></span><div><div class="n">Thunder Bay Twins</div><div class="s">Last met May 2, 2026 · L 1–4</div></div><span class="rec down">0-1</span></div>
+          </div>
+          <p class="hint" style="margin-top:8px">One team, two rows, and a 2-2 record reading as 2-1 and 0-1. “Same team as…” on Thunder 12U’s page folds them — after the fact.</p>
+          <button class="mk prob" data-n="2" aria-label="Note 2">2</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">2 · The proposal — type to find, from the book</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Typing</b> the list is your book, most recently met first <button type="button" class="tag new" data-n="3">new</button></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field">
+            <span class="lbl">Opponent</span>
+            <div class="input">Thu<span class="caret">|</span></div>
+            <div class="list region" data-r="3">
+              <div class="grp">Your opponents</div>
+              <div class="opt on"><span class="n">Oakville Thunder<span class="s">Last met Jun 14 · W 5–3</span></span><span class="rec up">2-1</span></div>
+              <div class="opt"><span class="n">Thunder Bay Twins<span class="s">Last met May 2 · L 1–4</span></span><span class="rec down">0-1</span></div>
+            </div>
+          </div>
+          <button class="mk" data-n="3" aria-label="Note 3">3</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>Picked</b> the book’s spelling, with the record beside it <button type="button" class="tag new" data-n="4">new</button></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="grid2">
+            <div class="field region" data-r="4">
+              <span class="lbl">Opponent</span>
+              <div class="input picked"><span><b>Oakville Thunder</b><span style="display:block;font-size:12px;color:var(--home-dim)">2-1 vs them · last met Jun 14</span></span><span class="x">✕</span></div>
+            </div>
+            <div class="field"><span class="lbl">Home / Away</span><div class="input">Home <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+          </div>
+          <p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p>
+          <button class="mk" data-n="4" aria-label="Note 4">4</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>A new name</b> saves as typed — the list just says so <button type="button" class="tag new" data-n="5">new</button></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field">
+            <span class="lbl">Opponent</span>
+            <div class="input">Sherwood Park Royals<span class="caret">|</span></div>
+            <div class="list region" data-r="5">
+              <div class="opt quiet"><span>New to your book — saves as typed. <b>Sherwood Park Royals</b> gets its own page after this game.</span></div>
+            </div>
+          </div>
+          <button class="mk" data-n="5" aria-label="Note 5">5</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>Editing an old game</b> a merged-away spelling still resolves <button type="button" class="tag new" data-n="4">new</button></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field region" data-r="4b">
+            <span class="lbl">Opponent</span>
+            <div class="input picked"><span><b>Thunder 12U</b><span style="display:block;font-size:12px;color:var(--home-dim)">Same team as Oakville Thunder · 2-2 vs them</span></span><span class="x">✕</span></div>
+          </div>
+          <p class="hint">The game keeps the name the coach gave it; the book reads it as Oakville Thunder, so the record under it is the whole record.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">3 · Two options, ruled separately</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Club</b> a sharing team also sees the club’s spellings <button type="button" class="tag new" data-n="6">recommend yes</button></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field">
+            <span class="lbl">Opponent</span>
+            <div class="input">Thu<span class="caret">|</span></div>
+            <div class="list region" data-r="6">
+              <div class="grp">Your opponents</div>
+              <div class="opt"><span class="n">Thunder Bay Twins<span class="s">Last met May 2 · L 1–4</span></span><span class="rec down">0-1</span></div>
+              <div class="grp">Your club has met</div>
+              <div class="opt on"><span class="n">Oakville Thunder<span class="s">Millwoods 12U · 3 games · 4 observations</span></span><span class="live">club</span></div>
+            </div>
+          </div>
+          <button class="mk" data-n="6" aria-label="Note 6">6</button>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>The nudge</b> “Same team as…?” on the form <button type="button" class="tag call" data-n="7">recommend hold</button></div>
+      <div class="stage narrow">
+        <div class="frame" style="gap:11px">
+          <div class="field region" data-r="7">
+            <span class="lbl">Opponent</span>
+            <div class="input">Thunder</div>
+            <div class="nudge">Same team as <b>Oakville Thunder</b>? <span class="act">Yes, use that name</span> · <span class="act">No, a different team</span></div>
+          </div>
+          <button class="mk" data-n="7" aria-label="Note 7">7</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">4 · The whole form, before and after</h2>
+  <div class="row wide">
+    <div class="spec">
+      <div class="spec-cap"><b>Before</b> Add Game as it stands this afternoon — the opponent typed by hand</div>
+      <div class="stage" id="beforeStage">
+        <div class="frame">
+          <div class="fhead"><h3 class="ftitle">Add Game <span class="dot" style="background:var(--evt-game)"></span></h3><span class="fx">✕</span></div>
+          <div class="group">
+            <span class="chk"><span class="box"></span>Repeat weekly</span>
+            <div class="grid3">
+              <div class="field"><span class="lbl">Date *</span><div class="input">2026-09-21 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div></div>
+              <div class="field"><span class="lbl">Start time *</span><div class="input">06:00 PM</div></div>
+              <div class="field"><span class="lbl">End time</span><div class="input">08:00 PM</div></div>
+            </div>
+            <div class="field">
+              <span class="lbl">Arrival</span>
+              <div class="input">1 hour before · 5:00 p.m. <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <p class="hint"><b>Arrive by 5:00 p.m.</b> — shows on the event and the calendar export.</p>
+            </div>
+          </div>
+          <div class="group">
+            <div class="field">
+              <span class="lbl">Location</span>
+              <div class="input picked"><span><b>Sherwood Park</b><span style="display:block;font-size:12px;color:var(--home-dim)">1200 Sherwood Dr · Diamond 2</span></span><span class="x">✕</span></div>
+            </div>
+          </div>
+          <div class="group">
+            <div class="grid2 region" data-r="1b">
+              <div class="field"><span class="lbl">Opponent</span><div class="input">Oakville Thunder</div></div>
+              <div class="field"><span class="lbl">Home / Away</span><div class="input">Home <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            </div>
+            <p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p>
+            <span class="chk"><span class="box"></span>This is a scrimmage</span>
+          </div>
+          <div class="group">
+            <div class="ghead"><p class="ct">More</p><span class="linkq">Hide</span></div>
+            <div class="grid2">
+              <div class="field"><span class="lbl">Field / Diamond #</span><div class="input">Diamond 2</div></div>
+              <div class="field"><span class="lbl">Uniform</span><div class="input ph">e.g. Home whites</div></div>
+            </div>
+            <div class="field"><span class="lbl">Tags</span><div class="input ph">Type to find or create a tag…</div></div>
+          </div>
+          <div class="foot"><span class="ghost">Cancel</span><span class="btn">Add game</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>After</b> the same form; one field changes, nothing moves <button type="button" class="tag new" data-n="8">one line more</button></div>
+      <div class="stage" id="afterStage">
+        <div class="frame">
+          <div class="fhead"><h3 class="ftitle">Add Game <span class="dot" style="background:var(--evt-game)"></span></h3><span class="fx">✕</span></div>
+          <div class="group">
+            <span class="chk"><span class="box"></span>Repeat weekly</span>
+            <div class="grid3">
+              <div class="field"><span class="lbl">Date *</span><div class="input">2026-09-21 <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg></div></div>
+              <div class="field"><span class="lbl">Start time *</span><div class="input">06:00 PM</div></div>
+              <div class="field"><span class="lbl">End time</span><div class="input">08:00 PM</div></div>
+            </div>
+            <div class="field">
+              <span class="lbl">Arrival</span>
+              <div class="input">1 hour before · 5:00 p.m. <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <p class="hint"><b>Arrive by 5:00 p.m.</b> — shows on the event and the calendar export.</p>
+            </div>
+          </div>
+          <div class="group">
+            <div class="field">
+              <span class="lbl">Location</span>
+              <div class="input picked"><span><b>Sherwood Park</b><span style="display:block;font-size:12px;color:var(--home-dim)">1200 Sherwood Dr · Diamond 2</span></span><span class="x">✕</span></div>
+            </div>
+          </div>
+          <div class="group">
+            <div class="grid2 region" data-r="8">
+              <div class="field"><span class="lbl">Opponent</span><div class="input picked"><span><b>Oakville Thunder</b><span style="display:block;font-size:12px;color:var(--home-dim)">2-1 vs them · last met Jun 14</span></span><span class="x">✕</span></div></div>
+              <div class="field"><span class="lbl">Home / Away</span><div class="input">Home <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            </div>
+            <p class="hint">Sets your dugout printout (“@” vs “vs”) and which side your win/loss counts on.</p>
+            <span class="chk"><span class="box"></span>This is a scrimmage</span>
+          </div>
+          <div class="group">
+            <div class="ghead"><p class="ct">More</p><span class="linkq">Hide</span></div>
+            <div class="grid2">
+              <div class="field"><span class="lbl">Field / Diamond #</span><div class="input">Diamond 2</div></div>
+              <div class="field"><span class="lbl">Uniform</span><div class="input ph">e.g. Home whites</div></div>
+            </div>
+            <div class="field"><span class="lbl">Tags</span><div class="input ph">Type to find or create a tag…</div></div>
+          </div>
+          <div class="foot"><span class="ghost">Cancel</span><span class="btn">Add game</span></div>
+          <button class="mk" data-n="8" aria-label="Note 8">8</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="sec">What each marker says</h2>
+  <div class="notes" aria-label="Notes">
+    <div class="note prob" data-n="1" tabindex="0"><span class="n">1</span><div><h3>A plain box, and nothing behind it <span class="tag today">today</span></h3><p>The coach types the opponent from memory, every game. The field shows nothing of what was typed before — not last month’s spelling, not the record. The book’s grouping folds capitals, punctuation and a leading “The”, and <b>stops there on purpose</b>: a guess that merged two real teams would cost a record, so anything past that is a coach’s call, made on the opponent’s page. Which means “Oakville Thunder” in June and “Thunder 12U” in August are two opponents until someone notices.</p><p class="rec-line"><b>Why not a tag:</b> a game wears several tags and a bill several money tags; a game has <b>one</b> opponent, and that opponent names a record with its own page and its own merge tool. Putting it in the tag libraries would give the same team two vocabularies and two merge tools that don’t know about each other.</p></div></div>
+    <div class="note prob" data-n="2" tabindex="0"><span class="n">2</span><div><h3>The cost shows up in the book, not on the form <span class="tag today">today</span></h3><p>One team, two rows, and a 2-2 record reading as 2-1 and 0-1. The fix exists — <b>Same team as…</b> on Thunder 12U’s page folds it into Oakville Thunder — but it is after the fact, on a page a coach opens to prepare for a game, not to tidy. The form is where the split was born.</p><p>And the form is the only one of the <b>three</b> ways a name reaches the schedule that a coach actually types into. League imports take the sheet’s column as it is; tournament games arrive with the organizer’s spelling and sit read-only under “From the organizer”. Neither can ever pick from a list, which is why the book resolves <b>names</b> rather than keys — and why the form is the right place to spend the effort, and the only place.</p></div></div>
+    <div class="note" data-n="3" tabindex="0"><span class="n">3</span><div><h3>Type to find — the Location field’s grammar, one row up <span class="tag new">new</span></h3><p>Start typing and the list offers your opponents, <b>most recently met first</b>, each wearing what the book shows on its own row: the last meeting and the record chip. Same words, same chip — the coach recognises the team before they can retype it. Typing matches the book’s names <b>and</b> the spellings that were merged away, so “12U” still finds Oakville Thunder.</p><p class="rec-line"><b>No “Manage…” row at the foot, and that is deliberate.</b> The Location list ends in “Manage places…” because places are minted there; an opponent is not minted here — the book makes their page the first time a game against them is saved — and the one management act, merging spellings, lives on the opponent’s page. A row that left a half-filled form for another page is the thing you turned down on 09-01 (“not a great UX”); the book stays one tap from any game, where it is today.</p></div></div>
+    <div class="note" data-n="4" tabindex="0"><span class="n">4</span><div><h3>Picked: the book’s spelling, with the record beside it <span class="tag new">new</span></h3><p>Picking writes the book’s spelling into the game. <b>That is the whole consistency lever — a spelling, not a key.</b> The game keeps holding a name exactly as it does today, because two of its three authors can only ever supply a name and the book already knows how to read one; a key would be blank on every import and every tournament game, and every screen that reads an opponent would need both paths. Under the name, the record and the last meeting. ✕ clears it; typing over it detaches it, the way a place does.</p><p>Editing an older game whose name was a merged-away spelling shows that spelling — the game is not rewritten — with the owning team named under it and the <b>whole</b> record, not the fragment.</p></div></div>
+    <div class="note" data-n="5" tabindex="0"><span class="n">5</span><div><h3>A name the book doesn’t know saves as typed <span class="tag new">new</span></h3><p>No “Add an opponent” sheet. A place gets one because a place carries an address, a usual diamond and a note; an opponent carries nothing but its name, so the list says one quiet thing — <b>this is new</b> — and the game saves with the text. The book gives them a page after the game, as it does today. Free text is still free text; the form just stops being the only way in.</p><p>The line is the signal that matters: it is the moment a new spelling is about to be born, and the existing names were on the list a keystroke ago. Most of the drift the book sees today ends here, without a rule.</p></div></div>
+    <div class="note" data-n="6" tabindex="0"><span class="n">6</span><div><h3>A sharing club team also sees the club’s spellings <span class="tag new">option · recommend yes</span></h3><p>The club layer of the book has a blind spot it states plainly: it matches an opponent across the club’s teams by spelling, with <b>no cross-team guesser</b> — so when Millwoods 12U calls them “Oakville Thunder” and your team types “Thunder 12U”, neither side sees the other’s notes, and nothing says why. The cheapest cure is upstream: for a team that shares its book, the list offers the spellings the club’s other teams use, in their own group, behind the same door the club layer already uses (Club plan, and only while you share). Picking one writes that spelling — no club record, no link — and the club notes light up on the first meeting instead of after a merge nobody knew to make.</p><p class="rec-line"><b>Recommendation:</b> yes, in the same build. It is one more group in the same list, and it turns the club book’s known miss into the case that can’t happen.</p></div></div>
+    <div class="note" data-n="7" tabindex="0"><span class="n">7</span><div><h3>“Same team as…?” on the form — I’d hold it <span class="tag call">option · recommend hold</span></h3><p>When a typed name shares a word with a book entry, the form could ask before saving. It is the guess the book refused, dressed as a question — safer, since the coach answers it — but it interrupts a save, and it will ask about Thunder Bay Twins when the coach means Oakville Thunder, and about “Thunder” when there are three. With the list putting Oakville Thunder in front of the coach at “Thu”, most of the case is already gone.</p><p class="rec-line"><b>Recommendation:</b> ship the list, watch the book for new splits across a season, and decide then with the count in hand. It slots in later without changing anything drawn here.</p></div></div>
+    <div class="note" data-n="8" tabindex="0"><span class="n">8</span><div><h3>One field changes; nothing on the form moves <span class="tag new">restyled</span></h3><p>Same rows, same order, the field the same height at rest, the hint under it unchanged. A filled form reads the same as today with one more line under the opponent. Toggle <b>Phone width</b> above: the list is the same full-width sheet the Location field opens, and the Opponent / Home-Away pair stacks as it does now.</p><p>Nothing else in the product changes: the schedule’s record chips, the game console, the dugout printout, family emails and the calendar export all keep reading the name, and imports and tournament games keep arriving as they do.</p></div></div>
+  </div>
+</div>
+</section>
+
+<section id="hub-brief" hidden>
+  <div class="doc">
+    <h1>PM Brief — Opponent Picker (proposed)</h1>
+    <p class="meta">Ruled 2026-09-21 (D1–D7 as drawn; D5 in, D6 held) · built on dev the same day · owner QA walk owed</p>
+    <h2>What a coach sees differently</h2>
+    <ul>
+      <li><b>The Opponent field on Add Game / Edit Game finds the team for you.</b> Start typing and it lists the opponents in your Scouting Book, most recently met first, each with your record against them and the last meeting. Pick one and the game takes the book’s spelling; the record sits under the name.</li>
+      <li><b>A team you haven’t met yet still just types in.</b> The list says it’s new and the game saves as typed — the book gives them a page afterwards, exactly as today. No extra step, no sheet.</li>
+      <li><b>For a club team that shares its book</b> (option, recommended): the list also offers the spellings your club’s other teams use, so the club’s notes on an opponent light up the first time you meet them rather than after someone spots the mismatch.</li>
+      <li>Everything else reads as it does now — the schedule’s record chips, the dugout printout, family emails, the calendar export, the Scouting Book itself. League imports and tournament games arrive unchanged.</li>
+    </ul>
+    <h2>Why it matters</h2>
+    <p>The Scouting Book groups games by the opponent’s spelling, and merges spellings only when a coach says so — a deliberate rule, so two real teams are never folded together by a guess. That leaves one gap: the form where the spelling is typed offers no help, so “Oakville Thunder” in June and “Thunder 12U” in August become two opponents with a split record until someone notices and merges. This closes the gap where the drift is born, by showing the coach the names the book already holds before they can retype one.</p>
+    <h2>Who it affects, and what happens if we do nothing</h2>
+    <p>Every rep-team coach who enters games by hand — the only one of the three ways an opponent’s name reaches the schedule that a coach actually types into. Do nothing and the book keeps splitting, quietly; club-sharing teams miss each other’s notes with no signal; and the merge tool stays the fix for a problem the form keeps creating.</p>
+    <h2>Priority</h2>
+    <p>Small and adjacent: the Location field got this exact treatment on the same form this morning, so the pattern, the list and the phone behaviour all exist. This is the second single-value field to use it. No schema, no migration, no change to how a game is stored.</p>
+    <h2>Success criteria</h2>
+    <ul>
+      <li>A coach typing the first three letters of an opponent they have met sees that opponent at the top of the list, with the same record chip the book shows.</li>
+      <li>New opponent pages in the book stop appearing for teams the book already holds — measured across a season as a count of merges made, which should fall toward zero.</li>
+      <li>On a sharing club team, meeting an opponent a sibling team has played shows the club’s notes on the first meeting (option D5).</li>
+      <li>Nothing on the Add Game form moves; the field is the same height at rest; the phone sheet is the Location field’s.</li>
+    </ul>
+    <h2>Deliberately not doing</h2>
+    <ul>
+      <li>Not a tag library. An opponent is one value naming a record — the book — with its own page and merge; a second vocabulary for the same team would be two merge tools that don’t know about each other.</li>
+      <li>No link from a game to an opponent record. Two of the three authors (importer, tournament organizer) can only supply a name, and the book already resolves names.</li>
+      <li>No “Manage…” row in the list and no “Add an opponent” sheet — nothing is minted on the form, and merging lives on the opponent’s page.</li>
+      <li>No guess-and-ask nudge for now (option D6, recommend hold).</li>
+    </ul>
+  </div>
+</section>
+
+<section id="hub-plan" hidden>
+  <div class="doc">
+    <h1>Opponent Picker — plan</h1>
+    <p class="meta">Ruled 2026-09-21 · built on dev the same day · the repo copy is <code>docs/projects/active/COACH_OPPONENT_PICKER_PLAN.md</code> (the technical detail lives there).</p>
+    <div class="callout"><b>As built — three small deviations from the drawing, all toward parity with the Location field beside it.</b><ul style="margin:8px 0 0"><li>No ✕ inside a picked field — the built Location field has none either; clearing is deleting the text, as it is one row up.</li><li>The club group is titled <b>“Your club has notes on”</b> rather than “has met”: what it lists is the spellings the club’s other teams hold <em>notes</em> under, which is exactly the set that lights the club layer — a sibling that merely played them has nothing to light.</li><li>A club row’s trailing word is “club notes” (no observation count on the row); the count and the team names are on the line under the field once picked.</li></ul></div>
+    <h2>Problem / context</h2>
+    <p>The Scouting Book is an overlay on the opponent names games carry: it groups by a normalized spelling (case, punctuation, whitespace, a leading “The”) and a coach-managed merge for the rest — and it deliberately has no key on the game, because three things write that name: the Add Game form, the schedule importer (a league sheet’s “vs” column) and tournament mirroring (the organizer’s spelling, read-only under “From the organizer”). The form is the only one a coach types into, and today it is a plain text box with nothing behind it. That is where every avoidable split in the book starts.</p>
+    <h2>Scope</h2>
+    <ul>
+      <li>The <b>Opponent</b> field on the rep-team Schedule’s Add Game / Edit Game form — the desktop modal and the phone sheet — for every event type that asks for an opponent.</li>
+      <li>The Location field’s picker grammar, applied to one value: type to find, most recently met first, pick to fill, type over to detach, a quiet line when the name is new. The list is the same list the Location field opens, so a coach meets one dropdown.</li>
+      <li>D5 (if accepted): a second group, “Your club has met”, for a team whose club layer is open — same gate the club book uses today (Club plan, sharing on), never a new door.</li>
+      <li>Help: the Game-day details article gains one sentence on the field; the Scouting Book article’s “why are there two of them” answer points at the field.</li>
+    </ul>
+    <div class="callout"><b>Out of scope.</b> The standalone / basic coach schedule editor (no book to read from — it stays a text box). The importer’s preview (takes the sheet as it is; a “matches your book” column is a separate, later idea). Mirrored tournament games (read-only; the field never appears). The Scouting Book’s own pages and its merge tool. Any org-level opponent registry. The nudge (D6) unless ruled in.</div>
+    <h2>Approach</h2>
+    <h3>What the list reads</h3>
+    <ul>
+      <li>The team’s book, the same read the Scouting Book list and the schedule’s record chips already make — every opponent with at least one meeting, with record, last meeting, and the merged-away spellings so a search on “12U” still finds Oakville Thunder. Ordered by last meeting, newest first; ties by name.</li>
+      <li>It follows the coach’s own access to the book. A helper whose Scouting Book grant is off sees the plain box, as today; the field never shows a record its owner may not read.</li>
+      <li>Re-read when the list opens (the tag picker’s rule), so a merge made in another tab shows on the next open.</li>
+    </ul>
+    <h3>What picking does</h3>
+    <ul>
+      <li>Writes the book’s display spelling into the game’s opponent name. Nothing else — no id, no link. The book resolves the spelling exactly as it resolves an imported one.</li>
+      <li>Picked state: the name, and under it the record chip and the last meeting. ✕ clears. Typing over the name detaches the picked state and the sub-line; the text stays whatever was typed.</li>
+      <li>Edit Game prefill: the game’s stored name shows as picked when the book resolves it (directly or through a merge); the sub-line names the owning team when the spelling was merged away, with the whole record.</li>
+    </ul>
+    <h3>A new name</h3>
+    <ul>
+      <li>No matching entry → the list holds one quiet line (“New to your book — saves as typed…”). The game saves the text. The book mints the page on its next read, exactly as today. There is no create step and no sheet.</li>
+      <li>An empty book (a new team’s first game) opens no list at all until something matches — the field behaves as the text box it is today.</li>
+    </ul>
+    <h3>Phone</h3>
+    <p>The list is the full-width sheet the Location field already opens on a phone; nothing new to draw or gate.</p>
+    <h2>Stages</h2>
+    <ol>
+      <li><b>The field</b> — picker over the team’s book on Add / Edit Game; picked, detached and new-name states; Edit prefill through merges; unit tests for search (names and merged spellings), ordering, and that a pick writes a spelling and nothing else.</li>
+      <li><b>Club group (D5)</b> — the second group behind the club book’s existing gate; unit test that a non-sharing or non-Club team never sees it.</li>
+      <li><b>Words, help, walk</b> — the two help sentences; the layout sweep on the schedule form at every width; the owner QA walk added to this hub as a tab.</li>
+    </ol>
+    <h2>Rollout</h2>
+    <ul>
+      <li>No migration and no schema change. Nothing about a stored game changes.</li>
+      <li>Demo sandbox: the coach demo’s book already has opponents, so the field shows a real list; no tour stop is added and no demo sentence quotes a figure from it.</li>
+      <li>Standalone coach teams (no org): the same field — their book is their own.</li>
+    </ul>
+    <h2>Open questions (each is a Decisions row)</h2>
+    <ul>
+      <li>D5 — club spellings in the list (recommend yes).</li>
+      <li>D6 — the “Same team as…?” nudge (recommend hold; revisit with a season’s merge count).</li>
+    </ul>
+    <h2>Risks, and where they sit</h2>
+    <ul>
+      <li>The schedule’s record chips key off each game’s <b>own</b> spelling with merges folded in server-side. The picker must write the display spelling, never the normalized key, or a chip stops matching its row. Tested.</li>
+      <li>The Scouting Book is a live-season instrument; so is Add Game. No closed-season surface gains a picker.</li>
+      <li>A coach who deliberately types a different name for the same team (a second squad, “Thunder Blue”) is not second-guessed — the list shows, the coach types past it, the text saves. That is the free-text guarantee kept.</li>
+    </ul>
+  </div>
+</section>
+
+<section id="hub-decisions" hidden>
+  <div class="doc">
+    <h1>Decisions</h1>
+    <p class="meta">Ruled 2026-09-21 — the owner accepted the hub as drawn (“looks good, go for it”): D1–D5 and D7 accepted, D6 held.</p>
+    <div id="decisionRows"></div>
+  </div>
+</section>
+
+<section id="hub-qa" hidden>
+  <div class="doc">
+    <h1>QA walk</h1>
+    <p class="meta">Added to this hub when the build is ready to walk.</p>
+  </div>
+</section>
+
+<script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var HUBS = ['mockup', 'brief', 'plan', 'decisions', 'qa'];
+    function showHub(w) { HUBS.forEach(function (h) { var s = $('hub-' + h); if (s) s.hidden = (h !== w); }); document.querySelectorAll('[data-hub]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-hub') === w)); }); try { history.replaceState(null, '', '#' + w); } catch (e) {} window.dispatchEvent(new Event('resize')); }
+    document.querySelectorAll('[data-hub]').forEach(function (b) { b.addEventListener('click', function () { showHub(b.getAttribute('data-hub')); }); });
+    var initial = (location.hash || '').slice(1); if (HUBS.indexOf(initial) > -1) showHub(initial);
+
+    /* phone width — reflows the two whole-form stages only */
+    var phone = $('phoneToggle'), wholes = [$('beforeStage'), $('afterStage')];
+    if (phone) phone.addEventListener('click', function () { var on = phone.getAttribute('aria-pressed') !== 'true'; phone.setAttribute('aria-pressed', String(on)); phone.textContent = on ? 'Full width' : 'Phone width'; wholes.forEach(function (s) { if (s) s.classList.toggle('phone', on); }); window.dispatchEvent(new Event('resize')); });
+
+    /* markers ↔ notes ↔ regions — every highlight opens its explanation */
+    var lit = null;
+    var MAP = { '1': ['1', '1b'], '2': ['2'], '3': ['3'], '4': ['4', '4b'], '5': ['5'], '6': ['6'], '7': ['7'], '8': ['8'] };
+    function setLit(n) { var same = (n === lit); document.querySelectorAll('.lit').forEach(function (el) { el.classList.remove('lit'); }); lit = same ? null : n; if (!lit) return; document.querySelectorAll('.mk[data-n="' + lit + '"], .note[data-n="' + lit + '"]').forEach(function (el) { el.classList.add('lit'); }); (MAP[lit] || []).forEach(function (r) { document.querySelectorAll('[data-r="' + r + '"]').forEach(function (el) { el.classList.add('lit'); }); }); }
+    function place() { document.querySelectorAll('.stage').forEach(function (stage) { stage.querySelectorAll('.mk').forEach(function (b) { var n = b.getAttribute('data-n'); var r = stage.querySelector('[data-r="' + n + '"], [data-r="' + n + 'b"]'); if (!r) return; var top = 0, el = r; while (el && el !== stage) { top += el.offsetTop; el = el.offsetParent; } b.style.top = (top + Math.max(0, (r.offsetHeight - 26) / 2)) + 'px'; }); }); }
+    place(); window.addEventListener('resize', place); if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    function lightAndScroll(n) { setLit(n); var note = document.querySelector('.note[data-n="' + n + '"]'); if (note && lit) note.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    document.querySelectorAll('.mk, button.tag[data-n]').forEach(function (b) { b.addEventListener('click', function () { lightAndScroll(b.getAttribute('data-n')); }); });
+    document.querySelectorAll('.note').forEach(function (nt) { nt.addEventListener('click', function () { setLit(nt.getAttribute('data-n')); }); nt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLit(nt.getAttribute('data-n')); } }); });
+
+    /* decisions — proposed, with a recommendation each; a ruling replaces the tag in place */
+    var DECISIONS = [
+      { id: 'D1', ask: 'Opponent becomes a type-to-find field over the Scouting Book — not a tag library', state: 'accepted', label: 'Accepted 2026-09-21', why: 'A game has one opponent, and that opponent names a record with its own page and its own merge tool; a tag is a label a game wears several of. The Location field got this exact grammar this morning, so the list, the phone sheet and the detach-by-typing rule already exist. Two vocabularies for one team would be two merge tools that don’t know about each other.' },
+      { id: 'D2', ask: 'Picking writes the book’s spelling; the game holds no link to an opponent record', state: 'accepted', label: 'Accepted 2026-09-21', why: 'Three things write an opponent’s name and two of them — the league importer and the tournament organizer — can only ever supply a name. The book already resolves a name, through its normalizer and the coach’s merges. A link would be blank on every import and every tournament game, and every screen reading an opponent would need both paths for nothing the merge table does not already give.' },
+      { id: 'D3', ask: 'A name the book doesn’t know saves as typed; the list says it is new; no “Add an opponent” sheet', state: 'accepted', label: 'Accepted 2026-09-21', why: 'A place gets a sheet because it carries an address, a usual diamond and a note. An opponent carries nothing but a name, and the book mints its page after the game as it does today. The quiet line is the signal that a new spelling is about to be born, with the existing names one keystroke above it.' },
+      { id: 'D4', ask: 'No “Manage…” row at the foot of the list', state: 'accepted', label: 'Accepted 2026-09-21', why: 'The Location list ends in “Manage places…” because places are minted there. Nothing is minted on the Opponent field, and the one management act — merging spellings — lives on the opponent’s page in the book. A row that navigated away from a half-filled form is what you turned down on 09-01; the book stays one tap from any game, where it is today.' },
+      { id: 'D5', ask: 'A sharing club team’s list also offers the spellings the club’s other teams use, as a second group', state: 'accepted', label: 'Accepted 2026-09-21 · built', why: 'The club layer matches opponents across teams by spelling with no cross-team guesser — its stated blind spot is a same-club-different-spelling miss that shows nothing. Offering the club’s spellings behind the club layer’s existing gate (Club plan, sharing on) turns that miss into the case that cannot happen. One more group in the same list; no club record, no link.' },
+      { id: 'D6', ask: '“Same team as …?” asked on the form when a typed name is close to a book entry', state: 'deferred', label: 'Held 2026-09-21', why: 'It is the guess the book refused, dressed as a question. Safer, since the coach answers — but it interrupts a save and it will ask about the wrong Thunder. With the list putting the right team in front of the coach at three letters, most of the case is gone. Ship the list, count new splits across a season, decide then; it slots in later without changing what is drawn.' },
+      { id: 'D7', ask: 'League imports and tournament games are untouched', state: 'accepted', label: 'Accepted 2026-09-21', why: 'The importer takes the sheet’s column as it is; the organizer’s spelling lands read-only under “From the organizer”. Both are read by the book the way they are today. A “matches your book” column on the import preview is a separate, later idea and is not drawn here.' }
+    ];
+    function esc(t) { return String(t).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+    $('decisionRows').innerHTML = DECISIONS.map(function (d) { return '<div class="drow"><div class="dh"><strong>' + esc(d.id) + ' · ' + esc(d.ask) + '</strong><span class="tag ' + (d.state === 'accepted' ? 'new' : d.state === 'rejected' ? 'today' : 'call') + '">' + esc(d.label) + '</span></div><p>' + esc(d.why) + '</p></div>'; }).join('');
+  })();
+</script>

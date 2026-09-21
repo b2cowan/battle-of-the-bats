@@ -7,6 +7,47 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-21 — THE OPPONENT FIELD READS THE SCOUTING BOOK, AND IT IS NOT A TAG: a game's opponent is ONE VALUE THAT NAMES A RECORD, so it gets the Place grammar (type to find, pick to take the book's SPELLING), never a label library (owner, from mockup hub `7BJir7hhGj6C39eVrXGXcn`; plan `COACH_OPPONENT_PICKER_PLAN.md`; built on dev the same day)
+
+**Decision (owner, "looks good, go for it" on D1–D7 as drawn).** The Opponent field on Add Game / Edit
+Game becomes a type-to-find over the team's Scouting Book — the opponents met, most recently met first,
+each row wearing the book's own record chip and last meeting. Picking writes the book's **display
+spelling** into the game and nothing else: **no link, no id.** A name the book doesn't know saves as
+typed with one quiet line ("New to your book — saves as typed…"); there is **no "Add an opponent"
+sheet** and **no "Manage…" row**. A sharing club team's list also offers the spellings the club's other
+teams have notes under, as a second group ("Your club has notes on"), behind the club layer's existing
+gate. The "Same team as…?" nudge on the form is **held**, not refused.
+
+**Why — three reasons, all from what the code does.**
+1. **A tag is a label a record wears several of; an opponent is one value naming a record** with its
+   own page and its own merge tool. Putting it in the tag libraries would give the same team two
+   vocabularies and two merge tools that don't know about each other. The owner's instinct (the form
+   is where the drift is born) was right; the shelf was wrong — the re-frame, not the answer, was the
+   deliverable.
+2. **Consistency is a spelling, not a key.** Three things write an opponent's name and the coach types
+   only one: the league importer and the tournament organizer can only ever supply a NAME, and the
+   book already resolves a name (normalizer + the coach's merges). A key on the game would be blank
+   on two of three paths and every reader would need both. The book plan's "no FK from events — ever"
+   survives for the reason it was written, not because it was written.
+3. **The door lives where minting lives, and nothing is minted here.** The Location list ends in
+   "Manage places…" because places are minted there and carry an address; an opponent carries nothing
+   but a name and the book mints its page after the game. Merging lives on the opponent's page, and a
+   row that left a half-filled form for another page is the 09-01 "not a great UX" refusal.
+
+**⚠ The widening that mattered.** The Club Shared Book's documented blind spot ("a same-club-different-
+spelling miss shows nothing" — no cross-team guesser, by design) is cured UPSTREAM by offering the
+club's spellings in the picker: the miss becomes the case that cannot happen, with no club record and
+no matcher. Asked about one form field, the evidence reached the club layer.
+
+**⚠ General form.** Before making a value "part of the tags system", ask whether a record wears ONE of
+it or SEVERAL — a single value that names a record (a place, an opponent) takes the picker grammar
+over its own book, not a label library; and when the same string has more than one author, drive
+consistency through the SPELLING the authors can all supply, never through a key only one of them can.
+
+**Held, not refused (D6):** a "Same team as…?" question on the form when a typed name is close to a
+book entry — the guess the book deliberately refused, dressed as a question. Revisit with a season's
+merge count in hand; it slots in without changing what was drawn.
+
 ### 2026-09-13 — MONEY THE GRID CANNOT PLACE GOES UNDER "NO DATE YET", DATED OR NOT: a By-period plan longer than two years files what is past its last column with the undated money, and says so (owner ruling 0, §173)
 
 **Decision (owner, on the recommendation).** The By-period grid shows at most two years of columns. Money
