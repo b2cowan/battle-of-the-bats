@@ -36,9 +36,9 @@ import { canConfigureTeam, canManageStaff, hasNoTeamRecordAccess, hasRecordAcces
 import { isInRunWindow, practicePlanState } from '@/lib/practice-state';
 import { nextOpenEvent } from '@/lib/coach-next-event';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
+import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import { tallyResults, formatRecord } from '@/lib/coach-season-record';
 import { countsTowardRecord } from '@/lib/season-wrapped';
-import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
 import { fieldNounFor, getSportPack, DEFAULT_SPORT } from '@/lib/sports';

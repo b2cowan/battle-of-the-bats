@@ -256,6 +256,8 @@ export default function CoachPlanTemplateEditorPage({
         </div>
       )}
 
+      {/* The autosave word, a transient pill at the window's foot (owner 2026-09-20): appears on an
+          edit, says "Saved" and fades; only an error stays. */}
       {canWrite && !loading && !loadError && (
         <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />
       )}

@@ -3127,9 +3127,10 @@ export default function CoachesSchedulePage({
                 </div>
               )}
 
-              {/* The autosave word floats at the window's foot (owner, 2026-09-14) — the bar
-                  it replaced held nothing else, and inside a scrolling panel it only showed at
-                  the very end of the list. */}
+              {/* The autosave word, a transient pill at the window's foot (owner 2026-09-20, revising
+                  that morning's home in the sheet's header): appears on an edit, says "Saved" and
+                  fades; only an error stays. Fixed to the viewport, so inside this scrolling panel
+                  it shows wherever the list is scrolled to. */}
               {attendanceRows.length > 0 && (
                 <SaveStatusPill saving={attendanceSaving} dirty={attendanceDirty} error={attendanceError} onRetry={handleAttendanceSave} />
               )}

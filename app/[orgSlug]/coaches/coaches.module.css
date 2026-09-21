@@ -10268,11 +10268,16 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 .ppTlWatch b { color: var(--text-tertiary); font-weight: 600; }
 .ppTlMeta { font-size: var(--type-support); color: var(--text-tertiary); }
-/* The open block — the card it always was, on the paper ground, set in from the spine. */
+/* The open block — the card it always was, on the paper ground, set in from the spine.
+   ⚠ NO `overflow: hidden` here (2026-09-20): the card hosts the tag pickers (equipment, and staff
+   as its LAST field), whose dropdowns hang below the input in absolute position — a clipping card
+   cut the staff menu at its own bottom border, and the picker's flip-up only reads the viewport.
+   Nothing inside paints to the card's edge (the head carries only a bottom rule), so the radius
+   needs no clip. */
 .ppTlOpen {
   min-width: 0; margin: 0.4rem 0 0.5rem 0.75rem;
   background: var(--home-paper, var(--bg)); border: 1px solid var(--home-line-strong, var(--border-2));
-  border-radius: 8px; overflow: hidden;
+  border-radius: 8px;
 }
 /* Every field on the open block sits WHITE on its cream (the stage-2 drawing; owner, 2026-09-15):
    the portal-wide field ground on the warm theme is the paper tone, which is fine on a white

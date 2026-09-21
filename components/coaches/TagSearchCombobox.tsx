@@ -194,11 +194,25 @@ export default function TagSearchCombobox({
   // Open the dropdown, flipping it ABOVE the input when there isn't room below (e.g. the Tags
   // field at the bottom of a scrollable modal, where a downward menu would be clipped by the
   // modal's scroll area / hidden behind the sticky footer).
+  // ⚠ "Room below" is measured against the NEAREST CLIPPING BOX, not just the window (owner-found
+  // 2026-09-20: the practice sheet's station modal is centred and content-sized, so its last field
+  // — Staff — can sit 300px above the window's bottom and 20px above its scroll pane's; the window
+  // said "plenty of room" and the menu was stuffed into the pane's scroll). Every ancestor whose
+  // overflow-y is not `visible` clips or scrolls, and the tightest of them bounds the menu in both
+  // directions. The menu is absolute, so a host that clips is a host the menu cannot leave — a
+  // card that must hold one does not `overflow: hidden` (see `.ppTlOpen`).
   function openDropdown() {
     const el = inputRef.current;
     if (el) {
       const rect = el.getBoundingClientRect();
-      setDropUp(window.innerHeight - rect.bottom < 250 && rect.top > 260);
+      let top = 0, bottom = window.innerHeight;
+      for (let n = el.parentElement; n; n = n.parentElement) {
+        if (getComputedStyle(n).overflowY === 'visible') continue;
+        const r = n.getBoundingClientRect();
+        top = Math.max(top, r.top);
+        bottom = Math.min(bottom, r.bottom);
+      }
+      setDropUp(bottom - rect.bottom < 250 && rect.top - top > 260);
     }
     setOpen(true);
     void refreshLibrary();

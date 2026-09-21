@@ -1333,9 +1333,11 @@ export default function CoachPracticePlanPage({
         </div>
       )}
 
-      {/* The autosave word, floating at the window's foot (owner, 2026-09-14) — the bar it
-          replaced held nothing else. The PLAN's word: on a record nothing about the plan saves
-          (the recap has its own line under its box), so the pill is the live face's (stage 6). */}
+      {/* The autosave word, a transient pill at the window's foot (owner 2026-09-20, revising that
+          morning's title-row home — the title row is pinned nowhere, so the word scrolled away with
+          the sheet's head). It appears on an edit, says "Saved" and fades; only an error stays. The
+          PLAN's word: on a record nothing about the plan saves (the recap has its own line under
+          its box), so the pill is the live face's (stage 6). */}
       {writing && !loading && !loadError && (
         <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />
       )}
