@@ -1,6 +1,6 @@
 -- Migration 306: a scrimmage is a flag, not a kind of game.
 -- (Owner question + ruling "the flag" 2026-09-20; D1–D6 accepted as recommended the same day.
---  Plan: docs/projects/active/COACH_SCRIMMAGE_IS_A_FLAG_PLAN.md)
+--  Plan: docs/projects/archive/COACH_SCRIMMAGE_IS_A_FLAG_PLAN.md — closed 2026-09-21, §211 passed)
 --
 -- `scrimmage` and `league_game` carried identical fields and differed only in what read them, and
 -- the kind was locked once an event existed — so a coach could never move a game between the two,

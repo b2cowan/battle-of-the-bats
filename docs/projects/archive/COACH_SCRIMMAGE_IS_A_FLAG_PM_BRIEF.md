@@ -1,6 +1,6 @@
 # A scrimmage is a flag, not a kind of game — PM brief
 
-**Owner ruling 2026-09-20:** "the flag." Plan: `COACH_SCRIMMAGE_IS_A_FLAG_PLAN.md`. Hub artifact
+**Owner ruling 2026-09-20:** "the flag." **Built, reviewed, committed `c255abc5` and walked (§211 passed) 2026-09-21 — CLOSED; ships with the next promote.** Plan: `COACH_SCRIMMAGE_IS_A_FLAG_PLAN.md`. Hub artifact
 (mockup · brief · plan · decisions): `COACH_SCRIMMAGE_IS_A_FLAG_HUB.html`.
 
 ## What changes for the coach

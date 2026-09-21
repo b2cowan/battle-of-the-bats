@@ -8,9 +8,10 @@ out (a per-game flag vs. a cheap League↔Scrimmage type switch on edit).
 
 **Status:** mockup + brief + plan drawn 2026-09-20; **D1–D6 ruled as recommended the same day; BUILT ON DEV
 2026-09-20; migration 306 applied to dev and verified (PROD-OWED, WITH the promote); /simplify + /review +
-/docs 2026-09-21; COMMITTED `c255abc5` 2026-09-21; owner QA walk §211 owed (hub QA Walk tab).**
+/docs 2026-09-21; COMMITTED `c255abc5` 2026-09-21; **§211 walked and PASSED 2026-09-21 — CLOSED.** Mig 306
+goes on prod WITH the next promote (MANUAL_PROD_STEPS).**
 Project hub (Mockup · PM Brief · Full Plan · Decisions, QA Walk added once built):
-`docs/projects/active/COACH_SCRIMMAGE_IS_A_FLAG_HUB.html` — published as Artifact
+`docs/projects/archive/COACH_SCRIMMAGE_IS_A_FLAG_HUB.html` (archived with the plan on close) — published as Artifact
 `https://claude.ai/artifact/FPcaNdZd7tY9MgBzm48B4x` (round 1, 2026-09-20). PM brief: `COACH_SCRIMMAGE_IS_A_FLAG_PM_BRIEF.md`.
 
 ---
@@ -340,4 +341,6 @@ does. Pin identities and relationships, never a date-moving figure.
   no section this change touched crossed the standard (the two over it — Insights, next season —
   were over before and were not edited in body; a later /docs pass).
 - 2026-09-21 — **COMMITTED `c255abc5`** (67 files) through a private index; the committed tree
-  typechecks clean in a scratch worktree. Owner walk §211 owed; mig 306 PROD-OWED, WITH the promote.
+  typechecks clean in a scratch worktree.
+- 2026-09-21 — **§211 walked by the owner: complete and successful, nothing flagged. CLOSED**; plan,
+  brief and hub moved to `docs/projects/archive/`. Mig 306 goes on prod WITH the next promote.
