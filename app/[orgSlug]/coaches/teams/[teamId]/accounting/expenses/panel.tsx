@@ -4860,11 +4860,13 @@ function MoneyRecordsPanel({
               problem={planProblem}
             />
           </div>
-          <div className={`${styles.field} ${styles.formGridFull}`}>
-            <label className={styles.label}>Tags</label>
-            <TagSearchCombobox library={expenseTags} selectedIds={formTags} onChange={setFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={refreshTagLibrary} />
-          </div>
-          {convNoteField('Optional details…')}
+          {/* Folded the same way as its received twin below (owner, 2026-09-21) — the two forms
+              hand typing to each other, so a note that sits behind "More" on one cannot stand in
+              the open on the other. No "how" here: no money has moved yet. */}
+          {convMoreFold('More — tags, note', Boolean(form.notes || formTags.length), <>
+            {convTagsField()}
+            {convNoteField('Optional details…')}
+          </>)}
           {consequence(<>
             <strong>nothing moves.</strong> The promise joins the plan and the forward view —
             record each cheque against it as it arrives.
@@ -5233,8 +5235,12 @@ function MoneyRecordsPanel({
                 onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
               />
             </div>
-            {convSponsorMethodField()}
-            {convNoteField('Optional details…')}
+            {/* No tags in this fold: an arrival against a standing sponsor sends method and note
+                only — the tags live on the sponsor record itself. The label lists what is inside. */}
+            {convMoreFold('More — how, note', Boolean(conv.sponsorMethod || form.notes), <>
+              <div className={styles.formSectionGrid}>{convSponsorMethodField()}</div>
+              {convNoteField('Optional details…')}
+            </>)}
             {amount > 0 && consequence(<>
               <strong>{fmt(amount)} arrives</strong> — shows on the ledger as sponsorship income.
               {shares.length > 0 && <>
@@ -5322,9 +5328,14 @@ function MoneyRecordsPanel({
               onChange={e => setForm(f => ({ ...f, receivedDate: e.target.value }))}
             />
           </div>
-          {convSponsorMethodField()}
           {/* CREDIT FAMILIES — the shared plan editor (Q16; one component for all three doors
-              after the §120 walk met the inline row squished). */}
+              after the §120 walk met the inline row squished).
+              ⚠ DIRECTLY UNDER THE DATE (owner, 2026-09-21). "How" stood between them, and a
+              bookkeeping detail sitting above the one field that decides whether a family is owed
+              money read as if it mattered more. It now lives in the fold below with tags and the
+              note — the expense form's own shape, and the same reasoning that put `Paid by` there:
+              the label lists what is inside, and the consequence line states the credit whether
+              the fold is open or shut. */}
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label}>Credit families</label>
             <SponsorCreditPlanEditor
@@ -5337,11 +5348,11 @@ function MoneyRecordsPanel({
           </div>
           {/* Tags reach money coming IN (mig 239) — the modal door has carried this field since
               08-15; the conversation door lacking it was the forms review's SP-9. */}
-          <div className={`${styles.field} ${styles.formGridFull}`}>
-            <label className={styles.label}>Tags</label>
-            <TagSearchCombobox library={expenseTags} selectedIds={formTags} onChange={setFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={refreshTagLibrary} />
-          </div>
-          {convNoteField('Optional details…')}
+          {convMoreFold('More — how, tags, note', Boolean(conv.sponsorMethod || form.notes || formTags.length), <>
+            <div className={styles.formSectionGrid}>{convSponsorMethodField()}</div>
+            {convTagsField()}
+            {convNoteField('Optional details…')}
+          </>)}
           <p className={`${styles.formHint} ${styles.formGridFull}`}>
             Nothing arrived yet? Answer <strong>{PLEDGE_HAND_OFF_ROW.name}</strong> instead — your
             typing stays.
@@ -5635,6 +5646,38 @@ function MoneyRecordsPanel({
           onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
           placeholder={placeholder}
         />
+      </div>
+    );
+  }
+
+  /** The shared money-tag picker — the ONE `TagSearchCombobox` call the sponsor forms share, so
+   *  the pledge and its received twin cannot drift on a placeholder or a manage door. */
+  function convTagsField() {
+    return (
+      <div className={`${styles.field} ${styles.formGridFull}`}>
+        <label className={styles.label}>Tags</label>
+        <TagSearchCombobox library={expenseTags} selectedIds={formTags} onChange={setFormTags} onCreate={createMoneyTag} placeholder="Type to find or create a money tag…" manage={{ ...MONEY_TAG_MANAGE, teamId, basePath: `/api/coaches/${orgSlug}/teams/${teamId}/expense-tags` }} onManageChanged={refreshTagLibrary} />
+      </div>
+    );
+  }
+
+  /**
+   * The sponsor forms' bookkeeping fold (owner, 2026-09-21) — the expense form's "More" shape,
+   * on the conversation: how it came, tags and the note fold away under one dashed row whose
+   * label lists what is inside, and the credit decision stands in the open above it.
+   *
+   * ⚠ `set` DOES TWO JOBS, exactly as `detailsSet` does on the expense form: it is the "Set"
+   * badge on the shut toggle, and the mount-only hint that opens the fold by itself. The second
+   * matters here more than there — a note SURVIVES a branch switch (`convNoteField`), so a coach
+   * who typed one under "Dues" and then picked "A sponsor came through" must meet it open, not
+   * find it behind a toggle that looks empty. Full-width in the form grid, like its sibling.
+   */
+  function convMoreFold(label: string, set: boolean, children: ReactNode) {
+    return (
+      <div className={styles.formGridFull}>
+        <CoachFormDisclosure label={label} title="More" meta={set ? 'Set' : undefined} defaultOpen={set}>
+          {children}
+        </CoachFormDisclosure>
       </div>
     );
   }
