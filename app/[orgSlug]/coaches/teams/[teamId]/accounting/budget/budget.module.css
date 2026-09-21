@@ -438,6 +438,22 @@
    page at 361px, with nothing owning the overflow). */
 .lineName { display: block; overflow-wrap: break-word; }
 
+/* The line modal's footer. The shared `.modalFooter` is one non-wrapping row; this one may wrap,
+   because its left side now carries a figure as well as a link (below) and on a phone the two
+   sides do not share a row. When nothing overflows, wrap changes nothing. */
+.lineModalFooter { flex-wrap: wrap; }
+
+/* The footer's LEFT cluster — the delete link and the running period total. It, not its children,
+   carries the `margin-right: auto` that keeps the actions on the right: with two things on the
+   left, an auto margin on each would have spread them across the bar like a nav. */
+.lineFooterLeft {
+  margin-right: auto;
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-width: 0;
+}
+
 /* Deleting a line moved INTO the edit modal (owner 2026-08-13): a quiet danger link in the
    footer, opposite Save, in front of the same confirm dialog as before. One control per row
    outside, full capability inside — the phone's tap-a-row door and the desktop pencil can
@@ -452,7 +468,6 @@
   color: var(--danger-light);
   text-decoration: underline;
   cursor: pointer;
-  margin-right: auto;
 }
 .deleteLineBtn:disabled { opacity: 0.6; cursor: default; }
 
@@ -1193,18 +1208,35 @@
 }
 .removePeriodBtn:hover { color: var(--danger-light); }
 
+/* The running period total — "Period total  $900.00 / $1,000.00". It lives in the sticky footer's
+   left cluster (owner 2026-09-21; it used to close the Period Breakdown panel, where it scrolled
+   away with the rows), so it wears no separator of its own: the footer's top rule is the line.
+   Label then figures, a short gap between; the figure is what the coach is watching. */
 .periodSumRow {
   display: flex;
-  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.6rem;
   font-size: var(--type-support);
   color: var(--text-tertiary);
-  margin-top: 0.5rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--home-line, rgba(255,255,255,0.06));
+  white-space: nowrap;
+}
+.periodSumRow > span:last-child {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+  color: var(--text-secondary);
 }
 
-.periodSumError { color: var(--danger-light); }
-.periodSumError span { color: var(--danger-light); }
+/* Red while the two figures disagree. Doubled with `.periodSumRow` on purpose: the figure span's
+   own colour above is a two-part selector too, and only an equal one written later beats it. */
+.periodSumRow.periodSumError,
+.periodSumRow.periodSumError > span { color: var(--danger-light); }
+
+@media (max-width: 640px) {
+  /* The phone's footer is ~350px wide: the left cluster takes a row of its own above the
+     buttons — delete link left, total right, the way a figure sits over the Save it is about. */
+  .lineFooterLeft { flex: 1 1 100%; justify-content: space-between; }
+  .lineFooterLeft > .periodSumRow { margin-left: auto; }
+}
 
 /* ── Generate installments modal ─────────────────────────────────────────── */
 .genInstructions {

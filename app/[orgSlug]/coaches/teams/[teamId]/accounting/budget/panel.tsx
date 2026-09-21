@@ -4678,21 +4678,11 @@ export function BudgetPlanPanel({
                   </div>
                 )}
 
-                {(() => {
-                  const err = periodSumError();
-                  const sum = periodSum();
-                  const total = parseFloat(form.totalAmount) || 0;
-                  return (
-                    <div className={`${styles.periodSumRow} ${err ? styles.periodSumError : ''}`}>
-                      <span>Period total</span>
-                      <span>
-                        {form.periodMode === 'percent'
-                          ? <>{sum.toFixed(1)}% {total > 0 && `= ${fmt((total * sum) / 100)}`}</>
-                          : <>{fmt(sum)} {total > 0 && `/ ${fmt(total)}`}</>}
-                      </span>
-                    </div>
-                  );
-                })()}
+                {/* ⚖ THE RUNNING PERIOD TOTAL MOVED TO THE STICKY FOOTER (owner, 2026-09-21). It sat
+                    here, under the rows, and scrolled away with them — twelve months in, the one
+                    figure that says whether the split adds up was off screen. The footer is the
+                    band that is always visible; the total shares it with the fix counter for the
+                    same reason the counter is there. */}
               </div>
             )}
 
@@ -4739,19 +4729,41 @@ export function BudgetPlanPanel({
             )}
 
             {saveError && <p className={styles.errorText}>{saveError}</p>}
-            <div className={shared.modalFooter}>
-              {/* Deleting lives HERE now (owner 2026-08-13) — the rows outside carry only the
-                  edit door, so the modal is where a line's full powers are. Opens the same
-                  confirm dialog the trash icon used to; a successful delete closes this form
-                  too (its line no longer exists). */}
-              {editingLine && (
-                <button
-                  type="button"
-                  className={styles.deleteLineBtn}
-                  onClick={() => setDeletingId(editingLine.id)}
-                >
-                  Delete line
-                </button>
+            <div className={`${shared.modalFooter} ${styles.lineModalFooter}`}>
+              {/* The footer's LEFT side: what the form is about, not what to do with it. Deleting
+                  lives HERE (owner 2026-08-13) — the rows outside carry only the edit door, so the
+                  modal is where a line's full powers are; it opens the same confirm dialog the
+                  trash icon used to, and a successful delete closes this form too. Beside it, the
+                  running period total (owner 2026-09-21): the footer is sticky, so the figure that
+                  says whether a split adds up is read without scrolling back up through the rows
+                  — it turns red while the two figures disagree, as the row under the periods did. */}
+              {(editingLine || form.whenAnswer === 'split') && (
+                <div className={styles.lineFooterLeft}>
+                  {editingLine && (
+                    <button
+                      type="button"
+                      className={styles.deleteLineBtn}
+                      onClick={() => setDeletingId(editingLine.id)}
+                    >
+                      Delete line
+                    </button>
+                  )}
+                  {form.whenAnswer === 'split' && (() => {
+                    const err = periodSumError();
+                    const sum = periodSum();
+                    const total = parseFloat(form.totalAmount) || 0;
+                    return (
+                      <div className={`${styles.periodSumRow} ${err ? styles.periodSumError : ''}`}>
+                        <span>Period total</span>
+                        <span>
+                          {form.periodMode === 'percent'
+                            ? <>{sum.toFixed(1)}% {total > 0 && `= ${fmt((total * sum) / 100)}`}</>
+                            : <>{fmt(sum)} {total > 0 && `/ ${fmt(total)}`}</>}
+                        </span>
+                      </div>
+                    );
+                  })()}
+                </div>
               )}
               {/* The footer is sticky, so this counter is the one piece of the verdict that is
                   visible however far the form is scrolled — the gap the old bottom-of-the-body
