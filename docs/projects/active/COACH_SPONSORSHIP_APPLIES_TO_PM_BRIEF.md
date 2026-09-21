@@ -1,6 +1,6 @@
 # PM Brief — Sponsorship Applies To
 
-**Status:** ruled 2026-09-21 (D1–D8 as drawn) · built on dev the same day · owner QA walk owed · migration 308 to prod BEFORE the promote
+**Status:** ruled 2026-09-21 (D1–D8 as drawn) · built on dev and committed `02a81294` the same day · owner QA walk owed · migration 308 to prod BEFORE the promote
 **Hub:** https://claude.ai/artifact/JhhkcVbSpNQycMRCBYzepR · plan `COACH_SPONSORSHIP_APPLIES_TO_PLAN.md`
 
 ## What a coach sees differently
