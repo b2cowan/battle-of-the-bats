@@ -1,6 +1,6 @@
 # PM Brief — Opponent Picker
 
-**Status:** ruled 2026-09-21 (D1–D7 as drawn on the hub; D5 in, D6 held) · built on dev the same day · owner QA walk owed
+**Status:** ruled 2026-09-21 (D1–D7 as drawn on the hub; D5 in, D6 held) · built, reviewed and committed `606a6861` the same day · owner QA walk owed
 **Hub:** https://claude.ai/artifact/7BJir7hhGj6C39eVrXGXcn · plan `COACH_OPPONENT_PICKER_PLAN.md`
 
 ## What a coach sees differently

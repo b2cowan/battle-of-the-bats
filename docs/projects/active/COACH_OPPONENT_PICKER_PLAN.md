@@ -1,6 +1,6 @@
 # Opponent Picker — the Opponent field reads the Scouting Book
 
-**Status:** ruled 2026-09-21 (D1–D7 as drawn; D5 in, D6 held) · built on dev the same day · owner QA walk owed
+**Status:** ruled 2026-09-21 (D1–D7 as drawn; D5 in, D6 held) · built on dev + /review (8 findings, 1 High fixed) + committed `606a6861` the same day · owner QA walk owed
 **Hub (mockup · brief · plan · decisions on ONE URL):** https://claude.ai/artifact/7BJir7hhGj6C39eVrXGXcn
 — source `docs/projects/active/COACH_OPPONENT_PICKER_HUB.html` (republish the SAME path to stack a round).
 **PM brief:** `COACH_OPPONENT_PICKER_PM_BRIEF.md`.
