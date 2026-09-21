@@ -541,6 +541,14 @@ function probeInPage(opts) {
   // At ≤ 640 the frame stands down and each row is its own card (the table's phone recipe), so
   // the question flips: the row's <li> must paint the wash, and NOTHING between it and `main`
   // may paint — a slab behind a stack of cards is the defect `.devTableCard` shipped (F-24).
+  //
+  // …unless the list DECLARES the recipe's second phone form, `data-row-list-phone="frame"`
+  // (`<CoachRowList phoneFrame>`; walk rule S.7 — a list whose columns fit a phone stays a framed
+  // list; first consumer the Overview's six-row board, owner ruling B5 2026-09-20). A declared
+  // framed phone list is held to the DESKTOP sentence at ≤ 640: the list paints the card, the rows
+  // paint nothing, nothing above paints. The declaration is what keeps the rule strict — a frame
+  // that failed to stand down looks exactly like this form, and without the attribute it is still
+  // reported as the stand-down failing.
   if (wanted('list-ground')) {
     const transparent = (c) => !c || c === 'transparent' || /^rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)$/.test(c);
     const resolve = (el, token) => {
@@ -556,10 +564,15 @@ function probeInPage(opts) {
       probe.remove();
       return out;
     };
-    const stopAt = root.querySelector('main') || root;
     const phone = window.innerWidth <= 640;
     for (const list of Array.from(root.querySelectorAll('[data-row-list]'))) {
       if (!visible(list) || isExempt(list)) continue;
+      // The walk ends at the list's OWN nearest <main> — the paper is main's ground and does not
+      // count. It used to end at the page's FIRST <main>, and the coach shell nests two (an
+      // unstyled outer one from the org layout, then `.coachesMain`, which paints the paper): the
+      // walk sailed past the inner one and reported it as a second painter behind every framed
+      // list on a coach screen (the schedule sheet's 768/1440 entries in the baseline are that).
+      const stopAt = list.closest('main') || root;
       // Only the FIRST visible row is read — `.find`, not `.filter`, so a forty-row list costs one
       // layout read, not forty (the same idiom the modal finder above uses).
       const row = Array.from(list.querySelectorAll(':scope > [data-row-list-row]')).find(visible);
@@ -567,7 +580,8 @@ function probeInPage(opts) {
       const label = `list·${list.getAttribute('aria-label') || nameOf(list)}`;
       const card = resolve(list, '--card-bg');
       if (!card) continue; // a surface with no card token cannot be held to one
-      if (!phone) {
+      const framedOnPhone = phone && list.getAttribute('data-row-list-phone') === 'frame';
+      if (!phone || framedOnPhone) {
         // Walk up from the row: the first painted ancestor must be the card.
         let node = row.parentElement;
         let painter = null;
@@ -578,9 +592,13 @@ function probeInPage(opts) {
         }
         const rowBg = getComputedStyle(row).backgroundColor;
         if (!transparent(rowBg)) {
-          add('list-ground', label, `the row itself paints ${rowBg} — a row is not a card on a desktop (§3.10.2)`);
+          add('list-ground', label, framedOnPhone
+            ? `declared a framed phone list (S.7) but the row itself paints ${rowBg} — the row-card wash is still on; two painters`
+            : `the row itself paints ${rowBg} — a row is not a card on a desktop (§3.10.2)`);
         } else if (!painter) {
-          add('list-ground', label, `nothing between the row and the page paints a ground — the list sits on the paper (§3.10.1: exactly one painter)`);
+          add('list-ground', label, framedOnPhone
+            ? `declared a framed phone list (S.7) but nothing paints a ground at ≤ 640 — the frame stood down anyway (a later rule, or the class is missing)`
+            : `nothing between the row and the page paints a ground — the list sits on the paper (§3.10.1: exactly one painter)`);
         } else if (painter.bg !== card) {
           add('list-ground', label, `the ground behind the row is ${painter.bg}, painted by <${painter.node.tagName.toLowerCase()} class="${String(painter.node.className).slice(0, 60)}">, not the card (${card})`);
         } else {

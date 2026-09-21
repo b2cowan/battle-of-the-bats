@@ -1079,6 +1079,13 @@ export default function TeamOverviewPage({
     icon: typeof Users;
     value: string;
     sub: string;
+    /** The sub is a HINT — a definition ("in the next 7 days"), a unit the figure does not need
+     *  ("active players"), an instruction ("Register for a tournament") or a description of the
+     *  door — rather than a FACT about the team (a number, a name, a date, a state). The desktop
+     *  tile shows every sub; the phone row (B6, owner 2026-09-21) draws only facts, and a row with
+     *  nothing factual to add stays one line. Decided here, beside the sub, never inferred from
+     *  its words. */
+    subIsHint?: boolean;
     href: string;
     tone: TileTone;
     flag?: { text: string; tone: 'ok' | 'warn' | 'mute' } | null;
@@ -1106,6 +1113,7 @@ export default function TeamOverviewPage({
             : decided.length === 0 ? 'No games yet'
               : formatRecord(tally),
           sub: decided.length === 0 ? 'Fills in as you finalize scores' : 'Scrimmages left out',
+          subIsHint: true,
           href: `${base}/history`,
           tone: decided.length === 0 ? 'muted' : 'default',
           pips: decided.slice(-5).map(e => ({ result: e.result ?? '' })),
@@ -1116,6 +1124,7 @@ export default function TeamOverviewPage({
           key, label: 'Roster', icon: Users,
           value: setupLoading ? '…' : String(setupStats?.activeRosterCount ?? 0),
           sub: 'active players',
+          subIsHint: true,
           href: `${base}/roster`,
           tone: 'default',
           flag: (!setupLoading && missingEmailCount > 0)
@@ -1145,6 +1154,7 @@ export default function TeamOverviewPage({
             key, label: 'This week', icon: Calendar,
             value: setupLoading ? '…' : (parts[0] ?? 'Nothing else'),
             sub: parts.slice(1).join(' · ') || 'in the next 7 days',
+            subIsHint: parts.length <= 1,
             href: `${base}/schedule`,
             tone: parts.length === 0 ? 'muted' : 'default',
             flag: birthdays.length > 0
@@ -1163,6 +1173,7 @@ export default function TeamOverviewPage({
           sub: nextEvent
             ? (nextEvent.opponent ? `vs ${nextEvent.opponent}` : (nextEvent.name || 'Upcoming event'))
             : 'scheduled ahead',
+          subIsHint: !nextEvent,
           href: `${base}/schedule`,
           tone: nextEvent ? 'default' : 'muted',
           // The same four-state vocabulary as the Lineups hub and the anchor card below (F02) — one
@@ -1189,6 +1200,7 @@ export default function TeamOverviewPage({
                 ? `next ${formatEventDate(`${tournaments.nextDate}T00:00:00`)}`
                 : `registered${tournaments.pending > 0 ? ` · ${tournaments.pending} pending` : ''}`)
             : 'Register for a tournament',
+          subIsHint: !(tournaments && tournaments.count > 0),
           href: `${base}/tournaments`,
           tone: (tournaments && tournaments.count > 0) ? 'default' : 'muted',
           // Tournament fees owed are a money figure — gate on money view (this tile isn't in the
@@ -1208,6 +1220,8 @@ export default function TeamOverviewPage({
               : duesOutstanding > 0
                 ? `outstanding${duesUnpaidCount > 0 ? ` · ${duesUnpaidCount} unpaid` : ''}`
                 : 'nothing owed',
+          // "Set up dues" is the STATE the figure's "—" cannot say on its own; "nothing owed" repeats "All paid".
+          subIsHint: duesOutstanding != null && duesOutstanding <= 0,
           href: `${base}/accounting`,
           tone: duesOverdueCount > 0 ? 'danger' : 'default',
           progress: (!setupLoading && duesProgress)
@@ -1229,6 +1243,7 @@ export default function TeamOverviewPage({
           sub: (!budget || budget.amount == null)
             ? 'Track what the season costs'
             : `${formatMoney(budget.spent)} of ${formatMoney(budget.amount)} spent`,
+          subIsHint: !budget || budget.amount == null,
           href: moneySectionHref(base, 'budget-vs-actual'),
           tone: (!budget || budget.amount == null) ? 'muted'
             : budget.spent > budget.amount ? 'danger' : 'default',
@@ -1251,6 +1266,7 @@ export default function TeamOverviewPage({
           key, label: 'Money', icon: DollarSign,
           value: 'Not set up',
           sub: 'Dues, a budget, and who has paid',
+          subIsHint: true,
           href: `${base}/accounting`,
           tone: 'muted',
         };
@@ -1262,6 +1278,7 @@ export default function TeamOverviewPage({
           sub: s == null || s.share == null
             ? 'Take attendance to see the season trend'
             : 'season average',
+          subIsHint: true,
           href: insightsSectionHref(base, 'attendance'),
           tone: s?.share == null ? 'muted' : 'default',
           flag: (s && s.lowCount > 0)
@@ -1288,6 +1305,7 @@ export default function TeamOverviewPage({
           sub: p == null || p.verdict === 'insufficient'
             ? 'Save a few lineups to see the balance'
             : `across ${p.games} game${p.games === 1 ? '' : 's'}`,
+          subIsHint: p == null || p.verdict === 'insufficient',
           href: insightsSectionHref(base, 'playing-time'),
           tone: p == null || p.verdict === 'insufficient' ? 'muted' : 'default',
           flag: (p && p.belowCount > 0)
@@ -1305,6 +1323,8 @@ export default function TeamOverviewPage({
           // caption that has already decided the answer is none.
           sub: openGoalCount == null ? 'Checking…'
             : openGoalCount > 0 ? 'goals in progress' : 'Set a focus for each player',
+          // "7" under Skills & Goals could be skills, goals or players — the unit is the fact here.
+          subIsHint: openGoalCount == null || openGoalCount === 0,
           href: `${base}/development`,
           tone: openGoalCount ? 'default' : 'muted',
         };
@@ -2243,11 +2263,21 @@ export default function TeamOverviewPage({
             the progress label and the second sub-line are not drawn here — the page each row opens
             has them. Measured before: six two-up tiles at 520px with 33 of the page's words at 11px;
             after: 52px rows, all six above the bar at 390×844. The grid above is display:none at
-            ≤640 and this list above it — both in the tree, the stylesheet shows one per width. */}
-        <CoachRowList className={styles.boardRows} labelledBy="board-title">
+            ≤640 and this list above it — both in the tree, the stylesheet shows one per width.
+            B6 (owner, 2026-09-21 — "a little squished and cluttered"): NO icon on a row (six words
+            need no glyph; the tile keeps its eyebrow icon), and the qualifier is a FACT or nothing —
+            the flag, the pips, or the sub only when the tile says it is not a hint (`subIsHint`) —
+            so "This week · 1 practice" and "Tournaments · None yet" are one calm line where the
+            tile's sub was a definition or an instruction.
+            THE GROUND IS ONE WHITE FRAME, NOT SIX ROW-CARDS (B5, owner ruling 2026-09-20): the recipe's
+            phone form broke the board into six olive-washed cards — the table's phone card, right for
+            a stack of records, wrong for six doors under a white hero card — where the approved
+            drawing was white. `phoneFrame` keeps the desktop frame at ≤640 (walk rule S.7: the
+            board's three columns fit a phone), hairlines between rows, no gaps; the sweep's
+            `list-ground` rule reads the declaration and holds the list to that form. */}
+        <CoachRowList className={styles.boardRows} labelledBy="board-title" phoneFrame>
           {board.slots.map(key => {
             const tile = buildTile(key);
-            const Icon = tile.icon;
             const qualifier = tile.flag
               ? <span className={tile.flag.tone === 'ok' ? kit.flagOk : tile.flag.tone === 'warn' ? kit.flagWarn : kit.flagMute}>{tile.flag.text}</span>
               : tile.pips && tile.pips.length > 0
@@ -2260,13 +2290,12 @@ export default function TeamOverviewPage({
                     ))}
                   </span>
                 )
-                : tile.sub;
+                : tile.subIsHint ? undefined : tile.sub;
             return (
               <CoachRow
                 key={tile.key}
                 as="link"
                 href={tile.href}
-                mark={<Icon size={15} aria-hidden />}
                 title={tile.label}
                 caption={qualifier}
                 trail={<span className={styles.boardRowFigure} data-tone={tile.tone} data-words={tile.tone === 'muted' || undefined}>{tile.value}</span>}

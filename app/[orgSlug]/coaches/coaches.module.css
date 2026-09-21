@@ -1882,21 +1882,62 @@
 @media (max-width: 640px) {
   .boardGrid { display: none; }
   ul.boardRows { display: block; }
-  .boardRows .rowListItem { margin-bottom: 6px; }
+  /* The ground is the recipe's framed phone form (`phoneFrame` on the list — the block at the foot
+     of this file; owner ruling B5, 2026-09-20): one white frame, hairlines, no gaps. The 6px gap
+     between row-cards that B3 built went with the row-cards. Only the density is the board's own: */
   /* Measured on the first build: 72px rows — the figure's 20px type at the row's 1.6 line-height
      made the title's line 32px tall, and the built card and page line each came in taller than
      drawn. The figure's line-height goes to 1 (its box is its glyphs), the two text lines take
-     the drawing's own 1.3 with no gap between them (the recipe's row-gap is paid twice on a phone,
-     once more for its line-break pseudo-element) — 47px rows, three over the tap floor, and all
-     six sit above the bar at 844 with the built card at 267. The drawing said 52; the frame
-     promised six rows above the bar, and that is the promise kept. */
-  .boardRows .rowListRow, .boardRows .rowListRow:has(.rowCaption) { padding-top: 0.35rem; padding-bottom: 0.35rem; min-height: var(--tap-min, 44px); gap: 0 0.5rem; }
+     the drawing's own 1.3 (the recipe's row-gap is paid twice on a phone, once more for its
+     line-break pseudo-element). B3 cut the rows to 47px to fit six GAPPED cards above the bar;
+     B5's frame took the gaps away and won ~40px back, and B6 (owner, 2026-09-21: "a little
+     squished and cluttered") spends it on the rows — 0.45rem above and below and 1px twice
+     between the lines, so a two-line row is the drawing's own 52px and a one-line row the 44px
+     floor. Measured: six rows end ~29px above the bar at 390×844 with the built card at 267. The
+     ceiling is real: the band starts at 446 and the bar at 772, so 52 is the tallest two-line row
+     that keeps all six above the bar with any margin — do not "give it a little more air". */
+  .boardRows .rowListRow, .boardRows .rowListRow:has(.rowCaption) { padding-top: 0.45rem; padding-bottom: 0.45rem; min-height: var(--tap-min, 44px); }
   .boardRows .rowListTitle, .boardRows .rowListCaption { line-height: 1.3; }
-  .boardRows .rowListMark { color: var(--home-olive, var(--text-tertiary)); }
-  /* The recipe's phone order puts the trail on the title's line and the caption under it; the
-     figure is that trail. */
-  .boardRows .rowListRow { align-items: center; }
-  .boardRows .rowListTrail { align-self: center; }
+  /* No mark on a phone row (B6): six words — Roster, Record, This week, Dues, Budget, Tournaments —
+     need no glyph to be recognised, and the column of six was a third of the clutter. The desktop
+     tile keeps its eyebrow icon (an eyebrow on a card is a different job from a word in a list).
+     The page passes no `mark`; there is no rule to style. */
+  /* THE FIGURE IS CENTRED ON THE ROW (owner, 2026-09-21, on the built B6 — "can we vertically align
+     these more centered?"; the B6 drawing had it so). The recipe's phone layout is a wrapping flex
+     row whose trail sits on the TITLE's line with the caption under both — right for a date lead
+     and a worded door, wrong for a 20px figure that is the row's point: it rode high on every
+     two-line row while the chevron beside it (absolute, top-to-bottom) sat centred. The board's
+     row is a two-column grid instead: the title and caption stack in the first column, the figure
+     takes the second and spans both lines, centred; a one-line row has an empty second row of zero
+     height, so it is unchanged. The recipe's line-break pseudo-element is a flex device and is
+     switched off here — in a grid it would have claimed a third row and its gap.
+     AND THE LABEL IS CENTRED TOO (owner, the next read: "the same for the left text when there is
+     no sub text"). Two things held it high, both MEASURED (resolved grid tracks, 2026-09-21):
+     (1) on a one-line row the figure spanned an EMPTY second track, and a track a spanning item
+     reaches has no growth limit — so "maximize tracks" handed it the row's spare height (8.8px of
+     the 44) and the label sat in the top half. The figure spans only when there IS a caption to
+     span; on a one-line row it sits in the title's track, and the tracks are centred in the row
+     (align-content — the default stretch would have split the spare between them). (2) the
+     recipe's phone `gap` rule is SERVED as `:is(.rowListRow, .rowListRow:has(.rowCaption))` — the
+     pipeline merges a selector list into `:is()`, which takes the specificity of its STRONGEST
+     member, so both branches weigh (0,2,0) and beat a plain `.boardRows .rowListRow` by order.
+     This rule keeps the same two-selector shape as the padding rule above so it is served at
+     (0,3,0) and its row-gap of 0 holds; the air between the two lines is the caption's own top
+     margin, which an empty track cannot inherit. */
+  .boardRows .rowListRow, .boardRows .rowListRow:has(.rowCaption) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    column-gap: 0.5rem;
+    row-gap: 0;
+    align-items: center;
+    align-content: center;
+  }
+  .boardRows .rowListRow::after { display: none; }
+  .boardRows .rowListTitle { grid-column: 1; grid-row: 1; }
+  .boardRows .rowListCaption { grid-column: 1; grid-row: 2; margin-top: 0.125rem; }
+  .boardRows .rowListTrail { grid-column: 2; grid-row: 1 / span 2; align-self: center; justify-self: end; margin-left: 0; }
+  .boardRows .rowListRow:not(:has(.rowListCaption)) .rowListTrail { grid-row: 1; }
   .boardRows .boardRowFigure { line-height: 1; }
   /* The band before the rows tightens with them (the desktop's 1.5rem/0.75rem stays). */
   .sectionKicker { margin: 0.75rem 0 0.4rem; }
@@ -1904,7 +1945,9 @@
 .boardRowFigure {
   font-family: var(--font-display);
   font-size: var(--type-title);
-  font-weight: 800;
+  /* Bold, not the tile's extra-bold (B6): still the loudest thing on its row, no longer shouting
+     across all six — the row is 52px, the tile was a 175px box. */
+  font-weight: 700;
   letter-spacing: -0.01em;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
@@ -11443,6 +11486,39 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
     width: var(--tap-min, 44px);
     display: grid; place-items: center;
   }
+}
+
+/* ≤ 640 · THE FRAMED PHONE LIST — the recipe's SECOND phone form, declared per list
+   (`<CoachRowList phoneFrame>` → `.rowListPhoneFrame` + `data-row-list-phone="frame"`).
+   The stand-down above exists for a table whose columns do NOT fit a phone; a list whose columns fit
+   stays a framed list at every width (phone walk rule S.7, "a table whose columns fit stays a
+   table"). First consumer: the Overview's six-row board (owner ruling B5, 2026-09-20). Its three
+   columns — the label with its qualifier · the figure · the chevron — fit at 360 and 390, and the six
+   rows are the coach's numbers, not a stack of records; as six row-cards they read as six grey slabs
+   under a white hero card, while the approved B3 drawing was one white frame. Measured on the
+   drawings: the band 342 → 314px, the sixth row's foot 4 → 33px clear of the bar.
+   The frame is the desktop's own (`.tableWrap`: card ground, neutral hairline, radius 8), the rows
+   paint nothing and the hairline under each but the last is the whole separation — the desktop
+   sentence "a row is not a card", kept. `ul.rowListPhoneFrame` ties `ul.rowList` on specificity and
+   wins by ORDER, as the whole block does; the row rule out-ranks `.rowListItem` on its own. The
+   chevron stays absolute in its relative <li>; `overflow: hidden` on the frame clips only the end
+   rows' hover tint to the corners. Every list without the declaration keeps its row-cards, and the
+   rendered sweep holds each form to its own sentence (`list-ground`, `check-layout-invariants.mjs`). */
+@media (max-width: 640px) {
+  ul.rowListPhoneFrame {
+    border: 1px solid var(--home-line, var(--border-2));
+    border-radius: 8px;
+    background: var(--card-bg, var(--surface));
+    overflow: hidden;
+  }
+  .rowListPhoneFrame .rowListItem {
+    border: 0;
+    border-radius: 0;
+    background: none;
+    margin-bottom: 0;
+    border-bottom: 1px solid var(--home-line, var(--border-2));
+  }
+  .rowListPhoneFrame .rowListItem:last-child { border-bottom: 0; }
 }
 
 /* The scouting book's own back-link is RETIRED (page-header ruling 2026-08-11): every drill-in

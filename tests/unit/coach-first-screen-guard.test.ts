@@ -23,6 +23,19 @@ import { readSource, stripComments } from './_source-code.ts';
  *      row list — and the stylesheet shows one per width. The rows are the portal's one row recipe
  *      (`CoachRowList`), not a second card system.
  *
+ *   B5 **THE BOARD'S GROUND IS ONE WHITE FRAME, NOT SIX ROW-CARDS** (owner, 2026-09-20 — "why are
+ *      these tiles grey?"). The recipe's phone form broke the board into six olive-washed cards
+ *      where the approved drawing was white; the board declares the recipe's framed phone form
+ *      (`phoneFrame`, walk rule S.7) and the recipe carries that form ONCE, at the foot of the
+ *      stylesheet, AFTER the stand-down it overrides — order is the mechanism there, so a tidy-up
+ *      that moves the block, or a "6px gap" rule that comes back on the board, is the grey coming back.
+ *
+ *   B6 **A PHONE ROW CARRIES A FACT OR NOTHING, AND NO ICON** (owner, 2026-09-21 — "a little squished
+ *      and cluttered"). The qualifier is the flag, the pips, or the sub only when the tile has NOT
+ *      marked it a hint (`subIsHint` — decided beside the sub, never inferred from its words); a row
+ *      with nothing factual stays one line. No mark on a row. Rows are 52px (0.45rem, 1px between
+ *      the lines) — the ceiling that keeps six above the bar; the figure is bold, not extra-bold.
+ *
  *   B4 **THE CARD'S DOORS GROUP BY DESTINATION; ITS FACTS SIT ON THE META LINE.** Three of the
  *      four door-chips open the same page; four doors to two pages was the shape refused.
  *
@@ -93,18 +106,51 @@ describe('B3 — on a phone a tile is a row', () => {
   const styles = stripComments(readSource(STYLES));
 
   it('the board renders the grid AND the row list from the same tiles', () => {
-    assert.ok(overview.includes('<CoachRowList className={styles.boardRows} labelledBy="board-title">'), 'the rows are the one row recipe');
+    assert.ok(overview.includes('<CoachRowList className={styles.boardRows} labelledBy="board-title" phoneFrame>'), 'the rows are the one row recipe, in its framed phone form (B5)');
     const grid = (overview.match(/board\.slots\.map\(key => \{\s*const tile = buildTile\(key\);/g) || []).length;
     assert.equal(grid, 2, 'both renderings read buildTile for the same slots — the resolver knows neither exists');
     assert.match(styles, /\.boardRows \{ display: none; \}/, 'the rows are hidden above 640');
     assert.match(styles, /\.boardGrid \{ display: none; \}/, 'the grid is hidden at ≤640');
   });
 
-  it('a row carries one qualifier — the flag, else the sub — and never the bar', () => {
+  it('B5 — the board keeps its frame on a phone: the recipe carries the form once, after the stand-down, and the board adds no gap', () => {
+    const rowList = stripComments(readSource('components/coaches/CoachRowList.tsx'));
+    assert.ok(rowList.includes("data-row-list-phone={phoneFrame ? 'frame' : undefined}"), 'the form is DECLARED on the list — the sweep reads the attribute');
+    assert.ok(rowList.includes("${phoneFrame ? ` ${styles.rowListPhoneFrame}` : ''}"), 'the declaration carries the recipe class');
+    const standDown = styles.indexOf('ul.rowList, ul.rowListInset { border: 0; border-radius: 0; background: none;');
+    const framed = styles.indexOf('ul.rowListPhoneFrame {');
+    assert.ok(standDown > 0 && framed > standDown, 'the framed phone form is declared AFTER the stand-down it overrides (same specificity — order is the mechanism)');
+    const lastRule = styles.indexOf('.rowListPhoneFrame .rowListItem:last-child');
+    assert.ok(lastRule > framed, 'the form ends with the last row shedding its hairline');
+    const block = styles.slice(framed, lastRule);
+    assert.ok(block.includes('background: var(--card-bg, var(--surface));'), 'the frame paints the card ground');
+    const rowRule = block.slice(block.indexOf('.rowListPhoneFrame .rowListItem {'));
+    assert.ok(rowRule.includes('background: none;') && rowRule.includes('border-bottom: 1px solid'), 'a row paints nothing; the hairline is the whole separation');
+    assert.ok(!styles.includes('.boardRows .rowListItem { margin-bottom: 6px; }'), 'the 6px gap between row-cards went with the row-cards');
+  });
+
+  it('a row carries one qualifier — the flag, else the pips, else a sub that is a FACT — and never the bar', () => {
     assert.match(overview, /const qualifier = tile\.flag\s*\?/, 'the flag wins the qualifier slot');
     const rows = overview.slice(overview.indexOf('<CoachRowList'), overview.indexOf('</CoachRowList>'));
     assert.ok(!rows.includes('CoachBar'), 'no progress bar on a row — the page it opens has it');
     assert.ok(!rows.includes('tile.progress'), 'no progress label on a row');
+    assert.ok(rows.includes(': tile.subIsHint ? undefined : tile.sub;'), 'B6 — a hint sub is not drawn on a phone row; the row stays one line');
+    assert.ok(!rows.includes('mark='), 'B6 — no icon on a phone row');
+    assert.ok(!rows.includes('tile.icon'), 'B6 — the row does not read the tile icon');
+  });
+
+  it('B6 — every tile decides whether its sub is a hint beside the sub, and the row density is the 52px ceiling', () => {
+    assert.ok(overview.includes('subIsHint?: boolean;'), 'the Tile type carries the decision');
+    const tiles = overview.slice(overview.indexOf('const buildTile = '), overview.indexOf('const renderSetupRow'));
+    const subs = (tiles.match(/^\s+sub: /gm) || []).length;
+    const hints = (tiles.match(/^\s+subIsHint: /gm) || []).length;
+    assert.equal(hints, subs, `every tile with a sub says whether it is a hint (${hints} of ${subs})`);
+    assert.ok(tiles.includes('subIsHint: parts.length <= 1,'), '"in the next 7 days" is a hint; "1 game · 2 other" is a fact');
+    assert.ok(tiles.includes('subIsHint: !(tournaments && tournaments.count > 0),'), '"Register for a tournament" is a hint; "next Sep 28" is a fact');
+    assert.ok(styles.includes('.boardRows .rowListRow, .boardRows .rowListRow:has(.rowCaption) { padding-top: 0.45rem; padding-bottom: 0.45rem;'), 'the rows breathe at 0.45rem — the 52px ceiling');
+    assert.ok(!styles.includes('.boardRows .rowListMark'), 'no mark rule on the board rows — there is no mark');
+    const fig = styles.slice(styles.indexOf('.boardRowFigure {'), styles.indexOf('.boardRowFigure[data-tone'));
+    assert.ok(fig.includes('font-weight: 700;'), 'the figure is bold, not extra-bold');
   });
 });
 
