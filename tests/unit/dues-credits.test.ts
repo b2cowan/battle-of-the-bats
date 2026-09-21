@@ -27,6 +27,7 @@ import {
   CREDIT_TYPE_LABELS,
   CREDIT_KIND_SENTENCE,
   creditKindSentence,
+  isArrangedCredit,
   type ApplicableCredit,
 } from '../../lib/dues-credits';
 
@@ -45,6 +46,7 @@ function credit(amount: number, over: Partial<ApplicableCredit> = {}): Applicabl
     creditDate: over.creditDate ?? '2026-02-01',
     createdAt: over.createdAt ?? null,
     description: over.description ?? null,
+    appliesTo: over.appliesTo ?? null,
   };
 }
 
@@ -411,6 +413,9 @@ describe('the three-state identity — issued = applied + paidOut + owedBack', (
         credit(cents(rnd() * total * 0.5), {
           creditType: (['fundraiser', 'contribution', 'overpayment', 'other', 'reimbursement', 'forgiven'] as const)[Math.floor(rnd() * 6)],
           creditDate: `2026-0${1 + Math.floor(rnd() * 8)}-15`,
+          // One credit in three carries an arrangement — sometimes naming a position the schedule
+          // does not have, which is the stale case the fallback pass exists for.
+          appliesTo: rnd() < 0.33 ? [1 + Math.floor(rnd() * 7)] : null,
         }));
       const issued = creditsTotal(credits.filter(c => c.creditType !== 'forgiven'));
       const paidOut = cents(rnd() * issued);
@@ -435,6 +440,143 @@ describe('the three-state identity — issued = applied + paidOut + owedBack', (
         cents(pos.leftToSend),
       );
     }
+  });
+});
+
+/* ── A sponsorship that names its payments (owner rulings D1–D8, 2026-09-21) ──────────────── */
+
+describe('applyCreditsToBills — an arranged credit lands on the payments it NAMED', () => {
+  /** Maya's schedule from the hub: 4 × $250, nothing paid; Riverdale Dental credits $300. */
+  const maya = () => allocateDuesPayments([inst(1, 250), inst(2, 250), inst(3, 250), inst(4, 250)], []).coverage;
+
+  it('D2: $300 arranged for #2 and #3 covers December and part of February — April untouched', () => {
+    const pos = applyCreditsToBills({
+      coverage: maya(),
+      credits: [credit(300, { description: 'Sponsorship — Riverdale Dental', appliesTo: [2, 3] })],
+      mode: 'last_first',
+    });
+    const [i1, i2, i3, i4] = pos.perInstallment;
+    assert.equal(i1.creditApplied, 0);
+    assert.equal(i2.creditApplied, 250); assert.equal(i2.settled, true);
+    assert.equal(i3.creditApplied, 50);  assert.equal(i3.toSend, 200);
+    assert.equal(i4.creditApplied, 0);   assert.equal(i4.toSend, 250);
+    assert.equal(i2.sources[0].arranged, true);
+    assert.equal(i3.sources[0].arranged, true);
+    assert.equal(i2.sources[0].fallback, undefined);
+    assert.equal(pos.applied, 300);
+    assert.equal(pos.owedBack, 0);
+  });
+
+  it('D2: among its named payments the credit lands EARLIEST first, whatever the team direction', () => {
+    for (const mode of ['last_first', 'next_first', 'keep_separate'] as const) {
+      const pos = applyCreditsToBills({ coverage: maya(), credits: [credit(300, { appliesTo: [2, 3] })], mode });
+      assert.equal(pos.perInstallment[1].creditApplied, 250, `${mode}: December is covered first`);
+      assert.equal(pos.perInstallment[2].creditApplied, 50, `${mode}: February takes what is left`);
+    }
+  });
+
+  it('D3: cash claimed a named payment first — the leftover follows the team default and is flagged', () => {
+    const coverage = allocateDuesPayments(
+      [inst(1, 250), inst(2, 250), inst(3, 250), inst(4, 250)],
+      [pay(250, '2026-09-30'), pay(250, '2026-11-28')],
+    ).coverage;
+    const pos = applyCreditsToBills({ coverage, credits: [credit(300, { appliesTo: [2, 3] })], mode: 'last_first' });
+    const [i1, i2, i3, i4] = pos.perInstallment;
+    assert.equal(i1.creditApplied, 0);
+    assert.equal(i2.creditApplied, 0, 'paid in cash — nothing for the arrangement to lower');
+    assert.equal(i3.creditApplied, 250); assert.equal(i3.sources[0].arranged, true);
+    assert.equal(i4.creditApplied, 50);  assert.equal(i4.sources[0].fallback, true);
+    assert.equal(i4.sources[0].arranged, undefined);
+    assert.equal(pos.applied, 300);
+    assert.equal(pos.owedBack, 0);
+  });
+
+  it('D4: a position the schedule no longer has is not a target — that money follows the default, flagged', () => {
+    const pos = applyCreditsToBills({ coverage: maya(), credits: [credit(300, { appliesTo: [9] })], mode: 'last_first' });
+    const [, , i3, i4] = pos.perInstallment;
+    assert.equal(i4.creditApplied, 250); assert.equal(i4.sources[0].fallback, true);
+    assert.equal(i3.creditApplied, 50);  assert.equal(i3.sources[0].fallback, true);
+  });
+
+  it('D5: keep_separate — the arrangement lands on its named payments; only the leftover waits', () => {
+    const pos = applyCreditsToBills({ coverage: maya(), credits: [credit(300, { appliesTo: [2] })], mode: 'keep_separate' });
+    const [, i2, i3, i4] = pos.perInstallment;
+    assert.equal(i2.creditApplied, 250); assert.equal(i2.sources[0].arranged, true);
+    assert.equal(i3.creditApplied, 0);
+    assert.equal(i4.creditApplied, 0);
+    assert.equal(pos.applied, 250);
+    assert.equal(pos.owedBack, 50, 'the $50 it could not place is owed back — the team setting says wait');
+  });
+
+  it('forgiveness STILL spends first: an arrangement never consumes a rebate on a bill forgiveness would cancel', () => {
+    const pos = applyCreditsToBills({
+      coverage: maya(),
+      credits: [
+        credit(250, { creditType: 'fundraiser', creditDate: '2026-02-01', appliesTo: [2] }),
+        credit(1000, { creditType: 'forgiven', creditDate: '2026-03-01' }),
+      ],
+      mode: 'last_first',
+    });
+    assert.equal(pos.forgivenApplied, 1000);
+    assert.equal(pos.applied, 0);
+    assert.equal(pos.owedBack, 250, 'the sponsor money is the family’s, and the bills are gone');
+  });
+
+  it('an arranged credit reaches its named payment BEFORE an older unarranged credit would have', () => {
+    const pos = applyCreditsToBills({
+      coverage: maya(),
+      credits: [
+        credit(250, { id: 'plain', creditDate: '2026-01-01' }),
+        credit(250, { id: 'arranged', creditDate: '2026-02-01', appliesTo: [4] }),
+      ],
+      mode: 'last_first',
+    });
+    const [, , i3, i4] = pos.perInstallment;
+    assert.equal(i4.sources[0].creditId, 'arranged');
+    assert.equal(i4.sources[0].arranged, true);
+    assert.equal(i3.sources[0].creditId, 'plain');
+    assert.equal(i3.sources[0].arranged, undefined);
+    assert.equal(i3.sources[0].fallback, undefined);
+  });
+
+  it('two arranged credits on one bill spend oldest-first', () => {
+    const pos = applyCreditsToBills({
+      coverage: maya(),
+      credits: [
+        credit(200, { id: 'newer', creditDate: '2026-03-01', appliesTo: [2] }),
+        credit(200, { id: 'older', creditDate: '2026-01-01', appliesTo: [2] }),
+      ],
+      mode: 'last_first',
+    });
+    const [, i2] = pos.perInstallment;
+    assert.deepEqual(i2.sources.map(s => [s.creditId, s.amount, s.arranged]), [['older', 200, true], ['newer', 50, true]]);
+    // The newer credit's other $150 had no named room: it follows the default, flagged.
+    assert.equal(pos.perInstallment[3].sources[0].creditId, 'newer');
+    assert.equal(pos.perInstallment[3].sources[0].fallback, true);
+  });
+
+  it('a payout skims the arranged credit like any other before it lands', () => {
+    const pos = applyCreditsToBills({ coverage: maya(), credits: [credit(300, { appliesTo: [2, 3] })], paidOut: 100, mode: 'last_first' });
+    assert.equal(pos.applied, 200);
+    assert.equal(pos.paidOut, 100);
+    assert.equal(pos.owedBack, 0);
+  });
+
+  it('isArrangedCredit: forgiveness is never arranged, and an empty list is the team default', () => {
+    assert.equal(isArrangedCredit({ creditType: 'fundraiser', appliesTo: [2] }), true);
+    assert.equal(isArrangedCredit({ creditType: 'forgiven', appliesTo: [2] }), false);
+    assert.equal(isArrangedCredit({ creditType: 'fundraiser', appliesTo: [] }), false);
+    assert.equal(isArrangedCredit({ creditType: 'fundraiser', appliesTo: null }), false);
+    assert.equal(isArrangedCredit({ creditType: 'fundraiser' }), false);
+  });
+
+  it('with no arrangement anywhere, every walk allocates exactly as before (§3 still holds, unflagged)', () => {
+    const pos = applyCreditsToBills({ coverage: rileyCoverage(), credits: [credit(900)], mode: 'last_first' });
+    const [, , i3, i4] = pos.perInstallment;
+    assert.equal(i4.creditApplied, 800);
+    assert.equal(i3.creditApplied, 100);
+    assert.equal(i4.sources[0].arranged, undefined);
+    assert.equal(i4.sources[0].fallback, undefined);
   });
 });
 

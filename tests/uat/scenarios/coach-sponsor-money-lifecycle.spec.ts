@@ -1212,3 +1212,199 @@ test.describe('a family’s overpayment credit follows the schedule, both doors 
     expect(await overpaymentCredits(), 'removing the receipts reconciles the credit away with them').toEqual([]);
   });
 });
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+ * A SPONSORSHIP THAT NAMES ITS PAYMENTS (Sponsorship Applies To — owner rulings D1–D8, 2026-09-21)
+ *
+ * The hub's own story, walked through the product's read endpoints: Maya's four $250 payments,
+ * Riverdale Dental's $600 with half credited to her family, and the parent's arrangement that it
+ * should cover #2 and #3. Then the two judgment calls the owner ruled on — cash claims a named
+ * payment first (D3), and the schedule is re-run under the arrangement (D4) — and the two refusals
+ * the resolver owns (a position the schedule lacks; a family with no schedule).
+ *
+ * ⚠ THE ARRANGEMENT IS READ FROM THREE PLACES AND THEY MUST AGREE: the sponsor record (the share's
+ * `appliesTo` + the cue), the dues GET (each credit's positions + per-installment slices flagged
+ * `arranged` / `fallback`), and dues/schedules (what the picker offers). The engine test pins the
+ * arithmetic; this pins that the rows and routes carry it.
+ * ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+test.describe('a sponsorship that names its payments — the agreement is stored, the dollars stay derived', () => {
+  const P3_FIRST = `${MARK}Arranged`;
+  let p3Id = '';
+  let arrangedSponsorId = '';
+
+  type DuesRow = {
+    player: { id: string };
+    installments: { id: string; installmentNumber: number; creditApplied?: number; creditSources?: { creditId: string; amount: number; arranged?: boolean; fallback?: boolean }[] }[];
+    credits: { id: string; amount: number; appliesTo?: number[] | null; arrangedAt?: string | null; arrangementNeedsCheck?: boolean }[];
+  };
+  async function mayaDues(page: Page): Promise<DuesRow> {
+    const dues = await call(page, `${api()}/dues`);
+    expect(dues.status).toBe(200);
+    const row = ((dues.body as { players: DuesRow[] }).players).find(p => p.player.id === p3Id);
+    if (!row) throw new Error('the arranged family is missing from the dues book');
+    return row;
+  }
+  async function planRow(page: Page) {
+    const rec = await call(page, `${api()}/fundraisers/${arrangedSponsorId}/entries`);
+    expect(rec.status).toBe(200);
+    const plan = (rec.body as { sponsorCreditPlan: { playerId: string; appliesTo: { n: number; dueDate: string | null; amount: number | null }[] | null; arrangedAt: string | null; needsCheck: boolean }[] }).sponsorCreditPlan;
+    const mine = plan.find(p => p.playerId === p3Id);
+    if (!mine) throw new Error('the arranged family is missing from the sponsor plan');
+    return mine;
+  }
+  const byN = (r: DuesRow) => new Map(r.installments.map(i => [i.installmentNumber, i]));
+
+  test('named payments land first, earliest first; cash on a named payment sends the rest to the default, flagged', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    p3Id = await insert('rep_roster_players', {
+      program_year_id: programYearId, team_id: repTeamId, org_id: orgId,
+      player_first_name: P3_FIRST, player_last_name: 'Family',
+      status: 'active', source: 'admin_manual',
+    });
+    const scheduleId = await insert('rep_player_dues_schedules', {
+      program_year_id: programYearId, team_id: repTeamId, org_id: orgId,
+      player_id: p3Id, total_amount: 1000,
+    });
+    const dues = [[1, `${YEAR}-10-01`], [2, `${YEAR}-12-01`], [3, `${YEAR + 1}-02-01`], [4, `${YEAR + 1}-04-01`]] as const;
+    for (const [n, due] of dues) {
+      await insert('rep_player_dues_installments', {
+        schedule_id: scheduleId, player_id: p3Id, org_id: orgId, team_id: repTeamId,
+        installment_number: n, amount: 250, due_date: due,
+      });
+    }
+
+    // The picker's read offers exactly those four, in order.
+    const schedules = await call(page, `${api()}/dues/schedules`);
+    expect(schedules.status).toBe(200);
+    const fam = (schedules.body as { families: { playerId: string; installments: { n: number; amount: number }[] }[] }).families.find(f => f.playerId === p3Id);
+    expect(fam?.installments.map(i => i.n), 'the picker offers the current payments').toEqual([1, 2, 3, 4]);
+
+    // The pledge, with the arrangement on the family's share (D1/D2): positions only from the client.
+    const created = await call(page, `${api()}/fundraisers`, {
+      method: 'POST',
+      body: {
+        kind: 'sponsor',
+        name: `${MARK} Riverdale Dental`,
+        sponsorStatus: 'pledged',
+        sponsorAmount: 600,
+        creditPlan: [{ playerId: p3Id, value: 50, unit: 'percent', appliesTo: [3, 2] }],
+      },
+    });
+    expect(created.status, 'a pledge may carry an arrangement').toBe(201);
+    arrangedSponsorId = (created.body as { fundraiser: { id: string } }).fundraiser.id;
+
+    const stored = await planRow(page);
+    expect(stored.appliesTo?.map(p => p.n), 'stored sorted, as positions').toEqual([2, 3]);
+    expect(stored.appliesTo?.[0].amount, 'with the snapshot of that payment').toBe(250);
+    expect(stored.arrangedAt, 'stamped when made').toBeTruthy();
+    expect(stored.needsCheck, 'the schedule has not moved since').toBe(false);
+
+    // The cheque lands: $600 → $300 for the family, on #2 in full and $50 of #3 — April untouched.
+    const cheque = await call(page, `${api()}/fundraisers/${arrangedSponsorId}/arrivals`, {
+      method: 'POST',
+      body: { amount: 600, receivedDate: ARRIVAL_1_DATE, method: 'cheque' },
+    });
+    expect(cheque.status).toBe(201);
+
+    let row = await mayaDues(page);
+    let m = byN(row);
+    expect(m.get(2)?.creditApplied, 'December covered').toBe(250);
+    expect(m.get(3)?.creditApplied, 'February takes what is left').toBe(50);
+    expect(m.get(4)?.creditApplied ?? 0, 'April untouched').toBe(0);
+    expect(m.get(2)?.creditSources?.[0]?.arranged, 'the slice says as arranged').toBe(true);
+    const credit = row.credits.find(c => c.appliesTo?.length);
+    expect(credit?.appliesTo, 'the credit row carries the positions the engine read').toEqual([2, 3]);
+    expect(credit?.amount).toBe(300);
+    expect(credit?.arrangementNeedsCheck).toBe(false);
+
+    // D3: cash claims a named payment first. Payments allocate oldest-first, so two $250 receipts
+    // cover #1 and #2; the arrangement then has only #3 to land on, and the $50 it cannot place
+    // follows the team default (last first → #4), flagged.
+    for (let i = 0; i < 2; i++) {
+      const paid = await call(page, `${api()}/players/${p3Id}/dues-payments`, {
+        method: 'POST',
+        body: { amount: 250, receivedDate: ARRIVAL_2_DATE, method: 'etransfer' },
+      });
+      expect(paid.status).toBe(201);
+    }
+    row = await mayaDues(page);
+    m = byN(row);
+    expect(m.get(2)?.creditApplied ?? 0, 'paid in cash — nothing for the arrangement to lower').toBe(0);
+    expect(m.get(3)?.creditApplied, 'the named payment still open takes the credit').toBe(250);
+    expect(m.get(3)?.creditSources?.[0]?.arranged).toBe(true);
+    expect(m.get(4)?.creditApplied, 'the leftover followed the team default').toBe(50);
+    expect(m.get(4)?.creditSources?.[0]?.fallback, 'and says so').toBe(true);
+  });
+
+  test('D4: a re-run schedule raises the cue on the sponsor and the family; Keep these clears it; a bad position is refused by name', async ({ page }) => {
+    await signIn(page, HEAD_EMAIL);
+
+    // The coach re-runs the dues: five payments now. Fresh installment rows, created after the
+    // arrangement's stamp — the cue's whole definition.
+    const rerun = await call(page, `${api()}/dues`, {
+      method: 'POST',
+      body: {
+        playerId: p3Id, totalAmount: 1000,
+        installments: [1, 2, 3, 4, 5].map(n => ({ installmentNumber: n, amount: 200, dueDate: `${YEAR}-0${4 + n}-01` })),
+      },
+    });
+    expect(rerun.status).toBe(201);
+
+    expect((await planRow(page)).needsCheck, 'the sponsor row asks for a look').toBe(true);
+    const row = await mayaDues(page);
+    expect(row.credits.find(c => c.appliesTo?.length)?.arrangementNeedsCheck, 'and so does the family credit row').toBe(true);
+
+    // The arrangement still applies by position (#2, #3 of the NEW schedule), never silently dropped.
+    const m = byN(row);
+    expect((m.get(2)?.creditApplied ?? 0) + (m.get(3)?.creditApplied ?? 0), 'lands on the new #2 and #3').toBeGreaterThan(0);
+
+    // "Keep these": the same positions, restamped — the cue clears without changing the choice.
+    const kept = await call(page, `${api()}/fundraisers/${arrangedSponsorId}`, {
+      method: 'PATCH',
+      body: { creditPlan: [{ playerId: p3Id, value: 50, unit: 'percent', appliesTo: [2, 3], keepArrangement: true }] },
+    });
+    expect(kept.status, 'Keep these saves').toBe(200);
+    const after = await planRow(page);
+    expect(after.needsCheck, 'the cue is cleared').toBe(false);
+    expect(after.appliesTo?.map(p => p.n)).toEqual([2, 3]);
+
+    // An unrelated save carries the stamp: re-sending the same split does not renew or clear anything.
+    const same = await call(page, `${api()}/fundraisers/${arrangedSponsorId}`, {
+      method: 'PATCH',
+      body: { creditPlan: [{ playerId: p3Id, value: 50, unit: 'percent', appliesTo: [2, 3] }] },
+    });
+    expect(same.status).toBe(200);
+    expect((await planRow(page)).arrangedAt, 'the stamp is carried, not renewed').toBe(after.arrangedAt);
+
+    // The resolver's refusals, server-side, by name (the guard-from-a-filtered-list lesson).
+    const missing = await call(page, `${api()}/fundraisers/${arrangedSponsorId}`, {
+      method: 'PATCH',
+      body: { creditPlan: [{ playerId: p3Id, value: 50, unit: 'percent', appliesTo: [9] }] },
+    });
+    expect(missing.status, 'a position the schedule lacks is refused').toBe(400);
+    expect(String((missing.body as { error: string }).error)).toContain('#9');
+    expect(String((missing.body as { error: string }).error)).toContain(P3_FIRST);
+
+    const noSchedule = await insert('rep_roster_players', {
+      program_year_id: programYearId, team_id: repTeamId, org_id: orgId,
+      player_first_name: `${MARK}NoSchedule`, player_last_name: 'Family',
+      status: 'active', source: 'admin_manual',
+    });
+    const unscheduled = await call(page, `${api()}/fundraisers/${arrangedSponsorId}`, {
+      method: 'PATCH',
+      body: { creditPlan: [{ playerId: p3Id, value: 40, unit: 'percent', appliesTo: [2] }, { playerId: noSchedule, value: 10, unit: 'percent', appliesTo: [1] }] },
+    });
+    expect(unscheduled.status, 'a family with no schedule cannot name payments').toBe(400);
+    expect(String((unscheduled.body as { error: string }).error)).toContain('no dues schedule yet');
+
+    // And the team default is one click away: an empty list is null, the credit re-derives unarranged.
+    const cleared = await call(page, `${api()}/fundraisers/${arrangedSponsorId}`, {
+      method: 'PATCH',
+      body: { creditPlan: [{ playerId: p3Id, value: 50, unit: 'percent', appliesTo: [] }] },
+    });
+    expect(cleared.status).toBe(200);
+    expect((await planRow(page)).appliesTo, 'back to the team default').toBeNull();
+    expect((await mayaDues(page)).credits.find(c => c.amount === 300)?.appliesTo ?? null, 'and the credit row agrees').toBeNull();
+  });
+});

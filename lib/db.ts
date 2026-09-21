@@ -10742,6 +10742,7 @@ export async function markRepPlayerDuesInstallmentPaid(
 import type { RepDuesPayment, RepDuesPayout, DuesPaymentMethod, DuesCredit } from './types';
 import { allocateDuesPayments, duesPaidAmount, splitFamilyOwnMoney, splitDuesLadder, planOverpaymentReconcile, SCHEDULE_CHANGE_CREDIT_DESCRIPTION, type DuesLadder } from './dues-payments';
 import { creditsTotal, amountsTotal, normalizeCreditApplicationMode, deriveDuesPosition, groupByPlayer, totalsByPlayer, payoutCeiling } from './dues-credits';
+import { positionsFromJson } from './sponsor-arrivals';
 
 function mapRepDuesPayment(r: any): RepDuesPayment {
   return {
@@ -10800,6 +10801,9 @@ function mapRepDuesCredit(r: any): DuesCredit {
     // credit BORN of another record is not the ledger drawer's to rewrite (2026-08-14).
     fundraiserEntryId: r.fundraiser_entry_id ?? null,
     expenseId: r.expense_id ?? null,
+    // The arrangement (mig 308): positions only, or null. Every engine caller that hands these
+    // rows straight through gets it for free — the dues GET builds its own object and copies it.
+    appliesTo: positionsFromJson(r.applies_to),
     createdAt: r.created_at,
   };
 }

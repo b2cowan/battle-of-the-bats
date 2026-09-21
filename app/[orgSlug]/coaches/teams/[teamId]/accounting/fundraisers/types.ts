@@ -85,6 +85,12 @@ export interface SponsorPlanRow {
   playerName: string | null;
   value: number;
   unit: string;
+  /** The arrangement (Sponsorship Applies To, D1–D8): the payments this share names, with the
+   *  date and amount each had when arranged; null = the team default. */
+  appliesTo?: { n: number; dueDate: string; amount: number }[] | null;
+  arrangedAt?: string | null;
+  /** The family's schedule was re-run after this was arranged — the D4 cue. */
+  needsCheck?: boolean;
 }
 
 /**

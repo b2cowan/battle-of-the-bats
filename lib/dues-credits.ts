@@ -38,9 +38,21 @@
  * makes the model self-correcting: a family that pays everything in cash anyway frees its credit
  * back to owed-back with no one editing anything. Pinned by test — do not reorder.
  *
- * ⚠ CREDIT APPLICATION IS DERIVED, NEVER STORED. No installment id ever lands on a credit row —
- * a stored allocation goes stale the moment dues change, a payment lands, or a credit resizes.
- * Same discipline (and same reason) as payment coverage next door.
+ * ⚠ NO COMPUTED LANDING IS EVER STORED. No installment id ever lands on a credit row — a stored
+ * allocation goes stale the moment dues change, a payment lands, or a credit resizes. Same
+ * discipline (and same reason) as payment coverage next door.
+ *
+ * ⚖ AN ARRANGEMENT MAY BE (owner ruling D8, Sponsorship Applies To, 2026-09-21). A credit can carry
+ * `appliesTo` — the POSITIONS (installment numbers, never ids: a schedule re-run recycles ids and
+ * keeps numbers) a parent and a coach agreed it should cover. That is the AGREEMENT, stored; the
+ * dollars are still derived on every read. It lands in its own pass, after forgiveness and before
+ * the ordinary walk, on its named payments only; whatever it cannot place there (a named payment
+ * already paid in cash, a position the schedule no longer has) joins the ordinary walk and is
+ * flagged `fallback` so the drawer can say "followed the team default" (D3). On keep_separate an
+ * arranged credit lands on its named payments anyway — the arrangement IS the family's explicit
+ * decision to land — and only its leftover waits (D5). Forgiveness still spends first, in every
+ * mode: an arranged rebate consumed on a bill a forgiveness would have cancelled would cost the
+ * family cash they were owed, which is the hazard the forgiveness-first rule exists to prevent.
  *
  * Before this module, summing rep_dues_credits by player was re-implemented independently in
  * four server call sites plus once more in the dues panel — five copies, zero tests. Every
@@ -225,6 +237,14 @@ export const CREDIT_MODE_SENTENCES: Record<CreditApplicationMode, string> = {
   keep_separate: 'Money credits don’t reduce bills — settled at season’s end',
 };
 
+/** The mode's sentence mid-sentence — "credits reduce the last payment first" — for prose that
+ *  runs on after a dash ("Applies to the team default — …"). Lowercases only the first letter, so
+ *  a proper noun later in a sentence would survive; today none has one. */
+export function creditModeMidSentence(mode: CreditApplicationMode): string {
+  const s = CREDIT_MODE_SENTENCES[mode];
+  return s.charAt(0).toLowerCase() + s.slice(1);
+}
+
 /** The DB column is free text to the compiler — normalize unknowns to the default. */
 export function normalizeCreditApplicationMode(value: unknown): CreditApplicationMode {
   return CREDIT_APPLICATION_MODES.includes(value as CreditApplicationMode)
@@ -300,6 +320,15 @@ export interface ApplicableCredit {
   /** Tiebreak for two credits dated the same day. */
   createdAt?: string | null;
   description?: string | null;
+  /** The payments this credit was ARRANGED to cover, as installment NUMBERS (header, D8). Absent
+   *  or empty = the team default. Copied onto the credit row from the sponsorship's credit plan by
+   *  the arrivals writer; never an installment id. */
+  appliesTo?: readonly number[] | null;
+}
+
+/** Whether a credit carries an arrangement worth a pass of its own. */
+export function isArrangedCredit(c: Pick<ApplicableCredit, 'appliesTo' | 'creditType'>): boolean {
+  return c.creditType !== 'forgiven' && Array.isArray(c.appliesTo) && c.appliesTo.length > 0;
 }
 
 /** One credit's contribution to one installment — the "covered by fundraising — Bottle Drive"
@@ -309,6 +338,11 @@ export interface CreditApplicationSlice {
   creditType: string;
   description: string | null;
   amount: number;
+  /** This slice landed on a payment the credit NAMED — the drawer says "as arranged". */
+  arranged?: boolean;
+  /** This slice is an arranged credit's leftover landing by the team default — the drawer says
+   *  "followed the team default". Never set together with `arranged`. */
+  fallback?: boolean;
 }
 
 export interface InstallmentCreditCoverage {
@@ -437,13 +471,6 @@ export function applyCreditsToBills(opts: {
     return { credit: c, leftC };
   }).filter(q => q.leftC > 0);
 
-  // keep_separate: only a WRITE-OFF may touch bills (header) — forgiveness, and since 2026-09-12
-  // an Adjustment too. Money-backed credits wait for season's end; a bill that has been lowered
-  // is lower now.
-  const spendable = mode === 'keep_separate'
-    ? queue.filter(q => q.credit.creditType === 'forgiven' || q.credit.creditType === 'other')
-    : queue;
-
   // The direction the team chose. next_first walks the schedule the way cash does; last_first
   // starts at the far end so near-term installments keep their dates and amounts.
   const walk = [...coverage].sort((a, b) =>
@@ -451,40 +478,76 @@ export function applyCreditsToBills(opts: {
       ? b.installmentNumber - a.installmentNumber
       : a.installmentNumber - b.installmentNumber);
 
-  let qi = 0;
   let appliedC = 0;
   let forgivenAppliedC = 0;
-  const byInstallment = new Map<string, InstallmentCreditCoverage>();
+  type Landing = { inst: InstallmentCoverage; needC: number; creditAppliedC: number; sources: CreditApplicationSlice[] };
+  const landings: Landing[] = walk.map(inst => ({ inst, needC: toCents(inst.remaining), creditAppliedC: 0, sources: [] }));
 
-  for (const inst of walk) {
-    let need = toCents(inst.remaining);
-    let creditAppliedC = 0;
-    const sources: CreditApplicationSlice[] = [];
-    while (need > 0 && qi < spendable.length) {
-      const q = spendable[qi];
-      if (q.leftC <= 0) { qi++; continue; }
-      const take = Math.min(need, q.leftC);
-      q.leftC -= take;
-      need -= take;
-      creditAppliedC += take;
-      if (q.credit.creditType === 'forgiven') forgivenAppliedC += take;
-      else appliedC += take;
-      sources.push({
-        creditId: q.credit.id,
-        creditType: q.credit.creditType,
-        description: q.credit.description ?? null,
-        amount: toDollars(take),
-      });
-      if (q.leftC === 0) qi++;
+  /* ONE spending loop, run three times over different targets and queues (header: forgiveness →
+     arranged → the rest). Installment-major, queue in order — the shape the original single walk
+     had, so the unflagged pass allocates exactly as before. A slice's flag follows the PASS and the
+     credit: in the arranged pass every slice is `arranged`; elsewhere an arranged credit's dollars
+     are its leftover landing by the default, `fallback`; a plain credit's slice carries neither. */
+  const land = (targets: readonly Landing[], q: typeof queue, arrangedPass = false) => {
+    let qi = 0;
+    for (const l of targets) {
+      while (l.needC > 0 && qi < q.length) {
+        const item = q[qi];
+        if (item.leftC <= 0) { qi++; continue; }
+        const take = Math.min(l.needC, item.leftC);
+        item.leftC -= take;
+        l.needC -= take;
+        l.creditAppliedC += take;
+        if (item.credit.creditType === 'forgiven') forgivenAppliedC += take;
+        else appliedC += take;
+        const slice: CreditApplicationSlice = {
+          creditId: item.credit.id,
+          creditType: item.credit.creditType,
+          description: item.credit.description ?? null,
+          amount: toDollars(take),
+        };
+        if (arrangedPass) slice.arranged = true;
+        else if (isArrangedCredit(item.credit)) slice.fallback = true;
+        l.sources.push(slice);
+        if (item.leftC === 0) qi++;
+      }
     }
-    byInstallment.set(inst.installmentId, {
-      installmentId: inst.installmentId,
-      installmentNumber: inst.installmentNumber,
-      cashRemaining: inst.remaining,
-      creditApplied: toDollars(creditAppliedC),
-      toSend: toDollars(Math.max(0, toCents(inst.remaining) - creditAppliedC)),
-      settled: toCents(inst.remaining) - creditAppliedC <= 0,
-      sources,
+  };
+
+  // Pass 1 — forgiveness, over every bill, in every mode (header).
+  land(landings, queue.filter(q => q.credit.creditType === 'forgiven'));
+
+  // Pass 2 — arranged credits, each on the payments it NAMED and nothing else, by age (D2, D5).
+  // Among its named payments a credit lands EARLIEST FIRST whatever the team direction: a parent
+  // who names December and February wants December covered before February is touched — relief
+  // on the nearer month is the reason the arrangement was made (the hub's drawing, ruled 09-21).
+  // A position the schedule no longer has is simply not a target; that money falls to pass 3.
+  const byNumber = [...landings].sort((a, b) => a.inst.installmentNumber - b.inst.installmentNumber);
+  for (const item of queue) {
+    if (!isArrangedCredit(item.credit)) continue;
+    const named = new Set(item.credit.appliesTo);
+    land(byNumber.filter(l => named.has(l.inst.installmentNumber)), [item], true);
+  }
+
+  // Pass 3 — the ordinary walk: unarranged credits and arranged leftovers, by age (D3).
+  // keep_separate: only a WRITE-OFF may touch bills here (header) — forgiveness (already spent),
+  // and since 2026-09-12 an Adjustment. Money-backed credits, an arranged leftover included, wait
+  // for season's end; a bill that has been lowered is lower now.
+  land(landings, queue.filter(q =>
+    q.credit.creditType !== 'forgiven'
+    && q.leftC > 0
+    && (mode !== 'keep_separate' || q.credit.creditType === 'other')));
+
+  const byInstallment = new Map<string, InstallmentCreditCoverage>();
+  for (const l of landings) {
+    byInstallment.set(l.inst.installmentId, {
+      installmentId: l.inst.installmentId,
+      installmentNumber: l.inst.installmentNumber,
+      cashRemaining: l.inst.remaining,
+      creditApplied: toDollars(l.creditAppliedC),
+      toSend: toDollars(Math.max(0, toCents(l.inst.remaining) - l.creditAppliedC)),
+      settled: toCents(l.inst.remaining) - l.creditAppliedC <= 0,
+      sources: l.sources,
     });
   }
 

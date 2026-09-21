@@ -1,12 +1,33 @@
 {
   "generated": "2026-09-21",
-  "total": 0,
+  "total": 5,
   "counts": {
     "tables": 0,
-    "columns": 0,
+    "columns": 3,
     "indexes": 0,
     "constraints": 0,
-    "rls": 0
+    "rls": 2
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:only-dev:rep_dues_credits.rep_dues_credits_applies_to_is_array",
+      "sig": ""
+    },
+    {
+      "key": "check:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_applies_to_is_array",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_dues_credits.applies_to",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.applies_to",
+      "sig": ""
+    },
+    {
+      "key": "column:only-dev:rep_fundraiser_credit_plan.arranged_at",
+      "sig": ""
+    }
+  ]
 }

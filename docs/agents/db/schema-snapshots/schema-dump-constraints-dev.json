@@ -3285,7 +3285,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "goal_id",
     "foreign_table": "rep_player_development_goals",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3295,7 +3295,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "goal_id",
     "foreign_table": "rep_player_development_goals",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3735,7 +3735,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "player_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3745,17 +3745,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "player_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_evaluation_not_assessed",
-    "constraint_name": "rep_evaluation_not_assessed_player_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3771,10 +3761,10 @@
   },
   {
     "table_name": "rep_evaluation_not_assessed",
-    "constraint_name": "rep_evaluation_not_assessed_session_team_fkey",
+    "constraint_name": "rep_evaluation_not_assessed_player_team_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "session_id",
-    "foreign_table": "rep_team_evaluation_sessions",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
     "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
@@ -3793,9 +3783,9 @@
     "table_name": "rep_evaluation_not_assessed",
     "constraint_name": "rep_evaluation_not_assessed_session_team_fkey",
     "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
+    "column_name": "session_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3806,6 +3796,16 @@
     "column_name": "team_id",
     "foreign_table": "rep_team_evaluation_sessions",
     "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_evaluation_not_assessed",
+    "constraint_name": "rep_evaluation_not_assessed_session_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_team_evaluation_sessions",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -3825,7 +3825,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "measurable_type_id",
     "foreign_table": "rep_team_measurable_types",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
   },
@@ -3835,7 +3835,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "measurable_type_id",
     "foreign_table": "rep_team_measurable_types",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
   },
@@ -4305,7 +4305,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4315,17 +4315,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "current_registration_id",
     "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_continuity_links",
-    "constraint_name": "rep_player_continuity_links_current_registration_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_tryout_registrations",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4336,6 +4326,16 @@
     "column_name": "team_id",
     "foreign_table": "rep_tryout_registrations",
     "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_continuity_links",
+    "constraint_name": "rep_player_continuity_links_current_registration_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_tryout_registrations",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4365,7 +4365,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4375,7 +4375,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4475,7 +4475,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -4485,7 +4485,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -5055,7 +5055,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_player_development_goals",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -5065,7 +5065,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_player_development_goals",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -5095,7 +5095,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "player_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -5105,17 +5105,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "player_id",
     "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
-    "delete_rule": "CASCADE",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_observations",
-    "constraint_name": "rep_player_observations_player_team_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_roster_players",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -5126,6 +5116,16 @@
     "column_name": "team_id",
     "foreign_table": "rep_roster_players",
     "foreign_column": "id",
+    "delete_rule": "CASCADE",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_observations",
+    "constraint_name": "rep_player_observations_player_team_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_roster_players",
+    "foreign_column": "team_id",
     "delete_rule": "CASCADE",
     "update_rule": "NO ACTION"
   },
@@ -5155,7 +5155,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "id",
+    "foreign_column": "team_id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -5165,7 +5165,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "team_id",
     "foreign_table": "rep_team_evaluation_sessions",
-    "foreign_column": "team_id",
+    "foreign_column": "id",
     "delete_rule": "SET NULL",
     "update_rule": "NO ACTION"
   },
@@ -5175,7 +5175,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "measurable_type_id",
     "foreign_table": "rep_team_measurable_types",
-    "foreign_column": "kind",
+    "foreign_column": "team_id",
     "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
   },
@@ -5195,17 +5195,7 @@
     "constraint_type": "FOREIGN KEY",
     "column_name": "measurable_type_id",
     "foreign_table": "rep_team_measurable_types",
-    "foreign_column": "team_id",
-    "delete_rule": "RESTRICT",
-    "update_rule": "NO ACTION"
-  },
-  {
-    "table_name": "rep_player_observations",
-    "constraint_name": "rep_player_observations_skill_fkey",
-    "constraint_type": "FOREIGN KEY",
-    "column_name": "team_id",
-    "foreign_table": "rep_team_measurable_types",
-    "foreign_column": "team_id",
+    "foreign_column": "kind",
     "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
   },
@@ -5216,6 +5206,16 @@
     "column_name": "team_id",
     "foreign_table": "rep_team_measurable_types",
     "foreign_column": "kind",
+    "delete_rule": "RESTRICT",
+    "update_rule": "NO ACTION"
+  },
+  {
+    "table_name": "rep_player_observations",
+    "constraint_name": "rep_player_observations_skill_fkey",
+    "constraint_type": "FOREIGN KEY",
+    "column_name": "team_id",
+    "foreign_table": "rep_team_measurable_types",
+    "foreign_column": "team_id",
     "delete_rule": "RESTRICT",
     "update_rule": "NO ACTION"
   },

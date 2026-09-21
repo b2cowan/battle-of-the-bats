@@ -25,7 +25,10 @@ import {
   getOrCreateRepTeamLedger,
   getRepDuesCreditsForPlayer,
   getRepDuesPayoutsForPlayer,
+  getRepPlayerDuesSchedules,
+  getRepDuesInstallmentsBySchedules,
 } from './db';
+import { formatPlayerFirstLast } from './player-name';
 import { payoutFloorViolation, payoutFloorMessage, CREDIT_HAS_PAYOUT } from './dues-credit-guards';
 import { orgDayKey } from './timezone';
 import {
@@ -33,8 +36,13 @@ import {
   accruedByFamilyFromRounds,
   arrivalOrder,
   deriveAllArrivalCredits,
+  positionsOf,
+  positionsFromJson,
+  sameArrangement,
   type AccruedShare,
+  type ArrangedPayment,
   type CreditPlanShare,
+  type CreditPlanShareInput,
 } from './sponsor-arrivals';
 
 const round2 = (n: number) => Math.round(n * 100) / 100;
@@ -45,14 +53,165 @@ export interface SponsorTeam { id: string; orgId: string; name: string }
 export async function getSponsorCreditPlan(fundraiserId: string): Promise<CreditPlanShare[]> {
   const { data } = await supabaseAdmin
     .from('rep_fundraiser_credit_plan')
-    .select('player_id, share_value, share_unit')
+    .select('player_id, share_value, share_unit, applies_to, arranged_at')
     .eq('fundraiser_id', fundraiserId)
     .order('created_at', { ascending: true });
   return (data ?? []).map(r => ({
     playerId: r.player_id as string,
     value: Number(r.share_value),
     unit: (r.share_unit as 'amount' | 'percent'),
+    appliesTo: positionsFromJson(r.applies_to),
+    arrangedPayments: arrangedPaymentsFromJson(r.applies_to),
+    arrangedAt: (r.arranged_at as string | null) ?? null,
   }));
+}
+
+/** The share's stored `applies_to` (jsonb, `[{n, due_date, amount}]`) → the typed SNAPSHOT.
+ *  The server writes every entry whole, so an entry missing its date or amount is malformed and is
+ *  dropped rather than surfaced half-empty; the positions themselves are read by `positionsFromJson`. */
+export function arrangedPaymentsFromJson(raw: unknown): ArrangedPayment[] | null {
+  if (!Array.isArray(raw) || raw.length === 0) return null;
+  const out: ArrangedPayment[] = [];
+  for (const v of raw) {
+    if (typeof v !== 'object' || v === null) continue;
+    const o = v as { n?: unknown; due_date?: unknown; amount?: unknown };
+    const n = Number(o.n);
+    const amount = Number(o.amount);
+    if (!Number.isInteger(n) || n < 1 || typeof o.due_date !== 'string' || !Number.isFinite(amount)) continue;
+    out.push({ n, dueDate: o.due_date, amount });
+  }
+  return out.length ? out.sort((a, b) => a.n - b.n) : null;
+}
+
+/** One family's payment schedule as the arrangement picker and the D4 cue read it. */
+export interface FamilyPaymentSchedule {
+  playerId: string;
+  installments: { n: number; dueDate: string; amount: number }[];
+  /** When the schedule was last (re-)run — the newest installment's creation time. A re-run
+   *  deletes and reinserts every row, so this moves on every re-run and on nothing else. */
+  lastRunAt: string | null;
+}
+
+/**
+ * The CURRENT dues schedule of each family, for this season — ONE read for the whole roster (or
+ * the families named). Serves the picker (GET dues/schedules), the arrangement resolver below and
+ * the record GET's cue, so the three can never disagree about which payments exist.
+ */
+export async function getFamilyPaymentSchedules(
+  programYearId: string,
+  playerIds?: readonly string[],
+): Promise<Map<string, FamilyPaymentSchedule>> {
+  const out = new Map<string, FamilyPaymentSchedule>();
+  if (playerIds && playerIds.length === 0) return out;
+  // The dues GET's own two reads and mappers (lib/db.ts) — not a third row-mapper for these tables.
+  const wanted = playerIds ? new Set(playerIds) : null;
+  const schedules = (await getRepPlayerDuesSchedules(programYearId)).filter(s => !wanted || wanted.has(s.playerId));
+  if (!schedules.length) return out;
+  const playerByScheduleId = new Map(schedules.map(s => [s.id, s.playerId]));
+  for (const s of schedules) out.set(s.playerId, { playerId: s.playerId, installments: [], lastRunAt: null });
+  for (const i of await getRepDuesInstallmentsBySchedules(schedules.map(s => s.id))) {
+    const fam = out.get(playerByScheduleId.get(i.scheduleId) ?? '');
+    if (!fam) continue;
+    fam.installments.push({ n: i.installmentNumber, dueDate: i.dueDate, amount: i.amount });
+    if (!fam.lastRunAt || i.createdAt > fam.lastRunAt) fam.lastRunAt = i.createdAt;
+  }
+  return out;
+}
+
+/** The newest installment's creation time — a re-run replaces every row, so this is the re-run's
+ *  date. ONE definition for the three readers of the D4 cue (the record GET, the dues GET, the
+ *  resolver) so they can never disagree about what "re-run since" means. */
+export function scheduleLastRunAt(installments: readonly { createdAt: string }[]): string | null {
+  return installments.reduce<string | null>((m, i) => (i.createdAt && (!m || i.createdAt > m) ? i.createdAt : m), null);
+}
+
+/** Roster display names for a set of players this season — the arrangement refusal names the
+ *  family; the two plan-writing routes each built this map by hand until `/simplify` (2026-09-21).
+ *  The size of the returned map is also the routes' membership check: a player id outside this
+ *  season simply is not in it. */
+export async function rosterFamilyNames(programYearId: string, playerIds: readonly string[]): Promise<Map<string, string>> {
+  if (!playerIds.length) return new Map();
+  const { data } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('id, player_first_name, player_last_name')
+    .in('id', [...playerIds])
+    .eq('program_year_id', programYearId);
+  return new Map((data ?? []).map(p => [
+    p.id as string,
+    formatPlayerFirstLast({ playerFirstName: p.player_first_name as string | null, playerLastName: p.player_last_name as string | null }),
+  ]));
+}
+
+/** The D4 cue: the family's schedule was re-run after this share was arranged. */
+export function arrangementNeedsCheck(
+  share: Pick<CreditPlanShare, 'appliesTo' | 'arrangedAt'>,
+  schedule: Pick<FamilyPaymentSchedule, 'lastRunAt'> | null | undefined,
+): boolean {
+  if (!positionsOf(share) || !share.arrangedAt || !schedule?.lastRunAt) return false;
+  return schedule.lastRunAt > share.arrangedAt;
+}
+
+/**
+ * Settle each share's arrangement before it is written (D1/D2/D4/D6):
+ *  · a position must exist on the family's CURRENT schedule — validated here, server-side, never
+ *    from the list the client drew (the guard-from-a-filtered-list lesson);
+ *  · the snapshot (`arrangedPayments`) is filled from that schedule;
+ *  · `arrangedAt` is stamped now when the positions changed from what was stored, or when the
+ *    coach pressed "Keep these"; otherwise the stored stamp is carried so an unrelated plan save
+ *    does not silently clear the cue.
+ * Takes the client's shape and returns the stored one — the write-only flag cannot leak into a row
+ * because the return type has nowhere to hold it. Returns the refusal sentence instead when a
+ * position is missing or the family has no schedule.
+ */
+export async function resolveArrangements(args: {
+  programYearId: string;
+  plan: readonly CreditPlanShareInput[];
+  stored: readonly CreditPlanShare[];
+  familyName?: (playerId: string) => string | null;
+}): Promise<CreditPlanShare[] | { error: string }> {
+  const { programYearId, plan, stored } = args;
+  const arranged = plan.filter(p => positionsOf(p));
+  const schedules = arranged.length
+    ? await getFamilyPaymentSchedules(programYearId, arranged.map(p => p.playerId))
+    : new Map<string, FamilyPaymentSchedule>();
+  const storedByPlayer = new Map(stored.map(s => [s.playerId, s]));
+  const now = new Date().toISOString();
+  const out: CreditPlanShare[] = [];
+  for (const { keepArrangement, ...share } of plan) {
+    const positions = positionsOf(share);
+    if (!positions) {
+      out.push({ ...share, appliesTo: null, arrangedPayments: null, arrangedAt: null });
+      continue;
+    }
+    const fam = schedules.get(share.playerId);
+    const who = args.familyName?.(share.playerId) ?? 'That family';
+    if (!fam || fam.installments.length === 0) {
+      return { error: `${who} has no dues schedule yet — set it up on Player Dues before naming payments.` };
+    }
+    const byN = new Map(fam.installments.map(i => [i.n, i]));
+    const missing = positions.filter(n => !byN.has(n));
+    if (missing.length) {
+      return { error: `${who}’s schedule has no payment #${missing[0]} — the schedule may have changed. Pick the payments again.` };
+    }
+    const prior = storedByPlayer.get(share.playerId);
+    const changed = !sameArrangement(prior, share);
+    out.push({
+      ...share,
+      appliesTo: positions,
+      arrangedPayments: positions.map(n => ({ n, dueDate: byN.get(n)!.dueDate, amount: byN.get(n)!.amount })),
+      arrangedAt: changed || keepArrangement || !prior?.arrangedAt ? now : prior.arrangedAt,
+    });
+  }
+  return out;
+}
+
+/** The plan row as the table stores its arrangement — the snapshot, or nulls for the default. */
+export function arrangementColumns(share: CreditPlanShare) {
+  const snapshot = share.arrangedPayments;
+  return {
+    applies_to: snapshot?.length ? snapshot.map(p => ({ n: p.n, due_date: p.dueDate, amount: p.amount })) : null,
+    arranged_at: snapshot?.length ? (share.arrangedAt ?? new Date().toISOString()) : null,
+  };
 }
 
 /** A sponsor's arrivals, oldest first — the replay order every re-derivation depends on. */
@@ -199,6 +358,8 @@ export async function writeSponsorArrivalRow(args: {
         credit_date: receivedDate,
         created_by: userId,
         fundraiser_entry_id: entry.id,
+        // The arrangement rides the credit (D8): positions only, from this family's share.
+        applies_to: positionsOf(plan.find(p => p.playerId === share.playerId)),
       })
       .select('id')
       .single();
@@ -276,11 +437,27 @@ export async function applySponsorAgreement(args: {
   team: SponsorTeam;
   programYearId: string;
   fundraiser: { id: string; name: string };
-  newPlan: CreditPlanShare[];
+  newPlan: CreditPlanShareInput[];
   newPledged: number | null;
   userId: string;
+  /** For the arrangement refusal sentence — the family's display name, when the route has it. */
+  familyName?: (playerId: string) => string | null;
 }): Promise<{ ok: true } | { error: NextResponse }> {
-  const { team, programYearId, fundraiser, newPlan, newPledged, userId } = args;
+  const { team, programYearId, fundraiser, newPledged, userId } = args;
+
+  /* The arrangement is settled first (positions validated against each family's CURRENT schedule,
+     snapshots filled, the stamp carried or renewed) — a refusal here leaves nothing touched. The
+     stored plan is read before it is replaced, so an unchanged arrangement keeps its date — and
+     only when some incoming share IS arranged; a plain $/% split has no stamp to carry. */
+  const storedPlan = args.newPlan.some(p => positionsOf(p)) ? await getSponsorCreditPlan(fundraiser.id) : [];
+  const resolvedPlan = await resolveArrangements({
+    programYearId,
+    plan: args.newPlan,
+    stored: storedPlan,
+    familyName: args.familyName,
+  });
+  if (!Array.isArray(resolvedPlan)) return { error: NextResponse.json({ error: resolvedPlan.error }, { status: 400 }) };
+  const newPlan = resolvedPlan;
 
   const arrivals = await getSponsorArrivals(fundraiser.id);
   const entryIds = arrivals.map(a => a.id as string);
@@ -312,9 +489,18 @@ export async function applySponsorAgreement(args: {
         player_id: p.playerId,
         share_value: p.value,
         share_unit: p.unit,
+        ...arrangementColumns(p),
       })),
     );
-    if (planErr) return { error: NextResponse.json({ error: planErr.message }, { status: 500 }) };
+    if (planErr) {
+      /* Two saves of the same split landing at once meet the plan's UNIQUE (fundraiser, family) on
+         the second insert. Say so in the coach's words rather than Postgres's (/review 2026-09-21). */
+      const collided = planErr.code === '23505';
+      return { error: NextResponse.json(
+        { error: collided ? 'That split was saved twice at once — reload the sponsor and check it once.' : planErr.message },
+        { status: collided ? 409 : 500 },
+      ) };
+    }
   }
 
   // Re-derive every arrival's credits from scratch under the new agreement.
@@ -371,6 +557,8 @@ async function rewriteSponsorCredits(args: {
     credit_date: arrival.received_date ?? orgDayKey(arrival.created_at),
     created_by: userId,
     fundraiser_entry_id: arrival.id,
+    // The arrangement rides the credit (D8): positions only, from this family's share.
+    applies_to: positionsOf(plan.find(p => p.playerId === share.playerId)),
   })));
   if (creditRows.length) {
     const { error: creditErr } = await supabaseAdmin.from('rep_dues_credits').insert(creditRows);

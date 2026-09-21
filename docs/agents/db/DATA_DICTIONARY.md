@@ -4062,7 +4062,7 @@ moment it lands.
 ### `rep_dues_credits`
 <!-- dict:table:rep_dues_credits -->
 
-**Purpose:** money the team owes a family (owner model 2026-08-14, mig 233) — contributions, fundraiser rebates, overpayments, reimbursements, forgiveness. Every credit dollar is settled exactly one of three ways — applied to bills, paid out in cash, or owed back at season's end — and **where a credit lands is DERIVED at read time** (`lib/dues-credits.ts` over the payment-coverage remainders, direction per `rep_program_years.credit_application`), never stored: no installment id ever lands on a credit row.
+**Purpose:** money the team owes a family (owner model 2026-08-14, mig 233) — contributions, fundraiser rebates, overpayments, reimbursements, forgiveness. Every credit dollar is settled exactly one of three ways — applied to bills, paid out in cash, or owed back at season's end — and **where a credit lands is DERIVED at read time** (`lib/dues-credits.ts` over the payment-coverage remainders, direction per `rep_program_years.credit_application`): **no COMPUTED landing is ever stored, and no installment id ever lands on a credit row.** ⚖ **An ARRANGEMENT may be (owner ruling D8, 2026-09-21, mig 308):** `applies_to` names the installment POSITIONS a sponsorship's credit was agreed to cover — the agreement, keyed by number because a schedule re-run recycles ids — and the engine lands it in its own pass; the dollars are still derived on every read.
 
 **Gotchas (read first):**
 1. **CIRCULAR FK with `rep_fundraiser_entries`; the authoritative direction is `fundraiser_entry_id → rep_fundraiser_entries.id`.** Both FKs exist (`rep_dues_credits.fundraiser_entry_id` and `rep_fundraiser_entries.credit_id`). On a fundraiser entry the credit is inserted **with `fundraiser_entry_id` set first**, then the entry's `credit_id` is back-filled — so `fundraiser_entry_id` is the durable link, `credit_id` the convenience reverse pointer. Only `credit_type='fundraiser'` credits have it set; manual credits leave it NULL.
@@ -4103,6 +4103,9 @@ moment it lands.
 
 <!-- dict:col:rep_dues_credits.payment_id -->
 **`payment_id`** (FK → `rep_dues_payments.id`, nullable, **ON DELETE CASCADE**) — set only on auto-created `overpayment` credits (gotcha 6); the payment's removal removes the credit.
+
+<!-- dict:col:rep_dues_credits.applies_to -->
+**`applies_to`** (jsonb, nullable, CHECK array-or-null; **mig 308**) — the installment **positions** (a JSON int array of `installment_number`s) this credit was ARRANGED to land on, **copied from `rep_fundraiser_credit_plan.applies_to` by the arrivals writer** onto each credit it accrues from that share (a plan edit rebuilds every arrival's credits, so the copy cannot drift). NULL = the team default. ⚠ Positions, never ids — `replaceRepDuesInstallments` deletes and reinserts, so ids are recycled and numbers survive a same-count re-run. Read by `applyCreditsToBills` (pass 2: named payments earliest-first, after forgiveness; the leftover joins the ordinary walk flagged `fallback`). Only sponsor-accrued `fundraiser` credits carry it today (D7 — mechanism generic, door on sponsorships only).
 
 <!-- dict:col:rep_dues_credits.expense_id -->
 **`expense_id`** (FK → `rep_team_expenses.id`, nullable, **ON DELETE CASCADE**; mig 234) — set only on `reimbursement` credits, pointing at the out-of-pocket expense that created them. Exactly the `payment_id` treatment: removing the expense removes the debt it created, so a credit can never outlive the cost it was repaying. ⚠ **Since mig 267 it is ONE CREDIT PER (expense, household), not one per expense** (gotcha 7 below) — `reconcileReimbursementCredits` (lib/db.ts) is now the one door, writing the whole set from the cost's payments; `createOutOfPocketExpense` still writes the first one atomically with its expense. **`(expense_id, player_id)` is the natural key** and is enforced by the partial UNIQUE index `uniq_rep_dues_credits_reimbursement_per_household`.
@@ -4418,6 +4421,21 @@ RLS mirrors `rep_fundraiser_entries` (org members read; team coaches / org money
 **`share_value`** (numeric, NOT NULL, CHECK `> 0`) / **`share_unit`** (text, NOT NULL, CHECK
 `amount|percent`) — the family's share as agreed: dollars, or a rate. Validation at the write
 path: Σ dollar-shares + Σ percent-shares × pledged ≤ pledged.
+
+<!-- dict:col:rep_fundraiser_credit_plan.applies_to -->
+<!-- dict:col:rep_fundraiser_credit_plan.arranged_at -->
+**`applies_to`** (jsonb, nullable, CHECK array-or-null; **mig 308**) / **`arranged_at`** (timestamptz,
+nullable; mig 308) — **the ARRANGEMENT (Sponsorship Applies To, owner rulings D1–D8, 2026-09-21):**
+the payments this family's share was agreed to cover, as a JSON array of `{n, due_date, amount}` —
+the installment POSITION named plus the date and amount that payment had when the arrangement was
+made — and when the coach made or last confirmed it ("Keep these" restamps). NULL = the team default
+(`rep_program_years.credit_application`). The write path (the sponsor PATCH's `creditPlan`) validates
+every `n` against the family's CURRENT schedule and refuses one that does not exist; the CHECK only
+refuses a non-array. **Gotcha 6:** the positions are copied onto every credit accrued from this share
+(`rep_dues_credits.applies_to`) — the engine reads the credit, never this row. **Gotcha 7 (the re-run
+cue, D4):** a dues re-run inserts fresh installment rows, so `max(rep_player_dues_installments.created_at)
+> arranged_at` for that family is "the schedule was re-run after this was arranged" — no column on the
+schedule was added for it.
 
 ### `rep_cost_allocations`
 <!-- dict:table:rep_cost_allocations -->

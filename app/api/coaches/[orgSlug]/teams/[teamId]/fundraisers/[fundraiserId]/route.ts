@@ -15,9 +15,9 @@ import { pluralize } from '@/lib/utils';
 import { withObservability } from '@/lib/observability';
 import { canWriteMoney, denyUnless } from '@/lib/coach-capabilities';
 import { isSponsorStatus } from '@/lib/coach-fundraising';
-import { creditPlanProblem, type CreditPlanShare } from '@/lib/sponsor-arrivals';
+import { creditPlanProblem, parseCreditPlanRows, type CreditPlanShareInput } from '@/lib/sponsor-arrivals';
 import { resolveRaisingForItem } from '@/lib/coach-budget-items';
-import { applySponsorAgreement, getSponsorCreditPlan } from '@/lib/sponsor-arrivals-server';
+import { applySponsorAgreement, getSponsorCreditPlan, rosterFamilyNames } from '@/lib/sponsor-arrivals-server';
 
 /**
  * ⚠ THE SINGLE-ENTRY EDITOR IS GONE (mig 268). applySponsorMoney, resolveSponsorEffective and
@@ -30,19 +30,10 @@ import { applySponsorAgreement, getSponsorCreditPlan } from '@/lib/sponsor-arriv
  * Status is DERIVED truth: an arrival makes a sponsor received; undoing the last one returns it
  * to a pledge. A status write that disagrees with the money is refused below, with directions.
  */
-function parseAgreementPlan(body: Record<string, any>): CreditPlanShare[] | { error: string } | null {
-  if (Array.isArray(body.creditPlan)) {
-    const plan: CreditPlanShare[] = [];
-    for (const row of body.creditPlan) {
-      const playerId = typeof row?.playerId === 'string' ? row.playerId : '';
-      const value = Number(row?.value);
-      const unit = row?.unit === 'amount' ? 'amount' : row?.unit === 'percent' ? 'percent' : null;
-      if (!playerId || !unit) return { error: 'Every credit row needs a family and a $ or % share.' };
-      if (!Number.isFinite(value) || value <= 0) continue;
-      plan.push({ playerId, value, unit: unit as 'amount' | 'percent' });
-    }
-    return plan;
-  }
+function parseAgreementPlan(body: Record<string, any>): CreditPlanShareInput[] | { error: string } | null {
+  // The rows are parsed by the ONE parser both plan doors share (lib/sponsor-arrivals.ts); the
+  // arrangement rides each row and is settled by the writer against the family's CURRENT schedule.
+  if (Array.isArray(body.creditPlan)) return parseCreditPlanRows(body.creditPlan);
   // Legacy single-family trio (the pre-arrivals Settings sheet): undefined means "not editing
   // the plan"; a named family maps to one row; an explicit empty family means "nobody".
   if (body.broughtInById === undefined && body.creditValue === undefined) return null;
@@ -178,7 +169,7 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   let newPledged: number | null = existing.pledged_amount != null ? Number(existing.pledged_amount) : null;
-  let newPlan: CreditPlanShare[] | null = null;
+  let newPlan: CreditPlanShareInput[] | null = null;
   if (isSponsor && (pledgedEdit !== undefined || Array.isArray(planEdit))) {
     if (pledgedEdit !== undefined) {
       const amt = Number(pledgedEdit);
@@ -191,15 +182,10 @@ export const PATCH = withObservability(async (req: Request,
     newPlan = Array.isArray(planEdit) ? planEdit : await getSponsorCreditPlan(existing.id);
     const problem = creditPlanProblem(newPlan, newPledged);
     if (problem) return NextResponse.json({ error: problem }, { status: 400 });
-    if (newPlan.length) {
-      const { data: players } = await supabaseAdmin
-        .from('rep_roster_players')
-        .select('id')
-        .in('id', newPlan.map(p => p.playerId))
-        .eq('program_year_id', programYear.id);
-      if ((players ?? []).length !== newPlan.length) {
-        return NextResponse.json({ error: 'That player is not on this season’s roster.' }, { status: 400 });
-      }
+    // Membership check and the names the arrangement refusal speaks, from one read.
+    const familyNames = await rosterFamilyNames(programYear.id, newPlan.map(p => p.playerId));
+    if (familyNames.size !== newPlan.length) {
+      return NextResponse.json({ error: 'That player is not on this season’s roster.' }, { status: 400 });
     }
     // ⚠ The floor is asked inside the shared writer, per family, BEFORE any row is touched —
     // and before the header write below, so a refusal leaves nothing half-changed.
@@ -210,6 +196,7 @@ export const PATCH = withObservability(async (req: Request,
       newPlan,
       newPledged,
       userId: ctx!.user.id,
+      familyName: id => familyNames.get(id) ?? null,
     });
     if ('error' in applied) return applied.error;
     // Provenance snapshot mirrors the create path: one percent share, else 0.

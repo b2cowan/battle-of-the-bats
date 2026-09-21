@@ -17,8 +17,8 @@ import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { tournamentToday } from '@/lib/timezone';
 import { isFundraisingKind, isSponsorStatus } from '@/lib/coach-fundraising';
 import { resolveRaisingForItem } from '@/lib/coach-budget-items';
-import { accrueArrival, creditPlanProblem, stillToCome, type CreditPlanShare } from '@/lib/sponsor-arrivals';
-import { writeSponsorArrivalRow } from '@/lib/sponsor-arrivals-server';
+import { accrueArrival, creditPlanProblem, parseCreditPlanRows, stillToCome, type CreditPlanShare, type CreditPlanShareInput } from '@/lib/sponsor-arrivals';
+import { writeSponsorArrivalRow, resolveArrangements, arrangementColumns, rosterFamilyNames } from '@/lib/sponsor-arrivals-server';
 
 /** The list shape a freshly-created record answers with — the table needs every column it prints. */
 function mapNewRecord(
@@ -67,19 +67,10 @@ function mapNewRecord(
  * Legacy single-family fields (`broughtInById`/`creditValue`/`creditUnit`) map to one row so the
  * recording conversation and any not-yet-reworked caller keep working through the transition.
  */
-function parseCreditPlan(body: Record<string, any>): CreditPlanShare[] | { error: string } {
-  if (Array.isArray(body.creditPlan)) {
-    const plan: CreditPlanShare[] = [];
-    for (const row of body.creditPlan) {
-      const playerId = typeof row?.playerId === 'string' ? row.playerId : '';
-      const value = Number(row?.value);
-      const unit = row?.unit === 'amount' ? 'amount' : row?.unit === 'percent' ? 'percent' : null;
-      if (!playerId || !unit) return { error: 'Every credit row needs a family and a $ or % share.' };
-      if (!Number.isFinite(value) || value <= 0) continue; // a zero share is "not credited"
-      plan.push({ playerId, value, unit });
-    }
-    return plan;
-  }
+function parseCreditPlan(body: Record<string, any>): CreditPlanShareInput[] | { error: string } {
+  // The rows are parsed by the ONE parser both plan doors share (lib/sponsor-arrivals.ts); the
+  // arrangement rides each row and is settled below against the family's CURRENT schedule.
+  if (Array.isArray(body.creditPlan)) return parseCreditPlanRows(body.creditPlan);
   const legacyId = body.broughtInById;
   const legacyValue = Number(body.creditValue ?? 0);
   const legacyUnit = body.creditUnit === 'amount' ? 'amount' : 'percent';
@@ -358,19 +349,21 @@ export const POST = withObservability(async (req: Request,
   if (!Array.isArray(planParsed)) {
     return NextResponse.json({ error: planParsed.error }, { status: 400 });
   }
-  const plan = planParsed;
-  const planProblem = creditPlanProblem(plan, amount);
+  const planProblem = creditPlanProblem(planParsed, amount);
   if (planProblem) return NextResponse.json({ error: planProblem }, { status: 400 });
 
-  if (plan.length) {
-    const { data: players } = await supabaseAdmin
-      .from('rep_roster_players')
-      .select('id')
-      .in('id', plan.map(p => p.playerId))
-      .eq('program_year_id', programYear.id);
-    if ((players ?? []).length !== plan.length) {
+  // Membership check and the names the arrangement refusal speaks, from one read; then settle each
+  // share's arrangement against the family's CURRENT schedule — nothing is written yet, so a bad
+  // position costs nothing. The resolved plan is the STORED shape (no write-only flags).
+  let plan: CreditPlanShare[] = [];
+  if (planParsed.length) {
+    const names = await rosterFamilyNames(programYear.id, planParsed.map(p => p.playerId));
+    if (names.size !== planParsed.length) {
       return NextResponse.json({ error: 'That player is not on this season’s roster.' }, { status: 400 });
     }
+    const resolved = await resolveArrangements({ programYearId: programYear.id, plan: planParsed, stored: [], familyName: id => names.get(id) ?? null });
+    if (!Array.isArray(resolved)) return NextResponse.json({ error: resolved.error }, { status: 400 });
+    plan = resolved;
   }
 
   const received = sponsorStatus === 'received';
@@ -441,6 +434,7 @@ export const POST = withObservability(async (req: Request,
         player_id: p.playerId,
         share_value: p.value,
         share_unit: p.unit,
+        ...arrangementColumns(p),
       })),
     );
     if (planErr) {

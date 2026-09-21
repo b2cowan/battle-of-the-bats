@@ -10125,6 +10125,15 @@
     "ordinal_position": 13
   },
   {
+    "table_name": "rep_dues_credits",
+    "column_name": "applies_to",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 14
+  },
+  {
     "table_name": "rep_dues_payments",
     "column_name": "id",
     "data_type": "uuid",
@@ -10582,6 +10591,24 @@
     "is_nullable": "NO",
     "column_default": "now()",
     "ordinal_position": 9
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "applies_to",
+    "data_type": "jsonb",
+    "udt_name": "jsonb",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 10
+  },
+  {
+    "table_name": "rep_fundraiser_credit_plan",
+    "column_name": "arranged_at",
+    "data_type": "timestamp with time zone",
+    "udt_name": "timestamptz",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 11
   },
   {
     "table_name": "rep_fundraiser_entries",

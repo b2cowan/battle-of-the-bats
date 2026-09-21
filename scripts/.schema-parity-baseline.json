@@ -1,4 +1,10 @@
 {
   "_comment": "ACCEPTED dev↔prod divergences (scripts/check-schema-parity.mjs). Every entry is debt, not a decision — the target is an empty object. A NEW divergence, or an accepted one whose signature changes, fails the gate. Lower this as items are reconciled; re-init only after refreshing the snapshots.",
-  "accepted": {}
+  "accepted": {
+    "check:only-dev:rep_dues_credits.rep_dues_credits_applies_to_is_array": "",
+    "check:only-dev:rep_fundraiser_credit_plan.rep_fundraiser_credit_plan_applies_to_is_array": "",
+    "column:only-dev:rep_dues_credits.applies_to": "",
+    "column:only-dev:rep_fundraiser_credit_plan.applies_to": "",
+    "column:only-dev:rep_fundraiser_credit_plan.arranged_at": ""
+  }
 }

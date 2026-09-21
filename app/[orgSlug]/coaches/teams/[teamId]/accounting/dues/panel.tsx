@@ -116,6 +116,10 @@ interface CreditSource {
   creditType: string;
   description: string | null;
   amount: number;
+  /** Landed on a payment the credit NAMED (Sponsorship Applies To) — the Note says "as arranged". */
+  arranged?: boolean;
+  /** An arranged credit's leftover landing by the team default — "followed the team default". */
+  fallback?: boolean;
 }
 
 /** The dues payload's installment rows. ⚠ `remainingAmount` is the NET figure since the credit
@@ -351,8 +355,12 @@ function ledgerRowFor(inst: InstallmentWithCredit, coverage: InstallmentCoverage
   const coveredByCredit = !inst.paidAt && creditApplied > 0.005 && (inst.creditSettled ?? false);
   const coveredLabel = (inst.creditSources ?? []).every(s => s.creditType === 'fundraiser')
     ? 'Covered by fundraising' : 'Covered by credit';
+  /* One clause per source, and the arrangement rides the clause (D2/D3): "Riverdale Dental ·
+     as arranged" on a payment the sponsorship named, "Riverdale Dental · followed the team
+     default" where its leftover landed by the setting. A source with neither flag reads as today. */
   const sourceNote = (inst.creditSources ?? [])
-    .map(s => s.description || CREDIT_TYPE_LABELS[s.creditType as DuesCreditType] || s.creditType)
+    .map(s => (s.description || CREDIT_TYPE_LABELS[s.creditType as DuesCreditType] || s.creditType)
+      + (s.arranged ? ' · as arranged' : s.fallback ? ' · followed the team default' : ''))
     .filter((v, i, a) => a.indexOf(v) === i)
     .join(' · ');
   return { paidCash, creditApplied, owing, partial, overdue, coveredByCredit, coveredLabel, sourceNote };
@@ -1955,6 +1963,55 @@ export function PlayerDuesPanel({
      credits print the same record with the same affordances — a coach can hand-add a `fundraiser`
      credit, so even that section needs the pencil and the bin. Two copies of this markup is how
      the two sections start disagreeing about which credits may be edited. */
+  /**
+   * THE ARRANGEMENT'S OWN LINE under a credit that names its payments (Sponsorship Applies To,
+   * D2–D4): which payments, read back as dates from the family's CURRENT schedule; what followed
+   * the team default and why (a named payment paid in cash, or a position the schedule no longer
+   * has); and the re-run cue. Everything here is read from the engine's slices and the schedule —
+   * nothing is re-derived, so this line and the ladder above it cannot disagree.
+   */
+  const selectedByN = new Map((selected?.installments ?? []).map(i => [i.installmentNumber, i]));
+  const selectedCovByN = new Map((selected?.coverage ?? []).map(cv => [cv.installmentNumber, cv]));
+  const arrangementLineFor = (c: PlayerWithDues['credits'][number]) => {
+    const named = c.appliesTo ?? [];
+    if (!named.length || !selected) return null;
+    const byN = selectedByN;
+    const covByN = selectedCovByN;
+    const dates = named.map(n => { const i = byN.get(n); return i ? fmtDate(i.dueDate, { withYear: false }) : `#${n}`; }).join(' · ');
+    let fallbackC = 0;
+    for (const inst of selected.installments) {
+      for (const s of inst.creditSources ?? []) if (s.creditId === c.id && s.fallback) fallbackC += Math.round(s.amount * 100);
+    }
+    /* Why a named payment had no room: paid in cash (cash claims first), gone from the schedule,
+       or already covered by an EARLIER credit — forgiveness spends before everything, and two
+       arranged credits on one bill spend oldest-first (/review 2026-09-21: the third reason was
+       missing, so the line said "followed the team default" with no because). */
+    const reasons: string[] = [];
+    for (const n of named) {
+      const i = byN.get(n);
+      if (!i) { reasons.push(`payment #${n} no longer exists`); continue; }
+      const when = fmtDate(i.dueDate, { withYear: false });
+      const cv = covByN.get(n);
+      if (cv && cv.remaining <= 0.005) { reasons.push(`${when} was paid in cash`); continue; }
+      const mine = (i.creditSources ?? []).filter(s => s.creditId === c.id).reduce((s, x) => s + x.amount, 0);
+      const others = (i.creditSources ?? []).some(s => s.creditId !== c.id);
+      if (others && mine + 0.005 < (cv?.remaining ?? i.amount)) reasons.push(`${when} was already covered by another credit`);
+    }
+    return (
+      <span style={{ flex: '1 1 100%', fontSize: '0.75rem', color: 'var(--home-dim, rgba(255,255,255,0.5))', lineHeight: 1.4 }}>
+        Applies to <strong style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', fontWeight: 600 }}>{dates}</strong>, as arranged with the family
+        {fallbackC > 0 && (
+          <> — <strong style={{ color: 'var(--home-ink-soft, rgba(255,255,255,0.75))', fontWeight: 600 }}>{fmt(fallbackC / 100)} followed the team default</strong>{reasons.length ? ` because ${reasons.join(' and ')}` : ''}</>
+        )}
+        {c.arrangementNeedsCheck && (
+          <span style={{ display: 'block', color: 'var(--warning)', marginTop: '0.15rem' }}>
+            The dues schedule was re-run after this was arranged — check the payments on the sponsor’s row in Fundraising.
+          </span>
+        )}
+      </span>
+    );
+  };
+
   const creditRow = (c: PlayerWithDues['credits'][number], hideType: boolean, displayAmount = c.amount) => (
       <div key={c.id} style={{
         display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '0.6rem',
@@ -2051,6 +2108,7 @@ export function PlayerDuesPanel({
             {deletingCreditId === c.id ? '…' : <Trash2 size={13} />}
           </button>
         )}
+        {arrangementLineFor(c)}
       </div>
   );
   const otherCreditRows = creditBreakdown.other;
@@ -2944,7 +3002,12 @@ export function PlayerDuesPanel({
                 {autoReminders ? 'Reminders on — 30 and 7 days before each due date' : 'Automatic reminders off'}
               </span>
               <span aria-hidden style={{ opacity: 0.5 }}>·</span>
-              <span>{CREDIT_MODE_SENTENCES[creditMode]}</span>
+              <span>
+                {CREDIT_MODE_SENTENCES[creditMode]}
+                {/* A sponsorship that names its payments is the one exception to the setting, and
+                    the line says so only when the book actually holds one. */}
+                {players.some(p => p.credits.some(c => c.appliesTo?.length)) ? ' — except where a sponsorship names its payments' : ''}
+              </span>
               {/* The whole line is live-season-only now, so the link needs no gate of its own. */}
               {moneyCanWrite && (
                 <>

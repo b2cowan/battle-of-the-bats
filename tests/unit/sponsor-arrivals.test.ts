@@ -16,6 +16,12 @@ import {
   deriveAllArrivalCredits,
   creditPlanProblem,
   stillToCome,
+  positionsOf,
+  positionsFromJson,
+  sameArrangement,
+  parseAppliesTo,
+  parseCreditPlanRows,
+  sharesFromRows,
   type CreditPlanShare,
 } from '../../lib/sponsor-arrivals.ts';
 
@@ -115,5 +121,83 @@ describe('stillToCome', () => {
     assert.equal(stillToCome(500, 250), 250);
     assert.equal(stillToCome(500, 600), 0);
     assert.equal(stillToCome(null, 250), 0);
+  });
+});
+
+/* ── The arrangement on a share (Sponsorship Applies To, owner rulings D1–D8, 2026-09-21) ───── */
+
+describe('positionsOf / positionsFromJson / sameArrangement — the agreement, keyed by position', () => {
+  it('normalizes any list of positions: sorted, de-duplicated, positive whole numbers; nothing named is null', () => {
+    assert.deepEqual(positionsOf({ appliesTo: [3, 2, 3] }), [2, 3]);
+    assert.deepEqual(positionsFromJson([{ n: 4 }, 2, '3', 0, -1, 1.5, 'x']), [2, 3, 4]);
+    assert.equal(positionsOf({ appliesTo: [] }), null);
+    assert.equal(positionsOf({ appliesTo: null }), null);
+    assert.equal(positionsOf(undefined), null);
+    assert.equal(positionsFromJson('not a list'), null);
+  });
+
+  it('compares the CHOICE only — the snapshot is not part of it', () => {
+    assert.equal(sameArrangement({ appliesTo: [2, 3] }, { appliesTo: [3, 2, 2] }), true);
+    assert.equal(sameArrangement({ appliesTo: [2] }, { appliesTo: [3] }), false);
+    assert.equal(sameArrangement({ appliesTo: [2] }, { appliesTo: null }), false);
+    assert.equal(sameArrangement({ appliesTo: null }, undefined), true);
+  });
+});
+
+describe('parseAppliesTo — what a share row may send', () => {
+  it('absent, null or empty is the team default', () => {
+    assert.equal(parseAppliesTo(undefined), null);
+    assert.equal(parseAppliesTo(null), null);
+    assert.equal(parseAppliesTo([]), null);
+  });
+  it('accepts positions as numbers or {n} objects, sorted and de-duplicated', () => {
+    assert.deepEqual(parseAppliesTo([3, 2, 3]), [2, 3]);
+    assert.deepEqual(parseAppliesTo([{ n: 4 }]), [4]);
+  });
+  it('refuses anything that is not a positive whole number — an id, a date, a zero', () => {
+    for (const bad of [[0], [1.5], ['abc-uuid'], ['2026-12-01'], 'not a list', [-1]]) {
+      const r = parseAppliesTo(bad);
+      assert.ok(r && !Array.isArray(r) && 'error' in r, `should refuse ${JSON.stringify(bad)}`);
+    }
+  });
+});
+
+describe('parseCreditPlanRows — the ONE parser both plan doors share', () => {
+  it('keeps real shares with their arrangement and the Keep-these flag; drops a zero share', () => {
+    const r = parseCreditPlanRows([
+      { playerId: 'p1', value: 50, unit: 'percent', appliesTo: [3, 2] },
+      { playerId: 'p2', value: '100', unit: 'amount', keepArrangement: true },
+      { playerId: 'p3', value: 0, unit: 'percent' },
+    ]);
+    assert.ok(Array.isArray(r));
+    assert.deepEqual(r, [
+      { playerId: 'p1', value: 50, unit: 'percent', appliesTo: [2, 3] },
+      { playerId: 'p2', value: 100, unit: 'amount', appliesTo: null, keepArrangement: true },
+    ]);
+  });
+  it('refuses a row with no family or no unit, and a bad arrangement, by sentence', () => {
+    const noFamily = parseCreditPlanRows([{ value: 10, unit: 'percent' }]);
+    assert.ok(!Array.isArray(noFamily) && /family/.test(noFamily.error));
+    const badUnit = parseCreditPlanRows([{ playerId: 'p1', value: 10, unit: 'shares' }]);
+    assert.ok(!Array.isArray(badUnit));
+    const badPositions = parseCreditPlanRows([{ playerId: 'p1', value: 10, unit: 'percent', appliesTo: ['x'] }]);
+    assert.ok(!Array.isArray(badPositions) && /positions/.test(badPositions.error));
+  });
+});
+
+describe('sharesFromRows carries the arrangement', () => {
+  it('positions ride the share; "Keep these" rides only when pressed', () => {
+    const shares = sharesFromRows([
+      { playerId: 'p1', value: '50', unit: 'percent', appliesTo: [3, 2] },
+      { playerId: 'p2', value: '100', unit: 'amount', appliesTo: null, keepArrangement: true },
+      { playerId: 'p3', value: '10', unit: 'percent' },
+      { playerId: '', value: '10', unit: 'percent', appliesTo: [1] },
+    ]);
+    assert.equal(shares.length, 3);
+    assert.deepEqual(shares[0].appliesTo, [2, 3]);
+    assert.equal(shares[0].keepArrangement, undefined);
+    assert.equal(shares[1].appliesTo, null);
+    assert.equal(shares[1].keepArrangement, true);
+    assert.equal(shares[2].appliesTo, null);
   });
 });

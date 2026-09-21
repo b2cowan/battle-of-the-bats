@@ -13,7 +13,8 @@ import PaymentMethodCombobox from '@/components/accounting/PaymentMethodCombobox
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
 import type { PayableItem } from '@/components/accounting/UpcomingPayablesPanel';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
-import SponsorCreditPlanEditor from '@/components/coaches/SponsorCreditPlanEditor';
+import SponsorCreditPlanEditor, { type SponsorCreditPlanRow } from '@/components/coaches/SponsorCreditPlanEditor';
+import { fetchFamilyPaymentSchedules, type FamilyPaymentSchedules } from '@/lib/coach-family-schedules';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useRoomAddress } from '@/components/coaches/useRoomAddress';
 import { roomNeighbours } from '@/lib/room-neighbours';
@@ -1387,8 +1388,14 @@ function MoneyRecordsPanel({
   const [sponsorDefaultPct, setSponsorDefaultPct] = useState<number | null>(null);
   /** The sponsor branch's credit-family rows (Q16) — an ARRAY, so its own state + snapshot
    *  baseline, the formPlan idiom exactly. */
-  const [convSponsorPlan, setConvSponsorPlan] = useState<{ playerId: string; value: string; unit: CreditUnit }[]>([]);
-  const [convSponsorPlanOpenedWith, setConvSponsorPlanOpenedWith] = useState<{ playerId: string; value: string; unit: CreditUnit }[]>([]);
+  const [convSponsorPlan, setConvSponsorPlan] = useState<SponsorCreditPlanRow[]>([]);
+  const [convSponsorPlanOpenedWith, setConvSponsorPlanOpenedWith] = useState<SponsorCreditPlanRow[]>([]);
+  /* The families' CURRENT payment schedules and the team's setting, for the arrangement line under
+     each credited family (Sponsorship Applies To, D1–D8). Fetched once per open of the sponsor
+     branch or the pledge form — GET dues/schedules, a light read; never the dues GET's whole
+     position — and cleared on close like every other branch read. Until it lands the line states
+     the default with no door. */
+  const [convSchedules, setConvSchedules] = useState<FamilyPaymentSchedules | null>(null);
   /** The cold picker's choices (Direction A): every sponsor this season, promises first — so
    *  "which sponsor came through?" is answered from a list, and a NEW name is one option, not a
    *  separate form. Null until the branch is first opened. */
@@ -1668,6 +1675,7 @@ function MoneyRecordsPanel({
     setClubBills(null);
     setClubBillsError('');
     setSponsorDefaultPct(null);
+    setConvSchedules(null);
     /* ⚠ THE RULE THIS FUNCTION IS FOR, restated because its most recent example has just been
        deleted: state added for one row must clear here, or it persists into the NEXT record. The
        inline "when was this paid?" prompt was left out when it was added, and a coach who opened it
@@ -2174,6 +2182,14 @@ function MoneyRecordsPanel({
     setConvSponsorPlanOpenedWith(p => (p.length === 0 ? seeded : p));
   }
 
+  async function loadFamilySchedules() {
+    const gen = convLoadGen.current;
+    try {
+      const next = await fetchFamilyPaymentSchedules(orgSlug, teamId);
+      if (gen === convLoadGen.current) setConvSchedules(next);
+    } catch { /* the line falls back to the default wording with no door */ }
+  }
+
   /** The cold picker's list: name + what each promise still has to come, promises first. */
   async function loadConvSponsors() {
     const gen = convLoadGen.current;
@@ -2289,6 +2305,7 @@ function MoneyRecordsPanel({
     if (next === 'club' && clubBills === null) void loadClubBills();
     if (next === 'sponsor' && sponsorDefaultPct === null) void loadSponsorDefaults();
     if (next === 'sponsor' && convSponsors === null) void loadConvSponsors();
+    if (next === 'sponsor' && convSchedules === null) void loadFamilySchedules();
   }
 
   /**
@@ -2340,6 +2357,7 @@ function MoneyRecordsPanel({
     setPledgeHandOff(true);
     setConvBranch(null);
     setWhatOpen(false);
+    if (convSchedules === null) void loadFamilySchedules();
   }
 
   /**
@@ -4858,6 +4876,8 @@ function MoneyRecordsPanel({
               families={roster.map(pl => ({ id: pl.id, name: formatPlayerLastFirst(pl) }))}
               defaultShare={sponsorDefaultPct !== null ? String(sponsorDefaultPct) : '0'}
               problem={planProblem}
+              schedules={convSchedules?.schedules ?? null}
+              creditMode={convSchedules?.creditMode ?? null}
             />
           </div>
           {/* Folded the same way as its received twin below (owner, 2026-09-21) — the two forms
@@ -5344,6 +5364,8 @@ function MoneyRecordsPanel({
               families={roster.map(p => ({ id: p.id, name: formatPlayerLastFirst(p) }))}
               defaultShare={sponsorDefaultPct !== null ? String(sponsorDefaultPct) : '0'}
               problem={coldPlanProblem}
+              schedules={convSchedules?.schedules ?? null}
+              creditMode={convSchedules?.creditMode ?? null}
             />
           </div>
           {/* Tags reach money coming IN (mig 239) — the modal door has carried this field since

@@ -33,8 +33,19 @@
   flex: 0 1 auto;
 }
 
+/* The closing row: "+ Add another family" on the left, the caller's Cancel · Save on the right —
+   one row, not a link with a button row under it. Wraps whole at a phone width. */
+.addRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.35rem;
+}
+.foot { display: flex; gap: 0.5rem; margin-left: auto; }
 .addBtn {
-  align-self: flex-start;
+  align-self: center;
 }
 
 /* ⚠ THE 44px FLOOR AT THE TOUCH WIDTHS (the rendered sweep, Phase B 2026-09-02 — the first time
@@ -48,6 +59,106 @@
   .shareValue,
   .share button { min-height: var(--tap-min, 44px); }
   .addBtn {
+    display: inline-flex;
+    align-items: center;
+    min-height: var(--tap-min, 44px);
+  }
+}
+
+/* ── The arrangement line and its picker (Sponsorship Applies To, owner rulings D1–D8, 2026-09-21) ──
+   One quiet line under a row that has a family; the picker opens IN PLACE under that same row, so
+   the form never grows a section — the 08-31 ruling keeps landing arithmetic off the pledge form,
+   and this keeps the choice a line until it is opened. Tokens only (the ratchet). */
+
+.rowGroup { display: flex; flex-direction: column; gap: 0.25rem; margin-bottom: 0.45rem; }
+.rowGroup .row { margin-bottom: 0; }
+
+.applies {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.5rem;
+  margin: 0;
+  padding-left: 0.15rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  line-height: 1.4;
+}
+.applies b { color: var(--text-secondary); font-weight: 600; }
+/* The separator is READ as text by the contrast gate, so it takes a text token, not a line token —
+   a hairline colour at 12px on white measured 1.23:1 (check:layout, 2026-09-21). */
+.dot { color: var(--text-tertiary); }
+/* The separator and its link wrap as ONE word — a line break between them strands the dot at the
+   start of the next line (seen on the room at desktop width, 2026-09-21). */
+.door { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+
+.cue {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.15rem 0.5rem;
+  margin: 0;
+  padding: 0.4rem 0.65rem;
+  border-radius: var(--radius-sm, 7px);
+  background: rgba(var(--warning-rgb), 0.12);
+  color: var(--warning);
+  font-size: var(--type-support);
+  line-height: 1.4;
+}
+.cue b { font-weight: 600; }
+
+.picker {
+  display: flex;
+  flex-direction: column;
+  margin-top: 0.15rem;
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--radius-sm, 7px);
+  background: var(--home-card);
+  overflow: hidden;
+}
+/* The picker is a QUIET list under a form row — its head is a caption at the line's own size, and
+   its rows sit at the body size the room's sibling lists use (`.roomZoneList li`), never the
+   room's inherited base (owner, 2026-09-21: "the font on this new section is too big"). */
+.pickerHead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--home-paper);
+  border-bottom: 1px solid var(--home-line);
+  font-size: var(--type-support);
+}
+.pickerHead b { font-weight: 600; color: var(--text-primary); }
+
+.pay {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  gap: 0.75rem;
+  align-items: center;
+  padding: 0.35rem 0.75rem;
+  border-bottom: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.pay:last-of-type { border-bottom: 0; }
+.pay input { width: 16px; height: 16px; margin: 0; accent-color: var(--home-olive); }
+.payOn { color: var(--text-primary); }
+.payN { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-tertiary); }
+.payDate { font-weight: 600; }
+.payOn .payDate { font-weight: 700; }
+.payAmt { font-variant-numeric: tabular-nums; font-weight: 600; }
+
+/* ⚠ THE 44px FLOOR AT THE TOUCH WIDTHS — the line's Change / Keep these / Done / Use the team
+   default links are the same 15px link the add button was until the Phase B sweep lifted it; the
+   rendered check measured Change at 15px on the sponsor's room (2026-09-21). Same rule, same
+   breakpoint as .addBtn above. */
+@media (max-width: 768px) {
+  .pay { min-height: var(--tap-min, 44px); }
+  .applies button,
+  .cue button,
+  .picker button {
     display: inline-flex;
     align-items: center;
     min-height: var(--tap-min, 44px);

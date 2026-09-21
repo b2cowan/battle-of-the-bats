@@ -21,6 +21,8 @@ import { futureReceivedDateRefusal } from '@/lib/money-date-guards';
 import { groupByPlayer, totalsByPlayer } from '@/lib/dues-credits';
 import { WHOLE_TEAM_ENTRY_LABEL } from '@/lib/coach-fundraising';
 import { creditExposure } from '@/lib/dues-credit-guards';
+import { arrangedPaymentsFromJson, arrangementNeedsCheck, getFamilyPaymentSchedules } from '@/lib/sponsor-arrivals-server';
+import { positionsFromJson } from '@/lib/sponsor-arrivals';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -189,7 +191,14 @@ export const GET = withObservability(async (_req: Request,
   // cash payouts (the figure the agreement sheet warns with BEFORE the payout floor refuses).
   let sponsorCreditExposure = 0; // legacy scalar: the LARGEST family exposure, kept for the sheet
   const sponsorExposureByFamily: { playerId: string; exposure: number }[] = [];
-  let sponsorCreditPlan: { playerId: string; playerName: string | null; value: number; unit: string }[] = [];
+  let sponsorCreditPlan: {
+    playerId: string; playerName: string | null; value: number; unit: string;
+    /** The arrangement (Sponsorship Applies To): the payments this share names, the stamp, and
+     *  whether the family's schedule was re-run since (the D4 cue). */
+    appliesTo: { n: number; dueDate: string; amount: number }[] | null;
+    arrangedAt: string | null;
+    needsCheck: boolean;
+  }[] = [];
   let sponsorArrivals: {
     entryId: string; amount: number; receivedDate: string | null; method: string | null;
     notes: string | null; credited: number;
@@ -205,15 +214,25 @@ export const GET = withObservability(async (_req: Request,
     const nameByPlayer = new Map((roster ?? []).map(p => [p.id, [p.player_first_name, p.player_last_name].filter(Boolean).join(' ')]));
     const { data: planRows } = await supabaseAdmin
       .from('rep_fundraiser_credit_plan')
-      .select('player_id, share_value, share_unit')
+      .select('player_id, share_value, share_unit, applies_to, arranged_at')
       .eq('fundraiser_id', fundraiserId)
       .order('created_at', { ascending: true });
-    sponsorCreditPlan = (planRows ?? []).map(p => ({
-      playerId: p.player_id as string,
-      playerName: nameByPlayer.get(p.player_id as string) ?? null,
-      value: Number(p.share_value),
-      unit: p.share_unit as string,
-    }));
+    // The D4 cue needs each arranged family's CURRENT schedule — one read for just those families.
+    const arrangedIds = (planRows ?? []).filter(p => Array.isArray(p.applies_to) && p.applies_to.length).map(p => p.player_id as string);
+    const familySchedules = await getFamilyPaymentSchedules(programYear.id, arrangedIds);
+    sponsorCreditPlan = (planRows ?? []).map(p => {
+      const appliesTo = arrangedPaymentsFromJson(p.applies_to);
+      const arrangedAt = (p.arranged_at as string | null) ?? null;
+      return {
+        playerId: p.player_id as string,
+        playerName: nameByPlayer.get(p.player_id as string) ?? null,
+        value: Number(p.share_value),
+        unit: p.share_unit as string,
+        appliesTo,
+        arrangedAt,
+        needsCheck: arrangementNeedsCheck({ appliesTo: positionsFromJson(p.applies_to), arrangedAt }, familySchedules.get(p.player_id as string)),
+      };
+    });
 
     const entryIds = allEntries.map(e => e.id as string);
     const creditsByEntry = new Map<string, number>();

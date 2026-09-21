@@ -1,0 +1,675 @@
+<title>Sponsorship Applies To</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --doc-bg:#ECEDF1; --doc-panel:#F7F7F9; --doc-ink:#1B1D23; --doc-muted:#5C6070; --doc-line:rgba(27,29,35,0.12);
+    --doc-accent:#57651E; --doc-on:rgba(87,101,30,0.16); --doc-warn:#835006; --doc-bad:#9E3030; --doc-focus:#134FD3;
+    --home-paper:#F8F4ED; --home-card:#FFFFFF; --home-ink:#241E15; --home-ink-soft:#4A4235; --home-dim:#615A54;
+    --home-line:rgba(70,55,30,0.12); --home-line-strong:rgba(70,55,30,0.20); --home-olive:#57651E; --home-olive-soft:rgba(87,101,30,0.10);
+    --home-lime:#D9F99D; --home-lime-ink:#241E15; --home-fill:rgba(70,55,30,0.08); --home-plum:#6B2D5C;
+    --good:#2F5D2A; --good-bg:rgba(52,102,42,0.10); --bad:#8A2E2E; --bad-bg:rgba(158,48,48,0.08); --warn:#835006; --warn-bg:rgba(131,80,6,0.10);
+    --type-heading:16px; --type-body:14px; --type-support:12px; --type-label:11px;
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A94A; --doc-bad:#E07A7A; --doc-focus:#8AB4FF; } }
+  :root[data-theme="dark"] { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A94A; --doc-bad:#E07A7A; --doc-focus:#8AB4FF; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--doc-bg); color:var(--doc-ink); font-family:Inter,system-ui,sans-serif; font-size:15px; line-height:1.5; }
+  [hidden] { display:none !important; }
+  button { font:inherit; color:inherit; background:none; border:0; padding:0; cursor:pointer; }
+  button:focus-visible, [tabindex]:focus-visible, a:focus-visible { outline:2px solid var(--doc-focus); outline-offset:2px; }
+  .wrap { max-width:1320px; margin:0 auto; padding-block:28px 64px; padding-inline:20px; }
+  /* hub chrome */
+  .hubbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px 24px; padding:14px 20px; background:var(--doc-ink); color:var(--doc-bg); }
+  .hubbar .t { margin-right:auto; } .hubbar .t strong { display:block; font-size:15px; } .hubbar .t small { color:color-mix(in srgb, var(--doc-bg) 75%, transparent); font-size:12px; }
+  .stages { display:flex; flex-wrap:wrap; gap:4px; list-style:none; margin:0; padding:0; }
+  .stages li { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:5px 10px; border-radius:999px; color:color-mix(in srgb, var(--doc-bg) 55%, transparent); white-space:nowrap; cursor:default; }
+  .stages li.done { color:var(--doc-bg); } .stages li.current { color:var(--doc-ink); background:var(--doc-accent); }
+  .hubactions button { min-height:40px; padding:7px 12px; border:1px solid color-mix(in srgb, var(--doc-bg) 40%, transparent); border-radius:6px; color:var(--doc-bg); font-size:13px; }
+  .hubactions button[aria-pressed="true"] { background:var(--doc-bg); color:var(--doc-ink); }
+  .hubtabs { display:flex; gap:22px; overflow:auto; white-space:nowrap; padding:0 20px; background:var(--doc-panel); border-bottom:1px solid var(--doc-line); }
+  .hubtabs button { min-height:46px; padding:9px 0; border-bottom:3px solid transparent; color:var(--doc-muted); font-size:14px; }
+  .hubtabs button[aria-pressed="true"] { border-bottom-color:var(--doc-accent); color:var(--doc-ink); font-weight:700; }
+  .walk { display:flex; gap:4px; flex-wrap:wrap; margin:0 0 26px; padding:0; list-style:none; }
+  .walk a { display:inline-flex; align-items:center; min-height:40px; padding:6px 12px; border-radius:6px; color:var(--doc-muted); text-decoration:none; font-size:13px; }
+  .walk a[aria-current="page"] { background:var(--doc-on); color:var(--doc-ink); font-weight:700; }
+  /* header */
+  .head { display:grid; gap:8px; max-width:74ch; margin-bottom:22px; }
+  .eyebrow { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-muted); }
+  h1 { margin:0; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.01em; text-wrap:balance; }
+  h2.sec { font-size:21px; margin:0 0 6px; text-wrap:balance; }
+  .lede { margin:0; color:var(--doc-muted); max-width:70ch; } .lede strong { color:var(--doc-ink); font-weight:600; }
+  .screen > .lede { margin-bottom:22px; }
+  /* specimens */
+  .row { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(440px,100%),1fr)); gap:28px 32px; align-items:start; margin-bottom:34px; }
+  .spec { display:grid; gap:10px; justify-items:start; min-width:0; }
+  .spec-cap { display:flex; flex-wrap:wrap; align-items:center; gap:8px 10px; font-size:13px; color:var(--doc-muted); max-width:600px; }
+  .spec-cap b { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-ink); }
+  .stage { width:600px; max-width:100%; container-type:inline-size; }
+  body.phone .stage { width:390px; }
+  .frame { width:100%; background:var(--home-card); color:var(--home-ink); border:1px solid var(--home-line-strong); border-radius:12px; padding:22px; font-family:Inter,system-ui,sans-serif; font-size:var(--type-body); line-height:1.4; box-shadow:0 1px 2px rgba(70,55,30,.05), 0 10px 30px rgba(20,15,10,.14); display:flex; flex-direction:column; gap:14px; }
+  .frame.paper { background:var(--home-paper); }
+  .fhead { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:2px; }
+  .ftitle { display:inline-flex; align-items:center; gap:10px; margin:0; font-size:var(--type-heading); font-weight:700; }
+  .fx { color:var(--home-dim); font-size:18px; line-height:1; }
+  .hint { margin:0; font-size:var(--type-support); color:var(--home-dim); line-height:1.45; } .hint b { color:var(--home-ink); font-weight:600; }
+  .lbl { display:block; font-size:var(--type-support); font-weight:600; color:var(--home-dim); }
+  .field { display:flex; flex-direction:column; gap:5px; min-width:0; }
+  .input { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--home-paper); border:1px solid var(--home-line-strong); border-radius:6px; padding:8px 12px; color:var(--home-ink); min-height:38px; }
+  .frame.paper .input { background:var(--home-card); }
+  .input.ph { color:var(--home-dim); } .input .caret { color:var(--home-dim); font-weight:300; }
+  .grid2 { display:grid; grid-template-columns:1fr 1fr; gap:11px 14px; }
+  .band { padding:10px 12px; border-radius:6px; background:var(--home-fill); display:flex; flex-direction:column; gap:2px; }
+  .band .l1 { font-weight:600; } .band .l2 { font-size:var(--type-support); color:var(--home-dim); }
+  .foot { display:flex; justify-content:flex-end; gap:8px; margin:4px -22px -22px; padding:14px 22px; border-top:1px solid var(--home-line); }
+  .btn { padding:8px 14px; border-radius:6px; font-weight:700; background:var(--home-lime); color:var(--home-lime-ink); min-height:36px; }
+  .ghost { padding:8px 10px; color:var(--home-dim); min-height:36px; border-radius:6px; }
+  .ghost.danger { color:var(--bad); }
+  .linkbtn { color:var(--home-olive); font-weight:600; font-size:var(--type-support); }
+  .consequence { margin:0; font-size:var(--type-support); color:var(--home-ink-soft); line-height:1.45; padding:9px 12px; border-left:3px solid var(--home-olive); background:var(--home-olive-soft); border-radius:0 6px 6px 0; }
+  .consequence b { color:var(--home-ink); }
+  /* the share row (the real editor's geometry) */
+  .srow { display:flex; flex-wrap:wrap; gap:6px 8px; align-items:center; }
+  .srow .fam { flex:1 1 220px; min-width:0; }
+  .share { display:flex; align-items:stretch; flex:0 0 auto; gap:6px; }
+  .unit { display:flex; align-items:stretch; }
+  .unit .num { width:6.5rem; border-radius:6px 0 0 6px; text-align:right; justify-content:flex-end; }
+  .unit .pill { display:inline-flex; align-items:center; padding:0 11px; border:1px solid var(--home-line-strong); border-left:0; font-weight:700; color:var(--home-dim); background:var(--home-card); }
+  .unit .pill.on { background:var(--home-ink); color:var(--home-card); border-color:var(--home-ink); }
+  .unit .pill:last-child { border-radius:0 6px 6px 0; }
+  .applies { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; font-size:var(--type-support); color:var(--home-dim); padding:2px 0 2px 2px; }
+  .applies b { color:var(--home-ink-soft); font-weight:600; }
+  .applies .dots { color:var(--home-line-strong); }
+  .cue { display:flex; flex-wrap:wrap; align-items:center; gap:4px 10px; font-size:var(--type-support); color:var(--warn); padding:6px 10px; border-radius:6px; background:var(--warn-bg); }
+  .cue b { font-weight:600; }
+  /* the payment picker */
+  .paylist { display:flex; flex-direction:column; gap:0; border:1px solid var(--home-line-strong); border-radius:8px; overflow:hidden; background:var(--home-card); }
+  .paylist .ph { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 12px; background:var(--home-paper); border-bottom:1px solid var(--home-line); font-size:var(--type-support); color:var(--home-dim); }
+  .paylist .ph b { color:var(--home-ink); font-weight:600; font-size:var(--type-body); }
+  .pay { display:grid; grid-template-columns:auto auto 1fr auto; gap:12px; align-items:center; padding:10px 12px; border-bottom:1px solid var(--home-line); min-height:44px; }
+  .pay:last-child { border-bottom:0; }
+  .pay .box { width:18px; height:18px; border:1.5px solid var(--home-line-strong); border-radius:4px; background:var(--home-card); display:inline-flex; align-items:center; justify-content:center; }
+  .pay .box.on { background:var(--home-ink); border-color:var(--home-ink); color:var(--home-card); font-size:12px; font-weight:700; }
+  .pay .n { font-family:"IBM Plex Mono",monospace; font-size:var(--type-support); color:var(--home-dim); }
+  .pay .d { font-weight:600; } .pay .d small { display:block; font-weight:400; font-size:var(--type-support); color:var(--home-dim); }
+  .pay .amt { font-variant-numeric:tabular-nums; font-weight:600; }
+  .pay.dim .d, .pay.dim .amt { color:var(--home-dim); font-weight:400; }
+  /* the room zone */
+  .zone { display:flex; flex-direction:column; gap:10px; }
+  .zlabel { margin:0; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.06em; color:var(--home-dim); }
+  .zones { display:grid; grid-template-columns:1fr 1fr; gap:22px; }
+  .tbl { width:100%; border-collapse:collapse; font-size:var(--type-body); }
+  .tbl th { text-align:left; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--home-dim); padding:6px 8px; border-bottom:1px solid var(--home-line-strong); white-space:nowrap; }
+  .tbl td { padding:9px 8px; border-bottom:1px solid var(--home-line); vertical-align:top; }
+  .tbl tr:last-child td { border-bottom:0; }
+  .tbl .num, .tbl th.num { text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+  .tbl .sub { display:block; font-size:var(--type-support); color:var(--home-dim); }
+  .tbl .rowact { display:inline-flex; gap:2px; }
+  .plum { color:var(--home-plum); font-weight:600; }
+  /* the drawer */
+  .dhead { display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .dhead h3 { margin:0; font-size:var(--type-heading); }
+  .dhead .who { font-size:var(--type-support); color:var(--home-dim); }
+  .tiles { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+  .tile { padding:10px 12px; border:1px solid var(--home-line); border-radius:8px; background:var(--home-card); min-width:0; }
+  .tile .k { display:block; font-size:var(--type-label); font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--home-dim); }
+  .tile .v { display:block; font-size:16px; font-weight:700; font-variant-numeric:tabular-nums; margin-top:2px; }
+  .tile .v.good { color:var(--good); } .tile .v.bad { color:var(--bad); }
+  .ladderwrap { overflow-x:auto; margin:0 -4px; padding:0 4px; }
+  .ladder { min-width:520px; }
+  .note-good { display:inline-flex; align-items:center; gap:5px; color:var(--good); font-weight:600; }
+  .note-bad { display:inline-flex; align-items:center; gap:5px; color:var(--bad); font-weight:600; }
+  .note-good .ck { width:12px; height:12px; border-radius:50%; background:var(--good); color:#fff; font-size:9px; display:inline-flex; align-items:center; justify-content:center; }
+  .credrow { display:flex; flex-wrap:wrap; align-items:baseline; gap:4px 12px; padding:9px 0; border-bottom:1px solid var(--home-line); }
+  .credrow:last-child { border-bottom:0; }
+  .credrow .amt { color:var(--good); font-weight:700; font-variant-numeric:tabular-nums; flex:0 0 auto; }
+  .credrow .desc { flex:1 1 140px; color:var(--home-ink-soft); }
+  .credrow .meta { color:var(--home-dim); font-size:var(--type-support); flex:0 0 auto; }
+  .credrow .line2 { flex:1 1 100%; font-size:var(--type-support); color:var(--home-dim); padding-left:0; }
+  .credrow .line2 b { color:var(--home-ink-soft); font-weight:600; }
+  /* settings specimen */
+  .setrow { display:grid; grid-template-columns:1fr; gap:6px; }
+  .setrow .q { font-weight:600; }
+  /* highlights — clickable, every one */
+  .mk { display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; padding:1px 6px; border-radius:4px; vertical-align:middle; margin-left:6px; line-height:1.5; cursor:pointer; border:1px solid transparent; }
+  .mk[data-k="new"] { background:var(--home-lime); color:#2b3f12; border-color:#b9d88c; }
+  .mk[data-k="re"] { background:#e3edf2; color:#1d4a5e; border-color:#b6cfdb; }
+  .mk[data-k="un"] { background:#eeeee9; color:#5c6658; border-color:#d3d9cd; }
+  .mk:hover { filter:brightness(.94); }
+  .fl { display:inline-flex; align-items:center; font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:700; letter-spacing:.06em; padding:1px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; line-height:1.5; color:#fff; background:var(--doc-bad); }
+  .fl.fix { background:var(--home-olive); letter-spacing:.02em; text-transform:none; }
+  .dt { display:inline-flex; align-items:center; font-family:"IBM Plex Mono",monospace; font-size:10px; font-weight:700; letter-spacing:.06em; padding:1px 6px; border-radius:4px; margin-left:6px; vertical-align:middle; line-height:1.5; color:var(--doc-warn); border:1px solid var(--doc-warn); background:transparent; }
+  .fl:hover, .dt:hover { filter:brightness(1.1); }
+  .spec-cap .mk, .spec-cap .fl, .spec-cap .dt { margin-left:0; }
+  /* dialog */
+  dialog { padding:0; border:1px solid var(--doc-line); border-radius:12px; max-width:600px; width:calc(100% - 30px); background:var(--doc-panel); color:var(--doc-ink); }
+  dialog::backdrop { background:rgba(20,22,28,.55); }
+  .dlghead { padding:16px 22px; border-bottom:1px solid var(--doc-line); display:flex; justify-content:space-between; align-items:center; gap:12px; }
+  .dlghead h2 { margin:0; font-size:17px; }
+  .dlghead button { min-height:40px; padding:6px 12px; border:1px solid var(--doc-line); border-radius:6px; font-size:13px; }
+  .dlgbody { padding:20px 22px 24px; }
+  .explain h3 { margin:14px 0 4px; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-muted); font-family:"IBM Plex Mono",monospace; }
+  .explain h3:first-child { margin-top:0; }
+  .explain p { margin:0 0 8px; font-size:14px; }
+  .explain .here { background:var(--doc-bg); border:1px solid var(--doc-line); border-radius:6px; padding:10px 12px; }
+  .explain .act { margin-top:14px; }
+  .explain .act button { min-height:40px; padding:7px 12px; border:1px solid var(--doc-line); border-radius:6px; font-size:13px; }
+  /* notes + docs */
+  .notes { display:grid; gap:12px; margin:8px 0 32px; max-width:900px; }
+  .note { display:grid; grid-template-columns:34px 1fr; gap:14px; padding:14px 18px; background:var(--doc-panel); border:1px solid var(--doc-line); border-radius:10px; }
+  .note .n { width:26px; height:26px; border-radius:6px; background:var(--doc-ink); color:var(--doc-bg); font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; margin-top:2px; }
+  .note.prob .n { background:var(--doc-bad); color:#fff; } .note.dec .n { background:transparent; color:var(--doc-warn); border:1px solid var(--doc-warn); }
+  .note h3 { margin:0 0 4px; font-size:15px; }
+  .note p { margin:0; color:var(--doc-muted); max-width:78ch; font-size:14px; } .note p + p { margin-top:6px; } .note p b { color:var(--doc-ink); font-weight:600; }
+  .intent { margin-top:6px; padding:14px 18px; background:var(--doc-panel); border:1px solid var(--doc-line); border-radius:10px; font-size:13px; color:var(--doc-muted); max-width:900px; } .intent strong { color:var(--doc-ink); }
+  .doc { max-width:78ch; margin:0 auto; padding-block:28px 56px; padding-inline:20px; }
+  .doc h1 { font-size:24px; margin-bottom:4px; } .doc h2 { font-size:18px; margin:28px 0 8px; } .doc h3 { font-size:15px; margin:18px 0 6px; }
+  .doc p, .doc li { color:var(--doc-ink); } .doc ul, .doc ol { padding-left:22px; } .doc li { margin:4px 0; } .doc .meta { color:var(--doc-muted); font-size:13px; margin:0 0 16px; }
+  .doc .callout { padding:12px 16px; border-left:3px solid var(--doc-accent); background:var(--doc-panel); border-radius:0 6px 6px 0; margin:14px 0; }
+  .doc table { border-collapse:collapse; width:100%; font-size:14px; } .doc th, .doc td { text-align:left; padding:7px 10px; border-bottom:1px solid var(--doc-line); vertical-align:top; } .doc th { font-size:12px; text-transform:uppercase; letter-spacing:.05em; color:var(--doc-muted); }
+  .drow { border:1px solid var(--doc-line); border-radius:10px; background:var(--doc-panel); padding:14px 16px; margin-bottom:10px; }
+  .drow .dh { display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap; } .drow .dh strong { font-size:15px; }
+  .drow p { margin:6px 0 0; color:var(--doc-muted); font-size:14px; } .drow p b { color:var(--doc-ink); }
+  .tag { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; padding:2px 7px; border-radius:4px; border:1px solid var(--doc-line); color:var(--doc-muted); white-space:nowrap; }
+  .tag.proposed { color:var(--doc-warn); border-color:var(--doc-warn); } .tag.accepted { color:var(--doc-accent); border-color:var(--doc-accent); } .tag.rejected { color:var(--doc-bad); border-color:var(--doc-bad); }
+  @container (max-width:420px) {
+    .frame { padding:16px; } .foot { margin:4px -16px -16px; padding:12px 16px; }
+    .grid2 { grid-template-columns:1fr; } .zones { grid-template-columns:1fr; } .tiles { grid-template-columns:1fr 1fr; }
+    .pay { grid-template-columns:auto auto 1fr; } .pay .amt { grid-column:3; justify-self:end; }
+  }
+  @media (max-width:600px) { .hubbar { padding:11px 15px; gap:8px; } .hubtabs { padding:0 14px; } .wrap { padding-inline:16px; } .stage, body.phone .stage { width:100%; } }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+
+<div class="hubbar">
+  <div class="t"><strong>Sponsorship Applies To — project hub</strong><small>Ruled 2026-09-21 (D1–D8 as drawn) · built on dev · /simplify + /review + /docs run the same day · owner QA walk owed</small></div>
+  <ul class="stages" aria-label="Project lifecycle">
+    <li class="done" title="Mockup published 2026-09-21 (this artifact, v1); ruled the same day: “looks good, do you want to build here”">Design</li>
+    <li class="done" title="COACH_SPONSORSHIP_APPLIES_TO_PLAN.md + PM brief, 2026-09-21">Plan</li>
+    <li class="done" title="Built on dev 2026-09-21 — mig 308 applied to dev; typecheck + verify:changed green (4,417 unit tests); the arranged-payments UAT scenario 2/2 against the dev server">Build</li>
+    <li class="done" title="/simplify (11 of 12 applied) · /review high-risk, 5 lenses: 1 High + 2 Medium + 2 Low confirmed and fixed, 3 accepted residuals, 2 refuted · /docs — all 2026-09-21">Review</li>
+    <li class="current" title="Owner QA walk owed — the PM Brief tab carries the five-step test">QA</li>
+    <li title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phoneToggle" aria-pressed="false">Phone width</button></div>
+</div>
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">Coaches portal · Money · Fundraising · a sponsorship's credit families · proposal · 2026-09-21</div>
+    <h1>A sponsorship that names its payments</h1>
+    <p class="lede">A parent and a coach agree that a sponsor's money should cover <em>these</em> payments — the December and February ones, say. Today the product has one team-wide answer to where any credit lands, and no family can be the exception. <strong>The proposal stores the agreement, not the dollars:</strong> the coach names the payments on that family's share of the sponsorship, the team default stays exactly as it is for everyone else, and the money still works itself out every time anyone looks — so a payment that arrives in cash, or a schedule that changes, can never leave a stale figure behind.</p>
+    <p class="lede">Every red flag, green chip, amber D-tag and NEW / UNCHANGED tag on a screen is clickable and explains itself. Use <strong>Phone width</strong> at the top to see each specimen at 390px.</p>
+  </header>
+
+  <ul class="walk" aria-label="Prototype walkthrough" id="walkNav">
+    <li><a href="#s1">1 · Today</a></li>
+    <li><a href="#s2">2 · The pledge — whole form</a></li>
+    <li><a href="#s3">3 · Naming the payments</a></li>
+    <li><a href="#s4">4 · The sponsor's room</a></li>
+    <li><a href="#s5">5 · The family's drawer</a></li>
+  </ul>
+
+  <!-- ═══════════════════════ 1 · TODAY ═══════════════════════ -->
+  <section class="screen" id="s1">
+    <h2 class="sec">1 · Today — one dial for the whole team</h2>
+    <p class="lede">The Okafor family's dues are $1,000.00 in four payments. Riverdale Dental pledged $600.00 and half of it is credited to Maya — $300.00. Where that $300.00 lands is decided by one team-wide setting, and nothing on the pledge, the sponsor, or the family can change it.</p>
+    <div class="row">
+      <div class="spec">
+        <div class="spec-cap"><b>Team settings · Money</b> <span class="mk" data-k="un" data-note="The team-wide setting stays exactly as it is — same three choices, same place, same default. The proposal never touches it; it adds an exception beside it, per family, per sponsorship.">Unchanged</span> <button class="fl" type="button" data-finding="F01" data-here="This picker is the only place the product decides where a credit lands, and it decides for every family and every credit at once. A parent who asks for something different has no door.">F01</button></div>
+        <div class="stage"><div class="frame paper">
+          <div class="zone">
+            <p class="zlabel">Money</p>
+            <div class="setrow">
+              <span class="q">How do credits meet bills?</span>
+              <div class="input"><span>The last payment first</span><span class="caret">▾</span></div>
+              <p class="hint">Fundraising shrinks the far end of the schedule; near-term amounts keep their dates</p>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="spec-cap"><b>Player Dues · Okafor, Maya · today</b> <button class="fl" type="button" data-finding="F02" data-here="The $300.00 landed on payment #4 in full and $50.00 of #3, because the team's setting says last payment first. Maya's parent asked the coach for December and February. Nothing on this row can say why it went to April instead — and nothing could have put it in December.">F02</button></div>
+        <div class="stage"><div class="frame">
+          <div class="dhead"><h3>Okafor, Maya</h3><span class="who">Sponsor credit landed by the team default — the last payment first</span></div>
+          <div class="tiles">
+            <div class="tile"><span class="k">Dues</span><span class="v">$1,000.00</span></div>
+            <div class="tile"><span class="k">Fundraising</span><span class="v good">−$300.00</span></div>
+            <div class="tile"><span class="k">Paid</span><span class="v">$0.00</span></div>
+            <div class="tile"><span class="k">Balance</span><span class="v bad">$700.00</span></div>
+          </div>
+          <div class="ladderwrap"><table class="tbl ladder">
+            <thead><tr><th>#</th><th>Due</th><th class="num">Installment</th><th class="num">Credits</th><th class="num">Paid</th><th class="num">Owing</th><th>Note</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Oct 1, 2026</td><td class="num">$250.00</td><td class="num">—</td><td class="num">—</td><td class="num">$250.00</td><td></td></tr>
+              <tr><td>2</td><td>Dec 1, 2026</td><td class="num">$250.00</td><td class="num">—</td><td class="num">—</td><td class="num">$250.00</td><td></td></tr>
+              <tr><td>3</td><td>Feb 1, 2027</td><td class="num">$250.00</td><td class="num plum">$50.00</td><td class="num">—</td><td class="num">$200.00</td><td>$50.00 covered — Riverdale Dental</td></tr>
+              <tr><td>4</td><td>Apr 1, 2027</td><td class="num">$250.00</td><td class="num plum">$250.00</td><td class="num">—</td><td class="num">$0.00</td><td><span class="note-good"><span class="ck">✓</span>Covered by fundraising</span> — Riverdale Dental</td></tr>
+            </tbody>
+          </table></div>
+          <p class="hint">Credits reduce the last payment first</p>
+        </div></div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note prob"><span class="n">F01</span><div><h3>One dial, every family</h3><p>The only way a sponsor's money meets a family's bills is the team setting — last payment first, next payment first, or held to season's end. It is the right default and it should stay the default. What is missing is the <b>exception</b>: a parent and a coach agree something specific for one family, and the product has no place to write it down.</p><p>There is no honest workaround. Recording the sponsor's cheque as a <b>payment</b> on the December bill would put it in the right month but call a sponsor's money the parent's cash — which changes what the season reports as collected. Switching the whole team to "next payment first" moves every family for one.</p></div></div>
+      <div class="note prob"><span class="n">F02</span><div><h3>The drawer cannot explain a landing</h3><p>The Note cell says <b>Covered by fundraising — Riverdale Dental</b> on whichever bill the direction reached. That is true, and it is not the sentence the parent needs: they asked for December, they see April, and nothing says why. Once an arrangement can exist, the drawer has to be able to say <b>as arranged</b> — and, when the money moved anyway, why it did.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 2 · THE PLEDGE, WHOLE FORM ═══════════════════════ -->
+  <section class="screen" id="s2" hidden>
+    <h2 class="sec">2 · The pledge — the whole form, before and after</h2>
+    <p class="lede">Logging a pledge is the "A sponsor promised us money" answer inside Record money. <strong>The ordinary pledge must look exactly as it does today</strong> — the owner retired landing arithmetic from this form on Aug 31 and that ruling's reason still holds. What the proposal adds is one quiet line under each credited family, stating the default. It becomes a door only when the coach opens it.</p>
+    <div class="row">
+      <div class="spec">
+        <div class="spec-cap"><b>Before · Record money · a pledge</b> <span class="mk" data-k="un" data-note="Drawn from the live form: the locked band, Sponsor or grant, Raising for, Pledged amount, Expected by, Credit families, Tags, Note, the When-you-save consequence and the closing row. Every one of these stays.">As today</span></div>
+        <div class="stage"><div class="frame">
+          <div class="fhead"><h3 class="ftitle">Record money</h3><span class="fx">×</span></div>
+          <div class="band"><span class="l1">A sponsor promised us money</span><span class="l2">Nothing arrives today — log the promise and record each cheque as it comes.</span></div>
+          <div class="field"><span class="lbl">Sponsor or grant *</span><div class="input"><span>Riverdale Dental</span></div></div>
+          <div class="grid2">
+            <div class="field"><span class="lbl">Raising for</span><div class="input"><span>Sponsorship</span><span class="caret">▾</span></div></div>
+            <div class="field"><span class="lbl">Pledged amount *</span><div class="input"><span>$</span><span style="margin-right:auto">600.00</span></div></div>
+          </div>
+          <div class="field"><span class="lbl">Expected by</span><div class="input"><span>Oct 15, 2026</span><span class="caret">▾</span></div></div>
+          <div class="field">
+            <span class="lbl">Credit families</span>
+            <div class="srow">
+              <div class="input fam"><span>Okafor, Maya</span><span class="caret">▾</span></div>
+              <div class="share"><div class="unit"><div class="input num"><span>50</span></div><span class="pill">$</span><span class="pill on">%</span></div></div>
+            </div>
+            <button type="button" class="linkbtn" style="align-self:flex-start">+ Add another family</button>
+          </div>
+          <div class="field"><span class="lbl">Tags</span><div class="input ph"><span>Type to find or create a money tag…</span></div></div>
+          <div class="field"><span class="lbl">Note</span><div class="input ph"><span>Optional details…</span></div></div>
+          <p class="consequence"><b>When you save:</b> nothing moves. The promise joins the plan and the forward view — record each cheque against it as it arrives.</p>
+          <div class="foot"><button type="button" class="ghost">Cancel</button><button type="button" class="btn">Save</button></div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="spec-cap"><b>After · the same form</b> <span class="mk" data-k="new" data-note="One line per credited family, under the family's share row: it states the team default by name and offers Change. Nothing about dollars, nothing about which bill — that arithmetic stays retired from this form. Only the choice lives here.">New — one line</span> <button class="fl fix" type="button" data-finding="F01" data-here="The exception gets a door on the family's share of the sponsorship — where the coach is already naming the family and the share, and where the parent's agreement was actually made. The team setting a screen away is untouched.">fixes F01</button> <button class="dt" type="button" data-d="D1">D1</button> <button class="dt" type="button" data-d="D2">D2</button></div>
+        <div class="stage"><div class="frame">
+          <div class="fhead"><h3 class="ftitle">Record money</h3><span class="fx">×</span></div>
+          <div class="band"><span class="l1">A sponsor promised us money <span class="mk" data-k="un" data-note="The locked band is unchanged — the door still names what the form is for.">Unchanged</span></span><span class="l2">Nothing arrives today — log the promise and record each cheque as it comes.</span></div>
+          <div class="field"><span class="lbl">Sponsor or grant *</span><div class="input"><span>Riverdale Dental</span></div></div>
+          <div class="grid2">
+            <div class="field"><span class="lbl">Raising for</span><div class="input"><span>Sponsorship</span><span class="caret">▾</span></div></div>
+            <div class="field"><span class="lbl">Pledged amount *</span><div class="input"><span>$</span><span style="margin-right:auto">600.00</span></div></div>
+          </div>
+          <div class="field"><span class="lbl">Expected by</span><div class="input"><span>Oct 15, 2026</span><span class="caret">▾</span></div></div>
+          <div class="field">
+            <span class="lbl">Credit families <span class="mk" data-k="un" data-note="The share rows are the live SponsorCreditPlanEditor, unchanged: family, share, $ or %, remove, + Add another family. The new line hangs under each row that has a family picked.">Unchanged</span></span>
+            <div class="srow">
+              <div class="input fam"><span>Okafor, Maya</span><span class="caret">▾</span></div>
+              <div class="share"><div class="unit"><div class="input num"><span>50</span></div><span class="pill">$</span><span class="pill on">%</span></div></div>
+            </div>
+            <div class="applies"><span>Applies to <b>the team default — the last payment first</b></span><span class="dots">·</span><button type="button" class="linkbtn">Change</button> <span class="mk" data-k="new" data-note="The stated default, in the team setting's own words, with a Change door. It appears once the row has a family; a row with no family has nothing to apply to. A family with no dues schedule yet gets the sentence on screen 3 instead of Change.">New</span></div>
+            <button type="button" class="linkbtn" style="align-self:flex-start">+ Add another family</button>
+          </div>
+          <div class="field"><span class="lbl">Tags</span><div class="input ph"><span>Type to find or create a money tag…</span></div></div>
+          <div class="field"><span class="lbl">Note</span><div class="input ph"><span>Optional details…</span></div></div>
+          <p class="consequence"><b>When you save:</b> nothing moves. The promise joins the plan and the forward view — record each cheque against it as it arrives. <span class="mk" data-k="un" data-note="The consequence line is unchanged — an arrangement moves no money today either; it only says where the cheques will land when they come.">Unchanged</span></p>
+          <div class="foot"><button type="button" class="ghost">Cancel</button><button type="button" class="btn">Save</button></div>
+        </div></div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="n">→</span><div><h3>The whole-form test</h3><p>Side by side, the after form is <b>one line taller</b> per credited family and otherwise identical. Nothing the form exists for moved below the fold, and a coach logging an ordinary pledge reads the default and moves on. That is the bar the Aug 31 ruling sets, and it is why the choice is a line and not a section.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 3 · NAMING THE PAYMENTS ═══════════════════════ -->
+  <section class="screen" id="s3" hidden>
+    <h2 class="sec">3 · Naming the payments</h2>
+    <p class="lede">Change opens that family's own schedule — dated, with amounts — as checkboxes, in place, under the share row. The coach ticks the payments the parent asked for and the line above restates the choice. Two sentences carry the rules: cash still lands first, and whatever cannot be placed follows the team default.</p>
+    <div class="row">
+      <div class="spec">
+        <div class="spec-cap"><b>The door open · Okafor, Maya</b> <span class="mk" data-k="new" data-note="The family's payments, drawn from their live dues schedule: position, due date, amount. Ticking is the whole gesture. Amounts are shown so the coach can see the sponsorship fits — $300.00 across two $250.00 payments — but the product does not pre-compute the split here; that stays derived, and the family's drawer shows it.">New</span> <button class="dt" type="button" data-d="D2">D2</button> <button class="dt" type="button" data-d="D3">D3</button> <button class="dt" type="button" data-d="D5">D5</button></div>
+        <div class="stage"><div class="frame">
+          <div class="field">
+            <span class="lbl">Credit families</span>
+            <div class="srow">
+              <div class="input fam"><span>Okafor, Maya</span><span class="caret">▾</span></div>
+              <div class="share"><div class="unit"><div class="input num"><span>50</span></div><span class="pill">$</span><span class="pill on">%</span></div></div>
+            </div>
+            <div class="paylist">
+              <div class="ph"><b>Applies to these payments</b><button type="button" class="linkbtn">Use the team default</button></div>
+              <div class="pay dim"><span class="box"></span><span class="n">#1</span><span class="d">Oct 1, 2026</span><span class="amt">$250.00</span></div>
+              <div class="pay"><span class="box on">✓</span><span class="n">#2</span><span class="d">Dec 1, 2026</span><span class="amt">$250.00</span></div>
+              <div class="pay"><span class="box on">✓</span><span class="n">#3</span><span class="d">Feb 1, 2027</span><span class="amt">$250.00</span></div>
+              <div class="pay dim"><span class="box"></span><span class="n">#4</span><span class="d">Apr 1, 2027</span><span class="amt">$250.00</span></div>
+            </div>
+            <p class="hint">Cash the family has already sent still lands first. Whatever this sponsorship can't place on these payments follows the team default — <b>the last payment first</b>.</p>
+            <button type="button" class="linkbtn" style="align-self:flex-start">+ Add another family</button>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="spec-cap"><b>Closed again · the line restates it</b> <span class="mk" data-k="new" data-note="Once payments are named, the line reads them back as dates — the words a parent uses — with Change still beside it. The team-default wording is gone from this row because it no longer applies to this family.">New</span></div>
+        <div class="stage"><div class="frame">
+          <div class="field">
+            <span class="lbl">Credit families</span>
+            <div class="srow">
+              <div class="input fam"><span>Okafor, Maya</span><span class="caret">▾</span></div>
+              <div class="share"><div class="unit"><div class="input num"><span>50</span></div><span class="pill">$</span><span class="pill on">%</span></div></div>
+            </div>
+            <div class="applies"><span>Applies to <b>Dec 1 · Feb 1</b></span><span class="dots">·</span><button type="button" class="linkbtn">Change</button></div>
+            <button type="button" class="linkbtn" style="align-self:flex-start">+ Add another family</button>
+          </div>
+        </div></div>
+        <div class="spec-cap" style="margin-top:14px"><b>No schedule yet · Tremblay, Liam</b> <span class="mk" data-k="new" data-note="A family without a dues schedule has no payments to name. The line says so and points at Player Dues; there is no Change. The coach comes back through Edit sponsorship once the schedule exists — the door is the same there.">New</span> <button class="dt" type="button" data-d="D6">D6</button></div>
+        <div class="stage"><div class="frame">
+          <div class="field">
+            <span class="lbl">Credit families</span>
+            <div class="srow">
+              <div class="input fam"><span>Tremblay, Liam</span><span class="caret">▾</span></div>
+              <div class="share"><div class="unit"><div class="input num"><span>150</span></div><span class="pill on">$</span><span class="pill">%</span></div></div>
+            </div>
+            <div class="applies"><span>Applies to <b>the team default</b> — Liam has no dues schedule yet. Set it up on <b>Player Dues</b> to name payments.</span></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note dec"><span class="n">D3</span><div><h3>Cash still claims a bill before a credit does</h3><p>This is the rule that makes the whole money model self-correcting today, and the arrangement lives inside it rather than over it. If Maya's parent pays the December bill in cash anyway, the sponsorship's $250.00 has no December to land on. <b>Proposed:</b> it goes to the next named payment, and anything still left follows the team default — so the family is never stranded, and the drawer says what happened (screen 5). <b>The alternative</b> is to hold it as money owed back to the family, which is stricter about the agreement and worse for the parent. Owner's call.</p></div></div>
+      <div class="note dec"><span class="n">D5</span><div><h3>On a "settle at season's end" team, an arrangement lands anyway</h3><p>That setting keeps money-backed credits off bills until the season closes. An arrangement is an explicit, per-family decision to do otherwise — that is the point of making one — so it lands on its named payments. Whatever it cannot place follows the team default, which on such a team means it waits.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 4 · THE SPONSOR'S ROOM ═══════════════════════ -->
+  <section class="screen" id="s4" hidden>
+    <h2 class="sec">4 · The sponsor's room — the same door, and the one warning it needs</h2>
+    <p class="lede">The sponsor's row on Fundraising expands into two zones: the cheques that arrived, and the families the money is credited to. The split editor there is the same component as the pledge form's, so the arrangement line and its door appear here without a second copy. This is also where a coach comes back to change an arrangement — and where the product tells them when the schedule has moved under one.</p>
+    <div class="row">
+      <div class="spec">
+        <div class="spec-cap"><b>Riverdale Dental · expanded</b> <span class="mk" data-k="un" data-note="The two zones as they stand: Cheques (arrived / amount / credited, Edit and Remove per row) and Credited to players (the live split editor with Save split). Unchanged except for the arrangement line.">Zones as today</span> <span class="mk" data-k="new" data-note="The arrangement line under the family's share, exactly as on the pledge form, plus when it was arranged — the room is where a coach revisits an agreement months later, so the date earns its place here and not on the pledge form.">New — the line</span> <button class="dt" type="button" data-d="D1">D1</button></div>
+        <div class="stage"><div class="frame paper">
+          <div class="zones">
+            <div class="zone">
+              <p class="zlabel">Cheques</p>
+              <table class="tbl">
+                <thead><tr><th>Arrived</th><th class="num">Amount</th><th class="num">Credited</th><th></th></tr></thead>
+                <tbody><tr><td>Sep 28, 2026</td><td class="num" style="font-weight:700">$600.00</td><td class="num plum">$300.00</td><td class="num"><span class="rowact"><button type="button" class="ghost" style="min-height:0;padding:2px 6px">Edit</button><button type="button" class="ghost danger" style="min-height:0;padding:2px 6px">Remove</button></span></td></tr></tbody>
+              </table>
+            </div>
+            <div class="zone">
+              <p class="zlabel">Credited to players</p>
+              <div class="srow">
+                <div class="input fam"><span>Okafor, Maya</span><span class="caret">▾</span></div>
+                <div class="share"><div class="unit"><div class="input num"><span>50</span></div><span class="pill">$</span><span class="pill on">%</span></div></div>
+              </div>
+              <div class="applies"><span>Applies to <b>Dec 1 · Feb 1</b> — arranged Sep 21, 2026</span><span class="dots">·</span><button type="button" class="linkbtn">Change</button></div>
+              <button type="button" class="linkbtn" style="align-self:flex-start">+ Add another family</button>
+              <p class="hint">Each cheque already earned its share; changing the split re-figures every credit.</p>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="spec-cap"><b>After the dues schedule was re-run</b> <span class="mk" data-k="new" data-note="A schedule re-run replaces every payment. Payments are named by position (#2, #3) so an ordinary re-run keeps the arrangement — but the coach may have added, removed or moved one, and the arrangement cannot know which. So the room says the schedule changed after the arrangement and asks for a look. Keep these clears it; Change reopens the picker. The same cue appears on the family's drawer (screen 5).">New — the cue</span> <button class="dt" type="button" data-d="D4">D4</button></div>
+        <div class="stage"><div class="frame paper">
+          <div class="zones">
+            <div class="zone">
+              <p class="zlabel">Cheques</p>
+              <table class="tbl">
+                <thead><tr><th>Arrived</th><th class="num">Amount</th><th class="num">Credited</th><th></th></tr></thead>
+                <tbody><tr><td>Sep 28, 2026</td><td class="num" style="font-weight:700">$600.00</td><td class="num plum">$300.00</td><td class="num"><span class="rowact"><button type="button" class="ghost" style="min-height:0;padding:2px 6px">Edit</button><button type="button" class="ghost danger" style="min-height:0;padding:2px 6px">Remove</button></span></td></tr></tbody>
+              </table>
+            </div>
+            <div class="zone">
+              <p class="zlabel">Credited to players</p>
+              <div class="srow">
+                <div class="input fam"><span>Okafor, Maya</span><span class="caret">▾</span></div>
+                <div class="share"><div class="unit"><div class="input num"><span>50</span></div><span class="pill">$</span><span class="pill on">%</span></div></div>
+              </div>
+              <div class="applies"><span>Applies to <b>#2 Nov 15 · #3 Jan 15</b> — arranged Sep 21, 2026 as Dec 1 · Feb 1</span></div>
+              <div class="cue"><span><b>The dues schedule was re-run Nov 3</b>, after this was arranged — check the payments.</span><button type="button" class="linkbtn">Keep these</button><span class="dots">·</span><button type="button" class="linkbtn">Change</button></div>
+              <button type="button" class="linkbtn" style="align-self:flex-start">+ Add another family</button>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note dec"><span class="n">D4</span><div><h3>Named by position, warned on change</h3><p>An arrangement remembers which payments by their <b>position</b> in the schedule (#2, #3) and the date and amount each had when it was made. Nudging every due date a week, or changing an amount, keeps the arrangement on the same payments. Adding or removing a payment shifts positions — and the product cannot tell a shift that matters from one that does not. <b>Proposed:</b> keep applying by position, and show this cue on the sponsor's row and the family's drawer until the coach presses Keep these or changes it. A position that no longer exists (four payments became three, #4 was named) follows the team default. <b>The alternative</b> — drop to the team default the moment the schedule changes, until the coach confirms — is quieter for the coach and louder for the parent, whose December suddenly reads $250.00 again. Owner's call.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════ 5 · THE FAMILY'S DRAWER ═══════════════════════ -->
+  <section class="screen" id="s5" hidden>
+    <h2 class="sec">5 · The family's drawer — where the arrangement has to be visible</h2>
+    <p class="lede">The parent's question is answered here, on Player Dues, in Maya's drawer: the ladder shows the sponsorship landing on the named payments, the Note cell says <strong>as arranged</strong>, and the credit itself names its payments. Reminders, statements, exports and season-end settlement all read this same computed position — none of them needs a change of its own.</p>
+    <div class="row">
+      <div class="spec">
+        <div class="spec-cap"><b>Arranged · the cheque has arrived</b> <button class="fl fix" type="button" data-finding="F02" data-here="Payment #2 is covered and #3 is $50.00 lighter, and the Note says why: as arranged. The credit row in the Fundraising section below names the payments the family agreed to. The parent who asked for December reads December.">fixes F02</button> <span class="mk" data-k="re" data-note="The Note cell keeps its grammar — Covered by fundraising — Riverdale Dental — and gains one clause, as arranged, on a landing that came from an arrangement. A landing by the team default says nothing extra, as today.">Restyled — one clause</span> <span class="mk" data-k="new" data-note="The credit row gains a second, quiet line naming its payments. It reads from the same arrangement the sponsor's room shows; there is no second copy of the fact.">New — the credit's line</span></div>
+        <div class="stage"><div class="frame">
+          <div class="dhead"><h3>Okafor, Maya</h3><span class="who">Sponsor credit lands as arranged</span></div>
+          <div class="tiles">
+            <div class="tile"><span class="k">Dues</span><span class="v">$1,000.00</span></div>
+            <div class="tile"><span class="k">Fundraising</span><span class="v good">−$300.00</span></div>
+            <div class="tile"><span class="k">Paid</span><span class="v">$0.00</span></div>
+            <div class="tile"><span class="k">Balance</span><span class="v bad">$700.00</span></div>
+          </div>
+          <div class="ladderwrap"><table class="tbl ladder">
+            <thead><tr><th>#</th><th>Due</th><th class="num">Installment</th><th class="num">Credits</th><th class="num">Paid</th><th class="num">Owing</th><th>Note</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Oct 1, 2026</td><td class="num">$250.00</td><td class="num">—</td><td class="num">—</td><td class="num">$250.00</td><td></td></tr>
+              <tr><td>2</td><td>Dec 1, 2026</td><td class="num">$250.00</td><td class="num plum">$250.00</td><td class="num">—</td><td class="num">$0.00</td><td><span class="note-good"><span class="ck">✓</span>Covered by fundraising</span> — Riverdale Dental · as arranged</td></tr>
+              <tr><td>3</td><td>Feb 1, 2027</td><td class="num">$250.00</td><td class="num plum">$50.00</td><td class="num">—</td><td class="num">$200.00</td><td>$50.00 covered — Riverdale Dental · as arranged</td></tr>
+              <tr><td>4</td><td>Apr 1, 2027</td><td class="num">$250.00</td><td class="num">—</td><td class="num">—</td><td class="num">$250.00</td><td></td></tr>
+            </tbody>
+          </table></div>
+          <div class="zone">
+            <p class="zlabel">Fundraising</p>
+            <div class="credrow"><span class="amt">−$300.00</span><span class="desc">Sponsorship — Riverdale Dental</span><span class="meta">Sep 28, 2026</span><span class="line2">Applies to <b>Dec 1 · Feb 1</b>, as arranged with the family</span></div>
+          </div>
+          <p class="hint">Credits reduce the last payment first — except where a sponsorship names its payments</p>
+        </div></div>
+      </div>
+      <div class="spec">
+        <div class="spec-cap"><b>Later · the parent paid December in cash anyway</b> <button class="dt" type="button" data-d="D3">D3</button> <span class="mk" data-k="new" data-note="Cash claimed the December bill first, as it always has. The sponsorship's $300.00 fills the other named payment (#3, $250.00) and the $50.00 it could not place follows the team default to #4. The Note on #4 and the credit's line both say so — the drawer never lets an arrangement look ignored.">New — the explanation</span></div>
+        <div class="stage"><div class="frame">
+          <div class="dhead"><h3>Okafor, Maya</h3><span class="who">Cash landed first; the arrangement placed what it could</span></div>
+          <div class="tiles">
+            <div class="tile"><span class="k">Dues</span><span class="v">$1,000.00</span></div>
+            <div class="tile"><span class="k">Fundraising</span><span class="v good">−$300.00</span></div>
+            <div class="tile"><span class="k">Paid</span><span class="v">$500.00</span></div>
+            <div class="tile"><span class="k">Balance</span><span class="v bad">$200.00</span></div>
+          </div>
+          <div class="ladderwrap"><table class="tbl ladder">
+            <thead><tr><th>#</th><th>Due</th><th class="num">Installment</th><th class="num">Credits</th><th class="num">Paid</th><th class="num">Owing</th><th>Note</th></tr></thead>
+            <tbody>
+              <tr><td>1</td><td>Oct 1, 2026</td><td class="num">$250.00</td><td class="num">—</td><td class="num">$250.00</td><td class="num">$0.00</td><td><span class="note-good"><span class="ck">✓</span>Paid Sep 30</span></td></tr>
+              <tr><td>2</td><td>Dec 1, 2026</td><td class="num">$250.00</td><td class="num">—</td><td class="num">$250.00</td><td class="num">$0.00</td><td><span class="note-good"><span class="ck">✓</span>Paid Nov 28</span></td></tr>
+              <tr><td>3</td><td>Feb 1, 2027</td><td class="num">$250.00</td><td class="num plum">$250.00</td><td class="num">—</td><td class="num">$0.00</td><td><span class="note-good"><span class="ck">✓</span>Covered by fundraising</span> — Riverdale Dental · as arranged</td></tr>
+              <tr><td>4</td><td>Apr 1, 2027</td><td class="num">$250.00</td><td class="num plum">$50.00</td><td class="num">—</td><td class="num">$200.00</td><td>$50.00 covered — Riverdale Dental · followed the team default</td></tr>
+            </tbody>
+          </table></div>
+          <div class="zone">
+            <p class="zlabel">Fundraising</p>
+            <div class="credrow"><span class="amt">−$300.00</span><span class="desc">Sponsorship — Riverdale Dental</span><span class="meta">Sep 28, 2026</span><span class="line2">Applies to <b>Dec 1 · Feb 1</b>, as arranged — <b>$50.00 followed the team default</b> because Dec 1 was paid in cash</span></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="notes">
+      <div class="note"><span class="n">→</span><div><h3>What does not change, and why that is the point</h3><p>Every figure a family is asked to send — the reminder email, the statement, the export, the season-end settlement, the Money Overview — is read from one computed position per family. The arrangement is a rule fed into that computation, so <b>every one of those surfaces is right without being touched</b>. The only screens that change are the three drawn here: the pledge form, the sponsor's room, and this drawer.</p></div></div>
+      <div class="note dec"><span class="n">D7</span><div><h3>Built generic, opened on sponsorships only</h3><p>The same "special arrangement" could be asked of a bottle-drive share or a written-off adjustment. The mechanism is built so any credit could carry one, but the door is drawn only on the sponsorship's credit families — where the parent-and-coach conversation actually happens. Nothing appears on the drive leaderboard or the Adjustment form until someone asks for it.</p></div></div>
+      <div class="note dec"><span class="n">D8</span><div><h3>The rule keeps its reason and changes one word</h3><p>The money model's standing rule reads: where a credit lands is derived, never stored. Its reason — a stored landing goes stale the moment the schedule, a payment or a cheque changes — is fully honoured here: the dollars are still computed on every read. What is stored is the <b>agreement</b>. The rule's wording tightens to "no <b>computed</b> landing is stored; an arrangement may be", and that is an owner ruling to make explicitly, not a comment to edit in passing.</p></div></div>
+    </div>
+  </section>
+
+  <footer class="intent" id="intent"></footer>
+</div>
+</section>
+
+<!-- ═══════════════════════ PM BRIEF ═══════════════════════ -->
+<section id="hub-brief" class="doc" hidden>
+  <div class="eyebrow">Product-manager brief · 2026-09-21</div>
+  <h1>Sponsorship Applies To</h1>
+  <p class="meta">A sponsorship that names the family's payments it covers. Ruled 2026-09-21 (D1–D8 as drawn); built on dev the same day; owner QA walk owed.</p>
+  <h2>What changes for the coach</h2>
+  <p>When a coach credits a family on a sponsorship — logging the pledge, or later in the sponsor's room — each family's share carries one quiet line: <strong>Applies to the team default</strong>, with a <strong>Change</strong> door. Opening it shows that family's own dues payments as checkboxes; the coach ticks the ones the parent asked for and the line reads them back as dates. Nothing else on the form moves. A coach who never opens the door sees a form one line taller than today and otherwise identical.</p>
+  <p>In the family's drawer on Player Dues, the sponsorship lands on the named payments and the Note says <strong>as arranged</strong>. If the parent pays a named payment in cash anyway, the sponsor's money fills the next named payment and anything left follows the team default — and the drawer says so in a sentence, so an arrangement never looks ignored. If the coach re-runs the dues schedule after an arrangement was made, the sponsor's row and the drawer both ask for a look until the coach confirms or changes it.</p>
+  <h2>Why it matters</h2>
+  <p>Parents make arrangements with coaches — "put the sponsorship on the December and February payments, we're tight then." Today the product has one team-wide answer to where any credit lands and no family can be the exception. The honest workarounds do not exist: recording the sponsor's cheque as a payment misreports a sponsor's money as the parent's cash; changing the team setting moves every family for one. The coach either says no, or keeps the arrangement in their head and hopes the reminder emails do not contradict it.</p>
+  <h2>Customer impact</h2>
+  <p>Head coaches and treasurers on any team that credits sponsorships to families. Most sponsorships will never open the door — the team default is right for most families — so the cost to everyone else is one line of text. For the family that did make an arrangement, every reminder, statement and export agrees with what the coach promised, because they all read the same computed position.</p>
+  <h2>Role-based access</h2>
+  <p>Anyone who can write money on the team can make or change an arrangement (the same rule as the split itself). Read-only staff see the arrangement stated on the sponsor's row and in the drawer, without Change.</p>
+  <h2>Tradeoffs</h2>
+  <ul>
+    <li><strong>The pledge form learns a choice about landing.</strong> The owner retired landing <em>arithmetic</em> from this form on Aug 31. The proposal keeps that: no dollars, no bills, only the choice, and only when opened. The default path is unchanged to the eye.</li>
+    <li><strong>The money model's rule changes one word.</strong> "Where a credit lands is derived, never stored" becomes "no computed landing is stored; an arrangement may be." Same reason, honoured the same way — the dollars are still computed on every read.</li>
+    <li><strong>Two judgment calls are the owner's</strong> (D3, D4): what happens to the sponsor's money when a named payment is paid in cash first, and what happens when the schedule is re-run under an arrangement. Each has a recommended answer and a stricter alternative drawn beside it.</li>
+  </ul>
+  <h2>Priority</h2>
+  <p>Medium. It is a real parent-facing gap with no workaround, but it affects the minority of sponsorships. It sits naturally after the current fundraising QA walks close and before the P4 money-book shelf, because it touches the same pledge and sponsor-room surfaces those walks cover.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach can name two payments on a family's sponsorship share in under a minute, from either door, and the family's drawer shows the money on those payments with "as arranged".</li>
+    <li>A cash payment on a named installment never strands the sponsor's money, and the drawer states where it went.</li>
+    <li>The reminder a family receives for a named month asks for the lowered figure — with no change to the reminder code.</li>
+    <li>A coach who never opens the door cannot tell the pledge form changed, beyond one line.</li>
+  </ul>
+  <h2>How to test it (once built)</h2>
+  <ol>
+    <li>On a UAT team with a four-payment dues schedule, log a pledge crediting one family 50%, open Change on that family and tick payments #2 and #3. Save.</li>
+    <li>Record the sponsor's cheque. Open that family in Player Dues: #2 covered, #3 part-covered, both Notes say as arranged; the credit row names the two dates.</li>
+    <li>Record a cash payment on #2. Reopen the drawer: #3 now fully covered, the remainder on #4 with "followed the team default", the credit row's sentence explains it.</li>
+    <li>Re-run the dues schedule with one more payment. The sponsor's row shows the "re-run after this was arranged" cue; Keep these clears it.</li>
+    <li>Credit a family with no dues schedule: the line points at Player Dues and offers no Change.</li>
+  </ol>
+</section>
+
+<!-- ═══════════════════════ FULL PLAN ═══════════════════════ -->
+<section id="hub-plan" class="doc" hidden>
+  <div class="eyebrow">Full assessment · 2026-09-21</div>
+  <h1>Sponsorship Applies To — implementation plan</h1>
+  <p class="meta">Source of record: <code>docs/projects/active/COACH_SPONSORSHIP_APPLIES_TO_PLAN.md</code>. This tab is the readable copy; the file carries the technical detail and the D-ledger.</p>
+
+  <h2>Problem / context</h2>
+  <p>Where a family's credits meet their bills is decided by one team-level setting (<code>rep_program_years.credit_application</code>: last payment first · next payment first · settle at season's end) and computed on every read by the pure credit engine (<code>lib/dues-credits.ts</code> · <code>applyCreditsToBills</code>). Nothing per family, per sponsorship or per credit exists. A sponsorship reaches a family as credit rows (one per cheque, sized by the family's agreed share in <code>rep_fundraiser_credit_plan</code>), and those rows are pooled with every other credit the family has and walked over the schedule in the team's direction.</p>
+  <p>The engine's header rule — "credit application is derived, never stored; no installment id ever lands on a credit row" — is load-bearing and stays. Its reason (a stored allocation goes stale when the schedule, a payment or a credit changes) is not violated by storing an <em>arrangement</em>, provided the dollars remain derived and the arrangement is keyed by something a schedule re-run does not recycle. Installment <em>ids</em> are recycled — <code>replaceRepDuesInstallments</code> deletes and reinserts — so an arrangement names positions (<code>installment_number</code>), which are stable through a same-count re-run.</p>
+
+  <h3>F01 — One dial, every family</h3>
+  <p>The team setting is the only decision point for credit landing. No per-family exception exists and no honest workaround does: a payment misreports the money's source (and changes dues-actual), and the team setting moves everyone.</p>
+  <h3>F02 — The drawer cannot explain a landing</h3>
+  <p>The Note cell prints "Covered by fundraising — {sponsor}" on whichever bill the direction reached. With arrangements possible, the drawer needs the clauses "as arranged" and "followed the team default", and the credit row needs to name its payments.</p>
+
+  <h2>Scope</h2>
+  <ul>
+    <li>A per-(sponsor × family) arrangement: named payment positions, stored on the credit-plan share and carried onto each accrued credit row.</li>
+    <li>The engine: a "named payments first" pass, before the team-direction walk, after forgiveness. Leftover of an arranged credit joins the ordinary run.</li>
+    <li>Three surfaces: the pledge form's and the sponsor room's shared share editor (the line + the picker), and the Player Dues drawer (Note clauses, credit-row sentence, the re-run cue).</li>
+    <li>Help: the fundraising answer and the dues "how credits meet bills" answer gain a paragraph; search terms gain "arranged", "applies to", "which payment".</li>
+    <li>UAT: one lifecycle scenario covering arranged → cash-first → re-run.</li>
+  </ul>
+  <div class="callout"><strong>Out of scope</strong><p>Exposing the door on drive entries or the Adjustment form (D7). Undoing an arrangement's history. Any change to the team setting or its three modes. A per-family <em>direction</em> override (Option A in the investigation) — subsumed by naming payments.</p></div>
+
+  <h2>Approach</h2>
+  <p><strong>Store the agreement, derive the dollars.</strong> The credit-plan share (<code>rep_fundraiser_credit_plan</code>) gains <code>applies_to</code> — an ordered set of installment positions with the due date and amount each had when arranged — and <code>arranged_at</code>. When arrivals accrue credits (<code>lib/sponsor-arrivals.ts</code> → <code>rep_dues_credits</code>), each credit row copies the share's <code>applies_to</code>, so every reader that already fetches credit rows has the arrangement in hand with no join. Editing the plan re-derives every arrival's credits from scratch (existing behaviour), so the copy cannot drift from the share.</p>
+  <p><strong>Engine change</strong> (<code>applyCreditsToBills</code>): after the forgiveness pass and payout skimming, run arranged credits over their named positions only (team direction among them); then run everything remaining — unarranged credits plus arranged leftovers — by age over the remainders in the team direction. Named positions that do not exist in the current coverage are skipped. On <code>keep_separate</code>, an arranged credit is spendable on its named positions (D5); its leftover is not. Per-installment <code>sources</code> gain <code>arranged: boolean</code> and <code>fallback: boolean</code> so the Note can say which clause. Pinned by tests: the identity (issued = applied + paid out + owed back) holds; cash-first holds; forgiveness-first holds; a stale position degrades to the default.</p>
+  <p><strong>Re-run cue</strong>: the dues schedule's last-replaced timestamp compared to <code>arranged_at</code>. "Keep these" restamps <code>arranged_at</code> (and re-snapshots date/amount per position). Shown on the sponsor's share row and on the family's credit row.</p>
+  <p><strong>Beat</strong>: a per-family direction override (Option A) — cheaper, but cannot express "these payments", which is the question parents actually ask.</p>
+
+  <h2>Open questions → Decisions tab</h2>
+  <p>D1–D8 are drawn on the mockup and listed on the Decisions tab as <em>Proposed</em>. D3 (cash-first leftover: default vs owed back) and D4 (re-run: apply by position with a cue vs hold to default until confirmed) are the two genuine judgment calls; the rest are recommendations the owner can wave through or overturn.</p>
+
+  <h2>Rollout</h2>
+  <ul>
+    <li><strong>One migration</strong>: two nullable columns on <code>rep_fundraiser_credit_plan</code> (<code>applies_to jsonb</code>, <code>arranged_at timestamptz</code>) and one on <code>rep_dues_credits</code> (<code>applies_to jsonb</code>). No backfill — every existing row means "team default". Dictionary + snapshots in the same unit of work; the engine header and the dictionary's purpose line reword per D8.</li>
+    <li><strong>Build order</strong>: engine + tests → accrual copies the arrangement → share editor line + picker (both doors inherit) → drawer clauses + credit-row sentence → re-run cue → help → UAT scenario → check:layout on the sponsor room (never baselined; do not <code>--init</code>).</li>
+    <li><strong>Demo sandbox</strong>: no narration touches fundraising (ruling ea8ddd14); nothing to re-read. The seed's sponsor rows carry no arrangement.</li>
+    <li><strong>Effort</strong>: medium — a few days. The engine is the risky part and the most test-covered.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════════ DECISIONS ═══════════════════════ -->
+<section id="hub-decisions" class="doc" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="meta">One row per question, added as it happens. <strong>Ruled 2026-09-21</strong> — the owner accepted D1–D8 as drawn (“looks good”), D3 and D4 on the recommended side. Each row keeps its reasoning.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<!-- QA walk — hidden until a walk exists -->
+<section id="hub-qa" class="doc" hidden>
+  <div class="eyebrow">Owner QA walk</div>
+  <h1>Sponsorship Applies To — QA walk</h1>
+  <div id="qaParts"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dlghead"><h2 id="dialogtitle"></h2><button type="button" id="closeDialog">Close</button></div><div class="dlgbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+const $ = id => document.getElementById(id);
+const esc = v => String(v).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* hub tabs */
+const HUBS = ['mockup','brief','plan','decisions','qa'];
+function showHub(which){ HUBS.forEach(h => { const s = $('hub-'+h); if (s) s.hidden = h !== which; }); document.querySelectorAll('[data-hub]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.hub === which))); window.scrollTo({top:0}); }
+document.querySelectorAll('[data-hub]').forEach(b => b.addEventListener('click', () => showHub(b.dataset.hub)));
+
+/* phone / desktop — every specimen at once */
+$('phoneToggle').addEventListener('click', () => { const on = document.body.classList.toggle('phone'); $('phoneToggle').setAttribute('aria-pressed', String(on)); $('phoneToggle').textContent = on ? 'Full width' : 'Phone width'; });
+
+/* screen router */
+const INTENTS = {
+  s1: 'Show the one decision point the product has today and the moment it fails a parent: the money went where the team rule sent it, and the drawer cannot say why.',
+  s2: 'Prove the after form passes the whole-screen test: one line taller per credited family, nothing else moved, and the Aug 31 landing-free ruling still holds on the default path.',
+  s3: 'The choice as a gesture: the family’s own dated payments as checkboxes, two sentences for the two rules (cash first; leftover follows the default), and the no-schedule case with no dead door.',
+  s4: 'The same editor in the sponsor’s room, so there is one copy of the line — and the one warning an arrangement needs when the schedule is re-run under it.',
+  s5: 'Where the arrangement is read: the ladder and its Note say as arranged, the credit names its payments, and the cash-first case explains itself instead of looking ignored.'
+};
+function showScreen(){ const id = location.hash.slice(1) || 's1'; const known = INTENTS[id] ? id : 's1'; document.querySelectorAll('.screen').forEach(el => el.hidden = el.id !== known); document.querySelectorAll('.walk a').forEach(a => a.setAttribute('aria-current', a.hash === '#'+known ? 'page' : 'false')); $('intent').innerHTML = '<strong>Design intent:</strong> ' + esc(INTENTS[known]); showHub('mockup'); }
+window.addEventListener('hashchange', showScreen);
+
+/* explanations behind every highlight */
+function modal(title, body){ $('dialogtitle').textContent = title; $('dialogbody').innerHTML = body; $('dialog').showModal(); }
+$('closeDialog').addEventListener('click', () => $('dialog').close());
+const FINDINGS = {
+  F01: { t:'One dial, every family', now:'Where a family’s credits meet their bills is one team-level setting (last payment first / next payment first / settle at season’s end), applied to every family and every credit at once. No per-family, per-sponsorship or per-credit exception exists anywhere in the product.', fix:'An arrangement on the family’s share of the sponsorship: the coach names the payments the parent asked for. The team setting is untouched and remains the default for every family that has no arrangement.' },
+  F02: { t:'The drawer cannot explain a landing', now:'The Note cell prints “Covered by fundraising — {sponsor}” on whichever bill the team direction reached. It is true and it is not the sentence a parent needs when they asked for a different month.', fix:'Two clauses — “as arranged” and “followed the team default” — on the Note, and a second line on the credit row naming the payments it applies to (and what happened when it could not).' }
+};
+const DECISIONS = [
+  { id:'D1', ask:'Where does the arrangement live?', ruling:'accepted', label:'Accepted 09-21', why:'On the family’s share of the sponsorship — one per sponsor × family — reached from both doors (the pledge form and the sponsor’s room) because both already draw the same share editor. Not a team setting (that is the default and stays), not on the family’s dues (the agreement is about this sponsor’s money, not all credits).' },
+  { id:'D2', ask:'What does it name?', ruling:'accepted', label:'Accepted 09-21', why:'Specific payments, as checkboxes of the family’s dated schedule — the question parents actually ask. The default is stated as one quiet line in the team setting’s own words with a Change door; the ordinary pledge looks as it does today. A per-family direction (last/next/hold) was considered and is subsumed. Build note: among its named payments a credit lands EARLIEST first whatever the team direction — the drawing (December covered before February) is the rule; walking the named payments in the team direction would have covered February first on a last-first team.' },
+  { id:'D3', ask:'A named payment gets paid in cash first — where does the sponsor’s money go?', ruling:'accepted', label:'Accepted 09-21 · recommended side', why:'Recommended: to the next named payment, then whatever is left follows the team default, and the drawer says so. Alternative: hold it as money owed back to the family — stricter about the agreement, worse for the parent. Cash always claims a bill before a credit does; the arrangement lives inside that rule.' },
+  { id:'D4', ask:'The dues schedule is re-run after an arrangement — what happens?', ruling:'accepted', label:'Accepted 09-21 · recommended side', why:'Recommended: payments are named by position (#2, #3), so a same-count re-run keeps the arrangement; any re-run after the arrangement raises a “check the payments” cue on the sponsor’s row and the family’s credit row until the coach presses Keep these or changes it; a position that no longer exists follows the team default. Alternative: drop to the team default until confirmed — quieter for the coach, louder for the parent.' },
+  { id:'D5', ask:'On a “settle at season’s end” team, does an arrangement land?', ruling:'accepted', label:'Accepted 09-21', why:'Yes — an arrangement is an explicit per-family decision to land, which is the point of making one. Its leftover follows the team setting, which there means it waits.' },
+  { id:'D6', ask:'The family has no dues schedule yet.', ruling:'accepted', label:'Accepted 09-21', why:'No Change door. The line says the team default applies and points at Player Dues; the coach returns through Edit sponsorship once the schedule exists. Never a dead door.' },
+  { id:'D7', ask:'Sponsorships only, or every credit?', ruling:'accepted', label:'Accepted 09-21', why:'Mechanism generic (any credit row can carry an arrangement), door on the sponsorship’s credit families only. Drives and Adjustments gain nothing until asked.' },
+  { id:'D8', ask:'Does this break the “derived, never stored” rule?', ruling:'accepted', label:'Accepted 09-21', why:'No — the dollars are still computed on every read; what is stored is the agreement, keyed by position not id. The rule’s wording tightens to “no computed landing is stored; an arrangement may be” in the engine header and the dictionary. This is an owner ruling, not a comment edit.' }
+];
+const KIND = { new:'New', re:'Restyled from today', un:'Unchanged from today' };
+const GENERIC = { new:'Not in the product today.', re:'Exists today and changes in shape or wording.', un:'Exists today and is drawn unchanged, so a build cannot drop it by accident.' };
+function explainFinding(id, here){ const f = FINDINGS[id]; if (!f) return; modal(id + ' · ' + f.t, `<div class="explain"><h3>What the product does today</h3><p>${esc(f.now)}</p>${here ? '<h3>Where you are looking</h3><p class="here">' + esc(here) + '</p>' : ''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><div class="act"><button type="button" data-plan="${id}">Read the finding in the plan →</button></div></div>`); }
+function explainDecision(id){ const d = DECISIONS.find(x => x.id === id); if (!d) return; modal(id + ' · ' + d.ask, `<div class="explain"><h3>Status</h3><p>${esc(d.label)}</p><h3>Proposal</h3><p>${esc(d.why)}</p><div class="act"><button type="button" data-decisions="1">All decisions →</button></div></div>`); }
+function explainTag(el){ const k = el.dataset.k; modal(KIND[k] || 'Tag', `<div class="explain"><p>${esc(el.dataset.note || GENERIC[k] || '')}</p>${el.dataset.note ? '<p style="color:var(--doc-muted)">' + esc(GENERIC[k]) + '</p>' : ''}</div>`); }
+function jumpToFinding(id){ $('dialog').close(); showHub('plan'); const hit = [...document.querySelectorAll('#hub-plan h3')].find(n => n.textContent.trim().startsWith(id + ' —')); if (hit) { hit.scrollIntoView({block:'start', behavior:'smooth'}); hit.style.background = 'var(--doc-on)'; setTimeout(() => hit.style.background = '', 2500); } }
+document.querySelectorAll('.mk').forEach(el => { el.title = 'Click to read what this refers to'; if (!el.closest('button,a')) { el.setAttribute('role','button'); el.tabIndex = 0; el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); explainTag(el); } }); } });
+document.addEventListener('click', e => {
+  const tag = e.target.closest('.mk'); if (tag) { e.preventDefault(); e.stopPropagation(); explainTag(tag); return; }
+  const el = e.target.closest('button,a'); if (!el) return;
+  if (el.dataset.finding) { e.preventDefault(); explainFinding(el.dataset.finding, el.dataset.here); return; }
+  if (el.dataset.d) { e.preventDefault(); explainDecision(el.dataset.d); return; }
+  if (el.dataset.plan) { jumpToFinding(el.dataset.plan); return; }
+  if (el.dataset.decisions) { $('dialog').close(); showHub('decisions'); }
+});
+
+/* decisions tab */
+$('decisionRows').innerHTML = DECISIONS.map(d => `<div class="drow" id="dec-${d.id}"><div class="dh"><strong>${esc(d.id)} · ${esc(d.ask)}</strong><span class="tag ${esc(d.ruling)}">${esc(d.label)}</span></div><p>${esc(d.why)}</p></div>`).join('');
+
+showScreen();
+</script>

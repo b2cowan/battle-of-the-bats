@@ -29,6 +29,8 @@ import { denyUnless, canViewMoney, canWriteMoney, redactRosterPlayer } from '@/l
 import { outstandingForSchedule } from '@/lib/dues-status';
 import { duesPaidAmount, splitFamilyOwnMoney, splitDuesLadder, SCHEDULE_CHANGE_CREDIT_DESCRIPTION } from '@/lib/dues-payments';
 import { creditsTotal, amountsTotal, deriveDuesPosition, groupByPlayer, payoutCeiling } from '@/lib/dues-credits';
+import { positionsFromJson } from '@/lib/sponsor-arrivals';
+import { arrangementNeedsCheck, scheduleLastRunAt } from '@/lib/sponsor-arrivals-server';
 import { settledPerCredit, duesActual, buildFamilyDuesInputs, type DuesCreditKind } from '@/lib/coach-dues-actual';
 import { tournamentToday } from '@/lib/timezone';
 import { normalizeGuardianEmail } from '@/lib/guardian-email';
@@ -125,6 +127,37 @@ export const GET = withObservability(async (_req: Request,
      what. `payableNow` remains the family-level ceiling and is unchanged. */
   const paidBackByCredit = await getRepDuesPaidBackByCredit(programYear.id);
 
+  /* THE RE-RUN CUE ON THE FAMILY'S CREDIT ROW (Sponsorship Applies To, D4). An arranged credit
+     carries its positions but not its stamp — the stamp lives on the sponsorship's share. Two
+     small reads, only when some credit is arranged at all: the arrivals those credits hang off
+     (for their sponsor), then the shares (for `arranged_at`). The cue itself is "this family's
+     schedule was re-run after that stamp", which the installments' own creation times say —
+     the same comparison the sponsor's room makes (`arrangementNeedsCheck`). */
+  const arrangedAtByCredit = new Map<string, string | null>();
+  {
+    const arrangedRows = ((allCredits ?? []) as Array<Record<string, unknown>>)
+      .filter(c => Array.isArray(c.applies_to) && (c.applies_to as unknown[]).length > 0 && c.fundraiser_entry_id);
+    if (arrangedRows.length) {
+      const { data: entryRows } = await supabaseAdmin
+        .from('rep_fundraiser_entries')
+        .select('id, fundraiser_id')
+        .in('id', [...new Set(arrangedRows.map(c => c.fundraiser_entry_id as string))]);
+      const fundraiserByEntry = new Map((entryRows ?? []).map(e => [e.id as string, e.fundraiser_id as string]));
+      const fundraiserIds = [...new Set([...fundraiserByEntry.values()])];
+      const { data: shareRows } = fundraiserIds.length
+        ? await supabaseAdmin
+          .from('rep_fundraiser_credit_plan')
+          .select('fundraiser_id, player_id, arranged_at')
+          .in('fundraiser_id', fundraiserIds)
+        : { data: [] as Array<Record<string, unknown>> };
+      const stampByShare = new Map((shareRows ?? []).map(r => [`${r.fundraiser_id}|${r.player_id}`, (r.arranged_at as string | null) ?? null]));
+      for (const c of arrangedRows) {
+        const fid = fundraiserByEntry.get(c.fundraiser_entry_id as string);
+        arrangedAtByCredit.set(c.id as string, fid ? stampByShare.get(`${fid}|${c.player_id}`) ?? null : null);
+      }
+    }
+  }
+
   /* ⚠⚠ THE BAND'S TWO FIGURES COME FROM THE REPORT'S OWN DERIVATION (owner R1/R2, 2026-09-09 —
      "a bill lowered is not a collection"). `Collected` is `actual` and `Dues` is
      `dues − billLowered.total`, both out of `duesActual`.
@@ -180,6 +213,8 @@ export const GET = withObservability(async (_req: Request,
       // shared with every other dues reader so they cannot drift.
 
       const rawCredits = creditsMap.get(p.id) ?? [];
+      // The D4 cue's reference for every credit of this family — once, not per credit.
+      const lastRunAt = schedule ? scheduleLastRunAt(installments) : null;
       const credits = rawCredits.map(c => ({
         id:          c.id,
         programYearId: c.program_year_id,
@@ -195,6 +230,14 @@ export const GET = withObservability(async (_req: Request,
         // rendered live edit/delete buttons — and the delete route had no refusal behind them.
         fundraiserEntryId: c.fundraiser_entry_id ?? null,
         expenseId:   c.expense_id ?? null,
+        // The arrangement (Sponsorship Applies To, mig 308) — the engine lands it, the drawer names it.
+        appliesTo:   positionsFromJson(c.applies_to),
+        arrangedAt:  arrangedAtByCredit.get(c.id as string) ?? null,
+        // The same predicate the sponsor's room shows — one definition (lib/sponsor-arrivals-server.ts).
+        arrangementNeedsCheck: arrangementNeedsCheck(
+          { appliesTo: positionsFromJson(c.applies_to), arrangedAt: arrangedAtByCredit.get(c.id as string) ?? null },
+          { lastRunAt },
+        ),
         createdAt:   c.created_at,
         /* What earlier paybacks have already settled off THIS credit (mig 281). Drives the Pay out
            sheet's tick-list. ⚠ Filled in below for credits a LEGACY payout touched — see
@@ -240,6 +283,7 @@ export const GET = withObservability(async (_req: Request,
           creditDate: c.creditDate as string,
           createdAt: (c.createdAt as string | null) ?? null,
           description: (c.description as string | null) ?? null,
+          appliesTo: (c.appliesTo as number[] | null) ?? null,
         })),
         paidOut: amountsTotal(payoutsByPlayer.get(p.id) ?? []),
         mode: programYear.creditApplication,

@@ -30,7 +30,8 @@ import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useLatestRef } from '@/components/coaches/useLatestRef';
 import TagSearchCombobox, { MONEY_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
-import SponsorCreditPlanEditor, { type SponsorCreditPlanRow } from '@/components/coaches/SponsorCreditPlanEditor';
+import SponsorCreditPlanEditor, { type SponsorCreditPlanRow, type StoredArrangement } from '@/components/coaches/SponsorCreditPlanEditor';
+import { fetchFamilyPaymentSchedules, type FamilyPaymentSchedules } from '@/lib/coach-family-schedules';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { moneyMovedMaxDate } from '@/lib/money-date-guards';
 import { writeFailure } from '@/lib/coach-sandbox-refusal';
@@ -44,7 +45,8 @@ import {
 import RaisingForField, { storedRaisingFor } from '@/components/coaches/RaisingForField';
 import type { BudgetItemSelection } from '@/components/accounting/BudgetItemPicker';
 import {
-  accruedByFamilyFromRounds, deriveAllArrivalCredits, sharesFromRows, stillToCome, creditPlanProblem,
+  accruedByFamilyFromRounds, deriveAllArrivalCredits, sharesFromRows, stillToCome, creditPlanProblem, sameArrangement,
+  type CreditPlanShareInput,
   type CreditPlanShare,
 } from '@/lib/sponsor-arrivals';
 import { fmt } from '@/lib/coach-money-summary';
@@ -73,12 +75,27 @@ function planRows(record: RoomRecord): SponsorCreditPlanRow[] {
     playerId: p.playerId,
     value: String(p.value),
     unit: (p.unit === 'amount' ? 'amount' : 'percent') as CreditUnit,
+    /* ⚠ THE ARRANGEMENT RIDES THE ROW (Sponsorship Applies To, D1). Every door that re-sends the
+       split — the live editor, and Edit sponsorship re-sending the STORED split when the pledge
+       moves — starts from these rows, so leaving the positions off here would silently reset a
+       family's arrangement on an unrelated save. */
+    appliesTo: p.appliesTo?.length ? p.appliesTo.map(x => x.n) : null,
   }));
 }
 
-function sameShares(a: readonly CreditPlanShare[], b: readonly CreditPlanShare[]): boolean {
+/** What the record knows about each family's stored arrangement, for the editor's stamp and cue. */
+function storedArrangements(record: RoomRecord): Map<string, StoredArrangement> {
+  return new Map(record.plan
+    .filter(p => p.appliesTo?.length)
+    .map(p => [p.playerId, { arrangedAt: p.arrangedAt ?? null, needsCheck: !!p.needsCheck, asArranged: p.appliesTo ?? null }]));
+}
+
+function sameShares(a: readonly CreditPlanShareInput[], b: readonly CreditPlanShareInput[]): boolean {
   return a.length === b.length
-    && a.every(s => b.some(t => t.playerId === s.playerId && t.value === s.value && t.unit === s.unit));
+    && a.every(s => b.some(t =>
+      t.playerId === s.playerId && t.value === s.value && t.unit === s.unit
+      && sameArrangement(t, s)
+      && !s.keepArrangement && !t.keepArrangement));
 }
 
 /**
@@ -333,7 +350,14 @@ export function SponsorRoomBody({
             <ul className={styles.roomZoneList}>
               {record.plan.map(p => (
                 <li key={p.playerId}>
-                  <span>{p.playerName ?? 'A family'}</span>
+                  <span>
+                    {p.playerName ?? 'A family'}
+                    {p.appliesTo?.length ? (
+                      <span className={styles.listRowSub}>
+                        Applies to {p.appliesTo.map(x => (x.dueDate ? formatStoredDate(x.dueDate, { withYear: false }) : `#${x.n}`)).join(' · ')}
+                      </span>
+                    ) : null}
+                  </span>
                   <strong>{p.unit === 'percent' ? `${p.value}%` : fmt(p.value)}</strong>
                 </li>
               ))}
@@ -378,9 +402,24 @@ function CreditPlanZone({
   /* The split as it was LAST SAVED, until the room reads it back: the settle target between the
      request returning and the reload landing, so "Save split" is not offered twice for one change
      and the way out asks about nothing that is already on the server (`/review`, 2026-09-02). */
-  const [savedShares, setSavedShares] = useState<CreditPlanShare[] | null>(null);
+  const [savedShares, setSavedShares] = useState<CreditPlanShareInput[] | null>(null);
+  /** Bumped on save and on cancel — the editor closes its open payment picker on it. */
+  const [settleKey, setSettleKey] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  /* The families' CURRENT payment schedules and the team's setting, for the arrangement line and
+     its picker (Sponsorship Applies To). One light read (GET dues/schedules — never the dues GET's
+     whole position), re-read when the record reloads so a re-run dues schedule shows its new
+     dates and the D4 cue's date is right. Until it lands the line states the default with no door. */
+  const [familySchedules, setFamilySchedules] = useState<FamilyPaymentSchedules | null>(null);
+  useEffect(() => {
+    let live = true;
+    fetchFamilyPaymentSchedules(orgSlug, teamId)
+      .then(next => { if (live) setFamilySchedules(next); })
+      .catch(() => { /* the line falls back to the default wording with no door */ });
+    return () => { live = false; };
+  }, [orgSlug, teamId, record]);
+  const arranged = useMemo(() => storedArrangements(record), [record]);
   /* The derivations are memoised because the editor re-renders this zone per keystroke, and the
      refusal check replays every arrival — the panels' own convention for a form-bearing surface. */
   const stored = useMemo(() => planRows(record), [record]);
@@ -440,7 +479,14 @@ function CreditPlanZone({
         body: JSON.stringify({ creditPlan: shares }),
       });
       if (!res.ok) throw new Error(writeFailure(res, await res.json().catch(() => ({})), 'The split could not be saved.'));
-      setSavedShares(shares);
+      /* ⚠ "KEEP THESE" IS SPENT BY THE SAVE (/review 2026-09-21, High). The flag is what makes a
+         row read as dirty, so a draft that kept it after a successful save could never settle —
+         Save reappeared, and every further press restamped the arrangement, hiding the re-run cue
+         it had just confirmed. Strip it from the draft and from the settle target together. */
+      const settled = shares.map(s => ({ ...s, keepArrangement: undefined }));
+      setDraft(d => d?.map(r => ({ ...r, keepArrangement: false })) ?? null);
+      setSavedShares(settled);
+      setSettleKey(k => k + 1);
       onChanged();
     } catch (e) {
       const message = e instanceof Error ? e.message : 'The split could not be saved.';
@@ -464,24 +510,29 @@ function CreditPlanZone({
         families={roster}
         defaultShare={String(defaultCreditPercent)}
         problem={problem}
-      />
-      {refused && <RefusalLines refusals={refusals} />}
-      {unfinished.length > 0 && (
-        <p className={styles.formHint} style={{ marginTop: '0.4rem' }}>
-          {unfinished.length === 1 ? 'One line isn’t finished' : `${unfinished.length} lines aren’t finished`}
-          {' '}— a family needs a share above zero to be credited. Set an amount, or drop the line
-          with its <strong>×</strong>. Unfinished lines are not saved.
-        </p>
-      )}
-      {error && <p className={styles.errorText} style={{ fontSize: 'var(--type-support)' }}>{error}</p>}
-      {record.arrivals.length > 0 && !dirty && unfinished.length === 0 && (
-        <p className={styles.formHint} style={{ marginTop: '0.4rem' }}>
-          Each cheque already earned its share; changing the split re-figures every credit.
-        </p>
-      )}
-      {dirty && (
-        <div className={styles.roomZoneFoot}>
-          <button type="button" className={styles.btnGhost} disabled={saving} onClick={() => { setDraft(null); setError(''); }}>
+        schedules={familySchedules?.schedules ?? null}
+        creditMode={familySchedules?.creditMode ?? null}
+        arranged={arranged}
+        settleKey={settleKey}
+        notes={<>
+          {refused && <RefusalLines refusals={refusals} />}
+          {unfinished.length > 0 && (
+            <p className={styles.formHint} style={{ marginTop: '0.4rem' }}>
+              {unfinished.length === 1 ? 'One line isn’t finished' : `${unfinished.length} lines aren’t finished`}
+              {' '}— a family needs a share above zero to be credited. Set an amount, or drop the line
+              with its <strong>×</strong>. Unfinished lines are not saved.
+            </p>
+          )}
+          {error && <p className={styles.errorText} style={{ fontSize: 'var(--type-support)' }}>{error}</p>}
+          {record.arrivals.length > 0 && !dirty && unfinished.length === 0 && (
+            <p className={styles.formHint} style={{ marginTop: '0.4rem' }}>
+              Each cheque already earned its share; changing the split re-figures every credit.
+            </p>
+          )}
+        </>}
+        /* Cancel · Save split ride the "+ Add another family" row — link left, buttons right. */
+        foot={dirty ? <>
+          <button type="button" className={styles.btnGhost} disabled={saving} onClick={() => { setDraft(null); setError(''); setSettleKey(k => k + 1); }}>
             Cancel
           </button>
           <button
@@ -493,8 +544,8 @@ function CreditPlanZone({
           >
             {saving ? 'Saving…' : 'Save split'}
           </button>
-        </div>
-      )}
+        </> : null}
+      />
     </>
   );
 }

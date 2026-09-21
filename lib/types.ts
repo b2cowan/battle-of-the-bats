@@ -3039,6 +3039,15 @@ export interface DuesCredit {
    */
   fundraiserEntryId?: string | null;
   expenseId?: string | null;
+  /** The payments this credit was ARRANGED to cover, as installment positions (Sponsorship Applies
+   *  To, mig 308) — copied from the sponsorship's credit plan by the arrivals writer. Null = the
+   *  team default. The engine (lib/dues-credits.ts) lands it in its own pass; the drawer names it. */
+  appliesTo?: number[] | null;
+  /** When the arrangement was made or last confirmed (from the sponsorship's share) — the dues
+   *  GET fills it for arranged credits; other readers leave it absent. */
+  arrangedAt?: string | null;
+  /** The family's schedule was re-run after the arrangement (D4) — the drawer's cue. */
+  arrangementNeedsCheck?: boolean;
   createdAt: string;
 }
 

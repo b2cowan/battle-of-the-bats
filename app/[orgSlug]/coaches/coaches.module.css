@@ -14056,7 +14056,10 @@ button.gdChip[aria-pressed='true'] {
 }
 /* The split's own Save and Cancel — drawn only once the split is dirty, right-aligned like a
    form's closing row, never a permanent button under a control that has not changed. */
-.roomZoneFoot { display: flex; justify-content: flex-end; gap: 0.5rem; margin-top: 0.6rem; }
+/* ⚰ `.roomZoneFoot` DELETED 2026-09-21 (Sponsorship Applies To, owner's first walk): the split
+   zone's Cancel · Save split now ride the "+ Add another family" row inside the shared editor
+   (`SponsorCreditPlanEditor.module.css` `.addRow` / `.foot`) — link left, buttons right — rather
+   than a row of their own under it. */
 /* A read-only coach's split: one family per line, the share on the right. */
 .roomZoneList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
 .roomZoneList li { display: flex; justify-content: space-between; gap: 0.75rem; font-size: var(--type-body); }
