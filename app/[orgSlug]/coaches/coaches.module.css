@@ -802,62 +802,110 @@
 
    ⚠ It sits OUTSIDE `.teamHeaderStatus`, which is `display: none` at ≤640. A "?" is chrome, not a
    status, and must survive the 2026-08-24 ruling that emptied that slot on phones.
-   ⚠ It DOES fold with `.teamHeaderCollapsed` (≤900) along with the flip — ruled 2026-08-25, and the
-   2026-08-02 bare-name collapse is deliberately not reopened. This is why "help stops scrolling
-   away" is true on a desktop (that bar never collapses) and false on a phone.
+   ⚠ It STAYS through scroll at every width. Until 2026-09-21 it folded with `.teamHeaderCollapsed`
+   (≤900) along with the flip, so "help stops scrolling away" was true on a desktop and false on a
+   phone; the phone re-evaluation (stage 1 · B2) deleted the collapse, so it is true everywhere.
    ⚠ NO desktop size override: the button is the shared 34px `.helpButtonIconOnly` circle, exactly
    the control the band used to hold, so nothing about it changes except where it lives. */
 .teamHeaderHelp { flex-shrink: 0; display: inline-flex; }
 
+/* ── The switcher's door on the team name (phone re-evaluation stage 1 · B1, 2026-09-21) ─────────
+   Rendered only with two or more teams and only below the nav breakpoint (`useIsPhoneNav`); the
+   chevron is hidden above 900 so the desktop never sees it in the frame before the button becomes
+   plain text. A button that LOOKS like the name: no fill, no border, the name's own type. */
+.teamHeaderSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+.teamHeaderSwitch:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 4px; }
+.teamHeaderSwitchChevron { flex: none; color: var(--text-tertiary); }
+@media (min-width: 901px) { .teamHeaderSwitchChevron { display: none; } }
+/* The tap floor in the tablet band (641–768), where the bar is still the two-line form: the same
+   overhang trick as the ≤640 rule below, sized to a 19px name line — the 44px box paints nothing,
+   so what overhangs the bar's top edge and the meta line beneath is transparent. The ≤640 rule
+   comes later in the source and takes over at the one-line form. */
+@media (max-width: 768px) { .teamHeaderSwitch { min-height: var(--tap-min, 44px); margin-top: -12px; margin-bottom: -13px; } }
+/* The Overview's club · season page line (stage 1 · B2 = B) — phone only; the bar's own meta line
+   carries both above 640, so no width names them twice. Mono, support size, tertiary ink, the
+   record-less half of the meta strip; the dot is drawn between siblings exactly as the strip
+   draws it, so a standalone team (no club) reads "2026 Season" with no orphan dot. */
+.teamHeaderPageLine {
+  display: none;
+  align-items: center;
+  gap: 0.5rem;
+  margin: -1rem -1rem 1rem;
+  padding: 0.2rem 1rem 0.3rem;
+  line-height: 1.3;
+  font-family: var(--font-data);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  background-color: var(--pitch-black);
+  background-image: linear-gradient(var(--card-bg), var(--card-bg));
+  border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.08));
+  white-space: nowrap;
+  overflow: hidden;
+}
+.teamHeaderPageLine > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.teamHeaderPageLine > span + span { flex: none; }
+.teamHeaderPageLine > span + span::before { content: '·'; margin-right: 0.5rem; color: inherit; opacity: 0.45; }
+
 @media (max-width: 900px) {
   .teamHeader { margin: -1rem -1rem 1rem; padding: 0.45rem 1rem; }
   .teamHeaderName { font-size: var(--type-heading); max-width: 100%; }
-  /* ── The SCROLLED state — PHONE ONLY, and deliberately so ──────────────────────────────────
-     Eyebrow, meta and the right slot fold away, leaving the bare team name on one slim line.
+  /* ⚰ THE SCROLLED STATE (`.teamHeaderCollapsed`) IS GONE — phone re-evaluation stage 1 · B2, owner
+     ruling 2026-09-21. It folded the meta, the right slot (the "?" with it) and the nudge once the
+     page scrolled past 64px, and unfolded under 12 — a threshold toggle, so the bar SNAPPED 59→36
+     and the content under the thumb jumped 23px, twice per pass. The owner asked for that
+     two-line-thinning form on every screen, saw both drawn at true size, and chose one line
+     everywhere instead (the ≤640 block below). The tablet band (641–900) keeps its two-line bar
+     through scroll, which is the desktop's own rule reaching down.
 
-     ⚠⚠ THESE RULES SPENT ONE DAY AT TOP LEVEL (2026-08-18, direction A) so the desktop bar
+     ⚠⚠ THESE RULES ALSO SPENT ONE DAY AT TOP LEVEL (2026-08-18, direction A) so the desktop bar
      collapsed too, and the owner REVERTED IT ON SIGHT: *"I like the size changes we made but you
-     can leave this header as is when scrolling."* Do not move them back out. The desktop bar
-     staying put is the ruling; the space that pass reclaimed came from the bar being two lines
-     instead of three and from the page-title band, not from chrome that vanishes and returns.
+     can leave this header as is when scrolling."* The bar staying put is the ruling at every
+     width now; the space reclaimed comes from the bar being smaller, never from chrome that
+     vanishes and returns. Do not bring a collapse back at any width.
 
-     justify-content centers the name in the reserved 36px — the parent is a flex COLUMN, and
-     without it the single remaining row pins to the top with the spare height as a dead band
-     below the name (owner-reported 2026-08-17; only this state has leftover room to show it). */
-  .teamHeaderCollapsed { min-height: 36px; padding-top: 0.3rem; padding-bottom: 0.3rem; justify-content: center; }
-  .teamHeaderCollapsed .teamHeaderMeta { display: none; }
-  .teamHeaderCollapsed .teamHeaderName { font-size: var(--type-body); }
-  /* The right slot folds with the rest of the detail — a collapsed phone bar is the bare team
-     name, and a chip plus a two-line stack beside it would defeat the point of collapsing. */
-  .teamHeaderCollapsed .teamHeaderRight { display: none; }
-  /* The nudge is a second fact about today, not the bare identity a collapsed bar promises —
-     folds away with the rest of the detail rather than surviving as the only non-name content. */
-  .teamHeaderCollapsed .teamHeaderNudge { display: none; }
-  /* Uncollapsed on a phone there is far less room: keep the chip and the time, and let the
+     On a tablet there is less room than a desktop: keep the chip and the time, and let the
      opponent's name take whatever is left rather than pushing the team name out.
-     ⚠ Applies to 641–900 only now — below 640 the status does not render at all
-     (`.teamHeaderStatus`, owner ruling 2026-08-24). Kept because a tablet still shows it. */
+     ⚠ Applies to 641–900 only — below 640 the status does not render at all
+     (`.teamHeaderStatus`, owner ruling 2026-08-24). */
   .teamHeaderStackKey { max-width: 10ch; }
 }
-/* ── ONE IDENTITY LINE AT REST ON A PHONE (owner ruling 2026-09-20, phone re-evaluation stage 0 ·
-   A2). Every team screen except Overview wears the masthead as a single 36px line from the first
-   frame — team name · record · the "?" — and keeps that ONE form through scroll, so the bar never
-   changes shape under a thumb. Overview (the team's own page) keeps the two lines and the scroll
-   collapse above. Measured before: 59px pinned on every screen, over a page that names itself
-   20px below. The desktop is untouched — the 2026-08-19 ruling that it never collapses stands.
-   ⚠ The "?" keeps its 44px tap target (the ≤640 floor above) and the row stays 36px because the
+/* ── ONE IDENTITY LINE ON A PHONE (owner rulings 2026-09-20, phone re-evaluation stage 0 · A2, and
+   2026-09-21, stage 1 · B2 = "B, one line everywhere"). EVERY team screen — the Overview included
+   since B2 — wears the masthead as a single 36px line from the first frame: team name · record ·
+   the "?" — and keeps that ONE form through scroll, so the bar never changes shape under a thumb.
+   The Overview's club · season line survives as `.teamHeaderPageLine` below — unpinned page
+   content directly under the bar, same words, same place at rest. Measured before A2: 59px pinned
+   on every screen, over a page that names itself 20px below; before B2 the Overview still snapped
+   59→36 on scroll and lost its "?". The desktop is untouched — the 2026-08-19 ruling stands.
+   ⚠ The "?" keeps its 44px tap target (the ≤640 floor below) and the row stays 36px because the
    button's vertical margins are negative: the hit area overhangs the bar's edges by 4px each way
-   rather than growing the bar. The sweep still measures a 44px control. ⚠ But the DISC is drawn
-   34px inside that 44px box (stage 0 walk, 2026-09-20): a transparent 5px border with the fill
-   clipped to the padding box, and the ghost hairline re-drawn as an inset shadow on the same
-   token. Painting the full 44px circle put its top 4px above the viewport — the bar is pinned at
-   the top — so the owner saw a "?" with its crown sliced off. The overhang is now invisible,
-   which is what an overhang has to be.
+   rather than growing the bar. The sweep still measures a 44px control. The overhang paints
+   NOTHING — on a phone the "?" is a bare glyph (`.teamHeaderHelp button` at ≤640, below), so the
+   4px that sit above a pinned bar's top edge are transparent. ⚠ It was briefly a disc: first the
+   full 44px circle, whose crown the viewport sliced off; then a 34px disc clipped inside the box
+   with a border/background-clip trick that needed restating under the warm skin (the shorthand
+   resets the clip). The owner read even the 34px disc as an "extra area" around the icon — the
+   HelpCircle glyph draws its own ring, and a second ring around it is a halo. So the disc went,
+   and the trick with it. Do not bring a fill back here; grow the GLYPH if it needs presence.
    ⚠ Over an open CHAT ROOM the masthead does not render at all — the room header is the identity
    there, and two stacked headers cost 120px above the first message. The published
    `--coach-header-h` follows to 0, which is exactly what the chat wrapper's height calc wants.
-   These sit AFTER the ≤900 collapse rules on purpose: same specificity, later source, so the rest
-   form wins over `.teamHeaderCollapsed` when both classes are present. */
+   (These sat AFTER the ≤900 collapse rules so the rest form would win over `.teamHeaderCollapsed`
+   when both classes were present; the collapse is gone, the order is now only history.) */
 @media (max-width: 640px) {
   .teamHeaderPhoneRest { min-height: 36px; padding-top: 0; padding-bottom: 0; justify-content: center; }
   .teamHeaderPhoneRest .teamHeaderRow { min-height: 36px; gap: 0.6rem; }
@@ -875,20 +923,22 @@
   .teamHeaderPhoneRest .teamHeaderMeta > span:not(.teamHeaderRecord) { display: none; }
   .teamHeaderPhoneRest .teamHeaderMeta > span + span::before { content: none; margin-right: 0; }
   .teamHeaderPhoneRest .teamHeaderRight { display: flex; }
-  .teamHeaderPhoneRest .teamHeaderHelp button {
-    margin-top: -4px;
-    margin-bottom: -4px;
-    border: 5px solid transparent;
-    background-clip: padding-box;
-    box-shadow: inset 0 0 0 1px var(--border-2);
-  }
-  /* ⚠ The clip is restated under the warm gate on purpose. The warm skin sets the ghost button's
-     `background` SHORTHAND (globals.css, specificity 0,3,1), and a shorthand silently resets
-     background-clip to border-box — measured: the disc still painted all 44px, with the hairline
-     drawn 5px inside it. Same declaration, one more selector, so the warm portal (the default)
-     clips the fill like the dark one. */
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .teamHeaderPhoneRest .teamHeaderHelp button { background-clip: padding-box; }
+  .teamHeaderPhoneRest .teamHeaderHelp button { margin-top: -4px; margin-bottom: -4px; }
   .teamHeaderPhoneChat { display: none; }
+  /* THE SWITCHER'S DOOR (stage 1 · B1, 2026-09-21): the name + chevron is one button, 44px tall
+     through the "?"'s own trick — a 4px overhang above and below the 36px line, so the bar does
+     not grow. The name keeps its ellipsis; the chevron is `flex: none` OUTSIDE the truncating
+     span, so a long name loses its tail and never its chevron (measured on the rest line at 390
+     and 360: "Riverdale Ridge 12U Mustangs" fits beside chevron, record and "?"; a longer name
+     truncates with the record and the "?" unmoved). */
+  .teamHeaderSwitch { margin-top: -4px; margin-bottom: -4px; min-height: var(--tap-min, 44px); }
+  /* THE OVERVIEW'S PAGE LINE (stage 1 · B2 = B): the club · season line the bar carried as its
+     second line, demoted from chrome to page. Full-bleed like the bar (the same negative side
+     margins), its top margin eats the bar's bottom margin so the two read as one block at rest,
+     and its own bottom margin is the gap the bar used to leave before the title row. Support
+     size, not the meta strip's label size: the strip is a nowrap line that overflowed at 12px
+     (see `.teamHeaderMeta`), this line has the page's width. */
+  .teamHeaderPageLine { display: flex; }
 }
 
 /* ⚠ THE SEPARATOR COULD STILL BE ORPHANED, AND THE RULE ABOVE SAYS IT CANNOT — read it again:
@@ -909,6 +959,28 @@
      stack is ~42px. The band gives back 8px + 4px of margin, so the screen still nets ahead —
      MEASURE it rather than quoting this comment. */
   .teamHeaderHelp button { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
+  /* ── A BARE GLYPH ON A PHONE (owner, 2026-09-20): no fill, no hairline, a bigger "?" ──────────
+     The 44px box above is a tap target, not a shape. The HelpCircle icon already draws a ring
+     around its "?", and the ghost button's disc drew a second one around that — the owner read
+     the disc as "extra blue area" beside the team name and asked for the symbol bigger instead.
+     So on a phone the button paints nothing and the glyph grows 15px → 20px; the tap target,
+     the 36px rest bar and the desktop's 34px ghost disc are all unchanged.
+     ⚠ Four selectors for one look, on purpose: the warm skin (the default) sets the ghost
+     button's `background` at 0,3,1 and its hover at 0,4,1 (globals.css), which a 0,1,1 rule here
+     cannot reach. The warm-gate prefix is the module's standing way past that skin — same
+     declaration, one more selector — and the bare pair still covers the dark portal. Do not
+     collapse these to one; the disc comes straight back under warm and only shows on a phone.
+     ⚠ Width/height on the svg beat the icon's own size attributes; the component's `size` prop
+     is shared with the desktop and every other iconOnly "?", which keep 15px. */
+  .teamHeaderHelp button,
+  .teamHeaderHelp button:hover,
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .teamHeaderHelp button,
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .teamHeaderHelp button:hover {
+    background: transparent;
+    border-color: transparent;
+    box-shadow: none;
+  }
+  .teamHeaderHelp button svg { width: 20px; height: 20px; }
   /* ⚠⚠ THE ROW RESERVES THE BUTTON'S HEIGHT WHETHER OR NOT A "?" IS THERE, AND THAT IS THE POINT.
      The slot is filled by an EFFECT (the page publishes after hydration), so the server sends a bar
      with no "?" and the client adds one — a 44px control landing in a row whose text stack is ~42px
@@ -918,13 +990,9 @@
      ⚠ Desktop needs no equivalent: its row is already ~42px tall against a 34px button, so the "?"
      changes nothing there. Moving it off the desktop band saves nothing and costs nothing. */
   .teamHeaderRow { min-height: var(--tap-min, 44px); }
-  /* ⚠⚠ AND IT MUST NOT REACH THE COLLAPSED BAR — MEASURED, AFTER THE RESERVATION ABOVE BROKE IT.
-     A scrolled phone bar is 36px of bare team name (2026-08-02). Reserving 44px for a "?" that
-     `.teamHeaderCollapsed .teamHeaderRight` has just hidden took that bar to **55px** — a 19px
-     permanent cost on every scrolled phone screen, to buy back 8px on a handful of unscrolled
-     ones. The reservation exists only to stop a post-hydration shift in the EXPANDED bar; a
-     collapsed bar has nothing to reserve for. */
-  .teamHeaderCollapsed .teamHeaderRow { min-height: 0; }
+  /* (A `.teamHeaderCollapsed .teamHeaderRow { min-height: 0 }` exception stood here — reserving
+     44px in a bar that had just hidden its "?" took the scrolled bar to 55px. The collapse is gone,
+     stage 1 · B2, and with it the exception; the rest form's 36px row rule above already wins.) */
 
   .teamHeaderMeta { flex-wrap: nowrap; }
   .teamHeaderMeta > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1800,6 +1868,51 @@
   .boardGrid { grid-template-columns: 1fr 1fr; gap: 0.5rem; }
 }
 
+/* ── THE BOARD AS ROWS (phone re-evaluation stage 1 · B3, owner ruling 2026-09-21) ──────────────
+   ≤640 the six tiles are six rows of the portal's one row recipe (`.rowList`, F-17) — the same
+   phone card the Schedule's list wears. Both renderings are in the tree; the grid is display:none
+   here and the list is display:none above 640, so a width shows exactly one. The row's density
+   is the ONE place the recipe gives way: the recipe's 0.65rem card gap put the sixth row's foot
+   under the bar at 844 (measured on the drawing: 20px under), and the board is a FIXED set on the
+   first screen where the fold is the point — a 6px gap and the compact pad keep all six above the
+   bar (52px rows, the sixth ending 4px clear). The figure rides the trail: a number at the title
+   step in the display face (the tile's figure one step down), words at heading and muted (the
+   tile's own `bigWords` pairing), the danger tone on the figure as the tile carries it. */
+.boardRows { display: none; }
+@media (max-width: 640px) {
+  .boardGrid { display: none; }
+  ul.boardRows { display: block; }
+  .boardRows .rowListItem { margin-bottom: 6px; }
+  /* Measured on the first build: 72px rows — the figure's 20px type at the row's 1.6 line-height
+     made the title's line 32px tall, and the built card and page line each came in taller than
+     drawn. The figure's line-height goes to 1 (its box is its glyphs), the two text lines take
+     the drawing's own 1.3 with no gap between them (the recipe's row-gap is paid twice on a phone,
+     once more for its line-break pseudo-element) — 47px rows, three over the tap floor, and all
+     six sit above the bar at 844 with the built card at 267. The drawing said 52; the frame
+     promised six rows above the bar, and that is the promise kept. */
+  .boardRows .rowListRow, .boardRows .rowListRow:has(.rowCaption) { padding-top: 0.35rem; padding-bottom: 0.35rem; min-height: var(--tap-min, 44px); gap: 0 0.5rem; }
+  .boardRows .rowListTitle, .boardRows .rowListCaption { line-height: 1.3; }
+  .boardRows .rowListMark { color: var(--home-olive, var(--text-tertiary)); }
+  /* The recipe's phone order puts the trail on the title's line and the caption under it; the
+     figure is that trail. */
+  .boardRows .rowListRow { align-items: center; }
+  .boardRows .rowListTrail { align-self: center; }
+  .boardRows .boardRowFigure { line-height: 1; }
+  /* The band before the rows tightens with them (the desktop's 1.5rem/0.75rem stays). */
+  .sectionKicker { margin: 0.75rem 0 0.4rem; }
+}
+.boardRowFigure {
+  font-family: var(--font-display);
+  font-size: var(--type-title);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.boardRowFigure[data-tone="danger"] { color: var(--home-live, var(--danger)); }
+.boardRowFigure[data-words] { font-family: var(--font-sans); font-size: var(--type-heading); font-weight: 700; color: var(--text-tertiary); }
+
 /* ── Lineups front door (game list) ─────────────────────────────────────── */
 .lineupClearBtn {
   background: none; border: none; padding: 0.3rem 0; cursor: pointer;
@@ -2153,11 +2266,6 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
    display:block · margin-top .12rem · --type-support · weight 400 · --text-tertiary ·
    letter-spacing 0 · text-transform none · white-space normal · line-height 1.35. */
 .insightsSeasonStatLbl { font-size: var(--type-support); color: var(--text-tertiary); }
-/* Overview safety-tier bridge line (the one finding that crosses dashboards). */
-.insightsBridge { display: flex; align-items: baseline; gap: 0.4rem; font-size: var(--type-body); color: var(--text-tertiary); margin: 0.6rem 0 0; }
-.insightsBridgeIcon { color: var(--warning); flex-shrink: 0; }
-.insightsBridge a { color: var(--blueprint-light); font-weight: 600; text-decoration: none; white-space: nowrap; }
-.insightsBridge a:hover { text-decoration: underline; }
 /* Past seasons — one compact line per year, expandable for the detail stats. */
 .insightsSeasonRow { border: 1px solid var(--home-line-strong, rgba(255,255,255,0.08)); border-radius: 8px; margin-bottom: 0.4rem; background: var(--home-olive-soft, rgba(255,255,255,0.03)); }
 /* ⚠ 44px, not 40 — a past-season row is the tap that opens a year, and `check:layout` flags it
@@ -2333,6 +2441,65 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
 /* Only the ones that GO somewhere react — a fact that lights up on hover promises a click that
    never happens. */
 a.oneChip:hover { border-color: currentColor; }
+/* The tap floor reaches the chips in the tablet band (641–768) — the chips there were 32px doors
+   under the 44px floor, baselined since 2026-09-20; the pill keeps its shape and grows. */
+@media (min-width: 641px) and (max-width: 768px) {
+  .oneChip { min-height: var(--tap-min, 44px); }
+}
+/* ── THE PHONE'S DOORS AND FACTS (phone re-evaluation stage 1 · B4, owner ruling 2026-09-21) ────
+   ≤640 the chip row stands down: the facts ("Call 5:30 p.m." · "Home kit") join the meta line as
+   `.oneMetaPhoneFact` segments (each nowrap, so a clock label never splits across the wrap), and
+   the doors become `.oneDoor` rows — full width, 44px, one per destination, the chip's own state
+   colours. Above 640 the doors and the phone facts are display:none and the chips carry both. */
+/* The base meta in its own span: the element the first fact's dot rule counts from (a fact that is
+   the meta's first ELEMENT child draws no dot). Inline so the line reads as one sentence. */
+.oneMetaBase { display: inline; }
+.oneMetaPhoneFact { display: none; }
+.oneMetaFactText { white-space: nowrap; }
+.oneDoors { display: none; }
+@media (max-width: 640px) {
+  .oneChips { display: none; }
+  .oneMetaPhoneFact { display: inline; }
+  /* No orphan dot: a fact that begins the line (no venue, no time) draws none. */
+  .oneMeta > .oneMetaPhoneFact:first-child .oneMetaDot { display: none; }
+  .oneDoors {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 0.4rem;
+    padding-top: 0.4rem;
+    border-top: 1px solid var(--border-2);
+  }
+  .oneDoor {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: var(--tap-min, 44px);
+    padding: 0.3rem 0.6rem 0.3rem 0.75rem;
+    border: 1px solid var(--border-2);
+    border-radius: 10px;
+    background: var(--home-fill, var(--white-8));
+    font-size: var(--type-body);
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-decoration: none;
+  }
+  .oneDoor[data-state="done"] {
+    color: var(--success);
+    border-color: rgba(var(--success-rgb), 0.32);
+    background: rgba(var(--success-rgb), 0.09);
+  }
+  .oneDoor[data-state="todo"] {
+    color: var(--warning);
+    border-color: rgba(var(--warning-rgb), 0.34);
+    background: rgba(var(--warning-rgb), 0.09);
+  }
+  .oneDoorBody { flex: 1 1 auto; min-width: 0; display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.3rem; }
+  .oneDoorBody > span { display: inline-flex; align-items: center; gap: 0.3rem; white-space: nowrap; }
+  .oneDoorBody strong { font-family: var(--font-display); font-weight: 800; color: currentColor; }
+  .oneDoorBody svg { flex: none; }
+  .oneDoorChevron { flex: none; color: currentColor; opacity: 0.7; }
+}
 
 /* Layout ONLY — colour and hover come from the shipped `btn btn-lime`, so the warm-theme
    ink-on-lime handling and the one-lime-action rule are inherited, not re-implemented. */

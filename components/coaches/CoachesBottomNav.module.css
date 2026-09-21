@@ -1,6 +1,9 @@
 /* Only on mobile */
-.bottomNav {
-  display: none;
+/* ⚠ `.sheetAnchor` shares these declarations: it is the team sheet's containing box OUTSIDE the
+   nav (stage 1 · B1), and the sheet's surface reads them from its nearest ancestor. Add a
+   variable to one, add it to both — here and in the warm remap below. */
+.bottomNav,
+.sheetAnchor {
   /* Scoped dropdown-surface color (bespoke near-black, not a semantic token) — declared
      unconditionally here so it cascades to .dropdown regardless of the media query. */
   --nav-dropdown-bg: #0d111a; /* token-exempt: bespoke near-black dropdown, no global match */
@@ -12,6 +15,7 @@
   --nav-scroll-shadow: rgba(0, 0, 0, 0.55);
   --nav-scrollbar-thumb: rgba(255, 255, 255, 0.28);
 }
+.bottomNav { display: none; }
 
 @media (max-width: 900px) {
   .bottomNav {
@@ -301,6 +305,21 @@
      `useDismissable` keeps treating a tap in it as inside. The scrim is positioned the same way
      — `position: fixed` would be contained by the nav's backdrop-filter and is avoided. */
   .moreWrap { position: static; }
+  /* THE TEAM SHEET'S ANCHOR (phone re-evaluation stage 1 · B1, 2026-09-21). `CoachTeamSwitchSheet`
+     draws the same sheet from the MASTHEAD, which is not inside the nav — so it wraps the scrim and
+     the panel in this zero-height box pinned to the bar's top edge, and the two absolute rules
+     below resolve against it exactly as they resolve against the nav. Below the nav's z-index on
+     purpose: the bar stays visible and tappable beneath the sheet, as it does under More; ABOVE
+     the autosave pill's 250 (`.savePill` in the coaches module), so the scrim covers the pill and
+     an error pill can never intercept a tap on the sheet (/review 2026-09-21). */
+  .sheetAnchor {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
+    height: 0;
+    z-index: 260;
+  }
   .sheetScrim {
     position: absolute;
     left: 0;
@@ -374,6 +393,9 @@
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bottomNav {
     background: rgba(var(--home-paper-rgb), 0.92);
     border-top-color: var(--home-line);
+  }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .bottomNav,
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .sheetAnchor {
     --nav-dropdown-bg: var(--home-card);
     /* Zero-alpha twin of --home-card (#FFFFFF) — see the note beside the dark pair above. */
     --nav-dropdown-bg-t: rgba(255, 255, 255, 0);

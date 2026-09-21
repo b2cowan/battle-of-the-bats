@@ -26,9 +26,10 @@ import { usePathname } from 'next/navigation';
  * dock scrolls sideways, a modal body scrolls vertically, and neither should be able to hide the
  * chrome behind them. Only the document, or a container tall enough to BE the page, counts.
  *
- * Intended adopters, not yet migrated: `components/admin/AdminEventHeader.tsx` and
- * `components/coaches/CoachTeamHeader.tsx` both carry this logic inline. They collapse in place
- * rather than standing down, but the reading half is the same; folding them in is a follow-up that
+ * Intended adopter, not yet migrated: `components/admin/AdminEventHeader.tsx` carries this logic
+ * inline (the coach masthead did too until 2026-09-21, when the phone re-evaluation deleted its
+ * scroll collapse outright — it no longer collapses at any width). It collapses in place rather
+ * than standing down, but the reading half is the same; folding it in is a follow-up that
  * should not ride along with a demo-chrome change.
  */
 export function useScrollCollapsed(options: {

@@ -154,8 +154,8 @@ export default function CoachesBottomNav() {
   const anyOverlayOpen = useAnyOverlayOpen();
 
   // The portal is team-scoped: use the team in the URL, otherwise default to the
-  // coach's (only / first) team so the bar always points somewhere sensible. The
-  // team switcher in More lets multi-team coaches change it.
+  // coach's (only / first) team so the bar always points somewhere sensible. A multi-team
+  // coach changes it from the team name in the masthead (stage 1 · B1).
   const teamMatch     = pathname.match(/\/coaches\/teams\/([^/]+)/);
   const urlTeamId     = teamMatch?.[1] ?? null;
   // Shared with the desktop rail since 2026-09-03 (lib/coach-nav-visibility.ts) — one fallback, so
@@ -296,58 +296,11 @@ export default function CoachesBottomNav() {
               </>
             )}
 
-            {/* Team switcher — only earns its place with 2+ entries (mirrors the tournament
-                switcher). ONE list under one header (stage 0 walk, 2026-09-20): a team with no
-                live season sits in the same list carrying its season's NAME as a quiet qualifier
-                — the words the desktop dropdown already uses for it — and still lands on Season's
-                End, which is where its nav's first slot points too. It used to be its own
-                "No live season" group: a desktop optgroup label transplanted onto a phone, where a
-                second uppercase header over a single row read like a warning and cost ~35px of a
-                sheet whose job is the tools beneath. The current team is tinted and carries no
-                chevron — "you are here", not a door; the others keep theirs. */}
-            {assignments.length + closedAssignments.length > 1 && (
-              <>
-                <div className={styles.dropSectionLabel}>Your teams</div>
-                {assignments.map(a => {
-                  const active = currentTeamId === a.teamId;
-                  return (
-                    <Link
-                      key={a.teamId}
-                      href={`${base}/teams/${a.teamId}`}
-                      className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
-                      role="menuitem"
-                      aria-current={active ? 'true' : undefined}
-                    >
-                      {a.teamColor && (
-                        <span style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0 }} />
-                      )}
-                      <span className={styles.dropItemName}>{a.teamName}</span>
-                      {!active && <ChevronRight size={14} className={styles.dropChevron} />}
-                    </Link>
-                  );
-                })}
-                {closedAssignments.map(a => {
-                  const active = currentTeamId === a.teamId;
-                  return (
-                    <Link
-                      key={a.teamId}
-                      href={`${base}/teams/${a.teamId}/season-end`}
-                      className={`${styles.dropItem} ${active ? styles.dropActive : ''}`}
-                      role="menuitem"
-                      aria-current={active ? 'true' : undefined}
-                    >
-                      {a.teamColor && (
-                        <span style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0, opacity: 0.7 }} />
-                      )}
-                      <span className={styles.dropItemName}>{a.teamName}</span>
-                      <span className={styles.dropItemMeta}>{a.programYearName}</span>
-                      {!active && <ChevronRight size={14} className={styles.dropChevron} />}
-                    </Link>
-                  );
-                })}
-                <div className={styles.dropDivider} />
-              </>
-            )}
+            {/* ⚠ The team switcher stood HERE until 2026-09-21 and now opens from the TEAM NAME in the
+                masthead (phone re-evaluation stage 1 · B1 — `CoachTeamSwitchSheet`, the same sheet
+                container and rows, moved). It cost 133px above the three tools a coach opens this
+                sheet for. Do not add a second copy back here: one switcher per width — the sidebar's
+                select on a desktop, the name's sheet on a phone. */}
 
             {/* ⚠ The season switcher stood HERE and is deleted (P2, 2026-08-16, Design A) — with
                 it, the parallel "Sections" list that replaced the coach's own menu once a season

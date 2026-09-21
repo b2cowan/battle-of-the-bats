@@ -96,6 +96,9 @@ type RowBase = {
   door?: CoachRowDoor | null;
   className?: string;
   'aria-label'?: string;
+  /** A placeholder row (the Overview's pending "…" slots) leaves the accessibility tree whole —
+   *  the <li>, not just its text — as the grid's placeholder cards do. */
+  'aria-hidden'?: boolean;
   tooltip?: string;
   /** A control that sits BESIDE the row (a sibling inside the <li>, never nested in the row's own
    *  link or button — the schedule's Game day pill). */
@@ -141,7 +144,7 @@ export function CoachRow(props: CoachRowProps) {
   );
   const ariaLabel = props['aria-label'];
   return (
-    <li className={styles.rowListItem} data-row-list-row>
+    <li className={styles.rowListItem} data-row-list-row aria-hidden={props['aria-hidden'] || undefined}>
       {props.as === 'link' ? (
         <Link href={props.href} className={rowClass} aria-label={ariaLabel} title={props.tooltip}>{inner}</Link>
       ) : props.as === 'button' ? (

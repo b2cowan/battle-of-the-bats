@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import { useOrg } from '@/lib/org-context';
-import { ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, Circle, DollarSign, LayoutDashboard, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
+import { ArrowRight, Building2, Calendar, CalendarCheck, CheckCircle2, ChevronDown, ChevronRight, Circle, DollarSign, LayoutDashboard, ListOrdered, MinusCircle, TrendingUp, TriangleAlert, Trophy, Users, Wallet, X } from 'lucide-react';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachSeasonFinishedNotice from '@/components/coaches/CoachSeasonFinishedNotice';
 import CoachHelperHome from '@/components/coaches/CoachHelperHome';
@@ -37,6 +37,7 @@ import { isInRunWindow, practicePlanState } from '@/lib/practice-state';
 import { nextOpenEvent } from '@/lib/coach-next-event';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
 import { readWltPreference, tallyResults, formatRecord, WLT_CATEGORIES } from '@/lib/coach-season-record';
+import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
 import { fieldNounFor, getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -273,9 +274,6 @@ export default function TeamOverviewPage({
   const [milestones, setMilestones] = useState<Milestones | null>(null);
   // Contextual org-invite banner (only when an org has actually invited this team)
   const [orgInvite, setOrgInvite] = useState<{ orgName: string } | null>(null);
-  // Safety-tier Insights bridge: the ONE finding category that shouldn't wait for a couch
-  // session (a pitcher over their arm-care cap) echoes as a single quiet line here.
-  const [armCareFlag, setArmCareFlag] = useState<{ name: string; overCapGames: number } | null>(null);
   // The coaching pair (chunk I, D13) — the two season-health tiles a coach WITHOUT money access
   // gets in slots 5–6. Both ride fetches this page already makes, so neither costs a request.
   const [attendanceSummary, setAttendanceSummary] = useState<AttendanceSummary | null>(null);
@@ -746,14 +744,14 @@ export default function TeamOverviewPage({
   const needsDevelopmentRead = coachingTiles.includes('development');
 
   // Season lineup analytics — ONE fetch, two consumers:
-  //   • the safety bridge (design log 2026-07-09): an over-cap pitcher as one quiet line, and
   //   • the Playing time tile (chunk I, D13): where the game's minutes are going.
+  // (It also fed the "Worth a look" safety bridge until 2026-09-20; the payload is unchanged.)
   // Lineups-gated; fail-silent (the Overview never blocks on analytics). Deliberately NOT a second
   // request for the tile — the payload already carries what both need.
   useEffect(() => {
     if (loading || isClosedTeam) return;
     const a = assignments.find(x => x.teamId === teamId);
-    if (!a || !a.capabilities.lineups) return; // never fetched ⇒ flag + tile stay null
+    if (!a || !a.capabilities.lineups) return; // never fetched ⇒ tile stays null
     let cancelled = false;
     // Chunk C: when the anchor is a GAME, ask the same call for today's arm-care concerns rather
     // than adding a second round trip. It answers only from what the coach's own settings and
@@ -765,8 +763,6 @@ export default function TeamOverviewPage({
       .then(res => (res.ok ? res.json() : null))
       .then(json => {
         if (cancelled) return;
-        const over = (json?.analytics?.armCare ?? []).find((r: { overCapGames: number }) => r.overCapGames > 0);
-        setArmCareFlag(over ? { name: over.name, overCapGames: over.overCapGames } : null);
         setGameDayArmCare((json?.armCare ?? []) as ArmCareConcern[]);
         setPeriodLabelPlural(json?.periodLabelPlural ?? 'Innings');
         const fairPlay = (json?.analytics?.fairPlay ?? []) as { fieldInnings: number; benchInnings: number }[];
@@ -1905,6 +1901,33 @@ export default function TeamOverviewPage({
     if (nextEvent.arrivalTime) prepChips.push({ key: 'call', state: 'fact', href: null, body: <>Call {fmtClockLabel(nextEvent.arrivalTime)}</> });
     if (nextEvent.uniform) prepChips.push({ key: 'uniform', state: 'fact', href: null, body: <>{nextEvent.uniform}</> });
   }
+  /**
+   * ON A PHONE THE ROW IS DOORS ONLY (phone re-evaluation stage 1 · B4, owner ruling 2026-09-21).
+   * "Call 5:30 p.m." and "Home kit" are answers, not actions — a coach tapped them and nothing
+   * happened — so at ≤640 they leave the chip row and join the META LINE beside the venue (the
+   * `oneMetaPhoneFact` spans below, hidden above 640 where the chips still carry them). The chips
+   * that ARE doors become full-width 44px rows, ONE PER DESTINATION: three of the four ("10 of 12
+   * in", "1 late", "1 out") carry the same attendance href, so four doors would have been four
+   * doors to two pages. The grouping is by `href` in first-seen order — the resolver above is
+   * unchanged and still decides who gets a door at all. The desktop card keeps its chips: both
+   * renderings are in the tree and the stylesheet shows one per width (never a JS media query —
+   * the server and the first client frame must agree).
+   */
+  // A chip that carries a STATE but no door (a duty the coach lacks, should a read ever return one
+  // anyway) keeps its colour as a door-shaped row with no chevron rather than fading into the
+  // facts — "green means done, amber means still to do" holds on a phone too (/review 2026-09-21;
+  // unreachable today, since the gated reads return nothing without the duty).
+  const prepDoors: { href: string | null; state: 'done' | 'todo' | 'fact'; bodies: React.ReactNode[]; keys: string[] }[] = [];
+  for (const chip of prepChips) {
+    if (!chip.href) {
+      if (chip.state !== 'fact') prepDoors.push({ href: null, state: chip.state, bodies: [chip.body], keys: [chip.key] });
+      continue;
+    }
+    const door = prepDoors.find(d => d.href === chip.href);
+    if (door) { door.bodies.push(chip.body); door.keys.push(chip.key); }
+    else prepDoors.push({ href: chip.href, state: chip.state, bodies: [chip.body], keys: [chip.key] });
+  }
+  const phoneMetaFacts = prepChips.filter(c => !c.href && c.state === 'fact');
 
   // ⚠ THE OVERVIEW HAS NO REFERENCE RAIL, DELIBERATELY (owner ruling 2026-08-03, after seeing it
   // built). Every line of it restated a tile the board already carries — the week's counts, the
@@ -2013,7 +2036,21 @@ export default function TeamOverviewPage({
               </Link>
             )
           )}
-          meta={anchorSlots.meta}
+          /* B4: the base meta in its own span so the phone-only facts after it can tell whether they
+             follow anything (a standalone dot before "Call 5:30 p.m." when there is no venue would
+             be an orphan). Above 640 the fact spans are display:none and the line reads as before. */
+          meta={(anchorSlots.meta || phoneMetaFacts.length > 0) ? (
+            <>
+              {anchorSlots.meta && <span className={styles.oneMetaBase}>{anchorSlots.meta}</span>}
+              {phoneMetaFacts.map(c => (
+                <span key={c.key} className={styles.oneMetaPhoneFact}>
+                  {/* The dot sits OUTSIDE the nowrap text so a fact that wraps takes the whole fact to
+                      the next line and leaves its dot at the end of the line before. */}
+                  <span className={styles.oneMetaDot} aria-hidden> · </span><span className={styles.oneMetaFactText}>{c.body}</span>
+                </span>
+              ))}
+            </>
+          ) : null}
           answers={(anchor.answers.length > 0 || (anchor.kind === 'preseason' && !tourSeen)) ? (
             <>
               {anchor.answers.map(answer => {
@@ -2112,6 +2149,28 @@ export default function TeamOverviewPage({
               ))}
             </div>
           )}
+          {/* The phone's doors (B4) — one 44px row per destination, in the row idiom the board's
+              rows use below; the first chip's state colours the door, the chips that share its
+              page follow as a sentence ("10 of 12 in · 1 late · 1 out"). ≤640 only. */}
+          {prepDoors.length > 0 && (
+            <div className={styles.oneDoors}>
+              {prepDoors.map(d => {
+                const body = (
+                  <span className={styles.oneDoorBody}>
+                    {d.bodies.map((b, i) => <span key={d.keys[i]}>{i > 0 && <span aria-hidden> · </span>}{b}</span>)}
+                  </span>
+                );
+                return d.href
+                  ? (
+                    <Link key={d.keys[0]} href={d.href} className={styles.oneDoor} data-state={d.state}>
+                      {body}
+                      <ChevronRight size={16} aria-hidden className={styles.oneDoorChevron} />
+                    </Link>
+                  )
+                  : <span key={d.keys[0]} className={styles.oneDoor} data-state={d.state}>{body}</span>;
+              })}
+            </div>
+          )}
 
           {/* Arm care (wow #2, D-C7). Decision SUPPORT: it warns, never blocks, never changes a
               lineup, and never tells the coach what to do. It claims ONLY what the coach's own
@@ -2193,18 +2252,56 @@ export default function TeamOverviewPage({
             </CoachCard>
           ))}
         </div>
+        {/* ON A PHONE A TILE IS A ROW (phone re-evaluation stage 1 · B3, owner ruling 2026-09-21).
+            The SAME six tiles — `buildTile` decides the words and the numbers, `resolveBoard` the
+            set and the order, and neither knows this list exists — drawn as the portal's one row
+            recipe (`CoachRowList`, F-17): the label with ONE qualifier under it, the figure on the
+            right, a chevron, the whole row the door. The qualifier is the tile's warning when it
+            has one ("12 missing email"), otherwise its sub-line; the record's is its pips. The bar,
+            the progress label and the second sub-line are not drawn here — the page each row opens
+            has them. Measured before: six two-up tiles at 520px with 33 of the page's words at 11px;
+            after: 52px rows, all six above the bar at 390×844. The grid above is display:none at
+            ≤640 and this list above it — both in the tree, the stylesheet shows one per width. */}
+        <CoachRowList className={styles.boardRows} labelledBy="board-title">
+          {board.slots.map(key => {
+            const tile = buildTile(key);
+            const Icon = tile.icon;
+            const qualifier = tile.flag
+              ? <span className={tile.flag.tone === 'ok' ? kit.flagOk : tile.flag.tone === 'warn' ? kit.flagWarn : kit.flagMute}>{tile.flag.text}</span>
+              : tile.pips && tile.pips.length > 0
+                ? (
+                  <span className={styles.wltFormPips} aria-label={`Last ${tile.pips.length}: ${tile.pips.map(p => p.result === 'win' ? 'W' : p.result === 'loss' ? 'L' : 'T').join(' ')}`}>
+                    {tile.pips.map((p, i) => (
+                      <span key={i} className={styles.wltPip} data-r={p.result || undefined} aria-hidden>
+                        {p.result === 'win' ? 'W' : p.result === 'loss' ? 'L' : 'T'}
+                      </span>
+                    ))}
+                  </span>
+                )
+                : tile.sub;
+            return (
+              <CoachRow
+                key={tile.key}
+                as="link"
+                href={tile.href}
+                mark={<Icon size={15} aria-hidden />}
+                title={tile.label}
+                caption={qualifier}
+                trail={<span className={styles.boardRowFigure} data-tone={tile.tone} data-words={tile.tone === 'muted' || undefined}>{tile.value}</span>}
+                door="chevron"
+              />
+            );
+          })}
+          {Array.from({ length: board.pendingSlots }, (_, i) => (
+            <CoachRow key={`pending-row-${i}`} as="static" title="…" className={styles.rowListMuted} aria-hidden />
+          ))}
+        </CoachRowList>
       </section>
 
-      {/* Safety-tier bridge from Insights — the ONE finding category that shouldn't wait for a
-          couch session. Kept as its own line rather than folded into the tail: an arm-care breach
-          is a warning, and the tail is where quiet things go. */}
-      {armCareFlag && (
-        <p className={styles.insightsBridge}>
-          <span className={styles.insightsBridgeIcon} aria-hidden>⚠</span>
-          Worth a look: {armCareFlag.name} went over the pitching cap in {armCareFlag.overCapGames} game{armCareFlag.overCapGames === 1 ? '' : 's'}.{' '}
-          <Link href={insightsSectionHref(base, 'playing-time')}>Season insights →</Link>
-        </p>
-      )}
+      {/* The "Worth a look: … went over the pitching cap" safety bridge stood under the board until
+          2026-09-20 (owner: remove it). Today's arm-care concern still shows on the game-day card
+          before first pitch, and the season figure lives on Insights, one tap from the Record and
+          Playing time rows — the line said it a third time. */}
 
       {/* ══ THE TAIL ═══════════════════════════════════════════════════════════
           Everything that is not today's work, in one quiet list: a tappable row list on a phone, a

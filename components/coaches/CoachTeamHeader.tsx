@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { ArrowLeftRight, X } from 'lucide-react';
+import { ArrowLeftRight, ChevronDown, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { resolveLiveSeason, resolveClosedSeason } from '@/lib/coach-season-view';
 import { mastheadSeasonLabel } from '@/lib/coach-season-label';
@@ -15,6 +15,9 @@ import { EVENT_WORD } from '@/lib/coach-schedule-vocab';
 import { formatInOrgZone } from '@/lib/timezone';
 import { useCoachNudgeDismiss } from '@/components/coaches/useCoachNudgeDismiss';
 import { CoachPageHelpSlot } from '@/components/coaches/CoachPageHelpSlot';
+import CoachTeamSwitchSheet from '@/components/coaches/CoachTeamSwitchSheet';
+import { useDismissable } from '@/lib/overlay-hooks';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import type { RepEventType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
@@ -49,9 +52,16 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   finished season shows its own final record instead of a status. Both arrive as PROPS from
  *   the team layout's single SSR feed; this component never fetches.
  * - Sticky against the viewport below the fixed top strip (the document is the portal's one
- *   real scroll container); publishes --coach-header-h; DESKTOP NEVER COLLAPSES, phone collapses
- *   to the bare team name with admin's 64/12 hysteresis. ⚠ A desktop collapse was built on
- *   2026-08-18 and reverted by the owner on sight the next day — see the effect's own note.
+ *   real scroll container); publishes --coach-header-h; THE BAR NEVER CHANGES SHAPE UNDER SCROLL,
+ *   at any width (desktop: owner ruling 2026-08-19; phone and tablet: phone re-evaluation stage 1
+ *   · B2, owner ruling 2026-09-21 — see the note where the collapse effect used to be).
+ * - ON A PHONE (≤640) IT IS ONE 36px LINE ON EVERY SCREEN — name · record · "?" — the Overview
+ *   included (stage 1 · B2 = "B, one line everywhere"). The Overview's club · season line is not
+ *   lost: it renders as an UNPINNED page line directly under the bar, same words, same place at
+ *   rest, and scrolls away with the page instead of snapping. See `teamHeaderPageLine`.
+ * - THE TEAM NAME IS THE SWITCHER'S DOOR ON A PHONE (stage 1 · B1): with two or more teams it
+ *   renders as a button with a chevron and opens `CoachTeamSwitchSheet` — the More sheet's own
+ *   rows, moved. One team: plain text. Desktop: the sidebar's select, untouched.
  * - Mounted by the TEAM layout, so it exists only under /teams/{teamId}.
  */
 function CoachTeamHeaderInner({
@@ -80,15 +90,37 @@ function CoachTeamHeaderInner({
 }) {
   const { assignments, closedAssignments } = useCoaches();
   const headerRef = useRef<HTMLElement>(null);
-  const [collapsed, setCollapsed] = useState(false);
-  // ONE IDENTITY LINE AT REST ON A PHONE (owner ruling 2026-09-20, phone re-evaluation stage 0 · A2).
-  // Two facts about the page under the bar, read from the address: is this the team's Overview
-  // (keeps the two-line masthead and the scroll collapse), and is this an open chat room (no
-  // masthead at ≤640 — the room header is the identity there). Both are CSS classes gated at ≤640
-  // in the stylesheet, never a JS media query, so the server and the first client frame agree.
+  // ONE IDENTITY LINE ON A PHONE (stage 0 · A2, 2026-09-20; extended to the Overview by stage 1 · B2,
+  // 2026-09-21). Two facts about the page under the bar, read from the address: is this the team's
+  // Overview (which gets the unpinned club · season page line under the bar), and is this an open
+  // chat room (no masthead at ≤640 — the room header is the identity there). Both are CSS classes
+  // gated at ≤640 in the stylesheet, never a JS media query, so the server and the first client
+  // frame agree.
   const pathname = usePathname() ?? '';
   const onOverview = /\/coaches\/teams\/[^/]+\/?$/.test(pathname);
   const onChat = /\/coaches\/teams\/[^/]+\/chat(?:\/|$)/.test(pathname);
+  // The switcher (stage 1 · B1): a phone-only door on the team name, offered only when there is
+  // somewhere to switch TO. `useIsPhoneNav` defaults to true so the server renders the button and a
+  // desktop swaps it for plain text after mount — the chevron is display:none above 900, so the
+  // swap moves nothing. The sheet lives inside `switchRef` so one dismiss boundary covers the
+  // button, and `switchSheetRef` the scrim and the panel (the sheet's scrim is a tap INSIDE the
+  // boundary that closes it, exactly as the More sheet's does).
+  // The sheet remembers the ADDRESS it was opened on rather than a boolean: a switch is a
+  // navigation, and the sheet closes with the address (as More does) with no effect to write —
+  // the derived `switchOpen` is simply false on the next page.
+  const isPhoneNav = useIsPhoneNav();
+  const [switchOpenAt, setSwitchOpenAt] = useState<string | null>(null);
+  const switchOpen = switchOpenAt === pathname;
+  const switchRef = useRef<HTMLSpanElement>(null);
+  const switchSheetRef = useRef<HTMLDivElement>(null);
+  const switchButtonRef = useRef<HTMLButtonElement>(null);
+  const closeSwitch = () => setSwitchOpenAt(null);
+  // Two boundaries, not one: the button sits inside the sticky header and the sheet is rendered
+  // OUTSIDE it (see the fragment below), so "outside" means outside both.
+  useDismissable(switchOpen, [switchRef, switchSheetRef], closeSwitch, () => {
+    setSwitchOpenAt(null);
+    switchButtonRef.current?.focus({ preventScroll: true });
+  });
   // Once per GAME, on-device (the portal's one dismiss idiom) — a new game week mints a new
   // event id, so the nudge returns for the next opponent without any expiry bookkeeping.
   // Called unconditionally (rules of hooks); the placeholder key is never written.
@@ -110,73 +142,28 @@ function CoachTeamHeaderInner({
     };
   }, [teamId]);
 
-  // Phone-only collapse on DOCUMENT scroll — the portal's one real scroll container
-  // (probe-verified 2026-08-01: the shell's inner elements never actually scroll; a
-  // listener on them structurally never fires).
-  //
-  // ⚠⚠ DESKTOP COLLAPSE WAS BUILT AND REVERTED ON 2026-08-19 — DO NOT RE-PROPOSE IT AS A SPACE
-  // SAVING. The header vertical-space pass (direction A) removed this width gate so the bar
-  // slimmed to ~40px while scrolling at every width; it worked, it was measured (−34px of pinned
-  // chrome), it passed review, and the owner rejected it ON SIGHT: *"I like the size changes we
-  // made but you can leave this header as is when scrolling."* The identity bar staying put is
-  // worth more than the pixels it costs. The pixels that SURVIVED that pass are the ones taken
-  // from the bar's own height (three lines to two) and from the page-title band — space reclaimed
-  // by making things smaller, not by making them disappear and come back.
-  //
-  // One evaluator, run at ATTACH and on BREAKPOINT CHANGE as well as on scroll: a team
-  // switch resets scroll without necessarily firing 'scroll' on this listener, and a
-  // rotation into the phone breakpoint arrives mid-scroll with no scroll event at all —
-  // both left a stale `collapsed` before (/review 2026-08-02).
-  useEffect(() => {
-    const phone = window.matchMedia('(max-width: 900px)');
-    const evaluate = () => {
-      if (!phone.matches) { setCollapsed(false); return; }
-      const y = window.scrollY;
-      // Hysteresis (collapse >64, expand <12) — a threshold pair, not a single line, because
-      // collapsing changes the bar's height and a single line would flap around it.
-      setCollapsed(prev => (prev ? y > 12 : y > 64));
-    };
-    evaluate();
-    window.addEventListener('scroll', evaluate, { passive: true });
-    phone.addEventListener('change', evaluate);
-    return () => {
-      window.removeEventListener('scroll', evaluate);
-      phone.removeEventListener('change', evaluate);
-    };
-  }, [teamId]);
-
-  /**
-   * ⚠ COLLAPSING CAN PULL THE FLOOR OUT FROM UNDER KEYBOARD FOCUS (/review 2026-08-19).
-   *
-   * Two controls live inside the parts a collapse hides — the "Public site" flip and the book
-   * nudge's dismiss button. A keyboard user can be ON one of them and still scroll the page
-   * (space, PageDown, arrows, a screen reader's own scrolling). The moment `collapsed` flips, that
-   * control is `display:none`, which drops it out of the accessibility tree AND out of focus —
-   * the browser silently resets focus to <body>, so the next Tab restarts from the top of the
-   * document with nothing to say where focus went.
-   *
-   * The bar itself becomes the landing spot: it is still on screen, it is the nearest thing that
-   * survived, and `preventScroll` stops the focus move from fighting the scroll that caused it.
-   * `offsetParent === null` is the cheap "did this element actually get hidden" test — it is null
-   * exactly when an ancestor is display:none, which is the case being repaired.
-   *
-   * ⚠ THIS STAYS EVEN THOUGH THE DESKTOP COLLAPSE WAS REVERTED (2026-08-19). The bug is a PHONE
-   * bug and always was — live since 2026-08-02, found only because a review looked at the desktop
-   * version. Reverting the thing that exposed it does not unfix it.
-   */
-  useEffect(() => {
-    if (!collapsed) return;
-    const el = headerRef.current;
-    const active = document.activeElement as HTMLElement | null;
-    if (!el || !active || !el.contains(active)) return;
-    if (active.offsetParent !== null) return; // still visible — the collapse did not hide it
-    el.focus({ preventScroll: true });
-  }, [collapsed]);
-
+  // ⚠⚠ THE SCROLL COLLAPSE IS GONE AT EVERY WIDTH — DO NOT RE-PROPOSE IT AS A SPACE SAVING.
+  // Two rulings, one reason. DESKTOP (2026-08-19): a collapse was built, measured (−34px of pinned
+  // chrome), passed review, and the owner rejected it on sight — "you can leave this header as is
+  // when scrolling"; the identity bar staying put is worth more than the pixels. PHONE + TABLET
+  // (2026-09-21, phone re-evaluation stage 1 · B2 — the owner asked for the Overview's thinning
+  // two-line bar on every screen and chose the opposite once both were drawn at true size): what
+  // lived here was a threshold toggle with hysteresis (collapse past 64px of scroll, expand under
+  // 12), so the bar did not shrink, it SNAPPED 59→36 — a 23px content jump under the thumb, twice
+  // per pass — and the collapsed form hid the whole right slot including the "?". The space that
+  // survives came from making the bar smaller (one line, stage 0 · A2), not from chrome that
+  // vanishes and returns. The focus-repair effect that lived beside it (a collapse could hide the
+  // control that had focus) went with it: nothing hides on scroll any more.
   const live = assignments.find(a => a.teamId === teamId) ?? null;
   const closed = closedAssignments.find(a => a.teamId === teamId) ?? null;
   const teamName = live?.teamName ?? closed?.teamName ?? null;
   if (!teamName) return null;
+  // The More sheet's own condition for showing the switcher (a switch needs a second team). Phone
+  // only — the desktop's switcher is the sidebar's select.
+  const canSwitch = isPhoneNav && assignments.length + closedAssignments.length > 1;
+  // `/{orgSlug}/coaches` — read off the address, not off client org-context (the default-org
+  // gotcha in the docblock: a multi-org coach's context org is not always the one on screen).
+  const coachesBase = pathname.slice(0, pathname.indexOf('/coaches') + '/coaches'.length);
 
   // The season the masthead is describing: the LIVE one, or the newest closed one when the team
   // has none. Both come from the shared resolvers so the header cannot name a different season
@@ -235,20 +222,41 @@ function CoachTeamHeaderInner({
   ) : null;
 
   return (
-    /* role="banner": a <header> nested in <main> gets NO implicit landmark; admin's event
-       header sets this explicitly for the identical mount position (AdminEventHeader:137). */
+    <>
+    {/* role="banner": a <header> nested in <main> gets NO implicit landmark; admin's event
+        header sets this explicitly for the identical mount position (AdminEventHeader:137). */}
     <header
       ref={headerRef}
       role="banner"
-      /* -1: never in the tab order, but focusable as the landing spot when a collapse hides the
-         control that had focus (see the effect above). */
+      /* -1: never in the tab order; focusable so a script (or a future control) can land here. It was
+         the landing spot for keyboard focus when the collapse hid a control — the collapse is gone. */
       tabIndex={-1}
-      className={`${styles.teamHeader}${collapsed ? ` ${styles.teamHeaderCollapsed}` : ''}${onOverview ? '' : ` ${styles.teamHeaderPhoneRest}`}${onChat ? ` ${styles.teamHeaderPhoneChat}` : ''}`}
+      className={`${styles.teamHeader} ${styles.teamHeaderPhoneRest}${onChat ? ` ${styles.teamHeaderPhoneChat}` : ''}`}
     >
       <div className={styles.teamHeaderRow}>
         <div className={styles.teamHeaderLeft}>
-          <span className={styles.teamHeaderNameRow}>
-            <span className={styles.teamHeaderName}>{teamName}</span>
+          {/* The name — and, on a phone with somewhere to switch to, the switcher's door (stage 1 · B1).
+              The chevron sits OUTSIDE the truncating span so a long name loses its tail, never its
+              chevron; the button keeps the "?"'s 44px tap trick (a 4px overhang above and below the
+              36px line — the bar does not grow). */}
+          <span ref={switchRef} className={styles.teamHeaderNameRow}>
+            {canSwitch ? (
+              <button
+                ref={switchButtonRef}
+                type="button"
+                className={styles.teamHeaderSwitch}
+                aria-haspopup="menu"
+                aria-expanded={switchOpen}
+                aria-controls={switchOpen ? 'coach-team-sheet' : undefined}
+                title="Switch team"
+                onClick={() => setSwitchOpenAt(o => (o === pathname ? null : pathname))}
+              >
+                <span className={styles.teamHeaderName}>{teamName}</span>
+                <ChevronDown size={16} aria-hidden className={styles.teamHeaderSwitchChevron} />
+              </button>
+            ) : (
+              <span className={styles.teamHeaderName}>{teamName}</span>
+            )}
           </span>
           <div className={styles.teamHeaderMeta}>
             {/* The club, FIRST segment of the meta line (2026-08-18, direction B — it used to be
@@ -315,8 +323,9 @@ function CoachTeamHeaderInner({
 
               ⚠ OUTSIDE `.teamHeaderStatus` on purpose. That wrapper is `display: none` at ≤640
               (the 2026-08-24 status ruling); the "?" is not a status and must survive there.
-              ⚠ It DOES fold with `.teamHeaderCollapsed` at ≤900, like the flip beside it — ruled,
-              and the 2026-08-02 bare-name collapse is deliberately not reopened.
+              ⚠ It STAYS through scroll at every width since stage 1 · B2 (2026-09-21) — the phone
+              collapse that used to fold it is gone, so "help stops scrolling away" is true on a
+              phone now as well as on a desktop.
               ⚠ Renders nothing until a page publishes: a screen with no help topic leaves this
               corner empty rather than offering a door onto nothing. */}
           <CoachPageHelpSlot />
@@ -355,6 +364,45 @@ function CoachTeamHeaderInner({
         </div>
       )}
     </header>
+    {/* THE TEAM SHEET (stage 1 · B1) — rendered as a SIBLING of the header, never inside it. The
+        header is a stacking context (`z-index: 40`), and a fixed sheet inside it would sit under
+        anything the page paints above 40 — the autosave pill (250), the console's own sheet — so
+        the scrim could not cover them and an error pill could intercept a tap on the sheet's corner
+        (/review 2026-09-21). Out here the anchor's own z-index (260: over the pill, under the bar)
+        decides. `display: contents` so the host adds no box to `.coachesMain` (the header's
+        margins and the page line's still meet). Gated on `canSwitch` as well as `switchOpen`: a
+        viewport crossing 900 while the sheet is open swaps the button for plain text, and the sheet
+        must go with it rather than stay open with no trigger. */}
+    {canSwitch && switchOpen && (
+      <div ref={switchSheetRef} style={{ display: 'contents' }}>
+        <CoachTeamSwitchSheet
+          base={coachesBase}
+          currentTeamId={teamId}
+          assignments={assignments}
+          closedAssignments={closedAssignments}
+          onClose={closeSwitch}
+        />
+      </div>
+    )}
+    {/* THE OVERVIEW'S PAGE LINE (stage 1 · B2 = B, owner ruling 2026-09-21). On a phone the bar
+        above is one line on every screen, so the club and the season — the Overview's own second
+        line since 2026-08-18, and the ONLY place a phone names the club since the 2026-08-17
+        slimdown — move here: an UNPINNED line directly under the bar, same words, same place at
+        rest, scrolling away with the page. Rendered on the Overview only and `display: none`
+        above 640, where the bar's own meta line still carries both (so no width shows them twice).
+        ⚠ A SIBLING of the sticky header, never inside it: the layout's ResizeObserver measures
+        `headerRef` for `--coach-header-h`, and this line must not count as pinned chrome. The
+        fragment keeps the header a DIRECT child of `.coachesMain` (its sticky pin and its
+        padding-cancelling margins depend on that — see the team layout's note). The dot separator
+        is drawn between siblings, as the meta line draws it, so a standalone team (no club) reads
+        "2026 Season" with no orphan dot. */}
+    {onOverview && (seasonText || !isTeamWorkspace) && (
+      <div className={styles.teamHeaderPageLine} data-team-page-line>
+        {!isTeamWorkspace && <span>{orgName}</span>}
+        {seasonText && <span>{seasonText}</span>}
+      </div>
+    )}
+    </>
   );
 }
 

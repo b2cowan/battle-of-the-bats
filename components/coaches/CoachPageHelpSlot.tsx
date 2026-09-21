@@ -20,12 +20,12 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * is that on a desktop, where the masthead never collapses (ruling 2026-08-19), contextual help is
  * permanently on screen instead of scrolling away with the band.
  *
- * ⚠ **ON A PHONE IT FOLDS WITH THE COLLAPSE, DELIBERATELY.** `.teamHeaderCollapsed` hides the whole
- * right slot at ≤900px, so a scrolled phone loses the "?" exactly as it loses the flip and the
- * season. That is ruled: the 2026-08-02 bare-name collapse is NOT reopened (it was re-affirmed on
- * 2026-08-24 when the status slot came off phones). It also means *"help stops scrolling away"* is
- * TRUE ON DESKTOP AND FALSE ON A PHONE — stated here because that sentence was this option's
- * original justification and it was only half right.
+ * ⚠ **ON A PHONE IT NO LONGER FOLDS.** Until 2026-09-21 `.teamHeaderCollapsed` hid the whole right
+ * slot at ≤900px once the page scrolled, so *"help stops scrolling away"* was TRUE ON DESKTOP AND
+ * FALSE ON A PHONE (stated here because that sentence was this option's original justification and
+ * it was only half right). The phone re-evaluation's stage 1 · B2 (owner ruling 2026-09-21) deleted
+ * the scroll collapse at every width — the masthead is one 36px line on a phone that never changes
+ * shape — so the sentence is now true everywhere.
  *
  * ⚠⚠ **NOT `CoachTopStrip`, AND THAT IS A SETTLED BOUNDARY.** The strip's controls open in place
  * (bell panel · account menu · Workspaces popover — the 2026-09-01 account-menu ruling), with real

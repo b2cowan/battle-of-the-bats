@@ -73,6 +73,18 @@ async function openMoreSheet(page) {
   await page.waitForTimeout(300);
 }
 
+// The team sheet, open (stage 1 · B1): the switcher's rows, reached from the team name in the
+// masthead. The name is a button only with two or more teams and only below the nav breakpoint;
+// where it is plain text (a desktop, a one-team coach) there is nothing to open and the entry
+// falls back to the page.
+async function openTeamSheet(page) {
+  const name = page.locator('header[role="banner"] button[aria-haspopup="menu"]').first();
+  if (await name.count() === 0 || !(await name.isVisible())) return;
+  await name.click();
+  await page.locator('#coach-team-sheet').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
 async function openFirstBlock(page) {
   const row = page.getByRole('button', { name: /^Open / }).first();
   if (await row.count() === 0) return;
@@ -170,6 +182,17 @@ export const SCREENS = [
     ready: 'h1',
     interact: openMoreSheet,
     scope: 'nav[aria-label="Coaches mobile navigation"] [role="menu"]',
+  },
+  // The team sheet, open (stage 1 · B1) — the switcher's rows, scoped to the open sheet. Where the
+  // name is plain text (above 900, or a one-team coach) the scope matches nothing and the entry
+  // falls back to the page — the same Overview coach-team-hub measures, as coach-team-hub-more does.
+  {
+    id: 'coach-team-hub-switcher',
+    session: 'coach',
+    path: team,
+    ready: 'h1',
+    interact: openTeamSheet,
+    scope: '#coach-team-sheet',
   },
   {
     id: 'coach-notifications',
