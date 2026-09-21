@@ -7,6 +7,7 @@ import { isDemoOrgId } from '@/lib/demo-org-server';
 import { getPracticeStaffPeople } from '@/lib/practice-plan-staff';
 import {
   mineTagIdsOf, myLabelsOnPlan, practiceDayLabel, practicePlanRecipients, practicePlanSentMessage, sanitizeAudience,
+  sanitizeChosenUserIds,
 } from '@/lib/practice-plan-send';
 import { practicePlanEmail, type PracticePlanEmailBlock } from '@/lib/practice-plan-email';
 import { notify } from '@/lib/notify';
@@ -22,11 +23,14 @@ import { practiceLengthMinutes } from '@/lib/practice-state';
  * "Send to staff" (COACH_PRACTICE_WHO_RUNS_IT_PLAN.md §5.3; owner rulings A–K, 2026-09-17).
  *
  * The plan autosaves and has no "done" (F04), so this is the explicit act: the coach chooses WHO
- * (`audience`) and whether their own EMAIL goes with the bell and push (`email`). The recipients
- * are decided by `practicePlanRecipients` — the same pure rule the sheet previewed, so the number
- * the coach read is the number that goes — then ONE dispatch per person, because the body names
- * THEIR stations ("You're on Close control and Footwork ladder"). The practice is stamped with
- * the last send (mig 303) and the stamp comes back for the toolbar.
+ * (`audience` — three groups, or 'chosen' with the ticked `userIds`, owner ask 2026-09-20: one
+ * assistant reads it over before the group gets it) and whether their own EMAIL goes with the
+ * bell and push (`email`). The recipients are decided by `practicePlanRecipients` — the same pure
+ * rule the sheet previewed, so the number the coach read is the number that goes; a ticked id
+ * that is the sender, off the staff or without schedule access simply does not go — then ONE
+ * dispatch per person, because the body names THEIR stations ("You're on Close control and
+ * Footwork ladder"). The practice is stamped with the last send and who it reached (mig 303 ·
+ * 305) and the stamp comes back for the toolbar.
  *
  * ⚠ THE BELL AND PUSH honour each person's notification settings and the master pause, as every
  * dispatch does. THE EMAIL DOES NOT (ruling J): it is the coach's own act — a colleague addressing
@@ -49,9 +53,13 @@ export const POST = withObservability(async (req: Request,
   const denied = denyUnless(canWritePracticePlans(assignment.capabilities), 'Sending the plan needs Schedule: View + edit. Ask your head coach.');
   if (denied) return denied;
 
-  const body = await req.json().catch(() => ({})) as { audience?: unknown; email?: unknown };
+  const body = await req.json().catch(() => ({})) as { audience?: unknown; email?: unknown; userIds?: unknown };
   const audience = sanitizeAudience(body.audience);
   if (!audience) return NextResponse.json({ error: 'Choose who to send it to.' }, { status: 400 });
+  const chosenUserIds = audience === 'chosen' ? sanitizeChosenUserIds(body.userIds) : [];
+  if (audience === 'chosen' && chosenUserIds.length === 0) {
+    return NextResponse.json({ error: 'Choose at least one person to send it to.' }, { status: 400 });
+  }
   const withEmail = body.email === true;
 
   const plan = event.practicePlan;
@@ -64,9 +72,13 @@ export const POST = withObservability(async (req: Request,
     getRepRosterPlayers(programYear.id),
   ]);
   const people = await getPracticeStaffPeople(teamId, ctx.org.id, staffTags);
-  const { recipients } = practicePlanRecipients(people, audience, { senderUserId: ctx.user.id, plan, staffTags });
+  const { recipients } = practicePlanRecipients(people, audience, { senderUserId: ctx.user.id, plan, staffTags, chosenUserIds });
   if (recipients.length === 0) {
-    return NextResponse.json({ error: 'Nobody to send to — that audience has no one who can open the plan.' }, { status: 400 });
+    return NextResponse.json({
+      error: audience === 'chosen'
+        ? 'Nobody to send to — none of the people you chose can open the plan.'
+        : 'Nobody to send to — that audience has no one who can open the plan.',
+    }, { status: 400 });
   }
 
   // ── The message's fixed parts, once — the org's clock, the house spelling ("6:00 p.m.") ──
@@ -152,7 +164,7 @@ export const POST = withObservability(async (req: Request,
   let stamped = null;
   try {
     stamped = await stampRepTeamEventPracticePlanSent(eventId, teamId, programYear.id, {
-      by: ctx.user.id, audience, count: recipients.length, email: emailed > 0,
+      by: ctx.user.id, audience, count: recipients.length, email: emailed > 0, to: recipients.map(r => r.userId),
     });
     if (!stamped) throw new Error('practice not found for the sent stamp');
   } catch (e) {

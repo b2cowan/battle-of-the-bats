@@ -272,8 +272,13 @@ type DoorProps = Omit<TeachingDoor, 'show'>;
  * shown (a modal has its own room), and the block itself when the station is its ONLY one, where
  * the fields read as the block's own lines and follow the block's door idiom (`doors`: a field
  * with content is always shown; an empty one waits at the foot). One order for both, so a coach
- * who learns the modal knows the flattened block: what you're doing · watching for · coaching
- * points · setup · equipment · who runs it · players · just for tonight · save to my drills.
+ * who learns the modal knows the flattened block — WHO, THEN WHAT (owner, 2026-09-20): staff ·
+ * players · what you're doing · watching for · coaching points · setup · equipment · just for
+ * tonight · save to my drills. The practice's half first because it is the half the coach fills
+ * at 9pm (the drill's words are usually already written, and locked on a drill-backed station),
+ * and because the printed sheet and the field screen already read a station that way — the
+ * staff · players line under the name, the words below. Staff had sat sixth, under the modal's
+ * fold, behind three multi-line boxes it is filled more often than.
  *
  * Two DIFFERENT kinds of not-editable, deliberately never conflated:
  *   readOnly  → this viewer may not write the plan at all (an assistant).
@@ -325,10 +330,11 @@ function StationFields({
   const door = (id: StationDoor): TeachingDoor => (doors ? doors(id) : OPEN_DOOR);
   const staff = door('staff'), note = door('note');
   const playerCount = station.playerIds?.length ?? 0;
-  /* The block's own staff line, when it holds one, already reads "Staff" above a flattened station
-     — so this line, the sole station's who-runs-it, is the one the block's Staff door opens only
-     while the block has none of its own; with both held, this one keeps the station's word. */
-  const staffLabel = sole && !hasStaff(block) ? 'Staff' : 'Who runs it';
+  /* ONE word for the people line — "Staff" — on a block and on a station alike (owner, 2026-09-20):
+     the door that opens this line already said "+ Staff", and the field it opened said something
+     else. The one place two Staff rows can now stand on a single flattened block is a block that
+     holds staff of its own AND on its sole station (a lead set on a circuit, then trimmed to one
+     station) — rare, legacy-shaped, and staff is not moved between levels on the way past. */
   const drillActions = !readOnly && (
     <>
       {/* ⚠ Detaching is the HONEST act, not a workaround. It keeps every word and hands the coach
@@ -345,38 +351,6 @@ function StationFields({
 
   return (
     <>
-      {fromDrill ? (
-        <>
-          {/* Quiet, and it STAYS for the life of the station — it records where this came from,
-              which remains true however the practice goes. Nothing renders from the drill row
-              itself, so there is no "edited" state to track. Flattened into its block (D1) the
-              line also carries the two doors, where the block's own words would sit — and the
-              drill's NAME, because nothing else on a flattened block says it: the block's title
-              is the drill's only when the block was placed from it, and a drill added to a written
-              block or swapped in keeps the block's own title (/review, 2026-09-15). The modal's
-              head says the name, so the line there does not. */}
-          <p className={`${styles.ppFromDrill} ${sole ? styles.ppFromDrillLine : ''}`}>
-            <Library size={12} aria-hidden /> From your drills
-            {sole && station.name.trim() ? ` · ${station.name}` : ''}
-            {station.drillTags?.length ? ` · ${station.drillTags.join(' · ')}` : ''}
-            {sole && drillActions}
-          </p>
-          <TeachingFacts values={station} equipmentTags={equipmentTags} />
-          {!sole && drillActions && <div className={styles.ppDrillActions}>{drillActions}</div>}
-        </>
-      ) : (
-        /* The five teaching fields from the shared module (stage 4, L6 — the drill sheet reads the
-           same list, so the two shapes cannot drift on order or words); the block's door idiom
-           rides in through `doors` when the station is flattened. */
-        <TeachingFields
-          values={station} readOnly={readOnly} noun="station" doingPlaceholder="What happens at this station"
-          doors={door} maxText={MAX_TEXT_LEN} maxPoints={MAX_COACHING_POINTS} maxPointLen={MAX_SHORT_TEXT_LEN}
-          equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
-          equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
-          onPatch={patch => onPatch(patch as Partial<PracticeStation>)}
-        />
-      )}
-
       {/* ⚠ A template stores no staff and no players — the practice supplies both, which is what
           lets one template work in April with twelve and July with nine. The controls are absent
           rather than disabled: a control that exists only to refuse should not exist. */}
@@ -385,7 +359,7 @@ function StationFields({
           empty read station would print a label over nothing). */}
       {!withoutPeople && staff.show && (!readOnly || hasStaff(station)) && (
         <div className={styles.ppField}>
-          <FieldLabel onRemove={staff.onRemove} removeLabel={staff.removeLabel}>{staffLabel}</FieldLabel>
+          <FieldLabel onRemove={staff.onRemove} removeLabel={staff.removeLabel}>Staff</FieldLabel>
           <PracticeTagPicker all={staffTags} ids={station.staffTagIds ?? []}
             legacyNames={station.staff} disabled={readOnly} onCreate={onCreateStaffTag}
             people={staffPeople} onPickPerson={onPickStaffPerson}
@@ -426,6 +400,38 @@ function StationFields({
             </div>
           )}
         </div>
+      )}
+
+      {fromDrill ? (
+        <>
+          {/* Quiet, and it STAYS for the life of the station — it records where this came from,
+              which remains true however the practice goes. Nothing renders from the drill row
+              itself, so there is no "edited" state to track. Flattened into its block (D1) the
+              line also carries the two doors, where the block's own words would sit — and the
+              drill's NAME, because nothing else on a flattened block says it: the block's title
+              is the drill's only when the block was placed from it, and a drill added to a written
+              block or swapped in keeps the block's own title (/review, 2026-09-15). The modal's
+              head says the name, so the line there does not. */}
+          <p className={`${styles.ppFromDrill} ${sole ? styles.ppFromDrillLine : ''}`}>
+            <Library size={12} aria-hidden /> From your drills
+            {sole && station.name.trim() ? ` · ${station.name}` : ''}
+            {station.drillTags?.length ? ` · ${station.drillTags.join(' · ')}` : ''}
+            {sole && drillActions}
+          </p>
+          <TeachingFacts values={station} equipmentTags={equipmentTags} />
+          {!sole && drillActions && <div className={styles.ppDrillActions}>{drillActions}</div>}
+        </>
+      ) : (
+        /* The five teaching fields from the shared module (stage 4, L6 — the drill sheet reads the
+           same list, so the two shapes cannot drift on order or words); the block's door idiom
+           rides in through `doors` when the station is flattened. */
+        <TeachingFields
+          values={station} readOnly={readOnly} noun="station" doingPlaceholder="What happens at this station"
+          doors={door} maxText={MAX_TEXT_LEN} maxPoints={MAX_COACHING_POINTS} maxPointLen={MAX_SHORT_TEXT_LEN}
+          equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
+          equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
+          onPatch={patch => onPatch(patch as Partial<PracticeStation>)}
+        />
       )}
 
       {/* ⚠ ALWAYS editable, even on a drill-backed station — this is the one field that must never
@@ -687,7 +693,12 @@ function StationModal({
         />
 
         <div className={`${styles.scrollPane} ${styles.ppStationBody}`}>
+          {/* Keyed on the station, so a step (Prev / Next, ← / →) starts the fields fresh: the two
+              pickers keep a typed-but-unchosen search as local state, and with Staff now the first
+              field a "jen" typed on station 1 carried into station 2's box (/review, 2026-09-20).
+              The PANEL is not keyed — the floor's own focus-on-step rule depends on it staying. */}
           <StationFields
+            key={station.id}
             station={station} block={block} sole={false} isRotation={isRotation}
             readOnly={readOnly} withoutPeople={withoutPeople}
             staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
@@ -1690,7 +1701,14 @@ function BlockCard({
   type Row = { id: Exclude<BlockDoor, 'teaching' | 'stations'>; label: string; applies: boolean; showing: boolean };
   const row = (id: Row['id'], applies: boolean, showing = applies && shows(id)): Row =>
     ({ id, label: DOOR_LABELS[id], applies, showing });
+  // In the FIELDS' order — who, then what (owner, 2026-09-20) — so the foot's doors read as the
+  // sheet does: + Staff first, then the words' additions, then tonight's note.
   const rows: Row[] = [
+    // The block's own staff line is offered while it has no stations or several; with ONE the door
+    // is the station's who-runs-it, and only while the block holds no staff of its own. Held
+    // content always shows, at either level — the one row whose showing is not "applies ∧ open".
+    row('staff', !withoutPeople && (sole ? !hasStaff(block) : true),
+      !withoutPeople && (sole ? hasStaff(sole) || (!hasStaff(block) && shows('staff')) : shows('staff'))),
     // With a sole written station its points are the block's points — offered only while the
     // block holds none of its own (the same rule as staff), so the sheet never shows a points
     // field AND a "+ Coaching points" door for one block; held content shows at either level.
@@ -1698,11 +1716,6 @@ function BlockCard({
       sole ? soleWritten && (hasPoints(sole.coachingPoints) || (!hasPoints(block.coachingPoints) && shows('points'))) : showTeaching && shows('points')),
     row('setup', soleWritten),
     row('equipment', sole ? soleWritten : stationCount === 0),
-    // The block's own staff line is offered while it has no stations or several; with ONE the door
-    // is the station's who-runs-it, and only while the block holds no staff of its own. Held
-    // content always shows, at either level — the one row whose showing is not "applies ∧ open".
-    row('staff', !withoutPeople && (sole ? !hasStaff(block) : true),
-      !withoutPeople && (sole ? hasStaff(sole) || (!hasStaff(block) && shows('staff')) : shows('staff'))),
     row('note', !withoutPeople && !!sole),
   ];
   const showing = Object.fromEntries(rows.map(r => [r.id, r.showing])) as Record<Row['id'], boolean>;
@@ -1829,44 +1842,6 @@ function BlockCard({
         </div>
         )}
 
-        {/* ── The two teaching fields (D2 · D3) — two fields, not one notes area: the "watching
-            for" line is what the field screen prints in bold at arm's length, and older plans
-            read through a field-by-field fallback. The station's words, the drill library's
-            words, the field screen's words; the stored keys stay `description` / `goal`. Absent
-            on a block with exactly one station and no words of its own (D7) — the station's
-            read-only text under Stations IS the block's teaching then. Read (stage 6, R2): the
-            same two, as text under their labels, each absent when empty. */}
-        {showTeaching && readOnly && (
-          <>
-            <ReadField label="What you're doing" text={block.description} />
-            <ReadField label="What you're watching for" text={block.goal} />
-          </>
-        )}
-        {showTeaching && !readOnly && (
-          <>
-            <label className={styles.ppField}>
-              <FieldLabel>What you&apos;re doing</FieldLabel>
-              <textarea className={styles.textarea} rows={2} value={block.description ?? ''}
-                maxLength={MAX_TEXT_LEN} placeholder="What happens, and how it's set up"
-                onChange={e => onPatch({ description: e.target.value })} />
-            </label>
-            <label className={styles.ppField}>
-              <FieldLabel>What you&apos;re watching for</FieldLabel>
-              <input className={styles.input} value={block.goal ?? ''} maxLength={MAX_TEXT_LEN}
-                placeholder="What good looks like here" onChange={e => onPatch({ goal: e.target.value })} />
-            </label>
-          </>
-        )}
-
-        {/* ── What the block holds, in a fixed order (D1): Coaching points · Staff · Players ·
-            Equipment · then its stations (stage 3). A section renders when it has content or its
-            door was opened this time; the doors for the rest wait at the foot. ── */}
-        {ownPoints && (
-          <CoachingPointsField points={block.coachingPoints} readOnly={readOnly}
-            maxPoints={MAX_COACHING_POINTS} maxLen={MAX_SHORT_TEXT_LEN} noun="block"
-            onSet={next => onPatch({ coachingPoints: next })} {...(sole ? {} : pointsDoor)} />
-        )}
-
         {ownStaff && (
           <div className={styles.ppField}>
             {/* The label draws its own quiet "×" (owner ask, 2026-09-15); the picker below
@@ -1917,6 +1892,48 @@ function BlockCard({
               </div>
             )}
           </div>
+        )}
+
+        {/* ── The two teaching fields (D2 · D3) — two fields, not one notes area: the "watching
+            for" line is what the field screen prints in bold at arm's length, and older plans
+            read through a field-by-field fallback. The station's words, the drill library's
+            words, the field screen's words; the stored keys stay `description` / `goal`. Absent
+            on a block with exactly one station and no words of its own (D7) — the station's
+            read-only text under Stations IS the block's teaching then. Read (stage 6, R2): the
+            same two, as text under their labels, each absent when empty. */}
+        {showTeaching && readOnly && (
+          <>
+            <ReadField label="What you're doing" text={block.description} />
+            <ReadField label="What you're watching for" text={block.goal} />
+          </>
+        )}
+        {showTeaching && !readOnly && (
+          <>
+            <label className={styles.ppField}>
+              <FieldLabel>What you&apos;re doing</FieldLabel>
+              <textarea className={styles.textarea} rows={2} value={block.description ?? ''}
+                maxLength={MAX_TEXT_LEN} placeholder="What happens, and how it's set up"
+                onChange={e => onPatch({ description: e.target.value })} />
+            </label>
+            <label className={styles.ppField}>
+              <FieldLabel>What you&apos;re watching for</FieldLabel>
+              <input className={styles.input} value={block.goal ?? ''} maxLength={MAX_TEXT_LEN}
+                placeholder="What good looks like here" onChange={e => onPatch({ goal: e.target.value })} />
+            </label>
+          </>
+        )}
+
+        {/* ── What the block holds, in a fixed order — WHO, THEN WHAT (owner, 2026-09-20; it was
+            D1's Coaching points · Staff · Players · Equipment): Staff · Players ABOVE the two
+            teaching fields, then Coaching points · Equipment · then its stations (stage 3) — the
+            station modal's order (staff · players · the words), the printed sheet's and the
+            field screen's, so a sheet with a written block and a drill block reads Staff in ONE
+            place. A section renders when it has content or its door was opened this time; the
+            doors for the rest wait at the foot. ── */}
+        {ownPoints && (
+          <CoachingPointsField points={block.coachingPoints} readOnly={readOnly}
+            maxPoints={MAX_COACHING_POINTS} maxLen={MAX_SHORT_TEXT_LEN} noun="block"
+            onSet={next => onPatch({ coachingPoints: next })} {...(sole ? {} : pointsDoor)} />
         )}
 
         {/* Kit lives at exactly ONE level — the activity's (D11), the same law as people: the

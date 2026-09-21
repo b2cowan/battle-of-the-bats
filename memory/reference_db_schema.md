@@ -1,12 +1,12 @@
 ---
 name: reference_db_schema
-description: Complete public schema table+column list — auto-generated 2026-09-18 from live fieldlogichq-dev Supabase project.
+description: Complete public schema table+column list — auto-generated 2026-09-21 from live fieldlogichq-dev Supabase project.
 metadata:
   node_type: memory
   type: reference
 ---
 
-# DB Schema Reference — 2026-09-18
+# DB Schema Reference — 2026-09-21
 
 **Auto-generated** from live `fieldlogichq-dev` project (ref `npgnrxaitgbtbtvvykto`) via Management API.
 Run `node scripts/refresh-db-schema.mjs` to refresh after applying migrations.
@@ -284,7 +284,7 @@ event_id (uuid) → rep_team_events.id NOT NULL, tag_id (uuid) → rep_team_tags
 - Indexes: rep_team_event_tags_tag_idx
 
 ### rep_team_events
-id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb), source_tournament_game_id (uuid), practice_plan (jsonb), family_shared_at, family_shared_by (uuid), practice_recap, practice_plan_sent_at, practice_plan_sent_by (uuid), practice_plan_sent_audience, practice_plan_sent_count, practice_plan_sent_email (boolean)
+id (uuid), program_year_id (uuid) → rep_program_years.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, org_id (uuid) → organizations.id NOT NULL, event_type NOT NULL, name NOT NULL, description, starts_at NOT NULL, ends_at, location, opponent, home_away, team_score (integer), opponent_score (integer), result, parent_event_id (uuid) → rep_team_events.id, is_recurring (boolean), recurrence_rule (jsonb), recurrence_parent_id (uuid) → rep_team_events.id, created_at, updated_at, status, source_basic_event_id (uuid), arrival_time, field_number, uniform, location_address, resources (jsonb), source_tournament_game_id (uuid), practice_plan (jsonb), family_shared_at, family_shared_by (uuid), practice_recap, practice_plan_sent_at, practice_plan_sent_by (uuid), practice_plan_sent_audience, practice_plan_sent_count, practice_plan_sent_email (boolean), practice_plan_sent_to
 - Indexes: rep_team_events_family_shared_idx, rep_team_events_org_id_idx, rep_team_events_parent_idx, rep_team_events_recurrence_parent_id_idx, rep_team_events_src_basic_event_uq, rep_team_events_src_tournament_game_uq, rep_team_events_team_id_idx, rep_team_events_year_idx
 
 ### rep_team_expense_tags

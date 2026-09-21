@@ -192,7 +192,7 @@ test.describe('drill library — a picked drill is read-only in the plan', () =>
 
     // ...and the practice's half of the same station is NOT locked.
     await expect(station.getByText('Just for tonight')).toBeVisible();
-    await expect(station.getByText("Who runs it")).toBeVisible();
+    await expect(station.getByText('Staff', { exact: true })).toBeVisible();
 
     expect(await horizontalOverflow(page)).toBeLessThanOrEqual(1);
   });

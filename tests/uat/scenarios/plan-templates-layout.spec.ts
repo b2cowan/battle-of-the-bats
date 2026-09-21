@@ -207,7 +207,10 @@ test.describe('the template editor — a template carries no people', () => {
     // ⚠ A control that exists only to refuse should not exist. These must be absent, not disabled —
     // so counting them (rather than checking `disabled`) is the assertion that matters.
     await expect(page.getByRole('button', { name: /Choose players/i })).toHaveCount(0);
-    await expect(page.getByLabel(/^Who runs it$/i)).toHaveCount(0);
+    // The people line is labelled "Staff" on a block and a station alike; a template has neither.
+    // Scoped to the sheet — the sidebar's own "Staff" entry is not the field. (The old assertion
+    // looked for an aria-label the picker never carried, and passed on nothing.)
+    await expect(page.locator('[data-room="plan-template"]').getByText('Staff', { exact: true })).toHaveCount(0);
     await expect(page.getByRole('button', { name: /^Draw$|Draw again/i })).toHaveCount(0);
     await expect(page.getByLabel(/^Just for tonight$/i)).toHaveCount(0);
 

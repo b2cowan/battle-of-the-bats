@@ -385,3 +385,54 @@ levels yield nothing); the merge carry; the catalogue's total records (typecheck
 - [x] Every open question is a lettered decision on the hub with a recommendation.
 - [x] Owner rulings A–K (in chat, 2026-09-17: "Build as recommended (A–K)") → §6 updated → built (§10).
 - [ ] Owner QA walk §203 (the hub's QA tab) → commit on the owner's word → migration 303 to prod before the promote.
+
+## 11. Follow-up (2026-09-20) — "Just these people", and the station's people line says Staff
+
+**Owner asks (2026-09-20, in chat):** (a) the station's fields should match the drill's; the one
+mismatch found was the people line — **"Who runs it"** on a station where the block (and the door
+that opens the line, "+ Staff") say **Staff**. The five teaching fields were already ONE shared list
+(stage 4, L6), so nothing else needed reconciling; the placeholder difference ("What happens at this
+station" / "How it runs") is each caller's own words and stays. (b) "For a coach who wants to send
+notifications when plans are done, can we also allow sending to specific coaches — sometimes they send
+to one assistant to review and update before sending to the broader group."
+
+**Built on dev 2026-09-20, commit owed:**
+- **Staff** is the station's word everywhere (modal and flattened). The one place two Staff rows can
+  now stand on a single flattened block — a block holding staff of its own AND on its sole station (a
+  lead set on a circuit, then trimmed to one) — is rare, legacy-shaped, and staff is NOT moved between
+  levels on the way past. Two UAT specs re-anchored (the template spec's old assertion looked for an
+  aria-label the picker never carried and passed on nothing; it now scopes to the sheet and counts the
+  word). The stations help article names the field.
+- **Staff · Players lead the station (owner, same day, on the built modal: "it is one of the things
+  that will likely get filled out the most and shouldn't fall below the footer line").** WHO, THEN WHAT
+  — the practice's half (staff · players) above the drill's five fields, in the modal and flattened
+  alike, then just for tonight · save to my drills. Beyond the fold, the merit: the printed sheet and
+  the field screen already read a station that way (the staff · players line under the name, the words
+  below); the edit sheet was the one surface reading it the other way round. On a drill-backed station
+  the modal now opens on its editable half instead of a wall of locked text. The block followed the same
+  day (owner: "update the written block with no station to match for consistency") — Staff · Players
+  ABOVE the two teaching fields, then Coaching points · Equipment · the stations, and the foot's doors
+  in the fields' order (+ Staff first); stage 2 D1's Coaching points · Staff · Players · Equipment is
+  superseded on that one point. The station modal's head now sits the same 0.6rem above its first field
+  that fields sit apart (the shared head's own margin had stacked on the body's padding) — the drill
+  sheet wears the same head and gets the same. Help: the stations and blocks articles name the order.
+- **A fourth audience, `chosen` — "Just these people":** a radio under the three groups; picking it
+  reveals a checklist of everyone the send could reach (the "Everyone on staff" set — the same two rules),
+  name and role word, each a 44px row. The route takes `userIds` beside `audience`, reads them through
+  `practicePlanRecipients` again (a ticked id that is the sender, off the staff, or without schedule
+  access does not go; STAFF order, never tick order), and refuses an empty pick.
+- **The sent line names them** — "Sent to Jen Okafor · bell and push · 4:12 p.m." — the sheet's "never
+  hides inside a count" rule, after the act. **Mig 305** widens the audience CHECK and adds
+  `practice_plan_sent_to uuid[]` (who it reached, every audience, no FK — a record of a past act);
+  the page resolves ids against the current staff and falls back to the count + "chosen by name"
+  when one no longer resolves. Applied to dev; PROD-OWED before the next promote; baselined in the
+  parity ratchet; dictionary row updated.
+- **Remembering (ruling B, read for the workflow it serves):** the sheet remembers the team's last
+  GROUP choice as the default; a hand-pick is NEVER the next default — "Jen first, then the coaches" is
+  one tick on Monday and none on Tuesday, and a habit press can never send the group's plan to Jen alone
+  — but the names last ticked wait pre-ticked inside "Just these people". The checklist is a SIBLING of
+  the radio's label, never inside it (a label with two labelable descendants forwards clicks to the
+  first — the Coaching points trap of 2026-09-15).
+- Unit: `practice-plan-send.test.ts` +5 (the tick list through the two rules, staff order, the
+  sanitizer's cap, the sent line's names and its fallback). Help: the send article's fourth definition
+  row, the remembering rule, the named sent line; keywords. `verify:changed` + `typecheck` green.

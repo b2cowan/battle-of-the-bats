@@ -18,7 +18,15 @@ import type { PracticePlan, PracticePlanSendAudience } from './types';
 import type { StaffKind } from './coach-capabilities';
 import { collectPracticePlanTagIds, practicePlanLevels } from './rep-practice-plan';
 
-export const PRACTICE_PLAN_AUDIENCES: ReadonlyArray<PracticePlanSendAudience> = ['named', 'coaches', 'staff'];
+/**
+ * The four options, in the sheet's order: three GROUPS the rule works out, then "Just these
+ * people" (owner ask, 2026-09-20 — "sometimes they send to one assistant to review and update
+ * before sending to the broader group"): the coach ticks names, and the same two rules still
+ * apply to every one of them.
+ */
+export const PRACTICE_PLAN_AUDIENCES: ReadonlyArray<PracticePlanSendAudience> = ['named', 'coaches', 'staff', 'chosen'];
+/** The audiences the rule decides by itself — what the sheet REMEMBERS as a team's default. A hand-pick is never the next default. */
+export const PRACTICE_PLAN_GROUP_AUDIENCES: ReadonlyArray<Exclude<PracticePlanSendAudience, 'chosen'>> = ['named', 'coaches', 'staff'];
 
 export function sanitizeAudience(input: unknown): PracticePlanSendAudience | null {
   return typeof input === 'string' && (PRACTICE_PLAN_AUDIENCES as readonly string[]).includes(input)
@@ -26,18 +34,34 @@ export function sanitizeAudience(input: unknown): PracticePlanSendAudience | nul
     : null;
 }
 
-/** The three options as the sheet and the sent state print them — one spelling, one home. */
+/** A hand-pick's ids, as the route and the remembered choice read them: strings, de-duplicated, capped at a staff's size. */
+export const MAX_CHOSEN_RECIPIENTS = 50;
+export function sanitizeChosenUserIds(input: unknown): string[] {
+  if (!Array.isArray(input)) return [];
+  const seen = new Set<string>();
+  for (const v of input) {
+    if (typeof v === 'string' && v.trim() && !seen.has(v)) seen.add(v);
+    if (seen.size >= MAX_CHOSEN_RECIPIENTS) break;
+  }
+  return [...seen];
+}
+
+/** The four options as the sheet and the sent state print them — one spelling, one home. */
 export const AUDIENCE_LABEL: Readonly<Record<PracticePlanSendAudience, string>> = {
   named: 'Named in this plan',
   coaches: 'Coaches and helpers',
   staff: 'Everyone on staff',
+  chosen: 'Just these people',
 };
 
-/** The sent state's parenthesis — lower-case, because it follows "Sent to 3". */
+/** The sent state's parenthesis — lower-case, because it follows "Sent to 3". A hand-pick's
+ *  sent line names the people instead (`sentToNames`); this word is its fallback when a name
+ *  can no longer be resolved. */
 export const AUDIENCE_SENT_LABEL: Readonly<Record<PracticePlanSendAudience, string>> = {
   named: 'named in the plan',
   coaches: 'coaches and helpers',
   staff: 'everyone on staff',
+  chosen: 'chosen by name',
 };
 
 /**
@@ -85,7 +109,12 @@ export interface PracticePlanRecipients {
 export function practicePlanRecipients(
   people: readonly PracticeStaffPerson[],
   audience: PracticePlanSendAudience,
-  ctx: { senderUserId: string; plan: PracticePlan | null; staffTags: readonly StaffTagIdentity[] },
+  ctx: {
+    senderUserId: string; plan: PracticePlan | null; staffTags: readonly StaffTagIdentity[];
+    /** 'chosen' only: the ids the coach ticked. Read through the same two rules as every group —
+     *  an id that is the sender, cannot open the plan, or is not on the staff simply does not go. */
+    chosenUserIds?: readonly string[];
+  },
 ): PracticePlanRecipients {
   const eligible = people.filter(p => p.userId !== ctx.senderUserId && p.canReadPlan);
   const onPlan = ctx.plan ? collectPracticePlanTagIds(ctx.plan, 'staff') : new Set<string>();
@@ -94,6 +123,11 @@ export function practicePlanRecipients(
 
   if (audience === 'staff') return { recipients: eligible, unlinkedNames: [], senderOnPlan };
   if (audience === 'coaches') return { recipients: eligible.filter(p => FIELD_KINDS.has(p.kind)), unlinkedNames: [], senderOnPlan };
+  if (audience === 'chosen') {
+    // In STAFF order, not tick order — the list the coach read is the list the sent line prints.
+    const chosen = new Set(ctx.chosenUserIds ?? []);
+    return { recipients: eligible.filter(p => chosen.has(p.userId)), unlinkedNames: [], senderOnPlan };
+  }
 
   // 'named' — every level's staff tag ids, matched to the people those tags ARE.
   const recipients = eligible.filter(p => p.tagId != null && onPlan.has(p.tagId));
@@ -112,6 +146,21 @@ export function practicePlanRecipients(
     }
   }
   return { recipients, unlinkedNames: [...unlinked].sort((a, b) => a.localeCompare(b)), senderOnPlan };
+}
+
+/**
+ * The sent line for a hand-pick names the people — "Sent to Jen Okafor and Craig Dubois" — because
+ * the head coach coming back tomorrow needs to know WHO has it, not how many (the sheet's own
+ * "never hides inside a count" rule, after the act). In staff order, as the sheet listed them.
+ * Null when any id no longer resolves to someone on the staff (they left; a stamp from before
+ * the column) — the caller falls back to the count and the audience word rather than naming
+ * three of four.
+ */
+export function sentToNames(to: readonly string[], people: readonly Pick<PracticeStaffPerson, 'userId' | 'name'>[]): string[] | null {
+  if (to.length === 0) return null;
+  const wanted = new Set(to);
+  const names = people.filter(p => wanted.has(p.userId)).map(p => p.name);
+  return names.length === wanted.size ? names : null;
 }
 
 /** One person's staff tag ids as the walk wants them — one word per person per team, so at most one. */

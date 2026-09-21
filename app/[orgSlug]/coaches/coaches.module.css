@@ -10617,6 +10617,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    reorder arrows it first carried left for the column's foot (`.ppStColMove`) the same day — its
    foot Delete this station and the room's Prev / Next stepper. */
 .ppStationModal .modalTitle { flex: 1 1 auto; min-width: 0; margin-right: 0.5rem; }
+/* The head sits the same 0.6rem above the first field that every field sits above the next
+   (owner catch, 2026-09-20): the shared modal head's own 1.25rem bottom margin stacked on the
+   body's top padding and read as a gap of its own. The body's padding is the whole distance —
+   here and on the drill sheet, which wears the same head. */
+.ppStationModal .modalHeader { margin-bottom: 0; }
 .ppStationTitle { font-size: var(--type-heading); font-weight: 700; }
 
 /* Marks a drill the CLUB shares. Coaches use it; only an org admin can change it. */
@@ -10914,6 +10919,18 @@ span.libCardMain { cursor: default; }
 .ppSendAudienceCount { font-family: var(--font-data); font-weight: 500; color: var(--text-tertiary); margin-left: 0.4rem; font-variant-numeric: tabular-nums; }
 .ppSendAudienceWho { font-size: var(--type-support); color: var(--text-secondary); line-height: 1.4; }
 .ppSendAudienceOnly { font-size: var(--type-support); color: var(--home-amber, var(--warning)); line-height: 1.4; }
+/* "Just these people" — the checklist under its radio (2026-09-20). A SIBLING of the radio's
+   label, never inside it: a <label> with two labelable descendants forwards every click to the
+   first (the same trap Coaching points hit, 2026-09-15). Indented to the radio's text column so
+   the names read as the option's own list; each row a 44px tap on a phone. */
+.ppSendPick { display: flex; flex-direction: column; gap: 0.15rem; margin: -0.2rem 0 0.25rem 1.85rem; }
+.ppSendPickRow {
+  display: flex; align-items: center; gap: 0.6rem; min-height: var(--tap-min, 44px);
+  padding: 0.25rem 0.5rem; border-radius: 8px; cursor: pointer; font-size: var(--type-support); color: var(--text-primary);
+}
+.ppSendPickRow[data-on='on'] { background: rgba(var(--home-olive-rgb, var(--logic-lime-rgb)), 0.1); }
+.ppSendPickRow input { margin: 0; width: 1.05rem; height: 1.05rem; flex: none; accent-color: var(--home-olive, var(--logic-lime)); }
+.ppSendPickRow small { color: var(--text-tertiary); font-size: var(--type-support); }
 .ppSendPreview {
   margin: 0 0 0.9rem; padding: 0.65rem 0.8rem; border-radius: 10px;
   border: 1px dashed var(--home-line-strong, var(--border-2)); background: var(--home-paper, transparent);

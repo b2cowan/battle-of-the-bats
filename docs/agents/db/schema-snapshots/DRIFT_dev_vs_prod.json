@@ -1,12 +1,21 @@
 {
-  "generated": "2026-09-18",
-  "total": 0,
+  "generated": "2026-09-21",
+  "total": 2,
   "counts": {
     "tables": 0,
-    "columns": 0,
+    "columns": 1,
     "indexes": 0,
     "constraints": 0,
-    "rls": 0
+    "rls": 1
   },
-  "items": []
+  "items": [
+    {
+      "key": "check:changed:rep_team_events.rep_team_events_practice_plan_sent_audience_check",
+      "sig": "(practice_plan_sent_audience = ANY (ARRAY['named'::text, 'coaches'::text, 'staff'::text, 'chosen'::text])) :: (practice_plan_sent_audience = ANY (ARRAY['named'::text, 'coaches'::text, 'staff'::text]))"
+    },
+    {
+      "key": "column:only-dev:rep_team_events.practice_plan_sent_to",
+      "sig": ""
+    }
+  ]
 }

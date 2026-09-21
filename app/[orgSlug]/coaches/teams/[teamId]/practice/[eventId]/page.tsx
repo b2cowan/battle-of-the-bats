@@ -41,7 +41,7 @@ import type { CircuitInput, RepTeamCircuit } from '@/lib/rep-circuits';
 import type { PracticeWeekScoutingBridge } from '@/lib/coach-opponent-nudge';
 import type { PickablePerson, PickableTag } from '@/components/coaches/TagPicker';
 import PracticeSendSheet, { type SendSheetChoice } from '../_PracticeSendSheet';
-import { AUDIENCE_SENT_LABEL, practiceDayLabel, type PracticeStaffPerson } from '@/lib/practice-plan-send';
+import { AUDIENCE_SENT_LABEL, joinNames, practiceDayLabel, sentToNames, type PracticeStaffPerson } from '@/lib/practice-plan-send';
 import styles from '../../../../coaches.module.css';
 import type { PracticePlanSentStamp, RepAttendanceStatus, RepTeamEvaluationSession, RepTeamEvent } from '@/lib/types';
 
@@ -375,6 +375,12 @@ export default function CoachPracticePlanPage({
   const staffPeopleForPicker = useMemo<PickablePerson[]>(
     () => staffPeople.map(p => ({ userId: p.userId, name: p.name, kindWord: p.kindWord, tagId: p.tagId })),
     [staffPeople],
+  );
+  /** The sent line's names for a hand-pick ("Just these people") — null for a group, or when one
+   *  no longer resolves; the line then falls back to the count and the audience word. */
+  const sentNames = useMemo(
+    () => (data?.sent?.audience === 'chosen' ? sentToNames(data.sent.to, staffPeople) : null),
+    [data?.sent, staffPeople],
   );
 
   // Team-resolved PDF settings (D4: team look → club look → defaults) — optional; the
@@ -1139,8 +1145,11 @@ export default function CoachPracticePlanPage({
                   a record shows neither the line nor the button (stage 6, R2). */}
               {!recordMode && hasBlocks && data.sent && (
                 <p className={styles.ppSentLine} data-testid="sent-to-staff">
-                  <b>Sent to {data.sent.count ?? 0}</b>
-                  {data.sent.audience && <> ({AUDIENCE_SENT_LABEL[data.sent.audience]})</>}
+                  {/* A hand-pick's line NAMES them — "Sent to Jen Okafor" — so tomorrow's reader
+                      knows who has it and who doesn't; the count and the word only when a name no
+                      longer resolves (they left the staff). */}
+                  <b>Sent to {sentNames ? joinNames(sentNames) : data.sent.count ?? 0}</b>
+                  {!sentNames && data.sent.audience && <> ({AUDIENCE_SENT_LABEL[data.sent.audience]})</>}
                   {' · '}{data.sent.email ? 'bell, push and email' : 'bell and push'}
                   {' · '}{sentWhenLabel(data.sent.at, nowMs)}
                   {canWrite && (data.staffPeople?.length ?? 0) > 1 && (

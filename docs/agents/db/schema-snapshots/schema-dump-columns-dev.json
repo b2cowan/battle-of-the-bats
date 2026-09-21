@@ -14031,6 +14031,15 @@
     "ordinal_position": 38
   },
   {
+    "table_name": "rep_team_events",
+    "column_name": "practice_plan_sent_to",
+    "data_type": "ARRAY",
+    "udt_name": "_uuid",
+    "is_nullable": "YES",
+    "column_default": null,
+    "ordinal_position": 39
+  },
+  {
     "table_name": "rep_team_expense_tags",
     "column_name": "expense_id",
     "data_type": "uuid",

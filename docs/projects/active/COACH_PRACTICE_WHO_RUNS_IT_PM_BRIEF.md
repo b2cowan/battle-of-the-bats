@@ -75,3 +75,18 @@ Eleven lettered questions on the hub's Decisions tab (helpers in "coaches"; the 
 carries the link; channels; no name fallback; build order; where the strip sits; "changed since" —
 recommended deferred; where the sent stamp lives; the coach's email bypassing settings and the pause;
 what the email carries). Each has a recommendation and a paste-back.
+
+## Follow-up (2026-09-20) — one assistant first
+
+- **Just these people.** Under the three audiences on *Send to staff* there is a fourth: tick names
+  from everyone the plan could reach (each with their role word) and send to just them — the way a
+  head coach hands a plan to one assistant to read over and tidy before the group gets it. The line
+  under the toolbar then names them — *Sent to Jen Okafor · bell and push · 4:12 p.m.* — so whoever
+  opens the plan tomorrow knows who has it and who doesn't.
+- The sheet keeps remembering your last *group* choice; a hand-pick is never made the next default (so
+  Monday's send to one assistant can't quietly make Tuesday's go to them alone), but the names you last
+  ticked stay ticked inside *Just these people*.
+- **Staff**, everywhere. The people line on a station is labelled *Staff*, as it is on a block and on
+  the door that opens it — it read "Who runs it" before. Nothing else on a station changed: the five
+  teaching fields already matched a drill's, field for field.
+- One small migration (305) is applied to dev and owed to prod before the next promote.

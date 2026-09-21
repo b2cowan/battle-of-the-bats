@@ -5754,6 +5754,7 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
           audience: r.practice_plan_sent_audience ?? null,
           count: r.practice_plan_sent_count ?? null,
           email: r.practice_plan_sent_email === true,
+          to: Array.isArray(r.practice_plan_sent_to) ? r.practice_plan_sent_to : [],
         }
       : null,
     createdAt: r.created_at,
@@ -5771,7 +5772,7 @@ export async function stampRepTeamEventPracticePlanSent(
   eventId: string,
   teamId: string,
   programYearId: string,
-  stamp: { by: string; audience: PracticePlanSendAudience; count: number; email: boolean },
+  stamp: { by: string; audience: PracticePlanSendAudience; count: number; email: boolean; to: readonly string[] },
 ): Promise<RepTeamEvent | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_team_events')
@@ -5781,6 +5782,8 @@ export async function stampRepTeamEventPracticePlanSent(
       practice_plan_sent_audience: stamp.audience,
       practice_plan_sent_count: stamp.count,
       practice_plan_sent_email: stamp.email,
+      // Who it reached (mig 305) — every audience, so a hand-pick's sent line can name them.
+      practice_plan_sent_to: [...stamp.to],
     })
     .eq('id', eventId)
     .eq('team_id', teamId)

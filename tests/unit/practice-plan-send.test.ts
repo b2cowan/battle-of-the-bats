@@ -20,13 +20,17 @@
  *      replaced is gone, and a fallback that worked for some teams would hide the missing link.
  *   5. **The message is personal**: "You're on Close control and Footwork ladder." for a named
  *      recipient, "Read it before 6:00 p.m." for one who is not; the house clock throughout.
+ *   6. **"Just these people" is the coach's tick list read through the SAME two rules** (owner ask
+ *      2026-09-20 — one assistant reads it over before the group gets it): a ticked id that is the
+ *      sender, off the staff, or without schedule access does not go; the rest go in STAFF order,
+ *      and the sent line names them — or falls back to the count when one no longer resolves.
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   joinNames, myLabelsOnPlan, practiceDayLabel, practicePlanRecipients, practicePlanSentMessage,
-  sanitizeAudience, type PracticeStaffPerson, type StaffTagIdentity,
+  sanitizeAudience, sanitizeChosenUserIds, sentToNames, type PracticeStaffPerson, type StaffTagIdentity,
 } from '../../lib/practice-plan-send';
 import { levelsForStaffTags } from '../../lib/rep-practice-plan';
 import { practicePlanEmail } from '../../lib/practice-plan-email';
@@ -125,12 +129,44 @@ describe('practicePlanRecipients — the three audiences', () => {
     assert.deepEqual(r, { recipients: [], unlinkedNames: [], senderOnPlan: false });
   });
 
-  it('sanitizeAudience admits only the three and nothing else', () => {
+  it('sanitizeAudience admits the three groups and "chosen", and nothing else', () => {
     assert.equal(sanitizeAudience('named'), 'named');
     assert.equal(sanitizeAudience('coaches'), 'coaches');
     assert.equal(sanitizeAudience('staff'), 'staff');
+    assert.equal(sanitizeAudience('chosen'), 'chosen');
     assert.equal(sanitizeAudience('everyone'), null);
     assert.equal(sanitizeAudience(undefined), null);
+  });
+});
+
+describe('"Just these people" — the coach’s own tick list, through the same two rules', () => {
+  it('reaches exactly the ticked people, in STAFF order — never tick order', () => {
+    const { recipients, unlinkedNames } = practicePlanRecipients(PEOPLE, 'chosen', { ...ctx, chosenUserIds: ['u-dana', 'u-jen'] });
+    assert.deepEqual(names(recipients), ['Jen Okafor', 'Dana Lee']);   // Jen is listed before Dana on the staff
+    assert.deepEqual(unlinkedNames, []);
+  });
+
+  it('a ticked id that is the sender, off the staff, or without schedule access does not go', () => {
+    const { recipients } = practicePlanRecipients(PEOPLE, 'chosen', { ...ctx, chosenUserIds: ['u-sam', 'u-noschedule', 'u-nobody', 'u-craig'] });
+    assert.deepEqual(names(recipients), ['Craig Dubois']);
+  });
+
+  it('nothing ticked — or no list at all — reaches nobody', () => {
+    assert.deepEqual(practicePlanRecipients(PEOPLE, 'chosen', { ...ctx, chosenUserIds: [] }).recipients, []);
+    assert.deepEqual(practicePlanRecipients(PEOPLE, 'chosen', ctx).recipients, []);
+  });
+
+  it('sanitizeChosenUserIds keeps strings once, drops the rest, and caps the list', () => {
+    assert.deepEqual(sanitizeChosenUserIds(['u-jen', 'u-jen', 7, '', ' ', null, 'u-craig']), ['u-jen', 'u-craig']);
+    assert.deepEqual(sanitizeChosenUserIds('u-jen'), []);
+    assert.deepEqual(sanitizeChosenUserIds(undefined), []);
+    assert.equal(sanitizeChosenUserIds(Array.from({ length: 80 }, (_, i) => `u-${i}`)).length, 50);
+  });
+
+  it('the sent line names them in staff order — and falls back (null) when one no longer resolves', () => {
+    assert.deepEqual(sentToNames(['u-craig', 'u-jen'], PEOPLE), ['Jen Okafor', 'Craig Dubois']);
+    assert.equal(sentToNames(['u-jen', 'u-gone'], PEOPLE), null);      // left the staff — count and word instead, never "1 of 2"
+    assert.equal(sentToNames([], PEOPLE), null);                       // a stamp from before the column
   });
 });
 

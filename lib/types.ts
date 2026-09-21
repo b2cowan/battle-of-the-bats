@@ -1700,8 +1700,12 @@ export interface RepTeamEvent {
   updatedAt: string;
 }
 
-/** The three audiences a coach can send a practice plan to — see `lib/practice-plan-send.ts`. */
-export type PracticePlanSendAudience = 'named' | 'coaches' | 'staff';
+/**
+ * The audiences a coach can send a practice plan to — see `lib/practice-plan-send.ts`. Three
+ * GROUPS, and 'chosen' (mig 305): the people the coach ticked by name — one assistant to read
+ * it over before the group gets it.
+ */
+export type PracticePlanSendAudience = 'named' | 'coaches' | 'staff' | 'chosen';
 
 export interface PracticePlanSentStamp {
   at: string;
@@ -1709,6 +1713,8 @@ export interface PracticePlanSentStamp {
   audience: PracticePlanSendAudience | null;
   count: number | null;
   email: boolean;
+  /** Who it reached — user ids (mig 305); `[]` on a stamp written before the column existed. */
+  to: string[];
 }
 
 /**

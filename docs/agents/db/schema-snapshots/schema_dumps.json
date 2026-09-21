@@ -14033,6 +14033,15 @@
         "column_default": null
       },
       {
+        "table_name": "rep_team_events",
+        "pos": 39,
+        "column_name": "practice_plan_sent_to",
+        "data_type": "ARRAY",
+        "udt_name": "_uuid",
+        "is_nullable": "YES",
+        "column_default": null
+      },
+      {
         "table_name": "rep_team_expense_tags",
         "pos": 1,
         "column_name": "expense_id",
@@ -29098,7 +29107,7 @@
         "kind": "CHECK",
         "table_name": "rep_team_events",
         "detail": "rep_team_events_practice_plan_sent_audience_check",
-        "check_clause": "(practice_plan_sent_audience = ANY (ARRAY['named'::text, 'coaches'::text, 'staff'::text]))"
+        "check_clause": "(practice_plan_sent_audience = ANY (ARRAY['named'::text, 'coaches'::text, 'staff'::text, 'chosen'::text]))"
       },
       {
         "kind": "CHECK",
