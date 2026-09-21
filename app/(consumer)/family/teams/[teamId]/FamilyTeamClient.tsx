@@ -216,14 +216,6 @@ export default function FamilyTeamClient({ view, guardian, recap }: {
                   {index > 0 && <div className={styles.divider} />}
                   <div className={`${styles.row} ${completed ? styles.rowDone : ''}`}>
                     {body}
-                    {entry.shared && (
-                      <Link
-                        className={styles.rowLink}
-                        href={`/${view.orgSlug}/teams/${view.teamSlug}/games/${entry.id}`}
-                      >
-                        Game page →
-                      </Link>
-                    )}
                     <ScoreCell entry={entry} />
                   </div>
                 </div>

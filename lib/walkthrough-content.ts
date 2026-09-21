@@ -345,13 +345,14 @@ export const PITCH_SLIDES = {
     // ⚠ VERIFIED 2026-09-12, AND NOTHING FAMILY-FACING IS OVER-PROMISED. A roster row carries the
     // jersey number, a primary and second position (derived from the profile's Best/Okay/Never
     // picker) and the family contacts. The coach-minted family link and its follower tier were
-    // REMOVED on 2026-09-12 (owner); what a family can read today is the team's PUBLIC page when
-    // Schedule visibility is set to Public link, plus any single game page the coach shares. The
-    // guardian/parent tier is env-gated OFF (lib/family-guardian.ts, GUARDIAN_TIER_ENABLED)
-    // pending privacy review, so this answer promises the public schedule and nothing more — no
-    // link, no following, no parent portal.
+    // REMOVED on 2026-09-12 (owner), and the per-game shared page on 2026-09-20 (owner — not
+    // production-ready); what a family can read today is the team's PUBLIC page when Schedule
+    // visibility is set to Public link. The guardian/parent tier is env-gated OFF
+    // (lib/family-guardian.ts, GUARDIAN_TIER_ENABLED) pending privacy review, so this answer
+    // promises the public schedule and nothing more — no link, no following, no parent portal,
+    // no per-game page.
     pageAnswer:
-      'One roster, not a thread: jersey numbers, a primary and second position for each player, and the family contacts beside them. One setting puts your schedule and results on the team’s own page, and any single game can be shared as a page of its own — families read it there, without you forwarding anything.',
+      'One roster, not a thread: jersey numbers, a primary and second position for each player, and the family contacts beside them. One setting puts your schedule and results on the team’s own page — families read it there, without you forwarding anything.',
     seoPhrase: 'one roster instead of a group text',
     alt: 'Four overlapping chat bubbles, two carrying fragments of team admin and one holding only a question mark. Beside them, three aligned roster rows — a number badge, a name, a position and a contact dot each — with a dotted line running down to a small phone showing a calendar.',
     // Both halves verified against the product: the roster carries jersey numbers, ranked

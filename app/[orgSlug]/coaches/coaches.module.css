@@ -6376,43 +6376,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .eventScoreAdd { display: inline-flex; align-items: center; gap: 0.3rem; min-height: 40px; padding: 0.4rem 0.8rem; background: var(--white-5); border: 1px solid var(--border-2); border-radius: 8px; font-size: var(--type-body); font-weight: 600; color: var(--text-secondary); cursor: pointer; }
 .eventScoreAdd:hover { background: var(--white-8); color: var(--text-primary); }
 
-/* Chunk D 3.1 — the postgame family-email offer, directly under the saved score. */
-.postgameDraft {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin: 0 0 0.85rem;
-  padding: 0.7rem 0.85rem;
-  background: rgba(var(--blueprint-blue-rgb), 0.10);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  border-radius: var(--radius-sm);
-}
-.postgameDraftText { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
-.postgameDraftText strong { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); }
-.postgameDraftText span { font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.4; }
-.postgameDraftBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.2rem;
-  flex-shrink: 0;
-  min-height: 38px;
-  padding: 0.4rem 0.85rem;
-  border-radius: 999px;
-  background: var(--blueprint-blue);
-  /* ⚠⚠ --on-primary: a FIXED white that does NOT flip with the theme. This ink sits on a SOLID
-     fill, and both the old --white and any body tier flip to near-black in the cream portal while
-     --blueprint-blue flips to olive underneath them — 2.58:1, a defect that predated the sweep and
-     that the sweep would have carried forward unchanged. **Text on a solid fill takes an on-fill
-     ink, never a body tier**; the portal already does this correctly with --on-lime and
-     --on-team-color elsewhere. */
-  color: var(--on-primary);
-  font-size: var(--type-body);
-  font-weight: 700;
-  text-decoration: none;
-}
-.postgameDraftBtn:hover { filter: brightness(1.1); }
-
 .resultBadge { font-size: var(--type-body); font-weight: 800; text-transform: uppercase; letter-spacing: 0.03em; }
 .scoreForm { display: flex; flex-direction: column; gap: 0.55rem; }
 .scoreFormRow { display: flex; align-items: flex-end; gap: 0.5rem; flex-wrap: wrap; }

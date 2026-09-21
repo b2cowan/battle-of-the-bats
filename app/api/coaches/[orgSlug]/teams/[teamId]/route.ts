@@ -115,13 +115,13 @@ export const GET = withObservability(async (_req: Request,
      * Schedule visibility — who outside the coaching staff may see games and practices. It sat
      * on the Roster page's "Team family access" card until 2026-09-12, when the family link and
      * its followers were removed (owner); the setting survived because it still decides two real
-     * things — whether a shared game page opens (`staff` refuses it) and whether the public team
+     * things — whether connected families see the schedule (`staff` refuses it) and whether the public team
      * page shows the schedule (`public_link`) — and a team SETTING belongs on Team settings.
      *
      * ⚠ NULL when the team is not on the premium portal. The family layer is premium and the
      * setting does nothing without it, so the row is ABSENT, never locked — the same rule as
-     * `clubBook.showSwitch` above. `canEdit` is schedule MANAGEMENT, the grant that shares a
-     * single game: both are acts of publishing the schedule.
+     * `clubBook.showSwitch` above. `canEdit` is schedule MANAGEMENT — publishing the schedule is
+     * a schedule act.
      */
     scheduleVisibility: (await isFamilyLayerEnabled({ org: ctx.org, repTeamId: teamId }))
       ? { value: team.scheduleVisibility, canEdit: canManageSchedule(assignment.capabilities) }
@@ -210,8 +210,8 @@ export const PATCH = withObservability(async (req: Request,
   }
 
   /**
-   * Schedule visibility — see the GET's note. Gated on schedule MANAGEMENT (the grant that
-   * shares a game), and the premium gate is re-checked HERE rather than trusted from the GET,
+   * Schedule visibility — see the GET's note. Gated on schedule MANAGEMENT (publishing the
+   * schedule is a schedule act), and the premium gate is re-checked HERE rather than trusted from the GET,
    * for the same reason the club-book switch re-checks the org-level switch above.
    */
   if ('scheduleVisibility' in body) {

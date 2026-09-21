@@ -16,13 +16,13 @@
  * never Account or an operator door. The assertions below are written to hold either way, so they
  * still catch a real leak; the D1 additions are pinned separately at the bottom of the file.
  *
- * ⚠ WHERE THE CHUNK D SURFACES ARE COVERED: the two new anonymous public surfaces — the shared
- * rep-team game page and the standing public team schedule — are asserted for this same
- * invariant in `family-access-boundary.spec.ts`, not here. They are deliberately NOT added to
- * the fixed-URL lists below because both only EXIST once a coach has shared a game / set the
- * team to Public link, so they need provisioned fixtures rather than a static dev URL. That
- * file checks the same two things this one does — no identity in the SSR HTML, no PII — plus
- * the share and visibility gates that make the pages exist at all.
+ * ⚠ WHERE THE CHUNK D SURFACE IS COVERED: the one anonymous public family surface — the standing
+ * public team schedule — is asserted for this same invariant in `family-access-boundary.spec.ts`,
+ * not here. It is deliberately NOT added to the fixed-URL lists below because it only EXISTS once
+ * a coach has set the team to Public link, so it needs a provisioned fixture rather than a static
+ * dev URL. That file checks the same two things this one does — no identity in the SSR HTML, no
+ * PII — plus the visibility gate that makes the page exist at all. (The per-game shared page,
+ * which used to be the second surface here, was removed on 2026-09-20.)
  *
  * Runs signed-OUT — the file overrides the suite's default org-owner session.
  */

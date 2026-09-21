@@ -31,9 +31,7 @@ import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { practiceHasPlan } from '@/lib/practice-state';
 import { canWritePracticePlans } from '@/lib/coach-capabilities';
 import { useMinuteClock } from '@/lib/use-minute-clock';
-import { buildPostgameDraft, postgameDraftHref } from '@/lib/postgame-draft';
 import { playerDisplayName } from '@/lib/coach-roster-name';
-import ShareGameLinkRow from '@/components/coaches/ShareGameLinkRow';
 import TagSearchCombobox, { GAME_TAG_MANAGE } from '@/components/coaches/TagSearchCombobox';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
@@ -830,20 +828,14 @@ export default function CoachesSchedulePage({
     hasOpponent: !!selectedEvent?.opponent,
     scoutingAvailable,
   });
-  // The page-level create + the panel's Edit / Cancel / Delete / Share — ONE rule, read from the
+  // The page-level create + the panel's Edit / Cancel / Delete — ONE rule, read from the
   // doors object rather than computed a second time beside it (`/review`, 2026-09-10).
   const canAddEvents = drawerDoors.editEvent;
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
   // where there is no HelpButton label to fall back to.
   const scheduleHelpRequest = {
     module: 'coaches' as const,
-    // "Share game link" is reached from a game in this schedule, so its guide belongs on
-    // this page's "?" rather than only in the family section on Roster.
-    // 'recipe-announcements' carries the postgame "Draft the family email" action, which the
-    // coach meets HERE (under a saved score) rather than on the Email families screen — so the
-    // Schedule's own "?" has to reach it, or the only explanation lives behind a door they had
-    // no reason to open.
-    sectionIds: ['recipe-premium-schedule', 'recipe-game-day-details', 'premium-share-game-link', 'recipe-announcements'],
+    sectionIds: ['recipe-premium-schedule', 'recipe-game-day-details'],
     label: 'Schedule',
     fullGuideHref: `/${orgSlug}/coaches/help#recipe-premium-schedule`,
   };
@@ -1372,58 +1364,6 @@ export default function CoachesSchedulePage({
   const mirroredGameHref = selectedEvent?.sourceTournamentGameId
     ? tournamentGames.find(g => g.id === selectedEvent.sourceTournamentGameId)?.href ?? null
     : null;
-  /**
-   * Chunk D 3.1 — the postgame family email, offered at the one moment the coach is already
-   * here: a game with a final score saved.
-   *
-   * Deliberately NOT offered when the coach cannot send announcements — a door that opens onto
-   * a screen they are gated out of is worse than no door (the label-keyed nav gate's lesson) —
-   * and `canWrite` folds in the archive rule, so a FINISHED season never offers to message a
-   * team that no longer exists (D-F7). Never offered on a cancelled game. Skipping it costs
-   * nothing: families are never told a postgame email exists, so one that is never written is
-   * not one that is missing.
-   */
-  const postgameDraftHrefForSelected = useMemo(() => {
-    if (!selectedEvent || !isGameEvent) return null;
-    if (selectedEvent.status === 'cancelled') return null;
-    if (selectedEvent.teamScore == null || selectedEvent.opponentScore == null) return null;
-    // ⚠ The read-only half of this condition is gone with the finished-season branches
-    // (2026-08-18); what is left is the grant that decides whether a draft can be sent at all —
-    // read from the doors object, like every other door on this panel.
-    if (!drawerDoors.emailFamilies) return null;
-
-    // ⚠ A PLAYED game is still `status: 'scheduled'` — the platform has no 'completed' status,
-    // it marks a game finished by giving it a result or a score. So "later on the clock" is
-    // NOT the same as "hasn't happened". A coach backfilling both halves of a Saturday
-    // double-header on Sunday night would otherwise have game 1's draft announce game 2 as
-    // "next up", which already happened. Same "is it over" rule the family surfaces use.
-    const after = new Date(selectedEvent.startsAt).getTime();
-    const notYetPlayed = (e: RepTeamEvent) =>
-      e.result == null && e.teamScore == null && e.opponentScore == null;
-    const next = events
-      .filter(e => e.status !== 'cancelled' && notYetPlayed(e) && new Date(e.startsAt).getTime() > after)
-      .sort((a, b) => new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime())[0] ?? null;
-
-    return postgameDraftHref(base, buildPostgameDraft({
-      teamName: page.teamName,
-      game: {
-        opponent: selectedEvent.opponent,
-        homeAway: selectedEvent.homeAway,
-        teamScore: selectedEvent.teamScore,
-        opponentScore: selectedEvent.opponentScore,
-      },
-      nextEvent: next && {
-        eventType: next.eventType,
-        name: next.name,
-        opponent: next.opponent,
-        homeAway: next.homeAway,
-        startsAt: next.startsAt,
-        location: next.location,
-        fieldNumber: next.fieldNumber,
-      },
-    }));
-  }, [selectedEvent, isGameEvent, drawerDoors.emailFamilies, page.teamName, events, base]);
-
   /**
    * ⚠ EVERY TAB RIDES A GRANT (staff access review, 2026-09-10). Attendance used to be seeded
    * unconditionally and Lineup pushed on any game, so a schedule-only helper met both tabs, a
@@ -2680,21 +2620,6 @@ export default function CoachesSchedulePage({
               </div>
             )}
 
-            {/* Chunk D 3.1 — "score entered → family email written". The highest-frequency
-                moment in the chunk: the coach was already here. Shown for a mirrored game too
-                (the organizer owns the score; the coach still owns telling their families). */}
-            {postgameDraftHrefForSelected && !scoreForm && (
-              <div className={styles.postgameDraft}>
-                <div className={styles.postgameDraftText}>
-                  <strong>Draft the family email</strong>
-                  <span>Result and what&apos;s next, pre-written. You edit it before anything sends.</span>
-                </div>
-                <Link href={postgameDraftHrefForSelected} className={styles.postgameDraftBtn}>
-                  Draft <ChevronRight size={14} aria-hidden />
-                </Link>
-              </div>
-            )}
-
             {/* Applied tags — read-only here; the picker/manager live in "Edit details". */}
             {(tagsByEventId[selectedEvent.id] ?? []).length > 0 && (
               <div className={styles.lineupChips}>
@@ -2851,20 +2776,6 @@ export default function CoachesSchedulePage({
                   )
                 )}
               </div>
-            )}
-
-            {/* ── Share game link (Chunk D 1.8) ──
-                Games only. Owner ruling #16: sharing ONE game is always its own deliberate act,
-                separate from the team's Schedule visibility setting — which is why this is a
-                per-event control and not something the visibility dropdown implies.
-                Absent in an archive along with every other action below (Chunk F). */}
-            {isGameEvent && canAddEvents && (
-              <ShareGameLinkRow
-                orgSlug={orgSlug}
-                teamId={teamId}
-                eventId={selectedEvent.id}
-                initialShared={!!selectedEvent.familySharedAt}
-              />
             )}
 
             {/* Actions — Edit (+ tournament Add game) lead; Cancel/Delete grouped to the right so

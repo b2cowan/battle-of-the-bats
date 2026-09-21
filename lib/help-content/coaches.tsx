@@ -610,13 +610,8 @@ const coachesHelp: HelpPageContent = {
       // here explicitly or a coach who reads "Email families" in their nav can never find this page.
       // The old term stays: the FREE portal's door is still called Announcements, and premium
       // coaches have been reading that word since launch.
-      keywords: ['announcements', 'email families', 'email parents', 'email my families', 'message team', 'send announcement', 'contact parents', 'reuse announcement', 'resend', 'confirm send', 'where is announcements', 'announcements renamed', 'announcements gone', 'cant find announcements', 'email everyone', 'unsubscribe', 'unsubscribed', 'opted out', 'opt out', 'family unsubscribed', 'not receiving emails', 'fewer families',
-        // Chunk D Slice 3 — the postgame draft. A coach who saw the button on the Schedule
-        // searches for the words ON the button, so they have to be listed here.
-        'draft the family email', 'draft family email', 'draft email', 'postgame email',
-        'post game email', 'after the game email', 'score email', 'result email',
-        'email after a game', 'tell families the score', 'write the email for me', 'pre-written'],
-      searchText: 'announcements email families email parents message whole team send announcement subject body recipients contact email roster missing email recent announcements log delivery premium confirm before sending irreversible cannot unsend reuse resend duplicate past announcement send again recipient count updates automatically no refresh unsaved changes draft warning read full message expand renamed email families premium nav door where did announcements go different from chat one way email audience families unsubscribe link footer family opted out casl count not names cannot re-subscribe them why did my recipient count drop draft the family email postgame draft after saving a final score result and next event pre-written nothing sends by itself you edit and press send never auto sends skipping it is fine',
+      keywords: ['announcements', 'email families', 'email parents', 'email my families', 'message team', 'send announcement', 'contact parents', 'reuse announcement', 'resend', 'confirm send', 'where is announcements', 'announcements renamed', 'announcements gone', 'cant find announcements', 'email everyone', 'unsubscribe', 'unsubscribed', 'opted out', 'opt out', 'family unsubscribed', 'not receiving emails', 'fewer families'],
+      searchText: 'announcements email families email parents message whole team send announcement subject body recipients contact email roster missing email recent announcements log delivery premium confirm before sending irreversible cannot unsend reuse resend duplicate past announcement send again recipient count updates automatically no refresh unsaved changes draft warning read full message expand renamed email families premium nav door where did announcements go different from chat one way email audience families unsubscribe link footer family opted out casl count not names cannot re-subscribe them why did my recipient count drop',
       content: (
         <>
           <p>Turn on <strong>Announcements</strong> from Explore to email your whole team at once.</p>
@@ -651,18 +646,6 @@ const coachesHelp: HelpPageContent = {
             </>
           ),
         },
-        {
-          id: 'announce-after-game',
-          title: 'The after-the-game email, written for you',
-          content: (
-            <>
-              <p>When you save a <strong>final score</strong> on the Schedule, a <strong>Draft the family email</strong> line appears under it. One tap opens this screen with the subject and message already written — the result, and what&apos;s next on your calendar. Change any of it, or delete it and write your own.</p>
-              <HelpNote variant="info" title="Nothing sends by itself">
-                <p>The draft just puts words in the box; it still takes your <strong>Send</strong> like any other message, and a note at the top of the compose box says so. If you never use it, nothing is missing — families are never told an after-game email is coming, so one you skip isn&apos;t one they notice.</p>
-              </HelpNote>
-            </>
-          ),
-        },
       ],
       faqs: [
         {
@@ -688,20 +671,6 @@ const coachesHelp: HelpPageContent = {
                 <li>A family has <strong>unsubscribed</strong>, and is left out of every send afterwards.</li>
               </ul>
               <p>You see <em>how many</em> families opted out, never <em>which</em> ones — so if you need to reach them, that has to be a direct conversation. You can&apos;t re-subscribe someone on their behalf.</p>
-            </>
-          ),
-        },
-        {
-          id: 'faq-postgame-draft',
-          question: 'What is “Draft the family email” after a game?',
-          answerText: 'Save a final score on a game in your Schedule and a Draft the family email line appears under the score. Tapping it opens Email families with the subject and message already written — the result, plus the next thing on your calendar. You edit it and press Send yourself; nothing is ever sent automatically, and a note on the compose box says so. It appears only on games with a score, never on a cancelled game, never in a finished season, and only if you are allowed to send announcements. Skipping it costs nothing — families are never promised an after-game email, so one you do not send is not one they miss.',
-          keywords: ['draft the family email', 'draft family email', 'postgame email', 'post game email', 'after the game', 'score email', 'result email', 'auto send', 'does it send automatically', 'pre-written email', 'where did this email come from'],
-          popular: true,
-          answer: (
-            <>
-              <p>Save a <strong>final score</strong> on a game in your Schedule and a <strong>Draft the family email</strong> line appears under it. Tapping it opens <strong>Email families</strong> with the subject and message already written — the result, plus the next thing on your calendar.</p>
-              <p><strong>It never sends on its own.</strong> You edit it and press <strong>Send</strong> yourself, exactly like any other message, and a note on the compose box says where the words came from.</p>
-              <p>You&apos;ll see it only on a game that has a score — never on a cancelled game, never in a finished season, and only if you&apos;re allowed to send announcements. <strong>Skipping it costs nothing:</strong> families are never told an after-game email is coming.</p>
             </>
           ),
         },
@@ -4948,12 +4917,12 @@ const coachesHelp: HelpPageContent = {
           answer: (
             <>
               <p>Because they&rsquo;re connected to your team <strong>twice</strong>, and removing one doesn&rsquo;t remove the other.</p>
-              <p>Removing someone from <strong>Staff</strong> ends their <em>coaching</em> access straight away — the plan, the roster, whatever you&rsquo;d granted them. But if that same person is also connected as a <strong>family member</strong> (a player&rsquo;s parent or guardian), that&rsquo;s a separate connection, and it&rsquo;s untouched. They keep seeing your schedule, your results, and any game page you&rsquo;ve shared.</p>
+              <p>Removing someone from <strong>Staff</strong> ends their <em>coaching</em> access straight away — the plan, the roster, whatever you&rsquo;d granted them. But if that same person is also connected as a <strong>family member</strong> (a player&rsquo;s parent or guardian), that&rsquo;s a separate connection, and it&rsquo;s untouched. They keep seeing your schedule and your results.</p>
               <p><strong>To end that too:</strong> open that player&rsquo;s page and remove them under <strong>Guardians</strong>. The two live in different places on purpose — one is your coaching staff, the other is a family connected to a child, and they&rsquo;re rarely the same decision.</p>
               <p>When we can tell it&rsquo;s the same person, we say so: their staff card shows <em>&ldquo;Also connected to this team as a family member&rdquo;</em>, and the removal confirmation spells it out before you confirm. ⚠ We match on the email address they signed in with — so if they&rsquo;re connected under a <em>different</em> address, that note won&rsquo;t appear. <strong>Not seeing the note isn&rsquo;t proof they have no family connection</strong>; if you&rsquo;re making sure, check the Guardians card on each player&rsquo;s page. The note is also hidden when you&rsquo;re looking at a finished season, because it describes today rather than back then.</p>
             </>
           ),
-          answerText: 'I removed someone from Staff but they can still see our schedule and results. Because they are connected to your team twice and removing one does not remove the other. Removing someone from Staff ends their coaching access straight away — the plan, the roster, whatever you granted. If that same person is also connected as a family member, a player\'s parent or guardian, that is a separate connection and it is untouched: they keep seeing your schedule, your results and any game page you shared. To end that too, open that player\'s page and remove them under Guardians. When we can tell it is the same person their staff card shows "Also connected to this team as a family member" and the removal confirmation spells it out before you confirm. We match on the email address they signed in with, so if they are connected under a different address the note will not appear — not seeing the note is not proof they have no family connection, check the Guardians card on each player\'s page. The note is hidden when viewing a finished season because it describes today.',
+          answerText: 'I removed someone from Staff but they can still see our schedule and results. Because they are connected to your team twice and removing one does not remove the other. Removing someone from Staff ends their coaching access straight away — the plan, the roster, whatever you granted. If that same person is also connected as a family member, a player\'s parent or guardian, that is a separate connection and it is untouched: they keep seeing your schedule and your results. To end that too, open that player\'s page and remove them under Guardians. When we can tell it is the same person their staff card shows "Also connected to this team as a family member" and the removal confirmation spells it out before you confirm. We match on the email address they signed in with, so if they are connected under a different address the note will not appear — not seeing the note is not proof they have no family connection, check the Guardians card on each player\'s page. The note is hidden when viewing a finished season because it describes today.',
           keywords: ['removed but still sees schedule', 'removed them but they can still see the schedule', 'remove assistant still has access', 'remove helper still sees', 'staff removal family connection', 'also connected as a family member', 'remove family connection', 'remove guardian', 'family access', 'two connections', 'still getting our results', 'revoke access completely', 'fully remove someone'],
         },
         {
@@ -5105,11 +5074,11 @@ const coachesHelp: HelpPageContent = {
             <>
               <p><strong>Schedule visibility</strong> is in <strong>Team settings → Sharing</strong>. It has three settings, and it applies to games and practices together:</p>
               <HelpDefs>
-                <HelpDef term="Staff only">Nobody outside your coaching staff sees the schedule. Families who are connected get a short &ldquo;not available right now&rdquo; message rather than an error, their connection stays intact for when you switch it back, and any game page you shared stops opening.</HelpDef>
-                <HelpDef term="Families">The default — the people connected to your players see the full schedule, and game pages you share work.</HelpDef>
+                <HelpDef term="Staff only">Nobody outside your coaching staff sees the schedule. Families who are connected get a short &ldquo;not available right now&rdquo; message rather than an error, and their connection stays intact for when you switch it back.</HelpDef>
+                <HelpDef term="Families">The default — the people connected to your players see the full schedule.</HelpDef>
                 <HelpDef term="Public link">Additionally, your team&apos;s public page shows the schedule to anyone who visits it.</HelpDef>
               </HelpDefs>
-              <p>This is enforced on our side, not just hidden. Setting it to Staff only genuinely removes the schedule everywhere, including from any calendar a family already subscribed to. Head coaches and assistants who manage the schedule can change it — the same people who can share a game.</p>
+              <p>This is enforced on our side, not just hidden. Setting it to Staff only genuinely removes the schedule everywhere, including from any calendar a family already subscribed to. Head coaches and assistants who manage the schedule can change it.</p>
             </>
           ),
         },
@@ -5118,24 +5087,24 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-family-link-gone',
           question: 'Where did the Team family access card and the family link go?',
-          answerText: 'They were removed. The card at the bottom of your Roster page held a shareable family link, an approval queue for relatives asking to follow the team, and the Schedule visibility setting. The link and the followers it let in are gone — nobody can ask to follow your team any more, and there is no queue to tend. Schedule visibility moved to Team settings under Sharing, with the same three settings. Sharing a single game link still works from the schedule, and the family season recap preview is still on each player page.',
+          answerText: 'They were removed. The card at the bottom of your Roster page held a shareable family link, an approval queue for relatives asking to follow the team, and the Schedule visibility setting. The link and the followers it let in are gone — nobody can ask to follow your team any more, and there is no queue to tend. Schedule visibility moved to Team settings under Sharing, with the same three settings. The family season recap preview is still on each player page.',
           keywords: ['family link', 'create link', 'reset link', 'followers', 'family followers', 'approval queue', 'requests waiting', 'where did it go', 'roster page card', 'team family access'],
           popular: true,
           answer: (
             <>
               <p>They were removed. That card held a shareable <strong>family link</strong>, an approval queue for relatives asking to follow the team, and the <strong>Schedule visibility</strong> setting.</p>
-              <p>The link and the &ldquo;followers&rdquo; it let in are gone — nobody can ask to follow your team any more, and there&rsquo;s no queue to tend. <strong>Schedule visibility</strong> moved to <strong>Team settings → Sharing</strong>, with the same three settings. Sharing a single game link still works from your schedule, and the <strong>Family season recap</strong> preview is still on each player&rsquo;s page.</p>
+              <p>The link and the &ldquo;followers&rdquo; it let in are gone — nobody can ask to follow your team any more, and there&rsquo;s no queue to tend. <strong>Schedule visibility</strong> moved to <strong>Team settings → Sharing</strong>, with the same three settings. The <strong>Family season recap</strong> preview is still on each player&rsquo;s page.</p>
             </>
           ),
         },
         {
           id: 'faq-family-hide-schedule',
           question: 'How do I stop families seeing the schedule for a while?',
-          answerText: 'Open Team settings, then Sharing, and set Schedule visibility to Staff only. Connected families see a short not-available message instead of the schedule, any shared game page stops opening, and subscribed calendars stop updating. Nobody is disconnected — switch it back to Families and everything returns.',
+          answerText: 'Open Team settings, then Sharing, and set Schedule visibility to Staff only. Connected families see a short not-available message instead of the schedule, and subscribed calendars stop updating. Nobody is disconnected — switch it back to Families and everything returns.',
           keywords: ['hide schedule', 'staff only', 'turn off', 'stop sharing schedule', 'temporarily', 'schedule visibility', 'where is schedule visibility'],
           answer: (
             <>
-              <p>Open <strong>Team settings → Sharing</strong> and set <strong>Schedule visibility</strong> to <strong>Staff only</strong>. Connected families see a short &ldquo;not available right now&rdquo; message, any game page you shared stops opening, and subscribed calendars stop updating.</p>
+              <p>Open <strong>Team settings → Sharing</strong> and set <strong>Schedule visibility</strong> to <strong>Staff only</strong>. Connected families see a short &ldquo;not available right now&rdquo; message, and subscribed calendars stop updating.</p>
               <p>Nobody is disconnected — switch it back to <strong>Families</strong> and everything returns.</p>
             </>
           ),
@@ -5195,54 +5164,6 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
-      // Chunk D Slice 1. Separate from the family-access section because a coach reaches this from
-      // the SCHEDULE, not the roster, and will search for "share a game" rather than "family".
-      id: 'premium-share-game-link',
-      group: 'Premium Coaches Portal',
-      heading: 'Sharing one game with people who have no account (Premium)',
-      summary: 'Turn a single game into a clean page anyone can open — teams, time, place, directions, and the final score once you enter it.',
-      keywords: ['share game', 'share game link', 'share a game', 'game link', 'game page', 'send the game', 'grandparent game', 'no account', 'follow this game', 'public game', 'stop sharing game', 'unshare'],
-      searchText: 'share game link single game public page no sign in needed teams time place directions final score grandparent out of town relatives share button event details schedule slide over stop sharing removes the page practices cannot be shared individually staff only blocks it team level only no player names premium coaches portal',
-      content: (
-        <>
-          <p>Open any game on your <strong>Schedule</strong> and choose <strong>Share</strong>. That creates a page for that one game which anyone can open — no account, no app.</p>
-          <p>The page shows both teams, the time, the place with directions, and the final score once you enter it. That is all it ever shows: <strong>no player names, no roster, no lineup</strong>. It is the same information as the scoreboard at the field, which is why it is safe to send to anyone.</p>
-          <p>Two things worth knowing:</p>
-          <ul>
-            <li><strong>The page does not exist until you share it.</strong> Nothing is public by default, and <strong>Stop sharing</strong> removes it again.</li>
-            <li><strong>Practices can&apos;t be shared this way.</strong> If you want your whole schedule public, that is the <strong>Public link</strong> setting under <strong>Team settings → Sharing</strong> instead.</li>
-          </ul>
-          <p>If your Schedule visibility is set to <strong>Staff only</strong>, sharing is refused with an explanation — a shared page would not open for anyone.</p>
-        </>
-      ),
-      faqs: [
-        {
-          id: 'faq-share-game-who-can-open',
-          question: 'Who can open a game link I share?',
-          answerText: 'Anyone you send it to. It needs no account and no sign in. It shows both teams, the time, the place with directions, and the final score once entered — never a player name, a roster or a lineup. It is not listed in search engines, so it only reaches the people you send it to.',
-          keywords: ['who can see', 'no account', 'public', 'anyone', 'search engine', 'google'],
-          answer: (
-            <>
-              <p>Anyone you send it to — it needs no account and no sign-in. It shows both teams, the time, the place with directions, and the final score once you enter it, and never a player name, roster or lineup.</p>
-              <p>It is not listed in search engines, so it reaches the people you send it to and nobody else.</p>
-            </>
-          ),
-        },
-        {
-          id: 'faq-share-game-undo',
-          question: 'Can I take a shared game page back down?',
-          answerText: 'Yes. Open the game again and choose Stop sharing — the page stops opening immediately, including for anyone who bookmarked it. Setting Schedule visibility to Staff only also closes every shared game page at once.',
-          keywords: ['undo', 'take down', 'stop sharing', 'unshare', 'remove game page'],
-          answer: (
-            <>
-              <p>Yes — open the game and choose <strong>Stop sharing</strong>. The page stops opening immediately, including for anyone who bookmarked it.</p>
-              <p>Setting <strong>Schedule visibility</strong> to <strong>Staff only</strong> closes every shared game page at once.</p>
-            </>
-          ),
-        },
-      ],
-    },
-    {
       // Chunk B (P1 #17). Team settings was the one nav destination in the premium portal with no
       // guide at all — so its help icon could only ever have opened the hub, which is a table of
       // contents where the coach expected an answer about this screen. Written rather than linked
@@ -5254,7 +5175,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'Team settings (Premium)',
       summary: 'Your division, how your printed documents look, the season you are in, the lineup rules Auto-fill follows, how dues behave, who can see your schedule, book sharing, and — for a standalone team — your link to a club or league.',
       keywords: ['team settings', 'settings', 'setting', 'tags', 'tag libraries', 'manage tags', 'merge tags', 'rename tag', 'manage awards', 'merge awards', 'retire award', 'award types', 'division', 'change division', 'edit division', 'age group', 'lineup rules', 'lineup settings', 'innings cap', 'pitching cap', 'pitch count', 'arm care', 'max innings', 'minimum innings', 'min play', 'playing time rule', 'rotation', 'auto-fill', 'autofill', 'auto fill rules', 'season status', 'season name', 'start next season', 'parent organization', 'link org', 'join a club', 'transfer team', 'club admin', 'where do i change', 'team options', 'configure team', 'money settings', 'dues settings', 'automatic dues reminders', 'reminders toggle', 'where is the reminders toggle', 'turn off reminder emails', 'stop reminder emails', 'credits reduce', 'credit setting', 'where did the dues settings go', 'settings groups', 'collapsed settings', 'sections are closed', 'share our book', 'club shared book', 'sharing', 'schedule visibility', 'who can see my schedule', 'staff only', 'public link', 'families setting', 'hide schedule', 'public schedule', 'where is schedule visibility', 'how your documents look', 'documents look', 'team crest', 'crest', 'team logo', 'logo on pdf', 'logo on roster', 'accent colour', 'accent color', 'footer line', 'pdf branding', 'document branding', 'customize pdf', 'club look', 'use club look', 'paper', 'printed documents'],
-      searchText: 'team settings screen collapsed groups closed until you open them each group shows what it is set to tags tag libraries money tags game tags focus tags staff equipment awards rename merge delete tag shared by your club manage tags manage awards drawer retire award merge instead division age group change division club admin manages division standalone team how your documents look team crest logo accent colour color footer line printed pdf paper roster dues lineup poster branding customize preview upload crest square image use your team colour back to your club look inherited club look head coach only season name status active complete start next season rollover lineup rules season defaults auto-fill max innings at one position rotation pitching innings cap arm care per pitcher player own pitcher cap stricter wins minimum innings per player everyone plays leave blank to turn off override for a single game auto-fill menu money group automatic dues reminders 30 days 7 days see an example credits reduce last payment first next payment first settle at season end where did the dues settings go moved from player dues money access view only sharing schedule visibility who can see games and practices staff only families public link public team page shows the schedule shared game page moved from roster team family access card club shared book scouting book parent organization link to a club or league recognition transfer team invited by your organization manage organization link premium coaches portal where do i change my division where are lineup caps where is the reminders toggle turn off reminder emails',
+      searchText: 'team settings screen collapsed groups closed until you open them each group shows what it is set to tags tag libraries money tags game tags focus tags staff equipment awards rename merge delete tag shared by your club manage tags manage awards drawer retire award merge instead division age group change division club admin manages division standalone team how your documents look team crest logo accent colour color footer line printed pdf paper roster dues lineup poster branding customize preview upload crest square image use your team colour back to your club look inherited club look head coach only season name status active complete start next season rollover lineup rules season defaults auto-fill max innings at one position rotation pitching innings cap arm care per pitcher player own pitcher cap stricter wins minimum innings per player everyone plays leave blank to turn off override for a single game auto-fill menu money group automatic dues reminders 30 days 7 days see an example credits reduce last payment first next payment first settle at season end where did the dues settings go moved from player dues money access view only sharing schedule visibility who can see games and practices staff only families public link public team page shows the schedule moved from roster team family access card club shared book scouting book parent organization link to a club or league recognition transfer team invited by your organization manage organization link premium coaches portal where do i change my division where are lineup caps where is the reminders toggle turn off reminder emails',
       content: (
         <>
           <p><strong>Team settings</strong> is the small set of things that are true about your team for a whole season, rather than about one game or one player. Each group is <strong>closed until you open it</strong>, and shows what it&rsquo;s currently set to on its own line — the answers below cover each group in the order it appears on the screen.</p>
@@ -5320,7 +5241,7 @@ const coachesHelp: HelpPageContent = {
           title: 'Sharing: who can see your schedule, and your book',
           content: (
             <>
-              <p>The <strong>Sharing</strong> group holds what leaves your team. <strong>Schedule visibility</strong> decides who outside your coaching staff can see games and practices: <strong>Staff only</strong> keeps them inside your staff and stops any shared game page opening; <strong>Families</strong> (the default) lets the people connected to your players see the full schedule, and game pages you share work; <strong>Public link</strong> also puts the schedule on your team&rsquo;s public page. It&rsquo;s enforced on our side, not just hidden, and head coaches and assistants who manage the schedule can change it. (It moved here from the Roster page&rsquo;s old <em>Team family access</em> card.)</p>
+              <p>The <strong>Sharing</strong> group holds what leaves your team. <strong>Schedule visibility</strong> decides who outside your coaching staff can see games and practices: <strong>Staff only</strong> keeps them inside your staff; <strong>Families</strong> (the default) lets the people connected to your players see the full schedule; <strong>Public link</strong> also puts the schedule on your team&rsquo;s public page. It&rsquo;s enforced on our side, not just hidden, and head coaches and assistants who manage the schedule can change it. (It moved here from the Roster page&rsquo;s old <em>Team family access</em> card.)</p>
               <p>In clubs that have turned on the <strong>Club Shared Book</strong>, a second row decides whether your scouting book is readable by the club&rsquo;s other sharing teams. You see theirs while you share yours, and stopping removes your book from their pages immediately.</p>
             </>
           ),

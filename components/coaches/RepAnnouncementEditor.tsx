@@ -20,13 +20,6 @@ type Props = {
    * to go fix a roster they can only read. Fails OPEN (assume they can) — the roster page enforces.
    */
   canEditRoster?: boolean;
-  /**
-   * A draft the coach arrived with, written for them elsewhere (Chunk D 3.1 — the postgame
-   * draft on the schedule). Seeds the compose box ONCE on mount and is never re-applied, so a
-   * coach who edits the wording and navigates within the screen does not have their words
-   * silently replaced. It is a starting point, not a value: nothing sends until they press Send.
-   */
-  initialDraft?: { subject: string; body: string } | null;
 };
 
 type ApiResponse = {
@@ -67,20 +60,12 @@ function statusLabel(announcement: RepTeamAnnouncement): string {
   return `${announcement.recipientCount} sent`;
 }
 
-export default function RepAnnouncementEditor({ orgSlug, teamId, canEditRoster = true, initialDraft = null }: Props) {
+export default function RepAnnouncementEditor({ orgSlug, teamId, canEditRoster = true }: Props) {
   const [announcements, setAnnouncements] = useState<RepTeamAnnouncement[]>([]);
   const [recipientSummary, setRecipientSummary] =
     useState<RepTeamAnnouncementRecipientSummary>(EMPTY_SUMMARY);
-  // Lazy initialisers, not an effect: the draft is present on the very first paint, so the
-  // coach never sees an empty box flash and fill itself in.
-  const [subject, setSubject] = useState(() => initialDraft?.subject ?? '');
-  const [body, setBody] = useState(() => initialDraft?.body ?? '');
-  // Real state, not a captured constant: the note below describes what is IN the box, and two
-  // existing flows replace those contents — reusing a past announcement, and a successful send
-  // (which clears them). A note still claiming "we drafted this from the score you just saved"
-  // over someone else's old announcement, or over an empty box, is the same dishonesty the
-  // note exists to prevent, pointed the other way.
-  const [draftSeeded, setDraftSeeded] = useState(() => !!initialDraft);
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [refreshBusy, setRefreshBusy] = useState(false);
@@ -160,7 +145,6 @@ export default function RepAnnouncementEditor({ orgSlug, teamId, canEditRoster =
   function reuse(a: RepTeamAnnouncement) {
     setSubject(a.subject);
     setBody(a.body);
-    setDraftSeeded(false); // these are a past announcement's words now, not the postgame draft
     setExpandedId(null);
     setError(null);
     setNotice(null);
@@ -186,7 +170,6 @@ export default function RepAnnouncementEditor({ orgSlug, teamId, canEditRoster =
       if (data.announcement.status !== 'failed') {
         setSubject('');
         setBody('');
-        setDraftSeeded(false); // the box is empty now — nothing left for the note to describe
       }
       setNotice(data.announcement.status === 'sent'
         ? 'Announcement sent.'
@@ -260,15 +243,6 @@ export default function RepAnnouncementEditor({ orgSlug, teamId, canEditRoster =
       )}
 
       <div className={styles.form}>
-        {/* Chunk D 3.1 — the coach arrived from a saved score with words already in the box.
-            Saying so is not decoration: an unexplained pre-filled email reads as something the
-            product already sent, which is the exact opposite of the no-auto-send guarantee. */}
-        {draftSeeded && (
-          <p className={styles.draftNote}>
-            We drafted this from the score you just saved. Nothing is sent until you press
-            Send — change any of it first.
-          </p>
-        )}
         <input
           className={styles.input}
           placeholder="Subject — e.g. Game time changed"

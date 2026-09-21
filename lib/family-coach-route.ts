@@ -12,8 +12,9 @@ import type { RepTeam } from './types';
  * The coaches API's house style is a per-file `resolveCoachContext` (49 routes do it), and
  * that convention is not being changed here. What this replaced was three BYTE-IDENTICAL
  * copies created in a single change — which is a different thing from a convention that grew
- * one route at a time. Two of the original three routes remain (sharing a game, the guardians
- * card); the team family-access routes were removed with the family link on 2026-09-12.
+ * one route at a time. One of the original three routes remains (the guardians card); the team
+ * family-access routes were removed with the family link on 2026-09-12, and the share-a-game
+ * route with the public game page on 2026-09-20.
  * Sharing the chain also means the premium gate is part of it rather than a step each family
  * route has to remember, so a further family route cannot be added without it.
  *

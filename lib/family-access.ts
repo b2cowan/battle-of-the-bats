@@ -209,9 +209,9 @@ export function normalizeVisibility(value: string | null | undefined): ScheduleV
  * rule (owner ruling #4).
  *
  * Exported rather than re-typed at each call site because it is a security-relevant
- * predicate with four readers already (the team view, the shared game view, the notifier,
- * and the calendar feed) and a fifth coming when push delivery is proven. Four hand-written
- * copies of `=== 'staff'` is four chances for the fifth to be written as `!== 'public_link'`.
+ * predicate with three readers already (the team view, the notifier and the calendar feed)
+ * and a fourth coming when push delivery is proven. Three hand-written
+ * copies of `=== 'staff'` is three chances for the fourth to be written as `!== 'public_link'`.
  */
 export function isVisibleToFamilies(value: string | null | undefined): boolean {
   return normalizeVisibility(value) !== 'staff';

@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import styles from './RepTeamPublicSchedule.module.css';
 import {
   directionsHref,
@@ -51,11 +50,6 @@ function Row({ entry, view }: { entry: FamilyScheduleEntry; view: FamilyTeamView
           {cancelled && ' · Cancelled'}
         </div>
       </div>
-      {entry.shared && (
-        <Link className={styles.link} href={`/${view.orgSlug}/teams/${view.teamSlug}/games/${entry.id}`}>
-          Details →
-        </Link>
-      )}
       {score && <b className={`${styles.score} ${TONE_CLASS[scheduleResultTone(entry)]}`}>{score}</b>}
     </div>
   );

@@ -38,7 +38,6 @@ describe('a helper on a game meets the Scouting tab and nothing else', () => {
     assert.equal(d.scoreForm, false);
     assert.equal(d.awards, false);
     assert.equal(d.editEvent, false);
-    assert.equal(d.emailFamilies, false);
     assert.equal(d.seasonAttendanceLink, false);
     // The bench observes — open to every schedule-holder by ruling (2026-08-04).
     assert.equal(d.scoutingTab, true);
@@ -61,8 +60,7 @@ describe('a default assistant keeps every door they had', () => {
     assert.equal(d.awards, true);
     assert.equal(d.editEvent, true);
     assert.equal(d.seasonAttendanceLink, true);
-    // Off by default — draft-only until the head coach grants sending.
-    assert.equal(d.emailFamilies, false);
+    // Sending announcements is off by default until the head coach grants it.
     assert.equal(ASSISTANT_DEFAULTS.announcementsSend, false);
   });
 

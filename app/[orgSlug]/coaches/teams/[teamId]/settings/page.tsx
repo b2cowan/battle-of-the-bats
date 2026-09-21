@@ -65,10 +65,10 @@ const VISIBILITY_LABEL: Record<ScheduleVisibility, string> = {
 };
 
 /** One sentence per setting, stating what it DOES rather than restating its name. Each names
- *  the consequence a coach can actually observe: a shared game page, the public team page. */
+ *  the consequence a coach can actually observe: the family schedule, the public team page. */
 const VISIBILITY_HELP: Record<ScheduleVisibility, string> = {
-  staff: 'Games and practices stay inside your coaching staff. Connected families see a quiet “not available” message, and a game page you shared stops opening until you switch back.',
-  families: 'The families you have connected see the full schedule, and game pages you share work.',
+  staff: 'Games and practices stay inside your coaching staff. Connected families see a quiet “not available” message until you switch back.',
+  families: 'The families you have connected see the full schedule.',
   public_link: 'Everything Families gets, and your team’s public page shows the schedule to anyone who visits it.',
 };
 
@@ -817,7 +817,7 @@ export default function TeamSettingsPage({
         {/* ── Sharing — Schedule visibility + the Club Shared Book ─────────── */}
         {/* Two settings about what leaves the team. Schedule visibility arrived 2026-09-12 from the
             Roster page's retired "Team family access" card (the family link went; the setting
-            stayed, because it still governs a shared game page and the public team page). The
+            stayed, because it still governs the family schedule and the public team page). The
             section shows when EITHER row is available and each row hides on its own rule —
             absent, never locked, so a coach is never offered a control that does nothing. The
             summary names the visibility first: it is the one a coach changes more than once. */}

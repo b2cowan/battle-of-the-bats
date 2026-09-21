@@ -19,17 +19,16 @@ import { grantMembershipsFromSeasonRows, clearMemberships } from './_coach-membe
  * connected persona is a VERIFIED GUARDIAN tied to the fixture's one child, which is the only
  * kind of connection that can exist. What the file proves is unchanged in substance:
  *
- *  1. THE STRANGER. A guessed family-team URL, a guessed calendar token, a guessed game page.
- *     All must be indistinguishable from "no such thing" — a 404 that leaks nothing, including
- *     whether the team exists.
+ *  1. THE STRANGER. A guessed family-team URL, a guessed calendar token. All must be
+ *     indistinguishable from "no such thing" — a 404 that leaks nothing, including whether the
+ *     team exists.
  *  2. THE DECLINED / REVOKED / UNLINKED ACCOUNT. Being declined is not access; having been
  *     removed is not access; being signed in is not access.
  *  3. CROSS-TEAM. A verified guardian on team A probing team B gets nothing.
  *  4. VISIBILITY FLIPPED TO STAFF. The setting is enforced at the API, so flipping it must
- *     remove the DATA from every surface (family view, game page, public team page), not just
+ *     remove the DATA from every surface (family view, public team page), not just
  *     hide a button — and it is now SET from Team settings, so the coach-side write is probed
  *     through the team settings API rather than the retired family-access route.
- *  5. THE SHARE GATE. A game page does not exist until the coach shares that specific game.
  *
  * Data-level and HTTP-status assertions only — never screenshots.
  * Self-provisions via service-role with the `capfamily-` marker; pre-cleans, tears down, and
@@ -80,8 +79,6 @@ let teamAId = '';
 let teamASlug = '';
 let yearAId = '';
 let playerAId = '';
-let sharedGameId = '';
-let unsharedGameId = '';
 
 /** Team B — the one they must NOT reach. */
 let teamBId = '';
@@ -186,7 +183,7 @@ test.beforeAll(async () => {
   teamBId = b.teamId; teamBSlug = b.slug;
 
   // A player on team A — the child the guardian is tied to, and the thing the anonymous
-  // surfaces (a shared game page) must never surface.
+  // surfaces (the public team page) must never surface.
   const { data: player, error: playerErr } = await admin.from('rep_roster_players').insert({
     program_year_id: yearAId, team_id: teamAId, org_id: orgId,
     player_first_name: `${MARK}Secret`, player_last_name: 'Child',
@@ -198,22 +195,21 @@ test.beforeAll(async () => {
   const soon = new Date(Date.now() + 7 * 24 * 3600 * 1000).toISOString();
   const later = new Date(Date.now() + 14 * 24 * 3600 * 1000).toISOString();
 
-  const { data: shared, error: sharedErr } = await admin.from('rep_team_events').insert({
-    program_year_id: yearAId, team_id: teamAId, org_id: orgId,
-    event_type: 'league_game', name: `${MARK} shared game`, starts_at: soon,
-    opponent: 'Falcons', home_away: 'home', status: 'scheduled',
-    family_shared_at: new Date().toISOString(),
-  }).select('id').single();
-  if (sharedErr) throw sharedErr;
-  sharedGameId = shared!.id;
-
-  const { data: unshared, error: unsharedErr } = await admin.from('rep_team_events').insert({
-    program_year_id: yearAId, team_id: teamAId, org_id: orgId,
-    event_type: 'league_game', name: `${MARK} unshared game`, starts_at: later,
-    opponent: 'Storm', home_away: 'away', status: 'scheduled',
-  }).select('id').single();
-  if (unsharedErr) throw unsharedErr;
-  unsharedGameId = unshared!.id;
+  // Two games on team A's schedule — the content every visibility probe below looks for
+  // ("Falcons") or must never find.
+  const { error: gamesErr } = await admin.from('rep_team_events').insert([
+    {
+      program_year_id: yearAId, team_id: teamAId, org_id: orgId,
+      event_type: 'league_game', name: `${MARK} home game`, starts_at: soon,
+      opponent: 'Falcons', home_away: 'home', status: 'scheduled',
+    },
+    {
+      program_year_id: yearAId, team_id: teamAId, org_id: orgId,
+      event_type: 'league_game', name: `${MARK} away game`, starts_at: later,
+      opponent: 'Storm', home_away: 'away', status: 'scheduled',
+    },
+  ]);
+  if (gamesErr) throw gamesErr;
 
   await addLink(teamAId, guardianUserId, GUARDIAN_EMAIL, 'verified');
   await addLink(teamAId, declinedUserId, DECLINED_EMAIL, 'declined');
@@ -403,16 +399,6 @@ test.describe('schedule visibility', () => {
     expect(JSON.stringify(after.body ?? {})).not.toContain('Falcons');
   });
 
-  test('flipping to STAFF 404s the shared game page', async ({ page }) => {
-    const live = await page.request.get(`/${ORG_SLUG}/teams/${teamASlug}/games/${sharedGameId}`);
-    expect(live.status()).toBe(200);
-
-    await setVisibility(teamAId, 'staff');
-
-    const dead = await page.request.get(`/${ORG_SLUG}/teams/${teamASlug}/games/${sharedGameId}`);
-    expect(dead.status()).toBe(404);
-  });
-
   test('the standing public team schedule exists ONLY at public_link', async ({ page }) => {
     // At `families` the team page renders, but without the schedule.
     const atFamilies = await page.request.get(`/${ORG_SLUG}/teams/${teamASlug}`);
@@ -421,32 +407,17 @@ test.describe('schedule visibility', () => {
 
     await setVisibility(teamAId, 'public_link');
 
+    // Anonymous on purpose: this is the one no-login surface a family reads, so the
+    // anonymous-public invariant is proved HERE (it used to be proved on the per-game page,
+    // removed 2026-09-20). Nothing about a person may reach the SSR HTML — the fixture's
+    // child and both guardian addresses are the canaries.
+    await page.context().clearCookies();
     const atPublic = await page.request.get(`/${ORG_SLUG}/teams/${teamASlug}`);
     expect(atPublic.status()).toBe(200);
-    expect(await atPublic.text()).toContain('Falcons');
-  });
-});
-
-// ── 5. A game page does not exist until it is shared ─────────────────────────
-
-test.describe('per-game share gate', () => {
-  test('an UNSHARED game has no page', async ({ page }) => {
-    const res = await page.request.get(`/${ORG_SLUG}/teams/${teamASlug}/games/${unsharedGameId}`);
-    expect(res.status()).toBe(404);
-  });
-
-  test('a SHARED game page carries no identity and no player name', async ({ page }) => {
-    await page.context().clearCookies();
-    const res = await page.request.get(`/${ORG_SLUG}/teams/${teamASlug}/games/${sharedGameId}`);
-    expect(res.status()).toBe(200);
-    const html = await res.text();
-    // The anonymous-public invariant: nothing about a person in the SSR HTML.
+    const html = await atPublic.text();
+    expect(html).toContain('Falcons');
     expect(html).not.toContain('Secret');
     expect(html).not.toContain('someone@dev.local');
     expect(html).not.toContain(GUARDIAN_EMAIL);
-    // It IS serving the game, so the assertions above are not vacuous.
-    expect(html).toContain('Falcons');
-    // Never indexed — a coach sharing one game did not ask to publish a fixture list.
-    expect(html.toLowerCase()).toContain('noindex');
   });
 });

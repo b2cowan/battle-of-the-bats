@@ -599,7 +599,7 @@ export const DEVELOPMENT_GRANT_MESSAGE =
  * "write", so there is no view-vs-manage ambiguity for a caller to get wrong.
  */
 /**
- * Create / edit / delete events, import a schedule, share a game.
+ * Create / edit / delete events, import a schedule.
  *
  * ⚠ SPLIT FROM `canViewSchedule` on 2026-08-03. Before that this predicate WAS `c.schedule`, so
  * every caller below inherited "can see it" and "can change it" as one answer. Read the JSDoc on

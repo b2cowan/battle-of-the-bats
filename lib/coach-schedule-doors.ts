@@ -29,7 +29,6 @@ import {
  *   scoreForm, editEvent ↔ `events/[eventId]` PATCH                  (`canManageSchedule`)
  *   awards               ↔ `awards` POST                             (`canManageAwards`)
  *   seasonAttendanceLink ↔ the Insights portal's own page gate       (`hasNonMoneyRecordAccess`)
- *   emailFamilies        ↔ `announcements` GET/POST                  (`announcementsSend`)
  */
 export interface ScheduleDrawerEvent {
   /** A league game, tournament game or scrimmage. */
@@ -50,7 +49,6 @@ export interface ScheduleDrawerDoors {
   awards: boolean;
   seasonAttendanceLink: boolean;
   editEvent: boolean;
-  emailFamilies: boolean;
 }
 
 const CLOSED: Readonly<ScheduleDrawerDoors> = {
@@ -61,7 +59,6 @@ const CLOSED: Readonly<ScheduleDrawerDoors> = {
   awards: false,
   seasonAttendanceLink: false,
   editEvent: false,
-  emailFamilies: false,
 };
 
 export function scheduleDrawerDoors(
@@ -81,6 +78,5 @@ export function scheduleDrawerDoors(
     awards: ev.isGame && canManageAwards(caps),
     seasonAttendanceLink: hasNonMoneyRecordAccess(caps),
     editEvent: canManageSchedule(caps),
-    emailFamilies: caps.announcementsSend,
   };
 }

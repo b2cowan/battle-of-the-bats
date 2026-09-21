@@ -5746,8 +5746,6 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
     recurrenceParentId: r.recurrence_parent_id ?? null,
     status: r.status ?? 'scheduled',
     sourceTournamentGameId: r.source_tournament_game_id ?? null,
-    // Degrades to null pre-migration, like practicePlan above.
-    familySharedAt: r.family_shared_at ?? null,
     // The last "Send to staff" (mig 303) — degrades to null pre-migration, like practicePlan above.
     practicePlanSent: r.practice_plan_sent_at
       ? {
@@ -5764,7 +5762,7 @@ function mapRepTeamEvent(r: any): RepTeamEvent {
 }
 
 /**
- * Stamp the practice with its last "Send to staff" (mig 303) — the `family_shared_at` idiom:
+ * Stamp the practice with its last "Send to staff" (mig 303) — a last-send stamp:
  * the last send only, overwritten by the next one. Season-scoped at the write like the recap
  * writer above it. Deliberately does NOT touch `updated_at`: sending the plan is not editing it,
  * and a later "changed since you sent it" (deferred, decision H) would need that stamp honest.

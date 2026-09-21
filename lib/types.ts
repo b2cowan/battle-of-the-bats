@@ -1691,18 +1691,9 @@ export interface RepTeamEvent {
    */
   sourceTournamentGameId: string | null;
   /**
-   * Chunk D 1.8 (mig 215): when the coach shared THIS game's public page, or null.
-   *
-   * Non-null is the whole reason `/{org}/teams/{slug}/games/{id}` resolves at all — the page
-   * does not exist until a coach deliberately shares it, and stops existing when they stop.
-   * Never set on a practice: a standing weekly practice location is what the Public-link
-   * visibility setting is for, and a per-game share must not publish one sideways.
-   */
-  familySharedAt: string | null;
-  /**
    * When the practice plan was last SENT to the staff (mig 303, "Send to staff"), or null — the
    * last send only, with who sent it, which audience and how many, and whether the coach's own
-   * email went with the bell and push. The `family_shared_at` idiom on the practice.
+   * email went with the bell and push. A last-send stamp, overwritten by the next send.
    */
   practicePlanSent: PracticePlanSentStamp | null;
   createdAt: string;

@@ -11,7 +11,6 @@ import {
 } from '@/lib/family-access';
 import { getFamilyTeamView } from '@/lib/family-view';
 import { composeICSFromInstants } from '@/lib/export/ics';
-import { resolveTrustedAppOrigin } from '@/lib/app-origin';
 
 /**
  * The calendar subscription feed — probably the highest day-to-day value per unit of work
@@ -61,7 +60,6 @@ export const GET = withObservability(async (req: Request,
   });
   if (!view) return notFound();
 
-  const origin = resolveTrustedAppOrigin(req);
   const ics = await composeICSFromInstants(
     view.entries
       .filter(e => e.status !== 'cancelled')
@@ -76,8 +74,6 @@ export const GET = withObservability(async (req: Request,
         durationHours: e.eventType === 'practice' ? 1.5 : 2,
         location: [e.location, e.fieldNumber, e.locationAddress].filter(Boolean).join(', ') || undefined,
         description: e.arrivalTime ? `Arrive by ${e.arrivalTime}` : undefined,
-        // Only link out to a page that actually exists for this reader.
-        url: e.shared ? `${origin}/${view.orgSlug}/teams/${view.teamSlug}/games/${e.id}` : undefined,
       })),
     `${view.teamName} schedule`,
   );

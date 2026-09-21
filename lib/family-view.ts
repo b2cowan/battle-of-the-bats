@@ -18,10 +18,9 @@ import {
  *
  * The team payload is TEAM-LEVEL ONLY — schedule, results, venue. There is no player
  * field in `FamilyScheduleEntry` at all, because the tier boundary is a security boundary
- * and the cheapest way to guarantee a team-level reader (the public team page, a shared
- * game) cannot reach child data is for the shape it receives to have nowhere to put it. The
- * guardian payload is a SEPARATE type that adds the player allow-list; it must never be
- * added to this one.
+ * and the cheapest way to guarantee a team-level reader (the public team page) cannot reach
+ * child data is for the shape it receives to have nowhere to put it. The guardian payload
+ * is a SEPARATE type that adds the player allow-list; it must never be added to this one.
  */
 
 // ── The one-list schedule (owner ruling #2) ────────────────────────────────────
@@ -59,9 +58,6 @@ export interface FamilyScheduleEntry {
    * produced a literal "null–null".
    */
   hasScore: boolean;
-  /** True when the coach has shared this specific game — the family view links to the
-   *  shareable page only where one exists. */
-  shared: boolean;
   /** The row the list opens at. Exactly one entry carries this. */
   isNextUp: boolean;
 }
@@ -83,7 +79,7 @@ export interface FamilyTeamView {
 
 const EVENT_COLUMNS =
   'id, event_type, name, starts_at, ends_at, location, location_address, field_number, ' +
-  'arrival_time, opponent, home_away, team_score, opponent_score, result, status, family_shared_at';
+  'arrival_time, opponent, home_away, team_score, opponent_score, result, status';
 
 interface EventRow {
   id: string;
@@ -101,7 +97,6 @@ interface EventRow {
   opponent_score: number | null;
   result: 'win' | 'loss' | 'tie' | null;
   status: 'scheduled' | 'cancelled';
-  family_shared_at: string | null;
 }
 
 /** A game is "completed" for display purposes when a result OR a score was recorded. We do
@@ -143,7 +138,6 @@ function toEntry(row: EventRow, nextUpId: string | null): FamilyScheduleEntry {
     opponentScore: scored ? row.opponent_score : null,
     result: completed ? row.result : null,
     status: row.status,
-    shared: !!row.family_shared_at,
     isNextUp: row.id === nextUpId,
   };
 }
@@ -266,108 +260,5 @@ export async function getFamilyTeamView(params: {
     scheduleVisibility: visibility,
     entries: rows.map(row => toEntry(row, nextUpId)),
     record: computeRecord(rows),
-  };
-}
-
-// ── A single shared game (1.8) ─────────────────────────────────────────────────
-
-export interface FamilyGameView {
-  id: string;
-  orgSlug: string;
-  orgName: string;
-  teamName: string;
-  teamSlug: string;
-  opponent: string | null;
-  homeAway: 'home' | 'away' | 'neutral' | null;
-  startsAt: string;
-  location: string | null;
-  locationAddress: string | null;
-  fieldNumber: string | null;
-  teamScore: number | null;
-  opponentScore: number | null;
-  result: 'win' | 'loss' | 'tie' | null;
-  status: 'scheduled' | 'cancelled';
-  /** The game is over (a result or a score was recorded). Drives the "Final" pill. */
-  isFinal: boolean;
-  /** BOTH scores are present, so a scoreboard can be drawn. A forfeit is `isFinal` without
-   *  being `hasScore` — conflating the two rendered a literal "null–null". */
-  hasScore: boolean;
-}
-
-/**
- * One game's public page — the grandparent screen.
- *
- * Three conditions, ALL required: the team is not `staff`, the event is a game, and the
- * coach explicitly shared THIS game. Decision #15 kept the URL plain rather than
- * tokenized because the page shows what the scoreboard at the field shows; what keeps it
- * honest is that it does not exist until a coach decides it should, and stops existing
- * the moment they close the team down to Staff only.
- *
- * There is no player field on this type. There never is one.
- */
-export async function getSharedGameView(params: {
-  repTeamId: string;
-  eventId: string;
-}): Promise<FamilyGameView | null> {
-  // The event is keyed on (eventId, teamId) and the team on teamId — neither needs the
-  // other's result, so they run together. This is a PUBLIC page; the round-trip saved is
-  // paid by every visitor a coach shares a game with.
-  const [eventResult, teamResult] = await Promise.all([
-    supabaseAdmin
-      .from('rep_team_events')
-      .select(`${EVENT_COLUMNS}, team_id, org_id`)
-      .eq('id', params.eventId)
-      .eq('team_id', params.repTeamId)
-      .maybeSingle(),
-    supabaseAdmin
-      .from('rep_teams')
-      .select('id, org_id, name, slug, schedule_visibility, is_archived')
-      .eq('id', params.repTeamId)
-      .maybeSingle(),
-  ]);
-  if (eventResult.error) throw eventResult.error;
-  if (teamResult.error) throw teamResult.error;
-  if (!eventResult.data || !teamResult.data) return null;
-
-  const row = eventResult.data as unknown as EventRow & { team_id: string; org_id: string };
-  if (!row.family_shared_at) return null;
-  if (row.event_type === 'practice') return null;
-
-  const team = teamResult.data as {
-    id: string; org_id: string; name: string; slug: string;
-    schedule_visibility: string | null; is_archived: boolean;
-  };
-  if (team.is_archived) return null;
-  if (!isVisibleToFamilies(team.schedule_visibility)) return null;
-
-  const { data: orgRow, error: orgError } = await supabaseAdmin
-    .from('organizations')
-    .select('name, slug')
-    .eq('id', team.org_id)
-    .maybeSingle();
-  if (orgError) throw orgError;
-  if (!orgRow) return null;
-  const org = orgRow as { name: string; slug: string };
-
-  const completed = isCompleted(row);
-  const scored = hasScore(row);
-  return {
-    id: row.id,
-    orgSlug: org.slug,
-    orgName: org.name,
-    teamName: team.name,
-    teamSlug: team.slug,
-    opponent: row.opponent,
-    homeAway: row.home_away,
-    startsAt: row.starts_at,
-    location: row.location,
-    locationAddress: row.location_address,
-    fieldNumber: row.field_number,
-    teamScore: scored ? row.team_score : null,
-    opponentScore: scored ? row.opponent_score : null,
-    result: completed ? row.result : null,
-    status: row.status,
-    isFinal: completed,
-    hasScore: scored,
   };
 }

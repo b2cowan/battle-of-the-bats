@@ -27,15 +27,8 @@ export function scheduleTimeLabel(iso: string): string {
   return formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit' });
 }
 
-/**
- * "vs Falcons" / "at Falcons" — which preposition a matchup reads with.
- *
- * Exported because the postgame family-email draft (Chunk D 3.1) states the same matchup in
- * prose and had hand-written the identical ternary. One sentence of duplication is how "vs"
- * and "at" quietly stop agreeing between the schedule a family reads and the email they were
- * sent about the same game.
- */
-export function opponentPhrase(opponent: string, homeAway: string | null): string {
+/** "vs Falcons" / "at Falcons" — which preposition a matchup reads with. */
+function opponentPhrase(opponent: string, homeAway: string | null): string {
   return `${homeAway === 'away' ? 'at' : 'vs'} ${opponent}`;
 }
 

@@ -1,13 +1,11 @@
 'use client';
 import { use } from 'react';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
 import { Mail } from 'lucide-react';
 import { useCoaches, resolveClosedAssignment } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import RepAnnouncementEditor from '@/components/coaches/RepAnnouncementEditor';
 import CoachNotGranted from '@/components/coaches/CoachNotGranted';
-import { DRAFT_SUBJECT_PARAM, DRAFT_BODY_PARAM } from '@/lib/postgame-draft';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import styles from '../../../coaches.module.css';
 
@@ -25,15 +23,6 @@ export default function TeamAnnouncementsPage({
   // the live year, deliberately), so the between-seasons state gets an honest sentence instead
   // of a lie — and instead of an editor whose Send could only fail.
   const closed = resolveClosedAssignment(assignments, closedAssignments, params.teamId);
-
-  // Chunk D 3.1 — a draft handed over from the schedule's score entry. Read here rather than
-  // inside the editor so the editor stays a plain controlled component with no URL knowledge.
-  const searchParams = useSearchParams();
-  const draftSubject = searchParams.get(DRAFT_SUBJECT_PARAM);
-  const draftBody = searchParams.get(DRAFT_BODY_PARAM);
-  const initialDraft = draftSubject && draftBody
-    ? { subject: draftSubject, body: draftBody }
-    : null;
 
   if (assignmentsLoading) {
     return <div className={styles.page}><CoachLoading label="Loading announcements…" /></div>;
@@ -103,7 +92,6 @@ export default function TeamAnnouncementsPage({
         orgSlug={params.orgSlug}
         teamId={params.teamId}
         canEditRoster={assignment.capabilities.rosterWrite}
-        initialDraft={initialDraft}
       />
     </div>
   );
