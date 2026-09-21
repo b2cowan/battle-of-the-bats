@@ -18,6 +18,7 @@ import {
   type ReviewedBudgetRow, type ReviewedPayableRow, type KnownCategory, type ExistingBudgetLine,
   type RowSuggestion,
 } from '@/lib/coach-budget-import';
+import { splitWindow } from '@/lib/coach-budget-period-modes';
 import { formatMonthLabel, type MonthKey } from '@/lib/coach-budget-months';
 import { PLAN_LADDER_LABEL } from '@/lib/coach-budget-totals';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
@@ -67,6 +68,7 @@ export default function BudgetImportSheet({
   existingLines,
   existingPayableDescriptions,
   seasonYear,
+  seasonOpened,
   gridMonths,
   todayMonth,
   initialShape,
@@ -79,6 +81,9 @@ export default function BudgetImportSheet({
   existingLines: ExistingBudgetLine[];
   existingPayableDescriptions: string[];
   seasonYear: number;
+  /** The day the season was opened (`YYYY-MM-DD`), from the plan payload. With the year it
+   *  anchors a bare month name in a pasted sheet — the same window the split pickers offer. */
+  seasonOpened: string | null;
   /** The months the team's own money already spans — the template follows them when it can. */
   gridMonths: MonthKey[];
   todayMonth: MonthKey;
@@ -182,7 +187,9 @@ export default function BudgetImportSheet({
       if (rows.length === 0) { setError('No rows we could read. Check the header row, or start from the template.'); return; }
       setPayableDraft(snapPayableRowsToLibrary(rows, categories));
     } else {
-      const rows = shape === 'list' ? rowsFromList(parsed) : rowsFromMonthGrid(parsed, seasonYear);
+      const rows = shape === 'list'
+        ? rowsFromList(parsed)
+        : rowsFromMonthGrid(parsed, splitWindow(seasonYear, seasonOpened).first);
       if (rows.length === 0) { setError('No rows we could read. Check the header row, or start from the template.'); return; }
       setBudgetDraft(snapBudgetRowsToLibrary(rows, categories));
     }

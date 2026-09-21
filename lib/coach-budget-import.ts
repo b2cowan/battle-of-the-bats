@@ -349,19 +349,34 @@ function stripLineIndent(value: string, styledIndent?: boolean): { text: string;
  * Month columns are discovered from the HEADERS, so a coach can hand us Sep–Aug, Jan–Dec, or the
  * five months their season actually runs. Everything that isn't a month and isn't a known column
  * (a prior-season column, a Total column) is ignored rather than misread.
+ *
+ * `firstMonth` is where a BARE month name lands: the first such month on or after it. It is the
+ * split pickers' own window start (`splitWindow(...).first`) — the month the season was opened, or
+ * its January — so a Sep–Aug sheet pasted into a 2027 season opened in September 2026 reads
+ * Sep 2026 … Aug 2027, and a Jan–Dec sheet reads the season year (owner ruling 2026-09-21). ⚰ It
+ * used to be the season YEAR, which put that Sep–Aug sheet a whole year late. A header that names
+ * its year ("Sep 2026", "Sep '26", "2026-09") is taken at its word either way.
  */
-export function rowsFromMonthGrid(file: ParsedImportFile, seasonYear: number): DraftBudgetRow[] {
+export function rowsFromMonthGrid(file: ParsedImportFile, firstMonth: MonthKey): DraftBudgetRow[] {
+  const firstYear = Number(firstMonth.slice(0, 4));
+  const firstMonthNumber = Number(firstMonth.slice(5, 7));
   // Discover the month columns left to right, carrying the year across a wrap.
   const monthColumns: Array<{ header: string; month: MonthKey }> = [];
-  let carriedYear = seasonYear;
+  let carriedYear = firstYear;
   let previousMonthNumber = 0;
   for (const header of file.headers) {
     const parsed = parseMonthHeader(header, carriedYear);
     if (!parsed) continue;
     let month = parsed.month;
     const monthNumber = Number(month.slice(5, 7));
-    // A bare month name that goes BACKWARDS means the season crossed a year boundary.
-    if (!/\d{2,4}\s*$/.test(header.trim()) && previousMonthNumber && monthNumber < previousMonthNumber) {
+    const bare = !/\d{2,4}\s*$/.test(header.trim());
+    if (bare && !previousMonthNumber && monthNumber < firstMonthNumber) {
+      // The FIRST bare month name, and it comes before the window opens — "Jan" for a season
+      // opened in September is next January, not the one already behind the window.
+      carriedYear = firstYear + 1;
+      month = `${carriedYear}-${month.slice(5)}`;
+    } else if (bare && previousMonthNumber && monthNumber < previousMonthNumber) {
+      // A bare month name that goes BACKWARDS means the season crossed a year boundary.
       carriedYear += 1;
       month = `${carriedYear}-${month.slice(5)}`;
     } else {

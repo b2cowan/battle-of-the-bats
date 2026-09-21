@@ -95,6 +95,7 @@ export default function MoneyImportMenu({
     categories: BudgetCategoryWithItems[];
     plan: RepBudgetPlan | null;
     seasonYear: number;
+    seasonOpened: string | null;
     payableDescriptions: string[];
     planMonths: MonthKey[];
   } | null>(null);
@@ -131,6 +132,7 @@ export default function MoneyImportMenu({
         categories: catData.categories ?? [],
         plan,
         seasonYear: typeof planData.seasonYear === 'number' ? planData.seasonYear : new Date().getFullYear(),
+        seasonOpened: typeof planData.seasonOpened === 'string' ? planData.seasonOpened : null,
         payableDescriptions: ((expData.expenses ?? []) as RepTeamExpense[]).map(e => e.description),
         planMonths: [...months].sort() as MonthKey[],
       });
@@ -223,6 +225,7 @@ export default function MoneyImportMenu({
             : []}
           existingPayableDescriptions={importTarget === 'payables' ? importPrep.payableDescriptions : []}
           seasonYear={importPrep.seasonYear}
+          seasonOpened={importPrep.seasonOpened}
           gridMonths={importTarget === 'budget' ? importPrep.planMonths : []}
           todayMonth={new Date().toISOString().slice(0, 7) as MonthKey}
           initialShape={importTarget === 'payables' ? 'payables' : undefined}

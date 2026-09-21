@@ -22,6 +22,9 @@
  * Pure: no IO, no React, no Date (every date here is `YYYY-MM-DD` string arithmetic, so a coach in
  * Toronto and a server in UTC agree).
  */
+/* ⚠ THE `.ts` EXTENSION IS LOAD-BEARING — same reason as the other pure `lib/coach-*` modules: a
+   plain-Node loader cannot resolve an extensionless specifier. */
+import { addMonths, monthKeyOf, MAX_MONTH_COLUMNS, type MonthKey } from './coach-budget-months.ts';
 
 export type PeriodSplitMode = 'months' | 'quarters' | 'dates' | 'names';
 
@@ -70,11 +73,105 @@ export const SPLIT_MODE_COLUMN: Record<PeriodSplitMode, string> = {
 const MONTH_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
   'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-/** The years a month/quarter picker offers: the season's own, and the one after it, so a season
- *  crossing New Year can be entered. (The platform records a season YEAR and nothing more — see the
- *  season-start-month follow-up in the plan.) */
-export function splitYears(seasonYear: number): number[] {
-  return [seasonYear, seasonYear + 1];
+// ── the window a period can be dated in ──────────────────────────────────────
+
+/** How many months the pickers offer, counted from the window's first month — the by-period
+ *  view's own column cap, imported rather than restated so the two cannot drift apart (/review
+ *  2026-09-21). The view counts from the first DATED month, so the two windows coincide only when
+ *  a line starts where the season did; a picker that outran the columns would still be filed
+ *  under No date yet there, never lost. */
+export const SPLIT_WINDOW_MONTHS = MAX_MONTH_COLUMNS;
+
+/** The months a period may be dated in — both ends inclusive, `YYYY-MM`. */
+export interface SplitWindow {
+  first: MonthKey;
+  last: MonthKey;
+}
+
+/**
+ * The window the month and quarter pickers offer.
+ *
+ * ⚠ IT STARTS WHEN THE SEASON WAS OPENED, NOT AT NEW YEAR (owner ruling 2026-09-21). Until then the
+ * pickers offered the season's calendar year and the one after it, so a 2027 season opened in
+ * September 2026 to run winter training could not budget a dollar before January — the months
+ * the plan was opened early FOR. The platform still records a season YEAR and nothing more; the day
+ * the season's row was created is the one fact that says when it began, and `openedMonth` is that
+ * day's month (in the org's zone — the caller reads it with `orgDayKey`).
+ *
+ * The rule: `SPLIT_WINDOW_MONTHS` from the EARLIER of the opened month and the season's January.
+ * A season opened partway through its own year (a coach who signed up in June) still offers that
+ * year from January — the literal "two years from opening" would have taken months away from them
+ * that they had before. And the window never ends before the season's own December, so a year set
+ * up far ahead (an org admin creating next year's season the autumn before last) is offered in
+ * full even when that stretches past twenty-four months.
+ *
+ * ⚖ What an early-opened season GIVES UP is the same four months at the far end: Sept 2026 → Aug
+ * 2028 reaches four months less into 2028 than Jan 2027 → Dec 2028 did. That is the ruling — two
+ * years from opening — and a line that already holds a month past the edge keeps it on offer
+ * (`splitPickerYears`), so nothing saved under the old rule becomes unreadable.
+ *
+ * `opened` is the day the season's row was created (`YYYY-MM-DD`, org zone) — a bare `YYYY-MM` is
+ * read the same way. Null or malformed = the January rule alone, which is exactly the old behaviour.
+ */
+export function splitWindow(seasonYear: number, opened: string | null | undefined): SplitWindow {
+  const january = `${seasonYear}-01`;
+  const december = `${seasonYear}-12`;
+  const openedMonth = monthKeyOf(opened);
+  const first = openedMonth && openedMonth < january ? openedMonth : january;
+  const span = addMonths(first, SPLIT_WINDOW_MONTHS - 1);
+  return { first, last: span < december ? december : span };
+}
+
+/** A `YYYY-MM` key for a period's date, or null when it has none. */
+function periodMonth(period: Pick<PeriodDraft, 'date'>): MonthKey | null {
+  return monthKeyOf(period.date);
+}
+
+/** The month a quarter opens on, for the quarter that contains `month`. */
+function quarterStart(month: MonthKey): MonthKey {
+  const q = quarterOf(Number(month.slice(5, 7)) - 1);
+  return `${month.slice(0, 4)}-${pad2(q * 3 + 1)}`;
+}
+
+/** The date a picker slot stands for — the 1st of the month, or the first day of the quarter. */
+function slotDate(mode: PeriodSplitMode, month: MonthKey): string {
+  return `${mode === 'quarters' ? quarterStart(month) : month}-01`;
+}
+
+/**
+ * Every month (or quarter) inside the window, grouped by year for the pickers' `<optgroup>`s.
+ * Slots are 0-based — a month 0–11, a quarter 0–3 — because that is what the pickers' values and
+ * `monthDate`/`quarterDate` already speak. A quarter is offered when any of its months is in the
+ * window, so a season opened in September offers Q3 of that year.
+ *
+ * ⚠ A MONTH THE LINE ALREADY HOLDS IS OFFERED TOO, inside the window or not (/review 2026-09-21).
+ * A controlled `<select>` whose value matches no option shows the browser's first option instead —
+ * a plausible, wrong month over a stored date it never touched. A line saved under the old
+ * year-pair rule past this window's edge, or imported with an explicit year, must reopen showing
+ * the month it holds; the coach may keep it or pick one from the window.
+ */
+export function splitPickerYears(
+  range: SplitWindow, mode: PeriodSplitMode, held: ReadonlyArray<Pick<PeriodDraft, 'date'>> = [],
+): Array<{ year: number; slots: number[] }> {
+  const step = mode === 'quarters' ? 3 : 1;
+  const keys = new Set<MonthKey>();
+  const start = mode === 'quarters' ? quarterStart(range.first) : range.first;
+  for (let m = start; m <= range.last; m = addMonths(m, step)) keys.add(m);
+  for (const p of held) {
+    const m = periodMonth(p);
+    if (m) keys.add(mode === 'quarters' ? quarterStart(m) : m);
+  }
+
+  const groups: Array<{ year: number; slots: number[] }> = [];
+  for (const m of [...keys].sort()) {
+    const year = Number(m.slice(0, 4));
+    const month = Number(m.slice(5, 7)) - 1;
+    const slot = mode === 'quarters' ? quarterOf(month) : month;
+    const last = groups[groups.length - 1];
+    if (last && last.year === year) last.slots.push(slot);
+    else groups.push({ year, slots: [slot] });
+  }
+  return groups;
 }
 
 function pad2(n: number): string {
@@ -156,67 +253,61 @@ export function resolvedPeriodLabel(
 
 // ── building rows ────────────────────────────────────────────────────────────
 
-/** The one empty period a fresh split starts with (owner: one, never zero and never twelve). */
-export function blankPeriod(mode: PeriodSplitMode, seasonYear: number): PeriodDraft {
+/** The one empty period a fresh split starts with (owner: one, never zero and never twelve). It
+ *  starts where the window does — the month the season was opened, or its January. */
+export function blankPeriod(mode: PeriodSplitMode, range: SplitWindow): PeriodDraft {
   return {
     label: '',
     amount: '',
-    date: mode === 'months' || mode === 'quarters' ? monthDate(seasonYear, 0) : '',
+    date: mode === 'months' || mode === 'quarters' ? slotDate(mode, range.first) : '',
   };
 }
 
 /**
  * The date the NEXT "+ Add period" should land on — one month or one quarter after the last row, so
- * repeatedly pressing one button walks a season without touching a picker. Rolls into the following
- * year, then stops advancing rather than leaving the picker's range.
+ * repeatedly pressing one button walks a season without touching a picker. Rolls across New Year,
+ * then stops advancing at the window's edge rather than leaving the picker's range.
  */
 export function nextPeriodDate(
-  mode: PeriodSplitMode, periods: PeriodDraft[], seasonYear: number,
+  mode: PeriodSplitMode, periods: PeriodDraft[], range: SplitWindow,
 ): string {
   if (mode !== 'months' && mode !== 'quarters') return '';
 
-  const years = splitYears(seasonYear);
-  const last = [...periods].reverse().find(p => readDate(p.date));
-  const ymd = last ? readDate(last.date) : null;
-  if (!ymd) return monthDate(seasonYear, 0);
+  const last = [...periods].reverse().find(p => periodMonth(p));
+  const from = last ? periodMonth(last) : null;
+  if (!from) return slotDate(mode, range.first);
 
-  const step = mode === 'months' ? 1 : 3;
-  const base = mode === 'months' ? ymd.month : quarterOf(ymd.month) * 3;
-  let month = base + step;
-  let year = ymd.year;
-  if (month > 11) { month -= 12; year += 1; }
+  const base = mode === 'quarters' ? quarterStart(from) : from;
+  const next = addMonths(base, mode === 'quarters' ? 3 : 1);
 
   // Past the end of the offered range there is nowhere to advance to; repeat the last slot rather
-  // than silently producing a year the picker cannot show.
-  if (!years.includes(year)) return monthDate(ymd.year, base);
-  return monthDate(year, month);
+  // than silently producing a month the picker cannot show.
+  return `${next > range.last ? base : next}-01`;
 }
 
 /**
- * Every month (or quarter) of the season year that isn't already covered, appended and sorted —
- * "Fill the season", the one-click version of pressing Add period twelve times.
+ * The window's first twelve months (or four quarters) that aren't already covered, appended and
+ * sorted — "Fill the season", the one-click version of pressing Add period twelve times. The year
+ * it lays out is the one that BEGINS when the season was opened: September to August for a season
+ * opened in September, January to December for one opened in its own year.
  */
 export function fillSeasonPeriods(
-  mode: PeriodSplitMode, periods: PeriodDraft[], seasonYear: number,
+  mode: PeriodSplitMode, periods: PeriodDraft[], range: SplitWindow,
 ): PeriodDraft[] {
   if (mode !== 'months' && mode !== 'quarters') return periods;
 
-  const slots = mode === 'months' ? 12 : 4;
-  const taken = new Set<number>();
+  const step = mode === 'quarters' ? 3 : 1;
+  const start = mode === 'quarters' ? quarterStart(range.first) : range.first;
+  const taken = new Set<MonthKey>();
   for (const p of periods) {
-    const ymd = readDate(p.date);
-    if (!ymd || ymd.year !== seasonYear) continue;
-    taken.add(mode === 'months' ? ymd.month : quarterOf(ymd.month));
+    const month = periodMonth(p);
+    if (month) taken.add(mode === 'quarters' ? quarterStart(month) : month);
   }
 
   const added: PeriodDraft[] = [];
-  for (let slot = 0; slot < slots; slot++) {
-    if (taken.has(slot)) continue;
-    added.push({
-      label: '',
-      amount: '',
-      date: mode === 'months' ? monthDate(seasonYear, slot) : quarterDate(seasonYear, slot),
-    });
+  for (let m = start, n = 0; n < 12; m = addMonths(m, step), n += step) {
+    if (taken.has(m)) continue;
+    added.push({ label: '', amount: '', date: `${m}-01` });
   }
   if (added.length === 0) return periods;
 

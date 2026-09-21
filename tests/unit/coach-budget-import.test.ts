@@ -88,7 +88,7 @@ describe('rowsFromMonthGrid', () => {
       ['Category', 'Line', 'Mar 2026', 'Apr 2026', 'May 2026', 'Notes'],
       [['Tournaments', 'Entry Fees', '1,200', '', '$1,200', 'two events']],
     );
-    const [row] = rowsFromMonthGrid(file, 2026);
+    const [row] = rowsFromMonthGrid(file, '2026-01');
     assert.equal(row.categoryName, 'Tournaments');
     assert.equal(row.lineName, 'Entry Fees');
     assert.deepEqual(row.periods, [
@@ -104,11 +104,39 @@ describe('rowsFromMonthGrid', () => {
       ['Category', 'Line', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
       [['Facilities', 'Dome Time', '100', '', '', '', '200', '']],
     );
-    const [row] = rowsFromMonthGrid(file, 2026);
+    const [row] = rowsFromMonthGrid(file, '2026-01');
     assert.deepEqual(row.periods, [
       { month: '2026-09', amount: '100' },
       { month: '2027-01', amount: '200' },
     ]);
+  });
+
+  it('lands a bare month name on the first such month on or after the season opened', () => {
+    // A 2027 season opened in September 2026: the off-season sheet reads Sep 2026 … Aug 2027, and
+    // a calendar-year sheet reads the season year — "Jan" is next January, not the one behind the
+    // window. Before 2026-09-21 the anchor was the season YEAR, which put the first sheet a whole
+    // year late.
+    const offSeason = sheet(
+      ['Category', 'Line', 'Sep', 'Dec', 'Jan', 'May', 'Aug'],
+      [['Training', 'Winter Gym', '100', '100', '100', '100', '100']],
+    );
+    assert.deepEqual(rowsFromMonthGrid(offSeason, '2026-09')[0].periods.map(p => p.month),
+      ['2026-09', '2026-12', '2027-01', '2027-05', '2027-08']);
+
+    const calendar = sheet(
+      ['Category', 'Line', 'Jan', 'Jun', 'Dec'],
+      [['Tournaments', 'Entry Fees', '100', '100', '100']],
+    );
+    assert.deepEqual(rowsFromMonthGrid(calendar, '2026-09')[0].periods.map(p => p.month),
+      ['2027-01', '2027-06', '2027-12']);
+
+    // A header that names its year is taken at its word either way.
+    const explicit = sheet(
+      ['Category', 'Line', 'Jan 2026', 'Feb'],
+      [['Tournaments', 'Entry Fees', '100', '100']],
+    );
+    assert.deepEqual(rowsFromMonthGrid(explicit, '2026-09')[0].periods.map(p => p.month),
+      ['2026-01', '2026-02']);
   });
 
   it('re-reads the app’s OWN export: indented lines, derived columns, derived rows', () => {
@@ -123,7 +151,7 @@ describe('rowsFromMonthGrid', () => {
         ['Running balance', '', '', '450', '1,350', ''],
       ],
     );
-    const rows = rowsFromMonthGrid(file, 2026);
+    const rows = rowsFromMonthGrid(file, '2026-01');
     assert.deepEqual(rows.map(r => [r.categoryName, r.lineName]), [
       ['Tournaments', 'Entry Fees'],
       ['Tournaments', 'Uniforms'],
@@ -150,7 +178,7 @@ describe('rowsFromMonthGrid', () => {
       ],
       [1, 2],
     );
-    const rows = rowsFromMonthGrid(file, 2026);
+    const rows = rowsFromMonthGrid(file, '2026-01');
     assert.deepEqual(rows.map(r => [r.categoryName, r.lineName]), [
       ['Tournaments', 'Entry Fees'],
       ['Tournaments', 'Uniforms'],
@@ -162,7 +190,7 @@ describe('rowsFromMonthGrid', () => {
   it('caps a runaway sheet', () => {
     const file = sheet(['Category', 'Line', 'Amount'],
       Array.from({ length: 400 }, (_, i) => ['Tournaments', `Line ${i}`, '10']));
-    assert.equal(rowsFromMonthGrid(file, 2026).length, 300);
+    assert.equal(rowsFromMonthGrid(file, '2026-01').length, 300);
   });
 });
 
@@ -357,7 +385,7 @@ describe('rowsFromList', () => {
       ['Fundraising', '', '1800', '', '1800'],
       ['Chocolate Sale', '', '1800', '', '1800'],
     ], [2, 5]);
-    assert.deepEqual(rowsFromMonthGrid(file, 2026).map(r => [r.lineName, r.amount, r.direction]), [
+    assert.deepEqual(rowsFromMonthGrid(file, '2026-01').map(r => [r.lineName, r.amount, r.direction]), [
       ['Entry Fees', '2500', 'out'],
       ['Chocolate Sale', '1800', 'in'],
     ]);

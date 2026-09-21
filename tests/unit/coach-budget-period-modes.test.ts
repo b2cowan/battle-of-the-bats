@@ -3,13 +3,21 @@ import { describe, it } from 'node:test';
 import {
   derivedPeriodLabel, resolvedPeriodLabel, blankPeriod, nextPeriodDate,
   fillSeasonPeriods, inferSplitMode, readDate, monthDate, quarterDate, quarterOf,
-  splitYears, evenShares, isEvenWithinRounding, refitSplit,
+  splitWindow, splitPickerYears, SPLIT_WINDOW_MONTHS, evenShares, isEvenWithinRounding, refitSplit,
   type PeriodDraft, type PeriodSplitMode,
 } from '../../lib/coach-budget-period-modes.ts';
+import { MAX_MONTH_COLUMNS } from '../../lib/coach-budget-months.ts';
 
 function p(date: string, label = '', amount = ''): PeriodDraft {
   return { date, label, amount };
 }
+
+/** A 2027 season opened partway through its own year — the January rule, which is the whole of
+ *  what the pickers offered before the opened month counted. */
+const IN_YEAR = splitWindow(2027, '2027-06-15');
+/** A 2027 season opened in September 2026 to run winter training — the owner's own team, and
+ *  the case that could not budget a dollar before January (ruling 2026-09-21). */
+const EARLY = splitWindow(2027, '2026-09-03');
 
 describe('reading dates', () => {
   it('parses a real date and rejects everything else', () => {
@@ -31,8 +39,82 @@ describe('reading dates', () => {
     assert.equal(quarterOf(11), 3);
   });
 
-  it('offers the season year and the one after it', () => {
-    assert.deepEqual(splitYears(2027), [2027, 2028]);
+});
+
+describe('the window a period can be dated in', () => {
+  it('runs two years from January for a season opened in its own year', () => {
+    assert.deepEqual(IN_YEAR, { first: '2027-01', last: '2028-12' });
+    assert.equal(SPLIT_WINDOW_MONTHS, MAX_MONTH_COLUMNS, 'the by-period view\'s own column cap');
+  });
+
+  it('starts when the season was opened, when that is earlier than its January', () => {
+    assert.deepEqual(EARLY, { first: '2026-09', last: '2028-08' });
+  });
+
+  it('does not lose the season\'s own year to a late opening', () => {
+    // A coach who signed up in June still lays out January to May — the literal "two years from
+    // opening" would have taken those months away from them.
+    assert.deepEqual(splitWindow(2027, '2027-06-15'), { first: '2027-01', last: '2028-12' });
+    assert.deepEqual(splitWindow(2027, '2028-02-01'), { first: '2027-01', last: '2028-12' });
+  });
+
+  it('never ends before the season\'s own December', () => {
+    // A year set up far ahead is offered in full, even past twenty-four months.
+    assert.deepEqual(splitWindow(2028, '2026-03-10'), { first: '2026-03', last: '2028-12' });
+  });
+
+  it('falls back to the January rule when the opened day is missing or malformed', () => {
+    assert.deepEqual(splitWindow(2027, null), IN_YEAR);
+    assert.deepEqual(splitWindow(2027, undefined), IN_YEAR);
+    assert.deepEqual(splitWindow(2027, 'soon'), IN_YEAR);
+    assert.deepEqual(splitWindow(2027, '2026-13-01'), IN_YEAR);
+  });
+
+  it('accepts a month key as well as a day', () => {
+    assert.deepEqual(splitWindow(2027, '2026-09'), EARLY);
+  });
+
+  it('groups the months of the window by year for the pickers', () => {
+    assert.deepEqual(splitPickerYears(IN_YEAR, 'months'), [
+      { year: 2027, slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+      { year: 2028, slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+    ]);
+    assert.deepEqual(splitPickerYears(EARLY, 'months'), [
+      { year: 2026, slots: [8, 9, 10, 11] },
+      { year: 2027, slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+      { year: 2028, slots: [0, 1, 2, 3, 4, 5, 6, 7] },
+    ]);
+  });
+
+  it('also offers a month the line already holds, inside the window or not', () => {
+    // A line saved under the old year-pair rule past this window's edge, or imported with an
+    // explicit year, reopens showing the month it holds rather than the browser's first option.
+    assert.deepEqual(splitPickerYears(EARLY, 'months', [p('2028-11-01'), p('2025-06-01'), p('')]), [
+      { year: 2025, slots: [5] },
+      { year: 2026, slots: [8, 9, 10, 11] },
+      { year: 2027, slots: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11] },
+      { year: 2028, slots: [0, 1, 2, 3, 4, 5, 6, 7, 10] },
+    ]);
+    // A held month inside the window is not offered twice; a quarter is offered once for any day in it.
+    assert.deepEqual(splitPickerYears(EARLY, 'months', [p('2027-03-01')]), splitPickerYears(EARLY, 'months'));
+    assert.deepEqual(splitPickerYears(EARLY, 'quarters', [p('2028-11-15')]), [
+      { year: 2026, slots: [2, 3] },
+      { year: 2027, slots: [0, 1, 2, 3] },
+      { year: 2028, slots: [0, 1, 2, 3] },
+    ]);
+  });
+
+  it('offers a quarter when any of its months is in the window', () => {
+    assert.deepEqual(splitPickerYears(IN_YEAR, 'quarters'), [
+      { year: 2027, slots: [0, 1, 2, 3] },
+      { year: 2028, slots: [0, 1, 2, 3] },
+    ]);
+    // September opens inside Q3, so Q3 2026 is on offer; August 2028 closes inside Q3 2028.
+    assert.deepEqual(splitPickerYears(EARLY, 'quarters'), [
+      { year: 2026, slots: [2, 3] },
+      { year: 2027, slots: [0, 1, 2, 3] },
+      { year: 2028, slots: [0, 1, 2] },
+    ]);
   });
 });
 
@@ -71,22 +153,27 @@ describe('derived period names', () => {
 });
 
 describe('the first period', () => {
-  it('anchors month and quarter splits on the season year, and dates on nothing', () => {
-    assert.equal(blankPeriod('months', 2027).date, '2027-01-01');
-    assert.equal(blankPeriod('quarters', 2027).date, '2027-01-01');
-    assert.equal(blankPeriod('dates', 2027).date, '');
-    assert.equal(blankPeriod('names', 2027).date, '');
-    assert.equal(blankPeriod('months', 2027).amount, '');
-    assert.equal(blankPeriod('months', 2027).label, '');
+  it('anchors month and quarter splits on the window\'s first month, and dates on nothing', () => {
+    assert.equal(blankPeriod('months', IN_YEAR).date, '2027-01-01');
+    assert.equal(blankPeriod('quarters', IN_YEAR).date, '2027-01-01');
+    assert.equal(blankPeriod('dates', IN_YEAR).date, '');
+    assert.equal(blankPeriod('names', IN_YEAR).date, '');
+    assert.equal(blankPeriod('months', IN_YEAR).amount, '');
+    assert.equal(blankPeriod('months', IN_YEAR).label, '');
+  });
+
+  it('starts a season opened in September in September — and its quarters in Q3', () => {
+    assert.equal(blankPeriod('months', EARLY).date, '2026-09-01');
+    assert.equal(blankPeriod('quarters', EARLY).date, '2026-07-01');
   });
 });
 
 describe('add period advances on its own', () => {
   it('walks the months so twelve taps build a year', () => {
-    let rows: PeriodDraft[] = [blankPeriod('months', 2027)];
+    let rows: PeriodDraft[] = [blankPeriod('months', IN_YEAR)];
     const seen = [rows[0].date];
     for (let i = 0; i < 11; i++) {
-      rows = [...rows, p(nextPeriodDate('months', rows, 2027))];
+      rows = [...rows, p(nextPeriodDate('months', rows, IN_YEAR))];
       seen.push(rows[rows.length - 1].date);
     }
     assert.equal(seen.length, 12);
@@ -97,33 +184,39 @@ describe('add period advances on its own', () => {
 
   it('walks quarters three months at a time', () => {
     const rows = [p('2027-01-01')];
-    assert.equal(nextPeriodDate('quarters', rows, 2027), '2027-04-01');
-    assert.equal(nextPeriodDate('quarters', [p('2027-10-01')], 2027), '2028-01-01');
+    assert.equal(nextPeriodDate('quarters', rows, IN_YEAR), '2027-04-01');
+    assert.equal(nextPeriodDate('quarters', [p('2027-10-01')], IN_YEAR), '2028-01-01');
   });
 
   it('rolls December into the following January', () => {
-    assert.equal(nextPeriodDate('months', [p('2027-12-01')], 2027), '2028-01-01');
+    assert.equal(nextPeriodDate('months', [p('2027-12-01')], IN_YEAR), '2028-01-01');
   });
 
   it('stops advancing rather than leaving the picker range', () => {
-    assert.equal(nextPeriodDate('months', [p('2028-12-01')], 2027), '2028-12-01');
-    assert.equal(nextPeriodDate('quarters', [p('2028-10-01')], 2027), '2028-10-01');
+    assert.equal(nextPeriodDate('months', [p('2028-12-01')], IN_YEAR), '2028-12-01');
+    assert.equal(nextPeriodDate('quarters', [p('2028-10-01')], IN_YEAR), '2028-10-01');
+    // An early-opened season's window closes in August: the last month repeats, and the last
+    // quarter is the one August sits in.
+    assert.equal(nextPeriodDate('months', [p('2028-08-01')], EARLY), '2028-08-01');
+    assert.equal(nextPeriodDate('quarters', [p('2028-07-01')], EARLY), '2028-07-01');
   });
 
-  it('starts at January when there is nothing to advance from', () => {
-    assert.equal(nextPeriodDate('months', [], 2027), '2027-01-01');
-    assert.equal(nextPeriodDate('months', [p('')], 2027), '2027-01-01');
+  it('starts where the window does when there is nothing to advance from', () => {
+    assert.equal(nextPeriodDate('months', [], IN_YEAR), '2027-01-01');
+    assert.equal(nextPeriodDate('months', [p('')], IN_YEAR), '2027-01-01');
+    assert.equal(nextPeriodDate('months', [], EARLY), '2026-09-01');
+    assert.equal(nextPeriodDate('quarters', [], EARLY), '2026-07-01');
   });
 
   it('has nothing to say in date and name modes', () => {
-    assert.equal(nextPeriodDate('dates', [p('2027-03-14')], 2027), '');
-    assert.equal(nextPeriodDate('names', [], 2027), '');
+    assert.equal(nextPeriodDate('dates', [p('2027-03-14')], IN_YEAR), '');
+    assert.equal(nextPeriodDate('names', [], IN_YEAR), '');
   });
 });
 
 describe('fill the season', () => {
   it('adds every month the line does not already cover, in calendar order', () => {
-    const filled = fillSeasonPeriods('months', [p('2027-06-01', '', '500')], 2027);
+    const filled = fillSeasonPeriods('months', [p('2027-06-01', '', '500')], IN_YEAR);
     assert.equal(filled.length, 12);
     assert.deepEqual(filled.map(r => r.date.slice(5, 7)),
       ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12']);
@@ -132,36 +225,52 @@ describe('fill the season', () => {
   });
 
   it('adds four quarters', () => {
-    const filled = fillSeasonPeriods('quarters', [], 2027);
+    const filled = fillSeasonPeriods('quarters', [], IN_YEAR);
     assert.deepEqual(filled.map(r => r.date), ['2027-01-01', '2027-04-01', '2027-07-01', '2027-10-01']);
   });
 
-  it('is a no-op once the season is covered', () => {
-    const full = fillSeasonPeriods('months', [], 2027);
-    assert.equal(fillSeasonPeriods('months', full, 2027), full, 'same array back — nothing added');
+  it('lays out the year that BEGINS when the season was opened', () => {
+    // September to August for the owner's team — the months it was opened early for, not the
+    // calendar year that starts four months in.
+    const months = fillSeasonPeriods('months', [], EARLY);
+    assert.deepEqual(months.map(r => r.date.slice(0, 7)), [
+      '2026-09', '2026-10', '2026-11', '2026-12', '2027-01', '2027-02',
+      '2027-03', '2027-04', '2027-05', '2027-06', '2027-07', '2027-08',
+    ]);
+    const quarters = fillSeasonPeriods('quarters', [], EARLY);
+    assert.deepEqual(quarters.map(r => r.date), ['2026-07-01', '2026-10-01', '2027-01-01', '2027-04-01']);
   });
 
-  it('ignores rows in another year when deciding what is missing', () => {
-    const filled = fillSeasonPeriods('quarters', [p('2028-01-01')], 2027);
+  it('is a no-op once the season is covered', () => {
+    const full = fillSeasonPeriods('months', [], IN_YEAR);
+    assert.equal(fillSeasonPeriods('months', full, IN_YEAR), full, 'same array back — nothing added');
+    const early = fillSeasonPeriods('months', [], EARLY);
+    assert.equal(fillSeasonPeriods('months', early, EARLY), early);
+  });
+
+  it('ignores rows outside the season when deciding what is missing', () => {
+    const filled = fillSeasonPeriods('quarters', [p('2028-01-01')], IN_YEAR);
     assert.equal(filled.length, 5);
+    // A December 2026 row on the early team IS in its season, and is not added twice.
+    assert.equal(fillSeasonPeriods('months', [p('2026-12-01')], EARLY).length, 12);
   });
 
   it('leaves undated rows at the end', () => {
-    const filled = fillSeasonPeriods('months', [p('', 'Deposit', '100')], 2027);
+    const filled = fillSeasonPeriods('months', [p('', 'Deposit', '100')], IN_YEAR);
     assert.equal(filled.length, 13);
     assert.equal(filled[12].label, 'Deposit');
   });
 
   it('does nothing in date and name modes', () => {
     const rows = [p('2027-03-14')];
-    assert.equal(fillSeasonPeriods('dates', rows, 2027), rows);
-    assert.equal(fillSeasonPeriods('names', rows, 2027), rows);
+    assert.equal(fillSeasonPeriods('dates', rows, IN_YEAR), rows);
+    assert.equal(fillSeasonPeriods('names', rows, IN_YEAR), rows);
   });
 });
 
 describe('reopening a saved line', () => {
   it('reads twelve 1st-of-months as a month split', () => {
-    const rows = fillSeasonPeriods('months', [], 2027)
+    const rows = fillSeasonPeriods('months', [], IN_YEAR)
       .map((r, i) => p(r.date, derivedPeriodLabel('months', r, i)));
     assert.equal(inferSplitMode(rows), 'months');
   });
@@ -212,15 +321,15 @@ describe('the three-Januaries defect (mode change must RESET, never convert)', (
     // into each quarter and producing three Januaries, three Aprils and so on. The ruling is that
     // a mode change starts over, so the only thing this module offers for a new mode is ONE blank
     // period. Pinned so a future "helpful" converter has to delete this test to exist.
-    const twelve = fillSeasonPeriods('months', [], 2027);
+    const twelve = fillSeasonPeriods('months', [], IN_YEAR);
     assert.equal(twelve.length, 12);
 
-    const afterSwitch = [blankPeriod('quarters', 2027)];
+    const afterSwitch = [blankPeriod('quarters', IN_YEAR)];
     assert.equal(afterSwitch.length, 1);
     assert.equal(afterSwitch[0].date, '2027-01-01');
     assert.equal(afterSwitch[0].amount, '');
 
-    const backToMonths = [blankPeriod('months', 2027)];
+    const backToMonths = [blankPeriod('months', IN_YEAR)];
     assert.equal(backToMonths.length, 1);
     const januaries = backToMonths.filter(r => r.date.slice(5, 7) === '01');
     assert.equal(januaries.length, 1);

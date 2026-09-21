@@ -1561,6 +1561,7 @@ function MoneyRecordsPanel({
    */
   const [staleAfterWrite, setStaleAfterWrite] = useState(false);
   const [seasonYear, setSeasonYear] = useState<number>(() => new Date().getFullYear());
+  const [seasonOpened, setSeasonOpened] = useState<string | null>(null);
 
   /* Nav-hide + body-scroll-lock registration for the record modal and the scope editor — one
      registration, any door.
@@ -2879,6 +2880,7 @@ function MoneyRecordsPanel({
           direction: isFundingKind(l.lineKind) ? 'in' as const : 'out' as const,
         })));
         if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
+        setSeasonOpened(typeof planData.seasonOpened === 'string' ? planData.seasonOpened : null);
       }
       return 'ok';
     } catch (e: any) {
@@ -8392,6 +8394,7 @@ function MoneyRecordsPanel({
           existingLines={[]}
           existingPayableDescriptions={expenses.map(e => e.description)}
           seasonYear={seasonYear}
+          seasonOpened={seasonOpened}
           gridMonths={[]}
           todayMonth={new Date().toISOString().slice(0, 7)}
           initialShape="payables"

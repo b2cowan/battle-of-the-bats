@@ -49,7 +49,8 @@ import {
   PERIOD_SPLIT_MODES, SPLIT_MODE_LABEL, SPLIT_MODE_NOUN, SPLIT_MODE_STEP_TWO, SPLIT_MODE_COLUMN,
   blankPeriod, nextPeriodDate, fillSeasonPeriods, inferSplitMode, resolvedPeriodLabel,
   evenShares, refitSplit,
-  derivedPeriodLabel, splitYears, readDate, monthDate, quarterDate, quarterOf,
+  derivedPeriodLabel, splitPickerYears, splitWindow, readDate, monthDate, quarterDate, quarterOf,
+  type SplitWindow,
   type PeriodSplitMode,
 } from '@/lib/coach-budget-period-modes';
 import { joinPeriodSplits } from '@/lib/coach-budget-periods-payload';
@@ -261,8 +262,8 @@ const BLANK_FORM: LineForm = {
 
 /** A fresh form, with the split mode the coach used last and the ONE empty period a new split
  *  starts with (owner ruling: one, never zero and never twelve). */
-function blankLineForm(seasonYear: number, mode: PeriodSplitMode): LineForm {
-  return { ...BLANK_FORM, splitMode: mode, periods: [blankPeriod(mode, seasonYear)] };
+function blankLineForm(splitRange: SplitWindow, mode: PeriodSplitMode): LineForm {
+  return { ...BLANK_FORM, splitMode: mode, periods: [blankPeriod(mode, splitRange)] };
 }
 
 /** DOM ids for the fields a failed save can jump to. A failed save must MOVE the form — that is
@@ -1185,7 +1186,7 @@ function PeriodGrid({ view, granularity, monthStart, onMonthStart, closed, onTog
  * category list, which lives in the component. Null when the word is not in it — see the field.
  */
 function formFromLine(
-  line: RepBudgetLineWithPeriods, seasonYear: number, fallbackMode: PeriodSplitMode,
+  line: RepBudgetLineWithPeriods, splitRange: SplitWindow, fallbackMode: PeriodSplitMode,
   actualSource: BudgetItemActualSource | null,
 ): LineForm {
   const periods: PeriodRow[] = line.periods.map(p => ({
@@ -1210,7 +1211,7 @@ function formFromLine(
     whenAnswer:   whenAnswerFor(periods, splitMode),
     periodMode:   'amount', // stored periods are always dollars
     splitMode,
-    periods:      periods.length > 0 ? periods : [blankPeriod(splitMode, seasonYear)],
+    periods:      periods.length > 0 ? periods : [blankPeriod(splitMode, splitRange)],
   };
 }
 
@@ -1434,6 +1435,12 @@ export function BudgetPlanPanel({
   // and the lines is a stated row of the summary ladder.
   const [seasonTotal,   setSeasonTotal]   = useState<number | null>(null);
   const [seasonYear,    setSeasonYear]    = useState<number>(() => Number(tournamentToday().slice(0, 4)));
+  /* The month the season was OPENED (`YYYY-MM`), from the plan payload. With the year it decides
+     the months the split pickers offer — a season opened in September for the year after it
+     starts its budget in September, not at New Year (owner ruling 2026-09-21; the rule is
+     `splitWindow`). Null until the plan loads, which is the January rule alone. */
+  const [seasonOpened,  setSeasonOpened]  = useState<string | null>(null);
+  const splitRange = useMemo(() => splitWindow(seasonYear, seasonOpened), [seasonYear, seasonOpened]);
   const [editingSeason, setEditingSeason] = useState(false);
   const [seasonInput,   setSeasonInput]   = useState('');
   const [seasonSaving,  setSeasonSaving]  = useState(false);
@@ -1802,6 +1809,7 @@ export function BudgetPlanPanel({
       setSeasonTotal(planData.seasonBudgetAmount ?? null);
       setSeasonInput(planData.seasonBudgetAmount != null ? String(planData.seasonBudgetAmount) : '');
       if (typeof planData.seasonYear === 'number') setSeasonYear(planData.seasonYear);
+      setSeasonOpened(typeof planData.seasonOpened === 'string' ? planData.seasonOpened : null);
       setCategories(catData.categories ?? []);
     } catch (e: unknown) {
       if (!quiet && seq === loadSeq.current) setError(e instanceof Error ? e.message : 'Failed to load');
@@ -1871,7 +1879,7 @@ export function BudgetPlanPanel({
        re-evaluates when the newer plan lands. */
     if (!line) return;
     deepLinkHandled.current = deepLinkLine;
-    const opened = formFromLine(line, seasonYear, lastSplitMode, sourceOfItem(line.itemId));
+    const opened = formFromLine(line, splitRange, lastSplitMode, sourceOfItem(line.itemId));
     // ?periods=1 arrives from a month cell, where the coach was looking at dates — so the period
     // split opens even on a line that is currently a lump sum. It becomes the BASELINE too: our
     // opening the split is not the coach's work, so an untouched form must still close silently.
@@ -1888,7 +1896,7 @@ export function BudgetPlanPanel({
        still reaches the line the ordinary way, because going back to the grid scrubs `line` from
        the address on the way past and re-arms it. */
     void openDeepLinkedLine.current?.();
-    // `seasonYear`/`lastSplitMode` are read for the opening form only — listing them would re-run
+    // `splitRange`/`lastSplitMode` are read for the opening form only — listing them would re-run
     // this and reopen the modal over whatever the coach is doing.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [deepLinkLine, deepLinkPeriods, loading, plan, assignments, teamId]);
@@ -1966,7 +1974,7 @@ export function BudgetPlanPanel({
   }
 
   function openAdd() {
-    const fresh = blankLineForm(seasonYear, lastSplitMode);
+    const fresh = blankLineForm(splitRange, lastSplitMode);
     setEditingLine(null);
     setForm(fresh);
     setFormBaseline(fresh);
@@ -1995,7 +2003,7 @@ export function BudgetPlanPanel({
     direction: BudgetItemDirection; actualSource: BudgetItemActualSource;
   }) {
     const prefilled: LineForm = {
-      ...blankLineForm(seasonYear, lastSplitMode),
+      ...blankLineForm(splitRange, lastSplitMode),
       direction:    item.direction,
       categoryId:   item.categoryId,
       categoryName: item.categoryName,
@@ -2011,7 +2019,7 @@ export function BudgetPlanPanel({
   }
 
   function openEdit(line: RepBudgetLineWithPeriods) {
-    const loaded = formFromLine(line, seasonYear, lastSplitMode, sourceOfItem(line.itemId));
+    const loaded = formFromLine(line, splitRange, lastSplitMode, sourceOfItem(line.itemId));
     setEditingLine(line);
     setForm(loaded);
     setFormBaseline(loaded);
@@ -2123,7 +2131,7 @@ export function BudgetPlanPanel({
         return { ...f, whenAnswer: next, periods: [] };
       }
       if (next === 'month') {
-        const kept = had[0] ?? blankPeriod('months', seasonYear);
+        const kept = had[0] ?? blankPeriod('months', splitRange);
         setPeriodUndo(worthKeeping && had.length > 1
           ? {
               periods: had,
@@ -2141,7 +2149,7 @@ export function BudgetPlanPanel({
       return {
         ...f,
         whenAnswer: next,
-        periods: had.length > 0 ? had : [blankPeriod(f.splitMode, seasonYear)],
+        periods: had.length > 0 ? had : [blankPeriod(f.splitMode, splitRange)],
       };
     });
     setSaveTried(false);
@@ -2162,7 +2170,7 @@ export function BudgetPlanPanel({
               + `period${had.length === 1 ? '' : 's'} ${had.length === 1 ? 'was' : 'were'} cleared.`,
           }
         : null);
-      return { ...f, splitMode: mode, periods: [blankPeriod(mode, seasonYear)] };
+      return { ...f, splitMode: mode, periods: [blankPeriod(mode, splitRange)] };
     });
     setSaveTried(false);
   }
@@ -2171,7 +2179,7 @@ export function BudgetPlanPanel({
     setPeriodUndo(null);
     setForm(f => ({
       ...f,
-      periods: [...f.periods, { ...BLANK_PERIOD, date: nextPeriodDate(f.splitMode, f.periods, seasonYear) }],
+      periods: [...f.periods, { ...BLANK_PERIOD, date: nextPeriodDate(f.splitMode, f.periods, splitRange) }],
     }));
   }
 
@@ -2183,7 +2191,7 @@ export function BudgetPlanPanel({
 
   function fillSeason() {
     setForm(f => {
-      const filled = fillSeasonPeriods(f.splitMode, f.periods, seasonYear);
+      const filled = fillSeasonPeriods(f.splitMode, f.periods, splitRange);
       const added = filled.length - f.periods.length;
       setPeriodUndo(added > 0
         ? {
@@ -4319,8 +4327,8 @@ export function BudgetPlanPanel({
                     </label>
 
                     {/* The month, picked with the SPLIT EDITOR'S OWN CONTROL — a select grouped by
-                        year, offering the season year and the next (24 options, which is why the
-                        approved mockup's chip row could not survive contact: 24 chips is a wall,
+                        year, offering two years from the month the season was opened (24 options,
+                        which is why the approved mockup's chip row could not survive contact: 24 chips is a wall,
                         and a second way to answer one question inside a form that already holds
                         the first). Same control, same words, one place to change it. */}
                     {id === 'month' && form.whenAnswer === 'month' && (
@@ -4331,9 +4339,9 @@ export function BudgetPlanPanel({
                         onChange={e => setPeriodSlot(0, 'months', e.target.value)}
                       >
                         <option value="">Pick a month</option>
-                        {splitYears(seasonYear).map(year => (
+                        {splitPickerYears(splitRange, 'months', form.periods).map(({ year, slots }) => (
                           <optgroup key={year} label={String(year)}>
-                            {Array.from({ length: 12 }, (_, m) => m).map(slot => (
+                            {slots.map(slot => (
                               <option key={slot} value={`${year}|${slot}`}>
                                 {derivedPeriodLabel('months',
                                   { label: '', amount: '', date: monthDate(year, slot) }, slot)}
@@ -4500,7 +4508,7 @@ export function BudgetPlanPanel({
                         <DateField
                           value={p.date}
                           ariaLabel={form.splitMode === 'names'
-                            ? `Date for ${resolvedPeriodLabel(form.splitMode, p, i)} (optional)`
+                            ? `Date for ${resolvedPeriodLabel(form.splitMode, p, i)}`
                             : `Date for period ${i + 1}`}
                           onChange={v => setPeriodField(i, 'date', v)}
                         />
@@ -4510,12 +4518,9 @@ export function BudgetPlanPanel({
                           value={periodSlotValue(p, form.splitMode)}
                           onChange={e => setPeriodSlot(i, form.splitMode, e.target.value)}
                         >
-                          {splitYears(seasonYear).map(year => (
+                          {splitPickerYears(splitRange, form.splitMode, form.periods).map(({ year, slots }) => (
                             <optgroup key={year} label={String(year)}>
-                              {(form.splitMode === 'months'
-                                ? Array.from({ length: 12 }, (_, m) => m)
-                                : [0, 1, 2, 3]
-                              ).map(slot => (
+                              {slots.map(slot => (
                                 <option key={slot} value={`${year}|${slot}`}>
                                   {derivedPeriodLabel(
                                     form.splitMode,
@@ -4847,6 +4852,7 @@ export function BudgetPlanPanel({
           existingLines={existingBudgetLinesFrom(plan?.lines ?? [])}
           existingPayableDescriptions={[]}
           seasonYear={seasonYear}
+          seasonOpened={seasonOpened}
           gridMonths={planMonths}
           todayMonth={today().slice(0, 7)}
           onClose={() => setImportOpen(false)}

@@ -6,6 +6,7 @@ import { denyUnless, canViewMoney } from '@/lib/coach-capabilities';
 import { computeBudgetTotals, normalizeBudgetLineKind, isFundingKind } from '@/lib/coach-budget-totals';
 import { normalizeSplitMode } from '@/lib/coach-budget-period-modes';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
+import { orgDayKey } from '@/lib/timezone';
 import {
   getRepDuesPaymentsByProgramYear,
   getRepDuesCreditsByProgramYear,
@@ -246,9 +247,11 @@ export const GET = withObservability(async (_req: Request,
 
   // The optional ESTIMATED total (rep_program_years.budget_amount) rides along so the planner
   // can state the difference between it and the itemized sum.
-  // The season YEAR rides along too (chunk H2): it anchors bare month names in an imported
-  // sheet ("Sep" with no year), and the paste path parses in the browser — so the client needs
-  // the same anchor the server's file path already has, or the two would disagree.
+  // The season YEAR rides along too (chunk H2), and since 2026-09-21 the day the season was
+  // OPENED with it: together they decide the months the split pickers offer and anchor bare
+  // month names in an imported sheet ("Sep" with no year) — see `splitWindow`. The paste path
+  // parses in the browser, so the client needs the same anchor the server's file path already
+  // has, or the two would disagree.
   return NextResponse.json({
     plan,
     duesAssessed,
@@ -265,6 +268,7 @@ export const GET = withObservability(async (_req: Request,
     duesScheduled: schedules.length > 0,
     seasonBudgetAmount: programYear.budgetAmount ?? null,
     seasonYear: programYear.year,
+    seasonOpened: orgDayKey(programYear.createdAt),
     // The season's carried-forward cash (Start next season / Team settings → Money), for the
     // By-period grid's Opening/Net/Closing balance rows (revenue-first project, decision A/§5).
     // ⚠ NULL ≠ ZERO — the same rule Budget vs. Actual's own opening reader follows

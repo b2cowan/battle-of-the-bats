@@ -183,7 +183,7 @@ describe('the season plan, exported and imported back', () => {
     const { rows: gridRows, kinds } = budgetPeriodGridRows(view);
 
     for (const file of [csvFile(columns, gridRows), xlsxFile(columns, gridRows, kinds)]) {
-      const rows = rowsFromMonthGrid(file, 2027);
+      const rows = rowsFromMonthGrid(file, '2027-01');
       assert.deepEqual(verdicts(reviewBudgetRows(rows, CATEGORIES, EXISTING)), EXPECTED);
       // The schedule survives the trip too — a re-import that flattened the months would rewrite
       // every line's payment plan on commit, which is a worse lie than losing the row.
@@ -215,7 +215,7 @@ describe('the season plan, exported and imported back', () => {
     const grid = budgetPeriodGridRows(view);
     assert.equal(grid.rows.find(r => r.item === 'Player installments')?.unscheduled, -300, 'the overshoot is in the file, signed');
     for (const file of [csvFile(columns, grid.rows), xlsxFile(columns, grid.rows, grid.kinds)]) {
-      const rows = rowsFromMonthGrid(file, 2027);
+      const rows = rowsFromMonthGrid(file, '2027-01');
       assert.deepEqual(verdicts(reviewBudgetRows(rows, CATEGORIES, EXISTING)), EXPECTED);
       assert.deepEqual(
         rows.map(r => [r.lineName, r.periods.map(p => p.month)]).sort((x, y) => String(x[0]).localeCompare(String(y[0]))),

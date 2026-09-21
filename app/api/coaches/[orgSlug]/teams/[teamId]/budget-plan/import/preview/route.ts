@@ -10,6 +10,8 @@ import {
   rowsFromMonthGrid, rowsFromList, rowsFromPayables,
   MAX_IMPORT_ROWS, type BudgetImportShape,
 } from '@/lib/coach-budget-import';
+import { splitWindow } from '@/lib/coach-budget-period-modes';
+import { orgDayKey } from '@/lib/timezone';
 
 /** A budget sheet is a few KB; anything bigger isn't a budget. Mirrors the roster importer. */
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
@@ -86,12 +88,14 @@ export const POST = withObservability(async (req: Request,
       ? await parseXLSX(await file.arrayBuffer(), MAX_IMPORT_ROWS)
       : parseCSV(await file.text(), MAX_IMPORT_ROWS);
 
-    // The season year anchors bare month names ("Sep" with no year) — see the reader.
+    // Bare month names ("Sep" with no year) land on the first such month on or after the season
+    // was opened — the same window the split pickers offer, so the paste path in the browser and
+    // this file path agree. See the reader.
     const rows = shape === 'payables'
       ? rowsFromPayables(parsed)
       : shape === 'list'
         ? rowsFromList(parsed)
-        : rowsFromMonthGrid(parsed, programYear.year);
+        : rowsFromMonthGrid(parsed, splitWindow(programYear.year, orgDayKey(programYear.createdAt)).first);
 
     if (rows.length === 0) {
       return NextResponse.json(
