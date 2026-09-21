@@ -7,8 +7,8 @@ included in certain stats?"* — ruled **"the flag"** the same day, after the tw
 out (a per-game flag vs. a cheap League↔Scrimmage type switch on edit).
 
 **Status:** mockup + brief + plan drawn 2026-09-20; **D1–D6 ruled as recommended the same day; BUILT ON DEV
-2026-09-20; migration 306 applied to dev and verified; owner QA walk §211 owed (hub QA Walk tab);
-commit owed.**
+2026-09-20; migration 306 applied to dev and verified (PROD-OWED, WITH the promote); /simplify + /review +
+/docs 2026-09-21; COMMITTED `c255abc5` 2026-09-21; owner QA walk §211 owed (hub QA Walk tab).**
 Project hub (Mockup · PM Brief · Full Plan · Decisions, QA Walk added once built):
 `docs/projects/active/COACH_SCRIMMAGE_IS_A_FLAG_HUB.html` — published as Artifact
 `https://claude.ai/artifact/FPcaNdZd7tY9MgBzm48B4x` (round 1, 2026-09-20). PM brief: `COACH_SCRIMMAGE_IS_A_FLAG_PM_BRIEF.md`.
@@ -339,3 +339,5 @@ does. Pin identities and relationships, never a date-moving figure.
   Practice · Tournament · Team Event, an old "League Game" still reads as a game). `measure:help`:
   no section this change touched crossed the standard (the two over it — Insights, next season —
   were over before and were not edited in body; a later /docs pass).
+- 2026-09-21 — **COMMITTED `c255abc5`** (67 files) through a private index; the committed tree
+  typechecks clean in a scratch worktree. Owner walk §211 owed; mig 306 PROD-OWED, WITH the promote.
