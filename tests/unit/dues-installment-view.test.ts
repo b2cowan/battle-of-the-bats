@@ -14,9 +14,8 @@ import {
   buildInstallmentColumns,
   dueNextForPlayer,
   focusInstallmentColumn,
-  chaseableInstallment,
+  nextUnpaidInstallment,
   familiesOwingOn,
-  DUE_REMINDER_DAYS_AHEAD,
   type ViewableInstallment,
 } from '../../lib/dues-installment-view';
 import { allocateDuesPayments } from '../../lib/dues-payments';
@@ -290,19 +289,34 @@ describe('focusInstallmentColumn — the one installment a coach can act on', ()
   });
 });
 
-describe('chaseableInstallment / familiesOwingOn — the on-demand reminder rule, shared', () => {
-  it('is chaseable when an installment is past due or due within the window, with money to send', () => {
-    const late = [inst(1, 100, '2026-08-01')];
-    const soon = [inst(1, 100, '2026-08-16')];
-    const later = [inst(1, 100, '2026-08-30')];
-    assert.equal(DUE_REMINDER_DAYS_AHEAD, 3);
-    assert.equal(chaseableInstallment({ installments: late, coverage: covered(late, 0) }, TODAY), true);
-    assert.equal(chaseableInstallment({ installments: soon, coverage: covered(soon, 0) }, TODAY), true);
-    assert.equal(chaseableInstallment({ installments: later, coverage: covered(later, 0) }, TODAY), false);
-    // Paid in full: nothing to say, however late the date.
-    assert.equal(chaseableInstallment({ installments: late, coverage: covered(late, 100) }, TODAY), false);
+describe('nextUnpaidInstallment — the per-family "Remind this family" rule', () => {
+  it('picks the earliest unpaid installment regardless of how far away it is', () => {
+    const schedule = [inst(1, 100, '2026-06-01'), inst(2, 100, '2026-09-01'), inst(3, 100, '2026-12-01')];
+    // Installment 1 is paid; the far-off installment 2 is still "next" even though it is months
+    // away — unlike the old window check, distance never excludes it.
+    assert.equal(
+      nextUnpaidInstallment({ installments: schedule, coverage: covered(schedule, 100) })?.installmentNumber,
+      2,
+    );
   });
 
+  it('picks the OLDEST unpaid bill when more than one is owed, not the season total', () => {
+    const schedule = [inst(1, 100, '2026-06-01'), inst(2, 100, '2026-07-01')];
+    const next = nextUnpaidInstallment({ installments: schedule, coverage: covered(schedule, 0) });
+    assert.equal(next?.installmentNumber, 1);
+  });
+
+  it('is null once every installment is settled, however it got there', () => {
+    const schedule = [inst(1, 100, '2026-06-01'), inst(2, 100, '2026-07-01')];
+    assert.equal(nextUnpaidInstallment({ installments: schedule, coverage: covered(schedule, 200) }), null);
+  });
+
+  it('is null for a player with no schedule at all', () => {
+    assert.equal(nextUnpaidInstallment({ installments: [], coverage: [] }), null);
+  });
+});
+
+describe('familiesOwingOn — one installment column, counted', () => {
   it('counts the families with money still to send on one installment, not the roster', () => {
     const a = [inst(1, 100, '2026-09-01')];
     const b = [inst(1, 100, '2026-09-01')];

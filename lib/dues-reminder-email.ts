@@ -73,6 +73,16 @@ export function duesReminderFooterHtml(p: { orgName?: string | null; teamName: s
 }
 
 /**
+ * What the on-screen preview greets when it cannot show the guardian's real first name — either
+ * none is on file yet (the letter cannot send until the roster row has an address, and the coach
+ * still wants to read what WOULD go), or the coach lacks the roster-PII grant (a treasurer can
+ * send the reminder without being allowed to read who it greets). Only the PREVIEW ever passes
+ * this; a real send greets the real name or "there". Bracketed so it reads as a blank, and
+ * exported so the modal can find and style the very same token in the rendered HTML.
+ */
+export const GUARDIAN_FIRST_NAME_PLACEHOLDER = '[guardian’s first name]';
+
+/**
  * `window` is the automatic wave (30 or 7 days ahead); null is the coach's ad-hoc
  * "Send Due Reminders" button, which carries its own subject line.
  */

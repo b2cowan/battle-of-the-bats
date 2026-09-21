@@ -15,8 +15,9 @@
 //
 // Respects the per-team "Automatic Dues Reminders" coach toggle
 // (rep_program_years.auto_reminders_enabled), same as the org-admin wave route.
-// The never-paid nudge (remind-unpaid) stays deliberately manual — it has no
-// sent-stamp, so automating it would re-email families every day.
+// The per-family "Remind this family" button stays deliberately manual and unbounded by date
+// (owner ruling 2026-09-21) — automating a send with no forward window would re-email a family
+// about the same far-off installment every day.
 //
 // Invoked by POST /api/platform-admin/dues-reminders (super-admin or scheduler
 // secret); the pg_cron schedule (migration 183) ticks it daily.

@@ -26,7 +26,6 @@
  */
 
 import type { InstallmentCoverage } from './dues-payments';
-import { addCalendarDays } from './timezone';
 
 export interface ViewableInstallment {
   id: string;
@@ -259,38 +258,38 @@ export function dueNextForPlayer(
    rather than one unused export sitting in the dues module pretending to be shared. */
 
 /**
- * How far ahead the coach's on-demand "Send due reminders" looks — past due, or due within this
- * many days. ⚠ ONE NUMBER, TWO READERS (cleanup 2026-09-04): the server's candidate query decides
- * who is emailed, and the player's panel decides whether to offer "Remind this family". Defined
- * once so a future change to the window cannot leave the button and the send disagreeing.
+ * How far ahead the team-wide on-demand "Send due reminders" looks — past due, or due within this
+ * many days. Governs ONLY that bulk send (and the automatic 30/7 waves, via their own bound) — the
+ * per-family "Remind this family" button is unbounded by date on purpose (owner ruling 2026-09-21:
+ * an explicit click means "tell them about their next bill", however far off it is) and reads
+ * `nextUnpaidInstallment` below instead, not this window.
  */
 export const DUE_REMINDER_DAYS_AHEAD = 3;
 
 /**
- * WHICH installments the on-demand reminder would actually chase today: past due or due within
- * the window, with money still to send. The same rule the send-reminders route's candidate query
- * applies, minus the seven-day courtesy — which the server owns, because only it can read a stamp
- * that landed since this page loaded.
+ * THE next bill this family owes — the earliest unpaid installment with money still to send, ties
+ * broken by installment number. `null` when every installment is settled (or there is no schedule
+ * at all).
  *
- * ⚠ THE LIST, NOT JUST THE ANSWER (/review 2026-09-05). The boolean below used to be the only
- * export, so a caller that needed to reason about the courtesy had to re-derive the candidate set
- * by hand — and the dues panel's first attempt did, over the WHOLE schedule including PAID
- * installments. A bill paid last week still carries the reminder stamp that chased it, so that
- * caller greyed out a legitimate send for a DIFFERENT bill that had since come due, and told the
- * coach a specific, false reason. One definition, handed out, so it cannot happen again.
+ * ⚠ UNBOUNDED BY DATE ON PURPOSE (owner ruling 2026-09-21, replacing the old `chaseableInstallment`
+ * window check). A coach pressing "Remind this family" is an explicit act, not a proximity notice
+ * — how many days away the bill is does not matter, only whether it is still owed. The team-wide
+ * "Send due reminders" keeps its own past-due/3-day window (`DUE_REMINDER_DAYS_AHEAD` above); this
+ * is the per-family button's rule, not that one's.
  */
-export function chaseableInstallments<T extends ViewableInstallment>(
+export function nextUnpaidInstallment<T extends ViewableInstallment>(
   p: { installments: T[]; coverage: InstallmentCoverage[] },
-  today: string,
-): T[] {
-  const cutoff = addCalendarDays(today, DUE_REMINDER_DAYS_AHEAD);
-  return p.installments.filter(i =>
-    !i.paidAt && i.dueDate <= cutoff && installmentToSend(i, p.coverage.find(c => c.installmentId === i.id)) > 0.005);
-}
-
-/** Would the on-demand reminder have anything to say to this family today? */
-export function chaseableInstallment(p: PlayerScheduleLike, today: string): boolean {
-  return chaseableInstallments(p, today).length > 0;
+): T | null {
+  let best: T | null = null;
+  for (const inst of p.installments) {
+    if (inst.paidAt) continue;
+    if (installmentToSend(inst, p.coverage.find(c => c.installmentId === inst.id)) <= 0.005) continue;
+    if (!best || inst.dueDate < best.dueDate ||
+        (inst.dueDate === best.dueDate && inst.installmentNumber < best.installmentNumber)) {
+      best = inst;
+    }
+  }
+  return best;
 }
 
 /**

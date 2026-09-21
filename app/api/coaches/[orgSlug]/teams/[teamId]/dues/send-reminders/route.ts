@@ -11,7 +11,7 @@ import {
 } from '@/lib/db';
 import type { RepDueReminderCandidate } from '@/lib/types';
 import { sendEmail } from '@/lib/email';
-import { duesReminderEmail } from '@/lib/dues-reminder-email';
+import { duesReminderEmail, GUARDIAN_FIRST_NAME_PLACEHOLDER } from '@/lib/dues-reminder-email';
 import { DUE_REMINDER_DAYS_AHEAD } from '@/lib/dues-installment-view';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canWriteMoney } from '@/lib/coach-capabilities';
@@ -50,15 +50,18 @@ function familiesOf(list: readonly RepDueReminderCandidate[]): Set<string> {
 //                           the Send-due-reminders confirmation (owner D3, 2026-09-04): the same
 //                           selection the send uses, so the button can never promise a different
 //                           number than it delivers.
-//   playerId: string      — ONE family (owner E4, 2026-09-04): the on-demand email, sent only to the
-//                           guardian of this player, listing every qualifying installment of theirs
-//                           (siblings on the same guardian email included — it is one letter to one
-//                           household). The 7-day courtesy still applies; a suppressed family is
-//                           reported as `skippedRecent` rather than re-dunned.
+//   playerId: string      — ONE family's "Remind this family" (owner ruling 2026-09-21): the
+//                           on-demand email about THIS player's own next unpaid installment ONLY —
+//                           never the team's 3-day window, never their season total, never a
+//                           sibling's own bill. An explicit click means "tell them about their
+//                           next bill", however far off it is.
 //
-// ⚠ ONE READ. The candidate query is seven round trips and a coverage pass over the whole roster;
-// it runs ONCE here with the courtesy carried as a FLAG, and every mode filters the flag in memory.
-// The send path must never email a `recentlyReminded` row — that is the courtesy.
+// ⚠ ONE READ for the team-wide modes (window / bulk on-demand). The candidate query is seven round
+// trips and a coverage pass over the whole roster; it runs ONCE with the courtesy carried as a
+// FLAG, and every mode filters the flag in memory. The send path must never email a
+// `recentlyReminded` row — that is the courtesy. `playerId` runs its OWN unbounded query instead
+// (below) — folding it into the bounded team-wide read would silently reintroduce the window this
+// button is meant to ignore.
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamId: string }> },) => {
   const { orgSlug, teamId } = await params;
@@ -72,6 +75,71 @@ export const POST = withObservability(async (req: Request,
   const window: 30 | 7 | undefined = body.window === 30 ? 30 : body.window === 7 ? 7 : undefined;
   const preview = body.preview === true;
   const playerId: string | null = typeof body.playerId === 'string' && body.playerId ? body.playerId : null;
+
+  // ⚠ "REMIND THIS FAMILY", UNBOUNDED (owner ruling 2026-09-21). `daysAhead: null` means no
+  // installment is excluded for being too far away — the ONLY filters left are "unpaid" and "this
+  // player's". Sorted so the FIRST row is the next bill; a family behind on two installments still
+  // gets ONE email, about the oldest one, never the total.
+  if (playerId) {
+    const mine = (await getDueReminderCandidates(teamId, null, undefined, { includeRecentlyReminded: true }))
+      .filter(c => c.playerId === playerId)
+      .sort((a, b) => a.dueDate.localeCompare(b.dueDate) || a.installmentNumber - b.installmentNumber);
+    const next = mine[0] ?? null;
+
+    // The reasons there is nothing to say, shared by preview and the real send so they can never
+    // disagree about WHY: no unpaid installment at all, or held by the 7-day courtesy.
+    if (!next) return NextResponse.json(preview ? { empty: true } : { remindersChecked: 0, emailsSent: 0, installmentsTagged: 0 });
+    if (next.recentlyReminded) {
+      return NextResponse.json(preview
+        ? { empty: true, skippedRecent: true }
+        : { remindersChecked: 1, emailsSent: 0, installmentsTagged: 0, skippedRecent: true });
+    }
+
+    if (preview) {
+      // ⚠ NO ADDRESS IS NOT "NOTHING TO SHOW" (owner, 2026-09-21). A coach whose roster row has no
+      // guardian email still wants to read what WOULD go once it does — so the letter renders
+      // with a placeholder where the greeting would name the guardian, and the modal warns that it
+      // cannot send until the Roster is updated. The real send below still refuses.
+      // ⚠ THE SAME PLACEHOLDER IS THE PII WALL. A treasurer sends reminders on `money: write` with
+      // NO roster-PII grant — the dues payload redacts the guardian's name and address from them,
+      // and this preview must not hand those back through a different door. Without the grant the
+      // greeting takes the placeholder and `to` is withheld; the real send, which shows them
+      // nothing, still greets the real name. Player names are baseline and stay.
+      const piiVisible = !!assignment.capabilities.rosterPii;
+      const missingEmail = !next.guardianEmail;
+      const guardianFirst = !piiVisible || (missingEmail && !next.guardianFirstName)
+        ? GUARDIAN_FIRST_NAME_PLACEHOLDER
+        : next.guardianFirstName ?? 'there';
+      const { subject, html } = duesReminderEmail({
+        teamName: team.name,
+        orgName: ctx.org.name,
+        window: null,
+        guardianFirst,
+        items: [next],
+      });
+      return NextResponse.json({
+        subject,
+        html,
+        to: piiVisible ? next.guardianEmail : null,
+        missingEmail,
+        guardianHidden: !piiVisible,
+      });
+    }
+
+    if (!next.guardianEmail) {
+      return NextResponse.json({ remindersChecked: 1, emailsSent: 0, installmentsTagged: 0, missingEmail: true });
+    }
+    const { subject, html } = duesReminderEmail({
+      teamName: team.name,
+      orgName: ctx.org.name,
+      window: null,
+      guardianFirst: next.guardianFirstName ?? 'there',
+      items: [next],
+    });
+    await sendEmail(next.guardianEmail, subject, html);
+    await markInstallmentsReminderSent([next.installmentId]);
+    return NextResponse.json({ remindersChecked: 1, emailsSent: 1, installmentsTagged: 1 });
+  }
 
   // Automated reminder windows: respect coach toggle
   if (window !== undefined && !programYear.autoRemindersEnabled) {
@@ -97,24 +165,8 @@ export const POST = withObservability(async (req: Request,
     });
   }
 
-  let candidates = reachable;
-  if (playerId) {
-    // The household this player belongs to, by guardian email — looked up in the unfiltered list so
-    // a family the courtesy is holding back is recognised and REPORTED, not silently skipped.
-    const own = all.find(c => c.playerId === playerId);
-    if (!own) {
-      return NextResponse.json({ remindersChecked: 0, emailsSent: 0, installmentsTagged: 0 });
-    }
-    if (!own.guardianEmail) {
-      return NextResponse.json({ remindersChecked: 1, emailsSent: 0, installmentsTagged: 0, missingEmail: true });
-    }
-    const email = own.guardianEmail;
-    candidates = reachable.filter(c => c.guardianEmail === email);
-    if (!candidates.length) {
-      return NextResponse.json({ remindersChecked: 1, emailsSent: 0, installmentsTagged: 0, skippedRecent: true });
-    }
-  }
-
+  // playerId is handled entirely above and always returns — nothing below runs for that mode.
+  const candidates = reachable;
   if (!candidates.length) {
     return NextResponse.json({ remindersChecked: 0, emailsSent: 0, installmentsTagged: 0 });
   }

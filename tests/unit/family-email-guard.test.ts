@@ -81,9 +81,9 @@ const FAMILY_SENDERS: { file: string; posture: Posture; what: string }[] = [
 
   // ── Transactional: money owed, and a place on a roster. Suppression skipped ON PURPOSE. ────
   { file: 'app/api/coaches/[orgSlug]/teams/[teamId]/dues/send-reminders/route.ts', posture: 'transactional',
-    what: 'A coach\'s "Send due reminders"' },
-  { file: 'app/api/coaches/[orgSlug]/teams/[teamId]/dues/remind-unpaid/route.ts', posture: 'transactional',
-    what: 'A coach\'s "Remind unpaid" — the fifth hand-built copy of the dues email' },
+    what: 'A coach\'s "Send due reminders" AND "Remind this family" — the never-paid "fifth ' +
+          'hand-built copy" this used to also cover was retired 2026-09-21 when the per-family ' +
+          'nudge folded into the one installment template' },
   { file: 'app/api/admin/rep-teams/dues/send-automated-reminders/route.ts', posture: 'transactional',
     what: 'The org admin\'s dues wave' },
   { file: 'lib/dues-reminders.ts', posture: 'transactional',
@@ -198,7 +198,10 @@ describe('Family email — every sender is accounted for', () => {
   it('EVERY transactional notice carries the shared footer — the price of skipping the opt-out', () => {
     const transactional = FAMILY_SENDERS.filter(s => s.posture === 'transactional');
     assert.equal(
-      transactional.length, 4,
+      // Was 4 until 2026-09-21, when the never-paid "Remind unpaid" route was retired and folded
+      // into send-reminders/route.ts (one button, one installment, one sender) — a real shrink,
+      // re-audited, not a drifted count.
+      transactional.length, 3,
       'The transactional set changed size — re-audit it. Each member skips the unsubscribe check, ' +
       'so each one owes a family an explanation of why it arrived anyway.',
     );

@@ -13817,7 +13817,10 @@ import type {
 
 export async function getDueReminderCandidates(
   teamId: string,
-  daysAhead: number,
+  /** `null` — no forward cutoff at all (the per-family "Remind this family" button, owner ruling
+   *  2026-09-21: an explicit click reaches an installment however far off it is). A number bounds
+   *  the team-wide sends (past due, or due within this many days) as before. */
+  daysAhead: number | null,
   window?: 30 | 7,
   /**
    * `includeRecentlyReminded` keeps the installments the 7-day courtesy would skip, each marked
@@ -13901,12 +13904,10 @@ export async function getDueReminderCandidates(
   const remainingOf = (i: any) => toSendById.get(i.id) ?? Number(i.amount);
 
   const today = new Date();
-  const cutoff = new Date(today);
-  cutoff.setDate(cutoff.getDate() + daysAhead);
   // Reminder window is a CALENDAR question — anchor on the org timezone, not the
   // runtime's, which is UTC in production and rolls over at ~8 PM Toronto.
   const todayStr = tournamentToday();
-  const cutoffStr = addCalendarDays(todayStr, daysAhead);
+  const cutoffStr = daysAhead === null ? null : addCalendarDays(todayStr, daysAhead);
   const sevenDaysAgo = new Date(today);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -13915,7 +13916,7 @@ export async function getDueReminderCandidates(
     // Fully covered but the projection hasn't stamped yet (or a zero-remainder edge): nothing
     // to chase — a reminder for $0.00 tells a family the books are wrong.
     if (remainingOf(i) <= 0.005) return false;
-    if (i.due_date > cutoffStr) return false;
+    if (cutoffStr !== null && i.due_date > cutoffStr) return false;
     // Past-due installments belong to the coach's AD-HOC send only (owner call 2026-08-14):
     // a coach pressing the button means "chase everything owed now". The automated 30/7 waves
     // stay forward-looking — they are proximity notices, and folding past-due into them would
@@ -13967,172 +13968,6 @@ export async function getDueReminderCandidates(
       recentlyReminded: recentlyReminded(i),
     };
   });
-}
-
-/** One never-paid player to nudge — used by the "Haven't paid anything yet" reminder. */
-export interface UnpaidDuesReminderTarget {
-  playerId: string;
-  playerFirstName: string;
-  playerLastName: string;
-  guardianFirstName: string | null;
-  guardianEmail: string | null;
-  teamName: string;
-  outstanding: number;
-  /**
-   * The family's NEXT unpaid bill — the one the send stamps (owner ruling 2026-09-05).
-   *
-   * ⚠⚠ THIS WAS "every unpaid installment", AND THAT REACHED TOO FAR (/review 2026-09-05).
-   * The reasoning for stamping all of them read well — the letter asks for the whole balance, so
-   * stamp what you actually chased — and it was wrong about what the column IS. `reminder_sent_at`
-   * is not a record of what a letter mentioned; every reader treats it as a CLOCK that suppresses
-   * the next send. Stamping bills months out therefore silenced a legitimate, different letter:
-   * this note only goes to a family whose next bill is more than three days away, so a family
-   * whose first payment landed four to nine days later got the nudge, then NO due-date reminder
-   * before that bill fell due, and next heard from us only once they were already late.
-   * One letter, one clock, on the bill the family is actually about to be chased for.
-   */
-  nextUnpaidInstallmentId: string | null;
-  /**
-   * ⚠ THE 7-DAY COURTESY REACHES THIS NUDGE TOO (owner ruling 2026-09-05). It read the SAME column
-   * and the SAME window `getDueReminderCandidates` judges the on-demand installment send by
-   * (`reminder_sent_at`, seven days) — deliberately NOT the automatic waves, which keep their own
-   * stamps and must not suppress a coach's deliberate send. Before this, one button had two
-   * behaviours: pressing it for a late family was held back after one send, and pressing it for a
-   * never-paid family emailed the parent every single time, recording nothing.
-   */
-  recentlyReminded: boolean;
-}
-
-/**
- * Players on the team's active program year who OWE dues but have recorded ZERO payments
- * (a schedule exists / balance is owed, and no installment is marked paid). Mirrors the
- * `isNeverPaidPlayer` predicate the portal shows, so this route targets exactly the players
- * whose panels offer Remind — including its credit rule (owner model 2026-08-14): a family
- * whose fundraising settled the season has nothing left to send and is never nudged, and each
- * target's `outstanding` is the NET figure (schedule minus credits applied), not the face amount.
- */
-export async function getUnpaidDuesReminderTargets(teamId: string): Promise<UnpaidDuesReminderTarget[]> {
-  const programYear = await getActiveRepProgramYear(teamId);
-  if (!programYear) return [];
-
-  const { data: schedules, error: sErr } = await supabaseAdmin
-    .from('rep_player_dues_schedules')
-    .select('id, player_id, total_amount')
-    .eq('program_year_id', programYear.id);
-  if (sErr) throw sErr;
-  if (!schedules?.length) return [];
-
-  const scheduleIds = schedules.map((s: any) => s.id);
-  const { data: allInst, error: iErr } = await supabaseAdmin
-    .from('rep_player_dues_installments')
-    .select('id, schedule_id, installment_number, amount, paid_at, reminder_sent_at')
-    .in('schedule_id', scheduleIds);
-  if (iErr) throw iErr;
-
-  const countBySchedule: Record<string, number> = {};
-  const anyPaidBySchedule: Record<string, boolean> = {};
-  const instsBySchedule = new Map<string, any[]>();
-  for (const i of (allInst ?? []) as any[]) {
-    countBySchedule[i.schedule_id] = (countBySchedule[i.schedule_id] ?? 0) + 1;
-    if (i.paid_at) anyPaidBySchedule[i.schedule_id] = true;
-    if (!instsBySchedule.has(i.schedule_id)) instsBySchedule.set(i.schedule_id, []);
-    instsBySchedule.get(i.schedule_id)!.push(i);
-  }
-
-  // Payment FACTS (mig 232): a family two part-payments into an installment has every paid_at
-  // still null — the stamp is only a full-coverage projection. Without this, the nudge would
-  // email "no dues payments yet" to a paying family, and its count would disagree with the
-  // panel's isNeverPaidPlayer banner (which reads paidAmount).
-  const [{ data: payRows, error: payErr }, seasonCredits, seasonPayouts] = await Promise.all([
-    supabaseAdmin
-      .from('rep_dues_payments')
-      .select('player_id')
-      .eq('program_year_id', programYear.id),
-    getRepDuesCreditsByProgramYear(programYear.id),
-    getRepDuesPayoutsByProgramYear(programYear.id),
-  ]);
-  if (payErr) throw payErr;
-  const paidPlayerIds = new Set((payRows ?? []).map((p: any) => p.player_id));
-  const creditsByPlayer = groupByPlayer(seasonCredits);
-  const paidOutByPlayer = totalsByPlayer(seasonPayouts);
-
-  // What each never-paid family is still asked to SEND: their whole schedule (no payments by
-  // definition) minus whatever their credits cover in the team's application mode.
-  const leftToSendBySchedule = new Map<string, number>();
-  for (const s of schedules as any[]) {
-    const insts = instsBySchedule.get(s.id) ?? [];
-    if (!insts.length) continue;
-    const { position } = deriveDuesPosition({
-      installments: insts.map((i: any) => ({ id: i.id, installmentNumber: i.installment_number, amount: Number(i.amount), paidAt: i.paid_at ?? null })),
-      payments: [],
-      credits: creditsByPlayer.get(s.player_id) ?? [],
-      paidOut: paidOutByPlayer.get(s.player_id) ?? 0,
-      mode: programYear.creditApplication,
-    });
-    leftToSendBySchedule.set(s.id, position.leftToSend);
-  }
-  const leftToSendOf = (s: any) =>
-    leftToSendBySchedule.get(s.id) ?? Math.round(Number(s.total_amount) * 100) / 100;
-
-  const neverPaid = schedules.filter((s: any) => {
-    const hasDues = (countBySchedule[s.id] ?? 0) > 0 || Number(s.total_amount) > 0;
-    return hasDues && !anyPaidBySchedule[s.id] && !paidPlayerIds.has(s.player_id)
-      && leftToSendOf(s) > 0.005;
-  });
-  if (!neverPaid.length) return [];
-
-  const playerIds = [...new Set(neverPaid.map((s: any) => s.player_id))];
-  const { data: players, error: pErr } = await supabaseAdmin
-    .from('rep_roster_players')
-    .select('id, player_first_name, player_last_name, guardian_first_name, guardian_email')
-    .in('id', playerIds);
-  if (pErr) throw pErr;
-  const playerMap = new Map((players ?? []).map((p: any) => [p.id, p]));
-
-  const team = await getRepTeam(teamId);
-
-  // The courtesy window, timestamped exactly as `getDueReminderCandidates` computes it — one
-  // definition of "reminded recently", so the two doors on this screen can never disagree about
-  // whether a family has already heard from us this week.
-  const sevenDaysAgo = new Date();
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-
-  return neverPaid
-    .map((s: any) => {
-      const p = playerMap.get(s.player_id);
-      if (!p) return null;
-      const unpaid = (instsBySchedule.get(s.id) ?? []).filter((i: any) => !i.paid_at);
-      /**
-       * ⚠ NO BILL TO STAMP MEANS NO SEND (/review 2026-09-05). A schedule can carry a total with
-       * NO installment rows — the season rollover creates the header and then skips the bills when
-       * the season it copied had none — and `isNeverPaidPlayer` counts that family as a target on
-       * `outstanding` alone. With nothing to stamp, the courtesy has nowhere to live: every press
-       * would read "not recently reminded" and email the parent again, which is precisely the bug
-       * this route was changed to close. The bulk send cannot reach that family either (it works
-       * from installment rows), so refusing here is the consistent answer, and the real repair is
-       * to give the schedule its bills.
-       */
-      if (!unpaid.length) return null;
-      // Earliest by DATE, not by number — a hand-set schedule can order the two differently.
-      const next = unpaid.reduce((best: any, i: any) =>
-        !best || i.due_date < best.due_date
-          || (i.due_date === best.due_date && i.installment_number < best.installment_number) ? i : best, null);
-      return {
-        playerId: s.player_id,
-        playerFirstName: p.player_first_name ?? '',
-        playerLastName: p.player_last_name ?? '',
-        guardianFirstName: p.guardian_first_name ?? null,
-        guardianEmail: p.guardian_email ?? null,
-        teamName: team?.name ?? '',
-        outstanding: leftToSendOf(s),
-        nextUnpaidInstallmentId: next?.id ?? null,
-        // ⚠ ANY unpaid bill with a fresh stamp holds this letter, because it is ONE letter about
-        // the whole balance — unlike the installment notice, which the server judges per bill.
-        recentlyReminded: unpaid.some((i: any) =>
-          i.reminder_sent_at && new Date(i.reminder_sent_at) >= sevenDaysAgo),
-      };
-    })
-    .filter((t): t is UnpaidDuesReminderTarget => t !== null);
 }
 
 export async function markInstallmentsReminderSent(installmentIds: string[]): Promise<void> {
