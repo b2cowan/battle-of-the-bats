@@ -8037,7 +8037,21 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    carries the row, its sticky variant (the measured `top` still set inline by the Ledger, the
    margin→padding rule with it) and the actions slot. Every Money tab, Skills & Goals, Roster,
    Schedule, a player's Results and Insights render it; Money's geometry was the kit's. The
-   `.panelSubhead` band heading below is a caller's own and stays. */
+   `.panelSubhead` band heading below is a caller's own and stays.
+   ⚠ "STAYS" WAS WRITTEN AND THE RULE WAS DELETED ANYWAY — the same commit took it, and for four days
+   Fundraising's "Fundraisers" / "Sponsors" band headings rendered as a browser-default h3 inside the
+   toolbar (owner found the sibling defect on Budget Plan, 2026-09-21). Restored byte-for-byte. A
+   CSS-module class the sheet no longer declares fails silently, so a headstone is not a guard. */
+
+/* A BAND's own heading inside a tab (the fundraising split, Direction A 2026-08-29): quieter
+   than the page title, louder than a table heading — the two-band pattern's one new piece. */
+.panelSubhead {
+  font-size: var(--type-section, 1rem);
+  font-weight: 800;
+  letter-spacing: 0.01em;
+  margin: 0;
+  color: var(--text-primary);
+}
 
 /* ⚰ `.panelToolbarTabs` — zero callers by 2026-09-16 (the sub-tabs it let shrink became the View
    pill). Its headstone keeps the warning: removing it once reproduced 30px of sideways scroll on
@@ -12857,7 +12871,18 @@ button.gdChip[aria-pressed='true'] {
    auto-fit row reflows 3 to 2+1 and orphans whichever figure lands alone. Nine classes went:
    .clubBand, .clubBandCell, .clubBandLabel, .clubBandFigure, .clubBandSub, .clubBandNote,
    .clubBandOut, .clubBandWait, .clubBandDirection. `.clubBandOverdue` SURVIVES -- it is the
-   inline warning glyph inside a caption, not part of the band recipe. */
+   inline warning glyph inside a caption, not part of the band recipe.
+   ⚠ "SURVIVES" WAS WRITTEN AND THE RULE WENT WITH THE OTHER NINE (money banner P2, 2026-09-03):
+   the Club band's "N overdue" caption lost its danger ink and its no-wrap for eighteen days, found
+   only when the owner hit the sibling defect on Budget Plan (2026-09-21). Restored byte-for-byte. */
+
+/* The inline warning glyph inside the standing band's caption -- "· ⚠ 2 overdue". */
+.clubBandOverdue {
+  color: var(--badge-danger-ink);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.clubBandOverdue svg { vertical-align: -1px; margin-right: 1px; }
 
 
 /* ══ THE MONEY TAB SUMMARY BAND — one recipe, every money tab ═══════════════════════════════════

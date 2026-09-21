@@ -68,6 +68,7 @@ import styles from './budget.module.css';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import shared from '../../../../coaches.module.css';
+import { CoachListToolbar } from '@/components/coaches/kit';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
@@ -3237,8 +3238,24 @@ export function BudgetPlanPanel({
           {/* Line items grouped by category */}
           {/* List ⇄ By period. Only offered once there is a plan to look at — a toggle over an
               empty page is furniture. */}
+          {/* ⚠ THE KIT'S TOOLBAR, NOT A CLASS FROM THE SHARED SHEET. The 2026-09-17 kit commit
+              deleted `.panelToolbar`/`.panelToolbarActions` and moved every other Money tab onto
+              `CoachListToolbar` — and missed this one, so for four days this row asked for a rule
+              that no longer existed and stacked its controls in a column (owner, 2026-09-21). A
+              CSS-module class that is not declared fails SILENTLY: no build error, no type error,
+              the element simply gets no class. The kit's geometry is byte-for-byte the old rule's. */}
           {allLines.length > 0 && (
-            <div className={shared.panelToolbar}>
+            <CoachListToolbar
+              actions={(
+                /* The create joins the row the tab already had (ruling 2026-08-13, decision 2) —
+                   no band was added to the page. When the plan is EMPTY this row does not render
+                   at all and the first-run card carries the doors, import included, at 390px. */
+                <>
+                  {planExport}
+                  {addLineButton}
+                </>
+              )}
+            >
               {/* ⚠ THE SAME PILLS BvA USES ONE TAB OVER (P4, owner Q4 — finishing the 2026-08-20
                   "one control shape" ruling, whose adoption list simply never named Budget Plan).
                   View is the arrangement control and takes the lead accent; Columns appears only
@@ -3292,14 +3309,7 @@ export function BudgetPlanPanel({
                   {foldAll.allClosed ? 'Expand all' : 'Collapse all'}
                 </button>
               )}
-              {/* The create joins the row the tab already had (ruling 2026-08-13, decision 2) —
-                  no band was added to the page. When the plan is EMPTY this row does not render
-                  at all and the first-run card carries the doors, import included, at 390px. */}
-              <div className={shared.panelToolbarActions}>
-                {planExport}
-                {addLineButton}
-              </div>
-            </div>
+            </CoachListToolbar>
           )}
 
           {/* ⚠ ALL lines, not just cost groups: a plan holding only expected-funding lines is not

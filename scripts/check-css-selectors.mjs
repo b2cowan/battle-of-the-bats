@@ -1,14 +1,41 @@
 #!/usr/bin/env node
 /**
- * check-css-selectors.mjs — the two CSS-Module defects nothing else in this repo can see.
+ * check-css-selectors.mjs — the three CSS-Module defects nothing else in this repo can see.
  *
  * `check-css-module-purity.mjs` asks whether a rule is legal. `check-public-tokens.mjs` asks what
- * colour it uses. Neither asks the two questions that actually cost us time in cleanup tranche 6
- * (2026-09-01):
+ * colour it uses. Neither asks the questions that actually cost us time — two from cleanup tranche
+ * 6 (2026-09-01), one from the Budget Plan toolbar (2026-09-21):
  *
- *   A. DEAD  — a class declared in a module that no component ever renders.
- *   B. CLASH — the SAME single-class selector declared twice at top level with rules that
- *              contradict each other, so one silently wins for every caller of both.
+ *   A. DEAD   — a class declared in a module that no component ever renders.
+ *   B. CLASH  — the SAME single-class selector declared twice at top level with rules that
+ *               contradict each other, so one silently wins for every caller of both.
+ *   C. ORPHAN — code asks a module for a class the module does not declare (`styles.foo` with no
+ *               `.foo`). The OPPOSITE of A, and the one that breaks a screen.
+ *
+ * ⚠⚠ WHY C EXISTS, AND WHY IT IS THE ONE THAT REACHES A CUSTOMER. A CSS-module class that is not
+ * declared resolves to `undefined` — `className="undefined"`, no build error, no type error, nothing
+ * in the console. The 2026-09-17 style-kit commit deleted `.panelToolbar` after moving the row into
+ * the kit component, migrated five Money tabs and missed the sixth: Budget Plan's toolbar stacked
+ * its controls in a column for four days. The same commit deleted `.panelSubhead` BESIDE a
+ * headstone saying it "stays"; the 2026-09-03 banner commit had done the same to `.clubBandOverdue`
+ * ("SURVIVES"). A and B were both green the whole time — they look the other way. A headstone is
+ * prose; only a scan that reads the callers can hold a deletion to its own note.
+ *
+ * ── C: what counts as a REFERENCE, and the bias ───────────────────────────────
+ * Deliberately CONSERVATIVE — a finding here names a rendering defect, so a false positive costs
+ * trust the way a false "dead" would cost working CSS. A reference is `alias.name` or
+ * `alias['name']` where `alias` is the default import of a `*.module.css` file, read from source
+ * with COMMENTS BLANKED FIRST (a headstone names the class it buried, which is exactly how the
+ * first scan for this defect reported zero findings). A name counts as declared if the module
+ * declares it as a local class OR as a `@keyframes` name — CSS Modules export both.
+ *
+ * ⚠ THE SHADOWED-ALIAS GUARD. `import s from 'admin-common.module.css'` and `.filter(s => s.id)`
+ * live in the same file: every `s.<prop>` on a lambda parameter would read as an orphan. So an
+ * alias that the file also binds locally (a parameter, a `const`, a destructure) — or that is one
+ * or two characters long, which is where that happens in practice — is read ONLY on lines that
+ * also carry `className` / `clsx(` / `cx(` / `classNames(`. Coverage narrows on those files;
+ * nothing false is reported from them. The dynamic index (`styles[\`now${x}\`]`) is not a
+ * reference this scan can resolve and is skipped, as A already skips it in the other direction.
  *
  * ⚠⚠ WHY B IS THE ONE THAT MATTERS, AND WHY IT IS NARROW ON PURPOSE. `.statStrip` was declared by
  * two unrelated families ~3,500 lines apart in the coaches stylesheet — an inline text strip
@@ -57,10 +84,13 @@
  * refactor orphaned four classes and — because the chain is `&&` — those four cosmetic findings
  * stopped schema-parity, index coverage, dictionary coverage, the org-context guard, observability
  * and the demo check from running AT ALL, for every session in the shared working copy. **Tidiness
- * debt must never mask a correctness failure.** What this gate finds is real and worth fixing, but
+ * debt must never mask a correctness failure.** What A and B find is real and worth fixing, but
  * none of it can break a customer today, whereas the checks it was standing in front of all can.
  * Same reasoning applies to `check-root-files.mjs`, which moved with it. If you add a check here,
  * ask which kind it is: correctness goes early, housekeeping goes after.
+ * ⚠ C IS a correctness finding, and it still lives here rather than earlier in the chain: a peer's
+ * half-finished refactor produces orphans as readily as dead classes, and the masking argument is
+ * about what a shared working copy does to an `&&` chain, not about how serious the finding is.
  *
  * ── Ratchet, exactly like the colour-token guardrail ──────────────────────────
  * A blanket check is red on day one (the coaches stylesheet alone is >12,000 lines), and a gate
@@ -72,8 +102,8 @@
  *   node scripts/check-css-selectors.mjs --report   print the full inventory, exit 0
  *   node scripts/check-css-selectors.mjs --json     machine-readable, exit 0
  */
-import { readdirSync, readFileSync, writeFileSync, existsSync, statSync } from 'node:fs';
-import { join, relative, sep } from 'node:path';
+import { readdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { dirname, join, relative, sep } from 'node:path';
 
 const ROOT = process.cwd();
 const BASELINE = join(ROOT, 'scripts/.css-selector-baseline.json');
@@ -148,9 +178,114 @@ function classesIn(selector) {
 }
 
 /**
- * Parse one stylesheet into the two shapes both checks need.
- * `declared`  Map name → first line it appears on (for the report)
- * `topRules`  the depth-0, single-simple-class rules, with their declarations
+ * Blank comments in a TS/JS/TSX source in place, string-aware, so `//` inside a URL string or a
+ * template literal does not start a comment and a headstone's `styles.buried` does not read as a
+ * reference. Newlines survive so line numbers stay honest. A `'`/`"` string ends at its line
+ * (an unescaped JSX apostrophe can therefore only mis-read the rest of its own line); a template
+ * literal tracks `${ }` nesting so an inner expression is read as code.
+ */
+function blankCodeComments(src) {
+  const out = src.split('');
+  const frames = [{ mode: 'code', depth: 0 }];   // template expressions push a 'code' frame
+  const top = () => frames[frames.length - 1];
+  for (let i = 0; i < src.length; i++) {
+    const c = src[i], n = src[i + 1];
+    const f = top();
+    if (f.mode === 'lc') { if (c === '\n') { frames.pop(); continue; } out[i] = ' '; continue; }
+    if (f.mode === 'bc') {
+      if (c === '*' && n === '/') { out[i] = out[i + 1] = ' '; i++; frames.pop(); continue; }
+      if (c !== '\n') out[i] = ' ';
+      continue;
+    }
+    if (f.mode === 'sq' || f.mode === 'dq') {
+      if (c === '\\') { i++; continue; }
+      if (c === '\n' || c === (f.mode === 'sq' ? "'" : '"')) frames.pop();
+      continue;
+    }
+    if (f.mode === 'tpl') {
+      if (c === '\\') { i++; continue; }
+      if (c === '`') { frames.pop(); continue; }
+      if (c === '$' && n === '{') { frames.push({ mode: 'code', depth: 0 }); i++; }
+      continue;
+    }
+    // mode === 'code'
+    if (c === '/' && n === '/') { out[i] = out[i + 1] = ' '; i++; frames.push({ mode: 'lc' }); continue; }
+    if (c === '/' && n === '*') { out[i] = out[i + 1] = ' '; i++; frames.push({ mode: 'bc' }); continue; }
+    if (c === "'") { frames.push({ mode: 'sq' }); continue; }
+    if (c === '"') { frames.push({ mode: 'dq' }); continue; }
+    if (c === '`') { frames.push({ mode: 'tpl' }); continue; }
+    if (c === '{') { f.depth++; continue; }
+    if (c === '}') {
+      if (f.depth === 0 && frames.length > 1) { frames.pop(); continue; }  // closes a `${`
+      f.depth--;
+    }
+  }
+  return out.join('');
+}
+
+const escapeRe = (s) => s.replace(/[$^\\.*+?()[\]{}|]/g, '\\$&');
+
+/** Does the file bind `alias` locally anywhere — a parameter, a const, a destructure? */
+function aliasIsShadowed(src, alias) {
+  if (alias.length <= 2) return true;   // where it happens in practice; see the header
+  const a = escapeRe(alias);
+  return new RegExp(
+    String.raw`\b(?:const|let|var|function|class)\s+${a}\b` +
+    String.raw`|\b${a}\s*=>` +
+    String.raw`|\(\s*${a}\s*[,):=]` +
+    String.raw`|,\s*${a}\s*[,)=:]` +
+    String.raw`|\{[^{}]*\b${a}\b[^{}]*\}\s*=[^=>]`,
+  ).test(src);
+}
+
+/**
+ * The character ranges of a file that are a class expression: the value of a `className={…}` /
+ * `className: …`, or the arguments of `clsx(…)` / `cx(…)` / `classNames(…)`. A shadowed alias is
+ * read only inside these — a line test was not enough, because
+ * `className={s.count}>{slots.filter(s => s.teamId)}` carries both on one line.
+ */
+function classContextRanges(src) {
+  const ranges = [];
+  const closer = { '{': '}', '(': ')', '[': ']' };
+  for (const m of src.matchAll(/className\s*=\s*\{|className\s*:|\b(?:clsx|cx|classNames)\s*\(/g)) {
+    let i = m.index + m[0].length;
+    const open = m[0].endsWith('{') ? '{' : m[0].endsWith('(') ? '(' : null;
+    if (open) {
+      const stack = [open];
+      let j = i;
+      for (; j < src.length && stack.length; j++) {
+        const ch = src[j];
+        if (closer[ch]) stack.push(ch);
+        else if (ch === closer[stack[stack.length - 1]]) stack.pop();
+      }
+      ranges.push([i, j]);
+    } else {
+      // `className: value,` inside an object literal — up to the next top-level `,` or `}`.
+      let depth = 0, j = i;
+      for (; j < src.length; j++) {
+        const ch = src[j];
+        if (closer[ch]) depth++;
+        else if (ch === '}' && depth === 0) break;
+        else if (ch === ')' || ch === ']' || ch === '}') depth--;
+        else if (ch === ',' && depth === 0) break;
+      }
+      ranges.push([i, j]);
+    }
+  }
+  return ranges;
+}
+const inRanges = (ranges, idx) => ranges.some(([a, b]) => idx >= a && idx < b);
+
+/** `@/x` is the repo root (tsconfig `paths`); anything else is relative to the importing file. */
+function resolveModuleSpec(fromFile, spec) {
+  return spec.startsWith('@/') ? join(ROOT, spec.slice(2)) : join(dirname(fromFile), spec);
+}
+
+/**
+ * Parse one stylesheet into the shapes the checks need.
+ * `declared`   Map name → first line it appears on (for the report)
+ * `topRules`   the depth-0, single-simple-class rules, with their declarations
+ * `keyframes`  every `@keyframes` name — exported by CSS Modules like a class, so C honours them
  */
 function parseModule(file) {
   const raw = readFileSync(file, 'utf8');
@@ -158,6 +293,7 @@ function parseModule(file) {
   const declared = new Map();
   const topRules = [];
   const composes = new Set();
+  const keyframes = new Set();
 
   /* ⚠⚠ COMPOSES TARGETS ARE COLLECTED PER FILE BUT APPLIED GLOBALLY (see `composedAnywhere`).
      `composes: warmVars from './warmTheme.module.css'` uses a class that lives in a DIFFERENT
@@ -186,7 +322,9 @@ function parseModule(file) {
       const line = css.slice(0, preludeStart).split('\n').length;
 
       if (isAt) {
-        stack.push(/^@(-\w+-)?keyframes/i.test(text) ? 'keyframes' : 'at');
+        const kf = /^@(?:-\w+-)?keyframes\s+(-?[A-Za-z_][\w-]*)/i.exec(text);
+        if (kf) keyframes.add(kf[1]);
+        stack.push(kf ? 'keyframes' : 'at');
       } else {
         // Is every enclosing block an at-rule? Then this rule is still "top level" for our
         // purposes only if there are NO enclosing blocks at all.
@@ -258,7 +396,7 @@ function parseModule(file) {
     if (!prelude.trim() && /\s/.test(c)) { preludeStart = i + 1; continue; }
     prelude += c;
   }
-  return { declared, topRules, composes };
+  return { declared, topRules, composes, keyframes };
 }
 
 // ── usage index, built once across every code root ────────────────────────────
@@ -336,14 +474,59 @@ for (const { key, declared, topRules } of parsed) {
   if (found.length) clashes[key] = [...new Set(found)].sort();
 }
 
+/* PASS 3 — C. For every code file that default-imports a module, every static `alias.name` /
+   `alias['name']` must be a name that module exports. Keyed in the baseline by name + module,
+   never by alias or line, so renaming an import or moving a line cannot make an old finding look
+   new. */
+const exportsOf = new Map(parsed.map((p) => [p.key, new Set([...p.declared.keys(), ...p.keyframes])]));
+const orphans = {};        // code file → ["name@module", …]
+const orphanDetail = [];   // { file, line, alias, name, module, guarded }
+const importRe = /import\s+(?:\*\s+as\s+)?([A-Za-z_$][\w$]*)\s+from\s+(['"])([^'"\n]+\.module\.css)\2/g;
+
+for (const f of codeFiles) {
+  const src = blankCodeComments(readFileSync(f, 'utf8'));
+  const found = new Set();
+  let classRanges = null;   // computed once, only if an alias in this file is shadowed
+  for (const im of src.matchAll(importRe)) {
+    const alias = im[1];
+    const moduleKey = rel(resolveModuleSpec(f, im[3]));
+    const exported = exportsOf.get(moduleKey);
+    if (!exported) continue;   // not a module this scan parsed (a missing file fails the build on its own)
+    const guarded = aliasIsShadowed(src, alias);
+    if (guarded && !classRanges) classRanges = classContextRanges(src);
+    // `[^\w$.-]` before the alias: not a property of something else, not the tail of a kebab word.
+    const refRe = new RegExp(
+      String.raw`(^|[^\w$.-])${escapeRe(alias)}(?:\.([A-Za-z_$][\w$]*)|\[\s*(['"])([^'"\n]+)\3\s*\])`, 'g');
+    for (const m of src.matchAll(refRe)) {
+      const name = m[2] ?? m[4];
+      if (exported.has(name)) continue;
+      const at = m.index + m[1].length;
+      if (guarded && !inRanges(classRanges, at)) continue;
+      const line = src.slice(0, at).split('\n').length;
+      const key = `${name}@${moduleKey}`;
+      if (!found.has(key)) {
+        found.add(key);
+        orphanDetail.push({ file: rel(f), line, alias, name, module: moduleKey, guarded });
+      }
+    }
+  }
+  if (found.size) orphans[rel(f)] = [...found].sort();
+}
+
 const totalDead = Object.values(dead).reduce((n, a) => n + a.length, 0);
 const totalClash = Object.values(clashes).reduce((n, a) => n + a.length, 0);
+const totalOrphan = Object.values(orphans).reduce((n, a) => n + a.length, 0);
 
 // ── modes ─────────────────────────────────────────────────────────────────────
 if (mode === 'json') {
-  console.log(JSON.stringify({ modules: cssFiles.length, dead, clashes, clashDetail }, null, 2));
+  console.log(JSON.stringify({ modules: cssFiles.length, dead, clashes, clashDetail, orphans, orphanDetail }, null, 2));
   process.exit(0);
 }
+
+const printOrphan = (log, o) => {
+  log(`  ${o.file}:${o.line}`);
+  log(`    ${o.alias}.${o.name} — no .${o.name} in ${o.module}`);
+};
 
 if (mode === 'report') {
   console.log(`CSS selector inventory — ${cssFiles.length} module(s)\n`);
@@ -355,6 +538,10 @@ if (mode === 'report') {
     console.log(`      line ${c.a.line}: ${c.prop}: ${c.a.value}`);
     console.log(`      line ${c.b.line}: ${c.prop}: ${c.b.value}   ← this one wins`);
   }
+  console.log(`\nORPHAN references (${totalOrphan}) — code asks for a class the module does not declare; `
+    + `the element renders with class "undefined":`);
+  if (!orphanDetail.length) console.log('  (none)');
+  for (const o of orphanDetail) printOrphan(console.log, o);
   console.log(`\nDEAD classes (${totalDead}) — declared, never rendered:`);
   for (const [f, names] of Object.entries(dead).sort()) {
     console.log(`  ${f}  (${names.length})`);
@@ -367,17 +554,18 @@ if (mode === 'report') {
 }
 
 if (mode === 'init') {
-  writeFileSync(BASELINE, JSON.stringify({ dead, clashes }, null, 2) + '\n');
+  writeFileSync(BASELINE, JSON.stringify({ dead, clashes, orphans }, null, 2) + '\n');
   console.log(`Baseline written: scripts/.css-selector-baseline.json`);
   console.log(`  ${totalDead} dead class(es) across ${Object.keys(dead).length} module(s)`);
   console.log(`  ${totalClash} clashing selector(s) across ${Object.keys(clashes).length} module(s)`);
+  console.log(`  ${totalOrphan} orphan reference(s) across ${Object.keys(orphans).length} code file(s)`);
   process.exit(0);
 }
 
 // ── ratchet ───────────────────────────────────────────────────────────────────
 const base = existsSync(BASELINE)
   ? JSON.parse(readFileSync(BASELINE, 'utf8'))
-  : { dead: {}, clashes: {} };
+  : { dead: {}, clashes: {}, orphans: {} };
 
 const newDead = [];
 for (const [f, names] of Object.entries(dead)) {
@@ -389,11 +577,26 @@ for (const [f, keys] of Object.entries(clashes)) {
   const allowed = new Set(base.clashes?.[f] ?? []);
   for (const k of keys) if (!allowed.has(k)) newClash.push({ file: f, key: k });
 }
+const newOrphan = [];
+for (const [f, keys] of Object.entries(orphans)) {
+  const allowed = new Set(base.orphans?.[f] ?? []);
+  for (const k of keys) if (!allowed.has(k)) newOrphan.push(orphanDetail.find((o) => o.file === f && `${o.name}@${o.module}` === k));
+}
 
-if (!newDead.length && !newClash.length) {
-  console.log(`✓ CSS selectors: ${cssFiles.length} module(s) — no new dead or clashing selectors `
-    + `(${totalDead} dead / ${totalClash} clashing grandfathered).`);
+if (!newDead.length && !newClash.length && !newOrphan.length) {
+  console.log(`✓ CSS selectors: ${cssFiles.length} module(s) — no new dead, clashing or orphaned selectors `
+    + `(${totalDead} dead / ${totalClash} clashing / ${totalOrphan} orphaned grandfathered).`);
   process.exit(0);
+}
+
+if (newOrphan.length) {
+  console.error(`\n✗ ${newOrphan.length} NEW orphan reference(s) — code asks for a class the module does `
+    + `not declare, so the element renders with class "undefined" and NO styling:\n`);
+  for (const o of newOrphan) printOrphan(console.error, o);
+  console.error(`\n  Two causes, two fixes. If the rule was DELETED and this caller left behind (a`);
+  console.error(`  "moved to the kit" or "retired" note nearby): restore the rule, or move this caller`);
+  console.error(`  onto whatever replaced it. If the name never existed: delete the reference, or`);
+  console.error(`  write the rule. A headstone that says a rule "stays" does not keep it — this does.`);
 }
 
 if (newClash.length) {

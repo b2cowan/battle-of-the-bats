@@ -50,6 +50,7 @@ import styles from './bva.module.css';
 import CoachLoadError from '@/components/coaches/CoachLoadError';
 import CoachLoading from '@/components/coaches/CoachLoading';
 import shared from '../../../../coaches.module.css';
+import { kit } from '@/components/coaches/kit';
 
 /* ⚠ THE REPORT IS TWO LEVELS: CATEGORY → ITEM (owner ruling 2026-08-15). It used to be category →
    budget line, named by whatever description a coach had typed, which is why a line filed under the
@@ -2952,8 +2953,12 @@ export function BudgetVsActualPanel({
 
             {/* On EVERY view, not just the month one — it exports whichever is on screen, so it
                 has no reason to appear and disappear. Standalone route included: this row is on
-                both, which is what stops the two shapes drifting apart. */}
-            <span className={shared.panelToolbarActions}>{bvaExport}</span>
+                both, which is what stops the two shapes drifting apart.
+                ⚠ `kit.toolbarActions` ON THE CALLER'S OWN ROW — the kit's documented idiom for a
+                toolbar with its own layout (the Ledger's decks do the same). It wore the shared
+                sheet's `.panelToolbarActions` until the 2026-09-17 kit commit deleted that rule
+                without moving this span, and Export quietly stopped pinning right. */}
+            <span className={kit.toolbarActions}>{bvaExport}</span>
           </div>
 
           {/* ⚰ THE VIEW SUBLABEL LINE LIVED HERE FOR ONE DAY (D5.7, built 2026-09-02) and the owner

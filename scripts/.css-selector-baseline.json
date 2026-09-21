@@ -466,5 +466,74 @@
       "tagChip|color",
       "tagChip|padding"
     ]
+  },
+  "orphans": {
+    "app/coaches/tournaments/[teamId]/not-found.tsx": [
+      "statusCard@components/coaches/CoachTournamentRecord.module.css",
+      "statusDesc@components/coaches/CoachTournamentRecord.module.css"
+    ],
+    "app/platform-admin/observability/[groupId]/page.tsx": [
+      "issueLink@app/platform-admin/observability/observability.module.css"
+    ],
+    "app/pricing/page.tsx": [
+      "clubText@app/pricing/page.module.css"
+    ],
+    "app/[orgSlug]/admin/rep-teams/rename-slugs/page.tsx": [
+      "inputError@app/[orgSlug]/admin/rep-teams/rep-teams.module.css"
+    ],
+    "app/[orgSlug]/admin/rep-teams/teams/[teamId]/history/[yearId]/page.tsx": [
+      "tab@app/[orgSlug]/admin/rep-teams/rep-teams.module.css",
+      "tabActive@app/[orgSlug]/admin/rep-teams/rep-teams.module.css",
+      "tabs@app/[orgSlug]/admin/rep-teams/rep-teams.module.css"
+    ],
+    "app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/schedule/page.tsx": [
+      "emptyStateState@app/[orgSlug]/admin/rep-teams/rep-teams.module.css"
+    ],
+    "app/[orgSlug]/admin/tournaments/results/page.tsx": [
+      "resultsExportMenu@app/[orgSlug]/admin/tournaments/results/results-admin.module.css"
+    ],
+    "app/[orgSlug]/admin/tournaments/schedule/page.tsx": [
+      "allDivisionSection@app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css",
+      "scheduleStatusChip@app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css"
+    ],
+    "app/[orgSlug]/admin/tournaments/staff-kit/page.tsx": [
+      "openLink@app/[orgSlug]/admin/tournaments/staff-kit/staff-kit.module.css"
+    ],
+    "app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/panel.tsx": [
+      "schedChip@app/[orgSlug]/coaches/teams/[teamId]/accounting/budget/budget.module.css"
+    ],
+    "app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/panel.tsx": [
+      "page@app/[orgSlug]/coaches/teams/[teamId]/accounting/budget-vs-actual/bva.module.css"
+    ],
+    "app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx": [
+      "gdMeta@app/[orgSlug]/coaches/coaches.module.css"
+    ],
+    "app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupTemplatesView.tsx": [
+      "sheetOnMobile@app/[orgSlug]/coaches/coaches.module.css"
+    ],
+    "app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx": [
+      "attendanceStatusBadgeLabel@app/[orgSlug]/coaches/coaches.module.css",
+      "sheetOnMobile@app/[orgSlug]/coaches/coaches.module.css",
+      "slideOverScrim@app/[orgSlug]/coaches/coaches.module.css"
+    ],
+    "app/[orgSlug]/[tournamentSlug]/playoffs/page.tsx": [
+      "matchupBlock@components/public/PlayoffPicture.module.css",
+      "seedBlock@components/public/PlayoffPicture.module.css"
+    ],
+    "components/coaches/BudgetItemManagerModal.tsx": [
+      "sheetOnMobile@app/[orgSlug]/coaches/coaches.module.css"
+    ],
+    "components/coaches/CoachStaffSheet.tsx": [
+      "sheetOnMobile@app/[orgSlug]/coaches/coaches.module.css"
+    ],
+    "components/coaches/GiveAwardModal.tsx": [
+      "sheetOnMobile@app/[orgSlug]/coaches/coaches.module.css"
+    ],
+    "components/coaches/ScheduleImportSheet.tsx": [
+      "sheetOnMobile@app/[orgSlug]/coaches/coaches.module.css"
+    ],
+    "components/public/ScheduleContent.tsx": [
+      "playoffRow@app/[orgSlug]/schedule/schedule.module.css"
+    ]
   }
 }

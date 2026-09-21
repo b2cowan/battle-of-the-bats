@@ -16,6 +16,20 @@
     ⚠ It deliberately does NOT flag the base-plus-variant idiom (a shared `.a, .b { }` block then a
     `.b { }` override) or `@media` overrides — those are correct CSS, and a check that flagged them
     would be wrong far more often than right.
+    - **2026-09-21 — it also fails on a NEW ORPHAN reference**: code that asks a module for a class
+      the module does not declare (`styles.foo` with no `.foo`). This is the one that reaches a
+      customer — an undeclared CSS-module class resolves to `undefined` with no build or type
+      error, so the element simply loses its styling. The 09-17 kit commit deleted `.panelToolbar`
+      and missed one caller; Budget Plan's toolbar stacked in a column for four days while A and B
+      stayed green. Comments are blanked before the scan (a headstone names the class it buried),
+      `@keyframes` names count as exported, and a one-letter alias that the file also uses as a
+      lambda parameter is read only inside `className={…}` / `clsx(…)`. 26 pre-existing findings are
+      grandfathered (`--report` lists them; ~4 are leftovers of a deliberately retired rule, the
+      rest names that were never styled) — triage line in TODO.md. **Before deleting a stylesheet
+      rule, grep for it as a MEMBER ACCESS across `app/ components/` and migrate every caller in the
+      same hunk; a "moved to the kit" note must list who moved.** Proven by
+      `tests/unit/check-css-selectors-orphans.test.ts`, which builds a fixture tree, breaks it on
+      purpose and asserts the script names the break.
   - **`check:root`** — fails on any non-gitignored file or directory at the repo root that is not on
     the allowlist. If you genuinely need a new root file, add it to `scripts/check-root-files.mjs`;
     if it is scratch, put it in the session scratchpad, not the repo.
