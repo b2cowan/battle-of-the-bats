@@ -1,6 +1,6 @@
 # Sponsorship Applies To — a sponsorship that names the family's payments it covers
 
-**Status:** ruled 2026-09-21 (D1–D8 as drawn — “looks good”; D3 + D4 on the recommended side) · BUILT ON DEV the same day (hub v2) · **mig 308 applied to dev 2026-09-21, PROD-OWED before the promote** (parity baseline carries its 5 in-flight items; lower to zero at the promote) · /simplify + /review + /docs run the same day · **committed `02a81294` 2026-09-21** · owner QA walk owed
+**Status:** ruled 2026-09-21 (D1–D8 as drawn — “looks good”; D3 + D4 on the recommended side) · BUILT ON DEV the same day (hub v2) · **mig 308 applied to dev 2026-09-21, PROD-OWED before the promote** (parity baseline carries its 5 in-flight items; lower to zero at the promote) · /simplify + /review + /docs run the same day · **committed `02a81294` 2026-09-21** · **✅ OWNER QA §218 PASSED 2026-09-21 — project CLOSED, archived** · mig 308 to prod BEFORE the promote
 **Hub (mockup · brief · plan · decisions on ONE URL):** https://claude.ai/artifact/JhhkcVbSpNQycMRCBYzepR
 — source `docs/projects/active/COACH_SPONSORSHIP_APPLIES_TO_HUB.html` (republish the SAME path to stack a round).
 **PM brief:** `COACH_SPONSORSHIP_APPLIES_TO_PM_BRIEF.md`.
