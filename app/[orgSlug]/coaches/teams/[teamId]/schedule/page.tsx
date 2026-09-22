@@ -970,6 +970,7 @@ export default function CoachesSchedulePage({
       if (gamesRes.status === 'fulfilled' && gamesRes.value.ok) {
         try { setTournamentGames((await gamesRes.value.json()).games ?? []); } catch { /* optional */ }
       }
+      return nextEvents;
     } catch (e: unknown) {
       setError(errorMessage(e, 'Failed to load events'));
     } finally {
@@ -1406,8 +1407,29 @@ export default function CoachesSchedulePage({
     setEditingRecurring(event.isRecurring);
     setEditScopeOpen(false);
     setSaveError('');
+    // The form stands where the sheet stood (a modal over a slide-over would be two overlays), so
+    // it remembers the game it was opened from and returns there — Back, Cancel, Escape or Save
+    // (owner, 2026-09-21: "back … brings me back to the schedule, not back to the game where I
+    // came from"). The "+ Add" doors never close a sheet, so they have nothing to return to.
+    // Edit details sits beside every tab, so the return keeps the coach's PLACE on the game — the
+    // tab and the attendance filter they left from — which `openEvent` would otherwise reset
+    // (/review, 2026-09-21).
+    returnToEventRef.current = { id: event.id, tab: slideTab, filter: attendanceFilter };
     closeSelectedEvent();
     setShowAddForm(true);
+  }
+
+  /** The game the open edit form returns to when it closes, and where on it — see `openEditForm`. */
+  const returnToEventRef = useRef<{ id: string; tab: typeof slideTab; filter: typeof attendanceFilter } | null>(null);
+  /** Back on the game the form was opened from, where the coach left it, if it is still on the calendar. */
+  function returnToEvent(list: RepTeamEvent[]) {
+    const back = returnToEventRef.current;
+    returnToEventRef.current = null;
+    const ev = back ? list.find(e => e.id === back.id) : null;
+    if (!ev || !back) return;
+    openEvent(ev);
+    setSlideTab(back.tab);
+    setAttendanceFilter(back.filter);
   }
 
   // Event-form view helpers (drive the per-type sections + the Save guard).
@@ -1633,6 +1655,7 @@ export default function CoachesSchedulePage({
     setEditingEventId(null);
     setEditingRecurring(false);
     setEditScopeOpen(false);
+    returnToEvent(events);
   }
 
   // scope 'one' = just this occurrence; 'remaining' = this + future; 'all' = the whole series.
@@ -1691,11 +1714,18 @@ export default function CoachesSchedulePage({
         const d = await res.json().catch(() => ({ error: res.statusText }));
         throw new Error(d.error ?? 'Save failed');
       }
+      // Back on the game, showing what was just saved — the refreshed record, never the stale one.
+      // ⚠ The refetch comes FIRST, so the form's close and the sheet's reopen land in ONE commit
+      // (the same hand-off Cancel makes): the sheet takes the form's history entry over. Closing
+      // before the await left the form's entry standing with nothing on screen for the length of
+      // the refetch, and its deferred consumption then popped it under the coach (/review,
+      // 2026-09-21). The form stays up, busy, until the calendar is back.
+      const refreshed = (await fetchEvents()) ?? [];
       setShowAddForm(false);
       setEditingEventId(null);
       setEditingRecurring(false);
       setEditScopeOpen(false);
-      await fetchEvents();
+      returnToEvent(refreshed);
     } catch (e: unknown) {
       setSaveError(errorMessage(e, 'Save failed'));
     } finally {

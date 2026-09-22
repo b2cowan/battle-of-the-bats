@@ -1,6 +1,7 @@
 'use client';
 import { createContext, useCallback, useContext, useRef, useState } from 'react';
 import FeedbackModal from '@/components/FeedbackModal';
+import { useBackStep } from './useBackStep';
 
 interface ConfirmOptions {
   title?: string;
@@ -39,6 +40,11 @@ export default function ConfirmProvider({ children }: { children: React.ReactNod
     setOpts(null);
     resolve?.(value);
   }, []);
+
+  // A question is a level of its own: Back answers it with its SAFE answer — "Keep editing",
+  // "Cancel" — and leaves the coach where the question was asked (`useBackStep`; a step over the
+  // floor that asked, so Back never closes the form under an open "Discard?").
+  useBackStep(opts !== null, () => settle(false));
 
   return (
     <ConfirmContext.Provider value={confirm}>

@@ -5,6 +5,7 @@ import { ArrowLeft, ChevronRight, ClipboardList } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
+import { useBackStep } from '@/components/coaches/useBackStep';
 import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import {
@@ -41,6 +42,13 @@ import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
  *
  * ⚠ NO SWIPE, NO DRAG, NO LONG-PRESS. Gloves defeat all three and a swipe collides with the
  * browser's own back gesture. Two buttons, both above 56px.
+ * ⚠ AND THE BROWSER'S OWN BACK GESTURE GOES UP ONE LEVEL, THE SAME LEVEL THE BUTTONS DO (owner,
+ * 2026-09-21 — "if I am in a station and I do a swipe back like most people do on phones it takes
+ * me out of the practice rather than back to the drill"). A stop stands one history entry behind
+ * the list and a station one behind its stop (`useBackStep`): Back from a station is the stop,
+ * from a stop the list, from the list the plan — exactly what "← Blocks" and the station's own
+ * back make. Nothing is an address and nothing survives a reload; the field still holds nothing
+ * between opens.
  *
  * ⚠ NO SOUND, NO VIBRATION, NO AUTO-ADVANCE. The cursor moves only when a human taps it.
  *
@@ -251,6 +259,7 @@ export default function CoachPracticeRunPage({
     setStationId(null);
   }, []);
 
+
   const rotating = !!block && blockRotates(block);
   // Memoised: `computeRotation` walks groups × rounds and builds the plain-language statements;
   // it needs redoing only when the block on screen changes.
@@ -268,6 +277,12 @@ export default function CoachPracticeRunPage({
   // Which station is open — this screen's own state, held for this open only (D28's per-tab
   // memory went with the P10 revision: the field holds nothing between opens).
   const chooseStation = useCallback((id: string | null) => setStationId(id), []);
+
+  // Back goes up one level — see the header. The station's step reads the station ON SCREEN, not
+  // the chosen id: "Next block" from inside a station leaves the id pointing at a station the new
+  // block does not have, and a level that is not on screen is not a level Back can go up from.
+  useBackStep(!onList, toList);
+  useBackStep(openStation !== null, () => chooseStation(null));
 
   /**
    * Everything below re-derives only when the PLAN or the CURSOR moves.

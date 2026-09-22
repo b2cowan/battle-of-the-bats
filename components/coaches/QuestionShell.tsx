@@ -70,7 +70,7 @@ export default function QuestionShell({
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   useOverlayOpenIfAvailable(open);
-  useDialogFloor(open, panelRef, { onClose, busy });
+  useDialogFloor(open, panelRef, { onClose, onBack, busy });
 
   /* The reload warning stays armed while the form is dirty even if its tab is hidden (the hub
      keeps the panel mounted, typing intact); only the link interception follows the tab, so a

@@ -2,6 +2,7 @@
 import { useEffect, useRef, type RefObject } from 'react';
 import { useLatestRef } from './useLatestRef';
 import { escapeClaimed } from './escapeOwnership';
+import { useBackStep } from './useBackStep';
 
 /**
  * THE ACCESSIBILITY FLOOR every overlay stands on (List · Room · Question, D7, 2026-09-02): Escape
@@ -51,6 +52,18 @@ import { escapeClaimed } from './escapeOwnership';
  *
  * ⚠ CLOSE IS BUSY-GATED: while a write is in flight the panel refuses to be dismissed (the club
  * fold's /review lesson — a write surface must not be torn down under its own request).
+ *
+ * ⚠ THE PHONE'S BACK GESTURE IS THE FLOOR'S ESCAPE (owner, 2026-09-21). An open floor stands one
+ * history entry deep (`useBackStep`), so Back — the gesture, or the browser's button — goes up ONE
+ * level: `onBack` where the panel has a view behind it (the phone header's arrow makes the same
+ * call), else `onClose`, the same guarded closer Escape makes. Busy holds; an unanswered INLINE
+ * question (an `alertdialog` docked in the panel — `GuardedDelete`, the tag manager's confirm)
+ * holds too, the walk's rule for the keys applied to the gesture: the coach answers it, and Back
+ * means what it meant. The portaled confirm dialogs (`ConfirmProvider`, a `role="dialog"` this
+ * check deliberately does not match) are steps of their OWN, so Back on one answers it safely
+ * rather than reaching the floor beneath. Before this, Back left the PAGE from inside every sheet
+ * in the portal, and from inside a dirty form it dropped the typing — the route guard never sees a
+ * popstate.
  *
  * `walk`, when given, binds ← / → to the room's Prev / Next — never while an input has focus.
  */
@@ -113,12 +126,20 @@ armFocusHistory();
 export function useDialogFloor(
   open: boolean,
   panelRef: RefObject<HTMLElement | null>,
-  opts: { onClose: () => void; busy?: boolean; walk?: DialogWalk | null; focusKey?: string | null },
+  opts: { onClose: () => void; onBack?: () => void; busy?: boolean; walk?: DialogWalk | null; focusKey?: string | null },
 ): void {
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   // The latest options, so the one keydown effect (keyed on `open`) never re-binds on render churn
   // and never calls a stale closer or walks a stale list.
   const optsRef = useLatestRef(opts);
+
+  // Back goes up one level — see the header. The step's callback reads the LATEST options.
+  useBackStep(open, () => {
+    const { onClose, onBack, busy } = optsRef.current;
+    if (busy) return;
+    if (document.querySelector('[role="alertdialog"]')) return;
+    (onBack ?? onClose)();
+  });
 
   useEffect(() => {
     if (!open) return;
