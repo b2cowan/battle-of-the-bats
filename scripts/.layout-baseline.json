@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-22T03:19:50.591Z",
+  "generated": "2026-09-22T13:09:31.413Z",
   "entries": {
     "coach-team-hub|768|tap-floor|button·Help: Premium Coaches Portal": {
       "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (surfaced as a NEW key on 2026-09-20 only because the Overview was re-baselined on game day). Closes with the portal-wide touch-debt project.",
@@ -3126,12 +3126,8 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE — the masthead \"?\" (register F-21, COACH_TOUCH_TARGET_DEBT_PLAN). DEFERRED, not accepted — the SAME control and the same standing as the coach-lineup-builder entry (phone re-evaluation stage 3, 2026-09-21: this id is the builder in one of its phone states; above 640 the gesture is a no-op and the entry measures the same page).",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-lineup-builder-setup|361|tap-floor|button·Game rules ▾": {
-      "reason": "The auto-fill panel's \"Game rules ▾\" — a bare 12px disclosure link with padding 0 inside the panel's 6px-gap settings column, DELIBERATELY left at its natural 16px by the 27 August 2026 /review of the lineup toolbar: the toolbar's 44px floor was rewritten onto named button classes precisely so it would NOT reach into this menu and wrap small text in a tall empty hit area nobody drew. Named as unchanged in the phone re-evaluation stage 3 plan (§9.4, ruled 2026-09-21). First seen by the sweep now because the stage-3 gesture opens the panel (the sweep cannot click, and never had). Its fix is a drawn control — a 44px row for the disclosure — owed to the touch-debt project (COACH_TOUCH_TARGET_DEBT_PLAN), not a floor rule.",
-      "detail": "16px tall (floor 44)"
-    },
-    "coach-lineup-builder-setup|390|tap-floor|button·Game rules ▾": {
-      "reason": "The auto-fill panel's \"Game rules ▾\" — a bare 12px disclosure link with padding 0 inside the panel's 6px-gap settings column, DELIBERATELY left at its natural 16px by the 27 August 2026 /review of the lineup toolbar: the toolbar's 44px floor was rewritten onto named button classes precisely so it would NOT reach into this menu and wrap small text in a tall empty hit area nobody drew. Named as unchanged in the phone re-evaluation stage 3 plan (§9.4, ruled 2026-09-21). First seen by the sweep now because the stage-3 gesture opens the panel (the sweep cannot click, and never had). Its fix is a drawn control — a 44px row for the disclosure — owed to the touch-debt project (COACH_TOUCH_TARGET_DEBT_PLAN), not a floor rule.",
+    "coach-schedule-month|768|tap-floor|button·UAT probe game · no lineup": {
+      "reason": "The 641–768 band's MONTH keeps the desktop's text chips in its cells (16px, three per day), found the day the sweep first opened the view (phone re-evaluation stage 2 · C2, 2026-09-21). The stage ruled the PHONE's month (dots, the day's rows beneath, ≤640) and said nothing else in the band moves; plan §8.2 notes the band's Week the same way. A 44px chip in a 110px cell is a decision about the band's calendar, owed to the owner with the band's Week — not a floor to apply on the way past. ⚠ THIS FOURTH ENTRY IS THE SAME CONDITION ON A NEW FIXTURE ROW, not a new defect: the month's chips are keyed by the event's visible LABEL, so seeding \"UAT probe game · no lineup\" (stage 3 · Game week, c9ed52b8, 2026-09-22) minted a new key for a condition already accepted three times above. It is NOT caused by the uncommitted tap-floor rework in coaches.module.css — the band was exposed by design before that work existed. Expect one more of these every time a fixture event is added.",
       "detail": "16px tall (floor 44)"
     }
   }

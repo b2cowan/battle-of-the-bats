@@ -1852,11 +1852,21 @@
 .statStrip { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.35rem 0.85rem; margin: 0 0 1.25rem; }
 .statStripItem { font-size: var(--type-support); color: var(--text-tertiary); text-transform: uppercase; letter-spacing: 0.05em; font-weight: 700; }
 .statStripItem strong { font-family: var(--font-display); font-size: var(--type-title); font-weight: 800; color: var(--text-primary); margin-right: 0.35rem; }
-/* ⚠ The THREE deliberate holdouts from the 2026-08-18 semantic-ink sweep (.statStripDot, .wltSep,
-   .lineupZero). Every one renders PUNCTUATION, not text — a separator dot, the middot between W-L-T,
-   and the ·/— that stands in for "nothing here". They convey no information a coach reads, so the
-   alpha ladder is the right home for them and the AA text floor does not apply. Do not "finish the
-   sweep" by converting these: it would make three pieces of visual grammar shout. */
+/* ⚠ The deliberate holdouts from the 2026-08-18 semantic-ink sweep — now TWO, not three
+   (.statStripDot, .wltSep; .lineupZero left the list 2026-09-22, see its own rule). Every one
+   renders PUNCTUATION, not text — a separator dot and the middot between W-L-T. They convey no
+   information a coach reads, so the alpha ladder is the right home for them and the AA text floor
+   does not apply. Do not "finish the sweep" by converting these: it would make the remaining
+   pieces of visual grammar shout.
+
+   ⚠⚠ BUT QUIET IS NOT THE SAME AS ABSENT, AND ONE OF THESE TWO IS STILL ABSENT. `--white-25` is
+   the ONE rung of the alpha ladder the warm gate never remaps, so `.statStripDot` paints 25% WHITE
+   on a white card wherever the coach portal renders it — the tryouts history stat strip, its only
+   caller, reads as floating fragments instead of one sentence. That is the same defect
+   `.teamHeaderMeta`'s separator was fixed for near the top of this file, and the same one
+   `.lineupZero` was fixed for. It is LEFT here on purpose: the fix changes a screen that has had no
+   owner mockup, and visual changes are mockup-gated. `.wltSep` is fine — `--white-20` IS remapped.
+   ⚠ So do not read this rule as evidence that `--white-25` works. It does not; this one is owed. */
 .statStripDot { color: var(--white-25); font-weight: 700; }
 
 
@@ -3522,6 +3532,9 @@ a.oneChip:hover { border-color: currentColor; }
 .unitField > .input { border-radius: var(--radius-sm, 7px) 0 0 var(--radius-sm, 7px); flex: 1; min-width: 0; }
 .unitPick { display: inline-flex; }
 .unitBtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   min-width: 2.4rem;
   padding: 0 0.55rem;
   font-size: var(--type-body);
@@ -6838,11 +6851,25 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .lineupAutoMenu .lineupControlLabel { min-width: 0; }
 
-/* Below 900px the coach BOTTOM NAV is present, and a downward-opening dropdown collides with it
-   (its Generate button hides behind the nav). So wherever the bottom nav shows, the menu rises as a
-   bottom-anchored panel above the nav with its own scroll. (Was 640px — but the nav appears ≤900px.)
-   `5.75rem` = the nav's height (72px) plus a 20px gap = 92px, composed from `--bottom-nav-height`
-   rather than hand-written so it can't drift from the real nav height.
+/* THE BUILDER'S FOUR PANELS ARE DRAWERS ON A PHONE (stage 3 · D12/D13, owner ruling 2026-09-22 —
+   "can this open as a bottom drawer on mobile? I think it will look better"). Wherever the coach
+   BOTTOM NAV shows (≤900) this menu was already bottom-anchored — a card floating 92px above the
+   foot, inset 14px each side, capped so it scrolled inside itself. What it lacked was the DRAWER'S
+   FORM, which the phone's other sheets (More, the team switcher, a player's RSVP, the position
+   sheet) have had since stage 1: flush edges, an 18px top radius, a grab line, and a scrim so the
+   surface reads as owning the screen rather than hovering over it.
+
+   ⚠ THE CONTAINER CHANGE IS WORTH 28px OF HEIGHT AND 29px OF WIDTH — MEASURED, AND THAT IS ALL.
+   Read from the browser at 390×667: the card's cap was 555, a drawer's is 583 (the 2.5rem of
+   clearance becomes 12px); the width goes 361 → 390 as the two gutters come back. The setup
+   panel's content was 566, so it fitted at 844 (568 tall, no scroll) and clipped by 11px at 667.
+   A drawer alone lands that at 579 in 583 — four pixels. **The fit was a CONTENT decision, not a
+   container one**, which is why D12 = B also trims what is inside (see `autoFillPanel`). Do not
+   re-argue the container as a way to make something fit; it has 28px to give and no more.
+
+   All FOUR phone panels wear this (D13: Setup · Templates · Print · the row-actions sheet) — one
+   skin change, not four. Converting only Setup would leave three panels on the same screen in the
+   old form, which reads worse than today because the inconsistency gets sharper.
 
    ⚠ 2026-07-31: this once collided with the lineup builder's Undo/Redo/Print bar, which docked
    above the nav at a HIGHER z-index (250) than this panel (60) and painted over the Generate
@@ -6851,18 +6878,165 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 @media (max-width: 900px) {
   .lineupAutoMenu {
     position: fixed;
-    left: 0.9rem;
-    right: 0.9rem;
+    left: 0;
+    right: 0;
     top: auto;
     width: auto;
-    /* Sit clearly above the nav and home indicator, and cap the height to the space that ACTUALLY
-       remains, so the Generate button at the bottom stays visible even when Game rules expands
-       the menu. It scrolls internally rather than growing behind anything. */
-    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + 1.25rem);
-    max-height: calc(100dvh - var(--bottom-nav-height, 72px) - env(safe-area-inset-bottom, 0px) - 2.5rem);
+    /* Flush to the BAR'S TOP, as `.sheetAnchor` is in CoachesBottomNav.module.css: the builder is
+       a page under the bar, not a dialog over it, so the bar stays visible and tappable beneath. */
+    /* ⚠ `--coach-foot-clear` (declared on `.coachesShell` at this same breakpoint) IS the nav
+       plus the home indicator — the formula this file warns against hand-copying. These panels
+       render IN-TREE inside the shell, never through a portal, so they inherit it; a portalled
+       copy would read the 0px default and sit under the bar. */
+    bottom: var(--coach-foot-clear);
+    max-height: calc(100dvh - var(--coach-foot-clear) - 12px);
     overflow-y: auto;
     overscroll-behavior: contain;
-    z-index: 260;   /* under the nav (300) */
+    z-index: 260;   /* under the nav (300), over the autosave pill (250) */
+    border: 1px solid var(--border-2);
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+    padding: 6px 14px 14px;
+  }
+  /* The grab line, as a STICKY pseudo-element rather than a button: it stays at the head of the
+     surface while the content scrolls under it, and it adds no tab stop and no JSX to four call
+     sites. (The scrim is the tap target for dismissing — see `.lineupSheetScrim`.) */
+  .lineupAutoMenu::before {
+    content: '';
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    flex: none;
+    width: 38px;
+    height: 4px;
+    margin: 0 auto 8px;
+    border-radius: 2px;
+    background: var(--border-2);
+  }
+  /* ⚠ The row-actions sheet is NOT re-padded here. `.lineupRowSheet { padding: 0.35rem }` is
+     declared LATER in this file at the same specificity, so a media-query copy of it loses and
+     would be a dead declaration — the kind `check:css-selectors` cannot see, because the SELECTOR
+     is alive. Measured: the sheet keeps 5.6px all round and the grab line sits inside it. */
+}
+
+/* The scrim under all four (D12). A SIBLING of the panel, never a pseudo-element: the panel has a
+   z-index and therefore its own stacking context, so a negative-z pseudo would paint on top of the
+   panel's own background instead of behind it. Stops at the bar's top, so the nav is never dimmed
+   — the same choice `.sheetScrim` makes. Desktop renders nothing: the rule is display:none until
+   the bottom nav exists, so no call site needs a width branch. */
+.lineupSheetScrim { display: none; }
+@media (max-width: 900px) {
+  .lineupSheetScrim {
+    display: block;
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: var(--coach-foot-clear);
+    z-index: 259;   /* directly under the panel, over the autosave pill (250) */
+    /* ⚠ THE SAME DIM AS THE PORTAL'S OTHER FOUR SHEETS, IN BOTH THEMES. `.sheetScrim` in
+       CoachesBottomNav.module.css carries these two values and a warm remap; this scrim cannot
+       simply WEAR that class (it is positioned against `.sheetAnchor`, and this panel is
+       standalone because it is shared with the desktop popover), so it copies the values and
+       must copy the remap with them. Without it the warm theme — the portal's DEFAULT — dimmed
+       the page flat black here and warm brown under the position sheet on the same screen. */
+    background: rgba(13, 17, 26, 0.45); /* token-exempt: scrim over the page, dark skin */
+  }
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .lineupSheetScrim {
+    background: rgba(36, 30, 21, 0.28); /* token-exempt: scrim over the warm page */
+  }
+}
+
+/* The drawer's title (D12 · B) — once the scrim covers the row that opened it, nothing on screen
+   says what this surface is. The position sheet titles itself with the player for the same reason.
+   Phone only: at 641–900 the panel is a drawer but keeps the desktop's contents. */
+.lineupSheetTitle {
+  margin: 0 0 0.1rem;
+  font-size: var(--type-body);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* ONE disclosure for the two per-game overrides (D12 · B). Innings to fill defaults to the whole
+   game and Game rules to the season's defaults, so both were rows spent on values almost nobody
+   changes — together they were ~140px of a surface that did not fit a short phone. Folding them
+   behind one row is where B's height comes from. It also retires the bare 16px "Game rules ▾"
+   disclosure the layout sweep had on its known-touch-debt list: this is a 44px row. */
+/* ONE RECIPE FOR THE DRAWER'S TWO QUIET FULL-WIDTH ROWS. `.lineupSheetMore` (the fold) and
+   `.lineupSheetQuiet` (Reshuffle under Generate) were eleven identical declarations apiece and had
+   already drifted on `gap` — 0.4 vs 0.35rem for no reason anyone could name. One base, two
+   differences. ⚠ Both keep the tap floor: quieter, never smaller.
+   ⚠ NOT `.stickyActionBar` for the FOOT, deliberately: that generic class is unconditional, and
+   this foot may only stick where the bottom nav exists — the desktop popover is not a scroller and
+   was never designed with a pinned foot. Reuse it the day this becomes width-agnostic. */
+.lineupSheetRow {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0;
+  background: none;
+  border: none;
+  color: var(--text-secondary);
+  font-size: var(--type-support);
+  font-weight: 600;
+  cursor: pointer;
+}
+.lineupSheetRow:hover:not(:disabled) { color: var(--text-primary); }
+.lineupSheetRow:disabled { opacity: 0.35; cursor: default; }
+.lineupSheetRow:focus-visible { outline: 3px solid rgba(var(--blueprint-blue-rgb), 0.35); outline-offset: 2px; }
+/* The fold reads as a label, so it sits left. */
+.lineupSheetMore { text-align: left; }
+/* Reshuffle reads as an action under Generate, so it centres beneath it. */
+.lineupSheetQuiet { justify-content: center; }
+.lineupSheetMoreBody {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-left: 0.6rem;
+  border-left: 2px solid var(--border-2);
+}
+
+/* Reshuffle under Generate (D12 · B): a quiet row, not a second full-width button competing with
+   the one action the surface exists for. ⚠ It keeps the 44px floor — quieter, never smaller. */
+
+
+/* THE DRAWER'S FOOT (D12 · B, revised on the owner's read 2026-09-22 — “looks like it is still
+   behind the nav”). Below ~640px of viewport the settings stop fitting and the drawer scrolls; what
+   was being clipped at its bottom edge was RESHUFFLE — the actions. Measured before the fix: at a
+   622-tall window the content was 557 in 538, so the last row sat 18px under the bar’s top edge.
+   ⚠ Trimming the settings further does NOT fix this — it moves the failure to a shorter phone.
+   Pinning the foot ends it at every height: the settings scroll UNDER these, the actions never move.
+   Desktop is untouched — the popover is not a scroller, so the foot is sticky only where the bar is. */
+/* The setup drawer is the only panel with a pinned foot; it hands the foot its bottom padding.
+   The other three (Templates, Print, the row menu) keep the container's, as they always had. */
+@media (max-width: 900px) {
+  .lineupSetupDrawer { padding-bottom: 0; }
+}
+.lineupSheetFoot { display: flex; flex-direction: column; gap: 0.6rem; }
+@media (max-width: 900px) {
+  .lineupSheetFoot {
+    position: sticky;
+    bottom: 0;
+    z-index: 1;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    /* The drawer's own surface, so settings scrolling behind the foot are hidden rather than
+       showing through it; the hairline says there is more above. */
+    background: var(--card-bg);
+    border-top: 1px solid var(--border-2);
+    /* ⚠ THE FOOT OWNS THE DRAWER'S BOTTOM PADDING (owner, 2026-09-22 — game-rule rows were showing
+       BELOW Reshuffle). `position: sticky; bottom: 0` stops at the SCROLLPORT's bottom, which is
+       INSIDE the container's 14px bottom padding, so scrolled content bled through a 14px strip
+       under the foot. Two things that do NOT fix it, both tried and measured: a negative bottom
+       margin (a sticky element's stop does not move), and painting a band with `box-shadow` (it
+       covers the strip but a TAP still lands on the control behind it — an invisible hit target).
+       The only honest fix is structural: the drawer that HAS a foot gives its bottom padding to
+       the foot, so the foot is what fills that space and what a thumb finds there. */
+    padding-bottom: 14px;
   }
 }
 .lineupAutoNote { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.4; }
@@ -7071,6 +7245,13 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .lineupSummaryName { text-align: left !important; color: var(--text-primary) !important; white-space: nowrap; }
 .lineupCountCell,
 .lineupPitchingCell { font-family: var(--font-data); font-variant-numeric: tabular-nums; color: var(--text-primary) !important; white-space: nowrap; }
+/* ⚠ LOAD-BEARING, NOT COSMETIC — do not "tidy" this away (2026-09-22). The pitching cell holds an
+   `.srOnly` span saying "2 of 4 used" / "0 pitched, no cap", because the `∞` on its own is read out
+   as "infinity". `.srOnly` is absolutely positioned; with no positioned ancestor its containing
+   block is the VIEWPORT, which parks a 1px span at the cell's x-position outside `.lineupSummaryWrap`'s
+   `overflow-x: auto` and scrolls the whole page sideways. `.lineupReadinessGo` carries the same line
+   for the same reason. The chip is the phone's copy of the same cell, so it takes it too. */
+.lineupPitchingCell, .lineupChip { position: relative; }
 .lineupAttentionCell { color: var(--warning) !important; font-size: var(--type-label); font-weight: 700; }
 .lineupSummaryBody { margin-top: 0.5rem; }
 
@@ -7097,7 +7278,33 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 
 /* Heat cells (desktop grid) */
 .lineupHeatCell { border-radius: 4px; font-weight: 600; }
-.lineupZero { color: var(--white-25); } /* renders ·/— for "none" — see .statStripDot */
+/* ⚠ INVISIBLE, NOT FAINT — and the distinction is the whole fix (owner ruling 2026-09-22).
+   `--white-25` is the ONE rung of the alpha ladder the coach warm gate never remaps (19 of 20 are
+   remapped; this one was missed), so on the portal's light skin it resolved to 25%-opacity WHITE on
+   a white card — 1:1 contrast, not a quiet mark but no mark at all. The holdout ruling directly
+   below is untouched and still right: this renders PUNCTUATION, so the AA text floor does not apply
+   and it must stay quiet. It simply has to stay quiet in a colour that EXISTS here.
+   Opacity is theme-proof — the same reasoning, and the same idiom, as `.teamHeaderMeta`'s separator
+   near the top of this file, which was fixed for this exact cause. Inheriting also means the mark
+   dims whatever ink its cell already uses instead of pinning a second shade beside it.
+   ⚠ Do NOT "restore" this to a --white-* token: it is no longer in PUNCTUATION_EXEMPT in
+   tests/unit/coach-semantic-ink.test.ts, because it no longer inks with a shade at all.
+
+   ⚠⚠ 0.32 IS A MEASURED VALUE, AND NOTHING IN THE BUILD CHECKS IT — that is why the number is
+   written down here. `check:text-contrast` does NOT cover this: it walks .tsx only, matching
+   Tailwind's `text-{token}/{pct}` utility syntax, and has no concept of a CSS `opacity` paired with
+   `color: inherit`. It passes on this rule the way it would pass on an empty file. Measured by hand
+   instead: the dash resolves to ~rgb(185,183,180) on the white card — 2.0:1 — against the ~2.2:1
+   the retired `--white-25` gave on the dark skin, so the mark is as quiet as it was designed to be
+   and no quieter. Deliberately under the 4.5:1 AA floor: it renders PUNCTUATION (see the holdout
+   note above), and a mark a coach reads no information from must not shout. If you change this
+   number, re-measure both skins — no gate will tell you that you were wrong.
+
+   ⚠ APPLY THIS TO THE GLYPH, NEVER TO A <td>. `opacity` composites the whole element as one group,
+   so on a cell it fades that cell's `background` and `border-bottom` too — which washed out the
+   summary table's row hairline under the Attention column until the 2026-09-22 review caught it.
+   All three callers are spans now. Keep them that way. */
+.lineupZero { color: inherit; opacity: 0.32; } /* renders — for "none" — see .statStripDot */
 
 /* Desktop grid vs mobile chips swap */
 .lineupSummaryMobile { display: none; }
@@ -7167,6 +7374,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .lineupReadiness[data-state="needs_review"] .lineupReadinessState { color: var(--danger); }
 .lineupReadiness[data-state="ready"] .lineupReadinessState { color: var(--success); }
 .lineupReadinessDetail { flex: 1 1 14rem; min-width: 0; color: var(--text-secondary); font-size: var(--type-support); }
+/* ⚠ LAYOUT-ONLY WRAPPER, INVISIBLE ABOVE 640. `display: contents` means the state word and the
+   sentence stay DIRECT children of the strip's flex row here, so the desktop layout is byte for
+   byte what it was before the wrapper existed. The phone block below turns it into a real column.
+   It exists because the status mark comes from LineupCheck.module.css and cannot be named from
+   this file — without a wrapper, stacking two of the row's four children means :nth-child, and the
+   mark is conditional, so the indices move. */
+.lineupReadinessText { display: contents; }
 /* The door's word, last on the strip (the row recipe's worded door, K-19). */
 .lineupReadinessGo { flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.2rem; font-size: var(--type-support); font-weight: 700; color: var(--text-primary); white-space: nowrap; }
 .lineupReadinessMark { flex: 0 0 auto; margin: 0.15rem 0.3rem 0.15rem 0; }
@@ -7174,6 +7388,132 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* The strip is a touch surface through 768 like the grid under it. */
 @media (max-width: 768px) {
   button.lineupReadinessDoor { min-height: var(--tap-min, 44px); }
+}
+
+/* ══ THE STATUS ROW ON A PHONE (owner, 2026-09-22) ═══════════════════════════════════════════
+   The strip above is a DESKTOP row: mark, state, sentence, door word, then Mark ready on the
+   right. At 390 it simply wraps, and a wrapping flex row leaves its leftovers hanging on the
+   LEFT — "Review" dropped to its own line with ~270px of nothing beside it, and the auto-width
+   button left ~80px more ("lots of empty space", with the two areas circled).
+
+   Here it is one row instead, the same shape as the Setup row below it: mark · (state over
+   sentence) · the Mark ready pill · chevron. 132px becomes 68px, which is a whole batting row
+   back above the fold on a 390 × 844 phone.
+
+   ⚠⚠ THE DOOR KEEPS THE 44px FLOOR — THE ROW IS NOT A SUBSTITUTE FOR IT (check:layout tap-floor,
+   caught 2026-09-22). This block first cleared `min-height` on the door, reasoning that the ROW now
+   carried the floor at 52px. That is wrong twice over. A thumb targets the BUTTON, not the box
+   around it, and the gate measures the button: the door rendered 36px (its two text lines) inside a
+   52px row that merely LOOKED right — the same "36px pill inside its 44px box" this project already
+   hit once in stage 2, on the one screen a coach uses one-handed at the side of a pitch. And the
+   overflow it was avoiding does not exist: a 44px child in a padded row makes the ROW GROW (to
+   54px here), which is fine. The floor belongs on every control, and a wrapper's height never
+   discharges it. The row's vertical padding steps down to 4px so the result lands at 54px.
+   ⚠ `flex-wrap` stays `wrap` on the strip: the error paragraph is `flex: 1 1 100%` and still has
+   to take a line of its own under everything else. Only the DOOR goes `nowrap`.
+
+   ⚠⚠ THE DOOR'S BASIS IS ZERO, AND THAT IS THE WHOLE POINT OF THIS ROW (owner screenshot,
+   2026-09-22 — "wasn't this supposed to be getting fixed?"). It was first written `flex: 1 1 auto`,
+   whose basis is the door's CONTENT width. Because the strip must stay `wrap` for the error
+   paragraph, a caption long enough to push the door's content past the line pushed the **Mark ready
+   pill onto a line of its own, left-aligned, with the empty space beside it** — precisely the defect
+   this row exists to remove, reintroduced by the fix for it. `flex: 1 1 0` makes the door's
+   hypothetical size ZERO, so the pill can never be pushed off whatever the sentence says and
+   however narrow the phone; the door then grows into what is left and the caption wraps inside it.
+   This removes the possibility rather than tuning a width.
+   ⚠ The Setup row never had this bug because `.lineupSetupRowWrap` is `nowrap` — it carries no
+   error line, so its pill cannot drop. That is the ONLY reason the two rows differ here. ══ */
+@media (max-width: 640px) {
+  .lineupReadiness {
+    align-items: center;
+    gap: 10px;
+    min-height: 52px;
+    padding: 4px 12px;
+    border-radius: 10px;
+  }
+  .lineupReadinessDoor {
+    flex: 1 1 0;
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 0;
+  }
+  .lineupReadinessText {
+    display: flex;
+    flex: 1 1 auto;
+    min-width: 0;
+    flex-direction: column;
+    gap: 2px;
+    line-height: 1.3;
+  }
+  /* The state stops being a 10px badge and becomes the row's TITLE, because the row now has a
+     caption under it — the same title/caption pair `.lineupSetupRowText` draws. The state colours
+     ten lines up still apply; only the type changes. */
+  .lineupReadinessState {
+    font-size: var(--type-body);
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    /* The four labels are short ("Not started" is the longest), so this is hardening rather than a
+       live fix — but a flex item defaults to `min-width: auto`, so without this a longer label
+       introduced later could not shrink and would push the pill instead of wrapping. */
+    min-width: 0;
+  }
+  /* ⚠ THE SENTENCE IS BOUNDED HERE, AND IT HAS TO BE (/review, 2026-09-22). `strip.detail` is
+     assembled by joining every waiting fact with ' · ' and it interpolates PLAYER NAMES, which
+     `playerDisplayName` deliberately does not cap. A lineup that is simultaneously clashing,
+     half-filled, unevenly benched and out of step with attendance composes a ~250-character
+     sentence; unbounded, in this column, that is ten-plus lines and the row becomes a paragraph
+     with a pill floating in the middle of it — the opposite of the 54px this block exists to
+     deliver. Two lines, then ellipsis: the row is a DOOR, and the check behind it lists every
+     fact in full, so nothing is lost, only deferred by one tap.
+     ⚠ `overflow-wrap: anywhere` is the same guard every other uncapped-name field in this
+     stylesheet carries — `min-width: 0` lets the BOX shrink but will not break an unbroken
+     surname, which would otherwise run out through the chevron. */
+  .lineupReadinessDetail {
+    flex: 0 1 auto;
+    min-width: 0;
+    color: var(--text-secondary);
+    overflow-wrap: anywhere;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* The worded door becomes the row's chevron. The WORD survives for assistive tech — it is the
+     only thing naming what the door opens.
+     ⚠ `position: relative` on the parent is load-bearing: `.srOnly` is absolutely positioned, and
+     with no positioned ancestor its containing block is the viewport, which parks a 1px span at
+     the row's x-position OUTSIDE any clip and scrolls the whole page sideways. */
+  .lineupReadinessGo { position: relative; gap: 0; color: var(--text-tertiary); }
+  .lineupReadinessGoWord {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  /* Mark ready becomes the row's pill — the same geometry the Setup row's Auto-fill pill uses. */
+  /* ⚠⚠ COMPOUND SELECTOR, AND THE SPECIFICITY IS THE WHOLE POINT (/review, 2026-09-22). This pill
+     wears `.btnPrimary` too, and `.btnPrimary` is declared ~700 lines BELOW this block. A media
+     query adds NO specificity, so as a bare `.lineupReadinessMark` this rule tied with
+     `.btnPrimary` (0,1,0 each) and LOST on source order — padding, border-radius and font-size
+     were silently `.btnPrimary`'s desktop values, giving a wider 14px pill in a row tuned to the
+     pixel. `min-height` survived only because `.lineupReadiness .btnPrimary` is already compound,
+     which is why no tap-floor gate saw it. Scoping to `.lineupReadiness` (0,2,0) makes the rule
+     win on specificity, so it no longer depends on where in the file it happens to sit.
+     ⚠ Its twin `.lineupSetupGo` sits BELOW `.btnPrimary` and wins by order — it must keep these
+     same values, or the two rows' pills stop being the same object. */
+  .lineupReadiness .lineupReadinessMark {
+    margin: 0;
+    padding: 0 12px;
+    border-radius: 8px;
+    font-size: var(--type-support);
+    white-space: nowrap;
+  }
 }
 .lineupHint {
   margin: 0;
@@ -14948,20 +15288,54 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 
 /* D1 · THE SETUP ROW — the row recipe's two-line form (B6's density: 14.5/600 title, 12.5 caption,
    2px between), white, a hairline, radius 10, 52px; a chevron that turns while its panel is open.
-   Only ever rendered at ≤640 (the editor decides the DOM), so the base rules need no gate. */
-.lineupSetupRow {
+   Only ever rendered at ≤640 (the editor decides the DOM), so the base rules need no gate.
+
+   ⚠ THE BORDER LIVES ON THE WRAP, NOT THE ROW (owner, 2026-09-22). While the game has no lineup an
+   Auto-fill pill rides this row, and a pill inside a <button> is a control nested in a control —
+   forbidden, and the reason `.lineupReadiness` has always kept Mark ready beside its door rather
+   than inside it. So the WRAP is the visible row (border, ground, radius, the 52px floor) and the
+   button is transparent inside it. Identical construction to the status row above: two rows, one
+   recipe, and a coach reads the top of this screen by one rule. */
+.lineupSetupRowWrap {
   display: flex;
   align-items: center;
   gap: 10px;
   width: 100%;
   min-height: 52px;
-  padding: 6px 12px;
+  padding: 4px 12px;
   border: 1px solid var(--home-line, var(--border-2));
   border-radius: 10px;
   background: var(--card-bg, var(--surface));
+}
+.lineupSetupRow {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  /* ⚠ THE FLOOR STAYS ON THE BUTTON. Moving the border out to the wrap moved the LOOK of the row
+     but not its tap target: a thumb hits this button, and the gate measures this button. Without
+     this it renders 36px (title + caption) inside a 52px wrap that looks correct — the defect
+     check:layout caught on 2026-09-22, and the same one stage 2 hit as "a 36px pill inside its
+     44px box". A wrapper's height never discharges a control's floor. */
+  min-height: var(--tap-min, 44px);
+  padding: 0;
+  border: 0;
+  background: none;
   color: var(--text-primary);
   text-align: left;
   cursor: pointer;
+}
+/* The pill: `.btnPrimary` supplies the lime fill and its warm-portal restore (one rule → every
+   coaches CTA flips, so the lime is NEVER re-pinned here); this sets only the geometry, matched to
+   `.lineupReadinessMark` so the two rows' pills are the same object. */
+.lineupSetupGo {
+  flex: 0 0 auto;
+  min-height: var(--tap-min, 44px);
+  padding: 0 12px;
+  border-radius: 8px;
+  font-size: var(--type-support);
+  white-space: nowrap;
 }
 .lineupSetupRowText {
   flex: 1;
@@ -14978,15 +15352,14 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .lineupSetupRowChev { flex: none; color: var(--text-tertiary); transition: transform 0.15s; }
 .lineupSetupRow[aria-expanded="true"] .lineupSetupRowChev { transform: rotate(180deg); }
 .lineupSetupRow:focus-visible { outline: 3px solid rgba(var(--blueprint-blue-rgb), 0.35); outline-offset: 1px; }
-/* A NEW lineup: the same row in the primary tone — the create's lime geometry — because it is
-   where Auto-fill lives. One component, two tones; decided once at open (`hasAssignments`). */
-.lineupSetupRow[data-state="primary"] {
-  background: var(--home-lime, var(--logic-lime));
-  border-color: var(--home-lime, var(--logic-lime));
-  color: var(--home-lime-ink, var(--pitch-black));
-}
-.lineupSetupRow[data-state="primary"] .lineupSetupRowText small,
-.lineupSetupRow[data-state="primary"] .lineupSetupRowChev { color: inherit; opacity: 0.8; }
+/* ⚰ `.lineupSetupRow[data-state="primary"]` — the whole row filled lime for a new lineup — was
+   DELETED on 2026-09-22 (owner: "why are we highlighting this dropdown in green? that seems
+   inconsistent from elsewhere in the app"). It was the ONLY full-width lime surface in the portal;
+   every other lime here is a button or a chip, which is exactly why it read as one enormous button
+   and fought the Mark ready pill above it. The "start here" job it was doing is now the Auto-fill
+   pill (`.lineupSetupGo`), which is button-sized, says what it does, and goes away once there is a
+   lineup — where the tone never did, because it was frozen at open.
+   ⚠ Do not bring a lime ROW back. If a new state needs to shout here, it gets a pill. */
 
 /* D2 · THE TOOL ROW — Undo · Redo · Print · Templates as four 44px squares, 8px apart, left-aligned,
    after the Setup row and directly above the list. */
@@ -15007,8 +15380,15 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
     align-items: stretch;
     gap: 8px;
   }
-  /* The full-width rule (`.lineupAutoWrap > button { width: 100% }`) is right for the Setup row and
-     wrong for the Print and Templates squares inside the tool row — it is what made Print 175px. */
+  /* The full-width rule (`.lineupAutoWrap > button { width: 100% }`) is wrong for the Print and
+     Templates squares inside the tool row — it is what made Print 175px.
+     ⚠ UPDATED 2026-09-22 (/review): that rule no longer reaches the SETUP ROW at all. D14 wrapped
+     the row button in `.lineupSetupRowWrap` so an Auto-fill pill could ride beside it, which made
+     the button a grandchild of `.lineupAutoWrap` rather than a direct child. The row's full width
+     now comes from the wrap's own `width: 100%` plus the button's `flex: 1 1 auto` — and that is
+     the better owner, because a blanket `width: 100%` on the button could never have shared the
+     row with the pill. The rule's only remaining targets are Print and Templates, which the line
+     below overrides. Do not "restore" it for the Setup row; it would fight the pill. */
   .lineupToolRow > .lineupAutoWrap { width: auto; align-self: auto; }
   .lineupToolRow .lineupAutoWrap > button { width: var(--tap-min, 44px); }
   /* The panel's phone rows: Format and Innings side by side (Innings 96px), the section captions,

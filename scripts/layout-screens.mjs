@@ -364,8 +364,14 @@ export const SCREENS = [
   // grid the builder entry already covers.
   { id: 'coach-lineup-builder-new', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/lineups/${c.noLineupGameEventId}` },
+  // ⚠ SCOPED TO THE DRAWER, as the position sheet is (D12, 2026-09-22). The setup panel became
+  // a bottom drawer with a SCRIM, so every control on the page behind it is now deliberately
+  // unreachable — 53 'hidden-behind-chrome' findings that are the modal working, not a defect.
+  // The screen exists to measure the drawer; the page behind it is measured by
+  // `coach-lineup-builder`, which is the same page with nothing open.
   { id: 'coach-lineup-builder-setup', session: 'coach', ready: 'h1',
-    path: (c) => `${team(c)}/lineups/${c.gameEventId}`, interact: openLineupSetupPanel },
+    path: (c) => `${team(c)}/lineups/${c.gameEventId}`, interact: openLineupSetupPanel,
+    scope: '#lineup-setup-panel' },
   { id: 'coach-lineup-builder-inning', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/lineups/${c.gameEventId}`, interact: stepLineupToInningTwo },
   { id: 'coach-lineup-builder-position', session: 'coach', ready: 'h1',

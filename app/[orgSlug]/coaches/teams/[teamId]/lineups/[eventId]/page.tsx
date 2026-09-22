@@ -3,6 +3,8 @@ import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { useDismissable } from '@/lib/overlay-hooks';
+import { useBackStep } from '@/components/coaches/useBackStep';
+import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { ListOrdered, CalendarDays, Undo2, Redo2, Printer, LayoutTemplate } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -289,6 +291,14 @@ export default function CoachLineupBuilderPage({
     [templatesRef, pdfRef],
     () => { setTemplatesOpen(false); setLineupPdfOpen(false); },
   );
+  /* ⚠ BACK CLOSES THE DRAWER, IT DOES NOT LEAVE THE PAGE (owner, 2026-09-22 — “when I hit
+     back it brings me to the lineup list and not the lineup I am editing”). These panels predate
+     §219 and never registered a level, which was survivable while they were small popovers and is
+     not now they are full-width modal drawers: a coach who opens one and reaches for the back
+     gesture loses the lineup. One step each, so Back — the gesture or the button — goes up ONE
+     level to the page behind, and the drawer's own exits consume it. */
+  useBackStep(templatesOpen, () => setTemplatesOpen(false));
+  useBackStep(lineupPdfOpen, () => setLineupPdfOpen(false));
 
   // Auto-save the lineup ~0.9s after the last change (debounced) — no Save button.
   useEffect(() => {
@@ -621,7 +631,8 @@ export default function CoachLineupBuilderPage({
           Templates ▾
         </button>
       )}
-      {templatesOpen && (
+      {templatesOpen && (<>
+        <LineupSheetScrim onClose={() => setTemplatesOpen(false)} />
         <div className={styles.lineupAutoMenu}>
           <div className={styles.lineupTemplateSection}>
             <span className={styles.lineupTemplateHead}>Start from a saved template</span>
@@ -649,7 +660,7 @@ export default function CoachLineupBuilderPage({
             {templateError && <p className={styles.errorText}>{templateError}</p>}
           </div>
         </div>
-      )}
+      </>)}
     </div>
   );
 
@@ -674,7 +685,8 @@ export default function CoachLineupBuilderPage({
           onClick={() => { setLineupPdfOpen(v => !v); setTemplatesOpen(false); }} aria-expanded={lineupPdfOpen}>
           <Printer size={18} />
         </button>
-        {lineupPdfOpen && (
+        {lineupPdfOpen && (<>
+          <LineupSheetScrim onClose={() => setLineupPdfOpen(false)} />
           <div className={styles.lineupAutoMenu}>
             {/* ONE document with a turn, not two documents (owner D1, 2026-09-19): the row prints,
                 the switch beneath it picks the sheet's orientation and remembers it on this device.
@@ -702,7 +714,7 @@ export default function CoachLineupBuilderPage({
               </label>
             )}
           </div>
-        )}
+        </>)}
       </div>
       {templatesControl}
     </>

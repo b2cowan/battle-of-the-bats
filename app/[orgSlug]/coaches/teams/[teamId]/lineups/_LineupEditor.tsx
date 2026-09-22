@@ -7,6 +7,8 @@
 // — lives here so it's written once and both surfaces stay in lock-step.
 import { useState, useRef, useEffect } from 'react';
 import { useDismissable } from '@/lib/overlay-hooks';
+import { useBackStep } from '@/components/coaches/useBackStep';
+import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { X, ChevronUp, ChevronDown, ChevronRight, GripVertical, Shuffle, Eraser } from 'lucide-react';
 import {
@@ -38,6 +40,8 @@ import styles from '../../../coaches.module.css';
 type SportPack = ReturnType<typeof getSportPack>;
 /** The auto-fill panel's id — the phone's Setup row names it in `aria-controls` (stage 3 · D1). */
 const SETUP_PANEL_ID = 'lineup-setup-panel';
+/** The phone panel's ONE folded section (D12 · B) — Innings to fill and Game rules together. */
+const SETUP_MORE_ID = 'lineup-setup-more';
 type GameRules = { maxPos: string; pitcher: string; minPlay: string };
 
 /* Each sub-line says what the mode does with the depth chart's ratings (owner, 2026-09-12): the old
@@ -245,6 +249,13 @@ export default function LineupEditor(props: LineupEditorProps) {
   const [rowActionsFor, setRowActionsFor] = useState<string | null>(null);
   const rowSheetRef = useRef<HTMLDivElement>(null);
   useDismissable(rowActionsFor !== null, rowSheetRef, () => setRowActionsFor(null));
+  /* ⚠ BACK CLOSES THE DRAWER, IT DOES NOT LEAVE THE PAGE (owner, 2026-09-22 — “when I hit
+     back it brings me to the lineup list and not the lineup I am editing”). These panels predate
+     §219 and never registered a level, which was survivable while they were small popovers and is
+     not now they are full-width modal drawers: a coach who opens one and reaches for the back
+     gesture loses the lineup. One step each, so Back — the gesture or the button — goes up ONE
+     level to the page behind, and the drawer's own exits consume it. */
+  useBackStep(rowActionsFor !== null, () => setRowActionsFor(null));
   useEffect(() => {
     if (rowActionsFor !== null) rowSheetRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true });
   }, [rowActionsFor]);
@@ -276,6 +287,7 @@ export default function LineupEditor(props: LineupEditorProps) {
   // A tap outside closes the panel and leaves focus where the tap put it; Escape closes it and, on
   // a phone, seats focus back on the Setup row it opened from (the keyboard is still driving).
   useDismissable(autoFillOpen, autoFillRef, () => setAutoFillOpen(false), () => closePanelToRow());
+  useBackStep(autoFillOpen, () => closePanelToRow());
 
   // Two input worlds, two activation rules (D8). A mouse lifts a row after 6px of travel, as it
   // always has. A finger lifts it after a HOLD (250ms without drifting) — that is what lets the
@@ -293,13 +305,10 @@ export default function LineupEditor(props: LineupEditorProps) {
     rows.map(r => ({ playerId: r.player.id, inningPositions: r.inningPositions })),
     inningCount, sportPack.fieldPositions,
   );
-  // THE SETUP ROW'S TONE (D1) is decided ONCE, when the editor first renders with its rows: "a
-  // lineup exists" = `hasAssignments`, the fact three surfaces already read (the sheet's Has-a-lineup
-  // chip, the hub badge, the strip's data-state). Never `rows.length` — a new lineup seeds every
-  // roster player as a row. Never live — the first Generate would otherwise fold the controls under
-  // the coach's thumb and Clear positions would pop them open. A new lineup shows the same row in the
-  // primary tone: one component, two tones, not two renderings.
-  const [setupFolded] = useState(() => analysis.hasAssignments);
+  // ⚰ `setupFolded` — the Setup row's frozen-at-open lime tone (D1) — was DELETED on 2026-09-22.
+  //    The row has one tone now, so there is nothing left to freeze; what a new lineup gets instead
+  //    is an Auto-fill PILL, read live from `analysis.hasAssignments` at the row itself. The full
+  //    reasoning is on the Setup row's own comment block below. Do not reintroduce a lime row.
   const fairPlayByPlayer = new Map(analysis.fairPlay.map(f => [f.playerId, f]));
   const summaryPositions = POSITION_ORDER.filter(pos => analysis.fairPlay.some(f => (f.positionCounts[pos] ?? 0) > 0));
   const benchVals = analysis.fairPlay.map(f => f.benched);
@@ -433,6 +442,15 @@ export default function LineupEditor(props: LineupEditorProps) {
   })();
   const waiting = [...inningWaiting, ...otherWaiting].join(' · ');
   const withWaiting = (lead: string) => waiting ? `${lead} · ${waiting}` : lead;
+  // THE READY PROMISE MOVES BEHIND THE ROW ON A PHONE (owner, 2026-09-22). "An edit before game
+  // time returns this to Draft" is a sentence about something the coach has NOT done, printed under
+  // something they have — on a 390px row it turns a 52px line into a four-line paragraph. It moves
+  // into the Lineup check's subtitle instead.
+  // ⚠ ONLY WHEN THERE IS A CHECK TO MOVE IT INTO. A Ready lineup with nothing waiting has no check
+  // door (`checkHasRows`), so dropping the sentence there would delete it rather than relocate it —
+  // and that row is two words long anyway, which is not the case this ruling is about. Both this
+  // flag and `checkSubtitle` below read the SAME condition, so the sentence is in exactly one place.
+  const draftPromiseMovedToCheck = isPhone && checkHasRows && !!readyState && !readyState.gameStarted && badge === 'ready';
   const strip: { label: string; detail: string } = readyState ? {
     not_started: { label: 'Not started', detail: withWaiting('Choose positions or Auto-fill to begin') },
     draft: {
@@ -451,7 +469,7 @@ export default function LineupEditor(props: LineupEditorProps) {
         readyState.readyAtLabel ? `Marked ready · ${readyState.readyAtLabel}` : 'Marked ready',
         openInningsLabel,
         ...otherWaiting,
-      ].filter(Boolean).join(' · ') + (readyState.gameStarted ? '' : '. An edit before game time returns this to Draft'),
+      ].filter(Boolean).join(' · ') + (readyState.gameStarted || draftPromiseMovedToCheck ? '' : '. An edit before game time returns this to Draft'),
     },
   }[badge] : {
     not_started: { label: 'Not started', detail: 'Choose positions or Auto-fill to begin' },
@@ -476,6 +494,8 @@ export default function LineupEditor(props: LineupEditorProps) {
   const checkSubtitle = [
     inningsWaiting > 0 ? `${inningsWaiting} ${periodLc}${inningsWaiting === 1 ? ' needs' : 's need'} a decision` : null,
     mismatches > 0 ? `${mismatches} attendance mismatch${mismatches === 1 ? '' : 'es'}` : null,
+    // The sentence the phone's Ready row handed over — see `draftPromiseMovedToCheck` above.
+    draftPromiseMovedToCheck ? 'An edit before game time returns this to Draft' : null,
   ].filter(Boolean).join(' · ');
   const pitcherCapFor = (row: LineupPlayerRow) => {
     const playerCap = row.player.lineupProfile?.pitcher?.maxInnings ?? null;
@@ -733,13 +753,19 @@ export default function LineupEditor(props: LineupEditorProps) {
       </label>
     </div>
   );
-  // Reshuffle — a toolbar button on the desktop, the panel's last row on a phone (where it closes
-  // the panel on a reshuffle it made, never on a kept one).
+  // Reshuffle — ONE behaviour, two skins: a toolbar button on the desktop, a quiet row under
+  // Generate in the phone drawer. Only the WRAPPER differs, so only the wrapper is written twice;
+  // the guard, the handler and the tooltip live here once. It closes the drawer on a reshuffle it
+  // made, never on a kept one (`handleReshuffle` says whether it ran).
+  const reshuffleProps = {
+    type: 'button' as const,
+    disabled: rows.length === 0,
+    onClick: async () => { if (await handleReshuffle() && isPhone) closePanelToRow(); },
+    title: 'Fresh arrangement with even bench rotation, using your current auto-fill settings',
+  };
   const reshuffleButton = (
-    <button type="button" className={styles.btnSecondary} disabled={rows.length === 0}
-      onClick={async () => { if (await handleReshuffle() && isPhone) closePanelToRow(); }}
-      title="Fresh arrangement with even bench rotation, using your current auto-fill settings" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-      <Shuffle size={14} /> Reshuffle
+    <button {...reshuffleProps} className={styles.btnSecondary} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+      <Shuffle size={14} aria-hidden="true" /> Reshuffle
     </button>
   );
   /* CLEAR IS A TOOL, AND TOOLS LIVE IN THE TOOL ROW (owner, 2026-09-22). It used to be a bare text
@@ -774,16 +800,59 @@ export default function LineupEditor(props: LineupEditorProps) {
   // A removed or re-fetched row simply stops matching and the position sheet closes itself.
   const positionRow = positionFor === null ? null : (rows.find(r => r.player.id === positionFor) ?? null);
 
+  // The two per-game overrides, written ONCE and placed by width (D12 · B): on a phone they sit
+  // together behind one 44px disclosure; on the desktop Innings to fill stays a visible row and
+  // Game rules keeps its own inline disclosure, exactly as before.
+  const inningsToFillField = (
+    <label className={styles.lineupControlLabel}>
+      <span>Innings to fill</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <select className={styles.select} aria-label="First inning to fill" value={rangeFrom}
+          onChange={e => { const v = Number(e.target.value); setFillFrom(v); if (fillTo !== null && v > rangeTo) setFillTo(v); }}>
+          {Array.from({ length: inningCount }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+        <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: 12 }}>to</span>
+        <select className={styles.select} aria-label="Last inning to fill" value={rangeTo}
+          onChange={e => setFillTo(Number(e.target.value))}>
+          {Array.from({ length: inningCount }, (_, i) => i + 1).filter(n => n >= rangeFrom).map(n => <option key={n} value={n}>{n}</option>)}
+        </select>
+      </span>
+    </label>
+  );
+  // ⚠ STILL GATED ON `gameRulesOpen`. Before this JSX was hoisted out of the panel to be written
+  // once, the gate was the `{gameRulesOpen && ...}` around it; hoisting quietly moved the gate to
+  // the CALL SITES and left the fields rebuilding on every render of the editor — including while
+  // the drawer is shut, since nothing resets the fold on close. Cheap either way, but a hoist that
+  // drops a guard is the kind of thing that stops being cheap in a bigger component.
+  const gameRulesFields = gameRulesOpen && gameRules && onGameRulesChange ? (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+      {([
+        { key: 'maxPos', label: 'Max innings / position', def: seasonCaps?.maxInningsPerPosition ?? null, min: 1 },
+        { key: 'pitcher', label: 'Max innings pitched', def: seasonCaps?.pitcherMaxInningsDefault ?? null, min: 1 },
+        { key: 'minPlay', label: 'Min innings / player', def: seasonCaps?.minInningsPerPlayer ?? null, min: 1 },
+      ] as const).map(f => (
+        <label key={f.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
+          <span>{f.label}</span>
+          <input type="number" min={f.min} max={12} className={styles.input} style={{ width: 128 }}
+            placeholder={f.def != null ? `Season default (${f.def})` : 'Off'}
+            value={gameRules[f.key]}
+            onChange={e => onGameRulesChange({ ...gameRules, [f.key]: e.target.value })} />
+        </label>
+      ))}
+      <p className={styles.lineupAutoNote} style={{ margin: 0 }}>Overrides just this game. Blank = your season default.</p>
+    </div>
+  ) : null;
+
   /* THE AUTO-FILL PANEL — today's popover (Mode, the Competitive extras, Fill, Innings to fill,
      Game rules, the note, Generate), which on a phone is also the SETUP panel (D1): Format and
      Innings labelled side by side at its top, Reshuffle under Generate. Fixed above the bar at
      ≤900 with its own scroll (`lineupAutoMenu`). Written once, mounted by whichever trigger the
      width renders — the desktop's Auto-fill button or the phone's Setup row. */
   const autoFillPanel = (
-    <div id={SETUP_PANEL_ID} className={styles.lineupAutoMenu}>
+    <div id={SETUP_PANEL_ID} className={`${styles.lineupAutoMenu} ${styles.lineupSetupDrawer}`}>
       {isPhone && (
         <>
-          <span className={styles.lineupSetupLabel}>Setup</span>
+          <p className={styles.lineupSheetTitle}>Lineup setup</p>
           {setupFields}
           <span className={`${styles.lineupSetupLabel} ${styles.lineupPanelSection}`}>Auto-fill</span>
         </>
@@ -825,50 +894,69 @@ export default function LineupEditor(props: LineupEditorProps) {
           <option value="regenerate">Regenerate all</option>
         </select>
       </label>
-      <label className={styles.lineupControlLabel}>
-        <span>Innings to fill</span>
-        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-          <select className={styles.select} aria-label="First inning to fill" value={rangeFrom}
-            onChange={e => { const v = Number(e.target.value); setFillFrom(v); if (fillTo !== null && v > rangeTo) setFillTo(v); }}>
-            {Array.from({ length: inningCount }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-          <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: 12 }}>to</span>
-          <select className={styles.select} aria-label="Last inning to fill" value={rangeTo}
-            onChange={e => setFillTo(Number(e.target.value))}>
-            {Array.from({ length: inningCount }, (_, i) => i + 1).filter(n => n >= rangeFrom).map(n => <option key={n} value={n}>{n}</option>)}
-          </select>
-        </span>
-      </label>
-      {gameRules && onGameRulesChange && (
-        <div>
-          <button type="button" onClick={() => setGameRulesOpen(v => !v)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
-            Game rules {gameRulesOpen ? '▴' : '▾'}
+      {isPhone ? (
+        /* ONE disclosure for the two per-game overrides (D12 · B). Both default to something the
+           coach almost never changes — the whole game, and the season's own caps — so on a phone
+           they were ~140px of a surface that did not fit. Folded, they are one 44px row, which
+           also retires the bare 16px "Game rules ▾" the layout sweep had on its known-debt list. */
+        <>
+          <button type="button" className={`${styles.lineupSheetRow} ${styles.lineupSheetMore}`} aria-expanded={gameRulesOpen} aria-controls={SETUP_MORE_ID}
+            onClick={() => setGameRulesOpen(v => !v)}>
+            {gameRules && onGameRulesChange ? 'Innings to fill · Game rules' : 'Innings to fill'} {gameRulesOpen ? '▴' : '▾'}
           </button>
           {gameRulesOpen && (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-              {([
-                { key: 'maxPos', label: 'Max innings / position', def: seasonCaps?.maxInningsPerPosition ?? null, min: 1 },
-                { key: 'pitcher', label: 'Max innings pitched', def: seasonCaps?.pitcherMaxInningsDefault ?? null, min: 1 },
-                { key: 'minPlay', label: 'Min innings / player', def: seasonCaps?.minInningsPerPlayer ?? null, min: 1 },
-              ] as const).map(f => (
-                <label key={f.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
-                  <span>{f.label}</span>
-                  <input type="number" min={f.min} max={12} className={styles.input} style={{ width: 128 }}
-                    placeholder={f.def != null ? `Season default (${f.def})` : 'Off'}
-                    value={gameRules[f.key]}
-                    onChange={e => onGameRulesChange({ ...gameRules, [f.key]: e.target.value })} />
-                </label>
-              ))}
-              <p className={styles.lineupAutoNote} style={{ margin: 0 }}>Overrides just this game. Blank = your season default.</p>
+            <div id={SETUP_MORE_ID} className={styles.lineupSheetMoreBody}>
+              {inningsToFillField}
+              {gameRulesFields}
             </div>
           )}
-        </div>
+        </>
+      ) : (
+        <>
+          {inningsToFillField}
+          {gameRules && onGameRulesChange && (
+            <div>
+              <button type="button" onClick={() => setGameRulesOpen(v => !v)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
+                Game rules {gameRulesOpen ? '▴' : '▾'}
+              </button>
+              {gameRulesOpen && <div style={{ marginTop: 6 }}>{gameRulesFields}</div>}
+            </div>
+          )}
+        </>
       )}
-      <p className={styles.lineupAutoNote}>Auto-fill spreads bench time evenly across the roster. It&apos;s a starting point — tweak after.</p>
-      <button type="button" className={styles.btnSecondary} onClick={handleAutoFill}>Generate lineup</button>
-      {isPhone && reshuffleButton}
+      <p className={styles.lineupAutoNote}>Auto-fill spreads bench time evenly across the roster — a starting point, tweak after.</p>
+      {/* THE ACTIONS NEVER SCROLL AWAY (D12 · B, revised on the owner's read 2026-09-22 — "looks
+          like it is still behind the nav"). Below ~640px of viewport the settings no longer fit,
+          and what was being clipped at the drawer's foot was Reshuffle — the actions, which is the
+          one thing a surface must never lose. Trimming further only moves the failure to a shorter
+          phone; pinning the foot ends it at every height. The settings above scroll under this. */}
+      <div className={styles.lineupSheetFoot}>
+        <button type="button" className={styles.btnSecondary} onClick={handleAutoFill}>Generate lineup</button>
+        {/* Reshuffle as a QUIET row under Generate, never a second full-width button competing with
+            the one action this surface exists for. It keeps the 44px floor. */}
+        {isPhone && (
+          <button {...reshuffleProps} className={`${styles.lineupSheetRow} ${styles.lineupSheetQuiet}`}>
+            <Shuffle size={14} aria-hidden="true" /> Reshuffle
+          </button>
+        )}
+      </div>
     </div>
   );
+
+  /* The strip's FACE — the mark, the state word and the sentence. One definition for both the door
+     and the doorless readings below, which carried it twice.
+     ⚠ `lineupReadinessText` is a LAYOUT-ONLY wrapper and it must stay invisible to the desktop row:
+     its CSS is `display: contents` above 640, so the state and the sentence remain direct children
+     of the flex row exactly as they were, and only the phone block makes it a real column (title
+     over caption). Wrapping them in the markup is what lets the phone stack them without reaching
+     for :nth-child — the mark comes from another CSS module and cannot be named from here. */
+  const stripFace = (<>
+    {stripMark && <LineupStateMark state={stripMark.state} label={stripMark.label} />}
+    <span className={styles.lineupReadinessText}>
+      <span className={styles.lineupReadinessState}>{strip.label}</span>
+      <span className={styles.lineupReadinessDetail}>{strip.detail}.</span>
+    </span>
+  </>);
 
   return (
     <div className={styles.lineupSection}>
@@ -893,53 +981,91 @@ export default function LineupEditor(props: LineupEditorProps) {
         <div ref={stripRef} tabIndex={-1} className={styles.lineupReadiness} data-state={badge}>
           {checkHasRows ? (
             <button type="button" className={styles.lineupReadinessDoor} onClick={() => setLens({ view: 'check' })} aria-haspopup="dialog">
-              {stripMark && <LineupStateMark state={stripMark.state} label={stripMark.label} />}
-              <span className={styles.lineupReadinessState}>{strip.label}</span>
-              <span className={styles.lineupReadinessDetail}>{strip.detail}.</span>
-              <span className={styles.lineupReadinessGo}>Review<ChevronRight size={15} aria-hidden /></span>
+              {stripFace}
+              <span className={styles.lineupReadinessGo}>
+                <span className={styles.lineupReadinessGoWord}>Review</span>
+                <ChevronRight size={15} aria-hidden />
+              </span>
             </button>
           ) : (
-            <div className={styles.lineupReadinessDoor}>
-              {stripMark && <LineupStateMark state={stripMark.state} label={stripMark.label} />}
-              <span className={styles.lineupReadinessState}>{strip.label}</span>
-              <span className={styles.lineupReadinessDetail}>{strip.detail}.</span>
-            </div>
+            <div className={styles.lineupReadinessDoor}>{stripFace}</div>
           )}
           {/* Mark ready sits BESIDE the door, never inside it, and is offered whenever nothing is
-              WRONG (D11): open innings never block — the button carries their count, so the coach
-              cannot press it without reading what is still open; an attendance mismatch warns,
-              it never blocks. A clash or an empty grid hides it. */}
+              WRONG (D11): open innings never block — an attendance mismatch warns, it never blocks.
+              A clash or an empty grid hides it.
+              ⚠ THE COUNT ON THE BUTTON IS A DESKTOP FACT (owner, 2026-09-22). D11 put it there so a
+              coach could not press Mark ready without reading what is still open — and on the
+              desktop strip that reason is load-bearing, because the button sits an inch from the
+              sentence. On a phone the two TOUCH: the sentence is the caption directly left of this
+              pill, so adjacency serves D11's reason and the count would simply print the same fact
+              twice, 40px apart. Phone gets the pill's short label; the caption carries the number. */}
           {readyState && canMarkLineupReady(analysis) && readyState.status === 'draft' && (
             <button type="button" className={`${styles.btnPrimary} ${styles.lineupReadinessMark}`} disabled={readyState.marking} onClick={readyState.onMarkReady}>
-              {readyState.marking
-                ? 'Marking ready…'
-                : openInnings.length
-                  ? `Mark ready · ${openInnings.length} ${periodLc}${openInnings.length === 1 ? '' : 's'} open`
-                  : 'Mark lineup ready'}
+              {isPhone
+                ? (readyState.marking ? 'Marking…' : 'Mark ready')
+                : readyState.marking
+                  ? 'Marking ready…'
+                  : openInnings.length
+                    ? `Mark ready · ${openInnings.length} ${periodLc}${openInnings.length === 1 ? '' : 's'} open`
+                    : 'Mark lineup ready'}
             </button>
           )}
           {readyState?.error && <p className={styles.errorText}>{readyState.error}</p>}
         </div>
         <div className={styles.lineupControls}>
           {isPhone ? (
-            /* THE SETUP ROW (stage 3 · D1, owner ruling 2026-09-21 — B, the panel): once a lineup
-               exists the Setup group is one 52px two-line row that reads its state — the lineup's
-               shape as the title, the auto-fill setting as the caption — and opens the builder's
-               own bottom panel (the surface Auto-fill, Templates, Print and the D8 row sheet
-               already use) holding Format · Innings, today's auto-fill choices, Generate and
-               Reshuffle. A new lineup shows the same row in the primary tone: it is where
-               Auto-fill lives. The grid never moves. A template changes the title, never the
-               caption — nothing stores which template a lineup came from. */
+            /* THE SETUP ROW (stage 3 · D1, owner ruling 2026-09-21 — B, the panel): the Setup group
+               is one 52px two-line row that reads its state — the lineup's shape as the title, the
+               auto-fill setting as the caption — and opens the builder's own bottom panel (the
+               surface Auto-fill, Templates, Print and the D8 row sheet already use) holding
+               Format · Innings, today's auto-fill choices, Generate and Reshuffle. The grid never
+               moves. A template changes the title, never the caption — nothing stores which
+               template a lineup came from.
+
+               ⚠⚰ THE LIME ROW IS GONE (owner, 2026-09-22: "why are we highlighting this dropdown in
+               green? that seems inconsistent from elsewhere in the app"). It was right: lime in this
+               portal is a BUTTON or a CHIP — every primary action, the game-day Live chip, an "on"
+               toggle — and this was the only surface in the portal filled lime edge to edge with a
+               title, a caption and a chevron inside it. It read as an enormous button and it fought
+               the Mark ready pill 8px above it. Worse, the tone was frozen at open (a `setupFolded`
+               lazy useState, now deleted) so it never went quiet: generate a lineup and the row
+               stayed lime for the rest of the session, shouting about a job already done.
+
+               WHAT REPLACES IT — one rule, shared with the status row above: A LIME PILL IS THE ONE
+               THING YOU CAN DO RIGHT NOW; NO PILL MEANS THERE IS NOTHING TO DO HERE. So while the
+               game has no lineup the row carries an Auto-fill pill, which is both the row's LABEL
+               (nothing on the closed row said it generates a lineup — "Auto-fill · Balanced" reads
+               as a setting being reported) and a one-tap generate. Once a lineup exists the pill is
+               gone and the row is only the door.
+
+               ⚠ The pill is a SIBLING of the row, never nested inside it — `lineupSetupRowWrap`
+               carries the border and the 52px floor, the row button is transparent inside it. Same
+               shape as `lineupReadiness` + its door, which is the point: two rows, one recipe.
+               ⚠ `hasAssignments` is read LIVE here, unlike the tone it replaces. That is safe
+               because the pill disappears in response to the coach's own tap on it, and coming back
+               after Clear is correct — there is no lineup again, so Auto-fill is the next move. */
             <div className={styles.lineupAutoWrap} ref={autoFillRef}>
-              <button ref={setupRowRef} type="button" className={styles.lineupSetupRow} aria-expanded={autoFillOpen} aria-controls={SETUP_PANEL_ID}
-                data-state={setupFolded ? undefined : 'primary'} onClick={() => setAutoFillOpen(v => !v)}>
-                <span className={styles.lineupSetupRowText}>
-                  <strong>{lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {inningCount} {sportPack.periodLabelPlural.toLowerCase()}</strong>
-                  <small>Auto-fill · {autoFillLabel}</small>
-                </span>
-                <ChevronDown size={18} aria-hidden className={styles.lineupSetupRowChev} />
-              </button>
-              {autoFillOpen && autoFillPanel}
+              <div className={styles.lineupSetupRowWrap}>
+                <button ref={setupRowRef} type="button" className={styles.lineupSetupRow} aria-expanded={autoFillOpen} aria-controls={SETUP_PANEL_ID}
+                  onClick={() => setAutoFillOpen(v => !v)}>
+                  <span className={styles.lineupSetupRowText}>
+                    <strong>{lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {inningCount} {sportPack.periodLabelPlural.toLowerCase()}</strong>
+                    <small>Auto-fill · {autoFillLabel}</small>
+                  </span>
+                  <ChevronDown size={18} aria-hidden className={styles.lineupSetupRowChev} />
+                </button>
+                {!analysis.hasAssignments && (
+                  <button type="button" className={`${styles.btnPrimary} ${styles.lineupSetupGo}`} disabled={rows.length === 0}
+                    onClick={handleAutoFill}>Auto-fill</button>
+                )}
+              </div>
+              {autoFillOpen && (<>
+                {/* The scrim (D12): a tap anywhere off the drawer closes it, and the page behind dims so the
+                     surface reads as owning the screen. Renders only where the bottom nav does — the class is
+                     display:none above 900, so no width branch is needed here. */}
+                <LineupSheetScrim onClose={closePanelToRow} />
+                {autoFillPanel}
+              </>)}
             </div>
           ) : (
             <>
@@ -953,7 +1079,10 @@ export default function LineupEditor(props: LineupEditorProps) {
               </div>
               <div className={styles.lineupAutoWrap} ref={autoFillRef}>
                 <button type="button" className={styles.btnPrimary} disabled={rows.length === 0} onClick={() => setAutoFillOpen(v => !v)}>Auto-fill · {autoFillLabel} ▾</button>
-                {autoFillOpen && autoFillPanel}
+                {autoFillOpen && (<>
+                  <LineupSheetScrim onClose={() => setAutoFillOpen(false)} />
+                  {autoFillPanel}
+                </>)}
               </div>
               {reshuffleButton}
             </>
@@ -1044,7 +1173,20 @@ export default function LineupEditor(props: LineupEditorProps) {
             instead of one tab away — so nobody is stranded if press-and-hold feels wrong on a
             given phone. */}
         {sheetRow && (
-          <div ref={rowSheetRef} className={`${styles.lineupAutoMenu} ${styles.lineupRowSheet}`} role="dialog" aria-label={`Options for ${playerDisplayName(sheetRow.player)}`}>
+          /* ⚠⚠ THE SCRIM MUST LIVE INSIDE THE ELEMENT `useDismissable` WATCHES (/review, 2026-09-22).
+             It was a SIBLING of the ref'd sheet here, where the builder's other three drawers put it
+             INSIDE their ref'd wrapper — and that asymmetry was a real, reproducible defect on the
+             one input this feature exists for. Outside the boundary, a tap on the scrim reads as
+             "outside": `useDismissable`'s document-level POINTERDOWN fires first and unmounts the
+             sheet, and the CLICK that follows lands on whatever the dismissal just revealed at that
+             screen position. Reproduced under touch emulation: dismissing this menu pressed
+             **Mark ready** underneath it and marked the lineup ready. A mouse never showed it.
+             Inside the boundary, `useDismissable` treats the tap as inside and never fires; the
+             scrim's own onClick is the single close path. ⚠ This wrapper is not decoration — if it
+             is ever flattened, the defect comes back silently. */
+          <div ref={rowSheetRef}>
+          <LineupSheetScrim onClose={() => setRowActionsFor(null)} />
+          <div className={`${styles.lineupAutoMenu} ${styles.lineupRowSheet}`} role="dialog" aria-label={`Options for ${playerDisplayName(sheetRow.player)}`}>
             <p className={styles.lineupRowSheetHead}>
               <strong>{playerDisplayName(sheetRow.player)}</strong>
               <span>{sheetRow.battingOrder ? `${sportPack.orderLabel} · ${sheetRow.battingOrder} of ${rows.filter(r => r.starter).length}` : 'Bench'}</span>
@@ -1053,6 +1195,7 @@ export default function LineupEditor(props: LineupEditorProps) {
             <button type="button" className={styles.lineupRowSheetItem} disabled={sheetIndex === rows.length - 1} onClick={() => moveRowByPlayer(sheetRow.player.id, 1)}><ChevronDown size={18} aria-hidden="true" /> Move down</button>
             <button type="button" className={`${styles.lineupRowSheetItem} ${styles.lineupRowSheetDanger}`} onClick={() => { removePlayer(sheetRow.player.id); setRowActionsFor(null); }}><X size={18} aria-hidden="true" /> Remove from lineup</button>
             <button type="button" className={styles.lineupRowSheetCancel} onClick={() => setRowActionsFor(null)}>Cancel</button>
+          </div>
           </div>
         )}
 
@@ -1135,9 +1278,47 @@ export default function LineupEditor(props: LineupEditorProps) {
                           <td className={styles.lineupSummaryName}>{playerDisplayName(row.player)}</td>
                           <td className={styles.lineupCountCell}>{fp?.onField ?? 0}/{inningCount}</td>
                           <td className={styles.lineupCountCell}>{fp?.benched ?? 0}</td>
-                          {sportPack.pitcherPosition && <td className={styles.lineupPitchingCell}>{row.player.lineupProfile?.pitcher ? `${pitching}/${pitcherCap ?? '—'}` : '—'}</td>}
-                          {summaryPositions.filter(pos => pos !== sportPack.pitcherPosition).map(pos => { const n = fp?.positionCounts[pos] ?? 0; return <td key={pos} className={styles.lineupHeatCell} style={heatStyle(n)}>{n || <span className={styles.lineupZero}>·</span>}</td>; })}
-                          {hasPlayerAttention && <td className={attention ? styles.lineupAttentionCell : styles.lineupZero}>{attention || '—'}</td>}
+                          {/* ⚠ THREE STATES, AND ONLY ONE OF THEM IS A DASH (owner ruling 2026-09-22). A pitcher
+                              with no cap reads `0/∞`, NEVER `0/—`: the bare `—` already means "not on the
+                              pitching chart" one row up, and one glyph cannot carry both. The non-pitcher dash
+                              is `.lineupZero` — it stands for "nothing here", so it takes the quiet tier like
+                              every other such mark in this table, rather than the cell's full-strength ink.
+                              ⚠ `∞` alone is read out as "infinity", which tells a screen-reader user nothing
+                              about arm care — so the glyph is hidden and the cell carries the words the REST of
+                              the portal already uses ("2 of 4 used" / "no cap" — the lineup check, the position
+                              sheet and the player profile all say it that way).
+                              ⚠ `aria-label` on the <td> was tried first and is WRONG here: a table cell's name
+                              is not what a screen reader reads when a coach arrows through the grid — it reads
+                              the CONTENT — so the gloss would have been silently dropped by the readers most
+                              likely to meet it. `.srOnly` inside the cell is this repo's proven idiom for it
+                              (the money panel's "— not planned", the Sessions and Metrics table headings).
+                              ⚠⚠ `.lineupPitchingCell` carries `position: relative` FOR this span and must keep
+                              it: `.srOnly` is absolutely positioned, and with no positioned ancestor its
+                              containing block becomes the viewport — a 1px span parked outside this table's
+                              horizontal scroller, dragging the page sideways. Same trap, same fix, as
+                              `.lineupReadinessGo`. */}
+                          {sportPack.pitcherPosition && (
+                            <td className={styles.lineupPitchingCell}>
+                              {row.player.lineupProfile?.pitcher ? (<>
+                                <span aria-hidden="true">{pitching}/{pitcherCap ?? '∞'}</span>
+                                <span className={styles.srOnly}>{pitcherCap == null ? `${pitching} pitched, no cap` : `${pitching} of ${pitcherCap} used`}</span>
+                              </>) : <span className={styles.lineupZero}>—</span>}
+                            </td>
+                          )}
+                          {/* ⚰ The zero `·` went with the same ruling. It rendered at `--white-25` — the ONE rung
+                              of the alpha ladder the warm gate never remaps — so it had always painted white on
+                              a white card and no coach has ever seen it. The olive heat tint is what says "this
+                              player plays here"; ~30 invisible dots were carrying nothing. Left blank on purpose:
+                              do not "restore" them. */}
+                          {summaryPositions.filter(pos => pos !== sportPack.pitcherPosition).map(pos => { const n = fp?.positionCounts[pos] ?? 0; return <td key={pos} className={styles.lineupHeatCell} style={heatStyle(n)}>{n || ''}</td>; })}
+                          {/* ⚠ `.lineupZero` goes on the GLYPH, never on the <td> (review finding, 2026-09-22).
+                              It now dims by `opacity`, and opacity composites the WHOLE element as one group —
+                              on a <td> that takes the cell's `background` and its `border-bottom` down with the
+                              dash, washing out the row's hairline under this one column on the light skin. On a
+                              <span> it reaches only the mark. Its two siblings in this table were already spans;
+                              this was the odd one out. (It also makes `color: inherit` actually govern: against
+                              a <td>, `.lineupSummaryTable td` is the more specific selector and silently won.) */}
+                          {hasPlayerAttention && <td className={attention ? styles.lineupAttentionCell : undefined}>{attention || <span className={styles.lineupZero}>—</span>}</td>}
                         </tr>
                       );
                     })}
@@ -1154,7 +1335,19 @@ export default function LineupEditor(props: LineupEditorProps) {
                     <span className={styles.lineupChipName}>{playerDisplayName(row.player)}</span>
                     {onFieldGauge(fp)}
                     <span className={styles.lineupChips}>
-                      {sportPack.pitcherPosition && row.player.lineupProfile?.pitcher && <span className={styles.lineupChip}>P {fp?.positionCounts[sportPack.pitcherPosition] ?? 0}/{pitcherCapFor(row) ?? '—'}</span>}
+                      {/* Same grammar as the desktop cell above — `∞` for no cap, never `—`. A phone is
+                          where a coach actually reads this, so a second spelling here would be the worst
+                          place to have one. */}
+                      {sportPack.pitcherPosition && row.player.lineupProfile?.pitcher && (() => {
+                        const cap = pitcherCapFor(row);
+                        const pitched = fp?.positionCounts[sportPack.pitcherPosition!] ?? 0;
+                        return (
+                          <span className={styles.lineupChip}>
+                            <span aria-hidden="true">P {pitched}/{cap ?? '∞'}</span>
+                            <span className={styles.srOnly}>{cap == null ? `${pitched} pitched, no cap` : `${pitched} of ${cap} used`}</span>
+                          </span>
+                        );
+                      })()}
                       {played.map(pos => <span key={pos} className={styles.lineupChip} style={heatStyle(fp!.positionCounts[pos])}>{pos}×{fp!.positionCounts[pos]}</span>)}
                       {played.length === 0 && <span className={styles.lineupZero}>—</span>}
                     </span>
