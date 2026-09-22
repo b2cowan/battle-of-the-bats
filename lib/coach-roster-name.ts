@@ -51,3 +51,22 @@ export function telHref(phone: string): string {
 export function playerDisplayName(player: NamedRosterPlayer): string {
   return [player.playerNumber ? `#${player.playerNumber}` : '', playerName(player)].filter(Boolean).join(' ');
 }
+
+/**
+ * Is this a CALL-UP — a player borrowed for one game rather than on the roster (mig 309)?
+ *
+ * ⚠ ONE PREDICATE, because the mark has to appear on **every** row a call-up touches: the batting
+ * order, the phone's inning list, the row-actions sheet, the bench console, the printed lineup card
+ * and the game sheet. A coach must never have to work out whether the ninth name is one of their
+ * own players, and a bare `=== 'callup'` written out at each of those sites is a mark that goes
+ * missing from whichever one is added next.
+ *
+ * Structurally typed for the same reason as `NamedRosterPlayer`: a surface holding only an identity
+ * projection can still ask the question.
+ */
+export function isCallUp(player: { status?: string | null } | null | undefined): boolean {
+  return player?.status === 'callup';
+}
+
+/** What the mark says, everywhere it appears. One spelling, settled by owner ruling R1 (2026-09-22). */
+export const CALL_UP_LABEL = 'Call-up';

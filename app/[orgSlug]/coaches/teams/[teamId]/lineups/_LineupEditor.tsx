@@ -28,7 +28,7 @@ import { analyzeLineup, deriveLineupBadge, canMarkLineupReady, inningsNeedingDec
 import { generateBestLineup, describePlacementReason, type PositionPolicy, type FillMode, type GenerationRationale } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
 import { resolveLineupCaps, normalizeRulesOverride } from '@/lib/lineup-caps';
-import { playerDisplayName } from '@/lib/coach-roster-name';
+import { playerDisplayName, isCallUp, CALL_UP_LABEL } from '@/lib/coach-roster-name';
 import {
   LINEUP_POSITIONS, POSITION_ORDER, heatStyle, renumberBattingOrder,
   type LineupPlayerRow,
@@ -120,6 +120,8 @@ function SortableLineupRow({
       <td className={styles.lineupPlayerCell} style={{ display: 'table-cell', verticalAlign: 'middle' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
           <span className={styles.lineupPlayerName}>{name}</span>
+          {/* mig 309 — the mark travels with the row, on every surface a call-up appears. */}
+          {isCallUp(row.player) && <span className={styles.lineupCallUpMark}>{CALL_UP_LABEL}</span>}
           <button type="button" className={styles.lineupRemoveBtn} aria-label={`Remove ${name} from the lineup`} title="Remove" onClick={() => onRemove(row.player.id)}><X size={13} /></button>
         </div>
       </td>
@@ -191,6 +193,40 @@ export interface LineupEditorProps {
     onRemoveOut: () => void;
   };
   /**
+   * The lineup's notes field, rendered BETWEEN the order and the availability panel (owner,
+   * 2026-09-22: *"that is what prints with the lineup so it would be good to see them together,
+   * kind of as they would print"*).
+   *
+   * ⚠ A SLOT, not a prop the editor owns. The notes are the page's state — they ride the same save
+   * as the lineup and the template editor has none — so the editor decides only WHERE they sit. The
+   * placement is the point: on paper the notes print directly under the grid, and they used to live
+   * below everything on screen, so the screen and the printout disagreed about what belonged with
+   * what.
+   */
+  notesSlot?: React.ReactNode;
+  /**
+   * Call-ups on THIS game (mig 309) — game builder only; the template editor passes nothing, since
+   * a template is a shape for the season and a borrowed player is not part of one.
+   *
+   * ⚠ `players` are the call-ups already linked to this game — **never the saved pool.** However
+   * many a team has, a fresh game hands in `[]` and the builder offers none of them. The pool lives
+   * behind `onCallUp`, which opens the sheet (owner ruling R3, 2026-09-22).
+   */
+  callUps?: {
+    players: RepRosterPlayer[];
+    /** Opens the "Call up a player" sheet. */
+    onCallUp: () => void;
+    onCloseSheet: () => void;
+    sheetOpen: boolean;
+    /**
+     * The sheet's contents, owned by the PAGE. The editor supplies the frame and the trigger and
+     * knows nothing about the pool, the fetch or the form — the same split as `controlsExtra`.
+     */
+    sheet: React.ReactNode;
+    /** Takes a call-up off this game entirely — not just out of the batting order. */
+    onRemoveCallUp: (playerId: string) => void;
+  };
+  /**
    * The persisted Draft/Ready handoff (mig 304, Phase 2 D1) — game lineups only. Undefined for the
    * template editor, which has no "ready for game day" concept; the readiness strip then falls
    * back to its old coverage-only wording ("Coverage complete") instead of offering to mark ready.
@@ -213,6 +249,7 @@ export default function LineupEditor(props: LineupEditorProps) {
     roster, rows, onRowsChange, lineupMode, onLineupModeChange, inningCount, onInningCountChange,
     sportPack, seasonCaps, gameRules, onGameRulesChange, defaultPolicy = 'balanced',
     addLabel, notInHeading, onBeforeMutate, onNotice, controlsExtra, notice, readyState, attendance,
+    callUps, notesSlot,
   } = props;
   const confirm = useConfirm();
   // THE PHONE'S FORMS (phone re-evaluation stage 3, owner ruling 2026-09-21) differ from the desktop's
@@ -288,6 +325,20 @@ export default function LineupEditor(props: LineupEditorProps) {
   // a phone, seats focus back on the Setup row it opened from (the keyboard is still driving).
   useDismissable(autoFillOpen, autoFillRef, () => setAutoFillOpen(false), () => closePanelToRow());
   useBackStep(autoFillOpen, () => closePanelToRow());
+
+  /**
+   * ⚠⚠ THE CALL-UP DRAWER REGISTERS THE SAME TWO, AND SHIPPED WITHOUT THEM.
+   *
+   * It was the ONE overlay in this builder where Escape did nothing, Tab walked out into the lineup
+   * behind it, and the Android back gesture left the page entirely — losing the lineup a coach was
+   * editing, which is the exact defect the §219 back-step ruling was written for (owner, 2026-09-22:
+   * *"when I hit back it brings me to the lineup list and not the lineup I am editing"*). Every
+   * sibling panel — Setup, the row-actions sheet, Templates, Print — registers both; this one hand-
+   * rolled a `focus()` call instead and inherited none of it. Found by `/simplify`'s reuse pass.
+   */
+  const callUpRef = useRef<HTMLDivElement>(null);
+  useDismissable(!!callUps?.sheetOpen, callUpRef, () => callUps?.onCloseSheet());
+  useBackStep(!!callUps?.sheetOpen, () => callUps?.onCloseSheet());
 
   // Two input worlds, two activation rules (D8). A mouse lifts a row after 6px of travel, as it
   // always has. A finger lifts it after a HOLD (250ms without drifting) — that is what lets the
@@ -602,7 +653,10 @@ export default function LineupEditor(props: LineupEditorProps) {
   function addPlayer(playerId: string) {
     mutate(list => {
       if (list.some(r => r.player.id === playerId)) return list;
-      const player = roster.find(p => p.id === playerId);
+      /* ⚠ The roster AND this game's call-ups (mig 309). The Call-ups group's own Add button routes
+         here, and a roster-only lookup would have made it a button that silently did nothing. */
+      const player = roster.find(p => p.id === playerId)
+        ?? (callUps?.players ?? []).find(p => p.id === playerId);
       if (!player) return list;
       return renumberBattingOrder([...list, { player, battingOrder: '', starter: lineupMode === 'everyone_bats', inningPositions: {}, notes: '' }], lineupMode);
     });
@@ -730,6 +784,13 @@ export default function LineupEditor(props: LineupEditorProps) {
   }
 
   const notInLineup = roster.filter(p => !rows.some(r => r.player.id === p.id));
+  /**
+   * Call-ups on this game who are not in the order. Normally EMPTY — you call someone up in order
+   * to use them, so the sheet puts them straight into the lineup. This group appears when a coach
+   * takes one back out of the order but keeps them on the game, which is the one state where "on
+   * this game but not batting" is a real thing rather than a loose end.
+   */
+  const callUpsNotInLineup = (callUps?.players ?? []).filter(p => !rows.some(r => r.player.id === p.id));
   // A removed or re-fetched row simply stops matching and the sheet closes itself.
   const sheetIndex = rowActionsFor === null ? -1 : rows.findIndex(r => r.player.id === rowActionsFor);
   const sheetRow = sheetIndex >= 0 ? rows[sheetIndex] : null;
@@ -1114,8 +1175,13 @@ export default function LineupEditor(props: LineupEditorProps) {
                 onPickPosition={setPositionFor}
                 cellIssueFor={cellIssueFor}
               />
-              {/* The hint moves UNDER the list on a phone (D4) and names the stepper. */}
-              <p className={`${styles.lineupScrollHint} ${styles.lineupScrollHintUnder}`}>Hold a number to move a player · ‹ › for the {periodLc}s</p>
+              {/* ⚰ The phone's "Hold a number to move a player · ‹ › for the innings" hint was
+                  REMOVED on 2026-09-22 (owner: "we don't need this message"). Both halves of it had
+                  become self-evident on this screen: the stepper above the list is a labelled
+                  "Inning 1 of 6" with two arrows, and every row's number carries a visible grip.
+                  It cost a line of the page's most contested space to narrate controls that are
+                  already legible. The desktop grid keeps its own hint, which says something the
+                  phone's does not — that the grid scrolls sideways. */}
             </>) : (<>
             <p className={styles.lineupScrollHint}>Hold a number to move a player · swipe across innings →</p>
             <div className={styles.lineupTableWrap}>
@@ -1238,17 +1304,106 @@ export default function LineupEditor(props: LineupEditorProps) {
           onApply={applyInningChanges}
         />
 
-        {notInLineup.length > 0 && (
+        {/* The notes, directly under the order — the shape they print in (owner, 2026-09-22). They
+            sat below everything on screen while printing immediately under the grid, so the screen
+            and the paper disagreed about what belonged with what. */}
+        {notesSlot}
+
+        {/* ── Who is available, and the one call-up door ───────────────────────────────────────
+            ⚠ **ONE PANEL, NOT TWO** (owner, 2026-09-22: *"I don't like the way these are aligned
+            under the main lineup table, lots of empty space"*). Call-ups first shipped in a second
+            dashed box of their own, which stacked two mostly-empty panels under the grid and made
+            the builder's foot look like an afterthought. The two belong together — both answer
+            "who can I still put in?" — so they share one frame, and each group keeps its own
+            heading and count so a coach never has to work out whether a name is one of their own.
+
+            The panel renders whenever the game builder is mounted, because the *Call up a player*
+            button is the only call-up affordance the builder has at rest and it must be reachable
+            even with every rostered player already in the lineup. The template editor passes no
+            `callUps`, so there it still appears only when somebody is out of the template. */}
+        {(notInLineup.length > 0 || callUps) && (
           <div className={styles.lineupNotPlaying}>
-            <p className={styles.lineupNotPlayingHead}>{notInHeading} · {notInLineup.length}</p>
-            <div className={styles.lineupNotPlayingList}>
-              {notInLineup.map(p => (
-                <div key={p.id} className={styles.lineupNotPlayingRow}>
-                  <span className={styles.lineupNotPlayingName}>{playerDisplayName(p)}</span>
-                  <button type="button" className={styles.lineupAddBackBtn} onClick={() => addPlayer(p.id)}>{addLabel}</button>
+            {/* ⚠⚠ **THE PILL IS THE ACTION — there is no "Add to lineup" button any more** (owner
+                ruling 2026-09-22, choosing this over widening the rows to fill the screen).
+                That button was repeated on every entry and said the same thing every time, while
+                the heading directly above it had already said these players are not in the lineup
+                and adding them is the only thing the list can do. So the button was the furniture
+                and the name was the content: folding the two together roughly halves each entry and
+                fits two or three names on a phone line instead of one. The pattern is the money
+                hub's item pills (`+ Registration revenue ×`), which is where the owner took it
+                from — deliberately NOT a shared component yet, because two call sites with
+                different actions do not earn one and the budget group would have to be refactored
+                into it to be worth anything. */}
+            {/* ⚠ ONE `.map` over BOTH groups. They were written out twice — same heading, same list,
+                same pill, same `+` — differing only in two class names, a suffix on the accessible
+                name, and one trailing ×. ~20 lines of copy to add a single button is how two
+                headings drift apart visually; a shape per group is how they cannot. */}
+            {[
+              { key: 'roster', heading: notInHeading, items: notInLineup, callUp: false },
+              { key: 'borrowed', heading: 'Call-ups', items: callUps ? callUpsNotInLineup : [], callUp: true },
+            ].filter(g => g.items.length > 0).map(group => (
+              <div key={group.key}>
+                <p className={`${styles.lineupNotPlayingHead}${group.callUp ? ` ${styles.lineupCallUpHead}` : ''}`}>
+                  {group.heading} · {group.items.length}
+                </p>
+                <div className={styles.lineupNotPlayingList}>
+                  {group.items.map(p => (
+                    <span key={p.id} className={`${styles.lineupNotPlayingRow}${group.callUp ? ` ${styles.lineupCallUpRow}` : ''}`}>
+                      <button
+                        type="button"
+                        className={styles.lineupAddPill}
+                        onClick={() => addPlayer(p.id)}
+                        aria-label={`${addLabel}: ${playerDisplayName(p)}${group.callUp ? ` (${CALL_UP_LABEL})` : ''}`}
+                      >
+                        {/* The verb lives in the accessible name — a screen reader hears "Add to
+                            lineup: #11 Kai Test", never a bare plus sign. */}
+                        <span className={styles.lineupAddPillPlus} aria-hidden>+</span>
+                        <span className={styles.lineupNotPlayingName}>{playerDisplayName(p)}</span>
+                      </button>
+                      {/* ⚠ The heavier of the two, and it keeps a full tap target rather than being
+                          a glyph at the pill's edge: this does not merely leave them out of the
+                          batting order, it takes them off the GAME and clears the lineup row they
+                          hold. It stays on the pill because that is where a coach looks for it. */}
+                      {group.callUp && callUps && (
+                        <button
+                          type="button"
+                          className={styles.lineupCallUpDrop}
+                          onClick={() => callUps.onRemoveCallUp(p.id)}
+                          aria-label={`Take ${playerDisplayName(p)} off this game`}
+                          title="Take off this game"
+                        >&times;</button>
+                      )}
+                    </span>
+                  ))}
                 </div>
-              ))}
+              </div>
+            ))}
+
+            {/* ⚠ The ref is on the WRAPPER, not the panel — the row sheet's own lesson, recorded in
+                `coach-lineup-phone-guard`: a dismissable whose boundary excludes its trigger closes
+                on the very tap that opened it. */}
+            {callUps && (
+            <div className={styles.lineupCallUpWrap} ref={callUpRef}>
+              <button
+                type="button"
+                className={styles.lineupCallUpBtn}
+                aria-haspopup="dialog"
+                aria-expanded={callUps.sheetOpen}
+                onClick={callUps.onCallUp}
+              >
+                + Call up a player
+              </button>
+              {/* The builder's own panel recipe (auto-fill / Templates / Print), so on a phone this
+                  is already the portal's drawer — flush to the bar, grab line, scrim — with no
+                  second copy of those rules to drift from. */}
+              {callUps.sheetOpen && (<>
+                <LineupSheetScrim onClose={callUps.onCloseSheet} />
+                <div className={`${styles.lineupAutoMenu} ${styles.lineupCallUpMenu}`} role="dialog" aria-label="Call up a player">
+                  {callUps.sheet}
+                </div>
+              </>)}
             </div>
+            )}
           </div>
         )}
       </>)}

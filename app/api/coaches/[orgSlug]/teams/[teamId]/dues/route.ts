@@ -194,6 +194,17 @@ export const GET = withObservability(async (_req: Request,
       })),
   });
 
+  /**
+   * ⚠ **DEPARTED PLAYERS STAY, AND THAT IS WHY THIS READS THE WHOLE ROSTER** rather than the active
+   * one: somebody who left mid-season can still owe money, and dropping them would hide a real
+   * balance.
+   *
+   * Call-ups never reach here — `getRepRosterPlayers` excludes them at the query (mig 309). That is
+   * what stopped a borrowed player rendering as a $0 row in the very screen the owner named first
+   * when asking for the feature ("we don't want them cluttering up our screens … i.e. player dues").
+   * This route is one of the handful that does NOT filter `status === 'active'`, so it inherited
+   * nothing at all until the exclusion moved into the read itself.
+   */
   const playersWithDues = await Promise.all(
     rosterPlayers.map(async p => {
       const schedule = scheduleMap.get(p.id) ?? null;
@@ -471,11 +482,16 @@ export const POST = withObservability(async (req: Request,
      always made, and this door was the one dues write missing it (/review 2026-08-30, Medium):
      without it a foreign or stale player id sailed past every scoped read below (they all just
      return empty for it) and the upsert stamped this team's org/team onto another team's player. */
+  // ⚠ NOT A CALL-UP (mig 309). Money never attaches to a borrowed player: no dues, no share, no
+  // payout. This route proves the player with a RAW query rather than `getRepRosterPlayer` (which
+  // refuses one), so the exclusion is spelled here — otherwise a crafted request lands a real fee
+  // schedule on a call-up, and no money screen ever shows it, because they exclude call-ups.
   const { data: playerRow } = await supabaseAdmin
     .from('rep_roster_players')
     .select('id')
     .eq('id', playerId)
     .eq('program_year_id', programYear.id)
+    .neq('status', 'callup')
     .single();
   if (!playerRow) {
     return NextResponse.json({ error: 'Player not found in this program year' }, { status: 404 });

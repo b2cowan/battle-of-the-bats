@@ -28,7 +28,7 @@ import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import RosterBulkAddSheet from '@/components/coaches/RosterBulkAddSheet';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { pitcherRankLabel } from '@/lib/lineup-profile';
-import { cleanNamePart, playerName, telHref } from '@/lib/coach-roster-name';
+import { cleanNamePart, playerName, telHref, isCallUp } from '@/lib/coach-roster-name';
 import { playerTabHref } from '@/lib/coach-player-tabs';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -122,6 +122,9 @@ export default function RosterPage({
   // without the sheet closing between each one.
   const [addedInRun, setAddedInRun] = useState(0);
   const [togglingId, setTogglingId] = useState<string | null>(null);
+  /** Call-ups (mig 309): playerId → games they have been called up to, this season. */
+  const [callUpGames, setCallUpGames] = useState<Record<string, number>>({});
+  const [removingCallUpId, setRemovingCallUpId] = useState<string | null>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -164,6 +167,25 @@ export default function RosterPage({
       if (!data) throw new Error('Failed to load roster');
       setPlayers(data.players ?? []);
       setProgramYear(data.programYear ?? null);
+
+      /* Call-up games-played (mig 309). A second, tiny request rather than folding the counts into
+         the roster payload: the roster read is the busiest on this page and is shared by surfaces
+         that have no call-up section at all. A failure here leaves the counts at zero and the
+         section still renders — the names are the point, the counts are the extra.
+         ⚠ ONLY when this roster actually holds one. The answer is already in the payload we just
+         read, and for almost every team on almost every load it is "none" — an unconditional fetch
+         spent six queries per roster load, per team switch, and on every return from the depth
+         chart, to learn that. */
+      try {
+        if (!(data.players ?? []).some((p: RepRosterPlayer) => isCallUp(p))) return;
+        const cuRes = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/call-ups`);
+        if (cuRes.ok && seq === loadSeq.current) {
+          const cu = await cuRes.json().catch(() => null);
+          const counts: Record<string, number> = {};
+          for (const row of cu?.callUps ?? []) counts[row.playerId] = row.gamesCalledUp ?? 0;
+          setCallUpGames(counts);
+        }
+      } catch { /* counts are the extra, not the point */ }
     } catch (e: unknown) {
       if (seq !== loadSeq.current) return;
       showFeedback('danger', errorMessage(e, 'Failed to load.'));
@@ -193,6 +215,39 @@ export default function RosterPage({
       .then(s => { if (!cancelled) setPdfSettings(s); });
     return () => { cancelled = true; };
   }, [orgSlug, teamId]);
+
+  /**
+   * Remove a call-up from the list (mig 309). Only reachable for one with no games — the button is
+   * absent otherwise, and the server refuses it anyway, because after the first game their name is
+   * on a saved lineup that must not change.
+   */
+  async function handleRemoveCallUp(player: RepRosterPlayer) {
+    const firstName = cleanNamePart(player.playerFirstName) || 'this call-up';
+    const ok = await confirm({
+      title: `Remove ${firstName} from your call-ups?`,
+      message: 'They have not played a game, so nothing is affected. You can call them up again any time.',
+      confirmText: 'Remove',
+      cancelText: 'Keep',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setRemovingCallUpId(player.id);
+    try {
+      const res = await fetch(
+        `/api/coaches/${orgSlug}/teams/${teamId}/call-ups?playerId=${encodeURIComponent(player.id)}`,
+        { method: 'DELETE' },
+      );
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? 'Could not remove that call-up');
+      }
+      await load();
+    } catch (e: unknown) {
+      showFeedback('danger', errorMessage(e, 'Could not remove that call-up'));
+    } finally {
+      setRemovingCallUpId(null);
+    }
+  }
 
   async function handleToggleStatus(player: RepRosterPlayer) {
     const newStatus = player.status === 'active' ? 'inactive' : 'active';
@@ -247,7 +302,10 @@ export default function RosterPage({
      same positional-match trap that once rewrote a paid installment on Payables; the rule it
      earned is that a list which can be filtered must be addressed by id.
      The off-roster rows are appended to the write so every player still ends up with a
-     deterministic order rather than a stale one left over from before they were removed. */
+     deterministic order rather than a stale one left over from before they were removed.
+     ⚠ Call-ups (mig 309) ride along here too — not because their order means anything (they are
+     never in this table and never in a roster order), but because this write replaces the whole
+     list and omitting them would blank their position. They keep whatever they had. */
   function withOffRosterAppended(nextActive: RepRosterPlayer[]) {
     return [...nextActive, ...players.filter(p => p.status !== 'active')];
   }
@@ -523,11 +581,21 @@ export default function RosterPage({
      2026-08-26) instead of sitting inline in batting order told apart by a grey pill — which was
      the only thing the Status column was ever really doing. */
   const activePlayers = players.filter(p => p.status === 'active');
-  const offRoster = players.filter(p => p.status !== 'active');
+  /* ⚠ `!== 'active'` USED TO CATCH CALL-UPS TOO, and that was the single worst fail-open site in
+     this feature: a borrowed player would have been shelved under "Off the roster" beside players
+     who left the team, which is a different thing entirely and reads as one. Call-ups get their own
+     section below (mig 309), and this one keeps its original meaning: people who were on the team
+     and are not now. */
+  const offRoster = players.filter(p => p.status === 'inactive');
+  const callUps = players.filter(isCallUp);
   // Assistant Coaches: only the head coach (or an assistant granted it) edits the roster; guardian
   // contact + DOB are hidden from assistants without the PII grant. The API enforces both — these
   // just keep the UI honest (no broken buttons, no blank sensitive columns).
   const canWriteRoster = !!page.capabilities?.rosterWrite;
+  /* The call-up shelf's own capability (mig 309, owner ruling R5). Both the games-played counts and
+     the Remove it gates are served by routes gated on `lineups`, not on roster-write — so the shelf
+     has to read the same flag the server does, or it offers a button that answers 403. */
+  const canLineups = !!page.capabilities?.lineups;
   const canSeePii = !!page.capabilities?.rosterPii;
   // `label` is required here — this object also goes straight to openHelp() from the empty state,
   // where there is no HelpButton label to fall back to.
@@ -815,6 +883,61 @@ export default function RosterPage({
                     )}
                   </li>
                 ))}
+              </ul>
+            </details>
+          )}
+
+          {/* ── Call-ups (mig 309) ─────────────────────────────────────────────────────────────
+              Players borrowed for a game. ⚠⚠ **BELOW THE ROSTER AND BELOW EVEN THE DEPARTED, AND
+              COLLAPSED** — the binding constraint on this section is that it must never make the
+              live roster noisier. It is the only place the saved list is visible without being
+              asked for; the lineup builder shows none of it until a coach presses "Call up a
+              player" (owner ruling R3, 2026-09-22).
+              ⚠ NO row is a link. A call-up has no profile — that page is the portal's busiest
+              instrument (dues, documents, development, guardians, medical) and its route 404s on a
+              call-up rather than offering to move a borrowed player onto the roster. */}
+          {callUps.length > 0 && (
+            <details className={styles.offRoster}>
+              <summary className={styles.offRosterSummary}>
+                Call-ups ({callUps.length})
+              </summary>
+              <p className={styles.callUpNote}>
+                Players you borrowed for a game. They are not on your roster and never appear in
+                dues, skills &amp; goals or awards.
+              </p>
+              <ul className={styles.offRosterList}>
+                {callUps.map(p => {
+                  const games = callUpGames[p.id] ?? 0;
+                  return (
+                    <li key={p.id} className={styles.offRosterRow}>
+                      <span className={styles.offRosterName}>{playerName(p)}</span>
+                      {p.playerNumber && <span className={styles.offRosterNum}>#{p.playerNumber}</span>}
+                      {/* The count several leagues cap, and the reason removal is or isn't offered. */}
+                      <span className={styles.callUpGames}>
+                        {games === 0 ? 'No games yet' : `${games} game${games === 1 ? '' : 's'}`}
+                      </span>
+                      {/* ⚠ Removal is offered ONLY before their first game. After that their name
+                          is on a saved lineup, and deleting the row would take that lineup entry
+                          with it — a card printed last month would stop matching the card printed
+                          today. A coach who wants the name gone takes them off each game first. */}
+                      {/* ⚠ `canLineups`, not `canWriteRoster`: the DELETE is gated on lineups
+                          (owner ruling R5), and the games count that decides this button comes from
+                          a route gated the same way. Gated on roster-write, a coach without lineups
+                          saw "No games yet" for everyone — the counts fetch having 403'd silently —
+                          and a Remove button that answered with a bare access error. */}
+                      {canLineups && games === 0 && (
+                        <button
+                          type="button"
+                          className={`btn btn-ghost ${styles.offRosterAdd}`}
+                          disabled={removingCallUpId === p.id}
+                          onClick={() => handleRemoveCallUp(p)}
+                        >
+                          {removingCallUpId === p.id ? '…' : 'Remove'}
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
               </ul>
             </details>
           )}

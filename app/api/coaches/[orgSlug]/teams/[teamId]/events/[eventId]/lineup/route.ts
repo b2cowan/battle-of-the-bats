@@ -4,6 +4,7 @@ import {
   getActiveRepProgramYear,
   getCoachingAssignmentsForUser,
   getRepRosterPlayers,
+  getRepCallUpsForEvent,
   getRepTeam,
   getRepTeamEventAttendance,
   getRepTeamEventById,
@@ -107,10 +108,11 @@ export const GET = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Lineups are available for games' }, { status: 400 });
   }
 
-  const [players, attendance, lineup] = await Promise.all([
+  const [players, attendance, lineup, callUps] = await Promise.all([
     getRepRosterPlayers(programYear.id),
     getRepTeamEventAttendance(eventId),
     getRepTeamLineupForEvent(eventId),
+    getRepCallUpsForEvent(eventId),
   ]);
   const entries = lineup ? await getRepTeamLineupEntries(lineup.id) : [];
 
@@ -120,6 +122,17 @@ export const GET = withObservability(async (_req: Request,
     event,
     // Redact guardian PII / notes for a coach without those grants (this endpoint returns the roster).
     players: redactRoster(players.filter(player => player.status === 'active'), capabilities),
+    /**
+     * ⚠ **CALL-UPS RIDE IN THEIR OWN KEY, NOT MERGED INTO `players`** (mig 309). The builder has to
+     * be able to tell them apart on every row it draws — the group heading, the mark, the season
+     * report's exclusion — and a merged list would make that a status test at a dozen call sites,
+     * one of which would eventually be forgotten.
+     *
+     * ⚠ Only the call-ups linked to THIS game. Not the pool, not every non-active row. A fresh
+     * game returns `[]` however many the team has saved — owner ruling R3, and the thing that keeps
+     * every other game's builder clean.
+     */
+    callUps: redactRoster(callUps, capabilities),
     attendance,
     lineup,
     entries,
@@ -159,8 +172,21 @@ export const PUT = withObservability(async (req: Request,
     return NextResponse.json({ error: 'entries must be an array' }, { status: 400 });
   }
 
-  const players = (await getRepRosterPlayers(programYear.id)).filter(player => player.status === 'active');
-  const activePlayerIds = new Set(players.map(player => player.id));
+  /**
+   * ⚠⚠ **THE NARROW HOLE, AND IT IS EXACTLY THIS WIDE** (mig 309): a lineup may contain an active
+   * roster player, or a call-up linked to THIS game. Nothing else.
+   *
+   * Before call-ups this set was the active roster and the guard was absolute. Widening it to "any
+   * non-active row" or to the whole call-up pool would let another game's borrowed player into this
+   * game's lineup — invisible in every list the builder draws, but holding a batting slot, counted
+   * by the lineup check and printed on the card.
+   */
+  const [roster, eventCallUps] = await Promise.all([
+    getRepRosterPlayers(programYear.id),
+    getRepCallUpsForEvent(eventId),
+  ]);
+  const players = roster.filter(player => player.status === 'active');
+  const activePlayerIds = new Set([...players, ...eventCallUps].map(player => player.id));
   const seenPlayers = new Set<string>();
   const seenOrders = new Set<number>();
   let starterCount = 0;
@@ -177,7 +203,7 @@ export const PUT = withObservability(async (req: Request,
     rows = (entries as RawLineupEntry[]).map(entry => {
       const playerId = typeof entry?.playerId === 'string' ? entry.playerId : '';
       if (!activePlayerIds.has(playerId)) {
-        throw new Error('Lineups can only include active roster players');
+        throw new Error('Lineups can only include players on this roster, or a call-up on this game');
       }
       if (seenPlayers.has(playerId)) {
         throw new Error('Each player can only appear once in a lineup');

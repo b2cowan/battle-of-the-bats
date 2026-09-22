@@ -122,6 +122,17 @@ describe('undo guard — completeness is acknowledged, not assumed', () => {
     rep_fundraisers:       'fundraiser ENTRIES are guarded; the drive itself is not player-scoped.',
     rep_document_templates:'player DOCUMENTS are guarded; the template is org-scoped.',
     rep_allocation_installments: 'club allocations are team-scoped, not player-scoped.',
+    rep_team_call_up_appearances:
+      'A LINK, not a record (mig 309). It says "this call-up was borrowed for that game"; what a '
+      + 'coach would actually mourn is their place in the saved lineup, and rep_team_lineup_entries '
+      + 'IS guarded above ("a lineup spot"), so the record is already protected on its own terms. '
+      + 'Cascading these alongside the call-up row is the intended cleanup, not a loss. ⚠ Like '
+      + 'rep_payable_payments, this is a backstop for a state the app does not produce: the only '
+      + 'route that deletes a call-up refuses when they have ANY appearance (409 — their name is on '
+      + 'those lineups), so a call-up with rows here cannot be deleted through the product at all. '
+      + 'A call-up is never a tryout acceptance either, so the undo this guard serves cannot reach '
+      + 'one — listing it in ROSTER_PLAYER_DEPENDENTS would add a query every undo pays for and no '
+      + 'undo can ever trip.',
   };
 
   it('every table that references rep_roster_players is either guarded or explained', () => {

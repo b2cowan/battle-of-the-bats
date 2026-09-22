@@ -1,4 +1,8 @@
 import { tournamentToday } from '../timezone';
+// ⚠ The call-up word comes from its ONE definition, not a literal. The doc-block on `isCallUp`
+// argues the mark must never drift between surfaces — and this is the surface whose own comment
+// says it must be unambiguous, so hardcoding it here was the first place it would have.
+import { CALL_UP_LABEL } from '../coach-roster-name';
 /**
  * lib/export/pdf.ts
  * PDF report builder — jsPDF + jspdf-autotable, lazy-loaded client-side.
@@ -1850,7 +1854,8 @@ export interface DevelopmentSummaryOptions {
   playerNumber?: string | null;
   teamName: string;
   seasonLabel?: string | null;
-  /** "Prepared 13 Sep 2026 · Coach Jordan" — the caller formats the date and names the coach. */
+  /** "Prepared 13 Sep 2026" — the caller formats the date. ⚠ No coach is named: the handout is the
+   *  record of a player, not a signed document (owner ruling 2026-09-22). */
   preparedLine: string;
   /** "What we're working on" — the chosen goals: the focus and the goal's own success sentence. */
   goals: { focusArea: string; success: string | null }[];
@@ -2684,6 +2689,15 @@ export interface LineupPosterPlayer {
   name: string;
   /** True for a 9-player-mode non-starter (rendered after the order, below the Subs rule). */
   isSub: boolean;
+  /**
+   * True for a CALL-UP — a player borrowed for this game only (mig 309).
+   *
+   * ⚠ Printed as the word "(Call-up)" after the name rather than as a tint or a chip, deliberately:
+   * this sheet goes on a dugout wall and onto a scorekeeper's clipboard, is very often photocopied
+   * or printed in greyscale, and the one question it has to answer without ambiguity is who is on
+   * this team. A colour that survives the screen and dies in the photocopier is not an answer.
+   */
+  isCallUp?: boolean;
   /** inning(string) → position code. '' = blank (prints an empty cell); 'Bench' = sit. */
   inningPositions: Record<string, string>;
 }
@@ -2737,12 +2751,23 @@ function matchupSeparator(homeAway?: 'home' | 'away' | 'neutral' | null): string
   return homeAway === 'away' ? '@' : 'vs';
 }
 
-/** "#12 Jane Smith" — the one-string form the card and the subs line still print. */
-function posterPlayerLabel(p: LineupPosterPlayer): string {
-  return p.number ? `#${p.number} ${p.name}` : p.name;
+/**
+ * The name as it prints, with the call-up mark when there is one (mig 309). ONE place, so the
+ * poster's name column, the card and the subs line can never disagree about whether a borrowed
+ * player is identified — the same reason `isCallUp` is one predicate on the screen side.
+ */
+function posterPlayerName(p: LineupPosterPlayer): string {
+  return p.isCallUp ? `${p.name} (${CALL_UP_LABEL})` : p.name;
 }
 
-const clampNum = (n: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, n));
+/** "#12 Jane Smith" — the one-string form the card and the subs line still print. */
+function posterPlayerLabel(p: LineupPosterPlayer): string {
+  const name = posterPlayerName(p);
+  return p.number ? `#${p.number} ${name}` : name;
+}
+
+// ⚰ `clampNum` was deleted 2026-09-22 with the poster's position legend — it existed only to keep
+// that legend's baseline between the grid's bottom and the page margin, and had no other caller.
 
 /** Shorten text to fit a max width in the current font, adding an ellipsis. */
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -3009,7 +3034,10 @@ export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions)
 
   // ── Grid geometry ─────────────────────────────────────────────────────────
   const gridTop = y + 4;
-  const legendReserve = 18 + notesReserve; // legend + branding (+ optional notes) below the grid
+  // ⚠ Was 18 while the position legend printed here (legend + branding). The legend went on
+  // 2026-09-22 and its ~8mm goes to the GRID, which is what a clipboard sheet is for — taller rows
+  // to write in. The 10 that remain are the branding strip's, which still prints.
+  const legendReserve = 10 + notesReserve; // branding (+ optional notes) below the grid
   const gridBottom = pageH - M - legendReserve;
   const gridArea = gridBottom - gridTop;
 
@@ -3104,7 +3132,7 @@ export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions)
     // name — shrinks through two steps before it will ever clip a kid's name
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(20, 20, 30);
-    const drawn = fitCell(doc, p.name, colNameW - 5, nameLadder);
+    const drawn = fitCell(doc, posterPlayerName(p), colNameW - 5, nameLadder);
     doc.text(drawn, colNameX + 3, mid, { align: 'left', baseline: 'middle' });
     // innings — Bench → "BN"; an unassigned inning is left EMPTY, because the ruled grid cell
     // is already the box.
@@ -3149,24 +3177,18 @@ export function buildLineupPosterDoc(jsPDFClass: any, opts: LineupPosterOptions)
   doc.setLineWidth(0.6); doc.line(colNoX, gridTop, colNoX, gridEnd);    // after Order
   if (hasNumbers) doc.line(colNameX, gridTop, colNameX, gridEnd);       // after No.
 
-  // ── Legend (kept above any notes block) ────────────────────────────────────
-  // ⚠ TWO LINES BY CONSTRUCTION, not by wrapping. As one wrapped string this broke mid-phrase
-  // — "Blank box = fill in" ended a line and "at the field" began the next as an orphan at the
-  // left margin. The position codes and the pen instruction are separate thoughts, so they are
-  // now separate lines and neither can shred into the other.
-  const legendY = clampNum(gridEnd + 5.5, gridTop, pageH - M - 12 - notesReserve);
-  doc.setFont('helvetica', 'normal');
-  doc.setFontSize(8);
-  doc.setTextColor(85, 85, 105);
-  const parts = opts.legend.map(l => `${l.code} ${l.label}`);
-  parts.push('BN Bench');
-  doc.text(fitText(doc, parts.join('    '), totalW), M, legendY);
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(8);
-  doc.setTextColor(110, 110, 132);
-  // ⚠ Says "Blank", not "Empty box" — there is no drawn box any more (see the inning loop).
-  // A sentence naming a mark the page does not carry is the defect this line was fixing.
-  doc.text('Blank = fill in at the field', M, legendY + 4.4);
+  // ⚰ THE POSITION LEGEND AND ITS "Blank = fill in at the field" LINE WERE REMOVED 2026-09-22
+  // (owner: "let's remove this description from the bottom of the printout").
+  //
+  // It spelled out "P Pitcher  C Catcher  1B First base …" across the foot of every poster, for an
+  // audience that has never needed it: the people who read this sheet are a coach and a scorekeeper
+  // at a diamond, and the codes it defined are the ones they use out loud. The two lines cost
+  // roughly 8mm at the bottom of the page, which the GRID now takes instead — the taller rows are
+  // the whole point of a clipboard sheet.
+  //
+  // ⚠ `opts.legend` is still in `LineupPosterOptions` and still supplied: `abbreviateHeadings`
+  // builds the same shape for the roster and tryout exports, where a legend IS earned because the
+  // codes there are column headings a parent may never have seen. Do not "tidy up" the field.
 
   // ── Optional coach notes block (bottom-anchored, e.g. opponent scouting) ────
   if (notesLines.length) {

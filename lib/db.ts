@@ -21,7 +21,7 @@ import type { DerivedClaim } from './coach-money-derived';
 import { isRealisedRecord } from './coach-fundraising';
 import { planInstallmentWrites, paymentRestatements, legacyEntryDescriptionsForPayment, type PlanPiece } from './payable-plan';
 import { whyPlanStrandsPaidMoney } from './payable-scope-edit';
-import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
+import { Tournament, TournamentStatus, Venue, VenueFacility, OrgVenue, OrgVenueFacility, FacilityType, Division, Pool, PoolSlot, Team, Game, Announcement, PlayoffConfig, RuleSection, RuleItem, Resource, Organization, OrganizationMember, OrgPlan, OrgRole, TournamentArchive, OrgPublicSiteContent, AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryStatus, AccountingEntryType, LeagueSeason, LeagueDivision, LeagueTeam, LeagueRegistration, LeagueGame, LeagueStandingsRow, LeagueSeasonSummary, LeagueRegistrationStatus, LeagueSeasonStatus, LeaguePractice, LeaguePracticeStatus, RepTeam, RepProgramYear, RepProgramYearStatus, RepTeamCoach, RepTryoutRegistration, RepTryoutRegistrationStatus, RepTryout, RepTryoutSession, RepTryoutRubric, RepTryoutRubricCategory, RepTryoutEvaluatorSession, RepTryoutScore, RepRosterPlayer, RepRosterStatus, RepTeamEvent, PracticePlanSendAudience, RepEventType, RepTeamEventAttendance, RepAttendanceStatus, RepLineupMode, RepTeamLineup, RepTeamLineupEntry, RepTeamCallUpAppearance, RepCallUpPoolEntry, RepTeamLineupTemplate, RepTeamLineupTemplateEntry, RepTeamTag, RepTagKind, RepTeamAwardType, RepPlayerAward, RepTeamMeasurableType, RepTeamDrill, RepTeamPlanTemplate, RepTeamCircuit, RepTeamPlace, RepPlayerMeasurable, RepPlayerDevelopmentGoal, RepDevelopmentGoalStatus, RepDevelopmentGoalOrigin, RepDevelopmentGoalReview, RepPlayerObservation, RepPlayerNote, RepEvaluationNotAssessed, RepPlayerTryoutBaseline, RepTryoutBaselineSnapshot, RepTeamEvaluationSession, RepPlayerContinuityLink, RepContinuityStatus, RepDocumentTemplate, RepDocumentType, RepPlayerDocument, RepCostAllocation, RepAllocationSplit, RepAllocationInstallment, RepPlayerDuesSchedule, RepPlayerDuesInstallment, RepTeamExpense, RepTeamMoneyIn, MoneyInKind, MoneyInSource, OrgPayee, TournamentRegistrationField, TournamentRegistrationFieldAnswer, TournamentRegistrationFieldType } from './types';
 import { parsePracticePlan, type PracticePlan, type PracticePlanBlock } from './rep-practice-plan';
 import { planToTemplateShape } from './rep-plan-templates';
 import { blockToCircuitShape } from './rep-circuits';
@@ -3863,10 +3863,20 @@ export async function cleanupOrphanedCoachMembership(orgId: string, userId: stri
 }
 
 /**
- * Display identities (org display name + auth email) for a set of coach user ids — the one
- * enrichment recipe shared by the season-record staff read below and the membership staff panel
- * (`lib/coach-membership.ts`). The name batch and the email lookups are independent, so they run
- * together. Emails are best-effort: a failed auth lookup costs the label, never the list.
+ * Display identities (name + auth email) for a set of coach user ids — the one enrichment recipe
+ * shared by the season-record staff read below and the membership staff panel
+ * (`lib/coach-membership.ts`). The name batch and the account lookups are independent, so they run
+ * together. Accounts are best-effort: a failed lookup costs the label, never the list.
+ *
+ * ⚠ The name follows the same two-step as `getOrgMemberDisplayNames` — **the club's word for them,
+ * then their own** — for the same reason: a member row is only named by an invitation acceptance or
+ * an admin typing one, so the head coach who created the team has always had a blank one. Here the
+ * account is ALREADY being fetched for the email, so the second step is free; it reads the name out
+ * of the response it was going to make anyway rather than asking twice.
+ *
+ * ⚠ This is why the practice plan's staff picker stopped offering people by the front of their
+ * email address (`lib/practice-plan-staff.ts` falls back to it, and was reaching that fallback for
+ * everyone the club had never named).
  */
 export async function resolveCoachUserIdentities(
   orgId: string,
@@ -3874,7 +3884,7 @@ export async function resolveCoachUserIdentities(
 ): Promise<Map<string, { displayName: string | null; email: string | null }>> {
   if (userIds.length === 0) return new Map();
 
-  const [memberRows, emails] = await Promise.all([
+  const [memberRows, accounts] = await Promise.all([
     supabaseAdmin
       .from('organization_members')
       .select('user_id, display_name')
@@ -3884,20 +3894,28 @@ export async function resolveCoachUserIdentities(
     Promise.all(userIds.map(async userId => {
       try {
         const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
-        return [userId, data.user?.email ?? null] as const;
+        return [userId, {
+          email: data.user?.email ?? null,
+          name: nameFromAccountMetadata(data.user?.user_metadata),
+        }] as const;
       } catch {
-        return [userId, null] as const; // best-effort — email is display-only
+        return [userId, { email: null, name: null }] as const; // best-effort — both are display-only
       }
     })),
   ]);
 
   const nameByUser = new Map(
-    memberRows.map((r: any) => [r.user_id as string, (r.display_name as string | null) ?? null]),
+    memberRows.map((r: any) => [r.user_id as string, (r.display_name as string | null)?.trim() || null]),
   );
-  const emailByUser = new Map(emails);
+  const accountByUser = new Map(accounts);
+  // ⚠ The SAME membership gate as `getOrgMemberDisplayNames`, for the same reason: only somebody
+  // the org still holds a row for falls through to their own account name. `nameByUser` has a key
+  // for every member row returned — including the blank-named ones — so its KEY answers "is this
+  // person still in the org?" while its VALUE answers "has the club named them?". Someone the org
+  // removed has no key at all and keeps the caller's fallback (here, their email).
   return new Map(userIds.map(id => [id, {
-    displayName: nameByUser.get(id) ?? null,
-    email: emailByUser.get(id) ?? null,
+    displayName: nameByUser.get(id) || (nameByUser.has(id) ? accountByUser.get(id)?.name ?? null : null),
+    email: accountByUser.get(id)?.email ?? null,
   }]));
 }
 
@@ -5273,25 +5291,67 @@ function mapRepRosterPlayer(r: any): RepRosterPlayer {
   };
 }
 
-export async function getRepRosterPlayers(programYearId: string): Promise<RepRosterPlayer[]> {
-  const { data, error } = await supabaseAdmin
+/**
+ * THE TEAM'S ROSTER for a season.
+ *
+ * ⚠⚠ **CALL-UPS ARE EXCLUDED AT THE QUERY, AND THAT DEFAULT IS THE FEATURE** (mig 309). A call-up
+ * is a player borrowed for one game; they reach a game only through `getRepCallUpsForEvent`, and
+ * they must never reach dues, skills & goals, awards, documents, tryouts, family audiences, the
+ * roster count, any season-long playing-time figure, Season Wrapped, the closed-season shelf or
+ * next season's rollover.
+ *
+ * The first cut of mig 309 left this read open and relied on the ~59 callers that happen to filter
+ * `status === 'active'` themselves. **That is safety by coincidence, and `/simplify` found where the
+ * coincidence had already failed:** `rep-season-wrapped.ts` fed this straight into
+ * `rosterCount: roster.length`, and `insights-digest.ts` fed it to the season analytics — so a
+ * borrowed player would have inflated the season's roster count and landed in the fair-play figures,
+ * which is the one defect this whole feature exists to prevent.
+ *
+ * So the exclusion lives HERE, once, where every present and future caller inherits it. The opt-in
+ * exists for exactly one surface — the coach roster page, which manages the call-up list — and a
+ * second caller wanting it should be read as a question, not a convenience.
+ */
+export async function getRepRosterPlayers(
+  programYearId: string,
+  opts?: { includeCallUps?: boolean },
+): Promise<RepRosterPlayer[]> {
+  let q = supabaseAdmin
     .from('rep_roster_players')
     .select('*')
-    .eq('program_year_id', programYearId)
+    .eq('program_year_id', programYearId);
+  if (!opts?.includeCallUps) q = q.neq('status', 'callup');
+  const { data, error } = await q
     .order('display_order', { ascending: true })
     .order('player_last_name', { ascending: true });
   if (error) throw error;
   return (data ?? []).map(mapRepRosterPlayer);
 }
 
-export async function getRepRosterPlayer(playerId: string): Promise<RepRosterPlayer | null> {
+/**
+ * ONE roster player by id — and, by the same default, **not a call-up**.
+ *
+ * ⚠ This closes nine side doors at once. The player page's own route was taught to 404 on a call-up
+ * because it carries a control that flips `status`; but `roster/[playerId]/notes`, `/documents`,
+ * `/documents/[docId]`, `/development`, `/development/goals`, `/goals/[goalId]`,
+ * `/development/measurables`, the admin document routes and the shared
+ * `resolveDevelopmentPlayerContext` all resolve a player through here with the same four-clause
+ * ownership check and none of them knew about call-ups — so a call-up's id posted at any of them
+ * would have attached a note, a document or a development goal to a borrowed player.
+ * Refusing here fixes all of them without touching any of them.
+ */
+export async function getRepRosterPlayer(
+  playerId: string,
+  opts?: { includeCallUps?: boolean },
+): Promise<RepRosterPlayer | null> {
   const { data, error } = await supabaseAdmin
     .from('rep_roster_players')
     .select('*')
     .eq('id', playerId)
     .single();
   if (error) return null;
-  return mapRepRosterPlayer(data);
+  const player = mapRepRosterPlayer(data);
+  if (player.status === 'callup' && !opts?.includeCallUps) return null;
+  return player;
 }
 
 /**
@@ -5338,6 +5398,15 @@ export async function createRepRosterPlayer(fields: {
   jerseySize?: string | null;
   lineupProfile?: LineupProfile | null;
   sourceBasicPlayerId?: string | null;
+  /**
+   * What KIND of entry this is. Omit for a roster player.
+   *
+   * ⚠ Added with mig 309 so a call-up can be created in ONE write. The call-up route used to insert
+   * an active player and immediately PATCH it to `'callup'`, which left a window in which the row
+   * was a **real active roster player** — in the roster count, in the dues list, in the roster order
+   * — and left a phantom active player behind if the second write failed.
+   */
+  status?: RepRosterStatus;
   /** Explicit append position. Omit for a single add; supply it when creating a batch. */
   displayOrder?: number;
 }): Promise<RepRosterPlayer> {
@@ -5346,7 +5415,12 @@ export async function createRepRosterPlayer(fields: {
   // (manual add, upgrade migration, season rollover) each append, preserving source order.
   // A caller adding MANY players at once passes an explicit `displayOrder` so the append position is
   // read once for the batch instead of re-queried per player (see getNextRepRosterDisplayOrder).
-  const nextDisplayOrder = fields.displayOrder ?? await getNextRepRosterDisplayOrder(fields.programYearId, fields.teamId);
+  // ⚠ A CALL-UP TAKES NO ORDER SLOT and skips this read: it is never in the roster list the order
+  // describes, so burning a position would only make the reorder write shepherd a row it never shows.
+  const isRosterMember = (fields.status ?? 'active') !== 'callup';
+  const nextDisplayOrder = !isRosterMember
+    ? 0
+    : fields.displayOrder ?? await getNextRepRosterDisplayOrder(fields.programYearId, fields.teamId);
 
   const { data, error } = await supabaseAdmin
     .from('rep_roster_players')
@@ -5355,6 +5429,7 @@ export async function createRepRosterPlayer(fields: {
       team_id: fields.teamId,
       org_id: fields.orgId,
       source: fields.source ?? 'admin_manual',
+      status: fields.status ?? 'active',
       tryout_registration_id: fields.tryoutRegistrationId ?? null,
       player_first_name: fields.playerFirstName,
       player_last_name: fields.playerLastName,
@@ -6284,6 +6359,186 @@ export async function getRepTeamLineupEntries(lineupId: string): Promise<RepTeam
     .order('batting_order', { ascending: true, nullsFirst: false });
   if (error) throw error;
   return (data ?? []).map(mapRepTeamLineupEntry);
+}
+
+// ── Call-ups (mig 309) ───────────────────────────────────────────────────────────────────────
+// A call-up is a roster row with status 'callup' — NOT on the roster, and excluded from every
+// `status === 'active'` read in the portal for free. These four functions are the whole of how one
+// reaches a game. Everything else about a call-up is deliberately absent.
+
+/**
+ * The call-ups linked to ONE game, in the roster's own order.
+ *
+ * ⚠ THIS IS THE NARROW HOLE. The lineup routes admit `active ∪ thisEvent'sCallUps` and nothing
+ * else — never the pool, never "all non-active rows". A caller that widens this re-opens the
+ * clutter the feature exists to prevent (plan §4.1) and lets another game's call-up into this
+ * game's lineup.
+ */
+export async function getRepCallUpsForEvent(eventId: string): Promise<RepRosterPlayer[]> {
+  const { data: links, error: linkErr } = await supabaseAdmin
+    .from('rep_team_call_up_appearances')
+    .select('player_id')
+    .eq('event_id', eventId);
+  if (linkErr) throw linkErr;
+  const ids = (links ?? []).map((l: any) => l.player_id as string);
+  if (ids.length === 0) return [];
+
+  const { data, error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('*')
+    .in('id', ids)
+    .eq('status', 'callup')          // a row demoted out of 'callup' stops being offered, link or not
+    .order('player_last_name', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map(mapRepRosterPlayer);
+}
+
+/**
+ * Everyone called up this season, with the games each has been linked to — the "Call up a player"
+ * sheet. Two reads (players → their links), counted in JS; the sheet is a handful of rows.
+ */
+export async function getRepCallUpPool(programYearId: string): Promise<RepCallUpPoolEntry[]> {
+  const { data: players, error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .select('*')
+    .eq('program_year_id', programYearId)
+    .eq('status', 'callup')
+    .order('player_first_name', { ascending: true });
+  if (error) throw error;
+  const rows = (players ?? []).map(mapRepRosterPlayer);
+  if (rows.length === 0) return [];
+
+  const { data: links, error: linkErr } = await supabaseAdmin
+    .from('rep_team_call_up_appearances')
+    .select('player_id')
+    .eq('program_year_id', programYearId);
+  if (linkErr) throw linkErr;
+
+  const counts = new Map<string, number>();
+  for (const l of links ?? []) {
+    const id = (l as any).player_id as string;
+    counts.set(id, (counts.get(id) ?? 0) + 1);
+  }
+  return rows.map(player => ({ player, gamesCalledUp: counts.get(player.id) ?? 0 }));
+}
+
+/**
+ * Link a call-up to a game. Idempotent by the unique index — calling it twice is not an error,
+ * which is what lets the sheet show a tick for someone already called up without a pre-read race.
+ */
+export async function linkRepCallUpToEvent(
+  fields: Omit<RepTeamCallUpAppearance, 'id' | 'createdAt'> & { createdBy?: string | null },
+): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_team_call_up_appearances')
+    .upsert({
+      event_id: fields.eventId,
+      player_id: fields.playerId,
+      program_year_id: fields.programYearId,
+      team_id: fields.teamId,
+      org_id: fields.orgId,
+      created_by: fields.createdBy ?? null,
+    }, { onConflict: 'event_id,player_id', ignoreDuplicates: true });
+  if (error) throw error;
+}
+
+/**
+ * Take a call-up off ONE game. Their saved entry and their other games are untouched — and so is
+ * any lineup row they already hold, which the caller clears first (see the event call-ups route).
+ */
+export async function unlinkRepCallUpFromEvent(eventId: string, playerId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_team_call_up_appearances')
+    .delete()
+    .eq('event_id', eventId)
+    .eq('player_id', playerId);
+  if (error) throw error;
+}
+
+/**
+ * Take ONE player out of a saved lineup and close the gap their batting slot leaves.
+ *
+ * ⚠⚠ **A TARGETED DELETE, NOT `replaceRepTeamLineupEntries`, AND THE DIFFERENCE IS A WIPED LINEUP.**
+ * That helper deletes every row for the lineup and then re-inserts the survivors. It is correct for
+ * the builder's save, where the client holds the rows and a failure reads as "Lineup save failed"
+ * and retries. It was badly wrong here: if the re-insert failed for any transient reason, the
+ * coach's ENTIRE saved lineup was gone, the handler answered "Could not take that call-up off this
+ * game", and the screen still showed twelve rows — so nothing on the client knew to rewrite it, and
+ * the emptiness only surfaced when someone opened Game-Day Mode at the field. Found by `/review`.
+ *
+ * ⚠ The renumber is not tidying either. Copying the survivors' batting orders verbatim left a GAP
+ * (1, 2, 4, 5) that the lineup PUT happily accepts — it only rejects duplicates and out-of-range —
+ * so the gap reached the printed card and the bench console, and reappeared as a silent change the
+ * next time the builder reopened and renumbered on load.
+ */
+export async function removePlayerFromSavedLineup(lineupId: string, playerId: string): Promise<void> {
+  const { error: delErr } = await supabaseAdmin
+    .from('rep_team_lineup_entries')
+    .delete()
+    .eq('lineup_id', lineupId)
+    .eq('player_id', playerId);
+  if (delErr) throw delErr;
+
+  const { data: rest, error: readErr } = await supabaseAdmin
+    .from('rep_team_lineup_entries')
+    .select('id, batting_order')
+    .eq('lineup_id', lineupId)
+    .not('batting_order', 'is', null)
+    .order('batting_order', { ascending: true });
+  if (readErr) throw readErr;
+
+  // Only the rows whose slot actually moved are written — a no-gap lineup writes nothing.
+  const updates = (rest ?? [])
+    .map((row, i) => ({ id: row.id as string, want: i + 1, has: row.batting_order as number }))
+    .filter(r => r.want !== r.has);
+  for (const u of updates) {
+    const { error } = await supabaseAdmin
+      .from('rep_team_lineup_entries')
+      .update({ batting_order: u.want, updated_at: new Date().toISOString() })
+      .eq('id', u.id);
+    if (error) throw error;
+  }
+}
+
+/**
+ * How many games a call-up has been linked to. Read before removing one from the list, because
+ * that count is what decides whether removal is offered at all.
+ */
+export async function countRepCallUpAppearances(playerId: string): Promise<number> {
+  const { count, error } = await supabaseAdmin
+    .from('rep_team_call_up_appearances')
+    .select('id', { count: 'exact', head: true })
+    .eq('player_id', playerId);
+  if (error) throw error;
+  return count ?? 0;
+}
+
+/**
+ * Remove a call-up from the list.
+ *
+ * ⚠⚠ **ONLY EVER CALL THIS FOR A CALL-UP WITH NO GAMES, and the caller must have checked.**
+ * Twenty-odd tables reference `rep_roster_players` and almost all of them cascade — including
+ * `rep_team_lineup_entries`. Deleting a call-up who has played would take their lineup row with
+ * them, so a card printed last month would stop matching the card printed today and the batting
+ * order would gain a hole. **An archive that quietly drops a player who was on the field rewrites
+ * the season, which is the one thing it must never do.**
+ *
+ * This is why the product does not offer removal after the first game rather than soft-deleting:
+ * a call-up who has played is part of the season's record, the way a departed player is, and the
+ * count beside their name is information a coach wants (several leagues cap borrowed appearances).
+ * A call-up added by mistake — a typo, someone who never came — has no games, and removing THEM
+ * touches nothing. If a coach wants a name gone after calling them up, they take them off that
+ * game first, which returns the count to zero through the ordinary door.
+ *
+ * The `status = 'callup'` filter is a second lock: this can never be pointed at a roster player.
+ */
+export async function deleteRepCallUp(playerId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('rep_roster_players')
+    .delete()
+    .eq('id', playerId)
+    .eq('status', 'callup');
+  if (error) throw error;
 }
 
 // All SAVED lineups (header + entries) for a program year — the season-analytics roll-up source.
@@ -9826,6 +10081,28 @@ export async function deleteRepPlayerNote(id: string, teamId: string, playerId: 
   return (data ?? []).length > 0;
 }
 
+/**
+ * How the portal names a person, in order of who gets to decide: **the club's word for them, then
+ * their own.**
+ *
+ * ⚠⚠ **THE SECOND HALF WAS MISSING, AND IT IS THE HALF THAT COVERS THE HEAD COACH** (owner report
+ * 2026-09-22). `organization_members.display_name` is written on exactly two paths — accepting an
+ * invitation, and an admin typing a name on the members screen. Somebody who **signed up and made
+ * the org or the team themselves** travels neither, so their membership row has been blank since
+ * the day they created it. Every attribution line in the coach portal read from that column alone,
+ * so the result was backwards: an invited assistant was named, and the head coach who owns the team
+ * came out as "a coach". Signup has captured their real name the whole time (`/api/auth/signup`,
+ * `/api/auth/coach-signup` both write `full_name` + `display_name` into the account) — nothing
+ * asked it. Now it does.
+ *
+ * ⚠ Order matters and is not arbitrary. The membership name wins because it is what the CLUB calls
+ * this person in this org — an admin may have set it deliberately, and the same account can be
+ * "Rob" in one club and "Coach Cowan" in another. The account name is the fallback, never the
+ * override.
+ *
+ * ⚠ The account read costs one call per user, so only the ids still unnamed pay for it: a club that
+ * names its members on the members screen stays at the single query it has always been.
+ */
 export async function getOrgMemberDisplayNames(orgId: string, userIds: string[]): Promise<Record<string, string>> {
   const ids = [...new Set(userIds.filter(Boolean))];
   if (ids.length === 0) return {};
@@ -9836,8 +10113,110 @@ export async function getOrgMemberDisplayNames(orgId: string, userIds: string[])
     .in('user_id', ids);
   if (error) throw error;
   const out: Record<string, string> = {};
-  for (const row of data ?? []) if (row.display_name) out[row.user_id as string] = row.display_name as string;
+  const isMember = new Set<string>();
+  for (const row of data ?? []) {
+    const id = row.user_id as string;
+    isMember.add(id);
+    const named = (row.display_name as string | null)?.trim();
+    if (named) out[id] = named;
+  }
+  /**
+   * ⚠⚠ **ONLY A CURRENT MEMBER FALLS THROUGH TO THEIR OWN NAME — THE ORG FILTER IS STILL THE
+   * BOUNDARY** (adversarial review, 2026-09-22).
+   *
+   * The first cut of this fallback asked the account for ANY id the membership read did not name,
+   * which quietly deleted a deliberate behaviour: **removal un-names you.** Taking a coach off a
+   * team revokes their team membership and then DELETES their `organization_members` row once they
+   * hold no other seat in the org (`cleanupOrphanedGuestOrgMembership`), and the admin members
+   * screen deletes it outright. The old org-scoped read returned nothing for them, which is exactly
+   * why the notes tab could promise that a departed coach "reads as 'a coach' rather than as
+   * nobody". An ungated account lookup has no org filter at all, so it would have put the real name
+   * of someone the club removed back onto every record they ever wrote — sometimes the very person
+   * removed after an incident.
+   *
+   * Gating on membership costs the fix nothing, which is what makes this the right shape rather
+   * than a compromise: the head coach this whole change exists for **has a row — it is merely
+   * blank** (dev: 20 of 21 active head coaches and all 36 assistants hold one; the single exception
+   * is a seeded fixture). "Has a row, no name" is the bug. "Has no row" is a person the org let go,
+   * and the caller's own "a coach" is the honest answer for them.
+   */
+  const unnamed = ids.filter(id => isMember.has(id) && !out[id]);
+  if (unnamed.length > 0) {
+    for (const [id, name] of await getAccountDisplayNames(unnamed)) out[id] = name;
+  }
   return out;
+}
+
+/**
+ * A person's name as their own ACCOUNT holds it — what signup asked them for.
+ *
+ * ⚠ Reads the three keys signup actually writes, in the order it writes them, and rebuilds from
+ * first + last only when neither whole-name key is there (an account created before the signup
+ * routes started storing `full_name`, and the platform-admin editor which writes `display_name`
+ * alone). A key present but blank counts as absent — `''` is not a name.
+ *
+ * ⚠⚠ **THIS TIER IS SELF-ASSERTED — the one before it is not** (adversarial review, 2026-09-22).
+ * `organization_members.display_name` is written only by an invitation acceptance or an admin
+ * typing it, so the club vouches for it. `user_metadata` is the account holder's OWN namespace:
+ * signup fills it, but the holder can also rewrite it from the browser with their own session, and
+ * no app-layer route sees that call. So a name from here is "what this person calls themselves",
+ * never "who the club says this is" — which is fine for a byline and is why the club's word
+ * outranks it, but means the value is untrusted input and is cleaned before it is handed back.
+ * Control characters (including the bidi overrides that let a string render as something else) are
+ * stripped, runs of whitespace collapse, and the result is capped at the same 60 characters the
+ * members screen caps a typed display name at.
+ */
+export function nameFromAccountMetadata(metadata: unknown): string | null {
+  const md = (metadata ?? {}) as Record<string, unknown>;
+  const pick = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : '');
+  const raw = pick(md.full_name) || pick(md.display_name) || `${pick(md.first_name)} ${pick(md.last_name)}`.trim();
+  // eslint-disable-next-line no-control-regex
+  const clean = raw.replace(/[ --​-‏‪-‮⁦-⁩]/g, '')
+    .replace(/\s+/g, ' ').trim().slice(0, 60).trim();
+  return clean || null;
+}
+
+/**
+ * Account names for the given users — one admin read each, in parallel.
+ *
+ * ⚠ **Best-effort on purpose.** These names are display-only attribution. An account that cannot be
+ * read (deleted, or a transient auth hiccup) simply stays unnamed, and the caller's own fallback —
+ * "a coach" on a record, the email's local part in the practice picker — says so honestly. Throwing
+ * here would take down a notes tab over a byline.
+ *
+ * ⚠⚠ **AND THAT PROMISE NEEDS A CLOCK, NOT JUST A `catch`** (adversarial review, 2026-09-22). The
+ * notes and development reads were pure Postgres before this fallback existed; they now depend on
+ * the auth API for a byline. A `catch` covers auth being DOWN — a refused connection throws, or the
+ * client hands back a null user, and the page degrades instantly. It does nothing for auth being
+ * SLOW: an endpoint that accepts the connection and then stalls has no deadline of its own worth
+ * relying on, the `await` below holds the whole request behind it, and a page whose every figure
+ * was already sitting in Postgres 504s over a name. The race gives the promise teeth — past the
+ * deadline the lookup resolves to nothing at all, exactly as a failure does, and the byline falls
+ * back. Parallel calls share one wall-clock deadline, so the ceiling is the timeout, not N × it.
+ *
+ * ⚠ A miss here is invisible by design (the byline just reads "a coach"), so a whole-service outage
+ * would otherwise leave no trace anywhere. One line is logged per BATCH — never per user, which on
+ * a wide list would be a log flood — so an outage shows up as a repeated warning rather than as a
+ * silent portal-wide loss of names nobody can explain.
+ */
+const ACCOUNT_NAME_LOOKUP_TIMEOUT_MS = 1500;
+
+async function getAccountDisplayNames(userIds: string[]): Promise<Map<string, string>> {
+  const found = new Map<string, string>();
+  let missed = 0;
+  const deadline = new Promise<null>(resolve => setTimeout(() => resolve(null), ACCOUNT_NAME_LOOKUP_TIMEOUT_MS).unref?.());
+  await Promise.all(userIds.map(async userId => {
+    try {
+      const res = await Promise.race([supabaseAdmin.auth.admin.getUserById(userId), deadline]);
+      if (!res) { missed++; return; } // past the deadline — leave the caller's fallback to name them
+      const name = nameFromAccountMetadata(res.data.user?.user_metadata);
+      if (name) found.set(userId, name);
+    } catch { missed++; /* display-only: an unreadable account is left for the caller's fallback */ }
+  }));
+  if (missed > 0) {
+    console.warn(`[names] ${missed}/${userIds.length} account name lookup(s) failed or timed out; those bylines fall back`);
+  }
+  return found;
 }
 
 /** Team-wide season measurables for the board (players are already season-scoped rows). */

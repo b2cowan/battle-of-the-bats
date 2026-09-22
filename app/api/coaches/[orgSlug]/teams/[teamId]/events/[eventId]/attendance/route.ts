@@ -4,6 +4,7 @@ import {
   getActiveRepProgramYear,
   getCoachingAssignmentsForUser,
   getRepRosterPlayers,
+  getRepCallUpsForEvent,
   getRepTeam,
   getRepTeamEventAttendance,
   getRepTeamEventById,
@@ -51,14 +52,25 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(assignment.capabilities.attendance, 'You do not have access to attendance.');
   if (denied) return denied;
 
-  const [players, attendance] = await Promise.all([
+  const [players, callUps, attendance] = await Promise.all([
     getRepRosterPlayers(programYear.id),
+    getRepCallUpsForEvent(eventId),
     getRepTeamEventAttendance(eventId),
   ]);
 
   return NextResponse.json({
-    // Redact guardian PII / notes for a coach without those grants (this endpoint returns the roster).
-    players: redactRoster(players.filter(player => player.status === 'active'), assignment.capabilities),
+    /**
+     * ⚠ THIS GAME'S CALL-UPS ARE ON THIS GAME'S SHEET (mig 309, owner ruling R4) — a borrowed player
+     * who does not turn up is the same problem as a rostered one who does not, and it is one game's
+     * list, not every event's.
+     *
+     * ⚠⚠ Adding them here was NOT optional once the bench console started carrying them. The console
+     * builds its "Who's here" drawer from its own payload, which merges call-ups in — so the drawer
+     * OFFERED a borrowed player and this route's PATCH refused them, 400, with the console's catch
+     * rolling the toggle back and showing nothing. Mid-game, the button just flipped back.
+     * A picker and its validator must agree; found by `/review`.
+     */
+    players: redactRoster([...players.filter(player => player.status === 'active'), ...callUps], assignment.capabilities),
     attendance,
     programYear,
   });
@@ -79,8 +91,14 @@ export const PATCH = withObservability(async (req: Request,
     return NextResponse.json({ error: 'entries must be an array' }, { status: 400 });
   }
 
-  const players = (await getRepRosterPlayers(programYear.id)).filter(player => player.status === 'active');
-  const activePlayerIds = new Set(players.map(player => player.id));
+  // Same set the GET offers: the active roster PLUS this game's call-ups (mig 309, owner ruling R4).
+  // A picker and its validator must agree — the console's "Who's here" drawer draws from the GET.
+  const [roster, eventCallUps] = await Promise.all([
+    getRepRosterPlayers(programYear.id),
+    getRepCallUpsForEvent(eventId),
+  ]);
+  const players = roster.filter(player => player.status === 'active');
+  const activePlayerIds = new Set([...players, ...eventCallUps].map(player => player.id));
 
   const rows = [];
   for (const entry of entries) {
@@ -89,7 +107,7 @@ export const PATCH = withObservability(async (req: Request,
     const note = typeof entry?.note === 'string' ? entry.note.trim() : '';
 
     if (!activePlayerIds.has(playerId)) {
-      return NextResponse.json({ error: 'Attendance can only be saved for active roster players' }, { status: 400 });
+      return NextResponse.json({ error: 'Attendance can only be saved for players on this roster, or a call-up on this game' }, { status: 400 });
     }
     if (!VALID_ATTENDANCE_STATUSES.includes(status)) {
       return NextResponse.json({ error: 'Invalid attendance status' }, { status: 400 });

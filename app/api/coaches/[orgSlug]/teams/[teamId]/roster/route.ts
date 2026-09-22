@@ -48,7 +48,11 @@ export const GET = withObservability(async (_req: Request,
   const denied = denyUnless(hasRecordAccess(capabilities), 'You do not have access to the roster.');
   if (denied) return denied;
 
-  const players = await getRepRosterPlayers(programYear.id);
+  /* ⚠ THE ONE OPT-IN IN THE CODEBASE (mig 309). This route feeds the roster PAGE, which manages
+     the call-up list in its own collapsed shelf — so it is the single surface that wants them.
+     Every other caller of this read inherits the exclusion; a second `includeCallUps` should be
+     read as a question about whether that surface really wants borrowed players in it. */
+  const players = await getRepRosterPlayers(programYear.id, { includeCallUps: true });
   return NextResponse.json({ players: redactRoster(players, capabilities), programYear, isReadOnly });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster' });
 

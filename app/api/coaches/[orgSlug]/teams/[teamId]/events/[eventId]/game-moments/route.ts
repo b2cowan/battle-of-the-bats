@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import {
   createRepTeamGameMoment,
   getRepRosterPlayers,
+  getRepCallUpsForEvent,
   getRepTeamEventById,
   getRepTeamStaffForYear,
 } from '@/lib/db';
@@ -49,10 +50,17 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Moments belong to games' }, { status: 400 });
   }
 
-  // The tag is validated against THIS season's active roster — a moment filed under a player
-  // who isn't on the team would render under nobody forever.
-  const roster = await getRepRosterPlayers(programYear.id);
-  const rosterIds = roster.filter(p => p.status === 'active').map(p => p.id);
+  /* The tag is validated against THIS season's active roster — a moment filed under a player
+     who isn't on the team would render under nobody forever.
+     ⚠ PLUS THIS GAME'S CALL-UPS (mig 309). They made the play, so they are taggable — and the
+     console's "About a player?" dropdown already offers them, because its payload merges them in.
+     Without this the picker offered a name the validator answered "Unknown player." to: a hard
+     error on a control the screen itself put there. Found by `/review`. */
+  const [roster, eventCallUps] = await Promise.all([
+    getRepRosterPlayers(programYear.id),
+    getRepCallUpsForEvent(eventId),
+  ]);
+  const rosterIds = [...roster.filter(p => p.status === 'active'), ...eventCallUps].map(p => p.id);
 
   const payload = await req.json().catch(() => ({}));
   const verdict = validateGameMoment(payload, rosterIds);

@@ -70,6 +70,14 @@ export const GET = withObservability(async (_req: Request,
       || player.programYearId !== programYear.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  /* ⚠ A CALL-UP HAS NO PROFILE (mig 309) — and the 404 above already covers it, because
+     `getRepRosterPlayer` returns null for one. That is deliberate depth: the same four-clause
+     ownership check is copy-pasted into nine sibling routes (notes, documents, development, goals,
+     measurables, and the shared development-player resolver), none of which knew about call-ups, so
+     a borrowed player's id posted at any of them would have attached a note or a document to them.
+     Refusing in the read fixes all ten without touching nine of them.
+     This page in particular carries a *Take them off the roster* control that flips `status` — it
+     would have offered to move a borrowed player ONTO the roster. */
 
   /**
    * ⚰ The bench MOMENTS left this payload on 2026-09-13 (roster + player page review, hub F20).
@@ -115,6 +123,9 @@ export const PATCH = withObservability(async (req: Request,
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+  // A call-up never gets here — `getRepRosterPlayer` returns null for one (mig 309), so the 404
+  // above catches it. Worth knowing why it matters on THIS route specifically: the `status` field
+  // below would otherwise promote a borrowed player onto the roster in a single PATCH.
   // Year-scope guard (Batch 3 rider): a roster row from a PAST season must never be editable
   // just because the team currently has an open year — "read-only past season" has to hold
   // per-row, not only per-team. (The season-end verification found this hole: the fetch
@@ -152,7 +163,10 @@ export const PATCH = withObservability(async (req: Request,
     playerDateOfBirth:body.playerDateOfBirth !== undefined ? (body.playerDateOfBirth || null)     : undefined,
     playerNumber:     body.playerNumber     !== undefined ? (body.playerNumber?.trim() || null)   : undefined,
     ...positionWrite,
-    status:           body.status           !== undefined ? body.status as RepRosterStatus        : undefined,
+    // ⚠ Only the ROSTER lifecycle is writable here — on/off the team. `callup` is a different KIND
+    // of entry (mig 309) and is refused above; letting it through would turn a rostered player into
+    // a borrowed one and drop them out of dues, development and the season report in one PATCH.
+    status:           body.status === 'active' || body.status === 'inactive' ? body.status as RepRosterStatus : undefined,
     guardianFirstName:body.guardianFirstName !== undefined ? trimmedOrNull(body.guardianFirstName): undefined,
     guardianLastName: body.guardianLastName  !== undefined ? trimmedOrNull(body.guardianLastName) : undefined,
     guardianEmail:    body.guardianEmail     !== undefined ? trimmedOrNull(body.guardianEmail)    : undefined,

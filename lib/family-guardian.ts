@@ -254,8 +254,14 @@ export async function approveGuardianLink(params: {
   // Independent of the cap check, so both run together.
   const [, playerResult] = await Promise.all([
     assertUnderGuardianCap(params.playerId),
+    /* ⚠ NOT A CALL-UP (mig 309). `guardian_email` is barred on a call-up by a database CHECK, which
+       closes every audience built by collecting emails — but a `family_links` row is a SECOND
+       audience the CHECK cannot reach: once claimed, that adult is a verified family member and
+       the team's game-change mail goes to every verified link regardless of which player it hangs
+       off. So the borrowed family would receive this team's email. Found by `/review`. */
     supabaseAdmin.from('rep_roster_players')
-      .select('id, team_id').eq('id', params.playerId).eq('team_id', params.repTeamId).maybeSingle(),
+      .select('id, team_id').eq('id', params.playerId).eq('team_id', params.repTeamId)
+      .neq('status', 'callup').maybeSingle(),
   ]);
   if (playerResult.error) throw playerResult.error;
   if (!playerResult.data) throw new FamilyLinkError('not_found', 'That player is not on this team.');
@@ -317,6 +323,9 @@ export async function inviteGuardian(params: {
     .select('id, team_id')
     .eq('id', params.playerId)
     .eq('team_id', params.repTeamId)
+    // ⚠ Not a call-up (mig 309) — see the note on the approve path: a family link is the one
+    // audience the no-email CHECK cannot close.
+    .neq('status', 'callup')
     .maybeSingle();
   if (playerError) throw playerError;
   if (!player) throw new FamilyLinkError('not_found', 'That player is not on this team.');

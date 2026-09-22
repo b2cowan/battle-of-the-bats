@@ -4404,6 +4404,28 @@ a.oneChip:hover { border-color: currentColor; }
 .offRosterNum { font-family: var(--font-data, monospace); font-size: var(--type-support); color: var(--text-tertiary); }
 .offRosterAdd { margin-left: auto; font-size: var(--type-support); padding: 0.25rem 0.6rem; }
 
+/* Call-ups (mig 309) — the same shelf recipe as Off the roster, with one sentence of its own. The
+   section explains the rule rather than leaving it to be discovered: it names the three places a
+   coach would most expect to find these players and will not. */
+.callUpNote {
+  margin: 0 0 0.5rem;
+  padding: 0 0.85rem;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+/* Games played — the figure several leagues cap, and the reason Remove is or is not offered.
+   `margin-left: auto` pushes it right; `.offRosterAdd` then sits after it with its own auto margin
+   neutralised, so a row with a button and a row without it read the same. */
+.callUpGames {
+  margin-left: auto;
+  font-family: var(--font-data, monospace);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.callUpGames + .offRosterAdd { margin-left: 0.5rem; }
+
 @media (max-width: 768px) {
   /* The shelf's own row, its name links and its Add back are targets in the whole touch band
      (K-12 — the tablet band was missed at ≤640, and the name link had no floor at any width). */
@@ -7739,28 +7761,171 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   margin: 0 0 0.5rem; font-size: var(--type-label); font-weight: 800;
   text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-tertiary);
 }
-.lineupNotPlayingList { display: flex; flex-direction: column; gap: 0.35rem; }
-.lineupNotPlayingRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+/* ⚠⚠ A WRAPPING ROW OF CHIPS, NOT A COLUMN OF FULL-WIDTH ROWS (owner, 2026-09-22: *"I don't like
+   the way these are aligned under the main lineup table, lots of empty space"*).
+   Each entry used to be its own full-width line with the name hard left and Add hard right, so a
+   single unplaced player drew a ~1,100px rule of nothing between the two on a desktop — and the
+   taller the panel grew, the emptier it looked. Names are short; letting them sit together and wrap
+   turns the same content into one or two tidy lines. On a phone one chip still fills the width, so
+   the phone reads exactly as it did. Serves the template editor too, which had the same gap. */
+/* ⚠⚠ A WRAPPING ROW OF PILLS, WHERE THE PILL IS THE ACTION (owner ruling 2026-09-22).
+   Each entry used to be a full-width line with the name hard left and an "Add to lineup" button
+   hard right — a ~1,100px rule of nothing between them on a desktop, and one whole line per player
+   on a phone. The button also repeated on every entry and said the same thing every time, under a
+   heading that had already said it. Name and action are now ONE pill, so several fit per line and
+   the furniture is gone. Serves the template editor too, which had the same gap. */
+.lineupNotPlayingList { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 0.35rem; }
+/* The chip: a wrapper, NOT the control — a call-up carries a second action inside it, and nesting
+   a button in a button is not a thing. The add pill fills it; the × sits beside. */
+/* ⚠ THE SAME TWO TOKENS THE MONEY HUB'S ITEM PILLS USE (`.checklistChip` in budget.module.css) —
+   `--home-card` and `--home-line`, not `--white-05`/`--white-10`. The overlay tokens are
+   TRANSLUCENT, so over this panel's own tint they came through beige rather than white and the
+   pills read as a different family from the ones they were modelled on. Owner caught it on sight:
+   *"can we make them white like our other ones?"* Matching the token, not eyeballing a colour, is
+   what keeps them together the next time the warm palette moves. */
+.lineupNotPlayingRow {
+  display: inline-flex; align-items: stretch;
+  flex: 0 1 auto; min-width: 0; max-width: 100%;
+  border: 1px solid var(--home-line, rgba(255,255,255,0.12)); border-radius: 999px;
+  background: var(--home-card, rgba(255,255,255,0.04));
+  overflow: hidden;
+}
+.lineupAddPill {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  min-width: 0;
+  padding: 0.3rem 0.7rem;
+  border: 0; background: transparent; cursor: pointer;
+  font-size: var(--type-support); font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+}
+/* Hover recolours the ink rather than washing the fill — the money hub's pill does the same
+   (`.checklistAdd:hover`), and a translucent overlay on a white card is what made these read beige
+   in the first place. */
+.lineupAddPill:hover { color: var(--logic-lime); }
+.lineupAddPill:hover .lineupAddPillPlus { color: var(--logic-lime); }
+.lineupAddPillPlus { flex: none; font-weight: 700; color: var(--text-tertiary); }
 .lineupNotPlayingName {
   display: inline-flex; align-items: center; gap: 0.4rem;
   font-size: var(--type-body); color: var(--text-secondary);
   min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
 .lineupNotPlayingName svg { color: var(--danger); flex-shrink: 0; }
-/* Add to lineup / Add to template — the row's one control, on the not-playing panel's tinted
-   ground. The ink is the primary text, not the accent: the accent's olive read 4.35:1 on the
-   panel's tint plus the button's own (the rendered sweep, 2026-09-19); the border keeps the
-   accent. Floored at the touch widths like every control the grid keeps. */
-.lineupAddBackBtn {
-  flex-shrink: 0; font-size: var(--type-support); font-weight: 700;
-  padding: 0.3rem 0.65rem; border-radius: 6px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb),0.4);
-  background: rgba(var(--blueprint-blue-rgb),0.12);
-  color: var(--text-primary); cursor: pointer;
+/* ⚰ `.lineupAddBackBtn` — the per-entry "Add to lineup" / "Add to template" button — was DELETED
+   here on 2026-09-22 when the pill became the action (owner ruling). Verified to have no remaining
+   callers in any `.tsx` before removal, which is the check this repo's own trap note asks for: a
+   deleted rule with a live caller throws nothing and simply renders unstyled. */
+
+/* The touch floor for the pills. ⚠ ≤900, not ≤768: the tablet band was missed on an earlier pass
+   through this file and is the width a coach most often holds at a field. */
+@media (max-width: 900px) {
+  .lineupAddPill { min-height: var(--tap-min, 44px); }
+  .lineupCallUpDrop { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
 }
-.lineupAddBackBtn:hover { background: rgba(var(--blueprint-blue-rgb),0.2); }
+
+/* ── Call-ups (mig 309) ──────────────────────────────────────────────────────────────────────
+   A player borrowed for one game. ⚠ THE TONE IS THE WARNING FAMILY, NOT THE ACCENT, AND THAT IS
+   THE POINT: the portal's olive/blueprint accent means "your team" on every other surface, so a
+   borrowed player wearing it would read as one of your own at a glance — which is the single thing
+   this mark exists to prevent. Amber says "temporary, and not quite yours" without claiming
+   anything is wrong, which is why it is not the danger red either. */
+/* The Call-ups group's heading and its chips, inside the shared panel. The heading gets a little
+   air above it because it is the SECOND group in that frame now, not a panel of its own. */
+.lineupCallUpHead { color: var(--warning); margin-top: 0.7rem; }
+.lineupNotPlaying > .lineupCallUpHead:first-child { margin-top: 0; }
+/* An amber chip rather than a mark inside it: in this list the row IS short, so tinting the whole
+   chip says "borrowed" without spending any of the name's width — the opposite trade from the
+   phone's batting-order row, where the columns are fixed and the name had to win. */
+/* ⚠ A call-up pill stays on the SAME white card as every other pill and is marked by its EDGE and
+   its INK, not by a tinted fill. Filling it amber made it a different kind of object on the shelf;
+   it is the same kind of object, about a borrowed player. Same family, unmistakably marked. */
+.lineupCallUpRow {
+  border-color: rgba(var(--warning-rgb), 0.55);
+}
+.lineupCallUpRow .lineupNotPlayingName,
+.lineupCallUpRow .lineupAddPillPlus { color: var(--warning); }
+/* ⚠ ONE RULE FOR THE MARK, WITH ITS ONE REAL VARIATION IN IT. The phone's inning row briefly had a
+   private copy in `LineupInningList.module.css`, and the two had already drifted (letter-spacing
+   0.06 vs 0.05em; a tinted chip against bare ink) — which is precisely what the `isCallUp` /
+   `CALL_UP_LABEL` doc-block says this feature must not allow. The difference is genuine, so it
+   lives here rather than in a second file: beside a name the mark is a chip, and under one — the
+   phone stacks it on the row's sub-line — a filled chip turns a 58px row into a two-storey card, so
+   there it is bare ink. */
+.lineupCallUpMark {
+  flex-shrink: 0;
+  font-size: var(--type-label); font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.05em;
+  padding: 0.1rem 0.35rem; border-radius: 4px;
+  background: rgba(var(--warning-rgb), 0.16);
+  color: var(--warning);
+  white-space: nowrap;
+}
+@media (max-width: 640px) {
+  .lineupCallUpMark { padding: 0; background: transparent; letter-spacing: 0.06em; }
+}
+/* Take them off this game — quiet beside the Add, because it is the rarer of the two. */
+/* "Take them off this game" — the pill's second half. ⚠ Not a floating glyph at the chip's edge:
+   it is the heavier of the two actions (it removes them from the GAME and clears the lineup row
+   they hold, not merely their place in the order), so it gets its own hairline division and a real
+   target rather than something a thumb can catch on the way past the name. */
+.lineupCallUpDrop {
+  flex: none; min-width: 30px; line-height: 1;
+  display: inline-flex; align-items: center; justify-content: center;
+  border: 0; border-left: 1px solid rgba(var(--warning-rgb), 0.35); border-radius: 0;
+  background: transparent; color: var(--text-tertiary);
+  font-size: var(--type-body); cursor: pointer;
+}
+.lineupCallUpDrop:hover { color: var(--danger); background: rgba(var(--danger-rgb), 0.1); }
+/* THE ONLY CALL-UP AFFORDANCE THE BUILDER HAS AT REST (owner ruling R3, 2026-09-22). Dashed and
+   amber-tinted so it reads as an addition from outside the roster rather than an ordinary control;
+   full width because it is the panel's action, not a row's. */
+.lineupCallUpBtn {
+  display: flex; align-items: center; justify-content: center; gap: 0.4rem;
+  width: 100%; min-height: 44px; margin-top: 0.5rem;
+  font-size: var(--type-support); font-weight: 700;
+  border: 1px dashed rgba(var(--warning-rgb), 0.5); border-radius: 8px;
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--warning); cursor: pointer;
+}
+.lineupCallUpBtn:hover { background: rgba(var(--warning-rgb), 0.16); }
+.lineupCallUpWrap { position: relative; }
+
+/* ⚠⚠ **DESKTOP ONLY, AND THE MEDIA QUERY IS LOAD-BEARING — DO NOT UNWRAP IT.**
+   The sheet opens UPWARD from its button on a desktop: the button is the last thing on the page, so
+   `.lineupAutoMenu`'s downward anchor (`top: calc(100% + 6px)`) would put the panel below the fold.
+   At ≤900 `.lineupAutoMenu` becomes the bar-anchored phone DRAWER and must be left completely alone.
+
+   ⚠ This block was first written unguarded, with a comment claiming the ≤900 drawer rules would win
+   "because they come later in the file". **They do not — this rule is ~900 lines later and the
+   specificity is identical (0,1,0), so THIS won.** The drawer is `position: fixed` at that width, so
+   `bottom: calc(100% + 6px)` resolved against the VIEWPORT and parked the sheet a full screen-height
+   above the top: the scrim dimmed the page and nothing appeared. Reported from a phone.
+   The lesson is the repo's own — same-specificity module rules resolve by source order, so an
+   override that must not apply at a width is scoped by a media query, never by an assumption about
+   where it sits in the file. */
+@media (min-width: 901px) {
+  .lineupCallUpMenu {
+    top: auto;
+    bottom: calc(100% + 6px);
+    right: auto;
+    left: 0;
+    width: min(360px, 100%);
+  }
+  /* The button sizes to its words on a desktop. Full width is a PHONE shape — stretched across a
+     1440 panel it read as the loudest thing on the screen, louder than Auto-fill, for an action a
+     coach takes a handful of times a season (owner, on first look). */
+  /* ⚠ `display: inline-flex`, not `width: auto`. The base rule is `display: flex`, which is
+     block-level — `width: auto` on it still fills the panel, so the button would have stayed the
+     full width of the screen and this fix would have looked like it did nothing. */
+  .lineupCallUpBtn {
+    display: inline-flex;
+    width: auto;
+    padding-inline: 0.9rem;
+    min-height: 36px;
+  }
+}
 @media (max-width: 768px) {
-  .lineupAddBackBtn { min-height: var(--tap-min, 44px); }
+  .lineupCallUpDrop { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
 }
 
 .lineupPlayerCell small {

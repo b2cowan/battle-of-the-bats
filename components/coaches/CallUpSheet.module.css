@@ -1,0 +1,140 @@
+/* CallUpSheet — the contents of the lineup builder's "Call up a player" panel (mig 309).
+
+   ⚰ `.title` `.close` `.error` `.fieldRow` `.field` `.foot` were DELETED 2026-09-22: the sheet now
+   wears the shared recipes it was already half-adopting — `coach.lineupSheetTitle`,
+   `coach.modalCloseBtn`, `coach.errorText`, `coach.formGrid`, `coach.field`,
+   `coach.lineupSheetFoot`. That was not tidying. The private `.foot` had no sticky rule, so on a
+   short phone the Call up / Back buttons scrolled away behind the bottom navigation — the exact
+   defect the shared foot was given its sticky rule for, days earlier, on a sibling drawer. And the
+   private `.fieldRow` collapsed to one column at 480 where every other coach form collapses at 640,
+   which made this the only two-up coach form still side-by-side at 600px.
+
+   ⚠ NO SHELL RULES HERE EITHER. The panel's frame, its phone drawer behaviour, the grab line and
+   the scrim all come from `.lineupAutoMenu` in coaches.module.css, which the caller wraps this in.
+   Everything below is the list and the form INSIDE that frame. A private copy of the shell would
+   have been a fifth builder panel that matched the other four until one of them changed. */
+
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+/* Shown while the saved list is on its way. Neither half of the sheet renders until it lands — a
+   flash of the "new call-up" form before the list arrives is what this replaces. */
+.loading {
+  margin: 0;
+  padding: 0.75rem 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+/* One saved call-up. The whole row is the control — a name with a small Add beside it is a target
+   the width of the word "Add"; the row is the width of the sheet. */
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 52px;
+  padding: 0.45rem 0.6rem;
+  text-align: left;
+  border: 1px solid rgba(var(--warning-rgb), 0.35);
+  border-radius: 8px;
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.row:hover:not(:disabled) { background: rgba(var(--warning-rgb), 0.16); }
+.row:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* Already on this game: the same row, not a control. The tick answers "did I already do this?" —
+   which is why these are shown rather than filtered out of the list. */
+.rowDone {
+  cursor: default;
+  opacity: 0.75;
+  color: var(--text-secondary);
+}
+
+.rowName {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+  font-size: var(--type-body);
+  font-weight: 600;
+}
+.rowName small {
+  font-weight: 400;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
+.rowAdd {
+  flex: none;
+  font-size: var(--type-support);
+  font-weight: 700;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid rgba(var(--warning-rgb), 0.5);
+  border-radius: 6px;
+  color: var(--warning);
+}
+
+/* "Someone new" — dashed, so it reads as creating rather than choosing. */
+.newBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  width: 100%;
+  min-height: 48px;
+  padding: 0.45rem 0.7rem;
+  font-size: var(--type-body);
+  font-weight: 600;
+  border: 1px dashed rgba(var(--warning-rgb), 0.5);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--warning);
+  cursor: pointer;
+}
+.newBtn:hover { background: rgba(var(--warning-rgb), 0.1); }
+.newBtn:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+}
+
+.note {
+  margin: 0;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  line-height: 1.5;
+}
+
+/* ⚠ THE INPUTS NEEDED A TAP FLOOR, and that was found by the layout sweep rather than by eye: the
+   shared `.input` recipe carries no minimum height, so these four fields rendered at 35px at 361,
+   390 and 768 — a form a coach fills in at a field, an hour before first pitch, one-handed. The
+   buttons had a floor from the first draft and the fields did not, which is exactly the split the
+   sweep exists to catch. Scoped to the shared `coach.field` wrapper the labels now wear. */
+@media (max-width: 900px) {
+  .form input { min-height: var(--tap-min, 44px); }
+}

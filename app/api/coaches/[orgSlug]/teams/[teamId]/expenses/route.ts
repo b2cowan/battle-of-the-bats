@@ -179,6 +179,9 @@ export const POST = withObservability(async (req: Request,
       .select('id, player_first_name, player_last_name')
       .eq('id', paidByPlayerId)
       .eq('program_year_id', programYear.id)
+      // ⚠ Not a call-up (mig 309) — a borrowed player never fronts a team expense, and this raw
+      // check bypasses `getRepRosterPlayer`, which would have refused one.
+      .neq('status', 'callup')
       .single();
     if (!row) {
       return NextResponse.json({ error: 'Player not found in this program year' }, { status: 404 });

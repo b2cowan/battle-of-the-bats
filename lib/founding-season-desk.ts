@@ -135,7 +135,10 @@ export async function getFoundingSeasonDeskData(): Promise<FoundingDeskData> {
     const { data: rosterRows } = await supabaseAdmin
       .from('rep_roster_players')
       .select('program_year_id')
-      .in('program_year_id', programYearIds);
+      .in('program_year_id', programYearIds)
+      // ⚠ Not call-ups (mig 309): this is the workspace's roster SIZE, and a borrowed player is not
+      // part of the team's size. Raw query, so it does not inherit the shared read's exclusion.
+      .neq('status', 'callup');
     for (const r of rosterRows ?? []) {
       const key = r.program_year_id as string;
       rosterCountByYear.set(key, (rosterCountByYear.get(key) ?? 0) + 1);

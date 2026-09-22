@@ -124,16 +124,36 @@
   transform: scale(1.02);
   opacity: 0.95;
 }
+/* ⚠⚠ THE MARK IS ON ITS OWN LINE, AND THAT IS THE SECOND ATTEMPT.
+   It first sat BESIDE the name, with the name truncating so the mark could never be clipped —
+   reasoning that a shortened name is recoverable and a missing "borrowed player" mark is not. On a
+   real phone that was wrong in practice: this row's other columns are fixed (44 handle · 38 · 64 ·
+   38), leaving ~134px for name + mark at 390, and a ~60px chip cut "#56 bob test" down to "#56…".
+   The owner reported it as the label taking over the name cell, and they were right — a name you
+   cannot read identifies nobody, so the mark had won an argument it should not have been in.
+   Stacked, both are whole: the name takes the full width of its cell and the mark sits under it in
+   the sub-line the portal already uses for a row's secondary fact. */
 .name {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0.1rem;
   font-size: var(--type-body);
   font-weight: 600;
   color: var(--text-primary);
+}
+.nameText {
+  max-width: 100%;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
+/* ⚰ `.callUpMark` lives in the shared coaches module (`coach.lineupCallUpMark`), not here. Two
+   rules for one mark had already drifted (letter-spacing 0.06 vs 0.05em, a tinted pill against bare
+   ink) — exactly what the `isCallUp`/`CALL_UP_LABEL` doc-block says this feature must not do. */
 /* The neighbours — the previous and next inning's positions, read-only and dim. 12px is the
    field floor's minimum (A4): a looked-for value, not this one. */
 .neighbour {

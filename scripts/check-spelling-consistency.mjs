@@ -71,6 +71,29 @@ const ENFORCED = [
 ];
 
 /**
+ * ⚠⚠ **"CALL-UP" IS SETTLED (owner ruling R1, 2026-09-22) BUT IS DELIBERATELY *NOT* IN THE LIST
+ * ABOVE — AND THE REASON IS ABOUT THIS GATE, NOT ABOUT THE WORD.**
+ *
+ * It was added on the day the feature landed, exactly as the `instalment` lesson says to do, and
+ * then taken out again with evidence: `buildPattern` is `\b(...)\b` with the **`i` flag**, and the
+ * word's identifier forms are everywhere. `callups` matches the prop `callUps`; `Callup` matches
+ * `isCallUp`, `CallUpSheet`, `onCallUp`, `getRepCallUpsForEvent`. And `'callup'` is the **stored
+ * status value** (mig 309), which appears in every route that excludes one. Measured on the day:
+ * **41 hits, none of them customer-visible prose.** Gating it would have meant ~41 `spelling-ok`
+ * waivers on correct code, which trains people to spray the escape hatch and quietly kills the
+ * gate's meaning for the words it can actually police.
+ *
+ * The rule still holds — it is enforced somewhere better. The word has **one home**,
+ * `CALL_UP_LABEL` in `lib/coach-roster-name.ts`, and `tests/unit/coach-call-ups-guard.test.ts`
+ * asserts both the constant's spelling and that each surface uses it. A single point of definition
+ * is a stronger guarantee than a grep, because a second spelling cannot be typed without also
+ * being a second constant.
+ *
+ * ⚠ If a future word has the same shape — settled prose that is also an identifier or an enum
+ * value — do the same thing: give it one constant, and do not force it through here.
+ */
+
+/**
  * Enforced rules that are a SHAPE rather than a word.
  *
  * ⚠ THE CLOCK NEEDED THIS AND A WORD LIST COULD NOT DO IT. The product told the time two ways —

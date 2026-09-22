@@ -134,6 +134,24 @@ async function openLineupSetupPanel(page) {
   await page.locator('#lineup-setup-panel').waitFor({ state: 'attached', timeout: 15_000 });
   await page.waitForTimeout(300);
 }
+/**
+ * The "Call up a player" sheet (mig 309) — the builder's FIFTH phone drawer, and the only state in
+ * which a coach ever sees the saved call-up list.
+ *
+ * ⚠ It is swept as its own screen for the same reason Setup and the position sheet are: a drawer is
+ * a layout the resting page never shows, so nothing else in this list can see its buttons, its two
+ * form rows or its docked foot. Scrolled to the foot first because the trigger is the last control
+ * on the page — at 361 it starts below the fold.
+ */
+async function openLineupCallUpSheet(page) {
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
+  await page.waitForTimeout(200);
+  const btn = page.getByRole('button', { name: /Call up a player/i }).first();
+  if (await btn.count() === 0 || !(await btn.isVisible())) return;
+  await btn.click();
+  await page.locator('[role="dialog"][aria-label="Call up a player"]').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(400);
+}
 /** Inning 2, scrolled 700 — the stepper pinned under the masthead with rows moving beneath it. */
 async function stepLineupToInningTwo(page) {
   const next = page.getByRole('button', { name: /^Next inning$/ }).first();
@@ -430,6 +448,9 @@ export const SCREENS = [
   { id: 'coach-lineup-builder-position', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/lineups/${c.gameEventId}`, interact: openLineupPositionSheet,
     scope: '[data-position-sheet] [role="dialog"]' },
+  { id: 'coach-lineup-builder-callup', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/lineups/${c.gameEventId}`, interact: openLineupCallUpSheet,
+    scope: '[role="dialog"][aria-label="Call up a player"]' },
   { id: 'coach-lineup-template', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/lineups/templates/${c.lineupTemplateId}` },
 

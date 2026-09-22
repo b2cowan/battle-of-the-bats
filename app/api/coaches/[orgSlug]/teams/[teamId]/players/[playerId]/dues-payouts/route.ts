@@ -147,7 +147,13 @@ export const POST = withObservability(async (req: Request,
     .from('rep_roster_players')
     .select('id, player_first_name, player_last_name')
     .eq('id', playerId)
+    // ⚠ NOT A CALL-UP (mig 309). Money never attaches to a borrowed player: they have no dues, no
+    // share and no payout. This route proves the player with a RAW query rather than
+    // `getRepRosterPlayer` (which refuses one), so the exclusion has to be spelled here — a crafted
+    // request could otherwise land a real money row on a call-up, and the money screens then never
+    // show it, because they exclude call-ups. Found by `/review`.
     .eq('program_year_id', programYear.id)
+    .neq('status', 'callup')
     .single();
   if (!playerRow) {
     return NextResponse.json({ error: 'Player not found in this program year' }, { status: 404 });

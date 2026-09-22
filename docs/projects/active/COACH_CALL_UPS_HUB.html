@@ -1,0 +1,847 @@
+<title>Call-ups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#FAF8F4; --surface:#FFFFFF; --surface-2:#F3F0E9; --sunk:#EFECE3;
+  --ink:#191B18; --ink-2:#4A4E46; --ink-3:#797E72;
+  --line:#E2DED4; --line-2:#CFCABB;
+  --accent:#4F6B16; --accent-soft:#EDF3DC;
+  --crit:#AE3620; --crit-soft:#FAE7E2;
+  --warn:#845F12; --warn-soft:#F6EED9;
+  --ok:#2C6349; --ok-soft:#E4F0EA;
+  --call:#8A5410; --call-soft:#F7EBD8; --call-line:#DDBE8A;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#131511; --surface:#1B1E19; --surface-2:#232720; --sunk:#101208;
+    --ink:#EDEBE4; --ink-2:#B6BAAE; --ink-3:#868B7E;
+    --line:#2F342B; --line-2:#3E453A;
+    --accent:#A9CC55; --accent-soft:#222A14;
+    --crit:#E8775C; --crit-soft:#331A13;
+    --warn:#D3A44C; --warn-soft:#2C2312;
+    --ok:#67B18E; --ok-soft:#14261D;
+    --call:#DCA85A; --call-soft:#2B2113; --call-line:#5A462A;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#131511; --surface:#1B1E19; --surface-2:#232720; --sunk:#101208;
+  --ink:#EDEBE4; --ink-2:#B6BAAE; --ink-3:#868B7E;
+  --line:#2F342B; --line-2:#3E453A;
+  --accent:#A9CC55; --accent-soft:#222A14;
+  --crit:#E8775C; --crit-soft:#331A13;
+  --warn:#D3A44C; --warn-soft:#2C2312;
+  --ok:#67B18E; --ok-soft:#14261D;
+  --call:#DCA85A; --call-soft:#2B2113; --call-line:#5A462A;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:"Public Sans",system-ui,-apple-system,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0 76px}
+h1,h2,h3,h4{font-family:Archivo,system-ui,sans-serif;text-wrap:balance;margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.eyebrow{font-family:Archivo,sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+
+header.top{border-bottom:1px solid var(--line);background:var(--surface)}
+.top-in{max-width:1180px;margin:0 auto;padding:26px 20px 20px;display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between}
+h1{font-size:clamp(26px,4.4vw,40px);font-weight:700;letter-spacing:-.02em;line-height:1.05}
+.sub{color:var(--ink-2);font-size:15px;max-width:62ch;margin-top:8px}
+.stamp{font-size:12px;color:var(--ink-3);text-align:right;line-height:1.7}
+.stamp b{color:var(--ink);font-weight:600}
+.stamp .pend{color:var(--call);font-weight:600}
+
+nav.tabs{position:sticky;top:0;z-index:40;background:var(--ground);border-bottom:1px solid var(--line)}
+.tabs-in{max-width:1180px;margin:0 auto;padding:0 20px;display:flex;gap:2px;overflow-x:auto}
+.tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;padding:14px 14px 12px;font-family:Archivo,sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.panel{padding-top:34px}
+.panel[hidden]{display:none!important}
+
+h2.sec{font-size:22px;font-weight:700;letter-spacing:-.01em;margin-bottom:6px}
+h3.sub3{font-size:16px;font-weight:600;margin-bottom:4px}
+p.lede{color:var(--ink-2);font-size:16px;max-width:68ch}
+p.body{color:var(--ink-2);font-size:14.5px;max-width:70ch}
+p.body b, li b{color:var(--ink);font-weight:600}
+.stack{display:flex;flex-direction:column;gap:28px}
+.rule{height:1px;background:var(--line);border:0;margin:0}
+ul.list{margin:10px 0 0;padding-left:20px;color:var(--ink-2);font-size:14.5px;max-width:70ch;display:flex;flex-direction:column;gap:7px}
+
+.quote{border-left:3px solid var(--line-2);padding:4px 0 4px 18px;color:var(--ink-2);font-size:15px;max-width:66ch;font-style:italic}
+.quote b{font-style:normal;color:var(--ink)}
+
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(272px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:17px 19px}
+.card h4{font-size:15px;font-weight:600;margin-bottom:6px}
+.card p{font-size:14px;color:var(--ink-2);margin:0}
+.card.pick{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.card.no{opacity:.82}
+
+.findings{display:flex;flex-direction:column;gap:12px}
+.find{display:grid;grid-template-columns:auto 1fr;gap:0 16px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line-2);border-radius:3px;padding:16px 18px}
+.find[data-sev="critical"]{border-left-color:var(--crit)}
+.find[data-sev="high"]{border-left-color:var(--warn)}
+.find[data-sev="medium"]{border-left-color:var(--accent)}
+.find-id{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--ink-3);padding-top:3px}
+.find-head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.find-head h4{font-size:15.5px;font-weight:600}
+.sev{font-family:Archivo,sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px}
+.sev[data-s="critical"]{background:var(--crit-soft);color:var(--crit)}
+.sev[data-s="high"]{background:var(--warn-soft);color:var(--warn)}
+.sev[data-s="medium"]{background:var(--accent-soft);color:var(--accent)}
+.find p{grid-column:2;margin:7px 0 0;font-size:14px;color:var(--ink-2)}
+.ev{grid-column:2;margin-top:11px;background:var(--sunk);border-radius:3px;padding:10px 12px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.75;color:var(--ink-2);overflow-x:auto;white-space:pre}
+.ev b{color:var(--ink);font-weight:600}
+.ev .bad{color:var(--crit);font-weight:600}
+.ev .good{color:var(--ok);font-weight:600}
+
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+table.t{border-collapse:collapse;width:100%;min-width:600px;font-size:13.5px}
+table.t th{font-family:Archivo,sans-serif;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);text-align:left;padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.t td{padding:11px 14px;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:top}
+table.t tr:last-child td{border-bottom:0}
+table.t td.mono{font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink)}
+table.t td b{color:var(--ink)}
+
+.split{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media (max-width:760px){.split{grid-template-columns:1fr}}
+.inbox,.outbox{border:1px solid var(--line);border-radius:4px;padding:17px 19px;background:var(--surface)}
+.inbox{border-left:3px solid var(--ok)}
+.outbox{border-left:3px solid var(--crit)}
+.inbox h4,.outbox h4{font-size:14px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:10px}
+.inbox h4{color:var(--ok)} .outbox h4{color:var(--crit)}
+.inbox ul,.outbox ul{margin:0;padding-left:18px;font-size:14px;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+
+.frames{display:flex;gap:44px;flex-wrap:wrap;align-items:flex-start}
+.framecol{flex:0 0 auto;max-width:100%}
+.framecap{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.framecap h3{font-family:Archivo,sans-serif;font-size:15px;font-weight:700}
+.framecap span{font-size:12px;color:var(--ink-3)}
+.truesize{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);margin-top:10px;letter-spacing:.02em;max-width:390px;line-height:1.7}
+
+.phone{position:relative;width:390px;max-width:100%;background:#F7F2E9;border:1px solid var(--line-2);border-radius:14px;overflow:hidden;
+  font-family:"Public Sans",system-ui,sans-serif;color:#1E1F1C;
+  --p-card:#FFFFFF;--p-ink:#1E1F1C;--p-ink2:#71746A;--p-ink3:#8E9186;--p-olive:#54700F;--p-olive-soft:#EBF2D8;--p-call:#8A5410;--p-call-soft:#F7EBD8;--p-call-line:#DDBE8A;--p-line:#E7E2D5;--p-mono:"IBM Plex Mono",monospace;}
+.phone.tall{height:844px}
+.phone *{box-sizing:border-box}
+.ph-mast{height:53px;background:#fff;border-bottom:1px solid var(--p-line);display:flex;align-items:center;gap:8px;padding:0 14px;font-size:17px;font-weight:700}
+.ph-mast em{font-style:normal;color:var(--p-ink3);font-weight:400;font-size:14px}
+.ph-body{padding:12px 16px;display:flex;flex-direction:column;gap:10px}
+.ph-h1{font-family:Archivo,sans-serif;font-size:19px;font-weight:700;line-height:1.2}
+.ph-meta{font-size:12.5px;color:var(--p-ink2)}
+.ph-setup{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:11px 13px;display:flex;justify-content:space-between;align-items:center;gap:10px;min-height:56px}
+.ph-setup b{display:block;font-size:14px;font-weight:600}
+.ph-setup span{font-size:12px;color:var(--p-ink2)}
+.ph-setup i{font-style:normal;color:var(--p-ink3);font-size:18px}
+.ph-tools{display:flex;gap:6px}
+.ph-sq{width:44px;height:44px;border:1px solid var(--p-line);border-radius:9px;background:#fff;display:grid;place-items:center;font-size:15px;color:var(--p-ink2);flex:0 0 auto}
+.ph-step{display:flex;align-items:center;gap:8px;background:var(--p-olive-soft);border:1px solid #D4E0B6;border-radius:9px;padding:7px 10px;min-height:44px}
+.ph-step b{font-family:var(--p-mono);font-size:12.5px;font-weight:700;color:var(--p-olive);letter-spacing:.04em}
+.ph-arrow{width:32px;height:32px;border-radius:7px;background:#fff;border:1px solid #D4E0B6;display:grid;place-items:center;color:var(--p-olive);font-size:15px;flex:0 0 auto}
+.ph-dots{display:flex;gap:4px;margin-left:auto}
+.ph-dot{width:8px;height:8px;border-radius:50%;background:#C9D9A4}
+.ph-dot.on{background:var(--p-olive)}
+.ph-dot.hole{background:#E3B85F}
+.ph-grouplbl{margin:7px 3px 1px;font-family:var(--p-mono);font-size:11.5px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--p-ink2);display:flex;align-items:center;gap:7px}
+.ph-grouplbl.call{color:var(--p-call)}
+.ph-row{display:flex;align-items:center;gap:10px;background:var(--p-card);border:1px solid var(--p-line);border-radius:9px;padding:9px 11px;min-height:52px}
+.ph-row.callrow{background:var(--p-call-soft);border-color:var(--p-call-line)}
+.ph-num{font-family:var(--p-mono);font-size:12px;font-weight:700;color:var(--p-ink2);min-width:18px}
+.ph-name{font-weight:600;font-size:14px;flex:1;min-width:0}
+.ph-name small{display:block;font-weight:400;font-size:11.5px;color:var(--p-ink2)}
+.ph-pos{border:1px solid var(--p-line);border-radius:7px;min-width:52px;height:38px;display:grid;place-items:center;font-family:var(--p-mono);font-size:12px;font-weight:600;background:#fff;color:var(--p-ink)}
+.ph-add{border:1px solid var(--p-olive);color:var(--p-olive);background:#fff;border-radius:7px;height:36px;padding:0 12px;font-size:12.5px;font-weight:600;display:grid;place-items:center}
+.ph-mark{font-family:var(--p-mono);font-size:10px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;background:var(--p-call);color:#FFF8EE;border-radius:3px;padding:3px 6px;flex:0 0 auto}
+.ph-callbtn{border:1px dashed var(--p-call-line);color:var(--p-call);background:var(--p-call-soft);border-radius:9px;min-height:48px;display:flex;align-items:center;justify-content:center;gap:8px;font-size:13.5px;font-weight:600}
+.ph-check{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:11px 13px;font-size:12.5px;color:var(--p-ink2);display:flex;flex-direction:column;gap:4px}
+.ph-check b{font-size:13.5px;color:var(--p-ink);font-weight:600}
+.ph-sect{background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:12px 13px}
+.ph-sect h4{font-family:Archivo,sans-serif;font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:3px}
+.ph-sect p{font-size:12px;color:var(--p-ink2);margin:0 0 9px}
+.ph-nav{position:absolute;left:0;right:0;bottom:0;height:64px;background:#fff;border-top:1px solid var(--p-line);display:flex;align-items:center;justify-content:space-around;font-size:10.5px;color:var(--p-ink3);font-family:var(--p-mono);letter-spacing:.06em;text-transform:uppercase}
+.ph-nav b{color:var(--p-olive);font-weight:700}
+.ph-scrim{position:absolute;inset:0;background:rgba(24,26,22,.42)}
+.ph-drawer{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid var(--p-line);border-radius:18px 18px 0 0;padding:9px 16px 16px;display:flex;flex-direction:column;gap:9px}
+.ph-grab{width:38px;height:4px;border-radius:2px;background:#D9D4C6;margin:0 auto 5px}
+.ph-drawer h4{font-family:Archivo,sans-serif;font-size:16px;font-weight:700}
+.ph-drawer .lbl{font-family:var(--p-mono);font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--p-ink2);margin-top:2px}
+.ph-new{border:1px dashed var(--p-call-line);background:var(--p-call-soft);color:var(--p-call);border-radius:9px;min-height:52px;display:flex;align-items:center;justify-content:space-between;padding:0 14px;font-size:14px;font-weight:600}
+.ph-empty{border:1px dashed var(--p-line);border-radius:9px;padding:14px;font-size:13px;color:var(--p-ink2);text-align:center;background:#FBF8F1}
+
+.mk{position:absolute;width:23px;height:23px;border-radius:50%;background:var(--call);color:#FFF8EE;border:2px solid var(--ground);font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:700;display:grid;place-items:center;cursor:pointer;padding:0;z-index:3;line-height:1}
+.mk:hover{transform:scale(1.14)}
+.mk[aria-pressed="true"]{background:var(--ink);transform:scale(1.14)}
+.mk:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.notebox{position:sticky;top:78px;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:18px 20px;min-width:290px;flex:1 1 290px;max-width:430px}
+.note-empty{font-size:13.5px;color:var(--ink-3);margin:0}
+.note-in h4{font-size:16px;font-weight:600;margin:3px 0 7px}
+.note-in p{font-size:14px;color:var(--ink-2);margin:0}
+.note-in p b{color:var(--ink);font-weight:600}
+
+.ruling{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:19px 21px}
+.ruling-head{display:flex;flex-wrap:wrap;gap:10px;align-items:baseline;margin-bottom:5px}
+.rid{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:700;color:var(--call);background:var(--call-soft);border-radius:3px;padding:2px 8px}
+.ruling-head h3{font-size:16.5px;font-weight:600}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(215px,1fr));gap:10px;margin-top:13px}
+.opt{border:1px solid var(--line);border-radius:4px;padding:12px 14px;background:var(--ground)}
+.opt[data-rec="1"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt .ol{font-family:Archivo,sans-serif;font-size:12px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);margin-bottom:4px;display:flex;gap:7px;align-items:center}
+.opt[data-rec="1"] .ol{color:var(--accent)}
+.opt p{font-size:13.5px;color:var(--ink-2);margin:0}
+.recpill{font-size:9.5px;letter-spacing:.09em;background:var(--accent);color:#F7FAF0;border-radius:2px;padding:2px 5px}
+:root[data-theme="dark"] .recpill,:root:not([data-theme="light"]) .recpill{color:#15200A}
+@media (prefers-color-scheme: light){:root:not([data-theme="dark"]) .recpill{color:#F7FAF0}}
+.why{margin-top:12px;font-size:13.5px;color:var(--ink-2);border-top:1px dashed var(--line);padding-top:11px}
+.why b{color:var(--ink)}
+
+.phase{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:18px 20px;border-left:3px solid var(--accent)}
+.phase.later{border-left-color:var(--line-2)}
+.phase h3{font-size:16px;font-weight:600;margin-bottom:3px}
+.phase .when{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3);letter-spacing:.06em;text-transform:uppercase;margin-bottom:9px}
+.phase ol{margin:0;padding-left:20px;font-size:14px;color:var(--ink-2);display:flex;flex-direction:column;gap:6px}
+
+#walk{display:flex;flex-direction:column;gap:9px;margin-top:8px}
+.wgrp{font-family:Archivo,sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-top:20px;padding-bottom:5px;border-bottom:1px solid var(--line)}
+.wgrp.neg{color:var(--crit)}
+.step{display:grid;grid-template-columns:auto auto 1fr;gap:12px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:12px 15px}
+.step:has(input:checked){background:var(--ok-soft);border-color:var(--ok)}
+.step .sid{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--ink-3);padding-top:2px;min-width:20px}
+.step input{width:19px;height:19px;accent-color:var(--accent);margin-top:2px;cursor:pointer}
+.step label{font-size:14px;color:var(--ink-2);cursor:pointer}
+.step label b{color:var(--ink);font-weight:600}
+.walkbar{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:22px;padding-top:18px;border-top:1px solid var(--line)}
+.walkbar button{appearance:none;font-family:Archivo,sans-serif;font-size:13px;font-weight:600;border-radius:4px;padding:10px 17px;cursor:pointer;border:1px solid var(--line-2);background:var(--surface);color:var(--ink)}
+.walkbar button:hover{border-color:var(--ink-3)}
+.walkbar button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+#count{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--ink-2);margin-right:auto}
+#paste{width:100%;min-height:150px;margin-top:14px;background:var(--sunk);border:1px solid var(--line);border-radius:4px;padding:13px;font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-2);resize:vertical}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div>
+      <p class="eyebrow">Coaches portal · Lineups</p>
+      <h1>Call-ups</h1>
+      <p class="sub">A player borrowed for one game. In the lineup, on the card, on the bench — and nowhere near dues, skills &amp; goals, or the season report.</p>
+    </div>
+    <div class="stamp">
+      <div>Drawn · ruled · built <b>2026-09-22</b></div>
+      <div class="pend">Phase 1 on dev · QA walk owed</div>
+      <div><span class="mono">COACH_CALL_UPS_PLAN.md</span></div>
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-in" role="tablist">
+    <button class="tab" role="tab" id="t-case" aria-controls="p-case" aria-selected="true">The case</button>
+    <button class="tab" role="tab" id="t-today" aria-controls="p-today" aria-selected="false">What it does today</button>
+    <button class="tab" role="tab" id="t-mock" aria-controls="p-mock" aria-selected="false">Before &amp; after</button>
+    <button class="tab" role="tab" id="t-map" aria-controls="p-map" aria-selected="false">In / out</button>
+    <button class="tab" role="tab" id="t-rule" aria-controls="p-rule" aria-selected="false">Rulings needed</button>
+    <button class="tab" role="tab" id="t-plan" aria-controls="p-plan" aria-selected="false">Build plan</button>
+    <button class="tab" role="tab" id="t-qa" aria-controls="p-qa" aria-selected="false">QA walk</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<!-- ═══ THE CASE ═══ -->
+<section class="panel" id="p-case" role="tabpanel" aria-labelledby="t-case">
+  <div class="stack">
+    <div>
+      <h2 class="sec">Teams run short, and the product has no word for it</h2>
+      <p class="lede">A player gets sick on Friday, two families are away, and Saturday needs nine. So the coach borrows one — from the club's other team, from the level below. Minor sport calls this a <b>call-up</b>.</p>
+    </div>
+
+    <div class="quote">
+      "we need to have the ability to add 'call up' in our games to see them in lineups and such. we don't want them cluttering up our screens that have roster lists where it is not applicable (i.e. player dues, skills and goals, etc.) but also need them available for things like making rosters and what not. <b>at a minimum they need to be available for lineup construction</b>"
+      <div style="font-style:normal;font-size:12.5px;color:var(--ink-3);margin-top:8px">— the owner, 2026-09-22</div>
+    </div>
+
+    <div>
+      <h3 class="sub3">What a coach does today</h3>
+      <p class="body">One of three things, and all three are bad. <b>Add them to the roster</b> — and now they are on the team: dues, skills &amp; goals, awards, the season report, family emails, and they roll into next season. <b>Leave them out</b> — and the builder's lineup is not the lineup being played. <b>Keep it on paper</b> — the worst one, because then the printed card, the bench console, the game notes and the report are all working from a fiction.</p>
+    </div>
+
+    <hr class="rule">
+
+    <div>
+      <h2 class="sec">Two finds that set the shape</h2>
+      <p class="body">Both came out of reading the code rather than the ask, and each one changes what gets built.</p>
+    </div>
+
+    <div class="findings">
+      <div>
+      <h2 class="sec">What the build turned up</h2>
+      <p class="body">Four defects, none of them in the request, all fixed. Each is a screen that would have been wrong in a way nobody would have reported as a call-up bug.</p>
+    </div>
+
+    <div class="findings" id="built-finds">
+      <div class="find" data-sev="critical">
+        <div class="find-id">B1</div>
+        <div><div class="find-head"><h4>Found while building: the bench console silently deleted call-ups from a saved lineup</h4><span class="sev" data-s="critical">Fixed</span></div></div>
+        <p>The console trims a saved lineup down to the players it was handed — on purpose, so a player deactivated mid-season cannot poison every save. Call-ups were not in that list, so the console dropped them on load and <b>the next substitution wrote the lineup back without them</b>. Mid-game, no error, a real player gone from the card.</p>
+      </div>
+      <div class="find" data-sev="high">
+        <div class="find-id">B2</div>
+        <div><div class="find-head"><h4>Player dues would have listed every call-up at /usr/bin/bash — the first screen the request named</h4><span class="sev" data-s="high">Fixed</span></div></div>
+        <p>That screen deliberately reads the <b>whole</b> roster, because a player who left mid-season can still owe money — so it inherited none of the free exclusion every other money surface got. Caught by the new guard rather than by reading.</p>
+      </div>
+      <div class="find" data-sev="high">
+        <div class="find-id">B3</div>
+        <div><div class="find-head"><h4>Re-opening a saved game dropped its call-up from the batting order</h4><span class="sev" data-s="high">Fixed</span></div></div>
+        <p>The builder looked its saved players up against the roster alone, so a call-up resolved to nothing and was quietly filtered out — leaving a hole in the order and a card that no longer matched the game.</p>
+      </div>
+      <div class="find" data-sev="medium">
+        <div class="find-id">B4</div>
+        <div><div class="find-head"><h4>The player profile would have offered to move a borrowed player onto the roster</h4><span class="sev" data-s="medium">Fixed</span></div></div>
+        <p>That page carries the <i>Take them off the roster</i> control, which flips the very field that makes someone a call-up. It now refuses to open for one, and the roster save refuses the value outright.</p>
+      </div>
+    </div>
+
+    <div>
+      <h2 class="sec">Two finds that set the shape</h2>
+      <p class="body">Both came out of reading the code rather than the ask, and each one changes what gets built.</p>
+    </div>
+
+    
+      <div class="find" data-sev="critical">
+        <div class="find-id">F1</div>
+        <div>
+          <div class="find-head"><h4>A call-up in the season report would tell the coach a lie</h4><span class="sev" data-s="critical">Critical</span></div>
+        </div>
+        <p>The season playing-time report is the most trusted screen in the lineups area: it catches a kid being short-changed on field time. It is driven by saved lineup entries. A call-up admitted naively lands in the fair-play table like this, beside teammates with a full season behind them:</p>
+        <div class="ev"><b>FAIR PLAY — season to date</b>
+  #7   Morgan          14 games    58 field    26 bench
+  #12  Riley           14 games    55 field    29 bench
+  #3   Avery           13 games    51 field    31 bench
+  <span class="bad">#22  Jamie (call-up)  1 game      4 field     2 bench   ← reads as neglect</span></div>
+        <p><b>The rule this sets, and it is the binding one:</b> a call-up counts <b>inside a game</b> and never <b>across the season</b>. The game's own checks — everyone bats, coverage, the pitching cap, Mark ready — must count them, because they are really out there taking a slot. Every season-long figure must not.</p>
+      </div>
+
+      <div class="find" data-sev="high">
+        <div class="find-id">F2</div>
+        <div>
+          <div class="find-head"><h4>A call-up attached to the season re-creates the clutter it was meant to remove</h4><span class="sev" data-s="high">High</span></div>
+        </div>
+        <p>If a call-up is simply "a different kind of player on the team", they sit in the available list of <b>every</b> game for the rest of the year. Four across a season means four extra names in every lineup builder forever, and the coach has to remember which one is actually coming on Saturday. The ask said it already: <b>"add call up in our <i>games</i>"</b>. So the primary object is an appearance — <i>Jamie is called up for Saturday</i> — with a saved pool underneath so nobody retypes Jamie every week. The appearance count comes free, and several leagues cap how many games an affiliate may play.</p>
+      </div>
+
+      <div class="find" data-sev="medium">
+        <div class="find-id">F3</div>
+        <div>
+          <div class="find-head"><h4>Found on the way: a roster state the product can render and the database can never produce</h4><span class="sev" data-s="medium">Medium · unrelated, rides along</span></div>
+        </div>
+        <p>The roster status type carries three values; the live constraint allows two. Nothing writes the third, and two surfaces read it — the closed-season page renders <i>"Left during the season"</i> for a state that cannot exist.</p>
+        <div class="ev">type   RepRosterStatus = 'active' | 'inactive' | <span class="bad">'released'</span>
+live   status = ANY (ARRAY['active', 'inactive'])          <span class="bad">← 'released' is unwritable</span></div>
+        <p>It is a dead branch, and it is <b>exactly the mistake this feature must not repeat</b>: a status value added to the type without the constraint change is a value the product shows and the database refuses. Retiring it rides with this work.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ TODAY ═══ -->
+<section class="panel" id="p-today" role="tabpanel" aria-labelledby="t-today" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">What the code does today</h2>
+      <p class="lede">Read out of the working tree and the live dev schema on 2026-09-22. This is the evidence the model choice rests on, and it is unusually favourable.</p>
+    </div>
+
+    <div class="cards">
+      <div class="card"><h4>One roster table, 24 dependants</h4><p>Every player-shaped thing in the portal hangs off one table — attendance, lineup entries, game moments, dues, payments, awards, documents, observations, goals, baselines, family links. Any model that puts a call-up elsewhere has to answer all 24.</p></div>
+      <div class="card"><h4>~59 roster reads already screen for "active"</h4><p>Lineups, attendance, the console, awards, development, dues, practice plans, templates, tryouts, insights, the recap, Wrapped, the settlement, the rollover. Every one of them.</p></div>
+      <div class="card"><h4>Two writes go further and reject</h4><p>The lineup save refuses any id outside the active set; the attendance save answers <span class="mono">400 — "Attendance can only be saved for active roster players"</span>. That is the guard this feature opens, and it must be opened narrowly.</p></div>
+    </div>
+
+    <div>
+      <h3 class="sub3">The consequence, and why it decides the model</h3>
+      <p class="body">If a call-up is a roster entry that is <b>not active</b>, then all ~59 of those screens exclude them <b>the day the change lands, with no code touched</b> — and so does anything built next year. The feature <b>fails safe</b>: a surface we forget hides a call-up.</p>
+    </div>
+
+    <hr class="rule">
+
+    <div>
+      <h3 class="sub3">The seven places that do the opposite test — these fail open</h3>
+      <p class="body">Seven roster-scoped places ask for the ones who <i>aren't</i> on the team. Each needs a deliberate answer, because each would otherwise show a call-up alongside departed players.</p>
+    </div>
+
+    <div class="tablewrap">
+      <table class="t">
+        <thead><tr><th>Surface</th><th>What it asks for today</th><th>What a call-up would wrongly do</th></tr></thead>
+        <tbody>
+          <tr><td><b>Roster page</b> — off-roster list</td><td class="mono">status !== 'active'</td><td>appear under "off the roster" beside departed players</td></tr>
+          <tr><td><b>Roster page</b> — reorder tail</td><td class="mono">status !== 'active'</td><td>be re-ordered as though departed</td></tr>
+          <tr><td><b>Player profile</b> — not-active banner</td><td class="mono">status !== 'active'</td><td>wear a banner written for a departed player</td></tr>
+          <tr><td><b>Closed-season page</b> — roster shelf</td><td class="mono">status !== 'active'</td><td>appear in the archived roster, labelled <i>"Not active"</i></td></tr>
+          <tr><td><b>Development session</b> — departed with readings</td><td class="mono">status !== 'active'</td><td>— safe (a call-up never has readings), but assert it</td></tr>
+          <tr><td><b>Season settlement</b> — the departed flag</td><td class="mono">departed: status !== 'active'</td><td>— safe <b>by accident</b> (the loop runs over dues rows and a call-up has none). Gets an explicit guard.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p class="body">Also on the audit list: <b>55 queries touch the roster table directly and only 10 carry a status filter.</b> The other 45 are single-row reads by id or writes — not a hazard on their own, but each gets checked rather than assumed.</p>
+
+    <hr class="rule">
+
+    <div>
+      <h3 class="sub3">Three models, and why one wins</h3>
+    </div>
+    <div class="cards">
+      <div class="card pick">
+        <h4>A · A roster entry of a different kind ✅</h4>
+        <p>A call-up is a roster row that is not active. All ~59 filters exclude them free, all 24 foreign keys keep working, <b>and it fails safe</b>. Cost: the seven sites above need answers, and "this call-up is inactive" becomes inexpressible — which it never needs to be. You remove a call-up; you don't retire one.</p>
+      </div>
+      <div class="card no">
+        <h4>B · A tick-box on a normal player</h4>
+        <p>Tidier in theory and wrong on the only axis that matters. All ~59 filters would <b>include</b> call-ups from the moment it lands — in dues, in skills &amp; goals, in family emails, in the fair-play report — which is the clutter the ask is about. It <b>fails open</b>, and so does every screen built after it. Rejected.</p>
+      </div>
+      <div class="card no">
+        <h4>C · A separate call-up table</h4>
+        <p>Cleanest identity; breaks the one thing the ask is about. Lineup entries, attendance, notes, the grid, the generator, the analysis, the caps, the printed card and the console all key on a single player id. Model C means every one of them merging two lists. Rejected for v1.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ MOCKUPS ═══ -->
+<section class="panel" id="p-mock" role="tabpanel" aria-labelledby="t-mock" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">Before &amp; after — at true size</h2>
+      <p class="lede">The lineup builder at 390&times;844, the width this is used at. Tap any numbered marker to read what it is.</p>
+      <div class="find" data-sev="medium" style="grid-template-columns:1fr;margin-top:4px">
+        <div class="find-head" style="margin-bottom:2px"><h4>Corrected 2026-09-22 — the builder offers no call-ups until you ask for one</h4></div>
+        <p style="grid-column:1">The first draft of the <i>Proposed</i> frame showed a standing <i>Call-ups &middot; 1</i> list sitting under the lineup, which is the season-pool behaviour the plan rejects two sections earlier. <b>Corrected:</b> however many call-ups are saved, a new game&rsquo;s builder shows none of them &mdash; only the button. Tapping it opens the saved list, or takes a new name. See markers 2 and 5.</p>
+      </div>
+    </div>
+
+    <div class="frames">
+      <div class="framecol">
+        <div class="framecap"><h3>Today</h3><span>390 &times; 844 · the builder, short two players</span></div>
+        <div class="phone tall">
+          <div class="ph-mast">Riverdale Ridge <em>· Lineup</em></div>
+          <div class="ph-body">
+            <div class="ph-h1">vs Kanata Selects</div>
+            <div class="ph-meta">Sat 27 Sep · 10:00 a.m. · Diamond 1</div>
+            <div class="ph-setup"><div><b>Setup</b><span>Everyone bats · 6 innings</span></div><i>&rsaquo;</i></div>
+            <div class="ph-tools"><div class="ph-sq">&#8617;</div><div class="ph-sq">&#8618;</div><div class="ph-sq">&#9113;</div><div class="ph-sq">&#9776;</div><div class="ph-sq">&#10005;</div></div>
+            <div class="ph-step"><div class="ph-arrow">&lsaquo;</div><b>INNING 1 OF 6</b><div class="ph-arrow">&rsaquo;</div><div class="ph-dots"><span class="ph-dot on"></span><span class="ph-dot hole"></span><span class="ph-dot"></span><span class="ph-dot"></span><span class="ph-dot"></span><span class="ph-dot"></span></div></div>
+            <div class="ph-check"><b>2 positions open</b><span>Everyone bats · 8 in the order</span></div>
+            <div class="ph-row"><span class="ph-num">1</span><span class="ph-name">Morgan Reyes<small>#7</small></span><span class="ph-pos">P</span></div>
+            <div class="ph-row"><span class="ph-num">2</span><span class="ph-name">Riley Chan<small>#12</small></span><span class="ph-pos">C</span></div>
+            <div class="ph-row"><span class="ph-num">3</span><span class="ph-name">Avery Boucher<small>#3</small></span><span class="ph-pos">SS</span></div>
+            <div class="ph-grouplbl">Not in the lineup · 0</div>
+            <div class="ph-empty">Everyone on the roster is in the lineup.<br><b>Two positions are still open.</b></div>
+          </div>
+          <div class="ph-nav"><span>Home</span><span><b>Schedule</b></span><span>Team</span><span>Money</span><span>More</span></div>
+        </div>
+        <p class="truesize">Three families away. Eight available, nine needed. The builder has nothing left to offer and no way to say so — the coach finishes this lineup on paper, and the printed card, the bench console and the season report all stop matching the game.</p>
+      </div>
+
+      <div class="framecol" style="position:relative">
+        <div class="framecap"><h3>Proposed</h3><span>390 &times; 844 · one call-up added</span></div>
+        <div class="phone tall">
+          <div class="ph-mast">Riverdale Ridge <em>· Lineup</em></div>
+          <div class="ph-body">
+            <div class="ph-h1">vs Kanata Selects</div>
+            <div class="ph-meta">Sat 27 Sep · 10:00 a.m. · Diamond 1</div>
+            <div class="ph-setup"><div><b>Setup</b><span>Everyone bats · 6 innings</span></div><i>&rsaquo;</i></div>
+            <div class="ph-tools"><div class="ph-sq">&#8617;</div><div class="ph-sq">&#8618;</div><div class="ph-sq">&#9113;</div><div class="ph-sq">&#9776;</div><div class="ph-sq">&#10005;</div></div>
+            <div class="ph-step"><div class="ph-arrow">&lsaquo;</div><b>INNING 1 OF 6</b><div class="ph-arrow">&rsaquo;</div><div class="ph-dots"><span class="ph-dot on"></span><span class="ph-dot on"></span><span class="ph-dot on"></span><span class="ph-dot on"></span><span class="ph-dot on"></span><span class="ph-dot on"></span></div></div>
+            <div class="ph-check" style="border-color:#BBD08C;background:#F4F8EA"><b>Every position covered</b><span>Everyone bats · 9 in the order · 1 call-up</span></div>
+            <div class="ph-row"><span class="ph-num">1</span><span class="ph-name">Morgan Reyes<small>#7</small></span><span class="ph-pos">P</span></div>
+            <div class="ph-row"><span class="ph-num">2</span><span class="ph-name">Riley Chan<small>#12</small></span><span class="ph-pos">C</span></div>
+            <div class="ph-row callrow"><span class="ph-num">3</span><span class="ph-name">Jamie Okafor<small>#22</small></span><span class="ph-mark">Call-up</span><span class="ph-pos">2B</span></div>
+            <div class="ph-grouplbl">Not in the lineup · 0</div>
+            <div class="ph-empty">Everyone on the roster is in the lineup.</div>
+            <div class="ph-callbtn">&#43;&nbsp; Call up a player</div>
+          </div>
+          <div class="ph-nav"><span>Home</span><span><b>Schedule</b></span><span>Team</span><span>Money</span><span>More</span></div>
+        </div>
+        <button class="mk" data-n="a1" style="left:-11px;top:724px" aria-label="Marker 1">1</button>
+        <button class="mk" data-n="a2" style="left:-11px;top:626px" aria-label="Marker 2">2</button>
+        <button class="mk" data-n="a3" style="left:-11px;top:571px" aria-label="Marker 3">3</button>
+        <button class="mk" data-n="a4" style="left:-11px;top:400px" aria-label="Marker 4">4</button>
+        <p class="truesize">Nine in the order, every position covered, the card prints the lineup that is actually played — and <b>the builder is offering no call-ups at all</b>, because none are called up to this game beyond the one already batting third.</p>
+      </div>
+
+      <div class="framecol" style="position:relative">
+        <div class="framecap"><h3>Tapping it</h3><span>390 wide · the pool lives here, not on the page</span></div>
+        <div class="phone" style="height:560px">
+          <div class="ph-mast">Riverdale Ridge <em>· Lineup</em></div>
+          <div class="ph-body">
+            <div class="ph-h1">vs Kanata Selects</div>
+            <div class="ph-meta">Sat 27 Sep · 10:00 a.m. · Diamond 1</div>
+            <div class="ph-setup"><div><b>Setup</b><span>Everyone bats · 6 innings</span></div><i>&rsaquo;</i></div>
+          </div>
+          <div class="ph-scrim"></div>
+          <div class="ph-drawer">
+            <div class="ph-grab"></div>
+            <h4>Call up a player</h4>
+            <div class="lbl">Called up before</div>
+            <div class="ph-row callrow"><span class="ph-name">Sam Delgado<small>#40 · 2 games this season</small></span><span class="ph-add">Add</span></div>
+            <div class="ph-row callrow"><span class="ph-name">Noor Haddad<small>#18 · 1 game this season</small></span><span class="ph-add">Add</span></div>
+            <div class="ph-row callrow"><span class="ph-name">Jamie Okafor<small>#22 · already in this game</small></span><span class="ph-pos" style="border:0;color:var(--p-ink3)">&#10003;</span></div>
+            <div class="ph-new"><span>&#43;&nbsp; Someone new</span><span>&rsaquo;</span></div>
+          </div>
+        </div>
+        <button class="mk" data-n="a5" style="left:-11px;top:280px" aria-label="Marker 5">5</button>
+        <button class="mk" data-n="a6" style="left:-11px;top:352px" aria-label="Marker 6">6</button>
+        <button class="mk" data-n="a7" style="left:-11px;top:492px" aria-label="Marker 7">7</button>
+        <p class="truesize">Three call-ups in the system and the builder showed none of them until asked. One tap to re-use a name, one tap to create a new one — and the list never grows on the page itself.</p>
+      </div>
+
+      <div class="notebox" id="note">
+        <p class="note-empty">Tap a numbered marker on the frame to read what it is.</p>
+      </div>
+    </div>
+
+    <hr class="rule">
+
+    <div class="frames">
+      <div class="framecol" style="position:relative">
+        <div class="framecap"><h3>The roster page</h3><span>390 wide · the pool, kept quiet</span></div>
+        <div class="phone">
+          <div class="ph-mast">Roster <em>· 2026</em></div>
+          <div class="ph-body">
+            <div class="ph-h1">Your team</div>
+            <div class="ph-meta">11 players</div>
+            <div class="ph-row"><span class="ph-num">#3</span><span class="ph-name">Avery Boucher<small>Shortstop</small></span><span class="ph-pos">&rsaquo;</span></div>
+            <div class="ph-row"><span class="ph-num">#7</span><span class="ph-name">Morgan Reyes<small>Pitcher</small></span><span class="ph-pos">&rsaquo;</span></div>
+            <div class="ph-grouplbl">Off the roster · 1</div>
+            <div class="ph-row" style="opacity:.62"><span class="ph-num">#9</span><span class="ph-name">Casey Lund<small>Left during the season</small></span><span class="ph-pos">&rsaquo;</span></div>
+            <div class="ph-sect" style="margin-top:6px">
+              <h4>Call-ups <span class="ph-mark">Not your roster</span></h4>
+              <p>Players you have borrowed for a game. They are not counted in your roster and never appear in dues, skills &amp; goals or awards.</p>
+              <div class="ph-row callrow"><span class="ph-name">Jamie Okafor<small>#22 · 1 game</small></span><span class="ph-pos">&times;</span></div>
+              <div class="ph-row callrow" style="margin-top:6px"><span class="ph-name">Sam Delgado<small>#40 · 2 games</small></span><span class="ph-pos">&times;</span></div>
+            </div>
+          </div>
+        </div>
+        <button class="mk" data-n="a8" style="left:-11px;top:378px" aria-label="Marker 8">8</button>
+        <button class="mk" data-n="a9" style="left:-11px;top:424px" aria-label="Marker 9">9</button>
+        <button class="mk" data-n="a10" style="left:-11px;top:487px" aria-label="Marker 10">10</button>
+        <p class="truesize">Below the roster, below even the departed players, in its own box that says what it is. Nothing about this section is allowed to make the live roster noisier.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ IN / OUT ═══ -->
+<section class="panel" id="p-map" role="tabpanel" aria-labelledby="t-map" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">Where a call-up appears — and where it never does</h2>
+      <p class="lede">The right-hand column is the actual feature. Anything that moves money, judges a player, reaches a family, or measures a season is on it.</p>
+    </div>
+
+    <div class="split">
+      <div class="inbox">
+        <h4>In the game</h4>
+        <ul>
+          <li>The lineup builder, <b>for the game they were called up to</b> — under their own Call-ups heading</li>
+          <li>The batting order, the field grid, the per-inning list</li>
+          <li>The per-game lineup check and <b>Mark ready</b> — everyone bats, coverage, clashes</li>
+          <li>The per-game pitching cap <i>(pending R2)</i></li>
+          <li>The printed lineup card, game sheet, poster and PDF</li>
+          <li>The bench console — on the field, on the bench, in a swap</li>
+          <li>Game notes and moments — they made the play</li>
+          <li><b>That game's</b> attendance sheet, and no other <i>(pending R4)</i></li>
+          <li>A quiet Call-ups section on the roster page — name, number, games played, remove</li>
+        </ul>
+      </div>
+      <div class="outbox">
+        <h4>Never</h4>
+        <ul>
+          <li>Player dues, the budget plan, the installment generator</li>
+          <li>Fundraiser credit, payouts, refunds, the season settlement</li>
+          <li>Skills &amp; goals, development sessions, observations, evaluations, continuity</li>
+          <li>Awards · documents · measurables</li>
+          <li>Tryouts and baselines</li>
+          <li>Family emails, practice-plan sends, the family portal</li>
+          <li>The roster count and every "your team has N players" figure</li>
+          <li><b>Every season-long playing-time figure</b> — fair play, bench balance, position variety, season arm care</li>
+          <li>Season insights and the digest · the player season recap · Season Wrapped</li>
+          <li>The closed season's roster shelf</li>
+          <li>Next season's rollover</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="find" data-sev="medium" style="grid-template-columns:1fr">
+      <div class="find-head" style="margin-bottom:2px"><h4>The one deliberate exception</h4></div>
+      <p style="grid-column:1">A <b>saved lineup card from a game they played keeps their name</b> — including in the closed-season archive. A call-up is not on the archived roster, because they were never on the team; but the game happened, and an archive that quietly drops a player who was on the field rewrites the season. That is the one thing an archive must never do, and it is the same rule that keeps a departed player's name on the record today.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ RULINGS ═══ -->
+<section class="panel" id="p-rule" role="tabpanel" aria-labelledby="t-rule" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">Six rulings — all ruled as recommended</h2>
+      <p class="lede"><b>Owner, 2026-09-22: “I agree with your recommendations.”</b> Every option marked below is the one that was ruled and built. Kept in full because the reasoning is the record of why the feature has the shape it has.</p>
+    </div>
+
+    <div class="ruling">
+      <div class="ruling-head"><span class="rid">R1</span><h3>The word</h3></div>
+      <p class="body">Whatever is picked gets locked to one spelling across every screen, table heading, button, toast, error, help article and help search term — and enforced by the build. Worth settling now rather than after it is in forty strings.</p>
+      <div class="opts">
+        <div class="opt" data-rec="1"><div class="ol">A · Call-up <span class="recpill">Recommended</span></div><p>Capital C, hyphenated. Plural <i>Call-ups</i>. The action reads <i>"Call up a player"</i>. Sport-neutral and plain.</p></div>
+        <div class="opt"><div class="ol">B · Affiliate / AP</div><p>Precise in baseball and hockey governance, and reads as paperwork. <i>AP</i> is jargon a new coach won't know.</p></div>
+        <div class="opt"><div class="ol">C · Pick-up</div><p>Natural speech, but collides with "pick-up game" — a different thing entirely.</p></div>
+        <div class="opt"><div class="ol">D · Guest</div><p>Understates it. A guest watches; this player bats.</p></div>
+      </div>
+    </div>
+
+    <div class="ruling">
+      <div class="ruling-head"><span class="rid">R2</span><h3>A call-up who pitches</h3></div>
+      <p class="body">The product tracks a per-game innings cap for arm care, and a season-long arm-care report. A borrowed pitcher sits awkwardly across the two.</p>
+      <div class="opts">
+        <div class="opt" data-rec="1"><div class="ol">A · Warn in the game, not in the season <span class="recpill">Recommended</span></div><p>The per-game cap warns as it would for anyone. No row in your season arm-care report.</p></div>
+        <div class="opt"><div class="ol">B · Both</div><p>Puts a one-game pitcher in a fourteen-game report — the F1 problem again, in a different table.</p></div>
+        <div class="opt"><div class="ol">C · Neither</div><p>Silent while a borrowed child throws over a cap. Not defensible.</p></div>
+      </div>
+      <div class="why"><b>Why A:</b> you are responsible for that arm on that day, so the warning has to fire. Their innings are not your season's record — and their own team's cap is not something this product can see.</div>
+    </div>
+
+    <div class="ruling">
+      <div class="ruling-head"><span class="rid">R3</span><h3>Attached to a game, or to the season</h3></div>
+      <div class="opts">
+        <div class="opt" data-rec="1"><div class="ol">A · Per game, plus a saved pool <span class="recpill">Recommended</span></div><p>A call-up shows in the game you called them up for. The pool means you never retype a name. Appearance counts come free.</p></div>
+        <div class="opt"><div class="ol">B · Season pool, shown in every game</div><p>Cheaper to build and it decays: by August every lineup builder carries every call-up you used in May.</p></div>
+      </div>
+      <div class="why"><b>Why A:</b> B re-creates the exact clutter this feature exists to remove — see finding F2. It is one small link between a player and a game, and it is what makes the feature feel right rather than merely present.</div>
+    </div>
+
+    <div class="ruling">
+      <div class="ruling-head"><span class="rid">R4</span><h3>Attendance</h3></div>
+      <div class="opts">
+        <div class="opt" data-rec="1"><div class="ol">A · That game's sheet only <span class="recpill">Recommended</span></div><p>Present on the game they were called up to; on no other event, ever.</p></div>
+        <div class="opt"><div class="ol">B · Never on an attendance sheet</div><p>Simpler, and a call-up who doesn't turn up is exactly the problem attendance exists to record.</p></div>
+      </div>
+    </div>
+
+    <div class="ruling">
+      <div class="ruling-head"><span class="rid">R5</span><h3>Who may add one</h3></div>
+      <div class="opts">
+        <div class="opt" data-rec="1"><div class="ol">A · Anyone with lineups access <span class="recpill">Recommended</span></div><p>Including assistants. It is a decision made at a field, often by whoever is running that game.</p></div>
+        <div class="opt"><div class="ol">B · Head coach and standalone only</div><p>Matches the roster-write rule, and blocks the assistant standing at the diamond an hour before first pitch.</p></div>
+        <div class="opt"><div class="ol">C · Anyone with roster-write</div><p>Same objection as B, with a less obvious rule.</p></div>
+      </div>
+      <div class="why"><b>Why A:</b> a call-up creates no money, no evaluation and no record that outlives the game. The permission should sit with the job, and the job is building a lineup.</div>
+    </div>
+
+    <div class="ruling">
+      <div class="ruling-head"><span class="rid">R6</span><h3>Contact details on a call-up</h3></div>
+      <div class="opts">
+        <div class="opt" data-rec="1"><div class="ol">A · A phone number, never an email <span class="recpill">Recommended</span></div><p>Optional. Enough to reach someone at the field, and structurally incapable of entering an email audience.</p></div>
+        <div class="opt"><div class="ol">B · The full guardian block</div><p>Every guardian field the roster has — and one missed audience filter away from emailing a family that isn't yours.</p></div>
+        <div class="opt"><div class="ol">C · Nothing</div><p>Safest, and leaves a coach with a borrowed child and no way to reach anyone.</p></div>
+      </div>
+      <div class="why"><b>Regardless of the answer:</b> a call-up never enters a family audience, a practice-plan send, or the family portal. That is a hard rule in v1, not a preference.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ PLAN ═══ -->
+<section class="panel" id="p-plan" role="tabpanel" aria-labelledby="t-plan" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">The build</h2>
+      <p class="lede">Phase 1 is the whole ask. Phases 2 and 3 are worth doing and worth doing after.</p>
+    </div>
+
+    <div class="phase">
+      <h3>Phase 1 — the floor</h3>
+      <div class="when">The ask, in full</div>
+      <ol>
+        <li>The database learns the new kind of roster entry, and the per-game link — in a migration, which is the lesson of finding F3.</li>
+        <li>The lineup builder gains a <b>Call up a player</b> action and a <b>Call-ups</b> group under <i>Not in the lineup</i>.</li>
+        <li>Every row a call-up appears on carries the mark.</li>
+        <li>A game's lineup admits exactly the call-ups linked to <b>that</b> game — not the pool, not every borrowed player.</li>
+        <li>The printed card, game sheet, poster and PDF list them, marked.</li>
+        <li>The seven fail-open surfaces each get their answer.</li>
+        <li>The dead <i>released</i> state is retired.</li>
+      </ol>
+    </div>
+
+    <div class="phase later">
+      <h3>Phase 2 — game day</h3>
+      <div class="when">Next</div>
+      <ol>
+        <li>The bench console: on the field, on the bench, in a swap.</li>
+        <li>Game notes and moments.</li>
+        <li>That game's attendance sheet.</li>
+        <li>The appearance counter on the pool, for leagues that cap borrowed games.</li>
+      </ol>
+    </div>
+
+    <div class="phase later">
+      <h3>Phase 3 — the club</h3>
+      <div class="when">Later, and worth waiting for</div>
+      <ol>
+        <li>When the club runs both teams here, pick a call-up off the other team's roster instead of retyping the name — so a real child does not become a duplicate record.</li>
+        <li>This rests on the person layer that already exists underneath the roster, and deserves its own pass.</li>
+      </ol>
+    </div>
+
+    <hr class="rule">
+
+    <div>
+      <h3 class="sub3">What gates it</h3>
+      <ul class="list">
+        <li><b>One assertion per excluded surface, by name</b> — dues, the installment generator, skills &amp; goals, awards, documents, tryouts, family audiences, rollover, settlement, Wrapped, the digest, the player recap, the archived roster shelf. F1 being free today is not the same as it being held next year.</li>
+        <li><b>The F1 rule, asserted from both sides</b> — absent from every season figure, present in the per-game check.</li>
+        <li><b>The narrow hole</b> — a lineup save accepts a call-up linked to this game and rejects one linked to another.</li>
+        <li><b>The guard that would have caught F3</b> — the roster status type and the live database constraint must agree.</li>
+        <li>The 45 unfiltered roster queries audited; the word added to the spelling gate once R1 lands; help content updated in the same unit of work; layout sweep, full suite, typecheck.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ═══ QA WALK ═══ -->
+<section class="panel" id="p-qa" role="tabpanel" aria-labelledby="t-qa" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">QA walk — 26 steps</h2>
+      <p class="lede">Run on a real phone, on a team with a live season and a game on the schedule. <b>Section D is the point of the whole feature</b> — it is the half that checks a call-up is <i>not</i> somewhere.</p>
+      <p class="body" style="margin-top:8px">Ticks are saved in this browser. Use <b>Copy</b> at the bottom to paste the result back into chat.</p>
+    </div>
+
+    <div id="walk">
+      <div class="wgrp">A · Adding one</div>
+      <div class="step"><span class="sid">1</span><input type="checkbox" id="s1"><label for="s1"><b>The builder offers nothing at rest.</b> Open a game &rarr; Lineup. The only call-up affordance is the <i>Call up a player</i> button; <i>Not in the lineup</i> counts rostered players only.</label></div>
+      <div class="step"><span class="sid">2</span><input type="checkbox" id="s2"><label for="s2"><b>The first one skips the empty list.</b> With no call-ups saved yet, tap the button — it goes straight to the new-call-up form. It takes a first name and a number: no dues field, no guardian email, no position ranking.</label></div>
+      <div class="step"><span class="sid">3</span><input type="checkbox" id="s3"><label for="s3"><b>They land under their own heading.</b> A <i>Call-ups</i> group, separate from the roster, with the mark on the row.</label></div>
+      <div class="step"><span class="sid">4</span><input type="checkbox" id="s4"><label for="s4"><b>The roster count did not move.</b> Go to the team's first screen. It still says the same number of players as before step 2.</label></div>
+
+      <div class="wgrp">B · In the game</div>
+      <div class="step"><span class="sid">5</span><input type="checkbox" id="s5"><label for="s5"><b>They take a batting slot.</b> Add the call-up to the lineup. They get a number in the order like anyone else.</label></div>
+      <div class="step"><span class="sid">6</span><input type="checkbox" id="s6"><label for="s6"><b>The mark follows them everywhere.</b> Batting order, the inning list, the position sheet — every row they appear on says call-up.</label></div>
+      <div class="step"><span class="sid">7</span><input type="checkbox" id="s7"><label for="s7"><b>The lineup check counts them.</b> Everyone-bats and position coverage both reflect the extra player. The check should go from short to complete.</label></div>
+      <div class="step"><span class="sid">8</span><input type="checkbox" id="s8"><label for="s8"><b>Mark ready works</b> with a call-up in the lineup.</label></div>
+      <div class="step"><span class="sid">9</span><input type="checkbox" id="s9"><label for="s9"><b>The printed card is right.</b> Print the lineup. The call-up is listed, in the order, marked — a scorekeeper reading it knows.</label></div>
+      <div class="step"><span class="sid">10</span><input type="checkbox" id="s10"><label for="s10"><b>The bench console shows them.</b> Open game day for that game. The call-up is on the field or the bench, marked, and can be swapped like anyone.</label></div>
+      <div class="step"><span class="sid">11</span><input type="checkbox" id="s11"><label for="s11"><b>A game note can tag them.</b> Write a note about the call-up. It saves and reads back correctly.</label></div>
+      <div class="step"><span class="sid">12</span><input type="checkbox" id="s12"><label for="s12"><b>That game's attendance lists them</b> <i>(if R4 = A)</i>.</label></div>
+
+      <div class="wgrp">C · Not in the other games</div>
+      <div class="step"><span class="sid">13</span><input type="checkbox" id="s13"><label for="s13"><b>Three saved, none shown.</b> Get three call-ups into the system, then open a fresh game's lineup. <b>None of the three appear anywhere on the page</b> — only the button. This is the owner's ruling of 2026-09-22 and the single most important step in section C.</label></div>
+      <div class="step"><span class="sid">14</span><input type="checkbox" id="s14"><label for="s14"><b>The sheet holds all three, and re-adding is one tap.</b> Tap <i>Call up a player</i>: all three appear with their games-played counts, plus <i>Someone new</i>. Add one without retyping. Anyone already called up to this game shows a tick rather than an Add.</label></div>
+      <div class="step"><span class="sid">15</span><input type="checkbox" id="s15"><label for="s15"><b>A practice does not offer them.</b> Open a practice. No call-up anywhere — not in the plan, not in attendance, not in the stations.</label></div>
+
+      <div class="wgrp neg">D · The half that matters — a call-up must be absent</div>
+      <div class="step"><span class="sid">16</span><input type="checkbox" id="s16"><label for="s16"><b>Player dues</b> — absent.</label></div>
+      <div class="step"><span class="sid">17</span><input type="checkbox" id="s17"><label for="s17"><b>The installment generator</b> — run it. The call-up is not included and the player count matches the roster exactly.</label></div>
+      <div class="step"><span class="sid">18</span><input type="checkbox" id="s18"><label for="s18"><b>Skills &amp; goals</b>, and a development session — absent from both.</label></div>
+      <div class="step"><span class="sid">19</span><input type="checkbox" id="s19"><label for="s19"><b>Awards</b> — open the give-an-award picker. Absent.</label></div>
+      <div class="step"><span class="sid">20</span><input type="checkbox" id="s20"><label for="s20"><b>Documents</b> and <b>measurables</b> — absent.</label></div>
+      <div class="step"><span class="sid">21</span><input type="checkbox" id="s21"><label for="s21"><b>The season playing-time report</b> — fair play, bench balance, position variety, arm care. Absent from all four, <b>including after the game they played</b>. This is finding F1 and it is the single most important step in the walk.</label></div>
+      <div class="step"><span class="sid">22</span><input type="checkbox" id="s22"><label for="s22"><b>Season insights and the digest</b> — absent.</label></div>
+      <div class="step"><span class="sid">23</span><input type="checkbox" id="s23"><label for="s23"><b>A team email or practice-plan send</b> — the audience count matches the roster. No call-up, and no contact of a call-up, anywhere in the recipient list.</label></div>
+      <div class="step"><span class="sid">24</span><input type="checkbox" id="s24"><label for="s24"><b>The roster page</b> — the call-up is in its own section, <b>not</b> mixed into "off the roster" with departed players.</label></div>
+
+      <div class="wgrp">E · The pool, and the archive</div>
+      <div class="step"><span class="sid">25</span><input type="checkbox" id="s25"><label for="s25"><b>Removing one does not rewrite a game.</b> Remove a call-up from the pool. The saved lineup from the game they played still shows their name.</label></div>
+      <div class="step"><span class="sid">26</span><input type="checkbox" id="s26"><label for="s26"><b>The closed season is honest both ways.</b> Close the season. The roster shelf does <b>not</b> list the call-up; the saved lineup card from their game <b>does</b>.</label></div>
+    </div>
+
+    <div class="walkbar">
+      <span id="count">0 of 26 checked</span>
+      <button type="button" id="reset">Reset</button>
+      <button type="button" id="copy">Copy result</button>
+    </div>
+    <textarea id="paste" readonly aria-label="Walk result to paste back"></textarea>
+  </div>
+</section>
+
+</div>
+
+<script>
+var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+tabs.forEach(function(t){
+  t.addEventListener('click', function(){
+    tabs.forEach(function(o){
+      var on = o === t;
+      o.setAttribute('aria-selected', on ? 'true' : 'false');
+      document.getElementById(o.getAttribute('aria-controls')).hidden = !on;
+    });
+    window.scrollTo({top:0, behavior:'instant'});
+  });
+});
+
+var NOTES = {
+  a1: ['Proposed &middot; the action', 'Call up a player, where the shortage is felt',
+       'It lives under <i>Not in the lineup</i>, because that is the heading a coach is staring at when they realise they are short. Dashed border and the call-up tone, so it never reads as an ordinary roster control. Tapping it takes a first name and a number &mdash; or picks someone from the pool, which is the usual case after the first few weeks.'],
+  a2: ['Proposed &middot; the default', 'Nothing on offer until you ask',
+       'This is the correction the owner made on 2026-09-22, and it is the whole answer to &ldquo;do we have to add one every time?&rdquo;. <b>Yes &mdash; and that is the point.</b> A team can have three call-ups saved and this heading still reads <i>Not in the lineup &middot; 0</i>, because none of them are called up to <b>this</b> game. The saved names live behind the button (marker 5), never on the page. An earlier draft of this frame showed a standing <i>Call-ups &middot; 1</i> list here; that was the season-pool behaviour the plan argues against two sections earlier, and it was wrong.'],
+  a3: ['Proposed &middot; the mark', 'On every row they touch',
+       'The batting order, the inning list, the bench console, the printed card and the game sheet. The mark uses the <b>amber</b> family rather than the portal&rsquo;s olive, deliberately &mdash; olive means &ldquo;your team&rdquo; everywhere else in the coaches portal, and this player is not.'],
+  a4: ['Proposed &middot; the check', 'Counted inside the game, and only there',
+       'The line reads <i>9 in the order &middot; 1 call-up</i>. The per-game check counts them because they are physically on the field taking a slot &mdash; everyone bats, position coverage, clashes, the pitching cap. <b>Every season-long figure ignores them</b>, which is finding F1 and the binding rule of this whole feature.'],
+  a5: ['Proposed &middot; the pool', 'The saved names live in the sheet, not on the page',
+       'Everyone you have called up this season, each with the games they have played. One tap re-uses a name; nothing is retyped. <b>The count is not decoration</b> &mdash; several leagues cap how many games a borrowed player may appear in, and today a coach tracks that on paper or not at all. Because this list is behind a button, it can grow to eight names without costing the builder a single pixel.'],
+  a6: ['Proposed &middot; already in', 'A name cannot be called up twice',
+       'Someone already called up to this game shows with a tick instead of an Add, rather than being hidden. Hiding them would make the sheet look like it had lost a name; the tick answers the question the coach actually has, which is &ldquo;did I already do this?&rdquo;'],
+  a7: ['Proposed &middot; someone new', 'The first call-up, and every one after',
+       'Takes a first name and a number. No dues field, no guardian email, no position ranking &mdash; it is deliberately a thin form, because a call-up is a thin thing. <b>When the pool is empty this is the whole sheet</b>: a coach calling someone up for the first time never sees an empty list with a button under it.'],
+  a8: ['Proposed &middot; the section', 'Below the roster, below even the departed',
+       'A quiet box at the bottom of the roster page &mdash; the only place a call-up is managed rather than used, and the only place the saved list is visible without being asked for. It is not a second roster and must never read as one. Nothing here is allowed to make the live roster noisier; that constraint is binding, not taste.'],
+  a9: ['Proposed &middot; the label', 'The section says what it is',
+       '&ldquo;Not your roster&rdquo;, in the row&rsquo;s own words, plus a sentence naming the three places a coach would most expect to find them and will not: dues, skills &amp; goals, awards. The screen explains the rule rather than leaving it to be discovered.'],
+  a10: ['Proposed &middot; removing one', 'Removes them from the pool, not from history',
+       'The &times; takes them off the list of people you can call up. <b>A saved lineup from a game they played keeps their name</b> &mdash; including in the closed-season archive. An archive that quietly drops a player who was on the field rewrites the season, which is the one thing it must never do.']
+};
+var note = document.getElementById('note');
+var current = null;
+Array.prototype.forEach.call(document.querySelectorAll('.mk'), function(m){
+  m.setAttribute('aria-pressed','false');
+  m.addEventListener('click', function(){
+    var k = m.getAttribute('data-n'), n = NOTES[k];
+    if (!n) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.mk'), function(o){ o.setAttribute('aria-pressed','false'); });
+    if (current === k){ current = null; note.innerHTML = '<p class="note-empty">Tap a numbered marker on the frame to read what it is.</p>'; return; }
+    current = k;
+    m.setAttribute('aria-pressed','true');
+    note.innerHTML = '<div class="note-in"><p class="eyebrow">'+n[0]+'</p><h4>'+n[1]+'</h4><p>'+n[2]+'</p></div>';
+  });
+});
+
+var boxes = Array.prototype.slice.call(document.querySelectorAll('#walk input[type=checkbox]'));
+var KEY = 'callups-hub-walk';
+function saveWalk(){
+  var s = {}; boxes.forEach(function(b){ s[b.id] = b.checked; });
+  try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(e){}
+}
+function refresh(){
+  var n = boxes.filter(function(b){ return b.checked; }).length;
+  document.getElementById('count').textContent = n + ' of ' + boxes.length + ' checked';
+  var lines = ['Call-ups — QA walk', ''];
+  boxes.forEach(function(b){
+    var lab = document.querySelector('label[for="' + b.id + '"]');
+    var sid = b.parentNode.querySelector('.sid').textContent;
+    var strong = lab.querySelector('b');
+    var txt = strong ? strong.textContent : lab.textContent;
+    lines.push((b.checked ? '[x] ' : '[ ] ') + sid + '. ' + txt.trim());
+  });
+  lines.push('', n + ' of ' + boxes.length + ' passed');
+  document.getElementById('paste').value = lines.join('\n');
+}
+boxes.forEach(function(b){ b.addEventListener('change', function(){ saveWalk(); refresh(); }); });
+try { var st = JSON.parse(localStorage.getItem(KEY) || '{}'); boxes.forEach(function(b){ b.checked = !!st[b.id]; }); } catch(e){}
+document.getElementById('reset').addEventListener('click', function(){ boxes.forEach(function(b){ b.checked = false; }); saveWalk(); refresh(); });
+document.getElementById('copy').addEventListener('click', function(){
+  var ta = document.getElementById('paste'); ta.select();
+  var btn = this, old = btn.textContent;
+  try { navigator.clipboard.writeText(ta.value); } catch(e){ try { document.execCommand('copy'); } catch(e2){} }
+  btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = old; }, 1600);
+});
+refresh();
+</script>

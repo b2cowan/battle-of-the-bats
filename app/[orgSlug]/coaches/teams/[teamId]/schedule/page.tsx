@@ -1214,12 +1214,23 @@ export default function CoachesSchedulePage({
           players?: RepRosterPlayer[];
           attendance?: RepTeamEventAttendance[];
           lineup?: RepTeamLineup | null;
+          callUps?: RepRosterPlayer[];
           entries?: RepTeamLineupEntry[];
           programYear?: RepProgramYear | null;
         } = await res.json();
         if (cancelled) return;
 
-        const players = data.players ?? [];
+        /**
+         * ⚠⚠ **THIS GAME'S CALL-UPS BELONG IN THE PEEK'S PLAYER LIST (mig 309), and leaving them out
+         * showed a batting order that was not the saved one.** `buildLineupRows` drops any entry it
+         * cannot resolve to a player, and the local `renumberBattingOrder` then closes the gap — so
+         * a call-up batting 4th simply vanished and batters 5–9 each moved up a slot. A coach
+         * checking the order from the schedule read a different lineup from the printed card and the
+         * bench console. Read-only, so nothing was corrupted; it was just quietly wrong.
+         * The builder carries the identical warning; this is the surface that had not been updated
+         * with it. Found by `/review`.
+         */
+        const players = [...(data.players ?? []), ...(data.callUps ?? [])];
         const attendanceByPlayer = new Map((data.attendance ?? []).map(row => [row.playerId, row]));
         setAttendanceRows(players.map(player => {
           const existing = attendanceByPlayer.get(player.id);

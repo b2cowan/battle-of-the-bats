@@ -2,7 +2,7 @@
 import { GripVertical } from 'lucide-react';
 import { SortableContext, verticalListSortingStrategy, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { playerDisplayName } from '@/lib/coach-roster-name';
+import { playerDisplayName, isCallUp, CALL_UP_LABEL } from '@/lib/coach-roster-name';
 import type { LineupPlayerRow } from '@/lib/lineup-grid';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import s from './LineupInningList.module.css';
@@ -80,6 +80,10 @@ function InningRow({
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: row.player.id });
   const style = { transform: CSS.Transform.toString(transform), transition };
   const name = playerDisplayName(row.player);
+  /* ⚠ The call-up mark is a visible part of this row's identity, so it belongs in the ACCESSIBLE
+     name too. A previous pass on this screen shipped an aria-label that silently dropped the row's
+     warning chips; a sighted coach could see "Call-up" and a screen-reader user could not. */
+  const spoken = isCallUp(row.player) ? `${name}, ${CALL_UP_LABEL}` : name;
   const number = row.battingOrder;
   const value = row.inningPositions[String(inning)] ?? '';
   // The neighbours: null where the inning has none (the first has no left, the last no right), the
@@ -97,16 +101,23 @@ function InningRow({
     <li ref={setNodeRef} style={style} className={s.row} data-dragging={isDragging || undefined}>
       {/* The number is the handle (D8): hold to drag, tap for Move up · Move down · Remove. */}
       <button type="button" className={coach.lineupBatHandle} data-numbered={number ? 'true' : undefined}
-        aria-label={`${name}, ${number ? `batting ${number}` : 'on the bench'}. Hold to move, tap for options.`}
+        aria-label={`${spoken}, ${number ? `batting ${number}` : 'on the bench'}. Hold to move, tap for options.`}
         {...attributes} {...listeners} onClick={() => onRowActions(row.player.id)}>
         <GripVertical size={12} aria-hidden="true" />{number || '–'}
       </button>
-      <span className={s.name}>{name}</span>
+      {/* mig 309 — a borrowed player is marked on the phone too. ⚠ The mark lives INSIDE the name
+          cell rather than as a sixth sibling: this row's widths are handle 44 · name · 38 · 64 · 38,
+          and another column would have pushed the position pill off a 360px screen. The name gives
+          way to it rather than the other way round (see `.name` / `.nameText`). */}
+      <span className={s.name}>
+        <span className={s.nameText}>{name}</span>
+        {isCallUp(row.player) && <span className={coach.lineupCallUpMark}>{CALL_UP_LABEL}</span>}
+      </span>
       {neighbour(prev, 'prev')}
       {/* The blank cell reads "—" (owner, 2026-09-18); the amber outline carries the open state, the
           red one a clash — the grid's outlines, on the pill. No chevron. */}
       <button type="button" className={s.pill} aria-haspopup="dialog"
-        aria-label={`${periodLabel} ${inning} position for ${name}`}
+        aria-label={`${periodLabel} ${inning} position for ${spoken}`}
         aria-describedby={descriptionId}
         data-open={issue.isOpen || undefined} data-clash={issue.hasConflict || undefined} data-blank={!value || undefined}
         onClick={() => onPickPosition(row.player.id)}>

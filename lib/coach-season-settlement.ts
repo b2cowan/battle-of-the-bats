@@ -275,7 +275,11 @@ export async function loadSeasonSettlement(opts: {
         detail: null, amount: 0,
       });
     }
-    if (p.status !== 'active') {
+    /* ⚠ `=== 'inactive'` since mig 309. A call-up is non-active too, and this loop runs over dues
+       rows — a call-up has none, so they were safe here BY ACCIDENT. Naming the state makes the
+       guard real: the sentence below is about a player who left the team, and a borrowed player
+       has no share to be off because they never had dues to pay. */
+    if (p.status === 'inactive') {
       breakdown.push({ label: 'Off the season’s-end roster — no share', detail: null, amount: 0 });
     } else if (r.choice === 'none') {
       breakdown.push({ label: 'No share — left to the team', detail: null, amount: 0 });
@@ -294,7 +298,7 @@ export async function loadSeasonSettlement(opts: {
       playerId: r.playerId,
       playerFirstName: p.playerFirstName,
       playerLastName: p.playerLastName,
-      departed: p.status !== 'active',
+      departed: p.status === 'inactive',   // mig 309 — a call-up is not "departed", it was never here
       owedBack: r.owedBack,
       cashShare: r.cashShare,
       leftToSend: r.leftToSend,

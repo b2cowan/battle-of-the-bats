@@ -122,8 +122,13 @@ export const GET = withObservability(async (_req: Request,
   const withReadings = new Set([
     ...entries.map(e => e.playerId), ...observations.map(o => o.playerId), ...notAssessed.map(n => n.playerId),
   ]);
+  /* ⚠ `=== 'inactive'`, not `!== 'active'` (mig 309). A call-up is also non-active, and the
+     reasoning above — "they left the team and took their saved results with them" — does not
+     describe a borrowed player, who never had a skills reading to keep. Call-ups are absent from
+     skills & goals entirely; naming the state rather than negating 'active' is what keeps this row
+     about the person it was written for. */
   const pastParticipants = redactRoster(
-    players.filter(p => p.status !== 'active' && withReadings.has(p.id)).map(identity),
+    players.filter(p => p.status === 'inactive' && withReadings.has(p.id)).map(identity),
     caps,
   );
 

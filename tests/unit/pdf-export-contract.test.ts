@@ -1765,18 +1765,29 @@ describe('an unassigned inning is left empty — the ruled cell IS the box', () 
     assert.ok(!doc.texts.some(t => t.str === ''), 'an empty inning drew a text run');
   });
 
-  it('does not promise a mark the page no longer carries', () => {
-    // The original defect was a legend naming a box that was never drawn. Removing the box
-    // brings that back unless the words move with it.
+  /**
+   * ⚰ THE POSITION LEGEND AND ITS "Blank = fill in at the field" LINE WERE REMOVED 2026-09-22
+   * (owner: "let's remove this description from the bottom of the printout"), so this test flipped
+   * from asserting the wording to asserting the absence — kept rather than deleted, because the
+   * original defect it guarded is still worth guarding against: a legend that named a drawn box the
+   * poster does not draw.
+   *
+   * The legend spelled out "P Pitcher  C Catcher  1B First base …" across the foot of every sheet,
+   * for readers who have never needed it — a coach and a scorekeeper at a diamond, using exactly
+   * those codes out loud. Its ~8mm went to the grid, which is what a clipboard sheet is for.
+   */
+  it('prints no position legend and promises no mark', () => {
     const doc = new SizingMockDoc({ orientation: 'landscape' });
     buildLineupPosterDoc(inject(doc), posterOpts());
     const drawn = doc.texts.map(t => t.str);
-    assert.ok(drawn.includes('Blank = fill in at the field'),
-      'the instruction is not drawn as one whole line');
+    assert.ok(!drawn.some(s => /Blank = fill in/.test(s)),
+      'the pen instruction is back at the foot of the poster');
+    assert.ok(!drawn.some(s => /\bP Pitcher\b/.test(s)),
+      'the position legend is back at the foot of the poster');
     assert.ok(!drawn.some(s => /box/i.test(s)),
-      'the legend still names a box the poster does not draw');
+      'the poster names a box it does not draw — the original defect');
     assert.ok(!drawn.some(s => s.trim() === 'at the field'),
-      'the instruction shredded across the wrap again');
+      'a fragment of the removed instruction is still being drawn');
   });
 });
 
@@ -1863,8 +1874,11 @@ describe('the poster turns for the clipboard — one document, not two', () => {
     buildLineupPosterDoc(inject(port), posterOpts({ orientation: 'portrait', includeNotes: true, notes: 'Shade left.' }));
     const words = (doc: MockDoc) => doc.texts.map(t => t.str).sort();
     assert.deepEqual(words(port), words(land));
-    // Equal sets prove nothing if BOTH sheets dropped the same thing — pin what must be there.
-    for (const must of ['NOTES', 'Shade left.', 'HOME', 'Riverdale Summer Classic', 'Blank = fill in at the field']) {
+    /* Equal sets prove nothing if BOTH sheets dropped the same thing — pin what must be there.
+       ⚠ 'Blank = fill in at the field' left this list on 2026-09-22 with the position legend it
+       belonged to (owner). The rest of the list is doing the real work here: notes, the home/away
+       mark and the event name are the things a sheet is useless without. */
+    for (const must of ['NOTES', 'Shade left.', 'HOME', 'Riverdale Summer Classic']) {
       assert.ok(words(port).some(w => w.includes(must)), `the portrait sheet lost "${must}"`);
     }
   });

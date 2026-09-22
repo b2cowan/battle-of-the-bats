@@ -50,14 +50,21 @@ export const GET = withObservability(async (req: Request,
   const players = await getRepRosterPlayers(programYear.id);
 
   /**
-   * ⚠ **EVERY NAME, INCLUDING THE ONES WHO LEFT — and the row says which.** A player released in
-   * March still played for this team, and quietly dropping them would rewrite the season, which is
-   * the one thing an archive must never do. It is also the ONE difference between this shelf and
-   * the rollover's idea of a roster (that carries `active` only, correctly: it is choosing who
-   * comes back, not recording who was here).
+   * ⚠ **EVERY NAME, INCLUDING THE ONES WHO LEFT — and the row says which.** A player who went
+   * inactive in March still played for this team, and quietly dropping them would rewrite the
+   * season, which is the one thing an archive must never do. It is also the ONE difference between
+   * this shelf and the rollover's idea of a roster (that carries `active` only, correctly: it is
+   * choosing who comes back, not recording who was here).
    *
    * ⚠ The status rides out so the PAGE can label the difference rather than presenting fourteen
-   * names as one squad. Nothing here filters on it.
+   * names as one squad.
+   *
+   * ⚠⚠ **CALL-UPS ARE THE ONE EXCLUSION (mig 309), and it is not the same rule** — but it is no
+   * longer spelled here. `getRepRosterPlayers` excludes them at the query for every caller, which is
+   * where that rule belongs. A departed player is dropped from nothing because they were ON THE
+   * TEAM; a call-up never was, so this shelf — which answers "who was on the team that season" —
+   * must not list them. The game they played is not erased by that: **their name stays on that
+   * game's saved lineup**, which is where a record of a borrowed player belongs.
    */
   return NextResponse.json({
     season: { programYearId: programYear.id, name: programYear.name, isReadOnly },

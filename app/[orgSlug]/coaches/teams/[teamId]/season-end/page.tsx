@@ -806,12 +806,15 @@ export default function SeasonEndPage({
                       {/* ⚠ A player who LEFT part-way through still played for this team, so they
                           stay on the record and the row says which — quietly dropping them would
                           rewrite the season, the one thing an archive must never do. */}
+                      {/* ⚠ `callup` never reaches here — the season-roster route filters it out
+                          (mig 309), because this shelf answers "who was on the team" and a
+                          borrowed player never was. Their name survives on the saved lineup of the
+                          game they played, which is the right place for it. */}
                       {(p.primaryPosition || p.status !== 'active') && (
                         <small>
                           {[
                             p.primaryPosition,
-                            p.status === 'released' ? 'Left during the season'
-                              : p.status !== 'active' ? 'Not active' : null,
+                            p.status !== 'active' ? 'Left during the season' : null,
                           ].filter(Boolean).join(' · ')}
                         </small>
                       )}

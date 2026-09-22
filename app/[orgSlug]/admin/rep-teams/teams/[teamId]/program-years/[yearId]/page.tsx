@@ -28,9 +28,16 @@ const ROSTER_EXPORT_COLS: ExportColumnDef[] = [
 const STATUS_LABEL: Record<string, string> = {
   draft: 'Draft', active: 'Active', completed: 'Completed', archived: 'Archived',
 };
-/** How a ROSTER PLAYER's standing is named — on screen and on the PDF's group headings alike. */
+/**
+ * How a ROSTER PLAYER's standing is named — on screen and on the PDF's group headings alike.
+ *
+ * `callup` is named here but should never reach this page: the roster route filters call-ups out
+ * (mig 309), because this list and its PDF are the roster a club submits to its association, and a
+ * borrowed player is not on it. The label stays so that if that filter is ever lifted the heading
+ * reads "Call-up" rather than a raw database value.
+ */
 const ROSTER_STATUS_LABEL: Record<RepRosterStatus, string> = {
-  active: 'Active', inactive: 'Inactive', released: 'Released',
+  active: 'Active', inactive: 'Inactive', callup: 'Call-up',
 };
 const STATUS_CSS: Record<string, string> = {
   draft: styles.badgeDraft, active: styles.badgeActive,
@@ -243,7 +250,7 @@ export default function ProgramYearOverviewPage({
      * roster a club submits to its association — the worst possible place to lose someone
      * silently. So unknown values get their own section under their raw name instead.
      */
-    const known = ['active', 'inactive', 'released'] as const;
+    const known = ['active', 'inactive'] as const;
     const order = [
       ...known,
       ...[...new Set(players.map(p => p.status))].filter(s => !known.includes(s as never)),

@@ -111,9 +111,23 @@ async function loadOrgFamilyWorld(orgId: string) {
     supabaseAdmin.from('org_person_emails')
       .select('person_id, email_normalized, is_current, first_seen_at, last_seen_at')
       .eq('org_id', orgId),
+    /**
+     * ⚠⚠ **CALL-UPS ARE EXCLUDED HERE, AND THIS QUERY IS WHY THE "FOR FREE" ARGUMENT NEEDED A
+     * SECOND LOOK** (mig 309). The Families desk reads the roster RAW, org-wide, and filters with
+     * `isLiveRegStatus` — "not declined, not withdrawn" — which happily admits `'callup'`. So every
+     * borrowed player landed on the desk as **a child with no family**, and the admin could never
+     * clear the row: a call-up has no `person_id`, the database forbids giving them a guardian
+     * email, and the player page 404s on one. Four call-ups a season would have been four permanent,
+     * accumulating data-problem rows in the org's consent tooling.
+     *
+     * Two `/review` lenses found this independently. It is the exact class the roster read's new
+     * default was introduced to close, in the one shape that default does not reach — a raw query
+     * whose predicate is a negative, not `status === 'active'`.
+     */
     supabaseAdmin.from('rep_roster_players')
       .select('id, person_id, player_first_name, player_last_name, guardian_email, status, team_id, program_year_id, created_at, rep_teams(name, slug), rep_program_years(year, status)')
-      .eq('org_id', orgId),
+      .eq('org_id', orgId)
+      .neq('status', 'callup'),
     supabaseAdmin.from('league_registrations')
       .select('id, person_id, player_first_name, player_last_name, guardian_email, status, registration_fee_paid, waiver_accepted_at, registered_at, season_id, league_seasons(name, slug, status, registration_fee), league_divisions(name)')
       .eq('org_id', orgId),

@@ -21,7 +21,7 @@ import {
   downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, buildFilename,
   fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings, type LineupPosterPlayer, type LineupPosterOrientation,
 } from '@/lib/export';
-import { playerName } from '@/lib/coach-roster-name';
+import { playerName, isCallUp } from '@/lib/coach-roster-name';
 import { formatInOrgZone } from '@/lib/timezone';
 import {
   LINEUP_POSITIONS, buildLineupRows, renumberBattingOrder, sortLineupRows, type LineupPlayerRow,
@@ -32,6 +32,7 @@ import { safeReturnPath, returnLabel } from '@/lib/development-address';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { sideWord } from '@/lib/coach-tournament-games';
 import { useMinuteClock } from '@/lib/use-minute-clock';
+import CallUpSheet, { type CallUpPoolRow } from '@/components/coaches/CallUpSheet';
 import LineupEditor from '../_LineupEditor';
 import styles from '../../../../coaches.module.css';
 import type {
@@ -154,6 +155,20 @@ export default function CoachLineupBuilderPage({
   // attendance mismatches. The lineup and attendance are independent: neither auto-changes the other.
   const [attendanceRows, setAttendanceRows] = useState<{ player: RepRosterPlayer; status: RepAttendanceStatus; note: string }[]>([]);
 
+  /* ── Call-ups on this game (mig 309) ──────────────────────────────────────────────────────────
+     `callUps` is only ever the players linked to THIS game. The saved pool is fetched on demand
+     when the sheet opens and lives nowhere else — owner ruling R3, 2026-09-22: three saved call-ups
+     show as nothing until the coach asks. */
+  const [callUps, setCallUps] = useState<RepRosterPlayer[]>([]);
+  const [callUpSheetOpen, setCallUpSheetOpen] = useState(false);
+  const [callUpPool, setCallUpPool] = useState<CallUpPoolRow[]>([]);
+  /* Two flags, not one: `loading` is the sheet fetching its saved list when it opens, `saving` is
+     the coach's own add. Merged, the submit button read "Adding…" for the first second every time
+     the sheet opened — a control describing an action nobody had started (owner, on first look). */
+  const [callUpLoading, setCallUpLoading] = useState(false);
+  const [callUpSaving, setCallUpSaving] = useState(false);
+  const [callUpError, setCallUpError] = useState('');
+
   // ── Undo/redo — snapshots of the editable lineup state (notes excluded on purpose). ──
   type LineupSnap = { rows: LineupPlayerRow[]; mode: RepLineupMode; innings: number };
   const [lineupHistory, setLineupHistory] = useState<{ undo: LineupSnap[]; redo: LineupSnap[] }>({ undo: [], redo: [] });
@@ -231,6 +246,7 @@ export default function CoachLineupBuilderPage({
       const data: {
         event?: RepTeamEvent;
         players?: RepRosterPlayer[];
+        callUps?: RepRosterPlayer[];
         attendance?: RepTeamEventAttendance[];
         lineup?: RepTeamLineup | null;
         entries?: RepTeamLineupEntry[];
@@ -240,7 +256,15 @@ export default function CoachLineupBuilderPage({
 
       setEvent(data.event ?? null);
       const players = data.players ?? [];
+      /* Call-ups on THIS game (mig 309) — never the saved pool, which lives behind the sheet. A game
+         nobody has been called up to gets `[]` however many the team has. */
+      const gameCallUps = data.callUps ?? [];
+      setCallUps(gameCallUps);
       const attendanceByPlayer = new Map((data.attendance ?? []).map(row => [row.playerId, row]));
+      /* ⚠ Attendance rows are the ROSTER's, not the roster plus call-ups. `attendanceRows` is what
+         feeds the editor's `roster` prop and therefore "Not in the lineup", and a call-up in there
+         would be indistinguishable from one of your own players in exactly the list this feature
+         exists to keep clean. Call-ups reach the editor through its own `callUps` prop. */
       setAttendanceRows(players.map(player => {
         const existing = attendanceByPlayer.get(player.id);
         return { player, status: existing?.status ?? 'unknown', note: existing?.note ?? '' };
@@ -248,9 +272,15 @@ export default function CoachLineupBuilderPage({
 
       const mode = data.lineup?.lineupMode ?? 'everyone_bats';
       const entries = data.entries ?? [];
-      // Rows come from the SAVED lineup (independent of attendance). A brand-new lineup (no entries
-      // yet) seeds from the whole active roster as a starting point the coach trims/fills.
-      const rosterById = new Map(players.map(p => [p.id, p]));
+      /* Rows come from the SAVED lineup (independent of attendance). A brand-new lineup (no entries
+         yet) seeds from the whole active roster as a starting point the coach trims/fills.
+         ⚠⚠ THE LOOKUP MUST INCLUDE CALL-UPS. It is built from `players` alone before mig 309, and
+         a saved lineup's call-up entries would then resolve to `undefined` and be silently filtered
+         out — the borrowed player would vanish from a lineup that had been saved with them in it,
+         leaving a hole in the batting order and a card that no longer matched the game.
+         ⚠ The SEED (a brand-new lineup) stays the active roster only: seeding from call-ups would
+         put a borrowed player in the order before anyone asked for them. */
+      const rosterById = new Map([...players, ...gameCallUps].map(p => [p.id, p]));
       const seedPlayers = entries.length > 0
         ? entries.map(e => rosterById.get(e.playerId)).filter((p): p is RepRosterPlayer => !!p)
         : players;
@@ -389,6 +419,156 @@ export default function CoachLineupBuilderPage({
     markLineupDirty();
   }
 
+  /* ── Call-ups (mig 309) ──────────────────────────────────────────────────────────────────────
+     The sheet's data is fetched when it OPENS, not with the page: it is the one thing on this
+     screen a coach may never touch, and loading a pool nobody asked for on every lineup is the
+     same instinct that put the pool on the page in the first place. */
+  const callUpsBase = `/api/coaches/${orgSlug}/teams/${teamId}/events/${eventId}/call-ups`;
+
+  /**
+   * ⚠⚠ **SEQUENCE-GUARDED, like `load()` a few hundred lines up — and it was not, which is how a
+   * removed call-up came back.** This writes the page's authoritative `callUps`, so a response that
+   * arrives after something newer has changed it must be dropped. Without the guard: open the sheet
+   * on slow field wifi, dismiss it, take a call-up off the game (the DELETE succeeds and the state
+   * updates) — then the stale GET resolves and re-writes the list it read BEFORE the unlink,
+   * putting that player back in the Call-ups group of a game they are no longer on. Adding them
+   * from there produced a lineup the server would refuse to save.
+   *
+   * The same guard covers a double-open (the trigger toggles): two GETs, the older winning both the
+   * pool and the list while its `finally` cleared the loading flag under the newer one.
+   * Found by `/review`.
+   */
+  const callUpSeq = useRef(0);
+
+  async function openCallUpSheet() {
+    const seq = ++callUpSeq.current;
+    setCallUpSheetOpen(true);
+    setCallUpError('');
+    setCallUpLoading(true);
+    // Cleared, so a failed open can never render the PREVIOUS open's list as if it were current —
+    // a stale pool with live Add buttons is worse than an empty one with an error above it.
+    setCallUpPool([]);
+    try {
+      const res = await fetch(callUpsBase);
+      const d = await res.json().catch(() => ({}));
+      if (seq !== callUpSeq.current) return;
+      if (!res.ok) throw new Error(d.error ?? 'Could not load your call-ups');
+      setCallUpPool(d.pool ?? []);
+      setCallUps(d.callUps ?? []);
+    } catch (e: unknown) {
+      if (seq !== callUpSeq.current) return;
+      setCallUpError(errorMessage(e, 'Could not load your call-ups'));
+    } finally {
+      if (seq === callUpSeq.current) setCallUpLoading(false);
+    }
+  }
+
+  /**
+   * Call someone up — an existing name or a new one, one request either way.
+   *
+   * ⚠ **CALLING SOMEONE UP ALSO PUTS THEM IN THE LINEUP, because that is why you did it.** Landing
+   * them in a "Call-ups" holding pen with a second Add to press would make the common path two taps
+   * for no reason. Taking them back out of the order is the coach's next move if they change their
+   * mind, and they stay on the game until removed from it explicitly.
+   */
+  async function submitCallUp(body: Record<string, unknown>) {
+    setCallUpSaving(true);
+    setCallUpError('');
+    try {
+      const res = await fetch(callUpsBase, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const d = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(d.error ?? 'Could not call up that player');
+      setCallUpSheetOpen(false);
+
+      /* ⚠ The rows come back WITH the response, so there is no second request. This used to re-fetch
+         the whole lineup endpoint to recover a row the POST already had in hand — re-running auth,
+         the team, the working year, the event, the entire roster, attendance, the lineup, its entries
+         and the same call-up read again: roughly ten queries and tens of KB, for one player. */
+      const fresh: RepRosterPlayer[] = d.callUps ?? [];
+      setCallUps(fresh);
+
+      /* ⚠ If the row is not in the response the add did NOT take, as far as this screen can tell —
+         another device may have taken them off the game between the link and the read. Say so and
+         keep the sheet open, rather than closing silently on a player the coach believes is in the
+         order. Found by `/review`. */
+      const added = fresh.find(p => p.id === d.playerId);
+      if (!added) {
+        setCallUpSheetOpen(true);
+        setCallUpError('That player is no longer on this game — try again.');
+        return;
+      }
+      if (added) {
+        pushLineupUndo();
+        setLineupRows(rows => rows.some(r => r.player.id === added.id)
+          ? rows
+          : renumberBattingOrder(
+            [...rows, { player: added, battingOrder: '', starter: lineupMode === 'everyone_bats', inningPositions: {}, notes: '' }],
+            lineupMode,
+          ));
+        markLineupDirty();
+      }
+    } catch (e: unknown) {
+      setCallUpError(errorMessage(e, 'Could not call up that player'));
+    } finally {
+      setCallUpSaving(false);
+    }
+  }
+
+  /**
+   * Take a call-up off this game entirely.
+   *
+   * ⚠ The server clears their lineup row too — a stranded entry would hold a batting slot and a
+   * fielding position for a player no list on this screen can show. This mirrors that locally so
+   * the screen matches without a reload, and pushes an undo step first so it is recoverable.
+   */
+  async function removeCallUpFromGame(playerId: string) {
+    setCallUpError('');
+    /* ⚠ Invalidate any sheet-open GET still in flight — its list was read BEFORE this unlink and
+       would put the player straight back into the Call-ups group. */
+    callUpSeq.current += 1;
+    /**
+     * ⚠⚠ **WAIT FOR THE SAVE CHAIN.** This handler is the only thing on this page that writes the
+     * SAVED lineup from outside `saveChainRef` — the server clears the player's entry inside the
+     * DELETE. This page's hard-won rule is that every lineup write is serialised, because two
+     * writes have no server-side ordering: a debounced PUT already in flight could otherwise land
+     * after the server's removal and restore the entry for a player who is no longer called up —
+     * a row no list on this screen can show, still holding a batting slot and still printing.
+     */
+    await saveChainRef.current.catch(() => false);
+    try {
+      const res = await fetch(`${callUpsBase}?playerId=${encodeURIComponent(playerId)}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}));
+        throw new Error(d.error ?? 'Could not take that call-up off this game');
+      }
+      /**
+       * ⚠⚠ **THE HISTORY IS CLEARED, NOT PUSHED TO — AND THE OLD `pushLineupUndo()` HERE COULD TRAP
+       * A COACH ON THIS PAGE.** Every snapshot in the stack may hold a row for a player who is no
+       * longer admissible to this lineup. Pressing Undo restored that row and marked the lineup
+       * dirty; the autosave then PUT it, the server correctly refused it (they are neither on the
+       * roster nor called up to this game), and the save-failed state re-triggered the same PUT —
+       * forever, roughly once a second, with the unsaved-changes guard blocking navigation. Redo or
+       * a reload was the only way out. Two `/review` lenses found it independently.
+       *
+       * The push was also a guaranteed no-op: this control only renders for a call-up already OUT
+       * of the order, so the filter below removes nothing and the snapshot equalled current state —
+       * costing the coach two Undo presses to reach their real last edit.
+       *
+       * Clearing is the honest answer. Taking someone off a game is a SERVER-side act that undo
+       * cannot reverse, so offering an undo step for it was a promise the button could not keep.
+       */
+      setLineupRows(rows => renumberBattingOrder(rows.filter(r => r.player.id !== playerId), lineupMode));
+      setLineupHistory({ undo: [], redo: [] });
+      setCallUps(list => list.filter(p => p.id !== playerId));
+    } catch (e: unknown) {
+      setLineupNotice(errorMessage(e, 'Could not take that call-up off this game'));
+    }
+  }
+
   /**
    * ⚠ Every lineup PUT from this page goes through ONE promise chain (the Game-Day console's own
    * guard, `/review` 2026-08-04; found missing HERE by `/review` 2026-09-20 on D11): two PUTs have
@@ -479,6 +659,8 @@ export default function CoachLineupBuilderPage({
         number: row.player.playerNumber ? String(row.player.playerNumber) : '',
         name: playerName(row.player),
         isSub,
+        // mig 309 — the printed sheet says who is borrowed, in words that survive a photocopier.
+        isCallUp: isCallUp(row.player),
         inningPositions: row.inningPositions,
       };
     });
@@ -758,6 +940,28 @@ export default function CoachLineupBuilderPage({
               onAddComing: () => addPlayersToLineup(comingNotInLineup.map(r => r.player.id)),
               onRemoveOut: () => removePlayersFromLineup(outButInLineup.map(r => r.player.id)),
             }}
+            callUps={{
+              players: callUps,
+              sheetOpen: callUpSheetOpen,
+              onCallUp: () => { if (callUpSheetOpen) setCallUpSheetOpen(false); else void openCallUpSheet(); },
+              onCloseSheet: () => setCallUpSheetOpen(false),
+              onRemoveCallUp: id => void removeCallUpFromGame(id),
+              sheet: (
+                <CallUpSheet
+                  pool={callUpPool}
+                  /* Derived, not stored. `linkedIds` was a second copy of `callUps` — written and
+                     filtered in lockstep with it on adjacent lines, which is the tell that it was
+                     one piece of state wearing two names. */
+                  linkedIds={callUps.map(p => p.id)}
+                  loading={callUpLoading}
+                  saving={callUpSaving}
+                  error={callUpError}
+                  onPick={id => void submitCallUp({ playerId: id })}
+                  onCreate={fields => void submitCallUp(fields)}
+                  onClose={() => setCallUpSheetOpen(false)}
+                />
+              ),
+            }}
             readyState={{
               status: lineupStatus,
               readyAtLabel: lineupReadyAt ? formatInOrgZone(lineupReadyAt, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : null,
@@ -766,13 +970,12 @@ export default function CoachLineupBuilderPage({
               error: readyError || undefined,
               gameStarted,
             }}
+            notesSlot={lineupRows.length > 0 ? (
+              <textarea className={styles.textarea} rows={2} value={lineupNotes}
+                onChange={e => { setLineupNotes(e.target.value); markLineupDirty(); }}
+                placeholder="Lineup notes (opponent scouting, reminders) — can be printed on the dugout poster" maxLength={1000} style={{ marginTop: '1rem' }} />
+            ) : null}
           />
-
-          {lineupRows.length > 0 && (
-            <textarea className={styles.textarea} rows={2} value={lineupNotes}
-              onChange={e => { setLineupNotes(e.target.value); markLineupDirty(); }}
-              placeholder="Lineup notes (opponent scouting, reminders) — can be printed on the dugout poster" maxLength={1000} style={{ marginTop: '1rem' }} />
-          )}
 
           {/* The autosave word, a transient pill at the window's foot (owner 2026-09-20, revising
               that morning's title-row home: the title row is pinned nowhere, so the word scrolled

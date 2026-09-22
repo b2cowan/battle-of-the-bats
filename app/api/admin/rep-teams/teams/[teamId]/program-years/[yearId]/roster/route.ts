@@ -33,6 +33,9 @@ export const GET = withObservability(async (_req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
+  // Call-ups are excluded by `getRepRosterPlayers` itself (mig 309) — this list and the PDF built
+  // from it are the ROSTER a club submits to its association, and a player borrowed for one game is
+  // not on it. Departed players ('inactive') stay: they were on the team and the record says so.
   const players = await getRepRosterPlayers(yearId);
   return NextResponse.json({ players });
 }, { route: '/api/admin/rep-teams/teams/[teamId]/program-years/[yearId]/roster' });

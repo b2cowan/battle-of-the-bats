@@ -48,7 +48,7 @@ import { lineupBuilderHref } from '@/lib/lineups-address';
 import { analyzeLineup, BENCH_POSITION } from '@/lib/lineup-analysis';
 import { generateBestLineup } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
-import { playerDisplayName, playerName } from '@/lib/coach-roster-name';
+import { playerDisplayName, playerName, isCallUp, CALL_UP_LABEL } from '@/lib/coach-roster-name';
 import { ATTENDANCE_WORD } from '@/lib/coach-schedule-vocab';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
@@ -738,6 +738,13 @@ export default function CoachGameConsolePage({
     return p ? playerName(p) : 'Player';
   };
   const numberOf = (playerId: string) => playerById.get(playerId)?.playerNumber ?? null;
+  /**
+   * The call-up mark (mig 309) — drawn on the field rows AND the bench rows, from one place so the
+   * two halves of this board cannot disagree. The console is the screen where a coach is making
+   * live decisions about who plays next, so "is this one of mine?" is at its most load-bearing.
+   */
+  const callUpMarkFor = (playerId: string) =>
+    (isCallUp(playerById.get(playerId)) ? <span className={styles.gdWarn}>{CALL_UP_LABEL}</span> : null);
 
   const attendingCount = (data?.players ?? []).filter(p => (att[p.id]?.status ?? 'unknown') !== 'absent').length;
   const outCount = (data?.players ?? []).filter(p => att[p.id]?.status === 'absent').length;
@@ -1102,6 +1109,7 @@ export default function CoachGameConsolePage({
                   >
                     <span className={styles.gdNum}>{numberOf(r.playerId)}</span>
                     <span className={styles.gdName}>{nameOf(r.playerId)}</span>
+                    {callUpMarkFor(r.playerId)}
                     {isOut && <span className={styles.gdWarn} data-tone="red">{ATTENDANCE_WORD.absent}</span>}
                     {pitched > 0 && cap !== null && (
                       <span className={styles.gdWarn} data-tone={pitched >= cap ? 'red' : undefined}>
@@ -1153,6 +1161,7 @@ export default function CoachGameConsolePage({
                   >
                     <span className={styles.gdNum}>{numberOf(r.playerId)}</span>
                     <span className={styles.gdName}>{nameOf(r.playerId)}</span>
+                    {callUpMarkFor(r.playerId)}
                     {isOut && <span className={styles.gdWarn} data-tone="red">{ATTENDANCE_WORD.absent}</span>}
                     {!isOut && streak >= 2 && (
                       <span className={styles.gdWarn} data-tone="red">

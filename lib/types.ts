@@ -1041,7 +1041,25 @@ export interface RepTeamGroup {
   createdAt: string;
 }
 export type RepTryoutRegistrationStatus = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined' | 'withdrawn';
-export type RepRosterStatus = 'active' | 'inactive' | 'released';
+/**
+ * What a roster row IS. Two of these are a lifecycle (`active` → `inactive`); the third is a
+ * different KIND of entry entirely.
+ *
+ * `callup` (mig 309) — a player borrowed for one or more individual GAMES. **Not on the roster.**
+ * Every roster read in the portal filters `status === 'active'`, so a call-up is excluded from
+ * dues, skills & goals, awards, documents, tryouts, family audiences, the roster count, every
+ * season-long playing-time figure, Season Wrapped, the closed-season roster shelf and next
+ * season's rollover — for free, and for anything built later. That is why this is a status rather
+ * than a flag: a flag would have been INCLUDED by all of them and fails open.
+ * A call-up reaches a game only through `rep_team_call_up_appearances`.
+ *
+ * ⚠ `'released'` USED TO BE HERE AND NEVER EXISTED. It was in this type from the beginning and the
+ * check constraint never allowed it, so it could be rendered (`season-end` printed "Left during the
+ * season") and never written. Removed with mig 309.
+ * **The type and the live constraint must agree** — `tests/unit/roster-status-constraint-guard.test.ts`
+ * now asserts it, so the next value added here cannot repeat that.
+ */
+export type RepRosterStatus = 'active' | 'inactive' | 'callup';
 /**
  * The KINDS of event on a coach schedule. `league_game` is the stored key for what the product
  * calls a **Game** (label changed 2026-09-20 — the key stays because renaming an enum value is a
@@ -1897,6 +1915,35 @@ export interface RepTeamLineupEntry {
   notes: string | null;
   createdAt: string;
   updatedAt: string;
+}
+
+/**
+ * A call-up tied to ONE game (mig 309, owner ruling R3 2026-09-22).
+ *
+ * This is what keeps the builder clean: a call-up is offered in a game's lineup builder ONLY if one
+ * of these links them to that game. However many call-ups a team has saved, a fresh game shows none
+ * of them — the saved pool lives behind the "Call up a player" button and in the roster page's
+ * Call-ups section, and nowhere else.
+ */
+export interface RepTeamCallUpAppearance {
+  id: string;
+  eventId: string;
+  playerId: string;
+  programYearId: string;
+  teamId: string;
+  orgId: string;
+  createdAt: string;
+}
+
+/**
+ * A row in the "Call up a player" sheet: a saved call-up plus the count the sheet shows. The count
+ * is not decoration — several leagues cap how many games a borrowed player may appear in, and today
+ * a coach tracks that on paper or not at all.
+ */
+export interface RepCallUpPoolEntry {
+  player: RepRosterPlayer;
+  /** Games this call-up has been linked to, this season. */
+  gamesCalledUp: number;
 }
 
 // A per-player slot inside a saved lineup TEMPLATE (mig 159). Keyed by player_id so the

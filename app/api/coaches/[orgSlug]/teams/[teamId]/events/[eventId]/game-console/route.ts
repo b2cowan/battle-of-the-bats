@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import {
   getRepRosterPlayers,
+  getRepCallUpsForEvent,
   getRepTeamEventAttendance,
   getRepTeamEventById,
   getRepTeamGameMomentsForEvent,
@@ -70,8 +71,25 @@ export const GET = withObservability(async (_req: Request,
   // gated at the source on the same predicate that allows capturing one — a read-only Helper's
   // console never receives the staff's private lines about the night.
   const showMoments = canLogGameMoment(caps);
-  const [players, attendance, lineup, staff, moments] = await Promise.all([
+  const [players, callUps, attendance, lineup, staff, moments] = await Promise.all([
     getRepRosterPlayers(programYear.id).then(all => all.filter(p => p.status === 'active')),
+    /**
+     * ⚠⚠ **THE CALL-UPS ON THIS GAME ARE PART OF THIS CONSOLE'S ROSTER, AND OMITTING THEM WAS
+     * DATA LOSS, NOT A MISSING FEATURE** (mig 309, found tracing the builder's callers).
+     *
+     * The console filters saved lineup entries down to the players in this payload — deliberately,
+     * so a player deactivated mid-season cannot ride into the console's full-replace PUT and
+     * poison every save with a 400 (the /review finding of 2026-08-04). With call-ups absent from
+     * the payload, that same filter silently dropped a borrowed player from the loaded grid, and
+     * the next substitution wrote the lineup back **without them** — deleting a real player from a
+     * lineup that had been saved with them in it, mid-game, with no error.
+     *
+     * They are merged into `players` below rather than served in their own key because every list
+     * on this screen — on the field, the bench, the swap, the seed — asks the same question the
+     * builder's roster asks: "who is available for this game?" A call-up on this game is. Their
+     * `status` rides with the row, so the console marks them without a second lookup.
+     */
+    getRepCallUpsForEvent(eventId),
     showAttendance ? getRepTeamEventAttendance(eventId) : Promise.resolve([]),
     showLineup ? getRepTeamLineupForEvent(eventId) : Promise.resolve(null),
     getRepTeamStaffForYear(programYear.id, ctx.org.id),
@@ -93,7 +111,7 @@ export const GET = withObservability(async (_req: Request,
      * override it resolves against rides on `lineup`, which is gated the same way.
      */
     lineupSettings: showLineup ? programYear.lineupSettings : null,
-    players: redactRoster(players, caps),
+    players: redactRoster([...players, ...callUps], caps),
     attendance,
     moments,
     isMirrored: isMirroredEvent(event),

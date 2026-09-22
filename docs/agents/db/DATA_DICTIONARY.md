@@ -2113,6 +2113,7 @@ moment it lands.
 <!-- dict:col:rep_roster_players.guardian_first_name -->
 <!-- dict:col:rep_roster_players.guardian_last_name -->
 <!-- dict:col:rep_roster_players.guardian_email -->
+⚠ **NOT freely writable on every roster row since mig 309** — a `'callup'` row must have it NULL (see `rep_roster_players_callup_no_email_check` above). A bulk person-attach or backfill written from the old description takes a `23514` on the first call-up it touches.
 <!-- dict:col:rep_roster_players.guardian_phone -->
 **`guardian_first_name` / `guardian_last_name` / `guardian_email` / `guardian_phone`** — guardian contact; **all nullable as of mig 139** (Coach Premium Upgrade Phase 3c — so a free team's roster carries over on upgrade without fabricating guardian data). The manual roster-add route still requires first/last/email app-side, so in practice only **migrated rows** (or edits that clear the field) are null. `guardian_email` indexed (`email_idx`, non-unique). TS types are already `string | null` and every reader is null-safe (dues reminders skip null emails; displays/exports coalesce). `guardian_phone` nullable.
 
@@ -2122,7 +2123,10 @@ moment it lands.
 ⚠ **Resolve it through `org_person_emails`, never through `org_people.email_normalized`** — a row still carrying a parent's OLD address must land on the same person as one carrying their new address. ⚠ Attaching a person is **not an edit anyone made**: the backfill deliberately does not bump `updated_at`, because touching it would make whole rosters look freshly changed to every surface that reads recency (mig 214's precedent). Nothing in the product reads this column yet.
 
 <!-- dict:col:rep_roster_players.status -->
-**`status`** (text, NOT NULL, default `'active'`; CHECK `active|inactive`) — `inactive` is the de-facto delete (gotcha 1).
+**`status`** (text, NOT NULL, default `'active'`; CHECK `active|inactive|callup`) — `inactive` is the de-facto delete (gotcha 1). **`callup` (mig 309) is not a lifecycle stage but a different KIND of entry**: a player borrowed for one or more individual GAMES, reached only through `rep_team_call_up_appearances`. Because ~59 roster reads across the portal filter `status === 'active'`, a call-up is excluded from dues, skills & goals, awards, documents, tryouts, family audiences, the roster count, every season-long playing-time figure, Season Wrapped, the closed-season roster shelf and next season's rollover **for free, and for anything built later** — that safe default is why this is a status rather than a flag (a flag would have been *included* by all ~59 and fails open). ⚠ The handful of surfaces that deliberately read the WHOLE roster (player dues, which must still show a departed player's unpaid balance) exclude `callup` **by name**; held by `tests/unit/coach-call-ups-guard.test.ts`. ⚠⚠ **`'released'` was in `RepRosterStatus` for a year and this CHECK never allowed it** — renderable, never writable, two dead branches. `tests/unit/roster-status-constraint-guard.test.ts` now holds the type and this constraint to the same set, in both directions; **add a value here in a NEW migration before adding it to the type, never the other way round.**
+
+<!-- dict:constraint:rep_roster_players.rep_roster_players_callup_no_email_check -->
+**`rep_roster_players_callup_no_email_check`** (CHECK, mig 309) — `status <> 'callup' OR guardian_email IS NULL`. **A call-up can never hold a guardian email**, which is owner ruling R6 made structural rather than procedural: every roster-derived email audience in the product is built by collecting `guardian_email`, so a row that cannot hold one cannot enter an audience even if a future audience query forgets to filter on status. ⚠ It fires on UPDATE too, so an active player carrying an email cannot be flipped to `'callup'` — nothing does, and the roster PATCH restricts its status field to `active|inactive` for exactly that reason. ⚠ **A `family_links` row is the ONE audience this constraint cannot close** (it hangs off `player_id`, not an email), so `lib/family-guardian.ts` excludes call-ups in its own raw query; see `coach-call-ups-guard.test.ts`.
 
 <!-- dict:col:rep_roster_players.source -->
 **`source`** (text, NOT NULL, default `'admin_manual'`; CHECK `tryout|admin_manual`) — `'tryout'` set only by the conversion path.
@@ -2477,6 +2481,39 @@ moment it lands.
 
 <!-- dict:col:rep_team_lineup_entries.notes -->
 **`notes`** (text, nullable; ≤500 chars app-enforced).
+
+### `rep_team_call_up_appearances`
+<!-- dict:table:rep_team_call_up_appearances -->
+
+**Purpose:** ties a **call-up** — a player borrowed for one game, `rep_roster_players.status = 'callup'` — to ONE game. Added by migration 309 (owner rulings R1–R6, 2026-09-22; plan `docs/projects/active/COACH_CALL_UPS_PLAN.md`). **Applied to dev 2026-09-22; ⚠ PROD-OWED — apply BEFORE promoting the code that reads it.**
+
+**Gotchas (read first):**
+1. **⚠⚠ THIS TABLE IS WHAT KEEPS THE LINEUP BUILDER CLEAN, and that is its whole reason to exist.** A call-up is offered in a game's builder **only** if a row here links them to that game. However many call-ups a team has saved, a fresh game offers **none** of them (owner ruling R3) — the saved list lives behind the *Call up a player* sheet and in the roster page's Call-ups shelf, and nowhere else. Without the per-game link a call-up would sit in every game's available list for the rest of the season, which is the exact clutter the feature was asked for to remove.
+2. **The lineup write's allowed set is `active roster ∪ THIS event's call-ups`**, and nothing wider — not the pool, not "all non-active rows". Widening it lets another game's borrowed player into this game's lineup: invisible in every list the builder draws, but holding a batting slot, counted by the lineup check, and printed on the card. Held by `tests/unit/coach-call-ups-guard.test.ts`.
+3. **The count is the product feature.** `COUNT(*) per player_id` is the "2 games this season" figure the sheet and the roster shelf show — several leagues cap how many games an affiliate may play. It is also what gates removal: the only route that deletes a call-up **refuses with 409 when they have any appearance**, because their name is on those saved lineups and deleting the roster row would cascade the lineup entry away (a card printed last month would stop matching the card printed today).
+4. **Games only** — the route refuses any non-game event type. There is no such thing as calling someone up to a practice.
+5. **Gated on `lineups`, not `rosterWrite`** (owner ruling R5) — an assistant running the game at a field can call someone up; it creates no money and no record that outlives the game.
+6. **Deliberately NOT in `ROSTER_PLAYER_DEPENDENTS`** — see the acknowledgement in `tests/unit/roster-delete-guard.test.ts`. It is a link, not a record; the record is the guarded `rep_team_lineup_entries` row.
+
+**Fields** (boilerplate `id`, `created_at` omitted):
+
+<!-- dict:col:rep_team_call_up_appearances.event_id -->
+**`event_id`** (FK → `rep_team_events.id` CASCADE; `UNIQUE(event_id, player_id)`) — the game they were called up to.
+
+<!-- dict:col:rep_team_call_up_appearances.player_id -->
+**`player_id`** (FK → `rep_roster_players.id` CASCADE; part of the unique) — must be a row with `status = 'callup'`; the read re-checks the status so a demoted row cannot be admitted by a stale link.
+
+<!-- dict:col:rep_team_call_up_appearances.program_year_id -->
+**`program_year_id`** (FK → `rep_program_years.id` CASCADE) — carried so the pool read can scope and count without a join.
+
+<!-- dict:col:rep_team_call_up_appearances.team_id -->
+**`team_id`** (FK → `rep_teams.id` CASCADE) — the RLS policies' subject, mirroring `rep_team_lineup_entries`.
+
+<!-- dict:col:rep_team_call_up_appearances.org_id -->
+**`org_id`** (FK → `organizations.id` CASCADE).
+
+<!-- dict:col:rep_team_call_up_appearances.created_by -->
+**`created_by`** (FK → `auth.users.id` SET NULL, nullable) — who called them up.
 
 ### `rep_team_lineup_templates`
 <!-- dict:table:rep_team_lineup_templates -->

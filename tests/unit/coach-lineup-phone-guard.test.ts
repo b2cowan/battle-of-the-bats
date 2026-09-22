@@ -248,7 +248,11 @@ describe('D1 — the Setup row and its panel', () => {
     // builder page (Templates, Print). Converting only one would sharpen the inconsistency.
     // ⚠ ONE COMPONENT, FIVE CALL SITES. They were five copied <div>s, and the copy had already
     // drifted (the warm colour above). The class is now spelled exactly once, in the component.
-    assert.equal(editor.split('<LineupSheetScrim onClose=').length - 1, 3, 'the editor’s three drawers');
+    // ⚠ FOUR since mig 309: the phone Setup drawer, the 641–900 Setup drawer, the row-actions
+    // drawer, and the "Call up a player" sheet. The call-up sheet deliberately reuses this same
+    // recipe rather than bringing a shell of its own — a fifth builder panel that looked like the
+    // other four until one of them changed is exactly what this count exists to prevent.
+    assert.equal(editor.split('<LineupSheetScrim onClose=').length - 1, 4, 'the editor’s four drawers');
     assert.equal(builder.split('<LineupSheetScrim onClose=').length - 1, 2, 'Templates and Print');
     assert.equal(scrimCmp.split('styles.lineupSheetScrim').length - 1, 1, 'the class has exactly one home');
     assert.ok(scrimCmp.includes('aria-hidden="true"'), 'and the markup cannot drift either');
@@ -497,13 +501,30 @@ describe('D5 — one inning at a time', () => {
     assert.match(sheet, /role="dialog"\s*aria-modal="true"/);
     assert.match(sheet, /sheet\.sheetAnchor/, 'the one sheet system\'s container');
   });
-  it('the hint renders after the list on a phone and names the stepper; the desktop keeps the swipe hint', () => {
+  /**
+   * ⚰ The phone hint ("Hold a number to move a player · ‹ › for the innings") was REMOVED on
+   * 2026-09-22 (owner: "we don't need this message"), so this test flipped from asserting its
+   * placement to asserting its absence — deliberately, rather than being deleted. Both halves of it
+   * had become self-evident: the stepper directly above the list is a labelled "Inning 1 of 6" with
+   * two arrows, and every row's number carries a visible grip. It spent a line of the page's most
+   * contested space narrating controls that already read.
+   *
+   * ⚠ The DESKTOP hint stays and is still asserted: it says something the phone's did not — that
+   * the grid scrolls sideways — which is the one thing about that surface a coach cannot see.
+   */
+  it('the phone shows no interaction hint; the desktop keeps the swipe hint', () => {
     const dnd = between(editor, '<DndContext sensors={sensors}', '</DndContext>', 'the DndContext');
-    const listAt = dnd.indexOf('<LineupInningList');
-    const hintAt = dnd.indexOf('lineupScrollHintUnder');
-    assert.ok(listAt > 0 && hintAt > listAt, 'the hint after the list');
-    assert.match(dnd, /Hold a number to move a player · ‹ › for the \{periodLc\}s/);
-    assert.match(dnd, /Hold a number to move a player · swipe across innings →/);
+    assert.ok(dnd.indexOf('<LineupInningList') > 0, 'the phone still renders the inning list');
+    assert.doesNotMatch(
+      dnd, /lineupScrollHintUnder/,
+      'The phone hint is back. It was removed because the stepper and the row grips already say '
+      + 'everything it said, and it cost a line of the phone\'s most contested space.',
+    );
+    assert.match(
+      dnd, /Hold a number to move a player · swipe across innings →/,
+      'The DESKTOP hint is gone too. That one earns its place — it names the sideways scroll, which '
+      + 'is the one thing about the grid a coach cannot see.',
+    );
   });
 });
 
