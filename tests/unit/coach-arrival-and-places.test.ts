@@ -14,6 +14,7 @@ import {
   arrivalPresetLabel, normalizeArrivalDefault,
 } from '../../lib/coach-arrival.ts';
 import { matchPlace, applyPlaceToEvent, filterPlaces, readPlaceFields, placeKey } from '../../lib/coach-places.ts';
+import { surfaceLabel } from '../../lib/sports.ts';
 
 describe('arrival — a lead time is a clock, same day', () => {
   it('turns a preset into the clock before the start', () => {
@@ -102,5 +103,30 @@ describe('places — the book matches by name, trimmed and case-folded', () => {
     assert.ok(readPlaceFields({ name: 'Park', address: 42 }).error);
     // A PATCH that names only the note leaves the rest undefined — "not editing", never "clear".
     assert.deepEqual(readPlaceFields({ note: 'park behind the arena' }).fields, { note: 'park behind the arena' });
+  });
+});
+
+describe('a field number reads as a sentence — a bare code takes the sport\'s noun, a name stays as typed', () => {
+  it('prefixes a bare code with the surface noun, "#" and a letter suffix included', () => {
+    assert.equal(surfaceLabel('baseball', '1'), 'Diamond 1');
+    assert.equal(surfaceLabel('softball', ' 1A '), 'Diamond 1A');
+    assert.equal(surfaceLabel('basketball', '#2'), 'Court 2');
+  });
+  it('leaves a value that already names itself alone — never "Diamond Diamond 2"', () => {
+    assert.equal(surfaceLabel('baseball', 'Diamond 2'), 'Diamond 2');
+    assert.equal(surfaceLabel('baseball', 'North Court'), 'North Court');
+    assert.equal(surfaceLabel('baseball', 'D2'), 'D2');
+  });
+  it('a sport with no surface noun of its own reads "Field", never "Other 1"; no sport at all is the platform default', () => {
+    assert.equal(surfaceLabel('soccer', '1'), 'Field 1');
+    assert.equal(surfaceLabel('other', '1'), 'Field 1');
+    // null/blank resolves to the legacy default sport (softball) everywhere else in the packs — same here.
+    assert.equal(surfaceLabel(null, '3'), 'Diamond 3');
+  });
+  it('blank in, empty out', () => {
+    assert.equal(surfaceLabel('baseball', ''), '');
+    assert.equal(surfaceLabel('baseball', '   '), '');
+    assert.equal(surfaceLabel('baseball', null), '');
+    assert.equal(surfaceLabel('baseball', undefined), '');
   });
 });

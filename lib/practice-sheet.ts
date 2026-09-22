@@ -23,6 +23,7 @@ import type { PracticeSheetBlock, PracticeSheetOptions, PracticeSheetRotation, P
 import { playerDisplayName } from './coach-roster-name';
 import { formatInOrgZone } from './timezone';
 import { formatStoredClock } from './utils';
+import { surfaceLabel } from './sports';
 import {
   blockOwnPeople, blockRotates, computeBlockClocks, computeRotation, formatDuration, practiceKitBag,
   resolvePracticePlanTagNames, resolveStationTeaching, rotationByStation, soleStationOf, stationLabel, tagNamesById,
@@ -44,6 +45,8 @@ export type PracticeSheetInput = {
     fieldNumber?: string | null;
   };
   teamName: string;
+  /** The team's sport — a bare diamond number prints "Diamond 1" on the where-line (`surfaceLabel`). */
+  sport: string | null | undefined;
   roster: { id: string; playerFirstName: string; playerLastName: string; playerNumber: string | null }[];
   /** The roster's ACTIVE focus areas — empty when the reader may not see them (the section is then absent). */
   goals: { playerId: string; focusArea: string; status: string }[];
@@ -58,7 +61,7 @@ export type PracticeSheetInput = {
 };
 
 export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOptions {
-  const { plan, event, teamName, roster, goals, canViewFocus, staffTags, equipmentTags, planTagIds, focusTags, settings } = input;
+  const { plan, event, teamName, sport, roster, goals, canViewFocus, staffTags, equipmentTags, planTagIds, focusTags, settings } = input;
   // Resolved to CURRENT tag names (mig 266) — see `resolvePracticePlanTagNames`. The sheet, like
   // the run screen, only ever reads `.staff`/`.equipment` as plain strings; this is what lets a
   // station saved under the new picker still print who's running it and what to bring.
@@ -200,7 +203,7 @@ export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOpti
   const whereLabel = [
     event.startsAt ? fmtTime(event.startsAt) : '',
     event.arrivalTime ? `Arrive ${formatStoredClock(event.arrivalTime)}` : '',
-    [event.location, event.fieldNumber].filter(Boolean).join(', '),
+    [event.location, surfaceLabel(sport, event.fieldNumber)].filter(Boolean).join(', '),
   ].filter(Boolean).join('  ·  ');
 
   return {

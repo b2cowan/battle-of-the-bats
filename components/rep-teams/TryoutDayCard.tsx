@@ -7,7 +7,7 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { getTryoutWindowNotice } from '@/lib/tryout-windows';
 import { utcToZonedInputs, addCalendarDays } from '@/lib/timezone';
 import { formatTryoutSessionWhen } from '@/lib/tryout-session-label';
-import { getSportPack } from '@/lib/sports';
+import { getSportPack, surfaceLabel } from '@/lib/sports';
 import type { RepTryout, RepTryoutSession } from '@/lib/types';
 import type { SetupItemStatus } from './TryoutSetupChecklist';
 import TryoutNamesSwitch from './TryoutNamesSwitch';
@@ -311,7 +311,7 @@ export default function TryoutDayCard({ apiBase, canWrite, sport, onError, onSta
                     <div className={styles.sessionWhen}>{formatTryoutSessionWhen(s)}</div>
                     {(s.location || s.fieldNumber || s.label) && (
                       <div className={styles.sessionMeta}>
-                        {[s.label, s.location, s.fieldNumber && `Field ${s.fieldNumber}`].filter(Boolean).join(' · ')}
+                        {[s.label, s.location, surfaceLabel(sport, s.fieldNumber)].filter(Boolean).join(' · ')}
                       </div>
                     )}
                   </div>

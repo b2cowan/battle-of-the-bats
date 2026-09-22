@@ -41,7 +41,7 @@ import { tallyResults, formatRecord } from '@/lib/coach-season-record';
 import { countsTowardRecord } from '@/lib/season-wrapped';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
 import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
-import { fieldNounFor, getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { surfaceLabel, getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { analyzeLineup, deriveLineupBadge, type LineupBadge } from '@/lib/lineup-analysis';
 import { gameDayEntryHref, isInGameDayWindow, toGameDayEventShape } from '@/lib/coach-game-day';
 import HelpTooltip from '@/components/help/HelpTooltip';
@@ -1571,13 +1571,9 @@ export default function TeamOverviewPage({
   const placeLabel = (() => {
     if (!nextEvent) return null;
     const venue = nextEvent.location?.trim() || null;
-    const field = nextEvent.fieldNumber?.trim() || null;
-    // A field value that already names itself ("Diamond 2", "Court A") must not become
-    // "Diamond Diamond 2" — only a bare number takes the noun.
-    // ⚠ A bare code takes the noun — "1" and "1A" alike, since a letter suffix is a common way to
-    // number a surface and is no more self-describing than a digit. Anything that already names
-    // itself ("Diamond 2", "North Court") is left exactly as the coach typed it.
-    const surface = field ? (/^\d+[A-Za-z]?$/.test(field) ? `${fieldNounFor(assignment.teamSport)} ${field}` : field) : null;
+    // A bare code takes the sport's noun ("Diamond 1"); a value that already names itself stays as
+    // typed — the rule lived here alone until 2026-09-21, now `surfaceLabel` is its one home.
+    const surface = surfaceLabel(assignment.teamSport, nextEvent.fieldNumber) || null;
     return [venue, surface].filter(Boolean).join(', ') || null;
   })();
 

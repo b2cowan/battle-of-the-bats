@@ -16,7 +16,7 @@ import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { sessionTitle } from '@/lib/development-session-view';
-import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { getSportPack, surfaceLabel, DEFAULT_SPORT } from '@/lib/sports';
 import { scheduleDrawerDoors } from '@/lib/coach-schedule-doors';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
@@ -473,14 +473,14 @@ function errorMessage(error: unknown, fallback: string) {
 //   · its clipboard sat INSIDE the title text with hand-rolled spacing, where `EventChip` and
 //     `TournamentGameChip` both put their mark in the leading icon slot before the time.
 // Both are fixed here; the dashed rail and the muted name stay exactly as they were.
-function TryoutChip({ session, dayKey, href, listRow }: { session: RepTryoutSession; dayKey?: string; href: string; listRow?: boolean }) {
+function TryoutChip({ session, sport, dayKey, href, listRow }: { session: RepTryoutSession; sport: string; dayKey?: string; href: string; listRow?: boolean }) {
   // ⚠ A session is a real moment now, read in the CLUB's zone like every event beside it — see
   // lib/tryout-session-label for why it used to be sliced, and why that was wrong.
   const time = formatTryoutSessionTime(session.startsAt);
   // Same rule as the other two chips: a day-scoped view already carries the date in its column
   // header, the flat list does not.
   const lead = dayKey ? time : [shortDate(tryoutSessionDay(session.startsAt)), time].filter(Boolean).join(' · ');
-  const place = [session.label, session.location, session.fieldNumber && `Field ${session.fieldNumber}`].filter(Boolean).join(' · ');
+  const place = [session.label, session.location, surfaceLabel(sport, session.fieldNumber)].filter(Boolean).join(' · ');
   // The LIST view's face (standard §3.10, F-26): the chip below is the calendar CELL's (K-21). The
   // clipboard is the one lead mark and the muted name carries the distinctness the dashed rail
   // carries in a cell.
@@ -1552,7 +1552,7 @@ export default function CoachesSchedulePage({
   // Location is rendered separately as a tappable Google Maps link (reusing the shared helper),
   // with the optional field/diamond # appended to the label (the maps query stays the location).
   const locationLabel = selectedEvent
-    ? [selectedEvent.location, selectedEvent.fieldNumber].filter(Boolean).join(' · ')
+    ? [selectedEvent.location, surfaceLabel(sportPack.id, selectedEvent.fieldNumber)].filter(Boolean).join(' · ')
     : '';
 
   // Attendance ↔ lineup mismatch for the open game (top-section warning). Only when a lineup exists.
@@ -2064,7 +2064,7 @@ export default function CoachesSchedulePage({
           durationHours: e.endsAt
             ? Math.max(0.5, (new Date(e.endsAt).getTime() - new Date(e.startsAt!).getTime()) / 3600000)
             : 2,
-          location:  [[e.location, e.fieldNumber].filter(Boolean).join(' · '), e.locationAddress].filter(Boolean).join(', ') || undefined,
+          location:  [[e.location, surfaceLabel(sportPack.id, e.fieldNumber)].filter(Boolean).join(' · '), e.locationAddress].filter(Boolean).join(', ') || undefined,
           description,
         };
       });
@@ -2134,7 +2134,7 @@ export default function CoachesSchedulePage({
       })),
       ...tryoutSessions.filter(t => tryoutSessionDay(t.startsAt) === key).map(t => ({
         at: clock24(t.startsAt),
-        node: <TryoutChip key={t.id} session={t} dayKey={key} href={`${base}/tryouts`} listRow />,
+        node: <TryoutChip key={t.id} session={t} sport={sportPack.id} dayKey={key} href={`${base}/tryouts`} listRow />,
       })),
     ].sort((a, b) => a.at.localeCompare(b.at));
     return rows.map(r => r.node);
@@ -2223,7 +2223,7 @@ export default function CoachesSchedulePage({
         })),
         ...trys.map(s => ({
           at: shownAt(tryoutSessionDay(s.startsAt), clock24(s.startsAt)),
-          node: <TryoutChip key={s.id} session={s} href={`${base}/tryouts`} listRow />,
+          node: <TryoutChip key={s.id} session={s} sport={sportPack.id} href={`${base}/tryouts`} listRow />,
         })),
       ].sort((a, b) => a.at.localeCompare(b.at));
       // A month is a BAND ROW inside the one frame (standard §3.10.5), not a kicker on the paper
@@ -2301,7 +2301,7 @@ export default function CoachesSchedulePage({
                         <TournamentGameChip key={`g-${g.id}`} game={g} dayKey={key} />
                       ))}
                       {dayTryouts.map(s => (
-                        <TryoutChip key={s.id} session={s} dayKey={key} href={`${base}/tryouts`} />
+                        <TryoutChip key={s.id} session={s} sport={sportPack.id} dayKey={key} href={`${base}/tryouts`} />
                       ))}
                     </>
                   )
@@ -3803,6 +3803,7 @@ export default function CoachesSchedulePage({
                       fills the address and the usual diamond; the Recent chips that stood here retired. */}
                   <PlaceCombobox
                     basePath={`/api/coaches/${orgSlug}/teams/${teamId}/places`}
+                    sport={sportPack.id}
                     places={places}
                     value={{ location: form.location, locationAddress: form.locationAddress, fieldNumber: form.fieldNumber, placeId: form.placeId }}
                     onChange={next => setForm(f => ({ ...f, ...next }))}
@@ -3891,7 +3892,7 @@ export default function CoachesSchedulePage({
                 </div>
                 {/* The diamond came from the place (D8): say so, and that changing it here is this game's own. */}
                 {formPlace?.fieldNumber && form.fieldNumber.trim() === formPlace.fieldNumber && (
-                  <p className={styles.formHint}>{formPlace.fieldNumber} is {formPlace.name}&rsquo;s usual — change it above for this game only.</p>
+                  <p className={styles.formHint}>{surfaceLabel(sportPack.id, formPlace.fieldNumber)} is {formPlace.name}&rsquo;s usual — change it above for this game only.</p>
                 )}
                 {/* Address LEFT this form (D8): a place carries it. The one case it still shows is an
                     event from before the book that holds an address and no place — read it, edit it,

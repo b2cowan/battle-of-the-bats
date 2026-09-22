@@ -766,7 +766,7 @@ export default function CoachPracticePlanPage({
     await downloadPracticeSheet(
       buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'practice-plan', scope: data.event.name || 'practice' }, 'pdf'),
       buildPracticeSheet({
-        plan, event: data.event, teamName: assignment?.teamName ?? teamId,
+        plan, event: data.event, teamName: assignment?.teamName ?? teamId, sport: assignment?.teamSport,
         roster: data.roster, goals: data.goals, canViewFocus: data.canViewFocus,
         staffTags, equipmentTags, planTagIds, focusTags, settings,
       }),

@@ -99,10 +99,27 @@ opens at the current time of day.
 - Dictionary rows for the new table/columns; `refresh:snapshots`; TODO; Owner QA Ledger §214; hub
   gains the Full Plan + QA Walk tabs; memory.
 
+### 3.7 Follow-up — a bare diamond number reads as a sentence (owner, 2026-09-21, from a screenshot)
+- The Location field's hint printed `address · fieldNumber`; with no address and a diamond typed as
+  "1", a bare **"1" floated under the field** with nothing to say what it was. The rule that fixes it
+  already existed ONCE — the team overview's next-game card prefixed a bare code with the sport's
+  surface noun as a local ternary — while six other readers printed the digit.
+- `surfaceLabel(sport, fieldNumber)` in `lib/sports.ts` (beside `fieldNounFor`) is now the one
+  home: a bare code ("1", "1A", "#2") → "Diamond 1"; a value that names itself ("Diamond 2") stays
+  as typed; a sport with no surface noun reads "Field", never "Other 1". Pinned in
+  `tests/unit/coach-arrival-and-places.test.ts`.
+- Readers converted: the Location hint and the picker's rows (`PlaceCombobox`, now takes `sport`),
+  Manage places rows, the event sheet's where-line, the calendar (ICS) export, the "… is X's usual"
+  hint under More, the tryout chip (which always said "Field" — wrong noun, and doubled a typed
+  "Diamond 2"), the game console's chip, the practice record's where-line and the printed practice
+  sheet (`buildPracticeSheet` takes `sport`). The XLSX export keeps the raw value — its column
+  header is the label there.
+
 ## 4. Verification
 `verify:changed` (incl. `check:migrations`, dictionary, spelling, CSS gates), `typecheck` (types +
 db.ts touched), focused lint, the new unit tests, the rendered check on `coach-schedule` +
-`coach-settings`; owner walk §214.
+`coach-settings`; owner walk §214 (§3.7 rides the same walk: parts D and E now read "Diamond N"
+under Location and on the picker's rows).
 
 ## 5. Not built, on purpose
 - No org-level venue library for coaches (admin's `org_venues` stays admin's).

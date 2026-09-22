@@ -5,6 +5,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import QuestionShell from './QuestionShell';
 import PlaceSheet from './PlaceSheet';
 import { useConfirm } from './ConfirmProvider';
+import { surfaceLabel } from '@/lib/sports';
 import type { RepTeamPlace } from '@/lib/types';
 
 /**
@@ -15,11 +16,14 @@ import type { RepTeamPlace } from '@/lib/types';
  */
 export default function ManagePlacesSheet({
   basePath,
+  sport,
   places,
   onClose,
   onChanged,
 }: {
   basePath: string;
+  /** The team's sport — the usual diamond reads "Diamond 2" on each row (`surfaceLabel`). */
+  sport: string | null | undefined;
   places: RepTeamPlace[];
   onClose: () => void;
   /** Re-read the book (and the events, when a save moved some). */
@@ -98,7 +102,7 @@ export default function ManagePlacesSheet({
         ) : (
           <div>
             {places.map(p => {
-              const facts = [p.address, p.fieldNumber].filter(Boolean).join(' · ');
+              const facts = [p.address, surfaceLabel(sport, p.fieldNumber)].filter(Boolean).join(' · ');
               const n = p.count ?? 0;
               return (
                 <div key={p.id} className={styles.tagManagerRow}>

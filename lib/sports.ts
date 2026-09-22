@@ -351,5 +351,30 @@ export function getSportPack(value: SportId | string | null | undefined): SportP
  * every field-picking label uses. Callers must not restate the pack→label lookup locally.
  */
 export function fieldNounFor(sport: SportId | string | null | undefined): string {
-  return FACILITY_TYPE_LABELS[getSportPack(sport).defaultFacilityType];
+  const type = getSportPack(sport).defaultFacilityType;
+  // A sport the packs don't tailor has no surface noun of its own — "Other 1" is not a sentence,
+  // and neither is "Other assignment" — so it reads "Field", the word the forms' own labels lead
+  // with. One answer here rather than one per caller (/review, 2026-09-21).
+  return type === 'other' ? 'Field' : FACILITY_TYPE_LABELS[type];
+}
+
+/**
+ * A field/diamond number as a customer READS it, everywhere one is shown beside (or instead of) a
+ * place: a bare code — "1", "1A", "#2" — takes the sport's surface noun ("Diamond 1"), and a value
+ * that already names itself ("Diamond 2", "North Court") is left exactly as the coach typed it, so
+ * it never becomes "Diamond Diamond 2". Blank in, '' out.
+ *
+ * ⚠ One rule, one home. This sat as a local ternary on the team overview's next-game card while
+ * the Location hint, the place picker, the event sheet, the game console, the practice sheet and
+ * the calendar export all printed the bare digit — a "1" floating under a field with nothing to
+ * say what it was (owner, 2026-09-21). The tabular exports (CSV and XLSX, one row builder) keep
+ * the raw value: their column header ("Field") is the label there.
+ *
+ * The noun is `fieldNounFor`'s — the one derivation, never restated here.
+ */
+export function surfaceLabel(sport: SportId | string | null | undefined, fieldNumber: string | null | undefined): string {
+  const field = fieldNumber?.trim() ?? '';
+  if (!field) return '';
+  if (!/^#?\d+[A-Za-z]?$/.test(field)) return field;
+  return `${fieldNounFor(sport)} ${field.replace(/^#/, '')}`;
 }

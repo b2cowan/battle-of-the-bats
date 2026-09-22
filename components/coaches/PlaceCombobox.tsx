@@ -6,6 +6,7 @@ import PlaceSheet from './PlaceSheet';
 import ManagePlacesSheet from './ManagePlacesSheet';
 import { claimEscape } from './escapeOwnership';
 import { applyPlaceToEvent, filterPlaces, matchPlace } from '@/lib/coach-places';
+import { surfaceLabel } from '@/lib/sports';
 import type { RepTeamPlace } from '@/lib/types';
 
 export interface PlaceFieldValue {
@@ -37,6 +38,7 @@ export interface PlaceFieldValue {
 export default function PlaceCombobox({
   id = 'event-location',
   basePath,
+  sport,
   places,
   value,
   onChange,
@@ -46,6 +48,8 @@ export default function PlaceCombobox({
   id?: string;
   /** `/api/coaches/{org}/teams/{team}/places` */
   basePath: string;
+  /** The team's sport — a bare diamond number reads "Diamond 1" beside the address (`surfaceLabel`). */
+  sport: string | null | undefined;
   /** The host's copy of the book; the picker re-reads on open (the tag picker's rule). */
   places: RepTeamPlace[];
   value: PlaceFieldValue;
@@ -135,7 +139,9 @@ export default function PlaceCombobox({
     }
   }
 
-  const facts = [value.locationAddress.trim(), value.fieldNumber.trim()].filter(Boolean).join(' · ');
+  // What came with the place, under the field: "1200 Sherwood Dr · Diamond 2". A bare "1" with no
+  // address floated here unlabelled once (owner, 2026-09-21) — the noun is the fix, not hiding it.
+  const facts = [value.locationAddress.trim(), surfaceLabel(sport, value.fieldNumber)].filter(Boolean).join(' · ');
 
   return (
     <div className={styles.tagCombo} data-escape-owner={open ? '' : undefined}>
@@ -156,7 +162,7 @@ export default function PlaceCombobox({
         <div className={`${styles.tagComboDropdown} ${dropUp ? styles.tagComboDropdownUp : ''}`}>
           {matches.length > 0 && <div className={styles.tagComboGroup}>Your places</div>}
           {matches.map((p, i) => {
-            const sub = [p.address, p.fieldNumber].filter(Boolean).join(' · ');
+            const sub = [p.address, surfaceLabel(sport, p.fieldNumber)].filter(Boolean).join(' · ');
             const n = p.count ?? 0;
             return (
               <button
@@ -215,6 +221,7 @@ export default function PlaceCombobox({
       {managing && (
         <ManagePlacesSheet
           basePath={basePath}
+          sport={sport}
           places={lib}
           onClose={() => setManaging(false)}
           onChanged={moved => { void refreshLibrary(); onPlacesChanged(moved); }}

@@ -9,6 +9,7 @@ import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import { buildPracticeSheet } from '@/lib/practice-sheet';
 import { practiceHasPlan } from '@/lib/practice-state';
+import { surfaceLabel } from '@/lib/sports';
 import { emptyPracticePlan, type PracticePlan } from '@/lib/rep-practice-plan';
 import { HowItWent, NoPlanRecord, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
 import PracticePlanEditor from '../../../../practice/_PracticePlanEditor';
@@ -175,7 +176,8 @@ export default function CoachPastPracticePlanPage({
   // The hub's one definition of "has a plan" — at least one block (stage 0); a goal-only row is a
   // record with no plan, exactly as the plan page reads it.
   const hasBlocks = practiceHasPlan({ practicePlan: data?.plan ?? null });
-  const teamName = assignments.find(a => a.teamId === teamId)?.teamName ?? teamId;
+  const assignment = assignments.find(a => a.teamId === teamId);
+  const teamName = assignment?.teamName ?? teamId;
 
   /** "Print the sheet" — the record on paper, through the ONE builder the plan page prints through. */
   async function handlePrint() {
@@ -187,7 +189,7 @@ export default function CoachPastPracticePlanPage({
     await downloadPracticeSheet(
       buildFilename({ org: currentOrg?.slug ?? orgSlug, dataset: 'practice-plan', scope: data.event.name || 'practice' }, 'pdf'),
       buildPracticeSheet({
-        plan, event: data.event, teamName,
+        plan, event: data.event, teamName, sport: assignment?.teamSport,
         roster: data.roster,
         // The read route never fetches focus areas for a finished season: the section is absent.
         goals: [], canViewFocus: false,
@@ -250,7 +252,7 @@ export default function CoachPastPracticePlanPage({
               <div className={styles.ppDocWhen}>
                 <PracticeWhenLine
                   startsAt={data.event.startsAt} endsAt={data.event.endsAt} plan={plan} record withYear
-                  where={[data.event.location, data.event.fieldNumber].filter(Boolean).join(', ') || null}
+                  where={[data.event.location, surfaceLabel(assignment?.teamSport, data.event.fieldNumber)].filter(Boolean).join(', ') || null}
                 />
               </div>
             </div>

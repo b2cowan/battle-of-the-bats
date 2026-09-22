@@ -43,7 +43,7 @@ import Link from 'next/link';
 import { ArrowLeft, Check, Circle, Undo2, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { hasNonMoneyRecordAccess } from '@/lib/coach-capabilities';
-import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
+import { getSportPack, surfaceLabel, DEFAULT_SPORT } from '@/lib/sports';
 import { analyzeLineup, BENCH_POSITION } from '@/lib/lineup-analysis';
 import { generateBestLineup } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
@@ -991,7 +991,7 @@ export default function CoachGameConsolePage({
             </span>
           </div>
           <div className={styles.gdChips}>
-            {event.fieldNumber && <span className={styles.gdChip}>{event.fieldNumber}</span>}
+            {event.fieldNumber && <span className={styles.gdChip}>{surfaceLabel(sportPack.id, event.fieldNumber)}</span>}
             {event.arrivalTime && <span className={styles.gdChip}>Arrive {formatStoredClock(event.arrivalTime)}</span>}
             {event.uniform && <span className={styles.gdChip}>{event.uniform}</span>}
             {/* P3 — the screen-awake switch. Present only where it does something: a live game,
