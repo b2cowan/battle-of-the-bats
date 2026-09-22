@@ -136,6 +136,22 @@ export async function resolveUatContext() {
     console.log('  · probe game re-anchored to now (it had drifted out of its live window)');
   }
 
+  /**
+   * A GAME WITH NO LINEUP — the builder's "new lineup" state (phone re-evaluation stage 3 · D1: the
+   * Setup row in the primary tone, the strip at "Not started"). Seeded five days out so it is never
+   * the Overview's anchor while the probe game is live; the seeder deletes any lineup left on it,
+   * because a sweep that finds one here is measuring the saved-lineup screen twice.
+   */
+  const bareGame = await db.from('rep_team_events')
+    .select('id').eq('program_year_id', py.data.id).eq('name', 'UAT probe game · no lineup').maybeSingle();
+  if (bareGame.error) throw new FixtureError(`no-lineup game lookup failed: ${bareGame.error.message}`);
+  if (!bareGame.data) {
+    throw new FixtureError(
+      'No "UAT probe game · no lineup" event on the active program year, so the builder\'s new-lineup state cannot be swept.',
+      'node scripts/seed-uat-coach-fixture.mjs',
+    );
+  }
+
   // The drive whose ROOM the sweep opens (`?section=fundraisers&fundraiser=`) — a room with no id
   // to open would sweep the LIST twice and report green on a screen nobody looked at.
   //
@@ -391,6 +407,8 @@ export async function resolveUatContext() {
     /** May's written-up practice on the live season — the plan page as a RECORD (stage 6). */
     recordPracticeEventId: recordEv.data.id,
     gameEventId: game.data.id,
+    /** A game with NO lineup — the builder's new-lineup state (stage 3 · D1). */
+    noLineupGameEventId: bareGame.data.id,
     fundraiserId: fr.data.id,
     sponsorId: sp.data.id,
     /** The club bill whose ROOM the sweep opens (`?clubBill=`). */

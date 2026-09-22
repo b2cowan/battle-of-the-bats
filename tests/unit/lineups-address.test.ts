@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  lineupsHref, lineupTemplateHref, parseLineupsSection, LINEUPS_SECTIONS,
+  lineupsHref, lineupTemplateHref, lineupBuilderHref, parseLineupsSection, LINEUPS_SECTIONS,
 } from '../../lib/lineups-address.ts';
 
 /**
@@ -21,6 +21,18 @@ describe('lineupsHref', () => {
   });
   it('the tab order is Games then Templates', () => {
     assert.deepEqual([...LINEUPS_SECTIONS], ['games', 'templates']);
+  });
+  it('the builder carries the way back only when it is inside this team\'s portal (stage 3 · D3)', () => {
+    assert.equal(lineupBuilderHref(base, 'ev1'), `${base}/lineups/ev1`);
+    assert.equal(lineupBuilderHref(base, 'ev1', { returnTo: null }), `${base}/lineups/ev1`);
+    assert.equal(
+      lineupBuilderHref(base, 'ev1', { returnTo: `${base}/schedule?event=ev1&tab=lineup` }),
+      `${base}/lineups/ev1?return=${encodeURIComponent(`${base}/schedule?event=ev1&tab=lineup`)}`,
+    );
+    assert.equal(lineupBuilderHref(base, 'ev1', { returnTo: `${base}/game/ev1` }), `${base}/lineups/ev1?return=${encodeURIComponent(`${base}/game/ev1`)}`);
+    assert.equal(lineupBuilderHref(base, 'ev1', { returnTo: base }), `${base}/lineups/ev1?return=${encodeURIComponent(base)}`);
+    assert.equal(lineupBuilderHref(base, 'ev1', { returnTo: 'https://evil.example/x' }), `${base}/lineups/ev1`, 'a foreign address is dropped');
+    assert.equal(lineupBuilderHref(base, 'ev1', { returnTo: `${base}/history?year=2024` }), `${base}/lineups/ev1`, 'never a year');
   });
   it('the template editor is a page under the room', () => {
     assert.equal(lineupTemplateHref(base, 'abc-123'), `${base}/lineups/templates/abc-123`);

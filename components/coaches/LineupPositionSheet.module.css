@@ -1,0 +1,130 @@
+/* LineupPositionSheet — what differs from the More / team / RSVP sheets it shares a container
+   with (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown` /
+   `.sheetGrab`). Doubled selectors on purpose where the nav module writes the same property at
+   (0,1,0) inside its ≤900 block — which of two same-weight rules wins across modules is bundle
+   order (the kit learned this the day it was built). Only ever rendered at ≤640. */
+
+/* The anchor's foot is the BAR's top — the nav module's own `.sheetAnchor` already says so (the
+   builder is a page under the bar, not a dialog over it); the z-index clears the row sheet and the
+   auto-fill panel (260) that share this screen, and stays under the nav (300). */
+.floor.floor { z-index: 270; }
+.panel.panel {
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+}
+/* The grab line as a 44px control — the sheet's own way out, beside the scrim and Escape. */
+.grabBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  margin: -6px 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.grabBtn > span { margin: 0; }
+
+.name {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+.sub {
+  margin: 2px 0 10px;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
+/* Bench — a 52px row at the top (the RSVP sheet's choice row), filled when it is the answer. */
+.benchRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 12px;
+  border: 1px solid var(--home-line-strong, var(--white-10));
+  border-radius: 10px;
+  background: var(--home-card, var(--card-bg));
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.benchMark { width: 22px; text-align: center; color: var(--text-tertiary); font-size: var(--type-body); }
+.benchRow small { margin-left: auto; font-size: var(--type-support); color: inherit; font-weight: 500; }
+.benchRow[aria-pressed="true"] {
+  background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.12));
+  border-color: var(--home-olive, var(--logic-lime));
+  color: var(--home-olive, var(--logic-lime));
+}
+.benchRow[aria-pressed="true"] .benchMark { color: inherit; }
+
+/* The group headings — the chart's three states, and "Or". A token-size caption in the data
+   face, the way every band in the portal is captioned; Never in the danger ink. */
+.groupHead {
+  margin: 10px 0 6px;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.groupHead[data-tone="never"] { color: var(--danger); }
+
+/* The chips — 44px tall, 72 wide at least, wrapping; the code large, a second line only where
+   the chart has a fact (a rank, the mound's cap use, "now"). */
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  min-height: var(--tap-min, 44px);
+  padding: 0 10px;
+  border: 1px solid var(--home-line-strong, var(--white-10));
+  border-radius: 10px;
+  background: var(--home-card, var(--card-bg));
+  color: var(--text-primary);
+  line-height: 1.1;
+  cursor: pointer;
+}
+.chip b { font-size: var(--type-body); font-weight: 700; }
+.chip small { margin-top: 2px; font-size: var(--type-token); color: var(--text-tertiary); white-space: nowrap; }
+.chip[aria-pressed="true"] {
+  background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.12));
+  border-color: var(--home-olive, var(--logic-lime));
+  color: var(--home-olive, var(--logic-lime));
+}
+.chip[aria-pressed="true"] small { color: inherit; }
+/* At the cap: the mound's chip says so in the warning ink — still offered (the cap is the
+   generator's rule; a coach may overrule it), never hidden. */
+.chip[data-tone="cap"] { border-color: rgba(var(--warning-rgb), 0.58); }
+.chip[data-tone="cap"] small { color: var(--warning); }
+/* Never — red, allowed and named, never confirmed (D9). */
+.chip[data-tone="never"] { border-color: rgba(var(--danger-rgb), 0.5); color: var(--danger); }
+.chip[data-tone="never"][aria-pressed="true"] { background: rgba(var(--danger-rgb), 0.1); border-color: var(--danger); color: var(--danger); }
+
+/* Leave open — a quiet row under "Or", the accent ink, no frame. */
+.quietRow {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  padding: 0 4px;
+  border: 0;
+  background: none;
+  color: var(--home-olive, var(--logic-lime));
+  font-size: var(--type-body);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.quietRow small { font-size: var(--type-support); font-weight: 500; color: var(--text-tertiary); }

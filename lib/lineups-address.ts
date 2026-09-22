@@ -18,12 +18,28 @@
  *
  * Framework-free on purpose, like `practice-plans-address.ts`.
  */
+import { safeReturnPath } from './development-address.ts';
+
 export type LineupsSection = 'games' | 'templates';
 export const LINEUPS_SECTIONS: ReadonlyArray<LineupsSection> = ['games', 'templates'];
 
 /** The hub, or one of its tabs. `base` is the team root (`/{org}/coaches/teams/{id}`). */
 export function lineupsHref(base: string, section: LineupsSection = 'games'): string {
   return section === 'games' ? `${base}/lineups` : `${base}/lineups?section=${section}`;
+}
+
+/**
+ * A game's lineup builder — with the way back (phone re-evaluation stage 3 · D3, owner 2026-09-21:
+ * "back from the lineup must lead to the game, not to Lineups"). The four doors in — the
+ * Schedule sheet's Lineup tab, the game-day console's two, the Overview's card — each send their
+ * OWN address as `returnTo`, and the builder's header arrow returns there (`returnLabel` names it
+ * by where it goes). The Lineups room's rows send none, so the arrow reads All lineups. The
+ * portal's one `return` convention (`safeReturnPath`): an address outside this team's portal is
+ * dropped here, so the link never carries it.
+ */
+export function lineupBuilderHref(base: string, eventId: string, opts: { returnTo?: string | null } = {}): string {
+  const back = safeReturnPath(opts.returnTo ?? null, base);
+  return back ? `${base}/lineups/${eventId}?return=${encodeURIComponent(back)}` : `${base}/lineups/${eventId}`;
 }
 
 /** The template editor's own address (`'new'` for a template not yet saved). */

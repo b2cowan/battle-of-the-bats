@@ -7,7 +7,8 @@
 // — lives here so it's written once and both surfaces stay in lock-step.
 import { useState, useRef, useEffect } from 'react';
 import { useDismissable } from '@/lib/overlay-hooks';
-import { X, ChevronUp, ChevronDown, ChevronRight, GripVertical, Shuffle } from 'lucide-react';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { X, ChevronUp, ChevronDown, ChevronRight, GripVertical, Shuffle, Eraser } from 'lucide-react';
 import {
   DndContext, closestCenter, MouseSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -19,6 +20,8 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
 import LineupInningInspector, { InningHeadingDoor } from '@/components/coaches/LineupInningInspector';
 import LineupCheck, { LineupStateMark, type LineupCheckInning, type LineupMarkState } from '@/components/coaches/LineupCheck';
+import LineupInningList, { type InningDotState } from '@/components/coaches/LineupInningList';
+import LineupPositionSheet from '@/components/coaches/LineupPositionSheet';
 import { analyzeLineup, deriveLineupBadge, canMarkLineupReady, inningsNeedingDecision } from '@/lib/lineup-analysis';
 import { generateBestLineup, describePlacementReason, type PositionPolicy, type FillMode, type GenerationRationale } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
@@ -33,6 +36,8 @@ import type { RepLineupMode, RepRosterPlayer, LineupSettings } from '@/lib/types
 import styles from '../../../coaches.module.css';
 
 type SportPack = ReturnType<typeof getSportPack>;
+/** The auto-fill panel's id — the phone's Setup row names it in `aria-controls` (stage 3 · D1). */
+const SETUP_PANEL_ID = 'lineup-setup-panel';
 type GameRules = { maxPos: string; pitcher: string; minPlay: string };
 
 /* Each sub-line says what the mode does with the depth chart's ratings (owner, 2026-09-12): the old
@@ -206,6 +211,12 @@ export default function LineupEditor(props: LineupEditorProps) {
     addLabel, notInHeading, onBeforeMutate, onNotice, controlsExtra, notice, readyState, attendance,
   } = props;
   const confirm = useConfirm();
+  // THE PHONE'S FORMS (phone re-evaluation stage 3, owner ruling 2026-09-21) differ from the desktop's
+  // in STRUCTURE — the Setup row and its panel (D1), the tool row the page hands in (D2), the inning
+  // list in the grid's place (D5) — so the DOM decides, not the stylesheet. `useIsPhone` reads the
+  // breakpoint synchronously and both pages mount this editor after their load, so a phone never
+  // paints the grid first. Desktop and the 641–768 band: nothing here changes.
+  const isPhone = useIsPhone();
 
   const [autoFillOpen, setAutoFillOpen] = useState(false);
   const [autoPolicy, setAutoPolicy] = useState<PositionPolicy>(defaultPolicy);
@@ -243,6 +254,17 @@ export default function LineupEditor(props: LineupEditorProps) {
   // carries a way back; opened from an inning heading, the X is the way out. null = closed.
   type Lens = { view: 'check' } | { view: 'inning'; inning: number; fromCheck: boolean };
   const [lens, setLens] = useState<Lens | null>(null);
+  // ONE INNING AT A TIME on a phone (D5): the inning the list shows. The VIEW, never the data —
+  // `inningPositions` is untouched by it and undo/redo span innings as they always have. Opens on
+  // 1; "Review inning N" (the check) and the inspector's own prev/next keep it in step; it stays put
+  // while the panel, the inspector or the position sheet open over it. Clamped at read so a shrunk
+  // inning count can never leave the list on an inning that no longer exists.
+  const [phoneInning, setPhoneInning] = useState(1);
+  const inningOnScreen = Math.min(Math.max(1, phoneInning), Math.max(1, inningCount));
+  // The position sheet (D5): whose pill is open, for the inning on screen. null = closed.
+  const [positionFor, setPositionFor] = useState<string | null>(null);
+  // The Setup row (D1): focus returns to it when its panel closes by a key or a Generate.
+  const setupRowRef = useRef<HTMLButtonElement>(null);
   const autoFillLabel = { competitive: 'Competitive', balanced: 'Balanced', development: 'Development' }[autoPolicy];
   // Keep the auto-fill policy in sync when the parent changes its pre-pick (e.g. a game loads).
   const policyInitRef = useRef(false);
@@ -251,7 +273,9 @@ export default function LineupEditor(props: LineupEditorProps) {
   }, [defaultPolicy]);
 
   const autoFillRef = useRef<HTMLDivElement>(null);
-  useDismissable(autoFillOpen, autoFillRef, () => setAutoFillOpen(false));
+  // A tap outside closes the panel and leaves focus where the tap put it; Escape closes it and, on
+  // a phone, seats focus back on the Setup row it opened from (the keyboard is still driving).
+  useDismissable(autoFillOpen, autoFillRef, () => setAutoFillOpen(false), () => closePanelToRow());
 
   // Two input worlds, two activation rules (D8). A mouse lifts a row after 6px of travel, as it
   // always has. A finger lifts it after a HOLD (250ms without drifting) — that is what lets the
@@ -269,6 +293,13 @@ export default function LineupEditor(props: LineupEditorProps) {
     rows.map(r => ({ playerId: r.player.id, inningPositions: r.inningPositions })),
     inningCount, sportPack.fieldPositions,
   );
+  // THE SETUP ROW'S TONE (D1) is decided ONCE, when the editor first renders with its rows: "a
+  // lineup exists" = `hasAssignments`, the fact three surfaces already read (the sheet's Has-a-lineup
+  // chip, the hub badge, the strip's data-state). Never `rows.length` — a new lineup seeds every
+  // roster player as a row. Never live — the first Generate would otherwise fold the controls under
+  // the coach's thumb and Clear positions would pop them open. A new lineup shows the same row in the
+  // primary tone: one component, two tones, not two renderings.
+  const [setupFolded] = useState(() => analysis.hasAssignments);
   const fairPlayByPlayer = new Map(analysis.fairPlay.map(f => [f.playerId, f]));
   const summaryPositions = POSITION_ORDER.filter(pos => analysis.fairPlay.some(f => (f.positionCounts[pos] ?? 0) > 0));
   const benchVals = analysis.fairPlay.map(f => f.benched);
@@ -459,6 +490,8 @@ export default function LineupEditor(props: LineupEditorProps) {
   // scrolls the grid to it underneath, so closing the lens leaves the coach at the right column.
   function focusInning(inning: number) {
     setView('lineup');
+    // The phone's list steps to the inning first (D5), so closing the lens lands on its rows.
+    setPhoneInning(inning);
     setLens({ view: 'inning', inning, fromCheck: true });
     window.requestAnimationFrame(() => {
       document.querySelector<HTMLElement>(`[data-lineup-inning="${inning}"]`)?.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
@@ -642,22 +675,30 @@ export default function LineupEditor(props: LineupEditorProps) {
         if (!(await confirm({ title: 'Regenerate lineup?', message: 'This replaces the positions currently in the grid. Continue?', confirmText: 'Regenerate', cancelText: 'Keep current', tone: 'warning' }))) return;
       }
       runGenerate(autoFillMode);
-      setAutoFillOpen(false);
+      closePanelToRow();
     } finally {
       genBusyRef.current = false;
     }
   }
-  async function handleReshuffle() {
-    if (genBusyRef.current || rows.length === 0) return;
+  /** True when it ran — the phone's panel closes on a reshuffle it made, never on a kept one. */
+  async function handleReshuffle(): Promise<boolean> {
+    if (genBusyRef.current || rows.length === 0) return false;
     genBusyRef.current = true;
     try {
       if (rows.some(r => Object.values(r.inningPositions).some(Boolean))) {
-        if (!(await confirm({ title: 'Reshuffle the lineup?', message: 'This replaces the positions currently in the grid with a fresh arrangement with even bench rotation, using your current auto-fill settings. Continue?', confirmText: 'Reshuffle', cancelText: 'Keep current', tone: 'warning' }))) return;
+        if (!(await confirm({ title: 'Reshuffle the lineup?', message: 'This replaces the positions currently in the grid with a fresh arrangement with even bench rotation, using your current auto-fill settings. Continue?', confirmText: 'Reshuffle', cancelText: 'Keep current', tone: 'warning' }))) return false;
       }
       runGenerate('regenerate');
+      return true;
     } finally {
       genBusyRef.current = false;
     }
+  }
+
+  /** The panel closes and, on a phone, focus goes back to the Setup row that opened it (D1). */
+  function closePanelToRow() {
+    setAutoFillOpen(false);
+    if (isPhone) setupRowRef.current?.focus({ preventScroll: true });
   }
 
   async function handleClear() {
@@ -672,6 +713,162 @@ export default function LineupEditor(props: LineupEditorProps) {
   // A removed or re-fetched row simply stops matching and the sheet closes itself.
   const sheetIndex = rowActionsFor === null ? -1 : rows.findIndex(r => r.player.id === rowActionsFor);
   const sheetRow = sheetIndex >= 0 ? rows[sheetIndex] : null;
+
+  // Format and Innings — per-game configuration (D3), ONE JSX in two homes: the desktop's Setup
+  // group beside Auto-fill, and the top of the phone's panel (D1).
+  const setupFields = (
+    <div className={styles.lineupSetupFields}>
+      <label className={styles.lineupControlLabel}>
+        <span>Format</span>
+        <select className={styles.select} aria-label="Lineup format" value={lineupMode} onChange={e => changeMode(e.target.value as RepLineupMode)}>
+          <option value="everyone_bats">Everyone bats</option>
+          <option value="nine_player">9 player ball</option>
+        </select>
+      </label>
+      <label className={styles.lineupControlLabel}>
+        <span>Innings</span>
+        <select className={styles.select} aria-label="Lineup innings" value={inningCount} onChange={e => changeInnings(Number(e.target.value))}>
+          {Array.from({ length: 12 }, (_, i) => i + 1).map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+      </label>
+    </div>
+  );
+  // Reshuffle — a toolbar button on the desktop, the panel's last row on a phone (where it closes
+  // the panel on a reshuffle it made, never on a kept one).
+  const reshuffleButton = (
+    <button type="button" className={styles.btnSecondary} disabled={rows.length === 0}
+      onClick={async () => { if (await handleReshuffle() && isPhone) closePanelToRow(); }}
+      title="Fresh arrangement with even bench rotation, using your current auto-fill settings" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+      <Shuffle size={14} /> Reshuffle
+    </button>
+  );
+  /* CLEAR IS A TOOL, AND TOOLS LIVE IN THE TOOL ROW (owner, 2026-09-22). It used to be a bare text
+     link under the grid — on a phone that left it stranded in its own 44px band between the hint and
+     the notes, the only control on the screen with nothing beside it. It is the same kind of thing as
+     Undo, Redo, Print and Templates (it acts on the grid; the page creates nothing), so it is the same
+     square, last in their row, and it greys out when there is nothing to erase the way Undo greys out
+     when there is nothing to take back. The confirm and the undo step behind it are unchanged — this
+     moved the control, not what it does. */
+  const clearButton = (
+    <button type="button" className={styles.footerIconBtn} aria-label="Clear positions" title="Clear positions"
+      disabled={!analysis.hasAssignments} onClick={handleClear}>
+      <Eraser size={18} />
+    </button>
+  );
+  // The phone's stepper and dots (D5) read the same analysis the grid's inning headings do.
+  const phoneDots: InningDotState[] = Array.from({ length: inningCount }, (_, i) => {
+    const n = i + 1;
+    return analysis.conflictInnings.has(n) ? 'clash' : openRolesByInning.has(n) ? 'open' : assignedInnings.has(n) ? 'done' : 'untouched';
+  });
+  const phoneOpenRoles = openRolesByInning.get(inningOnScreen);
+  const phoneCoverage = assignedInnings.has(inningOnScreen)
+    ? { filled: sportPack.fieldPositions.length - (phoneOpenRoles?.length ?? 0), total: sportPack.fieldPositions.length, open: !!phoneOpenRoles }
+    : null;
+  const phoneClash = analysis.conflictInnings.has(inningOnScreen)
+    ? (() => {
+        // One clash reads itself ("2 share C"); more than one is a count — the pill has 254px.
+        const clashes = analysis.conflicts.filter(c => c.inning === inningOnScreen);
+        return clashes.length === 1 ? `${clashes[0].count} share ${clashes[0].position}` : `${clashes.length} clashes`;
+      })()
+    : null;
+  // A removed or re-fetched row simply stops matching and the position sheet closes itself.
+  const positionRow = positionFor === null ? null : (rows.find(r => r.player.id === positionFor) ?? null);
+
+  /* THE AUTO-FILL PANEL — today's popover (Mode, the Competitive extras, Fill, Innings to fill,
+     Game rules, the note, Generate), which on a phone is also the SETUP panel (D1): Format and
+     Innings labelled side by side at its top, Reshuffle under Generate. Fixed above the bar at
+     ≤900 with its own scroll (`lineupAutoMenu`). Written once, mounted by whichever trigger the
+     width renders — the desktop's Auto-fill button or the phone's Setup row. */
+  const autoFillPanel = (
+    <div id={SETUP_PANEL_ID} className={styles.lineupAutoMenu}>
+      {isPhone && (
+        <>
+          <span className={styles.lineupSetupLabel}>Setup</span>
+          {setupFields}
+          <span className={`${styles.lineupSetupLabel} ${styles.lineupPanelSection}`}>Auto-fill</span>
+        </>
+      )}
+      <label className={styles.lineupControlLabel}>
+        <span>Mode</span>
+        <SublinedChoice
+          id="lineup-auto-mode"
+          label="Mode"
+          variant="toolbar"
+          options={AUTO_POLICY_OPTIONS}
+          value={autoPolicy}
+          onChange={setAutoPolicy}
+        />
+      </label>
+      {autoPolicy === 'competitive' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: '1px solid var(--home-line, rgba(255,255,255,0.08))' }}>
+          <label className={styles.lineupControlLabel}>
+            <span>A-squad</span>
+            <SublinedChoice
+              id="lineup-asquad-emphasis"
+              label="A-squad"
+              variant="toolbar"
+              options={A_SQUAD_OPTIONS}
+              value={aSquadEmphasis}
+              onChange={setASquadEmphasis}
+            />
+          </label>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', cursor: 'pointer' }}>
+            <input type="checkbox" checked={noBackToBackSits} onChange={e => setNoBackToBackSits(e.target.checked)} />
+            <span>Nobody sits two innings in a row</span>
+          </label>
+        </div>
+      )}
+      <label className={styles.lineupControlLabel}>
+        <span>Fill</span>
+        <select className={styles.select} value={autoFillMode} onChange={e => setAutoFillMode(e.target.value as FillMode)}>
+          <option value="empty">Fill empty spots only</option>
+          <option value="regenerate">Regenerate all</option>
+        </select>
+      </label>
+      <label className={styles.lineupControlLabel}>
+        <span>Innings to fill</span>
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <select className={styles.select} aria-label="First inning to fill" value={rangeFrom}
+            onChange={e => { const v = Number(e.target.value); setFillFrom(v); if (fillTo !== null && v > rangeTo) setFillTo(v); }}>
+            {Array.from({ length: inningCount }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+          <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: 12 }}>to</span>
+          <select className={styles.select} aria-label="Last inning to fill" value={rangeTo}
+            onChange={e => setFillTo(Number(e.target.value))}>
+            {Array.from({ length: inningCount }, (_, i) => i + 1).filter(n => n >= rangeFrom).map(n => <option key={n} value={n}>{n}</option>)}
+          </select>
+        </span>
+      </label>
+      {gameRules && onGameRulesChange && (
+        <div>
+          <button type="button" onClick={() => setGameRulesOpen(v => !v)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
+            Game rules {gameRulesOpen ? '▴' : '▾'}
+          </button>
+          {gameRulesOpen && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
+              {([
+                { key: 'maxPos', label: 'Max innings / position', def: seasonCaps?.maxInningsPerPosition ?? null, min: 1 },
+                { key: 'pitcher', label: 'Max innings pitched', def: seasonCaps?.pitcherMaxInningsDefault ?? null, min: 1 },
+                { key: 'minPlay', label: 'Min innings / player', def: seasonCaps?.minInningsPerPlayer ?? null, min: 1 },
+              ] as const).map(f => (
+                <label key={f.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
+                  <span>{f.label}</span>
+                  <input type="number" min={f.min} max={12} className={styles.input} style={{ width: 128 }}
+                    placeholder={f.def != null ? `Season default (${f.def})` : 'Off'}
+                    value={gameRules[f.key]}
+                    onChange={e => onGameRulesChange({ ...gameRules, [f.key]: e.target.value })} />
+                </label>
+              ))}
+              <p className={styles.lineupAutoNote} style={{ margin: 0 }}>Overrides just this game. Blank = your season default.</p>
+            </div>
+          )}
+        </div>
+      )}
+      <p className={styles.lineupAutoNote}>Auto-fill spreads bench time evenly across the roster. It&apos;s a starting point — tweak after.</p>
+      <button type="button" className={styles.btnSecondary} onClick={handleAutoFill}>Generate lineup</button>
+      {isPhone && reshuffleButton}
+    </div>
+  );
 
   return (
     <div className={styles.lineupSection}>
@@ -724,118 +921,48 @@ export default function LineupEditor(props: LineupEditorProps) {
           {readyState?.error && <p className={styles.errorText}>{readyState.error}</p>}
         </div>
         <div className={styles.lineupControls}>
-          {/* Setup group (D3): Format and Innings are per-game configuration, not the primary
-              action — grouped and labelled quietly so Auto-fill is the obvious next step. The
-              "Setup" caption sits above the fields, the same way Format/Innings label theirs,
-              rather than floating beside them at the group's mid-height. */}
-          <div className={styles.lineupSetupGroup} aria-label="Setup">
-            <span className={styles.lineupSetupLabel}>Setup</span>
-            <div className={styles.lineupSetupFields}>
-              <label className={styles.lineupControlLabel}>
-                <span>Format</span>
-                <select className={styles.select} aria-label="Lineup format" value={lineupMode} onChange={e => changeMode(e.target.value as RepLineupMode)}>
-                  <option value="everyone_bats">Everyone bats</option>
-                  <option value="nine_player">9 player ball</option>
-                </select>
-              </label>
-              <label className={styles.lineupControlLabel}>
-                <span>Innings</span>
-                <select className={styles.select} aria-label="Lineup innings" value={inningCount} onChange={e => changeInnings(Number(e.target.value))}>
-                  {Array.from({ length: 12 }, (_, i) => i + 1).map(c => <option key={c} value={c}>{c}</option>)}
-                </select>
-              </label>
+          {isPhone ? (
+            /* THE SETUP ROW (stage 3 · D1, owner ruling 2026-09-21 — B, the panel): once a lineup
+               exists the Setup group is one 52px two-line row that reads its state — the lineup's
+               shape as the title, the auto-fill setting as the caption — and opens the builder's
+               own bottom panel (the surface Auto-fill, Templates, Print and the D8 row sheet
+               already use) holding Format · Innings, today's auto-fill choices, Generate and
+               Reshuffle. A new lineup shows the same row in the primary tone: it is where
+               Auto-fill lives. The grid never moves. A template changes the title, never the
+               caption — nothing stores which template a lineup came from. */
+            <div className={styles.lineupAutoWrap} ref={autoFillRef}>
+              <button ref={setupRowRef} type="button" className={styles.lineupSetupRow} aria-expanded={autoFillOpen} aria-controls={SETUP_PANEL_ID}
+                data-state={setupFolded ? undefined : 'primary'} onClick={() => setAutoFillOpen(v => !v)}>
+                <span className={styles.lineupSetupRowText}>
+                  <strong>{lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {inningCount} {sportPack.periodLabelPlural.toLowerCase()}</strong>
+                  <small>Auto-fill · {autoFillLabel}</small>
+                </span>
+                <ChevronDown size={18} aria-hidden className={styles.lineupSetupRowChev} />
+              </button>
+              {autoFillOpen && autoFillPanel}
             </div>
-          </div>
-          <div className={styles.lineupAutoWrap} ref={autoFillRef}>
-              <button type="button" className={styles.btnPrimary} disabled={rows.length === 0} onClick={() => setAutoFillOpen(v => !v)}>Auto-fill · {autoFillLabel} ▾</button>
-              {autoFillOpen && (
-                <div className={styles.lineupAutoMenu}>
-                  <label className={styles.lineupControlLabel}>
-                    <span>Mode</span>
-                    <SublinedChoice
-                      id="lineup-auto-mode"
-                      label="Mode"
-                      variant="toolbar"
-                      options={AUTO_POLICY_OPTIONS}
-                      value={autoPolicy}
-                      onChange={setAutoPolicy}
-                    />
-                  </label>
-                  {autoPolicy === 'competitive' && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8, paddingTop: 8, borderTop: '1px solid var(--home-line, rgba(255,255,255,0.08))' }}>
-                      <label className={styles.lineupControlLabel}>
-                        <span>A-squad</span>
-                        <SublinedChoice
-                          id="lineup-asquad-emphasis"
-                          label="A-squad"
-                          variant="toolbar"
-                          options={A_SQUAD_OPTIONS}
-                          value={aSquadEmphasis}
-                          onChange={setASquadEmphasis}
-                        />
-                      </label>
-                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.7))', cursor: 'pointer' }}>
-                        <input type="checkbox" checked={noBackToBackSits} onChange={e => setNoBackToBackSits(e.target.checked)} />
-                        <span>Nobody sits two innings in a row</span>
-                      </label>
-                    </div>
-                  )}
-                  <label className={styles.lineupControlLabel}>
-                    <span>Fill</span>
-                    <select className={styles.select} value={autoFillMode} onChange={e => setAutoFillMode(e.target.value as FillMode)}>
-                      <option value="empty">Fill empty spots only</option>
-                      <option value="regenerate">Regenerate all</option>
-                    </select>
-                  </label>
-                  <label className={styles.lineupControlLabel}>
-                    <span>Innings to fill</span>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
-                      <select className={styles.select} aria-label="First inning to fill" value={rangeFrom}
-                        onChange={e => { const v = Number(e.target.value); setFillFrom(v); if (fillTo !== null && v > rangeTo) setFillTo(v); }}>
-                        {Array.from({ length: inningCount }, (_, i) => i + 1).map(n => <option key={n} value={n}>{n}</option>)}
-                      </select>
-                      <span style={{ color: 'var(--home-dim, rgba(255,255,255,0.5))', fontSize: 12 }}>to</span>
-                      <select className={styles.select} aria-label="Last inning to fill" value={rangeTo}
-                        onChange={e => setFillTo(Number(e.target.value))}>
-                        {Array.from({ length: inningCount }, (_, i) => i + 1).filter(n => n >= rangeFrom).map(n => <option key={n} value={n}>{n}</option>)}
-                      </select>
-                    </span>
-                  </label>
-                  {gameRules && onGameRulesChange && (
-                    <div>
-                      <button type="button" onClick={() => setGameRulesOpen(v => !v)} style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.6))' }}>
-                        Game rules {gameRulesOpen ? '▴' : '▾'}
-                      </button>
-                      {gameRulesOpen && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginTop: 6 }}>
-                          {([
-                            { key: 'maxPos', label: 'Max innings / position', def: seasonCaps?.maxInningsPerPosition ?? null, min: 1 },
-                            { key: 'pitcher', label: 'Max innings pitched', def: seasonCaps?.pitcherMaxInningsDefault ?? null, min: 1 },
-                            { key: 'minPlay', label: 'Min innings / player', def: seasonCaps?.minInningsPerPlayer ?? null, min: 1 },
-                          ] as const).map(f => (
-                            <label key={f.key} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8, fontSize: 12, color: 'var(--home-ink-soft, rgba(255,255,255,0.7))' }}>
-                              <span>{f.label}</span>
-                              <input type="number" min={f.min} max={12} className={styles.input} style={{ width: 128 }}
-                                placeholder={f.def != null ? `Season default (${f.def})` : 'Off'}
-                                value={gameRules[f.key]}
-                                onChange={e => onGameRulesChange({ ...gameRules, [f.key]: e.target.value })} />
-                            </label>
-                          ))}
-                          <p className={styles.lineupAutoNote} style={{ margin: 0 }}>Overrides just this game. Blank = your season default.</p>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <p className={styles.lineupAutoNote}>Auto-fill spreads bench time evenly across the roster. It&apos;s a starting point — tweak after.</p>
-                  <button type="button" className={styles.btnSecondary} onClick={handleAutoFill}>Generate lineup</button>
-                </div>
-              )}
-            </div>
-            <button type="button" className={styles.btnSecondary} disabled={rows.length === 0} onClick={handleReshuffle} title="Fresh arrangement with even bench rotation, using your current auto-fill settings" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-              <Shuffle size={14} /> Reshuffle
-            </button>
-            {controlsExtra}
-          </div>
+          ) : (
+            <>
+              {/* Setup group (D3): Format and Innings are per-game configuration, not the primary
+                  action — grouped and labelled quietly so Auto-fill is the obvious next step. The
+                  "Setup" caption sits above the fields, the same way Format/Innings label theirs,
+                  rather than floating beside them at the group's mid-height. */}
+              <div className={styles.lineupSetupGroup} aria-label="Setup">
+                <span className={styles.lineupSetupLabel}>Setup</span>
+                {setupFields}
+              </div>
+              <div className={styles.lineupAutoWrap} ref={autoFillRef}>
+                <button type="button" className={styles.btnPrimary} disabled={rows.length === 0} onClick={() => setAutoFillOpen(v => !v)}>Auto-fill · {autoFillLabel} ▾</button>
+                {autoFillOpen && autoFillPanel}
+              </div>
+              {reshuffleButton}
+            </>
+          )}
+          {/* The host's tools (Undo · Redo · Print · Templates) and the editor's own Clear are ONE row
+              of squares on a phone — the wrapper lives HERE rather than in the host because Clear is the
+              editor's action and it has to be INSIDE the row, not under it. */}
+          {isPhone ? <div className={styles.lineupToolRow}>{controlsExtra}{clearButton}</div> : <>{controlsExtra}{clearButton}</>}
+        </div>
 
         {notice && <p className={styles.lineupNotice}>{notice}</p>}
 
@@ -845,6 +972,22 @@ export default function LineupEditor(props: LineupEditorProps) {
           </div>
         ) : (
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            {isPhone ? (<>
+              {/* ONE INNING AT A TIME (stage 3 · D5): the grid's rows as a list for the inning on
+                  screen — the same SortableContext, the same D8 sensors, the same setPosition. */}
+              <LineupInningList
+                rows={rows} inning={inningOnScreen} inningCount={inningCount}
+                periodLabel={period} orderLabel={sportPack.orderLabel}
+                coverage={phoneCoverage} clash={phoneClash} dots={phoneDots}
+                onStep={setPhoneInning}
+                onOpenInning={() => setLens({ view: 'inning', inning: inningOnScreen, fromCheck: false })}
+                onRowActions={setRowActionsFor}
+                onPickPosition={setPositionFor}
+                cellIssueFor={cellIssueFor}
+              />
+              {/* The hint moves UNDER the list on a phone (D4) and names the stepper. */}
+              <p className={`${styles.lineupScrollHint} ${styles.lineupScrollHintUnder}`}>Hold a number to move a player · ‹ › for the {periodLc}s</p>
+            </>) : (<>
             <p className={styles.lineupScrollHint}>Hold a number to move a player · swipe across innings →</p>
             <div className={styles.lineupTableWrap}>
               {/* The pinned lead columns' widths live entirely in CSS (see `.lineupTable` in
@@ -890,7 +1033,7 @@ export default function LineupEditor(props: LineupEditorProps) {
                 </tbody>
               </table>
             </div>
-            <button type="button" className={styles.lineupClearBtn} onClick={handleClear} style={{ marginTop: '0.6rem' }}>Clear positions</button>
+            </>)}
           </DndContext>
         )}
 
@@ -913,6 +1056,18 @@ export default function LineupEditor(props: LineupEditorProps) {
           </div>
         )}
 
+        {/* The position sheet (D5): a tap on a row's position pill on a phone. The pick is the same
+            `setPosition` cell edit the grid's select makes — one undo step — and closes the sheet;
+            the floor returns focus to the pill. A Never pick is allowed and named, never confirmed. */}
+        {isPhone && positionRow && (
+          <LineupPositionSheet
+            row={positionRow} inning={inningOnScreen} inningCount={inningCount} periodLabel={period}
+            sportPack={sportPack} pitcherCap={pitcherCapFor(positionRow)}
+            onPick={code => { setPosition(positionRow.player.id, inningOnScreen, code); setPositionFor(null); }}
+            onClose={() => setPositionFor(null)}
+          />
+        )}
+
         <LineupCheck
           open={lens?.view === 'check' && !checkIsEmpty}
           onClose={() => setLens(null)}
@@ -933,7 +1088,7 @@ export default function LineupEditor(props: LineupEditorProps) {
           inningCount={inningCount}
           onClose={() => setLens(null)}
           onBack={lens?.view === 'inning' && lens.fromCheck ? () => setLens(checkIsEmpty ? null : { view: 'check' }) : undefined}
-          onNavigate={inning => setLens(l => ({ view: 'inning', inning, fromCheck: l?.view === 'inning' && l.fromCheck }))}
+          onNavigate={inning => { setPhoneInning(inning); setLens(l => ({ view: 'inning', inning, fromCheck: l?.view === 'inning' && l.fromCheck })); }}
           rows={rows}
           sportPack={sportPack}
           pitcherCapFor={pitcherCapFor}

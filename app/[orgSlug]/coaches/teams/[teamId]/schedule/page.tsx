@@ -52,7 +52,8 @@ import CoachLoading from '@/components/coaches/CoachLoading';
 import { CoachRowList, CoachRowBand, CoachRow, CoachRowListFoot } from '@/components/coaches/CoachRowList';
 import styles from '../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
-import { gameDayConsolePath, gameDayWindow, gameHasStarted, isGameDayEvent, toGameDayEventShape, windowHolds } from '@/lib/coach-game-day';
+import { gameDayConsolePath, gameDayPeriodKey, gameDayWindow, gameHasStarted, isGameDayEvent, toGameDayEventShape, windowHolds } from '@/lib/coach-game-day';
+import { lineupBuilderHref } from '@/lib/lineups-address';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import CoachRsvpSheet from '@/components/coaches/CoachRsvpSheet';
@@ -775,6 +776,13 @@ export default function CoachesSchedulePage({
   // These hold the loaded lineup just for that preview.
   const [lineupMode, setLineupMode] = useState<RepLineupMode>('everyone_bats');
   const [lineupRows, setLineupRows] = useState<LineupPlayerRow[]>([]);
+  const [lineupInningCount, setLineupInningCount] = useState(sportPack.defaultPeriodCount);
+  // THE PEEK'S LOOK-ONLY INNING FLIP (phone re-evaluation stage 3 · D3, the owner's fourth read,
+  // 2026-09-21): which inning the batting order's position column reads. Set when the sheet opens
+  // (`openEvent`) — 1, or on a game in play the inning the console last showed on this device (its
+  // own per-game memory, READ here, never written). Every width: a read has no phone-only reason.
+  // Nothing here edits — the doors stay the way to change anything.
+  const [peekInning, setPeekInning] = useState(1);
   // Player ids that are actually in the SAVED lineup — used to flag attendance ↔ lineup drift.
   const [lineupEntryIds, setLineupEntryIds] = useState<Set<string>>(new Set());
   // Game event ids whose saved lineup disagrees with attendance (server-computed) — badges the list.
@@ -1227,6 +1235,7 @@ export default function CoachesSchedulePage({
           const absentIds = new Set((data.attendance ?? []).filter(a => a.status === 'absent').map(a => a.playerId));
           const playingPlayers = players.filter(p => !absentIds.has(p.id));
           setLineupMode(mode);
+          setLineupInningCount(data.lineup?.inningCount ?? sportPack.defaultPeriodCount);
           setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(playingPlayers, data.entries ?? [], mode)), mode));
           setLineupEntryIds(new Set((data.entries ?? []).map(e => e.playerId)));
         } else {
@@ -1597,10 +1606,20 @@ export default function CoachesSchedulePage({
 
 
 
+  // The console keeps the inning it last showed per game in sessionStorage; a game in play opens
+  // the peek there so the coach reads the inning they are in. Read only — the sheet never writes it.
+  function initialPeekInning(event: RepTeamEvent): number {
+    if (!gameHasStarted(event, nowMs)) return 1;
+    try {
+      const saved = Number(sessionStorage.getItem(gameDayPeriodKey(event.id)) ?? '');
+      return Number.isInteger(saved) && saved >= 1 ? saved : 1;
+    } catch { return 1; }
+  }
   function openEvent(event: RepTeamEvent) {
     setSlideTab('attendance');
     setAttendanceFilter('all');
     setRsvpEditId(null);
+    setPeekInning(initialPeekInning(event));
     setDaySheet(null);
     // A half-typed score belongs to the game it was typed on. Today every path here passes
     // through a closed panel first, which clears it; a future "next game →" inside the panel
@@ -3270,26 +3289,46 @@ export default function CoachesSchedulePage({
     const lineupTab = activeSlideTab === 'lineup' && isLineupEvent(ev) ? (
       <div className={styles.lineupSection}>
         {(() => {
-          const editHref = `${base}/lineups/${ev.id}`;
+          // The builder, with the way back to THIS sheet (stage 3 · D3): stage 2's deep link lands
+          // on the Lineup tab, so the builder's arrow returns the coach to the game they left.
+          const editHref = lineupBuilderHref(base, ev.id, { returnTo: `${base}/schedule?event=${ev.id}&tab=lineup` });
           const hasLineup = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
           const battingRows = sortLineupRows(lineupRows).filter(r => lineupMode === 'nine_player' ? r.starter : true);
+          // THE DOOR TURNS BY THE CLOCK (stage 3 · D3, owner 2026-09-21: "can we make manual
+          // adjustments during the game here, or is that duplicative?"): before the game it is the
+          // builder; from game time it is the console — already the in-game adjustment surface
+          // (the inning stepper, subs with a this-inning / onward scope, the bench by longest
+          // sitting, the same lineup PUT). The same clock that makes the sheet score-first.
+          const started = gameHasStarted(ev, nowMs);
+          const peekDoor = started
+            ? { href: `${base}/game/${ev.id}`, word: 'Game day' }
+            : { href: editHref, word: 'Edit' };
+          const inningShown = Math.min(Math.max(1, peekInning), Math.max(1, lineupInningCount));
           return (
             <>
+              {/* The heading row carries the door on a phone (44px, the accent — the foot door
+                  sat 1,067px into the sheet under the whole order); the chip stays. The desktop
+                  keeps its foot door and this link is hidden above 640. */}
               <div className={styles.lineupPeekHeader}>
-                <div>
+                <div className={styles.lineupPeekTitleRow}>
                   <h3 className={styles.attendanceTitle}>Lineup</h3>
-                  <p className={styles.attendanceSummary}>
-                    {hasLineup ? 'A quick look — build and edit on the Lineups page.' : 'No lineup set for this game yet.'}
-                  </p>
+                  {/* This is a quick look — "build and edit on the Lineups page" below already
+                      says so — so it claims only what it can see from these rows: whether
+                      anything is saved. The honest Not started/Draft/Ready/Needs review badge
+                      (F02) belongs to the hub, the builder and the Overview, which actually run
+                      the analysis; a plain "has content" fact is exactly right here. */}
+                  <span className={styles.lineupFrontChip} data-tone={hasLineup ? 'ok' : 'warn'}>
+                    {hasLineup ? <><CheckCircle2 size={13} aria-hidden /> Has a lineup</> : <><CircleSlash size={13} aria-hidden /> No lineup yet</>}
+                  </span>
+                  {hasLineup && (
+                    <Link href={peekDoor.href} className={styles.lineupPeekDoor} data-door={started ? 'game-day' : 'edit'}>
+                      {peekDoor.word} <span aria-hidden>›</span>
+                    </Link>
+                  )}
                 </div>
-                {/* This is a quick look — "build and edit on the Lineups page" above already
-                    says so — so it claims only what it can see from these rows: whether
-                    anything is saved. The honest Not started/Draft/Ready/Needs review badge
-                    (F02) belongs to the hub, the builder and the Overview, which actually run
-                    the analysis; a plain "has content" fact is exactly right here. */}
-                <span className={styles.lineupFrontChip} data-tone={hasLineup ? 'ok' : 'warn'}>
-                  {hasLineup ? <><CheckCircle2 size={13} aria-hidden /> Has a lineup</> : <><CircleSlash size={13} aria-hidden /> No lineup yet</>}
-                </span>
+                <p className={styles.attendanceSummary}>
+                  {hasLineup ? 'A quick look — build and edit on the Lineups page.' : 'No lineup set for this game yet.'}
+                </p>
               </div>
 
               {lineupLoading ? (
@@ -3304,17 +3343,27 @@ export default function CoachesSchedulePage({
                   {/* No count / innings / format strip here (owner 2026-09-21): a quick look
                       shows the order itself, and the section's own gap is the only rhythm —
                       the peek's children carry no margins of their own. */}
-                  <p className={`${styles.sectionKicker} ${styles.lineupPeekKicker}`}>Batting order</p>
+                  {/* THE LOOK-ONLY INNING FLIP: ‹ › either side of the kicker; the position beside
+                      each name follows the inning. "—" where the cell is open. Never a setter on
+                      the rows — the doors are the way to change anything. */}
+                  <div className={styles.lineupPeekFlip} data-lineup-peek-flip>
+                    <button type="button" className={styles.gdStepper} aria-label={`Previous ${sportPack.periodLabel.toLowerCase()}`} disabled={inningShown <= 1} onClick={() => setPeekInning(inningShown - 1)}>‹</button>
+                    <p className={`${styles.sectionKicker} ${styles.lineupPeekKicker}`} aria-live="polite">
+                      {sportPack.orderLabel} · <b>{sportPack.periodLabel} {inningShown} of {lineupInningCount}</b>
+                    </p>
+                    <button type="button" className={styles.gdStepper} aria-label={`Next ${sportPack.periodLabel.toLowerCase()}`} disabled={inningShown >= lineupInningCount} onClick={() => setPeekInning(inningShown + 1)}>›</button>
+                  </div>
                   <ol className={styles.lineupPeekOrder}>
                     {battingRows.map(r => (
                       <li key={r.player.id}>
                         <span className={styles.lineupPeekBat}>{r.battingOrder || '–'}</span>
                         <span className={styles.lineupPeekName}>{playerDisplayName(r.player)}</span>
-                        {r.inningPositions['1'] && <span className={styles.lineupPeekPos}>{r.inningPositions['1']}</span>}
+                        <span className={styles.lineupPeekPos} data-blank={!r.inningPositions[String(inningShown)] || undefined}>{r.inningPositions[String(inningShown)] || '—'}</span>
                       </li>
                     ))}
                   </ol>
 
+                  {/* The desktop's foot door; hidden at ≤640 where the heading row carries it. */}
                   <div className={styles.lineupPeekFooter}>
                     <Link href={editHref} className="btn btn-lime btn-sm">Edit in Lineups →</Link>
                   </div>

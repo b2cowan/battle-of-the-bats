@@ -35,7 +35,7 @@
  */
 
 /**
- * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, recordPracticeEventId:string, gameEventId:string,
+ * @typedef {{orgSlug:string, teamId:string, practiceEventId:string, recordPracticeEventId:string, gameEventId:string, noLineupGameEventId:string,
  *            fundraiserId:string, sponsorId:string, clubBillId:string, finishedTeamId:string,
  *            receiptPlayerId:string, planTemplateId:string, lineupTemplateId:string,
  *            evalSessionId:string, opponentKey:string, measurableTypeId:string, rangeTypeId:string, skillTypeId:string,
@@ -117,6 +117,37 @@ async function openRsvpSheet(page) {
   await row.waitFor({ state: 'attached', timeout: 15_000 });
   await row.click();
   await page.locator('[data-rsvp-sheet] [role="dialog"]').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
+/**
+ * THE LINEUP BUILDER'S PHONE GESTURES (phone re-evaluation stage 3, 2026-09-21). At ≤640 Setup is
+ * one row that opens the builder's panel, the grid is one inning at a time behind a ‹ › stepper,
+ * and a position is picked from a bottom sheet; above 640 none of those controls is rendered, so
+ * each gesture is a no-op there and the entry measures the grid the coach-lineup-builder entry
+ * already covers. Every door is the product's own — an accessible name, a role — never a class.
+ */
+async function openLineupSetupPanel(page) {
+  const row = page.locator('button[aria-controls="lineup-setup-panel"]').first();
+  if (await row.count() === 0 || !(await row.isVisible())) return;
+  await row.click();
+  await page.locator('#lineup-setup-panel').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+/** Inning 2, scrolled 700 — the stepper pinned under the masthead with rows moving beneath it. */
+async function stepLineupToInningTwo(page) {
+  const next = page.getByRole('button', { name: /^Next inning$/ }).first();
+  if (await next.count() === 0 || !(await next.isVisible())) return;
+  await next.click();
+  await page.evaluate(() => window.scrollTo(0, 700));
+  await page.waitForTimeout(400);
+}
+/** The position sheet, raised from the first row's pill — scoped to its dialog by the entry. */
+async function openLineupPositionSheet(page) {
+  const pill = page.locator('[data-lineup-inning-list] ul button[aria-haspopup="dialog"]').first();
+  if (await pill.count() === 0 || !(await pill.isVisible())) return;
+  await pill.click();
+  await page.locator('[data-position-sheet] [role="dialog"]').waitFor({ state: 'attached', timeout: 15_000 });
   await page.waitForTimeout(300);
 }
 
@@ -326,6 +357,20 @@ export const SCREENS = [
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?tab=family` },
   { id: 'coach-lineup-builder',  session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/lineups/${c.gameEventId}` },
+  // The builder's phone states (phone re-evaluation stage 3, 2026-09-21): a game with no lineup
+  // (the Setup row in the primary tone), the setup panel open, inning 2 scrolled so the pinned
+  // stepper is read, and the position sheet open (scoped to its dialog — the page beneath its
+  // scrim is the builder entry's). Above 640 the gestures are no-ops and the entries measure the
+  // grid the builder entry already covers.
+  { id: 'coach-lineup-builder-new', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/lineups/${c.noLineupGameEventId}` },
+  { id: 'coach-lineup-builder-setup', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/lineups/${c.gameEventId}`, interact: openLineupSetupPanel },
+  { id: 'coach-lineup-builder-inning', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/lineups/${c.gameEventId}`, interact: stepLineupToInningTwo },
+  { id: 'coach-lineup-builder-position', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/lineups/${c.gameEventId}`, interact: openLineupPositionSheet,
+    scope: '[data-position-sheet] [role="dialog"]' },
   { id: 'coach-lineup-template', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/lineups/templates/${c.lineupTemplateId}` },
 

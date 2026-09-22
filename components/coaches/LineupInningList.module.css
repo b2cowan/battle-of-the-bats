@@ -1,0 +1,174 @@
+/* LineupInningList — the phone's lineup, one inning at a time (phone re-evaluation stage 3 · D5).
+   Only ever rendered at ≤640 (the editor decides the DOM with `useIsPhone`), so nothing here is
+   media-gated. The ‹ › steppers wear the console's `gdStepper` from the coaches module; the number
+   handle wears `lineupBatHandle` (D8) — both unchanged recipes. What is written here is what the
+   drawing added: the pinned stepper, the pill, the dots, the row and its neighbour columns. */
+
+.wrap { display: flex; flex-direction: column; }
+
+/* THE STEPPER PINS under the masthead as the list scrolls — the schedule's month band, the same
+   construction: sticky against the document (no ancestor may `overflow: hidden`), on the page's
+   own ground so the rows scroll under it, not through it. It keeps the page's column (the
+   drawing's edge-to-edge hairline was a 16px spill to the rendered sweep, and the rows it covers
+   sit in the same column). z-index under the masthead (40), the save pill (250) and every sheet
+   (260). */
+.pin {
+  position: sticky;
+  top: calc(var(--coach-topstrip-top, 0px) + var(--coach-header-h, 0px));
+  z-index: 30;
+  padding: 2px 0 6px;
+  background: var(--bg);
+}
+.stepper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+/* The pill — the console's period chip (`gdPeriodChip`: olive on olive-soft, the data face, a
+   999 radius) as a BUTTON, because it is the inning inspector's door. */
+.stepPill {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--tap-min, 44px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--home-olive-soft, rgba(var(--logic-lime-rgb), 0.12));
+  color: var(--home-olive, var(--logic-lime));
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.stepPill[data-state="bad"] {
+  background: rgba(var(--danger-rgb), 0.12);
+  color: var(--danger);
+}
+.stepWord { flex: none; }
+/* The coverage figure ("8/9") — the grid heading's own figure; amber while a role is open, the
+   clash sentence in the pill's red. `--type-support` clears the field floor (A4). */
+.stepFact {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+}
+.stepPill[data-state="open"] .stepFact { color: var(--warning); }
+.stepChev { font-family: inherit; font-size: var(--type-body); font-weight: 400; color: var(--text-tertiary); }
+.stepPill[data-state="bad"] .stepChev { color: inherit; }
+
+/* The dots — a glance at the whole game: filled done · amber outline open · red a clash · a
+   quiet outline untouched · a ring on the inning on screen. 8px, 9 apart, never a tap target. */
+.dots {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 9px;
+  height: 12px;
+  margin: 7px 0 0;
+}
+.dots i {
+  display: block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--home-olive, var(--logic-lime));
+}
+.dots i[data-state="open"] { background: transparent; box-shadow: inset 0 0 0 1.5px var(--warning); }
+.dots i[data-state="clash"] { background: var(--danger); }
+.dots i[data-state="untouched"] { background: transparent; box-shadow: inset 0 0 0 1.5px var(--border-2); }
+.dots i[data-current] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--home-olive, var(--logic-lime)); }
+.dots i[data-current][data-state="open"] { box-shadow: inset 0 0 0 1.5px var(--warning), 0 0 0 2px var(--bg), 0 0 0 3.5px var(--warning); }
+.dots i[data-current][data-state="clash"] { box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--danger); }
+.dots i[data-current][data-state="untouched"] { box-shadow: inset 0 0 0 1.5px var(--border-2), 0 0 0 2px var(--bg), 0 0 0 3.5px var(--border-2); }
+
+/* THE LIST — one white frame of hairlined 58px rows (the phone frame's materials, S.7). No
+   `overflow` on the frame: a lifted row paints past its edge, so the radius sits on the rows. */
+.list {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  background: var(--card-bg, var(--surface));
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 10px;
+}
+.row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 58px;
+  padding: 0 8px 0 6px;
+  border-bottom: 1px solid var(--home-line, var(--border-2));
+  background: var(--card-bg, var(--surface));
+}
+.row:first-child { border-radius: 10px 10px 0 0; }
+.row:last-child { border-bottom: 0; border-radius: 0 0 10px 10px; }
+/* The row in the air (dnd-kit's transform moves it; this is its look): lifted over its
+   neighbours, its shadow and a hair of scale saying so, the handle in the accent. */
+.row[data-dragging] {
+  z-index: 2;
+  border-radius: 10px;
+  border-bottom-color: transparent;
+  box-shadow: 0 10px 24px -8px rgba(0, 0, 0, 0.5);
+  transform: scale(1.02);
+  opacity: 0.95;
+}
+.name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* The neighbours — the previous and next inning's positions, read-only and dim. 12px is the
+   field floor's minimum (A4): a looked-for value, not this one. */
+.neighbour {
+  flex: none;
+  width: 38px;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.neighbour[data-blank] { opacity: 0.55; }
+/* THIS inning's position — a 44 × 64 pill, no chevron; the grid's open (amber) and clash (red)
+   outlines (`lineupPositionOpen` / `lineupPositionConflict`), on the pill. */
+.pill {
+  flex: none;
+  width: 64px;
+  min-height: var(--tap-min, 44px);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border: 1px solid var(--border-2);
+  border-radius: 9px;
+  background: var(--card-bg, var(--surface));
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.pill[data-blank] { color: var(--text-tertiary); font-weight: 400; }
+.pill[data-open] { border-color: rgba(var(--warning-rgb), 0.58); }
+.pill[data-clash] { border-color: var(--danger); box-shadow: 0 0 0 1px rgba(var(--danger-rgb), 0.18); }
+.pill:focus-visible { outline: 3px solid rgba(var(--blueprint-blue-rgb), 0.35); outline-offset: 1px; }

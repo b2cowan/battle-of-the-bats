@@ -44,6 +44,7 @@ import { ArrowLeft, Check, Circle, Undo2, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import { hasNonMoneyRecordAccess } from '@/lib/coach-capabilities';
 import { getSportPack, surfaceLabel, DEFAULT_SPORT } from '@/lib/sports';
+import { lineupBuilderHref } from '@/lib/lineups-address';
 import { analyzeLineup, BENCH_POSITION } from '@/lib/lineup-analysis';
 import { generateBestLineup } from '@/lib/lineup-generator';
 import { playerPositionPrefs } from '@/lib/lineup-profile';
@@ -1056,7 +1057,8 @@ export default function CoachGameConsolePage({
             <p className={styles.gdFallbackLead}>No lineup saved for this game yet.</p>
             {can.subs ? (
               <div className={styles.gdFallbackDoors}>
-                <Link href={`${base}/lineups/${eventId}`} className={styles.gdBigBtn} data-primary="yes">
+                {/* The builder, with the way back to this console (stage 3 · D3). */}
+                <Link href={lineupBuilderHref(base, eventId, { returnTo: `${base}/game/${eventId}` })} className={styles.gdBigBtn} data-primary="yes">
                   Start from a template
                   <small>your usual grid, ready to adjust</small>
                 </Link>
@@ -1342,7 +1344,7 @@ export default function CoachGameConsolePage({
                 </tbody>
               </table>
             </div>
-            <Link href={`${base}/lineups/${eventId}`} className={styles.gdDoorRow}>
+            <Link href={lineupBuilderHref(base, eventId, { returnTo: `${base}/game/${eventId}` })} className={styles.gdDoorRow}>
               <span>Open the full builder — batting order, modes, caps</span><span aria-hidden>›</span>
             </Link>
           </div>

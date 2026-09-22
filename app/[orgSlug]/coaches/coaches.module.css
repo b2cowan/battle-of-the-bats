@@ -1959,16 +1959,10 @@
 .boardRowFigure[data-words] { font-family: var(--font-sans); font-size: var(--type-heading); font-weight: 700; color: var(--text-tertiary); }
 
 /* ── Lineups front door (game list) ─────────────────────────────────────── */
-.lineupClearBtn {
-  background: none; border: none; padding: 0.3rem 0; cursor: pointer;
-  color: var(--text-tertiary); font-size: var(--type-support);
-}
-.lineupClearBtn:hover { color: var(--text-secondary); text-decoration: underline; }
-/* 25px, and it empties the whole grid — the smallest control on the screen was the most
-   destructive one on it. Quiet stays quiet; only the target grows. */
-@media (max-width: 768px) {
-  .lineupClearBtn { min-height: var(--tap-min, 44px); }
-}
+/* ⚠ `.lineupClearBtn` LIVED HERE — the quiet text link under the grid, grown to a 44px tap
+   target at ≤768. Retired 2026-09-22: Clear is now the last square in the lineup tool row
+   (`.footerIconBtn`), beside Undo, Redo, Print and Templates, at every width. Nothing else ever
+   used the class; the rule goes with its callers rather than sitting here unreferenced. */
 
 /* ── Season analytics (Lineups landing page) — collapsible sections, all data from saved lineups ── */
 .lineupAnalyticsBasis { margin: 0 0 0.75rem; font-size: var(--type-support); color: var(--text-tertiary); }
@@ -7022,19 +7016,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .lineupTemplateLoad:hover { background: rgba(var(--blueprint-blue-rgb), 0.12); }
 .lineupTemplateLoad strong { font-size: var(--type-body); font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lineupTemplateLoad span { font-size: var(--type-label); color: var(--text-tertiary); }
-.lineupTemplateDelete {
-  flex: 0 0 auto;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  background: none;
-  border: none;
-  border-radius: 7px;
-  color: var(--text-tertiary);
-  cursor: pointer;
-}
-.lineupTemplateDelete:hover { background: rgba(var(--danger-rgb, 239,68,68), 0.15); color: var(--danger); }
 
 /* Inline notice (e.g. "Loaded template …") above the lineup grid */
 .lineupNotice {
@@ -7623,8 +7604,20 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    adjacent margins, so a child margin here would ADD to the gap instead of replacing it — which
    is exactly how this panel doubled up its own spacing before (owner 2026-09-21). */
 .lineupPeekHeader {
-  display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
+  display: flex; flex-direction: column; gap: 0.15rem;
 }
+/* The title row: "Lineup", the Has-a-lineup chip at the right, and — on a phone — the door (see the
+   stage-3 block at the foot of this file). */
+.lineupPeekTitleRow { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.lineupPeekTitleRow .attendanceTitle { margin: 0; }
+.lineupPeekTitleRow .lineupFrontChip { margin-left: auto; }
+.lineupPeekDoor { display: none; }
+/* The look-only inning flip (stage 3 · D3, every width): ‹ › at the tap floor either side of the
+   kicker, which names the inning in the primary ink. The order beneath follows it. */
+.lineupPeekFlip { display: flex; align-items: center; gap: 0.5rem; }
+.lineupPeekFlip .lineupPeekKicker { flex: 1; min-width: 0; text-align: center; }
+.lineupPeekFlip .lineupPeekKicker b { color: var(--text-primary); font-weight: 800; }
+.lineupPeekPos[data-blank] { color: var(--text-tertiary); background: transparent; }
 .lineupPeekEmpty {
   text-align: center; padding: 1.4rem 1rem;
   border: 1px dashed var(--white-10); border-radius: 10px;
@@ -14943,4 +14936,106 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
   .slideOverFoot .formHint { flex: 1 1 100%; padding: 0.6rem 0; text-align: center; }
   .slideOverFoot .deleteConfirm { flex: 1 1 100%; padding-top: 0.6rem; }
   .slideOverFoot .deleteConfirmBtns button { min-height: var(--tap-min, 44px); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   PHONE RE-EVALUATION · STAGE 3 — GAME WEEK (owner rulings 2026-09-21: D1 = B the panel · D2 = B
+   after the Setup row · D5 · D3 · D4 as drawn). ≤640 unless a rule says otherwise; the desktop
+   and the 641–768 band keep the grid and their controls. The inning list and the position sheet
+   live in their own modules (LineupInningList · LineupPositionSheet); what is here is the
+   builder's own chrome and the schedule peek's door.
+   ═══════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* D1 · THE SETUP ROW — the row recipe's two-line form (B6's density: 14.5/600 title, 12.5 caption,
+   2px between), white, a hairline, radius 10, 52px; a chevron that turns while its panel is open.
+   Only ever rendered at ≤640 (the editor decides the DOM), so the base rules need no gate. */
+.lineupSetupRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 6px 12px;
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 10px;
+  background: var(--card-bg, var(--surface));
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.lineupSetupRowText {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.3;
+}
+.lineupSetupRowText strong,
+.lineupSetupRowText small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lineupSetupRowText strong { font-size: var(--type-body); font-weight: 600; }
+.lineupSetupRowText small { font-size: var(--type-support); color: var(--text-tertiary); }
+.lineupSetupRowChev { flex: none; color: var(--text-tertiary); transition: transform 0.15s; }
+.lineupSetupRow[aria-expanded="true"] .lineupSetupRowChev { transform: rotate(180deg); }
+.lineupSetupRow:focus-visible { outline: 3px solid rgba(var(--blueprint-blue-rgb), 0.35); outline-offset: 1px; }
+/* A NEW lineup: the same row in the primary tone — the create's lime geometry — because it is
+   where Auto-fill lives. One component, two tones; decided once at open (`hasAssignments`). */
+.lineupSetupRow[data-state="primary"] {
+  background: var(--home-lime, var(--logic-lime));
+  border-color: var(--home-lime, var(--logic-lime));
+  color: var(--home-lime-ink, var(--pitch-black));
+}
+.lineupSetupRow[data-state="primary"] .lineupSetupRowText small,
+.lineupSetupRow[data-state="primary"] .lineupSetupRowChev { color: inherit; opacity: 0.8; }
+
+/* D2 · THE TOOL ROW — Undo · Redo · Print · Templates as four 44px squares, 8px apart, left-aligned,
+   after the Setup row and directly above the list. */
+.lineupToolRow { display: flex; align-items: center; gap: 8px; }
+
+/* The panel's second caption ("Auto-fill", under the Setup fields it now carries on a phone). */
+.lineupPanelSection { padding-top: 0.4rem; border-top: 1px solid var(--border-2); }
+
+/* D4 · the hint under the list. */
+.lineupScrollHintUnder { margin: 0.6rem 0 0; }
+
+@media (max-width: 640px) {
+  /* The controls become ONE column: the Setup row, then the tool row (the 2×2 grid above is the
+     desktop-era phone form, retired here by order). */
+  .lineupControls {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+  /* The full-width rule (`.lineupAutoWrap > button { width: 100% }`) is right for the Setup row and
+     wrong for the Print and Templates squares inside the tool row — it is what made Print 175px. */
+  .lineupToolRow > .lineupAutoWrap { width: auto; align-self: auto; }
+  .lineupToolRow .lineupAutoWrap > button { width: var(--tap-min, 44px); }
+  /* The panel's phone rows: Format and Innings side by side (Innings 96px), the section captions,
+     Generate and Reshuffle centred at the tap floor. */
+  .lineupAutoMenu .lineupSetupFields { flex-wrap: nowrap; gap: 8px; align-items: flex-end; }
+  .lineupAutoMenu .lineupSetupFields .lineupControlLabel:first-child { flex: 1 1 auto; }
+  .lineupAutoMenu .lineupSetupFields .lineupControlLabel:last-child { flex: 0 0 96px; }
+  .lineupAutoMenu .btnSecondary { justify-content: center; min-height: var(--tap-min, 44px); }
+  /* D4 · the meta line drops the year — the Schedule's rows never carry it and the season has one. */
+  .lineupMetaYear { display: none; }
+  /* D3 · the peek's door on the heading row (44px, the create's lime), the chip beside the title,
+     the foot door gone. */
+  .lineupPeekTitleRow .lineupFrontChip { margin-left: 0; }
+  .lineupPeekDoor {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: auto;
+    min-height: var(--tap-min, 44px);
+    padding: 0 14px;
+    border-radius: 9px;
+    background: var(--home-lime, var(--logic-lime));
+    color: var(--home-lime-ink, var(--pitch-black));
+    font-size: var(--type-body);
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+  .lineupPeekFooter { display: none; }
 }

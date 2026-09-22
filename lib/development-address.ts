@@ -68,12 +68,13 @@ export const isRecordId = (v: unknown): v is string => typeof v === 'string' && 
 const id = (v: string | null): string | null => (isRecordId(v) ? v : null);
 
 /**
- * Only a path INSIDE this team's portal survives: it must start with the team root followed by
- * `/` or `?`, carry no scheme, no `//`, no backslash, no `..` segment, and no year parameter.
+ * Only a path INSIDE this team's portal survives: it must be the team root itself (the Overview —
+ * the lineup builder's way back from its card, stage 3 · D3) or start with the team root followed
+ * by `/` or `?`, carry no scheme, no `//`, no backslash, no `..` segment, and no year parameter.
  */
 export function safeReturnPath(raw: string | null | undefined, base: string): string | null {
   if (!raw) return null;
-  if (!raw.startsWith(`${base}/`) && !raw.startsWith(`${base}?`)) return null;
+  if (raw !== base && !raw.startsWith(`${base}/`) && !raw.startsWith(`${base}?`)) return null;
   if (raw.includes('//') || raw.includes('\\') || /(^|\/)\.\.(\/|$|\?)/.test(raw)) return null;
   if (/[?&]year=/.test(raw)) return null;
   return raw;
@@ -126,13 +127,22 @@ export function playerDevelopmentHref(
   return `${base}/roster/${playerId}?${qp.toString()}`;
 }
 
-/** What the way back is called — by where it goes, never by a label the address could carry. */
+/**
+ * What the way back is called — by where it goes, never by a label the address could carry. The
+ * header composes "Back to <label>" for the arrow's name and shows the label beside it, so each is
+ * the destination's NOUN. The lineup builder's three doors (phone re-evaluation stage 3 · D3):
+ * the game on the Schedule (`schedule?event=…` — that game's sheet), the game-day console, and the
+ * bare team address, the Overview.
+ */
 export function returnLabel(returnTo: string | null, base: string): string | null {
   if (!returnTo) return null;
+  if (returnTo === base) return 'Overview';
   // A route prefix with a boundary — `/development` and `/development?section=…`, never `/developmentx`.
   const under = (segment: string) => new RegExp(`^${base.replace(/[.*+?^${}()|[\\]\\\\]/g, '\\$&')}/${segment}(?:[/?#]|$)`).test(returnTo);
   if (under('development')) return 'Skills & Goals';
   if (under('history')) return 'Insights';
+  if (under('schedule') && /[?&]event=/.test(returnTo)) return 'The game';
+  if (under('game')) return 'Game day';
   return null;
 }
 

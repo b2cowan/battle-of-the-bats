@@ -44,6 +44,7 @@ import { armCareCopy, type ArmCareConcern } from '@/lib/coach-arm-care';
 import { surfaceLabel, getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { analyzeLineup, deriveLineupBadge, type LineupBadge } from '@/lib/lineup-analysis';
 import { gameDayEntryHref, isInGameDayWindow, toGameDayEventShape } from '@/lib/coach-game-day';
+import { lineupBuilderHref } from '@/lib/lineups-address';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import { getCoachGuidance } from '@/lib/coach-guidance';
@@ -1782,7 +1783,8 @@ export default function TeamOverviewPage({
   // door its resolver never granted, and `null` genuinely renders nothing (never a disabled button).
   const anchorHref = (action: string): string => {
     switch (action) {
-      case 'build_lineup': return nextEvent ? `${base}/lineups/${nextEvent.id}` : `${base}/lineups`;
+      // The builder, with the way back to this Overview (stage 3 · D3).
+      case 'build_lineup': return nextEvent ? lineupBuilderHref(base, nextEvent.id, { returnTo: base }) : `${base}/lineups`;
       case 'take_attendance': return nextEvent ? `${base}/schedule?event=${nextEvent.id}&tab=attendance` : `${base}/schedule`;
       // A practice's three doors (D7): the plan page for plan/open, the field screen inside the window.
       case 'plan_practice':

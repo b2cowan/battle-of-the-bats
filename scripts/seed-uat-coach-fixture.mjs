@@ -336,6 +336,47 @@ if (existingGame) {
   ok('game created');
 }
 
+/* A SECOND GAME WITH NO LINEUP — the builder's "new lineup" state (phone re-evaluation stage 3 ·
+   D1, 2026-09-21: the Setup row in the primary tone, the strip at "Not started", every roster
+   player seeded as a row with nothing decided). Five days out, so it is never the Overview's
+   anchor while the probe game is live. Re-anchored every seed like the probe game, and ANY lineup
+   found on it is deleted: a walk that generated one here would leave the sweep measuring the
+   saved-lineup screen twice and reporting green on a state nobody looked at (the same shape as
+   sections 11, 12b and 13). Nothing saves on it by itself — the builder does not autosave at open. */
+const bareStarts = new Date(Date.now() + 5 * 86_400_000);
+bareStarts.setUTCHours(17, 0, 0, 0);
+const bareEnds = new Date(bareStarts.getTime() + 2 * 60 * 60_000);
+const { data: existingBare } = await db.from('rep_team_events')
+  .select('id').eq('program_year_id', py.id).eq('name', 'UAT probe game · no lineup').maybeSingle();
+let bareGameId;
+if (existingBare) {
+  const upd = await db.from('rep_team_events')
+    .update({ starts_at: bareStarts.toISOString(), ends_at: bareEnds.toISOString() })
+    .eq('id', existingBare.id).select('id').single();
+  if (upd.error) { console.error('✗ no-lineup game update', upd.error.message); process.exit(1); }
+  bareGameId = upd.data.id;
+  ok('no-lineup game refreshed (re-anchored five days out)');
+} else {
+  const ins = await db.from('rep_team_events').insert({
+    program_year_id: py.id, team_id: team.id, org_id: org.id,
+    event_type: 'league_game', name: 'UAT probe game · no lineup',
+    opponent: 'Probe Rovers', home_away: 'away',
+    starts_at: bareStarts.toISOString(), ends_at: bareEnds.toISOString(),
+    location: 'UAT Fields', field_number: '3',
+  }).select('id').single();
+  if (ins.error) { console.error('✗ no-lineup game insert', ins.error.message); process.exit(1); }
+  bareGameId = ins.data.id;
+  ok('no-lineup game created');
+}
+{
+  const stray = await db.from('rep_team_lineups').select('id').eq('event_id', bareGameId);
+  for (const l of stray.data ?? []) {
+    await db.from('rep_team_lineup_entries').delete().eq('lineup_id', l.id);
+    await db.from('rep_team_lineups').delete().eq('id', l.id);
+  }
+  if ((stray.data ?? []).length) ok(`no-lineup game: ${stray.data.length} stray lineup(s) removed`);
+}
+
 /* ══════════════════════════════════════════════════════════════════════════════════════════════
  * ⚠⚠ **THE LIVE SEASON HAD NO FINISHED GAMES, AND THAT MADE THE WHOLE INSIGHTS PORTAL UNWALKABLE**
  * (added 2026-08-19, found on the first owner walk of §58).

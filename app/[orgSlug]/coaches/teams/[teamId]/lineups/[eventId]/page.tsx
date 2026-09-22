@@ -1,8 +1,10 @@
 'use client';
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { useDismissable } from '@/lib/overlay-hooks';
-import { ListOrdered, CalendarDays, X, Undo2, Redo2, Printer } from 'lucide-react';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { ListOrdered, CalendarDays, Undo2, Redo2, Printer, LayoutTemplate } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
@@ -24,6 +26,7 @@ import {
 } from '@/lib/lineup-grid';
 import { analyzeLineup } from '@/lib/lineup-analysis';
 import { gameHasStarted } from '@/lib/coach-game-day';
+import { safeReturnPath, returnLabel } from '@/lib/development-address';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { sideWord } from '@/lib/coach-tournament-games';
 import { useMinuteClock } from '@/lib/use-minute-clock';
@@ -46,6 +49,15 @@ function fmtDate(iso: string) {
 function fmtTime(iso: string) {
   return formatInOrgZone(iso, { hour: 'numeric', minute: '2-digit' });
 }
+// The meta line's date in two parts — the day and the year — so a phone can drop the year (stage
+// 3 · D4: the Schedule's rows never carry it and the season has one; at 360 it was what wrapped
+// "View on schedule" onto a 44px line of its own). Joined, the two read exactly as `fmtDate`.
+function fmtDay(iso: string) {
+  return formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric' });
+}
+function fmtYear(iso: string) {
+  return formatInOrgZone(iso, { year: 'numeric' });
+}
 function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
@@ -66,7 +78,11 @@ export default function CoachLineupBuilderPage({
   params: Promise<{ orgSlug: string; teamId: string; eventId: string }>;
 }) {
   const { orgSlug, teamId, eventId } = use(paramsPromise);
+  const searchParams = useSearchParams();
   const { assignments, loading: ctxLoading } = useCoaches();
+  // The phone's tool row (stage 3 · D2) differs from the desktop's toolbar in structure, so the DOM
+  // decides; the editor beneath makes the same call for its own forms.
+  const isPhone = useIsPhone();
   const { currentOrg } = useOrg();
   const confirm = useConfirm();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -340,23 +356,6 @@ export default function CoachLineupBuilderPage({
       ? `Loaded “${t.name}” — skipped ${skipped} player${skipped === 1 ? '' : 's'} no longer on the roster.`
       : `Loaded “${t.name}” — review and save when ready.`);
   }
-  async function handleDeleteTemplate(t: RepTeamLineupTemplate) {
-    if (!(await confirm({
-      title: 'Delete template?',
-      message: `Delete the saved template “${t.name}”? This can't be undone.`,
-      confirmText: 'Delete', cancelText: 'Keep', tone: 'warning',
-    }))) return;
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/lineup-templates/${t.id}`, { method: 'DELETE' });
-      if (!res.ok) {
-        const d = await res.json().catch(() => ({ error: res.statusText }));
-        throw new Error(d.error ?? 'Could not delete template');
-      }
-      await reloadTemplates();
-    } catch (e: unknown) {
-      setTemplateError(errorMessage(e, 'Could not delete template'));
-    }
-  }
 
   // Reconcile actions for the attendance-mismatch banner — lineup-side only, dedup in the updater.
   function addPlayersToLineup(ids: string[]) {
@@ -536,8 +535,18 @@ export default function CoachLineupBuilderPage({
   // A scrimmage says so under the title — its game kind reads the same as any other Game now, so the
   // word is how a coach knows the auto-fill opened on Development for a reason.
   const gameMeta = event && event.startsAt
-    ? `${fmtDate(event.startsAt)} · ${fmtTime(event.startsAt)}${event.isScrimmage ? ` · ${SCRIMMAGE_LABEL}` : ''}`
-    : '';
+    ? <>{fmtDay(event.startsAt)}<span className={styles.lineupMetaYear}>, {fmtYear(event.startsAt)}</span> · {fmtTime(event.startsAt)}{event.isScrimmage ? ` · ${SCRIMMAGE_LABEL}` : ''}</>
+    : null;
+  // THE WAY BACK (stage 3 · D3, owner 2026-09-21: "back from the lineup must lead to the game, not
+  // to Lineups"): the arrow returns to the door the builder was opened from — the game on the
+  // Schedule (its sheet open on Lineup), the game-day console, the Overview — through the portal's
+  // `return` convention (the player page's way back to Skills & Goals): the address carries it,
+  // `safeReturnPath` drops anything outside this team's portal, `returnLabel` names it by where
+  // it goes. A foreign or missing address falls back to All lineups, which is what the room's
+  // rows send. Save, Mark ready and the autosave never navigate.
+  const returnTo = safeReturnPath(searchParams.get('return'), base);
+  const returnName = returnTo ? returnLabel(returnTo, base) : null;
+  const backTo = returnTo && returnName ? { href: returnTo, label: returnName } : { href: `${base}/lineups`, label: 'All lineups' };
   // The box first, then the kind: a scrimmage (a Game with "This is a scrimmage" ticked) opens on
   // Development, a tournament game on Competitive, any other game on Balanced.
   const defaultPolicy: PositionPolicy = event?.isScrimmage ? 'development'
@@ -552,10 +561,10 @@ export default function CoachLineupBuilderPage({
         title={gameTitle}
         helpLabel="Lineup builder"
         help={lineupHelpRequest}
-        backTo={{ href: `${base}/lineups`, label: 'All lineups' }}
+        backTo={backTo}
       />
       <div className={styles.pageSummaryStrip}>
-        <span className={styles.lineupMetaText}>{gameMeta || 'Set the batting order and field positions for this game.'}</span>
+        <span className={styles.lineupMetaText}>{gameMeta ?? 'Set the batting order and field positions for this game.'}</span>
         {event && (
           <Link href={`${base}/schedule?event=${eventId}`} className={styles.lineupOnScheduleLink}>
             <CalendarDays size={12} aria-hidden /> View on schedule
@@ -591,12 +600,27 @@ export default function CoachLineupBuilderPage({
   // the Schedule; this page has only ever read it.
 
   // The Templates popover, injected into the editor's controls row via `controlsExtra`.
+  // On a phone the trigger is a fourth `footerIconBtn` (stage 3 · D2) — a glyph BUTTON opening
+  // exactly this panel, NOT a `CoachToolbarMenu`: the panel is a FORM (an input and a save
+  // button) and nothing in it is checked (a lineup does not remember its template).
+  // ⚠ NO DELETE HERE (owner, 2026-09-22). This panel does exactly two things — start FROM a saved
+  // template, save this lineup AS one. Deleting, renaming, editing and applying a template all live
+  // in the Templates tab of the Lineups room (`_LineupTemplatesView`), which is where the help
+  // already sends coaches. A destructive glyph pinned to the edge of the row you are trying to TAP
+  // is a mis-tap waiting to happen, and on a phone the row IS the tap target.
   const templatesControl = (
     <div className={styles.lineupAutoWrap} ref={templatesRef}>
-      <button type="button" className={styles.btnSecondary} disabled={lineupRows.length === 0}
-        onClick={() => { setTemplatesOpen(v => !v); setTemplateError(''); setLineupPdfOpen(false); }} aria-expanded={templatesOpen}>
-        Templates ▾
-      </button>
+      {isPhone ? (
+        <button type="button" className={styles.footerIconBtn} aria-label="Templates" title="Templates" disabled={lineupRows.length === 0}
+          onClick={() => { setTemplatesOpen(v => !v); setTemplateError(''); setLineupPdfOpen(false); }} aria-expanded={templatesOpen}>
+          <LayoutTemplate size={18} />
+        </button>
+      ) : (
+        <button type="button" className={styles.btnSecondary} disabled={lineupRows.length === 0}
+          onClick={() => { setTemplatesOpen(v => !v); setTemplateError(''); setLineupPdfOpen(false); }} aria-expanded={templatesOpen}>
+          Templates ▾
+        </button>
+      )}
       {templatesOpen && (
         <div className={styles.lineupAutoMenu}>
           <div className={styles.lineupTemplateSection}>
@@ -611,7 +635,6 @@ export default function CoachLineupBuilderPage({
                       <strong>{t.name}</strong>
                       <span>{t.lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {t.inningCount} {sportPack.periodLabelPlural.toLowerCase()}</span>
                     </button>
-                    <button type="button" className={styles.lineupTemplateDelete} aria-label={`Delete template ${t.name}`} title="Delete template" onClick={() => handleDeleteTemplate(t)}><X size={14} /></button>
                   </li>
                 ))}
               </ul>
@@ -637,7 +660,12 @@ export default function CoachLineupBuilderPage({
   // ordinary toolbar buttons and the save word floats as the same pill every other coach screen
   // uses. Print reuses the auto-fill/Templates popover recipe (`lineupAutoWrap`/`lineupAutoMenu`)
   // rather than a bar-specific menu of its own.
-  const toolbarExtras = (
+  // On a phone these are squares in ONE flex row (stage 3 · D2, owner ruling — B: after the Setup
+  // row, directly above the list): tools, not header actions — they act on the grid and the page
+  // creates nothing, so the page-actions guard's `actions: null` stays true. The ROW itself is
+  // built by the editor, which adds its own Clear as the last square (owner, 2026-09-22) — these
+  // four are handed over bare.
+  const lineupTools = (
     <>
       <button type="button" className={styles.footerIconBtn} aria-label="Undo" title="Undo" disabled={lineupHistory.undo.length === 0} onClick={undoLineup}><Undo2 size={18} /></button>
       <button type="button" className={styles.footerIconBtn} aria-label="Redo" title="Redo" disabled={lineupHistory.redo.length === 0} onClick={redoLineup}><Redo2 size={18} /></button>
@@ -711,7 +739,7 @@ export default function CoachLineupBuilderPage({
             onBeforeMutate={pushLineupUndo}
             onNotice={setLineupNotice}
             notice={lineupNotice}
-            controlsExtra={toolbarExtras}
+            controlsExtra={lineupTools}
             attendance={{
               comingNotInLineup: comingNotInLineup.map(r => r.player),
               outButInLineup: outButInLineup.map(r => r.player),

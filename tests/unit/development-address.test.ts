@@ -48,6 +48,9 @@ describe('the profile address', () => {
 
   it('only returns INSIDE this team’s portal — anything else is dropped, never followed', () => {
     assert.equal(safeReturnPath(`${base}/history?section=development`, base), `${base}/history?section=development`);
+    // The team root itself — the Overview — is a way back (the lineup builder's card door, stage 3 · D3).
+    assert.equal(safeReturnPath(base, base), base);
+    assert.equal(safeReturnPath(`${base}x`, base), null, 'a prefix of the root is not the root');
     assert.equal(safeReturnPath('https://evil.example/x', base), null);
     assert.equal(safeReturnPath('//evil.example/x', base), null);
     assert.equal(safeReturnPath('/other-org/coaches/teams/T1/development', base), null);
@@ -71,6 +74,13 @@ describe('the profile address', () => {
     assert.equal(returnLabel(`${base}/roster`, base), null);
     assert.equal(returnLabel(`${base}/developmentx`, base), null, 'a prefix is not a route');
     assert.equal(returnLabel(`${base}/development`, base), 'Skills & Goals');
+  });
+  it('names the lineup builder\'s three doors by where they go (stage 3 · D3)', () => {
+    assert.equal(returnLabel(`${base}/schedule?event=ev1&tab=lineup`, base), 'The game');
+    assert.equal(returnLabel(`${base}/schedule`, base), null, 'the Schedule without a game is not "the game"');
+    assert.equal(returnLabel(`${base}/game/ev1`, base), 'Game day');
+    assert.equal(returnLabel(base, base), 'Overview');
+    assert.equal(returnLabel(`${base}/gamex`, base), null, 'a prefix is not a route');
   });
 
   it('never carries a year — the look-back layer is the closed-season page, not a parameter', () => {
