@@ -256,6 +256,28 @@ export function sessionTitle(s: { sessionDate: string; note: string | null }): s
   return `${formatWeekdayDate(s.sessionDate, 'short')}${s.note ? ` — ${s.note}` : ''}`;
 }
 
+/**
+ * A session's own NAME — what its PAGE is titled (phone re-evaluation stage 4 · E5, owner
+ * 2026-09-22): the name the coach gave it, and only that.
+ *
+ * ⚠ THIS EXISTS BESIDE `sessionTitle` RATHER THAN REPLACING IT, and the pair is the point. The page
+ * carried the long form as its `<h1>` and the day AGAIN on the when-line directly beneath it, in a
+ * different spelling — "Mon 21 Sept" over "Monday 21 September" (measured: 246×66 over three lines,
+ * on a page whose first player was already 563px down). One date, one place, one spelling. But the
+ * long form is still right everywhere it is a session among sessions: the Sessions LIST's row text,
+ * the practice plan's "Recorded here" rows, the review dialog's subtitle, and the observation
+ * sheet's "dated by the session" line — which without a date in it would be a promise with nothing
+ * behind it. So: `sessionTitle` names a session in a list, `sessionName` titles its own page.
+ *
+ * ⚠ It does NOT truncate. An unnamed session falls back to the day, because a page with no title is
+ * worse than a repeated date; and a session NAMED with a whole sentence (the UAT fixture is) still
+ * wraps to two lines. Clamping a title to force the drawing's one line would hide part of a name
+ * the coach typed, which is a worse trade than a second line.
+ */
+export function sessionName(s: { sessionDate: string; note: string | null }): string {
+  return s.note?.trim() || formatWeekdayDate(s.sessionDate, 'short');
+}
+
 /** The list's State column (C5): "unfinished" while a cell holds nothing, "complete" once none does, null with no scope. */
 export function sessionState(s: { unrecordedCount?: number | null; scopeCellCount?: number | null }): 'unfinished' | 'complete' | null {
   if (s.unrecordedCount == null || s.scopeCellCount == null) return null;
@@ -445,10 +467,35 @@ export function orderEventsByAnchor<E extends { eventType: string; startsAt: str
   });
 }
 
-export const ROW_STATE_LABELS: Readonly<Record<SessionRowState, string>> = {
+/* ⚠ NOT EXPORTED (/review, 2026-09-22). It had no reader left outside this file once
+   `rowStateLabel` below became the one door to a row's wording, and leaving it exported invited a
+   caller to read the raw table and reintroduce the very split that function exists to close — a
+   skill row saying "Saved" while the Review table beside it says "Recorded". */
+const ROW_STATE_LABELS: Readonly<Record<SessionRowState, string>> = {
   saving: 'Saving…',
   error: 'Not saved — retry',
   saved: 'Saved',
   not_assessed: 'Not assessed',
   not_recorded: 'Not recorded',
 };
+
+/**
+ * What a row's state is CALLED — one rule for the desktop row's word and the phone chip's, so the
+ * two can never drift (phone re-evaluation stage 4 · E2, owner 2026-09-22).
+ *
+ * ⚠ A SKILL ROW SAYS "Recorded", NOT "Saved", AND THAT IS A CORRECTION RATHER THAN A PHONE WORD.
+ * "Saved" describes an autosave that just landed, which is true of a TEST row — a typed attempt
+ * leaves the field and goes to the server — and is not true of a skill row, which never saves
+ * anything: the row is a door and the dialog behind it owns the write. The screen already called
+ * this state "Recorded" in two other places — the row's own chip in the drawing, and the Review
+ * session table's column header, which has read Test · **Recorded** · Not assessed · Not recorded
+ * since stage 2 — so the row was the odd one out at every width, not just on a phone. Building the
+ * chip as "Recorded" while leaving the row on "Saved" would have shipped one screen calling one
+ * state two names, which is the thing the one-spelling ruling (owner 2026-08-24) is about.
+ *
+ * The other four labels are untouched, and a TEST row keeps "Saved".
+ */
+export function rowStateLabel(state: SessionRowState, opts?: { skill?: boolean }): string {
+  if (opts?.skill && state === 'saved') return 'Recorded';
+  return ROW_STATE_LABELS[state];
+}

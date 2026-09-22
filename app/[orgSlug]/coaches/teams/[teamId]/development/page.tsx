@@ -238,9 +238,23 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
         opens the scope step (Phase 2). ABSENT while nothing can start (stage 0, D2): the old
         landing led with a switched-off lime button whose reason sat in a box below the tabs; now
         the Overview card carries the first move, and the header earns its lime once a test exists. */
+  /* ⚠ AT ≤640 THE WORDS GO AND THE "+" STAYS (phone re-evaluation stage 4 · E5, owner 2026-09-22).
+     Measured at 390×844 on 2026-09-22: a 139×44 word button at y=99, on a row of ITS OWN between
+     the title and the tabs — the only create in the portal still sitting that way. House rule 3
+     (2026-08-23) with `actionsPhoneInTitleRow` below is the portal's existing answer and the exact
+     shape Roster's Add Player, Money's Record and Schedule's Add Event already wear: the symbol
+     keeps the title row's corner beside the "?", the label survives as the accessible name, and the
+     hub loses that 58px row. Nothing changes above 640. */
   const startAction = !canWrite || loading || stage === 'define' ? undefined : (
-    <button type="button" className={styles.btnPrimary} disabled={busy} onClick={openScope}>
-      <Plus size={15} aria-hidden /> Start session
+    <button
+      type="button"
+      className={`${styles.btnPrimary} ${styles.headerPrimaryBtn}`}
+      aria-label="Start session"
+      disabled={busy}
+      onClick={openScope}
+    >
+      <Plus size={15} aria-hidden />
+      <span className={styles.headerBtnLabel}>Start session</span>
     </button>
   );
 
@@ -260,6 +274,7 @@ function DevelopmentHub({ orgSlug, teamId }: { orgSlug: string; teamId: string }
         helpLabel="Skills & Goals"
         help={helpRequest}
         actions={startAction}
+        actionsPhoneInTitleRow
       />
 
       <CoachTabBar tabs={tabs} activeId={section} ariaLabel="Skills and Goals views" />

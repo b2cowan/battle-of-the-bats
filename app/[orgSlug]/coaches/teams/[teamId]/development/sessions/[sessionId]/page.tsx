@@ -7,6 +7,7 @@ import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import QuestionShell from '@/components/coaches/QuestionShell';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import MetricDefinitionSheet from '@/components/coaches/MetricDefinitionSheet';
 import SessionSheet, { type SessionFacts, type SessionPlan, type SessionRosterRow, type SessionEventOption } from '@/components/coaches/SessionSheet';
 import RecordObservationDialog from '@/components/coaches/RecordObservationDialog';
@@ -20,7 +21,7 @@ import { formatWeekdayDate } from '@/lib/measurable-format';
 import { playerName } from '@/lib/coach-roster-name';
 import {
   sessionMetricChips, sessionRows, sessionScopeCounts, scopeSentence, chipProgressByType, defaultSessionChip, plannedAttempts,
-  lastPlannedCounts, lastRunDates, scopeSummary, sessionReview, sessionTitle, planCandidates, type ReviewRow,
+  lastPlannedCounts, lastRunDates, scopeSummary, sessionReview, sessionTitle, sessionName, planCandidates, type ReviewRow,
 } from '@/lib/development-session-view';
 import styles from '../../../../../coaches.module.css';
 import css from '@/components/coaches/DevelopmentSession.module.css';
@@ -78,6 +79,9 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   const confirm = useConfirm();
   const router = useRouter();
   const { openHelp } = useHelpDrawer();
+  /* ≤640, read live. Two things on this page ask: the docked count bar (E4) and the grid's own
+     door rows (E2, inside the grid). Both are different DOM, not one shape restyled. */
+  const isPhone = useIsPhone();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const apiBase = `/api/coaches/${orgSlug}/teams/${teamId}`;
   // A session is a room inside Skills & Goals: the subtree's layout answers a coach without the
@@ -102,9 +106,14 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     setObsFocusAfter(null);
     const row = document.querySelector<HTMLElement>(`[data-player-row="${obsFocusAfter}"]`);
     if (!row) return;
+    /* ⚠ `matches` AS WELL AS `querySelector`, because at ≤640 the ROW IS THE DOOR (stage 4 · E2):
+       the door marker sits on the row element itself, and `querySelector` never matches the element
+       it is called on — so the phone would have walked to the end of the list and focused nothing. */
+    const doorIn = (el: Element): HTMLElement | null =>
+      (el.matches('[data-observation-door]') ? el as HTMLElement : el.querySelector<HTMLElement>('[data-observation-door]'));
     let next: Element | null = row.nextElementSibling;
-    while (next && !next.querySelector('[data-observation-door]')) next = next.nextElementSibling;
-    const target = next?.querySelector<HTMLElement>('[data-observation-door]') ?? row.querySelector<HTMLElement>('button');
+    while (next && !doorIn(next)) next = next.nextElementSibling;
+    const target = (next && doorIn(next)) ?? doorIn(row) ?? row.querySelector<HTMLElement>('button');
     target?.focus();
   }, [obsFocusAfter]);
   const [obsBusy, setObsBusy] = useState(false);
@@ -211,8 +220,42 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   const linkedEvent = events.find(e => e.id === session.eventId) ?? null;
   const plan = scopeSummary(session, types);
   const title = sessionTitle(session);
+  /* The page titles itself with the session's NAME; the day lives on the when-line one row down and
+     nowhere else (E5). `title` — the long form — is still what the review dialog and the
+     observation sheet quote, because there a session is one among many and its date is the fact
+     being stated. See `sessionName` for why the pair exists. */
+  const pageTitle = sessionName(session);
   // The grid hands back a player id; the row's player object is looked up ONCE here.
   const rowPlayer = (pid: string) => rows.find(r => r.player.id === pid)?.player;
+
+  /**
+   * ── "Save & next player" — THE NEXT UNRECORDED ROW, NOT THE NEXT ROW (stage 4 · E3) ──
+   * The whole point of the dialog's docked foot: a coach records whoever is in front of them and
+   * never walks back to the list. So this skips anyone already accounted for (an observation or a
+   * not-assessed mark), anyone OUTSIDE the session's scope, and any past participant whose row is
+   * read-only — the scoped fixture is the one that proves it, which is why §10.7 asks for that
+   * fixture by name.
+   *
+   * ⚠ FORWARD ONLY, and it is offered only when there IS someone ahead. It does not wrap: a coach
+   * who started at #5 is not silently carried back to #1 by a button that says "next". When nobody
+   * is left ahead the offer is absent rather than inert, so the button never means nothing — and
+   * the list, which shows every remaining chip, is the honest way back to anyone skipped.
+   *
+   * ⚠ Read BEFORE the save, not after. The only row the save changes is the current player's, so
+   * the answer cannot go stale — and computing it after would mean waiting on the reload.
+   */
+  const nextUnrecordedAfter = (playerId: string): GridRow['player'] | null => {
+    const at = rows.findIndex(r => r.player.id === playerId);
+    if (at < 0) return null;
+    for (const r of rows.slice(at + 1)) {
+      if (!r.inScope || r.pastParticipant) continue;
+      if (r.observation || r.notAssessed) continue;
+      return r.player;
+    }
+    return null;
+  };
+  const obsNext = obsSheet ? nextUnrecordedAfter(obsSheet.player.id) : null;
+
   // What a drop from the plan would touch, per metric (C9): the results saved here AND the
   // not-assessed marks — "delete them too" removes both, so the question counts both.
   const recordedCounts: Record<string, { results: number; notAssessed: number }> = {};
@@ -315,23 +358,41 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     for (let k = 1; k <= draft.values.length; k++) if ((draft.values[k - 1] ?? '').trim() !== '') await commitAttempt(player, k);
   }
 
-  async function markNotAssessed(player: SessionRosterRow, mark: boolean) {
-    if (!selectedType || !canWrite) return;
+  /**
+   * Mark (or clear) "not assessed" for one player against one metric in this session.
+   *
+   * ⚠ THE METRIC IS A PARAMETER, not read live from the chip (stage 4 · E3). The row's own link
+   * passes the selected chip, which is what it has always done; the observation dialog's fourth
+   * answer passes the skill it CAPTURED when it opened — the same discipline the sheet already
+   * applies to its title and its write, so a chip that changes cannot re-address someone else's
+   * mark. Returns whether it landed, because the dialog has to know before it closes.
+   */
+  async function markNotAssessed(
+    player: SessionRosterRow, mark: boolean, forType?: RepTeamMeasurableType, reason?: string | null,
+  ): Promise<boolean> {
+    const type = forType ?? selectedType;
+    if (!type || !canWrite) return false;
     try {
       const res = await fetch(`${apiBase}/development/sessions/${session.id}/not-assessed`, {
         method: mark ? 'POST' : 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ playerId: player.id, measurableTypeId: selectedType.id }),
+        /* The REASON is the mark's own field and the row reads it back ("— left early"). The row's
+           link has never asked for one, so it stays undefined there; the dialog's fourth answer
+           carries whatever the coach typed beside it. */
+        body: JSON.stringify({ playerId: player.id, measurableTypeId: type.id, ...(reason ? { reason } : {}) }),
       });
       const json = await res.json().catch(() => null);
       if (!res.ok || !json) throw new Error(json?.error ?? 'Could not save that — try again.');
       setData(d => {
         if (!d) return d;
-        const rest = d.notAssessed.filter(n => !(n.playerId === player.id && n.measurableTypeId === selectedType.id));
+        const rest = d.notAssessed.filter(n => !(n.playerId === player.id && n.measurableTypeId === type.id));
         return { ...d, notAssessed: mark ? [...rest, json.notAssessed] : rest };
       });
+      return true;
     } catch (e) {
-      setRowErr(`${player.playerFirstName}: ${e instanceof Error ? e.message : 'could not save that — try again.'}`);
+      const message = e instanceof Error ? e.message : 'could not save that — try again.';
+      setRowErr(`${player.playerFirstName}: ${message}`);
+      return false;
     }
   }
 
@@ -344,15 +405,69 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     if (!selectedType || !isSkill || !canWriteObservations || selectedRetired) return;
     const existing = observations.find(o => o.playerId === player.id && o.measurableTypeId === selectedType.id) ?? null;
     setObsErr('');
+    /* ⚠ And clear the page's own banner (/review, 2026-09-22). A failed mark-write inside the dialog
+       sets `rowErr`, which renders ABOVE THE GRID — invisible while a full-screen sheet is open, and
+       nothing in the dialog's flow cleared it. A coach who retried, or advanced with "Save & next
+       player", came back to a stale error attributed to a player they had long since left. */
+    setRowErr('');
     setObsSheet({ player, skill: selectedType, existing });
   }
-  async function submitObservation(v: { observedOn: string; note: string; descriptor: string; goalId: string | null }) {
+  async function submitObservation(v: {
+    observedOn: string; note: string; descriptor: string; goalId: string | null;
+    notAssessedToday?: boolean; andNext?: boolean;
+  }) {
     if (!obsSheet || obsBusy) return;
     const { player, skill, existing } = obsSheet;
+    /* Read the next player BEFORE the write (E3): the only row this save changes is the current
+       one, so the answer cannot go stale, and nothing has to wait on the reload. */
+    const next = v.andNext ? nextUnrecordedAfter(player.id) : null;
+    const marked = notAssessed.find(n => n.playerId === player.id && n.measurableTypeId === skill.id) ?? null;
+    const wasMarked = !!marked;
+    /**
+     * ── "Not assessed today" IS AN ANSWER, AND IT WRITES SOMEWHERE ELSE (stage 4 · E3) ──
+     * The fourth answer is not an observation: it is the session's not-assessed mark, the same
+     * record the desktop row's "Mark not assessed" link writes, so it goes to that route and not to
+     * this one. The sentence a coach typed beside it travels as that mark's REASON — the row reads
+     * it back ("— left early") — because the first build dropped it silently (see the dialog).
+     *
+     * ⚠⚠ THE DESTRUCTIVE HALF GOES **LAST**, AND THAT ORDER IS THE WHOLE POINT (/review, 2026-09-22).
+     * The first build cleared the mark FIRST and then wrote the observation, so a coach turning a
+     * marked row into a real record could lose both: the DELETE landed, the POST failed on a field
+     * network blip, and the dialog said "Not saved — try again" — which reads as *nothing happened*
+     * while the mark had already gone. A player deliberately marked not-assessed ended up with
+     * neither a mark nor a record, and nothing on screen said so.
+     *
+     * So: **write the record first; clear the mark only once the record exists.** The two failure
+     * modes are then both non-destructive —
+     *   · the record fails → the mark is untouched, and the error tells the truth;
+     *   · the record lands but the clear fails → the coach has what they asked for, and a stale mark
+     *     that is INVISIBLE and harmless, because a record outranks a mark everywhere in this
+     *     product: `rowState` tests `hasEntries` first, and the counts only ever score a mark for a
+     *     player who has no record (`!r.recorded && r.notAssessed`), so nothing double-counts. The
+     *     next save of that row clears it.
+     * There is no transaction available across two routes; ordering is the entire mitigation, so do
+     * not "tidy" these two steps back together.
+     */
+    if (v.notAssessedToday) {
+      // Setting the mark writes nothing else, so there is no ordering question on this path.
+      /* Re-writing the mark is how its REASON is corrected, so the condition is "new mark, or the
+         coach changed the sentence" — the dialog seeds the field from the stored reason, so an
+         untouched one arrives unchanged and a cleared one is a deliberate clear. */
+      if (!wasMarked || v.note.trim() !== (marked?.reason ?? '')) {
+        setObsBusy(true); setObsErr('');
+        const landed = await markNotAssessed(player, true, skill, v.note.trim() || null);
+        setObsBusy(false);
+        if (!landed) { setObsErr(rowErr || 'Could not save that — try again.'); return; }
+      }
+      setObsSheet(null);
+      if (next) openObservation(next);
+      return;
+    }
     // An edit sends ONLY what changed (a descriptor the skill has since dropped is never re-sent
     // untouched); nothing changed closes without a request. The date is fixed here; the goal is not.
     const patch = existing ? observationEditPatch(existing, { ...v, observedOn: existing.observedOn }) : null;
-    if (existing && !patch) { setObsSheet(null); return; }
+    // Nothing changed: no request. "Save & next player" still means move on, so the walk continues.
+    if (existing && !patch) { setObsSheet(null); if (next) openObservation(next); return; }
     setObsBusy(true); setObsErr('');
     try {
       const url = existing
@@ -373,7 +488,15 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
         ...d,
         observations: existing ? d.observations.map(o => o.id === existing.id ? json.observation : o) : [...d.observations, json.observation],
       } : d);
+      /* ⚠ THE RECORD EXISTS NOW, SO THE MARK MAY GO — and only now (see the ordering note above).
+         A failure here leaves the coach with the record they asked for and an invisible stale mark,
+         which is the harmless half of the trade; it is surfaced on the row rather than swallowed. */
+      if (wasMarked) await markNotAssessed(player, false, skill);
       setObsSheet(null);
+      /* "Save & next player": the dialog does not close onto the list, it re-opens on the next
+         player who still needs recording (E3) — which is the whole reason the foot has two buttons.
+         The focus-restore dance below is for plain Save, where the coach IS returning to the list. */
+      if (next) { openObservation(next); return; }
       if (!existing) setObsFocusAfter(player.id);
     } catch (e) {
       setObsErr(e instanceof Error ? e.message : 'Not saved — try again.');
@@ -518,7 +641,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
     <div className={styles.page}>
       <CoachPageHeader
         icon={ClipboardCheck}
-        title={title}
+        title={pageTitle}
         backTo={{ href: skillsAndGoalsHref(base, 'sessions'), label: 'Skills & Goals' }}
         helpLabel="Skills & Goals"
         help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
@@ -627,19 +750,64 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
                   subtitle: `${title} · dated by the session`,
                   enteredBy: obsSheet.existing?.createdBy ? (authors[obsSheet.existing.createdBy] ?? 'a coach') : null,
                 }}
+                /* The fourth answer, and the "& next player" offer — both only a SESSION can
+                   answer, which is why the dialog takes them from here rather than deciding
+                   (E3). `marked` opens the dialog on the answer the row already holds, so the
+                   mark has a way back now that its link has left the row's edge (E2). */
+                notAssessed={(() => {
+                  const m = notAssessed.find(n => n.playerId === obsSheet.player.id && n.measurableTypeId === obsSheet.skill.id) ?? null;
+                  return { marked: !!m, reason: m?.reason ?? null };
+                })()}
+                nextLabel={obsNext ? playerName(obsNext) : null}
                 busy={obsBusy}
                 error={obsErr}
                 onSubmit={v => void submitObservation(v)}
                 onClose={() => { if (!obsBusy) setObsSheet(null); }}
               />
             )}
-            <div className={css.foot}>
-              <p className={styles.devCardNote} style={{ margin: 0 }}>
-                {scopeSentence(counts)} · {selectedType.name}{selectedType.unit ? ` (${selectedType.unit})` : ''}.
-                {pastRows > 0 && ` ${pastRows} record${pastRows === 1 ? '' : 's'} from ${pastRows === 1 ? 'a player' : 'players'} no longer on the roster ${pastRows === 1 ? 'is' : 'are'} listed above.`}
-              </p>
-              <button type="button" className={styles.btnPrimary} style={{ minHeight: 'var(--tap-min, 44px)' }} onClick={() => setReviewOpen(true)}>Review session →</button>
-            </div>
+            {/* ── ≤640: the count and the way out DOCK above the bottom nav (stage 4 · E4, owner
+                2026-09-22 — "build as drawn, knowingly a NEW idiom") ──
+                The count is what a coach checks between players and it was 1,747px down the page.
+                Docked, the figure that moves with every tap is under the thumb that moves it, and
+                the bar earns its place the way the standing ruling asks — real content that
+                changes, plus the way out — rather than being a save pill in disguise.
+
+                ⚠ THE FIGURE IS THE CHIP'S OWN, by the same rule, so the screen cannot show two
+                counts that disagree. `progress()` is what the chip dropdown already reads:
+                accounted for — a result, an observation OR a mark — of those in the plan. The word
+                "recorded" alone would then be claiming a MARK is a record, so a session that holds
+                any mark says so in a second clause and the common case reads exactly as drawn.
+
+                ⚠ The past-participant note is NOT on the bar. It is a footnote about the LIST, it
+                never changes while a coach records, and the bar has room for the count and the way
+                out and nothing else — so on a phone it stays with the list it describes. */}
+            {isPhone ? (
+              <>
+                {pastRows > 0 && (
+                  <p className={css.pastNote}>
+                    {pastRows} record{pastRows === 1 ? '' : 's'} from {pastRows === 1 ? 'a player' : 'players'} no longer on the roster {pastRows === 1 ? 'is' : 'are'} listed above.
+                  </p>
+                )}
+                <div className={`${css.foot} ${css.dock}`}>
+                  <span className={css.dockCount}>
+                    <b>
+                      {progress(selectedType.id)} recorded
+                      {counts.notAssessed > 0 && ` · ${counts.notAssessed} not assessed`}
+                    </b>
+                    <small>{selectedType.name}</small>
+                  </span>
+                  <button type="button" className={`${styles.btnPrimary} ${css.dockPill}`} onClick={() => setReviewOpen(true)}>Review session →</button>
+                </div>
+              </>
+            ) : (
+              <div className={css.foot}>
+                <p className={styles.devCardNote} style={{ margin: 0 }}>
+                  {scopeSentence(counts)} · {selectedType.name}{selectedType.unit ? ` (${selectedType.unit})` : ''}.
+                  {pastRows > 0 && ` ${pastRows} record${pastRows === 1 ? '' : 's'} from ${pastRows === 1 ? 'a player' : 'players'} no longer on the roster ${pastRows === 1 ? 'is' : 'are'} listed above.`}
+                </p>
+                <button type="button" className={`${styles.btnPrimary} ${css.dockPill}`} onClick={() => setReviewOpen(true)}>Review session →</button>
+              </div>
+            )}
           </>
         )
       ) : (

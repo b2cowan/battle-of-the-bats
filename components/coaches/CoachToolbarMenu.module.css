@@ -176,3 +176,83 @@
 @media (max-width: 640px) {
   .triggerBare > svg:last-child { display: none; }
 }
+
+/* ═══ THE PANEL AS A PHONE DRAWER (`drawerOnPhone`) — phone re-evaluation stage 4 · E1, owner
+   2026-09-22 ═══
+   The practice plan's "⋯" square opens its desk actions here, and on a phone a popover anchored
+   under a 44px square is the wrong surface: it hangs mid-screen, it is placed by measurement one
+   frame late, and it would be the only card left in a portal that settled on drawers. Stage 3 · D13
+   (ruled and built the same morning, next door) turned the lineup builder's four phone panels into
+   drawers — flush to the bar's top, 18px top radius, a grab line, the page dimmed — so this is that
+   form, not a fifth one.
+
+   ⚠ THE BAND IS ≤640 AT BOTH ENDS, AND THAT IS TWO GUARDS ON PURPOSE. The class is put on the panel
+   by `useIsPhone()`, so between 641 and 900 the menu stays the popover it is today and the sibling
+   recipe's own ≤900 band is not disturbed — stage 4 moves nothing above 640. The media query is the
+   BELT: written inside it, every declaration here is inert on a mouse even if a future caller hands
+   the class over at the wrong width, and `.panel` alone still describes the popover. Nothing needs
+   an "undo at 641" counterpart — that version was written first and was harder to read than the
+   rule it was overriding.
+
+   ⚠ `--coach-foot-clear` (declared on `.coachesShell`) IS the nav plus the home indicator. The
+   drawer renders IN-TREE, never through a portal, so it inherits the token; a portalled copy would
+   read the 0px default and sit under the bar. Do NOT hand-copy the arithmetic, and do NOT add the
+   safe-area inset again — the token already contains it, and counting it twice floats the drawer off
+   the nav. Do NOT raise it above the nav either: the clearance is geometric, and anything above the
+   nav also outranks the sheets that open over it (the game-day console tried z-index 301 and buried
+   68px of its own sheet).
+
+   ⚠ Sibling recipe, deliberately not merged yet: `.lineupAutoMenu`'s phone block in
+   coaches.module.css carries the same geometry for the builder's four in-tree panels at ≤900. The
+   two answer different questions — that one is a page panel at the NAV breakpoint, this one a menu
+   panel at the CONTENT breakpoint — and merging them would have meant editing a file another
+   session was holding. If a THIRD caller wants this shape, promote it to one class rather than
+   writing a fourth copy. */
+@media (max-width: 640px) {
+  .drawer {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: auto;
+    width: auto;
+    max-width: none;
+    bottom: var(--coach-foot-clear);
+    max-height: calc(100dvh - var(--coach-foot-clear) - 12px);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    z-index: 260;   /* under the nav (300), over the autosave pill (250) — the portal's sheet value */
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.35);
+    padding: 6px 8px 14px;
+  }
+  /* The grab line, as a STICKY pseudo-element rather than a button: it stays at the head of the
+     surface while the rows scroll under it, and it adds no tab stop — which matters here, because a
+     `role="menu"` has exactly ONE tab stop and the arrow keys rove the rows. (The scrim is the tap
+     target for dismissing — see `LineupSheetScrim`.) */
+  .drawer::before {
+    content: '';
+    display: block;
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    width: 38px;
+    height: 4px;
+    margin: 0 auto 8px;
+    border-radius: 2px;
+    background: var(--border-2);
+  }
+}
+/* The drawer's title — once the scrim covers the row that opened it, nothing on screen says what
+   this surface is (the reason D12 gave the builder's drawers one). Rendered only in drawer mode, so
+   it needs no width rule of its own. */
+.drawerTitle {
+  margin: 0 0 0.1rem;
+  padding: 0 0.6rem;
+  font-family: var(--font-display);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}

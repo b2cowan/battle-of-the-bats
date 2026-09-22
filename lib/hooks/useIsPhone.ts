@@ -32,10 +32,27 @@ function subscribe(onChange: () => void): () => void {
 function getSnapshot(): boolean {
   return typeof window !== 'undefined' && !!window.matchMedia && window.matchMedia(QUERY).matches;
 }
+function subscribeNever(): () => void {
+  return () => {};
+}
 function getServerSnapshot(): boolean {
   return false;
 }
 
-export function useIsPhone(): boolean {
-  return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+/**
+ * `enabled` — ask only where the answer is USED (/review, 2026-09-22). `CoachToolbarMenu` reads this
+ * for its phone drawer, and that menu is rendered ONCE PER CHIP on the practice-plan editor and the
+ * groups room; every instance was opening a `matchMedia` listener for a drawer those callers never
+ * ask for. Passing `false` subscribes to nothing and answers `false`, so a caller that cannot use
+ * the answer pays nothing for it. Default `true` keeps every existing call site unchanged.
+ *
+ * ⚠ Both branches are module-level functions, so the store identity is stable per value of
+ * `enabled` — React re-subscribes only when a caller actually flips it, never on a re-render.
+ */
+export function useIsPhone(enabled = true): boolean {
+  return useSyncExternalStore(
+    enabled ? subscribe : subscribeNever,
+    enabled ? getSnapshot : getServerSnapshot,
+    getServerSnapshot,
+  );
 }

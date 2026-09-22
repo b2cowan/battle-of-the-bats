@@ -2,6 +2,8 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
 import { Check, ChevronDown } from 'lucide-react';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import LineupSheetScrim from './LineupSheetScrim';
 import shared from '@/app/[orgSlug]/coaches/coaches.module.css';
 import styles from './CoachToolbarMenu.module.css';
 
@@ -57,6 +59,8 @@ export function CoachToolbarMenu({
   variant = 'secondary',
   collapseOnPhone = false,
   bareOnPhone = false,
+  drawerOnPhone = false,
+  drawerTitle,
   open: openProp,
   onOpenChange,
   children,
@@ -97,6 +101,36 @@ export function CoachToolbarMenu({
    * trigger with its chevron. Meaningless without `collapseOnPhone`.
    */
   bareOnPhone?: boolean;
+  /**
+   * ⚠ **AT ≤640 THE PANEL IS A DRAWER, NOT A POPOVER** (phone re-evaluation stage 4 · E1, owner
+   * 2026-09-22). It rises from the bottom nav's top with a grab line and dims the page behind it —
+   * the form stage 3 · D13 settled for every phone panel in the portal the same morning. Pass this
+   * wherever the trigger is a phone control whose menu is a list of things to DO; leave it off for a
+   * desktop-shaped toolbar, and off for the `chip` variant, whose panel belongs beside its pill.
+   *
+   * ⚠⚠ **THE SCRIM RENDERS INSIDE `rootRef` — THE ELEMENT `useDismissable` WATCHES — AND THAT IS A
+   * FIX, NOT A TIDY-UP.** A scrim rendered as a SIBLING of the watched element makes the dismiss
+   * hook's `pointerdown` listener fire first, unmount the overlay, and let the following `click`
+   * land on whatever the scrim was covering. Reproduced next door on 2026-09-22 under touch
+   * emulation: dismissing the lineup builder's row menu pressed the button underneath and marked
+   * the lineup READY — a state with no product path back, repaired in the database by hand. **A
+   * mouse passed that test every single time; only touch showed it.** Inside the watched element
+   * the hook reads the tap as "inside", never fires, and the scrim's own `onClick` closes cleanly.
+   *
+   * ⚠ And when you test a dismissal, assert on the STATE the control underneath would change — not
+   * on whether an overlay appeared. The first probe next door reported "no fall-through" and was
+   * wrong, because the fall-through pressed a button, and a button opens nothing.
+   *
+   * The band is ≤640 in JS as well as in CSS (`useIsPhone`), so the 641–900 popover — and the
+   * sibling ≤900 drawer recipe the builder's own panels use — are both left exactly as they are.
+   */
+  drawerOnPhone?: boolean;
+  /**
+   * What the drawer calls itself — drawn only in drawer mode, and only because the scrim hides the
+   * row that opened it (D12 gave the builder's drawers a title for the same reason). A desktop
+   * popover hanging off a visible "⋯" needs none, which is why this is not a `heading` child.
+   */
+  drawerTitle?: string;
   /**
    * ⚠ **CONTROLLED MODE, AND IT EXISTS FOR EXACTLY ONE SHAPE: A DOOR ELSEWHERE ON THE PAGE THAT
    * OPENS THIS MENU** (Schedule's empty state, Phase 4b). Leave both undefined and the menu owns
@@ -224,6 +258,15 @@ export function CoachToolbarMenu({
     narrowMinWidth: variant === 'glyph' ? 160 : 200,
     align: 'end',
   });
+  /* The drawer is a phone presentation of the SAME panel (E1). `useAnchoredMenu` still runs — a
+     hook cannot be conditional, and the popover must be placed the instant the width crosses back —
+     but its measured `top`/`left` are INLINE styles and would beat the drawer's own `position:
+     fixed` from the stylesheet, so drawer mode simply does not wear them. */
+  /* ⚠ Asked only when this menu can actually USE the answer. This component is rendered once per
+     CHIP on the practice-plan editor and the groups room, so an unconditional subscription opened a
+     matchMedia listener per player for a drawer those callers never request (/review, 2026-09-22). */
+  const isPhone = useIsPhone(drawerOnPhone);
+  const asDrawer = drawerOnPhone && isPhone;
 
   return (
     <div ref={rootRef} className={styles.root} onKeyDown={onKeyDown}>
@@ -247,11 +290,14 @@ export function CoachToolbarMenu({
         {variant === 'glyph' ? null : collapseOnPhone ? <span className={shared.headerBtnLabel}>{label}</span> : label}
         {variant !== 'chip' && variant !== 'glyph' && <ChevronDown size={14} aria-hidden />}
       </button>
+      {/* ⚠ INSIDE `rootRef`, which is the element `useDismissable` watches — see `drawerOnPhone`
+          above for the defect a sibling scrim caused next door, and why a mouse never shows it. */}
+      {open && asDrawer && <LineupSheetScrim onClose={() => { setOpen(false); rescueFocus(); }} />}
       {open && (
         <div
           ref={panelRef}
-          className={styles.panel}
-          style={panelStyle}
+          className={`${styles.panel}${asDrawer ? ` ${styles.drawer}` : ''}`}
+          style={asDrawer ? undefined : panelStyle}
           role="menu"
           // One place decides that picking something closes the menu, so no item has to remember
           // to — including an item that goes on to open a dialog, which wants this menu gone
@@ -267,6 +313,7 @@ export function CoachToolbarMenu({
             rescueFocus();
           }}
         >
+          {asDrawer && drawerTitle && <div className={styles.drawerTitle}>{drawerTitle}</div>}
           {children}
         </div>
       )}

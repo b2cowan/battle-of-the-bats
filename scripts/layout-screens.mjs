@@ -210,6 +210,59 @@ async function dockLibrary(page) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * Open the OBSERVATION DIALOG on a session's skill row (phone re-evaluation stage 4 · E3,
+ * 2026-09-22) — the screen a coach touches twelve times in a session, and the one the sweep had
+ * never seen. It had a 33px Save and a 33px Cancel floating mid-panel over 392px of dead space,
+ * above a 37px select, and nothing caught it: every walk and every entry measured the PAGE and not
+ * the dialog behind its rows. The same shape as stage 3 reading the recap's door instead of the
+ * console's. A blind spot closes by being LISTED, which is what this entry is for.
+ *
+ * The door is the product's own: pick the SKILL chip (a test's rows are attempt boxes, not doors),
+ * then take the first row that still needs recording. ⚠ At ≤640 the row IS the door (E2), so the
+ * gesture lands on the row; above it, on the row's own "Record an observation ›". One selector
+ * covers both, because the marker moved ONTO the row rather than changing its name.
+ */
+async function openObservationDialog(page) {
+  // The chips are a dropdown at ≤640 and a row of pills above it — take whichever this width draws.
+  const select = page.locator('select').filter({ hasText: 'Sets feet' }).first();
+  if ((await select.count()) > 0 && (await select.isVisible())) {
+    const labels = await select.locator('option').allInnerTexts();
+    const at = labels.findIndex((t) => /Sets feet/.test(t));
+    if (at >= 0) await select.selectOption({ index: at });
+  } else {
+    const chip = page.getByRole('tab', { name: /Sets feet/ }).first();
+    if ((await chip.count()) === 0) return;
+    await chip.click();
+  }
+  await page.waitForTimeout(400);
+  const door = page.locator('[data-observation-door]').first();
+  if ((await door.count()) === 0) return;
+  await door.click();
+  await page.getByRole('dialog').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(400);
+}
+
+/**
+ * The session SCROLLED, with the count bar DOCKED (phone re-evaluation stage 4 · E4, 2026-09-22) —
+ * a state the sweep has never had. The bar is `position: sticky`, so at rest on a short page and at
+ * the page's very END it sits in normal flow: measuring only those two says nothing about the state
+ * a coach is actually in. ⚠ And it must NOT scroll to the end, because that is exactly what
+ * unsticks a sticky bar — it is how the game-day console's own hit-tests missed a real defect. Half
+ * a viewport is a scroll position a coach genuinely reaches with the bar pinned.
+ */
+async function scrollSessionWithDock(page) {
+  const select = page.locator('select').filter({ hasText: 'Sets feet' }).first();
+  if ((await select.count()) > 0 && (await select.isVisible())) {
+    const labels = await select.locator('option').allInnerTexts();
+    const at = labels.findIndex((t) => /Sets feet/.test(t));
+    if (at >= 0) await select.selectOption({ index: at });
+  }
+  await page.waitForTimeout(300);
+  await page.evaluate(() => window.scrollBy(0, Math.round(window.innerHeight / 2)));
+  await page.waitForTimeout(400);
+}
+
 /** The circuit open and its GROUPS ROOM up (stage 3 revision, D9): the draw row, the pool column,
  *  the group columns with their chips, name boxes and bins, the foot's "+ Add a group" and Done. */
 async function openCircuitGroups(page) {
@@ -406,6 +459,21 @@ export const SCREENS = [
     interact: openFirstBlock },
   { id: 'coach-development-session',  session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/development/sessions/${c.evalSessionId}` },
+  {
+    // THE OBSERVATION DIALOG, OPEN (phone stage 4 · E3, 2026-09-22). See `openObservationDialog`
+    // for why this was a blind spot: the dialog a coach taps twelve times a session held the worst
+    // tap floors in the portal and no entry had ever opened it.
+    id: 'coach-development-session-observation', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/development/sessions/${c.evalSessionId}`,
+    interact: openObservationDialog,
+  },
+  {
+    // THE SESSION SCROLLED, WITH THE COUNT BAR DOCKED (phone stage 4 · E4, 2026-09-22): a sticky
+    // bar measured only at rest and at the page's end is a bar nobody measured. Half a viewport in.
+    id: 'coach-development-session-docked', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/development/sessions/${c.evalSessionId}`,
+    interact: scrollSessionWithDock,
+  },
   // Phase 2 (2026-09-13): the scoped session — one field per attempt, Saved / Not assessed /
   // Not recorded rows, a player outside the scope, a corrected attempt — every state the grid has.
   { id: 'coach-development-session-scoped', session: 'coach', ready: 'h1',

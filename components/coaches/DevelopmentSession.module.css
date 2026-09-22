@@ -386,6 +386,176 @@
 .reviewTable td { vertical-align: top; }
 .reviewTable thead th { position: sticky; top: 0; z-index: 1; }
 
+/* ═══ THE PHONE'S RECORDING ROW, AND THE BAR THAT COUNTS IT (phone re-evaluation stage 4 · E2 · E4,
+   owner 2026-09-22) ═══ */
+
+/* ── E2 · a player is ONE 56px row, and the row IS the door ──
+   Measured at 390×844 on 2026-09-22: an unrecorded skill row was 117px — a head line carrying the
+   name, the state and "Mark not assessed", then a dashed "Record an observation ›" box on a second
+   row — so ten of them were 1,170px and the page was 1,949. One row is 56, twelve are 672, and the
+   row is ONE tap target instead of two, which is what makes "twelve players, twelve taps" possible
+   at all. The name goes to 16px because this is the one screen in the portal read standing up in
+   daylight (S.5 — today the name was 14 and the state and both actions were all at 12), and the
+   state becomes a chip because a coach scanning for work is looking for the absence of lime, not
+   reading a sentence.
+
+   ⚠ 56, not 44. The practice-run screens next door set themselves a higher floor than the portal's
+   tap minimum for exactly this reason, and this row borrows it rather than inventing a third
+   number. The chip and the chevron are drawn INSIDE the 56 — the layout sweep measures an element's
+   OWN rectangle, so a small control wearing a big `::after` reads as under-floor even though it
+   passes a hit-test (three of the game-day console's controls were flagged that way).
+
+   ⚠ THE ROW IS LIVE AT REST. Nothing here gates on a prior selection. Game day's on-field rows are
+   all disabled until a bench player is picked and that screen reads as DEAD; a recording row doing
+   the same would be worse, because there is nothing to pick first.
+
+   ⚠ A row a coach may not WRITE is deliberately not this shape — see the component. It keeps the
+   old row, which reads the observation's note on its face; the 56px row shows the descriptor only,
+   and a reader with no door would have no way left to the words. */
+.doorRow {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 0 0.6rem;
+  align-items: center;
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 0.4rem;
+  border: 0;
+  border-top: 1px solid var(--home-line, var(--border-2));
+  background: none;
+  font: inherit;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+}
+.labels + .doorRow, .doorRow:first-child { border-top: none; }
+.doorRow:hover { background: var(--home-paper, var(--surface-2)); }
+.doorRowOutsideScope { opacity: 0.85; }
+/* The number is the row's quiet handle, in the data face — the treatment `.num` already gives it. */
+.doorNum { color: var(--text-tertiary); font-family: var(--font-data); font-size: var(--type-support); }
+.doorName { min-width: 0; display: grid; }
+.doorName > strong {
+  font-size: var(--type-lead, 1rem);
+  font-weight: 600;
+  line-height: 1.2;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* A recorded row keeps its descriptor, on a second line, and STAYS 56px. The note belongs in the
+   record, not in the list — it is one tap away, and it is what the dialog opens on. */
+.doorName > small {
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* The state as a chip: Recorded (lime), Not recorded (quiet fill), Not assessed (outline). */
+.doorState {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.15rem 0.5rem;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  font-size: var(--type-support);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.doorStateDone { background: rgba(var(--success-rgb), 0.16); color: var(--badge-success-ink); }
+.doorStateOpen { background: var(--home-paper, var(--surface-2)); color: var(--text-secondary); }
+.doorStateNa { border-color: var(--home-line-strong, var(--border-2)); color: var(--text-tertiary); }
+.doorGo { color: var(--text-tertiary); font-size: var(--type-body); }
+
+/* The past-participant note, on a phone (E4). On a desktop it is a clause inside the foot's
+   sentence; the docked bar has room for the count and the way out and nothing else, so the note
+   about the LIST stays with the list, in flow, where it has always described what is above it. */
+.pastNote { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── E4 · the count and the way out DOCK above the bottom nav ──
+   The count is what a coach checks between players and Review session is the way out; both sat at
+   the bottom of a 1,949px page (measured 2026-09-22: the summary at 1,747, the button at 1,801).
+   Docked, the figure that moves with every tap is under the thumb that moves it.
+
+   ⚠ THIS INVENTS THE IDIOM FOR THIS SCREEN — it does not borrow one, and that is worth knowing
+   before anyone "makes it consistent" with something. The drawing's card claimed a docked bar
+   already existed on the practice plan; it does not, and it was measured for: the plan page and the
+   run list carry exactly two pinned elements (the 37px team header and the 72px nav), and the run's
+   block screen has Back / Next block as 56px controls in NORMAL FLOW.
+
+   ⚠ IT IS THE SAME ELEMENT AS THE FOOT, MADE STICKY — never a second surface. Sticky rather than
+   fixed, so at the page's end it lands in flow exactly where the foot is today, and so nothing has
+   to reserve space for it.
+
+   ⚠⚠ IT DOES NOT WEAR `.stickyActionBar`, AND THAT IS DELIBERATE. The portal's generic sticky
+   footer pins at `bottom: 0` and pads by `env(safe-area-inset-bottom)` — and those are precisely
+   the two things this surface must not do (see below). The game-day console wears it and had to
+   override both. On top of that, a cross-module override of a same-specificity class rests entirely
+   on BUNDLE ORDER in this repo, which has already cost one silent no-op. Five declarations, two of
+   them actively wrong, is not reuse.
+
+   ⚠⚠ CLEARING THE NAV IS TWO CHANGES AND A THIRD THAT MUST NOT BE MADE. Sit at
+   `--coach-foot-clear` rather than zero — a bar at zero is drawn UNDER the nav, the defect the
+   game-day console shipped with all four of its actions including End game untappable at every
+   scroll position but the page's last pixel. And take NO safe-area padding: that inset is already
+   inside the token, so adding it again counts the home indicator twice and floats the bar off the
+   nav. ⚠ Do NOT add a z-index. The clearance is GEOMETRIC — the bar sits above the nav's box and
+   cannot overlap it — and the console proved the over-correction: at 301 it outranked its own
+   bottom sheets, buried 68px of one and blocked two buttons. A docked bar belongs UNDER everything
+   that opens over it.
+
+   ⚠ AND THE SAVE PILL IS THE OTHER THING TO CHECK, even though it is not here. The portal's
+   autosave pill is `position: fixed; z-index: 250` at `--coach-foot-clear + 0.6rem` — squarely
+   where this bar sits — and in its ERROR state it takes pointer events and can swallow a tap
+   outright. This page renders NO pill (checked: the five callers of `SaveStatusPill` are the two
+   lineup screens, the game-day console and the two practice-plan editors; this grid saves per field
+   and says so on the row). If a pill ever arrives here it must be offset above this bar the way
+   `.gdPage .savePill` is, or a failed save will draw over the count. */
+.dock {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem 1rem;
+  min-height: 3.5rem;
+  margin-top: 0.8rem;
+}
+/* The figure, with the test it is about under it — the count is per test, not per session. */
+.dockCount { display: grid; gap: 0.05rem; min-width: 0; }
+.dockCount > b { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.dockCount > small {
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* ⚠ THE 44 IS THE ELEMENT, and this is the trap stage 2's own phrasing invites. "A 36px pill inside
+   its 44px box" reads as a small element carrying a big `::after` for its tap area — which passes a
+   hit-test and still reports under-floor, because the sweep measures the element's own rectangle.
+   The BUTTON is the target; what shrinks is what is drawn inside it. */
+.dockPill { min-height: var(--tap-min, 44px); flex-shrink: 0; }
+
+@media (max-width: 640px) {
+  .dock {
+    position: sticky;
+    bottom: var(--coach-foot-clear);   /* NOT zero, and no safe-area padding — see above */
+    z-index: 2;                        /* and NOT above the nav — see above */
+    /* ⚠ NO NEGATIVE MARGIN, AND THAT IS A MEASUREMENT RATHER THAN A PREFERENCE. The bar was first
+       bled to the screen edges with `margin-inline: -0.9rem`, which is a GUESS at a gutter this
+       file cannot see: the 16px actually comes from `.coachesMain`'s padding, two elements up, in
+       another module. The sweep caught it immediately — the page spilling 14px at 361 and 390, on
+       three session entries — and a hand-copied 16px would only have moved the guess, going
+       silently wrong the day the shell's gutter changes (the same trap `--coach-foot-clear` exists
+       to stop). So the bar takes the content column's own width and aligns with the rows above it,
+       which is what every other element on this page does. It still reads as docked: it carries the
+       card ground and a top rule, and the page scrolls under it. */
+    padding: 0.5rem 0;
+    border-top: 1px solid var(--home-line, var(--border-2));
+    background: var(--card-bg, var(--surface));
+  }
+  .dockPill { min-height: 3.5rem; padding-inline: 1rem; }
+}
+
 @media (max-width: 640px) {
   .labels { display: none; }
   /* The phone composition (C7): the name and the state on the first line, the boxes on the second. */

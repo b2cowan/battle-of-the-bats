@@ -1,0 +1,101 @@
+/* ═══ THE OBSERVATION DIALOG ON A PHONE (phone re-evaluation stage 4 · E3, owner 2026-09-22) ═══
+   This is the screen a coach touches TWELVE TIMES in a session, and no walk had ever opened it: the
+   walks measured the page and not the dialog behind its rows. Measured at 390×844 on 2026-09-22,
+   before this file existed:
+
+     · Save        148 × 33   (the portal's tap floor is 44; the run screens next door use 56)
+     · Cancel       78 × 33
+     · descriptor  359 × 37   — a native select, which is a tap, a wheel and a confirm
+     · and the foot sat mid-panel with 392px of dead space beneath it
+
+   WHY THE FOOT FLOATED, and why the fix is three lines here rather than a shared prop.
+   `QuestionShell`'s phone sheet is already a flex column and `.modalFooter` already asks for
+   `margin-top: auto` — but this dialog's footer is a GRANDCHILD, inside its own `<form>`, and a
+   form that is not itself stretched gives `auto` nothing to push against.
+
+   ⚠ THE SHELL'S `scroll` VARIANT WAS TRIED DURING THIS BUILD AND ABANDONED — measured, not guessed.
+   (It never shipped: HEAD's dialog does not pass `scroll` either, so the diff shows no removal. The
+   note is here to stop the next session reaching for it.)
+   That variant is the portal's proven pinned-header-and-foot recipe and eight sheets stand on it,
+   but its rule for a form's fields is `.modalScrollBody > form > .formGrid { margin-inline: -1.5rem }`
+   — a bleed sized for the DESKTOP panel's 1.5rem padding. Wearing it here put a 407px grid inside a
+   359px form, and the layout sweep reported the form spilling **24px at every one of 361 · 390 ·
+   768 · 1440**. The sheets that use that variant successfully make the FORM itself the scroller
+   (`.scrollPane`, as the metric-definition sheet does) rather than nesting a bleeding grid inside a
+   form that does not scroll. Two honest options followed: change the shared recipe and move eight
+   other sheets, or own three declarations here. This file owns them — the stage's brief is ≤640 and
+   nothing else should move for it. ⚠ If a future session wants the shared recipe to handle this
+   shape, that is a real piece of work with its own sweep, not a prop swap.
+
+   ⚠ EVERYTHING IN THIS FILE IS ≤640. Stage 4 moves nothing above it: the desktop keeps its
+   Descriptor select (and with it "No descriptor"), its Cancel, and its 33px foot — which is a
+   portal-wide question about dialog footers, not this dialog's, and is flagged rather than swept. */
+
+/* ── The foot docks because the FORM stretches ──
+   The form becomes the panel's flex child, the fields become the scroller between the pinned header
+   and the pinned foot, and `.modalFooter`'s own `margin-top: auto` finally has something to push
+   against. Both classes are this module's, so there is no cross-module specificity race (in this
+   repo two same-specificity module rules are decided by BUNDLE ORDER, which has already cost one
+   silent no-op) and nothing at all changes above 640, where neither rule exists. */
+@media (max-width: 640px) {
+  .phoneForm { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+  /* ⚠ No negative margin. The panel's own side padding is the gutter; bleeding the scroller out to
+     the panel edge is what the shared recipe does with a desktop-sized number, and it is the whole
+     reason that route was abandoned above. */
+  .phoneScroll { overflow-y: auto; flex: 1 1 auto; min-height: 0; }
+}
+
+/* ── The answers: 56px rows instead of a 37px select ──
+   Three descriptors are a short, fixed list, so they are rows: one tap instead of a tap, a wheel
+   and a confirm. Same move stage 3 made when the lineup's position select became a sheet of chips —
+   the portal's direction of travel is away from selects on a phone.
+
+   ⚠ 56, borrowed from the practice-run screens rather than invented, and it is the ELEMENT's own
+   height: the layout sweep measures an element's own rectangle, so nothing here may be a small
+   control wearing a 56px `::after`. */
+.picks { display: grid; gap: 0.4rem; }
+.pick {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  min-height: 3.5rem;
+  padding: 0.5rem 0.9rem;
+  border: 1px solid var(--home-line-strong, var(--border-2));
+  border-radius: var(--radius-sm, 6px);
+  background: var(--card-bg, transparent);
+  font: inherit;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-align: left;
+  cursor: pointer;
+  gap: 0.5rem;
+}
+/* ⚠ THE CHOSEN ANSWER IS NOT MARKED BY COLOUR ALONE (/review, 2026-09-22). The first build gave it
+   a border colour and a 14%-alpha tint and nothing else — on the one screen this portal is read
+   standing up in daylight, by a coach who may have a colour-vision deficiency. It now also carries a
+   TICK and a heavier label, the same pairing `CoachToolbarMenuItem`'s checked row already uses.
+   ⚠ `aria-pressed`, not `aria-checked`: these are toggle buttons in a group, not radios — the
+   component's own note says why the radio role was the wrong promise. */
+.pick[aria-pressed='true'] {
+  border-color: var(--home-olive, var(--logic-lime));
+  background: rgba(var(--success-rgb), 0.14);
+}
+.pick[aria-pressed='true'] .pickText { font-weight: 700; }
+.pickText { min-width: 0; }
+/* The tick occupies its slot at every state so choosing an answer never re-flows the row under the
+   thumb that chose it; it is merely invisible until the answer is the chosen one. */
+.pickTick { flex: none; margin-left: auto; opacity: 0; color: var(--home-olive, var(--logic-lime)); }
+.pick[aria-pressed='true'] .pickTick { opacity: 1; }
+/* "Not assessed today" — the fourth answer, arriving from the row's edge (E2). Quiet, and last: it
+   is a real answer to "what did you see?", but it is not the one a coach is usually reaching for. */
+.pickQuiet .pickText { font-weight: 500; color: var(--text-secondary); }
+/* A descriptor the skill's list has since dropped, still offered so the coach can see what is
+   stored rather than reading "no descriptor" over it. */
+.pickStale .pickText { font-style: italic; color: var(--text-tertiary); }
+
+/* ── The foot, docked by `.phoneForm` above, at 56px ──
+   ⚠ The 56 is on the BUTTON. Both buttons share the row, and "Save & next player" — the one a coach
+   presses eleven times out of twelve — takes the width it needs first. */
+.footBtn { min-height: 3.5rem; flex: 1 1 auto; justify-content: center; }
+.footBtnNarrow { flex: 0 1 auto; }

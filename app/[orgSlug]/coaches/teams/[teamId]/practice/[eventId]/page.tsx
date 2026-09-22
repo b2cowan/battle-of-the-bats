@@ -1,7 +1,7 @@
 'use client';
-import { use, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { BookMarked, ClipboardList, Library, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
+import { BookMarked, ClipboardList, Library, MoreHorizontal, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
@@ -26,6 +26,8 @@ import {
 } from '@/lib/rep-practice-plan';
 import { HowItWent, NoPlanRecord, PracticeScheduleLink, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import {
   MAX_TEMPLATE_NAME_LEN, templateBlocksLine, templateShapeLabel, templateToPlan,
 } from '@/lib/rep-plan-templates';
@@ -283,6 +285,12 @@ export default function CoachPracticePlanPage({
    */
   const [docked, setDocked] = useState(false);
   const [canDock, setCanDock] = useState(false);
+  /* ≤640 — the CONTENT breakpoint, read live. The only thing on this page that asks is the
+     toolbar (E1): the phone drawer and the desktop row are different DOM, not one row restyled, so
+     the stylesheet cannot make this call. ⚠ Declared HERE, with the other hooks, because the render
+     below has early returns (no-schedule access, loading, load error) and a hook after one of them
+     is a hooks-order error rather than a lint opinion. */
+  const isPhone = useIsPhone();
   const [panelHost, setPanelHost] = useState<HTMLElement | null>(null);
   const columnRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -852,6 +860,53 @@ export default function CoachPracticePlanPage({
   const writing = canWrite && !recordMode;
 
   /**
+   * ── THE TOOLBAR'S DESK ACTIONS — ONE LIST, TWO PRESENTATIONS (phone re-evaluation stage 4 · E1,
+   *    owner 2026-09-22: "option A as drawn") ──
+   * On a phone this screen is opened to READ the plan or to RUN it, and today four controls over
+   * THREE ROWS and 148px stand between the title and the sheet (measured at 390×844 on this
+   * fixture, 2026-09-22). At ≤640 the row becomes Run practice and a 44px "⋯" whose drawer holds
+   * everything else — 104px back. Above 640 nothing moves: the same list renders as the same
+   * buttons, in the same order, with the same classes they have always had.
+   *
+   * ⚠ ONE LIST, because the alternative is every label written twice. The portal's one-spelling
+   * rule (owner 2026-08-24) is a BUILD GATE on customer-visible copy, and a phone branch that
+   * repeats "Save as template…" beside a desktop branch is exactly how a word acquires a second
+   * spelling. The GATES are the point of this array and each is load-bearing: `canWrite` for the
+   * promotion, `writing && staff > 1` for Send to staff (the who-runs-it build's — gated, never
+   * deleted; it does not render on a record, and this fixture has one staff member, so it is absent
+   * here too), `recordMode && canWrite` for the record's quiet edit door. Pinned from the other end
+   * by the vocabulary guard, which reads these predicates rather than the rendering.
+   *
+   * ⚠ Library is NOT in this list and must not join it. It is a WIDTH decision (`canDock`, from a
+   * 1,156px working column up), so on a phone it does not exist at all — and a drawer row that can
+   * never be reached on the only surface the drawer has is worse than no row. It also wears
+   * `aria-pressed`: a toggle, not a do-this-now item, which is the other half of why.
+   *
+   * ⚠ Run practice stays FIRST and stays on a record, and that is not this stage's call to make.
+   * The run screen stopped counting days on 2026-09-17 (the P10 no-clock ruling), so a coach may
+   * walk the plan before, during or after the practice and the day decides only the button's
+   * WEIGHT. §10.6 left "does the row keep Run practice once a practice has been run?" open for this
+   * build; it was already answered, so it is not reopened here.
+   */
+  const deskActions: {
+    key: string; testId: string; icon: ReactNode; label: string; onSelect: () => void;
+    /** The record's edit door: a quiet link at the row's right end on a desktop, an ordinary row in the drawer. */
+    quiet?: boolean;
+  }[] = [];
+  if (canWrite) {
+    deskActions.push({ key: 'template', testId: 'save-as-template', icon: <BookMarked size={14} aria-hidden />, label: 'Save as template…', onSelect: () => setSaveTemplateOpen(true) });
+  }
+  deskActions.push({ key: 'print', testId: 'print-the-sheet', icon: <Printer size={14} aria-hidden />, label: 'Print the sheet', onSelect: handlePrint });
+  // ⚠ `data?.` here where the JSX below says `data.` — this list is built ABOVE the render's own
+  // `!data ? null :` narrowing, so the optional chain is the same gate, not a looser one.
+  if (writing && (data?.staffPeople?.length ?? 0) > 1) {
+    deskActions.push({ key: 'send', testId: 'send-to-staff', icon: <Send size={14} aria-hidden />, label: 'Send to staff', onSelect: () => setSendOpen(true) });
+  }
+  if (recordMode && canWrite) {
+    deskActions.push({ key: 'edit', testId: 'edit-the-plan', icon: <Pencil size={13} aria-hidden />, label: 'Edit the plan', onSelect: () => setEditing(true), quiet: true });
+  }
+
+  /**
    * "How it went" — one block, two places (stage 6, R2 · R3): FIRST on the record, under the head;
    * at the foot on the live page once the practice has started. Writable for a writer in both
    * (the recap is the record's one live field — its autosave is its own, `recapDirty`, kept apart
@@ -1093,48 +1148,65 @@ export default function CoachPracticePlanPage({
                   day) · Save as template… (a practice that went well is the best template there
                   is) · Print the sheet · and, at the right end for a writer, a quiet "Edit the
                   plan" — a door, not the default. Library (a writing tool) and Send to staff
-                  (nobody to prepare) are the LIVE page's and do not render; gated, never deleted. */}
+                  (nobody to prepare) are the LIVE page's and do not render; gated, never deleted.
+                  ⚠⚠ AT ≤640 THE ROW IS Run practice AND A 44px "⋯" (phone re-evaluation stage 4 ·
+                  E1, owner 2026-09-22). Everything above still holds — the same members, the same
+                  gates, the same order — but they are drawn as rows in a drawer rather than as
+                  buttons across three lines. The list is `deskActions`, built above with its
+                  reasoning; do not add a member HERE. Measured: 148px → 44px. */}
               {hasBlocks && (
                 <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
                   <Link href={`${base}/practice/${eventId}/run`} className={runState === 'run' ? styles.btnPrimary : styles.btnSecondary} data-testid="run-practice">
                     <Play size={14} aria-hidden /> Run practice
                   </Link>
-                  {/* Explicit promotion, never automatic — the "Save to my drills…" bargain, one
-                      level up. */}
-                  {canWrite && (
-                    <button type="button" className={styles.btnSecondary} onClick={() => setSaveTemplateOpen(true)}>
-                      <BookMarked size={14} aria-hidden /> Save as template…
-                    </button>
-                  )}
-                  <button type="button" className={styles.btnSecondary} onClick={handlePrint}>
-                    <Printer size={14} aria-hidden /> Print the sheet
-                  </button>
-                  {/* "Send to staff" (COACH_PRACTICE_WHO_RUNS_IT, 2026-09-17) — the explicit act the
-                      autosaving plan has no other "done" for (F04). A secondary button: the sheet's
-                      first block (or, in the window, Run practice) keeps the page's one lime. Only
-                      for a writer, only with blocks, and only when there is a staff to send to. */}
-                  {writing && (data.staffPeople?.length ?? 0) > 1 && (
-                    <button type="button" className={styles.btnSecondary} onClick={() => setSendOpen(true)} data-testid="send-to-staff">
-                      <Send size={14} aria-hidden /> Send to staff
-                    </button>
+                  {/* ── ≤640: one 44px "⋯" square, and the desk work is behind it (E1) ──
+                      The square is stage 3's tool-row geometry one member wide, and its panel is
+                      D13's drawer rather than a card — the form the portal settled on for every
+                      phone panel on 2026-09-22. `deskActions` above is the single list both
+                      presentations read, so no label is written twice. */}
+                  {isPhone ? (
+                    deskActions.length > 0 && (
+                      <CoachToolbarMenu
+                        variant="glyph"
+                        drawerOnPhone
+                        drawerTitle="Practice plan"
+                        label="More for this practice plan"
+                        icon={<MoreHorizontal size={18} aria-hidden />}
+                      >
+                        {deskActions.map(a => (
+                          <CoachToolbarMenuItem key={a.key} icon={a.icon} label={a.label} onSelect={a.onSelect} />
+                        ))}
+                      </CoachToolbarMenu>
+                    )
+                  ) : (
+                    deskActions.map(a => (
+                      /* Above 640 this is byte-for-byte the row it has always been: the three
+                         secondaries in order, then the record's quiet edit link at the right end.
+                         `quiet` is the only thing that varies, and it varies here rather than in
+                         the list, because it is a presentation fact. */
+                      <button
+                        key={a.key}
+                        type="button"
+                        className={a.quiet
+                          ? `${styles.ppTlQuietLink} ${styles.ppToolbarEnd} ${styles.ppEditPlanLink}`
+                          : styles.btnSecondary}
+                        data-testid={a.testId}
+                        onClick={a.onSelect}
+                      >
+                        {a.icon} {a.label}
+                      </button>
+                    ))
                   )}
                   {/* The docked library's quiet toggle (stage 4, L5), at the toolbar's right end — pressed
                       while docked. ABSENT below a 1,156px working column, not disabled: a 1,366 laptop
                       never sees it and keeps the sheet. On the blank page (no toolbar yet) the ghost
-                      row's own words do this job. */}
+                      row's own words do this job. ⚠ Outside `deskActions` on purpose — a width
+                      decision and an `aria-pressed` toggle, so it can neither reach the phone's
+                      drawer nor pretend to be a do-this-now row (see the list's own note). */}
                   {writing && canDock && (
                     <button type="button" className={`${styles.btnSecondary} ${styles.ppToolbarEnd}`} aria-pressed={docked}
                       data-on={docked ? 'on' : undefined} data-testid="library-toggle" onClick={() => dock(!docked)}>
                       <Library size={14} aria-hidden /> Library
-                    </button>
-                  )}
-                  {/* The record's one way into the editor, for a writer only (stage 6, R2): quiet, at
-                      the right end, this visit — the way back is the record. On a phone it takes its
-                      own 44px line under the three buttons. */}
-                  {recordMode && canWrite && (
-                    <button type="button" className={`${styles.ppTlQuietLink} ${styles.ppToolbarEnd} ${styles.ppEditPlanLink}`}
-                      data-testid="edit-the-plan" onClick={() => setEditing(true)}>
-                      <Pencil size={13} aria-hidden /> Edit the plan
                     </button>
                   )}
                 </div>

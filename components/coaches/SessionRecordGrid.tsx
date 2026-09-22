@@ -2,7 +2,8 @@
 import { useState } from 'react';
 import { formatValue } from '@/lib/measurable-format';
 import { describeAttempts } from '@/lib/measurable-series';
-import { rowState, attemptBoxes, ROW_STATE_LABELS, type SessionRow, type SessionRowState } from '@/lib/development-session-view';
+import { rowState, attemptBoxes, rowStateLabel, type SessionRow, type SessionRowState } from '@/lib/development-session-view';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import type { RepEvaluationNotAssessed, RepPlayerMeasurable, RepPlayerObservation, RepTeamMeasurableType } from '@/lib/types';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import css from './DevelopmentSession.module.css';
@@ -39,10 +40,33 @@ const authorLine = (authors: Record<string, string>, id: string | null) => (id ?
  *
  * ONE LANGUAGE PER ROW (C7): a saved attempt sits in the same box as an empty one; the correction
  * mark stays; "entered by" is off the row (it reads on Edit and in the review). Per-row state
- * (Saved · Saving · Not saved — retry · Not recorded · Not assessed) with Edit and Retry on the
- * row; a failed value survives on screen beside its error; "Mark not assessed" on BLANK rows only.
- * On a phone the row is the name and the state on the first line, the boxes on the second, the
- * headline under (the module's ≤640 rule).
+ * (Recorded/Saved · Saving · Not saved — retry · Not recorded · Not assessed — `rowStateLabel`)
+ * with Edit and Retry on the row; a failed value survives on screen beside its error;
+ * "Mark not assessed" on BLANK rows only. On a phone a TEST row is the name and the state on the
+ * first line, the boxes on the second, the headline under (the module's ≤640 rule).
+ *
+ * ⚠⚠ **AT ≤640 A SKILL ROW IS ONE 56px ROW AND THE ROW IS THE DOOR** (phone re-evaluation stage 4 ·
+ * E2, owner 2026-09-22). Measured: 117px a player, so ten filled 1,170px of a 1,949px page, with
+ * the state and BOTH actions set at 12px on the one screen a coach reads standing up in daylight.
+ * Now: the number, the name at 16px, the descriptor under it on a recorded row, the state as a
+ * chip, a chevron — and tapping anywhere on it opens the observation dialog. Two tap targets become
+ * one, which is what makes "twelve players, twelve taps" possible at all.
+ *
+ * ⚠ **"Mark not assessed" LEAVES THE ROW'S EDGE ENTIRELY**, and that is stage 3's ruling rather than
+ * this stage's: a destructive control does not sit on the edge of a row whose whole body is the tap.
+ * It becomes the dialog's fourth answer — where it also belongs, since the dialog asks what you saw
+ * and "I didn't assess this" is one of the answers. **So a row already marked not-assessed must be
+ * a door too**, or a phone would have no way to undo the mark: the dialog opens with that answer
+ * chosen, and picking a descriptor instead clears it.
+ *
+ * ⚠ **ONLY A ROW THE COACH MAY WRITE TAKES THIS SHAPE.** A read-only row (no grant, a retired chip,
+ * a past participant) keeps the old composition, because that row reads the observation's NOTE on
+ * its face and the 56px row deliberately shows only the descriptor — the note is behind the door,
+ * and a reader with no door would lose the words altogether. `readOnly` is the one branch.
+ *
+ * ⚠ **EVERY ROW IS LIVE AT REST.** Nothing here waits on a prior selection. Game day's on-field
+ * rows are disabled until a bench player is picked and that screen reads as dead; there is nothing
+ * to pick first here, so a gated row would be worse.
  *
  * ⚠ Pure of network: the page owns the fetches. This component draws rows from the view module
  * and the drafts it is handed, and reports what the coach did.
@@ -78,6 +102,9 @@ export default function SessionRecordGrid({
   onObservationEdit: (playerId: string) => void;
 }) {
   const isSkill = type.kind === 'skill';
+  /* ≤640, read live. The door row is different DOM from the desktop row — one element instead of
+     four, a button instead of a div — so this is a decision the stylesheet cannot make (E2). */
+  const isPhone = useIsPhone();
   const def = { aim: type.aim, headline: type.headline, rangeFrom: type.rangeFrom, rangeTo: type.rangeTo };
   // Enter → the next attempt field, then the next player's first. DOM order is roster order.
   const [gridEl, setGridEl] = useState<HTMLDivElement | null>(null);
@@ -124,6 +151,46 @@ export default function SessionRecordGrid({
 
         const stateCls = state === 'saved' ? css.stateSaved : state === 'error' ? css.stateError : state === 'saving' ? '' : css.stateQuiet;
         const rowNote = row.pastParticipant ? 'no longer on the roster' : row.inScope ? null : 'outside the scope';
+
+        /* ── ≤640, a writable SKILL row: one 56px row, and the row is the door (E2) ──
+           The chip's word comes from the same `rowStateLabel` the desktop row reads, so the two
+           cannot drift; the descriptor sits under the name on a recorded row and the NOTE does not,
+           because the note belongs in the record the door opens. A row already marked not-assessed
+           is a door too — that is the only way back from the mark on a phone. */
+        if (isPhone && isSkill && !readOnly) {
+          const chipCls = state === 'saved' ? css.doorStateDone : state === 'not_assessed' ? css.doorStateNa : css.doorStateOpen;
+          const chip = rowStateLabel(state, { skill: true });
+          const under = observation?.descriptor
+            ? observation.descriptor
+            : row.notAssessed?.reason ? row.notAssessed.reason : rowNote;
+          return (
+            <button
+              key={p.id}
+              type="button"
+              className={`${css.doorRow}${row.inScope ? '' : ` ${css.doorRowOutsideScope}`}`}
+              data-player-row={p.id}
+              data-observation-door
+              /* The name, THE SECOND LINE, and the state — then what the tap does. A row announced
+                 as just a name would say nothing about why it is a button.
+                 ⚠ `under` belongs in here (/review, 2026-09-22): an aria-label REPLACES the button's
+                 whole accessible name, so the saved descriptor, the not-assessed reason and the
+                 "outside the scope" note — all of which a sighted coach reads while scanning — were
+                 announced to nobody. A screen-reader user had to open each row to learn what the
+                 list already showed. */
+              aria-label={`${name}${under ? ` — ${under}` : ''} — ${chip}. ${observation ? 'Edit the observation' : 'Record an observation'}`}
+              onClick={() => (observation ? onObservationEdit(p.id) : onRecordObservation(p.id))}
+            >
+              {p.playerNumber && <span className={css.doorNum}>#{p.playerNumber}</span>}
+              {!p.playerNumber && <span />}
+              <span className={css.doorName}>
+                <strong>{name}</strong>
+                {under && <small>{under}</small>}
+              </span>
+              <span className={`${css.doorState} ${chipCls}`}>{chip}</span>
+              <span className={css.doorGo} aria-hidden>›</span>
+            </button>
+          );
+        }
 
         return (
           <div key={p.id} className={`${css.row}${row.inScope ? '' : ` ${css.rowOutsideScope}`}`} data-player-row={p.id}>
@@ -182,7 +249,7 @@ export default function SessionRecordGrid({
 
             {/* ── the state ── */}
             <span className={`${css.state} ${stateCls}`} role="status">
-              {ROW_STATE_LABELS[state]}
+              {rowStateLabel(state, { skill: isSkill })}
               {!readOnly && state === 'not_recorded' && !editing && (
                 <button type="button" className={css.rowLink} onClick={() => onMarkNotAssessed(p.id)}>Mark not assessed</button>
               )}

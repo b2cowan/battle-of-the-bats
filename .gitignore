@@ -66,3 +66,8 @@ pnpm-workspace.yaml
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# probes — one-off browser measurements an agent runs against the dev server. They live IN the
+# repo (not the OS temp dir) because a probe has to resolve node_modules, and NOT in test-results/
+# because a plain `npm test` wipes that directory mid-session.
+.probe/

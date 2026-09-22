@@ -359,7 +359,13 @@ const SITES: Site[] = [
     screen: 'Skills & Goals (Overview · Sessions · Metrics)', variant: 'standard', helpHost: 'masthead',
     actions: {
       from: 'startAction', slot: 'action', holds: 'Start session (the one create; ABSENT until a test is defined — stage 0, 2026-09-14)',
-      phoneHidden: null, phoneInTitleRow: null,
+      /* ⚠ THE CORNER, SINCE PHONE STAGE 4 · E5 (owner 2026-09-22). Measured at 390×844: a 139×44
+         word button on a row of ITS OWN at y=99, between the title and the tabs — the last create in
+         the portal still sitting that way. It now goes icon-only ("+", house rule 3) and keeps the
+         title line's corner beside the "?", exactly as Roster's Add Player, Money's Record and
+         Schedule's Add Event already do. The flag's own rule is satisfied for the same reason
+         theirs is: ONE compact control on a phone, its words carried by an aria-label. */
+      phoneHidden: null, phoneInTitleRow: 'true',
     },
   },
   /* The team board's page is a REDIRECT into Insights → Coverage now (Phase 1 sent it to the Players

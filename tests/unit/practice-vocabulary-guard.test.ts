@@ -224,12 +224,35 @@ describe('the record\'s face on the plan page (stage 6, R1 · R2 · R3)', () => 
     assert.ok(editor.includes("'Nothing written for this one.'"), 'an unwritten goal is silence in the muted ink');
     assert.ok(!editor.includes("'No goal written'"));
   });
+  /**
+   * ⚠ THE GATES MOVED OUT OF THE JSX AND INTO `deskActions`, AND THE GATES ARE WHAT THIS PINS
+   * (phone re-evaluation stage 4 · E1, owner 2026-09-22). At ≤640 the toolbar is Run practice and a
+   * 44px "⋯" whose drawer holds the desk work, so the same members are now built as ONE list that
+   * both presentations read — which is the only way the labels are not written twice. The members,
+   * their gates and their order are unchanged; only where they are written moved. Asserted on the
+   * predicates rather than on the surrounding JSX punctuation, so the next presentation change does
+   * not read as a lost gate.
+   */
   it('the record\'s toolbar: Send to staff and Library gated on the live face, a quiet Edit the plan for a writer', () => {
-    assert.ok(page.includes('{writing && (data.staffPeople?.length ?? 0) > 1 && ('), 'Send to staff — gated, never deleted');
-    assert.ok(page.includes('data-testid="send-to-staff"'), 'the who-runs-it build\'s button is still here');
-    assert.ok(page.includes('{writing && canDock && ('), 'Library — gated');
-    assert.ok(page.includes('{recordMode && canWrite && ('), 'Edit the plan — a writer, on a record');
-    assert.ok(page.includes('data-testid="edit-the-plan"'));
+    assert.ok(page.includes('writing && (data?.staffPeople?.length ?? 0) > 1'), 'Send to staff — gated, never deleted');
+    assert.ok(page.includes('data-testid="send-to-staff"') || page.includes("testId: 'send-to-staff'"), 'the who-runs-it build\'s button is still here');
+    assert.ok(page.includes('{writing && canDock && ('), 'Library — gated, and still in the ROW: a width decision cannot reach the phone drawer');
+    assert.ok(page.includes('recordMode && canWrite'), 'Edit the plan — a writer, on a record');
+    assert.ok(page.includes("testId: 'edit-the-plan'"));
+  });
+  it('the desk actions are ONE list — a phone drawer and a desktop row, never two copies of the words (E1)', () => {
+    // One occurrence of each label in the page's code: two would be the one-spelling rule's own
+    // failure mode (a phone branch and a desktop branch drifting apart word by word).
+    for (const label of ['Save as template…', 'Print the sheet', 'Send to staff', 'Edit the plan']) {
+      const hits = page.split(`'${label}'`).length - 1;
+      assert.equal(hits, 1, `"${label}" is written ONCE, in deskActions — found ${hits}`);
+    }
+    assert.ok(page.includes('drawerOnPhone'), 'the "⋯" panel is D13\'s drawer, not a card');
+    assert.ok(page.includes('variant="glyph"'), 'and its trigger is the portal\'s 44px glyph square');
+    // Run practice is NOT in the list: it is the row's primary at every width, and it survives a
+    // record (the P10 no-clock ruling, 2026-09-17).
+    assert.ok(page.includes('data-testid="run-practice"'), 'Run practice stays the row\'s own primary');
+    assert.ok(!page.includes("testId: 'run-practice'"), 'and never becomes a drawer row');
   });
   it('a record with no plan says the reader\'s sentence, never the live page\'s "yet … once there is one"', () => {
     assert.ok(chrome.includes('No plan was written for this practice.'));
