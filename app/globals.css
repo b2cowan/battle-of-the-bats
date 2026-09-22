@@ -499,6 +499,28 @@ body:has([data-chat-fullbleed]) {
   }
 }
 
+/* The coach Schedule on a PHONE — the list is the scroller (phone re-evaluation stage 2 · C1,
+   owner ruling 2026-09-21): the same chain lock as the chat rooms above, at the coach portal's
+   CONTENT breakpoint (≤640, where the schedule's own stylesheet turns its calendar body into a
+   box that fits the viewport and scrolls inside). Without it `body { min-height: 100vh }` and the
+   root main's bottom-nav gutter leave the document a few dozen pixels of travel, and the first
+   slide on the list drags the masthead up instead of the months. The marker is the scroller
+   itself; above 640 the page scrolls as a document and this block does not apply. */
+@media (max-width: 640px) {
+  html:has([data-schedule-scroller]),
+  body:has([data-schedule-scroller]) {
+    min-height: 0;
+    height: 100dvh;
+    overflow: hidden;
+  }
+  #main-content:has([data-schedule-scroller]) {
+    min-height: 0;
+    height: 100dvh;
+    padding-bottom: 0;
+    overflow: hidden;
+  }
+}
+
 /* ─── FieldLogic Platform Tokens (additive — do not replace existing tokens) ─── */
 :root {
   /* FieldLogic palette */

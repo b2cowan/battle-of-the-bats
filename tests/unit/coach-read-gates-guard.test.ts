@@ -116,7 +116,9 @@ test('the schedule panel builds its tabs from the doors object, never unconditio
   );
   assert.match(page, /drawerDoors\.attendanceTab\)\s*slideTabs\.push/, 'the Attendance tab rides drawerDoors.attendanceTab');
   assert.match(page, /drawerDoors\.lineupTab\)\s*slideTabs\.push/, 'the Lineup tab rides drawerDoors.lineupTab');
-  assert.match(page, /drawerDoors\.scoreForm\s*&&/, 'the score form rides drawerDoors.scoreForm');
+  // `&&` or the ternary's `?` — the sheet's score block became one expression positioned by the
+  // phone's order (phone re-evaluation stage 2 · C3, 2026-09-21); the gate is the same door.
+  assert.match(page, /drawerDoors\.scoreForm\s*(?:&&|\?)/, 'the score form rides drawerDoors.scoreForm');
   assert.match(page, /drawerDoors\.awards\s*&&/, 'the award button rides drawerDoors.awards');
 });
 

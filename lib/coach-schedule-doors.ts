@@ -2,7 +2,6 @@ import {
   canManageAwards,
   canManageSchedule,
   canLogScoutingObservation,
-  hasNonMoneyRecordAccess,
   type CoachCapabilities,
 } from './coach-capabilities';
 
@@ -28,7 +27,12 @@ import {
  *   scoutingTab          ↔ `opponents/*`                             (`canLogScoutingObservation`)
  *   scoreForm, editEvent ↔ `events/[eventId]` PATCH                  (`canManageSchedule`)
  *   awards               ↔ `awards` POST                             (`canManageAwards`)
- *   seasonAttendanceLink ↔ the Insights portal's own page gate       (`hasNonMoneyRecordAccess`)
+ *
+ * ⚠ `seasonAttendanceLink` (the "Season attendance" link into Insights, gated on
+ * `hasNonMoneyRecordAccess`) LEFT the panel on 2026-09-21, the owner's first look at the phone
+ * sheet: a coach mid-game is likelier to leave the game by accident through it than to read the
+ * season on purpose, and Insights is one nav tap away at every width. The gate still exists — it
+ * is the Insights portal's own; the panel simply no longer offers a door onto it.
  */
 export interface ScheduleDrawerEvent {
   /** A Game (scrimmage or not) or a tournament game. */
@@ -47,7 +51,6 @@ export interface ScheduleDrawerDoors {
   scoutingTab: boolean;
   scoreForm: boolean;
   awards: boolean;
-  seasonAttendanceLink: boolean;
   editEvent: boolean;
 }
 
@@ -57,7 +60,6 @@ const CLOSED: Readonly<ScheduleDrawerDoors> = {
   scoutingTab: false,
   scoreForm: false,
   awards: false,
-  seasonAttendanceLink: false,
   editEvent: false,
 };
 
@@ -76,7 +78,6 @@ export function scheduleDrawerDoors(
     scoutingTab: ev.isGame && ev.hasOpponent && ev.scoutingAvailable && canLogScoutingObservation(caps),
     scoreForm: ev.isGame && canManageSchedule(caps),
     awards: ev.isGame && canManageAwards(caps),
-    seasonAttendanceLink: hasNonMoneyRecordAccess(caps),
     editEvent: canManageSchedule(caps),
   };
 }

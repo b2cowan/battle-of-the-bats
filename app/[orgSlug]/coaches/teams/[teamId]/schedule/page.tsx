@@ -1,7 +1,7 @@
 'use client';
-import { Fragment, use, useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Fragment, use, useState, useEffect, useLayoutEffect, useCallback, useMemo, useRef } from 'react';
 import { formatStoredClock as fmtClock } from '@/lib/utils';
-import { ArrowLeft, Calendar, CalendarPlus, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, Plus, Upload, X, Trophy, TriangleAlert } from 'lucide-react';
+import { ArrowLeft, Calendar, CalendarDays, CalendarPlus, CalendarRange, CheckCircle2, ChevronLeft, ChevronRight, CircleHelp, CircleSlash, List, Plus, Upload, X, Trophy, TriangleAlert } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -18,7 +18,6 @@ import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { sessionTitle } from '@/lib/development-session-view';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { scheduleDrawerDoors } from '@/lib/coach-schedule-doors';
-import { insightsSectionHref } from '@/lib/coach-insights-links';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
   buildFilename, serializeRows, serializeHeaders,
@@ -50,12 +49,15 @@ import {
   type MovedGame, type DuplicateGamePair,
 } from '@/lib/coach-tournament-games';
 import CoachLoading from '@/components/coaches/CoachLoading';
-import { CoachRowList, CoachRowBand, CoachRow } from '@/components/coaches/CoachRowList';
+import { CoachRowList, CoachRowBand, CoachRow, CoachRowListFoot } from '@/components/coaches/CoachRowList';
 import styles from '../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
-import { gameDayConsolePath, gameDayWindow, isGameDayEvent, toGameDayEventShape, windowHolds } from '@/lib/coach-game-day';
+import { gameDayConsolePath, gameDayWindow, gameHasStarted, isGameDayEvent, toGameDayEventShape, windowHolds } from '@/lib/coach-game-day';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
+import CoachRsvpSheet from '@/components/coaches/CoachRsvpSheet';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { groupWeekDays, pickTodayRow, sheetOrder, weekEmptyLine } from '@/lib/coach-schedule-phone';
 import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { tournamentToday, formatInOrgZone, orgDayKey, utcToZonedInputs } from '@/lib/timezone';
 import { formatTryoutSessionTime, tryoutSessionDay } from '@/lib/tryout-session-label';
@@ -193,6 +195,17 @@ function composeWhen(f: EventForm): EventForm {
 }
 
 type ViewMode = 'list' | 'week' | 'month';
+
+/**
+ * THE VIEW MENU'S ROWS (phone re-evaluation stage 2 · C1, owner ruling 2026-09-21). At ≤640 the
+ * List · Week · Month toggle is one icon-only button beside the create, wearing the CURRENT view's
+ * glyph — list lines, week columns, month grid — one symbol saying where you are and that it
+ * switches (the row's own left icon is already a calendar, so a fixed calendar glyph would say
+ * "calendar" twice and nothing about the view). The desktop keeps the kit toolbar's toggle.
+ */
+const VIEW_MODES: ViewMode[] = ['list', 'week', 'month'];
+const VIEW_WORD: Record<ViewMode, string> = { list: 'List', week: 'Week', month: 'Month' };
+const VIEW_GLYPH: Record<ViewMode, React.ElementType> = { list: List, week: CalendarRange, month: CalendarDays };
 
 interface EventForm {
   eventType: RepEventType;
@@ -476,6 +489,7 @@ function TryoutChip({ session, dayKey, href, listRow }: { session: RepTryoutSess
       <CoachRow
         as="link"
         href={href}
+        data-day={tryoutSessionDay(session.startsAt)}
         tooltip="Tryout — opens your Tryouts tab"
         mark={<ClipboardList size={12} aria-hidden />}
         lead={lead}
@@ -529,6 +543,7 @@ function TournamentGameChip({ game, dayKey, listRow }: { game: CoachScheduleTour
       lead, leadKind: 'date-time' as const,
       title, titleWeight: 'plain' as const,
       trail,
+      'data-day': game.gameDate ?? undefined,
     };
     return game.href
       ? <CoachRow as="link" href={game.href} tooltip="Open the live game page" {...face} />
@@ -627,6 +642,7 @@ function EventChip({ event, onClick, dayKey, mismatch, awardCount, moved, bookRe
       <CoachRow
         as="button"
         onClick={onClick}
+        data-day={event.startsAt ? dayStr(event.startsAt) : undefined}
         className={cancelled ? styles.rowListMuted : undefined}
         mark={<Icon size={12} style={{ color }} aria-hidden />}
         lead={lead}
@@ -701,6 +717,18 @@ export default function CoachesSchedulePage({
 
   const [view, setView] = useState<ViewMode>('list');
   const [cursorDate, setCursorDate] = useState(() => tournamentToday());
+  /** Month on a phone (stage 2 · C2): the tapped day, whose rows sit under the grid; today at open.
+   *  `navigate()` moves it with the month so the rows beneath never name a day the grid does not show. */
+  const [selectedDay, setSelectedDay] = useState(() => tournamentToday());
+  /** ≤640 — the event sheet renders its blocks in the phone's order (stage 2 · C3); the desktop
+   *  keeps today's order. A JS decision because the ORDER is DOM order (the tab sequence must match
+   *  the reading order — never CSS `order`), and the sheet only opens after mount. */
+  const isPhone = useIsPhone();
+  /** THE PHONE'S SCROLLER (stage 2 · C1): the calendar body between the title row and the bar.
+   *  Above 640 the same element is a plain block with no travel. */
+  const scrollerRef = useRef<HTMLDivElement | null>(null);
+  /** The spacer under the list that lets the last month reach the top of the scroller. */
+  const tailRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
   // The slide-over is declared a modal dialog (role + aria-modal, stage 0 · A4) — so it stands on
@@ -740,12 +768,12 @@ export default function CoachesSchedulePage({
   const [attendanceError, setAttendanceError] = useState('');
   // Attendance metric-filter ('all' or a status) + which rows have their note input expanded.
   const [attendanceFilter, setAttendanceFilter] = useState<RepAttendanceStatus | 'all'>('all');
-  // Which player's RSVP editor is open (one at a time). null = all collapsed.
+  // Which player's RSVP SHEET is open (one at a time; stage 2 · C3 — it used to be an inline
+  // editor under the row). null = closed.
   const [rsvpEditId, setRsvpEditId] = useState<string | null>(null);
   // The schedule shows a READ-ONLY lineup peek (the editable builder lives on the Lineups page).
   // These hold the loaded lineup just for that preview.
   const [lineupMode, setLineupMode] = useState<RepLineupMode>('everyone_bats');
-  const [lineupInningCount, setLineupInningCount] = useState(sportPack.defaultPeriodCount);
   const [lineupRows, setLineupRows] = useState<LineupPlayerRow[]>([]);
   // Player ids that are actually in the SAVED lineup — used to flag attendance ↔ lineup drift.
   const [lineupEntryIds, setLineupEntryIds] = useState<Set<string>>(new Set());
@@ -1065,6 +1093,39 @@ export default function CoachesSchedulePage({
     } catch { /* ignore malformed params */ }
   }, [loading, events]);
 
+  /**
+   * THE LIST OPENS ON TODAY (phone re-evaluation stage 2 · C1, owner ruling 2026-09-21 — "open on
+   * today's date, not open then scroll; slide up for the past, down for the future"). Before first
+   * paint, once per open of the list: the first row whose club-local DAY is on or after today sits
+   * directly under its pinned month band, and the coach slides up into the past and down into the
+   * future — no scroll to watch. A game that started earlier today is still today's (the DAY
+   * decides, never the instant — `pickTodayRow`); a day with nothing lands on the next event; a
+   * season with everything behind it opens on its last month, and the spacer under the list is
+   * what lets that month reach the top (the empty paper under it is honest — the season ends there).
+   * Runs on every LOAD of the list — the first, a return from Week or Month, and the refetch after
+   * a save (`fetchEvents` unmounts the list behind "Loading events…", so its scroll position is
+   * gone either way; landing on today again beats landing on April).
+   * ⚠ Phone only by construction, not by a width check: above 640 the scroller is a plain block
+   * (no `overflow`), so the assignment is a no-op there and the desktop keeps April at open —
+   * the owner's "phone first" ruling on C1's width question.
+   */
+  useLayoutEffect(() => {
+    if (loading || view !== 'list') return;
+    const scroller = scrollerRef.current;
+    if (!scroller || getComputedStyle(scroller).overflowY !== 'auto') return;
+    const rows = Array.from(scroller.querySelectorAll<HTMLElement>('[data-day]'));
+    const at = pickTodayRow(rows.map(r => r.dataset.day ?? ''), tournamentToday());
+    if (at < 0) return;
+    const row = rows[at];
+    const bandH = scroller.querySelector<HTMLElement>('[data-row-band]')?.offsetHeight ?? 0;
+    // The row's top inside the scroller — summed up the offset chain, since the row's own
+    // offsetParent is the frame, not the scroller.
+    let top = 0;
+    for (let n: HTMLElement | null = row; n && n !== scroller; n = n.offsetParent as HTMLElement | null) top += n.offsetTop;
+    if (tailRef.current) tailRef.current.style.height = `${Math.max(0, scroller.clientHeight - bandH - row.offsetHeight)}px`;
+    scroller.scrollTop = Math.max(0, top - bandH);
+  }, [loading, view, teamId]);
+
   // `?add=practice` (practices re-evaluation stage 0, D6): the Practice plans empty state's button
   // opens the Add Practice FORM directly rather than landing the coach on the list two clicks short
   // of it. Its own effect, not a branch of the one above: that one waits for a non-empty events
@@ -1165,7 +1226,6 @@ export default function CoachesSchedulePage({
           const absentIds = new Set((data.attendance ?? []).filter(a => a.status === 'absent').map(a => a.playerId));
           const playingPlayers = players.filter(p => !absentIds.has(p.id));
           setLineupMode(mode);
-          setLineupInningCount(data.lineup?.inningCount ?? sportPack.defaultPeriodCount);
           setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(playingPlayers, data.entries ?? [], mode)), mode));
           setLineupEntryIds(new Set((data.entries ?? []).map(e => e.playerId)));
         } else {
@@ -2046,7 +2106,38 @@ export default function CoachesSchedulePage({
     } else {
       d.setDate(d.getDate() + dir * 7);
     }
-    setCursorDate(d.toISOString().slice(0, 10));
+    const next = d.toISOString().slice(0, 10);
+    setCursorDate(next);
+    // Month on a phone (C2): the day whose rows sit under the grid must be ON the grid — today
+    // when the month is this one, else its first day.
+    if (view === 'month') {
+      const today = tournamentToday();
+      setSelectedDay(today.slice(0, 7) === next.slice(0, 7) ? today : `${next.slice(0, 7)}-01`);
+    }
+  }
+
+  /**
+   * One day's rows in the LIST's row shape with a time-only lead (`dayKey`) — the rows under the
+   * month grid on a phone (stage 2 · C2). Sorted the way the list sorts a month: on the club-local
+   * clock every row displays, every kind together (the 2026-08-24 one-chronological-list rule).
+   */
+  function dayRows(key: string) {
+    const clock24 = (iso: string) => formatInOrgZone(iso, { hour: '2-digit', minute: '2-digit', hour12: false });
+    const rows = [
+      ...sortDayEvents(events.filter(e => eventOnDay(e, key))).map(e => ({
+        at: e.startsAt ? clock24(e.startsAt) : '99:99',
+        node: <EventChip key={e.id} event={e} dayKey={key} onClick={() => openEvent(e)} mismatch={mismatchIds.has(e.id)} awardCount={awardCountByEventId[e.id]} moved={movedEventIds.has(e.id)} bookRecord={bookRecordFor(e)} gameDayHref={gameDayHrefById.get(e.id) ?? null} listRow />,
+      })),
+      ...unmirroredGames.filter(g => g.gameDate === key).map(g => ({
+        at: g.startsAt ? clock24(g.startsAt) : '99:99',
+        node: <TournamentGameChip key={`g-${g.id}`} game={g} dayKey={key} listRow />,
+      })),
+      ...tryoutSessions.filter(t => tryoutSessionDay(t.startsAt) === key).map(t => ({
+        at: clock24(t.startsAt),
+        node: <TryoutChip key={t.id} session={t} dayKey={key} href={`${base}/tryouts`} listRow />,
+      })),
+    ].sort((a, b) => a.at.localeCompare(b.at));
+    return rows.map(r => r.node);
   }
 
   const curMonth = cursorDate.slice(0, 7);
@@ -2146,8 +2237,12 @@ export default function CoachesSchedulePage({
     });
     // The LIST view is a row list on the recipe (§3.10, F-26): one frame on the card, compact
     // rows with a hairline, months as bands. The week and month views keep their chips (K-21).
+    // `phoneFrame` (stage 2 · C1, the owner's "no card gaps"): the rows fit a phone — the name, then
+    // the date-time beneath — so they keep ONE white frame with hairlines at ≤640, the recipe's
+    // declared second phone form (S.7; the Overview's board was the first), and the month band
+    // pins at the top of the scroller as the coach slides.
     return (
-      <CoachRowList label="Schedule">
+      <CoachRowList label="Schedule" phoneFrame>
         {monthGroups}
         {tbdGames.length > 0 && (
           <>
@@ -2168,16 +2263,28 @@ export default function CoachesSchedulePage({
       d.setDate(d.getDate() + i);
       return d;
     });
-    return (
-      <div className={styles.calWeekGrid}>
-        {days.map(day => {
-          const key = day.toISOString().slice(0, 10);
-          const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
-          const dayTryouts = tryoutSessions.filter(s => tryoutSessionDay(s.startsAt) === key);
-          const dayGames = unmirroredGames
-            .filter(g => g.gameDate === key)
-            .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
-          return (
+    const cells = days.map(day => {
+      const key = day.toISOString().slice(0, 10);
+      const dayEvents = sortDayEvents(events.filter(e => eventOnDay(e, key)));
+      const dayTryouts = tryoutSessions.filter(s => tryoutSessionDay(s.startsAt) === key);
+      const dayGames = unmirroredGames
+        .filter(g => g.gameDate === key)
+        .sort((a, b) => (a.startsAt ?? '').localeCompare(b.startsAt ?? ''));
+      return {
+        key, day, dayEvents, dayTryouts, dayGames,
+        hasEvents: dayEvents.length + dayTryouts.length + dayGames.length > 0,
+        // "Mon 14" — the quiet line's own words (en-CA short weekday + day number).
+        label: day.toLocaleDateString('en-CA', { weekday: 'short', day: 'numeric' }),
+      };
+    });
+    // A WEEK WITHOUT BLANKS (stage 2 · C2, owner ruling 2026-09-21): at ≤640 a run of empty days is
+    // one quiet line — "Mon 14 – Thu 17 · nothing scheduled" — and a day with something keeps its
+    // card exactly as built. Both forms render (the seven cards for ≥641, the grouped stack for
+    // ≤640) and the stylesheet shows one per width, so the server and the browser agree on first
+    // paint. The grouping is `groupWeekDays` (lib/coach-schedule-phone), unit-tested.
+    const groups = groupWeekDays(cells);
+    const byKey = new Map(cells.map(c => [c.key, c]));
+    const renderDay = ({ key, day, dayEvents, dayTryouts, dayGames }: (typeof cells)[number]) => (
             <div key={key} className={styles.calWeekDay}>
               <div className={styles.calWeekDayLabel}>
                 {day.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' })}
@@ -2201,9 +2308,18 @@ export default function CoachesSchedulePage({
                 }
               </div>
             </div>
-          );
-        })}
-      </div>
+    );
+    return (
+      <>
+        <div className={`${styles.calWeekGrid} ${styles.calWeekWide}`}>
+          {cells.map(renderDay)}
+        </div>
+        <div className={styles.calWeekPhone}>
+          {groups.map(g => g.kind === 'day'
+            ? renderDay(byKey.get(g.key)!)
+            : <p key={g.from} className={styles.calWeekQuiet}>{weekEmptyLine(g.label)}</p>)}
+        </div>
+      </>
     );
   }
 
@@ -2218,7 +2334,7 @@ export default function CoachesSchedulePage({
     ];
     while (cells.length % 7 !== 0) cells.push(null);
 
-    return (
+    const grid = (
       <div className={styles.calMonthGrid}>
         {DAYS_OF_WEEK.map(d => (
           <div key={d} className={styles.calMonthHeader}>{d.slice(0, 3)}</div>
@@ -2232,9 +2348,40 @@ export default function CoachesSchedulePage({
           const dayTryouts = tryoutSessions.filter(s => tryoutSessionDay(s.startsAt) === key);
           const dayGames = unmirroredGames.filter(g => g.gameDate === key);
           const isToday = key === tournamentToday();
+          const isSelected = key === selectedDay;
+          // The cell's accessible name on a phone, where the chips are dots (C2): the day, and
+          // what is on it.
+          const longDay = day.toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' });
+          const onDay = dayEvents.length + dayGames.length + dayTryouts.length;
           return (
-            <div key={key} className={`${styles.calMonthCell} ${isToday ? styles.calMonthCellToday : ''}`}>
+            <div key={key} className={`${styles.calMonthCell} ${isToday ? styles.calMonthCellToday : ''}${isSelected ? ` ${styles.calMonthCellSelected}` : ''}`}>
               <span className={styles.calMonthDayNum}>{day.getDate()}</span>
+              {/* THE CELL IS THE TAP on a phone (stage 2 · C2): a button over the whole cell selects
+                  the day and its rows appear under the grid. Rendered at every width and shown only
+                  at ≤640 by the stylesheet — a button INSIDE the cell rather than the cell as a
+                  button, because the desktop's chips beneath are buttons of their own and a button
+                  cannot hold one. The dots are decoration; the name carries the day and its count. */}
+              <button
+                type="button"
+                className={styles.calMonthDayBtn}
+                aria-pressed={isSelected}
+                aria-label={`${longDay}${onDay ? ` · ${onDay} event${onDay === 1 ? '' : 's'}` : ''}`}
+                onClick={() => setSelectedDay(key)}
+              />
+              <span className={styles.calMonthDots} aria-hidden>
+                {dayEvents.slice(0, 4).map(e => {
+                  const outlined = e.isScrimmage && e.status !== 'cancelled';
+                  return (
+                    <span
+                      key={e.id}
+                      className={`${styles.calMonthDot}${outlined ? ` ${styles.calMonthDotOutline}` : ''}${e.status === 'cancelled' ? ` ${styles.calMonthDotCancelled}` : ''}`}
+                      style={{ color: EVENT_COLORS[e.eventType] }}
+                    />
+                  );
+                })}
+                {dayGames.slice(0, 2).map(g => <span key={`g-${g.id}`} className={styles.calMonthDot} style={{ color: 'var(--warning)' }} />)}
+                {dayTryouts.length > 0 && <span className={`${styles.calMonthDot} ${styles.calMonthDotOutline}`} style={{ color: 'var(--text-tertiary)' }} />}
+              </span>
               <div className={styles.calMonthDayEvents}>
                 {dayEvents.slice(0, 3).map(e => {
                   // Multi-day tournament: continuation days get a "›" lead so the span reads as one run.
@@ -2306,6 +2453,25 @@ export default function CoachesSchedulePage({
         })}
       </div>
     );
+    // THE SELECTED DAY'S ROWS UNDER THE GRID (stage 2 · C2): the list's own row shape with a
+    // time-only lead, the day as the band; an empty day says so in one quiet line. Phone only —
+    // the stylesheet hides it above 640, where the cells carry their chips and "+N more" opens the
+    // day sheet as before.
+    const selectedLong = new Date(`${selectedDay}T00:00:00`).toLocaleDateString('en-CA', { weekday: 'long', month: 'long', day: 'numeric' });
+    const selectedRows = dayRows(selectedDay);
+    return (
+      <>
+        {grid}
+        <div className={styles.calMonthDayRows}>
+          <CoachRowList label={`On ${selectedLong}`} phoneFrame>
+            <CoachRowBand>{selectedLong}</CoachRowBand>
+            {selectedRows.length > 0
+              ? selectedRows
+              : <CoachRow as="static" title={<span className={styles.calMonthQuiet}>Nothing on {selectedLong}</span>} titleWeight="plain" />}
+          </CoachRowList>
+        </div>
+      </>
+    );
   }
 
   // Page-header ruling 2026-08-11: header actions, extracted so the CoachPageHeader call stays
@@ -2320,8 +2486,24 @@ export default function CoachesSchedulePage({
    * exports live with their data whether or not their contents vary, so a coach never has to
    * remember which kind of export a screen has.
    */
+  const ViewGlyph = VIEW_GLYPH[view];
   const scheduleHeaderActions = (
     <>
+      {/* THE VIEW MENU (phone re-evaluation stage 2 · C1, owner ruling 2026-09-21): at ≤640 the
+          List · Week · Month toggle is this one glyph beside the create — the CURRENT view's glyph,
+          no word, no chevron — opening three radio rows. Rendered at every width and shown by the
+          stylesheet at ≤640 only; the kit toolbar's toggle beneath is the ≥641 form (the server
+          renders both, CSS decides). Not a create: house rule 4 is about the one create, which
+          keeps its corner. Roster's List / Depth chart toggle stays a toggle — two options do not
+          earn a menu. */}
+      <span className={styles.viewMenuPhone}>
+        <CoachToolbarMenu label={`Change view · ${VIEW_WORD[view]}`} icon={<ViewGlyph size={20} aria-hidden />} variant="glyph">
+          {VIEW_MODES.map(v => {
+            const Glyph = VIEW_GLYPH[v];
+            return <CoachToolbarMenuItem key={v} icon={<Glyph size={16} aria-hidden />} label={VIEW_WORD[v]} checked={view === v} onSelect={() => setView(v)} />;
+          })}
+        </CoachToolbarMenu>
+      </span>
       {/* Add event — coach-portal primaries take the shared header geometry (2026-08-23), not
           hand-written sizing. Gated on the same grant as the empty state's CTA: without it the
           events POST 403s, so this was a button that could only ever fail — and once the empty
@@ -2341,6 +2523,9 @@ export default function CoachesSchedulePage({
           variant="primary"
           /* House rule 3: the words go on a phone and the label survives as the accessible name. */
           collapseOnPhone
+          /* And the chevron goes with them (stage 2 · C1, owner 2026-09-21): the lime square is the
+             add door on every list in the portal; the six-type menu is unchanged behind it. */
+          bareOnPhone
           /* Controlled, because the empty state's own "Add Event" opens THIS menu — see the prop's
              note. Every other caller in the portal leaves the menu to own its state. */
           open={addTypeMenuOpen}
@@ -2389,26 +2574,777 @@ export default function CoachesSchedulePage({
    * useful control on this screen at 390px. The rule is unchanged (a toolbar control is icon-only
    * on a phone); the icon follows the ACTION.
    */
+  /* One document in three file types, so no document picker — just the list (owner ruling
+     2026-08-24: a dropdown with one option is worse than no dropdown). And no hints: a row
+     is its name and its extension. "Calendar .ics" is the one that does something other than
+     drop a file in Downloads, and the trigger already says so on a phone by swapping the
+     download arrow for a calendar mark. ONE list for both forms of the control (the toolbar's
+     button above 640, the quiet row under the list at ≤640). */
+  const scheduleExportChoices = [
+    { id: 'xlsx', name: 'Excel', ext: '.xlsx', run: handleExportXLSX },
+    { id: 'csv', name: 'CSV', ext: '.csv', run: handleExportCSV },
+    { id: 'ics', name: 'Calendar', ext: '.ics', phone: 'keep' as const, run: handleExportICS },
+  ];
   const scheduleExport = (
     <CoachExportButton
       label="Schedule"
       disabled={events.length === 0}
       phoneIcon={<CalendarPlus size={14} />}
-      /* One document in three file types, so no document picker — just the list (owner ruling
-         2026-08-24: a dropdown with one option is worse than no dropdown). And no hints: a row
-         is its name and its extension. "Calendar .ics" is the one that does something other than
-         drop a file in Downloads, and the trigger already says so on a phone by swapping the
-         download arrow for a calendar mark. */
-      choices={[
-        { id: 'xlsx', name: 'Excel', ext: '.xlsx', run: handleExportXLSX },
-        { id: 'csv', name: 'CSV', ext: '.csv', run: handleExportCSV },
-        { id: 'ics', name: 'Calendar', ext: '.ics', phone: 'keep', run: handleExportICS },
-      ]}
+      choices={scheduleExportChoices}
     />
   );
 
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * THE EVENT SHEET — its blocks, named once, rendered in ONE OF TWO ORDERS (phone re-evaluation
+   * stage 2 · C3, owner ruling 2026-09-21).
+   *
+   * The desktop (≥641) keeps exactly the order it has had: header · title · when · the source and
+   * moved notes · where · the score · tags · awards · description · resources · the practice plan ·
+   * the actions · the lineup warning · the tabs and the tab's content.
+   *
+   * A phone renders the same blocks in the order they are USED, and "the day" is decided by the
+   * clock the product already keeps (`gameHasStarted` — the same start the game-day console and
+   * the lineup's Ready state turn on):
+   *   · BEFORE FIRST PITCH (an upcoming game, or today's until it starts): header · title · when ·
+   *     the where-ROW · notes · the tabs and the tab's content · then "+ Add final score" as a quiet
+   *     door (a coach who types a score early still finds it) · tags · description · resources ·
+   *     the foot row. The locked awards box ("Enter a final score to unlock awards") does not render
+   *     here — a sentence explaining an absence, on a game morning (the 2026-09-04 anti-clutter rule).
+   *   · FROM FIRST PITCH ON, and whenever a score already exists: the score leads — the door, or
+   *     the scoreline with Edit score and the book row — then tags · awards · the tabs and content ·
+   *     description · resources · the foot row.
+   *   · A PRACTICE keeps its plan block first (the practices re-evaluation's own block, unchanged),
+   *     then attendance (one tab, so no tab row), then the notes and the foot row.
+   * The order is JSX order, never CSS `order`: the tab sequence must match the reading order.
+   * `isPhone` is a real width because the sheet only opens after mount (`useIsPhone`).
+   *
+   * Survives the reorder, by construction: the deep-link tab (`?tab=lineup|scouting` → `setSlideTab`,
+   * the fallback to the first held tab), `useDialogFloor` on the panel (Escape through
+   * `requestCloseSlideOver`, the Tab trap, focus return), `data-field-floor` on the attendance
+   * section (A4), `scheduleDrawerDoors` deciding every door exactly as before.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  function renderEventSheet(ev: RepTeamEvent) {
+    const hasScore = ev.teamScore != null && ev.opponentScore != null;
+    const started = gameHasStarted(ev, nowMs);
+    const scoreLeads = isGameEvent && sheetOrder({ started, hasScore }) === 'score-first';
+    const mapsQuery = ev.locationAddress || ev.location || locationLabel;
+    const openMap = (e: React.MouseEvent) => {
+      // Open the map explicitly rather than relying on the anchor default —
+      // inside the modal the plain new-tab navigation was landing on about:blank.
+      e.preventDefault();
+      e.stopPropagation();
+      window.open(mapsHref(mapsQuery), '_blank', 'noopener,noreferrer');
+    };
+    const mapTitle = ev.locationAddress ? `Open ${ev.locationAddress} in Google Maps` : `Search ${locationLabel} in Google Maps`;
+    const mappable = !!locationLabel && !!(ev.locationAddress || ev.location);
+
+    const header = (
+      <div className={styles.modalHeader}>
+        <button className={styles.modalBackBtn} aria-label="Back" onClick={requestCloseSlideOver}><ArrowLeft size={20} /></button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+          {(() => { const Icon = EVENT_ICONS[ev.eventType]; return <Icon size={16} style={{ color: EVENT_COLORS[ev.eventType] }} />; })()}
+          <span className={styles.eventTypePill} style={{ background: `color-mix(in srgb, ${EVENT_COLORS[ev.eventType]} 13.333%, transparent)`, color: EVENT_COLORS[ev.eventType] }}>
+            {EVENT_LABELS[ev.eventType]}
+          </span>
+          {/* The drawer says what the row says — the kind's pill, and the word beside it. */}
+          {ev.isScrimmage && <span className={styles.scrimmageChip}>{SCRIMMAGE_LABEL}</span>}
+          {ev.status === 'cancelled' && (
+            <span className={styles.eventTypePill} style={{ background: 'color-mix(in srgb, var(--warning) 13.333%, transparent)', color: 'var(--warning)' }}>Cancelled</span>
+          )}
+        </div>
+        <button className={styles.modalCloseBtn} onClick={requestCloseSlideOver}>
+          <X size={18} />
+        </button>
+      </div>
+    );
+    const titleBlock = <h2 className={styles.slideOverTitle}>{ev.name}</h2>;
+    const whenLine = eventMeta.length > 0 ? (
+      <p className={styles.slideOverMeta}>{eventMeta.join('  ·  ')}</p>
+    ) : null;
+
+    /* Batch 4 — where this game came from. Its time, opponent, venue and score are the
+        organizer's; attendance and the lineup below are entirely the coach's. */
+    const sourceBlock = mirroredGame ? (
+      <div className={`${styles.infoBanner} ${styles.sourceNote}`}>
+        <Trophy size={13} aria-hidden style={{ flexShrink: 0 }} />
+        <span>
+          From <strong>{ev.name}</strong> · organizer’s schedule
+          {mirroredGameHref && (
+            <>
+              {' '}
+              <a href={mirroredGameHref} target="_blank" rel="noopener noreferrer" className={styles.sourceNoteLink}>
+                View on the tournament page <ExternalLink size={11} aria-hidden />
+              </a>
+            </>
+          )}
+        </span>
+      </div>
+    ) : null;
+
+    /* The organizer moved it since this device last showed it. Nothing was lost — the
+        point is that the coach knows. Attendance is only worth re-checking when the DAY
+        changed; a clock nudge doesn't invalidate anyone's reply. */
+    const movedBlock = selectedMoved ? (
+      <div className={`${styles.infoBanner} ${styles.movedNote}`} role="status">
+        <strong>Moved from {fmtDate(selectedMoved.previous)} · {fmtTime(selectedMoved.previous)}.</strong>{' '}
+        Your lineup and attendance moved with it — nothing to rebuild.
+        {selectedMoved.dayChanged && (
+          <span className={styles.movedNoteWarn}> Attendance was taken for the old time — worth re-checking.</span>
+        )}
+      </div>
+    ) : null;
+
+    // Location is rendered as a tappable Google Maps link (reusing the shared helper), with the
+    // optional field/diamond # appended to the label (the maps query stays the location).
+    // On a phone THE WHOLE LINE IS THE ROW (C3): pin · venue · the uniform · a chevron, 44px, the
+    // tap opens the map; a field number with no place name or address stays a plain line, as it
+    // does on the desktop, where the link keeps its inline shape beside the uniform.
+    const whereBlock = (locationLabel || ev.uniform) ? (
+      isPhone && mappable ? (
+        <a
+          href={mapsHref(mapsQuery)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.slideOverWhereRow}
+          title={mapTitle}
+          onClick={openMap}
+        >
+          <MapPin size={15} aria-hidden />
+          <span className={styles.slideOverWhereText}>
+            {locationLabel}
+            {ev.uniform && <span className={styles.slideOverWhereKit}> · Uniform: {ev.uniform}</span>}
+          </span>
+          <ChevronRight size={16} aria-hidden className={styles.slideOverWhereChevron} />
+        </a>
+      ) : (
+        <p className={styles.slideOverMeta}>
+          {locationLabel && (
+            mappable ? (
+              <a
+                href={mapsHref(mapsQuery)}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.slideOverMapLink}
+                title={mapTitle}
+                onClick={openMap}
+              >
+                <MapPin size={13} aria-hidden />{locationLabel}
+              </a>
+            ) : (
+              /* only a field/diamond # with no place name or address — nothing useful to map */
+              <span>{locationLabel}</span>
+            )
+          )}
+          {locationLabel && ev.uniform ? '  ·  ' : ''}
+          {ev.uniform && <span>Uniform: {ev.uniform}</span>}
+        </p>
+      )
+    ) : null;
+    /* The place's note (mig 307) — "park behind the arena" — read off the book by the link. */
+    const placeNote = ev.placeId && places.find(p => p.id === ev.placeId)?.note ? (
+      <p className={styles.slideOverMeta}>{places.find(p => p.id === ev.placeId)?.note}</p>
+    ) : null;
+
+    /* Final score — the headline fact of a played game lives in the header, not behind a
+       tab. W/L/T is always derived from the two numbers (no manual override).
+       On a MIRRORED game the score is the organizer's: shown, never editable (the API
+       refuses it, and the next sync would overwrite a local edit anyway).
+       The score is a schedule WRITE (the PATCH behind Save gates on schedule editing), so
+       the form and its "+ Add final score" door ride the same grant. A coach without it
+       still reads the score — the read-only line. ONE block, positioned by the order. */
+    const scoreBlock = !isGameEvent ? null : mirroredGame ? (
+      <div className={styles.eventScoreLine}>
+        {ev.teamScore != null ? (
+          <div className={styles.eventScore}>{scoreline(ev)}</div>
+        ) : (
+          <p className={styles.formHint}>The final score arrives from the tournament once it’s posted.</p>
+        )}
+      </div>
+    ) : drawerDoors.scoreForm ? (
+      <div className={styles.eventScoreLine}>
+        {scoreForm ? (
+          <div className={styles.scoreForm}>
+            <div className={styles.scoreFormRow}>
+              <label className={styles.scoreFieldLabel}>
+                <span>Your team</span>
+                <input className={styles.input} style={{ width: '4.5rem' }} type="number" min={0} inputMode="numeric" autoFocus value={scoreForm.teamScore} onChange={e => setScoreForm(s => s && ({ ...s, teamScore: e.target.value }))} />
+              </label>
+              <span className={styles.scoreFormSep}>–</span>
+              <label className={styles.scoreFieldLabel}>
+                <span>Opponent</span>
+                <input className={styles.input} style={{ width: '4.5rem' }} type="number" min={0} inputMode="numeric" value={scoreForm.opponentScore} onChange={e => setScoreForm(s => s && ({ ...s, opponentScore: e.target.value }))} />
+              </label>
+              {(() => {
+                const t = scoreForm.teamScore.trim(), o = scoreForm.opponentScore.trim();
+                if (t === '' || o === '') return null;
+                const r = Number(t) > Number(o) ? 'win' : Number(t) < Number(o) ? 'loss' : 'tie';
+                return (
+                  <span className={styles.resultBadge} style={{ alignSelf: 'flex-end', paddingBottom: '0.5rem', color: resultColor(r) }}>
+                    {r.toUpperCase()}
+                  </span>
+                );
+              })()}
+            </div>
+            <div className={styles.scoreFormActions}>
+              <button className={styles.btnPrimary} disabled={saving || scoreForm.teamScore.trim() === '' || scoreForm.opponentScore.trim() === ''} onClick={handleScoreSave}>Save</button>
+              <button className={styles.btnGhost} onClick={() => setScoreForm(null)}>Cancel</button>
+            </div>
+            {saveError && <p className={styles.errorText}>{saveError}</p>}
+          </div>
+        ) : ev.teamScore != null ? (
+          <div className={styles.eventScore}>
+            {scoreline(ev)}
+            <button className={styles.eventScoreEdit} onClick={() => setScoreForm({ teamScore: String(ev.teamScore ?? ''), opponentScore: String(ev.opponentScore ?? '') })}>
+              Edit score
+            </button>
+            {/* The Scouting Book's capture door — a quiet link at the one moment every
+                coach reliably visits after every game (score entry), never a modal
+                (owner ruling). The tab itself is the capture sheet. */}
+            {scoutingKey && activeSlideTab !== 'scouting' && (
+              <button type="button" className={styles.scoutToastDoor} onClick={() => setSlideTab('scouting')}>
+                Add to the book on {ev.opponent} ›
+              </button>
+            )}
+          </div>
+        ) : (
+          <button className={styles.eventScoreAdd} onClick={() => setScoreForm({ teamScore: '', opponentScore: '' })}>
+            + Add final score
+          </button>
+        )}
+      </div>
+    ) : ev.teamScore != null ? (
+      <div className={styles.eventScoreLine}>
+        <div className={styles.eventScore}>
+          {scoreline(ev)}
+          {/* The Scouting Book's capture door stays open to every schedule-holder — the
+              bench observes, by ruling — even when the score itself is read-only. */}
+          {scoutingKey && activeSlideTab !== 'scouting' && (
+            <button type="button" className={styles.scoutToastDoor} onClick={() => setSlideTab('scouting')}>
+              Add to the book on {ev.opponent} ›
+            </button>
+          )}
+        </div>
+      </div>
+    ) : null;
+
+    /* Applied tags — read-only here; the picker/manager live in "Edit details". */
+    const tagsBlock = (tagsByEventId[ev.id] ?? []).length > 0 ? (
+      <div className={styles.lineupChips}>
+        {(tagsByEventId[ev.id] ?? []).map(tagId => {
+          const tag = teamTags.find(t => t.id === tagId);
+          return tag ? <span key={tagId} className={styles.lineupChip}>{tag.name}</span> : null;
+        })}
+      </div>
+    ) : null;
+
+    /* Awards given — the "same visit" give-award moment (Coach Tags & Player Awards
+       Phase 2). Gated on a final score, same as the tags/score UI above it. On a phone it does
+       not render before the game has started (C3): once the score leads, exactly as before. */
+    const awardsBlock = isGameEvent && drawerDoors.awards && (!isPhone || scoreLeads) ? (
+      <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
+        <h4 className={styles.formSectionTitle}>Awards given</h4>
+        {ev.status === 'cancelled' ? (
+          <p className={styles.formHint}>This game was cancelled.</p>
+        ) : ev.teamScore == null || ev.opponentScore == null ? (
+          <p className={styles.formHint}>Enter a final score to unlock awards for this game.</p>
+        ) : (
+          <>
+            {teamAwards.filter(a => a.eventId === ev.id).length === 0 ? (
+              <p className={styles.formHint}>No awards given for this game yet.</p>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginBottom: '0.6rem' }}>
+                {teamAwards.filter(a => a.eventId === ev.id).map(a => (
+                  <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
+                    <span style={{ fontSize: '0.85rem', color: 'var(--white-90)' }}>
+                      {a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}{a.awardType?.name ?? 'Award'} — {a.playerName}
+                    </span>
+                    <span className={styles.tagManagerActions}>
+                      <button
+                        type="button"
+                        title="Edit"
+                        aria-label={`Edit ${a.awardType?.name ?? 'award'} for ${a.playerName}`}
+                        disabled={!!awardBusyId}
+                        onClick={() => { setEditingAward(a); setGiveAwardOpen(true); }}
+                      >
+                        <Pencil size={14} aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        title="Remove"
+                        aria-label={`Remove ${a.awardType?.name ?? 'award'} for ${a.playerName}`}
+                        disabled={awardBusyId === a.id}
+                        onClick={() => handleRemoveAward(a)}
+                      >
+                        <Trash2 size={14} aria-hidden />
+                      </button>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+            {awardActionError && <p className={styles.errorText}>{awardActionError}</p>}
+            {/* A rosterless team gets a reason, not a blank player picker (Chunk E WI-7). */}
+            {awardPlayers.length === 0 ? (
+              <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--white-55)' }}>🏆 Add players to your roster first — then you can give awards.</p>
+            ) : (
+              <button className={styles.btnSecondary} onClick={() => { setEditingAward(null); setGiveAwardOpen(true); }}>🏆 Give an award</button>
+            )}
+          </>
+        )}
+      </div>
+    ) : null;
+
+    const descriptionBlock = ev.description ? (
+      <p className={styles.slideOverNotes}>{ev.description}</p>
+    ) : null;
+
+    const resourcesBlock = ev.resources && ev.resources.length > 0 ? (
+      <div className={styles.resourceList}>
+        {ev.resources.map((r, i) => {
+          const RIcon = resourceIcon(r.url);
+          return (
+            <button
+              key={i}
+              type="button"
+              className={styles.resourceLink}
+              title={r.url}
+              onClick={() => window.open(r.url, '_blank', 'noopener,noreferrer')}
+            >
+              <RIcon size={14} aria-hidden />
+              <span className={styles.resourceLinkLabel}>{r.label}</span>
+              <ExternalLink size={12} aria-hidden style={{ opacity: 0.5, flexShrink: 0 }} />
+            </button>
+          );
+        })}
+      </div>
+    ) : null;
+
+    /* ── Practice plan (Practice Plans 1a) ──
+       A SUMMARY plus a door, never the editor: the plan is written on its own drill-in
+       where the focus rail and the rotation grid have room. Read rides `schedule` (this
+       whole slide-over already does); writing is head-coach-only and the builder says so.
+       The links section above is left completely alone — some coaches will keep their
+       own document forever, and that is a legitimate outcome (D2).
+
+       ⚠ The archive suppression here is DELETED (2026-08-18), and what it protected still
+       holds: the practice-plan routes resolve the team's ACTIVE program year, so from a
+       closed season "Open the plan →" errored and "Plan this practice →" invited a write
+       into a finished season. This screen is no longer rendered for a closed season at
+       all, so there is nothing left to hide — and READING a past plan has its own home,
+       the practices shelf on the closed-season page, which reaches a year-aware read
+       route rather than this one.
+
+       ⚠ NO "Run practice →" HERE (owner, 2026-09-18). This panel is one practice's
+       surface, like a row on the Practice plans hub, and the field door left every
+       per-practice surface at once: the shortcut lives on the next-practice card alone
+       (the hub's and the Overview's), and every other practice is two taps — Open the
+       plan, then Run practice, first in the plan's toolbar on any day. Before that it was
+       offered on any plan ROW (a goal-only plan got "There's no plan to run yet"), then
+       window-gated (stage 5, P3), then on any planned practice (P10) — three answers in
+       a week, all to a question the plan page already answers. */
+    const practiceBlock = ev.eventType === 'practice' ? (
+      <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
+        <h4 className={styles.formSectionTitle}>Practice plan</h4>
+        {/* "Has a plan" is the hub's ONE definition — at least one block (stage 0; stage 6
+            applied it here): a goal typed and abandoned is a real, blockless row, and it
+            read "0 blocks — …" with an Open door on this panel while the hub's row said
+            "No plan written". */}
+        {practiceHasPlan(ev) ? (
+          <>
+            <p className={styles.formHint}>
+              {summarizePracticePlan(ev.practicePlan!)}
+              {ev.practicePlan!.goal ? ` — ${ev.practicePlan!.goal}` : ''}
+            </p>
+            <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
+              <Link href={`${base}/practice/${ev.id}`} className={styles.btnSecondary}>
+                Open the plan →
+              </Link>
+            </div>
+          </>
+        ) : (
+          /* The door follows the grant the plan page itself writes on — Schedule: View +
+             edit (`canWritePracticePlans`, staff-access pass 2) — never "head coach"
+             (practices re-evaluation stage 6, owner ruling R8, 2026-09-18): an assistant
+             with View + edit read "No plan yet." here and "Plan this practice" on the hub.
+             A viewer gets the plan page's own sentence, so the panel says WHY and not just
+             "no". */
+          page.capabilities && canWritePracticePlans(page.capabilities) ? (
+            <>
+              <p className={styles.formHint}>
+                No plan yet — set out the blocks, stations and groups for this practice.
+              </p>
+              <Link href={`${base}/practice/${ev.id}`} className={styles.btnSecondary}>
+                Plan this practice →
+              </Link>
+            </>
+          ) : (
+            <p className={styles.formHint}>
+              No plan yet. Writing the plan comes with Schedule: View + edit — ask your head coach.
+            </p>
+          )
+        )}
+      </div>
+    ) : null;
+
+    /* Actions — Edit (+ tournament Add game) lead; Cancel/Delete grouped to the right so
+       the destructive pair is separated from the everyday action. Above the tabs on the
+       desktop; on a phone THE FOOT ROW (C3) — three equal 44px cells under a hairline, Delete in
+       the danger ink, "+ Add game" on its own full row beneath; the delete confirmation renders
+       in its place, and a mirrored game shows its sentence there. PINNED to the foot of the sheet
+       (owner, 2026-09-21 — it sat at the END of the sheet and was hard to find under a long
+       list): it joins the form sheets' `.modalFooter` recipe rather than growing a second
+       sticky rule, so the sheet drops its bottom padding and clears the home indicator the way
+       every Save bar already does. Phone only — the class rides the same `isPhone` branch.
+       ⚠ Absent entirely in an archive (Chunk F): the server already refuses these for a
+       past season, but a record that draws Edit / Cancel / Delete and then errors is
+       worse than one that simply doesn't offer them. */
+    const addGameButton = ev.eventType === 'external_tournament' ? (
+      <button className={`${styles.btnSecondary}${isPhone ? ` ${styles.slideOverFootWide}` : ''}`} disabled={saving} onClick={() => {
+        setSelectedEvent(null);
+        // Seed the game on the tournament's start day so it lands inside the span.
+        const start = `${ev.startsAt ? dayStr(ev.startsAt) : cursorDate}T${DEFAULT_EVENT_HOUR}`;
+        openAddForm('tournament_game', {
+          parentEventId: ev.id,
+          name: `${ev.name} – Game`,
+          startsAt: start,
+          endsAt: addHoursLocal(start, 2),
+        });
+      }}>
+        + Add game
+      </button>
+    ) : null;
+    const actionsBlock = canAddEvents ? (
+      <div className={`${styles.slideOverActions}${isPhone ? ` ${styles.slideOverFoot} ${styles.modalFooter}` : ''}`}>
+        {!deleteConfirm ? (
+          <>
+            <button className={styles.btnSecondary} disabled={saving} onClick={() => openEditForm(ev)}>
+              Edit details
+            </button>
+            {!isPhone && addGameButton}
+            {/* A mirrored game isn't the coach's to cancel or delete — and it wouldn't
+                stick: the next sync would restore it from the organizer's schedule, minus
+                the attendance and lineup a delete would have cascaded away. */}
+            {mirroredGame ? (
+              <span className={styles.slideOverActionsRight}>
+                <span className={styles.formHint}>Only {ev.name} can cancel or remove this game.</span>
+              </span>
+            ) : (
+              <div className={styles.slideOverActionsRight}>
+                <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
+                  {ev.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
+                </button>
+                <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: ev.id, isRecurring: ev.isRecurring })}>
+                  Delete
+                </button>
+              </div>
+            )}
+            {isPhone && addGameButton}
+          </>
+        ) : (
+          <div className={styles.deleteConfirm}>
+            <p className={styles.deleteConfirmMsg}>
+              {deleteConfirm.isRecurring ? 'Delete this recurring practice:' : `Delete "${ev.name}"?`}
+            </p>
+            <div className={styles.deleteConfirmBtns}>
+              {deleteConfirm.isRecurring ? (
+                <>
+                  <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>This only</button>
+                  <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'remaining')}>This &amp; future</button>
+                  <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'all')}>All</button>
+                </>
+              ) : (
+                <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>Confirm delete</button>
+              )}
+              <button className={styles.btnGhost} onClick={() => setDeleteConfirm(null)}>Cancel</button>
+            </div>
+            {saveError && <p className={styles.errorText}>{saveError}</p>}
+          </div>
+        )}
+      </div>
+    ) : null;
+
+    const peekWarnBlock = lineupMismatch && drawerDoors.lineupTab ? (
+      <div className={styles.lineupPeekWarn} role="status">
+        {lineupMismatch.coming.length > 0 && (
+          <p>⚠ Marked in but not in the lineup: {lineupMismatch.coming.join(', ')}.</p>
+        )}
+        {lineupMismatch.out.length > 0 && (
+          <p>⚠ In the lineup but marked Out: {lineupMismatch.out.join(', ')}.</p>
+        )}
+        <span>
+          Fix the attendance below, or{' '}
+          <Link href={`${base}/lineups/${ev.id}`} style={{ textDecoration: 'underline', color: 'var(--white-80)' }}>edit the lineup →</Link>
+        </span>
+      </div>
+    ) : null;
+
+    const tabsBlock = slideTabs.length > 1 ? (
+      <div className={styles.slideTabs} role="tablist">
+        {slideTabs.map(t => (
+          <button
+            key={t.key}
+            type="button"
+            role="tab"
+            aria-selected={activeSlideTab === t.key}
+            className={`${styles.slideTab} ${activeSlideTab === t.key ? styles.slideTabActive : ''}`}
+            onClick={() => setSlideTab(t.key)}
+          >
+            {t.label}
+          </button>
+        ))}
+      </div>
+    ) : null;
+
+    const scoutingTab = activeSlideTab === 'scouting' && scoutingKey ? (
+      <OpponentScoutingPanel
+        orgSlug={orgSlug}
+        teamId={teamId}
+        eventId={ev.id}
+        opponentName={ev.opponent!}
+        mirrored={isMirroredEvent(ev)}
+      />
+    ) : null;
+
+    const attendanceTab = activeSlideTab === 'attendance' ? (() => {
+      const filteredRows = attendanceFilter === 'all'
+        ? attendanceRows
+        : attendanceRows.filter(row => row.status === attendanceFilter);
+      // data-field-floor: a surface read standing up — the sweep holds its type floor (A4).
+      return (
+        <div className={styles.attendanceSection} data-field-floor>
+          <div className={styles.attendanceHeader}>
+            <h3 className={styles.attendanceTitle}>Attendance</h3>
+            <div className={styles.attendanceBulkActions}>
+              <button
+                type="button"
+                className={styles.btnGhost}
+                disabled={attendanceLoading || attendanceRows.length === 0}
+                onClick={() => setAllAttendance('attending')}
+              >
+                <CheckCircle2 size={14} /> All in
+              </button>
+              <button
+                type="button"
+                className={styles.btnGhost}
+                disabled={attendanceLoading || attendanceRows.length === 0}
+                onClick={() => setAllAttendance('unknown')}
+              >
+                <CircleHelp size={14} /> Reset
+              </button>
+              {/* ⚠ "Season attendance" (Batch 4's return trip to the Insights report) sat here
+                  beside the bulk actions, and as a quiet row under the list on a phone (C3) —
+                  until the owner's first look at the built phone sheet (2026-09-21): a coach
+                  mid-game is likelier to leave the game by accident through it than to read the
+                  season on purpose, and Insights is one nav tap away at every width. Gone from
+                  both widths; `scheduleDrawerDoors` no longer decides it. */}
+            </div>
+          </div>
+
+          {/* Metric chips that double as filters — counts are always visible; tap to focus.
+              On a phone: five equal 44px cells (C3). */}
+          {attendanceRows.length > 0 && (
+            <div className={styles.attendanceFilters} role="group" aria-label="Filter attendance by status">
+              <button
+                type="button"
+                aria-pressed={attendanceFilter === 'all'}
+                className={`${styles.attFilter} ${attendanceFilter === 'all' ? styles.attFilterActiveAll : ''}`}
+                onClick={() => setAttendanceFilter('all')}
+              >
+                All <span className={styles.attFilterCount}>{attendanceRows.length}</span>
+              </button>
+              {ATTENDANCE_OPTIONS.map(option => {
+                const Icon = option.icon;
+                const count = attendanceRows.filter(row => row.status === option.value).length;
+                const active = attendanceFilter === option.value;
+                return (
+                  <button
+                    key={option.value}
+                    type="button"
+                    data-status={option.value}
+                    aria-pressed={active}
+                    aria-label={`${option.label}: ${count}`}
+                    title={option.label}
+                    className={`${styles.attFilter} ${active ? styles.attFilterActive : ''}`}
+                    onClick={() => setAttendanceFilter(active ? 'all' : option.value)}
+                  >
+                    <Icon size={14} /> <span className={styles.attFilterCount}>{count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {attendanceLoading ? (
+            <CoachLoading label="Loading attendance…" inline />
+          ) : attendanceError && attendanceRows.length === 0 ? (
+            // A read that FAILED is said as a failure. It used to fall through to the empty
+            // line below and claim the roster had no active players.
+            <div className={styles.attendanceEmpty}>{attendanceError}</div>
+          ) : attendanceRows.length === 0 ? (
+            <div className={styles.attendanceEmpty}>Add active players to the roster before marking attendance.</div>
+          ) : filteredRows.length === 0 ? (
+            <div className={styles.attendanceEmpty}>No players in this group.</div>
+          ) : (
+            /* THE ROWS ARE THE PORTAL'S ONE ROW LIST, and THE ROW IS THE TAP (C3, the owner's second
+               read: one frame with hairlines, no gaps — the schedule's own treatment). Each row is a
+               `<button aria-haspopup="dialog">` that raises the RSVP sheet for that player; the
+               status badge is its trail (its word at the body size — on attendance-taking the status
+               IS the looked-for value, A4's field key), the note flag beside it, a chevron says it
+               opens. The per-row button and the inline editor it opened are gone at every width. */
+            <CoachRowList label="Attendance" inset phoneFrame className={styles.attendanceRows}>
+              {filteredRows.map(row => {
+                const cur = ATTENDANCE_BY_VALUE[row.status] ?? ATTENDANCE_BY_VALUE.unknown;
+                const StatusIcon = cur.icon;
+                const name = playerDisplayName(row.player);
+                return (
+                  <CoachRow
+                    key={row.player.id}
+                    as="button"
+                    aria-haspopup="dialog"
+                    aria-label={`${name} · ${cur.label}${row.note ? ' · has a note' : ''} · set attendance`}
+                    onClick={() => setRsvpEditId(row.player.id)}
+                    title={name}
+                    trail={
+                      <>
+                        {row.note && (
+                          <span className={styles.attendanceNoteFlag} title={row.note} aria-hidden>
+                            <StickyNote size={13} />
+                          </span>
+                        )}
+                        {/* Current status — same icon + colour as the filter chips. */}
+                        <span className={styles.attendanceStatusBadge} data-status={row.status} data-field-key aria-hidden>
+                          <StatusIcon size={14} />
+                          <span>{cur.label}</span>
+                        </span>
+                      </>
+                    }
+                    door="chevron"
+                  />
+                );
+              })}
+            </CoachRowList>
+          )}
+          {/* The autosave word, a transient pill at the window's foot (owner 2026-09-20, revising
+              that morning's home in the sheet's header): appears on an edit, says "Saved" and
+              fades; only an error stays. Fixed to the viewport, so inside this scrolling panel
+              it shows wherever the list is scrolled to. */}
+          {attendanceRows.length > 0 && (
+            <SaveStatusPill saving={attendanceSaving} dirty={attendanceDirty} error={attendanceError} onRetry={handleAttendanceSave} />
+          )}
+        </div>
+      );
+    })() : null;
+
+    const lineupTab = activeSlideTab === 'lineup' && isLineupEvent(ev) ? (
+      <div className={styles.lineupSection}>
+        {(() => {
+          const editHref = `${base}/lineups/${ev.id}`;
+          const hasLineup = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
+          const battingRows = sortLineupRows(lineupRows).filter(r => lineupMode === 'nine_player' ? r.starter : true);
+          return (
+            <>
+              <div className={styles.lineupPeekHeader}>
+                <div>
+                  <h3 className={styles.attendanceTitle}>Lineup</h3>
+                  <p className={styles.attendanceSummary}>
+                    {hasLineup ? 'A quick look — build and edit on the Lineups page.' : 'No lineup set for this game yet.'}
+                  </p>
+                </div>
+                {/* This is a quick look — "build and edit on the Lineups page" above already
+                    says so — so it claims only what it can see from these rows: whether
+                    anything is saved. The honest Not started/Draft/Ready/Needs review badge
+                    (F02) belongs to the hub, the builder and the Overview, which actually run
+                    the analysis; a plain "has content" fact is exactly right here. */}
+                <span className={styles.lineupFrontChip} data-tone={hasLineup ? 'ok' : 'warn'}>
+                  {hasLineup ? <><CheckCircle2 size={13} aria-hidden /> Has a lineup</> : <><CircleSlash size={13} aria-hidden /> No lineup yet</>}
+                </span>
+              </div>
+
+              {lineupLoading ? (
+                <CoachLoading label="Loading the lineup…" inline />
+              ) : !hasLineup ? (
+                <div className={styles.lineupPeekEmpty}>
+                  <p>Build the batting order and field positions on the full Lineups page.</p>
+                  <Link href={editHref} className="btn btn-lime btn-sm">Build lineup →</Link>
+                </div>
+              ) : (
+                <>
+                  {/* No count / innings / format strip here (owner 2026-09-21): a quick look
+                      shows the order itself, and the section's own gap is the only rhythm —
+                      the peek's children carry no margins of their own. */}
+                  <p className={`${styles.sectionKicker} ${styles.lineupPeekKicker}`}>Batting order</p>
+                  <ol className={styles.lineupPeekOrder}>
+                    {battingRows.map(r => (
+                      <li key={r.player.id}>
+                        <span className={styles.lineupPeekBat}>{r.battingOrder || '–'}</span>
+                        <span className={styles.lineupPeekName}>{playerDisplayName(r.player)}</span>
+                        {r.inningPositions['1'] && <span className={styles.lineupPeekPos}>{r.inningPositions['1']}</span>}
+                      </li>
+                    ))}
+                  </ol>
+
+                  <div className={styles.lineupPeekFooter}>
+                    <Link href={editHref} className="btn btn-lime btn-sm">Edit in Lineups →</Link>
+                  </div>
+                </>
+              )}
+            </>
+          );
+        })()}
+      </div>
+    ) : null;
+    const tabContent = <>{scoutingTab}{attendanceTab}{lineupTab}</>;
+
+    // THE TWO ORDERS — JSX order, never CSS `order` (see the block above).
+    const body = !isPhone ? (
+      <>
+        {titleBlock}{whenLine}{sourceBlock}{movedBlock}{whereBlock}{placeNote}
+        {scoreBlock}{tagsBlock}{awardsBlock}{descriptionBlock}{resourcesBlock}{practiceBlock}
+        {actionsBlock}{peekWarnBlock}{tabsBlock}{tabContent}
+      </>
+    ) : scoreLeads ? (
+      <>
+        {titleBlock}{whenLine}{whereBlock}{placeNote}{sourceBlock}{movedBlock}
+        {scoreBlock}{tagsBlock}{awardsBlock}
+        {peekWarnBlock}{tabsBlock}{tabContent}
+        {descriptionBlock}{resourcesBlock}{actionsBlock}
+      </>
+    ) : (
+      <>
+        {titleBlock}{whenLine}{whereBlock}{placeNote}{sourceBlock}{movedBlock}
+        {practiceBlock}
+        {peekWarnBlock}{tabsBlock}{tabContent}
+        {scoreBlock}{tagsBlock}
+        {descriptionBlock}{resourcesBlock}{actionsBlock}
+      </>
+    );
+
+    return (
+      <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (requestCloseSlideOver)?.(); }}>
+        {/* A modal sheet, declared as one (role + aria-modal) the way the newer RoomShell and
+            QuestionShell sheets are: the page behind it is inert by declaration, and the layout
+            sweep narrows to the sheet instead of reporting the rows it covers as hidden. */}
+        <div
+          ref={slideOverRef}
+          tabIndex={-1}
+          className={`${styles.slideOver}${activeSlideTab === 'lineup' ? ` ${styles.slideOverWide}` : ''}`}
+          role="dialog"
+          aria-modal="true"
+          aria-label={ev.name}
+          data-sheet-order={isPhone ? (scoreLeads ? 'score-first' : 'tabs-first') : 'desktop'}
+          onClick={e => e.stopPropagation()}
+        >
+          {header}
+          {body}
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={`${styles.page} ${styles.pageWide}`}>
+    <div className={`${styles.page} ${styles.pageWide} ${styles.schedulePage}`}>
       {/* Header (page-header ruling 2026-08-11): "Schedule" — the name the nav already uses;
           "Team Calendar" said "team" (the masthead's job) and disagreed with its own menu item.
           Actions right, "?" in its fixed corner; the view switcher rides the views below. */}
@@ -2416,10 +3352,12 @@ export default function CoachesSchedulePage({
         icon={Calendar}
         title="Schedule"
         actions={scheduleHeaderActions}
-        /* House rule 4: the one create keeps the title line's corner beside the "?" on a phone.
-           A read-only assistant has no create and no import, so the row drops entirely. */
+        /* House rule 4: the one create keeps the title line's corner beside the "?" on a phone —
+           and since stage 2 · C1 the view menu sits there with it, for every coach: a read-only
+           assistant has no create and no import, but still switches views, so the row never
+           drops (the create gates itself on `canAddEvents`; `actionsPhoneHidden` would take the
+           view menu with it). */
         actionsPhoneInTitleRow
-        actionsPhoneHidden={!canAddEvents}
         helpLabel="Schedule"
         help={scheduleHelpRequest}
       />
@@ -2427,8 +3365,10 @@ export default function CoachesSchedulePage({
       {/* List | Week | Month — a view switcher is not an action: it rides the body it switches
           (ruling 2026-08-11), exactly where Roster's List/Depth-chart toggle already lives. */}
       {/* The kit's list toolbar (components/coaches/kit, 2026-09-16): the view toggle leads, the
-          export is pinned right — the row every list in the portal draws. */}
-      <CoachListToolbar actions={scheduleExport}>
+          export is pinned right — the row every list in the portal draws. ≥641 only since stage 2
+          · C1: on a phone the switch is the glyph in the title row and the export is the quiet row
+          under the list — the 59px this row cost on every open. */}
+      <CoachListToolbar actions={scheduleExport} className={styles.scheduleToolbarWide}>
         <div className={styles.viewToggle}>
           {(['list', 'week', 'month'] as ViewMode[]).map(v => (
             <button
@@ -2441,25 +3381,6 @@ export default function CoachesSchedulePage({
           ))}
         </div>
       </CoachListToolbar>
-
-      {/* Navigator for week/month */}
-      {view !== 'list' && (
-        <div className={styles.calNav}>
-          <button className={styles.calNavBtn} onClick={() => navigate(-1)}><ChevronLeft size={16} /></button>
-          <span className={styles.calNavLabel}>
-            {view === 'month'
-              ? new Date(curMonth + '-01T00:00:00').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
-              : (() => {
-                const start = new Date(curWeek + 'T00:00:00');
-                const end = new Date(curWeek + 'T00:00:00');
-                end.setDate(end.getDate() + 6);
-                return `${start.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`;
-              })()
-            }
-          </span>
-          <button className={styles.calNavBtn} onClick={() => navigate(1)}><ChevronRight size={16} /></button>
-        </div>
-      )}
 
       {/* Batch 4 — the hand-entered duplicates. Coaches worked around the missing tools by typing
           their tournament games in themselves; now the real ones arrive automatically, those teams
@@ -2502,15 +3423,53 @@ export default function CoachesSchedulePage({
         <p className={styles.importResult} role="status">{importToast}</p>
       )}
 
-      {/* Calendar body */}
-      {loading
-        ? <div className={styles.loadingState}>Loading events…</div>
-        : error
-          ? <p className={styles.errorText}>{error}</p>
-          : view === 'list'  ? renderListView()
-          : view === 'week'  ? renderWeekView()
-          : renderMonthView()
-      }
+      {loading && <div className={styles.loadingState}>Loading events…</div>}
+      {!loading && error && <p className={styles.errorText}>{error}</p>}
+
+      {/* THE CALENDAR BODY — on a phone, THE SCROLLER (stage 2 · C1, owner ruling 2026-09-21): the
+          list, Week and Month live in this box between the title row and the bar, and it is what
+          scrolls; the document does not (the chat room's construction — `data-schedule-scroller`
+          is what the global page-scroll lock keys on at ≤640). The month band pins at its top; it
+          opens positioned on today; "+" and the view menu never move. Above 640 it is a plain
+          block and the page scrolls as a document, exactly as before. */}
+      <div ref={scrollerRef} className={styles.scheduleScroller} data-schedule-scroller>
+      {/* Navigator for week/month */}
+      {view !== 'list' && (
+        <div className={styles.calNav}>
+          <button className={styles.calNavBtn} onClick={() => navigate(-1)}><ChevronLeft size={16} /></button>
+          <span className={styles.calNavLabel}>
+            {view === 'month'
+              ? new Date(curMonth + '-01T00:00:00').toLocaleDateString('en-CA', { month: 'long', year: 'numeric' })
+              : (() => {
+                const start = new Date(curWeek + 'T00:00:00');
+                const end = new Date(curWeek + 'T00:00:00');
+                end.setDate(end.getDate() + 6);
+                return `${start.toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })} – ${end.toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' })}`;
+              })()
+            }
+          </span>
+          <button className={styles.calNavBtn} onClick={() => navigate(1)}><ChevronRight size={16} /></button>
+        </div>
+      )}
+
+      {!loading && !error && (
+        view === 'list'  ? renderListView()
+        : view === 'week'  ? renderWeekView()
+        : renderMonthView()
+      )}
+      {/* The export as a quiet row under the list (C1; ≤640 only by the stylesheet): the same
+          control, the same chooser — the toolbar above keeps the desktop's button. */}
+      {!loading && !error && view === 'list' && events.length > 0 && (
+        <div className={styles.scheduleExportRow}>
+          <CoachRowListFoot>
+            <CoachExportButton variant="row" label="Schedule" choices={scheduleExportChoices} />
+          </CoachRowListFoot>
+        </div>
+      )}
+      {/* The spacer that lets the last month reach the top of the scroller (sized by the
+          open-on-today effect from the scroller's own height; 60vh until it has run). */}
+      {view === 'list' && <div ref={tailRef} className={styles.scheduleTail} aria-hidden />}
+      </div>
 
       {/* ── Day list (mobile month-cell tap) ──────────────────────────────── */}
       {daySheet && (
@@ -2534,686 +3493,28 @@ export default function CoachesSchedulePage({
       )}
 
       {/* ── Detail slide-over ─────────────────────────────────────────────── */}
-      {selectedEvent && (
-        <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) (requestCloseSlideOver)?.(); }}>
-          {/* A modal sheet, declared as one (role + aria-modal) the way the newer RoomShell and
-              QuestionShell sheets are: the page behind it is inert by declaration, and the layout
-              sweep narrows to the sheet instead of reporting the rows it covers as hidden. */}
-          <div
-            ref={slideOverRef}
-            tabIndex={-1}
-            className={`${styles.slideOver}${activeSlideTab === 'lineup' ? ` ${styles.slideOverWide}` : ''}`}
-            role="dialog"
-            aria-modal="true"
-            aria-label={selectedEvent.name}
-            onClick={e => e.stopPropagation()}
-          >
-            <div className={styles.modalHeader}>
-              <button className={styles.modalBackBtn} aria-label="Back" onClick={requestCloseSlideOver}><ArrowLeft size={20} /></button>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                {(() => { const Icon = EVENT_ICONS[selectedEvent.eventType]; return <Icon size={16} style={{ color: EVENT_COLORS[selectedEvent.eventType] }} />; })()}
-                <span className={styles.eventTypePill} style={{ background: `color-mix(in srgb, ${EVENT_COLORS[selectedEvent.eventType]} 13.333%, transparent)`, color: EVENT_COLORS[selectedEvent.eventType] }}>
-                  {EVENT_LABELS[selectedEvent.eventType]}
-                </span>
-                {/* The drawer says what the row says — the kind's pill, and the word beside it. */}
-                {selectedEvent.isScrimmage && <span className={styles.scrimmageChip}>{SCRIMMAGE_LABEL}</span>}
-                {selectedEvent.status === 'cancelled' && (
-                  <span className={styles.eventTypePill} style={{ background: 'color-mix(in srgb, var(--warning) 13.333%, transparent)', color: 'var(--warning)' }}>Cancelled</span>
-                )}
-              </div>
-              <button className={styles.modalCloseBtn} onClick={requestCloseSlideOver}>
-                <X size={18} />
-              </button>
-            </div>
-            <h2 className={styles.slideOverTitle}>{selectedEvent.name}</h2>
+      {selectedEvent && renderEventSheet(selectedEvent)}
 
-            {eventMeta.length > 0 && (
-              <p className={styles.slideOverMeta}>{eventMeta.join('  ·  ')}</p>
-            )}
-
-            {/* Batch 4 — where this game came from. Its time, opponent, venue and score are the
-                organizer's; attendance and the lineup below are entirely the coach's. */}
-            {mirroredGame && (
-              <div className={`${styles.infoBanner} ${styles.sourceNote}`}>
-                <Trophy size={13} aria-hidden style={{ flexShrink: 0 }} />
-                <span>
-                  From <strong>{selectedEvent.name}</strong> · organizer’s schedule
-                  {mirroredGameHref && (
-                    <>
-                      {' '}
-                      <a href={mirroredGameHref} target="_blank" rel="noopener noreferrer" className={styles.sourceNoteLink}>
-                        View on the tournament page <ExternalLink size={11} aria-hidden />
-                      </a>
-                    </>
-                  )}
-                </span>
-              </div>
-            )}
-
-            {/* The organizer moved it since this device last showed it. Nothing was lost — the
-                point is that the coach knows. Attendance is only worth re-checking when the DAY
-                changed; a clock nudge doesn't invalidate anyone's reply. */}
-            {selectedMoved && (
-              <div className={`${styles.infoBanner} ${styles.movedNote}`} role="status">
-                <strong>Moved from {fmtDate(selectedMoved.previous)} · {fmtTime(selectedMoved.previous)}.</strong>{' '}
-                Your lineup and attendance moved with it — nothing to rebuild.
-                {selectedMoved.dayChanged && (
-                  <span className={styles.movedNoteWarn}> Attendance was taken for the old time — worth re-checking.</span>
-                )}
-              </div>
-            )}
-            {(locationLabel || selectedEvent.uniform) && (
-              <p className={styles.slideOverMeta}>
-                {locationLabel && (
-                  (selectedEvent.locationAddress || selectedEvent.location) ? (
-                    <a
-                      href={mapsHref(selectedEvent.locationAddress || selectedEvent.location || locationLabel)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={styles.slideOverMapLink}
-                      title={selectedEvent.locationAddress ? `Open ${selectedEvent.locationAddress} in Google Maps` : `Search ${locationLabel} in Google Maps`}
-                      onClick={e => {
-                        // Open the map explicitly rather than relying on the anchor default —
-                        // inside the modal the plain new-tab navigation was landing on about:blank.
-                        e.preventDefault();
-                        e.stopPropagation();
-                        window.open(
-                          mapsHref(selectedEvent.locationAddress || selectedEvent.location || locationLabel),
-                          '_blank',
-                          'noopener,noreferrer',
-                        );
-                      }}
-                    >
-                      <MapPin size={13} aria-hidden />{locationLabel}
-                    </a>
-                  ) : (
-                    /* only a field/diamond # with no place name or address — nothing useful to map */
-                    <span>{locationLabel}</span>
-                  )
-                )}
-                {locationLabel && selectedEvent.uniform ? '  ·  ' : ''}
-                {selectedEvent.uniform && <span>Uniform: {selectedEvent.uniform}</span>}
-              </p>
-            )}
-            {/* The place's note (mig 307) — "park behind the arena" — read off the book by the link. */}
-            {selectedEvent.placeId && places.find(p => p.id === selectedEvent.placeId)?.note && (
-              <p className={styles.slideOverMeta}>{places.find(p => p.id === selectedEvent.placeId)?.note}</p>
-            )}
-
-            {/* Final score — the headline fact of a played game lives in the header, not behind a
-                tab. W/L/T is always derived from the two numbers (no manual override).
-                On a MIRRORED game the score is the organizer's: shown, never editable (the API
-                refuses it, and the next sync would overwrite a local edit anyway). */}
-            {isGameEvent && mirroredGame && (
-              <div className={styles.eventScoreLine}>
-                {selectedEvent.teamScore != null ? (
-                  <div className={styles.eventScore}>{scoreline(selectedEvent)}</div>
-                ) : (
-                  <p className={styles.formHint}>The final score arrives from the tournament once it’s posted.</p>
-                )}
-              </div>
-            )}
-            {/* The score is a schedule WRITE (the PATCH behind Save gates on schedule editing), so
-                the form and its "+ Add final score" door ride the same grant. A coach without it
-                still reads the score — the read-only line below. */}
-            {isGameEvent && !mirroredGame && drawerDoors.scoreForm && (
-              <div className={styles.eventScoreLine}>
-                {scoreForm ? (
-                  <div className={styles.scoreForm}>
-                    <div className={styles.scoreFormRow}>
-                      <label className={styles.scoreFieldLabel}>
-                        <span>Your team</span>
-                        <input className={styles.input} style={{ width: '4.5rem' }} type="number" min={0} inputMode="numeric" autoFocus value={scoreForm.teamScore} onChange={e => setScoreForm(s => s && ({ ...s, teamScore: e.target.value }))} />
-                      </label>
-                      <span className={styles.scoreFormSep}>–</span>
-                      <label className={styles.scoreFieldLabel}>
-                        <span>Opponent</span>
-                        <input className={styles.input} style={{ width: '4.5rem' }} type="number" min={0} inputMode="numeric" value={scoreForm.opponentScore} onChange={e => setScoreForm(s => s && ({ ...s, opponentScore: e.target.value }))} />
-                      </label>
-                      {(() => {
-                        const t = scoreForm.teamScore.trim(), o = scoreForm.opponentScore.trim();
-                        if (t === '' || o === '') return null;
-                        const r = Number(t) > Number(o) ? 'win' : Number(t) < Number(o) ? 'loss' : 'tie';
-                        return (
-                          <span className={styles.resultBadge} style={{ alignSelf: 'flex-end', paddingBottom: '0.5rem', color: resultColor(r) }}>
-                            {r.toUpperCase()}
-                          </span>
-                        );
-                      })()}
-                    </div>
-                    <div className={styles.scoreFormActions}>
-                      <button className={styles.btnPrimary} disabled={saving || scoreForm.teamScore.trim() === '' || scoreForm.opponentScore.trim() === ''} onClick={handleScoreSave}>Save</button>
-                      <button className={styles.btnGhost} onClick={() => setScoreForm(null)}>Cancel</button>
-                    </div>
-                    {saveError && <p className={styles.errorText}>{saveError}</p>}
-                  </div>
-                ) : selectedEvent.teamScore != null ? (
-                  <div className={styles.eventScore}>
-                    {scoreline(selectedEvent)}
-                    <button className={styles.eventScoreEdit} onClick={() => setScoreForm({ teamScore: String(selectedEvent.teamScore ?? ''), opponentScore: String(selectedEvent.opponentScore ?? '') })}>
-                      Edit score
-                    </button>
-                    {/* The Scouting Book's capture door — a quiet link at the one moment every
-                        coach reliably visits after every game (score entry), never a modal
-                        (owner ruling). The tab itself is the capture sheet. */}
-                    {scoutingKey && activeSlideTab !== 'scouting' && (
-                      <button type="button" className={styles.scoutToastDoor} onClick={() => setSlideTab('scouting')}>
-                        Add to the book on {selectedEvent.opponent} ›
-                      </button>
-                    )}
-                  </div>
-                ) : (
-                  <button className={styles.eventScoreAdd} onClick={() => setScoreForm({ teamScore: '', opponentScore: '' })}>
-                    + Add final score
-                  </button>
-                )}
-              </div>
-            )}
-            {isGameEvent && !mirroredGame && !drawerDoors.scoreForm && selectedEvent.teamScore != null && (
-              <div className={styles.eventScoreLine}>
-                <div className={styles.eventScore}>
-                  {scoreline(selectedEvent)}
-                  {/* The Scouting Book's capture door stays open to every schedule-holder — the
-                      bench observes, by ruling — even when the score itself is read-only. */}
-                  {scoutingKey && activeSlideTab !== 'scouting' && (
-                    <button type="button" className={styles.scoutToastDoor} onClick={() => setSlideTab('scouting')}>
-                      Add to the book on {selectedEvent.opponent} ›
-                    </button>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Applied tags — read-only here; the picker/manager live in "Edit details". */}
-            {(tagsByEventId[selectedEvent.id] ?? []).length > 0 && (
-              <div className={styles.lineupChips}>
-                {(tagsByEventId[selectedEvent.id] ?? []).map(tagId => {
-                  const tag = teamTags.find(t => t.id === tagId);
-                  return tag ? <span key={tagId} className={styles.lineupChip}>{tag.name}</span> : null;
-                })}
-              </div>
-            )}
-
-            {/* Awards given — the "same visit" give-award moment (Coach Tags & Player Awards
-                Phase 2). Gated on a final score, same as the tags/score UI above it. */}
-            {isGameEvent && drawerDoors.awards && (
-              <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
-                <h4 className={styles.formSectionTitle}>Awards given</h4>
-                {selectedEvent.status === 'cancelled' ? (
-                  <p className={styles.formHint}>This game was cancelled.</p>
-                ) : selectedEvent.teamScore == null || selectedEvent.opponentScore == null ? (
-                  <p className={styles.formHint}>Enter a final score to unlock awards for this game.</p>
-                ) : (
-                  <>
-                    {teamAwards.filter(a => a.eventId === selectedEvent.id).length === 0 ? (
-                      <p className={styles.formHint}>No awards given for this game yet.</p>
-                    ) : (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginBottom: '0.6rem' }}>
-                        {teamAwards.filter(a => a.eventId === selectedEvent.id).map(a => (
-                          <div key={a.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.5rem' }}>
-                            <span style={{ fontSize: '0.85rem', color: 'var(--white-90)' }}>
-                              {a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}{a.awardType?.name ?? 'Award'} — {a.playerName}
-                            </span>
-                            <span className={styles.tagManagerActions}>
-                              <button
-                                type="button"
-                                title="Edit"
-                                aria-label={`Edit ${a.awardType?.name ?? 'award'} for ${a.playerName}`}
-                                disabled={!!awardBusyId}
-                                onClick={() => { setEditingAward(a); setGiveAwardOpen(true); }}
-                              >
-                                <Pencil size={14} aria-hidden />
-                              </button>
-                              <button
-                                type="button"
-                                title="Remove"
-                                aria-label={`Remove ${a.awardType?.name ?? 'award'} for ${a.playerName}`}
-                                disabled={awardBusyId === a.id}
-                                onClick={() => handleRemoveAward(a)}
-                              >
-                                <Trash2 size={14} aria-hidden />
-                              </button>
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                    {awardActionError && <p className={styles.errorText}>{awardActionError}</p>}
-                    {/* A rosterless team gets a reason, not a blank player picker (Chunk E WI-7). */}
-                    {awardPlayers.length === 0 ? (
-                      <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--white-55)' }}>🏆 Add players to your roster first — then you can give awards.</p>
-                    ) : (
-                      <button className={styles.btnSecondary} onClick={() => { setEditingAward(null); setGiveAwardOpen(true); }}>🏆 Give an award</button>
-                    )}
-                  </>
-                )}
-              </div>
-            )}
-
-            {selectedEvent.description && (
-              <p className={styles.slideOverNotes}>{selectedEvent.description}</p>
-            )}
-
-            {selectedEvent.resources && selectedEvent.resources.length > 0 && (
-              <div className={styles.resourceList}>
-                {selectedEvent.resources.map((r, i) => {
-                  const RIcon = resourceIcon(r.url);
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      className={styles.resourceLink}
-                      title={r.url}
-                      onClick={() => window.open(r.url, '_blank', 'noopener,noreferrer')}
-                    >
-                      <RIcon size={14} aria-hidden />
-                      <span className={styles.resourceLinkLabel}>{r.label}</span>
-                      <ExternalLink size={12} aria-hidden style={{ opacity: 0.5, flexShrink: 0 }} />
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-
-            {/* ── Practice plan (Practice Plans 1a) ──
-                A SUMMARY plus a door, never the editor: the plan is written on its own drill-in
-                where the focus rail and the rotation grid have room. Read rides `schedule` (this
-                whole slide-over already does); writing is head-coach-only and the builder says so.
-                The links section above is left completely alone — some coaches will keep their
-                own document forever, and that is a legitimate outcome (D2).
-
-                ⚠ The archive suppression here is DELETED (2026-08-18), and what it protected still
-                holds: the practice-plan routes resolve the team's ACTIVE program year, so from a
-                closed season "Open the plan →" errored and "Plan this practice →" invited a write
-                into a finished season. This screen is no longer rendered for a closed season at
-                all, so there is nothing left to hide — and READING a past plan has its own home,
-                the practices shelf on the closed-season page, which reaches a year-aware read
-                route rather than this one.
-
-                ⚠ NO "Run practice →" HERE (owner, 2026-09-18). This panel is one practice's
-                surface, like a row on the Practice plans hub, and the field door left every
-                per-practice surface at once: the shortcut lives on the next-practice card alone
-                (the hub's and the Overview's), and every other practice is two taps — Open the
-                plan, then Run practice, first in the plan's toolbar on any day. Before that it was
-                offered on any plan ROW (a goal-only plan got "There's no plan to run yet"), then
-                window-gated (stage 5, P3), then on any planned practice (P10) — three answers in
-                a week, all to a question the plan page already answers. */}
-            {selectedEvent.eventType === 'practice' && (
-              <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
-                <h4 className={styles.formSectionTitle}>Practice plan</h4>
-                {/* "Has a plan" is the hub's ONE definition — at least one block (stage 0; stage 6
-                    applied it here): a goal typed and abandoned is a real, blockless row, and it
-                    read "0 blocks — …" with an Open door on this panel while the hub's row said
-                    "No plan written". */}
-                {practiceHasPlan(selectedEvent) ? (
-                  <>
-                    <p className={styles.formHint}>
-                      {summarizePracticePlan(selectedEvent.practicePlan!)}
-                      {selectedEvent.practicePlan!.goal ? ` — ${selectedEvent.practicePlan!.goal}` : ''}
-                    </p>
-                    <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
-                      <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
-                        Open the plan →
-                      </Link>
-                    </div>
-                  </>
-                ) : (
-                  /* The door follows the grant the plan page itself writes on — Schedule: View +
-                     edit (`canWritePracticePlans`, staff-access pass 2) — never "head coach"
-                     (practices re-evaluation stage 6, owner ruling R8, 2026-09-18): an assistant
-                     with View + edit read "No plan yet." here and "Plan this practice" on the hub.
-                     A viewer gets the plan page's own sentence, so the panel says WHY and not just
-                     "no". */
-                  page.capabilities && canWritePracticePlans(page.capabilities) ? (
-                    <>
-                      <p className={styles.formHint}>
-                        No plan yet — set out the blocks, stations and groups for this practice.
-                      </p>
-                      <Link href={`${base}/practice/${selectedEvent.id}`} className={styles.btnSecondary}>
-                        Plan this practice →
-                      </Link>
-                    </>
-                  ) : (
-                    <p className={styles.formHint}>
-                      No plan yet. Writing the plan comes with Schedule: View + edit — ask your head coach.
-                    </p>
-                  )
-                )}
-              </div>
-            )}
-
-            {/* Actions — Edit (+ tournament Add game) lead; Cancel/Delete grouped to the right so
-                the destructive pair is separated from the everyday action. Kept above the tabs.
-                ⚠ Absent entirely in an archive (Chunk F): the server already refuses these for a
-                past season, but a record that draws Edit / Cancel / Delete and then errors is
-                worse than one that simply doesn't offer them. */}
-            {canAddEvents && (
-            <div className={styles.slideOverActions}>
-              {!deleteConfirm ? (
-                <>
-                  <button className={styles.btnSecondary} disabled={saving} onClick={() => openEditForm(selectedEvent)}>
-                    Edit details
-                  </button>
-                  {selectedEvent.eventType === 'external_tournament' && (
-                    <button className={styles.btnSecondary} disabled={saving} onClick={() => {
-                      const ev = selectedEvent;
-                      setSelectedEvent(null);
-                      // Seed the game on the tournament's start day so it lands inside the span.
-                      const start = `${ev.startsAt ? dayStr(ev.startsAt) : cursorDate}T${DEFAULT_EVENT_HOUR}`;
-                      openAddForm('tournament_game', {
-                        parentEventId: ev.id,
-                        name: `${ev.name} – Game`,
-                        startsAt: start,
-                        endsAt: addHoursLocal(start, 2),
-                      });
-                    }}>
-                      + Add game
-                    </button>
-                  )}
-                  {/* A mirrored game isn't the coach's to cancel or delete — and it wouldn't
-                      stick: the next sync would restore it from the organizer's schedule, minus
-                      the attendance and lineup a delete would have cascaded away. */}
-                  {mirroredGame ? (
-                    <span className={styles.slideOverActionsRight}>
-                      <span className={styles.formHint}>Only {selectedEvent.name} can cancel or remove this game.</span>
-                    </span>
-                  ) : (
-                    <div className={styles.slideOverActionsRight}>
-                      <button className={styles.btnGhost} disabled={saving} onClick={handleToggleCancel}>
-                        {selectedEvent.status === 'cancelled' ? 'Restore event' : 'Cancel event'}
-                      </button>
-                      <button className={styles.btnDanger} onClick={() => setDeleteConfirm({ eventId: selectedEvent.id, isRecurring: selectedEvent.isRecurring })}>
-                        Delete
-                      </button>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className={styles.deleteConfirm}>
-                  <p className={styles.deleteConfirmMsg}>
-                    {deleteConfirm.isRecurring ? 'Delete this recurring practice:' : `Delete "${selectedEvent.name}"?`}
-                  </p>
-                  <div className={styles.deleteConfirmBtns}>
-                    {deleteConfirm.isRecurring ? (
-                      <>
-                        <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>This only</button>
-                        <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'remaining')}>This &amp; future</button>
-                        <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'all')}>All</button>
-                      </>
-                    ) : (
-                      <button className={styles.btnDanger} disabled={saving} onClick={() => handleDelete(deleteConfirm.eventId, 'one')}>Confirm delete</button>
-                    )}
-                    <button className={styles.btnGhost} onClick={() => setDeleteConfirm(null)}>Cancel</button>
-                  </div>
-                  {saveError && <p className={styles.errorText}>{saveError}</p>}
-                </div>
-              )}
-            </div>
-            )}
-
-            {lineupMismatch && drawerDoors.lineupTab && (
-              <div className={styles.lineupPeekWarn} role="status">
-                {lineupMismatch.coming.length > 0 && (
-                  <p>⚠ Marked in but not in the lineup: {lineupMismatch.coming.join(', ')}.</p>
-                )}
-                {lineupMismatch.out.length > 0 && (
-                  <p>⚠ In the lineup but marked Out: {lineupMismatch.out.join(', ')}.</p>
-                )}
-                <span>
-                  Fix the attendance below, or{' '}
-                  <Link href={`${base}/lineups/${selectedEvent!.id}`} style={{ textDecoration: 'underline', color: 'var(--white-80)' }}>edit the lineup →</Link>
-                </span>
-              </div>
-            )}
-
-            {slideTabs.length > 1 && (
-              <div className={styles.slideTabs} role="tablist">
-                {slideTabs.map(t => (
-                  <button
-                    key={t.key}
-                    type="button"
-                    role="tab"
-                    aria-selected={activeSlideTab === t.key}
-                    className={`${styles.slideTab} ${activeSlideTab === t.key ? styles.slideTabActive : ''}`}
-                    onClick={() => setSlideTab(t.key)}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {activeSlideTab === 'scouting' && scoutingKey && selectedEvent && (
-              <OpponentScoutingPanel
-                orgSlug={orgSlug}
-                teamId={teamId}
-                eventId={selectedEvent.id}
-                opponentName={selectedEvent.opponent!}
-                mirrored={isMirroredEvent(selectedEvent)}
-              />
-            )}
-
-            {activeSlideTab === 'attendance' && (() => {
-            const filteredRows = attendanceFilter === 'all'
-              ? attendanceRows
-              : attendanceRows.filter(row => row.status === attendanceFilter);
-            // data-field-floor: a surface read standing up — the sweep holds its type floor (A4).
-            return (
-            <div className={styles.attendanceSection} data-field-floor>
-              <div className={styles.attendanceHeader}>
-                <h3 className={styles.attendanceTitle}>Attendance</h3>
-                <div className={styles.attendanceBulkActions}>
-                  <button
-                    type="button"
-                    className={styles.btnGhost}
-                    disabled={attendanceLoading || attendanceRows.length === 0}
-                    onClick={() => setAllAttendance('attending')}
-                  >
-                    <CheckCircle2 size={14} /> All in
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.btnGhost}
-                    disabled={attendanceLoading || attendanceRows.length === 0}
-                    onClick={() => setAllAttendance('unknown')}
-                  >
-                    <CircleHelp size={14} /> Reset
-                  </button>
-                  {/* Batch 4 (f8-2): the season report and the place attendance is recorded had
-                      no link between them in either direction. This is the return trip — offered
-                      only to a coach the Insights portal itself admits. */}
-                  {drawerDoors.seasonAttendanceLink && (
-                    <Link href={insightsSectionHref(base, 'attendance')} className={styles.btnGhost}>
-                      Season attendance
-                    </Link>
-                  )}
-                </div>
-              </div>
-
-              {/* Metric chips that double as filters — counts are always visible; tap to focus. */}
-              {attendanceRows.length > 0 && (
-                <div className={styles.attendanceFilters} role="group" aria-label="Filter attendance by status">
-                  <button
-                    type="button"
-                    aria-pressed={attendanceFilter === 'all'}
-                    className={`${styles.attFilter} ${attendanceFilter === 'all' ? styles.attFilterActiveAll : ''}`}
-                    onClick={() => setAttendanceFilter('all')}
-                  >
-                    All <span className={styles.attFilterCount}>{attendanceRows.length}</span>
-                  </button>
-                  {ATTENDANCE_OPTIONS.map(option => {
-                    const Icon = option.icon;
-                    const count = attendanceRows.filter(row => row.status === option.value).length;
-                    const active = attendanceFilter === option.value;
-                    return (
-                      <button
-                        key={option.value}
-                        type="button"
-                        data-status={option.value}
-                        aria-pressed={active}
-                        aria-label={`${option.label}: ${count}`}
-                        title={option.label}
-                        className={`${styles.attFilter} ${active ? styles.attFilterActive : ''}`}
-                        onClick={() => setAttendanceFilter(active ? 'all' : option.value)}
-                      >
-                        <Icon size={14} /> <span className={styles.attFilterCount}>{count}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              )}
-
-              {attendanceLoading ? (
-                <CoachLoading label="Loading attendance…" inline />
-              ) : attendanceError && attendanceRows.length === 0 ? (
-                // A read that FAILED is said as a failure. It used to fall through to the empty
-                // line below and claim the roster had no active players.
-                <div className={styles.attendanceEmpty}>{attendanceError}</div>
-              ) : attendanceRows.length === 0 ? (
-                <div className={styles.attendanceEmpty}>Add active players to the roster before marking attendance.</div>
-              ) : filteredRows.length === 0 ? (
-                <div className={styles.attendanceEmpty}>No players in this group.</div>
-              ) : (
-                <div className={styles.attendanceList}>
-                  {filteredRows.map(row => {
-                    const cur = ATTENDANCE_BY_VALUE[row.status] ?? ATTENDANCE_BY_VALUE.unknown;
-                    const StatusIcon = cur.icon;
-                    const isSet = row.status !== 'unknown';
-                    const editing = rsvpEditId === row.player.id;
-                    return (
-                    <div key={row.player.id} className={styles.attendanceRow} data-editing={editing ? 'true' : undefined}>
-                      <span className={styles.attendancePlayerName}>{playerDisplayName(row.player)}</span>
-                      {/* Current status — same icon + colour as the filter chips. */}
-                      <span className={styles.attendanceStatusBadge} data-status={row.status} title={cur.label}>
-                        <StatusIcon size={14} />
-                        <span>{cur.label}</span>
-                      </span>
-                      {row.note && !editing && (
-                        <span className={styles.attendanceNoteFlag} title={row.note} aria-label="Has a note">
-                          <StickyNote size={13} />
-                        </span>
-                      )}
-                      <button
-                        type="button"
-                        className={styles.rsvpBtn}
-                        aria-expanded={editing}
-                        aria-label={`${isSet ? 'Edit' : 'Set'} attendance for ${playerDisplayName(row.player)}`}
-                        onClick={() => setRsvpEditId(editing ? null : row.player.id)}
-                      >
-                        {isSet ? 'Edit RSVP' : 'RSVP'}
-                      </button>
-                      {editing && (
-                        <div className={styles.rsvpEditor}>
-                          <div className={styles.rsvpOptions} role="group" aria-label={`Set attendance for ${playerDisplayName(row.player)}`}>
-                            {ATTENDANCE_OPTIONS.map(option => {
-                              const Icon = option.icon;
-                              return (
-                                <button
-                                  key={option.value}
-                                  type="button"
-                                  data-status={option.value}
-                                  aria-pressed={row.status === option.value}
-                                  className={`${styles.rsvpOption} ${row.status === option.value ? styles.rsvpOptionActive : ''}`}
-                                  onClick={() => setPlayerAttendance(row.player.id, { status: option.value })}
-                                >
-                                  <Icon size={16} /> {option.label}
-                                </button>
-                              );
-                            })}
-                          </div>
-                          <input
-                            className={styles.attendanceNoteInput}
-                            value={row.note}
-                            onChange={e => setPlayerAttendance(row.player.id, { note: e.target.value })}
-                            placeholder="Note (e.g. leaving early)"
-                            aria-label={`Attendance note for ${playerDisplayName(row.player)}`}
-                            maxLength={500}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* The autosave word, a transient pill at the window's foot (owner 2026-09-20, revising
-                  that morning's home in the sheet's header): appears on an edit, says "Saved" and
-                  fades; only an error stays. Fixed to the viewport, so inside this scrolling panel
-                  it shows wherever the list is scrolled to. */}
-              {attendanceRows.length > 0 && (
-                <SaveStatusPill saving={attendanceSaving} dirty={attendanceDirty} error={attendanceError} onRetry={handleAttendanceSave} />
-              )}
-            </div>
-            );
-            })()}
-
-            {activeSlideTab === 'lineup' && isLineupEvent(selectedEvent) && (
-              <div className={styles.lineupSection}>
-                {(() => {
-                  const editHref = `${base}/lineups/${selectedEvent!.id}`;
-                  const hasLineup = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
-                  const battingRows = sortLineupRows(lineupRows).filter(r => lineupMode === 'nine_player' ? r.starter : true);
-                  const modeLabel = lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats';
-                  return (
-                    <>
-                      <div className={styles.lineupPeekHeader}>
-                        <div>
-                          <h3 className={styles.attendanceTitle}>Lineup</h3>
-                          <p className={styles.attendanceSummary}>
-                            {hasLineup ? 'A quick look — build and edit on the Lineups page.' : 'No lineup set for this game yet.'}
-                          </p>
-                        </div>
-                        {/* This is a quick look — "build and edit on the Lineups page" above already
-                            says so — so it claims only what it can see from these rows: whether
-                            anything is saved. The honest Not started/Draft/Ready/Needs review badge
-                            (F02) belongs to the hub, the builder and the Overview, which actually run
-                            the analysis; a plain "has content" fact is exactly right here. */}
-                        <span className={styles.lineupFrontChip} data-tone={hasLineup ? 'ok' : 'warn'}>
-                          {hasLineup ? <><CheckCircle2 size={13} aria-hidden /> Has a lineup</> : <><CircleSlash size={13} aria-hidden /> No lineup yet</>}
-                        </span>
-                      </div>
-
-                      {lineupLoading ? (
-                        <CoachLoading label="Loading the lineup…" inline />
-                      ) : !hasLineup ? (
-                        <div className={styles.lineupPeekEmpty}>
-                          <p>Build the batting order and field positions on the full Lineups page.</p>
-                          <Link href={editHref} className="btn btn-lime btn-sm">Build lineup →</Link>
-                        </div>
-                      ) : (
-                        <>
-                          <div className={styles.lineupPeekStats}>
-                            <div><b>{battingRows.length}</b><span>{lineupMode === 'nine_player' ? 'Starters' : 'Batting'}</span></div>
-                            <div><b>{lineupInningCount}</b><span>{sportPack.periodLabelPlural}</span></div>
-                            <div><b>{modeLabel}</b><span>Format</span></div>
-                          </div>
-
-                          <p className={styles.sectionKicker} style={{ marginTop: '1rem' }}>Batting order</p>
-                          <ol className={styles.lineupPeekOrder}>
-                            {battingRows.map(r => (
-                              <li key={r.player.id}>
-                                <span className={styles.lineupPeekBat}>{r.battingOrder || '–'}</span>
-                                <span className={styles.lineupPeekName}>{playerDisplayName(r.player)}</span>
-                                {r.inningPositions['1'] && <span className={styles.lineupPeekPos}>{r.inningPositions['1']}</span>}
-                              </li>
-                            ))}
-                          </ol>
-
-                          <div className={styles.lineupPeekFooter}>
-                            <Link href={editHref} className="btn btn-lime btn-sm">Edit in Lineups →</Link>
-                          </div>
-                        </>
-                      )}
-                    </>
-                  );
-                })()}
-              </div>
-            )}
-
-          </div>
-        </div>
-      )}
+      {/* THE RSVP SHEET (stage 2 · C3) — one player's attendance from the foot of the screen. A
+          SIBLING of the event sheet's overlay, never a child of its panel: its dialog floor stacks
+          over the event sheet's, and a floor answers an Escape from inside ITS panel — nested, one
+          key would close both. Tapping a choice writes it through the list's own path and closes;
+          a typed note rides the same autosave (the transient pill). */}
+      {selectedEvent && rsvpEditId && (() => {
+        const row = attendanceRows.find(r => r.player.id === rsvpEditId);
+        if (!row) return null;
+        return (
+          <CoachRsvpSheet
+            playerName={playerDisplayName(row.player)}
+            eventLine={[selectedEvent.startsAt ? fmtDate(selectedEvent.startsAt) : '', selectedEvent.name].filter(Boolean).join(' · ')}
+            status={row.status}
+            note={row.note}
+            onPick={status => { setPlayerAttendance(row.player.id, { status }); setRsvpEditId(null); }}
+            onNote={note => setPlayerAttendance(row.player.id, { note })}
+            onClose={() => setRsvpEditId(null)}
+          />
+        );
+      })()}
 
       {/* Warn before leaving with unsaved event / attendance / lineup edits */}
       <UnsavedChangesGuard active={formDirty || attendanceDirty} />

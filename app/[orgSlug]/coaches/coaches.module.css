@@ -6348,6 +6348,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   .calWeekDay { min-width: 0; }
   .calWeekDayEvents { min-height: 0; padding: 0.35rem 0.4rem; }
   .calWeekEmpty { padding: 0.1rem 0.2rem; }
+  /* The stack-below rule above exists for a NARROW desktop column. Here a day is a full-width
+     card, and stretched across it the pill was a lime banner as wide as the event (owner,
+     2026-09-21). Beside the chip again, right, centred on the chip's two lines — where the list
+     puts it (its beside-slot is centred too). */
+  .calWeekDayEvents .eventChipRow { flex-direction: row; align-items: center; }
 }
 
 .calMonthGrid {
@@ -6679,35 +6684,12 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .attFilterActive[data-status="unknown"] { background: var(--home-card, rgba(255,255,255,0.10)); border-color: var(--home-line-strong, rgba(255,255,255,0.3)); color: var(--text-primary); }
 .attFilterActiveAll { background: rgba(var(--logic-lime-rgb),0.16); border-color: var(--logic-lime); color: var(--logic-lime); }
 
-.attendanceList {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-/* One compact line per player: name (truncates) · icon status control · note toggle. The note
-   input, when open, wraps to a full-width second line (flex-basis:100%). */
-.attendanceRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem 0.5rem;
-  padding: 0.4rem 0.55rem;
-  background: var(--home-card, var(--card-bg));
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.07));
-  border-radius: 8px;
-}
-
-.attendancePlayerName {
-  flex: 1;
-  min-width: 0;
-  font-size: var(--type-body);
-  color: var(--text-primary);
-  font-weight: 650;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
+/* ⚰ `.attendanceList` / `.attendanceRow` / `.attendancePlayerName` (→ 2026-09-21, phone
+   re-evaluation stage 2 · C3): the attendance list is the portal's one row recipe now
+   (`CoachRowList phoneFrame`, `.attendanceRows` at the foot of this file) — one frame, hairlines,
+   the row is the tap. The per-row "Edit RSVP" button and its inline editor (`.rsvpBtn`,
+   `.rsvpEditor`, `.rsvpOption*`) went with them; a player's RSVP is a bottom sheet
+   (`components/coaches/CoachRsvpSheet`, which carries the option palette). */
 
 /* Status control: ONE connected segmented pill (not 4 floating boxes) — a single
    border frames the group, thin dividers split the segments, and only the chosen
@@ -6820,49 +6802,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 .attendanceStatusBadge[data-status="unknown"]   { color: var(--text-tertiary); }
 
 .attendanceNoteFlag { display: inline-flex; flex-shrink: 0; color: var(--logic-lime); }
-
-/* "RSVP" / "Edit RSVP" — opens the per-player editor below the row. */
-.rsvpBtn {
-  flex-shrink: 0;
-  font-size: var(--type-support); font-weight: 700;
-  padding: 0.32rem 0.7rem; border-radius: 6px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb),0.4);
-  background: rgba(var(--blueprint-blue-rgb),0.12);
-  color: var(--blueprint-light);
-  cursor: pointer;
-  white-space: nowrap;
-}
-.rsvpBtn:hover { background: rgba(var(--blueprint-blue-rgb),0.2); }
-
-.attendanceRow[data-editing="true"] { border-color: rgba(var(--blueprint-blue-rgb),0.4); }
-
-/* The on-demand RSVP editor: the four status options + the note input, wrapping to a full-width
-   second line under the row. */
-.rsvpEditor { flex-basis: 100%; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 0.25rem; }
-.rsvpOptions { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-.rsvpOption {
-  display: inline-flex; align-items: center; gap: 0.35rem;
-  min-height: 38px; padding: 0.4rem 0.7rem; border-radius: 8px;
-  border: 1px solid var(--white-10); background: var(--home-card, rgba(255,255,255,0.03));
-  color: var(--text-secondary); font-size: var(--type-body); font-weight: 600; cursor: pointer;
-}
-.rsvpOption svg { color: var(--text-tertiary); }
-.rsvpOption:hover { background: var(--home-olive-soft, rgba(255,255,255,0.07)); }
-.rsvpOptionActive[data-status="attending"] { background: rgba(var(--success-rgb),0.16); border-color: var(--success); color: var(--success); }
-.rsvpOptionActive[data-status="late"]      { background: rgba(var(--warning-rgb),0.16); border-color: var(--warning); color: var(--warning); }
-.rsvpOptionActive[data-status="absent"]    { background: rgba(var(--danger-rgb),0.14); border-color: var(--danger); color: var(--danger); }
-.rsvpOptionActive[data-status="unknown"]   { background: var(--home-card, rgba(255,255,255,0.12)); border-color: var(--home-line-strong, rgba(255,255,255,0.3)); color: var(--text-primary); }
-.rsvpOptionActive svg { color: inherit; }
-
-/* Warm coaches portal (dev-gated) — ratified RSVP palette (TH-5): In = OLIVE (not the
-   win-green the --success remap gives), so "attending" reads on the warm palette and
-   stays distinct from a game win. Late=amber, Out=live-red, No-reply=dim already track
-   --warning/--danger/neutral tokens. Dark keeps the --success green (unchanged). */
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .rsvpOptionActive[data-status="attending"] {
-  background: var(--home-olive-soft);
-  border-color: var(--home-olive);
-  color: var(--home-olive);
-}
 
 /* Mobile: the dense attendance controls reach the portal's ONE tap floor (desktop keeps the
    compact 34/30px density).
@@ -7677,10 +7616,14 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   }
 }
 
-/* ── Read-only lineup peek (schedule slide-over). The editable builder lives on the Lineups page. */
+/* ── Read-only lineup peek (schedule slide-over). The editable builder lives on the Lineups page.
+   `.lineupSection` (the parent) is a flex column with `gap: 0.75rem` — that gap is the ONLY
+   spacing between these children. None of them carries its own top/bottom margin: flexbox
+   doesn't collapse a child's margin into the parent's `gap` the way block layout collapses
+   adjacent margins, so a child margin here would ADD to the gap instead of replacing it — which
+   is exactly how this panel doubled up its own spacing before (owner 2026-09-21). */
 .lineupPeekHeader {
   display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem;
-  margin-bottom: 0.85rem;
 }
 .lineupPeekEmpty {
   text-align: center; padding: 1.4rem 1rem;
@@ -7688,15 +7631,12 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   background: transparent;
 }
 .lineupPeekEmpty p { margin: 0 0 0.9rem; color: var(--text-secondary); font-size: var(--type-body); }
-.lineupPeekStats {
-  display: flex; gap: 1.4rem; flex-wrap: wrap;
-  padding: 0.7rem 0.9rem; border-radius: 10px;
-  background: var(--home-card, var(--card-bg));border: 1px solid var(--white-8);
-}
-.lineupPeekStats > div { display: flex; flex-direction: column; gap: 0.1rem; }
-.lineupPeekStats b { font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); line-height: 1.1; }
-.lineupPeekStats span { font-size: var(--type-label); text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); }
-.lineupPeekOrder { list-style: none; margin: 0.4rem 0 0; padding: 0; }
+/* Overrides the shared `.sectionKicker`'s own `margin: 1.5rem 0 0.75rem` (both top AND bottom —
+   an override that zeroed only margin-top left margin-bottom stacking with the flex `gap` below
+   it, reproducing the exact bug this file exists to fix). That margin is for a kicker following
+   unrelated content in normal flow; here the flex `gap` above and below it already places it. */
+.lineupPeekKicker { margin: 0; }
+.lineupPeekOrder { list-style: none; margin: 0; padding: 0; }
 .lineupPeekOrder li {
   display: flex; align-items: center; gap: 0.6rem;
   padding: 0.35rem 0; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.05));
@@ -7750,7 +7690,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   .lineupOnScheduleLink { min-height: var(--tap-min, 44px); }
 }
 .lineupNotPlayingTag { font-style: normal; font-size: var(--type-support); color: var(--warning); }
-.lineupPeekFooter { margin-top: 1.1rem; display: flex; justify-content: flex-end; }
+.lineupPeekFooter { display: flex; justify-content: flex-end; }
 
 .deleteConfirm { display: flex; flex-direction: column; gap: 0.5rem; }
 .deleteConfirmMsg { font-size: var(--type-body); color: var(--text-secondary); margin: 0; }
@@ -11506,15 +11446,20 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
    paint nothing and the hairline under each but the last is the whole separation — the desktop
    sentence "a row is not a card", kept. `ul.rowListPhoneFrame` ties `ul.rowList` on specificity and
    wins by ORDER, as the whole block does; the row rule out-ranks `.rowListItem` on its own. The
-   chevron stays absolute in its relative <li>; `overflow: hidden` on the frame clips only the end
-   rows' hover tint to the corners. Every list without the declaration keeps its row-cards, and the
-   rendered sweep holds each form to its own sentence (`list-ground`, `check-layout-invariants.mjs`). */
+   chevron stays absolute in its relative <li>; `overflow: clip` on the frame clips only the end
+   rows' hover tint to the corners. ⚠ `clip`, NOT `hidden` (stage 2 · C1, 2026-09-21): `hidden`
+   makes the frame a scroll container, which becomes the scrollport of any `position: sticky`
+   band inside it — the Schedule's pinned month header pinned against the frame, i.e. never.
+   `clip` clips to the radius exactly the same and establishes no scroll container, so a band
+   sticks against the real scroller outside the frame. Every list without the declaration keeps
+   its row-cards, and the rendered sweep holds each form to its own sentence (`list-ground`,
+   `check-layout-invariants.mjs`). */
 @media (max-width: 640px) {
   ul.rowListPhoneFrame {
     border: 1px solid var(--home-line, var(--border-2));
     border-radius: 8px;
     background: var(--card-bg, var(--surface));
-    overflow: hidden;
+    overflow: clip;
   }
   .rowListPhoneFrame .rowListItem {
     border: 0;
@@ -11537,6 +11482,9 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
     border-bottom: 1px solid var(--home-line, var(--border-2));
   }
   .rowListPhoneFrame .rowListBand:first-child { border-top: 0; }
+  /* Declared on an INSET list (a card already paints — the event sheet's attendance list, stage 2 ·
+     C3): the hairlines stay and the frame's own ground does not come back. Exactly one painter. */
+  ul.rowListInset.rowListPhoneFrame { border: 0; border-radius: 0; background: none; }
 }
 
 /* The scouting book's own back-link is RETIRED (page-header ruling 2026-08-11): every drill-in
@@ -14705,4 +14653,294 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
   .devReportSummary { display: flex; }
   /* The corner chevron is its own 44×44 box — the row-borrowing padding and margin stand down. */
   .devReportDoor { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); padding: 0; margin: 0; }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════════════════════════
+   THE SCHEDULE ON A PHONE — phone re-evaluation stage 2 (owner rulings C1–C4, 2026-09-21; plan
+   COACH_MOBILE_EXPERIENCE_PLAN.md §8; the hub's "2 · Schedule" tab is the drawing).
+
+   Kept in ONE block at the foot of the file, AFTER the row recipe, on purpose: two rules here
+   override recipe rules at the same specificity and win by ORDER (the recipe's ≤640 row rule is
+   served as `:is(.rowListRow, .rowListRow:has(.rowCaption))` — (0,2,0) — so a two-class override
+   must come later; the stage-1 board learned that the hard way). Everything ≤640 is phone-only;
+   the 641–768 rules are the tablet band's tap floor and nothing else; the desktop is untouched.
+   ══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+/* ── C1 · the list is the scroller ─────────────────────────────────────────────────────────── */
+/* The phone-only chrome: the view glyph in the title row, the export row under the list, the
+   spacer. Hidden by default; the ≤640 block shows them. The kit toolbar is the ≥641 form. */
+.viewMenuPhone { display: none; }
+.scheduleExportRow { display: none; }
+.scheduleTail { display: none; }
+/* The scroller is a plain block above 640 — the page scrolls as a document, as before. Positioned
+   so the open-on-today effect can sum a row's offset chain up to it at every width. */
+.scheduleScroller { position: relative; }
+
+@media (max-width: 640px) {
+  .viewMenuPhone { display: inline-flex; }
+  /* (0,2,0): the kit's own `.toolbar` sets display at (0,1,0) from another module, and which
+     same-weight rule wins across modules is bundle order. */
+  .schedulePage .scheduleToolbarWide { display: none; }
+  /* The page fits the viewport between the masthead and the bar (both published as variables —
+     `--coach-header-h` by the masthead, `--coach-foot-clear` by the shell) less the main's 1rem
+     top gutter; a flex column whose one growing child is the scroller. The document itself is
+     locked by the global `:has([data-schedule-scroller])` rule (globals.css), the chat room's
+     construction, so nothing above the list can scroll. */
+  .schedulePage {
+    display: flex;
+    flex-direction: column;
+    height: calc(100dvh - var(--coach-header-h, 0px) - var(--coach-foot-clear, 0px) - 1rem);
+    min-height: 0;
+  }
+  .schedulePage > * { flex: none; }
+  .schedulePage > .scheduleScroller {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    /* The frame's rounded corners are clipped by the frame itself (`overflow: clip`); the scroller
+       paints nothing — the list's ground is the frame's, exactly one painter (`list-ground`). */
+    /* The foot gutter. The box ends exactly at the bar's top edge (that is what the height above
+       says), so without this the last thing in Week or Month sat FLUSH against the bar and read as
+       sliding under it (owner, 2026-09-21). Padding INSIDE the scroller, not a shorter box: a
+       shorter box would clip scrolling content a rem above the bar, mid-air. The list view's
+       60vh tail already cleared it; a rem more there is nothing. Matches the side gutters. */
+    padding-bottom: 1rem;
+  }
+  /* THE PINNED MONTH BAND: sticky at the scroller's top, so the months pass under it as the coach
+     slides. (Its container is the scroller, not the frame — the frame is `overflow: clip`, which
+     is no scroll container.) Its ground and hairline are the phone frame's band rule (paper tone,
+     which is opaque in both themes — a pinned band a row can read through is the money grid's
+     pinned-column defect). ⚠ This rule used to paint `--card-bg` here, the frame's white, and
+     that is what made the month read as one more row (owner, 2026-09-21). No top rule while it
+     pins: the frame's own border sits directly above it, and mid-list the previous row's hairline
+     already draws the line above. */
+  .scheduleScroller .rowListBand {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    border-top: 0;
+  }
+  /* The quiet export row under the list, and the spacer that lets the last month reach the top
+     (sized by the open-on-today effect; 60vh until it has run). */
+  .scheduleExportRow { display: block; }
+  .scheduleTail { display: block; min-height: 60vh; }
+  /* The schedule's rows in the frame: the name on the first line, the date-time lead beneath —
+     the recipe's own phone order at the DRAWING'S density (56px plain; the Game day pill's 44px
+     box sits inside that since it stopped painting its floor, 2026-09-21), not the row-card's
+     (0.65rem pads and 1.6 line-heights made 67 / 91 — the board met the same thing, B3). The row-gap is paid twice around the recipe's line-break pseudo-element, so
+     0.0625rem is 2px between the lines. Written in the recipe's own two-selector shape: its ≤640
+     rule is served as `:is(…)` at (0,2,0), which a plain two-class override would tie and lose on
+     order. */
+  .scheduleScroller .rowListRow,
+  .scheduleScroller .rowListRow:has(.rowCaption) {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    gap: 0.0625rem 0.5rem;
+    line-height: 1.3;
+  }
+  .scheduleScroller .rowListLead[data-lead] { line-height: 1.3; }
+}
+
+/* ── C2 · Week without blanks; Month as dots + the selected day's rows ─────────────────────── */
+/* Two forms of the week — the seven cards (≥641) and the grouped stack (≤640) — both rendered;
+   the stylesheet shows one. */
+.calWeekPhone { display: none; }
+/* The phone-only pieces of a month cell — the tap over the cell and the dots — hidden above 640. */
+.calMonthDayBtn { display: none; }
+.calMonthDots { display: none; }
+.calMonthDayRows { display: none; }
+/* The ‹ › arrows take the tap floor on the touch widths (they were 32px, in no baseline — the
+   sweep never opened Week or Month before this stage). Desktop keeps the compact box. */
+@media (max-width: 768px) {
+  .calNavBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
+  /* The 641–768 band's List · Week · Month toggle at the floor — the three C4 entries at 768. */
+  .viewToggleBtn { min-height: var(--tap-min, 44px); }
+}
+@media (max-width: 640px) {
+  .calWeekWide { display: none; }
+  .calWeekPhone { display: flex; flex-direction: column; gap: 0.4rem; }
+  /* A run of empty days as one quiet line — "Mon 14 – Thu 17 · nothing scheduled". */
+  .calWeekQuiet {
+    display: flex;
+    align-items: center;
+    min-height: var(--tap-min, 44px);
+    margin: 0;
+    padding: 0 0.75rem;
+    font-size: var(--type-support);
+    color: var(--text-tertiary);
+    border: 1px dashed var(--home-line-strong, rgba(255, 255, 255, 0.24));
+    border-radius: 10px;
+  }
+  /* Month: the grid stays; a cell says its number and a dot per event. Day numbers 11 → 12px, the
+     weekday heads 10 → 11 (steps on the ladder, no new size). The chips and "+N more" leave the
+     phone — the day's rows live under the grid. */
+  .calMonthHeader { font-size: var(--type-label); }
+  .calMonthCell { position: relative; min-height: 50px; padding: 0.3rem 0.35rem; }
+  .calMonthCellToday { background: var(--pitch-black); }
+  .calMonthDayNum {
+    font-size: var(--type-support);
+    line-height: 20px;
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    border-radius: 50%;
+    margin-bottom: 5px;
+    font-variant-numeric: tabular-nums;
+  }
+  /* Today's number ringed; the selected day filled (a STATE fill — the one place the olive-soft
+     tint survives, by the 2026-09-21 tint ruling). */
+  .calMonthCellToday .calMonthDayNum { box-shadow: inset 0 0 0 1.5px var(--home-olive, var(--blueprint-blue)); color: var(--text-primary); font-weight: 700; }
+  .calMonthCellSelected { background: var(--home-olive-soft, rgba(var(--blueprint-blue-rgb), 0.12)); }
+  .calMonthCellSelected .calMonthDayNum { background: var(--home-olive, var(--blueprint-blue)); color: var(--on-team-color); box-shadow: none; font-weight: 700; }
+  .calMonthDayEvents { display: none; }
+  /* The tap: a button over the whole cell (the cell holds the desktop's chip buttons, so it
+     cannot be one itself). Transparent — the number and dots beneath are what the coach sees. */
+  .calMonthDayBtn {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    background: none;
+    border: 0;
+    border-radius: 0;
+    cursor: pointer;
+  }
+  .calMonthDayBtn:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
+  /* A dot per event in the type's colour (ridden in as `color`); a ticked game keeps its outlined
+     shape, a cancelled one fades — the chip's own cues, at 7px. */
+  .calMonthDots { display: flex; flex-wrap: wrap; gap: 3px; min-height: 7px; padding-left: 6px; pointer-events: none; }
+  .calMonthDot { width: 7px; height: 7px; border-radius: 50%; background: currentColor; flex: none; }
+  .calMonthDotOutline { background: transparent; box-shadow: inset 0 0 0 1.5px currentColor; }
+  .calMonthDotCancelled { opacity: 0.4; }
+  /* The selected day's rows under the grid — the list's own frame, the day as its band. */
+  .calMonthDayRows { display: block; margin-top: 0.85rem; }
+  .calMonthQuiet { color: var(--text-tertiary); }
+}
+
+/* ── C3 · the event sheet: the where-row, the foot row, the attendance list, the floors ──────── */
+/* The where-ROW (≤640 only — the desktop keeps its inline link): pin · venue · uniform · chevron,
+   the whole line the tap that opens the map, at the floor. */
+.slideOverWhereRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: var(--tap-min, 44px);
+  margin: 0 0 0.35rem;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--blueprint-light);
+  text-decoration: none;
+  border-bottom: 1px solid var(--home-line, rgba(255, 255, 255, 0.07));
+}
+.slideOverWhereRow > svg { flex: none; }
+.slideOverWhereText { flex: 1 1 auto; min-width: 0; }
+.slideOverWhereKit { color: var(--text-secondary); font-weight: 400; }
+.slideOverWhereChevron { color: var(--text-tertiary); }
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .slideOverWhereRow { color: var(--home-olive); }
+
+/* THE ATTENDANCE LIST on the row recipe (every width, since the row is the tap everywhere the
+   inline editor used to be): the badge is the trail and its word is the looked-for value —
+   body size (A4's field key), not the chip's support size. Rows 48px on a phone. */
+.attendanceRows .attendanceStatusBadge { font-size: var(--type-body); }
+.attendanceRows .rowListTitle { font-weight: 600; }
+
+@media (max-width: 768px) {
+  /* Every control on the sheet reaches the floor in the touch band — the tabs (35), Edit score
+     (36), "+ Add final score" (40), the book row (20), All in / Reset (27), the count chips (24),
+     Give an award, the plan doors, Edit / Cancel / Delete (32) — the 92 C4 entries, answered once
+     here rather than per control. */
+  .slideTab { min-height: var(--tap-min, 44px); }
+  .eventScoreAdd { min-height: var(--tap-min, 44px); }
+  /* The tablet band keeps the inline map link (the where-ROW is the phone's form) at the floor. */
+  .slideOverMapLink { min-height: var(--tap-min, 44px); }
+  .eventScoreEdit {
+    min-height: var(--tap-min, 44px);
+    padding: 0 0.75rem;
+    border: 1px solid var(--home-line-strong, var(--white-10));
+    border-radius: 10px;
+    text-decoration: none;
+    font-size: var(--type-body);
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .scoutToastDoor { display: flex; align-items: center; width: 100%; min-height: var(--tap-min, 44px); padding: 0; }
+  .attendanceBulkActions button, .attendanceBulkActions a { min-height: var(--tap-min, 44px); }
+  .attFilter { min-height: var(--tap-min, 44px); }
+  .slideOverActions button, .slideOverActions a { min-height: var(--tap-min, 44px); }
+  .slideOver .formSection .btnSecondary { min-height: var(--tap-min, 44px); }
+  .lineupPeekFooter a, .lineupPeekEmpty a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .attendanceRows .rowListRow { min-height: 48px; }
+}
+
+@media (max-width: 640px) {
+  /* The tabs sit directly under the where-row and the list directly under its chips — the
+     desktop's air (a 20px tab margin, 14 + 14 around the section, 12 between its parts) is the
+     screen's room on a phone; the drawing put the first player at 356. */
+  .slideTabs { margin-top: 0.5rem; }
+  .attendanceSection { margin-top: 0.35rem; padding-top: 0.5rem; gap: 0.5rem; }
+  /* 48px rows (the recipe's phone card is 55 with its 0.65rem pads) — the drawing's density. */
+  .attendanceRows .rowListRow,
+  .attendanceRows .rowListRow:has(.rowCaption) { padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 48px; }
+  /* The five count chips as one 44px row — five equal cells, the count at the body size, the
+     icon each chip already has. */
+  .attendanceFilters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+  .attFilter { justify-content: center; padding: 0 0.25rem; border-radius: 10px; font-size: var(--type-body); }
+  /* "+ ADD FINAL SCORE" A LITTLE SMALLER (owner, 2026-09-21, the first look at the built sheet)
+     WITHOUT GIVING BACK THE FLOOR. The button stays the 44px box the tap-floor gate and a thumb
+     agree on (`check:layout` reads the control's OWN rectangle — see `.gdEntryBtn`, the same
+     idiom); what shrinks is the PAINT: the button goes transparent and its pill — the same fill,
+     border and radius the desktop's 40px control wears — is drawn behind the words by `::after`,
+     36px tall, inset 4px top and bottom (half the difference, so it stays centred if either
+     number moves). The desktop and the 641–768 band keep the plain control. The `:hover` pair
+     outranks the base hover rule (0,2,0 later in the file) so the tap flash paints the pill, never
+     the 44px box. */
+  .eventScoreAdd,
+  .eventScoreAdd:hover { position: relative; isolation: isolate; background: none; border: none; padding: 0 0.7rem; }
+  .eventScoreAdd::after {
+    content: ''; position: absolute; z-index: -1;
+    inset: calc((var(--tap-min, 44px) - 36px) / 2) 0;
+    background: var(--white-5); border: 1px solid var(--border-2); border-radius: 8px;
+  }
+  .eventScoreAdd:hover::after { background: var(--white-8); }
+  /* THE FOOT ROW: Edit details · Cancel event · Delete as three equal cells under a hairline, no
+     fills, Delete in the danger ink; "+ Add game" (an external tournament) on its own full row
+     beneath; a mirrored game's sentence, and the delete confirmation, take the whole row. The
+     right-hand group dissolves so its two buttons are cells of their own.
+     ⚠ PINNED (owner, 2026-09-21): the page also gives it `.modalFooter` on a phone, so it is the
+     form sheets' sticky bar — bottom of the scroll box, `margin-top: auto` on a short sheet, the
+     0.9rem bleed, the sheet's bottom padding dropped by the `:has(.modalFooter)` rule, the home
+     indicator cleared. That rule outranks this one (0,4,0 — two `:not(.x)` count as classes —
+     vs 0,1,0), which is why no `margin-top` is stated here any more: the 1rem it used to carry
+     would have lost to `auto` silently. This
+     block keeps only what makes the bar a foot ROW rather than a Save bar — no top pad above the
+     44px cells, no gap between them, wrapping for the full-row members. */
+  .slideOverFoot {
+    padding-top: 0;
+    gap: 0;
+    flex-wrap: wrap;
+  }
+  .slideOverFoot > button,
+  .slideOverFoot .slideOverActionsRight > button {
+    flex: 1 1 30%;
+    justify-content: center;
+    min-height: var(--tap-min, 44px);
+    background: none;
+    border: 0;
+    border-radius: 0;
+    font-size: var(--type-body);
+    font-weight: 600;
+    color: var(--text-secondary);
+  }
+  .slideOverFoot .slideOverActionsRight { display: contents; }
+  .slideOverFoot > .btnDanger,
+  .slideOverFoot .slideOverActionsRight > .btnDanger { color: var(--danger); }
+  .slideOverFoot .slideOverFootWide { flex-basis: 100%; }
+  .slideOverFoot .formHint { flex: 1 1 100%; padding: 0.6rem 0; text-align: center; }
+  .slideOverFoot .deleteConfirm { flex: 1 1 100%; padding-top: 0.6rem; }
+  .slideOverFoot .deleteConfirmBtns button { min-height: var(--tap-min, 44px); }
 }

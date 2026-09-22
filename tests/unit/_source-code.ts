@@ -23,8 +23,18 @@ import path from 'node:path';
 
 const REPO = path.join(import.meta.dirname, '..', '..');
 
-/** A repo-relative file, read whole. */
-export const readSource = (rel: string): string => readFileSync(path.join(REPO, rel), 'utf8');
+/**
+ * A repo-relative file, read whole — with its line endings normalized to LF.
+ *
+ * ⚠ The repo runs `core.autocrlf=true`, so a Windows checkout (and any file a PowerShell
+ * round-trip has touched) carries CRLF, while a file an agent's tool wrote carries LF. A guard
+ * that anchors across a line break (`'\n  return ('`) therefore passed or failed on WHICH TOOL
+ * LAST SAVED THE FILE, not on the code — found 2026-09-21 when a peer's save flipped the schedule
+ * page to CRLF and the phone guard failed on a source it had passed an hour earlier. Normalizing
+ * here, once, means no guard has to know.
+ */
+export const readSource = (rel: string): string =>
+  readFileSync(path.join(REPO, rel), 'utf8').replace(/\r\n/g, '\n');
 
 /**
  * `source` with its comments removed.

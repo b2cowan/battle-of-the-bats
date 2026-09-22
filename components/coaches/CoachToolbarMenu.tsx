@@ -56,6 +56,7 @@ export function CoachToolbarMenu({
   disabled = false,
   variant = 'secondary',
   collapseOnPhone = false,
+  bareOnPhone = false,
   open: openProp,
   onOpenChange,
   children,
@@ -75,14 +76,27 @@ export function CoachToolbarMenu({
    * the chevron because a row of pills wearing chevrons reads as a row of selects. The keyboard
    * pattern above is the whole reason the chip is THIS component and not a second menu: Enter on
    * the chip is the phone-and-keyboard path to everything drag does.
+   *
+   * `glyph` is the trigger as ONE SYMBOL in a 44px box — no word, no chevron; `label` becomes its
+   * accessible name and `icon` is what a coach sees (the Schedule's view menu beside "+" at ≤640,
+   * phone re-evaluation stage 2 · C1, owner ruling 2026-09-21: "some calendar symbol … no chevron,
+   * save the space"). Pass the CURRENT choice's glyph as `icon` so the one symbol says where you
+   * are and that it switches. The rows are `checked` radio items.
    */
-  variant?: 'secondary' | 'primary' | 'chip';
+  variant?: 'secondary' | 'primary' | 'chip' | 'glyph';
   /**
    * House rule 3 — on a phone the words go and the symbol stays, with the label surviving as the
    * accessible name. Only for a trigger sitting in a page header, where the title one line above
    * says what is being created; a toolbar trigger has no such anchor and keeps its word.
    */
   collapseOnPhone?: boolean;
+  /**
+   * ⚠ Phone only: the symbol ALONE — the chevron goes with the word at ≤640, so the trigger is the
+   * bare lime square the portal's every list uses as its add door (the Schedule's "+", owner
+   * ruling 2026-09-21; its six-type menu is unchanged behind it). The desktop keeps the worded
+   * trigger with its chevron. Meaningless without `collapseOnPhone`.
+   */
+  bareOnPhone?: boolean;
   /**
    * ⚠ **CONTROLLED MODE, AND IT EXISTS FOR EXACTLY ONE SHAPE: A DOOR ELSEWHERE ON THE PAGE THAT
    * OPENS THIS MENU** (Schedule's empty state, Phase 4b). Leave both undefined and the menu owns
@@ -203,9 +217,11 @@ export function CoachToolbarMenu({
   // Always right-aligned: these triggers sit at the right end of a right-pinned group, so a
   // left-aligned panel would hang off the page. A left-aligned variant can add the option back
   // when a caller actually needs one.
+  // A glyph trigger's menu is a short list of one-word choices (List · Week · Month) — 160 wide,
+  // the drawing's number; the worded triggers keep the room their hints need.
   const panelStyle = useAnchoredMenu(open, rootRef, panelRef, {
-    minWidth: 260,
-    narrowMinWidth: 200,
+    minWidth: variant === 'glyph' ? 160 : 260,
+    narrowMinWidth: variant === 'glyph' ? 160 : 200,
     align: 'end',
   });
 
@@ -215,7 +231,8 @@ export function CoachToolbarMenu({
         ref={triggerRef}
         type="button"
         className={
-          `${styles.trigger}${variant === 'primary' ? ` ${styles.triggerPrimary}` : variant === 'chip' ? ` ${styles.triggerChip}` : ''}` +
+          `${styles.trigger}${variant === 'primary' ? ` ${styles.triggerPrimary}` : variant === 'chip' ? ` ${styles.triggerChip}` : variant === 'glyph' ? ` ${styles.triggerGlyph}` : ''}` +
+          `${bareOnPhone ? ` ${styles.triggerBare}` : ''}` +
           `${open ? ` ${styles.triggerOpen}` : ''}`
         }
         disabled={disabled}
@@ -223,12 +240,12 @@ export function CoachToolbarMenu({
         aria-expanded={open}
         /* The label is the accessible name while it is visible; once it can hide at ≤640 the
            name has to be stated, or the phone gets a button announced as "chevron". */
-        aria-label={collapseOnPhone ? label : undefined}
+        aria-label={collapseOnPhone || variant === 'glyph' ? label : undefined}
         onClick={() => setOpen(v => !v)}
       >
         {icon}
-        {collapseOnPhone ? <span className={shared.headerBtnLabel}>{label}</span> : label}
-        {variant !== 'chip' && <ChevronDown size={14} aria-hidden />}
+        {variant === 'glyph' ? null : collapseOnPhone ? <span className={shared.headerBtnLabel}>{label}</span> : label}
+        {variant !== 'chip' && variant !== 'glyph' && <ChevronDown size={14} aria-hidden />}
       </button>
       {open && (
         <div

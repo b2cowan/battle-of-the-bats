@@ -107,9 +107,10 @@ describe('the attendance report is reachable at all', () => {
    * unreachable page the missing tile would have been.
    *
    * ⚠ The old top-level `/attendance` route still exists as a permanent redirect, and that is a
-   * second thing worth pinning: three surfaces link to it by its old address (the Schedule's
-   * "Season attendance" button, the Overview coaching-pair tile, and every bookmark a coach has
-   * made in a year of using it). Deleting the redirect breaks all three silently.
+   * second thing worth pinning: every bookmark a coach has made in a year of using it lands on
+   * that address, and in-product surfaces have pointed at it too (the Overview coaching-pair
+   * tile; the Schedule sheet's "Season attendance" button until it left the sheet on 2026-09-21).
+   * Deleting the redirect breaks the bookmarks silently.
    */
   const HUB = readFileSync(
     join(process.cwd(), 'app', '[orgSlug]', 'coaches', 'teams', '[teamId]', 'history', 'page.tsx'),
@@ -149,9 +150,9 @@ describe('the attendance report is reachable at all', () => {
   it('the old /attendance address still lands on the tab', () => {
     assert.match(
       LEGACY, /insightsLegacyRedirectPage\('attendance'\)/,
-      'the top-level /attendance route must keep redirecting into the portal. The Schedule\'s '
-      + '"Season attendance" button, the Overview coaching-pair tile and every coach bookmark used '
-      + 'this address for a year; deleting the redirect 404s all of them at once.',
+      'the top-level /attendance route must keep redirecting into the portal. The Overview '
+      + 'coaching-pair tile and every coach bookmark used this address for a year; deleting the '
+      + 'redirect 404s all of them at once.',
     );
   });
 });

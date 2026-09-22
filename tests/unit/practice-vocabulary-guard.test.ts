@@ -281,7 +281,9 @@ describe('who sees what (stage 6, R8 · R9) — one grant, one definition of "ha
     assert.ok(schedule.includes('canWritePracticePlans(page.capabilities)'));
     assert.ok(!schedule.includes('page.capabilities?.isHeadCoach ?'));
     assert.ok(schedule.includes('No plan yet. Writing the plan comes with Schedule: View + edit — ask your head coach.'));
-    assert.ok(schedule.includes('practiceHasPlan(selectedEvent)'), 'the hub\'s one definition — at least one block');
+    // The sheet renders from a non-null parameter since the phone re-evaluation's stage 2 (C3,
+    // 2026-09-21): `renderEventSheet(ev)`. The definition it reads is what this pins.
+    assert.ok(schedule.includes('practiceHasPlan(ev)'), 'the hub\'s one definition — at least one block');
   });
   it('the helper\'s "Open my station" waits for a BLOCK, not a bare plan row', () => {
     const helper = prose(HELPER);

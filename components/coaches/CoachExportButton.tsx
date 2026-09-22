@@ -1,7 +1,7 @@
 'use client';
 import { useCallback, useEffect, useId, useState, type ReactNode } from 'react';
 import { usePathname, useSearchParams } from 'next/navigation';
-import { Download, X } from 'lucide-react';
+import { ChevronRight, Download, X } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature, type PlanFeature } from '@/lib/plan-features';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -104,6 +104,8 @@ export default function CoachExportButton({
   /** Nothing to export yet. Renders greyed rather than absent: the row keeps its shape. */
   disabled = false,
   className,
+  variant = 'toolbar',
+  rowLabel = 'Export the season',
 }: {
   label: string;
   choices: CoachExportChoice[];
@@ -111,6 +113,17 @@ export default function CoachExportButton({
   ariaLabel?: string;
   disabled?: boolean;
   className?: string;
+  /**
+   * `row` — the same control as a QUIET ROW at the foot of a list ("Export the season ›"), for a
+   * phone whose list is the scroller and has no toolbar row above it (the Schedule at ≤640, phone
+   * re-evaluation stage 2 · C1, owner ruling 2026-09-21). The trigger is the row's words with a
+   * chevron, at the tap floor, full width; the dialog behind it is the one above. Rendered inside
+   * `CoachRowListFoot`. The caller shows ONE of the two forms per width — both render, the
+   * stylesheet decides (the server and the browser disagree about the width on first paint).
+   */
+  variant?: 'toolbar' | 'row';
+  /** The row form's words. */
+  rowLabel?: string;
 }) {
   const { currentOrg } = useOrg();
   const available = choices.filter(
@@ -182,6 +195,17 @@ export default function CoachExportButton({
 
   return (
     <>
+      {variant === 'row' ? (
+        <button
+          type="button"
+          className={`${styles.rowTrigger}${className ? ` ${className}` : ''}`}
+          data-phone={triggerPhone}
+          disabled={disabled}
+          onClick={() => { setError(''); setOpen(true); }}
+        >
+          {rowLabel}<ChevronRight size={15} aria-hidden />
+        </button>
+      ) : (
       <button
         type="button"
         className={`${shared.btnSecondary} ${styles.trigger}${phoneIcon ? ` ${styles.hasPhoneIcon}` : ''}${className ? ` ${className}` : ''}`}
@@ -197,6 +221,7 @@ export default function CoachExportButton({
         {phoneIcon && <span className={styles.iconPhone} aria-hidden>{phoneIcon}</span>}
         <span className={shared.headerBtnLabel}>Export</span>
       </button>
+      )}
 
       {open && (
         <ExportChoiceDialog

@@ -38,7 +38,6 @@ describe('a helper on a game meets the Scouting tab and nothing else', () => {
     assert.equal(d.scoreForm, false);
     assert.equal(d.awards, false);
     assert.equal(d.editEvent, false);
-    assert.equal(d.seasonAttendanceLink, false);
     // The bench observes — open to every schedule-holder by ruling (2026-08-04).
     assert.equal(d.scoutingTab, true);
   });
@@ -51,7 +50,7 @@ describe('a helper on a game meets the Scouting tab and nothing else', () => {
 });
 
 describe('a default assistant keeps every door they had', () => {
-  it('has both tabs, the score form, awards, editing and the Insights link', () => {
+  it('has both tabs, the score form, awards and editing', () => {
     const d = scheduleDrawerDoors(assistant(), game);
     assert.equal(d.attendanceTab, true);
     assert.equal(d.lineupTab, true);
@@ -59,7 +58,6 @@ describe('a default assistant keeps every door they had', () => {
     assert.equal(d.scoreForm, true);
     assert.equal(d.awards, true);
     assert.equal(d.editEvent, true);
-    assert.equal(d.seasonAttendanceLink, true);
     // Sending announcements is off by default until the head coach grants it.
     assert.equal(ASSISTANT_DEFAULTS.announcementsSend, false);
   });
@@ -74,13 +72,12 @@ describe('a default assistant keeps every door they had', () => {
 });
 
 describe('a money-only treasurer reads the panel and changes the schedule nowhere on it', () => {
-  it('sees no schedule write door and no Insights link, since money is not a player duty', () => {
+  it('sees no schedule write door', () => {
     const d = scheduleDrawerDoors(treasurer(), game);
     assert.equal(d.attendanceTab, false);
     assert.equal(d.lineupTab, false);
     assert.equal(d.scoreForm, false);
     assert.equal(d.editEvent, false);
-    assert.equal(d.seasonAttendanceLink, false);
     assert.equal(d.scoutingTab, true);
     // ⚠ Awards MIRROR the API's own rule (`canManageAwards` = any record duty, money included), so
     // a treasurer holds this door today. Whether money should count towards awards is a question

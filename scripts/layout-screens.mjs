@@ -85,6 +85,41 @@ async function openTeamSheet(page) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * THE SCHEDULE'S PHONE GESTURES (phone re-evaluation stage 2, 2026-09-21). At ≤640 the List · Week ·
+ * Month switch is a glyph-only menu beside "+" ("Change view · <current>") and the list is an inner
+ * scroller that opens positioned on today; above 640 the switch is the kit toolbar's toggle and the
+ * page scrolls as a document. Each gesture uses whichever door the width renders.
+ */
+async function pickScheduleView(page, word) {
+  const glyph = page.getByRole('button', { name: /^Change view · / }).first();
+  if (await glyph.count() && await glyph.isVisible()) {
+    await glyph.click();
+    await page.getByRole('menuitemradio', { name: word, exact: true }).click();
+  } else {
+    const toggle = page.getByRole('button', { name: word, exact: true }).first();
+    if (await toggle.count() === 0) return;
+    await toggle.click();
+  }
+  await page.waitForTimeout(400);
+}
+/** The list slid up into the past — the sticky month band's ground over the rows is only real
+ *  while it is pinned, and the open position pins today's; this reads April's. No-op above 640
+ *  (the scroller has no travel there). */
+async function slideScheduleToTop(page) {
+  await page.evaluate(() => { const s = document.querySelector('[data-schedule-scroller]'); if (s) s.scrollTop = 0; });
+  await page.waitForTimeout(250);
+}
+/** The RSVP sheet, raised from the first attendance row of the open event sheet (C3): a dialog
+ *  over a dialog, scoped so the event sheet beneath its scrim is not reported as covered. */
+async function openRsvpSheet(page) {
+  const row = page.locator('[role="dialog"][aria-modal="true"] button[aria-haspopup="dialog"]').first();
+  await row.waitFor({ state: 'attached', timeout: 15_000 });
+  await row.click();
+  await page.locator('[data-rsvp-sheet] [role="dialog"]').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
 async function openFirstBlock(page) {
   const row = page.getByRole('button', { name: /^Open / }).first();
   if (await row.count() === 0) return;
@@ -221,6 +256,20 @@ export const SCREENS = [
   // `check:css-selectors` direction C, 2026-09-21. The sheet declares itself a modal dialog; a
   // scope on that declaration cannot go stale the way a class name can.
   { id: 'coach-schedule-attendance', session: 'coach', ready: '[data-field-floor]', scope: '[role="dialog"][aria-modal="true"]',
+    path: (c) => `${team(c)}/schedule?event=${c.gameEventId}&tab=attendance` },
+  // The list slid to the top (stage 2 · C1): at ≤640 the list opens positioned on today inside its
+  // own scroller, so the plain entry above reads the September band pinned; this one reads April's
+  // — the sticky ground over the rows, and the rows the open position never shows. Above 640 the
+  // gesture is a no-op and the entry measures the same page `coach-schedule` does.
+  { id: 'coach-schedule-past', session: 'coach', path: (c) => `${team(c)}/schedule`, ready: 'h1', interact: slideScheduleToTop },
+  // Week and Month (stage 2 · C2) — never swept before this stage (the 32px ‹ › arrows and the
+  // 10px month chips sat in no baseline because nothing opened them). The gesture is the width's
+  // own switch: the glyph menu at ≤640, the toolbar's toggle above.
+  { id: 'coach-schedule-week', session: 'coach', path: (c) => `${team(c)}/schedule`, ready: 'h1', interact: (p) => pickScheduleView(p, 'Week') },
+  { id: 'coach-schedule-month', session: 'coach', path: (c) => `${team(c)}/schedule`, ready: 'h1', interact: (p) => pickScheduleView(p, 'Month') },
+  // The RSVP sheet (stage 2 · C3) — one player's attendance from the foot of the screen, scoped to
+  // its own dialog (the way `coach-team-hub-switcher` scopes to its sheet).
+  { id: 'coach-schedule-rsvp', session: 'coach', ready: '[data-field-floor]', scope: '[data-rsvp-sheet] [role="dialog"]', interact: openRsvpSheet,
     path: (c) => `${team(c)}/schedule?event=${c.gameEventId}&tab=attendance` },
   /* ⚠ ATTENDANCE MOVED INTO THE INSIGHTS PORTAL (P1, 2026-08-18) — `/attendance` is now a permanent
      redirect, and this entry addresses the TAB. It stays here rather than moving down to the

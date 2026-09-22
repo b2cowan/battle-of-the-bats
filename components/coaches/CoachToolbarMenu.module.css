@@ -154,3 +154,25 @@
 @media (max-width: 768px) {
   .triggerChip { min-height: var(--tap-min, 44px); }
 }
+
+/* The trigger as ONE SYMBOL (`variant="glyph"`) — a 44px box, the glyph and nothing else; the
+   accessible name is the label. The Schedule's view menu beside "+" (phone re-evaluation stage 2 ·
+   C1, 2026-09-21): a quiet ghost box the size of the create beside it, in the secondary ink. */
+.triggerGlyph {
+  width: var(--tap-min, 44px);
+  height: var(--tap-min, 44px);
+  padding: 0;
+  justify-content: center;
+  background: none;
+  color: var(--text-secondary);
+}
+.triggerGlyph > svg { display: block; }
+.triggerGlyph:hover:not(:disabled),
+.triggerGlyph.triggerOpen { background: var(--home-olive-soft, rgba(255, 255, 255, 0.11)); color: var(--text-primary); }
+
+/* `bareOnPhone`: at ≤640 the collapsed trigger keeps its symbol and loses the chevron too — the
+   lime square is the add door (the Schedule's "+", owner ruling 2026-09-21). The chevron is the
+   trigger's last child; the label span before it is already display:none at this width. */
+@media (max-width: 640px) {
+  .triggerBare > svg:last-child { display: none; }
+}

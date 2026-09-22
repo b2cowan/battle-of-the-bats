@@ -278,8 +278,15 @@ const SITES: Site[] = [
     screen: 'Schedule',
     variant: 'standard', helpHost: 'masthead',
     actions: {
-      from: 'scheduleHeaderActions', slot: 'action', holds: 'Add Event (the create, with a choice inside), then Import',
-      phoneHidden: '!canAddEvents', phoneInTitleRow: 'true',
+      // Since the phone re-evaluation's stage 2 (C1, owner ruling 2026-09-21) the slot ALSO holds the
+      // view menu — a glyph-only button (the current view's glyph, no word, no chevron) shown at
+      // ≤640 only, where it replaces the kit toolbar's List · Week · Month toggle. It sits BEFORE the
+      // create because it is not a create (house rule 4 is about the one create, which keeps its
+      // corner) and wears none of the secondary markers, so the create-first check has no opinion.
+      // `actionsPhoneHidden` went with it: a read-only assistant has no create and no import but
+      // still switches views, so the row never drops — the create gates itself on `canAddEvents`.
+      from: 'scheduleHeaderActions', slot: 'action', holds: 'the view menu (≤640 only, a glyph), Add Event (the create, with a choice inside), then Import',
+      phoneHidden: null, phoneInTitleRow: 'true',
     },
   },
   {

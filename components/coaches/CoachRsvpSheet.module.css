@@ -1,0 +1,108 @@
+/* CoachRsvpSheet — what differs from the More / team sheets it shares a container with
+   (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown` / `.sheetGrab`).
+   Doubled selectors on purpose: the nav module writes the same properties at (0,1,0) inside its
+   ≤900 block, and which of two same-weight rules wins across modules is bundle order — (0,2,0)
+   wins whichever comes first (the kit learned this the day it was built). */
+
+/* The anchor's foot is the SCREEN'S foot, not the bar's: the event sheet covers the bar at ≤640
+   and the nav is hidden while any sheet is open. Above the event sheet's overlay (400 at ≤640,
+   200 wider) and the day sheet (400). */
+.floor.floor {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  z-index: 410;
+}
+.panel.panel {
+  padding-bottom: calc(18px + env(safe-area-inset-bottom, 0px));
+}
+/* The grab line as a 44px control — the sheet's own way out, beside the scrim and Escape. */
+.grabBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  margin: -6px 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.grabBtn > span { margin: 0; }
+
+.name {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 800;
+  line-height: 1.15;
+  color: var(--text-primary);
+}
+.sub {
+  margin: 2px 0 10px;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+
+/* The four choices — full-width 52px rows, the icon each option already has, the current one
+   ticked and filled in its status tint (the same tints the list's badges wear). */
+.choices { display: flex; flex-direction: column; gap: 6px; }
+.choice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 52px;
+  padding: 0 12px;
+  border: 1px solid var(--home-line-strong, var(--white-10));
+  border-radius: 10px;
+  background: var(--home-card, var(--card-bg));
+  color: var(--text-primary);
+  font-size: var(--type-body);
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.choice > svg { color: var(--text-tertiary); flex: none; }
+.choice:hover { background: var(--home-olive-soft, rgba(255, 255, 255, 0.07)); }
+.choiceOn > svg { color: inherit; }
+.tick { margin-left: auto; }
+.choiceOn[data-status="attending"] { background: rgba(var(--success-rgb), 0.16); border-color: var(--success); color: var(--success); }
+.choiceOn[data-status="late"]      { background: rgba(var(--warning-rgb), 0.16); border-color: var(--warning); color: var(--warning); }
+.choiceOn[data-status="absent"]    { background: rgba(var(--danger-rgb), 0.14);  border-color: var(--danger);  color: var(--danger); }
+.choiceOn[data-status="unknown"]   { background: var(--home-olive-soft, rgba(255, 255, 255, 0.12)); border-color: var(--home-line-strong, rgba(255, 255, 255, 0.3)); color: var(--text-primary); }
+/* Warm coaches portal — the ratified RSVP palette (TH-5): In = OLIVE, not the win-green the
+   --success remap gives, so "attending" stays distinct from a game win. The rule the inline
+   editor carried in `coaches.module.css` before the sheet replaced it (stage 2 · C3). */
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .choiceOn[data-status="attending"] {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+
+/* The note under the choices, at the floor. */
+.note.note { width: 100%; margin-top: 8px; min-height: var(--tap-min, 44px); }
+
+/* ABOVE THE NAV BREAKPOINT the nav module draws nothing (its sheet rules are ≤900), and the row is
+   the tap at every width now that the inline editor is gone — so the same panel is a small
+   centered dialog: the coach portal's modal surface, no grab line. The anchor stays the zero-height
+   box at the screen's foot (a full-screen fixed element is CHROME to the rendered sweep, which
+   would report the event sheet beneath as hidden under it); the scrim rises from it over the
+   viewport and the panel is placed at the viewport's centre against it. */
+@media (min-width: 901px) {
+  .scrim { position: absolute; left: 0; right: 0; bottom: 0; height: 100vh; background: rgba(0, 0, 0, 0.6); }
+  .panel.panel {
+    position: absolute;
+    left: 50%;
+    bottom: 50vh;
+    transform: translate(-50%, 50%);
+    width: min(400px, calc(100vw - 2rem));
+    padding: 1rem 1.25rem 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+    border-radius: var(--radius);
+  }
+  .grabBtn { display: none; }
+}

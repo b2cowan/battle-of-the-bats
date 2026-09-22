@@ -750,7 +750,12 @@ function probeInPage(opts) {
         const overflowProp = axis === 'y' ? 'overflowY' : 'overflowX';
         let a = el.parentElement, scroller = null;
         while (a) {
-          if (/(auto|scroll|hidden|clip)/.test(getComputedStyle(a)[overflowProp])) { scroller = a; break; }
+          // ⚠ NOT `clip`. `overflow: clip` clips without establishing a scroll container, so a
+          // sticky element inside it sticks against the next scroller UP — which is exactly why
+          // the row recipe's framed phone list uses it (the Schedule's month band pins against
+          // the list's scroller through the frame; stage 2 · C1, 2026-09-21). Treating `clip` as
+          // a scroller reported that band as "trapped in <ul>" on a frame that never scrolls.
+          if (/(auto|scroll|hidden)/.test(getComputedStyle(a)[overflowProp])) { scroller = a; break; }
           a = a.parentElement;
         }
         // No clipping ancestor means the document scrolls it, and the document has travel

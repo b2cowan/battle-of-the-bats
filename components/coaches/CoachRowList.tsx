@@ -50,7 +50,10 @@ export function CoachRowList({
    *  grey slabs, and the approved drawing was one white frame). Declared, never inferred: the
    *  rendered sweep's `list-ground` rule reads `data-row-list-phone` and holds the list to the
    *  framed form at ≤640 (the list paints the card, the rows paint nothing); without it a framed
-   *  phone list is the stand-down FAILING and is reported as such. Meaningless with `inset`. */
+   *  phone list is the stand-down FAILING and is reported as such. WITH `inset` (the Schedule's
+   *  attendance list inside the event sheet, phone re-evaluation stage 2 · C3): the list keeps its
+   *  hairlines at ≤640 instead of breaking into row-cards and still paints no ground — the card
+   *  around it is the one painter, on a phone as on a desktop. */
   phoneFrame?: boolean;
   /** What the list is, for the accessibility tree (§1: a list with no heading row must say). */
   label?: string;
@@ -116,11 +119,16 @@ type RowBase = {
   /** A control that sits BESIDE the row (a sibling inside the <li>, never nested in the row's own
    *  link or button — the schedule's Game day pill). */
   beside?: ReactNode;
+  /** The club-local day (`YYYY-MM-DD`) the record falls on, written on the <li> — what the
+   *  Schedule's open-on-today effect reads to find the first row on or after today (phone
+   *  re-evaluation stage 2 · C1). The DAY, never the instant: a game that started an hour ago is
+   *  still today's row. Undated rows leave it off. */
+  'data-day'?: string;
 };
 
 export type CoachRowProps =
   | (RowBase & { as: 'link'; href: string })
-  | (RowBase & { as: 'button'; onClick: MouseEventHandler<HTMLButtonElement>; 'aria-expanded'?: boolean; disabled?: boolean })
+  | (RowBase & { as: 'button'; onClick: MouseEventHandler<HTMLButtonElement>; 'aria-expanded'?: boolean; 'aria-haspopup'?: 'dialog' | 'menu'; disabled?: boolean })
   | (RowBase & { as?: 'static' });
 
 export function CoachRow(props: CoachRowProps) {
@@ -157,7 +165,7 @@ export function CoachRow(props: CoachRowProps) {
   );
   const ariaLabel = props['aria-label'];
   return (
-    <li className={styles.rowListItem} data-row-list-row aria-hidden={props['aria-hidden'] || undefined}>
+    <li className={styles.rowListItem} data-row-list-row data-day={props['data-day']} aria-hidden={props['aria-hidden'] || undefined}>
       {props.as === 'link' ? (
         <Link href={props.href} className={rowClass} aria-label={ariaLabel} title={props.tooltip}>{inner}</Link>
       ) : props.as === 'button' ? (
@@ -166,6 +174,7 @@ export function CoachRow(props: CoachRowProps) {
           className={rowClass}
           onClick={props.onClick}
           aria-expanded={props['aria-expanded']}
+          aria-haspopup={props['aria-haspopup']}
           aria-label={ariaLabel}
           disabled={props.disabled}
           title={props.tooltip}
