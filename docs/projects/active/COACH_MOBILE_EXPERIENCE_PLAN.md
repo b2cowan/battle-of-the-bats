@@ -324,6 +324,116 @@ The desktop’s grid and the 641–768 band’s (the phone’s form is D5 — a 
   Touched: the builder page (the button, its handler, the now-unused `X` import) and
   `.lineupTemplateDelete` in the coaches stylesheet; the panel’s measured height is unchanged (the
   ✕ was 30px wide inside a stretched row). Focused lint · the 29-case phone guard · `check:css-selectors` green.
+### 9.10 D12 · D13 — the builder’s four phone panels become DRAWERS, and the setup drawer is trimmed to fit (owner ruling 2026-09-22, built the same day; **COMMITTED `f29fd9c8`** 2026-09-22)
+
+**Asked:** *“can this open as a bottom drawer on mobile? I think it will look better and likely be able to
+fit everything on screen too.”* **Answered before drawing, and half of it was pushed back on:** the panel
+was ALREADY bottom-anchored — a card pinned 92px above the foot, inset 14px each side, capped so it
+scrolled inside itself. Read from the browser at 390×667 / 390×844: the card’s room is **555 / 732**, a
+drawer’s is **583 / 760**. **The container change is worth 28px of height and 29px of width, and nothing
+else.** The panel’s content was 566, so it FITTED at 844 (568 tall, no scroll, 713 in 752 with Game rules
+open) and clipped by 11px at 667 — the owner’s screenshot. A drawer alone lands that at 579 in 583. **So
+the fit was a CONTENT decision, not a container one**, and the option that was recommended and ruled (B)
+trims the content too. ⚠ **Do not re-argue the container as a way to make something fit: it has 28px.**
+
+**The real argument for the drawer** is that this one screen spoke TWO overlay languages: the D5 position
+sheet is a true drawer, while Setup, Templates, Print and the player row menu were floating cards. Hence
+**D13 — all four convert**, because converting Setup alone sharpens the inconsistency rather than softening
+it. Drawn on the hub’s stage-3 tab as six true-size frames (three captured from the build, three drawn).
+
+- **D12 = B.** The panel opens as the phone’s own sheet: full width, flush to the bar’s top, an 18px top
+  radius, a sticky grab line, and a **scrim** so the page behind dims and a tap anywhere off it closes.
+  The bar stays lit and tappable beneath — the builder is a page under the bar, not a dialog over it. The
+  drawer **titles itself “Lineup setup”**, because the scrim covers the row that opened it (the position
+  sheet titles itself with the player for the same reason). **The trim:** *Innings to fill* and *Game
+  rules* fold together behind ONE 44px disclosure (both are per-game overrides of a default almost nobody
+  changes); the explainer drops to one line; **Reshuffle becomes a quiet row under Generate** rather than a
+  second full-width button competing with the one action the surface exists for.
+- **D13 = as drawn.** Templates, Print and the player row menu take the same container. No words, controls
+  or behaviour change in any of the three.
+- **Not changed, and still open:** Generate stays the portal’s secondary button. It and Reshuffle were
+  BOTH `btnSecondary` — the surface’s one reason for existing was indistinguishable from the optional
+  thing under it — and B removes that by demoting Reshuffle out of button form. Whether Generate should
+  wear the lime is a separate ruling. ⚠ **The argument for it is NOT “the phone lost its primary”:**
+  `Mark ready` is `btnPrimary` eight pixels above the Setup row whenever the lineup can be marked, and
+  D14 taking the lime off the Setup row was right on its own evidence (a lime row pointed at *Auto-fill*
+  — regenerate what you just built — while the real next step sat above it in the same colour). The
+  honest case is only *“a panel’s one reason for existing should not look like its optional sibling.”*
+- **Desktop and the 641–900 band.** 1440 is untouched — a 340px popover at 10px radius with no scrim,
+  measured. The band gets the container only (a 768-wide drawer); the title and the trim follow
+  `isPhone`, so 641–900 keeps today’s contents exactly.
+
+**Built as (2026-09-22 · dev — every number read from the browser, never a screenshot).** The drawer
+**558 in 583 at 667 (25px spare, no scroll)** and 558 in 760 at 844; 390 wide, flush at 72, radius
+18px 18px 0 0; the scrim 390 wide stopping at the bar’s top, z 259 under the panel’s 260 and over the
+autosave pill’s 250. Templates 244, Print 210, the row menu 282 — all 390 wide and flush. At 768 the same
+four are 768-wide drawers; at 1440 nothing changed. The one disclosure opened: 780 of content, so it
+scrolls at 667 and by 20px at 844 — **opt-in, which is the point.** ⚠ **The DRAWN B was 522 and the built
+one is 558:** the drawing showed its two new rows at 26px and 30px and both must clear the **44px tap
+floor** — *quieter, never smaller*. The trim is worth 36px less than drawn and still fits with room.
+**A debt paid on the way:** the bare 16px “Game rules ▾” disclosure — on the layout sweep’s known-debt
+list since 27 August and named in §9.4 as unchanged — is now that 44px row; its two baseline entries no
+longer reproduce and were pruned (782 → 780).
+
+**⚠ Revised the same day on the owner's read — *"looks like it is still behind the nav"*.** The
+build above was measured at **667 and 844 only**, and the owner's window is about **622 tall**.
+Reproduced across heights: **below ~640px of viewport the settings stop fitting, the drawer scrolls,
+and what gets clipped at its bottom edge is RESHUFFLE — the actions.** At 622 the content was 557 in
+538, so the last row sat 18px under the bar's top; at 600 and 568, worse. **The "25px spare" in the
+paragraph above was true at 667 and nowhere shorter — a verification miss, not a build defect.**
+
+⚠ **The fix is NOT more trimming.** Trimming the settings to fit 622 only moves the failure to 600.
+Two changes instead:
+1. **The foot is PINNED.** Generate and Reshuffle sit in a sticky foot on the drawer's own surface
+   with a hairline above it; the settings scroll *under* them. The actions are now reachable at
+   **every** height, which is the property that was missing — a surface must never lose its actions.
+   Sticky only ≤900: the desktop popover is not a scroller.
+2. **The duplicate caption is gone.** The drawer is TITLED *"Lineup setup"* and then said
+   *"SETUP"* immediately beneath it — the same word twice. Dropping it is a copy fix that also took
+   the content from **557 → 539**, so the drawer now fits outright at 640 and above.
+
+**Re-measured, by hit-test (is this control actually the topmost element at its centre?), at
+568 · 600 · 622 · 640 · 667 · 844 — Generate and Reshuffle reachable at all six.** The drawer is 540
+where it fits and caps at the room available where it does not; it scrolls only below 640, and only
+the settings scroll. Guard **42/42** with a new case pinning the foot's stickiness, its own surface
+and its ≤900 gating; full suite **4,483 pass**; `check:layout --only=` the six lineup screens ×4
+widths — **no new findings**; selectors and spelling clean.
+
+⚠ **A process note worth keeping, because it nearly shipped a lying guard.** The first version of
+that new test case was written through a shell heredoc, and this environment **strips backslashes
+out of heredocs**. Every `\n` became a real newline (which broke the parse loudly, and blocked the
+whole repo's `npm test` until a peer caught it) — but every regex escape vanished **silently**:
+`/className=\{styles\.lineupSheetQuiet\}/` became a quantifier and `/var\(--card-bg\)/` became a
+capture group matching `var--card-bg`. **Those would have parsed and asserted the wrong thing.**
+Write test files through the editor tool, not heredocs; where a heredoc is unavoidable, assert with
+backslash-free `includes()`.
+
+**⚠ Two more on the owner's third read (2026-09-22), both real.** (1) **Back left the page.** *“when I hit back it brings me to the lineup list and not the lineup I am editing — how is this expected to work on a phone if a user tries to leave this drawer they can't get back to the lineup?”* Correct, and it is a **§219 violation that predates D12**: these four panels never registered a level, which was survivable while they were small popovers and is not once they are full-width modal drawers — a coach who opens one and reaches for the back gesture loses the lineup. **All four now register one step each** (Setup, Templates, Print, the row menu), so Back closes the drawer and stays on the lineup, and a second Back leaves to the room. Verified in the browser for all four. The position sheet already had this through its dialog floor; nothing else on the builder did. (2) **A 14px strip under the pinned foot** was showing the game-rule rows scrolling behind it. `position: sticky; bottom: 0` stops at the SCROLLPORT's bottom, which is inside the container's 14px bottom padding. ⚠ **Two non-fixes, both tried and MEASURED:** a negative bottom margin (a sticky element's stop does not move — the strip stayed 14px) and a `box-shadow` band (it covers the strip, but a **tap still lands on the control behind it** — an invisible hit target, which is worse than the bleed). The structural fix stands: the drawer that has a foot gives its bottom padding TO the foot (`lineupSetupDrawer`), so the foot is both what fills that space and what a thumb finds there. Re-measured at 568 · 622 · 667 · 844: **gap 0, a tap in the last 4px finds the foot, Generate and Reshuffle reachable at all four.** Guard 42/42, suite **4,483 pass**, sweep clean. **STILL OPEN, an owner ruling not a defect:** *“don't we usually open drawers like this over the nav?”* — no: all four existing sheets (More, the team switcher, a player's RSVP, the position sheet) sit ABOVE the bar by the stage-1 decision *“the builder is a page under the bar, not a dialog over it”*, and D12 followed them. The owner's instinct matches the platform norm, and there is a substantive argument beyond looks: **the bar is undimmed and tappable while a modal drawer is open**, so a coach can leave mid-edit by tapping Schedule. Changing it is one decision across all five sheets.
+
+⚠⚠ **A DEFECT FOUND AFTER THIS PASS, BY `/review` — recorded here rather than quietly fixed.** The walk above covered what a coach could see; this one no gate and no walk could see. The builder's four drawers each raise a scrim, and THREE of them render it INSIDE the element `useDismissable` watches while the ROW MENU rendered it as a SIBLING. Outside that boundary a scrim tap reads as *outside*: the hook's document-level **pointerdown** fires first and unmounts the overlay, and the **click** that follows lands on whatever the dismissal just revealed at that screen position. **Reproduced under touch emulation on the real page: dismissing the row menu pressed `Mark ready` underneath it and marked the lineup READY** — a state change the coach never asked for, on a lineup that then had to be repaired in the database (there is deliberately no product action back to Draft once a game has started). ⚠ **A MOUSE PASSED IT EVERY TIME; only touch showed it** — the one input this feature exists for. Fixed by wrapping the row menu's scrim and sheet in the ref'd element, so all four now share one boundary and one close path (verified in the browser: all four report scrim and panel under the same watched wrapper). Pinned by a new guard case — 43/43 — because nothing else in the toolchain can see it. **The transferable rule: a scrim belongs INSIDE the element its dismiss hook watches, and a dismissal gesture must be tested with TOUCH.** Passed to the two sessions building phone drawers of their own; one confirmed it would have shipped the same defect. 
+
+**Build notes.** One container change in `.lineupAutoMenu`’s ≤900 block (flush, radius, `- 12px` cap, no
+gap and no gutters) plus a sticky `::before` grab line; `.lineupSheetScrim` is a SIBLING element at each
+of the five call sites (three in the editor — the phone drawer, the 641–900 drawer, the row menu — and
+two on the builder page), never a pseudo-element, because the panel’s z-index gives it its own stacking
+context and a negative-z pseudo would paint over its own background. `.lineupSheetTitle`,
+`.lineupSheetMore` / `.lineupSheetMoreBody` and `.lineupSheetQuiet` are new; the last two carry
+`min-height: var(--tap-min, 44px)`. `inningsToFillField` and `gameRulesFields` are written ONCE and placed
+by width. ⚠ `.lineupRowSheet`’s padding is deliberately NOT restated inside the media query — the base
+rule is declared later at the same specificity and would win, leaving a dead declaration that
+`check:css-selectors` cannot see because the SELECTOR is alive.
+
+**Verification.** typecheck · focused lint 0 errors (the only warnings are peers’ pre-existing ones) ·
+`verify:changed` green with **4,481 unit tests passing** · `check:css-selectors` clean · the phone guard
+**40/40**, with four new cases pinning the drawer’s geometry, the scrim on all four panels and its z-order,
+the single fold, and both new rows’ 44px floor · `check:layout --only=` the six lineup screens ×4 widths:
+**no new findings**. ⚠ The `coach-lineup-builder-setup` sweep entry is now **scoped to `#lineup-setup-panel`**,
+as the position-sheet entry already was: with a scrim, every control on the page behind is deliberately
+unreachable, which produced 53 `hidden-behind-chrome` findings that were the modal working, not a defect.
+The page behind is still measured by `coach-lineup-builder`, which is the same page with nothing open.
+
+**Walk owed — ledger §223.**
+
 ## 10 · Stage 4 — Practice week & skills (drawn 2026-09-22)
 
 The drawing is the hub's **"4 · Practice week & skills"** tab (five true-size 390px frames, before/after,
@@ -438,7 +548,7 @@ itself (E1 is the toolbar above it only); Money.
   square.
 - A **"QA walk · 4"** tab on the hub at build time, its § number from the ledger.
 
-### 10.8 Built as (2026-09-22 · dev — every number read from the browser's own geometry at 390×844 and 360×780, never a screenshot; probes `s4-before`, `s4-after`, `s4-dialog`, `s4-walk2`, `s4-na`, `s4-fallthrough2`, `s4-overflow` in the build session's `.probe/`) — **UNCOMMITTED, ledger §225 walk owed**
+### 10.8 Built as (2026-09-22 · dev — every number read from the browser's own geometry at 390×844 and 360×780, never a screenshot; probes `s4-before`, `s4-after`, `s4-dialog`, `s4-walk2`, `s4-na`, `s4-fallthrough2`, `s4-overflow` in the build session's `.probe/`) — **COMMITTED `3a8c69da` 2026-09-22; ledger §225 walk (44 steps) owed**
 
 ⚠ **THE DEPENDENCY THIS STAGE TURNED OUT TO HAVE, AND HOW IT WAS SETTLED (2026-09-22).** E1's drawer
 reuses stage 3 · D12/D13's scrim component, whose CSS lives in the shared coach stylesheet — and that
