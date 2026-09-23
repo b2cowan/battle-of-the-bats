@@ -124,6 +124,8 @@ describe('E1 — the practice plan toolbar is one row, and the "⋯" opens a dra
 describe('E2 — a player is one 56px row, and the row is the door', () => {
   const grid = read(GRID);
   const css = readSource(SESSION_CSS);
+  /* The row's controls and the sheet that replaced them are ONE rule, so they are asserted together. */
+  const page = read(SESSION_PAGE);
 
   it('the door row is a BUTTON carrying the row marker, only at ≤640, only for a writable skill row', () => {
     assert.ok(grid.includes('if (isPhone && isSkill && !readOnly) {'), 'the one branch — and `readOnly` keeps the old row');
@@ -170,6 +172,63 @@ describe('E2 — a player is one 56px row, and the row is the door', () => {
     assert.ok(grid.includes('css.doorUnder'), 'the descriptor is the ROW\'s second line');
     assert.ok(!/doorName[^>]*>\s*<strong>[\s\S]{0,120}?<small>/.test(grid), 'and no longer nested inside the name');
     assert.ok(/\.doorUnder\s*\{[^}]*grid-column:\s*2 \/ -1/.test(css), 'spanning from the name\'s column to the end');
+  });
+
+  it('a phone TEST row carries no mark and no Edit \u2014 and the review is the door that replaces them', () => {
+    /* ⚠⚠ THE HEADLINE CHANGE OF 2026-09-23 HAD NO TEST AT ALL (/review, same day). The row lost
+       "Mark not assessed" and "Edit" on a phone, and the ONLY thing that makes that safe is the
+       review sheet gaining the write. Nothing tied the two together, so deleting the review’s door
+       while leaving the row’s removal in place would have shipped a mark a coach could set and
+       never clear — and CI would have been silent. These assertions are that tie. */
+    assert.ok(grid.includes('const phoneTest = isPhone && !isSkill && !readOnly;'), 'the gate is phone + a TEST + writable');
+    assert.ok(grid.includes('!readOnly && !phoneTest && state === \'not_recorded\''), 'Mark not assessed is off the phone row');
+    assert.ok(grid.includes('!readOnly && !phoneTest && state === \'saved\''), 'and so is Edit');
+    assert.ok(/!readOnly && state === 'error'/.test(grid), 'Retry stays at BOTH widths \u2014 an errored row has no saved value to tap');
+    assert.ok(page.includes('onMark={async (playerId, typeId, reason)'), 'the review sheet is where the mark went');
+    assert.ok(page.includes('onUnmark={async (playerId, typeId)'), 'and it is how a mark comes back off');
+  });
+
+  it('a mark the review cannot reach keeps its own Undo', () => {
+    /* ⚠ The review lists only players IN the plan. A player marked and then dropped from the plan
+       is absent from it — so if the row had no Undo either, that mark would be permanent. */
+    assert.ok(grid.includes("(!phoneTest || !row.inScope) && state === 'not_assessed'"),
+      'an out-of-scope row keeps Undo even on a phone');
+  });
+
+  it('the review\'s write is gated like the grid, and cannot be left mid-flight', () => {
+    /* ⚠ Internal notes, not just the Development grant: writing on a SKILL needs both, which is
+       what the grid’s own readOnly says. Without this clause an assistant the head coach left
+       without notes could mark a skill here — a control the rest of the screen hides from them. */
+    assert.ok(page.includes("canWrite && !r.retired && (r.type.kind !== 'skill' || canWriteObservations)"),
+      'the sheet mirrors the grid\u2019s readOnly formula');
+    assert.ok(page.includes('canWriteObservations={canWriteObservations}'), 'and the page actually passes it');
+    /* ⚠ The sheet owns its own in-flight state: the page’s busy flag is never set by this write. */
+    assert.ok(page.includes('const working = busy || pending !== null;'), 'the sheet knows when its own write is in the air');
+    assert.ok(page.includes('<button type="button" className={styles.btnSecondary} disabled={working} onClick={onBack}>'),
+      'and neither way out is tappable while it is');
+    assert.ok(page.includes('disabled={working} onClick={onClose}'), 'both footer buttons, not just one');
+  });
+
+  it('a refused mark is printed where the coach is looking, not on the banner behind the sheet', () => {
+    /* ⚠ `rowErr` paints above the grid. A full-screen sheet covers it, which is the trap this
+       file’s own neighbour already documents for the observation dialog. */
+    assert.ok(page.includes('const failure = await run();'), 'the write is awaited, not fired and forgotten');
+    assert.ok(page.includes('if (failure) { setWriteErr(failure); return; }'), 'a refusal keeps the panel open, holding the reason');
+    assert.ok(page.includes('css.reviewWhyErr'), 'and prints it inside that panel');
+    assert.ok(/\.reviewWhyErr\s*\{/.test(css), 'the class is declared \u2014 an undeclared one renders unstyled and silent');
+    assert.ok(page.includes('): Promise<string | null> {'), 'the write hands back the refusal\u2019s own words');
+  });
+
+  it('every figure on the bar comes from ONE object, so the headline cannot contradict its breakdown', () => {
+    /* ⚠⚠ The first build read the headline from progress() and the breakdown from counts — two
+       different rules. chipProgressByType EXCLUDES a mark on a session with no stated plan, while
+       sessionScopeCounts always counts one, so an unplanned session holding a mark read
+       "3 of 5 accounted for · 3 recorded · 1 not assessed" and could never pin the way out. */
+    assert.ok(page.includes('const accounted = chipProgress(counts);'), 'the headline is the canonical accounted-for figure');
+    assert.ok(page.includes('${accounted.done} of ${accounted.total} accounted for'), 'and the breakdown beside it is the same object');
+    assert.ok(!page.includes('${progress(selectedType.id)} accounted for'), 'never the chip helper, which follows a different rule when unplanned');
+    assert.ok(page.includes('counts.scoped && counts.total > 0 && counts.notRecorded === 0'),
+      'and a session with NO PLAN never claims completeness \u2014 sessionState() returns null for one');
   });
 
   it('the bar that holds only the count is ONE line', () => {
@@ -314,13 +373,22 @@ describe('E4 — the count and the way out dock above the nav', () => {
   });
 
   it('the figure is the CHIP\'S OWN, so the screen cannot show two counts that disagree', () => {
-    assert.ok(page.includes('progress(selectedType.id)'), 'the same rule the chip dropdown reads');
+    /* ⚠ The CHIP reads progress(); the BAR reads counts. They agree in every case — planned or
+       not — which is why the bar could stop borrowing the chip's helper without the screen ever
+       showing two figures that disagree. */
+    assert.ok(page.includes('progress(chip.type.id)'), 'the chip dropdown still carries its own count');
+    assert.ok(!page.includes('progress(selectedType.id)'), 'and the bar no longer borrows it — it reads counts');
     /* ⚠ The bar stopped calling a mark a record on 2026-09-23 rather than stopping saying so:
        "12 of 12 recorded · 2 not assessed" reads as fourteen of twelve, so the headline becomes
        "accounted for" the moment a mark is part of the figure, and the two numbers follow it. */
     assert.ok(page.includes('counts.notAssessed > 0'), 'a session holding marks still says so');
     assert.ok(page.includes('accounted for'), 'and it stops calling a mark a record when it does');
-    assert.ok(page.includes('{progress(selectedType.id)} recorded'), 'with no marks, the common case is untouched');
+    /* ⚠ The bar stopped reading `progress()` entirely on 2026-09-23 (/review): that helper
+       excludes a mark on an unplanned session while the breakdown beside it always counts one,
+       so the two could contradict. Both now come off `counts`. The CHIP still reads `progress()`,
+       which is what the first assertion above is about, and the two agree in every case. */
+    assert.ok(page.includes('${counts.recorded} of ${counts.total} recorded'),
+      'with no marks the bar reads recorded-of-total, off the same object as the breakdown');
   });
 
   it('the way out waits at the end of the list, and only a full house pins it', () => {
@@ -328,7 +396,8 @@ describe('E4 — the count and the way out dock above the nav', () => {
        reads the SAME figure the bar prints beside it (a result, an observation OR a mark); gating
        on typed values would let the bar say "12 of 12" while withholding the way out, which is the
        disagreement the test above exists to stop. */
-    assert.ok(page.includes('typeProgress.done >= typeProgress.total'), 'accounted for, never "has a value"');
+    assert.ok(page.includes('counts.notRecorded === 0'), 'accounted for — a value OR a mark, never "has a value"');
+    assert.ok(page.includes('counts.scoped &&'), 'and a session with no plan stated never claims to be complete');
     assert.ok(page.includes('{!allAccounted && ('), 'while anyone is outstanding the door sits under the LAST player');
     assert.ok(page.includes('{allAccounted && ('), 'and only then does it move up into the pinned bar');
     assert.ok(!/tailOut[\s\S]{0,400}?dockPill/.test(page.slice(page.indexOf('{!allAccounted && ('), page.indexOf('{allAccounted && ('))),

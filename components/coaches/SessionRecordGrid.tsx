@@ -315,7 +315,10 @@ export default function SessionRecordGrid({
                 boxes below it do not — so a blank row carries no state at all. Mark not assessed
                 and Edit are both absent there; see this file's header for where each one went. */}
             <span className={`${css.state} ${stateCls}${phoneTest ? ` ${css.stateChipWrap}` : ''}`} role="status">
-              {(!phoneTest || state !== 'not_recorded') && (
+              {/* ⚠ …and it stands down while the row is being EDITED: the caption below already says
+                  "editing — entered by …", and a chip reading "Recorded" beside it is the row saying
+                  two things at once on the one line this redraw exists to keep clear. */}
+              {(!phoneTest || (state !== 'not_recorded' && !editing)) && (
                 phoneTest
                   ? <span className={`${css.stateChip} ${state === 'saved' ? css.stateChipDone : state === 'not_assessed' ? css.stateChipNa : ''}`}>{rowStateLabel(state)}</span>
                   : rowStateLabel(state)
@@ -323,7 +326,13 @@ export default function SessionRecordGrid({
               {!readOnly && !phoneTest && state === 'not_recorded' && !editing && (
                 <button type="button" className={css.rowLink} onClick={() => onMarkNotAssessed(p.id)}>Mark not assessed</button>
               )}
-              {!readOnly && !phoneTest && state === 'not_assessed' && (
+              {/* ⚠ UNDO COMES BACK WHEN THE REVIEW CANNOT REACH THE MARK (/review 2026-09-23). The
+                  review sheet is the phone's door to a mark, and it lists only players who are IN
+                  the session's plan — so a player marked while in the plan and then dropped from it
+                  keeps a "Not assessed" chip that no screen could remove: absent from the review's
+                  lists, and stripped of this link. Narrow (it needs a plan edited after a mark) and
+                  permanent, which is the bad combination. An out-of-scope row keeps its own way out. */}
+              {!readOnly && (!phoneTest || !row.inScope) && state === 'not_assessed' && (
                 <button type="button" className={css.rowLink} onClick={() => onUnmarkNotAssessed(p.id)}>Undo</button>
               )}
               {/* Retry stays at BOTH widths: an errored row holds no saved value to tap, so without

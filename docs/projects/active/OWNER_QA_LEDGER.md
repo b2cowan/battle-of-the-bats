@@ -22934,6 +22934,8 @@ The other two were the answers claiming to be radio buttons without the keyboard
 
 **Fixture note:** the walk was driven end to end on dev and **the fixture was restored exactly as it was found** (Avery and Blake recorded against the skill, nobody else) — every observation the walk wrote was deleted afterwards and the state re-read to confirm.
 
+**§225 WALKED — PASSED 2026-09-23** (owner). Findings that surfaced during the walk were fixed on the spot rather than logged as open items.
+
 ## §226 · Money on a phone — **the summary band narrows to two-up and Budget Plan stops opening with no budget on screen** — the walk Money was deferred for, opened 2026-09-22.
 
 **The defect, measured before anything was drawn (UAT fixture, 390×844):** Budget Plan rendered its

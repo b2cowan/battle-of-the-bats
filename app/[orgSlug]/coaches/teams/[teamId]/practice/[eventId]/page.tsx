@@ -1166,17 +1166,19 @@ export default function CoachPracticePlanPage({
                       presentations read, so no label is written twice. */}
                   {isPhone ? (
                     deskActions.length > 0 && (
-                      <CoachToolbarMenu
-                        variant="glyph"
-                        drawerOnPhone
-                        drawerTitle="Practice plan"
-                        label="More for this practice plan"
-                        icon={<MoreHorizontal size={18} aria-hidden />}
-                      >
-                        {deskActions.map(a => (
-                          <CoachToolbarMenuItem key={a.key} icon={a.icon} label={a.label} onSelect={a.onSelect} />
-                        ))}
-                      </CoachToolbarMenu>
+                      <span className={styles.ppToolbarEnd}>
+                        <CoachToolbarMenu
+                          variant="glyph"
+                          drawerOnPhone
+                          drawerTitle="Practice plan"
+                          label="More for this practice plan"
+                          icon={<MoreHorizontal size={18} aria-hidden />}
+                        >
+                          {deskActions.map(a => (
+                            <CoachToolbarMenuItem key={a.key} icon={a.icon} label={a.label} onSelect={a.onSelect} />
+                          ))}
+                        </CoachToolbarMenu>
+                      </span>
                     )
                   ) : (
                     deskActions.map(a => (

@@ -50,7 +50,7 @@ Not walked as a phone problem, recorded: Money (3,019px; 136 of 495 words ≤11p
 | 2 Schedule | Today first with the past folded; Week without blanks; Month as dots + a day list; the event sheet ordered by the day — **and the sheet’s 96 baselined findings** | Q 2.1–2.3 | **drawn 2026-09-20 (§8) · C1 redrawn 2026-09-21 on the owner’s first read (the list as the scroller, no fold row, a view menu, one frame) · **RULED 2026-09-21 — C1–C4 build as drawn, the desktop phone-first** · build owed (the build prompt is in the drawing session’s hand-back)** |
 | 3 Game week | The builder's Setup as one self-describing row that opens the builder's panel; undo · redo · print · templates as one icon row; **one inning at a time** with the neighbours in small type and the number as the handle (the owner's read); the sheet's Lineup door at the top and Back to the game; the meta line and the hint | D1–D5 (Q 4.1, 4.2) | **drawn 2026-09-21 (§9), revised on four owner reads the same day · RULED 2026-09-21 — D1 = B, D2 = B, D5 · D3 · D4 as drawn · build owed (the build prompt is in the drawing session's hand-back)** |
 | 4 Practice week & skills | The plan's toolbar as ONE 44px row + a "⋯" drawer; a player is one 56px row and the row is the door; the observation dialog's descriptors as rows with a DOCKED foot and Save & next player; the count and Review docked above the bar; one title, one date, a 44px "+" | E1–E5 (Q 6.1, 7.1, 7.2) | **drawn 2026-09-22 (§10) · RULED 2026-09-22 — E1 = A, E2 · E3 · E4 · E5 as drawn · build owed** |
-| 5 People | The player's Details tab as the RECORD with Edit on the section (F1); the switcher as a `‹ 4/12 ›` stepper, its row gone (F2); the chat list this-team-first, sorted CLIENT-side with an `Your other teams` divider (F3). **Plus one the drawing found that the plan never asked: (F4) Family & paperwork is the OTHER tab that lands as a form** — same read face, and `tel:` rows on the tab whose job is "who do I call?". Gate CLEAR: §182 walked 40/40 on 2026-09-13. | Q 3.2, 8.1, 8.2 (+ F4) | **drawn 2026-09-22 (§11) · RULING OWED** |
+| 5 People | The player's Details tab as the RECORD with Edit on the section (F1); the player's NAME carries a chevron and opens a sheet of the roster — the team switcher's own idiom — and the switcher's 56px row goes (F2, REDRAWN 2026-09-23 on the owner's read; the first form was a prev/next stepper and is withdrawn); the chat list this-team-first, sorted CLIENT-side with an `Your other teams` divider (F3). **Plus one the drawing found that the plan never asked: (F4) Family & paperwork is the OTHER tab that lands as a form** — same read face, and `tel:` rows on the tab whose job is "who do I call?". Gate CLEAR: §182 walked 40/40 on 2026-09-13. | Q 3.2, 8.1, 8.2 (+ F4) | **drawn 2026-09-22 (§11) · F2 redrawn 2026-09-23 · RULED 2026-09-23 — F1 · F2 (as redrawn) · F3 = B · F4 accepted · build owed** |
 | 6 Reports | Tables that fit stay tables; short tab labels; the notification clamp | Q 9.1, 10.1 | — |
 
 ## 4 · Stage 0 — the shell (drawn 2026-09-19)
@@ -821,21 +821,45 @@ one of `/review`'s four High findings lived.
 was found** (Avery and Blake recorded against the skill, nobody else) — every observation and mark
 the walk wrote was deleted afterwards and the state re-read to confirm.
 
-## 11 · Stage 5 — People (drawn 2026-09-22)
+## 11 · Stage 5 — People (drawn 2026-09-22 · RULED 2026-09-23)
 
-The drawing is the hub's **"5 · People"** tab (ten true-size 390px frames, before/after, fifteen
-clickable annotations). This section is the durable record: what is proposed, what the drawing
+The drawing is the hub's **"5 · People"** tab (eleven true-size 390px frames, before/after, seventeen
+clickable annotations). This section is the durable record: what was ruled, what the drawing
 corrected in this plan's own record, what it found that was not asked for, and what the build is
-gated on. **Ruling owed.**
+gated on.
 
-### 11.0 What is being asked (F1–F4)
+### 11.0 Rulings (owner, 2026-09-23 — *"I approve as designed"*)
+
+- **F1** — Details lands as the **record** on a phone, with **Edit on the section**. *Build as drawn.*
+- **F2** — the player's **name carries a chevron** and opens a **sheet of the roster**, the team
+  switcher's own idiom. *Build as redrawn* — the prev/next stepper is **withdrawn**.
+- **F3** — the chat list sorts **this team's rooms first, client-side**, with the `Your other teams`
+  divider. *Option B as drawn* (A, sort-only, is not taken).
+- **F4** — **Family & paperwork gets the same read face and section Edit.** Offered as a separable
+  addition and **accepted** with the rest.
+
+⚠ **No migration.** Every decision is presentation at ≤640. No route learns a year
+(`HISTORY_ENDPOINTS` untouched); no new API; nothing is stored that was not stored before.
+
+⚠ **Two things the ruling does NOT settle, both recorded below rather than assumed:** whether the
+portal-wide touch-target project starts and whether People goes first (§11.5a), and whether the Chat
+tab should render at all for a team whose plan has no team chat (§11.5b).
+
+### 11.0b What is being built (F1–F4)
 
 - **F1 — Q 8.1.** On a phone the player's **Details** tab lands as the **record**, with **Edit** on
   the *section* rather than the page. Same fields, same saves, same gates; the desktop and the
   641–768 band keep the form.
-- **F2 — Q 8.2.** The player switcher becomes the portal's own **stepper** — `‹ 4/12 ›`, two 44px
-  elements in the title row — and the 56px row the select sat on disappears. The desktop keeps the
-  select.
+- **F2 — Q 8.2, REDRAWN 2026-09-23 on the owner's read.** The player's **name carries a chevron**
+  and opens a **sheet of the roster** — the team switcher's own idiom (stage 1 · B1), one line down.
+  The 56px row the select sat on disappears either way. The desktop keeps the select.
+  ⚠ **The first drawing was a prev/next stepper and it was wrong.** It traded random access for
+  sequential access to save a row: reaching the ninth player took eight presses, which is worse than
+  the dropdown it replaced. **And it would have reversed a standing ruling by accident** — the Switch
+  player dropdown (owner, 2026-09-13) is reasoned in the code as *"a native select — the sidebar's
+  team switcher is one too"*, i.e. it exists to MATCH the team switcher. Stage 1 · B1 then turned
+  that switcher into a name + chevron + sheet, so honouring the 13 September ruling today produces
+  exactly the owner's read. Withdrawn, and the withdrawal is drawn on the tab beside the new frame.
 - **F3 — Q 3.2.** The chat list puts **this team's rooms first**, sorted **client-side**, with one
   quiet `Your other teams` divider once a room from elsewhere appears (**B**; A is sort-only).
 - **F4 — an ADDITION, not one of the three questions.** **Family & paperwork** is the *other* tab
@@ -870,6 +894,9 @@ Measured on the running product 2026-09-22, after stages 0–4, at 390×844 and 
   and the tablet band keep the form, so that prompt keeps landing where it always did.
 - **Stage 5's gate is clear.** The ladder's stage-5 row read "after §182 is walked"; **§182 walked
   40/40 PASS on 2026-09-13**.
+- ⚠ **And one the DRAWING got wrong, corrected by the owner on first read (2026-09-23).** F2's first
+  form was a prev/next stepper, argued from "a coach checks four players in a row at the fence" — an
+  assumption with nothing behind it. The ordinary case is *a coach wants Devon*. See §11.0.
 - What holds: the roster is one screen (twelve rows, 46px pitch, first at y=179, last at y=687);
   the switcher is a native select; the player's tabs are five and unchanged.
 
@@ -904,7 +931,9 @@ at 35px with no record face at all, on the tab that answers station 8's own job 
 | Positions · Pitching · A-squad | 216 + 292 + 120 = **628px** | three rows |
 | Controls under 44px, Details | **21** (4 inputs 35 · 8 chips 30 · star 26 · 3 selects 37 · a 20px help button) | **0** on the face that lands |
 | The header | 100px (44 title + a 56px row holding one select) | **44px** |
-| The switcher | a 137×44 native select — tap, wheel, confirm | `‹ 4/12 ›`, two 44px elements, one tap |
+| The switcher | a 137×44 native select — tap, wheel, confirm | the name + a 16px chevron; a sheet of the roster |
+| Reaching the ninth player | select → wheel → confirm | **two taps**, flat for every player (the withdrawn stepper: eight) |
+| The roster sheet | — | **679px, twelve 52px rows, no inner scroll at 390 or 360** (measured in the shipped container) |
 | Family & paperwork | 1,472px, 7 inputs at 35px + a 38px Upload | read face; `tel:` rows |
 | Chat: rooms from this team, first | **0 of 2** on the fixture (see §11.5) | this team's, then a divider |
 
@@ -917,8 +946,9 @@ docked bar.
 |---|---|---|
 | The record face | The player page's **own** non-writer view (§182, 13 Sep) | Shipped and walked 40/40. F1 widens its audience; it does not invent it. |
 | "Edit is a visit" | The practice record's *Edit the plan* (practices stage 6) | Settled — never stored, never in the URL, false on every load, and focus moved by hand to the first writable field because the door unmounts under the pointer. |
-| The stepper | The lineup builder's pinned inning stepper (stage 3 · D5) | Safe — §220 passed it. `.gdStepper` is 44px on both axes **as the element**, and `disabled` at each end. |
-| "4/12" | Stage 4's "3 of 12" kicker | Safe, and here it sits on a control that actually has ‹ ›. |
+| The name + chevron | The masthead's team switcher (stage 1 · B1) | Shipped and walked — ruled 21 Sep, §210 passed 24/24. Same chevron, same 44px tap, same "offered only when there is somewhere to go". |
+| The sheet **layer** | *A form covers the nav, a menu sits on top of it* (owner, 2026-09-23) | **Settled, and it lands on the menu side.** The roster sheet is a MENU — tap a name, it acts, it closes — so it stops at the bar's top with the nav **visible, undimmed and tappable**, exactly as the team switcher it copies. It does **not** raise itself to the form layer, and it does **not** enrol in the overlay counter (that would hide the bar the sheet is drawn against). The ruling arrived the morning after this was drawn and confirms it rather than disturbing it. |
+| The roster sheet | The More sheet's container, already shared with the team sheet | Measured with twelve rows in it: 679px, 52px rows, no inner scroll at 390 or 360, the bar live beneath. A **third** caller on one sheet system. |
 | `tel:` rows | The roster's one stripping rule (13 Sep `/simplify`) | Settled. One helper, reused. |
 | **NOT** borrowed: "the row is the door" (stage 4 · E2) | — | A record row opens nothing. Deliberately not a door. |
 
@@ -963,9 +993,12 @@ fixed here. **It also means F3 cannot be QA-walked on today's fixture.**
 - **Whether the read face keeps the four glance tiles above it.** They are doors to other tabs and
   this stage does not touch them — but a record under a card of facts is two records on one screen,
   and only a filled player will show whether that reads as one thing or two.
-- **The stepper's order versus the depth chart's.** Both are "the coach's own order" because they are
-  the same array, but a player opened from the depth chart was not walked. At 390 the depth chart is
+- **The sheet's order versus the depth chart's.** Both are "the coach's own order" because they are the
+  same array, but a player opened from the depth chart was not walked. At 390 the depth chart is
   1,121px with 3 sub-floor controls, so it is not a phone problem; the ordering question is still real.
+- **A third caller on one sheet system.** The container, scrim, grab line and row density are the More
+  sheet's, already shared with the team sheet. Three callers is where a shared component starts wanting
+  options — decide at build whether the roster sheet needs anything the other two do not, and resist it.
 - **What a `CoachPageSection` action slot is called and how it differs from `meta`.** `meta` holds
   FACTS today ("92% · 13 recorded"). Putting a button in the fact slot is how a shared component
   quietly becomes two things.
@@ -977,23 +1010,31 @@ fixed here. **It also means F3 cannot be QA-walked on today's fixture.**
   Without it the read face cannot be seen, the sweep re-measures the same empty screen and the walk
   checks nothing. **First task, not last.**
 - **Unit:** a source guard for the read face's field list **including Never positions**; that Edit is
-  neither stored nor in the URL; that the stepper walks the **active** list and asks the
-  unsaved-changes question; that the chat sort lives in the view and **not** in `listRoomsForUser`
+  neither stored nor in the URL; that the roster sheet lists the **active** players in the coach's
+  own order, keeps the coach's current `?tab=`, marks the current player with `aria-current` and no
+  chevron, is absent when there is nowhere to go, and asks the unsaved-changes question; that the
+  sheet reuses the shared container rather than a fourth one; that the chat sort lives in the view
+  and **not** in `listRoomsForUser`
   (assert the service is untouched — that is the one that would move the consumer inbox).
 - **`check:layout --only=`** with **new sweep screens for each edit state** (the player's and the
   family tab's) at 361 / 390 / 768 / 1440, plus the two read faces and the roster with the call-up
   shelf open. ⚠ The edit-state screens are the load-bearing half — see §11.5(a). ⚠ Scope with
   `--only=`; a `components/coaches/*` or stylesheet diff widens `--changed` to every coach screen and
   aborts on the memory floor.
-- **A hit-test, not a look,** on both stepper arrows at 390 and 360, under **touch** as well as
-  mouse, at rest and scrolled. ⚠ Assert on the **state** (which player the URL names), never on
-  whether an element appeared.
-- ⚠ **The sweep measures an element's OWN rect.** Each arrow must BE 44px — not a small element
-  wearing a 44px `::after`. The roster row is the live example of the trap: hit-tested it opens the
-  player under mouse and touch, and all twelve are in the baseline as 22px.
-- **Driven by hand at 390 and 360:** walk all twelve players with the arrows without returning to
-  the roster once; open Edit, type, press an arrow, confirm the question is asked; reload on the edit
-  state and confirm you land on the record.
+- **A hit-test, not a look,** on the sheet at 390 and 360, under **touch** as well as mouse: the
+  chevron opens it, a row navigates **on the tab the coach was reading**, a tap on the dimmed page
+  closes it *without firing what is underneath*, Escape returns focus to the name, and the bottom nav
+  is still tappable beneath. ⚠ Assert on the **state** (which player the URL names), never on whether
+  an element appeared — and a peer reproduced a scrim dismissal pressing the control beneath it under
+  touch only. Confirm the sheet is absent on a one-player roster, and on a player who is off the list.
+- ⚠ **The sweep measures an element's OWN rect.** The chevron's tap target must BE 44px — B1 does it
+  with a 4px overhang above and below the line, so the row does not grow. The roster row is the live
+  example of the trap: hit-tested it opens the player under mouse and touch, and all twelve sit in the
+  baseline as 22px.
+- **Driven by hand at 390 and 360:** reach the ninth player in two taps from the first, on the tab
+  you were already reading; open Edit, type, open the sheet and pick somebody, and confirm the
+  unsaved-changes question is asked (a select is not a link, so today's guard never sees it — that was
+  a /review finding on 13 September); reload on the edit state and confirm you land on the record.
 - **`check:css-selectors` BEFORE calling it done** — F1 and F4 stop rendering a large block of form
   markup at ≤640, and a stale rule outlives the code it described.
 - A **"QA walk · 5"** tab on the hub at build time, its § from the ledger. ⚠ It cannot hold a

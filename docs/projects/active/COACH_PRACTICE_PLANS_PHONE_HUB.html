@@ -1,0 +1,728 @@
+<title>Practice Plans on a Phone</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+/* The identity is the phone programme's — the owner reads these hubs back to back (Coaching from a
+   phone → Money on a phone → this one), and a third visual world would read as a third project.
+   Tokens copied from COACH_MONEY_PHONE_HUB.html. */
+:root{
+  --paper:#F4F5F1; --surface:#FFFFFF; --ink:#1A211B; --ink-2:#4A544B; --muted:#6F796F; --rule:#D8DDD4;
+  --accent:#4C7719; --accent-ink:#37570F; --accent-soft:#E4EDD3; --ask:#8F540C; --ask-soft:#F5E7CF;
+  --mono-bg:#EBEEE6; --push-soft:#EEF1EA; --focus:#2F6FD1; --bad:#9E3030; --bad-soft:#F6E3E1;
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141A15; --surface:#1B221C; --ink:#E9ECE5; --ink-2:#B9C1B7; --muted:#8B968B; --rule:#2B352C;
+    --accent:#A9D45A; --accent-ink:#C6E58A; --accent-soft:#24301A; --ask:#E3AA5C; --ask-soft:#33271A;
+    --mono-bg:#212A22; --push-soft:#1F271F; --focus:#7FB0FF; --bad:#E08A8A; --bad-soft:#3A2323;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141A15; --surface:#1B221C; --ink:#E9ECE5; --ink-2:#B9C1B7; --muted:#8B968B; --rule:#2B352C;
+  --accent:#A9D45A; --accent-ink:#C6E58A; --accent-soft:#24301A; --ask:#E3AA5C; --ask-soft:#33271A;
+  --mono-bg:#212A22; --push-soft:#1F271F; --focus:#7FB0FF; --bad:#E08A8A; --bad-soft:#3A2323;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-ink);text-decoration-thickness:1px;text-underline-offset:2px}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;margin:0}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.82em}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button{font:inherit;color:inherit}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ── tabs ── */
+.tabs{max-width:1180px;margin:0 auto;padding:16px 20px 0;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+@media (min-width:1040px){.tabs{padding:20px 32px 0}}
+.tabs .tabtitle{font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:auto;padding:0 0 12px}
+.tab{font-family:var(--display);font-weight:600;font-size:15px;padding:8px 14px 11px;border:0;background:none;color:var(--ink-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .st{font-family:var(--mono);font-size:10.5px;color:var(--ask);background:var(--ask-soft);padding:1px 6px;border-radius:3px;letter-spacing:.02em}
+.tab .st.built{color:var(--accent-ink);background:var(--accent-soft)}
+.tab .st.dim{color:var(--muted);background:var(--mono-bg)}
+
+/* ── page frame ── */
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 90px}
+@media (min-width:1040px){.wrap{padding:0 32px 110px}}
+.masthead{padding:40px 0 30px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+.masthead h1{font-size:clamp(32px,5vw,50px);font-weight:700;line-height:1.02;letter-spacing:-.015em;margin:10px 0 16px}
+.lede{font-size:19.5px;line-height:1.5;max-width:62ch}
+.lede em{font-style:italic}
+/* the lifecycle strip — an anchored fact per stage, never a status word */
+.strip{display:flex;flex-wrap:wrap;gap:6px;margin-top:18px}
+.strip span{font-family:var(--mono);font-size:11px;padding:3px 9px;border-radius:20px;background:var(--mono-bg);color:var(--muted)}
+.strip span.on{background:var(--accent-soft);color:var(--accent-ink)}
+.strip span.now{background:var(--ask-soft);color:var(--ask)}
+section{padding:34px 0;border-bottom:1px solid var(--rule)}
+section:last-child{border-bottom:0}
+section > h2{font-size:26px;font-weight:700;letter-spacing:-.01em;margin-bottom:6px}
+.sub{font-size:16px;color:var(--ink-2);max-width:66ch;margin-bottom:20px}
+h3{font-size:18px;font-weight:600;margin:26px 0 8px}
+h4{font-size:15px;font-weight:600;margin:18px 0 6px}
+.prose p{font-size:16px;line-height:1.6;max-width:66ch;margin-bottom:12px;color:var(--ink)}
+.prose p:last-child{margin-bottom:0}
+ul.list{margin:0 0 14px;padding-left:1.15em}
+ul.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max-width:64ch}
+ul.list li b,ul.list li strong{color:var(--ink)}
+ol.list{margin:0 0 14px;padding-left:1.3em}
+ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max-width:64ch}
+
+/* ── the data table ── */
+.tbl{border:1px solid var(--rule);border-radius:8px;overflow-x:auto;background:var(--surface);margin:14px 0 6px}
+.tbl table{width:100%;border-collapse:collapse;font-size:14px;font-family:var(--display);min-width:560px}
+.tbl th{font-weight:600;text-align:left;padding:8px 12px;background:var(--mono-bg);color:var(--ink-2);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.tbl td{padding:8px 12px;border-top:1px solid var(--rule);vertical-align:top;line-height:1.4;color:var(--ink-2)}
+.tbl td:first-child{font-weight:600;color:var(--ink);white-space:nowrap}
+.tbl td.n{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tbl .fail{color:var(--bad);font-family:var(--mono);font-size:11.5px}
+.tbl .pass{color:var(--accent-ink);font-family:var(--mono);font-size:11.5px}
+.cap{font-family:var(--display);font-size:13px;color:var(--muted);line-height:1.5;margin-top:8px;max-width:70ch}
+
+/* ── clickable annotations: a chip opens its own explanation (house rule) ── */
+.why{font-family:var(--display);font-size:11.5px;font-weight:600;letter-spacing:.02em;color:var(--ask);
+     background:var(--ask-soft);border:0;border-radius:20px;padding:2px 10px;cursor:pointer;display:inline-flex;
+     align-items:center;gap:5px;line-height:1.5;vertical-align:1px}
+.why:hover{filter:brightness(.96)}
+.why::after{content:"+";font-family:var(--mono);opacity:.7}
+.why[aria-expanded="true"]::after{content:"−"}
+.why.ok{color:var(--accent-ink);background:var(--accent-soft)}
+.whybody{margin:8px 0 4px;padding:11px 14px;background:var(--ask-soft);border-radius:8px;font-size:14.5px;
+         line-height:1.55;color:var(--ink);max-width:68ch}
+.whybody.ok{background:var(--accent-soft)}
+.whybody .m{font-family:var(--mono);font-size:12.5px}
+/* an in-frame marker: a small numbered dot on the drawing that opens its note below the frame */
+.mk{position:absolute;z-index:2;width:20px;height:20px;border-radius:50%;background:#9E3030;color:#fff;border:2px solid #fff;
+    font:700 10.5px/16px "Inter",system-ui,sans-serif;text-align:center;cursor:pointer;padding:0;box-shadow:0 1px 3px rgba(0,0,0,.25)}
+.mk.g{background:#4C7719}
+.mk:hover{filter:brightness(1.1)}
+.notes{margin:10px 0 0;padding:0;list-style:none;max-width:100%}
+.notes li{display:none;font-family:var(--display);font-size:14px;line-height:1.5;color:var(--ink);padding:9px 12px;border-radius:8px;background:var(--ask-soft);margin-top:6px}
+.notes li.g{background:var(--accent-soft)}
+.notes li.open{display:block}
+.notes li b{font-family:var(--mono);font-size:12px;margin-right:6px}
+
+/* ── decision blocks ── */
+.ask{border:1px solid var(--ask);border-radius:10px;background:var(--surface);padding:18px 20px;margin:20px 0}
+.ask > .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ask)}
+.ask h3{margin:4px 0 8px;font-size:20px}
+.ask > p{font-size:15px;line-height:1.55;color:var(--ink-2);max-width:68ch}
+.opts{display:grid;gap:10px;margin-top:14px}
+.opt{border:1px solid var(--rule);border-radius:8px;padding:12px 14px;background:var(--push-soft)}
+.opt.rec{border-color:var(--accent);background:var(--accent-soft)}
+.opt .t{font-family:var(--display);font-weight:700;font-size:15px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.opt .t .tag{font-family:var(--mono);font-size:10.5px;padding:1px 7px;border-radius:3px;background:var(--mono-bg);color:var(--muted);letter-spacing:.04em}
+.opt.rec .t .tag{background:var(--accent);color:#fff}
+.opt p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin-top:5px;max-width:66ch}
+.opt p b{color:var(--ink)}
+.paste{border:1px dashed var(--rule);border-radius:10px;padding:16px 18px;margin:24px 0 0;background:var(--surface)}
+.paste .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.paste pre{font-family:var(--mono);font-size:13px;line-height:1.6;white-space:pre-wrap;margin:8px 0 0;color:var(--ink)}
+
+/* metric strip */
+.mets{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 2px}
+.met{border:1px solid var(--rule);border-radius:8px;background:var(--surface);padding:10px 14px;min-width:132px;flex:1 1 150px}
+.met .k{font-family:var(--display);font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.met .v{font-family:var(--display);font-size:25px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:2px}
+.met .v.bad{color:var(--bad)}
+.met .v.good{color:var(--accent-ink)}
+.met .s{font-family:var(--display);font-size:12.5px;color:var(--muted);line-height:1.4}
+.flag{border-left:3px solid var(--bad);background:var(--bad-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;max-width:70ch}
+.flag p{font-size:15px;line-height:1.55;color:var(--ink)}
+.flag .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--bad);display:block;margin-bottom:3px}
+.good-flag{border-left-color:var(--accent);background:var(--accent-soft)}
+.good-flag .k{color:var(--accent-ink)}
+.foot{padding:26px 0 0;font-family:var(--display);font-size:13.5px;color:var(--muted);line-height:1.6}
+
+/* ══ TRUE-SIZE DRAWINGS — the warm coach portal at 390px, not reflowed ══
+   Values are the product's own: paper #F6F2EA, card #FFF, hairline rgba(70,55,30,.12), ink #241E15,
+   the lime #B9E356, the spine 2px ink, the gutter in the data face at 11px. */
+.pair{display:flex;gap:20px;flex-wrap:wrap;margin:18px 0 4px;align-items:flex-start}
+.drawcol{flex:0 0 auto;max-width:100%;position:relative}
+.drawhead{font-family:var(--display);font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+          color:var(--muted);margin-bottom:7px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.drawhead .h{font-family:var(--mono);font-size:11px;color:var(--ask);background:var(--ask-soft);padding:1px 6px;border-radius:3px;text-transform:none;letter-spacing:0}
+.drawhead .h.good{color:var(--accent-ink);background:var(--accent-soft)}
+.ph{position:relative;width:390px;max-width:100%;background:#F6F2EA;color:#241E15;font-family:"Inter",system-ui,sans-serif;
+    font-size:14px;line-height:1.35;border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.phbar{height:37px;background:#FFF;border-bottom:1px solid rgba(70,55,30,.12);padding:0 16px;display:flex;align-items:center;justify-content:space-between;font-weight:600;font-size:15px}
+.phbar .rec{font-weight:500;color:#6E6553;font-size:13px;margin-left:10px}
+.phbar .q{width:24px;height:24px;border-radius:50%;border:1.5px solid #241E15;display:inline-grid;place-items:center;font-size:13px;font-weight:700}
+.ptitle{display:flex;align-items:center;gap:12px;padding:14px 16px 8px}
+.ptitle .back{width:44px;height:44px;display:grid;place-items:center;font-size:18px;color:#4A4335;border-right:1px solid rgba(70,55,30,.2)}
+.ptitle .ico{width:32px;height:32px;border-radius:9px;background:#E4EDD3;display:grid;place-items:center;font-size:15px}
+.ptitle b{font-size:19px;font-weight:800;letter-spacing:-.01em}
+.tbar{display:flex;align-items:center;gap:8px;padding:0 16px 10px}
+.tbar .btn,.tbar .sq{min-height:44px;display:inline-flex;align-items:center;justify-content:center;gap:6px;border-radius:8px;font-size:15px;font-weight:600;padding:0 14px;border:1px solid rgba(70,55,30,.2);background:#FFF;color:#241E15;white-space:nowrap}
+.tbar .sq{width:44px;padding:0;margin-left:auto;letter-spacing:.1em}
+.sent{padding:0 16px 8px;font-size:13px;color:#4A4335;line-height:1.45}
+.sent b{color:#241E15}
+.sent .lnk{display:inline-flex;align-items:center;min-height:44px;color:#3F5F14;font-weight:600}
+.doc{background:#FFF;margin:0 16px;padding:16px 16px 18px}
+.doc .when{font-family:var(--mono);font-size:13px;line-height:1.5}
+.doc .when b{font-size:15px;font-weight:700}
+.doc .when .m{color:#6E6553;font-size:12.5px}
+.doc .lnk{display:inline-flex;align-items:center;gap:6px;min-height:44px;color:#3F5F14;font-weight:600;font-size:14px}
+.doc .hr{border-top:2px solid #241E15;margin:2px 0 12px}
+.doc .goal{font-size:17px;line-height:1.4;padding-bottom:10px;border-bottom:1px dashed rgba(70,55,30,.25)}
+.doc .goal b{font-weight:700}
+.doc .about{display:flex;align-items:center;gap:10px;min-height:44px;color:#3F5F14;font-weight:600;font-size:15px}
+.doc .facts{font-size:14.5px;color:#4A4335;margin:-4px 0 10px}
+/* the timeline */
+.tl{display:grid;grid-template-columns:var(--g,92px) minmax(0,1fr);min-width:0}
+.tl .gut{font-family:var(--mono);font-size:11px;line-height:1.4;color:#4A4335;text-align:right;padding:12px 6px 12px 0;border-right:2px solid #241E15;white-space:nowrap;font-variant-numeric:tabular-nums}
+.tl .gut small{display:block;font-size:11px;color:#6E6553}
+.tl .gut .mv{display:flex;justify-content:flex-end;gap:0;margin:2px -6px -7px 0}
+.tl .gut .mv i{width:44px;height:44px;display:grid;place-items:center;font-style:normal;color:#6E6553;font-size:12px}
+.tl .row{padding:10px 8px 12px 12px;border-bottom:1px dotted rgba(70,55,30,.35);min-width:0}
+.tl .row .t{font-weight:700;font-size:14px}
+.tl .row .d{font-size:14px;color:#4A4335;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.tl .row .d b{color:#6E6553;font-weight:600}
+.tl .row .meta{font-size:12px;color:#6E6553;margin-top:2px}
+.tl .row.slim{padding:9px 8px 9px 12px;min-height:56px;display:flex;flex-direction:column;justify-content:center;gap:2px;position:relative}
+.tl .row.slim .t{display:flex;align-items:center;gap:8px;font-size:15px}
+.tl .row.slim .t .rot{font-size:10px;font-weight:700;letter-spacing:.06em;border:1px solid rgba(70,55,30,.3);border-radius:4px;padding:1px 5px;color:#4A4335}
+.tl .row.slim .meta{font-size:13px;margin:0}
+.tl .row.slim::after{content:"›";position:absolute;right:10px;top:50%;transform:translateY(-50%);color:#6E6553;font-size:18px}
+.tl .ghost{padding:12px 8px 12px 12px;font-size:13px;font-weight:600;color:#4A4335;line-height:1.5}
+.tl .ghost .lnk{color:#3F5F14;display:inline-flex;align-items:center;min-height:44px}
+.tl .add{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;font-size:15px;font-weight:600;color:#3F5F14}
+/* the open block, in place */
+.card{margin:6px 0 8px 6px;background:#F6F2EA;border:1px solid rgba(70,55,30,.2);border-radius:8px;min-width:0}
+.card .head{display:flex;align-items:center;gap:6px;padding:10px 10px;border-bottom:1px solid rgba(70,55,30,.15)}
+.card .head .inp{flex:1 1 auto;min-width:0}
+.card .body{padding:12px 10px 14px}
+.lab{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6E6553;margin:12px 0 6px}
+.lab:first-child{margin-top:0}
+.inp,.ta{background:#FFF;border:1px solid rgba(70,55,30,.25);border-radius:6px;min-height:44px;padding:10px 12px;font-size:14px;color:#241E15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.inp.ph1{color:#8A8272}
+.ta{min-height:52px;white-space:normal;line-height:1.4;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.ta.tall{min-height:72px;-webkit-line-clamp:3}
+.sq44{width:44px;height:44px;display:grid;place-items:center;border-radius:8px;color:#4A4335;font-size:15px;flex:0 0 auto}
+.chips{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center}
+.chip{min-width:40px;height:44px;border-radius:22px;border:1px solid rgba(70,55,30,.3);background:#FFF;display:inline-grid;place-items:center;font-size:13.5px;font-weight:600;padding:0 10px}
+.chip.on{background:#241E15;color:#FFF;border-color:#241E15}
+.minbox{width:80px;height:44px;border-radius:6px;border:1px solid rgba(70,55,30,.25);background:#FFF;display:inline-grid;place-items:center;font-size:14px}
+.ends{font-size:12.5px;color:#6E6553;font-variant-numeric:tabular-nums;margin-top:8px}
+.tag{display:inline-flex;align-items:center;gap:8px;height:44px;border-radius:22px;border:1px solid rgba(70,55,30,.3);background:#FFF;padding:0 6px 0 14px;font-size:14px;font-weight:600}
+.tag .dot{width:9px;height:9px;border-radius:50%;background:#7A8C3E}
+.tag .x{width:32px;height:32px;display:grid;place-items:center;color:#6E6553}
+.pchip{display:inline-flex;align-items:center;height:44px;border-radius:22px;border:1px solid rgba(70,55,30,.3);background:#FFF;padding:0 12px;font-size:13.5px;font-weight:600;white-space:nowrap}
+.doors{font-size:14px;font-weight:600;color:#3F5F14;padding:6px 0;display:flex;gap:10px;align-items:center;min-height:44px}
+.doors .sep{color:#6E6553}
+.quiet{font-size:13.5px;font-weight:600;color:#3F5F14;text-align:right;min-height:44px;display:flex;align-items:center;justify-content:flex-end}
+/* the sheet */
+.sheet{background:#FFF;min-height:200px}
+.sheet .shead{display:flex;align-items:center;gap:6px;padding:10px 12px 6px 6px;border-bottom:1px solid rgba(70,55,30,.12)}
+.sheet .shead .eb{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#6E6553;flex:1 1 auto}
+.sheet .sbody{padding:12px 16px 16px}
+.sfoot{position:relative;display:flex;align-items:center;gap:8px;padding:8px 12px;border-top:1px solid rgba(70,55,30,.15);background:#F6F2EA}
+.sfoot .stp{display:inline-flex;align-items:center;border:1px solid rgba(70,55,30,.25);border-radius:8px;background:#FFF;height:44px;overflow:hidden}
+.sfoot .stp i{width:44px;height:44px;display:grid;place-items:center;font-style:normal;font-size:18px;color:#4A4335}
+.sfoot .stp span{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;padding:0 10px;color:#241E15;border-left:1px solid rgba(70,55,30,.2);border-right:1px solid rgba(70,55,30,.2);height:44px;display:grid;place-items:center}
+.sfoot .done{margin-left:auto;height:44px;padding:0 20px;border-radius:8px;background:#B9E356;border:1px solid #9BC93F;font-weight:700;font-size:15px;display:grid;place-items:center}
+.strow{display:flex;align-items:center;gap:10px;min-height:56px;padding:6px 0;border-bottom:1px solid rgba(70,55,30,.15);position:relative}
+.strow .n{font-weight:700;font-size:14.5px}
+.strow .w{font-size:13px;color:#4A4335}
+.strow::after{content:"›";margin-left:auto;color:#6E6553;font-size:18px;padding-right:6px}
+/* the fold marker, and the nav */
+.fold{position:relative;border-top:2px dashed #9E3030;margin:0;padding:5px 16px 2px;background:rgba(158,48,48,.06)}
+.fold span{font-family:var(--mono);font-size:10.5px;color:#9E3030;font-weight:500}
+.below{opacity:.42}
+.nav{height:72px;background:#FFF;border-top:1px solid rgba(70,55,30,.12);display:grid;grid-template-columns:repeat(5,1fr);align-items:center;text-align:center;font-size:9.5px;font-weight:700;letter-spacing:.06em;color:#4A4335}
+.nav span::before{content:"";display:block;width:22px;height:18px;margin:0 auto 5px;border:1.5px solid #4A4335;border-radius:4px;opacity:.55}
+.nav span.on{color:#241E15}
+.nav span.on::before{background:#E4EDD3;border-color:#7A8C3E;opacity:1}
+/* the field */
+.run{padding:14px 16px 16px}
+.run .rbar{display:flex;justify-content:space-between;align-items:center;font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#6E6553;min-height:44px}
+.run .rbar b{color:#241E15}
+.run h5{font-family:"Inter",system-ui,sans-serif;font-size:30px;line-height:1.06;font-weight:800;letter-spacing:-.025em;margin:2px 0 6px}
+.run .rl{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:#4A4335;margin:12px 0 4px}
+.run .rp{font-size:16px;line-height:1.45}
+.run .rp.b{font-weight:600}
+.run .rowr{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:10px;align-items:center;min-height:56px;padding:8px 12px;border-radius:10px;border:1px solid rgba(70,55,30,.2);background:#FFF;margin-top:8px;font-size:14px}
+.run .rowr .g{font-size:20px;font-weight:900;color:#7A8C3E}
+.run .rowr .nm{font-weight:700}
+.run .rowr .who{font-size:12.5px;color:#6E6553}
+.run .acts{display:flex;gap:8px;margin-top:14px}
+.run .acts .sec{width:76px;height:56px;border:1px solid rgba(70,55,30,.25);border-radius:10px;display:grid;place-items:center;font-weight:600;color:#4A4335}
+.run .acts .pri{flex:1 1 auto;height:56px;border-radius:10px;background:#241E15;color:#F6F2EA;display:grid;place-items:center;font-weight:700;font-size:16px}
+.dock{position:relative;background:#F6F2EA;border-top:1px solid rgba(70,55,30,.15);padding:8px 16px}
+</style>
+
+<nav class="tabs" role="tablist" aria-label="Practice plans on a phone">
+  <span class="tabtitle">Practice plans on a phone</span>
+  <button type="button" class="tab" role="tab" data-tab="found" aria-selected="true" aria-controls="tab-found">What the walk found<span class="st dim">measured 23 Sep · 390 and 360</span></button>
+  <button type="button" class="tab" role="tab" data-tab="s1" aria-selected="false" aria-controls="tab-s1">1 · The block on its own screen<span class="st">drawn · ruling owed</span></button>
+  <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
+  <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
+</nav>
+
+<div class="wrap">
+
+<!-- ══════════════════════ TAB 0 · WHAT THE WALK FOUND ══════════════════════ -->
+<div id="tab-found" role="tabpanel">
+  <header class="masthead">
+    <div class="eyebrow">Measured 23 September 2026 · the UAT probe practice · 390×844 and 360×780</div>
+    <h1>Building a practice plan on a phone</h1>
+    <p class="lede">The phone programme stopped at the toolbar above the plan; the practices re-evaluation
+    drew every screen on a desk. So the plan <em>editor</em> — the thing a coach writes the week's practice in —
+    has never been designed for a phone: what a coach gets at 390px is the desktop editor squeezed to
+    half its width. Every figure here was read from the running product's own geometry, never estimated
+    from a screenshot.</p>
+    <div class="strip" aria-label="Where the project is">
+      <span class="on">Walked 23 Sep</span><span class="on">Stage 1 drawn 23 Sep</span><span class="now">Ruling owed</span>
+      <span>Built —</span><span>QA —</span><span>Committed —</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>The four numbers</h2>
+    <div class="mets">
+      <div class="met"><div class="k">The writing column</div><div class="v bad">197<span style="font-size:14px;font-weight:500;color:var(--muted)"> of 390</span></div><div class="s">A text field is 197px wide on a 390px screen — about 28 characters a line. The title field is 106px; “Small-sided game” does not fit.</div></div>
+      <div class="met"><div class="k">One block, open</div><div class="v bad">1,013px</div><div class="s">A plain block opens to 1,013px inside the timeline. The rotating block opens to 1,729.</div></div>
+      <div class="met"><div class="k">What moves</div><div class="v bad">895px</div><div class="s">Opening block 1 pushes block 2 from 651px to 1,546px down the page. That is the lost place.</div></div>
+      <div class="met"><div class="k">Where the form starts</div><div class="v bad">146px</div><div class="s">Page gutter 16 · sheet padding 16 · the clock column 92 · the spine and the card’s edge — 37% of the width is spent before the first letter.</div></div>
+    </div>
+    <p class="cap">At 360×780 the same fields are 167px (~24 characters), the title 76px (“Skills circuit” is cut), and the open block 1,080px.</p>
+  </section>
+
+  <section>
+    <h2>Station by station</h2>
+    <p class="sub">One row per screen a coach passes through building and then running a plan. “The fold” is the
+    735px between the team line (37px) and the bottom bar (72px) at 390×844.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Station</th><th>Measured at 390×844</th><th>Finding</th></tr></thead>
+      <tbody>
+        <tr><td>A · The plan, blocks shut</td><td>Page 1,650. The timeline is 326 wide: a 92px clock column, a 2px spine, 234 for the row. A shut block is <b>117px</b> — title, a cut sentence, a cut “Watching for”, who. The “Add a block · or a drill from your library” row is <b>130px</b> because its words wrap in 234px. The first block sits at ~535.</td><td>Three blocks cost 351px and say two cut sentences each. <button type="button" class="why" data-why="w-a" aria-expanded="false">why the row is 117</button><div id="w-a" class="whybody" hidden>The row was drawn for a desktop column ~700px wide, where “Dynamic warm-up, then partner work at walking pace.” fits on one line and tells the coach what the block is. At 234px the same line is “Dynamic warm-up, then partn…” — the line is still paid for, and it no longer says anything the title did not.</div></td></tr>
+        <tr><td>B · A plain block, open</td><td>Page 1,650 → <b>2,546</b>. The open block is <b>1,013px</b> tall in a 228px column. Fields 197 wide (~28 characters); the title 106 (~15); the five minutes chips wrap to two lines; six player chips take six lines; “Watching for” is a one-line box. Block 2 moves from 651 to <b>1,546</b>.</td><td>The form is nested three deep — the sheet, the spine, the card — and each layer takes its padding; the writing column is what is left. <button type="button" class="why" data-why="w-b" aria-expanded="false">what the margin is</button><div id="w-b" class="whybody" hidden>The 92px clock column is that wide because the ▲▼ reorder pair (two 44px buttons) sits under the clock at ≤640 — the code says so: “12:00 p.m.” needs 66px; the pair needs 88. Narrowing the margin alone gives the fields back ~26px (197 → 223) and leaves the block 1,000px tall in the flow. It is the wrong lever.</div></td></tr>
+        <tr><td>C · A rotating block, open</td><td>Page → <b>3,263</b>; the block <b>1,729px</b>. Three stations as 115–138px rows in a 197px column; “+ Add a station / a drill, or write one” wraps to 67px; the rotation grid is <b>404px wide inside a 197px box</b> — the page’s only sideways scroll; “Edit groups ›” at 2,206.</td><td>The rotation cannot be read without scrolling sideways inside a card inside a page. <button type="button" class="why" data-why="w-c" aria-expanded="false">the grid</button><div id="w-c" class="whybody" hidden>The hand-arranged grid (stations across, rounds down, a group pill in each cell) was ruled for the desktop and set to `width: max-content` so pills never wrap — right there, and 404px on a phone. Stage 2 draws it by round on a phone; stage 1 only widens its box to 358.</div></td></tr>
+        <tr><td>D · A station</td><td>An existing station’s “Open ›” opens a <b>full-screen form</b>: fields <b>359px</b> wide (~51 characters), the name 296, an eyebrow “Footwork ladder — station 1 of 3”, and a foot with <b>Delete · ‹ · Next: Close control ›</b> (the ‹ › step between stations). Adding one: the “Add a station” sheet is full-screen too (tabs 44, drill rows with “+ Add”); its “Write one” tab is a sentence and a <b>31px</b> lime button that <i>adds a blank station card</i> rather than opening the form — so a new station’s first field is <b>four taps</b> in.</td><td>The form is the shape stage 1 proposes for the block, already built one level down. <button type="button" class="why ok" data-why="w-d" aria-expanded="false">what is already right</button><div id="w-d" class="whybody ok" hidden>The station form is exactly K2: full width, its own header naming “station 1 of 3”, the page untouched behind it, a foot that steps to the next station. The block editor should look like its own station form, not the other way round — and that is why K2 is drawn as a sheet rather than invented. Stage 2’s job is the new-station path (the 31px button, the blank card, then the form) and the station <i>rows</i> inside the block.</div></td></tr>
+        <tr><td>E · The groups room</td><td>Full-screen, a pinned foot (+ Add a group · Done), 21 controls all at 44; scrolls 893 in 677.</td><td><span class="pass">Keep.</span> The one editor screen that was drawn for a phone.</td></tr>
+        <tr><td>F · The field</td><td>The list <b>916</b> — one screen, rows 61–83, “Who’s here tonight” at 631. A rotating stop: Back · Rotate now at <b>473</b>, all on screen one. A plain stop: at 563. A <b>station</b>: 1,156 tall, Rotate now at <b>996</b> — 224px under the fold (308 at 360).</td><td>Good, as the owner said. The station screen is the one that buries its button; a longer plan buries the block screen’s too. <button type="button" class="why" data-why="w-f" aria-expanded="false">the fixture is a floor</button><div id="w-f" class="whybody" hidden>The probe practice has 8-word notes, two coaching points and three stations. A real block with a paragraph of setup and six stations would put “Rotate now” under the fold on the block screen as well — the number here is the best case, not the typical one.</div></td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>Standing back</h2>
+    <ul class="list">
+      <li><b>S.1 The editor is nested, and nesting is the cost.</b> Sheet → spine → card → field: each layer takes its padding and the writing column is the remainder. The fix is not thinner padding; it is taking the form out of the timeline on a phone.</li>
+      <li><b>S.2 A form that grows in the flow moves everything under it.</b> A form on its own screen moves nothing — the list is where the coach left it when they come back.</li>
+      <li><b>S.3 A cut sentence is not information.</b> The row carries the facts that fit (length · who · stations); the sheet carries the words.</li>
+      <li><b>S.4 What already fits a phone is left alone.</b> The station sheet, the groups room, the run list and its stops were drawn for a phone and measure like it.</li>
+      <li><b>S.5 At the field the thumb is busy.</b> The one control that moves the practice on sits where the thumb is, docked, never under the fold.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The stage ladder</h2>
+    <p class="sub">One stage at a time: drawn at true size here → ruled → built → reviewed → walked → the next. Stage 1 is drawn on its tab; stages 2–4 are named so nothing is promised twice.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr></thead>
+      <tbody>
+        <tr><td>1 · The block on its own screen</td><td>The plan’s blocks as a compact list on a phone; a block opens as a full-screen sheet with every field at full width and a pinned foot (‹ › between blocks · Done); reorder moves into the sheet; “+ Add a block” as one row.</td><td>K1–K4</td><td>drawn 23 Sep · ruling owed</td></tr>
+        <tr><td>2 · Stations and the rotation</td><td>A station as a 56px row inside the block sheet (the row is the door to the form that already exists); “Write one” adds the station <i>and</i> opens its form in one motion, on a 44px button (four taps → two); the rotation drawn <b>by round</b> on a phone with hand-arrange as the pill’s tap menu; the desktop grid untouched.</td><td>L1–L3</td><td>—</td></tr>
+        <tr><td>3 · The field</td><td>Back · Next · Rotate now docked above the bar on the block and station screens; the plain stop’s order (does the note lead, or the watching-for line?); swipe between stops as an addition — recommended <i>Not yet</i>.</td><td>M1–M3</td><td>—</td></tr>
+        <tr><td>4 · The head of the page</td><td>What sits above the first block on a phone: the sent line and “Send again”, the when-block, the goal, About — ~500px before the plan begins.</td><td>N1</td><td>—</td></tr>
+      </tbody>
+    </table></div>
+    <h3>Not in scope</h3>
+    <ul class="list">
+      <li>The desktop and the 641–768 band — the timeline with the block open in place stays exactly as ruled by the practices re-evaluation. Every drawing here is a ≤640 form.</li>
+      <li>The rulings that decide what a plan <i>is</i>: the plan as a document, “+ Stations makes two”, the grid as a starting point, drag as an addition, no clock at the field, the run list as the first screen. This project reads those screens as phone screens only.</li>
+      <li>The library pages (drills · circuits · templates) and the Skills &amp; Goals session. One note stands from the Schedule stage: the library’s “+ ▾” still wears its chevron on a phone.</li>
+      <li>The plan-template editor is the <i>same</i> editor and inherits the sheet by construction — nothing separate is drawn for it.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB 1 · THE BLOCK ON ITS OWN SCREEN ══════════════════════ -->
+<div id="tab-s1" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Stage 1 · drawn 23 September 2026 · four decisions</div>
+    <h1>The block on its own screen</h1>
+    <p class="lede">On a phone the plan’s blocks become a compact list, and a block opens on its own screen —
+    the shape the station sheet already has. Every field takes the full width, the list stays where it
+    was, and a pinned foot walks the coach from block to block without going back. The drawings are
+    <b>390px wide and do not reflow</b>: open this tab on a phone to read them at the size a coach will.</p>
+  </header>
+
+  <section>
+    <h2>The whole screen, before and after</h2>
+    <p class="sub">The same practice, the same block. Left: the Skills circuit open in place, as built today. Right: the plan as a list, K1. Red dots mark a measured problem; green dots mark what the drawing answers — tap one.</p>
+    <div class="pair">
+      <div class="drawcol">
+        <div class="drawhead">As built · Skills circuit open <span class="h">block 1,729px · fields 197 · grid scrolls sideways</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="ptitle"><span class="back">←</span><span class="ico">📋</span><b>UAT probe practice</b></div>
+          <div class="tbar"><span class="btn">▷ Run practice</span><span class="sq">···</span></div>
+          <div class="sent"><b>Sent to 5</b><br>(coaches and helpers) · bell and push · Sep 18, 9:30 a.m.<br><span class="lnk">Send again</span></div>
+          <div class="doc">
+            <div class="when"><b>Mon, Sep 21</b><br><b>10:45 p.m.–12:15 a.m. · 90 min</b><br><span class="m">60 of 90 min planned · 30 rest of practice</span></div>
+            <span class="lnk">▦ View on schedule</span>
+            <div class="hr"></div>
+            <div class="goal"><b>Tonight:</b> Sharper decisions under pressure</div>
+            <div class="about">› About this practice</div>
+            <div class="facts">test · Skills · Cones, Bibs, Spare balls</div>
+            <div class="tl" style="--g:92px">
+              <div class="gut">10:45 p.m.<small>15 min</small><span class="mv"><i>⌃</i><i>⌄</i></span></div>
+              <div class="row"><div class="t">Warm-up</div><div class="d">Dynamic warm-up, then partn…</div><div class="d"><b>Watching for:</b> Everyone movin…</div><div class="meta">6 players</div><button type="button" class="mk" data-note="n1" style="right:8px;top:14px" aria-label="note 1">1</button></div>
+              <div class="gut" style="position:relative">11:00 p.m.<small>45 min</small><span class="mv"><i>⌃</i><i>⌄</i></span><button type="button" class="mk" data-note="n2" style="left:4px;top:8px" aria-label="note 2">2</button></div>
+              <div class="card" style="position:relative">
+                <div class="head"><div class="inp">Skills circui</div><span class="sq44">⌃</span><span class="sq44">🗑</span><button type="button" class="mk" data-note="n3" style="left:96px;top:-8px" aria-label="note 3">3</button></div>
+                <div class="body">
+                  <div class="lab">Minutes</div>
+                  <div class="chips"><span class="chip">5</span><span class="chip">10</span><span class="chip">15</span><span class="chip">20</span><span class="chip">30</span><span class="minbox">45</span><span style="font-size:13px;color:#6E6553">min</span></div>
+                  <div class="ends">ends 11:45 p.m.</div>
+                  <div class="lab">Staff</div>
+                  <span class="tag"><span class="dot"></span>UAT Coach<span class="x">×</span></span>
+                  <div class="inp ph1" style="margin-top:8px">Add a tag…</div>
+                  <div class="lab">Players</div>
+                  <div class="chips"><span class="pchip">Whole team</span></div>
+                  <div class="lab">What you’re doing</div>
+                  <div class="ta" style="position:relative">Three stations, groups move on every fifteen minutes.<button type="button" class="mk" data-note="n4" style="right:-8px;top:-8px" aria-label="note 4">4</button></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="fold"><span>▲ the bottom bar sits here · 735px of screen</span></div>
+          <div class="below">
+            <div class="doc" style="padding-top:0">
+              <div class="tl" style="--g:92px">
+                <div class="gut"></div>
+                <div class="card" style="margin-top:0;border-top:0;border-radius:0 0 8px 8px">
+                  <div class="body">
+                    <div class="lab">What you’re watching for</div><div class="inp">Each player gets a full turn at all thre</div>
+                    <div class="lab">Coaching points</div><div class="ta">Rotate on the whistle</div>
+                    <div class="lab">Stations</div>
+                    <div class="strow" style="flex-direction:column;align-items:flex-start;gap:2px;padding:8px 0"><span class="n">Footwork ladder</span><span class="w">UAT Coach</span><span class="w">Tonight: Only two ladders</span><span class="w" style="color:#3F5F14;font-weight:600">Open ›</span></div>
+                    <div class="lab">Rotation</div>
+                    <div style="overflow:hidden;border:1px solid rgba(70,55,30,.2);border-radius:6px;background:#FFF;padding:6px;font-size:11px;white-space:nowrap;position:relative">Round 1 &nbsp;[A] Footwork &nbsp;[B] Close control &nbsp;[C] Finishing → →<button type="button" class="mk" data-note="n5" style="right:-6px;top:-8px" aria-label="note 5">5</button></div>
+                    <div style="font-size:12px;color:#6E6553;margin-top:10px">… 1,729px of block; “Small-sided game” at 2,367; the page 3,263</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="nav"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span class="on">MORE</span></div>
+        </div>
+        <ul class="notes">
+          <li id="n1"><b>1</b>A shut block is 117px and two of its four lines are cut sentences: “Dynamic warm-up, then partn…” says nothing “Warm-up” did not.</li>
+          <li id="n2"><b>2</b>The clock column is 92px because the ▲▼ pair lives under the clock on a phone; “12:00 p.m.” alone needs 66. The pair is why the margin is wide.</li>
+          <li id="n3"><b>3</b>The title field is 106px — about 15 characters. “Skills circuit” shows as “Skills circui”; “Small-sided game” is cut at 390 and 360.</li>
+          <li id="n4"><b>4</b>Every writing field is 197px wide, ~28 characters a line, two lines visible. A three-sentence setup is read through a letterbox.</li>
+          <li id="n5"><b>5</b>The rotation grid is 404px wide inside a 197px box — the only sideways scroll on the page, inside a card, inside the timeline.</li>
+        </ul>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">K1 · the plan as a list <span class="h good">three blocks 168px · nothing cut · the first block at 535</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="ptitle"><span class="back">←</span><span class="ico">📋</span><b>UAT probe practice</b></div>
+          <div class="tbar"><span class="btn">▷ Run practice</span><span class="sq">···</span></div>
+          <div class="sent"><b>Sent to 5</b><br>(coaches and helpers) · bell and push · Sep 18, 9:30 a.m.<br><span class="lnk">Send again</span></div>
+          <div class="doc">
+            <div class="when"><b>Mon, Sep 21</b><br><b>10:45 p.m.–12:15 a.m. · 90 min</b><br><span class="m">60 of 90 min planned · 30 rest of practice</span></div>
+            <span class="lnk">▦ View on schedule</span>
+            <div class="hr"></div>
+            <div class="goal"><b>Tonight:</b> Sharper decisions under pressure</div>
+            <div class="about">› About this practice</div>
+            <div class="facts">test · Skills · Cones, Bibs, Spare balls</div>
+            <div class="tl" style="--g:66px;position:relative">
+              <div class="gut">10:45 p.m.</div>
+              <div class="row slim"><div class="t">Warm-up</div><div class="meta">15 min · UAT Coach · 6 players</div></div>
+              <div class="gut">11:00 p.m.</div>
+              <div class="row slim"><div class="t">Skills circuit <span class="rot">⟳ ROTATION</span></div><div class="meta">45 min · 3 stations · 3 rounds</div></div>
+              <div class="gut">11:45 p.m.</div>
+              <div class="row slim"><div class="t">Small-sided game</div><div class="meta">Rest of practice · Whole team</div></div>
+              <div class="gut" style="color:#8A8272">12:15 a.m.</div>
+              <div class="add">+ Add a block</div>
+              <button type="button" class="mk g" data-note="g1" style="left:44px;top:-10px" aria-label="answer 1">1</button>
+              <button type="button" class="mk g" data-note="g2" style="right:40px;top:6px" aria-label="answer 2">2</button>
+              <button type="button" class="mk g" data-note="g3" style="right:40px;top:126px" aria-label="answer 3">3</button>
+              <button type="button" class="mk g" data-note="g4" style="left:110px;top:178px" aria-label="answer 4">4</button>
+            </div>
+            <div class="lab" style="margin-top:14px">✎ How it went</div>
+            <div style="font-size:12.5px;color:#6E6553;margin-bottom:6px">For you and your staff. Families never see this.</div>
+            <div class="ta ph1" style="color:#8A8272">What would you do differently next time?</div>
+          </div>
+          <div class="fold"><span>▲ the bottom bar sits here · the whole plan and “How it went” are above it</span></div>
+          <div class="nav"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span class="on">MORE</span></div>
+        </div>
+        <ul class="notes">
+          <li id="g1" class="g"><b>1</b>The spine and the clock stay — they are the plan’s identity and the reader’s way of finding “what’s at 11:00”. The column narrows to the clock alone (66px) because the ▲▼ pair leaves the row for the sheet (K3). The length moves onto the row’s second line.</li>
+          <li id="g2" class="g"><b>2</b>A block is one 56px row: the title, and one line of facts that fit — length · who · stations or players. The sentences are inside; the chevron says the row opens. The whole row is the door, the portal’s rule for every phone list.</li>
+          <li id="g3" class="g"><b>3</b>The rotation badge stays on the row (it is a fact about the block, not a sentence). Nothing on the row is ever truncated: each fact is short by construction.</li>
+          <li id="g4" class="g"><b>4</b>“+ Add a block” is one 44px row at the foot under the plan’s end time, instead of a 130px paragraph. Its two paths — write one, or start from a drill — are inside the new block’s sheet (K4).</li>
+        </ul>
+      </div>
+    </div>
+    <p class="cap">Drawn: a 56px row × 3 = 168px where the three shut blocks measured 351; the add row 44 where it measured 130. The head above the plan (sent line, when, goal, About) is deliberately drawn unchanged — it is stage 4’s question, and drawing it smaller here would hide what stage 1 alone earns.</p>
+  </section>
+
+  <section>
+    <h2>The block sheet — K2</h2>
+    <p class="sub">Tap a row and the block opens on its own screen, the shape the “Add a station” sheet already has. The list underneath does not move. Left: the top of the sheet. Right: the same sheet scrolled to its foot. The foot bar is pinned at every scroll position.</p>
+    <div class="pair">
+      <div class="drawcol">
+        <div class="drawhead">K2 · the sheet, top <span class="h good">fields 358 wide (was 197) · title 358 (was 106) · minutes on one line</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="sheet" style="position:relative">
+            <div class="shead"><span class="sq44">✕</span><span class="eb">Block 2 of 3 · 11:00 p.m.</span><span class="sq44">⌃</span><span class="sq44">⌄</span><span class="sq44">🗑</span>
+              <button type="button" class="mk g" data-note="h1" style="left:40px;top:-6px" aria-label="answer 1">1</button>
+              <button type="button" class="mk g" data-note="h2" style="right:60px;top:-6px" aria-label="answer 2">2</button>
+            </div>
+            <div class="sbody">
+              <div class="inp" style="font-weight:700;font-size:16px;position:relative">Skills circuit<button type="button" class="mk g" data-note="h3" style="right:-8px;top:-8px" aria-label="answer 3">3</button></div>
+              <div class="lab">Minutes</div>
+              <div class="chips" style="position:relative"><span class="chip">5</span><span class="chip">10</span><span class="chip">15</span><span class="chip">20</span><span class="chip">30</span><span class="minbox">45</span><button type="button" class="mk g" data-note="h4" style="right:-8px;top:-8px" aria-label="answer 4">4</button></div>
+              <div class="ends">ends 11:45 p.m.</div>
+              <div class="lab">Staff</div>
+              <div class="chips"><span class="tag"><span class="dot"></span>UAT Coach<span class="x">×</span></span><span class="inp ph1" style="flex:1 1 120px;min-width:0">Add a tag…</span></div>
+              <div class="lab">Players</div>
+              <div class="chips"><span class="pchip">Whole team</span><span class="quiet" style="min-height:44px">Choose players…</span></div>
+              <div class="lab">What you’re doing</div>
+              <div class="ta tall">Three stations, groups move on every fifteen minutes. Two coaches float between the ladder and the wall.</div>
+              <div class="lab">What you’re watching for</div>
+              <div class="inp">Each player gets a full turn at all three.</div>
+              <div class="lab">Coaching points</div>
+              <div class="ta">Rotate on the whistle<br>Ladder first, then the wall</div>
+            </div>
+          </div>
+          <div class="fold"><span>▲ the pinned foot sits here — the sheet scrolls under it</span></div>
+          <div class="sfoot"><span class="stp"><i>‹</i><span>2 of 3</span><i>›</i></span><span class="done">Done</span>
+            <button type="button" class="mk g" data-note="h5" style="left:60px;top:-10px" aria-label="answer 5">5</button>
+          </div>
+          <div class="nav"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span class="on">MORE</span></div>
+        </div>
+        <ul class="notes">
+          <li id="h1" class="g"><b>1</b>✕ closes the sheet back to the list, the same as Done — there is nothing to “cancel”, the block autosaves as it does today. The eyebrow names the block’s place and clock so the coach never loses which block they are in.</li>
+          <li id="h2" class="g"><b>2</b>Move up · Move down · Delete on the sheet’s head — the three controls the open block’s head and gutter carry today, side by side at 44px. This is K3.</li>
+          <li id="h3" class="g"><b>3</b>The title at the full 358px. “Small-sided game” fits at 390 and at 360, with room for the whole of “Small-sided game — no keepers”.</li>
+          <li id="h4" class="g"><b>4</b>The five minutes chips and the minutes box on one line (5×40 + 80 + gaps = 320 in 358). At 360 they still fit (328). “ends 11:45 p.m.” under them, as today.</li>
+          <li id="h5" class="g"><b>5</b>The pinned foot: ‹ and › open the previous and next block in place — the coach writes the whole plan without going back to the list — and Done returns to the list with this block’s row picked out. The bar clears the bottom nav the way the recording screen’s does.</li>
+        </ul>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">K2 · the sheet, foot <span class="h good">stations as rows · the doors · the same pinned foot</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="sheet" style="position:relative">
+            <div class="shead"><span class="sq44">✕</span><span class="eb">Block 2 of 3 · 11:00 p.m.</span><span class="sq44">⌃</span><span class="sq44">⌄</span><span class="sq44">🗑</span></div>
+            <div class="sbody">
+              <div class="lab">Equipment</div>
+              <div class="chips"><span class="tag"><span class="dot" style="background:#B58A3C"></span>Cones<span class="x">×</span></span><span class="tag"><span class="dot" style="background:#B58A3C"></span>Bibs<span class="x">×</span></span><span class="inp ph1" style="flex:1 1 100px;min-width:0">Add…</span></div>
+              <div class="lab" style="position:relative">Stations<button type="button" class="mk g" data-note="f1" style="left:70px;top:-6px" aria-label="answer 1">1</button></div>
+              <div class="strow"><div><div class="n">Footwork ladder</div><div class="w">UAT Coach · Tonight: Only two ladders</div></div></div>
+              <div class="strow"><div><div class="n">Close control</div><div class="w">Sam Assistant</div></div></div>
+              <div class="strow"><div><div class="n">Finishing</div><div class="w">Jordan Helper</div></div></div>
+              <div class="add" style="padding:0;position:relative">+ Add a station<button type="button" class="mk g" data-note="f2" style="left:130px;top:2px" aria-label="answer 2">2</button></div>
+              <div class="lab" style="position:relative">Rotation<button type="button" class="mk" data-note="f3" style="left:70px;top:-6px" aria-label="note 3">3</button></div>
+              <div style="font-size:14px;line-height:1.5">3 rounds · 15 min a round · Groups A, B, C from who replied</div>
+              <div style="overflow:hidden;border:1px solid rgba(70,55,30,.2);border-radius:6px;background:#FFF;padding:6px;font-size:11px;white-space:nowrap;margin-top:6px">Round 1 &nbsp;[A] Footwork &nbsp;[B] Close control &nbsp;[C] Finishing &nbsp;·&nbsp; Round 2 →</div>
+              <div class="doors" style="margin-top:4px"><span>Edit groups ›</span></div>
+              <div class="quiet" style="position:relative">▥ Save to my circuits…<button type="button" class="mk g" data-note="f4" style="left:0;top:2px" aria-label="answer 4">4</button></div>
+            </div>
+          </div>
+          <div class="sfoot"><span class="stp"><i>‹</i><span>2 of 3</span><i>›</i></span><span class="done">Done</span></div>
+          <div class="nav"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span class="on">MORE</span></div>
+        </div>
+        <ul class="notes">
+          <li id="f1" class="g"><b>1</b>A station is a 56px row — name, who runs it, tonight’s note — and the row opens the station form (the desk’s “Open ›” is the row). Today each station is a 115–138px card with its own reorder pair.</li>
+          <li id="f2" class="g"><b>2</b>“+ Add a station” as one 44px row (it wraps to 67px today). It opens the sheet that already exists.</li>
+          <li id="f3"><b>3</b>The rotation grid is still the desktop grid in stage 1 — 404px, now in a 358px box, so it still scrolls a little. Stage 2 draws it by round. Drawn honestly rather than fixed on the way past.</li>
+          <li id="f4" class="g"><b>4</b>The block’s own doors — Edit groups, Save to my circuits — sit at the foot of the sheet where they sit at the foot of the card today. Nothing is renamed and nothing is gated differently.</li>
+        </ul>
+      </div>
+    </div>
+    <p class="cap">Drawn: the sheet holds every field the open block holds today, in the same order, with the same words; only the container changed. A plain block (no stations) ends at the coaching points and the doors line “+ Equipment · + Stations · Save to my drills…”.</p>
+  </section>
+
+  <section>
+    <h2>The four decisions</h2>
+
+    <div class="ask">
+      <div class="k">K1 · the list</div>
+      <h3>On a phone, the plan’s blocks are a compact list</h3>
+      <p>Three blocks measure 351px today and say two cut sentences each. The row keeps the facts that fit and the sheet keeps the words.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>Keep the spine and the clock; the row is title + one line of facts</div><p>The clock column narrows from 92 to 66px (the reorder pair leaves it), the spine stays, a block is a 56px row: <b>Warm-up · 15 min · UAT Coach · 6 players</b>. The plan still reads as the document the desk shows; only the row’s sentences go. Drawn above.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>The portal’s row list, the time as an inline lead</div><p>The Schedule’s phone shape: no spine, the time in the row’s lead cell. Slightly more room for the title (~290 vs 258) at the cost of the plan looking different from itself on a desk. Not drawn; say the word and it will be.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Keep one truncated sentence on the row</div><p>“Dynamic warm-up, then partn…” as a second line. Costs ~20px a row and, measured, never completes a sentence at 390.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">K2 · the block opens on its own screen</div>
+      <h3>A block edits in a full-screen sheet, not inside the timeline</h3>
+      <p>This is the load-bearing decision. It answers the margin, the narrow fields and the lost place with one change of container.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>The sheet — the “Add a station” shape</div><p>Full width, its own header, the list untouched behind it, a pinned foot with ‹ 2 of 3 › and Done. <b>This is not a new idiom: the station form inside a block already opens exactly this way on a phone</b> — 359px fields, “station 1 of 3” in its head, Delete · ‹ · Next in its foot (station D on the walk tab). Fields go from 197 to 358px (+82% characters a line), the title from 106 to 358, six player chips from six lines to two, and <b>nothing under the block moves</b> when it opens. The tradeoff is real: a coach cannot see the rest of the plan while writing one block; the eyebrow (“Block 2 of 3 · 11:00 p.m.”) and the ‹ › stepper are the answer to that, not a second column.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Stay in place; narrow the margin</div><p>The honest arithmetic of the first framing: with the ▲▼ pair moved and the column at 66px, the fields grow from 197 to ~223px (+13%), the title from 106 to ~132, and the block is still ~1,000px tall in the flow, still moving everything below it. A real gain, and a small one.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">K3 · reorder</div>
+      <h3>Where do Move up · Move down go once they leave the row?</h3>
+      <p>The pair is the reason the clock column is 92px. On a phone it is used rarely and it is the only control on a shut row that is not “open me”.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>On the sheet’s head, beside Delete</div><p>Three 44px squares on the row that already carries ✕ and the eyebrow. Move keeps the sheet open on the same block and the eyebrow’s clock updates. The desk keeps its gutter pair untouched.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>A “Reorder” mode on the list with drag handles</div><p>The lineup builder’s phone idiom (the number as the handle). More build, a second mode to learn, and drag is ruled an addition — the buttons would still be needed somewhere.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">K4 · adding a block</div>
+      <h3>“+ Add a block” is one row; where do its two paths go?</h3>
+      <p>Today the ghost row is a 130px paragraph — “Add a block · 15 min · or a drill from your library” — with two doors in it.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>The row opens a blank block’s sheet, with “Start from a drill ›” inside it</div><p>One tap to the common case (a new block with the cursor in the title); the library one more tap, as a quiet door under the title. The sheet opens on “Block 4 of 4 · 12:15 a.m.” with 15 minutes set, as the ghost row promises today.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>A chooser first — Write one · From your drills</div><p>The station sheet’s two tabs, one level up. Symmetric with stations; one more tap for every block a coach writes by hand, which is most of them.</p></div>
+      </div>
+    </div>
+
+    <div class="paste">
+      <div class="k">Paste back into the chat to rule</div>
+<pre>Stage 1 · Practice plans on a phone
+K1 the list — A / B / C
+K2 the block on its own screen — A / B
+K3 reorder — A / B
+K4 adding a block — A / B
+Notes:</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Measured before → drawn after (390×844)</h2>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th class="n">Before</th><th class="n">After (drawn)</th></tr></thead>
+      <tbody>
+        <tr><td>A shut block</td><td class="n">117px</td><td class="n">56px</td></tr>
+        <tr><td>Three shut blocks + Add a block</td><td class="n">481px</td><td class="n">212px</td></tr>
+        <tr><td>A writing field</td><td class="n">197px · ~28 chars</td><td class="n">358px · ~51 chars</td></tr>
+        <tr><td>The title field</td><td class="n">106px · ~15 chars</td><td class="n">358px · ~51 chars</td></tr>
+        <tr><td>Minutes chips</td><td class="n">2 lines</td><td class="n">1 line (390 and 360)</td></tr>
+        <tr><td>Six player chips</td><td class="n">6 lines</td><td class="n">2 lines</td></tr>
+        <tr><td>Block 2’s row when block 1 opens</td><td class="n">moves 895px</td><td class="n">moves 0</td></tr>
+        <tr><td>Blocks in the timeline with one open</td><td class="n">page 2,546</td><td class="n">page unchanged; the sheet scrolls on its own</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">“Drawn” values follow from the drawing’s own geometry (a 56px row is 56px by construction); the build re-measures every one in the browser before the walk.</p>
+  </section>
+
+  <section>
+    <h2>What holds, by construction</h2>
+    <ul class="list">
+      <li><b>Nothing is renamed and nothing is gated differently.</b> The sheet renders the same fields, in the same order, through the same permissions as the open block today; a viewer sees the read face in the sheet, a writer the form.</li>
+      <li><b>Autosave is unchanged.</b> The transient Saved pill appears on an edit and fades, over the sheet as it does over the page today; only an error persists.</li>
+      <li><b>The desktop and the 641–768 band are untouched</b> — the block opens in place with its gutter pair, exactly as the practices re-evaluation ruled.</li>
+      <li><b>The record (a past practice) keeps its face:</b> its rows open to read in the same sheet, read-only, with no ▲▼🗑 and no stepper edit — the ‹ › still walk the blocks.</li>
+      <li><b>Escape, the scrim, and the phone’s Back close the sheet</b> — the portal’s convention for every phone panel since 22 September.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB · PLAN ══════════════════════ -->
+<div id="tab-plan" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">The plan · docs/projects/active/COACH_PRACTICE_PLANS_PHONE_PLAN.md</div>
+    <h1>Practice plans on a phone — the plan</h1>
+    <p class="lede">The durable record: how the walk was read, what it found, the rules, the ladder, and what each stage owes at build. The markdown file is the source; this tab is the same text, readable.</p>
+  </header>
+  <section class="prose">
+    <h3>0 · What this is</h3>
+    <p>A phone-first re-evaluation of the two screens a coach builds and runs a practice on — the plan editor and the field screen — in the shape of the phone programme: a measured walk, shape questions for the owner, and a stage ladder drawn, ruled, built and walked one stage at a time. It picks up exactly where the phone programme’s stage 4 stopped (“the practice plan’s sheet itself” was named as not reopened there) and where the practices re-evaluation never went (every one of its screens was drawn on a desk).</p>
+    <h3>1 · Method</h3>
+    <p>23 September 2026, dev, signed in as the UAT head coach, the UAT probe practice (a written plan: a plain block, a rotating block with three stations and three drawn groups, a rest-of-practice block). A Playwright phone context at 390×844 and another at 360×780 drove the plan page into edit mode, opened each block, opened the station sheet and the groups room, then the run screen’s list, a rotating stop, a station and a plain stop. Per screen the browser’s own geometry was read: page height, every field’s width and the characters it holds, the open block’s height, how far the next block moved, controls under the 44px floor, pinned chrome, the position of the field’s buttons against the fold. Screenshots were taken only as reference for the drawings.</p>
+    <h3>2 · Findings</h3>
+    <p>On the “What the walk found” tab — the station table is the record. In one line: the writing column is 197 of 390px, a block opens to 1,013px inside the timeline and pushes the next block 895px down, the rotation grid scrolls sideways inside a 197px box, and a new station’s first field is four taps in behind a 31px button; the station form, the station sheet, the groups room and the run screen were built for a phone and measure like it — the station form is the very shape stage 1 proposes for the block.</p>
+    <h3>3 · Standing rulings this plan works inside (not reopened)</h3>
+    <p>The plan as a document (practices stage 1); “+ Stations makes two” (D13); the grid as a starting point (D14); drag as an addition, buttons everywhere (L2); no clock at the field (P10); the run list as the first screen (W1–W4); the record’s face (R2); the phone programme’s shell, the transient Saved pill, the field floor, and E1’s toolbar; the tap floor as a touch-only rule and the 641–768 band; the portal’s phone-panel conventions (drawers flush to the bar, the warm scrim, Escape/scrim/Back all close).</p>
+    <h3>4 · The ladder</h3>
+    <p><b>Stage 1 · The block on its own screen</b> (K1–K4, drawn 23 Sep, ruling owed) · <b>Stage 2 · Stations and the rotation</b> (L1 the station row and the form one tap in; L2 the rotation by round on a phone; L3 hand-arrange as the pill’s tap menu) · <b>Stage 3 · The field</b> (M1 Back · Next · Rotate now docked; M2 the station screen; M3 swipe as an addition — recommended Not yet) · <b>Stage 4 · The head of the page</b> (N1 what sits above the first block on a phone).</p>
+    <h3>5 · Stage 1 — build notes, for the session that builds it</h3>
+    <p>≤640 only, decided in JS by the portal’s phone hook so the sheet is never rendered on a desk. The timeline’s shut row loses its two sentence lines and its gutter pair at ≤640 and gains a chevron; the gutter variable drops to the clock’s width. The open block renders inside a full-screen sheet (the “Add a station” sheet’s construction: its own header, the body the scroller, a pinned foot on the shared foot-clearance token — never a hand-copied 16px) with the same field components the card renders today; the sheet’s head carries ✕ · the eyebrow · Move up · Move down · Delete; the foot carries ‹ N of M › and Done; ‹ › change the open block in place. “+ Add a block” is one row that creates a block and opens its sheet; “Start from a drill ›” inside the sheet opens the existing picker. The template editor inherits all of it. No migration, no new route, no year parameter.</p>
+    <h3>6 · Verification at build</h3>
+    <p>A source guard for the ≤640 row (no sentence lines, no pair) and the sheet (the same field set as the card; the foot on the clearance token; ‹ › bounded); the layout sweep on the plan page with a block open at 361/390/768/1440 plus a new screen for the sheet open; a hit-test on the pinned foot at rest and mid-scroll at 390 and 360; the Saved pill over the sheet; Escape/scrim/Back; the record’s read face in the sheet; driven by hand at 390 and 360: write a three-block plan from blank without returning to the list. A “QA walk · 1” tab added to this hub at build, its § from the ledger.</p>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB · PM BRIEF ══════════════════════ -->
+<div id="tab-brief" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">PM brief · docs/projects/active/COACH_PRACTICE_PLANS_PHONE_PM_BRIEF.md</div>
+    <h1>Practice plans on a phone — the brief</h1>
+    <p class="lede">For a product owner: what a coach sees and does differently, why it matters, what it costs.</p>
+  </header>
+  <section class="prose">
+    <h3>The problem in one sentence</h3>
+    <p>A coach writing a practice plan on their phone types into fields half the width of the screen, inside a block that is taller than two screens and pushes the rest of the plan out from under them every time they open it.</p>
+    <h3>What a coach sees after stage 1</h3>
+    <p>The plan is a short list of blocks — each one line of title and one line of facts, nothing cut off — with “+ Add a block” at the foot. Tap a block and it opens on its own screen with every field at full width and the minutes chips on one line; a bar at the foot walks to the previous or next block without going back; Done returns to the list exactly where it was, with the block you edited picked out. Stations, groups, equipment and the library doors are all in the sheet, where they are on the card today.</p>
+    <h3>Who it affects</h3>
+    <p>Every Premium coach and assistant who writes plans (Schedule: View + edit) on a phone or small tablet, and — read-only — anyone who opens a plan there. The desktop and larger tablets are unchanged. Plan templates get the same treatment because they are the same editor.</p>
+    <h3>Why it matters</h3>
+    <p>Practice plans are the Premium portal’s weekday tool and the one most often written in a car park or a kitchen, not at a desk. The phone programme made every other weekday screen fit a phone; this is the last one that does not.</p>
+    <h3>Tradeoffs</h3>
+    <p>A coach cannot see the rest of the plan while editing one block on a phone (the sheet’s eyebrow and ‹ › are the mitigation). The plan’s look diverges more between phone and desk than any screen so far (a list vs a timeline with the block open in place). Stage 1 leaves the rotation grid scrolling a little on a phone; stage 2 draws it by round.</p>
+    <h3>Success criteria</h3>
+    <p>At 390: a shut block ≤ 60px and never truncated; a writing field ≥ 350px wide; the minutes chips on one line; opening a block moves nothing else on the page; a three-block plan written from blank without returning to the list; the layout sweep green with the sheet open; the field’s advance button reachable without scrolling on every stop once stage 3 lands.</p>
+  </section>
+</div>
+
+<p class="foot">Measured 23 September 2026 on <span class="mono">dev</span>, signed in as the UAT head coach, on a warm dev
+server. Probes: <span class="mono">.probe/pp-phone-measure.mjs · pp-station-modal.mjs</span>. Every figure on this
+page was read out of the rendered product, not estimated. Drawings are 390px wide and do not reflow — open
+this page on a phone to judge a tap target or a type size.</p>
+
+</div>
+
+<script>
+(function(){
+  var tabs = [].slice.call(document.querySelectorAll('.tab[data-tab]'));
+  /* Every tab button needs a panel here — a button with no entry falls through silently. */
+  var panels = { found:'tab-found', s1:'tab-s1', plan:'tab-plan', brief:'tab-brief' };
+  function show(k){
+    if(!panels[k]) k = 'found';
+    Object.keys(panels).forEach(function(key){ var el = document.getElementById(panels[key]); if(el) el.hidden = (key !== k); });
+    tabs.forEach(function(t){ t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === k)); });
+    window.scrollTo(0,0);
+  }
+  tabs.forEach(function(t){ t.addEventListener('click', function(){ var k = t.getAttribute('data-tab'); show(k); history.replaceState(null, '', '#tab=' + k); }); });
+  var m = /#tab=([a-z0-9]+)/i.exec(location.hash);
+  show(m ? m[1] : 'found');
+
+  /* House rule: an annotation opens on CLICK. A hover title is not an explanation. */
+  [].slice.call(document.querySelectorAll('.why')).forEach(function(b){
+    b.addEventListener('click', function(){
+      var body = document.getElementById(b.getAttribute('data-why')); if(!body) return;
+      var open = b.getAttribute('aria-expanded') === 'true';
+      b.setAttribute('aria-expanded', String(!open)); body.hidden = open;
+    });
+  });
+  /* A numbered dot on a drawing opens its note under the frame; a second tap closes it. */
+  [].slice.call(document.querySelectorAll('.mk[data-note]')).forEach(function(b){
+    b.addEventListener('click', function(){
+      var li = document.getElementById(b.getAttribute('data-note')); if(!li) return;
+      var was = li.classList.contains('open');
+      var list = li.parentElement; [].slice.call(list.children).forEach(function(x){ x.classList.remove('open'); });
+      if(!was) li.classList.add('open');
+      if(!was) li.scrollIntoView({ block:'nearest' });
+    });
+  });
+})();
+</script>

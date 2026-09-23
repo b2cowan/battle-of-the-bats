@@ -21,7 +21,7 @@ import { formatWeekdayDate } from '@/lib/measurable-format';
 import { playerName } from '@/lib/coach-roster-name';
 import {
   sessionMetricChips, sessionRows, sessionScopeCounts, scopeSentence, chipProgressByType, defaultSessionChip, plannedAttempts,
-  lastPlannedCounts, lastRunDates, scopeSummary, sessionReview, sessionTitle, sessionName, planCandidates, type ReviewRow,
+  lastPlannedCounts, lastRunDates, scopeSummary, sessionReview, sessionTitle, sessionName, planCandidates, chipProgress, type ReviewRow,
 } from '@/lib/development-session-view';
 import styles from '../../../../../coaches.module.css';
 import css from '@/components/coaches/DevelopmentSession.module.css';
@@ -228,20 +228,33 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   // The grid hands back a player id; the row's player object is looked up ONCE here.
   const rowPlayer = (pid: string) => rows.find(r => r.player.id === pid)?.player;
   /* ── what the phone bar reads (owner design, 2026-09-23) ──
-     ⚠ "ACCOUNTED FOR", NEVER "HAS A VALUE", and that is the load-bearing part: progress() counts
-     a result, an observation OR a mark, and this button hangs off the very figure printed beside
-     it. Gating on typed values instead would let the bar read "12 of 12" while still withholding
-     the way out — precisely the two-figures-that-disagree failure the count’s own note forbids. */
-  const typeProgress = selectedType ? progressByType.get(selectedType.id) ?? null : null;
-  const allAccounted = !!typeProgress && typeProgress.total > 0 && typeProgress.done >= typeProgress.total;
-  /* ⚠ The headline says "accounted for" the moment a MARK is part of the figure — "12 of 12
-     recorded · 2 not assessed" reads as fourteen of twelve, which is the sum a coach does in their
-     head at the end of a session. With no marks the common case is untouched: "7 of 12 recorded". */
-  const dockCount = selectedType
-    ? counts.notAssessed > 0
-      ? `${progress(selectedType.id)} accounted for · ${counts.recorded} recorded · ${counts.notAssessed} not assessed`
-      : `${progress(selectedType.id)} recorded`
-    : '';
+     ⚠⚠ EVERY FIGURE ON THIS BAR COMES FROM `counts`, AND THAT IS THE WHOLE FIX (/review, same day).
+     The first build read its headline from `progress()` and its breakdown from `counts`, which are
+     two different rules: `chipProgressByType` deliberately EXCLUDES a not-assessed mark on a session
+     with no stated plan (the legacy "N of M entered", where a mark is not an entry), while
+     `sessionScopeCounts` always counts one. On any unplanned session holding a mark the bar therefore
+     read "3 of 5 accounted for · 3 recorded · 1 not assessed" — a headline contradicted by its own
+     breakdown, the exact "fourteen of twelve" failure this bar was rewritten to stop — and
+     `allAccounted` could never be reached, so the way out stayed withheld forever however much the
+     coach recorded. Reading all four numbers off ONE object makes them agree by construction.
+     ⚠ `chipProgress(counts)` is the canonical "accounted for" (recorded + marked, of those counted),
+     and it is what the chip dropdown shows for a planned session — so the bar still cannot disagree
+     with the chip above it. On an unplanned session both read the same recorded-only figure too,
+     because there `counts.recorded` IS what the chip counts. */
+  const accounted = chipProgress(counts);
+  /* ⚠ A SESSION WITH NO PLAN HAS NO "COMPLETE" TO CLAIM, so the way out never pins on one. That is
+     not a nicety: `sessionState()` returns NULL rather than complete/unfinished without a scope, and
+     the sessions list prints a dash. A bar announcing "you are done" against a total nobody stated
+     would be the screen inventing a milestone the record does not have. */
+  const allAccounted = counts.scoped && counts.total > 0 && counts.notRecorded === 0;
+  /* ⚠ "accounted for" appears only once a MARK is part of the figure — "12 of 12 recorded · 2 not
+     assessed" reads as fourteen of twelve, which is the sum a coach does in their head. With no marks
+     the common case is untouched and still reads "7 of 12 recorded". */
+  const dockCount = !selectedType
+    ? ''
+    : counts.notAssessed > 0
+      ? `${accounted.done} of ${accounted.total} accounted for · ${counts.recorded} recorded · ${counts.notAssessed} not assessed`
+      : `${counts.recorded} of ${counts.total} recorded`;
 
   /**
    * ── "Save & next player" — THE NEXT UNRECORDED ROW, NOT THE NEXT ROW (stage 4 · E3) ──
@@ -380,13 +393,20 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
    * passes the selected chip, which is what it has always done; the observation dialog's fourth
    * answer passes the skill it CAPTURED when it opened — the same discipline the sheet already
    * applies to its title and its write, so a chip that changes cannot re-address someone else's
-   * mark. Returns whether it landed, because the dialog has to know before it closes.
+   * mark.
+   *
+   * ⚠ RETURNS THE ERROR'S OWN WORDS — null when it landed (/review 2026-09-23). It used to return
+   * a bare boolean, which left every SHEET that calls it with nothing to show: `rowErr` renders
+   * above the grid, behind whatever full-screen sheet is open, so a refusal a coach most needs to
+   * read — "That result is already recorded", when another device saved a value meanwhile — was
+   * displayed where they could not be looking. The observation dialog worked around it by reading
+   * `rowErr` out of a stale closure; now both sheets are handed the message directly.
    */
   async function markNotAssessed(
     player: SessionRosterRow, mark: boolean, forType?: RepTeamMeasurableType, reason?: string | null,
-  ): Promise<boolean> {
+  ): Promise<string | null> {
     const type = forType ?? selectedType;
-    if (!type || !canWrite) return false;
+    if (!type || !canWrite) return 'You do not have the Development grant for this team.';
     try {
       const res = await fetch(`${apiBase}/development/sessions/${session.id}/not-assessed`, {
         method: mark ? 'POST' : 'DELETE',
@@ -403,11 +423,11 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
         const rest = d.notAssessed.filter(n => !(n.playerId === player.id && n.measurableTypeId === type.id));
         return { ...d, notAssessed: mark ? [...rest, json.notAssessed] : rest };
       });
-      return true;
+      return null;
     } catch (e) {
       const message = e instanceof Error ? e.message : 'could not save that — try again.';
       setRowErr(`${player.playerFirstName}: ${message}`);
-      return false;
+      return message;
     }
   }
 
@@ -472,7 +492,7 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
         setObsBusy(true); setObsErr('');
         const landed = await markNotAssessed(player, true, skill, v.note.trim() || null);
         setObsBusy(false);
-        if (!landed) { setObsErr(rowErr || 'Could not save that — try again.'); return; }
+        if (landed) { setObsErr(landed); return; }   /* the refusal's own words, not a stale banner read */
       }
       setObsSheet(null);
       if (next) openObservation(next);
@@ -880,19 +900,22 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
           rows={sessionReview({ session, types, roster, pastParticipants, entries, notAssessed, observations, name: p => playerName(p) })}
           busy={sessionBusy}
           canWrite={canWrite}
+          canWriteObservations={canWriteObservations}
           onDrop={typeId => void dropFromPlan(typeId)}
           /* The review's own door to the mark (owner 2026-09-23). `markNotAssessed` already took a
              type and a reason — the grid row simply never passed either — so this is the same one
              write path the dialog's fourth answer uses, aimed at a player from the review's list. */
-          onMark={(playerId, typeId, reason) => {
+          onMark={async (playerId, typeId, reason) => {
             const player = roster.find(r => r.id === playerId);
             const type = types.find(t => t.id === typeId);
-            if (player && type) void markNotAssessed(player, true, type, reason);
+            if (!player || !type) return 'That player is no longer on this season\u2019s roster.';
+            return markNotAssessed(player, true, type, reason);
           }}
-          onUnmark={(playerId, typeId) => {
+          onUnmark={async (playerId, typeId) => {
             const player = roster.find(r => r.id === playerId);
             const type = types.find(t => t.id === typeId);
-            if (player && type) void markNotAssessed(player, false, type);
+            if (!player || !type) return 'That player is no longer on this season\u2019s roster.';
+            return markNotAssessed(player, false, type);
           }}
           onClose={() => setReviewOpen(false)}
           onBack={() => router.push(skillsAndGoalsHref(base, 'sessions'))}
@@ -932,17 +955,31 @@ const NOT_ASSESSED_REASONS = ['Absent', 'Hurt', 'Ran out of time'] as const;
  * the network, like everything else on this screen.
  */
 function SessionReviewDialog({
-  title, plan, rows, busy, canWrite, onDrop, onMark, onUnmark, onClose, onBack,
+  title, plan, rows, busy, canWrite, canWriteObservations, onDrop, onMark, onUnmark, onClose, onBack,
 }: {
   title: string;
   plan: string | null;
   rows: ReviewRow<RepTeamMeasurableType>[];
   busy: boolean;
   canWrite: boolean;
+  /**
+   * ⚠ THE SECOND GRANT, AND IT IS NOT OPTIONAL (/review 2026-09-23). `canWrite` alone is the
+   * Development grant; writing anything on a SKILL needs Internal notes as well, which is why the
+   * grid's own `readOnly` reads `isSkill && !canWriteObservations`. The first build of this sheet
+   * gated only on `canWrite`, so an assistant the head coach had deliberately left without Internal
+   * notes — a coach this screen otherwise hides the whole skill grid from — could still mark a
+   * player not assessed on a skill here, or undo a mark a senior coach had set. Neither the route
+   * nor RLS draws that line for this table, so this gate is the line.
+   */
+  canWriteObservations: boolean;
   onDrop: (typeId: string) => void;
-  /** Account for a player on ONE test — the reason is optional, as the mark's field always was. */
-  onMark: (playerId: string, typeId: string, reason: string | null) => void;
-  onUnmark: (playerId: string, typeId: string) => void;
+  /**
+   * Account for a player on ONE test — the reason is optional, as the mark's field always was.
+   * Resolves to the refusal's words, or null when it landed: this sheet covers the page's own error
+   * banner, so it has to show its own.
+   */
+  onMark: (playerId: string, typeId: string, reason: string | null) => Promise<string | null>;
+  onUnmark: (playerId: string, typeId: string) => Promise<string | null>;
   onClose: () => void;
   onBack: () => void;
 }) {
@@ -950,55 +987,97 @@ function SessionReviewDialog({
      looking at two open questions. Keyed by test AND player: the same player is listed under every
      test they missed, and those are separate marks. */
   const [asking, setAsking] = useState<{ typeId: string; playerId: string; marked: boolean } | null>(null);
+  /**
+   * ⚠⚠ THE SHEET OWNS ITS OWN IN-FLIGHT STATE AND ITS OWN ERROR (/review 2026-09-23), and every part
+   * of that sentence was missing from the first build.
+   *   · `busy` is the PAGE's `sessionBusy`, which `markNotAssessed` never sets — so every
+   *     `disabled={busy}` here was decorative against the one action this sheet performs.
+   *   · The question panel closed synchronously beside a fire-and-forget write, so the screen
+   *     confirmed the answer before the server had agreed to it.
+   *   · A refusal set `rowErr`, which paints above the grid — behind this very sheet.
+   *   · And the two footer buttons were ungated, so a coach could answer for their last outstanding
+   *     player and tap "Done — back to Sessions" while that write was still in the air. If it then
+   *     failed, nobody ever saw it and the session was quietly left incomplete.
+   * Now: the panel stays open until the write lands, the refusal is printed inside the panel that
+   * asked the question, and nothing leaves the sheet while a write is in flight.
+   */
+  const [pending, setPending] = useState<{ typeId: string; playerId: string } | null>(null);
+  const [writeErr, setWriteErr] = useState('');
+  const working = busy || pending !== null;
   const isAsking = (typeId: string, playerId: string) => asking?.typeId === typeId && asking.playerId === playerId;
-  const toggle = (typeId: string, playerId: string, marked: boolean) =>
+  const isPending = (typeId: string, playerId: string) => pending?.typeId === typeId && pending.playerId === playerId;
+  const toggle = (typeId: string, playerId: string, marked: boolean) => {
+    setWriteErr('');
     setAsking(a => (a && a.typeId === typeId && a.playerId === playerId ? null : { typeId, playerId, marked }));
+  };
+
+  /** One write, awaited: the panel closes only on success, and says why when there is a why. */
+  async function answer(typeId: string, playerId: string, run: () => Promise<string | null>) {
+    if (pending) return;
+    setPending({ typeId, playerId });
+    setWriteErr('');
+    const failure = await run();
+    setPending(null);
+    if (failure) { setWriteErr(failure); return; }   /* the panel stays open, holding the reason */
+    setAsking(null);
+  }
 
   /** A name the coach can act on, with its question opening directly beneath it. */
   const person = (r: ReviewRow<RepTeamMeasurableType>, p: { id: string; label: string }, marked: boolean) => (
     <span key={p.id} className={css.reviewPerson}>
-      <button type="button" className={css.reviewName} disabled={busy}
+      <button type="button" className={css.reviewName} disabled={working}
         aria-expanded={isAsking(r.type.id, p.id)}
         onClick={() => toggle(r.type.id, p.id, marked)}>{p.label}</button>
       {isAsking(r.type.id, p.id) && (
         <span className={css.reviewWhy}>
           <span className={css.reviewWhyQ}>
-            {marked ? 'Undo this mark?' : `Why was ${p.label} not assessed?`}
+            {isPending(r.type.id, p.id) ? 'Saving…' : marked ? 'Undo this mark?' : `Why was ${p.label} not assessed?`}
           </span>
           <span className={css.reviewWhyOpts}>
             {marked ? (
-              <button type="button" className={css.reviewWhyOpt} disabled={busy}
-                onClick={() => { onUnmark(p.id, r.type.id); setAsking(null); }}>Undo the mark</button>
+              <button type="button" className={css.reviewWhyOpt} disabled={working}
+                onClick={() => void answer(r.type.id, p.id, () => onUnmark(p.id, r.type.id))}>Undo the mark</button>
             ) : (
               <>
                 {NOT_ASSESSED_REASONS.map(reason => (
-                  <button key={reason} type="button" className={css.reviewWhyOpt} disabled={busy}
-                    onClick={() => { onMark(p.id, r.type.id, reason.toLowerCase()); setAsking(null); }}>{reason}</button>
+                  <button key={reason} type="button" className={css.reviewWhyOpt} disabled={working}
+                    onClick={() => void answer(r.type.id, p.id, () => onMark(p.id, r.type.id, reason.toLowerCase()))}>{reason}</button>
                 ))}
-                <button type="button" className={css.reviewWhyOpt} disabled={busy}
-                  onClick={() => { onMark(p.id, r.type.id, null); setAsking(null); }}>No reason given</button>
+                <button type="button" className={css.reviewWhyOpt} disabled={working}
+                  onClick={() => void answer(r.type.id, p.id, () => onMark(p.id, r.type.id, null))}>No reason given</button>
               </>
             )}
           </span>
+          {/* The refusal, in the panel that asked — never on the banner this sheet is covering. */}
+          {writeErr && isAsking(r.type.id, p.id) && <span className={css.reviewWhyErr} role="alert">{writeErr}</span>}
         </span>
       )}
     </span>
   );
 
+  /**
+   * ⚠ A name is a BUTTON only where the coach may write THIS kind of thing. A reader sees the same
+   * list as plain words — the sheet must never offer a control the product withholds elsewhere.
+   * The formula deliberately mirrors the grid's own `readOnly`: the Development grant, not a retired
+   * test, and — on a SKILL — Internal notes as well. (`pastParticipant` needs no clause here: the
+   * review's lists are built from in-scope, still-rostered players only, so such a name never
+   * appears in the first place.)
+   */
+  const mayMark = (r: ReviewRow<RepTeamMeasurableType>) =>
+    canWrite && !r.retired && (r.type.kind !== 'skill' || canWriteObservations);
+
   const names = (r: ReviewRow<RepTeamMeasurableType>) => {
     const parts: React.ReactNode[] = [];
-    /* ⚠ A name is a BUTTON only where the coach may write. A reader sees the same list as plain
-       words — the sheet must never offer a control the server would refuse. */
     if (r.names.notAssessed.length > 0) parts.push(
       <span key="na" className={css.reviewNameLine}><b>Not assessed:</b>{' '}
-        {canWrite && !r.retired
+        {mayMark(r)
           ? r.names.notAssessed.map(p => person(r, p, true))
           : r.names.notAssessed.map(p => p.label).join(', ')}
       </span>,
     );
     if (r.names.notRecorded.length > 0) parts.push(
       <span key="nr" className={css.reviewNameLine}><b>Not recorded:</b>{' '}
-        {canWrite && !r.retired
+        {mayMark(r)
           ? r.names.notRecorded.map(p => person(r, p, false))
           : r.names.notRecorded.map(p => p.label).join(', ')}
       </span>,
@@ -1068,9 +1147,12 @@ function SessionReviewDialog({
           {canWrite ? ' Tap a name to account for them.' : ''} The counts are read from what you recorded.
         </p>
       </div>
+      {/* ⚠ BOTH WAYS OUT WAIT FOR THE WRITE (/review 2026-09-23). Ungated, a coach could answer for
+          their last outstanding player and leave on the same breath; a write that then failed took
+          the session's completeness with it, silently. */}
       <div className={styles.modalFooter}>
-        <button type="button" className={styles.btnSecondary} onClick={onBack}>Done — back to Sessions</button>
-        <button type="button" className={styles.btnPrimary} onClick={onClose}>Keep recording</button>
+        <button type="button" className={styles.btnSecondary} disabled={working} onClick={onBack}>Done — back to Sessions</button>
+        <button type="button" className={styles.btnPrimary} disabled={working} onClick={onClose}>Keep recording</button>
       </div>
     </QuestionShell>
   );

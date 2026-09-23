@@ -455,6 +455,15 @@
 }
 .reviewWhyOpt:hover { background: var(--home-fill, var(--surface-2)); }
 .reviewWhyOpt:disabled { opacity: 0.6; cursor: default; }
+/* The refusal, inside the panel that asked the question — NEVER on the page banner behind this
+   sheet. It is the only place a coach is looking when a mark is refused (/review 2026-09-23). */
+.reviewWhyErr {
+  display: block;
+  margin-top: 0.45rem;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--danger);
+}
 
 .reviewLegend b { color: var(--text-secondary); font-weight: 600; }
 /* The lead cell's name list can run to a dozen players — several lines taller than the sibling
