@@ -53,7 +53,7 @@ The plan as a document (practices stage 1, 2026-09-14); "+ Stations makes two" (
 
 | Stage | Covers | Asks | State |
 |---|---|---|---|
-| 1 · The block on its own screen | The plan's blocks as a compact list on a phone (the spine and the clock stay; the row is title + one line of facts; 56px); a block opens as a **full-screen sheet** — the station form's shape — with every field at full width and a pinned foot (‹ N of M › · Done); Move up · Move down · Delete on the sheet's head; "+ Add a block" as one 44px row that opens a blank block's sheet with "Start from a drill ›" inside it. | K1–K4 | **drawn 2026-09-23 · ruling owed** |
+| 1 · The block on its own screen | The plan's blocks as a compact list on a phone (the spine and the clock stay; the row is title + one line of facts; 56px); a block opens as a **full-screen sheet** — the station form's shape — with every field at full width and a pinned foot (‹ N of M › · Done); Move up · Move down · Delete on the sheet's head; "+ Add a block" as one 44px row that opens a blank block's sheet with "Start from a drill ›" inside it. | K1–K4 | **drawn 2026-09-23 · RULED 2026-09-23 — K1–K4 = A as recommended** |
 | 2 · Stations and the rotation | A station as a 56px row inside the block sheet (the row is the door to the form that exists); "Write one" adds the station *and* opens its form in one motion on a 44px button (four taps → two); the rotation drawn **by round** on a phone (Round 1: A → Footwork · B → Close control · C → Finishing …) with hand-arrange as the pill's tap menu (D14's tap path already exists); the desktop grid untouched. | L1–L3 | — |
 | 3 · The field | Back · Next · Rotate now docked above the bar on the block and station screens (the E4 idiom; the bar on the clearance token, never above the nav); the station screen's "Coming to you" kept; a plain stop's order (does the note lead, or the watching-for line and the points?); swipe between stops as an addition — recommended *Not yet* (gloves; the browser's back gesture; the docked buttons take most of the value). | M1–M3 | — |
 | 4 · The head of the page | What sits above the first block on a phone: the sent line and "Send again" (~110px), the when-block, the goal, About — ~500px before the plan begins. Drawn unchanged in stage 1 on purpose so stage 1's own gain is not hidden. | N1 | — |
@@ -62,7 +62,7 @@ The plan as a document (practices stage 1, 2026-09-14); "+ Stations makes two" (
 
 The drawing is the hub's **"1 · The block on its own screen"** tab: the whole screen before and after (the Skills circuit open in place, as built, beside the plan as a list), the sheet's top and its foot, every red dot a measured problem and every green dot what the drawing answers, and the four decisions with a paste-back.
 
-### 6.0 Rulings (owner paste-back — owed)
+### 6.0 Rulings (owner, 2026-09-23 — *"I agree with your recommendations"*: K1 = A · K2 = A · K3 = A · K4 = A)
 
 - **K1 · the list** — A (recommended): keep the spine and the clock; the column narrows 92 → 66px as the reorder pair leaves it; a block is a 56px row, title + one line of facts (`Warm-up · 15 min · UAT Coach · 6 players`), a chevron, the whole row the door. B: the portal's row list with the time as an inline lead (the Schedule's phone shape; not drawn). C: keep one truncated sentence (measured never to complete at 390).
 - **K2 · the block opens on its own screen** — A (recommended): the sheet — full width, its own header, the list untouched behind it, a pinned foot with ‹ 2 of 3 › and Done; the station form already opens exactly this way. B: stay in place and narrow the margin — honest arithmetic: fields 197 → ~223 (+13%), the block still ~1,000px in the flow.
@@ -109,6 +109,78 @@ The drawing is the hub's **"1 · The block on its own screen"** tab: the whole s
 - **A hit-test, not a look,** on the pinned foot at rest and mid-scroll at 390 and 360 with the keyboard closed; the Saved pill over the sheet (z-order against 250/260); Escape / scrim / Back.
 - **Driven by hand at 390 and 360:** write a three-block plan from blank without returning to the list; open a past practice and read its blocks through the sheet; a picker dropdown inside the sheet not clipped.
 - A **"QA walk · 1"** tab on the hub at build time, its § number from the ledger.
+
+### 6.5 Built as (2026-09-23 · dev · every number read from the browser's own geometry — probe `.probe/pp-stage1-after.mjs` at 390 / 360 / 1440) — **ledger §227, walk owed; committed 2026-09-23 with its /simplify + /review fixes**
+
+**Measured after, 390×844:**
+
+| | Before | After (measured) |
+|---|---|---|
+| A shut block | 117px, two cut sentences | **59px**, title + one facts line, nothing cut (`Warm-up` / `15 min · UAT Coach · 6 players`) |
+| The clock column | 92px | **80px** (5rem — the proven clock-alone width; the drawing's 66 would have cut "12:00 p.m.") |
+| Three blocks + the add row | 481px | **221px** |
+| A writing field / the title | 197 / 106px | **359 / 359px** (329 at 360) |
+| Block 2 when block 1 opens | moves 895px | **moves 0** |
+| The sheet's foot | — | Previous · Next · Done all 44px, **pinned at 783** at rest and with the body scrolled to its end |
+| Desktop 1440 | — | **unchanged**: rows 117px, the pair under every clock, the block opens in place, no dialog |
+
+**What was built.** `BlockSheet` (new, in the editor) is the station form's construction — the
+portal modal with `.ppStationModal`, `useDialogFloor` with the block walk bound to ← / →, the
+shared `CoachModalHeader` carrying a two-line eyebrow (the place, then the clock — never uppercased,
+the clock rule) and Move up · Move down · Delete, the body `scrollPane`, and a `.modalFooter` with
+`RoomWalkNav` and Done. `BlockCard` gained `phone` / `sheet` / `onStartFromDrill`: its open body is
+built ONCE (`titleEl` + `body`) and rendered either inside the timeline card (desktop, unchanged
+markup) or inside the sheet; the sheet's body wrapper keeps the `.ppTlOpen` class (so every field
+rule written for the open block reaches it) and drops the card's look. The editor decides
+`phoneSheet = useIsPhone(!soloBlock) && !soloBlock`, renders every timeline block SHUT on a phone,
+mounts the open one as the sheet BEFORE the station modal / groups room / picker / drill sheet, and
+wires both from ONE `blockCardProps(block, i)` so the row and the sheet cannot drift. The body is
+keyed per block (a picker's typed-but-unchosen search starts fresh on a step), the panel is not (the
+floor, its focus rule and its history step stay armed across the walk). The sheet enrols in
+`useOverlayOpen`. K4: one `.ppTlAddRow` once the plan has a block; the blank plan keeps its lime
+ghost row. "Start from a drill ›" shows only on a just-added, still-blank block and swaps it for the
+drill sheet's own new-block path. No migration, no route, no year parameter.
+
+**Found and fixed on the way:**
+- ⚠ **The new block's title lost the cursor in the dev build.** `autoFocus` fired, then the dialog
+  floor's StrictMode double-mount cleanup handed focus back to "+ Add a block" and the re-mount
+  seated it on the panel. An effect in `BlockCard` (a parent's effects run after its children's)
+  now focuses the title last, in either build.
+- ⚠ **The layout sweep measured the WRONG dialog when two are stacked.** `openModal` took the FIRST
+  visible `aria-modal` dialog — the block sheet — so the station form over it read as a fixed bar
+  covering 20 controls. It now takes the LAST (the one the user is in; every stacked floor mounts
+  after its host). A sweep fix, not a product one: the product's keys, Tab and Back already answer
+  only the top floor.
+- ⚠ **A probe's delete was lost to the autosave debounce** — the browser closed inside the pause and
+  two blank blocks stayed on the fixture; removed and proven by reload. The after-probe now waits
+  for the Saved pill and reloads before it reports.
+- The sweep's `openFirstBlock` waited on the in-place card's "Close <block>" — it now waits on
+  whichever presentation the width draws.
+
+**Deviations from the drawing, stated:** the clock column is 80px not 66 (above); the foot's walk
+is the shared `RoomWalkNav`, so it names the neighbours ("‹ War…" / "Small-sid… ›") where the
+drawing showed a bare "‹ 2 of 3 ›" — the same control the station form's foot uses; at 360 a long
+row's facts WRAP (79 / 108px) rather than truncate — the no-truncation rule held over the height
+target; the five quick-length chips sit on one line with the minutes box, "Rest of practice" and
+"ends …" wrap to a second (the ≤640 clock-row rule, unchanged).
+
+**Verified:** typecheck clean · eslint 0 · unit **4,631 / 4,631** (new
+`coach-practice-plans-phone-guard.test.ts`, 11 cases; one `practice-vocabulary-guard` assertion
+updated to the widened drag gate) · `check:css-selectors`, `check:spelling`, CSS-module purity
+green · `check:layout --only=coach-practice-plan,coach-practice-station,coach-practice-record-open`
+clean at 361 / 390 / 1440 (768: the header "?" — the known touch-debt entry, now also recorded for
+the station screen where it predated this change) · driven at 390 / 360: the sheet's walk, Escape
+back to the row, add → title focused → delete → reload shows the plan as found.
+
+**/simplify + /review (2026-09-23, high-risk tier: 4 cleanup lenses, then 4 finder lenses; `verify:changed` green, 4,634 unit):**
+- /simplify applied: the sheet's walk now uses a shared `blockWalk` beside `stationWalk` (the same `roomNeighbours` arithmetic, unit-tested at the ends); `BlockSheet` derives first/last/can-move from the walk instead of three duplicate props; one `canAddBlock`/`phoneAddRow` pair instead of a hand-negated condition; a dead `&& !soloBlock`. Skipped with reasons: extracting a shell shared with `StationModal` (reshapes a component outside this change — a follow-up); a first-tag-name micro-optimisation (a handful of blocks); moving the title-focus fix into `useDialogFloor` via `[autofocus]` (React does not render that attribute on the client — the proposed fix would find nothing).
+- /review — **four confirmed, all fixed:** ⚠ **(High, data loss)** "Start from a drill ›" judged a block blank by title/stations/words only, so players, staff, a length or coaching points set before a title were discarded by the swap — now `isUntouchedNewBlock` requires every field to be as `addBlock` made it (a field the type grows later counts as work by default). **(Medium, a11y)** deleting a block from its own sheet restored focus to that block's deleted row (focus fell to `<body>`), and closing after a walk returned focus to the FIRST row opened — the editor now focuses the row of the block last shown, else the add row (both add rows carry the marker, so deleting the ONLY block lands on the blank plan's lime row). **(Low)** a blank block moved before "Start from a drill" re-landed at the end — the drill sheet now carries the position. **(Low)** a template's clock-less gutter printed "Rest of practice" into the 5rem phone column — it says "rest", the dated gutter's word. Refuted/clean: Back with a stacked station form closes only the top; stepping pushes no history; the overlay lock does not double-register; read-only viewers get no Move/Delete/add; the desktop title markup is identical.
+- **Noted, not changed:** "Start from a drill ›" disappears once the coach steps away from the new block and back (the fresh flag clears on any step — discoverability, not data); rotating a phone across 640 with a block open unmounts the sheet into the desk card — worth one real-device check on the walk.
+
+**Not verified, and why:** `coach-practice-groups` could not be swept at any width, desktop
+included — the probe practice has aged into a RECORD (read-only, so no "Edit groups ›"); the fixture
+wants its usual re-seed, which is not this change's. The help article still describes "the arrows
+under each block's start time … on a phone" — `/docs` owed.
 
 ## 7 · Not in scope
 

@@ -173,7 +173,9 @@ async function openFirstBlock(page) {
   const row = page.getByRole('button', { name: /^Open / }).first();
   if (await row.count() === 0) return;
   await row.click();
-  await page.getByRole('button', { name: /^Close / }).first().waitFor({ state: 'attached', timeout: 15_000 });
+  // ≤640 the block opens as its own SHEET (practice plans on a phone, K2, 2026-09-23) — no in-place
+  // "Close <block>" exists there, so wait on whichever presentation this width draws.
+  await page.locator('[data-block-sheet], button[aria-label^="Close "]').first().waitFor({ state: 'attached', timeout: 15_000 });
   await page.waitForTimeout(300);
 }
 

@@ -1490,6 +1490,12 @@ export function stationWalk(stations: readonly PracticeStation[], stationId: str
   return roomNeighbours(stations, stationId, s => s.id, (s) => stationLabel(s, stations.indexOf(s)));
 }
 
+/** The phone's block sheet walks the plan's blocks the same way (practice plans on a phone, K2) —
+ *  the same shared arithmetic, so the two walks agree on what an edge does. */
+export function blockWalk(blocks: readonly PracticePlanBlock[], blockId: string | null): RoomNeighbours {
+  return roomNeighbours(blocks, blockId, b => b.id, b => b.title.trim() || `Block ${blocks.indexOf(b) + 1}`);
+}
+
 // ── The field run (slice 1b) ─────────────────────────────────────────────────
 
 /**

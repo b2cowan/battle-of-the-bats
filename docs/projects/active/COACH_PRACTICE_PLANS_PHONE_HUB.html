@@ -140,6 +140,18 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
 .good-flag{border-left-color:var(--accent);background:var(--accent-soft)}
 .good-flag .k{color:var(--accent-ink)}
 .foot{padding:26px 0 0;font-family:var(--display);font-size:13.5px;color:var(--muted);line-height:1.6}
+/* the QA walk */
+.qasign{border:1px solid var(--rule);background:var(--surface);border-radius:10px;padding:14px 16px;font-family:var(--display);font-size:14.5px;line-height:1.55;margin-bottom:16px;max-width:72ch}
+.qaprog{font-family:var(--display);font-weight:700;font-size:15px;margin:0 0 14px}
+.qapart{border:1px solid var(--rule);border-radius:10px;background:var(--surface);padding:16px 18px;margin-bottom:14px}
+.qapart h3{margin:0 0 8px;font-size:17px}
+.qastep{display:flex;gap:10px;align-items:flex-start;padding:7px 0;font-family:var(--display);font-size:14.5px;line-height:1.5;color:var(--ink);cursor:pointer}
+.qastep input{width:20px;height:20px;flex:0 0 auto;margin-top:2px;accent-color:var(--accent)}
+.qastep b{font-family:var(--mono);font-size:12px;color:var(--muted);font-weight:500;flex:0 0 auto;margin-top:2px}
+.qaverdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px;font-family:var(--display);font-size:13.5px}
+.qabtn{font-family:var(--display);font-size:14px;font-weight:600;border:1px solid var(--rule);background:var(--surface);color:var(--ink);border-radius:7px;padding:8px 14px;min-height:44px;cursor:pointer}
+.qabtn[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.qapart textarea{width:100%;margin-top:10px;min-height:60px;border:1px solid var(--rule);border-radius:7px;padding:9px 11px;font:14px/1.5 var(--display);background:var(--paper);color:var(--ink);resize:vertical}
 
 /* ══ TRUE-SIZE DRAWINGS — the warm coach portal at 390px, not reflowed ══
    Values are the product's own: paper #F6F2EA, card #FFF, hairline rgba(70,55,30,.12), ink #241E15,
@@ -261,7 +273,8 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
 <nav class="tabs" role="tablist" aria-label="Practice plans on a phone">
   <span class="tabtitle">Practice plans on a phone</span>
   <button type="button" class="tab" role="tab" data-tab="found" aria-selected="true" aria-controls="tab-found">What the walk found<span class="st dim">measured 23 Sep · 390 and 360</span></button>
-  <button type="button" class="tab" role="tab" data-tab="s1" aria-selected="false" aria-controls="tab-s1">1 · The block on its own screen<span class="st">drawn · ruling owed</span></button>
+  <button type="button" class="tab" role="tab" data-tab="s1" aria-selected="false" aria-controls="tab-s1">1 · The block on its own screen<span class="st built">ruled 23 Sep · K1–K4 = A</span></button>
+  <button type="button" class="tab" role="tab" data-tab="qa1" aria-selected="false" aria-controls="tab-qa1">QA walk · 1<span class="st built">built 23 Sep</span><span class="st">§227 walk owed</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
 </nav>
@@ -279,8 +292,8 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
     half its width. Every figure here was read from the running product's own geometry, never estimated
     from a screenshot.</p>
     <div class="strip" aria-label="Where the project is">
-      <span class="on">Walked 23 Sep</span><span class="on">Stage 1 drawn 23 Sep</span><span class="now">Ruling owed</span>
-      <span>Built —</span><span>QA —</span><span>Committed —</span>
+      <span class="on">Walked 23 Sep</span><span class="on">Stage 1 drawn 23 Sep</span><span class="on">Ruled 23 Sep · K1–K4 = A</span>
+      <span class="on">Built on dev 23 Sep · §227</span><span class="now">QA walk owed</span><span>Committed —</span>
     </div>
   </header>
 
@@ -329,7 +342,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
     <div class="tbl"><table>
       <thead><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr></thead>
       <tbody>
-        <tr><td>1 · The block on its own screen</td><td>The plan’s blocks as a compact list on a phone; a block opens as a full-screen sheet with every field at full width and a pinned foot (‹ › between blocks · Done); reorder moves into the sheet; “+ Add a block” as one row.</td><td>K1–K4</td><td>drawn 23 Sep · ruling owed</td></tr>
+        <tr><td>1 · The block on its own screen</td><td>The plan’s blocks as a compact list on a phone; a block opens as a full-screen sheet with every field at full width and a pinned foot (‹ › between blocks · Done); reorder moves into the sheet; “+ Add a block” as one row.</td><td>K1–K4</td><td>drawn 23 Sep · ruled 23 Sep (all four as recommended)</td></tr>
         <tr><td>2 · Stations and the rotation</td><td>A station as a 56px row inside the block sheet (the row is the door to the form that already exists); “Write one” adds the station <i>and</i> opens its form in one motion, on a 44px button (four taps → two); the rotation drawn <b>by round</b> on a phone with hand-arrange as the pill’s tap menu; the desktop grid untouched.</td><td>L1–L3</td><td>—</td></tr>
         <tr><td>3 · The field</td><td>Back · Next · Rotate now docked above the bar on the block and station screens; the plain stop’s order (does the note lead, or the watching-for line?); swipe between stops as an addition — recommended <i>Not yet</i>.</td><td>M1–M3</td><td>—</td></tr>
         <tr><td>4 · The head of the page</td><td>What sits above the first block on a phone: the sent line and “Send again”, the when-block, the goal, About — ~500px before the plan begins.</td><td>N1</td><td>—</td></tr>
@@ -636,6 +649,29 @@ Notes:</pre>
   </section>
 </div>
 
+<!-- ══════════════════════ TAB · QA WALK 1 ══════════════════════ -->
+<div id="tab-qa1" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">QA walk · stage 1 · ledger §227 · built on dev 23 September 2026</div>
+    <h1>Walk the block on its own screen</h1>
+    <p class="lede">On your phone, signed in as the UAT head coach. Tick each step as it holds; mark each part
+    Pass or Needs work; the box under a part is for what you saw. Ticks are kept in this browser. When you are
+    done, press <b>Copy the result</b> and paste it into the chat.</p>
+  </header>
+  <section>
+    <div class="qasign"><b>Where:</b> the UAT Test Team → More → <b>Practice plans</b> → <b>UAT probe practice</b>.
+    It is a past practice, so open the <b>⋯</b> beside Run practice and choose <b>Edit the plan</b> first.
+    Parts A–E on a phone; part F on a computer.</div>
+    <p class="qaprog" id="qaProg">0 of 0 steps ticked</p>
+    <div id="qaParts"></div>
+    <div class="paste">
+      <div class="k">The result, to paste back</div>
+      <button type="button" class="qabtn" id="qaCopy">Copy the result</button>
+      <pre id="qaOut"></pre>
+    </div>
+  </section>
+</div>
+
 <!-- ══════════════════════ TAB · PLAN ══════════════════════ -->
 <div id="tab-plan" role="tabpanel" hidden>
   <header class="masthead">
@@ -695,7 +731,7 @@ this page on a phone to judge a tap target or a type size.</p>
 (function(){
   var tabs = [].slice.call(document.querySelectorAll('.tab[data-tab]'));
   /* Every tab button needs a panel here — a button with no entry falls through silently. */
-  var panels = { found:'tab-found', s1:'tab-s1', plan:'tab-plan', brief:'tab-brief' };
+  var panels = { found:'tab-found', s1:'tab-s1', qa1:'tab-qa1', plan:'tab-plan', brief:'tab-brief' };
   function show(k){
     if(!panels[k]) k = 'found';
     Object.keys(panels).forEach(function(key){ var el = document.getElementById(panels[key]); if(el) el.hidden = (key !== k); });
@@ -714,6 +750,103 @@ this page on a phone to judge a tap target or a type size.</p>
       b.setAttribute('aria-expanded', String(!open)); body.hidden = open;
     });
   });
+  /* ── QA walk · 1 (§227). Steps pin what a coach SEES — names and places — never a pixel figure. ── */
+  var QA = [
+    { id:'A', title:'A · The plan is a list (phone)', steps:[
+      'Each of the three blocks is one short row: its title, then one line of facts — Warm-up reads "15 min · UAT Coach · 6 players".',
+      'No row shows a sentence cut off with "…" — the words "Dynamic warm-up, then partner work…" are not on the Warm-up row.',
+      'Each row has a small › at its right edge. There are no up/down arrows under the times.',
+      'The start times (10:45 p.m., 11:00 p.m., 11:45 p.m.) still run down the left, beside the dark line.',
+      'Under the last block is a single "+ Add a block" row — not a paragraph with "or a drill from your library".'
+    ]},
+    { id:'B', title:'B · A block opens on its own screen (phone)', steps:[
+      'Tap Skills circuit. It fills the screen; the plan list is gone from view and the bottom tabs are covered.',
+      'The top reads "Block 2 of 3" with "11:00 p.m." under it — in small letters, not "P.M.".',
+      'The title box reads "Skills circuit" in full, across the whole width.',
+      '"What you’re doing" shows its whole sentence without a cut; the box is the width of the screen.',
+      'The minute chips 5 · 10 · 15 · 20 · 30 and the minutes box sit on one line.',
+      'The three stations (Footwork ladder, Close control, Finishing) and "Edit groups ›" are further down the same screen.',
+      'Scroll to the bottom: the bar with "‹ Warm-up", "2 of 3 blocks", "Small-sided game ›" and Done stays at the foot the whole time.',
+      'Type a word into "What you’re watching for", wait for Saved to fade, then delete it again.'
+    ]},
+    { id:'C', title:'C · Walking, moving and leaving (phone)', steps:[
+      'Tap "Small-sided game ›": the same screen now shows Small-sided game, "Block 3 of 3 · 11:45 p.m.".',
+      'Tap the up arrow at the top: it becomes "Block 2 of 3"; tap the down arrow to put it back to "Block 3 of 3".',
+      'Tap Done: you are back on the list, which has not jumped — the rows are where they were, in the original order.',
+      'Open Warm-up and tap any of the quiet "+" doors at the foot of its screen — the field it adds appears right there, full width. Tap its small × to close it again.',
+      'Tap "‹" (Back) at the top left: the screen closes and you are on the list. The phone’s own Back does the same.',
+      'With a block open, turn the phone sideways: the block is still open with what you typed, and turning back does not leave the page.'
+    ]},
+    { id:'D', title:'D · Adding a block (phone)', steps:[
+      'Tap "+ Add a block": a new screen opens reading "Block 4 of 4 · 12:15 a.m." with the keyboard up and the cursor in the title.',
+      'Under the title is a quiet "Start from a drill ›".',
+      'Type any title: "Start from a drill ›" disappears.',
+      'Tap the bin at the top: the screen closes and the list shows the original three blocks.',
+      'Reload the page (and choose Edit the plan again): still exactly three blocks.'
+    ]},
+    { id:'E', title:'E · The doors inside a block (phone)', steps:[
+      'Open Skills circuit and tap "Footwork ladder": the station opens over the block, reading "station 1 of 3".',
+      'Close the station (Back): you are on Skills circuit again, not on the list.',
+      'Tap "Edit groups ›": the groups room opens; Done brings you back to Skills circuit.'
+    ]},
+    { id:'F', title:'F · Nothing moved on a computer', steps:[
+      'On a desktop browser, the same plan shows the blocks as before — each row with its sentence and the up/down arrows under its time.',
+      'Clicking a block opens it right where it is, inside the list, as before — no full-screen sheet.'
+    ]}
+  ];
+  var KEY = 'pp-phone-qa1';
+  var st = {}; try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  var root = document.getElementById('qaParts');
+  var total = 0;
+  QA.forEach(function(p){
+    var box = document.createElement('div'); box.className = 'qapart';
+    var h = document.createElement('h3'); h.textContent = p.title; box.appendChild(h);
+    p.steps.forEach(function(s, i){
+      total++;
+      var id = 'qa-' + p.id + (i + 1);
+      var lab = document.createElement('label'); lab.className = 'qastep'; lab.setAttribute('for', id);
+      var cb = document.createElement('input'); cb.type = 'checkbox'; cb.id = id; cb.checked = !!st[id];
+      cb.addEventListener('change', function(){ st[id] = cb.checked; save(); render(); });
+      var n = document.createElement('b'); n.textContent = p.id + (i + 1);
+      var t = document.createElement('span'); t.textContent = s;
+      lab.appendChild(cb); lab.appendChild(n); lab.appendChild(t); box.appendChild(lab);
+    });
+    var v = document.createElement('div'); v.className = 'qaverdict';
+    v.appendChild(document.createTextNode('Part ' + p.id + ':'));
+    ['Pass', 'Needs work'].forEach(function(word){
+      var b = document.createElement('button'); b.type = 'button'; b.className = 'qabtn'; b.textContent = word;
+      b.setAttribute('aria-pressed', String(st['v-' + p.id] === word));
+      b.addEventListener('click', function(){ st['v-' + p.id] = st['v-' + p.id] === word ? '' : word; save(); render(); });
+      v.appendChild(b);
+    });
+    box.appendChild(v);
+    var ta = document.createElement('textarea'); ta.id = 'qa-note-' + p.id; ta.placeholder = 'What you saw (optional)';
+    ta.value = st['n-' + p.id] || '';
+    ta.addEventListener('input', function(){ st['n-' + p.id] = ta.value; save(); render(); });
+    box.appendChild(ta);
+    root.appendChild(box);
+  });
+  function render(){
+    var done = 0; QA.forEach(function(p){ p.steps.forEach(function(_, i){ if (st['qa-' + p.id + (i + 1)]) done++; }); });
+    document.getElementById('qaProg').textContent = done + ' of ' + total + ' steps ticked';
+    [].slice.call(document.querySelectorAll('.qaverdict')).forEach(function(v, idx){
+      var p = QA[idx];
+      [].slice.call(v.querySelectorAll('button')).forEach(function(b){ b.setAttribute('aria-pressed', String(st['v-' + p.id] === b.textContent)); });
+    });
+    var lines = ['§227 · Practice plans on a phone · stage 1 — ' + done + '/' + total + ' ticked'];
+    QA.forEach(function(p){
+      var miss = p.steps.map(function(_, i){ return st['qa-' + p.id + (i + 1)] ? null : p.id + (i + 1); }).filter(Boolean);
+      lines.push(p.id + ': ' + (st['v-' + p.id] || 'no verdict') + (miss.length ? ' · unticked ' + miss.join(' ') : ' · all ticked') + (st['n-' + p.id] ? ' · ' + st['n-' + p.id].replace(/\s+/g, ' ') : ''));
+    });
+    document.getElementById('qaOut').textContent = lines.join('\n');
+  }
+  render();
+  document.getElementById('qaCopy').addEventListener('click', function(){
+    var text = document.getElementById('qaOut').textContent;
+    if (navigator.clipboard) navigator.clipboard.writeText(text).catch(function(){});
+  });
+
   /* A numbered dot on a drawing opens its note under the frame; a second tap closes it. */
   [].slice.call(document.querySelectorAll('.mk[data-note]')).forEach(function(b){
     b.addEventListener('click', function(){

@@ -23065,3 +23065,13 @@ a one-tile band — harmless today, since no caller can produce one and with no 
 a no-op.
 
 **WALK STILL OWED — §226, on a real phone.** Steps to write.
+
+## §227 · Practice plans on a phone · stage 1 — **the block on its own screen: on a phone the plan is a list, and a block opens full-width where nothing under it moves** — owner rulings 2026-09-23 (*"I agree with your recommendations"*): K1 · K2 · K3 · K4 = A. Plan `COACH_PRACTICE_PLANS_PHONE_PLAN.md` §6 (§6.5 is the build record); hub https://claude.ai/artifact/73DbeziBqDjMr4QEhRWTvp tab "QA walk · 1". Built on dev and committed 2026-09-23 (the commit carrying this entry). No migration.
+
+**What changed, at ≤640 only:** a shut block is one 59px row — its title and one line of facts (length · who runs it · how many), a chevron, no cut sentences and no reorder arrows (was 117px). Tapping it opens the block as a full-screen sheet — the shape the block's own station form already had — with every field at the full width (359px, was 197; the title 359, was 106), Move up · Move down · Delete on its head, and a pinned foot that walks to the previous or next block, then Done. Nothing under the block moves when it opens (was 895px). "+ Add a block" is one row; a new block opens with the cursor in its title and a quiet "Start from a drill ›". **Desktop and tablet unchanged** (measured at 1440).
+
+**Found on the way, fixed:** the title lost the cursor in the dev build (the dialog's double-mount handed focus back); the layout sweep measured the wrong dialog when two are stacked (a sweep fix — it read the station form as a bar over the block sheet); a probe's delete was lost to the autosave pause and left two blank blocks on the fixture (removed, proven by reload).
+
+**Owed:** the walk (28 steps on the hub) · `/docs` (the practice-plan article says the reorder arrows sit under each start time "on a phone") · the fixture's re-seed (the probe practice has aged into a record, so the groups-room sweep screen cannot run at any width — not this change's) · (/review done — below).
+
+**§227 · /simplify + /review 2026-09-23 (high-risk tier) — four confirmed, all fixed before commit:** (High) "Start from a drill ›" could discard players, staff, a length or coaching points set on a new block before its title — "blank" now means every field untouched; deleting a block from its own screen left keyboard focus nowhere, and Done after walking returned focus to the first row opened — focus now lands on the block last shown, else the add row; a moved blank block re-landed at the end; a template's "Rest of practice" overflowed the phone's time column (now "rest"). Walk still owed; add one real-phone rotation check with a block open.

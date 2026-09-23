@@ -285,7 +285,9 @@ describe('the editor\'s read mode is a FACE, not a disabled form (stage 6, R2)',
   it('rows open to read: the ghost row, the gaps and the drag handle stay behind `layout.timeline`, the doors behind `!readOnly`', () => {
     assert.ok(editor.includes('timeline: !readOnly && !soloBlock'));
     assert.ok(editor.includes('{!readOnly && (doors.length > 0 || promoteDoor) && ('));
-    assert.ok(editor.includes('const canDrag = !readOnly && !solo && blockCount > 1;'));
+    // A phone neither drags nor carries the pair (practice plans on a phone, K1 · K3, 2026-09-23);
+    // read-only still never drags — the first term is the one this test is about.
+    assert.ok(editor.includes('const canDrag = !readOnly && !solo && !phone && !sheet && blockCount > 1;'));
   });
 });
 

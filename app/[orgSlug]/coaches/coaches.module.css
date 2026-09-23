@@ -11129,11 +11129,11 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   .ppDocWhenSep { display: none; }
   /* The record's edit door takes its own line under the three buttons (stage 6, frame 147). */
   .ppEditPlanLink { flex-basis: 100%; margin-left: 0; }
-  /* 5.75rem: the reorder pair at the tap floor is 88px wide and sits flush to the spine (its
-     negative right margin cancels the gutter's padding); "12:00 p.m." at the label size measures
-     66px and had 5rem until the pair arrived (owner, 2026-09-15) — the block gives up 12px for it
-     rather than stacking the pair, which would have made every row ~75px taller. */
-  .ppTl { --pp-gutter-w: 5.75rem; }
+  /* 5rem: the clock alone — "12:00 p.m." at the label size measures 66px. The column was 5.75rem
+     while the reorder pair (88px) sat under the clock; on a phone the pair moved to the block
+     sheet's head (practice plans on a phone, K3, 2026-09-23), and the length to the row's facts
+     line, so the gutter gives the 12px back. The 641–768 band keeps the pair and its 6.25rem. */
+  .ppTl { --pp-gutter-w: 5rem; }
   .ppTlGutter { font-size: var(--type-label); padding: 0.75rem 0.4rem 0.75rem 0; }
   .ppTlClosed { padding-left: 0.75rem; }
   .ppTlGhost { padding-left: 0.75rem; }
@@ -11464,6 +11464,41 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    here and on the drill sheet, which wears the same head. */
 .ppStationModal .modalHeader { margin-bottom: 0; }
 .ppStationTitle { font-size: var(--type-heading); font-weight: 700; }
+
+/* ── PRACTICE PLANS ON A PHONE · stage 1 (owner ruling K1–K4 = A, 2026-09-23) ──
+   Every class here is RENDERED only at ≤640 — the editor decides by `useIsPhone`, because the
+   phone's shape differs in structure (a list of rows plus a sheet) rather than in style — so no
+   media query is needed and the desktop cannot reach them.
+   K1 · the shut row: title + one line of facts, a chevron, the whole row the door. */
+.ppTlClosedPhone { position: relative; min-height: 3.5rem; justify-content: center; padding-block: 0.45rem; padding-right: 2.25rem; }
+.ppTlRowChevron { position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); }
+/* K4 · "+ Add a block" as one 44px row under the plan's end time — the ghost row's quiet voice. */
+.ppTlAddRow {
+  composes: linkBtn ppQuietLink;
+  display: flex; align-items: center; gap: 0.45rem; width: 100%; margin: 0;
+  min-height: var(--tap-min, 44px); padding: 0 0.5rem 0 0.75rem; font: inherit; font-weight: 600; text-align: left;
+}
+/* K2 · the block sheet — the station form's shape (`.ppStationModal`), which it wears too. The
+   head carries the block's place and clock in the data face; the title leads the body. */
+/* ⚠ NEVER uppercase: the eyebrow carries a clock, and "P.M." is a second spelling of the house's
+   "p.m." (the clock ruling, 2026-08-26) — `text-transform` would print it on every block. Two
+   deliberate lines, the place then the clock, rather than one line that wraps where it likes. */
+.ppBlockSheetEyebrow {
+  display: flex; flex-direction: column; gap: 0.05rem;
+  font-family: var(--font-data); font-size: var(--type-support); font-weight: 600; line-height: 1.25;
+  color: var(--text-secondary); font-variant-numeric: tabular-nums; white-space: nowrap;
+}
+.ppBlockSheetEyebrow b { color: var(--text-primary); font-weight: 700; }
+/* The body keeps the open card's CLASS — every field rule written for the open block (the white
+   field ground, the tap floors, the doors line) reaches the sheet unchanged — and drops the card's
+   LOOK: in a sheet there is no spine to set it in from. (0,2,0) beats `.ppTlOpen` at every width. */
+.ppTlOpen.ppBlockSheetBody { margin: 0; border: 0; border-radius: 0; background: none; }
+.ppBlockSheetBody .ppBlockBody { padding: 0; }
+.ppBlockSheetTitle .ppBlockTitle { width: 100%; font-size: var(--type-heading); font-weight: 700; }
+.ppBlockSheetFromDrill { composes: linkBtn ppQuietLink; display: inline-flex; align-items: center; gap: 0.35rem; align-self: flex-start; margin: -0.35rem 0 0; min-height: var(--tap-min, 44px); font: inherit; font-weight: 600; }
+/* The foot: the walk, then Done — at the floor (a dialog footer's buttons carry none of their own). */
+.ppBlockSheet .modalFooter { align-items: center; }
+.ppBlockSheet .modalFooter .btnPrimary { min-height: var(--tap-min, 44px); margin-left: auto; }
 
 /* Marks a drill the CLUB shares. Coaches use it; only an org admin can change it. */
 .ppSharedChip {

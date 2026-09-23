@@ -14,7 +14,7 @@ import {
   arrangeGroup, blockAsksForTeaching, blockRotates, collapseSoleStation, computeRotation, defaultIntervalMinutes,
   describeRounds, describeSplit, forgetArrangement, formatDuration, newPracticePlanId, practiceKitBag,
   resolveStationTeaching, mergedTagNames, rotationByStation, settlePlanLevels, splitBlockIntoStations, stationLabel,
-  soleStationOf, stationWalk, tagNamesById, unplacedPlayers, walkBlockClocks,
+  soleStationOf, stationWalk, blockWalk, tagNamesById, unplacedPlayers, walkBlockClocks,
   type BlockClock, type PracticePlan, type PracticePlanBlock,
   type PracticeRotation, type PracticeStation,
 } from '@/lib/rep-practice-plan';
@@ -41,7 +41,8 @@ import {
 } from '@/components/coaches/LibraryRow';
 import DrillSheet from '@/components/coaches/DrillSheet';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
-import { RoomWalkNav } from '@/components/coaches/RoomShell';
+import { RoomWalkNav, type RoomNav } from '@/components/coaches/RoomShell';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -1499,8 +1500,99 @@ function PromoteDialog({
  *   · The station card, the rotation panel and the drill sheet's contents are stage 3's and 4's —
  *     untouched here.
  */
+/** True while a block is exactly what `addBlock` made — an id, an empty title, the default length,
+ *  and nothing else set (an empty list or empty string counts as unset). */
+function isUntouchedNewBlock(block: PracticePlanBlock): boolean {
+  return Object.entries(block).every(([key, value]) => {
+    if (key === 'id') return true;
+    if (key === 'title') return !String(value ?? '').trim();
+    if (key === 'duration') {
+      const d = value as PracticePlanBlock['duration'];
+      return !d.restOfPractice && d.minutes === DEFAULT_BLOCK_MINUTES;
+    }
+    return value == null || value === '' || (Array.isArray(value) && value.length === 0);
+  });
+}
+
+/**
+ * ⚠ ON A PHONE A BLOCK EDITS ON ITS OWN SCREEN (practice plans on a phone, stage 1, owner ruling
+ * K2 = A, 2026-09-23). In the timeline the open card was nested three deep — the sheet, the spine,
+ * the card — and each layer took its padding: a 197px writing column on a 390px phone, a 106px
+ * title, and a 1,013px form that pushed every block under it 895px down. So at ≤640 the timeline
+ * shows every block SHUT and the open one renders here instead, as a full-screen sheet — the shape
+ * the block's own station form already had one level down (`StationModal`): the fields at the
+ * sheet's full width, the block's place and clock in the head, Move up · Move down · Delete beside
+ * them (K3 — the reorder pair left the gutter, which is what let the clock column narrow), and a
+ * pinned foot that walks the blocks without going back to the list, then Done.
+ *
+ * The BODY is `BlockCard`'s own, byte for byte — this component is only the container, so a field
+ * can never exist in one presentation and not the other. The desktop and the 641–768 band keep
+ * the block open in place, exactly as the practices re-evaluation ruled it.
+ */
+function BlockSheet({
+  bodyKey, label, eyebrow, walk, readOnly, onMove, onDelete, onClose, children,
+}: {
+  bodyKey: string;
+  label: string;
+  /** "Block 2 of 3" and the block's start ("11:00 p.m."; absent for a template, which has no clock). */
+  eyebrow: { place: string; clock: string | null };
+  walk: RoomNav;
+  readOnly: boolean;
+  onMove: (delta: number) => void;
+  onDelete: () => void;
+  onClose: () => void;
+  children: ReactNode;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(true, panelRef, {
+    onClose,
+    walk: { prev: walk.prev?.id ?? null, next: walk.next?.id ?? null, onSelect: walk.onSelect },
+    focusKey: `${walk.index}:${label}`,
+  });
+  return (
+    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`${label} — ${eyebrow.place}${eyebrow.clock ? ` · ${eyebrow.clock}` : ''}`}
+        className={`${styles.modal} ${styles.modalWide} ${styles.modalScrollBody} ${styles.ppStationModal} ${styles.ppBlockSheet}`}
+        data-block-sheet>
+        <CoachModalHeader onClose={onClose} closeAriaLabel="Done" title={
+          <span className={styles.ppBlockSheetEyebrow}>
+            <b>{eyebrow.place}</b>
+            {eyebrow.clock && <span>{eyebrow.clock}</span>}
+          </span>
+        }>
+          {/* The walk already knows the ends — one source for "first", "last" and "nothing to move". */}
+          {!readOnly && walk.total > 1 && (
+            <>
+              <button type="button" className={styles.ppIconBtn} aria-label={`Move ${label} up`}
+                disabled={!walk.prev} onClick={() => onMove(-1)}><ChevronUp size={16} /></button>
+              <button type="button" className={styles.ppIconBtn} aria-label={`Move ${label} down`}
+                disabled={!walk.next} onClick={() => onMove(1)}><ChevronDown size={16} /></button>
+            </>
+          )}
+          {!readOnly && (
+            <button type="button" className={styles.ppIconBtn} aria-label={`Delete ${label}`} onClick={onDelete}>
+              <Trash2 size={15} />
+            </button>
+          )}
+        </CoachModalHeader>
+        <div className={`${styles.scrollPane} ${styles.ppStationBody}`}>
+          {/* Keyed on the block, so a step starts the fields fresh (a picker's typed-but-unchosen
+              search is local state — the station modal's /review lesson); the PANEL is not keyed,
+              so the floor, its focus rule and its history step stay armed across the walk. */}
+          <div key={bodyKey} className={`${styles.ppTlOpen} ${styles.ppBlockSheetBody}`}>{children}</div>
+        </div>
+        <div className={styles.modalFooter}>
+          <RoomWalkNav nav={walk} />
+          <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function BlockCard({
   block, index, blockCount, clock, blockStartMs, open, focusTitle, openDoors, readOnly, withoutPeople, solo,
+  phone = false, sheet, onStartFromDrill,
   restTakenElsewhere, roster, notRepliedIds,
   staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, mineBlocks, mineStations, equipmentTags, onCreateEquipmentTag, nameOf,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
@@ -1516,6 +1608,13 @@ function BlockCard({
   /** The circuit editor: the block ALONE on a sheet — no collapse, no bin, no clock, no drag; the
    *  header's Retire is the only way out (stage 4, L9). */
   solo?: boolean;
+  /** ≤640 (practice plans on a phone, K1): the shut row carries facts, not cut sentences, and no
+   *  reorder pair — the pair lives on the block sheet's head. */
+  phone?: boolean;
+  /** Render the OPEN block as the phone's full-screen sheet (K2) rather than a card in the spine. */
+  sheet?: { walk: RoomNav };
+  /** "Start from a drill ›" inside a new, still-empty block's sheet (K4) — absent otherwise. */
+  onStartFromDrill?: () => void;
   /** A block the coach JUST added lands with its title focused; a row they opened to read does not. */
   focusTitle: boolean;
   /** The doors standing open on THIS block while it is open — the editor owns the set (D1). */
@@ -1600,16 +1699,32 @@ function BlockCard({
      an arrow that drifted would have become a drag and swallowed the click — the arrows stop the
      mousedown at their edge, and a press on an arrow is only ever a step. Absent on a read-only
      plan, with one block, and on the circuit editor's lone block (nothing to move it among). */
-  const canDrag = !readOnly && !solo && blockCount > 1;
+  /* A phone has no mouse to drag with and no pair under the clock (K3 moved it to the sheet's head);
+     the sheet's copy of the block registers under its own id so the list row's handle is not
+     replaced by a disabled twin. */
+  const canDrag = !readOnly && !solo && !phone && !sheet && blockCount > 1;
   const { setNodeRef: setHandleRef, listeners: handleListeners, isDragging } = useDraggable({
-    id: `block:${block.id}`, data: { kind: 'block', blockId: block.id, index, label } satisfies DragData, disabled: !canDrag,
+    id: `block:${block.id}${sheet ? ':sheet' : ''}`, data: { kind: 'block', blockId: block.id, index, label } satisfies DragData, disabled: !canDrag,
   });
+  /* A block just added opens its SHEET with the cursor in the title (K4). `autoFocus` alone lost it:
+     the sheet's dialog floor seats focus on the panel whenever focus is outside it, and in the dev
+     build's double-mounted effects the floor's first cleanup hands focus back to "+ Add a block"
+     before the second mount re-seats it on the panel. This effect runs after the floor's (a parent's
+     effects run after its children's), so the title wins in either build. */
+  const titleRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (sheet && open && focusTitle) titleRef.current?.focus();
+  }, [sheet, open, focusTitle]);
+  const lengthWord = block.duration.restOfPractice ? 'Rest of practice' : gutterLength;
   const gutter = (
     <div ref={setHandleRef} {...(canDrag ? handleListeners : {})}
       className={`${styles.ppTlGutter}${canDrag ? ` ${styles.ppTlGutterHandle}` : ''}`}
       data-lifted={isDragging ? 'on' : undefined}>
-      {clock ? clock.startLabel : gutterLength || '—'}
-      {clock && <small>{block.duration.restOfPractice ? 'rest' : gutterLength || 'no length'}</small>}
+      {/* A template has no clock, so the gutter carries the length — on a phone's 5rem column
+          "Rest of practice" is the short "rest" the dated gutter already prints (/review, 2026-09-23). */}
+      {clock ? clock.startLabel : phone && block.duration.restOfPractice ? 'rest' : gutterLength || '—'}
+      {/* On a phone the length rides the row's facts line instead (K1) — the column narrows to the clock. */}
+      {clock && !phone && <small>{block.duration.restOfPractice ? 'rest' : gutterLength || 'no length'}</small>}
       {canDrag && (
         <span className={styles.ppTlMove} onMouseDown={e => e.stopPropagation()}>
           <button type="button" className={styles.ppMoveBtn} aria-label={`Move ${label} up`}
@@ -1646,7 +1761,15 @@ function BlockCard({
        was built to avoid. */
     const watchingFor = sole ? resolveStationTeaching(sole, block).goal : block.goal;
     const playerCount = block.playerIds?.length ?? 0;
+    /* On a phone (K1) the row is the title and ONE line of facts that fit — the length (the gutter
+       gave it up), who runs it, then the count — and never a cut sentence: at 234px "Dynamic
+       warm-up, then partn…" said nothing the title did not. The words are one tap away in the sheet. */
+    const phoneFacts = phone ? [
+      clock ? lengthWord || null : null,
+      withoutPeople ? null : (mergedTagNames((sole ?? block).staff, (sole ?? block).staffTagIds, staffTags)[0] ?? null),
+    ] : [];
     const rowMeta = [
+      ...phoneFacts,
       stationCount >= 2 ? `${stationCount} stations` : null,
       withoutPeople || stationCount > 0 ? null : playerCount > 0 ? `${playerCount} player${playerCount === 1 ? '' : 's'}` : 'Whole team',
     ].filter(Boolean).join(' · ');
@@ -1659,16 +1782,18 @@ function BlockCard({
         {/* The row's accessible name is its CONTENT — title, first line, watching for, who — with a
             hidden "Open" verb in front; an aria-label would replace all of that with the title
             alone (/review, 2026-09-14). The gutter before it carries the time. */}
-        <button type="button" className={styles.ppTlClosed} aria-expanded={false} onClick={onOpen}>
+        <button type="button" className={`${styles.ppTlClosed}${phone ? ` ${styles.ppTlClosedPhone}` : ''}`}
+          {...(phone ? { 'aria-haspopup': 'dialog' as const } : { 'aria-expanded': false })} onClick={onOpen}>
           <span className="sr-only">Open </span>
           <span className={styles.ppTlTitle}>
             {block.title || <span className={styles.ppTlUntitled}>{label}</span>}
             {isRotation && <span className={styles.ppShapeTag}><Repeat size={11} aria-hidden /> Rotation</span>}
             {mine && <YouMark />}
           </span>
-          {firstLine && <span className={styles.ppTlDesc}>{firstLine}</span>}
-          {watchingFor && <span className={styles.ppTlWatch}><b>Watching for:</b> {watchingFor}</span>}
+          {!phone && firstLine && <span className={styles.ppTlDesc}>{firstLine}</span>}
+          {!phone && watchingFor && <span className={styles.ppTlWatch}><b>Watching for:</b> {watchingFor}</span>}
           {rowMeta && <span className={styles.ppTlMeta}>{rowMeta}</span>}
+          {phone && <ChevronRight size={18} aria-hidden className={styles.ppTlRowChevron} />}
         </button>
       </div>
     );
@@ -1751,48 +1876,35 @@ function BlockCard({
     return null;                                                        // one station: the station's own door (D1)
   })();
 
-  return (
-    <div className={styles.ppTlRow}>
-      {gutter}
-      <div className={styles.ppTlOpen}>
-      <div className={styles.ppBlockHead}>
-        {/* The head is the title, the collapse and the bin. The reorder pair left it for the
-            gutter (above), where the shut row has it too. */}
-        <div className={styles.ppBlockTitleWrap}>
-          {/* Read (stage 6, R2): the title as the shut row prints it — text, the rotation tag beside
-              it — never a greyed box. */}
-          {readOnly ? (
-            <span className={styles.ppTlTitle}>
-              {block.title || <span className={styles.ppTlUntitled}>{label}</span>}
-              {isRotation && <span className={styles.ppShapeTag}><Repeat size={11} aria-hidden /> Rotation</span>}
-            </span>
-          ) : (
-            <input className={`${styles.input} ${styles.ppBlockTitle}`} value={block.title}
-              maxLength={MAX_TITLE_LEN}
-              placeholder="What are we doing?"
-              autoFocus={focusTitle}
-              aria-label={`Block ${index + 1} title`} onChange={e => onPatch({ title: e.target.value })} />
-          )}
-          {/* The clock left this line for the gutter (stage 1); the ROTATION tag left it at stage 3 —
-              an open rotating block carries the pressed "Groups rotate" chip on its strip a few
-              lines down, so the tag said the same thing twice (and overflowed the head on a phone).
-              The shut row keeps it (D6). */}
-        </div>
+  /* Read (stage 6, R2): the title as the shut row prints it — text, the rotation tag beside it —
+     never a greyed box. The clock left this line for the gutter (stage 1); the ROTATION tag left it
+     at stage 3 — an open rotating block carries the pressed "Groups rotate" chip on its strip a few
+     lines down, so the tag said the same thing twice. The shut row keeps it (D6). */
+  const titleEl = readOnly ? (
+    <span className={styles.ppTlTitle}>
+      {block.title || <span className={styles.ppTlUntitled}>{label}</span>}
+      {isRotation && <span className={styles.ppShapeTag}><Repeat size={11} aria-hidden /> Rotation</span>}
+    </span>
+  ) : (
+    <input ref={titleRef} className={`${styles.input} ${styles.ppBlockTitle}`} value={block.title}
+      maxLength={MAX_TITLE_LEN}
+      placeholder="What are we doing?"
+      autoFocus={focusTitle}
+      aria-label={`Block ${index + 1} title`} onChange={e => onPatch({ title: e.target.value })} />
+  );
 
-        {!solo && (
-          <button type="button" className={styles.ppIconBtn} aria-expanded
-            aria-label={`Close ${label}`} onClick={onClose}>
-            <ChevronUp size={16} />
-          </button>
-        )}
-        {!readOnly && !solo && (
-          <button type="button" className={styles.ppIconBtn} aria-label={`Delete ${label}`} onClick={onDelete}>
-            <Trash2 size={15} />
-          </button>
-        )}
-      </div>
-
+  const body = (
       <div className={styles.ppBlockBody}>
+        {/* On the phone's sheet the title leads the body at the sheet's full width (K2) — the head
+            holds the block's place and clock instead. */}
+        {sheet && <div className={styles.ppBlockSheetTitle}>{titleEl}</div>}
+        {/* K4: a block just added from "+ Add a block" is blank; its library path is one quiet door
+            under the title, and only while there is nothing to lose. */}
+        {sheet && onStartFromDrill && (
+          <button type="button" className={`${styles.ppTlQuietLink} ${styles.ppBlockSheetFromDrill}`} onClick={onStartFromDrill}>
+            <Library size={12} aria-hidden /> Start from a drill ›
+          </button>
+        )}
         {provenance}
         {/* ── The clock row (D4 · D5): quick lengths · the minutes · Rest of practice · "ends …" ──
             ⚠ RANGES WERE REMOVED (owner, 2026-08-01). A block that might run 25 or 35 minutes
@@ -2059,6 +2171,47 @@ function BlockCard({
           </div>
         )}
       </div>
+  );
+
+  if (sheet) {
+    return (
+      <BlockSheet
+        bodyKey={block.id}
+        label={label}
+        eyebrow={{ place: `Block ${index + 1} of ${blockCount}`, clock: clock?.startLabel ?? null }}
+        walk={sheet.walk}
+        readOnly={readOnly}
+        onMove={onMove}
+        onDelete={onDelete}
+        onClose={onClose}
+      >
+        {body}
+      </BlockSheet>
+    );
+  }
+
+  return (
+    <div className={styles.ppTlRow}>
+      {gutter}
+      <div className={styles.ppTlOpen}>
+      <div className={styles.ppBlockHead}>
+        {/* The head is the title, the collapse and the bin. The reorder pair left it for the
+            gutter (above), where the shut row has it too. */}
+        <div className={styles.ppBlockTitleWrap}>{titleEl}</div>
+
+        {!solo && (
+          <button type="button" className={styles.ppIconBtn} aria-expanded
+            aria-label={`Close ${label}`} onClick={onClose}>
+            <ChevronUp size={16} />
+          </button>
+        )}
+        {!readOnly && !solo && (
+          <button type="button" className={styles.ppIconBtn} aria-label={`Delete ${label}`} onClick={onDelete}>
+            <Trash2 size={15} />
+          </button>
+        )}
+      </div>
+      {body}
       </div>
     </div>
   );
@@ -2272,7 +2425,9 @@ export default function PracticePlanEditor({
    *   · `{ kind: 'station', …, swapId }`   → replace that station, keeping its position
    */
   const [drillSheet, setDrillSheet] = useState<
-    | { kind: 'block' }
+    // `at`: where the new block lands — the end unless the sheet's "Start from a drill" is standing
+    // in for a blank block the coach had already moved (/review, 2026-09-23).
+    | { kind: 'block'; at?: number }
     | { kind: 'station'; blockId: string; swapId?: string }
     | null
   >(null);
@@ -2836,7 +2991,31 @@ export default function PracticePlanEditor({
   // mis-tap can't land on a nav tab underneath it) and locks the page behind it. Read the RESOLVED
   // targets, not the raw state: a station or a picker target that vanished under its dialog
   // (another tab's autosave) unmounts the dialog, and the lock must go with it (/review, 2026-09-15).
-  useOverlayOpen(!!pickerTarget || !!openDrillSheet || !!openPromoting || !!openStationRow || !!openGroupsBlock || !!openNewDrill);
+  /* ⚠ THE PHONE'S BLOCK SHEET (practice plans on a phone, K2, 2026-09-23). At ≤640 the open block
+     is a full-screen sheet over the list rather than a card inside the spine. The circuit editor's
+     lone block stays on its page — it has no list to leave. Decided in JS, not CSS: the two
+     presentations differ in STRUCTURE (a row plus a dialog vs a card), which a stylesheet cannot do. */
+  const phoneSheet = useIsPhone(!soloBlock); // `false` answers false — the circuit editor never asks
+  const sheetIndex = phoneSheet && openId ? plan.blocks.findIndex(b => b.id === openId) : -1;
+  const sheetBlock = sheetIndex >= 0 ? plan.blocks[sheetIndex] : undefined;
+  useOverlayOpen(!!pickerTarget || !!openDrillSheet || !!openPromoting || !!openStationRow || !!openGroupsBlock || !!openNewDrill || !!sheetBlock);
+  /* When the sheet closes, the list picks out the block the coach was LAST on (K2) — not the row
+     that first opened the sheet (the floor's own restore, captured once for the whole walk), and
+     never a row that no longer exists: a block deleted from its own sheet took its row with it and
+     left focus on <body> (/review, 2026-09-23). Gone → the add row. Runs after the floor's cleanup
+     (a parent's effects after its children's), and yields to any dialog that took over the screen
+     in the same commit ("Start from a drill" hands straight to the drill sheet). */
+  const sheetBlockId = sheetBlock?.id ?? null;
+  const lastSheetBlockId = useRef<string | null>(null);
+  useEffect(() => {
+    if (sheetBlockId) { lastSheetBlockId.current = sheetBlockId; return; }
+    const id = lastSheetBlockId.current;
+    lastSheetBlockId.current = null;
+    if (!id || document.querySelector('[role="dialog"][aria-modal="true"]')) return;
+    const row = document.getElementById(`block-${id}`)?.querySelector<HTMLElement>('button')
+      ?? document.querySelector<HTMLElement>('[data-pp-add-row]');
+    row?.focus();
+  }, [sheetBlockId]);
   /* The roster picker's dialog floor (stage 2, D9) — armed while it is open; Escape closes it
      and hands focus back to the "Choose players…" that opened it. ⚠ Escape never closes an open
      BLOCK: a row is not a sheet, and the floor is mounted on the sheets alone. */
@@ -2911,6 +3090,81 @@ export default function PracticePlanEditor({
     delete next.includeFocusAreas;
     onChange(next);
   };
+
+  /* One block's wiring, shared by its row in the timeline and — on a phone — the sheet it opens
+     into, so the two can never be wired differently. `open` / `openDoors` / `phone` / `sheet` are
+     the caller's: they are the only things the two presentations decide differently. */
+  const blockCardProps = (block: PracticePlanBlock, i: number) => ({
+    block,
+    index: i,
+    blockCount: plan.blocks.length,
+    clock: clockByBlock.get(block.id),
+    // From the SAME clock walk as the gutter — never a second copy of the arithmetic.
+    blockStartMs: clockByBlock.get(block.id)?.startMs,
+    solo: soloBlock,
+    focusTitle: freshId === block.id,
+    readOnly,
+    withoutPeople,
+    restTakenElsewhere: !layout.restOffered || (restBlockId != null && restBlockId !== block.id),
+    roster,
+    notRepliedIds,
+    staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson,
+    mineBlocks, mineStations,
+    equipmentTags, onCreateEquipmentTag,
+    staffManage, onStaffTagsChanged,
+    equipmentManage, onEquipmentTagsChanged,
+    nameOf,
+    onOpen: () => openBlock(block),
+    onClose: () => openBlock(null),
+    onOpenDoor: openDoor,
+    onCloseDoor: closeDoor,
+    onMove: (delta: number) => moveBlock(i, delta),
+    onDelete: () => {
+      setBlocks(plan.blocks.filter(b => b.id !== block.id));
+      if (openId === block.id) openBlock(null);
+    },
+    onPatch: (patch: Partial<PracticePlanBlock>) => patchBlock(block.id, patch),
+    onOpenPicker: setAttach,
+    onAddStation: (swapId?: string) => setDrillSheet({ kind: 'station', blockId: block.id, swapId }),
+    onDetachStation: (stationId: string) => detachStation(block.id, stationId),
+    onSwapStation: (stationId: string) => setDrillSheet({ kind: 'station', blockId: block.id, swapId: stationId }),
+    onPromoteStation: (stationId: string) => {
+      setPromoteError('');
+      setPromoting({ kind: 'station', blockId: block.id, stationId });
+    },
+    // The library door by shape (L1 · L9) — absent for a viewer who can't write to the
+    // library, and inside the circuit editor (a circuit is not saved from itself).
+    onPromoteBlock: onCreateDrill && layout.promote ? () => { setPromoteError(''); setPromoting({ kind: 'block', blockId: block.id }); } : undefined,
+    onPromoteCircuit: onCreateCircuit && layout.promote ? () => { setPromoteError(''); setPromoting({ kind: 'circuit', blockId: block.id }); } : undefined,
+    onOpenStation: (stationId: string) => setOpenStation({ blockId: block.id, stationId }),
+    onPatchStation: (stationId: string, patch: Partial<PracticeStation>) => patchStation(block.id, stationId, patch),
+    onMoveStation: (stationId: string, delta: number) => moveStation(block.id, stationId, delta),
+    onOpenGroups: () => setOpenGroups({ blockId: block.id }),
+  });
+
+  /* The sheet's walk (K2): the neighbouring blocks by their titles, the arrows stopping at the ends.
+     A step re-opens through `openBlock`, so the doors re-seed exactly as a tap on the row would. */
+  const sheetWalk: RoomNav | null = sheetBlock ? {
+    ...blockWalk(plan.blocks, sheetBlock.id),
+    noun: 'blocks',
+    onSelect: id => openBlock(plan.blocks.find(b => b.id === id) ?? null),
+  } : null;
+  /* K4: a block JUST added from "+ Add a block" and still blank offers the library under its title.
+     Taking it swaps the blank block for the pick — the drill sheet's own "new block" path — so
+     nothing the coach typed can be lost (there is nothing yet). */
+  /* The foot of the timeline: the ghost row, or — on a phone once the plan has a block — one row (K4). */
+  const canAddBlock = layout.timeline && plan.blocks.length < MAX_BLOCKS;
+  const phoneAddRow = phoneSheet && !firstBlock;
+  /* ⚠ "Blank" is UNTOUCHED SINCE IT WAS ADDED, field by field — not "no title or words" (/review,
+     2026-09-23: players, staff, a length chip or coaching points set before a title were silently
+     thrown away by the swap). Every field but the id must still be what `addBlock` made, so a field
+     the block type grows later counts as work by default. */
+  const sheetIsBlank = !!sheetBlock && freshId === sheetBlock.id && isUntouchedNewBlock(sheetBlock);
+  const startSheetFromDrill = sheetIsBlank && !readOnly && (drills.length > 0 || circuits.length > 0) ? () => {
+    setBlocks(plan.blocks.filter(b => b.id !== sheetBlock!.id));
+    openBlock(null);
+    setDrillSheet({ kind: 'block', at: sheetIndex });
+  } : undefined;
 
   return (
     /* ONE drag context over the sheet AND the docked panel (which portals into the page's host
@@ -3050,59 +3304,29 @@ export default function PracticePlanEditor({
           {layout.timeline && (
             <GapTarget index={i} startLabel={clockByBlock.get(block.id)?.startLabel ?? null} blockCount={plan.blocks.length} />
           )}
-          <BlockCard
-            block={block}
-            index={i}
-            blockCount={plan.blocks.length}
-            clock={clockByBlock.get(block.id)}
-            // From the SAME clock walk as the gutter — never a second copy of the arithmetic.
-            blockStartMs={clockByBlock.get(block.id)?.startMs}
-            open={soloBlock || openId === block.id}
-            solo={soloBlock}
-            focusTitle={freshId === block.id}
-            openDoors={soloBlock || openId === block.id ? openDoors : NO_DOORS}
-            readOnly={readOnly}
-            withoutPeople={withoutPeople}
-            restTakenElsewhere={!layout.restOffered || (restBlockId != null && restBlockId !== block.id)}
-            roster={roster}
-            notRepliedIds={notRepliedIds}
-            staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
-            mineBlocks={mineBlocks} mineStations={mineStations}
-            equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
-            staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
-            equipmentManage={equipmentManage} onEquipmentTagsChanged={onEquipmentTagsChanged}
-            nameOf={nameOf}
-            onOpen={() => openBlock(block)}
-            onClose={() => openBlock(null)}
-            onOpenDoor={openDoor}
-            onCloseDoor={closeDoor}
-            onMove={delta => moveBlock(i, delta)}
-            onDelete={() => setBlocks(plan.blocks.filter(b => b.id !== block.id))}
-            onPatch={patch => patchBlock(block.id, patch)}
-            onOpenPicker={setAttach}
-            onAddStation={swapId => setDrillSheet({ kind: 'station', blockId: block.id, swapId })}
-            onDetachStation={stationId => detachStation(block.id, stationId)}
-            onSwapStation={stationId => setDrillSheet({ kind: 'station', blockId: block.id, swapId: stationId })}
-            onPromoteStation={stationId => {
-              setPromoteError('');
-              setPromoting({ kind: 'station', blockId: block.id, stationId });
-            }}
-            // The library door by shape (L1 · L9) — absent for a viewer who can't write to the
-            // library, and inside the circuit editor (a circuit is not saved from itself).
-            onPromoteBlock={onCreateDrill && layout.promote ? () => { setPromoteError(''); setPromoting({ kind: 'block', blockId: block.id }); } : undefined}
-            onPromoteCircuit={onCreateCircuit && layout.promote ? () => { setPromoteError(''); setPromoting({ kind: 'circuit', blockId: block.id }); } : undefined}
-            onOpenStation={stationId => setOpenStation({ blockId: block.id, stationId })}
-            onPatchStation={(stationId, patch) => patchStation(block.id, stationId, patch)}
-            onMoveStation={(stationId, delta) => moveStation(block.id, stationId, delta)}
-            onOpenGroups={() => setOpenGroups({ blockId: block.id })}
-          />
+          {/* ≤640: every block reads SHUT here and the open one renders as the sheet below (K2). */}
+          <BlockCard {...blockCardProps(block, i)}
+            open={soloBlock || (!phoneSheet && openId === block.id)}
+            openDoors={soloBlock || (!phoneSheet && openId === block.id) ? openDoors : NO_DOORS}
+            phone={phoneSheet} />
           </Fragment>
         ))}
         {layout.timeline && (
           <GapTarget index={plan.blocks.length} startLabel={nextStartLabel ?? null} blockCount={plan.blocks.length} />
         )}
 
-        {layout.timeline && plan.blocks.length < MAX_BLOCKS && (
+        {/* ≤640, once the plan has a block (K4): ONE 44px row under the plan's end time. Its two
+            alternatives moved into the new block's sheet ("Start from a drill ›"); the blank plan
+            keeps its lime ghost row and "start this plan from…" — that screen was not redrawn. */}
+        {canAddBlock && phoneAddRow && (
+          <div className={styles.ppTlRow}>
+            <div className={styles.ppTlGutter}>{nextStartLabel ?? ''}</div>
+            <button type="button" className={styles.ppTlAddRow} data-pp-add-row onClick={addBlock}>
+              <Plus size={15} aria-hidden /> Add a block
+            </button>
+          </div>
+        )}
+        {canAddBlock && !phoneAddRow && (
           <div className={styles.ppTlRow}>
             <div className={styles.ppTlGutter}>
               {nextStartLabel ?? ''}
@@ -3112,7 +3336,9 @@ export default function PracticePlanEditor({
               {/* The ghost row IS the next block: pressing it writes one at the time in the gutter,
                   open in place, its title ready to type. The lime rule — one earned action per
                   screen — is why the first block is lime and every later one is not. */}
-              <button type="button" className={firstBlock ? styles.btnPrimary : styles.btnSecondary} onClick={addBlock}>
+              {/* `data-pp-add-row` here too: deleting the ONLY block from its phone sheet lands focus on
+                  this row, since the plan is blank again (/review, 2026-09-23). */}
+              <button type="button" className={firstBlock ? styles.btnPrimary : styles.btnSecondary} data-pp-add-row onClick={addBlock}>
                 <Plus size={14} aria-hidden /> {firstBlock ? 'Add the first block' : 'Add a block'}
               </button>
               <span className={styles.ppTlQuiet}>
@@ -3229,6 +3455,19 @@ export default function PracticePlanEditor({
             )}
           </div>}
         </div>
+      )}
+
+      {/* ── The phone's block sheet (K2) — mounted BEFORE the station modal, the groups room, the
+          picker and the drill sheet, so every door inside the block opens OVER it. ── */}
+      {sheetBlock && sheetWalk && (
+        /* NOT keyed on the block: a step keeps ONE sheet mounted, so its dialog floor and its
+           history step (the phone's Back) stay armed across the walk instead of re-arming per block. */
+        <BlockCard {...blockCardProps(sheetBlock, sheetIndex)}
+          open
+          openDoors={openDoors}
+          phone
+          sheet={{ walk: sheetWalk }}
+          onStartFromDrill={startSheetFromDrill} />
       )}
 
       {/* ── A station, open as a modal (stage 3, D4) — mounted BEFORE the picker and the drill sheet
@@ -3352,10 +3591,10 @@ export default function PracticePlanEditor({
                 : 'Write a station'
           }
           onPick={drill => {
-            if (openDrillSheet.kind === 'block') addBlockFromDrill(drill);
+            if (openDrillSheet.kind === 'block') addBlockFromDrill(drill, openDrillSheet.at);
             else addStationFromDrill(openDrillSheet.blockId, drill, openDrillSheet.swapId);
           }}
-          onPickCircuit={openDrillSheet.kind === 'block' ? circuit => addBlockFromCircuit(circuit) : undefined}
+          onPickCircuit={openDrillSheet.kind === 'block' ? circuit => addBlockFromCircuit(circuit, openDrillSheet.at) : undefined}
           onWriteOne={() => {
             if (openDrillSheet.kind === 'block') { addBlock(); setDrillSheet(null); }
             else addBlankStation(openDrillSheet.blockId, openDrillSheet.swapId);

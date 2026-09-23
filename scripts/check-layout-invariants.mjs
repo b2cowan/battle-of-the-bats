@@ -332,8 +332,13 @@ function probeInPage(opts) {
    * modal open, ~110 of them phantom) and to R4 as a scroll-locked body trapping every sticky
    * header behind it.
    */
+  // ⚠ THE TOPMOST one when two are stacked (practice plans on a phone, 2026-09-23): the block's
+  // sheet opens its station's form OVER itself, and taking the FIRST visible dialog measured the
+  // sheet underneath — so R6 read the station form as a fixed bar covering every control on the
+  // sheet (20 findings, all the stack working as designed). The user is in the LAST one opened,
+  // which is the last in document order: every stacked floor in the portal mounts after its host.
   const openModal = Array.from(document.querySelectorAll('[role="dialog"][aria-modal="true"]'))
-    .find((d) => visible(d)) ?? null;
+    .filter((d) => visible(d)).pop() ?? null;
 
   // ── colour maths (WCAG 2.1) ────────────────────────────────────────────────
   const parseColor = (s) => {
