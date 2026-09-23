@@ -3244,12 +3244,27 @@ export function BudgetPlanPanel({
                         alone is not a statement — and the note below it, which says the same
                         thing at length, is not guaranteed to be the status showing. Twenty-five
                         characters with the door on the end, measured to one line at 390. */}
+                    {/* ⚠⚠ THE COUNT IS GUARDED AT ZERO, LIKE THE DESK FORM ONE SCREEN DOWN, and
+                        the first cut of this caption was not — it printed a bare "0 lines"
+                        (/review, 2026-09-23). The state is ordinary, not an edge: a coach who sets
+                        player dues FIRST un-sets `trueEmpty`, so the band renders while there is
+                        still no expense line and no estimate — and the phone read "0 lines · Set a
+                        total" where the desk correctly said only "set an estimated total". Two
+                        forms of one caption have to agree about WHETHER a clause appears, not just
+                        how it is worded; the separator is conditional for the same reason.
+                        ⚠ AND THE PREVIEW CLAUSE IS DROPPED ON PURPOSE. The desk adds "with your
+                        expense preview" here; the phone does not, matching the deliberate drop on
+                        Closing balance directly below — the preview is stated by its own controls,
+                        and at 26 characters it cannot share this tile's one line anyway. Stated
+                        because the first cut dropped it silently, which reads as an oversight. */}
                     {seasonTotal != null
                       ? <>{totals.overPlanned ? 'Over your estimate' : 'Your estimate'}</>
-                      : <>{totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>}
+                      : totals.costLineCount > 0 && (
+                          <>{totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>
+                        )}
                     {moneyCanWrite && !editingSeason && (
                       <>
-                        {' · '}
+                        {(seasonTotal != null || totals.costLineCount > 0) && ' · '}
                         <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>
                           {seasonTotal != null ? 'Edit' : 'Set a total'}
                         </button>
