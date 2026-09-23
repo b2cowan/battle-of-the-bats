@@ -10,7 +10,7 @@ import { useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
-import { X, ChevronUp, ChevronDown, ChevronRight, GripVertical, Shuffle, Eraser } from 'lucide-react';
+import { X, ChevronUp, ChevronDown, ChevronRight, GripVertical, Shuffle, Eraser, UserPlus } from 'lucide-react';
 import {
   DndContext, closestCenter, MouseSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -769,10 +769,11 @@ export default function LineupEditor(props: LineupEditorProps) {
     }
   }
 
-  /** The panel closes and, on a phone, focus goes back to the Setup row that opened it (D1). */
+  /** The panel closes and focus goes back to the Setup row that opened it (D1) — desktop shares
+   *  this trigger with the phone now, so the return-focus is no longer phone-only. */
   function closePanelToRow() {
     setAutoFillOpen(false);
-    if (isPhone) setupRowRef.current?.focus({ preventScroll: true });
+    setupRowRef.current?.focus({ preventScroll: true });
   }
 
   async function handleClear() {
@@ -814,21 +815,15 @@ export default function LineupEditor(props: LineupEditorProps) {
       </label>
     </div>
   );
-  // Reshuffle — ONE behaviour, two skins: a toolbar button on the desktop, a quiet row under
-  // Generate in the phone drawer. Only the WRAPPER differs, so only the wrapper is written twice;
-  // the guard, the handler and the tooltip live here once. It closes the drawer on a reshuffle it
-  // made, never on a kept one (`handleReshuffle` says whether it ran).
+  // Reshuffle — now ONE skin everywhere: a quiet row under Generate, inside the Setup & Auto-fill
+  // drawer both breakpoints share. It closes the drawer on a reshuffle it made, never on a kept
+  // one (`handleReshuffle` says whether it ran).
   const reshuffleProps = {
     type: 'button' as const,
     disabled: rows.length === 0,
-    onClick: async () => { if (await handleReshuffle() && isPhone) closePanelToRow(); },
+    onClick: async () => { if (await handleReshuffle()) closePanelToRow(); },
     title: 'Fresh arrangement with even bench rotation, using your current auto-fill settings',
   };
-  const reshuffleButton = (
-    <button {...reshuffleProps} className={styles.btnSecondary} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
-      <Shuffle size={14} aria-hidden="true" /> Reshuffle
-    </button>
-  );
   /* CLEAR IS A TOOL, AND TOOLS LIVE IN THE TOOL ROW (owner, 2026-09-22). It used to be a bare text
      link under the grid — on a phone that left it stranded in its own 44px band between the hint and
      the notes, the only control on the screen with nothing beside it. It is the same kind of thing as
@@ -904,20 +899,25 @@ export default function LineupEditor(props: LineupEditorProps) {
     </div>
   ) : null;
 
-  /* THE AUTO-FILL PANEL — today's popover (Mode, the Competitive extras, Fill, Innings to fill,
-     Game rules, the note, Generate), which on a phone is also the SETUP panel (D1): Format and
-     Innings labelled side by side at its top, Reshuffle under Generate. Fixed above the bar at
-     ≤900 with its own scroll (`lineupAutoMenu`). Written once, mounted by whichever trigger the
-     width renders — the desktop's Auto-fill button or the phone's Setup row. */
+  /* THE AUTO-FILL PANEL — the SETUP panel (D1, now shared by both breakpoints): Format and Innings
+     labelled side by side at its top, Mode, the Competitive extras, Fill, Innings to fill, Game
+     rules, the note, Generate, and Reshuffle under Generate. A popover on the desktop, fixed above
+     the bar at ≤640 with its own scroll (`lineupAutoMenu`). Written once, mounted by the one Setup
+     & Auto-fill trigger every width renders. */
   const autoFillPanel = (
-    <div id={SETUP_PANEL_ID} className={`${styles.lineupAutoMenu} ${styles.lineupSetupDrawer}`}>
-      {isPhone && (
-        <>
-          <p className={styles.lineupSheetTitle}>Lineup setup</p>
-          {setupFields}
-          <span className={`${styles.lineupSetupLabel} ${styles.lineupPanelSection}`}>Auto-fill</span>
-        </>
-      )}
+    <div id={SETUP_PANEL_ID} className={`${styles.lineupAutoMenu} ${styles.lineupSetupDrawer}`} role="dialog" aria-label="Lineup setup">
+      <div className={styles.lineupSetupDrawerHead}>
+        <p className={styles.lineupSheetTitle}>Lineup setup</p>
+        {/* Close is a DESKTOP-only affordance (CSS-gated, ≥901) — the phone/tablet drawer already
+            has the scrim, Escape, and Generate/Reshuffle to leave by; a true modal's backdrop is
+            less obviously clickable than a small popover's "click anywhere else", so it earns an
+            explicit ×. */}
+        <button type="button" className={styles.lineupSetupDrawerClose} aria-label="Close" onClick={closePanelToRow}>
+          <X size={16} aria-hidden />
+        </button>
+      </div>
+      {setupFields}
+      <span className={`${styles.lineupSetupLabel} ${styles.lineupPanelSection}`}>Auto-fill</span>
       <label className={styles.lineupControlLabel}>
         <span>Mode</span>
         <SublinedChoice
@@ -995,11 +995,9 @@ export default function LineupEditor(props: LineupEditorProps) {
         <button type="button" className={styles.btnSecondary} onClick={handleAutoFill}>Generate lineup</button>
         {/* Reshuffle as a QUIET row under Generate, never a second full-width button competing with
             the one action this surface exists for. It keeps the 44px floor. */}
-        {isPhone && (
-          <button {...reshuffleProps} className={`${styles.lineupSheetRow} ${styles.lineupSheetQuiet}`}>
-            <Shuffle size={14} aria-hidden="true" /> Reshuffle
-          </button>
-        )}
+        <button {...reshuffleProps} className={`${styles.lineupSheetRow} ${styles.lineupSheetQuiet}`}>
+          <Shuffle size={14} aria-hidden="true" /> Reshuffle
+        </button>
       </div>
     </div>
   );
@@ -1074,84 +1072,118 @@ export default function LineupEditor(props: LineupEditorProps) {
           {readyState?.error && <p className={styles.errorText}>{readyState.error}</p>}
         </div>
         <div className={styles.lineupControls}>
-          {isPhone ? (
-            /* THE SETUP ROW (stage 3 · D1, owner ruling 2026-09-21 — B, the panel): the Setup group
-               is one 52px two-line row that reads its state — the lineup's shape as the title, the
-               auto-fill setting as the caption — and opens the builder's own bottom panel (the
-               surface Auto-fill, Templates, Print and the D8 row sheet already use) holding
-               Format · Innings, today's auto-fill choices, Generate and Reshuffle. The grid never
-               moves. A template changes the title, never the caption — nothing stores which
-               template a lineup came from.
+          {/* THE SETUP ROW (stage 3 · D1, owner ruling 2026-09-21 — B, the panel; unified across
+             both breakpoints 2026-09-23 — the desktop toolbar used to spell out Format, Innings,
+             Auto-fill and Reshuffle as four separate controls, which buried the one control this
+             screen actually exists for. One 52px row reads its state — the lineup's shape as the
+             title, the auto-fill setting as the caption — and opens the builder's own panel (the
+             surface Auto-fill, Templates, Print and the D8 row sheet already use) holding
+             Format · Innings, today's auto-fill choices, Generate and Reshuffle. The grid never
+             moves. A template changes the title, never the caption — nothing stores which
+             template a lineup came from.
 
-               ⚠⚰ THE LIME ROW IS GONE (owner, 2026-09-22: "why are we highlighting this dropdown in
-               green? that seems inconsistent from elsewhere in the app"). It was right: lime in this
-               portal is a BUTTON or a CHIP — every primary action, the game-day Live chip, an "on"
-               toggle — and this was the only surface in the portal filled lime edge to edge with a
-               title, a caption and a chevron inside it. It read as an enormous button and it fought
-               the Mark ready pill 8px above it. Worse, the tone was frozen at open (a `setupFolded`
-               lazy useState, now deleted) so it never went quiet: generate a lineup and the row
-               stayed lime for the rest of the session, shouting about a job already done.
+             ⚠⚰ THE LIME ROW IS GONE (owner, 2026-09-22: "why are we highlighting this dropdown in
+             green? that seems inconsistent from elsewhere in the app"). It was right: lime in this
+             portal is a BUTTON or a CHIP — every primary action, the game-day Live chip, an "on"
+             toggle — and this was the only surface in the portal filled lime edge to edge with a
+             title, a caption and a chevron inside it. It read as an enormous button and it fought
+             the Mark ready pill 8px above it. Worse, the tone was frozen at open (a `setupFolded`
+             lazy useState, now deleted) so it never went quiet: generate a lineup and the row
+             stayed lime for the rest of the session, shouting about a job already done.
 
-               WHAT REPLACES IT — one rule, shared with the status row above: A LIME PILL IS THE ONE
-               THING YOU CAN DO RIGHT NOW; NO PILL MEANS THERE IS NOTHING TO DO HERE. So while the
-               game has no lineup the row carries an Auto-fill pill, which is both the row's LABEL
-               (nothing on the closed row said it generates a lineup — "Auto-fill · Balanced" reads
-               as a setting being reported) and a one-tap generate. Once a lineup exists the pill is
-               gone and the row is only the door.
+             WHAT REPLACES IT — one rule, shared with the status row above: A LIME PILL IS THE ONE
+             THING YOU CAN DO RIGHT NOW; NO PILL MEANS THERE IS NOTHING TO DO HERE. So while the
+             game has no lineup the row carries an Auto-fill pill, which is both the row's LABEL
+             (nothing on the closed row said it generates a lineup — "Auto-fill · Balanced" reads
+             as a setting being reported) and a one-tap generate. Once a lineup exists the pill is
+             gone and the row is only the door.
 
-               ⚠ The pill is a SIBLING of the row, never nested inside it — `lineupSetupRowWrap`
-               carries the border and the 52px floor, the row button is transparent inside it. Same
-               shape as `lineupReadiness` + its door, which is the point: two rows, one recipe.
-               ⚠ `hasAssignments` is read LIVE here, unlike the tone it replaces. That is safe
-               because the pill disappears in response to the coach's own tap on it, and coming back
-               after Clear is correct — there is no lineup again, so Auto-fill is the next move. */
-            <div className={styles.lineupAutoWrap} ref={autoFillRef}>
-              <div className={styles.lineupSetupRowWrap}>
-                <button ref={setupRowRef} type="button" className={styles.lineupSetupRow} aria-expanded={autoFillOpen} aria-controls={SETUP_PANEL_ID}
-                  onClick={() => setAutoFillOpen(v => !v)}>
-                  <span className={styles.lineupSetupRowText}>
-                    <strong>{lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {inningCount} {sportPack.periodLabelPlural.toLowerCase()}</strong>
-                    <small>Auto-fill · {autoFillLabel}</small>
-                  </span>
-                  <ChevronDown size={18} aria-hidden className={styles.lineupSetupRowChev} />
-                </button>
-                {!analysis.hasAssignments && (
-                  <button type="button" className={`${styles.btnPrimary} ${styles.lineupSetupGo}`} disabled={rows.length === 0}
-                    onClick={handleAutoFill}>Auto-fill</button>
-                )}
-              </div>
-              {autoFillOpen && (<>
-                {/* The scrim (D12): a tap anywhere off the drawer closes it, and the page behind dims so the
-                     surface reads as owning the screen. Renders only where the bottom nav does — the class is
-                     display:none above 900, so no width branch is needed here. */}
-                <LineupSheetScrim onClose={closePanelToRow} />
-                {autoFillPanel}
-              </>)}
+             ⚠ The pill is a SIBLING of the row, never nested inside it — `lineupSetupRowWrap`
+             carries the border and the 52px floor, the row button is transparent inside it. Same
+             shape as `lineupReadiness` + its door, which is the point: two rows, one recipe.
+             ⚠ `hasAssignments` is read LIVE here, unlike the tone it replaces. That is safe
+             because the pill disappears in response to the coach's own tap on it, and coming back
+             after Clear is correct — there is no lineup again, so Auto-fill is the next move. */}
+          <div className={styles.lineupAutoWrap} ref={autoFillRef}>
+            {/* The eyebrow (owner, 2026-09-23: "can we label this button so users know its for
+                setting parameters and automating selections?"): on the desktop/tablet row the
+                trigger only ever showed its CURRENT values, which reads as a status line rather
+                than a control — this names what it's FOR before it's opened. Phone-hidden: the
+                row already carries a border, a chevron and the 44px floor a tap target needs,
+                the same "obviously interactive" cues the status strip's door uses above it, so a
+                label would only repeat what the shape already says on a screen with less room to
+                say it. */}
+            <span className={`${styles.lineupSetupLabel} ${styles.lineupSetupTriggerLabel}`}>Setup</span>
+            <div className={styles.lineupSetupRowWrap}>
+              <button ref={setupRowRef} type="button" className={styles.lineupSetupRow} aria-expanded={autoFillOpen} aria-controls={SETUP_PANEL_ID}
+                onClick={() => setAutoFillOpen(v => !v)}>
+                <span className={styles.lineupSetupRowText}>
+                  <strong>{lineupMode === 'nine_player' ? '9 player ball' : 'Everyone bats'} · {inningCount} {sportPack.periodLabelPlural.toLowerCase()}</strong>
+                  <small>Auto-fill · {autoFillLabel}</small>
+                </span>
+                <ChevronDown size={18} aria-hidden className={styles.lineupSetupRowChev} />
+              </button>
+              {!analysis.hasAssignments && (
+                <button type="button" className={`${styles.btnPrimary} ${styles.lineupSetupGo}`} disabled={rows.length === 0}
+                  onClick={handleAutoFill}>Auto-fill</button>
+              )}
             </div>
-          ) : (
-            <>
-              {/* Setup group (D3): Format and Innings are per-game configuration, not the primary
-                  action — grouped and labelled quietly so Auto-fill is the obvious next step. The
-                  "Setup" caption sits above the fields, the same way Format/Innings label theirs,
-                  rather than floating beside them at the group's mid-height. */}
-              <div className={styles.lineupSetupGroup} aria-label="Setup">
-                <span className={styles.lineupSetupLabel}>Setup</span>
-                {setupFields}
-              </div>
-              <div className={styles.lineupAutoWrap} ref={autoFillRef}>
-                <button type="button" className={styles.btnPrimary} disabled={rows.length === 0} onClick={() => setAutoFillOpen(v => !v)}>Auto-fill · {autoFillLabel} ▾</button>
-                {autoFillOpen && (<>
-                  <LineupSheetScrim onClose={() => setAutoFillOpen(false)} />
-                  {autoFillPanel}
+            {autoFillOpen && (<>
+              {/* The scrim (D12): a tap anywhere off the drawer closes it, and the page behind dims so the
+                   surface reads as owning the screen. Renders only where the bottom nav does — the class is
+                   display:none above 900, so no width branch is needed here. */}
+              <LineupSheetScrim onClose={closePanelToRow} />
+              {/* The true DESKTOP's own dim (owner, 2026-09-23: "should we open a modal for this
+                  given its size?"). Above, at 641–900, the scrim just above already covers this —
+                  the panel is already the same fixed, bar-anchored drawer a phone gets. Only ≥901
+                  lacked one: an anchored popover with no idea where the viewport ends, which is
+                  exactly what ran off the bottom of a shorter window. Reuses this app's own
+                  confirm-dialog backdrop (`.modal-overlay` in globals.css) rather than teaching
+                  the phone/tablet scrim a desktop mode the other three panels sharing it don't
+                  need — a SIBLING overlay, not a widened one. */}
+              <div className={styles.lineupSetupModalOverlay} aria-hidden="true" onClick={closePanelToRow} />
+              {autoFillPanel}
+            </>)}
+          </div>
+          {/* The host's tools (Undo · Redo · Print · Templates), the editor's own Clear, and Call-up
+              are ONE row of squares, pushed to the row's right edge in the desktop/tablet layout
+              (owner, 2026-09-23) so the left reads as "what you're building" and the right as
+              "history and output" — the same row on a phone just wraps beneath instead.
+              ⚠ Call-up joined this row 2026-09-23, second: sitting alone between Setup and the tool
+              squares it was a third, in-between height in the row (taller than a square, shorter
+              than Setup's two-line trigger) — a visual "why is this one a different size" the owner
+              flagged from a live screenshot. As a peer of Undo/Redo it just reads as one more tool. */}
+          <div className={styles.lineupToolRow}>
+            {callUps && (
+              <div className={styles.lineupCallUpWrap} ref={callUpRef}>
+                <button
+                  type="button"
+                  className={styles.lineupCallUpBtn}
+                  aria-haspopup="dialog"
+                  aria-expanded={callUps.sheetOpen}
+                  /* House rule 3: the words go on a phone and the aria-label carries them — same
+                     recipe as the roster's "+ Add Player" (`headerBtnLabel`), so this reads as one
+                     more icon square beside Undo/Redo there, not a lone survivor of a banner. */
+                  aria-label="Call up a player"
+                  onClick={callUps.onCallUp}
+                >
+                  {/* UserPlus, not a bare Plus (owner, 2026-09-23): among five other tool icons a
+                      plain "+" reads as "add a row," which "Not in the lineup" already does below.
+                      A person-with-a-plus names the actual action — bringing someone from OUTSIDE
+                      the roster in — without needing the label a phone hides. */}
+                  <UserPlus size={16} aria-hidden />
+                  <span className={styles.headerBtnLabel}>Call up a player</span>
+                </button>
+                {callUps.sheetOpen && (<>
+                  <LineupSheetScrim onClose={callUps.onCloseSheet} />
+                  <div className={styles.lineupAutoMenu} role="dialog" aria-label="Call up a player">
+                    {callUps.sheet}
+                  </div>
                 </>)}
               </div>
-              {reshuffleButton}
-            </>
-          )}
-          {/* The host's tools (Undo · Redo · Print · Templates) and the editor's own Clear are ONE row
-              of squares on a phone — the wrapper lives HERE rather than in the host because Clear is the
-              editor's action and it has to be INSIDE the row, not under it. */}
-          {isPhone ? <div className={styles.lineupToolRow}>{controlsExtra}{clearButton}</div> : <>{controlsExtra}{clearButton}</>}
+            )}
+            {controlsExtra}{clearButton}
+          </div>
         </div>
 
         {notice && <p className={styles.lineupNotice}>{notice}</p>}
@@ -1309,7 +1341,7 @@ export default function LineupEditor(props: LineupEditorProps) {
             and the paper disagreed about what belonged with what. */}
         {notesSlot}
 
-        {/* ── Who is available, and the one call-up door ───────────────────────────────────────
+        {/* ── Who is available ──────────────────────────────────────────────────────────────────
             ⚠ **ONE PANEL, NOT TWO** (owner, 2026-09-22: *"I don't like the way these are aligned
             under the main lineup table, lots of empty space"*). Call-ups first shipped in a second
             dashed box of their own, which stacked two mostly-empty panels under the grid and made
@@ -1317,11 +1349,10 @@ export default function LineupEditor(props: LineupEditorProps) {
             "who can I still put in?" — so they share one frame, and each group keeps its own
             heading and count so a coach never has to work out whether a name is one of their own.
 
-            The panel renders whenever the game builder is mounted, because the *Call up a player*
-            button is the only call-up affordance the builder has at rest and it must be reachable
-            even with every rostered player already in the lineup. The template editor passes no
-            `callUps`, so there it still appears only when somebody is out of the template. */}
-        {(notInLineup.length > 0 || callUps) && (
+            The *Call up a player* door itself moved into the toolbar (2026-09-23) — it no longer
+            needs this panel to stay mounted just to stay reachable, so this now renders only when
+            there is actually a roster or call-up name to show. */}
+        {(notInLineup.length > 0 || callUpsNotInLineup.length > 0) && (
           <div className={styles.lineupNotPlaying}>
             {/* ⚠⚠ **THE PILL IS THE ACTION — there is no "Add to lineup" button any more** (owner
                 ruling 2026-09-22, choosing this over widening the rows to fill the screen).
@@ -1378,32 +1409,6 @@ export default function LineupEditor(props: LineupEditorProps) {
                 </div>
               </div>
             ))}
-
-            {/* ⚠ The ref is on the WRAPPER, not the panel — the row sheet's own lesson, recorded in
-                `coach-lineup-phone-guard`: a dismissable whose boundary excludes its trigger closes
-                on the very tap that opened it. */}
-            {callUps && (
-            <div className={styles.lineupCallUpWrap} ref={callUpRef}>
-              <button
-                type="button"
-                className={styles.lineupCallUpBtn}
-                aria-haspopup="dialog"
-                aria-expanded={callUps.sheetOpen}
-                onClick={callUps.onCallUp}
-              >
-                + Call up a player
-              </button>
-              {/* The builder's own panel recipe (auto-fill / Templates / Print), so on a phone this
-                  is already the portal's drawer — flush to the bar, grab line, scrim — with no
-                  second copy of those rules to drift from. */}
-              {callUps.sheetOpen && (<>
-                <LineupSheetScrim onClose={callUps.onCloseSheet} />
-                <div className={`${styles.lineupAutoMenu} ${styles.lineupCallUpMenu}`} role="dialog" aria-label="Call up a player">
-                  {callUps.sheet}
-                </div>
-              </>)}
-            </div>
-            )}
           </div>
         )}
       </>)}

@@ -203,15 +203,15 @@ describe('D1 — the Setup row and its panel', () => {
     // layout sweep can see this, which is why it is pinned here.
     const editorScrims: [string, string][] = [
       ['the row menu', 'onClose={() => setRowActionsFor(null)}'],
-      ['the phone Setup drawer', 'onClose={closePanelToRow}'],
-      ['the 641–900 Setup drawer', 'onClose={() => setAutoFillOpen(false)}'],
+      ['the Setup & Auto-fill drawer', 'onClose={closePanelToRow}'],
+      ['the call-up sheet', 'onClose={callUps.onCloseSheet}'],
     ];
     // Every scrim must come AFTER the opening tag that carries its dismissable's ref, so it is a
     // descendant of the watched element rather than a sibling of it.
     const boundaries: Record<string, string> = {
       'the row menu': '<div ref={rowSheetRef}>',
-      'the phone Setup drawer': 'ref={autoFillRef}',
-      'the 641–900 Setup drawer': 'ref={autoFillRef}',
+      'the Setup & Auto-fill drawer': 'ref={autoFillRef}',
+      'the call-up sheet': 'ref={callUpRef}',
     };
     for (const [name, onClose] of editorScrims) {
       const scrimAt = editor.indexOf(`<LineupSheetScrim ${onClose}`);
@@ -243,16 +243,18 @@ describe('D1 — the Setup row and its panel', () => {
     assert.ok(scrim.includes('rgba(13, 17, 26, 0.45)'), 'the dark dim matches .sheetScrim');
     assert.ok(css.includes('.lineupSheetScrim {\n    background: rgba(36, 30, 21, 0.28);'),
       'and the warm remap matches it too — warm is the portal default');
-    // D13: all four of the builder's phone panels, not just Setup. Three live in the editor
-    // (the phone Setup drawer, the 641–900 Setup drawer, the row-actions drawer) and two on the
-    // builder page (Templates, Print). Converting only one would sharpen the inconsistency.
-    // ⚠ ONE COMPONENT, FIVE CALL SITES. They were five copied <div>s, and the copy had already
+    // D13: all of the builder's phone panels, not just Setup. Two live in the editor (the Setup &
+    // Auto-fill drawer, the row-actions drawer) and two on the builder page (Templates, Print).
+    // Converting only one would sharpen the inconsistency.
+    // ⚠ ONE COMPONENT, N CALL SITES. They were copied <div>s once, and the copy had already
     // drifted (the warm colour above). The class is now spelled exactly once, in the component.
-    // ⚠ FOUR since mig 309: the phone Setup drawer, the 641–900 Setup drawer, the row-actions
-    // drawer, and the "Call up a player" sheet. The call-up sheet deliberately reuses this same
-    // recipe rather than bringing a shell of its own — a fifth builder panel that looked like the
-    // other four until one of them changed is exactly what this count exists to prevent.
-    assert.equal(editor.split('<LineupSheetScrim onClose=').length - 1, 4, 'the editor’s four drawers');
+    // ⚠ THREE since 2026-09-23: the Setup & Auto-fill drawer (desktop and phone shared ONE trigger
+    // and ONE scrim that day — previously two, `closePanelToRow` on the phone and a bare
+    // `setAutoFillOpen(false)` on the desktop), the row-actions drawer, and the "Call up a player"
+    // sheet (moved into the toolbar the same day, still reusing this recipe rather than a shell of
+    // its own). A fourth call site that looked like these three until one of them changed is
+    // exactly what this count exists to prevent.
+    assert.equal(editor.split('<LineupSheetScrim onClose=').length - 1, 3, 'the editor’s three drawers');
     assert.equal(builder.split('<LineupSheetScrim onClose=').length - 1, 2, 'Templates and Print');
     assert.equal(scrimCmp.split('styles.lineupSheetScrim').length - 1, 1, 'the class has exactly one home');
     assert.ok(scrimCmp.includes('aria-hidden="true"'), 'and the markup cannot drift either');
@@ -290,25 +292,114 @@ describe('D1 — the Setup row and its panel', () => {
     // the control behind it). The foot takes that padding instead, so the panel with a foot gives
     // its own up — which is what `lineupSetupDrawer` is for.
     assert.ok(panel.includes('${styles.lineupAutoMenu} ${styles.lineupSetupDrawer}'), 'the setup drawer wears the modifier');
-    assert.ok(between(css, '  .lineupSetupDrawer {', '}', 'the setup drawer').includes('padding-bottom: 0'), 'it gives up its bottom padding');
-    const pinned = between(css, '  .lineupSheetFoot {', '\n  }', 'the pinned foot');
+    // ⚰ Both rules were ≤900-gated until 2026-09-23 — "Desktop is untouched, the popover is not a
+    // scroller" stopped being true the day the popover became a ≥901 modal with its own max-height
+    // and scroll (same reason a phone drawer needed one). Unconditional now, not width-gated.
+    assert.match(css, /\.lineupSetupDrawer \{ padding-bottom: 0; \}/, 'it gives up its bottom padding, at every width');
+    const pinned = between(css, '.lineupSheetFoot {', '\n}', 'the pinned foot');
     assert.ok(pinned.includes('padding-bottom: 14px;'), 'and the foot takes it, so a tap there finds the foot');
     assert.ok(pinned.includes('position: sticky;'), 'pinned');
     assert.ok(pinned.includes('bottom: 0;'), 'to the foot');
     assert.ok(pinned.includes('background: var(--card-bg);'), 'its own surface, so settings cannot show through it');
+    assert.doesNotMatch(pinned, /@media/, 'no width gate left on the sticky foot itself');
+  });
+  it('D12 · the true desktop (≥901) gets its own modal, borrowed from this app\'s existing confirm-dialog chrome (owner, 2026-09-23)', () => {
+    // ⚰ 641–900 already had this: the panel is the SAME fixed, scrim-backed drawer a phone gets
+    // (D13). Only ≥901 was still a small anchored popover with no viewport-edge awareness, which is
+    // exactly what ran off the bottom of a shorter window once Format/Innings joined it (D1, above).
+    const overlay = between(css, '.lineupSetupModalOverlay { display: none; }', '}\n}', 'the desktop overlay');
+    assert.match(overlay, /@media \(min-width: 901px\)/);
+    assert.match(overlay, /position: fixed;\s*inset: 0;/);
+    // Same values as the app's global confirm-dialog backdrop — reused, not reinvented.
+    assert.match(overlay, /background: rgba\(0, 0, 0, 0\.75\);/);
+    assert.match(overlay, /backdrop-filter: blur\(4px\);/);
+    const drawerModal = between(css, '.lineupSetupDrawer {\n    position: fixed;', '\n  }', 'the desktop modal card');
+    // ⚰⚠⚠ REPRODUCED DEFECT, NOT A STYLE PREFERENCE (found live, 2026-09-23 — "this mode dropdown
+    // is not working"). The card first centred with `transform: translate(-50%, -50%)`. Mode and
+    // A-squad both use `SublinedChoice`, whose own dropdown is `position: fixed` anchored to a rect
+    // it measures against the true viewport — SublinedChoice's own header comment says so: "no
+    // ancestor of the modal may gain a transform/filter, or fixed re-anchors to it and this clips
+    // again." A `transform` on THIS card IS exactly that ancestor: it silently becomes the
+    // containing block for every `position: fixed` descendant, so the child's viewport-measured
+    // coordinates paint somewhere else while nothing throws. `inset` + `margin: auto` centers a
+    // `position: fixed` box with a definite width the same way, without a transform anywhere.
+    assert.match(drawerModal, /inset: 0;\s*margin: auto;/, 'centered without a transform');
+    assert.doesNotMatch(drawerModal, /transform:/, 'a transform here breaks every SublinedChoice this panel hosts (Mode, A-squad) — see SublinedChoice.tsx’s own header comment');
+    assert.match(drawerModal, /overflow-y: auto;/, 'its own scroll — Generate must never depend on the PAGE scrolling');
+    // The overlay renders as a sibling in the JSX, right before the panel it dims.
+    assert.match(editor, /className=\{styles\.lineupSetupModalOverlay\} aria-hidden="true" onClick=\{closePanelToRow\}/);
+    assert.ok(
+      editor.indexOf('lineupSetupModalOverlay') < editor.indexOf('{autoFillPanel}', editor.indexOf('lineupAutoWrap')),
+      'the overlay sits before the panel it backs, so it paints first and the panel paints over it',
+    );
+    // A true dialog now, not just a disclosure — matches Call-up and the row sheet, which already
+    // carry role="dialog" at every width they render.
+    assert.match(editor, /id=\{SETUP_PANEL_ID\} className=\{`\$\{styles\.lineupAutoMenu\} \$\{styles\.lineupSetupDrawer\}`\} role="dialog" aria-label="Lineup setup"/);
+    // The close × exists in the DOM at every width but only PAINTS on the true desktop — CSS
+    // decides, per this file's own rule for width-only differences (no isPhoneNav check in JS).
+    assert.match(editor, /className=\{styles\.lineupSetupDrawerClose\} aria-label="Close" onClick=\{closePanelToRow\}/);
+    const closeBtn = between(css, '.lineupSetupDrawerClose {', '}', 'the close button');
+    assert.match(closeBtn, /display: none;/, 'hidden by default — the 641–900 drawer and phone sheet dismiss by scrim/Escape/Generate already');
+    assert.match(css, /@media \(min-width: 901px\) \{\s*\.lineupSetupDrawerClose \{ display: inline-flex; \}/);
+  });
+  it('the trigger names itself: a phone-hidden "Setup" eyebrow (owner, 2026-09-23)', () => {
+    const wrap = between(editor, 'className={styles.lineupAutoWrap} ref={autoFillRef}', 'className={styles.lineupSetupRowWrap}', 'the trigger wrap');
+    assert.match(wrap, /className=\{`\$\{styles\.lineupSetupLabel\} \$\{styles\.lineupSetupTriggerLabel\}`\}>Setup</, 'reuses the panel\'s own caption recipe, not a second one');
+    const mod = between(css, '.lineupSetupTriggerLabel { display: block;', '\n}', 'the eyebrow modifier');
+    assert.match(mod, /@media \(max-width: 640px\) \{\s*\.lineupSetupTriggerLabel \{ display: none; \}/,
+      'phone-hidden — the row\'s border, chevron and 44px floor already read as interactive there');
   });
   it('Generate closes the panel and returns focus to the row; Escape does the same', () => {
     assert.match(editor, /runGenerate\(autoFillMode\);\s*closePanelToRow\(\);/);
     assert.match(editor, /useDismissable\(autoFillOpen, autoFillRef, \(\) => setAutoFillOpen\(false\), \(\) => closePanelToRow\(\)\)/);
-    assert.match(editor, /function closePanelToRow\(\) \{\s*setAutoFillOpen\(false\);\s*if \(isPhone\) setupRowRef\.current\?\.focus/);
+    // ⚰ `if (isPhone)` guarded the focus-return until 2026-09-23 — dead weight once the desktop
+    // shares the same trigger and the same close, since a popover returning focus to the button
+    // that opened it is correct at every width, not a phone-only courtesy.
+    assert.match(editor, /function closePanelToRow\(\) \{\s*setAutoFillOpen\(false\);\s*setupRowRef\.current\?\.focus/);
+    assert.doesNotMatch(editor, /if \(isPhone\) setupRowRef\.current\?\.focus/, 'the return-focus is unconditional now');
   });
-  it('the DOM decision is useIsPhone; the desktop branch keeps the Setup group, the Auto-fill button and Reshuffle', () => {
+  it('the Setup & Auto-fill trigger is ONE shape shared by every width (2026-09-23)', () => {
+    // ⚰ Until 2026-09-23 this test asserted the OPPOSITE: `{isPhone ? (…) : (…)}` around two
+    // entirely different toolbars, the desktop one spelling out a bordered Setup group, a bare
+    // Auto-fill button and a standalone Reshuffle button that the drawer version folded away. The
+    // fix was to give the desktop the SAME collapsed trigger the phone already had.
     assert.match(editor, /const isPhone = useIsPhone\(\);/);
-    const controls = between(editor, '<div className={styles.lineupControls}>', '{controlsExtra}', 'the controls');
-    assert.match(controls, /\{isPhone \? \(/);
-    assert.match(controls, /className=\{styles\.lineupSetupGroup\} aria-label="Setup"/);
-    assert.match(controls, /Auto-fill · \{autoFillLabel\} ▾/);
-    assert.match(controls, /\{reshuffleButton\}/);
+    const controls = between(editor, '<div className={styles.lineupControls}>', '<div className={styles.lineupToolRow}>', 'the controls');
+    assert.doesNotMatch(controls, /\{isPhone \? \(/, 'one shape now, not a phone/desktop fork');
+    assert.doesNotMatch(css, /\.lineupSetupGroup \{/, 'the desktop-only bordered wrapper is retired');
+    assert.doesNotMatch(editor, /reshuffleButton/, 'Reshuffle has no standalone toolbar skin left — only the drawer\'s quiet row');
+    assert.doesNotMatch(editor, /Auto-fill · \{autoFillLabel\} ▾/, 'the bare desktop Auto-fill button is gone with it');
+    // The ONE trigger both widths share:
+    assert.match(controls, /ref=\{setupRowRef\} type="button" className=\{styles\.lineupSetupRow\}/);
+    // ⚰ Call-up rode alone here, beside Setup, for one day. Same-day follow-up: it moved again.
+    assert.doesNotMatch(controls, /lineupCallUpWrap/, 'Call-up no longer sits directly in the controls row — it is in the tool row now');
+  });
+  it('Call-up rides the tool row beside Undo/Redo, a peer square, not an odd height in the middle (owner, 2026-09-23)', () => {
+    // ⚰ Call-up spent 2026-09-23 morning beside Setup, alone — a third, in-between height in the
+    // row (taller than a square, shorter than Setup's two-line trigger), which the owner flagged
+    // from a live screenshot: "can we do something about these button height differences?" The
+    // fix folded it into the tool row instead, and shrank it to an icon-only "+" on a phone (house
+    // rule 3 — the same recipe as the roster's "+ Add Player") so it now reads as one more square
+    // beside Undo/Redo there, not the lone survivor of a full-width banner.
+    const toolRow = between(editor, '<div className={styles.lineupToolRow}>', '{controlsExtra}{clearButton}', 'the tool row');
+    assert.match(toolRow, /\{callUps && \(/, 'still gated on the game having call-ups at all');
+    assert.match(toolRow, /className=\{styles\.lineupCallUpWrap\} ref=\{callUpRef\}/, 'Call-up opens the row, before Undo');
+    // ⚰ A bare Plus for one more day (2026-09-23): among five other tool icons it read as "add a
+    // row," a job "Not in the lineup" already does below. UserPlus names the actual action.
+    assert.match(toolRow, /<UserPlus size=\{16\} aria-hidden \/>/);
+    assert.doesNotMatch(editor, /<Plus size=\{16\}/, 'the generic Plus glyph is gone, not just unused');
+    assert.match(toolRow, /aria-label="Call up a player"/, 'the accessible name survives the icon-only phone shape');
+    assert.match(toolRow, /<span className=\{styles\.headerBtnLabel\}>Call up a player<\/span>/,
+      'house rule 3 — words become symbols on a phone, and the aria-label carries them');
+    assert.doesNotMatch(toolRow, />\s*\+ Call up a player\s*</, 'no bare-text button left; the label lives in the headerBtnLabel span');
+    // The row's own CSS carries no baked-in width or top-margin any more — those were a phone
+    // BANNER's shape, wrong for a button that now lives inside a row of squares with its own gap.
+    const btnBase = between(css, '.lineupCallUpBtn {', '}', 'the call-up button base rule');
+    assert.doesNotMatch(btnBase, /width: 100%/, 'no longer a full-width banner by default');
+    assert.doesNotMatch(btnBase, /margin-top/, 'the row\'s own gap spaces it now, not a hand-tuned margin');
+    const phoneBtn = between(phoneCss, '.lineupCallUpBtn {', '}', 'the call-up button on a phone');
+    assert.match(phoneBtn, /width: var\(--tap-min, 44px\)/, 'a 44px square, matching its row-neighbours');
+    assert.match(phoneBtn, /height: var\(--tap-min, 44px\)/);
   });
 });
 
@@ -419,13 +510,21 @@ describe('D2 — the tool row', () => {
     assert.doesNotMatch(builder, /toolbarExtras/, 'the page no longer wraps them');
     assert.match(builder, /const isPhone = useIsPhone\(\);/);
   });
-  it('CLEAR is the editor\'s fifth square, INSIDE the row at ≤640 and beside them above it — the text link is gone', () => {
+  it('CLEAR is the editor\'s fifth square, INSIDE the row at every width — the text link is gone', () => {
     const button = between(editor, 'const clearButton = (', '\n  );', 'the clear tool');
     assert.match(button, /className=\{styles\.footerIconBtn\} aria-label="Clear positions" title="Clear positions"/);
     assert.match(button, /disabled=\{!analysis\.hasAssignments\}/, 'greys out when there is nothing to erase');
     assert.match(button, /onClick=\{handleClear\}/);
     assert.match(button, /<Eraser size=\{18\} \/>/);
-    assert.match(editor, /\{isPhone \? <div className=\{styles\.lineupToolRow\}>\{controlsExtra\}\{clearButton\}<\/div> : <>\{controlsExtra\}\{clearButton\}<\/>\}/);
+    // ⚰ Until 2026-09-23 this row only existed on a phone (`isPhone ? <div className={lineupToolRow}>
+    // … : <>…</>`) — the desktop's four tools sat bare in the toolbar, left-packed after Setup. The
+    // wrapper is unconditional now, and the CSS pushes it to the row's right edge above the phone
+    // column instead of a JS fork changing what renders.
+    assert.match(editor, /<div className=\{styles\.lineupToolRow\}>\s*\{callUps && \(/, 'Call-up opens the row now (it joined later that day); Undo/Redo/Print/Templates/Clear still close it');
+    assert.match(editor, /\{controlsExtra\}\{clearButton\}\s*<\/div>\s*<\/div>/);
+    assert.doesNotMatch(editor, /isPhone \? <div className=\{styles\.lineupToolRow\}/, 'no JS fork left — one wrapper, every width');
+    assert.match(between(css, '.lineupToolRow {', '}', 'the tool row'), /margin-left: auto/,
+      'the CSS pushes it right in the row layout; harmless in the phone column, which stretches it full width');
     assert.match(editor, /confirm\(\{ title: 'Clear all positions\?'/, 'the confirm behind it is unchanged');
     assert.doesNotMatch(editor, /lineupClearBtn/, 'the stranded text link is gone');
     assert.doesNotMatch(css, /lineupClearBtn/, 'and so is its rule');

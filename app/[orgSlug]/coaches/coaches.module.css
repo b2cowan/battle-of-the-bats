@@ -6971,14 +6971,43 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   }
 }
 
-/* The drawer's title (D12 · B) — once the scrim covers the row that opened it, nothing on screen
-   says what this surface is. The position sheet titles itself with the player for the same reason.
-   Phone only: at 641–900 the panel is a drawer but keeps the desktop's contents. */
+/* The drawer's title (D12 · B) — once the scrim (≤900) or the modal backdrop (≥901, 2026-09-23)
+   covers the row that opened it, nothing on screen says what this surface is. The position sheet
+   titles itself with the player for the same reason. Every width now: the desktop trigger used to
+   open a plain popover with no scrim of its own, so nothing dimmed behind it either — this title
+   was truly phone/tablet-only furniture until the desktop got the same backdrop. */
 .lineupSheetTitle {
-  margin: 0 0 0.1rem;
+  margin: 0;
   font-size: var(--type-body);
   font-weight: 700;
   color: var(--text-primary);
+}
+/* The head row: the title plus a close × that only exists on the true desktop (≥901, below) — a
+   modal backdrop is less obviously clickable than a small popover's "tap anywhere else", so that
+   width earns an explicit close the other two don't need. */
+.lineupSetupDrawerHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin: 0 0 0.1rem;
+}
+.lineupSetupDrawerClose {
+  display: none;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border-2);
+  border-radius: 50%;
+  background: var(--card-bg);
+  color: var(--text-tertiary);
+  cursor: pointer;
+}
+.lineupSetupDrawerClose:hover { color: var(--text-primary); }
+@media (min-width: 901px) {
+  .lineupSetupDrawerClose { display: inline-flex; }
 }
 
 /* ONE disclosure for the two per-game overrides (D12 · B). Innings to fill defaults to the whole
@@ -7032,36 +7061,77 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    622-tall window the content was 557 in 538, so the last row sat 18px under the bar’s top edge.
    ⚠ Trimming the settings further does NOT fix this — it moves the failure to a shorter phone.
    Pinning the foot ends it at every height: the settings scroll UNDER these, the actions never move.
-   Desktop is untouched — the popover is not a scroller, so the foot is sticky only where the bar is. */
+   ⚰ "Desktop is untouched" stopped being true 2026-09-23: the popover became a centered modal with
+   its own max-height and scroll (below), for the same reason a phone drawer needed one — Format,
+   Innings and everything after them made this too tall to trust to "the page is long enough."
+   Once it scrolls, it needs the same pinned foot, so this is unconditional now, not ≤900-gated. */
 /* The setup drawer is the only panel with a pinned foot; it hands the foot its bottom padding.
    The other three (Templates, Print, the row menu) keep the container's, as they always had. */
-@media (max-width: 900px) {
-  .lineupSetupDrawer { padding-bottom: 0; }
-}
-.lineupSheetFoot { display: flex; flex-direction: column; gap: 0.6rem; }
-@media (max-width: 900px) {
-  .lineupSheetFoot {
-    position: sticky;
-    bottom: 0;
-    z-index: 1;
-    margin-top: auto;
-    padding-top: 0.5rem;
-    /* The drawer's own surface, so settings scrolling behind the foot are hidden rather than
-       showing through it; the hairline says there is more above. */
-    background: var(--card-bg);
-    border-top: 1px solid var(--border-2);
-    /* ⚠ THE FOOT OWNS THE DRAWER'S BOTTOM PADDING (owner, 2026-09-22 — game-rule rows were showing
-       BELOW Reshuffle). `position: sticky; bottom: 0` stops at the SCROLLPORT's bottom, which is
-       INSIDE the container's 14px bottom padding, so scrolled content bled through a 14px strip
-       under the foot. Two things that do NOT fix it, both tried and measured: a negative bottom
-       margin (a sticky element's stop does not move), and painting a band with `box-shadow` (it
-       covers the strip but a TAP still lands on the control behind it — an invisible hit target).
-       The only honest fix is structural: the drawer that HAS a foot gives its bottom padding to
-       the foot, so the foot is what fills that space and what a thumb finds there. */
-    padding-bottom: 14px;
-  }
+.lineupSetupDrawer { padding-bottom: 0; }
+.lineupSheetFoot {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  position: sticky;
+  bottom: 0;
+  z-index: 1;
+  margin-top: auto;
+  padding-top: 0.5rem;
+  /* The drawer's own surface, so settings scrolling behind the foot are hidden rather than
+     showing through it; the hairline says there is more above. */
+  background: var(--card-bg);
+  border-top: 1px solid var(--border-2);
+  /* ⚠ THE FOOT OWNS THE DRAWER'S BOTTOM PADDING (owner, 2026-09-22 — game-rule rows were showing
+     BELOW Reshuffle). `position: sticky; bottom: 0` stops at the SCROLLPORT's bottom, which is
+     INSIDE the container's 14px bottom padding, so scrolled content bled through a 14px strip
+     under the foot. Two things that do NOT fix it, both tried and measured: a negative bottom
+     margin (a sticky element's stop does not move), and painting a band with `box-shadow` (it
+     covers the strip but a TAP still lands on the control behind it — an invisible hit target).
+     The only honest fix is structural: the drawer that HAS a foot gives its bottom padding to
+     the foot, so the foot is what fills that space and what a thumb finds there. */
+  padding-bottom: 14px;
 }
 .lineupAutoNote { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.4; }
+
+/* THE TRUE DESKTOP'S OWN MODAL (≥901, owner 2026-09-23 — "should we open a modal for this given
+   its size?"). At 641–900 the panel is already the phone's fixed, scrim-backed drawer (D13 made
+   that width-agnostic on purpose); only ≥901 was still a small anchored popover with no idea where
+   the viewport ends — which is exactly what ran off the bottom of a shorter browser window once
+   Format and Innings joined it. The fix borrows this app's own confirm-dialog chrome (`.modal` /
+   `.modal-overlay` in globals.css) rather than inventing new modal chrome or widening the
+   phone/tablet scrim's job to include a width the other three panels sharing it don't need. */
+.lineupSetupModalOverlay { display: none; }
+@media (min-width: 901px) {
+  .lineupSetupModalOverlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    /* Same values as the global `.modal-overlay` — this app's confirm dialogs don't remap the
+       backdrop for the warm theme (only the CARD does), so neither does this. */
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(4px);
+  }
+  /* ⚠⚠ NO `transform` HERE — EVER (found live, 2026-09-23: the Mode field stopped opening). This
+     panel hosts `SublinedChoice` (Mode, A-squad), whose own dropdown is `position: fixed`,
+     anchored to a rect it measures in JS against the true VIEWPORT, by its own explicit rule:
+     "no ancestor of the modal may gain a transform/filter, or fixed re-anchors to it and this
+     clips again." A `transform` on THIS element is exactly that ancestor — it quietly changes
+     the containing block for every `position: fixed` descendant from the viewport to this box,
+     so the child's viewport-measured coordinates paint in the wrong place while nothing errors.
+     Center with `inset` + `margin: auto` instead — it centers a `position: fixed` box with a
+     definite width/max-height the same way, without ever creating a containing block. */
+  .lineupSetupDrawer {
+    position: fixed;
+    inset: 0;
+    margin: auto;
+    width: min(420px, calc(100vw - 40px));
+    max-height: min(80vh, 620px);
+    overflow-y: auto;
+    z-index: 1001; /* one above the overlay it shares no stacking context with — they're siblings, not parent/child */
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
+  }
+}
 
 /* Toolbar icon buttons — Undo / Redo / Print, alongside Auto-fill and Templates. */
 .footerIconBtn {
@@ -7572,18 +7642,9 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   letter-spacing: 0.04em;
 }
 
-/* Setup group (D3, 2026-09-18): Format + Innings are per-game configuration, kept visually
-   subordinate to Auto-fill (the primary action) with their own quiet label rather than sitting
-   as equals beside it. The "Setup" caption sits ABOVE the fields as its own line (not centered
-   beside them at the group's mid-height) so it reads the same way every field label in this
-   toolbar does. */
-.lineupSetupGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-  padding-right: 0.75rem;
-  border-right: 1px solid var(--border-2);
-}
+/* Format + Innings (D3, 2026-09-18) live inside the Setup & Auto-fill panel now (2026-09-23 —
+   `.lineupSetupGroup`, the desktop-only bordered wrapper that used to hold them inline in the
+   toolbar, is retired with that change; `setupFields` renders once, inside `.lineupAutoMenu`). */
 .lineupSetupLabel {
   font-size: var(--type-label);
   font-weight: 700;
@@ -7596,9 +7657,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   align-items: flex-end;
   gap: 0.5rem;
   flex-wrap: wrap;
-}
-@media (max-width: 640px) {
-  .lineupSetupGroup { border-right: none; padding-right: 0; }
 }
 
 /* min-height: one shared height for every toolbar control. A select's padding+border, a
@@ -7877,11 +7935,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 .lineupCallUpDrop:hover { color: var(--danger); background: rgba(var(--danger-rgb), 0.1); }
 /* THE ONLY CALL-UP AFFORDANCE THE BUILDER HAS AT REST (owner ruling R3, 2026-09-22). Dashed and
-   amber-tinted so it reads as an addition from outside the roster rather than an ordinary control;
-   full width because it is the panel's action, not a row's. */
+   amber-tinted so it reads as an addition from outside the roster rather than an ordinary control.
+   ⚠ A ROW'S BUTTON, NOT A PANEL'S, SINCE 2026-09-23 — it lives inside `.lineupToolRow` now, beside
+   Undo/Redo/Print/Templates/Clear, so its own base rule carries no width or top-margin: the row's
+   `gap` spaces it and the two breakpoints below size it, square on a phone, a labelled pill above. */
 .lineupCallUpBtn {
   display: flex; align-items: center; justify-content: center; gap: 0.4rem;
-  width: 100%; min-height: 44px; margin-top: 0.5rem;
+  min-height: 44px;
   font-size: var(--type-support); font-weight: 700;
   border: 1px dashed rgba(var(--warning-rgb), 0.5); border-radius: 8px;
   background: rgba(var(--warning-rgb), 0.08);
@@ -7890,38 +7950,39 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .lineupCallUpBtn:hover { background: rgba(var(--warning-rgb), 0.16); }
 .lineupCallUpWrap { position: relative; }
 
-/* ⚠⚠ **DESKTOP ONLY, AND THE MEDIA QUERY IS LOAD-BEARING — DO NOT UNWRAP IT.**
-   The sheet opens UPWARD from its button on a desktop: the button is the last thing on the page, so
-   `.lineupAutoMenu`'s downward anchor (`top: calc(100% + 6px)`) would put the panel below the fold.
-   At ≤900 `.lineupAutoMenu` becomes the bar-anchored phone DRAWER and must be left completely alone.
-
-   ⚠ This block was first written unguarded, with a comment claiming the ≤900 drawer rules would win
-   "because they come later in the file". **They do not — this rule is ~900 lines later and the
-   specificity is identical (0,1,0), so THIS won.** The drawer is `position: fixed` at that width, so
-   `bottom: calc(100% + 6px)` resolved against the VIEWPORT and parked the sheet a full screen-height
-   above the top: the scrim dimmed the page and nothing appeared. Reported from a phone.
-   The lesson is the repo's own — same-specificity module rules resolve by source order, so an
-   override that must not apply at a width is scoped by a media query, never by an assumption about
-   where it sits in the file. */
-@media (min-width: 901px) {
-  .lineupCallUpMenu {
-    top: auto;
-    bottom: calc(100% + 6px);
-    right: auto;
-    left: 0;
-    width: min(360px, 100%);
-  }
-  /* The button sizes to its words on a desktop. Full width is a PHONE shape — stretched across a
-     1440 panel it read as the loudest thing on the screen, louder than Auto-fill, for an action a
-     coach takes a handful of times a season (owner, on first look). */
+/* ⚰ The "opens UPWARD" override — and the `.lineupCallUpMenu` modifier class that carried it —
+   are gone (2026-09-23): they existed only because the button sat last on the page, at the bottom
+   of the grid, so the popover had to open above its trigger or land below the fold. Now that
+   Call-up lives in the toolbar at the top of the screen, its sheet just wears bare `.lineupAutoMenu`
+   and takes its ordinary downward anchor — same recipe as Auto-fill's own popover beside it, with
+   no modifier left to override anything. Only the button's own sizing still needs a row-layout
+   override, at the same breakpoint the toolbar itself switches from a column to a row (`useIsPhone`'s
+   640px, not the old, unrelated 901px nav breakpoint). */
+@media (min-width: 641px) {
+  /* The button sizes to its words once it is a peer of Auto-fill and Setup, not a lone panel
+     action. Full width is a PHONE shape — stretched across a 1440 toolbar it would read as the
+     loudest thing on the screen, louder than Setup & Auto-fill beside it. */
   /* ⚠ `display: inline-flex`, not `width: auto`. The base rule is `display: flex`, which is
-     block-level — `width: auto` on it still fills the panel, so the button would have stayed the
+     block-level — `width: auto` on it still fills its row, so the button would have stayed the
      full width of the screen and this fix would have looked like it did nothing. */
   .lineupCallUpBtn {
     display: inline-flex;
     width: auto;
     padding-inline: 0.9rem;
-    min-height: 36px;
+    min-height: 2.5rem; /* matches the row's shared 40px control height, see the note above `.lineupControls .btnPrimary` */
+  }
+}
+/* ⚠ HOUSE RULE 3, ONE MORE TIME (owner, 2026-09-23, from a live phone screenshot): "on mobile can
+   we make it just the '+' next to undo/redo?" — the same "words become symbols, the aria-label
+   carries them" recipe as the roster's "+ Add Player" (`.headerBtnLabel`, gated ≤640 already), so
+   this needed no NEW rule for the label — only for the button's own shape, which was still the
+   phone-banner width/height instead of the square its new row-neighbours wear. */
+@media (max-width: 640px) {
+  .lineupCallUpBtn {
+    width: var(--tap-min, 44px);
+    height: var(--tap-min, 44px);
+    min-height: var(--tap-min, 44px);
+    padding: 0;
   }
 }
 @media (max-width: 768px) {
@@ -15753,7 +15814,9 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 
 /* D1 · THE SETUP ROW — the row recipe's two-line form (B6's density: 14.5/600 title, 12.5 caption,
    2px between), white, a hairline, radius 10, 52px; a chevron that turns while its panel is open.
-   Only ever rendered at ≤640 (the editor decides the DOM), so the base rules need no gate.
+   ⚰ Was phone-only, so the base rules needed no gate — unified across every width 2026-09-23; the
+   base rules still need none, since the ≥641 treatment (inline-flex, content-width) is an ADD, not
+   a replacement (below), same as the ≥901 modal treatment is an add on the panel it opens.
 
    ⚠ THE BORDER LIVES ON THE WRAP, NOT THE ROW (owner, 2026-09-22). While the game has no lineup an
    Auto-fill pill rides this row, and a pill inside a <button> is a control nested in a control —
@@ -15817,6 +15880,29 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
 .lineupSetupRowChev { flex: none; color: var(--text-tertiary); transition: transform 0.15s; }
 .lineupSetupRow[aria-expanded="true"] .lineupSetupRowChev { transform: rotate(180deg); }
 .lineupSetupRow:focus-visible { outline: 3px solid rgba(var(--blueprint-blue-rgb), 0.35); outline-offset: 1px; }
+/* The row wrap is a block `width: 100%` by default — right for the phone column, where
+   `.lineupControls`' `align-items: stretch` hands it that 100% to fill (@640 below). In the
+   desktop/tablet ROW the toolbar still is (2026-09-23, the trigger's now shared by every width),
+   nothing stretches it, so `width: 100%` would instead fill 100% of `.lineupAutoWrap`'s own
+   auto-sized box — which a `width: 100%` block child forces to full-bleed too, in a feedback loop
+   that (depending on the engine) either fills the whole row or produces a genuinely undefined
+   width. `display: inline-flex` sidesteps the loop rather than fighting it: an inline-level flex
+   box always shrink-to-fits its content, unambiguously, so the trigger sizes to its own text and
+   `.lineupAutoWrap` (an ordinary block around it) follows suit. Direct-child scoping reaches only
+   the Setup wrap, never Print/Templates' own `.lineupAutoWrap` popovers, a level deeper inside
+   `.lineupToolRow`. */
+@media (min-width: 641px) {
+  .lineupControls > .lineupAutoWrap .lineupSetupRowWrap { display: inline-flex; width: auto; }
+}
+/* The trigger's eyebrow (owner, 2026-09-23 — "can we label this button so users know its for
+   setting parameters and automating selections?"). Reuses `.lineupSetupLabel`'s own recipe (the
+   SAME caption the panel wears above "Auto-fill" once it's open) rather than a second one; this
+   modifier only adds the phone gate, since on a phone the row's border, chevron and 44px floor
+   already read as "tap me" without repeating it in words. */
+.lineupSetupTriggerLabel { display: block; margin: 0 0 0.25rem 2px; }
+@media (max-width: 640px) {
+  .lineupSetupTriggerLabel { display: none; }
+}
 /* ⚰ `.lineupSetupRow[data-state="primary"]` — the whole row filled lime for a new lineup — was
    DELETED on 2026-09-22 (owner: "why are we highlighting this dropdown in green? that seems
    inconsistent from elsewhere in the app"). It was the ONLY full-width lime surface in the portal;
@@ -15826,9 +15912,13 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    lineup — where the tone never did, because it was frozen at open.
    ⚠ Do not bring a lime ROW back. If a new state needs to shout here, it gets a pill. */
 
-/* D2 · THE TOOL ROW — Undo · Redo · Print · Templates as four 44px squares, 8px apart, left-aligned,
-   after the Setup row and directly above the list. */
-.lineupToolRow { display: flex; align-items: center; gap: 8px; }
+/* D2 · THE TOOL ROW — Undo · Redo · Print · Templates (+ Clear) as icon squares, 8px apart. On the
+   phone column it wraps onto its own line below Setup and Call-up, left-aligned. In the desktop/
+   tablet ROW (2026-09-23) `margin-left: auto` pushes it to the row's right edge instead, so the
+   toolbar reads as two groups — build tools on the left, history/output on the right — rather than
+   one long left-packed line. The rule is harmless in the phone column: stretched full width by
+   `.lineupControls`' `align-items: stretch`, there is no free space left for the margin to spend. */
+.lineupToolRow { display: flex; align-items: center; gap: 8px; margin-left: auto; }
 
 /* The panel's second caption ("Auto-fill", under the Setup fields it now carries on a phone). */
 .lineupPanelSection { padding-top: 0.4rem; border-top: 1px solid var(--border-2); }
