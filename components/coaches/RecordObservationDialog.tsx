@@ -85,10 +85,12 @@ export default function RecordObservationDialog({
   presetGoalId?: string | null;
   /**
    * Opened from a session's grid (or the goal's history, for an observation a session dates): the
-   * skill and the date come from the record, not the coach. The title names the player; the
-   * subtitle says which session dates it.
+   * skill and the date come from the record, not the coach. The title names the player.
+   * ⚠ `subtitle` is OPTIONAL and the session's own door passes none (owner, 2026-09-23) — a coach
+   * standing in a session does not need the sheet to read its date and name back. Only a door on a
+   * PLAYER's page, where the date field is hidden and the list spans many days, sends one.
    */
-  fixed?: { skill: RepTeamMeasurableType; observedOn: string; playerName: string; subtitle: string; enteredBy?: string | null } | null;
+  fixed?: { skill: RepTeamMeasurableType; observedOn: string; playerName: string; subtitle?: string; enteredBy?: string | null } | null;
   /**
    * ⚠ Only a SESSION can answer "not assessed today" — the mark belongs to a session and a player,
    * so only a session's door offers the fourth answer (E3). `marked` is the row's state on open, so
@@ -323,12 +325,12 @@ export default function RecordObservationDialog({
               </label>
             )}
           </div>
-          {/* The one line that answers "whose record is it?" (E8): the record is the coach's, read behind
-              Internal notes; the paper is chosen line by line on the handout page. */}
-          <p className={styles.formHint}>
-            {fixed?.enteredBy && editing ? `Entered by ${fixed.enteredBy} · ` : ''}
-            One observation, not an overall grade. Visible to coaches with Internal notes · on a handout only if you choose it.
-          </p>
+          {/* Attribution only (E8). The disclaimer that used to run beside it — "one observation, not
+              an overall grade…" — was removed: the sheet's own fields already say what is being
+              recorded, and the handout page is where the paper is chosen line by line. */}
+          {editing && fixed?.enteredBy && (
+            <p className={styles.formHint}>Entered by {fixed.enteredBy}</p>
+          )}
           {(localErr || error) && <p className={styles.errorText} role="alert">{localErr || error}</p>}
           <div className={styles.modalFooter}>
             {editing && onRemove && <SheetRemoveButton label="Remove observation" busy={busy} onRemove={onRemove} />}

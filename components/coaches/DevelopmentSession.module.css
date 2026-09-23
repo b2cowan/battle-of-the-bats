@@ -151,6 +151,20 @@
   background: var(--home-fill, transparent);
   color: var(--text-primary);
 }
+/* ⚠ A SAVED VALUE IS THE ROW'S EDIT CONTROL at ≤640 (owner 2026-09-23) — the phone row carries no
+   Edit link, so the value itself opens the row. It must keep the read-only face's exact geometry:
+   it is the same box in the same place, and only the underline says it can be pressed. A button
+   resets its own font and padding, so both are restated here rather than inherited. */
+.attemptTap {
+  font: inherit;
+  font-family: var(--font-data);
+  font-size: var(--type-body);
+  padding: 0;
+  cursor: pointer;
+  box-shadow: inset 0 -2px 0 var(--home-line-strong, var(--border-2));
+}
+/* No :focus-visible rule here on purpose — globals.css declares one for every element. */
+
 .attemptPlus {
   display: inline-flex;
   align-items: center;
@@ -198,6 +212,21 @@
   font-size: var(--type-support);
   color: var(--text-secondary);
 }
+/* The ≤640 test row's state, as a CHIP on the name's line. Drawn only when the word says something
+   the boxes below do not — a blank row has no chip at all, which is what gives the name its line. */
+.stateChipWrap { align-self: center; }
+.stateChip {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  background: var(--home-fill, var(--surface-2));
+  border-radius: var(--home-radius-pill, 999px);
+  padding: 0.18rem 0.5rem;
+  white-space: nowrap;
+}
+.stateChipDone { color: var(--badge-success-ink); background: rgba(var(--home-win-rgb, 52, 102, 42), 0.12); }
+.stateChipNa { background: none; border: 1px solid var(--home-line-strong, var(--border-2)); color: var(--text-secondary); }
+
 .stateSaved { color: var(--badge-success-ink); }
 .stateError { color: var(--danger); }
 .stateQuiet { color: var(--text-tertiary); }
@@ -375,6 +404,58 @@
 .reviewNameLine { display: block; margin-top: 0.25rem; }
 .reviewNameLine:first-child { margin-top: 0; }
 .reviewLegend { margin: 0.6rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── the review sheet’s names, which are CONTROLS now (owner ruling 2026-09-23) ──
+   Tapping a name opens its question directly beneath it — in place, never a second dialog over
+   the first, which is how a sheet ends up burying its own buttons on a phone. */
+.reviewPerson { display: inline; }
+.reviewName {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--tap-min, 44px);
+  margin: 0 0.3rem 0.2rem 0;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid var(--home-line-strong, var(--border-2));
+  border-radius: var(--home-radius-pill, 999px);
+  background: var(--home-fill, var(--surface-2));
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.reviewName:hover { border-color: var(--text-tertiary); }
+.reviewName[aria-expanded="true"] { background: var(--text-primary); color: var(--home-paper, var(--surface)); border-color: var(--text-primary); }
+.reviewName:disabled { opacity: 0.6; cursor: default; }
+/* The question, opened in place. A block inside an inline name list, so it starts its own line. */
+.reviewWhy {
+  display: block;
+  margin: 0.2rem 0 0.5rem;
+  padding: 0.6rem 0.7rem;
+  border-radius: var(--home-radius-sm, 9px);
+  background: var(--home-paper, var(--surface-2));
+}
+.reviewWhyQ {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+.reviewWhyOpts { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+.reviewWhyOpt {
+  min-height: var(--tap-min, 44px);
+  padding: 0.35rem 0.7rem;
+  border: 1px solid var(--home-line-strong, var(--border-2));
+  border-radius: var(--home-radius-pill, 999px);
+  background: var(--home-card, var(--surface));
+  font: inherit;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.reviewWhyOpt:hover { background: var(--home-fill, var(--surface-2)); }
+.reviewWhyOpt:disabled { opacity: 0.6; cursor: default; }
+
 .reviewLegend b { color: var(--text-secondary); font-weight: 600; }
 /* The lead cell's name list can run to a dozen players — several lines taller than the sibling
    numeric cells. `.td`'s shared `vertical-align: middle` (right, for every OTHER list table, whose
@@ -433,7 +514,7 @@
 .doorRowOutsideScope { opacity: 0.85; }
 /* The number is the row's quiet handle, in the data face — the treatment `.num` already gives it. */
 .doorNum { color: var(--text-tertiary); font-family: var(--font-data); font-size: var(--type-support); }
-.doorName { min-width: 0; display: grid; }
+.doorName { min-width: 0; }
 .doorName > strong {
   font-size: var(--type-lead, 1rem);
   font-weight: 600;
@@ -443,8 +524,14 @@
   white-space: nowrap;
 }
 /* A recorded row keeps its descriptor, on a second line, and STAYS 56px. The note belongs in the
-   record, not in the list — it is one tap away, and it is what the dialog opens on. */
-.doorName > small {
+   record, not in the list — it is one tap away, and it is what the dialog opens on.
+   ⚠ IT IS THE ROW'S SECOND LINE, NOT THE NAME CELL'S (owner, 2026-09-23). Inside the name cell it
+   shared a column with the chip and the chevron and truncated at roughly half the screen; spanning
+   from the name's column to the row's end gives it the full width, and the row's height is unchanged
+   because this was always the same two lines. */
+.doorUnder {
+  grid-column: 2 / -1;
+  min-width: 0;
   font-size: var(--type-support);
   color: var(--text-tertiary);
   overflow: hidden;
@@ -529,11 +616,33 @@
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* ⚠ THE BAR THAT HOLDS ONLY THE COUNT IS ONE LINE (owner, 2026-09-23 — it was meant to get smaller
+   and did not). Dropping the pill took its 56px floor away but left the count stacked as a figure
+   over its test name, so the bar still stood two lines tall and gave the roster almost nothing back.
+   On one line it is ~36px instead of ~80px, which is the ~44px the redraw was supposed to return. */
+.dockThin .dockCount { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0 0.5rem; }
+.dockThin .dockCount > small { flex: 0 1 auto; }
+
 /* ⚠ THE 44 IS THE ELEMENT, and this is the trap stage 2's own phrasing invites. "A 36px pill inside
    its 44px box" reads as a small element carrying a big `::after` for its tap area — which passes a
    hit-test and still reports under-floor, because the sweep measures the element's own rectangle.
    The BUTTON is the target; what shrinks is what is drawn inside it. */
 .dockPill { min-height: var(--tap-min, 44px); flex-shrink: 0; }
+
+/* ── the way out, while the session is still outstanding (owner design, 2026-09-23) ──
+   A full-width control under the LAST player, not a pinned one. It is only ever drawn at ≤640 and
+   only while something is unaccounted for — once everything is, it moves into the bar below and
+   this disappears, so the screen never offers the same door twice.
+   ⚠ It takes the content column, like everything else on this page — no bleed to the screen edges.
+   The bar next to it learned that the hard way: a hand-copied gutter is a guess at padding that
+   lives two elements up in another module, and the sweep caught it spilling 14px at 361. */
+.tailOut {
+  display: none;
+  width: 100%;
+  min-height: 3.5rem;
+  margin-top: 0.8rem;
+}
+
 
 @media (max-width: 640px) {
   .dock {
@@ -554,6 +663,10 @@
     background: var(--card-bg, var(--surface));
   }
   .dockPill { min-height: 3.5rem; padding-inline: 1rem; }
+  .tailOut { display: inline-flex; align-items: center; justify-content: center; }
+  /* With only the count in it the bar has no 56px pill to set its height, so it takes the room a
+     line of text needs and gives the rest back to the roster — about 36px, which is the point. */
+  .dockThin { min-height: 0; }
 }
 
 @media (max-width: 640px) {
@@ -564,6 +677,15 @@
   .state { grid-column: 2; grid-row: 1; justify-content: flex-end; }
   .attempts, .obs, .row > .obsSaved, .row > .recordDash { grid-column: 1 / -1; grid-row: 2; }
   .rowError { grid-row: 3; }
+  /* ⚠ A WRITABLE TEST ROW: the name is READ, not glanced (owner 2026-09-23). Same two lines as
+     above — the name's column simply stops sharing with a status word and two links, which is what
+     took it from ~90px of the line to ~290px and stopped every surname truncating. The state, when
+     there is one, is a chip at the end of that line; a blank row has none, so the name has all of
+     it. The row tightens from ~117px to ~90px, and nothing inside it shrinks: the 44px boxes are
+     the floor and they are untouched. */
+  .rowPhoneTest { padding: 0.55rem 0.4rem; align-items: center; }
+  .rowPhoneTest .name strong { font-size: var(--type-lead, 1rem); line-height: 1.2; }
+  .rowPhoneTest .attempts { margin-top: 0.15rem; }
   .attempt { width: 4.4rem; }
   /* The tests are a dropdown, always (C7 — the owner's read): one line, the open list carries every count. */
   .chips { display: none; }

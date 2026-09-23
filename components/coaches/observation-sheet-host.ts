@@ -24,14 +24,20 @@ export interface FixedObservation {
   skill: RepTeamMeasurableType;
   observedOn: string;
   playerName: string;
-  subtitle: string;
+  /** Optional: only a door that does NOT already stand in the session says which one dates it. */
+  subtitle?: string;
   enteredBy?: string | null;
 }
 
 /**
  * The sheet's `fixed` shape for an observation a SESSION dates: the skill and the date come from the
- * record (C12's mode), the subtitle says so. Null for one recorded from the bench — that one keeps
- * its date editable in the ordinary edit mode.
+ * record (C12's mode). Null for one recorded from the bench — that one keeps its date editable in
+ * the ordinary edit mode.
+ *
+ * ⚠ The subtitle exists HERE and not on the session's own door (owner, 2026-09-23): these two hosts
+ * are the PLAYER's pages, where a coach reads a list of observations taken on many days, and the
+ * sheet hides both the skill and the date fields — so this line is the only thing that says when it
+ * was taken and why the date cannot be edited. The skill is not repeated: the title already names it.
  */
 export function fixedObservation(
   o: RepPlayerObservation,
@@ -42,7 +48,7 @@ export function fixedObservation(
   if (!o.sessionId || !skill) return null;
   return {
     skill, observedOn: o.observedOn, playerName, enteredBy,
-    subtitle: `${skill.name} · ${formatShortDate(o.observedOn)} · dated by the session it was taken in`,
+    subtitle: `${formatShortDate(o.observedOn)} · dated by the session it was taken in`,
   };
 }
 

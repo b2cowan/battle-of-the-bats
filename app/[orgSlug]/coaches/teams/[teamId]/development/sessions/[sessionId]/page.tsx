@@ -227,6 +227,21 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   const pageTitle = sessionName(session);
   // The grid hands back a player id; the row's player object is looked up ONCE here.
   const rowPlayer = (pid: string) => rows.find(r => r.player.id === pid)?.player;
+  /* ── what the phone bar reads (owner design, 2026-09-23) ──
+     ⚠ "ACCOUNTED FOR", NEVER "HAS A VALUE", and that is the load-bearing part: progress() counts
+     a result, an observation OR a mark, and this button hangs off the very figure printed beside
+     it. Gating on typed values instead would let the bar read "12 of 12" while still withholding
+     the way out — precisely the two-figures-that-disagree failure the count’s own note forbids. */
+  const typeProgress = selectedType ? progressByType.get(selectedType.id) ?? null : null;
+  const allAccounted = !!typeProgress && typeProgress.total > 0 && typeProgress.done >= typeProgress.total;
+  /* ⚠ The headline says "accounted for" the moment a MARK is part of the figure — "12 of 12
+     recorded · 2 not assessed" reads as fourteen of twelve, which is the sum a coach does in their
+     head at the end of a session. With no marks the common case is untouched: "7 of 12 recorded". */
+  const dockCount = selectedType
+    ? counts.notAssessed > 0
+      ? `${progress(selectedType.id)} accounted for · ${counts.recorded} recorded · ${counts.notAssessed} not assessed`
+      : `${progress(selectedType.id)} recorded`
+    : '';
 
   /**
    * ── "Save & next player" — THE NEXT UNRECORDED ROW, NOT THE NEXT ROW (stage 4 · E3) ──
@@ -747,7 +762,8 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
                   skill: obsSheet.skill,
                   observedOn: session.sessionDate,
                   playerName: playerName(obsSheet.player),
-                  subtitle: `${title} · dated by the session`,
+                  /* No subtitle: the page the coach is standing on IS the session — repeating its
+                     date and name back at them is the screen talking to itself (owner, 2026-09-23). */
                   enteredBy: obsSheet.existing?.createdBy ? (authors[obsSheet.existing.createdBy] ?? 'a coach') : null,
                 }}
                 /* The fourth answer, and the "& next player" offer — both only a SESSION can
@@ -788,15 +804,27 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
                     {pastRows} record{pastRows === 1 ? '' : 's'} from {pastRows === 1 ? 'a player' : 'players'} no longer on the roster {pastRows === 1 ? 'is' : 'are'} listed above.
                   </p>
                 )}
-                <div className={`${css.foot} ${css.dock}`}>
+                {/* ⚠⚠ THE WAY OUT WAITS AT THE END OF THE LIST UNTIL THE SESSION IS ACCOUNTED FOR
+                    (owner design, 2026-09-23). While anyone is still outstanding this is a full-width
+                    control BELOW the last player — reachable all session (scroll past the roster and
+                    it is there, which is how "who have I still got left?" gets answered mid-session)
+                    without standing on the screen while the coach works. The pinned bar keeps only
+                    the COUNT, which is the thing that changes with every tap and the whole reason it
+                    was docked.
+                    ⚠ When everything IS accounted for the button MOVES UP into the bar rather than
+                    appearing twice: a coach who has just recorded the last player is already at the
+                    foot of the list, so it arrives under the thumb exactly when it means something. */}
+                {!allAccounted && (
+                  <button type="button" className={`${styles.btnSecondary} ${css.tailOut}`} onClick={() => setReviewOpen(true)}>Review session →</button>
+                )}
+                <div className={`${css.foot} ${css.dock}${allAccounted ? '' : ` ${css.dockThin}`}`}>
                   <span className={css.dockCount}>
-                    <b>
-                      {progress(selectedType.id)} recorded
-                      {counts.notAssessed > 0 && ` · ${counts.notAssessed} not assessed`}
-                    </b>
+                    <b>{dockCount}</b>
                     <small>{selectedType.name}</small>
                   </span>
-                  <button type="button" className={`${styles.btnPrimary} ${css.dockPill}`} onClick={() => setReviewOpen(true)}>Review session →</button>
+                  {allAccounted && (
+                    <button type="button" className={`${styles.btnPrimary} ${css.dockPill}`} onClick={() => setReviewOpen(true)}>Review session →</button>
+                  )}
                 </div>
               </>
             ) : (
@@ -853,6 +881,19 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
           busy={sessionBusy}
           canWrite={canWrite}
           onDrop={typeId => void dropFromPlan(typeId)}
+          /* The review's own door to the mark (owner 2026-09-23). `markNotAssessed` already took a
+             type and a reason — the grid row simply never passed either — so this is the same one
+             write path the dialog's fourth answer uses, aimed at a player from the review's list. */
+          onMark={(playerId, typeId, reason) => {
+            const player = roster.find(r => r.id === playerId);
+            const type = types.find(t => t.id === typeId);
+            if (player && type) void markNotAssessed(player, true, type, reason);
+          }}
+          onUnmark={(playerId, typeId) => {
+            const player = roster.find(r => r.id === playerId);
+            const type = types.find(t => t.id === typeId);
+            if (player && type) void markNotAssessed(player, false, type);
+          }}
           onClose={() => setReviewOpen(false)}
           onBack={() => router.push(skillsAndGoalsHref(base, 'sessions'))}
         />
@@ -861,16 +902,37 @@ function SessionView({ orgSlug, teamId, sessionId }: { orgSlug: string; teamId: 
   );
 }
 
+/** The reasons the review offers for a not-assessed mark. "No reason given" writes the mark with
+ *  none — the field has always been optional and a coach on a field should never be forced to
+ *  invent a word. Deliberately NOT a free-text box: this panel opens inside a name list, and a
+ *  keyboard rising over it is the thing a phone cannot afford here. */
+const NOT_ASSESSED_REASONS = ['Absent', 'Hurt', 'Ran out of time'] as const;
+
 /**
  * "Review session →" (C8, C9): a table to the standard — Test · Recorded · Not assessed · Not
  * recorded, figures right — then under each test the NAMES a coach acts on before leaving the
  * field: who is not assessed (with the reason — accounted for, done), who is not recorded (still
  * to do), who ran fewer than tonight's plan. A test with nothing recorded offers "Didn't run it
- * tonight — drop it from the plan ›". Stores nothing (station 4, as ruled): the counts are read
- * from what was recorded, by the ONE rule the grid's foot and the list read.
+ * tonight — drop it from the plan ›". The counts are read from what was recorded, by the ONE rule
+ * the grid's foot and the list read.
+ *
+ * ⚠⚠ **THIS SHEET WRITES NOW, AND THAT REVERSES "STORES NOTHING" (station 4)** — owner ruling
+ * 2026-09-23, deliberately, mockup 88FTwEYRhDBzS6sfRA2MJa. The not-assessed mark left the grid row
+ * at ≤640 (it cost ~110px on all twelve rows for something used once or twice), and this is where
+ * it went, because this sheet ALREADY lists exactly the players it applies to. Tapping a
+ * "Not recorded" name opens the reason in place; tapping a "Not assessed" name offers to undo it.
+ *   · **In place, never a second dialog.** A sheet stacked on a sheet is what buries its own
+ *     controls on a phone — the drawer incident next door in the game-day console.
+ *   · **The legend changed with the behaviour.** It used to end "Nothing is stored here"; that
+ *     sentence became false the moment a name could be tapped, and a screen that lies about
+ *     whether it saves is worse than one that saves nothing.
+ *   · A mark is per player PER TEST, which is why every test's list is on this one screen: that is
+ *     what makes this route CHEAPER than the row it replaced, not dearer.
+ * The write itself still belongs to the page (`onMark`/`onUnmark`) — this component stays pure of
+ * the network, like everything else on this screen.
  */
 function SessionReviewDialog({
-  title, plan, rows, busy, canWrite, onDrop, onClose, onBack,
+  title, plan, rows, busy, canWrite, onDrop, onMark, onUnmark, onClose, onBack,
 }: {
   title: string;
   plan: string | null;
@@ -878,13 +940,69 @@ function SessionReviewDialog({
   busy: boolean;
   canWrite: boolean;
   onDrop: (typeId: string) => void;
+  /** Account for a player on ONE test — the reason is optional, as the mark's field always was. */
+  onMark: (playerId: string, typeId: string, reason: string | null) => void;
+  onUnmark: (playerId: string, typeId: string) => void;
   onClose: () => void;
   onBack: () => void;
 }) {
+  /* Which name has its panel open — one at a time across the whole sheet, so a coach is never
+     looking at two open questions. Keyed by test AND player: the same player is listed under every
+     test they missed, and those are separate marks. */
+  const [asking, setAsking] = useState<{ typeId: string; playerId: string; marked: boolean } | null>(null);
+  const isAsking = (typeId: string, playerId: string) => asking?.typeId === typeId && asking.playerId === playerId;
+  const toggle = (typeId: string, playerId: string, marked: boolean) =>
+    setAsking(a => (a && a.typeId === typeId && a.playerId === playerId ? null : { typeId, playerId, marked }));
+
+  /** A name the coach can act on, with its question opening directly beneath it. */
+  const person = (r: ReviewRow<RepTeamMeasurableType>, p: { id: string; label: string }, marked: boolean) => (
+    <span key={p.id} className={css.reviewPerson}>
+      <button type="button" className={css.reviewName} disabled={busy}
+        aria-expanded={isAsking(r.type.id, p.id)}
+        onClick={() => toggle(r.type.id, p.id, marked)}>{p.label}</button>
+      {isAsking(r.type.id, p.id) && (
+        <span className={css.reviewWhy}>
+          <span className={css.reviewWhyQ}>
+            {marked ? 'Undo this mark?' : `Why was ${p.label} not assessed?`}
+          </span>
+          <span className={css.reviewWhyOpts}>
+            {marked ? (
+              <button type="button" className={css.reviewWhyOpt} disabled={busy}
+                onClick={() => { onUnmark(p.id, r.type.id); setAsking(null); }}>Undo the mark</button>
+            ) : (
+              <>
+                {NOT_ASSESSED_REASONS.map(reason => (
+                  <button key={reason} type="button" className={css.reviewWhyOpt} disabled={busy}
+                    onClick={() => { onMark(p.id, r.type.id, reason.toLowerCase()); setAsking(null); }}>{reason}</button>
+                ))}
+                <button type="button" className={css.reviewWhyOpt} disabled={busy}
+                  onClick={() => { onMark(p.id, r.type.id, null); setAsking(null); }}>No reason given</button>
+              </>
+            )}
+          </span>
+        </span>
+      )}
+    </span>
+  );
+
   const names = (r: ReviewRow<RepTeamMeasurableType>) => {
     const parts: React.ReactNode[] = [];
-    if (r.names.notAssessed.length > 0) parts.push(<span key="na" className={css.reviewNameLine}><b>Not assessed:</b> {r.names.notAssessed.join(', ')}</span>);
-    if (r.names.notRecorded.length > 0) parts.push(<span key="nr" className={css.reviewNameLine}><b>Not recorded:</b> {r.names.notRecorded.join(', ')}</span>);
+    /* ⚠ A name is a BUTTON only where the coach may write. A reader sees the same list as plain
+       words — the sheet must never offer a control the server would refuse. */
+    if (r.names.notAssessed.length > 0) parts.push(
+      <span key="na" className={css.reviewNameLine}><b>Not assessed:</b>{' '}
+        {canWrite && !r.retired
+          ? r.names.notAssessed.map(p => person(r, p, true))
+          : r.names.notAssessed.map(p => p.label).join(', ')}
+      </span>,
+    );
+    if (r.names.notRecorded.length > 0) parts.push(
+      <span key="nr" className={css.reviewNameLine}><b>Not recorded:</b>{' '}
+        {canWrite && !r.retired
+          ? r.names.notRecorded.map(p => person(r, p, false))
+          : r.names.notRecorded.map(p => p.label).join(', ')}
+      </span>,
+    );
     if (r.names.fewer.length > 0) parts.push(<span key="fw" className={css.reviewNameLine}><b>Fewer than planned:</b> {r.names.fewer.join(', ')}</span>);
     return parts;
   };
@@ -943,8 +1061,11 @@ function SessionReviewDialog({
             </table>
           </div>
         )}
+        {/* ⚠ "Nothing is stored here" left this sentence when the names became tappable (owner
+            2026-09-23) — it was true of the old read-only sheet and is a lie about this one. */}
         <p className={css.reviewLegend}>
-          <b>Not assessed</b> — you said why (absent, hurt); nothing left to do. <b>Not recorded</b> — nothing yet. Nothing is stored here; the counts are read from what you recorded.
+          <b>Not assessed</b> — you said why (absent, hurt); nothing left to do. <b>Not recorded</b> — nothing yet.
+          {canWrite ? ' Tap a name to account for them.' : ''} The counts are read from what you recorded.
         </p>
       </div>
       <div className={styles.modalFooter}>

@@ -57,6 +57,8 @@ const DIALOG = 'components/coaches/RecordObservationDialog.tsx';
 const DIALOG_CSS = 'components/coaches/RecordObservationDialog.module.css';
 const SESSION_CSS = 'components/coaches/DevelopmentSession.module.css';
 const HUB = 'app/[orgSlug]/coaches/teams/[teamId]/development/page.tsx';
+/* The two PLAYER pages' host for the observation sheet — where a subtitle is still earned. */
+const OBSERVATION_HOST = 'components/coaches/observation-sheet-host.ts';
 
 describe('E1 — the practice plan toolbar is one row, and the "⋯" opens a drawer', () => {
   const page = read(PLAN_PAGE);
@@ -149,14 +151,32 @@ describe('E2 — a player is one 56px row, and the row is the door', () => {
     assert.ok(!/\.doorRow::after/.test(css), 'and nothing wears a pseudo-element as its tap area');
   });
 
-  it('the state word is ONE rule — a skill row says Recorded, a test row says Saved', () => {
-    assert.equal(rowStateLabel('saved', { skill: true }), 'Recorded');
-    assert.equal(rowStateLabel('saved'), 'Saved');
-    for (const s of ['not_recorded', 'not_assessed', 'saving', 'error'] as const) {
-      assert.equal(rowStateLabel(s, { skill: true }), rowStateLabel(s), `${s} is untouched by the skill rule`);
-    }
-    assert.ok(grid.includes('rowStateLabel(state, { skill: isSkill })'), 'the desktop row reads the same rule');
-    assert.ok(grid.includes('rowStateLabel(state, { skill: true })'), 'and so does the chip — they cannot drift');
+  it('the state word is ONE rule — EVERY row says Recorded, and nothing says Saved', () => {
+    /* ⚠ The skill/test split went on 2026-09-23 (owner: "that seems inconsistent"). The chip is
+       permanent and states that a record EXISTS; the bar's figure, the Review table's column and the
+       sessions list all already call that state "recorded", so switching the test dropdown must not
+       change the word. "Saving…" and "Not saved — retry" stay: those are about the write. */
+    assert.equal(rowStateLabel('saved'), 'Recorded');
+    assert.equal(rowStateLabel('saving'), 'Saving…');
+    assert.equal(rowStateLabel('error'), 'Not saved — retry');
+    assert.ok(!grid.includes('skill: true') && !grid.includes('skill: isSkill'), 'no caller can ask for a second word');
+    assert.equal(rowStateLabel.length, 1, 'and the rule has no option left to pass');
+  });
+
+  it('the door row gives its second line the whole width, not the name cell\'s', () => {
+    /* ⚠ Owner, 2026-09-23: the chip sits "in line with the name only, so there was room under for
+       text". Inside the name cell the descriptor shared a column with the chip and the chevron and
+       truncated at about half the screen. */
+    assert.ok(grid.includes('css.doorUnder'), 'the descriptor is the ROW\'s second line');
+    assert.ok(!/doorName[^>]*>\s*<strong>[\s\S]{0,120}?<small>/.test(grid), 'and no longer nested inside the name');
+    assert.ok(/\.doorUnder\s*\{[^}]*grid-column:\s*2 \/ -1/.test(css), 'spanning from the name\'s column to the end');
+  });
+
+  it('the bar that holds only the count is ONE line', () => {
+    /* ⚠ It was meant to get smaller and did not: dropping the pill removed its 56px floor but left
+       the figure stacked over its test name, so the bar still stood two lines tall. */
+    assert.ok(/\.dockThin \.dockCount\s*\{[^}]*display:\s*flex/.test(css), 'the count and the test name share a line');
+    assert.ok(/\.dockThin\s*\{[^}]*min-height:\s*0/.test(css), 'with no floor of its own');
   });
 });
 
@@ -294,8 +314,26 @@ describe('E4 — the count and the way out dock above the nav', () => {
   });
 
   it('the figure is the CHIP\'S OWN, so the screen cannot show two counts that disagree', () => {
-    assert.ok(page.includes('{progress(selectedType.id)} recorded'), 'the same rule the chip dropdown reads');
-    assert.ok(page.includes('counts.notAssessed > 0 &&'), 'and a session holding marks says so, rather than calling a mark a record');
+    assert.ok(page.includes('progress(selectedType.id)'), 'the same rule the chip dropdown reads');
+    /* ⚠ The bar stopped calling a mark a record on 2026-09-23 rather than stopping saying so:
+       "12 of 12 recorded · 2 not assessed" reads as fourteen of twelve, so the headline becomes
+       "accounted for" the moment a mark is part of the figure, and the two numbers follow it. */
+    assert.ok(page.includes('counts.notAssessed > 0'), 'a session holding marks still says so');
+    assert.ok(page.includes('accounted for'), 'and it stops calling a mark a record when it does');
+    assert.ok(page.includes('{progress(selectedType.id)} recorded'), 'with no marks, the common case is untouched');
+  });
+
+  it('the way out waits at the end of the list, and only a full house pins it', () => {
+    /* ⚠⚠ OWNER DESIGN, 2026-09-23 — and "accounted for" is the load-bearing word. The trigger
+       reads the SAME figure the bar prints beside it (a result, an observation OR a mark); gating
+       on typed values would let the bar say "12 of 12" while withholding the way out, which is the
+       disagreement the test above exists to stop. */
+    assert.ok(page.includes('typeProgress.done >= typeProgress.total'), 'accounted for, never "has a value"');
+    assert.ok(page.includes('{!allAccounted && ('), 'while anyone is outstanding the door sits under the LAST player');
+    assert.ok(page.includes('{allAccounted && ('), 'and only then does it move up into the pinned bar');
+    assert.ok(!/tailOut[\s\S]{0,400}?dockPill/.test(page.slice(page.indexOf('{!allAccounted && ('), page.indexOf('{allAccounted && ('))),
+      'never both at once — one door, in one place');
+    assert.ok(css.includes('.dockThin'), 'and with only the count in it the bar gives the rest back to the roster');
   });
 
   it('the desktop foot is untouched, and the past-participant note stays with the list on a phone', () => {
@@ -319,7 +357,12 @@ describe('E5 — one title, one date, and the create is a "+"', () => {
     assert.ok(page.includes('const pageTitle = sessionName(session);'));
     assert.ok(page.includes('title={pageTitle}'), 'the h1 takes the name');
     assert.ok(page.includes('subtitle={plan ? `${title} · ${plan}` : title}'), 'the review still names the day');
-    assert.ok(page.includes('subtitle: `${title} · dated by the session`'), 'and so does "dated by the session"');
+    /* ⚠ THE SESSION’S OWN DOOR PASSES NO SUBTITLE (owner, 2026-09-23). It used to repeat the
+       session’s date and name back at a coach who was standing on that very page — the screen
+       talking to itself. The player’s pages still send one, because there the sheet hides the date
+       field and the list spans many days, so the line is the only thing saying WHEN. */
+    assert.ok(!page.includes('dated by the session'), 'the session’s own sheet does not name the session it is already on');
+    assert.ok(read(OBSERVATION_HOST).includes('dated by the session it was taken in'), 'a PLAYER’s page still says which session dates it');
   });
 
   it('an unnamed session falls back to the day rather than to no title at all', () => {

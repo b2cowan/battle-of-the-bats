@@ -374,12 +374,30 @@ export function scopeSummary(scope: Pick<ScopeLike, 'scopeMetricIds' | 'scopePla
 }
 
 // ── the review (C8, C9): a table of counts, then the NAMES ────────────────────────────────────────
+/**
+ * A player the review names, carrying the id a write needs beside the words a coach reads.
+ *
+ * ⚠ The id is here because the review is now where a not-assessed mark is SET (owner ruling
+ * 2026-09-23). It used to be a list of rendered strings, which is exactly the shape that cannot be
+ * acted on — the label carries the reason ("Casey — absent"), so it is not a name and must never be
+ * parsed back into one. Read `id` to act, `label` to render, and never the other way round.
+ */
+export interface ReviewPerson { id: string; label: string }
+
 export interface ReviewNames {
-  /** Nothing yet — still to do. */
-  notRecorded: string[];
-  /** "Casey — absent": accounted for, done. */
-  notAssessed: string[];
-  /** "Avery (1 of 2)": recorded with fewer attempts than tonight's plan. Empty on a pre-count session. */
+  /**
+   * Nothing yet — still to do. ⚠ These are the review's WRITE targets: a coach marks a player not
+   * assessed by tapping one of these names, which is the only door to the mark at ≤640 now that the
+   * grid row has none (owner 2026-09-23).
+   */
+  notRecorded: ReviewPerson[];
+  /** "Casey — absent": accounted for, done. Tapping one offers to undo the mark. */
+  notAssessed: ReviewPerson[];
+  /**
+   * "Avery (1 of 2)": recorded with fewer attempts than tonight's plan. Empty on a pre-count session.
+   * ⚠ Deliberately still plain strings — this list is a GLANCE, never an action: a player who ran
+   * fewer attempts has a record, so there is nothing here to account for.
+   */
   fewer: string[];
 }
 export interface ReviewRow<T extends TypeLike> {
@@ -395,8 +413,12 @@ export interface ReviewRow<T extends TypeLike> {
 /**
  * One row per metric the session touched — the scope, then anything recorded outside it, then the
  * retired — with the counts from the ONE rule and the names a coach acts on before leaving the
- * field. Stores nothing (station 4, as ruled). `name` renders a player; `reason` is the
- * not-assessed mark's word.
+ * field. `name` renders a player; `reason` is the not-assessed mark's word.
+ *
+ * ⚠ THIS FUNCTION still stores nothing — it reads. What changed on 2026-09-23 is the DIALOG it
+ * feeds: "station 4, as ruled" said the review sheet writes nothing at all, and the owner reopened
+ * that so the not-assessed mark could leave the grid row. The counts here are still read from what
+ * was recorded, by the one rule; the sheet re-reads them after each mark it writes.
  */
 export function sessionReview<
   P extends PlayerLike, E extends EntryLike, T extends TypeLike,
@@ -426,8 +448,11 @@ export function sessionReview<
       const counted = rows.filter(r => !r.pastParticipant && r.inScope);
       const planned = c.type.kind === 'skill' ? null : plannedAttempts(args.session, c.type.id);
       const names: ReviewNames = {
-        notRecorded: counted.filter(r => !r.recorded && !r.notAssessed).map(r => args.name(r.player)),
-        notAssessed: counted.filter(r => !r.recorded && r.notAssessed).map(r => `${args.name(r.player)}${r.notAssessed?.reason ? ` — ${r.notAssessed.reason}` : ''}`),
+        notRecorded: counted.filter(r => !r.recorded && !r.notAssessed).map(r => ({ id: r.player.id, label: args.name(r.player) })),
+        notAssessed: counted.filter(r => !r.recorded && r.notAssessed).map(r => ({
+          id: r.player.id,
+          label: `${args.name(r.player)}${r.notAssessed?.reason ? ` — ${r.notAssessed.reason}` : ''}`,
+        })),
         fewer: planned && planned > 1
           ? counted.filter(r => r.entries.length > 0 && r.entries.length < planned).map(r => `${args.name(r.player)} (${r.entries.length} of ${planned})`)
           : [],
@@ -474,7 +499,7 @@ export function orderEventsByAnchor<E extends { eventType: string; startsAt: str
 const ROW_STATE_LABELS: Readonly<Record<SessionRowState, string>> = {
   saving: 'Saving…',
   error: 'Not saved — retry',
-  saved: 'Saved',
+  saved: 'Recorded',
   not_assessed: 'Not assessed',
   not_recorded: 'Not recorded',
 };
@@ -483,19 +508,20 @@ const ROW_STATE_LABELS: Readonly<Record<SessionRowState, string>> = {
  * What a row's state is CALLED — one rule for the desktop row's word and the phone chip's, so the
  * two can never drift (phone re-evaluation stage 4 · E2, owner 2026-09-22).
  *
- * ⚠ A SKILL ROW SAYS "Recorded", NOT "Saved", AND THAT IS A CORRECTION RATHER THAN A PHONE WORD.
- * "Saved" describes an autosave that just landed, which is true of a TEST row — a typed attempt
- * leaves the field and goes to the server — and is not true of a skill row, which never saves
- * anything: the row is a door and the dialog behind it owns the write. The screen already called
- * this state "Recorded" in two other places — the row's own chip in the drawing, and the Review
- * session table's column header, which has read Test · **Recorded** · Not assessed · Not recorded
- * since stage 2 — so the row was the odd one out at every width, not just on a phone. Building the
- * chip as "Recorded" while leaving the row on "Saved" would have shipped one screen calling one
- * state two names, which is the thing the one-spelling ruling (owner 2026-08-24) is about.
+ * ⚠⚠ **EVERY ROW SAYS "Recorded". THE SKILL/TEST SPLIT IS GONE** (owner, 2026-09-23: *"why do some
+ * of them say 'saved' instead of 'recorded'? that seems inconsistent"*). Stage 4 corrected the skill
+ * row to "Recorded" and left a test row on "Saved", reasoning that "Saved" describes an autosave
+ * that just landed — true of the write, but NOT of what the row is showing. The chip is permanent:
+ * it states that a record EXISTS, and three other things on that same screen already name that state
+ * "recorded" — the bar's own figure ("7 of 12 recorded"), the Review table's column header, and the
+ * sessions list's complete/unfinished rule. Switching the test dropdown changed the word for the
+ * same state, which is exactly what the one-spelling ruling (owner 2026-08-24) forbids.
+ * ⚠ It also cut against the standing autosave ruling: "Saved" is a TRANSIENT word that fades, and a
+ * chip that never fades was borrowing it for a state it does not describe.
  *
- * The other four labels are untouched, and a TEST row keeps "Saved".
+ * **Saving…** and **Not saved — retry** are untouched: those ARE about the write, and they are the
+ * two moments where a coach needs to know whether the server has it.
  */
-export function rowStateLabel(state: SessionRowState, opts?: { skill?: boolean }): string {
-  if (opts?.skill && state === 'saved') return 'Recorded';
+export function rowStateLabel(state: SessionRowState): string {
   return ROW_STATE_LABELS[state];
 }

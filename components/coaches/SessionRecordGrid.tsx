@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { formatValue } from '@/lib/measurable-format';
 import { describeAttempts } from '@/lib/measurable-series';
 import { rowState, attemptBoxes, rowStateLabel, type SessionRow, type SessionRowState } from '@/lib/development-session-view';
@@ -40,7 +40,8 @@ const authorLine = (authors: Record<string, string>, id: string | null) => (id ?
  *
  * ONE LANGUAGE PER ROW (C7): a saved attempt sits in the same box as an empty one; the correction
  * mark stays; "entered by" is off the row (it reads on Edit and in the review). Per-row state
- * (Recorded/Saved · Saving · Not saved — retry · Not recorded · Not assessed — `rowStateLabel`)
+ * (Recorded · Saving · Not saved — retry · Not recorded · Not assessed — `rowStateLabel`, ONE word
+ * per state at every width and for every kind of row)
  * with Edit and Retry on the row; a failed value survives on screen beside its error;
  * "Mark not assessed" on BLANK rows only. On a phone a TEST row is the name and the state on the
  * first line, the boxes on the second, the headline under (the module's ≤640 rule).
@@ -51,6 +52,26 @@ const authorLine = (authors: Record<string, string>, id: string | null) => (id ?
  * Now: the number, the name at 16px, the descriptor under it on a recorded row, the state as a
  * chip, a chevron — and tapping anywhere on it opens the observation dialog. Two tap targets become
  * one, which is what makes "twelve players, twelve taps" possible at all.
+ *
+ * ⚠⚠ **AT ≤640 A WRITABLE TEST ROW IS THE PLAYER'S NAME AND THEIR BOXES, AND NOTHING ELSE**
+ * (owner ruling 2026-09-23, mockup 88FTwEYRhDBzS6sfRA2MJa). The name takes the whole first line at
+ * `--type-lead` — measured, it had ~90px of a ~300px line and truncated every surname, because the
+ * status column took what it wanted first and the name took the remainder. What left that line:
+ *   · **"Not recorded" on a blank row** — two empty boxes sit directly beneath saying it already.
+ *     The chip returns the moment it carries something the boxes cannot: Saving…, Not saved —
+ *     retry, Recorded, Not assessed.
+ *   · **"Mark not assessed"** — ~110px on all twelve rows, for something used once or twice a
+ *     session. It moves to the REVIEW SHEET, which already lists exactly the players it applies to.
+ *     ⚠ And that is cheaper than it sounds, not dearer: a mark is per player PER TEST, so an absent
+ *     player needs accounting for on every test in the session — on the rows that is one trip
+ *     through the test dropdown each time, while the review has every test on one screen.
+ *   · **"Edit"** — the SAVED VALUE is the control now: tapping a recorded attempt opens the row for
+ *     editing with the caret in the box that was tapped. Everything Edit was buying survives — it is
+ *     still a deliberate act on a specific value, the row still announces "editing" and who entered
+ *     it, and a changed value still carries its correction mark.
+ * **Retry stays on the row**, because an errored row has no saved value to tap and no other way back.
+ * ⚠ DESKTOP IS UNTOUCHED — the wide grid has room for the state word and both links, and none of the
+ * reasoning above applies to it. `isPhone && !isSkill && !readOnly` is the whole gate.
  *
  * ⚠ **"Mark not assessed" LEAVES THE ROW'S EDGE ENTIRELY**, and that is stage 3's ruling rather than
  * this stage's: a destructive control does not sit on the edge of a row whose whole body is the tap.
@@ -108,6 +129,24 @@ export default function SessionRecordGrid({
   const def = { aim: type.aim, headline: type.headline, rangeFrom: type.rangeFrom, rangeTo: type.rangeTo };
   // Enter → the next attempt field, then the next player's first. DOM order is roster order.
   const [gridEl, setGridEl] = useState<HTMLDivElement | null>(null);
+  /* Tapping a saved value opens the row AND lands the caret in the box that was tapped — the whole
+     point of dropping the Edit link is that the value you touched is the value you are changing.
+     The input does not exist until the PAGE flips the row to editing, a render later, so the want
+     is parked here and spent on the first render where the field exists.
+     ⚠ A ref, not state, and the effect takes no dependency array — the draft that makes the field
+     appear lives on the page and reaches this component without `rows` ever changing identity, so
+     a keyed effect would never fire on the render that matters. Writing a ref is also not a
+     setState, which is what keeps this out of the cascading-render rule. */
+  const wantFocus = useRef<{ playerId: string; attemptNo: number } | null>(null);
+  useEffect(() => {
+    const want = wantFocus.current;
+    if (!want || !gridEl) return;
+    const row = gridEl.querySelector(`[data-player-row="${want.playerId}"]`);
+    const field = row?.querySelectorAll<HTMLElement>('[data-attempt-field]')[want.attemptNo - 1];
+    if (!field) return;   // the row has not opened yet — the next render will find it
+    wantFocus.current = null;
+    field.focus();
+  });
   function focusNext(current: HTMLElement) {
     if (!gridEl) return;
     const fields = [...gridEl.querySelectorAll<HTMLElement>('[data-attempt-field]')];
@@ -159,7 +198,7 @@ export default function SessionRecordGrid({
            is a door too — that is the only way back from the mark on a phone. */
         if (isPhone && isSkill && !readOnly) {
           const chipCls = state === 'saved' ? css.doorStateDone : state === 'not_assessed' ? css.doorStateNa : css.doorStateOpen;
-          const chip = rowStateLabel(state, { skill: true });
+          const chip = rowStateLabel(state);
           const under = observation?.descriptor
             ? observation.descriptor
             : row.notAssessed?.reason ? row.notAssessed.reason : rowNote;
@@ -182,18 +221,27 @@ export default function SessionRecordGrid({
             >
               {p.playerNumber && <span className={css.doorNum}>#{p.playerNumber}</span>}
               {!p.playerNumber && <span />}
-              <span className={css.doorName}>
-                <strong>{name}</strong>
-                {under && <small>{under}</small>}
-              </span>
+              <span className={css.doorName}><strong>{name}</strong></span>
               <span className={`${css.doorState} ${chipCls}`}>{chip}</span>
               <span className={css.doorGo} aria-hidden>›</span>
+              {/* ⚠ THE SECOND LINE IS THE ROW'S OWN, NOT THE NAME'S (owner, 2026-09-23: the chip sits
+                  "in line with the name only, so there was room under for text"). It used to live
+                  inside the name cell, which meant the descriptor shared its width with the chip and
+                  the chevron and truncated at about half the screen — "Independently — without a …".
+                  Spanning the row from the name's column to the end gives it every pixel the name
+                  itself gets. The row does not grow: this is the same two lines it always drew. */}
+              {under && <small className={css.doorUnder}>{under}</small>}
             </button>
           );
         }
 
+        /* ≤640, writable, a TEST — the row the owner redrew on 2026-09-23. A read-only row keeps the
+           old composition (it has no controls to lose and its state word is all it has), and a skill
+           row never reaches here: the door above returned already. */
+        const phoneTest = isPhone && !isSkill && !readOnly;
+
         return (
-          <div key={p.id} className={`${css.row}${row.inScope ? '' : ` ${css.rowOutsideScope}`}`} data-player-row={p.id}>
+          <div key={p.id} className={`${css.row}${phoneTest ? ` ${css.rowPhoneTest}` : ''}${row.inScope ? '' : ` ${css.rowOutsideScope}`}`} data-player-row={p.id}>
             <div className={css.name}>
               <strong>{p.playerNumber && <span className={css.num}>#{p.playerNumber} </span>}{name}</strong>
               {rowNote && <span>{rowNote}</span>}
@@ -221,7 +269,21 @@ export default function SessionRecordGrid({
                   const saved = row.entries.find(e => e.attemptNo === k) ?? null;
                   const editable = !readOnly && (editing || !saved);
                   if (!editable) {
-                    // A saved attempt in the SAME box as an empty one (C7) — a read-only face of the field.
+                    /* A saved attempt in the SAME box as an empty one (C7) — a read-only face of the
+                       field. ⚠ At ≤640 on a writable row that face is the row's EDIT CONTROL (owner
+                       2026-09-23): the phone row carries no Edit link, so the value itself opens the
+                       row and takes the caret. It stays a plain span everywhere else — desktop keeps
+                       its link, and a row nobody may write has nothing to open. */
+                    if (isPhone && !readOnly && saved) {
+                      return (
+                        <button key={k} type="button" className={`${css.attempt} ${css.attemptSaved} ${css.attemptTap}`}
+                          aria-label={`Edit ${name} attempt ${k} — ${formatValue(saved.value)}${saved.correctedFrom != null ? `, corrected from ${formatValue(saved.correctedFrom)}` : ''}`}
+                          onClick={() => { wantFocus.current = { playerId: p.id, attemptNo: k }; onEdit(p.id); }}>
+                          {formatValue(saved.value)}
+                          {saved.correctedFrom != null && <span className={styles.devRowDash}>*</span>}
+                        </button>
+                      );
+                    }
                     return (
                       <span key={k} className={`${css.attempt} ${css.attemptSaved}`}
                         title={saved?.correctedFrom != null ? `corrected — was ${formatValue(saved.correctedFrom)}` : undefined}>
@@ -247,19 +309,29 @@ export default function SessionRecordGrid({
               </div>
             )}
 
-            {/* ── the state ── */}
-            <span className={`${css.state} ${stateCls}`} role="status">
-              {rowStateLabel(state, { skill: isSkill })}
-              {!readOnly && state === 'not_recorded' && !editing && (
+            {/* ── the state ──
+                ⚠ `phoneTest` is the ≤640 writable TEST row (owner 2026-09-23): the word becomes a
+                CHIP that sits on the name's line, and it is drawn only when it says something the
+                boxes below it do not — so a blank row carries no state at all. Mark not assessed
+                and Edit are both absent there; see this file's header for where each one went. */}
+            <span className={`${css.state} ${stateCls}${phoneTest ? ` ${css.stateChipWrap}` : ''}`} role="status">
+              {(!phoneTest || state !== 'not_recorded') && (
+                phoneTest
+                  ? <span className={`${css.stateChip} ${state === 'saved' ? css.stateChipDone : state === 'not_assessed' ? css.stateChipNa : ''}`}>{rowStateLabel(state)}</span>
+                  : rowStateLabel(state)
+              )}
+              {!readOnly && !phoneTest && state === 'not_recorded' && !editing && (
                 <button type="button" className={css.rowLink} onClick={() => onMarkNotAssessed(p.id)}>Mark not assessed</button>
               )}
-              {!readOnly && state === 'not_assessed' && (
+              {!readOnly && !phoneTest && state === 'not_assessed' && (
                 <button type="button" className={css.rowLink} onClick={() => onUnmarkNotAssessed(p.id)}>Undo</button>
               )}
+              {/* Retry stays at BOTH widths: an errored row holds no saved value to tap, so without
+                  it a failed save on a phone would have no way back. */}
               {!readOnly && state === 'error' && (
                 <button type="button" className={css.rowLink} onClick={() => onRetry(p.id)}>Retry</button>
               )}
-              {!readOnly && state === 'saved' && !editing && (
+              {!readOnly && !phoneTest && state === 'saved' && !editing && (
                 <button type="button" className={css.rowLink} onClick={() => (isSkill ? onObservationEdit(p.id) : onEdit(p.id))}>Edit</button>
               )}
               {/* Who typed it is Edit's fact (C7) — said here, where a correction is being made. */}

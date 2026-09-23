@@ -204,13 +204,18 @@ describe('sessionReview — a row per test with the counts and the NAMES', () =>
   it('the sprint: 2 recorded · 1 not assessed · 2 not recorded, and the names with their reasons', () => {
     const r = review.find(x => x.type.id === 'sprint')!;
     assert.deepEqual([r.counts.recorded, r.counts.notAssessed, r.counts.notRecorded], [2, 1, 2]);
-    assert.deepEqual(r.names, { notRecorded: ['Blake', 'Frankie'], notAssessed: ['Casey — absent'], fewer: ['Avery (1 of 2)'] });
+    /* The two actionable lists carry the player id the review's mark is written against, so they
+       are compared by their rendered LABEL; "fewer" is a glance and stays plain strings. */
+    assert.deepEqual(r.names.notRecorded, [{ id: 'blake', label: 'Blake' }, { id: 'frankie', label: 'Frankie' }]);
+    assert.deepEqual(r.names.notAssessed, [{ id: 'casey', label: 'Casey — absent' }]);
+    assert.deepEqual(r.names.fewer, ['Avery (1 of 2)']);
     assert.equal(r.droppable, false);
   });
   it('a test with nothing recorded is droppable (C9); a skill counts its observation; a retired test says so', () => {
     const t = review.find(x => x.type.id === 'throw')!;
     assert.equal(t.droppable, true);
-    assert.deepEqual(t.names.notRecorded, ['Avery', 'Blake', 'Casey', 'Devon', 'Frankie']);
+    assert.deepEqual(t.names.notRecorded.map(p => p.label), ['Avery', 'Blake', 'Casey', 'Devon', 'Frankie']);
+    assert.ok(t.names.notRecorded.every(p => !!p.id), 'the review names carry the id the mark is written against');
     assert.deepEqual(t.names.fewer, [], 'a one-attempt plan never reports fewer');
     const f = review.find(x => x.type.id === 'feet')!;
     assert.equal(f.counts.recorded, 1);

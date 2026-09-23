@@ -783,9 +783,9 @@ one of `/review`'s four High findings lived.
 - **C2** · Each player is **one row**: number, name at a readable size, a **chip**, and a chevron. Twelve players take about **670px** instead of 1,170.
 - **C3** · The chips read **Recorded** (lime), **Not recorded** (quiet) or **Not assessed** (outline) — you are scanning for the *absence* of lime. ⚠ **This is the word change from the notes above.** Say if you want *Saved* back on a skill row.
 - **C4** · A **recorded** row shows its descriptor on a second line and is **still 56px**. The note is not on the row — it lives in the record the row opens.
-- **C5** · **“Mark not assessed” is gone from the row's edge**, and so is the row's *Edit*. Nothing destructive sits on a row whose whole body is the tap — your Templates ruling, applied here.
+- **C5** · **“Mark not assessed” is gone from the SKILL row's edge**, and so is that row's *Edit*. Nothing destructive sits on a row whose whole body is the tap — your Templates ruling, applied here. ⚠ **Scope named in the item itself (owner, 2026-09-23).** It read as a portal-wide claim and was re-raised as a defect against a *test* row, whose exemption is two items down at C7: an item whose truth depends on a setup step three lines above it will be re-checked against the wrong screen, because a walk is read one line at a time on a phone.
 - **C6** · Tap **anywhere** on a row: the name, the chip, the empty middle. It opens. **Every row is live** — none of them waits on you selecting something else first. *(Game day's field rows do wait, and that screen reads as dead; this one must never.)*
-- **C7** · Switch the dropdown to a **test** (*60-yd sprint*). Those rows are **unchanged** — one box per attempt, the state and *Mark not assessed* where they always were. A row with fields in it cannot be a door, so E2 is the skill row only.
+- **C7** · Switch the dropdown to a **test** (*60-yd sprint*). Those rows are **unchanged** — one box per attempt, the state and *Mark not assessed* where they always were. A row with fields in it cannot be a door, so E2 is the skill row only. ⚠⚠ **SUPERSEDED for the row’s CONTENTS by the 2026-09-23 redraw — see § "The test row, and the way out" below.** What survives, and is still the reason: a test row is **not** a door. What changed is that the owner raised a question this item never weighed — the player’s **name** was truncating — and the answer moved *Mark not assessed* off the row for a width reason, not the mis-tap reason that moved it off a skill row.
 - **C8** · On a **desktop**, the skill rows are the wide grid exactly as before — name, the whole observation, the state with *Edit*.
 
 #### D · The dialog — the stage's real deliverable — 16 steps
@@ -1003,3 +1003,157 @@ fixed here. **It also means F3 cannot be QA-walked on today's fixture.**
 ### 11.8 Built as
 
 *(owed — this stage is drawn, not ruled.)*
+
+
+---
+
+## 12 · The test row, and the way out (owner, 2026-09-23 — built the same day)
+
+Raised from the field, not from this plan's question list: *"is this the best format for the tiles? the
+players names are all being cut off"*, and *"do we need to pin the review session to all pages while
+assessing?"*. Mockup **88FTwEYRhDBzS6sfRA2MJa** (v5), approved *"looks good, go ahead and build as
+designed"*.
+
+⚠ **This is the row C7 of stage 4 exempted.** That exemption was right on its own terms and still is —
+a row with fields in it cannot be a door — but it answered *"can the whole row be a tap target?"*, and
+the owner asked something it never weighed: *"can the coach read the name?"*
+
+### 12.1 What the evidence said, once it was measured rather than eyeballed
+
+⚠ **Owner screenshots run at 125% browser zoom.** A row that measures 146px on the image is **117px**
+of layout. Every figure below is CSS pixels at 361px, read off the stylesheet.
+
+| | Before | After |
+|---|---|---|
+| Row height, one player | 117px | **90px** |
+| Width the name gets | ~90px (≈9 characters) | **~290px** |
+| Name size | 14px | **16px** |
+| Bar while recording | 80px | **44px** |
+| Players visible, fresh session | 2.7 | **3.9** |
+| Attempt box · smallest tap target | 70×44px · 44px | **unchanged** |
+
+The first line was a two-column grid and the **status column took what it wanted first**: "Not
+recorded" (~75px) + "Mark not assessed" (~110px) + gaps left the name the remainder. A third of the
+line to the name, two thirds to a status word and an exception control.
+
+### 12.2 What left the row, and where each thing went
+
+- **"Not recorded" on a blank row** — deleted. Two empty boxes directly beneath say it. The chip
+  returns the moment it carries something the boxes cannot: *Saving…*, *Not saved — retry*,
+  *Recorded*, *Not assessed*.
+- **"Mark not assessed"** — moved to the **review sheet**, whose name list is already exactly the
+  players it applies to. ⚠ **Cheaper, not dearer:** a mark is per player **per test**, so an absent
+  player is accounted for on every test in the session — on the rows that is one trip through the test
+  dropdown each time; the review has every test on one screen.
+- **"Edit"** — the **saved value is the control**. Tapping a recorded attempt opens the row with the
+  caret in the box tapped. The guard survives (a deliberate act on a specific value), so does the
+  disclosure ("editing — entered by …") and so does the correction mark.
+- **Retry stays**, at both widths: an errored row holds no saved value to tap and would have no way back.
+
+**Desktop is untouched.** `isPhone && !isSkill && !readOnly` is the whole gate.
+
+### 12.3 The way out — the owner's own design, and it beat the one proposed
+
+While anyone is unaccounted for, **"Review session →" is a full-width control under the last player**
+and the pinned bar carries **only the count**. When everything is accounted for it **moves up** into
+the bar. The proposal it replaced was "hide it until the first record"; this is better because the door
+is **never absent** — scrolling past the roster answers *"who have I still got left?"* all session —
+and because a coach finishing the last player is already at the foot of the list, so it arrives under
+the thumb exactly when it means something.
+
+⚠ **"ACCOUNTED FOR", NOT "HAS A VALUE"** — the owner's wording was the latter and it was corrected in
+review. The trigger reads the same figure printed beside it (a result, an observation **or** a mark);
+gating on typed values would let the bar read "12 of 12" while withholding the way out, which is the
+two-figures-that-disagree failure the count's own note forbids.
+
+⚠ The bar's headline also stopped calling a mark a record: **"12 of 12 recorded · 2 not assessed"**
+reads as fourteen of twelve. With any mark present it now reads *"12 of 12 accounted for · 10 recorded
+· 2 not assessed"*; with none, the common case is untouched.
+
+### 12.4 The review sheet writes now — station 4's "stores nothing" is REVERSED, deliberately
+
+Owner ruling, eyes open. Tapping a **Not recorded** name opens the reason **in place** (Absent · Hurt ·
+Ran out of time · No reason given); tapping a **Not assessed** name offers to undo. Consequences
+carried in the same unit of work:
+
+- **The legend lied and was fixed.** It ended *"Nothing is stored here"* — false the moment a name
+  could be tapped. It now says *"Tap a name to account for them."*, and only where the coach may write.
+- **No second dialog**, ever: the question opens inside the name list. A sheet stacked on a sheet is
+  how a panel buries its own controls on a phone.
+- **A name is a button only where the coach may write** — a reader sees the same list as plain words.
+- `ReviewNames` carries **ids** now, not rendered strings: the label holds the reason ("Casey —
+  absent"), so it is not a name and must never be parsed back into one.
+
+### 12.5 Corrected in this plan's own record
+
+1. **C5 was re-raised as a defect and was not one.** Its scope lived in C1 and its exemption in C7;
+   the item itself claimed the row's edge portal-wide. **Reworded to name the skill row.**
+2. **C7's reason was mis-cited during the design** — first draft of the mockup said test rows kept the
+   mark "because they had no dialog to move it into". The record says they kept it because a test row
+   is not a door. Different reason, and it killed the option that rested on it (hiding the mark behind
+   a chip, which would have required inventing a menu for the rare path).
+3. **The mockup drew saved values as white input faces**, which is why the owner asked why an Edit
+   button existed "if I can edit in place" — you cannot. Fixed in v4 of the mockup.
+
+### 12.6 Not reopened
+
+- The docked bar itself (stage 4 · E4) — it keeps the count, for the reason it was docked.
+- Skill rows, at either width. The desktop grid, entirely. Read-only rows, entirely.
+- The correction asterisk's **hover tooltip** — unreadable on a phone and against the standing
+  "a flag opens its explanation on click" rule. **Named, not fixed**: it is not this redraw's to take.
+
+### 12.7 Built as (2026-09-23 · dev)
+
+`lib/development-session-view.ts` (`ReviewPerson`; `ReviewNames.notRecorded`/`notAssessed` carry ids),
+`components/coaches/SessionRecordGrid.tsx` (the `phoneTest` composition, the tappable saved value and
+its focus ref), `components/coaches/DevelopmentSession.module.css` (`.rowPhoneTest`, `.attemptTap`,
+`.stateChip*`, `.tailOut`, `.dockThin`, the review's name controls), the session page (the tail door,
+`allAccounted`, `dockCount`, the review's write path). Guards updated rather than deleted:
+`coach-practice-week-phone-guard` gains *"the way out waits at the end of the list"* and its count test
+now pins the accounted-for wording; `development-session-plan` compares the review's names by label
+and asserts they carry ids.
+
+**Verification:** `npm run typecheck` clean · `lint:focused` clean on every changed file ·
+`verify:changed` — **4,580 unit tests pass, 0 fail**, every static gate green. ⚠ The run also reports
+**1 CSS orphan in `_LineupEditor.tsx`** (`styles.lineupCallUpMenu`, the rule deleted and only a comment
+left behind): that is a **peer session's in-flight work in this shared copy**, in files this stage never
+touched, and is left for them. Browser verification is the owner's.
+
+### 12.8 Three defects the owner found on the built screen (2026-09-23, same day)
+
+All three were mine, all three are fixed. Worth recording because two of them are the same shape: a
+thing was **drawn** one way and **built** another, and the drawing was right.
+
+1. **The pinned bar did not get smaller.** Dropping the pill took away its 56px floor, but the count
+   stayed a figure **stacked over** its test name, so the bar still stood two lines tall and gave the
+   roster almost nothing back — the whole point of the change. The mockup drew the thin state as ONE
+   line (count and test name side by side) and the build did not carry that over. Now ~36px, not ~80px.
+
+2. **The chip was in line with more than the name.** On a SKILL row the descriptor lived *inside the
+   name cell*, so it shared its column with the chip and the chevron and truncated at about half the
+   screen — "Independently — without a …". The owner’s rule: the pill sits **in line with the name
+   only**, so everything under it gets the full width. The descriptor is now the ROW’s second line,
+   spanning from the name’s column to the end. The row does not grow — it was always these two lines.
+   ⚠ This is the same defect that started the whole thread, one row type over: a status control
+   taking width from the words a coach actually reads.
+
+3. **"Saved" and "Recorded" on one screen.** Stage 4 corrected a skill row to *Recorded* and left a
+   test row on *Saved*, reasoning that "Saved" describes the autosave that just landed. True of the
+   **write**, but not of what the chip shows: the chip is permanent, and it states that a record
+   EXISTS. Three other things on that same screen already call that state "recorded" — the bar’s own
+   figure, the Review table’s column header, and the sessions list’s complete/unfinished rule — so
+   switching the test dropdown changed the word for one state, which the one-spelling ruling forbids.
+   It also borrowed a word the autosave ruling defines as **transient** for a chip that never fades.
+   **Every row now says Recorded, at every width, and `rowStateLabel` has no option left to pass.**
+   *Saving…* and *Not saved — retry* are untouched: those ARE about the write.
+
+Guards added with the fixes, so none of the three can come back: the bar’s thin state is one line, the
+door row’s second line spans the row, and no caller can ask for a second word for one state.
+**Re-verified: typecheck clean, 4,582 unit tests pass, every static gate green.**
+
+### 12.9 The QA walk — owed
+
+*(owed — a walk in the ledger's §-series, phone at 361 and 390: the name at full width, a blank row with
+no controls, the chip appearing on save, tap-a-value-to-edit landing the caret in the tapped box, the
+tail door under the last player, the move into the bar at full house, and the review sheet's mark and
+undo on two tests.)*
