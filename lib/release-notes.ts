@@ -93,6 +93,18 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
         text: 'Cards and forms throughout the coach portal now use a flatter, more consistent look — no tinted backgrounds.',
       },
       {
+        category: 'improved',
+        text: "Editing a lineup's Setup, Templates, or calling up a player on a phone — a stray tap on Schedule or another tab can no longer bump you out mid-edit; the rest of the app waits until you're done.",
+      },
+      {
+        category: 'improved',
+        text: 'Recording a testing session on a phone is quicker: each row is just the player\'s name and their score boxes, and the Review session button appears once everyone\'s accounted for, right where your thumb already is.',
+      },
+      {
+        category: 'improved',
+        text: 'The lineup builder\'s toolbar is tidier on a phone: Setup and Auto-fill now share one button, and calling up a player lives right in the toolbar instead of a separate step.',
+      },
+      {
         category: 'fixed',
         text: 'Field numbers now read clearly everywhere they show up — "Diamond 1" instead of a bare "1."',
       },
@@ -103,6 +115,14 @@ export const RELEASE_ENTRIES: ReleaseEntry[] = [
       {
         category: 'fixed',
         text: "The Scouting Book page for an opponent is available as soon as a game is scheduled, not only after it's been played.",
+      },
+      {
+        category: 'fixed',
+        text: "Marking a player ‘not assessed’ from a testing session's review screen now waits for the save to finish before you can leave — and tells you clearly if it didn't go through.",
+      },
+      {
+        category: 'fixed',
+        text: "The Budget Plan's phone summary no longer briefly shows ‘0 lines’ before your budget loads.",
       },
     ],
   },
