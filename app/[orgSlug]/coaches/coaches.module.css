@@ -12374,10 +12374,9 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   text-transform: inherit; text-decoration: none;
 }
 .gdBack:hover { color: var(--text-primary); }
-.gdLivePill {
-  background: var(--home-live, var(--danger)); color: rgba(255, 247, 242, 0.98); font-weight: 700;
-  letter-spacing: 0.08em; padding: 0.35em 0.7em; border-radius: 999px;
-}
+/* ⚠ `.gdLivePill` — the brick-red GAME DAY badge — is gone (owner 2026-09-22). A coach who
+   opened the game-day screen knows which screen they are on; what the badge actually carried is
+   that writes are open, and that is `.gdLiveDot` on the head's first line now. */
 
 .gdHandedOff { margin: 0; text-align: center; font-size: var(--type-body); line-height: 1.5; color: var(--text-tertiary); }
 
@@ -12385,42 +12384,83 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   background: var(--home-card, var(--card-bg)); border: 1px solid var(--border-2);
   border-radius: var(--radius, 12px); padding: 0.8rem 0.9rem;
 }
-.gdCard[data-sticky="head"] { position: sticky; top: 0.5rem; z-index: 3; }
+/* ⚠ The header card no longer pins — `data-sticky="head"` moved to `.gdInningBar` with the
+   console re-draw (owner 2026-09-22). Pinning the whole 216px card meant the opponent's name and
+   the kit chips rode down the page with the score, which is what cost the board six of its rows. */
 /* A card nested INSIDE a sheet, where siblings space themselves with their own margin-top
    (.gdSumLines, .gdQuietNote) rather than a container gap. The delta only — one card frame. */
 .gdCard[data-inset="yes"] { margin-top: 0.5rem; }
 
-.gdMatch { display: flex; justify-content: space-between; align-items: baseline; gap: 0.5rem; }
-.gdOpp { font-weight: 700; font-size: var(--type-heading); color: var(--text-primary); }
+/* ── The live head's first line (console re-draw, owner 2026-09-22) ──────────────────────────
+   Back arrow · the opponent (the scouting door) · the live dot. The 47px `.gdBar` above it is
+   gone from the LIVE screen — the recap and the error state still wear it, which is why it and
+   `.gdBack` stay declared. `align-items: center` now, not baseline: the row carries a 44px
+   control at each end and a baseline would hang them off the name's text baseline. */
+.gdMatch { display: flex; justify-content: space-between; align-items: center; gap: 0.5rem; }
+/* The word beside the recap's back arrow — dropped at phone width, where every other action in
+   this product is icon-only; the link's `aria-label` carries the destination at both widths.
+   ⚠ Hiding the word left `.gdBack` with a 15px icon as its only child, so the recap's and the
+   error state's back link became a 15 × 44 target — the live screen's `.gdBackBtn` got a full
+   44 × 44 in the same change and this one got the opposite (/review 2026-09-22). It takes the
+   floor in BOTH dimensions at the width where the word is gone. */
+@media (max-width: 640px) {
+  .gdBackWord { display: none; }
+  .gdBack { min-width: var(--tap-min, 44px); justify-content: center; }
+}
+/* A full 44px target, not a 38px box with an invisible halo: the layout sweep measures the
+   ELEMENT's rect, and a pseudo-element tap area reads as a 38px control to it and to anything
+   else that audits this screen. With the score block gone there is room for the honest size. */
+.gdBackBtn {
+  flex: 0 0 auto; width: var(--tap-min, 44px); height: var(--tap-min, 44px);
+  display: grid; place-items: center;
+  border: 1px solid var(--border-2); border-radius: 9px; background: var(--home-card, var(--card-bg));
+  color: var(--text-secondary); text-decoration: none;
+}
+.gdBackBtn:hover { color: var(--text-primary); }
+/* What the GAME DAY pill was really carrying: writes are open. The same address serves a
+   read-only recap outside the window, so this is a fact, not a page label. */
+.gdLiveDot {
+  flex: 0 0 auto; display: inline-flex; align-items: center; gap: 0.35rem;
+  font-family: var(--font-data); font-size: var(--type-label); font-weight: 700;
+  letter-spacing: 0.09em; color: var(--home-live, var(--danger));
+}
+.gdLiveDot i { width: 7px; height: 7px; border-radius: 999px; background: currentColor; display: block; }
+/* ⚠ Both take `min-width: 0` and their own ellipsis: the live head's first line now carries a
+   44px back arrow and the LIVE dot beside the name, so a long opponent must give way rather
+   than push them off the row. (Same trap the one-line masthead hit at 360 in stage 0.) */
+.gdOpp {
+  font-weight: 700; font-size: var(--type-heading); color: var(--text-primary);
+  flex: 1 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* ⚠ The door is a FLEX ROW and the name truncates inside it, not the button itself (/review
+   2026-09-22). With the ellipsis on the button, the `::after` chevron was part of the same
+   truncating box and a long opponent clipped the door's own affordance away. The name shrinks;
+   the chevron never does. */
 .gdOppDoor {
   background: none; border: none; padding: 0; cursor: pointer; text-align: left;
   font-weight: 700; font-size: var(--type-heading); color: var(--text-primary);
   border-bottom: 2px dotted var(--home-olive, var(--logic-lime)); min-height: var(--tap-min, 44px);
+  flex: 1 1 auto; min-width: 0;
+  display: flex; align-items: center; gap: 0.15em;
 }
-.gdOppDoor::after { content: " ›"; color: var(--home-olive, var(--logic-lime)); }
-.gdHa { color: var(--text-tertiary); font-size: var(--type-support); }
+.gdOppName { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gdOppDoor::after { content: "›"; color: var(--home-olive, var(--logic-lime)); flex: 0 0 auto; }
+/* ⚠ `.gdHa` — the standalone "Home"/"Away" word — is GONE, rule and all (owner 2026-09-22).
+   `matchupTitle` already carries it ("vs" for home, "@" for away), so the head stated one fact
+   twice in two grammars; the recap's head never rendered it at all. */
 .gdChips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
 .gdChip {
   font-size: var(--type-label); color: var(--text-secondary); background: var(--white-10);
   border-radius: 999px; padding: 0.25em 0.7em;
 }
-/* P3 — the same chip as a switch (screen staying on). A button so it announces itself to a
-   screen reader as pressable; sized to the thumb minimum even though it reads as a chip. */
-button.gdChip {
-  border: 1px solid transparent; cursor: pointer; font-family: inherit; line-height: 1.5;
-  min-height: var(--tap-min, 44px); padding-inline: 0.85em;
-}
-/* "On" reads off the ARIA state the button already carries (the .lineupFilterChip convention in
-   this file), so the pressed look and what a screen reader says can never disagree. Soft tint, not
-   the filled lime: this chip sits beside the field/uniform chips and must not shout at them. */
-button.gdChip[aria-pressed='true'] {
-  background: var(--home-olive-soft, rgba(190, 242, 100, 0.12));
-  color: var(--home-olive, var(--logic-lime));
-  border-color: var(--home-olive, var(--logic-lime)); font-weight: 600;
-}
-.gdScoreRow { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; row-gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
-.gdScore { background: none; border: none; padding: 0; cursor: pointer; text-align: left; min-height: var(--tap-min, 44px); }
-.gdScore:disabled { cursor: default; }
+/* ⚠ `button.gdChip` and its pressed state are GONE with the "Screen staying on" switch (owner
+   2026-09-22). The chips row is facts again — the diamond, the arrival time, the kit — and it
+   fits one line at 390 because nothing in it is a 44px control any more. The screen still stays
+   awake during a live game; it simply no longer says so on the most crowded screen in the
+   portal. See the console page's `useScreenWakeLock` call for the full reasoning. */
+/* ⚠ `.gdScoreRow` / `.gdScore` are gone too: the running US — THEM block left the header (the
+   score is a door under the board now, `.gdScoreDoor`). `.gdScoreLbl` and `.gdScoreDash` stay —
+   the score sheet and the End-game wrap still use them. */
 .gdScoreLbl {
   display: block; font-family: var(--font-data); font-size: var(--type-token); font-weight: 600;
   letter-spacing: 0.12em; color: var(--text-tertiary);
@@ -12428,25 +12468,54 @@ button.gdChip[aria-pressed='true'] {
      "US — THEM" no longer fits the score block's content width without this. */
   white-space: nowrap;
 }
-.gdScoreVal {
-  font-family: var(--font-data); font-size: var(--type-display); font-weight: 700; line-height: 1.1;
-  font-variant-numeric: tabular-nums; color: var(--text-primary);
-}
+/* ⚠ `.gdScoreVal` — the display-sized running score — is gone with the block it drew. The
+   door's figure is `.gdScoreDoorVal`, deliberately a step down: it is a fact you glance at on
+   the way past, not the headline of the screen. `.gdScoreLbl` and `.gdScoreDash` DO survive
+   (the score sheet, the End-game wrap and the door itself). */
 .gdScoreDash { color: var(--text-tertiary); font-weight: 400; }
-/* The stepper group may drop under the score on a narrow phone rather than spill (A4 widened its
-   chip by a step); `margin-left: auto` keeps it at the right edge either way. */
-.gdPeriod { display: flex; align-items: center; gap: 0.35rem; margin-left: auto; }
+/* ── THE PINNED INNING BAR (console re-draw, owner 2026-09-22) ───────────────────────────────
+   The one thing that follows a coach down the page, now that the score has left the header. It
+   is the lineup builder's pinned stepper, on the console: arrow · chip · arrow, with a row of
+   status dots beneath. `.gdPeriod` — the old right-hand cluster that shared a wrapping row with
+   the score, and dropped under it at 360 — is gone; this centres instead, so there is nothing
+   to wrap.
+
+   ⚠ Nothing between this and the document may `overflow: hidden`, or the sticky pin dies (the
+   lesson from stage 2). `.gdPage` sets no clip, and this is its direct child. */
+.gdInningBar {
+  background: var(--home-card, var(--card-bg)); border: 1px solid var(--border-2);
+  border-radius: 10px; padding: 0.5rem 0.75rem;
+  display: flex; flex-direction: column; gap: 0.45rem;
+  position: sticky; top: 0.5rem; z-index: 3;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.06);
+}
+.gdInningRow { display: flex; align-items: center; justify-content: center; gap: 0.6rem; }
 .gdPeriodChip {
   background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime));
   font-family: var(--font-data); font-size: var(--type-label); font-weight: 700; letter-spacing: 0.02em;
   border-radius: 999px; padding: 0.45em 0.7em; white-space: nowrap;
 }
+/* Full 44px, both of them. The 360px wrap this bar was built to cure was never the stepper's
+   size — it was the stepper sharing a wrapping row with the score block. With the score gone,
+   two 44px boxes and the chip leave ~190px of slack at 360, so there is nothing to buy by
+   shrinking them below the floor. */
 .gdStepper {
+  flex: 0 0 auto;
   width: var(--tap-min, 44px); height: var(--tap-min, 44px); border-radius: 9px;
   border: 1px solid var(--border-2); background: var(--home-card, var(--card-bg));
   color: var(--text-secondary); font-size: var(--type-heading); display: grid; place-items: center; cursor: pointer;
 }
 .gdStepper:disabled { opacity: 0.35; cursor: default; }
+/* Decorative only — the bar carries an `srOnly` sentence for anyone who cannot see these. */
+.gdDots { display: flex; justify-content: center; gap: 0.3rem; }
+.gdDots i {
+  width: 7px; height: 7px; border-radius: 999px; display: block;
+  background: var(--border-2); box-sizing: border-box;
+}
+.gdDots i[data-state="done"] { background: var(--home-olive, var(--logic-lime)); }
+.gdDots i[data-state="open"] { background: transparent; border: 1.5px solid var(--warning); }
+.gdDots i[data-state="clash"] { background: var(--home-live, var(--danger)); }
+.gdDots i[data-now="yes"] { box-shadow: 0 0 0 2.5px var(--home-olive-soft, rgba(190,242,100,0.3)); }
 
 .gdHint {
   display: flex; align-items: center; justify-content: center; gap: 0.6rem;
@@ -12467,9 +12536,18 @@ button.gdChip[aria-pressed='true'] {
 .gdRow {
   display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left;
   background: var(--home-card, var(--card-bg)); border: 1px solid var(--border-2);
-  border-radius: 9px; padding: 0.62rem 0.7rem; min-height: 3.5rem; cursor: pointer;
+  border-radius: 9px; min-height: 3.5rem; cursor: pointer;
   color: var(--text-primary);
+  /* ⚠ The vertical padding is 0.35rem, not the 0.62rem it was, and it is load-bearing (/review,
+     2026-09-22). The row now CONTAINS two 44px controls (`.gdRowMain` and the position), and
+     44 + 0.62rem×2 = 63.8px silently overran the 3.5rem this rule declares — every row grew ~8px
+     and the board gave back roughly a row and a half of the space this whole re-draw was for.
+     At 0.35rem the content box is 44.8px, so a 44px control fits and `min-height` is true again. */
+  padding: 0.35rem 0.7rem;
 }
+/* The row is a container now, not a button (the position beside the name is its own control),
+   so only the open-position placeholder still renders `.gdRow` AS a button. */
+div.gdRow { cursor: default; }
 .gdRow:disabled { cursor: default; }
 .gdRow[data-selected="yes"] { outline: 2px solid var(--home-olive, var(--logic-lime)); outline-offset: 1px; background: var(--home-olive-soft, rgba(190,242,100,0.1)); }
 .gdRow[data-target="yes"] { border-style: dashed; border-color: var(--home-olive, var(--logic-lime)); }
@@ -12501,8 +12579,91 @@ button.gdChip[aria-pressed='true'] {
   background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime));
   border-radius: 6px; padding: 0.35em 0.6em;
 }
+/* ── THE POSITION AS A CONTROL (console re-draw · G1, owner 2026-09-22) ──────────────────────
+   The pill used to be a read-only span on a row that was itself a disabled button — so a player
+   on the field could not be tapped at all, and a field-to-field move had no path but the Full
+   grid's dropdowns. Now the pill is the control at every row, and it looks like one: an outline
+   rather than a bare tint, and a real 44px target. The select is the same control above phone
+   width, where the builder's sheet system has no positioning rules. */
+.gdPosBtn {
+  font-family: var(--font-data); font-size: var(--type-body); font-weight: 700;
+  background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime));
+  border: 1.5px solid var(--home-olive, var(--logic-lime)); border-radius: 7px;
+  min-width: 3.25rem; min-height: var(--tap-min, 44px); padding: 0 0.6rem;
+  display: grid; place-items: center; cursor: pointer; flex: 0 0 auto;
+}
+.gdPosSelect {
+  font-family: var(--font-data); font-size: var(--type-body); font-weight: 700;
+  background: var(--home-olive-soft, rgba(190,242,100,0.12)); color: var(--home-olive, var(--logic-lime));
+  border: 1.5px solid var(--home-olive, var(--logic-lime)); border-radius: 7px;
+  min-width: 3.9rem; min-height: var(--tap-min, 44px); padding: 0 0.4rem;
+  cursor: pointer; flex: 0 0 auto;
+}
+/* The row's own tap area — the swap flow. A plain flex child so the row keeps its 56px and its
+   padding; `data-static` is the honest inert form, used wherever the swap is not on offer (at
+   rest, without the grant, or for an absent player). ⚠ Deliberately NOT a disabled button: a
+   disabled control that still looks tappable is the exact defect this screen came out of. */
+.gdRowMain {
+  display: flex; align-items: center; gap: 0.6rem; flex: 1; min-width: 0;
+  background: none; border: 0; padding: 0; margin: 0; font: inherit; color: inherit;
+  /* The floor, not the row's 3.5rem: this is the tap area the sweep measures, and a bench row
+     with one short name would otherwise sit at 40px. */
+  text-align: left; min-height: var(--tap-min, 44px); cursor: pointer;
+}
+.gdRowMain[data-static="yes"] { cursor: default; }
 
-.gdFooter { display: flex; gap: 0.5rem; padding-top: 0.6rem; margin-top: 0.4rem; }
+/* ── THE SCORE'S DOOR (owner ruling 2026-09-22) ──────────────────────────────────────────────
+   What is left of the running score: a quiet row under the board, met on the way to End game.
+   Reads as a door, not a scoreboard — the figure is present but it is not the loudest thing on
+   the screen, and nothing in the product depends on it before the game ends. */
+.gdScoreDoor {
+  display: flex; align-items: center; gap: 0.6rem; width: 100%; text-align: left;
+  background: var(--home-card, var(--card-bg)); border: 1px solid var(--border-2);
+  border-radius: 9px; padding: 0.6rem 0.75rem; min-height: var(--tap-min, 44px);
+  color: var(--text-secondary); font-size: var(--type-support); font-weight: 600; cursor: pointer;
+}
+.gdScoreDoor > span:last-child { margin-left: auto; color: var(--home-olive, var(--logic-lime)); font-weight: 700; }
+.gdScoreDoorVal {
+  font-family: var(--font-data); font-size: var(--type-body); font-weight: 700;
+  font-variant-numeric: tabular-nums; color: var(--text-primary); letter-spacing: 0.04em;
+}
+
+/* ⚠⚠ THE FOOTER MUST CLEAR THE PHONE'S NAVIGATION BAR — this is the fix for a real defect, not
+   a polish (owner-reported 2026-09-22, hit-tested before and after). `.stickyActionBar` pins to
+   `bottom: 0` and knows nothing about the nav, which is `position: fixed`, 72px tall and
+   z-index 300. The console is that recipe's ONLY consumer, so nothing else in the portal was
+   affected — and here it meant all four action buttons, End game included, were drawn
+   underneath the nav and untappable at every scroll position except the page's very last pixel.
+   Measured: 66.6px of a 66.6px bar covered, at scrollY 0 and mid-scroll alike.
+
+   The clearance token is the one the save pill, the docked bar and the sidebar already read
+   (`--coach-foot-clear`, the `.saveBar` precedent directly above in this file) rather than a
+   hand-copied 72px that would go silently wrong the day the nav changes. The z-index rises
+   above the nav too, so a future nav taller than the token can never re-bury it. */
+/* ⚠⚠ THE CLEARANCE IS GEOMETRIC. DO NOT ADD A Z-INDEX HERE. (/review, 2026-09-22 — this rule
+   was written with `z-index: 301` "so a future nav taller than the token can never re-bury it",
+   and that one line REINTRODUCED THE EXACT DEFECT IT WAS FIXING, one layer up.) The bar sits
+   ABOVE the nav's box, so it never overlaps the nav and needs no stacking help at all. Raising it
+   to 301 put it over `.gdSheet` (z-index 45) as well — and every sheet on this screen is opened
+   FROM this bar, so the bar is always stuck on screen when one opens. Hit-tested: the End-game
+   wrap's "Keep coaching" and "Confirm & notify families" both came back BLOCKED by a footer
+   button, 68.2px of the sheet buried. It also outranked `.sheetAnchor` (260), the shared
+   container for the nav's More sheet and the team switcher, which every other phone surface
+   deliberately sits under. `.stickyActionBar`'s z-index 2 is correct and sufficient.
+
+   Doubled class on purpose: `.stickyActionBar` is ~11,950 lines earlier in this same file, and a
+   media query adds no specificity, so the override rested entirely on source order. The file's
+   own `.inlineField.inlineField` precedent calls that fragile at a fraction of this distance. */
+.gdFooter {
+  display: flex; gap: 0.5rem; padding-top: 0.6rem; margin-top: 0.4rem;
+  /* Declared unconditionally so `--gd-foot-h` below is honest at EVERY width. `.stickyActionBar`
+     pads by the safe-area inset; at ≤900 that inset is already inside `--coach-foot-clear`, so
+     keeping both would count the home indicator twice and float the bar off the nav. */
+  padding-bottom: 0.6rem;
+}
+@media (max-width: 900px) {
+  .gdFooter.gdFooter { bottom: var(--coach-foot-clear); }
+}
 .gdFbtn {
   flex: 1; min-height: 3.5rem; border: 1px solid var(--border-2); border-radius: 9px;
   background: var(--home-card, var(--card-bg)); color: var(--text-primary);
@@ -12517,19 +12678,93 @@ button.gdChip[aria-pressed='true'] {
 .gdFooter[data-tight="yes"] .gdFbtn { font-size: var(--type-support); padding-left: 0.25rem; padding-right: 0.25rem; }
 .gdFooter[data-tight="yes"] .gdFbtn small { font-size: var(--type-token); }
 
+/* The shared autosave pill floats at the window's foot — which on THIS screen is where the
+   action bar lives. It rides above the bar rather than on it. `--gd-foot-h` is the bar's own
+   height (3.5rem button + its padding), declared here so the two cannot drift apart. */
+.gdPage { --gd-foot-h: 4.7rem; }
+.gdPage .savePill { bottom: calc(var(--gd-foot-h) + 0.6rem); }
+@media (max-width: 900px) {
+  .gdPage .savePill { bottom: calc(var(--coach-foot-clear) + var(--gd-foot-h) + 0.6rem); }
+}
+
 /* Bottom sheets: one at a time, above the bottom nav on phones, centered column on desktop.
    Deliberately NOT `.modalOverlay` (the portal's modal-with-backdrop idiom): these sheets must
    leave the board visible and tappable context behind them — a bench decision is made while
    looking at the bench. */
 .gdSheet {
   position: fixed; left: 50%; transform: translateX(-50%); width: min(30rem, calc(100vw - 1.5rem));
-  bottom: 1rem; z-index: 45; max-height: 70dvh; overflow-y: auto;
+  /* ⚠ 260, not the 45 it was (/review 2026-09-22). The autosave pill is NEW on this screen — the
+     save word used to be an inline span in the top strip with no stacking at all — and the pill
+     is `z-index: 250` with a comment reading "over the sheet and the slide-over", which meant the
+     SCHEDULE's slide-over, not these. Its offset lands it squarely inside the band a populated
+     sheet occupies, so at 45 it drew over the End-game wrap's two buttons; in the `error` state
+     the pill takes `pointer-events: auto` and could intercept the tap outright. 260 is the exact
+     value and the exact reasoning `.sheetAnchor` already carries in CoachesBottomNav.module.css —
+     above the pill's 250, below the nav's 300 — so the portal now has ONE answer to this. The nav
+     never covers these sheets anyway: they are offset above its box, not stacked against it. */
+  bottom: 1rem; z-index: 260; max-height: 70dvh; overflow-y: auto;
   background: var(--home-card, var(--card-bg)); border: 1px solid var(--border);
   border-radius: 16px; padding: 0.9rem 0.9rem 1.1rem;
   box-shadow: 0 -8px 40px rgba(0, 0, 0, 0.35);
 }
 @media (max-width: 900px) {
-  .gdSheet { bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + 0.5rem); max-height: 62dvh; }
+  /* ── THE FIVE SHEETS ARE DRAWERS ON A PHONE (owner ruling 2026-09-22) ───────────────────
+     Score, Who's here, Note, the scouting book and the End-game wrap rise from the bar's top
+     edge: full width, flush, rounded at the top only, with a grab line and the page dimmed
+     behind. Same shape as the position sheet and the More sheet, so this screen stops speaking
+     two overlay languages — the argument the owner had already accepted for the lineup builder
+     (D12/D13) the same day.
+
+     ⚠ `:not([data-card])` is the carve-out and it is (0,2,0), so it beats the base rule on
+     specificity rather than on source order. The one card left is the SUBSTITUTION CONFIRM,
+     whose question is about the board behind it. */
+  .gdSheet:not([data-card]) {
+    left: 0; right: 0; width: auto; transform: none;
+    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px));
+    border-radius: 18px 18px 0 0;
+    border-bottom: 0;
+    max-height: 72dvh;
+    padding: 0.55rem 0.9rem calc(1.1rem + env(safe-area-inset-bottom, 0px));
+  }
+  /* The card that stays a card. */
+  .gdSheet[data-card] { bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + 0.5rem); max-height: 62dvh; }
+}
+/* ── THE DRAWER'S SCRIM ──────────────────────────────────────────────────────────────────────
+   A REAL ELEMENT, not a pseudo-element on the sheet. It was tried as `.gdSheet::before` with a
+   negative z-index, on the reasoning that a negative child paints behind its parent's background
+   — which is only true when the parent does NOT form a stacking context. `.gdSheet` does (fixed
+   + z-index), so within that context the painting order is background → negative children →
+   content, and the scrim dimmed THE DRAWER ITSELF, leaving its text on a grey ground. Owner
+   caught it on the phone: "looks like you are dimming the whole thing, drawers too."
+
+   It also takes the tap. The pseudo-element version had to be `pointer-events: none` (a tap on a
+   pseudo reports its PARENT, which would have read as a tap inside the sheet and defeated
+   tap-away) — but that let taps fall THROUGH the dimmed page to whatever sat behind, so tapping
+   a dimmed position pill both closed the sheet and opened the picker. A scrim that dims without
+   blocking is a lie. This one is a sibling of the sheet, so a tap on it is still "outside" to
+   `useDismissable` and closes, while the page under it stays inert.
+
+   259: over the page, the action bar (2) and the autosave pill (250) — the pill is covered so an
+   error pill can never intercept a tap on the sheet, the same reason `.sheetAnchor` gives — and
+   under the sheet (260) and the nav (300), which stays lit and tappable as the nav's own sheets
+   intend. Phone only; above the drawer breakpoint these are cards and there is nothing to dim. */
+.gdScrim { display: none; }
+@media (max-width: 900px) {
+  .gdScrim {
+    display: block; position: fixed; inset: 0; z-index: 259;
+    background: rgba(13, 17, 26, 0.45); /* token-exempt: scrim over the page, matches .sheetScrim */
+  }
+}
+
+/* The drawer's grab line — the phone sheet system's signature, so these read as the same kind of
+   surface as the position sheet and the More sheet. Decorative: nothing here is draggable, and
+   there are already four ways out. Absent above the drawer breakpoint, where these stay cards. */
+.gdGrab { display: none; }
+@media (max-width: 900px) {
+  .gdSheet:not([data-card]) .gdGrab {
+    display: block; width: 36px; height: 4px; border-radius: 999px;
+    margin: 0 auto 0.5rem; background: var(--border-2);
+  }
 }
 .gdSheetHead {
   display: flex; align-items: center; justify-content: space-between; gap: 0.6rem;
@@ -12548,9 +12783,20 @@ button.gdChip[aria-pressed='true'] {
   padding: 0.6rem 0.5rem;
 }
 .gdBigBtn small { font-size: var(--type-label); font-weight: 500; color: var(--text-tertiary); }
+/* ⚠ THE PORTAL'S CTA IS LIME, NOT INK (owner from the phone, 2026-09-22: "why is the save button
+   black? that seems inconsistent with our theme"). This wore `--home-ink` on `--home-paper` — a
+   near-black fill — while `.btnPrimary` above is documented as THE shared coaches CTA for every
+   form and modal submit, and carries its own warm-theme rule so its fill stays TRUE lime rather
+   than the olive the global lime→olive accent remap would give it. The console was built with its
+   own palette and never got that memo. Same pair here, and the same warm override below, so all
+   five of this screen's deliberate acts (Save note, Confirm & notify families, the substitution's
+   "from here on", Start from a template) read as the CTA they are. */
 .gdBigBtn[data-primary="yes"] {
-  background: var(--home-ink, var(--white-90)); color: var(--home-paper, var(--bg));
-  border-color: var(--home-ink, var(--white-90));
+  background: var(--logic-lime); color: var(--pitch-black);
+  border-color: var(--logic-lime);
+}
+:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .gdBigBtn[data-primary="yes"] {
+  background: var(--home-lime); color: var(--home-lime-ink); border-color: var(--home-lime);
 }
 .gdBigBtn[data-primary="yes"] small { color: inherit; opacity: 0.7; }
 .gdBigBtn:disabled { opacity: 0.5; cursor: default; }
@@ -12690,29 +12936,34 @@ button.gdChip[aria-pressed='true'] {
   margin-top: 0.35rem; font-size: var(--type-label); color: var(--text-tertiary);
 }
 .gdMomentCount { font-family: var(--font-data); font-variant-numeric: tabular-nums; }
-.gdTagPick { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.1rem; }
-.gdTagChip {
-  font-family: var(--font-data); font-size: var(--type-label); font-weight: 600; cursor: pointer;
-  color: var(--text-tertiary); background: none; border: 1px solid var(--border-2);
-  border-radius: 999px; padding: 0.55em 0.75em; min-height: var(--tap-min, 44px);
+/* ⚠ `.gdTagPick` / `.gdTagChip` are GONE with the chip grid (owner 2026-09-22). One chip per
+   player grew with the roster and pushed `Save note` off the foot of the drawer — the sheet's one
+   action, behind a scroll. It is a dropdown now: one row, any roster size. */
+/* ⚠ THE LABEL'S FONT LIVES ON THE LABEL, NOT THE WRAPPER (owner, 2026-09-22: "this dropdown
+   format is not consistent with our portal font/size/etc."). The wrapper carried
+   `font-family: var(--font-data)` and the select inherited it — the portal's form controls set no
+   font-family of their own, so the dropdown came out in the mono data face at the label's size.
+   The wrapper is now a plain column; only the label span is styled.
+   Stacked, not side by side: label-above-field is the portal's form idiom, and at 390 the
+   uppercase tracked label and the control were fighting for one row. */
+/* The here/out count, in the drawer that owns it now that the footer button is just its name. */
+.gdAttCount {
+  margin: 0 0 0.5rem; font-family: var(--font-data); font-size: var(--type-support);
+  font-weight: 600; letter-spacing: 0.06em; color: var(--text-tertiary);
 }
-.gdTagChip[data-on="yes"] {
-  background: var(--home-olive-soft, rgba(190,242,100,0.12));
-  color: var(--home-olive, var(--logic-lime));
-  border-color: var(--home-olive, var(--logic-lime)); font-weight: 700;
+
+.gdMomentTag { display: flex; flex-direction: column; gap: 0.3rem; margin-top: 0.7rem; }
+.gdMomentTag > span {
+  font-family: var(--font-data); font-size: var(--type-token); font-weight: 700;
+  letter-spacing: 0.13em; text-transform: uppercase; color: var(--text-tertiary);
 }
-.gdGridTable { border-collapse: collapse; font-size: var(--type-support); min-width: 100%; }
-.gdGridTable th, .gdGridTable td {
-  border: 1px solid var(--border-2); padding: 0.25rem 0.3rem; text-align: center;
-  color: var(--text-secondary); font-variant-numeric: tabular-nums;
-}
-.gdGridTable th[data-now="yes"], .gdGridTable td[data-now="yes"] { background: var(--home-olive-soft, rgba(190,242,100,0.1)); }
-.gdGridName { text-align: left; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
-.gdGridTable select {
-  background: var(--home-card, var(--card-bg)); color: var(--text-primary);
-  border: 1px solid var(--border-2); border-radius: 6px; padding: 0.2rem; font-size: var(--type-support);
-  min-height: 2rem;
-}
+/* Composed with the portal's shared `.select`, which supplies the ground, border, radius, body
+   size and focus ring. This adds only what the field floor needs: the 44px thumb minimum. */
+.gdMomentTagSelect { min-height: var(--tap-min, 44px); cursor: pointer; }
+/* ⚠ `.gdGridTable` / `.gdGridName` are GONE with the Full grid sheet (owner 2026-09-22) — the
+   only sideways-scrolling table on a screen read one-handed at a fence, and the only route this
+   screen had for moving a player who was already on the field. Correcting a later inning is the
+   pinned stepper now: step to it and edit there, exactly as the phone builder does. */
 
 /* Game-Day entry on a schedule/lineups row: the row stays one interactive element; the action
    is a sibling link. Lime pill + live dot, the mockup's shape. */
@@ -13416,6 +13667,14 @@ button.gdChip[aria-pressed='true'] {
   color: var(--text-tertiary);
   font-variant-numeric: tabular-nums;
 }
+/* The caption's two forms (M1, 2026-09-22). Only a tile that DECLARES a `captionShort` renders
+   both. Both are stated HERE, at base, rather than only inside the phone block: a class whose sole
+   declaration sits in a media query still compiles, but it leaves the desk reading depending on a
+   rule that is not written down — and the desk form is the one that must survive if a width ever
+   falls between the blocks. `display: none` also takes the hidden form out of the accessibility
+   tree, so a screen reader reads one caption, not two. */
+.moneyBandCapDesk { display: inline; }
+.moneyBandCapPhone { display: none; }
 
 /* ⚠ THE NOTE SITS BENEATH THE BAND, NEVER INSIDE A TILE — one sentence, for the thing no figure can
    carry ("Waiting on the club isn't yours yet"). */
@@ -13427,11 +13686,52 @@ button.gdChip[aria-pressed='true'] {
 }
 .moneyBandNote strong { color: var(--text-secondary); }
 
+/* ── THE BAND'S NARROW FORM: TWO-UP, NEVER ONE (Money phone walk · M1, owner 2026-09-22) ────────
+   ⚠⚠ THIS REPLACES THE ALL-OR-NOTHING STACK, and the argument the stack inherited is NOT being
+   overturned — it is being read correctly for the first time. The Club band refused the portal's
+   AUTO-FIT summary grid because an auto-fit row reflows 3 → 2 + 1 and orphans whichever figure
+   lands alone. That settled "not auto-fit". It never settled "one column", and the two were treated
+   as the same thing for a year. A FIXED two-column grid orphans nothing: with three tiles the third
+   takes the whole width rather than sitting beside a gap.
+
+   ⚠ WHAT THE STACK COST, MEASURED at 390×844 on the UAT fixture (2026-09-22): Budget Plan's band
+   326px, its first budget line rendered at y=894 against a bottom bar at y=772 — 122px BELOW the
+   fold, so the screen at rest held a summary, a warning and three rows of buttons and no budget.
+   Budget vs. Actual 387px and 34px below. And BvA is the tab whose captions are SHORTEST (12–23
+   characters, one line each), which is the proof the words were never the problem: four one-line
+   tiles stacked one per row is 387px however short they are.
+
+   ⚠ THE ODD TILE IS THE LAST ONE, by position, not by a per-tile flag (M1a, owner 2026-09-22). On
+   Budget Plan that lands on Closing balance — the tile this panel's own comment calls the season's
+   verdict — and a tab that wants a different tile wide reorders its own roster. A `wide` prop on a
+   shared component with six callers is the drift this band exists to prevent.
+
+   ⚠ 760, NOT 640. The band is the one thing on these tabs that a tablet reads exactly as a phone
+   does: the stack it replaces ran to 760, and leaving 641–760 stacked would have kept the worst
+   case on the width with the most room. The PHONE-only steps are in the ≤640 block below. */
 @media (max-width: 760px) {
-  /* All-or-nothing — see the note above. */
   .moneyBand[data-tiles="2"],
   .moneyBand[data-tiles="3"],
-  .moneyBand[data-tiles="4"] { grid-template-columns: 1fr; }
+  .moneyBand[data-tiles="4"] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  /* Only ever true for a 3-tile band — a 2- or 4-tile band fills both columns. */
+  .moneyBandTile:nth-child(odd):last-child { grid-column: 1 / -1; }
+}
+
+/* ── The phone's two further steps ──────────────────────────────────────────────────────────────
+   ⚠⚠ THE FIGURE STEP IS NOT COSMETIC — IT IS WHAT MAKES TWO-UP SURVIVE 361px. Measured with the
+   band forced two-up at its 24px figure: `+$8,090.02` (Headroom), `$11,600.32` (Season end) and
+   `$11,491.30` (Dues) all overflowed their tile. The step to `--type-title` is the SAME move the
+   Overview board's phone rows already make for the same reason, so this is a decision the portal
+   has taken once, not twice. Re-measured after: every figure and label fits at 361 and 390.
+   ⚠ Do not restore 24px here "now that it is two-up". It fits at 390 and does not at 361, and 361
+   is a width this portal supports. */
+@media (max-width: 640px) {
+  .moneyBandTile { padding: 0.7rem 0.75rem; }
+  .moneyBandFigure { font-size: var(--type-title); }
+  /* The declared phone caption takes over from the desk one. A tile that declared no
+     `captionShort` has no `.moneyBandCapDesk` element and is untouched by both rules. */
+  .moneyBandCapDesk { display: none; }
+  .moneyBandCapPhone { display: inline; }
 }
 
 /* ── The two halves ─────────────────────────────────────────────────────────

@@ -37,12 +37,24 @@ const COACH_SHEETS = [
 /**
  * The deliberate holdouts, and the reason each is allowed to stay on the ladder.
  *
- * ⚠ Every one renders PUNCTUATION — a separator dot, the middot between W-L-T, and the `·`/`—` that
- * stands in for "nothing here". They carry no information a coach reads, so the AA text floor does
- * not apply and brightening them would make three pieces of visual grammar shout. **This list is the
- * decision point:** adding a class here is claiming it renders no readable text, so say which glyph.
+ * ⚠ Every one renders PUNCTUATION — a separator dot and the middot between W-L-T. They carry no
+ * information a coach reads, so the AA text floor does not apply and brightening them would make
+ * those pieces of visual grammar shout. **This list is the decision point:** adding a class here is
+ * claiming it renders no readable text, so say which glyph.
+ *
+ * ⚠⚠ `.lineupZero` LEFT THIS LIST 2026-09-22, and why it left is the part worth reading. Exemption
+ * was never the problem — it renders the `—` standing for "nothing here", so it genuinely belongs
+ * below the AA floor. The problem is that the shade it named, `--white-25`, is the ONE rung of the
+ * alpha ladder the coach warm gate never remaps, so on the portal's light skin it resolved to 25%
+ * WHITE on a white card: 1:1 contrast, invisible rather than quiet. It now takes `color: inherit`
+ * plus `opacity`, which is theme-proof, so it no longer inks with a shade and needs no exemption.
+ * **The lesson for anyone adding a class here: this list exempts a rule from naming a ROLE, and it
+ * cannot tell you whether the SHADE you named resolves on the surface you render on.** An exempt
+ * rule can still be invisible, and this guard will stay green while it is. `.statStripDot` is in
+ * exactly that state today (its fix is owed a mockup) — so do not read its presence as proof that
+ * `--white-25` works.
  */
-const PUNCTUATION_EXEMPT = ['.statStripDot', '.wltSep', '.lineupZero'];
+const PUNCTUATION_EXEMPT = ['.statStripDot', '.wltSep'];
 
 /** `color:` declarations only — never `border-color:`, `background-color:`, `outline-color:`. */
 const RAW_INK = /(?<![-\w])color:\s*var\(--(white[0-9-]*|home-ink[a-z-]*|home-dim|fl-text|data-gray|blueprint-blue)\b/g;

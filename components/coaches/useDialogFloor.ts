@@ -126,7 +126,7 @@ armFocusHistory();
 export function useDialogFloor(
   open: boolean,
   panelRef: RefObject<HTMLElement | null>,
-  opts: { onClose: () => void; onBack?: () => void; busy?: boolean; walk?: DialogWalk | null; focusKey?: string | null },
+  opts: { onClose: () => void; onBack?: () => void; busy?: boolean; walk?: DialogWalk | null; focusKey?: string | null; address?: string | null },
 ): void {
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   // The latest options, so the one keydown effect (keyed on `open`) never re-binds on render churn
@@ -134,12 +134,16 @@ export function useDialogFloor(
   const optsRef = useLatestRef(opts);
 
   // Back goes up one level — see the header. The step's callback reads the LATEST options.
+  // `address`, where a floor names a place, also puts the open panel in the URL bar, so Back from
+  // a page the coach walked out to through one of the panel's own doors returns to the PANEL and
+  // not to the page underneath it (`useBackStep`). A floor that names an address must be
+  // reopenable from it on a cold load — that is the whole contract.
   useBackStep(open, () => {
     const { onClose, onBack, busy } = optsRef.current;
     if (busy) return;
     if (document.querySelector('[role="alertdialog"]')) return;
     (onBack ?? onClose)();
-  });
+  }, opts.address ?? null);
 
   useEffect(() => {
     if (!open) return;

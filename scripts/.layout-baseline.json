@@ -1,6 +1,50 @@
 {
-  "generated": "2026-09-22T16:25:21.412Z",
+  "generated": "2026-09-22T22:09:22.223Z",
   "entries": {
+    "coach-development-session-observation|361|content-overflow|form·What did you see?With support — coach gu": {
+      "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
+      "detail": "content spills 15px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-development-session-observation|390|content-overflow|form·What did you see?With support — coach gu": {
+      "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
+      "detail": "content spills 15px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-development-session-observation|768|tap-floor|button·Help: Skills & Goals": {
+      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-session-observation|768|control-width|button·Help: Skills & Goals": {
+      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session-observation|768|tap-floor|select·No descriptorWith support — coach guides": {
+      "reason": "Pre-existing touch debt at the TABLET band, newly visible rather than newly made: phone stage 4 · E3 (owner 2026-09-22) rebuilt this dialog's foot and its descriptor picker at ≤640 — 56px rows and a docked 56px foot — and the stage's brief is explicit that the desktop and the 641–768 band do not move. So at 768 the dialog is still the desktop form: a 37px select and 33px buttons. ⚠ This is NOT this dialog's problem alone — no dialog footer in the portal has a phone or tablet tap floor, which is the widest thing stage 4 found and is flagged to the owner in plan §10.8 rather than swept into a ≤640 stage. Closes with that ruling or with the portal-wide touch-debt project.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-development-session-observation|768|tap-floor|button·Cancel": {
+      "reason": "Pre-existing touch debt at the TABLET band, newly visible rather than newly made: phone stage 4 · E3 (owner 2026-09-22) rebuilt this dialog's foot and its descriptor picker at ≤640 — 56px rows and a docked 56px foot — and the stage's brief is explicit that the desktop and the 641–768 band do not move. So at 768 the dialog is still the desktop form: a 37px select and 33px buttons. ⚠ This is NOT this dialog's problem alone — no dialog footer in the portal has a phone or tablet tap floor, which is the widest thing stage 4 found and is flagged to the owner in plan §10.8 rather than swept into a ≤640 stage. Closes with that ruling or with the portal-wide touch-debt project.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-development-session-observation|768|tap-floor|button·Save observation": {
+      "reason": "Pre-existing touch debt at the TABLET band, newly visible rather than newly made: phone stage 4 · E3 (owner 2026-09-22) rebuilt this dialog's foot and its descriptor picker at ≤640 — 56px rows and a docked 56px foot — and the stage's brief is explicit that the desktop and the 641–768 band do not move. So at 768 the dialog is still the desktop form: a 37px select and 33px buttons. ⚠ This is NOT this dialog's problem alone — no dialog footer in the portal has a phone or tablet tap floor, which is the widest thing stage 4 found and is flagged to the owner in plan §10.8 rather than swept into a ≤640 stage. Closes with that ruling or with the portal-wide touch-debt project.",
+      "detail": "33px tall (floor 44)"
+    },
+    "coach-development-session-observation|768|content-overflow|form·DescriptorNo descriptorWith support — co": {
+      "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
+      "detail": "content spills 24px with overflow-x:visible — no scroller owns it"
+    },
+    "coach-development-session-docked|768|tap-floor|button·Help: Skills & Goals": {
+      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-development-session-docked|768|control-width|button·Help: Skills & Goals": {
+      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-development-session-observation|1440|content-overflow|form·DescriptorNo descriptorWith support — co": {
+      "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
+      "detail": "content spills 24px with overflow-x:visible — no scroller owns it"
+    },
     "coach-team-hub|768|tap-floor|button·Help: Premium Coaches Portal": {
       "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason (surfaced as a NEW key on 2026-09-20 only because the Overview was re-baselined on game day). Closes with the portal-wide touch-debt project.",
       "detail": "34px tall (floor 44)"
@@ -841,14 +885,6 @@
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
       "detail": "34px tall (floor 44)"
     },
-    "coach-budget|768|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-budget|768|tap-floor|button·Add Line": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "31px tall (floor 44)"
-    },
     "coach-budget|768|control-width|button·Help: Money": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
@@ -856,10 +892,6 @@
     "coach-budget-vs-actual|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
       "detail": "34px tall (floor 44)"
-    },
-    "coach-budget-vs-actual|768|tap-floor|button·Export": {
-      "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
-      "detail": "33px tall (floor 44)"
     },
     "coach-budget-vs-actual|768|tap-floor|button·See it by month": {
       "reason": "Pre-existing control at its pre-existing size. NOT a regression from the 2026-08-13 Money-hub table pass: it appears now because the layout fixture gained budget lines, dues, expenses, fundraisers and payment requests that day, and every Money screen had been sweeping an EMPTY STATE before then. Desktop widths keep the portal's compact control heights by a standing portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and these clear it there.",
@@ -2817,10 +2849,6 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-budget|768|tap-floor|button·Rename, add or remove your team's own ca": {
-      "reason": "The Budget Plan toolbar's third button (Manage categories & items, 2026-09-09). It is the same control as its two siblings on this row — Export and Add Line, both already recorded here at 31–33px — and takes their standing reason: desktop widths keep the portal's compact control heights by a portal-wide decision; the phone breakpoint is where the 44px floor is enforced, and it clears it there. It appears in the sweep now because the door is no longer gated on the team owning an item (owner ruling Q2), so the layout fixture renders it for the first time. Not a new height; a newly visible one.",
-      "detail": "33px tall (floor 44)"
-    },
     "coach-budget-period|361|control-width|button·Show the previous month": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently. ⚠ EXTENDED TO coach-budget-period 2026-09-10: the Budget plan's By-period grid now spreads the dues schedule, whose due dates widen the column range past twelve months, so the SAME shared pager renders on this screen too. The control is unchanged and its size is the accepted decision recorded above — nothing new landed silently; one more screen reached it.",
       "detail": "36px wide (floor 44) — icon-only control"
@@ -3129,50 +3157,6 @@
     "coach-schedule-month|768|tap-floor|button·UAT probe game · no lineup": {
       "reason": "The 641–768 band's MONTH keeps the desktop's text chips in its cells (16px, three per day), found the day the sweep first opened the view (phone re-evaluation stage 2 · C2, 2026-09-21). The stage ruled the PHONE's month (dots, the day's rows beneath, ≤640) and said nothing else in the band moves; plan §8.2 notes the band's Week the same way. A 44px chip in a 110px cell is a decision about the band's calendar, owed to the owner with the band's Week — not a floor to apply on the way past. ⚠ THIS FOURTH ENTRY IS THE SAME CONDITION ON A NEW FIXTURE ROW, not a new defect: the month's chips are keyed by the event's visible LABEL, so seeding \"UAT probe game · no lineup\" (stage 3 · Game week, c9ed52b8, 2026-09-22) minted a new key for a condition already accepted three times above. It is NOT caused by the uncommitted tap-floor rework in coaches.module.css — the band was exposed by design before that work existed. Expect one more of these every time a fixture event is added.",
       "detail": "16px tall (floor 44)"
-    },
-    "coach-development-session-observation|361|content-overflow|form·What did you see?With support — coach gu": {
-      "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
-      "detail": "content spills 15px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-development-session-observation|390|content-overflow|form·What did you see?With support — coach gu": {
-      "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
-      "detail": "content spills 15px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-development-session-observation|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-session-observation|768|control-width|button·Help: Skills & Goals": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-development-session-observation|768|tap-floor|select·No descriptorWith support — coach guides": {
-      "reason": "Pre-existing touch debt at the TABLET band, newly visible rather than newly made: phone stage 4 · E3 (owner 2026-09-22) rebuilt this dialog's foot and its descriptor picker at ≤640 — 56px rows and a docked 56px foot — and the stage's brief is explicit that the desktop and the 641–768 band do not move. So at 768 the dialog is still the desktop form: a 37px select and 33px buttons. ⚠ This is NOT this dialog's problem alone — no dialog footer in the portal has a phone or tablet tap floor, which is the widest thing stage 4 found and is flagged to the owner in plan §10.8 rather than swept into a ≤640 stage. Closes with that ruling or with the portal-wide touch-debt project.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-development-session-observation|768|tap-floor|button·Cancel": {
-      "reason": "Pre-existing touch debt at the TABLET band, newly visible rather than newly made: phone stage 4 · E3 (owner 2026-09-22) rebuilt this dialog's foot and its descriptor picker at ≤640 — 56px rows and a docked 56px foot — and the stage's brief is explicit that the desktop and the 641–768 band do not move. So at 768 the dialog is still the desktop form: a 37px select and 33px buttons. ⚠ This is NOT this dialog's problem alone — no dialog footer in the portal has a phone or tablet tap floor, which is the widest thing stage 4 found and is flagged to the owner in plan §10.8 rather than swept into a ≤640 stage. Closes with that ruling or with the portal-wide touch-debt project.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-development-session-observation|768|tap-floor|button·Save observation": {
-      "reason": "Pre-existing touch debt at the TABLET band, newly visible rather than newly made: phone stage 4 · E3 (owner 2026-09-22) rebuilt this dialog's foot and its descriptor picker at ≤640 — 56px rows and a docked 56px foot — and the stage's brief is explicit that the desktop and the 641–768 band do not move. So at 768 the dialog is still the desktop form: a 37px select and 33px buttons. ⚠ This is NOT this dialog's problem alone — no dialog footer in the portal has a phone or tablet tap floor, which is the widest thing stage 4 found and is flagged to the owner in plan §10.8 rather than swept into a ≤640 stage. Closes with that ruling or with the portal-wide touch-debt project.",
-      "detail": "33px tall (floor 44)"
-    },
-    "coach-development-session-observation|768|content-overflow|form·DescriptorNo descriptorWith support — co": {
-      "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
-      "detail": "content spills 24px with overflow-x:visible — no scroller owns it"
-    },
-    "coach-development-session-docked|768|tap-floor|button·Help: Skills & Goals": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
-      "detail": "34px tall (floor 44)"
-    },
-    "coach-development-session-docked|768|control-width|button·Help: Skills & Goals": {
-      "reason": "Shared coach-portal chrome — the masthead help button at its grandfathered 768 size, the same entry every other coach screen carries with this reason. Closes with the portal-wide touch-debt project.",
-      "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "coach-development-session-observation|1440|content-overflow|form·DescriptorNo descriptorWith support — co": {
-      "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
-      "detail": "content spills 24px with overflow-x:visible — no scroller owns it"
     }
   }
 }

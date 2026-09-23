@@ -47,10 +47,10 @@ Not walked as a phone problem, recorded: Money (3,019px; 136 of 495 words ≤11p
 |---|---|---|---|
 | 0 The shell | More as a full-width sheet with the hot three as tiles; the masthead at rest as one line off-Overview; no masthead over an open chat room (back on the left); Saved in the title row; the field floor | A1–A4 | **Ruled 2026-09-20 as drawn · built 2026-09-20 (§4.7) · §208 walked 25/25 · committed `92a204ab` (A3 the pill `d30ad45b`)** |
 | 1 The first screen | Overview tiles as rows; the card's facts to the meta line, its doors to 44px. **Plus two the owner raised on the §208 walk (2026-09-20), drawn FIRST as items 1 and 2:** (1) **the team switcher moves to the masthead** — a small down chevron on the team name, 2+ teams only, opening a bottom sheet of the one-list rows built on the walk (current team tinted, the closed team with its season name → season-end); the switcher rows then leave the More sheet; the drawing must prove a long name + chevron + record + "?" truncates cleanly in the 36px line at 390. (2) **Masthead consistency** — the owner asked for the Overview's two-lines-thinning-on-scroll on every screen; my recommendation is the opposite (**one line everywhere**, the Overview's club · season line moving INTO the Overview page, the phone collapse deleted) because the collapse as built SNAPS 59→36 at a threshold (a 23px jump under the thumb, hysteresis 64/12), the thin form drops the whole right slot including the "?", and a tool page's second line is club · season — the record is already on the slim line and the season has one value. Draw BOTH at true size, recommendation marked; the owner rules. | Q 1.1, 1.2 + the two above | **drawn 2026-09-20 · ruled 2026-09-21 (B1 · B3 · B4 as drawn, B2 = B) · built 2026-09-21 (§7.7) · §210 walked 24/24 PASS 2026-09-21 · committed `ff0068bb` 2026-09-21** |
-| 2 Schedule | Today first with the past folded; Week without blanks; Month as dots + a day list; the event sheet ordered by the day — **and the sheet’s 96 baselined findings** | Q 2.1–2.3 | **drawn 2026-09-20 (§8) · C1 redrawn 2026-09-21 on the owner’s first read · RULED 2026-09-21 — C1–C4 as drawn, the desktop phone-first · built 2026-09-21 (§8.7) · §216 walked 35/35 PASS across all six parts · committed `bb928e41` 2026-09-21** |
-| 3 Game week | The builder's Setup as one self-describing row that opens the builder's panel; undo · redo · print · templates as one icon row; **one inning at a time** with the neighbours in small type and the number as the handle (the owner's read); the sheet's Lineup door at the top and Back to the game; the meta line and the hint | D1–D5 (Q 4.1, 4.2) | **drawn 2026-09-21 (§9), revised on four owner reads the same day · RULED 2026-09-21 — D1 = B, D2 = B, D5 · D3 · D4 as drawn · built 2026-09-21 (§9.8) · §220 walk COMPLETE 2026-09-22 · committed `c9ed52b8` 2026-09-22. **D12 · D13 (§9.10) — the builder’s four phone panels as DRAWERS behind one shared scrim: RULED + built 2026-09-22, §223 PASSED, committed `f29fd9c8` 2026-09-22.**** |
-| 4 Practice week & skills | The plan's toolbar as ONE 44px row + a "⋯" drawer; a player is one 56px row and the row is the door; the observation dialog's descriptors as rows with a DOCKED foot and Save & next player; the count and Review docked above the bar; one title, one date, a 44px "+" | E1–E5 (Q 6.1, 7.1, 7.2) | **drawn 2026-09-22 (§10) · RULED 2026-09-22 — E1 = A, E2 · E3 · E4 · E5 as drawn · built 2026-09-22 (§10.8) · `/review` found FOUR Highs, all fixed and re-driven in a browser (two were data loss) · committed `3a8c69da` 2026-09-22, behind `f29fd9c8` which E1’s drawer depends on · **ledger §225 walk (44 steps, §10.9) owed**** |
-| 5 People | The player’s read face with Edit; prev/next; chat this-team-first | Q 3.2, 8.1, 8.2 | **GATE CLEAR — §182 walked 40/40 PASS 2026-09-13, so this is drawable now. ⚠ Two things in flight reach it: call-ups (mig 309) put a player in a game who is not on the roster, and a name-resolution change altered what the portal shows where a member name is blank. Measure the product before drawing it.** |
+| 2 Schedule | Today first with the past folded; Week without blanks; Month as dots + a day list; the event sheet ordered by the day — **and the sheet’s 96 baselined findings** | Q 2.1–2.3 | **drawn 2026-09-20 (§8) · C1 redrawn 2026-09-21 on the owner’s first read (the list as the scroller, no fold row, a view menu, one frame) · **RULED 2026-09-21 — C1–C4 build as drawn, the desktop phone-first** · build owed (the build prompt is in the drawing session’s hand-back)** |
+| 3 Game week | The builder's Setup as one self-describing row that opens the builder's panel; undo · redo · print · templates as one icon row; **one inning at a time** with the neighbours in small type and the number as the handle (the owner's read); the sheet's Lineup door at the top and Back to the game; the meta line and the hint | D1–D5 (Q 4.1, 4.2) | **drawn 2026-09-21 (§9), revised on four owner reads the same day · RULED 2026-09-21 — D1 = B, D2 = B, D5 · D3 · D4 as drawn · build owed (the build prompt is in the drawing session's hand-back)** |
+| 4 Practice week & skills | The plan's toolbar as ONE 44px row + a "⋯" drawer; a player is one 56px row and the row is the door; the observation dialog's descriptors as rows with a DOCKED foot and Save & next player; the count and Review docked above the bar; one title, one date, a 44px "+" | E1–E5 (Q 6.1, 7.1, 7.2) | **drawn 2026-09-22 (§10) · RULED 2026-09-22 — E1 = A, E2 · E3 · E4 · E5 as drawn · build owed** |
+| 5 People | The player's Details tab as the RECORD with Edit on the section (F1); the switcher as a `‹ 4/12 ›` stepper, its row gone (F2); the chat list this-team-first, sorted CLIENT-side with an `Your other teams` divider (F3). **Plus one the drawing found that the plan never asked: (F4) Family & paperwork is the OTHER tab that lands as a form** — same read face, and `tel:` rows on the tab whose job is "who do I call?". Gate CLEAR: §182 walked 40/40 on 2026-09-13. | Q 3.2, 8.1, 8.2 (+ F4) | **drawn 2026-09-22 (§11) · RULING OWED** |
 | 6 Reports | Tables that fit stay tables; short tab labels; the notification clamp | Q 9.1, 10.1 | — |
 
 ## 4 · Stage 0 — the shell (drawn 2026-09-19)
@@ -304,7 +304,7 @@ The desktop’s grid and the 641–768 band’s (the phone’s form is D5 — a 
 ### 9.8 Built as (2026-09-21 · dev — every number read from the browser, never a screenshot; probes `stage3-after.mjs`, `stage3-interact.mjs`, `probe-arrows.mjs` in the build session's scratchpad; ledger §220 **WALK COMPLETE 2026-09-22**; **COMMITTED `c9ed52b8` 2026-09-22** from a private index)
 - **D1 — the Setup row and its panel.** At ≤640 the editor renders ONE `<button class=lineupSetupRow aria-expanded aria-controls>` inside the auto-fill wrapper in place of the Setup group, the Auto-fill button and Reshuffle: the title `{Everyone bats | 9 player ball} · {inningCount} {periodLabelPlural}`, the caption "Auto-fill · {mode}", a chevron that turns while the panel is open; 52px, white, a hairline, radius 10. Its TONE is decided once — `const [setupFolded] = useState(() => analysis.hasAssignments)` on the editor's first render with its rows (both pages mount it after load) — and `data-state="primary"` (the create's lime) when the lineup had nothing at open; never `rows.length`, never live. The row toggles `autoFillOpen`; the panel is today's `lineupAutoMenu` written ONCE as a const (`autoFillPanel`) and mounted by whichever trigger the width renders, with a "Setup" caption + Format and Innings side by side (Innings 96px) prepended and an "Auto-fill" caption before the mode, and Reshuffle appended after Generate on a phone (it closes the panel on a reshuffle it made, never on a kept one — `handleReshuffle` now says whether it ran). Generate closes the panel and seats focus on the row (`closePanelToRow`); Escape does the same through `useDismissable`'s `onEscape`; a tap outside closes and leaves focus where the tap put it. The DOM decision is `useIsPhone()` — rewritten on `useSyncExternalStore` so a non-hydrating mount reads the breakpoint synchronously (the effect-driven read painted the desktop's sideways grid for one frame on a phone before the list replaced it; the Schedule, which only reads it after mount, behaves as before). Desktop and 641–768: the Setup group, the Auto-fill button and Reshuffle exactly as before (`setupFields` and `reshuffleButton` are one JSX each, rendered by width).
 - **D2 — the tool row.** ⚠ **Amended at the owner's first look (2026-09-22): the row has FIVE squares and the EDITOR builds it.** The builder page hands `lineupTools` (Undo · Redo · Print · Templates) over bare through `controlsExtra`; the editor wraps them — plus its own **Clear** (`footerIconBtn`, lucide `Eraser`, `aria-label`/`title` "Clear positions", `disabled={!analysis.hasAssignments}`, the same confirm and the same single undo step) — in `<div class=lineupToolRow>` at ≤640 and renders them loose in `.lineupControls` above it. The wrapper moved out of the page because Clear is the editor's action and has to sit INSIDE the row, not under it. **Clear's old home is gone at EVERY width:** the bare `lineupClearBtn` text link under the grid (44px on a phone) left the only control on the screen with nothing beside it, stranded between the hint and the notes; the class and its rules are deleted, and the template editor — which passes no `controlsExtra` — now shows Clear as the single square in that row. Templates is a fourth `footerIconBtn` (lucide `LayoutTemplate`, `aria-label="Templates"`, `aria-expanded`) opening exactly today's panel — a form, so not a `CoachToolbarMenu`; the desktop keeps "Templates ▾". Print keeps `confirmPrintIfOpen`. `.lineupControls` at ≤640 is a flex column (the Setup row, then the tool row — the 2×2 grid rule retired by order); `.lineupToolRow > .lineupAutoWrap { width: auto }` and its button at 44 so the full-width rule that made Print 175px no longer reaches the squares. The page-actions guard's builder entry stays `actions: null`.
-- **D5 — one inning at a time.** New `components/coaches/LineupInningList.tsx` (+ module), rendered by the editor at ≤640 INSIDE its `DndContext` in `lineupTableWrap`'s place: a sticky block (`.pin`: `top: calc(var(--coach-topstrip-top) + var(--coach-header-h))`, the page's ground, z 30 under the masthead's 40, no negative margin — the drawing's edge-to-edge bleed was a 16px content-overflow to the sweep and the rows it covers sit in the same column) holding the stepper row — ‹ and › as the console's `gdStepper` (44×44), between them the pill `<button class=stepPill data-lineup-inning aria-haspopup="dialog">` in the console's period-chip materials reading "Inning N of M · 8/9" (the coverage figure from `assignedInnings` / `openRolesByInning`, amber while a role is open; on a clash the pill turns red and reads "· ⚠ 2 share C", or "· ⚠ 3 clashes" when an inning has more than one — the pill has 254px) and opening the inning inspector on that inning — and the dots row beneath (`aria-hidden`; filled done · amber outline open · red a clash · a quiet outline untouched · a ring on the inning on screen, from `analysis.conflictInnings`, `openRolesByInning`, `assignedInnings`). Then one white frame of 58px rows in the SAME `SortableContext` + `verticalListSortingStrategy` with the editor's D8 sensors: the number as `coach.lineupBatHandle` (hold lifts, tap opens the row sheet — unchanged), the name, the PREVIOUS inning's position (38px, 12px muted; blank on the first inning; "—" at reduced opacity where the cell is open), the position PILL `<button class=pill aria-haspopup="dialog">` 64×44 with no chevron reading `inningPositions[String(inning)] || '—'` and wearing the grid's open (amber) and clash (red) outlines from `cellIssueFor` (its description in an sr-only span), the NEXT inning's (blank on the last). A lifted row lifts (z 2, a shadow, scale 1.02); the list itself never clips. `phoneInning` state in the editor (1 at open; clamped to `inningCount` at read as `inningOnScreen`); ‹ › set it; `focusInning(n)` sets it before the lens; the inspector's `onNavigate` sets it; it stays put while the panel, the inspector or the sheet open over it. The hint moves UNDER the list on a phone: "Hold a number to move a player · ‹ › for the innings" (`lineupScrollHintUnder`); the desktop keeps the swipe hint above the grid. ⚠ No Start column on the phone row (9-player ball): the number already says starter or bench ("–"), and a drag or Move across the cut promotes as the grid's checkbox does (D-C12) — the row has 44 · name · 38 · 64 · 38 of room at 390 and nothing to give a fifth control. **The position sheet** — new `components/coaches/LineupPositionSheet.tsx` (+ module), the fourth member of the one sheet system (the nav module's `.sheetAnchor / .sheetScrim / .dropdown / .sheetGrab`; its own `useDialogFloor`; z 270 over the row sheet and the panel; its anchor's foot is the BAR's top, as More's — the builder is a page under the bar; only ever rendered at ≤640): the name; "Inning 2 of 6 · playing CF · 3B in the 1st, LF in the 3rd" (the standing: playing X / on the bench / open; the neighbours as ordinals); **Bench** as a 52px `aria-pressed` row; chips (44 tall, ≥72 wide, wrapping) grouped by the chart's three states through the pure `positionGroups` in **`lib/lineup-position-groups.ts`** (framework-free, so the guard pins the grouping without a DOM): Best in rank order with the rank as the second line (a charted pitcher's mound sits with their Best carrying "2 of 4 used" / "at cap" in the warning ink / "1 pitched · no cap"), Fine — anywhere not Never (the sport's roster vocabulary — the field spots plus DH/OF the desktop select offers — in neither list; for a non-pitcher the mound with "doesn't pitch"; a current value outside the vocabulary still gets a chip), Never (red, allowed, never confirmed); the current chip filled and reading "now"; "Or" then Leave open as a quiet row. A tap → `setPosition(row, inningOnScreen, code)` (one undo step) → close; Escape and the scrim close; the floor returns focus to the pill.
+- **D5 — one inning at a time.** New `components/coaches/LineupInningList.tsx` (+ module), rendered by the editor at ≤640 INSIDE its `DndContext` in `lineupTableWrap`'s place: a sticky block (`.pin`: `top: calc(var(--coach-topstrip-top) + var(--coach-header-h))`, the page's ground, z 30 under the masthead's 40, no negative margin — the drawing's edge-to-edge bleed was a 16px content-overflow to the sweep and the rows it covers sit in the same column) holding the stepper row — ‹ and › as the console's `gdStepper` (44×44), between them the pill `<button class=stepPill data-lineup-inning aria-haspopup="dialog">` in the console's period-chip materials reading "Inning N of M · 8/9" (the coverage figure from `assignedInnings` / `openRolesByInning`, amber while a role is open; on a clash the pill turns red and reads "· ⚠ 2 share C", or "· ⚠ 3 clashes" when an inning has more than one — the pill has 254px. ⚠⚠ **AMENDED 2026-09-22 — THE TRAILING FACT IS ALL-OR-NOTHING**, on the owner's read of a phone showing "INNING 2 OF 6 · ⚠ 2 clas…": *"if we can't fit this message I think the symbol is enough."* 254px was a MEASUREMENT, not a guarantee, and the sentence had two ways to be wrong at once — it ellipsised itself into a fragment that said nothing the red pill and the ⚠ had not already said, and the chevron (the door's own affordance, which had no `flex` of its own) shrank to a sliver beside it. The fact now reads WHOLE or is not painted at all: `.stepInner` wraps and is exactly one line tall with the overflow hidden, so a fact that no longer fits beside the inning words drops to an unpainted second line — the browser's own line breaking, at every width and font scale, with no measurement and no number to guess. The MARK (`· ⚠`) is its own element BEFORE the sentence, so a clashing inning always reads as one; the chevron is a SIBLING of the wrapping box (inside it, it would wrap away with the sentence) and never shrinks. The rule covers the coverage figure too — `8/…` is the same bug — and nothing is lost to a screen reader, whose label carried the whole fact all along) and opening the inning inspector on that inning — and the dots row beneath (`aria-hidden`; filled done · amber outline open · red a clash · a quiet outline untouched · a ring on the inning on screen, from `analysis.conflictInnings`, `openRolesByInning`, `assignedInnings`). Then one white frame of 58px rows in the SAME `SortableContext` + `verticalListSortingStrategy` with the editor's D8 sensors: the number as `coach.lineupBatHandle` (hold lifts, tap opens the row sheet — unchanged), the name, the PREVIOUS inning's position (38px, 12px muted; blank on the first inning; "—" at reduced opacity where the cell is open), the position PILL `<button class=pill aria-haspopup="dialog">` 64×44 with no chevron reading `inningPositions[String(inning)] || '—'` and wearing the grid's open (amber) and clash (red) outlines from `cellIssueFor` (its description in an sr-only span), the NEXT inning's (blank on the last). A lifted row lifts (z 2, a shadow, scale 1.02); the list itself never clips. `phoneInning` state in the editor (1 at open; clamped to `inningCount` at read as `inningOnScreen`); ‹ › set it; `focusInning(n)` sets it before the lens; the inspector's `onNavigate` sets it; it stays put while the panel, the inspector or the sheet open over it. The hint moves UNDER the list on a phone: "Hold a number to move a player · ‹ › for the innings" (`lineupScrollHintUnder`); the desktop keeps the swipe hint above the grid. ⚠ No Start column on the phone row (9-player ball): the number already says starter or bench ("–"), and a drag or Move across the cut promotes as the grid's checkbox does (D-C12) — the row has 44 · name · 38 · 64 · 38 of room at 390 and nothing to give a fifth control. **The position sheet** — new `components/coaches/LineupPositionSheet.tsx` (+ module), the fourth member of the one sheet system (the nav module's `.sheetAnchor / .sheetScrim / .dropdown / .sheetGrab`; its own `useDialogFloor`; z 270 over the row sheet and the panel; its anchor's foot is the BAR's top, as More's — the builder is a page under the bar; only ever rendered at ≤640): the name; "Inning 2 of 6 · playing CF · 3B in the 1st, LF in the 3rd" (the standing: playing X / on the bench / open; the neighbours as ordinals); **Bench** as a 52px `aria-pressed` row; chips (44 tall, ≥72 wide, wrapping) grouped by the chart's three states through the pure `positionGroups` in **`lib/lineup-position-groups.ts`** (framework-free, so the guard pins the grouping without a DOM): Best in rank order with the rank as the second line (a charted pitcher's mound sits with their Best carrying "2 of 4 used" / "at cap" in the warning ink / "1 pitched · no cap"), Fine — anywhere not Never (the sport's roster vocabulary — the field spots plus DH/OF the desktop select offers — in neither list; for a non-pitcher the mound with "doesn't pitch"; a current value outside the vocabulary still gets a chip), Never (red, allowed, never confirmed); the current chip filled and reading "now"; "Or" then Leave open as a quiet row. A tap → `setPosition(row, inningOnScreen, code)` (one undo step) → close; Escape and the scrim close; the floor returns focus to the pill.
 - **D3 — the road in and back out.** `lib/lineups-address.ts` gains `lineupBuilderHref(base, eventId, { returnTo })` (through `safeReturnPath` — a foreign address is dropped before the link carries it); `safeReturnPath` admits the bare team root (the Overview); `returnLabel` learns three destinations — `schedule` with an `event=` → **The game**, `game` → **Game day**, the bare team address → **Overview** — as nouns, because the header composes "Back to <label>" for the arrow's name and shows the noun beside it like every other back label in the portal (All lineups, Templates, Skills & Goals). The four doors send their own address: the sheet's tab (`base/schedule?event=<id>&tab=lineup` — stage 2's deep link), the console's two (`base/game/<id>`; the live console's builder door sits inside its "Full grid" sheet), the Overview's card (`base`); the room's rows send none. The builder reads `searchParams.get('return')` through `safeReturnPath` and `returnLabel` into `backTo`, else All lineups; Save, Mark ready and the autosave never navigate. **The peek:** the header is a title row (Lineup · the chip · the door) over the summary at every width — on the desktop the chip keeps the right edge and the door is `display: none`; at ≤640 the chip sits beside the title and the door is a 44px lime link at the right that TURNS BY THE CLOCK: `gameHasStarted(ev, nowMs)` → "Game day ›" to the console, else "Edit ›" to the builder with the return; the foot door is `display: none` at ≤640 and kept above. **The look-only flip** at every width: `‹` · "Batting order · Inning N of M" · `›` (the console's 44×44 `gdStepper`s; `aria-live="polite"` on the kicker); `peekInning` state set in `openEvent` — 1, or on a game in play `sessionStorage[gameDayPeriodKey(id)]` (the console's own memory, read, never written); a new `lineupInningCount` state from the fetched lineup clamps it; the order's position column reads `inningPositions[String(inningShown)] || '—'` (the peek was hard-wired to `['1']`); nothing here calls a setter on the rows.
 - **D4 — the small moves.** `fmtDay` + `fmtYear` split the meta line's date so the year is `<span class=lineupMetaYear>` — `display: none` at ≤640; joined they read exactly as `fmtDate`, which the poster's `dateLabel` keeps. The hint under the list (above).
 - **Measured after (390×844, the probe game with its saved lineup):** meta 44 (the year gone) · strip 260–392 (132, unchanged — D11's) · **the Setup row 416–468 (52)** · the tool row 476–520, four 44×44 at x 16 / 68 / 120 / 172 (⚠ **five since the 09-22 amendment** — Clear at x 224 on the row's own 44 + 8 rhythm; the row's height and top are unchanged, re-read on the §220 walk) · the pin 532–584 (the stepper 44, the dots under it) · the list 611, **the first player at 612** (the drawing's 610; was 844), rows 58, **two whole on screen one and the third begun** (the bar at 772) · the hint 19px at 1,275 under the list · the not-in-the-lineup row as before (⚠ Clear's own 44px band under the hint is **gone since the 09-22 amendment** — it is a square in the tool row; the page is ~52px shorter than the figure below, re-read on the §220 walk) · page 1,728 (was 1,914) · **47 controls (was 108), 1 under 44 (the skip link, pre-existing)** · 18 words ≤11px (was 35). The panel from the row: 361 × 568 (the drawing 549), 660 from the foot, Setup at 199, Format and Innings at 226 side by side, Auto-fill at 301, Mode 336, Generate 640, Reshuffle 693, no internal scroll; Escape closed it with focus on the row; Generate filled every cell, closed it, focus on the row. Inning 2 scrolled 700: the pin at 37 under the masthead (the stepper 44 + the dots), "Inning 2 of 6 · 8/9", the dots `done · open* · open…`, the first row reading Bench · SS · 3B (prev · this · next). The position sheet: 489 from the foot (the drawing 494), z 270, Bench 52, chips 72×44, the current one filled; a chip pick landed in the cell, closed the sheet, focus on the pill, the clash it made read on the pill ("· ⚠ 2 share C") and the dot; Undo took it back; Escape closed it with focus on the pill. A hold-and-drag (the mouse sensor, 6px) moved row 2 above row 1 and renumbered 1 · 2 · 3; Review inning 2 from the check opened the inspector on 2 and stepped the list to 2; the inspector's › moved both to 3; the stepper's pill opened the inspector on the inning on screen; Templates opened its 231px form (an input, the saved row) 323 from the foot; Print → Dugout poster → "Print with open roles?" with Keep working · Print anyway; the row sheet (Move up · Move down · Remove · Cancel) from a tap on a number. **360×780:** the first player at 612, one whole and the second begun; the meta line 44 (was 69 — "View on schedule" back on the line); the name column 104. **A new lineup (the seeded no-lineup game, 12 rows, 9 innings):** the strip 42 ("Not started"), **the row in the primary tone at 326**, the tools, "Inning 1 of 9" with no figure, nine untouched dots, **the first player at 525** (the drawing 506), four whole. **The template editor:** the same row at 432 (its own tone from the template's rows), "Inning 1 of 6 · ⚠ 3 clashes" in red (the fixture template clashes in every inning), the first player at 579 (the drawing 566), three whole, Back to Templates. **768 and 1440:** the grid (734 in 734 at 768; 1,154 at 1440), no row, no tool row, no stepper, the year kept, Back to All lineups — untouched. **The peek (390, the started probe game):** "Game day ›" 106×44 on the heading row at the right edge (y 435 in the sheet), the foot door hidden, the flip row 44 with ‹ disabled on 1, "Batting order · Inning 1 of 6" → › › → "Inning 3 of 6" and the positions followed (Bench → 3B, P → 2B, an open cell "—"), no save pill; the game nudged 20 minutes ahead: "Edit ›" carrying the return. **1440:** the desktop order, the door `display: none`, the foot door "Edit in Lineups →" carrying the return, the flip row 1,130 wide with the ‹ › at its ends. **The way back (390):** from the sheet's door → "Back to The game" (`…/schedule?event=<id>&tab=lineup`); from the console's Full grid → Open the full builder → "Back to Game day" (`…/game/<id>`); `?return=<base>` → "Back to Overview"; bare, a foreign origin, another org's team, the Schedule without a game, a `year=` address → "Back to All lineups". ⚠ The Overview's `build_lineup` door is not on screen while the probe game is live (its card offers "Open game day"), so its address was read by loading it directly and pinned in the guard.
@@ -820,3 +820,186 @@ one of `/review`'s four High findings lived.
 **Fixture note:** the walk was driven end to end on dev and the fixture **restored exactly as it
 was found** (Avery and Blake recorded against the skill, nobody else) — every observation and mark
 the walk wrote was deleted afterwards and the state re-read to confirm.
+
+## 11 · Stage 5 — People (drawn 2026-09-22)
+
+The drawing is the hub's **"5 · People"** tab (ten true-size 390px frames, before/after, fifteen
+clickable annotations). This section is the durable record: what is proposed, what the drawing
+corrected in this plan's own record, what it found that was not asked for, and what the build is
+gated on. **Ruling owed.**
+
+### 11.0 What is being asked (F1–F4)
+
+- **F1 — Q 8.1.** On a phone the player's **Details** tab lands as the **record**, with **Edit** on
+  the *section* rather than the page. Same fields, same saves, same gates; the desktop and the
+  641–768 band keep the form.
+- **F2 — Q 8.2.** The player switcher becomes the portal's own **stepper** — `‹ 4/12 ›`, two 44px
+  elements in the title row — and the 56px row the select sat on disappears. The desktop keeps the
+  select.
+- **F3 — Q 3.2.** The chat list puts **this team's rooms first**, sorted **client-side**, with one
+  quiet `Your other teams` divider once a room from elsewhere appears (**B**; A is sort-only).
+- **F4 — an ADDITION, not one of the three questions.** **Family & paperwork** is the *other* tab
+  that lands as a form (seven 35px inputs). It gets the same read face and the same section-level
+  Edit — and it is the tab whose job statement is *"who do I call?"*, so its phone numbers become
+  `tel:` rows a thumb can hit. **Rule it separately; decline it freely.**
+
+⚠ **No migration.** Every decision is presentation at ≤640. No route learns a year
+(`HISTORY_ENDPOINTS` untouched); no new API; nothing is stored that was not stored before.
+
+### 11.1 What the drawing corrected in this plan's own record
+
+Measured on the running product 2026-09-22, after stages 0–4, at 390×844 and 360×780.
+
+- **The player page is 2,111px, not 1,955, and carries 21 sub-floor controls, not 19** (22 with the
+  skip link every page has). §1's station-8 row is left as the walk recorded it.
+- **The roster is 941px, not 916** — the in-flight call-up shelf adds a third collapsed row.
+- ⚠ **Station 3's first two complaints are already FIXED, by stage 0 · A2.** The walk recorded
+  "masthead 59 + room header 61 pinned above the messages; composer 60 + bar 72 below; 592px for
+  messages; back on the right beside the ?". Measured now: **no masthead**, one 61px room header,
+  composer 64 + nav 72, **645px for messages (76%)**, and **back is a 44×44 button on the LEFT**.
+  **Q 3.1 is closed. Only Q 3.2 is left on that station**, which is why stage 5 draws one chat
+  decision and not two.
+- ⚠ **Q 3.2's "the consumer chat inbox is separate and untouched" is FALSE.** `getChatInbox` is
+  built on `listRoomsForUser` and its own comment says it depends on that order. A sort written into
+  the service reorders the consumer inbox too. It must be client-side — and it has to be anyway,
+  because `/api/chat/rooms` is portal-agnostic and takes **no team**, so the server does not know
+  which team the coach is standing in. The portal view already holds both halves.
+- **Q 8.1's "what rides on it: the deep links that open Details to a section" resolves to nothing
+  on a phone.** There is exactly **one** producer of `?section=player` in the repo — the roster's
+  "+ Add a position" prompt — and it lives in the desktop table, measuring **0×0 at 390**. Desktop
+  and the tablet band keep the form, so that prompt keeps landing where it always did.
+- **Stage 5's gate is clear.** The ladder's stage-5 row read "after §182 is walked"; **§182 walked
+  40/40 PASS on 2026-09-13**.
+- What holds: the roster is one screen (twelve rows, 46px pitch, first at y=179, last at y=687);
+  the switcher is a native select; the player's tabs are five and unchanged.
+
+### 11.2 The find that was not in the plan's questions
+
+**The UAT fixture's twelve players all have an empty record.** Read from the database: no date of
+birth, no positions marked Best or Never, no bats, no throws, no jersey size, on any of them; one
+has a pitching profile, and that one carries an innings cap with no rank.
+
+So **the Details tab measured at 2,111px with 21 sub-floor controls is the EMPTY one** — a real
+team's player renders more, not less. This is `COACH_TOUCH_TARGET_DEBT_PLAN.md`'s own warning
+running verbatim: *"an empty screen also hides RED … the recorded count is a FLOOR, not a total."*
+**Every before-number in this section is a floor.**
+
+It has two consequences the ruling has to carry:
+
+1. The read face **cannot be photographed on this fixture** — it would be eight dashes in a row.
+   Every "after" frame on the tab is therefore drawn with a **filled** record and says so.
+2. **A stage-5 QA walk needs one filled player seeded before it starts**, or it checks nothing.
+   This is the first build task, not the last (§11.7).
+
+The second find is **F4** itself: the walk measured the Details tab and stopped. Opening the other
+four found that **Family & paperwork is a form too** — Guardian contact and Safety are seven inputs
+at 35px with no record face at all, on the tab that answers station 8's own job statement.
+
+### 11.3 Measured before → after (390×844)
+
+| | Before (measured) | After (drawn) |
+|---|---|---|
+| The player page | 2,111px | ~1,200px |
+| The "Player" section | 1,312px — 62% of the page | ~360px |
+| Positions · Pitching · A-squad | 216 + 292 + 120 = **628px** | three rows |
+| Controls under 44px, Details | **21** (4 inputs 35 · 8 chips 30 · star 26 · 3 selects 37 · a 20px help button) | **0** on the face that lands |
+| The header | 100px (44 title + a 56px row holding one select) | **44px** |
+| The switcher | a 137×44 native select — tap, wheel, confirm | `‹ 4/12 ›`, two 44px elements, one tap |
+| Family & paperwork | 1,472px, 7 inputs at 35px + a 38px Upload | read face; `tel:` rows |
+| Chat: rooms from this team, first | **0 of 2** on the fixture (see §11.5) | this team's, then a divider |
+
+### 11.4 What it borrows — and what it deliberately does not
+
+Stage 5 invents nothing; there is no "knowingly a new idiom" paragraph as there was for stage 4's
+docked bar.
+
+| Borrowed | From | Standing |
+|---|---|---|
+| The record face | The player page's **own** non-writer view (§182, 13 Sep) | Shipped and walked 40/40. F1 widens its audience; it does not invent it. |
+| "Edit is a visit" | The practice record's *Edit the plan* (practices stage 6) | Settled — never stored, never in the URL, false on every load, and focus moved by hand to the first writable field because the door unmounts under the pointer. |
+| The stepper | The lineup builder's pinned inning stepper (stage 3 · D5) | Safe — §220 passed it. `.gdStepper` is 44px on both axes **as the element**, and `disabled` at each end. |
+| "4/12" | Stage 4's "3 of 12" kicker | Safe, and here it sits on a control that actually has ‹ ›. |
+| `tel:` rows | The roster's one stripping rule (13 Sep `/simplify`) | Settled. One helper, reused. |
+| **NOT** borrowed: "the row is the door" (stage 4 · E2) | — | A record row opens nothing. Deliberately not a door. |
+
+### 11.5 Two things stage 5 ran into that are NOT stage 5's to fix
+
+**(a) ⚠⚠ The portal's touch-target debt already has a file, a decision and an owner — and has never
+been started.** Stage 4 reported "no dialog footer anywhere in the portal has a phone tap floor" as
+a wider find wanting its own ruling; this stage hit the same class again (21 on one screen); a third
+session hit it the same day (35px form fields). **The honest framing is not "three sightings, rule
+it portal-wide" — it is already ruled portal-wide.** `COACH_TOUCH_TARGET_DEBT_PLAN.md` was raised
+2026-08-19, the owner decided its desktop half that day (the floor stops at the last touch width),
+and the touch half was left open with a suggested, unapproved order. Its status still reads **"named,
+not started."**
+
+So the live decision is **whether that project starts, and whether People goes first.** Counted from
+the current baseline: **422 accepted sub-floor entries across 87 screens, 120 of them on station 8's
+four screens** (player 42, roster 37, depth chart 35, family 6) — **28% of the portal's entire touch
+debt on one station.**
+
+⚠ **And this is what makes it a decision rather than a coincidence.** F1 and F4 move roughly twenty
+of those entries *behind an Edit control*. The sweep visits a screen as it lands, so they would
+**leave the baseline** — which is precisely what the debt file forbids: *"do not close this by
+bulk-writing reasons … that converts a visible problem into an invisible decision."* Hiding them
+behind a visit is the same move wearing a nicer hat. The gate that answers it is cheap and is
+written into §11.7: **a new sweep screen per edit state**, so every one of those controls is still
+measured, in the state a coach actually meets it.
+
+**(b) The Chat tab renders for a team whose plan has no team chat.** The tab gates on a per-coach
+capability (`staffChat`, derived from the staff assignment, default true); whether the room exists
+gates on the **org plan** (`coach_peer_chat` — Club rank, or the standalone Premium grant). Below
+Club those disagree, so a coach opens Chat under their own team and is shown only **other clubs'**
+rooms. On the UAT fixture (`uat-test-org`, Tournament Plus) that is exactly what happens: two rooms,
+both other workspaces', **none** this team's. A gating call, not a phone one — recorded here, not
+fixed here. **It also means F3 cannot be QA-walked on today's fixture.**
+
+### 11.6 Open at build, named rather than guessed
+
+- **Which face a coach WITHOUT roster-write meets on a phone.** They already see the record — so do
+  they see the section's Edit at all? My answer is no, and the "only the head coach can edit a
+  player's record" line stays. Confirm against an assistant fixture rather than reasoning about it;
+  say which in §11.8.
+- **Whether the read face keeps the four glance tiles above it.** They are doors to other tabs and
+  this stage does not touch them — but a record under a card of facts is two records on one screen,
+  and only a filled player will show whether that reads as one thing or two.
+- **The stepper's order versus the depth chart's.** Both are "the coach's own order" because they are
+  the same array, but a player opened from the depth chart was not walked. At 390 the depth chart is
+  1,121px with 3 sub-floor controls, so it is not a phone problem; the ordering question is still real.
+- **What a `CoachPageSection` action slot is called and how it differs from `meta`.** `meta` holds
+  FACTS today ("92% · 13 recorded"). Putting a button in the fact slot is how a shared component
+  quietly becomes two things.
+
+### 11.7 Verification at build
+
+- ⚠ **Seed a filled player FIRST** — date of birth, Best and Never positions, a pitching profile
+  *with a rank*, bats, throws, jersey size, a guardian with a phone and an email, a medical note.
+  Without it the read face cannot be seen, the sweep re-measures the same empty screen and the walk
+  checks nothing. **First task, not last.**
+- **Unit:** a source guard for the read face's field list **including Never positions**; that Edit is
+  neither stored nor in the URL; that the stepper walks the **active** list and asks the
+  unsaved-changes question; that the chat sort lives in the view and **not** in `listRoomsForUser`
+  (assert the service is untouched — that is the one that would move the consumer inbox).
+- **`check:layout --only=`** with **new sweep screens for each edit state** (the player's and the
+  family tab's) at 361 / 390 / 768 / 1440, plus the two read faces and the roster with the call-up
+  shelf open. ⚠ The edit-state screens are the load-bearing half — see §11.5(a). ⚠ Scope with
+  `--only=`; a `components/coaches/*` or stylesheet diff widens `--changed` to every coach screen and
+  aborts on the memory floor.
+- **A hit-test, not a look,** on both stepper arrows at 390 and 360, under **touch** as well as
+  mouse, at rest and scrolled. ⚠ Assert on the **state** (which player the URL names), never on
+  whether an element appeared.
+- ⚠ **The sweep measures an element's OWN rect.** Each arrow must BE 44px — not a small element
+  wearing a 44px `::after`. The roster row is the live example of the trap: hit-tested it opens the
+  player under mouse and touch, and all twelve are in the baseline as 22px.
+- **Driven by hand at 390 and 360:** walk all twelve players with the arrows without returning to
+  the roster once; open Edit, type, press an arrow, confirm the question is asked; reload on the edit
+  state and confirm you land on the record.
+- **`check:css-selectors` BEFORE calling it done** — F1 and F4 stop rendering a large block of form
+  markup at ≤640, and a stale rule outlives the code it described.
+- A **"QA walk · 5"** tab on the hub at build time, its § from the ledger. ⚠ It cannot hold a
+  checkable step for F3 until §11.5(b) is answered or a Club-tier fixture exists — write that into the
+  walk rather than leaving a step permanently unticked.
+
+### 11.8 Built as
+
+*(owed — this stage is drawn, not ruled.)*

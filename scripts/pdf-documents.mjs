@@ -1041,7 +1041,7 @@ export async function buildDocuments() {
   // them, a written next step — and the full dated log only as an appendix.
   const HANDOUT = {
     playerName: 'Maya Chen', playerNumber: '#7', teamName: TEAM, seasonLabel: SEASON,
-    preparedLine: 'Prepared Sep 11, 2026 · Coach Jordan',
+    preparedLine: 'Prepared Sep 11, 2026',
     goals: [
       { focusArea: 'Throw with a settled base', success: 'A settled setup that repeats without a reminder during the partner drill.' },
     ],
@@ -1081,7 +1081,7 @@ export async function buildDocuments() {
       // A player with nothing chosen yet — the shape a brand-new roster prints.
       ['nothing-recorded', (name, settings) => downloadDevelopmentSummary(name, {
         playerName: 'Declan O’Shaughnessy', playerNumber: '#22', teamName: TEAM, seasonLabel: SEASON,
-        preparedLine: 'Prepared Sep 11, 2026 · Coach Jordan',
+        preparedLine: 'Prepared Sep 11, 2026',
         goals: [], observations: [], results: [], nextStep: null, nextReviewOn: null, log: null, settings,
       })],
     ],

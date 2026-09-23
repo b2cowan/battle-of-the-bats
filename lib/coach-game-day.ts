@@ -381,6 +381,8 @@ export function validateQuietScoreWrite(input: {
 export const gameDayPeriodKey = (eventId: string) => `fl.game-day.period.${eventId}`;
 /** "Skip lineup — just score & attendance" for this game, chosen at the no-lineup fallback. */
 export const gameDaySkipLineupKey = (eventId: string) => `fl.game-day.skip-lineup.${eventId}`;
-/** P3 — whether the coach has switched OFF "screen staying on" for this game. Default is on;
- *  the preference is per-game and per-tab, like every other console UI preference. */
-export const gameDayAwakeKey = (eventId: string) => `fl.game-day.awake.${eventId}`;
+/* ⚠ `gameDayAwakeKey` is GONE (owner ruling 2026-09-22, console re-draw · G4). It stored whether
+   a coach had switched OFF "screen staying on" for a game; the switch itself was retired with
+   the chip, so nothing reads or writes the key. The behaviour it guarded survives — the console
+   still holds the screen awake through the live window — it simply no longer asks. The stale
+   values are harmless: the key lived in sessionStorage, which dies with the tab. */

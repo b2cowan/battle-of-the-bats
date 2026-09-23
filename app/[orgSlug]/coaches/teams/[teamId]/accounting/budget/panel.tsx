@@ -2,7 +2,12 @@
 import { useState, useEffect, useCallback, useMemo, useRef, use, Fragment } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { BarChart3, Plus, X, ChevronDown, ChevronRight, AlertTriangle, Settings2 } from 'lucide-react';
+import {
+  BarChart3, Plus, X, ChevronDown, ChevronRight, AlertTriangle, Settings2,
+  MoreHorizontal, ChevronsDownUp, ChevronsUpDown,
+} from 'lucide-react';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import BudgetItemPicker from '@/components/accounting/BudgetItemPicker';
@@ -1353,6 +1358,15 @@ export function BudgetPlanPanel({
   const { assignments, loading: ctxLoading } = useCoaches();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const router = useRouter();
+  /* ⚠ A HOOK, NOT A MEDIA QUERY, AND ONLY BECAUSE THE STYLESHEET CANNOT DO THIS ONE (Money phone
+     walk · M2, 2026-09-22). The toolbar's two forms of the desk actions are different STRUCTURE —
+     buttons in a row versus a menu whose rows are its children — so rendering both and hiding one
+     would put the same labels in the DOM twice and hand a screen reader two of each. This panel
+     paints its toolbar only after its own fetch resolves, on the client, so the hook's server-false
+     start is never painted. ⚠ It sits UP HERE with the rest of the hooks: the toolbar is built
+     below several early returns, and a hook called there runs in a different order on a loading
+     render than on a loaded one. */
+  const isPhone = useIsPhone();
   /** The Player installments row's door on both views (owner ruling F, 2026-09-13). */
   const duesHref = moneySectionHref(base, 'dues', undefined);
 
@@ -2967,31 +2981,76 @@ export function BudgetPlanPanel({
   // was outlined while New Fundraiser one tab away was filled — the same job, two weights.
   const addLineButton = moneyCanWrite ? (
     <>
+      {/* ⚠⚠ THIS CREATE KEEPS ITS WORDS ON A PHONE, AND THAT IS A REVERSAL MADE ON THE BUILT
+          SCREEN (Money phone walk · M2, 2026-09-22). It was built as a bare lime "+" — the
+          Schedule's phone create, 109px down to 44px, and the last 65px that let this toolbar hold
+          ONE row. Then the screenshot showed why it cannot be: the Money hub's PAGE HEADER already
+          collapses *Record money* to a bare lime "+" on a phone, so Budget Plan drew two identical
+          lime squares, 90px apart, meaning "record a payment" and "add a budget line". A coach
+          cannot tell those apart by looking, and the two flows are nothing like each other.
+          ⚠ The rule that settles it is the portal's own "one name, one weight", read the other way
+          round: it forbids one job wearing two weights, and it equally forbids two jobs wearing
+          one glyph. The header owns the bare lime "+" on this hub. This one says what it does.
+          ⚠ COST, STATED: the toolbar is two rows at 390 (96px) instead of one (44px). Still down
+          from 148px, and the first budget line still clears the bottom bar by 80px. Worth it.
+          ⚠ Do not "finish the job" by re-collapsing this without first moving or re-weighting the
+          header's create — that is a Money-hub header decision, not this toolbar's. */}
       <button type="button" className={shared.btnPrimary} onClick={openAdd}>
         <Plus size={15} aria-hidden /> Add Line
       </button>
-      {/* ⚠⚠ THE ONE DOOR TO A TEAM'S OWN VOCABULARY, AND IT LIVES HERE ON PURPOSE (Money form P2,
-          2026-08-16). Migration 246 made a word's side part of what it is and the picker filters by
-          it, so "I put it on the wrong side" needs an answer somewhere. The Budget Plan is where a
-          word first becomes a row a coach reads, it is the screen the money redesign leaves
-          untouched through P3 and P4, and the shape already exists one tab over — Transactions
-          carries "Manage tags" beside its own create, for exactly the same reason. Team Settings was
-          considered and refused: these are budget content a coach writes while working, not
-          configuration.
-          ⚠ NOT GATED on the team owning anything (owner ruling Q2, 2026-09-09): the dialog adds
-          as well as renames, so the coach with nothing yet is the one who needs it. ⚠ The tooltip
-          no longer offers to "move it to the other side" — that control was retracted 2026-08-17
-          and the sentence outlived it here for three weeks. */}
-      <button
-        type="button"
-        className={shared.btnSecondary}
-        onClick={() => setItemManagerOpen(true)}
-        title="Rename, add or remove your team's own categories and items"
-      >
-        <Settings2 size={15} aria-hidden /> {MANAGE_DOOR_LABEL}
-      </button>
     </>
   ) : null;
+
+  /**
+   * ⚠⚠ THE DESK ACTIONS — the control-row members that are NOT a lens and NOT the create, written
+   * ONCE and drawn two ways (Money phone walk · M2, owner 2026-09-22). Above 640 they are buttons
+   * in the row exactly as they have always been; at ≤640 they are rows in a "⋯" drawer. One list,
+   * so neither presentation can gain a member the other does not have and no label is written
+   * twice — the shape stage 4 settled for the practice plan's toolbar, from the identical 148px.
+   *
+   * ⚠ EXPORT IS DELIBERATELY NOT IN HERE. It is already icon-only at 45px (the portal's one export
+   * control decides that for itself), so it costs the row almost nothing — and its dialog is a
+   * child of its own trigger, which the menu unmounts on pick. Moving it would mean hoisting
+   * controlled open-state into a component seven Money tabs, Roster and Schedule all share, to buy
+   * 45px. It stays on the row at every width.
+   *
+   * ⚠ AND THE LENSES STAY ON THE ROW TOO — View, Columns and When change what the screen IS, and a
+   * lens a coach cannot see is a screen they cannot explain.
+   */
+  const deskActions: {
+    key: string; label: string; icon: React.ReactNode; title?: string; onSelect: () => void;
+  }[] = [];
+  if (foldAll.keys.length > 0) {
+    deskActions.push({
+      key: 'fold',
+      label: foldAll.allClosed ? 'Expand all' : 'Collapse all',
+      icon: foldAll.allClosed ? <ChevronsUpDown size={15} aria-hidden /> : <ChevronsDownUp size={15} aria-hidden />,
+      onSelect: foldAll.toggle,
+    });
+  }
+  if (moneyCanWrite) {
+    /* ⚠⚠ THE ONE DOOR TO A TEAM'S OWN VOCABULARY, AND IT LIVES HERE ON PURPOSE (Money form P2,
+       2026-08-16). Migration 246 made a word's side part of what it is and the picker filters by
+       it, so "I put it on the wrong side" needs an answer somewhere. The Budget Plan is where a
+       word first becomes a row a coach reads, it is the screen the money redesign leaves untouched
+       through P3 and P4, and the shape already exists one tab over — Transactions carries "Manage
+       tags" beside its own create, for exactly the same reason. Team Settings was considered and
+       refused: these are budget content a coach writes while working, not configuration.
+       ⚠ NOT GATED on the team owning anything (owner ruling Q2, 2026-09-09): the dialog adds as
+       well as renames, so the coach with nothing yet is the one who needs it. ⚠ The tooltip no
+       longer offers to "move it to the other side" — that control was retracted 2026-08-17 and the
+       sentence outlived it here for three weeks.
+       ⚠ AT 235px IT WAS THE WIDEST CONTROL ON THE ROW and the single reason the toolbar wrapped to
+       a third line at 390 (M2, measured). It is a writing tool, not a field tool; a drawer is the
+       right distance for it on a phone. It has NOT moved on the desk. */
+    deskActions.push({
+      key: 'manage',
+      label: MANAGE_DOOR_LABEL,
+      icon: <Settings2 size={15} aria-hidden />,
+      title: "Rename, add or remove your team's own categories and items",
+      onSelect: () => setItemManagerOpen(true),
+    });
+  }
 
   /**
    * The plan as it stands, built at click time — grouped exactly as the screen is grouped, in
@@ -3119,6 +3178,33 @@ export function BudgetPlanPanel({
                 label: PLAN_LADDER_LABEL.totalRevenue,
                 figure: fmt(seasonRevenue),
                 tone: 'good',
+                /* The phone form (M1, 2026-09-22). What goes is the WRITTEN-OFF CLAUSE — it is the
+                   Player Dues tab's own Dues caption one tab over, stated there with the figure it
+                   belongs to. What stays is the DOOR: a coach with no dues set still has the only
+                   control on this screen that sets them, because M1 does not remove controls, it
+                   moves reading matter. ⚠ The words are the desk caption's, trimmed — not a
+                   rewrite. "Player installments" is what this figure is called on the table below
+                   and in the Statement; a shorter synonym would be a second name for one row. */
+                /* ⚠ MEASURED TO ONE LINE, NOT TRIMMED BY EYE. A two-up tile at 390 gives the
+                   caption a 154px box, which is about 24 characters at the support step — so
+                   "Includes player installments" (28) took two lines and dragged the whole grid
+                   row with it. "Player installments" is still the row's name on the table below;
+                   what goes is the word "player", which the tile's own tab already is. */
+                captionShort: periodView.installments ? (
+                  <>{duesDraft ? 'Installments (draft)' : 'Includes installments'}</>
+                ) : (
+                  <>
+                    Player dues not set
+                    {moneyCanWrite && allLines.length > 0 && (
+                      <>
+                        {' · '}
+                        <button type="button" className={styles.ladderLink} onClick={() => setGenOpen(true)}>
+                          set dues
+                        </button>
+                      </>
+                    )}
+                  </>
+                ),
                 caption: periodView.installments ? (
                   <>
                     Includes player installments
@@ -3142,6 +3228,35 @@ export function BudgetPlanPanel({
                 key: 'expenses',
                 label: PLAN_LADDER_LABEL.totalExpenses,
                 figure: fmt(seasonExpenses),
+                /* ⚠⚠ THE PHONE FORM DROPS THE FIGURE THE NOTE BELOW ALREADY SHOUTS. Measured at
+                   390 the desk caption ran 60 characters onto two lines — "Your estimate —
+                   $14,186.00 itemized is $1,186.00 over · Edit" — while the status note 200px
+                   under it opened "Over your estimate by $1,186.00". The same fact, twice, on one
+                   screen, because the caption grew into a sentence and the note was never re-read
+                   against it. On a phone the note keeps it and the caption names the relationship
+                   only; the itemized total survives on the desk, where there is room for both.
+                   ⚠ THE EDIT DOOR IS NOT READING MATTER and stays at both widths — it is the only
+                   way to change the estimate from this screen. */
+                captionShort: (
+                  <span className={totals.overPlanned ? styles.planCapBad : undefined}>
+                    {/* ⚠ "Over" SURVIVES IN WORDS, not just in red ink. The caption is already
+                        inked with `planCapBad` when the lines outgrow the estimate, but colour
+                        alone is not a statement — and the note below it, which says the same
+                        thing at length, is not guaranteed to be the status showing. Twenty-five
+                        characters with the door on the end, measured to one line at 390. */}
+                    {seasonTotal != null
+                      ? <>{totals.overPlanned ? 'Over your estimate' : 'Your estimate'}</>
+                      : <>{totals.costLineCount} line{totals.costLineCount === 1 ? '' : 's'}</>}
+                    {moneyCanWrite && !editingSeason && (
+                      <>
+                        {' · '}
+                        <button type="button" className={styles.ladderLink} onClick={openEstimateEditor}>
+                          {seasonTotal != null ? 'Edit' : 'Set a total'}
+                        </button>
+                      </>
+                    )}
+                  </span>
+                ),
                 caption: seasonTotal != null ? (
                   <span className={totals.overPlanned ? styles.planCapBad : undefined}>
                     {totals.overPlanned
@@ -3180,6 +3295,16 @@ export function BudgetPlanPanel({
                 label: PLAN_LADDER_LABEL.closingBalance,
                 figure: fmtSigned(balance.seasonClosing),
                 tone: balance.seasonClosing < -0.005 ? 'danger' : 'plain',
+                /* The phone form keeps the OPENING — the one thing a closing balance cannot be read
+                   without — and drops the three "what else is in here" clauses. Each of those is
+                   stated where it can be acted on rather than merely noted: the undated amounts by
+                   the note under the table that exists to explain them, the expense preview by the
+                   preview's own controls, the draft schedule by the dues tab. ⚠ This is the tile
+                   that takes the full-width seat when the band goes two-up (M1a), so it has the
+                   most room of the three and still needs the least. */
+                captionShort: balance.openingUnset
+                  ? 'No opening balance set'
+                  : <>From {fmtSigned(balance.seasonOpening)} opening</>,
                 caption: (
                   <>
                     {balance.openingUnset
@@ -3251,8 +3376,41 @@ export function BudgetPlanPanel({
                    no band was added to the page. When the plan is EMPTY this row does not render
                    at all and the first-run card carries the doors, import included, at 390px. */
                 <>
+                  {/* ⚠ THE "⋯" JOINS THE DOING, NOT THE LENSES (M2, measured). It first sat with
+                      the View and When pills, which split the row as [lenses + ⋯] / [export +
+                      create] — the overflow of the actions filed with the controls that are not
+                      actions. Here the row reads lenses on the left, everything a coach DOES on
+                      the right, and it is also what makes one row possible: the actions group is
+                      laid out as a unit, so the four doing-controls pack together instead of the
+                      auto margin stranding two of them on a second line. */}
+                  {isPhone && deskActions.length > 0 && (
+                    <CoachToolbarMenu
+                      variant="glyph"
+                      drawerOnPhone
+                      drawerTitle="Budget plan"
+                      label="More for this budget"
+                      icon={<MoreHorizontal size={18} aria-hidden />}
+                    >
+                      {deskActions.map(a => (
+                        <CoachToolbarMenuItem key={a.key} icon={a.icon} label={a.label} onSelect={a.onSelect} />
+                      ))}
+                    </CoachToolbarMenu>
+                  )}
                   {planExport}
                   {addLineButton}
+                  {/* The vocabulary door keeps its desk seat beside the create (M2 moves nothing
+                      above 640); at ≤640 the same entry is a row in the "⋯" drawer above. */}
+                  {!isPhone && deskActions.filter(a => a.key === 'manage').map(a => (
+                    <button
+                      key={a.key}
+                      type="button"
+                      className={shared.btnSecondary}
+                      title={a.title}
+                      onClick={a.onSelect}
+                    >
+                      {a.icon} {a.label}
+                    </button>
+                  ))}
                 </>
               )}
             >
@@ -3295,20 +3453,35 @@ export function BudgetPlanPanel({
                   onChange={next => changeWhenFilter(next as 'all' | 'undated' | 'dated')}
                 />
               )}
-              {/* Collapse all / Expand all (P3) — one ghost verb for the whole outline. It acts on
-                  the SECTION level (categories and the money-in sections); expanding also reopens
-                  any item folds, which is what "show me everything" means.
-                  ⚠ ON BOTH VIEWS since the §133 walk, acting on whichever outline is on screen —
-                  and only where there is something to fold, the same rule the month pager follows. */}
-              {foldAll.keys.length > 0 && (
+              {/* ── THE DESK ACTIONS, DRAWN FOR THIS WIDTH (M2, owner 2026-09-22) ──────────────
+                  `deskActions` above is the single list; only its presentation changes here.
+
+                  Above 640 this is byte-for-byte the row it has always been: Collapse all as the
+                  ghost verb (P3 — one verb for the whole outline, acting at the SECTION level on
+                  whichever view is on screen, and only where there is something to fold, the same
+                  rule the month pager follows), then the vocabulary door beside the create.
+
+                  At ≤640 every one of them is a row in the 44px "⋯" drawer over in `actions`, so
+                  nothing but the two lenses is drawn here. ⚠ That drawer is `drawerOnPhone`, not a
+                  popover: a menu of things to DO rises from the bottom bar at this width (settled
+                  portal-wide 2026-09-22), and the scrim that dismisses it renders inside the
+                  element the dismiss hook watches — a sibling scrim lets the dismissing tap fall
+                  through and press whatever was underneath, which a mouse never reproduces.
+
+                  ⚠ ONLY THE FOLD VERB IS A CHILD ON THE DESK. The vocabulary door has always sat
+                  in the ACTIONS slot beside the create, and M2 moves nothing above 640 — it is
+                  drawn from this same list, over there. Rendering it here would have quietly
+                  walked it from the right of the row to the left. */}
+              {!isPhone && deskActions.filter(a => a.key === 'fold').map(a => (
                 <button
+                  key={a.key}
                   type="button"
                   className={`${shared.btnGhost} ${styles.collapseAllBtn}`}
-                  onClick={foldAll.toggle}
+                  onClick={a.onSelect}
                 >
-                  {foldAll.allClosed ? 'Expand all' : 'Collapse all'}
+                  {a.label}
                 </button>
-              )}
+              ))}
             </CoachListToolbar>
           )}
 

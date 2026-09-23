@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { nameFromAccountMetadata } from './db';
 import { getTeamWorkspaceForOrg, isTeamWorkspaceOrg } from './team-workspace-entitlements';
 import { resolveBasicCoachTeamIdForWorkspace } from './basic-coach-teams';
 import { linkRepTeamToRegistration } from './rep-team-tournament-links';
@@ -72,19 +73,25 @@ async function resolveHost(org: Organization): Promise<ResolvedHost | null> {
   return { workspaceId: workspace.id, repTeamId: repTeam.id, teamName: repTeam.name, basicCoachTeamId, headCoach };
 }
 
-/** The workspace's primary owner: display name from the org membership (the staff sheet's source), email from auth. */
+/**
+ * The workspace's primary owner: the club's word for them if it has one, otherwise their own
+ * account name; email from auth.
+ *
+ * ⚠ This screen was the ONLY place that already knew to ask the account when the membership row is
+ * blank — everything else in the coach portal stopped at the membership and printed "a coach" for
+ * every head coach who created their own team. That ladder is now `getOrgMemberDisplayNames` /
+ * `resolveCoachUserIdentities`, and this reads the same helper rather than keeping a second copy of
+ * the rule that could drift from it.
+ */
 async function resolveHeadCoach(orgId: string, userId: string | null): Promise<ResolvedHost['headCoach']> {
   if (!userId) return { userId: null, name: null, email: null };
   const [{ data: member }, { data: authUser }] = await Promise.all([
     supabaseAdmin.from('organization_members').select('display_name').eq('organization_id', orgId).eq('user_id', userId).maybeSingle<{ display_name: string | null }>(),
     supabaseAdmin.auth.admin.getUserById(userId),
   ]);
-  const md = (authUser?.user?.user_metadata ?? {}) as Record<string, unknown>;
-  const pick = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : '');
-  const metaName = pick(md.full_name) || pick(md.display_name) || `${pick(md.first_name)} ${pick(md.last_name)}`.trim();
   return {
     userId,
-    name: member?.display_name?.trim() || metaName || null,
+    name: member?.display_name?.trim() || nameFromAccountMetadata(authUser?.user?.user_metadata) || null,
     email: authUser?.user?.email?.trim().toLowerCase() || null,
   };
 }

@@ -14,6 +14,7 @@ A staged re-shaping of the Premium Coaches Portal for phones. Not a redesign: ev
 - **Recording at practice is one tap per player.** A player is a row; the dialog offers Next player; the tally and Review stay docked above the bar.
 - **"Saved" stops sitting over the work.** It appears only while something is saving and fades a couple of seconds after it has; only a failed save stays, with its Retry. *(Revised 2026-09-20: drawn first as a word in the title row; on the desktop that word scrolled away with the row.)*
 - **The field is readable at arm's length.** The console's positions and counts come up to body and support sizes.
+- **A player opens as a record, not a form.** On a phone the player's Details tab shows what you set — number, positions, pitching, bats and throws — as plain lines you can read at the fence, with an **Edit** button on the section when you want to change something. It is the same face a coach without editing rights has seen since September; this gives it to the head coach too. Walking the roster becomes two arrows and a "4 of 12" instead of a spinning dropdown, and the row that dropdown sat on disappears. The chat list puts your own team's rooms first. *(Drawn 2026-09-22 — F1–F4 on the hub's "5 · People" tab; ruling owed. One addition the plan never asked for: **Family & paperwork** is the other tab that opens as a form, and it is the one that answers "who do I call?" — as a record, a guardian's phone number becomes a number you tap.)*
 - **Tables that fit stay tables.** The attendance report is twelve rows, not twelve stacked cards.
 
 ## Why it matters
@@ -28,7 +29,8 @@ No new differences. An assistant sees fewer doors in the sheet (the same gating 
 ## Trade-offs
 - Two arrangements per screen where the phone diverges (rows vs tiles; folded vs open setup). Kept to the container so copy and data have one source.
 - The bottom bar's four tabs stay. The owner may swap Roster for a season tool after stage 2 if the sheet does not settle it — the question is on the hub (Q 0.2) with a recommendation to keep.
-- Stage 5 (the player's read face) waits for the roster and player page walk (§182).
+- Stage 5's gate is clear — the roster and player page walk (§182) passed 40/40 on 13 September. Its own trade-off is a real one: a head coach who opens a player to change a jersey number now taps **Edit** first. The station's job is three reads, so the trade looks right, and it is the part of that stage to push on.
+- ⚠ **The test fixture's players all have blank records**, so the phone measurements on the player page are a floor rather than a total, and the People stage cannot be QA-walked until one fully filled player is seeded. Named on the hub rather than worked around.
 
 ## Sequence
 Stage 0 first (the shell — cheap, and it lifts every other screen); then the first screen and the Schedule, which are the roads to everything; then game week, practice week, people, reports. Each stage is drawn on the hub at true size, ruled by the owner, built, reviewed and walked before the next begins. **Open the hub's stage tab on an actual phone** — the frames are true size and that is the only test that settles a tap target or a type size.

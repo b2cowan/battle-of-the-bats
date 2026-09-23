@@ -738,7 +738,6 @@ export default function CoachesSchedulePage({
   // on the panel and returns to the opener. Declaring modal without this told a screen reader the
   // page behind was inert while keyboard focus could still wander into it.
   const slideOverRef = useRef<HTMLDivElement | null>(null);
-  useDialogFloor(!!selectedEvent, slideOverRef, { onClose: () => { void requestCloseSlideOver(); } });
   // Mobile month view: a tapped day with >1 event opens this bottom-sheet day list (a single
   // event opens its detail directly). Desktop keeps the in-cell text chips, so this stays null.
   const [daySheet, setDaySheet] = useState<{ dateKey: string; events: RepTeamEvent[] } | null>(null);
@@ -812,6 +811,22 @@ export default function CoachesSchedulePage({
   const { openHelp } = useHelpDrawer();
 
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
+
+  /**
+   * THE OPEN GAME IS A PLACE (owner, 2026-09-22 — "browser back skips the game"). The sheet's
+   * floor now names its ADDRESS: the same `?event=…&tab=…` this page already reopens a game from
+   * (the deep link below), and already hands the lineup builder as its way back. Every door out
+   * of the sheet leads to another PAGE — the builder, Game day, Run practice, a player — and the
+   * level the sheet stood on carried no place, so Back out of one of them stepped over it onto
+   * the bare schedule and the coach lost the game they came from. With the address on it, Back
+   * lands on the game, on the tab they were reading, and a reload keeps it open. `useBackStep`
+   * writes it silently and takes it away again when the sheet is CLOSED, so a live address
+   * always means a sheet is open.
+   * ⚠ The RAW `slideTab`, not the resolved `activeSlideTab` — the fallback for a coach whose
+   * grants open no such tab belongs to the read, and it runs again on the way back in.
+   */
+  const sheetAddress = selectedEvent ? `${base}/schedule?event=${selectedEvent.id}&tab=${slideTab}` : null;
+  useDialogFloor(!!selectedEvent, slideOverRef, { onClose: () => { void requestCloseSlideOver(); }, address: sheetAddress });
 
   // Which SEASON is on screen — the team's LIVE one, always. `page.capabilities` are that
   // season's. ⚠ `page.canWrite()` is GONE (2026-08-18): it folded read-only into every write
@@ -1099,6 +1114,22 @@ export default function CoachesSchedulePage({
       // event turns out to have no Scouting tab — or this coach holds no tab on it at all —
       // activeSlideTab falls back to the first tab they do hold, or to none.
       if (sp.get('tab') === 'scouting') setSlideTab('scouting');
+      // ⚠ THE ADDRESS BELONGS TO THE SHEET, NOT TO THE PAGE UNDER IT. A commit from now the
+      // sheet's floor puts `?event=…` on an entry of its OWN (`sheetAddress`), and gives it back
+      // when the coach closes the game. This entry — the one the link, the builder's arrow or a
+      // reload landed on — hands the query over now, so closing the game leaves a plain schedule
+      // behind instead of an address naming a game that is no longer open (which a reload would
+      // then re-open). Silent by construction: the state carries Next's internals, so its patched
+      // `replaceState` passes it straight to the browser. Any OTHER param on the address is
+      // untouched — `?add=practice` is read by its own effect, which runs after this one.
+      // ⚠ THE ORDER IS NOT A COINCIDENCE AND DOES NOT DEPEND ON WHERE THE HOOKS SIT. Opening the
+      // sheet is a state change, so its floor cannot push its entry until the NEXT commit — this
+      // hand-off has always happened a full commit earlier, which is what lets the step read a
+      // plain schedule as the view it must revert to when the coach closes the game.
+      sp.delete('event');
+      sp.delete('tab');
+      const rest = sp.toString();
+      window.history.replaceState(window.history.state, '', `${window.location.pathname}${rest ? `?${rest}` : ''}`);
     } catch { /* ignore malformed params */ }
   }, [loading, events]);
 
@@ -1212,9 +1243,9 @@ export default function CoachesSchedulePage({
         }
         const data: {
           players?: RepRosterPlayer[];
+          callUps?: RepRosterPlayer[];
           attendance?: RepTeamEventAttendance[];
           lineup?: RepTeamLineup | null;
-          callUps?: RepRosterPlayer[];
           entries?: RepTeamLineupEntry[];
           programYear?: RepProgramYear | null;
         } = await res.json();

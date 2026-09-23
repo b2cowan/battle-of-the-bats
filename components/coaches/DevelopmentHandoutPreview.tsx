@@ -58,15 +58,66 @@ import css from './DevelopmentHandoutPreview.module.css';
 interface HandoutData {
   showGoals: boolean;
   showMeasurables: boolean;
+  // ⚠ READING A SHELF AND BEING ABLE TO FILL IT ARE DIFFERENT GRANTS, and the handout now needs
+  // both: `showGoals`/`showMeasurables` decide whether an empty shelf is DRAWN, these two decide
+  // whether its line may invite the coach to add something. Goals AND observations write on
+  // `canWriteGoals` (the grant WITH Internal notes); results write on `canWrite`. An assistant can
+  // hold Internal notes without the Development grant — they read every goal on this screen and
+  // can add none of them.
+  canWrite: boolean;
+  canWriteGoals: boolean;
   types: RepTeamMeasurableType[];
   measurables: RepPlayerMeasurable[];
   goals: RepPlayerDevelopmentGoal[];
   observations: RepPlayerObservation[];
-  authors: Record<string, string>;
-  viewerId: string | null;
+  // ⚠ No `authors` / `viewerId`. The route still returns both — the development screens attribute
+  // every record — but the handout names nobody, so it does not read them. See `preparedLine`.
 }
 
 const resultKey = (typeId: string, rowKey: string) => `${typeId}|${rowKey}`;
+
+/**
+ * ═══ A SECTION THE PAPER CAN HOLD IS DRAWN EVEN WHEN IT IS EMPTY (owner ruling 2026-09-22) ═══
+ *
+ * The chooser used to render only the sections this player already had something in. A coach whose
+ * players carry test results and nothing else therefore read this column as *a handout IS a table
+ * of test times* — the goals and observation shelves were not hidden politely, they were invisible,
+ * and a goal written next week never reached the paper because nobody knew the paper had room for
+ * it. An empty shelf now keeps its heading and says what would fill it.
+ *
+ * ⚠ THE GATE IS PERMISSION, NOT EMPTINESS. A ghost is drawn only where this coach could actually
+ * print that shelf — `showGoals` for goals and observations, `showMeasurables` for results. An
+ * assistant without Internal notes gets results only, and advertising a goals shelf to them is a
+ * promise the server refuses. Gate a ghost on the same flag as the shelf it stands in for, always.
+ *
+ * ⚠⚠ AND THE INVITATION IS A SECOND, NARROWER GATE (review finding, 2026-09-22). The first draft
+ * ended every ghost line "— add one and it appears here", which reads as an instruction. Reading a
+ * shelf and filling it are different grants: `canViewDevelopmentGoals` is Internal notes alone,
+ * while writing a goal or an observation also needs the Development grant, and recording a result
+ * needs it too. So an assistant with notes but no Development grant was being told to add a goal
+ * the server would refuse. The invitation clause now rides on `canWriteGoals` / `canWrite`; without
+ * it the line states the fact and stops. **A "nothing here yet" line that names an action must be
+ * gated on the WRITE grant, never on the one that let the coach see the shelf.**
+ *
+ * ⚠ Three ghosts over a bare textarea is a shape this never draws: when NOTHING can be chosen the
+ * whole chooser is replaced by the empty state (`anythingToChoose`), which already has its door.
+ *
+ * ⚠ NO DOOR OUT OF HERE. Nothing on this screen is stored — not the ticks, not the typed next step
+ * — so an "add a goal →" link would silently discard the coach's work on the way out. The
+ * masthead's `?` carries the explanation (it opens the handout's OWN help answer); the ghost is
+ * only the sign that there is something to explain.
+ */
+function GhostGroup({ legend, line }: { legend: string; line: string }) {
+  return (
+    <fieldset className={`${css.group} ${css.ghost}`}>
+      <legend>{legend}</legend>
+      <p className={css.ghostLine}>
+        <span className={css.ghostBox} aria-hidden />
+        <span>{line}</span>
+      </p>
+    </fieldset>
+  );
+}
 
 export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }: { orgSlug: string; teamId: string; playerId: string }) {
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
@@ -140,13 +191,27 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
   const backTo = returnTo
     ? { href: returnTo, label: returnLabel(returnTo, base) ?? playerName }
     : { href: playerDevelopmentHref(base, playerId, { view: 'goals' }), label: playerName || 'Player' };
+  // ⚠ THE HANDOUT'S OWN ANSWER, not the Development section's first sub-topic (owner ruling
+  // 2026-09-22). Without `subtopicId` the masthead `?` opened on how the section is laid out, while
+  // the answer that lists every part of the paper sat eleven sub-topics further down — which is
+  // half the reason this screen read as unexplained. It is now the panel a coach lands on when a
+  // ghost shelf makes them ask what else a handout can hold.
+  //
+  // ⚠ SUBTOPIC ONLY — NEVER A `label` HERE. On a masthead-hosted page the request's `label` beats
+  // `helpLabel` and becomes the BUTTON's accessible name (`CoachPageHelpSlot` republishes it, and
+  // the `?` is named from the published request), so naming the sub-topic renamed the control to
+  // "Help: The development handout". Two consequences, both bad: this one page stops matching the
+  // portal's "Help: <section>" convention, and the rendered layout gate reports the button's
+  // long-accepted 34px geometry as two BRAND-NEW findings, because its baseline entries are keyed
+  // by that accessible name. The drawer still opens on the handout's answer — that is `subtopicId`'s
+  // job, not the label's.
   const header = (
     <CoachPageHeader
       icon={Printer}
       title="Preview development handout"
       backTo={backTo}
       helpLabel="Development"
-      help={{ module: 'coaches', sectionIds: ['premium-development'], fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
+      help={{ module: 'coaches', sectionIds: ['premium-development'], subtopicId: 'premium-development-handout', fullGuideHref: `/${orgSlug}/coaches/help#premium-development` }}
     />
   );
 
@@ -172,8 +237,21 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
     );
   }
 
-  const author = (id: string | null) => (id ? (data.authors[id] ?? 'a coach') : 'a coach');
-  const preparedLine = `Prepared ${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })} · ${author(data.viewerId)}`;
+  /**
+   * ⚠ THE DATE ONLY — THE HANDOUT NAMES NOBODY (owner ruling 2026-09-22).
+   *
+   * This line used to end "· <the coach>", resolved from the org membership's display name. That
+   * name is written on two paths only (accepting an invitation; an admin typing one on the members
+   * screen), so a head coach who signed up and created the team themselves never had one and the
+   * paper a family takes home read "Prepared … · a coach". The owner ruled out BOTH halves: not the
+   * blank word, and not the name either. A handout is the record of a player, not a signed
+   * document — the coach handing it over is standing right there.
+   *
+   * ⚠ Do not re-add a byline here. Naming the VIEWER is a different feature from naming an AUTHOR;
+   * the author lines (notes, observations, the session grid) are where a name belongs, and those
+   * now fall back to the person's own account name when the club holds no word for them.
+   */
+  const preparedLine = `Prepared ${new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}`;
   const chosenGoals = data.showGoals ? data.goals.filter(g => chosenGoalIds.has(g.id)) : [];
   const chosenObservations = data.showGoals ? observations.filter(o => chosenObservationIds.has(o.id)) : [];
   const chosenResults = data.showMeasurables
@@ -262,7 +340,10 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
             </div>
             <p className={css.chooseSub}>Current season · one player · nothing is stored or sent — a print of the record as of today.</p>
 
-            {data.showGoals && data.goals.length > 0 && (
+            {data.showGoals && (data.goals.length === 0 ? (
+              <GhostGroup legend="What we’re working on"
+                line={data.canWriteGoals ? 'No goal this season — add one and it appears here.' : 'No goal this season.'} />
+            ) : (
               <fieldset className={css.group}>
                 <legend>What we’re working on</legend>
                 {data.goals.map(g => (
@@ -275,9 +356,12 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
                   </label>
                 ))}
               </fieldset>
-            )}
+            ))}
 
-            {data.showGoals && observations.length > 0 && (
+            {data.showGoals && (observations.length === 0 ? (
+              <GhostGroup legend="A recent observation"
+                line={data.canWriteGoals ? 'No observation this season — record one and it appears here.' : 'No observation this season.'} />
+            ) : (
               <fieldset className={css.group}>
                 <legend>A recent observation</legend>
                 {/* Where the sentence goes (E8's push, G5): the sheet that wrote it said "on a handout
@@ -293,9 +377,12 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
                   </label>
                 ))}
               </fieldset>
-            )}
+            ))}
 
-            {data.showMeasurables && tests.length > 0 && (
+            {data.showMeasurables && (tests.length === 0 ? (
+              <GhostGroup legend="Selected test results"
+                line={data.canWrite ? 'No test result this season — record one and it appears here.' : 'No test result this season.'} />
+            ) : (
               <fieldset className={css.group}>
                 <legend>Selected test results</legend>
                 {tests.map(({ type, rows }) => {
@@ -324,7 +411,7 @@ export default function DevelopmentHandoutPreview({ orgSlug, teamId, playerId }:
                   );
                 })}
               </fieldset>
-            )}
+            ))}
 
             <label className={css.nextStep}>
               <span>Next step</span>

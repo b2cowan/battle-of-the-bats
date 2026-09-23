@@ -51,20 +51,57 @@
   background: rgba(var(--danger-rgb), 0.12);
   color: var(--danger);
 }
-.stepWord { flex: none; }
-/* The coverage figure ("8/9") — the grid heading's own figure; amber while a role is open, the
-   clash sentence in the pill's red. `--type-support` clears the field floor (A4). */
-.stepFact {
+/* ⚠⚠ THE TRAILING FACT READS WHOLE OR IT IS NOT THERE (owner, 2026-09-22, on a phone reading
+   "INNING 2 OF 6 · ⚠ 2 clas…": "if we can't fit this message I think the symbol is enough").
+   It used to ellipsis, and a FRAGMENT of a sentence is worse than no sentence — "2 clas…" says
+   nothing the red pill and the ⚠ have not already said, and it spends the width that made it
+   unreadable. The mechanism is the browser's own line breaking, never a measurement: this box
+   WRAPS and is exactly ONE LINE TALL with the overflow hidden, so a fact that no longer fits
+   beside the inning words drops to line 2 and is never painted — at every width, every font
+   scale and every period label, with no ResizeObserver and no number to guess.
+   `align-content: flex-start` holds line 1 at the top of that line; the pill centres the whole
+   box in its 44. The line is the type token plus its leading, so it follows the token. */
+.stepInner {
+  --step-line: calc(var(--type-support) + 4px);
+  flex: 0 1 auto;
   min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  align-content: flex-start;
+  justify-content: center;
+  column-gap: 4px;
+  row-gap: 0;
+  line-height: var(--step-line);
+  max-height: var(--step-line);
   overflow: hidden;
-  text-overflow: ellipsis;
+}
+.stepWord { flex: none; }
+/* The clash MARK — the half of the fact that never drops. 8px from the inning words (the pill's
+   own rhythm), 4 from the sentence it introduces. */
+.stepMark {
+  flex: none;
+  margin-inline-start: 4px;
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+/* The coverage figure ("8/9") — the grid heading's own figure; amber while a role is open, the
+   clash sentence in the pill's red. `--type-support` clears the field floor (A4). ⚠ `flex: none`
+   is load-bearing: a fact that can SHRINK squeezes itself illegible instead of dropping away. */
+.stepFact {
+  flex: none;
   font-size: var(--type-support);
   font-weight: 600;
   letter-spacing: 0;
   text-transform: none;
 }
+.stepWord + .stepFact { margin-inline-start: 4px; }
 .stepPill[data-state="open"] .stepFact { color: var(--warning); }
-.stepChev { font-family: inherit; font-size: var(--type-body); font-weight: 400; color: var(--text-tertiary); }
+/* ⚠ `flex: none` here is the SAME defect one seat over: the chevron had no flex of its own, so a
+   long fact shrank the door's own affordance to a sliver beside the ellipsis. It never shrinks. */
+.stepChev { flex: none; font-family: inherit; font-size: var(--type-body); font-weight: 400; color: var(--text-tertiary); }
 .stepPill[data-state="bad"] .stepChev { color: inherit; }
 
 /* The dots — a glance at the whole game: filled done · amber outline open · red a clash · a
@@ -151,9 +188,10 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-/* ⚰ `.callUpMark` lives in the shared coaches module (`coach.lineupCallUpMark`), not here. Two
-   rules for one mark had already drifted (letter-spacing 0.06 vs 0.05em, a tinted pill against bare
-   ink) — exactly what the `isCallUp`/`CALL_UP_LABEL` doc-block says this feature must not do. */
+/* ⚰ `.callUpMark` was DELETED here 2026-09-22 — the phone row now wears the shared
+   `coach.lineupCallUpMark`. Two rules for one mark had already drifted (letter-spacing 0.06 vs
+   0.05em, and one was a tinted pill while the other was bare ink), which is exactly what the
+   `isCallUp`/`CALL_UP_LABEL` doc-block says this feature must not do. */
 /* The neighbours — the previous and next inning's positions, read-only and dim. 12px is the
    field floor's minimum (A4): a looked-for value, not this one. */
 .neighbour {

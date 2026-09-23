@@ -316,7 +316,16 @@ export default function CoachOpponentCardPage({
 
   const canErase = (o: RepTeamOpponentObservation) =>
     data.isHeadCoach || (o.createdBy != null && o.createdBy === data.viewerId);
-  const manyAuthors = new Set(observations.map(o => o.createdByName ?? '?')).size > 1;
+  /**
+   * Name the authors only when there really is more than one — and ⚠ an author we cannot name is
+   * not evidence of a SECOND author. Counting the unknowns as one shared `'?'` made a solo coach's
+   * book flip the moment any row carried a name: rows are stamped with the writer's name at write
+   * time, that stamp used to come back null for a coach the club had never named, and once the name
+   * lookup started resolving them every NEW row got "— Rob Cowan" while the older ones stayed bare.
+   * One person's own book then read as though somebody else had written half of it. Unknowns are
+   * dropped instead, so the suffix appears only when two authors are actually known apart.
+   */
+  const manyAuthors = new Set(observations.map(o => o.createdByName).filter(Boolean)).size > 1;
 
   async function shareToStaffChat() {
     if (busyRef.current.share) return;

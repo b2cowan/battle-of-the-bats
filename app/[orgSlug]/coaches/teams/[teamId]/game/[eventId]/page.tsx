@@ -52,15 +52,20 @@ import { playerDisplayName, playerName, isCallUp, CALL_UP_LABEL } from '@/lib/co
 import { ATTENDANCE_WORD } from '@/lib/coach-schedule-vocab';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
-import { LINEUP_POSITIONS, type LineupSeedEntry } from '@/lib/lineup-grid';
+import { LINEUP_POSITIONS, type LineupPlayerRow, type LineupSeedEntry } from '@/lib/lineup-grid';
 import { ordinal } from '@/lib/playoff-bracket';
 import {
   applyBenchOrder, applyConsoleSwap, benchOrderIds, benchOrderStillSorted, benchStreakThrough,
-  consoleMode, deriveGameResult, gameDayAwakeKey, gameDayPeriodKey, gameDaySkipLineupKey,
+  consoleMode, deriveGameResult, gameDayPeriodKey, gameDaySkipLineupKey,
   toGameDayEventShape,
 } from '@/lib/coach-game-day';
 import { resolveLineupCaps, resolvePlayerPitcherCap } from '@/lib/lineup-caps';
 import { useScreenWakeLock } from '@/lib/hooks/useScreenWakeLock';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { useDismissable } from '@/lib/overlay-hooks';
+import { useBackStep } from '@/components/coaches/useBackStep';
+import LineupPositionSheet from '@/components/coaches/LineupPositionSheet';
+import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import { GAME_MOMENT_MAX, sortMomentsNewestFirst } from '@/lib/coach-game-moments';
 import { formatInOrgZone } from '@/lib/timezone';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
@@ -97,7 +102,7 @@ interface ConsoleData {
   headCoachName: string | null;
 }
 
-type SheetKind = null | 'score' | 'attendance' | 'grid' | 'book' | 'end' | 'moment';
+type SheetKind = null | 'score' | 'attendance' | 'book' | 'end' | 'moment';
 
 export default function CoachGameConsolePage({
   params: paramsPromise,
@@ -270,26 +275,19 @@ export default function CoachGameConsolePage({
     try { sessionStorage.setItem(gameDayPeriodKey(eventId), String(clamped)); } catch { /* UI pref only */ }
   };
 
-  // ── The screen stays on (P3, owner-ruled 2026-08-05) ──────────────────────────────────────
-  // Live window only, drive grants only, and never silent — the chip below says it out loud and
-  // switches it off in one tap. Read once at mount, the same way this screen reads the clock:
-  // no hydration risk, because nothing that depends on either renders until the fetch lands.
-  const [awakeSupported] = useState(() => typeof navigator !== 'undefined' && 'wakeLock' in navigator);
-  const [awake, setAwake] = useState(() => {
-    try { return sessionStorage.getItem(gameDayAwakeKey(eventId)) !== '0'; } catch { return true; }
-  });
-
-  // The policy lives HERE (live window, drive grant, coach's own switch); the hook only holds
+  // ── The screen stays on, silently (owner ruling 2026-09-22, console re-draw · G4) ──────────
+  // The policy still lives HERE — live window only, drive grants only — and the hook only holds
   // the lock. Review mode never keeps a screen awake, and neither does a helper's console.
-  useScreenWakeLock(awake && awakeSupported && live && !readOnlyViewer);
-
-  const toggleAwake = () => {
-    setAwake(prev => {
-      const next = !prev;
-      try { sessionStorage.setItem(gameDayAwakeKey(eventId), next ? '1' : '0'); } catch { /* UI pref only */ }
-      return next;
-    });
-  };
+  //
+  // ⚠ THE "SCREEN STAYING ON" CHIP IS GONE, and with it the 2026-08-05 rule that a screen which
+  // refuses to sleep must always say so. That rule was retired on its own merits, not for space:
+  // a wake lock defers the IDLE timeout and nothing else, so the power button still sleeps the
+  // handset, and the browser releases the lock the moment the tab hides (see the hook) — so a
+  // pocketed phone sleeps normally and nothing was ever trapped awake. The chip was a 44px
+  // button among 26px chips, which cost the chip row a second line on the most crowded screen in
+  // the portal. The honesty moved to the help article, where it answers the question a coach
+  // actually asks ("why does my screen keep turning off?").
+  useScreenWakeLock(live && !readOnlyViewer);
 
   // ── Lineup save (the builder's PUT, verbatim contract) ────────────────────────────────────
   const lineupPutBody = useCallback((currentRows: GridRow[]) => JSON.stringify({
@@ -670,6 +668,83 @@ export default function CoachGameConsolePage({
     return n;
   };
 
+  /**
+   * ── EDITING A POSITION IS THE BUILDER'S TAP (console re-draw · G1, owner 2026-09-22) ───────
+   * The pill beside a name is a real control now, on the field and on the bench alike, and it
+   * raises the SAME `LineupPositionSheet` the phone builder raises — one component, one grammar,
+   * so the two screens can never drift into different answers to "what does Casey play?".
+   *
+   * ⚠ Phone only, exactly as the builder gates it: the sheet is the fourth member of the phone's
+   * bottom-sheet system, and that system's positioning rules live entirely inside the nav's
+   * ≤900px block (`.sheetAnchor` in CoachesBottomNav.module.css). Rendered above that width it
+   * would lay out in the document flow. So ≤640 raises the sheet and wider widths get the
+   * builder's other control, a native `<select>` — which is what the desktop grid has always used.
+   */
+  const isPhone = useIsPhone();
+  const [positionFor, setPositionFor] = useState<string | null>(null);
+  /**
+   * ⚠ WHERE FOCUS GOES AFTER A PICK (/review 2026-09-22 — measured landing on `<body>`).
+   *
+   * Changing a position is the one edit that MOVES A ROW BETWEEN THE TWO GROUPS: give a benched
+   * player a position and they leave `benched.map()` for `onField.map()`. Those are different
+   * parents, so React unmounts the old control and mounts a new one — and the position sheet's
+   * focus-restore is holding the node that just died, so focus fell to the document body. For a
+   * keyboard or screen-reader coach that is being thrown to the top of the page after the most
+   * common edit on the screen; the same happens to the desktop `<select>`, which unmounts too.
+   *
+   * So the row asks for focus back BY PLAYER rather than by node. The ref is deliberately not
+   * state: this is a one-shot that must not cause a render of its own.
+   */
+  const refocusPlayerRef = useRef<string | null>(null);
+  useEffect(() => {
+    const playerId = refocusPlayerRef.current;
+    if (!playerId) return;
+    refocusPlayerRef.current = null;
+    document.querySelector<HTMLElement>(`[data-pos-for="${playerId}"]`)?.focus({ preventScroll: true });
+  });
+
+  /** One cell edit — the same shape the Full grid's select made, and one undo step. */
+  const setPositionAt = (playerId: string, code: string) => {
+    refocusPlayerRef.current = playerId;
+    mutateRows(rows.map(r => (r.playerId === playerId
+      ? { ...r, inningPositions: { ...r.inningPositions, [key]: code } }
+      : r)));
+  };
+  /** The sheet speaks `LineupPlayerRow` (the builder's shape); the console's row is a seed
+   *  entry. One adapter here beats teaching a shared component a second shape. */
+  const positionSheetRow: LineupPlayerRow | null = useMemo(() => {
+    if (!positionFor) return null;
+    const row = rows.find(r => r.playerId === positionFor);
+    const player = playerById.get(positionFor);
+    if (!row || !player) return null;
+    return {
+      player,
+      battingOrder: row.battingOrder != null ? String(row.battingOrder) : '',
+      starter: row.starter,
+      inningPositions: row.inningPositions,
+      notes: row.notes ?? '',
+    };
+  }, [positionFor, rows, playerById]);
+
+  /**
+   * The pinned stepper's dots — the builder's own read of each inning, on the console's own
+   * `analysis`. A clash is louder than an open role, which is louder than a finished inning;
+   * an inning nobody has touched stays quiet rather than reading as a problem.
+   */
+  const inningDots = useMemo(() => {
+    const assigned = new Set<number>();
+    for (const r of rows) {
+      for (const [k, v] of Object.entries(r.inningPositions)) if (v) assigned.add(Number(k));
+    }
+    const openBy = new Map(analysis.missingFieldPositions.map(m => [m.inning, m.positions]));
+    return Array.from({ length: inningCount }, (_, i) => {
+      const n = i + 1;
+      if (analysis.conflictInnings.has(n)) return 'clash' as const;
+      if (!assigned.has(n)) return 'untouched' as const;
+      return (openBy.get(n)?.length ? 'open' : 'done') as 'open' | 'done';
+    });
+  }, [rows, analysis, inningCount]);
+
   const selectingTarget = subInId !== null;
   const coveringAbsent = coverFor !== null;
   const boardInteractive = live && can.subs && rows.length > 0;
@@ -690,13 +765,65 @@ export default function CoachGameConsolePage({
     if (!boardInteractive || !selectingTarget) return;
     setPendingSwap({ inId: subInId!, outId: null, position: pos, fromPeriod: period });
   };
-  /** Any user-initiated sheet open abandons a half-made swap decision — the sheets are
-   *  deliberately non-modal, and two open decisions at once is how the wrong one gets tapped. */
-  const openSheet = (kind: SheetKind) => {
-    setSheet(kind);
+  /**
+   * THE ONE RULE: any user-initiated surface abandons a half-made swap decision. The sheets are
+   * deliberately non-modal, and two open decisions at once is how the wrong one gets tapped.
+   *
+   * ⚠ This is now a named function because the console re-draw added a SECOND way in (the
+   * position control on every row) and hand-rolled a partial copy of it — clearing `subInId` and
+   * `coverFor` but not `pendingSwap`. /review 2026-09-22 found both halves of that: a confirmed
+   * swap card survived behind the position sheet's scrim and came back live when the sheet
+   * closed, and on the desktop `<select>` nothing was cleared at all, so a hand-picked position
+   * was silently overwritten by the swap that was still pending behind it. One function, three
+   * call sites, no third copy.
+   */
+  const abandonSwap = () => {
     setPendingSwap(null);
     setSubInId(null);
     setCoverFor(null);
+  };
+  /**
+   * Open the position sheet for one player — a surface, so it abandons a swap like any other AND
+   * closes any open sheet. ⚠ The closing matters: `.gdSheet` is deliberately scrim-less so the
+   * board stays visible behind it, which also leaves the board's position pills TAPPABLE behind
+   * it. Without this, tapping a pill while (say) the score sheet was open left two surfaces up at
+   * once — the thing `openSheet`'s rule exists to prevent, arrived at from the other direction.
+   */
+  const beginPositionEdit = (playerId: string) => {
+    setSheet(null);
+    abandonSwap();
+    setPositionFor(playerId);
+  };
+  /**
+   * ── LEAVING A SHEET (owner from the phone, 2026-09-22: "I can't escape or click out of these
+   * modals, only the X allows me to leave") ──────────────────────────────────────────────────
+   *
+   * Every `.gdSheet` on this screen — score, Who's here, Note, the scouting book, the End-game
+   * wrap AND the substitution confirm — declared `role="dialog"` and offered exactly one way out.
+   * No Escape, no tap-away, and no phone Back either: §219 gave a history entry to every dialog
+   * FLOOR, and these six never had one, so Back walked out of the game entirely.
+   *
+   * They stay NON-MODAL by design — no scrim, the board readable behind them, because a bench
+   * decision is made while looking at the bench. So this is `useDismissable` (a pointer-down
+   * outside dismisses, Escape dismisses) plus `useBackStep`, rather than `useDialogFloor`, whose
+   * focus TRAP would contradict a surface you are meant to be able to look and tap past.
+   *
+   * ⚠ Both states are cleared together on purpose. They are supposed to be mutually exclusive,
+   * but nothing enforced it: with a sheet open you could still tap a bench row and then a field
+   * row, and the swap confirm would render ON TOP of the open sheet. Dismissing clears the
+   * overlay, whatever is in it.
+   */
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const swapRef = useRef<HTMLDivElement>(null);
+  const overlayOpen = sheet !== null || pendingSwap !== null;
+  const dismissOverlay = useCallback(() => { setSheet(null); setPendingSwap(null); }, []);
+  useDismissable(overlayOpen, [sheetRef, swapRef], dismissOverlay);
+  useBackStep(overlayOpen, dismissOverlay);
+
+  const openSheet = (kind: SheetKind) => {
+    setSheet(kind);
+    abandonSwap();
+    setPositionFor(null);
     // A failure from an earlier sitting must not greet the coach on a fresh open — it would
     // misattribute a save that already failed to a capture that hasn't happened yet.
     setMomentError('');
@@ -746,6 +873,48 @@ export default function CoachGameConsolePage({
   const callUpMarkFor = (playerId: string) =>
     (isCallUp(playerById.get(playerId)) ? <span className={styles.gdWarn}>{CALL_UP_LABEL}</span> : null);
 
+  /**
+   * The position, as a CONTROL — the builder's two, chosen by width (see `isPhone` above).
+   * Rendered on every board row, on the field and on the bench alike: on the bench it is also
+   * the one-tap way to send somebody in, which is why the row's own tap can stay the swap.
+   *
+   * `locked` is the honest inert form — no grant, outside the live window, or an absent player,
+   * who must not be put on the field from here. A locked position is a plain span rather than a
+   * disabled control, because a disabled-looking button on a row is the defect this screen just
+   * came out of.
+   */
+  const positionControl = (r: GridRow, locked = false) => {
+    const pos = r.inningPositions[key] ?? '';
+    const shown = pos || '—';
+    if (!boardInteractive || locked) {
+      return <span className={styles.gdPos} data-field-key>{shown}</span>;
+    }
+    const label = `${nameOf(r.playerId)}, ${periodLabel.toLowerCase()} ${period}`;
+    return isPhone ? (
+      <button
+        type="button"
+        className={styles.gdPosBtn}
+        data-field-key
+        data-pos-for={r.playerId}
+        aria-label={`${label} — currently ${pos || 'on the bench'}. Change it.`}
+        onClick={() => beginPositionEdit(r.playerId)}
+      >
+        {shown}
+      </button>
+    ) : (
+      <select
+        className={styles.gdPosSelect}
+        data-field-key
+        data-pos-for={r.playerId}
+        value={pos}
+        aria-label={label}
+        onChange={e => { abandonSwap(); setPositionAt(r.playerId, e.target.value); }}
+      >
+        {LINEUP_POSITIONS.map(p => <option key={p || 'blank'} value={p}>{p || '—'}</option>)}
+      </select>
+    );
+  };
+
   const attendingCount = (data?.players ?? []).filter(p => (att[p.id]?.status ?? 'unknown') !== 'absent').length;
   const outCount = (data?.players ?? []).filter(p => att[p.id]?.status === 'absent').length;
 
@@ -757,9 +926,16 @@ export default function CoachGameConsolePage({
     ?? deriveGameResult(teamScore, oppScore);
 
   // ── Render ────────────────────────────────────────────────────────────────────────────────
+  /** The recap's and the error state's way back — inside `.gdBar`, which the LIVE screen no
+   *  longer renders. The word is the destination now, not the page it happens to live on; at
+   *  phone width the stylesheet drops it and the accessible name carries the detail. */
   const backLink = (
-    <Link href={`${base}/schedule?event=${eventId}`} className={styles.gdBack}>
-      <ArrowLeft size={13} aria-hidden /> Schedule
+    <Link
+      href={`${base}/schedule?event=${eventId}`}
+      className={styles.gdBack}
+      aria-label="Back to this game on the schedule"
+    >
+      <ArrowLeft size={15} aria-hidden /> <span className={styles.gdBackWord}>Back</span>
     </Link>
   );
 
@@ -785,47 +961,45 @@ export default function CoachGameConsolePage({
     : event.name;
   const startLine = formatInOrgZone(event.startsAt, { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
 
-  const scoreBlock = (
-    <button
-      type="button"
-      className={styles.gdScore}
-      onClick={() => openSheet('score')}
-      aria-label="Open the score sheet"
-      disabled={!live && !ended}
-    >
-      <span className={styles.gdScoreLbl}>US — THEM</span>
-      <span className={styles.gdScoreVal}>
-        {teamScore ?? '–'}<span className={styles.gdScoreDash}> – </span>{oppScore ?? '–'}
-      </span>
-    </button>
-  );
-
+  /**
+   * ── THE AUTOSAVE WORD IS THE SHARED PILL (console re-draw, owner 2026-09-22) ───────────────
+   * This screen hand-rolled its own `.saveStatus` span and pinned it in the top strip, always
+   * visible — the home every other autosaving coach screen left on 2026-09-20. It was missed
+   * because the console was never added to `coach-save-pill-guard`'s list of surfaces; it is on
+   * that list now, so the next time this word moves, this screen moves with it.
+   *
+   * ⚠ Three honest states come from the component, and it must never lump dirty into saving.
+   * Two zones save here, so the pill reports whichever is working and retries whichever failed —
+   * a lineup error wins the retry because it is the one with edits queued behind it.
+   */
   const savePill = (can.subs || can.score) && live ? (
-    <span className={styles.saveStatus} aria-live="polite">
-      {(lineupError || scoreError)
-        ? (
-          <button
-            type="button"
-            className={styles.saveRetry}
-            onClick={() => { if (lineupError) void saveLineup(rows); else setScoreDirty(true); }}
-          >
-            Couldn’t save · Retry
-          </button>
-        )
-        : (lineupSaving || lineupDirty || scoreSaving || scoreDirty)
-          ? 'Saving…'
-          : <><Check size={12} aria-hidden /> Saved</>}
-    </span>
+    <SaveStatusPill
+      saving={lineupSaving || scoreSaving}
+      dirty={lineupDirty || scoreDirty}
+      error={lineupError || scoreError}
+      onRetry={() => { if (lineupError) void saveLineup(rows); else setScoreDirty(true); }}
+    />
   ) : null;
 
-  // Every sheet wears the same head; one definition instead of six hand-copies.
+  /**
+   * Every sheet wears the same head; one definition instead of six hand-copies — and the grab
+   * line rides with it, which is what makes these five DRAWERS and leaves the substitution
+   * confirm (whose head is inline, by itself) a card. Owner ruling 2026-09-22.
+   *
+   * The line is decorative: nothing here is draggable, and there are already four ways out
+   * (Escape, tap-away, the phone's Back, the X). It is the phone sheet system's signature, so a
+   * coach reads these as the same kind of surface as the position sheet and the More sheet.
+   */
   const sheetHead = (title: React.ReactNode) => (
-    <div className={styles.gdSheetHead}>
-      <b>{title}</b>
-      <button type="button" className={styles.gdSheetClose} onClick={() => setSheet(null)} aria-label="Close">
-        <X size={16} />
-      </button>
-    </div>
+    <>
+      <span className={styles.gdGrab} aria-hidden />
+      <div className={styles.gdSheetHead}>
+        <b>{title}</b>
+        <button type="button" className={styles.gdSheetClose} onClick={() => setSheet(null)} aria-label="Close">
+          <X size={16} />
+        </button>
+      </div>
+    </>
   );
 
   /**
@@ -864,8 +1038,19 @@ export default function CoachGameConsolePage({
 
   // The Scouting Book sheet (the rider's door) — ONE instance, rendered by both the live
   // console (header-name door) and the recap (capture door), so the two can never drift.
+  /**
+   * The drawers' scrim. Rendered for the five `sheet` surfaces and NOT for the substitution
+   * confirm, which is deliberately still a card over a board the coach is meant to read.
+   *
+   * ⚠ It is a SIBLING of the sheet, never a child or a pseudo-element of it — see `.gdScrim`
+   * for what happened when it was the latter. Being a sibling is also what keeps it "outside"
+   * for `useDismissable`, so a tap on it closes without needing a handler of its own, and the
+   * page underneath stays inert instead of taking the tap through a dimmed layer.
+   */
+  const drawerScrim = sheet !== null ? <div className={styles.gdScrim} aria-hidden /> : null;
+
   const bookSheet = sheet === 'book' && event.opponent ? (
-    <div className={styles.gdSheet} role="dialog" aria-label={`Your book on ${event.opponent}`}>
+    <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label={`Your book on ${event.opponent}`}>
       {sheetHead(`${event.opponent} — your book`)}
       <OpponentScoutingPanel
         orgSlug={orgSlug} teamId={teamId} eventId={eventId}
@@ -890,7 +1075,7 @@ export default function CoachGameConsolePage({
             <div className={styles.gdMatch}>
               {opponentDoor ? (
                 <button type="button" className={styles.gdOppDoor} onClick={() => setSheet('book')}>
-                  {matchupTitle}
+                  <span className={styles.gdOppName}>{matchupTitle}</span>
                 </button>
               ) : (
                 <span className={styles.gdOpp}>{matchupTitle}</span>
@@ -956,6 +1141,9 @@ export default function CoachGameConsolePage({
             </Link>
           )}
 
+          {drawerScrim}
+
+
           {bookSheet}
         </div>
       </div>
@@ -965,8 +1153,9 @@ export default function CoachGameConsolePage({
   // ── Live mode ─────────────────────────────────────────────────────────────────────────────
   const showFallback = rows.length === 0 && !skipLineup;
   const boardVisible = rows.length > 0;
-  /** LABELLED footer buttons only — the undo arrow is icon-width and keeps its own room. */
-  const footerLabelCount = [can.attendance, can.moments, boardVisible, can.score && !mirrored]
+  /** LABELLED footer buttons only — the undo arrow is icon-width and keeps its own room.
+   *  Full grid left with the sideways table; Scouting took its slot (console re-draw · G3). */
+  const footerLabelCount = [can.attendance, can.moments, opponentDoor, can.score && !mirrored]
     .filter(Boolean).length;
 
   return (
@@ -974,67 +1163,109 @@ export default function CoachGameConsolePage({
       {/* data-field-floor (owner 2026-09-20, stage 0 · A4): read standing up — nothing under 12px
           inside, the position at 14; the sweep's `field-floor` rule holds it. */}
       <div className={styles.gdPage} data-field-floor>
-        <div className={styles.gdBar}>
-          {backLink}
-          <span className={styles.gdLivePill}>GAME DAY</span>
-          {savePill}
-        </div>
-
         {readOnlyViewer && <p className={styles.gdHandedOff}>{whoRunsTheBench}</p>}
 
-        {/* Header strip — matchup, chips, score, period cursor (sticky). */}
-        <div className={styles.gdCard} data-sticky="head">
+        {/* ── The head, which SCROLLS (console re-draw, owner 2026-09-22) ────────────────────
+            The 47px top strip above this is gone: the back arrow moved onto this line, "GAME DAY"
+            became the live dot beside it (a coach who opened game day knows they are on game day;
+            what the badge was really carrying is that writes are open, because this same address
+            serves a read-only recap outside the window), and the save word left for the shared
+            floating pill.
+
+            ⚠ The home/away WORD is gone too, not relocated: `matchupTitle` already says it —
+            "vs" for a home game, "@" for an away one — so the line was stating one fact twice,
+            in two grammars, and it was the fourth chip's worth of room that did it. */}
+        <div className={styles.gdCard}>
           <div className={styles.gdMatch}>
+            <Link
+              href={`${base}/schedule?event=${eventId}`}
+              className={styles.gdBackBtn}
+              aria-label="Back to this game on the schedule"
+            >
+              <ArrowLeft size={17} aria-hidden />
+            </Link>
             {opponentDoor ? (
               // The Scouting Book door (rider): the opponent's name opens your book as a sheet.
+              // Kept as the CONTEXTUAL route now that the footer carries a door you can see
+              // (G3 = A) — two routes to one sheet are fine when they cannot disagree.
               // Absent when the slot is TBD — a door to nothing is a dead end, not a feature.
               <button type="button" className={styles.gdOppDoor} onClick={() => openSheet('book')}>
-                {matchupTitle}
+                <span className={styles.gdOppName}>{matchupTitle}</span>
               </button>
             ) : (
               <span className={styles.gdOpp}>{matchupTitle}</span>
             )}
-            <span className={styles.gdHa}>
-              {event.homeAway === 'home' ? 'Home' : event.homeAway === 'away' ? 'Away' : ''}
+            {/* No `aria-label`: a bare span has the generic role, which does not take a name from
+                one, so the attribute was inert. The visible word says it. */}
+            <span className={styles.gdLiveDot}>
+              <i aria-hidden /> LIVE
             </span>
           </div>
           <div className={styles.gdChips}>
             {event.fieldNumber && <span className={styles.gdChip}>{surfaceLabel(sportPack.id, event.fieldNumber)}</span>}
             {event.arrivalTime && <span className={styles.gdChip}>Arrive {formatStoredClock(event.arrivalTime)}</span>}
             {event.uniform && <span className={styles.gdChip}>{event.uniform}</span>}
-            {/* P3 — the screen-awake switch. Present only where it does something: a live game,
-                a coach who runs the bench, a browser that can do it. Never a silent behaviour. */}
-            {awakeSupported && !readOnlyViewer && (
+          </div>
+        </div>
+
+        {/* ── The one thing that PINS: the inning ───────────────────────────────────────────
+            With the running score gone (nothing in the product reads a mid-game score — the
+            season record refuses one by design, and End game carries its own two fields), the
+            control worth following a coach down the page is the inning: it drives the board, and
+            stepping it is how a later inning gets corrected now that the Full grid sheet is gone.
+            So this is the lineup builder's own pinned stepper, dots and all.
+
+            ⚠ `data-sticky="head"` STAYS on this element. It is the layout sweep's readiness
+            selector for this screen (`scripts/layout-screens.mjs`), and it is rendered only in
+            live mode, so it still proves both things the sweep needs: the screen resolved, and it
+            resolved as the console rather than the recap. */}
+        <div className={styles.gdInningBar} data-sticky="head">
+          <div className={styles.gdInningRow}>
+            {(can.subs || can.score || can.attendance) && (
               <button
-                type="button"
-                className={styles.gdChip}
-                aria-pressed={awake}
-                onClick={toggleAwake}
-              >
-                {awake ? 'Screen staying on' : 'Screen sleeps normally'}
-              </button>
+                type="button" className={styles.gdStepper} onClick={() => setCursor(period - 1)}
+                disabled={period <= 1} aria-label={`Back one ${periodLabel.toLowerCase()}`}
+              >‹</button>
+            )}
+            <span className={styles.gdPeriodChip}>
+              {periodLabel.toUpperCase()} {period} OF {inningCount}
+            </span>
+            {(can.subs || can.score || can.attendance) && (
+              <button
+                type="button" className={styles.gdStepper} onClick={() => setCursor(period + 1)}
+                disabled={period >= inningCount} aria-label={`Next ${periodLabel.toLowerCase()}`}
+              >›</button>
             )}
           </div>
-          <div className={styles.gdScoreRow}>
-            {scoreBlock}
-            <div className={styles.gdPeriod}>
-              {(can.subs || can.score || can.attendance) && (
-                <button
-                  type="button" className={styles.gdStepper} onClick={() => setCursor(period - 1)}
-                  disabled={period <= 1} aria-label={`Back one ${periodLabel.toLowerCase()}`}
-                >‹</button>
-              )}
-              <span className={styles.gdPeriodChip}>
-                {periodLabel.toUpperCase()} {period} OF {inningCount}
+          {/* Decorative, never a tap target — the same rule the builder's dots follow. The
+              sentence beside them is what a screen reader gets instead. */}
+          {boardVisible && (
+            <>
+              <div className={styles.gdDots} aria-hidden>
+                {inningDots.map((state, i) => (
+                  <i key={i} data-state={state} data-now={i + 1 === period ? 'yes' : undefined} />
+                ))}
+              </div>
+              {/* ⚠ Reports BOTH conditions, not whichever it meets first (/review 2026-09-22).
+                  The dots show a clash and an open role at the same time whenever both exist —
+                  an ordinary mid-game state — and an if/else here told a screen-reader user only
+                  about the clash, dropping the open role entirely. The eye gets both; so does
+                  this. Named by inning, because "which one" is the whole question. */}
+              <span className={styles.srOnly}>
+                {(() => {
+                  const lc = periodLabel.toLowerCase();
+                  const list = (state: string) => inningDots
+                    .map((d, i) => (d === state ? i + 1 : 0)).filter(Boolean).join(', ');
+                  const clash = list('clash');
+                  const open = list('open');
+                  const parts: string[] = [];
+                  if (clash) parts.push(`two players at one position in ${lc} ${clash}`);
+                  if (open) parts.push(`a position still open in ${lc} ${open}`);
+                  return parts.length ? parts.join('; ') : `Every started ${lc} is filled`;
+                })()}
               </span>
-              {(can.subs || can.score || can.attendance) && (
-                <button
-                  type="button" className={styles.gdStepper} onClick={() => setCursor(period + 1)}
-                  disabled={period >= inningCount} aria-label={`Next ${periodLabel.toLowerCase()}`}
-                >›</button>
-              )}
-            </div>
-          </div>
+            </>
+          )}
         </div>
 
         {/* Substitution hint line — the two-tap flow's one instruction. */}
@@ -1098,15 +1329,12 @@ export default function CoachGameConsolePage({
                       playerById.get(r.playerId)?.lineupProfile?.pitcher?.maxInnings, teamPitcherCap)
                   : null;
                 const isOut = att[r.playerId]?.status === 'absent';
-                return (
-                  <button
-                    key={r.playerId}
-                    type="button"
-                    className={styles.gdRow}
-                    data-target={selectingTarget ? 'yes' : undefined}
-                    onClick={() => tapFieldRow(r)}
-                    disabled={!boardInteractive || (!selectingTarget && !coveringAbsent)}
-                  >
+                // A field row is a swap TARGET only while somebody is picked off the bench —
+                // `tapFieldRow` accepts nothing else. Outside that, the row's facts are text and
+                // the position beside them is the control.
+                const isTarget = boardInteractive && selectingTarget && r.playerId !== subInId;
+                const facts = (
+                  <>
                     <span className={styles.gdNum}>{numberOf(r.playerId)}</span>
                     <span className={styles.gdName}>{nameOf(r.playerId)}</span>
                     {callUpMarkFor(r.playerId)}
@@ -1116,8 +1344,30 @@ export default function CoachGameConsolePage({
                         {pitched} of {cap} {sportPack.periodLabelPlural.toLowerCase()} pitched
                       </span>
                     )}
-                    <span className={styles.gdPos} data-field-key>{pos}</span>
-                  </button>
+                  </>
+                );
+                return (
+                  <div key={r.playerId} className={styles.gdRow} data-target={isTarget ? 'yes' : undefined}>
+                    {isTarget ? (
+                      <button
+                        type="button"
+                        className={styles.gdRowMain}
+                        onClick={() => tapFieldRow(r)}
+                      >
+                        {/* ⚠ The action is a HIDDEN PREFIX, not an `aria-label` (/review
+                            2026-09-22). An explicit label REPLACES the name computed from the
+                            content, so labelling this button silently dropped the warning chips
+                            — "3 of 5 innings pitched", "OUT" — from what a screen reader says,
+                            at exactly the moment they decide the swap. This way the name is the
+                            action AND the facts. */}
+                        <span className={styles.srOnly}>Put {nameOf(subInId!)} in for </span>
+                        {facts}
+                      </button>
+                    ) : (
+                      <span className={styles.gdRowMain} data-static="yes">{facts}</span>
+                    )}
+                    {positionControl(r)}
+                  </div>
                 );
               })}
               {selectingTarget && openPositions.map(pos => (
@@ -1149,16 +1399,9 @@ export default function CoachGameConsolePage({
               {benched.map(r => {
                 const streak = benchStreakThrough(r, period);
                 const isOut = att[r.playerId]?.status === 'absent';
-                return (
-                  <button
-                    key={r.playerId}
-                    type="button"
-                    className={styles.gdRow}
-                    data-selected={subInId === r.playerId ? 'yes' : undefined}
-                    data-target={coveringAbsent ? 'yes' : undefined}
-                    onClick={() => tapBenchRow(r)}
-                    disabled={!boardInteractive || isOut}
-                  >
+                const selectable = boardInteractive && !isOut;
+                const facts = (
+                  <>
                     <span className={styles.gdNum}>{numberOf(r.playerId)}</span>
                     <span className={styles.gdName}>{nameOf(r.playerId)}</span>
                     {callUpMarkFor(r.playerId)}
@@ -1168,12 +1411,82 @@ export default function CoachGameConsolePage({
                         {ordinal(streak)} straight {periodLabel.toLowerCase()} sitting
                       </span>
                     )}
-                  </button>
+                  </>
+                );
+                return (
+                  <div
+                    key={r.playerId}
+                    className={styles.gdRow}
+                    data-selected={subInId === r.playerId ? 'yes' : undefined}
+                    data-target={coveringAbsent && !isOut ? 'yes' : undefined}
+                  >
+                    {selectable ? (
+                      <button
+                        type="button"
+                        className={styles.gdRowMain}
+                        onClick={() => tapBenchRow(r)}
+                        /* ⚠ `aria-pressed` only where it is TRUE that this toggles. Picking a
+                           sub off the bench toggles (tap again to deselect); covering an absent
+                           player is one-shot — it opens the confirm immediately — so announcing
+                           "not pressed" there describes a toggle that does not exist. */
+                        aria-pressed={coveringAbsent ? undefined : subInId === r.playerId}
+                      >
+                        {/* The action as a hidden prefix, so the warning chips stay in the name. */}
+                        <span className={styles.srOnly}>
+                          {coveringAbsent ? `Cover ${coverFor!.position} with ` : 'Pick to go in: '}
+                        </span>
+                        {facts}
+                      </button>
+                    ) : (
+                      <span className={styles.gdRowMain} data-static="yes">{facts}</span>
+                    )}
+                    {/* An absent player is never sent onto the field from here. */}
+                    {positionControl(r, isOut)}
+                  </div>
                 );
               })}
             </div>
           </>
         )}
+
+        {/* ── The score, demoted to a door (owner ruling 2026-09-22) ────────────────────────
+            The running US — THEM block that used to sit in the header is gone. Nothing in the
+            product reads a mid-game score: the season record refuses one by design (the quiet
+            write may not carry `result`), the schedule, insights and the recap all read a
+            FINISHED game, and End game carries its own two fields and its own win/loss/tie
+            badge. So the score keeps a door — the same sheet, untouched, +1 buttons and all —
+            and the door sits where you meet it on the way to ending the game, rather than
+            taking the most valuable 50px on the screen.
+            ⚠ NOT gated on `can.score`, and that is deliberate (/review 2026-09-22 — it WAS, and
+            that was a regression). The block this replaced rendered for everyone in the live
+            branch, so an assistant with lineups but not schedule-manage could always READ the
+            score even though the pad was closed to them; gating the door shut that off, while the
+            recap went on showing the final score to the same person the moment the game ended.
+            The sheet already has the right three-way answer — the tournament's sentence, the pad,
+            or "The score is kept by your coaching staff." — and that third branch was left
+            unreachable by the gate, which is the tell. `can` flags gate AFFORDANCES, not reads.
+            ⚠ Mirrored games keep the door too: the sheet is where "Scored by the tournament" is
+            explained, and a coach who goes looking deserves that sentence, not a missing control. */}
+        <button type="button" className={styles.gdScoreDoor} onClick={() => openSheet('score')}>
+          <span>{can.score && !mirrored ? 'Update score' : 'Score'}</span>
+          <b className={styles.gdScoreDoorVal}>
+            {teamScore ?? '–'}<span className={styles.gdScoreDash}> – </span>{oppScore ?? '–'}
+          </b>
+          <span aria-hidden>›</span>
+        </button>
+
+        {/* The full builder — the Full grid sheet's last line, now that the sheet is gone.
+            Batting order, modes and caps were never on this screen and still aren't. */}
+        {boardVisible && can.subs && (
+          <Link
+            href={lineupBuilderHref(base, eventId, { returnTo: `${base}/game/${eventId}` })}
+            className={styles.gdDoorRow}
+          >
+            <span>Open the full builder — batting order, modes, caps</span><span aria-hidden>›</span>
+          </Link>
+        )}
+
+        {savePill}
 
         {/* Footer — sticky, safe-area aware; absent entirely for a read-only viewer.
             `data-tight` fires at four or more labelled buttons (P2's Note joins here): the
@@ -1184,10 +1497,14 @@ export default function CoachGameConsolePage({
             className={`${styles.stickyActionBar} ${styles.gdFooter}`}
             data-tight={footerLabelCount >= 4 ? 'yes' : undefined}
           >
+            {/* ⚠ The count was a `<small>` under this label and it is GONE (owner, 2026-09-22:
+                "change this button to just 'who's here' to make it fit better, the count and such
+                can be on the drawer after clicking it"). "11 HERE · 1 OUT" wrapped to two lines
+                inside a 56px button at 390 and squeezed its three neighbours; the count is a
+                thing you read once, and the drawer it opens is the place that owns it. */}
             {can.attendance && (
               <button type="button" className={styles.gdFbtn} onClick={() => openSheet('attendance')}>
                 Who’s here
-                <small>{attendingCount} HERE{outCount > 0 ? ` · ${outCount} ${ATTENDANCE_WORD.absent.toUpperCase()}` : ''}</small>
               </button>
             )}
             {can.moments && (
@@ -1196,9 +1513,14 @@ export default function CoachGameConsolePage({
                 {moments.length > 0 && <small>{moments.length} TONIGHT</small>}
               </button>
             )}
-            {boardVisible && (
-              <button type="button" className={styles.gdFbtn} onClick={() => openSheet('grid')}>
-                Full grid
+            {/* ── Scouting, out of the dotted underline (G3 = A, owner 2026-09-22) ─────────
+                It was reachable only by knowing the opponent's name was tappable — the weakest
+                affordance on the screen, for one of the three jobs this screen is FOR. The name
+                keeps its door as the contextual route; this is the one you can see. Absent on a
+                TBD opponent, like the name's door, because a book on nobody is a dead end. */}
+            {opponentDoor && (
+              <button type="button" className={styles.gdFbtn} onClick={() => openSheet('book')}>
+                Scouting
               </button>
             )}
             {can.subs && rows.length > 0 && undoStack.length > 0 && (
@@ -1216,7 +1538,7 @@ export default function CoachGameConsolePage({
 
         {/* ── Sheets ── */}
         {sheet === 'score' && (
-          <div className={styles.gdSheet} role="dialog" aria-label="Score">
+          <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label="Score">
             {sheetHead('Score')}
             {mirrored ? (
               <p className={styles.gdQuietNote}>
@@ -1274,8 +1596,13 @@ export default function CoachGameConsolePage({
         )}
 
         {sheet === 'attendance' && (
-          <div className={styles.gdSheet} role="dialog" aria-label="Who’s here">
+          <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label="Who’s here">
             {sheetHead('Who’s here')}
+            {/* The count the footer button used to carry, in the drawer that owns it. */}
+            <p className={styles.gdAttCount}>
+              {attendingCount} here
+              {outCount > 0 ? ` · ${outCount} ${ATTENDANCE_WORD.absent.toLowerCase()}` : ''}
+            </p>
             {(data.players).map(p => {
               const current = att[p.id]?.status ?? 'unknown';
               return (
@@ -1305,64 +1632,35 @@ export default function CoachGameConsolePage({
           </div>
         )}
 
-        {sheet === 'grid' && (
-          <div className={styles.gdSheet} role="dialog" aria-label="Full grid">
-            {sheetHead('Full grid')}
-            {/* The familiar builder table, for corrections to ANY period (plan §3.3). The primary
-                tap flow stays current-onward; batting order and modes stay builder-only. */}
-            <div className={styles.scrollX}>
-              <table className={styles.gdGridTable}>
-                <thead>
-                  <tr>
-                    <th>Player</th>
-                    {Array.from({ length: inningCount }, (_, i) => (
-                      <th key={i} data-now={i + 1 === period ? 'yes' : undefined}>{i + 1}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {rows.map(r => (
-                    <tr key={r.playerId}>
-                      <td className={styles.gdGridName}>{nameOf(r.playerId)}</td>
-                      {Array.from({ length: inningCount }, (_, i) => {
-                        const k = String(i + 1);
-                        const value = r.inningPositions[k] ?? '';
-                        return (
-                          <td key={k} data-now={i + 1 === period ? 'yes' : undefined}>
-                            {can.subs ? (
-                              <select
-                                value={value}
-                                aria-label={`${nameOf(r.playerId)}, ${periodLabel.toLowerCase()} ${k}`}
-                                onChange={e => {
-                                  const next = rows.map(row => row.playerId === r.playerId
-                                    ? { ...row, inningPositions: { ...row.inningPositions, [k]: e.target.value } }
-                                    : row);
-                                  mutateRows(next);
-                                }}
-                              >
-                                {LINEUP_POSITIONS.map(pos => (
-                                  <option key={pos || 'blank'} value={pos}>{pos || '—'}</option>
-                                ))}
-                              </select>
-                            ) : (value || '—')}
-                          </td>
-                        );
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <Link href={lineupBuilderHref(base, eventId, { returnTo: `${base}/game/${eventId}` })} className={styles.gdDoorRow}>
-              <span>Open the full builder — batting order, modes, caps</span><span aria-hidden>›</span>
-            </Link>
-          </div>
+        {/* ── THE POSITION SHEET — the builder's, unchanged (G1 = A, owner 2026-09-22) ─────
+            The whole of "make it the lineup editor's experience". One component serves both
+            screens, so a pick here and a pick there can never mean different things; the write
+            is the same one-cell edit the Full grid's select used to make, and the same single
+            undo step.
+
+            ⚠ THE FULL GRID SHEET IS GONE, and with it the only sideways-scrolling table on a
+            screen read one-handed at a fence. Correcting a later inning is the pinned stepper
+            now — step to it, edit there — which is the same answer the phone builder gives.
+            The door to the full builder was the sheet's last line and moves here, because
+            batting order, modes and caps were never on this screen. */}
+        {isPhone && positionSheetRow && (
+          <LineupPositionSheet
+            row={positionSheetRow}
+            inning={period}
+            inningCount={inningCount}
+            periodLabel={periodLabel}
+            sportPack={sportPack}
+            pitcherCap={resolvePlayerPitcherCap(
+              positionSheetRow.player.lineupProfile?.pitcher?.maxInnings, teamPitcherCap)}
+            onPick={code => { setPositionAt(positionSheetRow.player.id, code); setPositionFor(null); }}
+            onClose={() => setPositionFor(null)}
+          />
         )}
 
         {/* The capture sheet (P2, mockup frames 12–13). Quiet sheet, never a modal over the
             game: one line, an optional player, one button. Nothing here notifies anyone. */}
         {sheet === 'moment' && can.moments && (
-          <div className={styles.gdSheet} role="dialog" aria-label="Note a moment">
+          <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label="Note a moment">
             {sheetHead('Note')}
             {momentSavedCount > 0 && (
               <p className={styles.gdMomentSaved} aria-live="polite">
@@ -1388,21 +1686,30 @@ export default function CoachGameConsolePage({
               <span className={styles.gdMomentCount}>{momentBody.length} / {GAME_MOMENT_MAX}</span>
             </div>
 
-            <p className={styles.gdGroupLbl}>About a player?</p>
-            <div className={styles.gdTagPick}>
-              {data.players.map(p => (
-                <button
-                  key={p.id}
-                  type="button"
-                  className={styles.gdTagChip}
-                  data-on={momentPlayerId === p.id ? 'yes' : undefined}
-                  aria-pressed={momentPlayerId === p.id}
-                  onClick={() => setMomentPlayerId(prev => (prev === p.id ? null : p.id))}
-                >
-                  {p.playerNumber ? `${p.playerNumber} ` : ''}{playerDisplayName(p)}
-                </button>
-              ))}
-            </div>
+            {/* ⚠ A DROPDOWN, not a wrap of chips (owner, 2026-09-22: "can we make 'about a
+                player' a dropdown so we can keep the save button on the screen?"). One chip per
+                player is a grid that grows with the roster — on a 13-player team it pushed
+                `Save note` off the bottom of the drawer, so the one action the sheet exists for
+                was the one thing you had to scroll to find. A select is one 44px row whatever the
+                roster does, and it is the portal's ruled form idiom besides.
+                The native `<label>` wraps the control, so the visible text IS the accessible
+                name — no `aria-label` to drift from what is on screen. */}
+            <label className={styles.gdMomentTag}>
+              <span>About a player?</span>
+              <select
+                className={`${styles.select} ${styles.gdMomentTagSelect}`}
+                value={momentPlayerId ?? ''}
+                onChange={e => setMomentPlayerId(e.target.value || null)}
+              >
+                <option value="">Nobody in particular</option>
+                {/* ⚠ `playerDisplayName` ALREADY prefixes "#2" — the chip this replaced also
+                    prefixed the bare number, so it read "2 #2 Blake Test". Pre-existing, and
+                    invisible at chip size; a dropdown row puts it in 14px type where it is not. */}
+                {data.players.map(p => (
+                  <option key={p.id} value={p.id}>{playerDisplayName(p)}</option>
+                ))}
+              </select>
+            </label>
 
             {momentError && <p className={styles.errorText}>{momentError}</p>}
             <div className={styles.gdSheetActions}>
@@ -1414,16 +1721,21 @@ export default function CoachGameConsolePage({
                 {momentSaving ? 'Saving…' : 'Save note'}
               </button>
             </div>
-            <p className={styles.gdQuietNote}>
-              Moments stay with you and your staff — families are never notified about them.
-            </p>
+            {/* ⚠ The closing "Moments stay with you and your staff — families are never notified"
+                line is GONE (owner, 2026-09-22). The sheet already says it, twice: the meta line
+                under the textarea reads "For you and your staff", and the footer button's own
+                help article covers the notification rule. A drawer that has to be short should
+                not spend a two-line paragraph repeating its own caption. */}
           </div>
         )}
+
+        {drawerScrim}
+
 
         {bookSheet}
 
         {sheet === 'end' && (
-          <div className={styles.gdSheet} role="dialog" aria-label="End game">
+          <div ref={sheetRef} className={styles.gdSheet} role="dialog" aria-label="End game">
             {sheetHead('End game')}
             <div className={styles.gdFinal}>
               <span className={styles.gdScoreLbl}>FINAL — {matchupTitle.toUpperCase()}</span>
@@ -1513,8 +1825,13 @@ export default function CoachGameConsolePage({
                 (_, i) => outRow.inningPositions[String(pendingSwap.fromPeriod + i)] || '—')
             : [];
           const varies = new Set(remaining).size > 1;
+          // ⚠ `data-card` — the ONE surface here that stays a floating card while the other five
+          // became drawers (the owner's 2026-09-22 ruling covered those five). The board behind is
+          // the thing this question is ABOUT, so it is not dimmed. See the plan's §3.9 for the
+          // argument that it should probably join them; that is an owner call, not a tidy-up, so
+          // it is asked rather than assumed.
           return (
-            <div className={styles.gdSheet} role="dialog" aria-label="Substitution">
+            <div ref={swapRef} className={styles.gdSheet} data-card="yes" role="dialog" aria-label="Substitution">
               <div className={styles.gdSheetHead}>
                 <b>
                   {nameOf(pendingSwap.inId)}

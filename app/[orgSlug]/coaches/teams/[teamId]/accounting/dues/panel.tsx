@@ -2271,6 +2271,12 @@ export function PlayerDuesPanel({
       /* ⚠ THE CAPTION NAMES WHICHEVER KINDS ARE ACTUALLY THERE, and says nothing at all when there
          are neither — which is most seasons (R5). A standing "$0.00 of adjustments" would be noise
          on every team that has never written a bill down. */
+      /* The phone form (M1, 2026-09-22): the headcount only. The adjustments-and-forgiveness
+         clause is what this caption exists to disclose on a desk — it says the figure is NET — but
+         it ran the caption to 40+ characters, and every dollar of it is itemized on the player rows
+         directly beneath, where a coach acts on it. R5's rule still holds at both widths: with
+         neither kind of write-off there is no clause to drop and both forms read the same. */
+      captionShort: `${players.length} player${players.length === 1 ? '' : 's'}`,
       caption: [
         `${players.length} player${players.length === 1 ? '' : 's'}`,
         (() => {
@@ -2306,6 +2312,15 @@ export function PlayerDuesPanel({
         const beyond = Math.round((seasonTotals.collected - seasonTotals.settled) * 100) / 100;
         return beyond > 0.005 ? `${fmt(beyond)} of it beyond what those families were billed` : undefined;
       })(),
+      /* 54 characters was the longest caption in the band (M1, 2026-09-22). The phone form keeps
+         the FIGURE — which is the whole point of the clause, and the part a coach cannot derive —
+         and lets "over the bills" carry what the desk spells out. ⚠ "over the bills" and not "over
+         the dues": the comparison is against what those families were BILLED, and `Dues` is the
+         tile one seat to the left holding a different number. */
+      captionShort: (() => {
+        const beyond = Math.round((seasonTotals.collected - seasonTotals.settled) * 100) / 100;
+        return beyond > 0.005 ? `${fmt(beyond)} over the bills` : undefined;
+      })(),
     },
     {
       key: 'owing',
@@ -2316,6 +2331,21 @@ export function PlayerDuesPanel({
       // Only when somebody is in credit — with nobody, the three tiles already tie out.
       caption: seasonTotals.inCreditFamilies > 0
         ? `excludes ${fmt(seasonTotals.inCredit)} owed back to ${pluralize(seasonTotals.inCreditFamilies, 'family', 'families')}`
+        : undefined,
+      /* ⚠ THE PHONE FORM KEEPS "excludes" AND DROPS THE FIGURE — the reverse of Collected above,
+         and deliberately. Here the load-bearing word is that the balance does NOT net off money
+         owed back; the amount is on the families' own rows. Saying "2 families in credit" without
+         "excludes" would read as a component OF the balance, which is the one misreading this
+         caption exists to prevent. */
+      /* ⚠ "excludes" IS THE WORD THAT CANNOT GO, so the FIGURE and the count are what do. Under a
+         tile called Balance owing, a bare "2 families in credit" reads as part OF the balance,
+         which is the single misreading this caption exists to prevent — while the amount and the
+         families are both itemized on their own rows directly below, where a coach acts on them.
+         Measured into the 154px a two-up tile gives a caption at 390 (≈24 characters at the
+         support step): "excludes 2 families in credit" (29) and "excludes $1,482.65 owed back"
+         (27) both took two lines and dragged the whole grid row with them. */
+      captionShort: seasonTotals.inCreditFamilies > 0
+        ? 'excludes credit owed back'
         : undefined,
     },
     {

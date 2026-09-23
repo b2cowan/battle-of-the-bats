@@ -13,10 +13,13 @@ import type { RepTeamTag } from './types';
  * the stored staff kind and the current capabilities live there, and "can they open the plan"
  * has to be answered by the same predicate the plan route gates on (`canViewSchedule`).
  *
- * ⚠ `name` is never blank. The member display name is optional and often is blank — which is the
- * whole reason the old name match failed (F01) — so it falls back to the email's local part. A
- * linked tag keeps the coach's OWN word for them; this name is only what the picker and the sheet
- * print beside the kind word.
+ * ⚠ `name` is never blank. The resolved name is the club's word for them, then their own account
+ * name (`resolveCoachUserIdentities`), and only then the email's local part. That last rung used to
+ * carry almost everyone — the member display name is optional and is blank for anybody who signed
+ * up rather than accepting an invitation, which is the whole reason the old name match failed (F01)
+ * and why the picker offered people by the front of their email address. It is now what it was
+ * meant to be: the last resort for an account with no name anywhere. A linked tag keeps the coach's
+ * OWN word for them; this name is only what the picker and the sheet print beside the kind word.
  */
 export async function getPracticeStaffPeople(
   teamId: string,

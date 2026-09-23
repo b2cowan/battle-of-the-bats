@@ -1,0 +1,845 @@
+<title>The Bench Console Re-Draw</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wght@500;600;700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#FAF8F4; --surface:#FFFFFF; --surface-2:#F3F0E9; --sunk:#EFECE3;
+  --ink:#191B18; --ink-2:#4A4E46; --ink-3:#797E72;
+  --line:#E2DED4; --line-2:#CFCABB;
+  --accent:#4F6B16; --accent-soft:#EDF3DC;
+  --crit:#AE3620; --crit-soft:#FAE7E2;
+  --warn:#845F12; --warn-soft:#F6EED9;
+  --ok:#2C6349; --ok-soft:#E4F0EA;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#131511; --surface:#1B1E19; --surface-2:#232720; --sunk:#101208;
+    --ink:#EDEBE4; --ink-2:#B6BAAE; --ink-3:#868B7E;
+    --line:#2F342B; --line-2:#3E453A;
+    --accent:#A9CC55; --accent-soft:#222A14;
+    --crit:#E8775C; --crit-soft:#331A13;
+    --warn:#D3A44C; --warn-soft:#2C2312;
+    --ok:#67B18E; --ok-soft:#14261D;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#131511; --surface:#1B1E19; --surface-2:#232720; --sunk:#101208;
+  --ink:#EDEBE4; --ink-2:#B6BAAE; --ink-3:#868B7E;
+  --line:#2F342B; --line-2:#3E453A;
+  --accent:#A9CC55; --accent-soft:#222A14;
+  --crit:#E8775C; --crit-soft:#331A13;
+  --warn:#D3A44C; --warn-soft:#2C2312;
+  --ok:#67B18E; --ok-soft:#14261D;
+}
+*{box-sizing:border-box}
+body{background:var(--ground);color:var(--ink);font-family:"Public Sans",system-ui,-apple-system,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+.wrap{max-width:1180px;margin:0 auto;padding-inline:20px;padding-block:0 72px}
+h1,h2,h3,h4{font-family:Archivo,system-ui,sans-serif;text-wrap:balance;margin:0}
+.mono{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.eyebrow{font-family:Archivo,sans-serif;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3)}
+
+header.top{border-bottom:1px solid var(--line);background:var(--surface)}
+.top-in{max-width:1180px;margin:0 auto;padding:26px 20px 20px;display:flex;flex-wrap:wrap;gap:18px;align-items:flex-end;justify-content:space-between}
+h1{font-size:clamp(26px,4.4vw,40px);font-weight:700;letter-spacing:-.02em;line-height:1.05}
+.sub{color:var(--ink-2);font-size:15px;max-width:60ch;margin-top:8px}
+.stamp{font-size:12px;color:var(--ink-3);text-align:right;line-height:1.7}
+.stamp b{color:var(--ink);font-weight:600}
+
+nav.tabs{position:sticky;top:0;z-index:40;background:var(--ground);border-bottom:1px solid var(--line)}
+.tabs-in{max-width:1180px;margin:0 auto;padding:0 20px;display:flex;gap:2px;overflow-x:auto}
+.tab{appearance:none;background:none;border:0;border-bottom:2px solid transparent;padding:14px 14px 12px;font-family:Archivo,sans-serif;font-size:13px;font-weight:600;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);cursor:pointer;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.panel{padding-top:34px}
+.panel[hidden]{display:none!important}
+
+h2.sec{font-size:22px;font-weight:700;letter-spacing:-.01em;margin-bottom:6px}
+h3.sub3{font-size:16px;font-weight:600;margin-bottom:4px}
+p.lede{color:var(--ink-2);font-size:16px;max-width:68ch}
+p.body{color:var(--ink-2);font-size:14.5px;max-width:68ch}
+.stack{display:flex;flex-direction:column;gap:26px}
+.rule{height:1px;background:var(--line);border:0;margin:0}
+
+.findings{display:flex;flex-direction:column;gap:12px}
+.find{display:grid;grid-template-columns:auto 1fr;gap:0 16px;background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--line-2);border-radius:3px;padding:16px 18px}
+.find[data-sev="critical"]{border-left-color:var(--crit)}
+.find[data-sev="high"]{border-left-color:var(--warn)}
+.find[data-sev="medium"]{border-left-color:var(--accent)}
+.find-id{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--ink-3);padding-top:3px}
+.find-head{display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.find-head h4{font-size:15.5px;font-weight:600}
+.sev{font-family:Archivo,sans-serif;font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border-radius:2px}
+.sev[data-s="critical"]{background:var(--crit-soft);color:var(--crit)}
+.sev[data-s="high"]{background:var(--warn-soft);color:var(--warn)}
+.sev[data-s="medium"]{background:var(--accent-soft);color:var(--accent)}
+.sev[data-s="low"]{background:var(--surface-2);color:var(--ink-3)}
+.find p{grid-column:2;margin:7px 0 0;font-size:14px;color:var(--ink-2)}
+.ev{grid-column:2;margin-top:11px;background:var(--sunk);border-radius:3px;padding:10px 12px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.75;color:var(--ink-2);overflow-x:auto;white-space:pre}
+.ev b{color:var(--ink);font-weight:600}
+.ev .bad{color:var(--crit);font-weight:600}
+
+.frames{display:flex;gap:44px;flex-wrap:wrap;align-items:flex-start}
+.framecol{flex:0 0 auto;max-width:100%}
+.framecap{display:flex;align-items:baseline;gap:10px;margin-bottom:12px}
+.framecap h3{font-family:Archivo,sans-serif;font-size:15px;font-weight:700}
+.framecap span{font-size:12px;color:var(--ink-3)}
+.truesize{font-family:"IBM Plex Mono",monospace;font-size:11px;color:var(--ink-3);margin-top:10px;letter-spacing:.02em;max-width:390px}
+
+.phone{position:relative;width:390px;max-width:100%;height:844px;background:#F7F2E9;border:1px solid var(--line-2);border-radius:14px;overflow:hidden;
+  font-family:"Public Sans",system-ui,sans-serif;color:#1E1F1C;
+  --p-card:#FFFFFF;--p-ink:#1E1F1C;--p-ink2:#71746A;--p-ink3:#8E9186;--p-olive:#54700F;--p-olive-soft:#EBF2D8;--p-live:#B03A22;--p-line:#E7E2D5;--p-mono:"IBM Plex Mono",monospace;}
+.phone *{box-sizing:border-box}
+.ph-mast{height:53px;background:#fff;border-bottom:1px solid var(--p-line);display:flex;align-items:center;gap:8px;padding:0 14px;font-size:17px;font-weight:700}
+.ph-mast em{font-style:normal;color:var(--p-ink3);font-weight:400}
+.ph-mast b{font-family:var(--p-mono);font-size:13px;font-weight:600;letter-spacing:.06em;margin-left:4px}
+.ph-body{padding:10px 16px;display:flex;flex-direction:column;gap:10px}
+.ph-bar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;height:47px;font-family:var(--p-mono);font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--p-ink2)}
+.ph-livepill{background:var(--p-live);color:#FFF7F2;font-weight:700;letter-spacing:.09em;padding:7px 14px;border-radius:999px;font-size:12px}
+.ph-saved{margin-left:auto;color:var(--p-ink2);font-weight:600}
+.ph-card{background:var(--p-card);border:1px solid var(--p-line);border-radius:12px;padding:13px 14px}
+.ph-match{display:flex;justify-content:space-between;align-items:baseline;gap:8px;height:44px}
+.ph-match b{font-size:19px;font-weight:700;border-bottom:2px dotted var(--p-olive);padding-bottom:2px}
+.ph-match b::after{content:" \203A";color:var(--p-olive)}
+.ph-match span{font-size:13px;color:var(--p-ink2)}
+.ph-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.ph-chip{font-size:12px;color:var(--p-ink2);background:#EFEDE6;border-radius:999px;padding:6px 12px;line-height:1.5}
+.ph-chip-on{min-height:44px;display:flex;align-items:center;background:var(--p-olive-soft);color:var(--p-olive);border:1px solid var(--p-olive);font-weight:600;padding-inline:15px}
+.ph-scorerow{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:11px}
+.ph-scorelbl{display:block;font-family:var(--p-mono);font-size:12px;font-weight:600;letter-spacing:.13em;color:var(--p-ink2);white-space:nowrap}
+.ph-scoreval{font-family:var(--p-mono);font-size:30px;font-weight:700;line-height:1.1;letter-spacing:.06em}
+.ph-period{display:flex;align-items:center;gap:5px;margin-left:auto}
+.ph-step{width:44px;height:44px;border:1px solid var(--p-line);border-radius:9px;display:grid;place-items:center;color:var(--p-ink2);font-size:18px;background:#fff;flex:0 0 auto}
+.ph-step-sm{width:36px;height:36px;font-size:16px;flex:0 0 auto}
+.ph-inn{background:var(--p-olive-soft);color:var(--p-olive);font-family:var(--p-mono);font-size:12px;font-weight:700;border-radius:999px;padding:8px 12px;white-space:nowrap}
+.ph-grouplbl{margin:5px 3px 1px;font-family:var(--p-mono);font-size:12px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;color:var(--p-ink2)}
+.ph-row{display:flex;align-items:center;gap:10px;background:var(--p-card);border:1px solid var(--p-line);border-radius:9px;padding:10px 12px;min-height:56px}
+.ph-row.dim{opacity:.55}
+.ph-num{font-family:var(--p-mono);font-size:12px;font-weight:700;color:var(--p-ink2);min-width:18px}
+.ph-name{font-weight:600;font-size:14px;flex:1;min-width:0}
+.ph-pos{font-family:var(--p-mono);font-size:14px;font-weight:700;background:var(--p-olive-soft);color:var(--p-olive);border-radius:7px;padding:8px 11px}
+.ph-pos-btn{border:1.5px solid var(--p-olive);min-width:52px;min-height:44px;display:grid;place-items:center;padding:0 10px}
+.ph-warn{font-family:var(--p-mono);font-size:12px;font-weight:600;color:var(--p-live);background:#FAE7E2;border-radius:6px;padding:5px 7px;line-height:1.2}
+.ph-rows{display:flex;flex-direction:column;gap:7px}
+.ph-nav{position:absolute;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid var(--p-line);display:flex;align-items:center;justify-content:space-around;padding:0 6px;z-index:6}
+.ph-tab{display:flex;flex-direction:column;align-items:center;gap:5px;font-family:var(--p-mono);font-size:10px;font-weight:600;letter-spacing:.06em;color:var(--p-ink2)}
+.ph-tab i{width:22px;height:22px;border:1.7px solid var(--p-ink2);border-radius:5px;display:block}
+.ph-tab.on{color:var(--p-ink)}
+.ph-tab.on i{background:#22261C;border-color:#22261C;border-radius:999px}
+.ph-foot{position:absolute;left:0;right:0;display:flex;gap:8px;background:#fff;border-top:1px solid var(--p-line);padding:10px 16px}
+.ph-foot.buried{bottom:0;height:67px;z-index:1}
+.ph-foot.cleared{bottom:72px;height:67px;z-index:7}
+.ph-fbtn{flex:1;min-height:47px;border:1px solid var(--p-line);border-radius:9px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12.5px;font-weight:600;background:#fff;text-align:center}
+.ph-fbtn small{font-family:var(--p-mono);font-size:10px;color:var(--p-ink3);font-weight:600}
+.ph-fbtn.end{color:var(--p-live);border-color:#E7BEB2}
+.ph-pin{position:relative;background:var(--p-card);border:1px solid var(--p-line);border-radius:10px;padding:9px 13px;display:flex;align-items:center;justify-content:space-between;gap:8px;box-shadow:0 2px 10px rgba(30,31,28,.07)}
+.ph-pin[data-stepper]{flex-direction:column;gap:8px;align-items:stretch}
+.ph-steprow{display:flex;align-items:center;justify-content:center;gap:10px}
+.ph-dots{display:flex;justify-content:center;gap:6px}
+.ph-dots i{width:7px;height:7px;border-radius:999px;background:#D9D4C6;display:block}
+.ph-dots i.on{background:#54700F;box-shadow:0 0 0 2.5px rgba(84,112,15,.22)}
+.ph-dots i.done{background:#54700F}
+.ph-dots i.open{background:transparent;border:1.5px solid #C08A1E}
+.ph-doorrow{display:flex;align-items:center;justify-content:space-between;gap:8px;background:var(--p-card);border:1px solid var(--p-line);border-radius:9px;padding:12px 13px;min-height:48px;font-size:13.5px;color:var(--p-ink2);margin-top:3px}
+.ph-doorrow b{font-family:var(--p-mono);font-weight:700;color:var(--p-ink);letter-spacing:.06em}
+.ph-pinlbl{position:absolute;top:-8px;left:12px;background:var(--p-olive);color:#fff;font-family:var(--p-mono);font-size:9px;font-weight:600;letter-spacing:.09em;padding:2px 6px;border-radius:3px}
+.ph-match2{display:flex;align-items:center;gap:9px;min-height:44px}
+.ph-back{width:38px;height:38px;flex:0 0 38px;border:1px solid var(--p-line);border-radius:9px;display:grid;place-items:center;font-size:17px;color:var(--p-ink2);background:#fff}
+.ph-match2 b{font-size:18px;font-weight:700;flex:1;min-width:0;border-bottom:2px dotted var(--p-olive);padding-bottom:2px}
+.ph-match2 b::after{content:" \203A";color:var(--p-olive)}
+.ph-dot{font-family:var(--p-mono);font-size:11px;font-weight:700;letter-spacing:.09em;color:var(--p-live);display:flex;align-items:center;gap:5px;flex:0 0 auto}
+.ph-dot i{width:7px;height:7px;border-radius:999px;background:var(--p-live);display:block}
+.ph-pillfloat{position:absolute;right:14px;bottom:152px;background:#22261C;color:#F4F2EA;font-family:var(--p-mono);font-size:11.5px;font-weight:600;padding:8px 13px;border-radius:999px;z-index:8;opacity:.93}
+.ph-sheet{position:absolute;left:12px;right:12px;bottom:84px;background:#fff;border:1px solid var(--p-line);border-radius:15px;padding:13px 14px;z-index:7;box-shadow:0 8px 30px rgba(30,31,28,.18)}
+.ph-sheethead{display:flex;justify-content:space-between;align-items:center;font-weight:700;font-size:14px;margin-bottom:10px}
+.ph-posgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.ph-poscell{min-height:46px;border:1px solid var(--p-line);border-radius:8px;display:grid;place-items:center;font-family:var(--p-mono);font-size:14px;font-weight:700;color:var(--p-ink2)}
+.ph-poscell.on{background:var(--p-olive-soft);color:var(--p-olive);border-color:var(--p-olive);border-width:1.5px}
+
+.mk{position:absolute;z-index:9;width:25px;height:25px;border-radius:999px;border:2px solid #F7F2E9;background:#22261C;color:#F7F2E9;font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;display:grid;place-items:center;cursor:pointer;padding:0;box-shadow:0 1px 5px rgba(0,0,0,.35)}
+.mk:hover{transform:scale(1.14)}
+.mk:focus-visible{outline:2px solid #54700F;outline-offset:2px}
+.mk[data-k="crit"]{background:#AE3620}
+.mk[data-k="good"]{background:#3C5C10}
+.mk[aria-pressed="true"]{box-shadow:0 0 0 4px rgba(84,112,15,.45),0 1px 5px rgba(0,0,0,.35)}
+@media (prefers-reduced-motion:reduce){.mk:hover{transform:none}}
+
+.note{margin-top:20px;background:var(--surface);border:1px solid var(--line);border-radius:4px;min-height:96px}
+.note-empty{padding:20px 22px;color:var(--ink-3);font-size:14px;margin:0}
+.note-in{padding:18px 22px}
+.note-in .eyebrow{margin-bottom:5px}
+.note-in h4{font-family:Archivo,sans-serif;font-size:16.5px;font-weight:700;margin-bottom:7px}
+.note-in p{margin:0;font-size:14.5px;color:var(--ink-2);max-width:78ch}
+.note-in .ev{grid-column:auto;margin-top:12px;display:block}
+
+.qs{display:flex;flex-direction:column;gap:16px}
+.q{background:var(--surface);border:1px solid var(--line);border-radius:4px;padding:18px 20px}
+.q-head{display:flex;gap:10px;align-items:baseline;margin-bottom:4px}
+.q-head .mono{font-size:12px;font-weight:600;color:var(--accent)}
+.q-head h4{font-family:Archivo,sans-serif;font-size:16px;font-weight:700}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:12px;margin-top:13px}
+.opt{border:1px solid var(--line);border-radius:3px;padding:13px 15px;background:var(--ground)}
+.opt[data-rec="yes"]{border-color:var(--accent);background:var(--accent-soft)}
+.opt h5{font-family:Archivo,sans-serif;font-size:13px;font-weight:700;margin:0 0 5px;display:flex;flex-wrap:wrap;gap:7px;align-items:baseline}
+.rec{font-size:9.5px;font-weight:700;letter-spacing:.09em;text-transform:uppercase;color:var(--accent);border:1px solid currentColor;border-radius:2px;padding:1px 5px}
+.opt p{margin:0;font-size:13.5px;color:var(--ink-2)}
+
+.tblwrap{overflow-x:auto;border:1px solid var(--line);border-radius:4px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:640px;font-size:14px}
+th{text-align:left;font-family:Archivo,sans-serif;font-size:10.5px;font-weight:700;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);padding:11px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:11px 14px;border-bottom:1px solid var(--line);color:var(--ink-2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td b{color:var(--ink);font-weight:600}
+td.num{font-family:"IBM Plex Mono",monospace;font-variant-numeric:tabular-nums;white-space:nowrap}
+.delta{font-family:"IBM Plex Mono",monospace;font-weight:600;color:var(--ok)}
+
+.walk{display:flex;flex-direction:column;gap:9px}
+.step{display:grid;grid-template-columns:auto auto 1fr;gap:0 13px;align-items:start;background:var(--surface);border:1px solid var(--line);border-radius:3px;padding:13px 16px}
+.step input{width:19px;height:19px;margin:2px 0 0;accent-color:var(--accent);cursor:pointer}
+.step .sid{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;color:var(--ink-3);padding-top:2px}
+.step label{font-size:14.5px;cursor:pointer}
+.step label b{font-weight:600}
+.step small{display:block;color:var(--ink-3);font-size:13px;margin-top:3px}
+.step:has(input:checked){background:var(--ok-soft);border-color:var(--ok)}
+.walkbar{display:flex;flex-wrap:wrap;gap:14px;align-items:center;justify-content:space-between;background:var(--surface-2);border:1px solid var(--line);border-radius:4px;padding:14px 18px}
+.walkbar .count{font-family:"IBM Plex Mono",monospace;font-size:14px;font-weight:600}
+.btn{appearance:none;font-family:Archivo,sans-serif;font-size:12px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;border:1px solid var(--line-2);background:var(--surface);color:var(--ink);border-radius:3px;padding:9px 15px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.paste{width:100%;min-height:96px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;background:var(--sunk);color:var(--ink-2);border:1px solid var(--line);border-radius:4px;padding:12px 14px;resize:vertical}
+
+ul.tight{margin:9px 0 0;padding-left:20px;color:var(--ink-2);font-size:14.5px;max-width:74ch}
+ul.tight li{margin-bottom:6px}
+ul.tight li b{color:var(--ink);font-weight:600}
+code{font-family:"IBM Plex Mono",monospace;font-size:.9em;background:var(--sunk);padding:1px 5px;border-radius:3px}
+
+@media (max-width:900px){ .frames{gap:34px} }
+</style>
+
+<header class="top">
+  <div class="top-in">
+    <div>
+      <p class="eyebrow">Coaches portal &middot; phone re-evaluation &middot; the bench console</p>
+      <h1>The Bench Console Re-Draw</h1>
+      <p class="sub">The game-day screen, measured at the fence and redrawn top to bottom. Ruled, BUILT and REVIEWED, 22 Sep. Two defects fixed, the score demoted, scouting promoted, the board editing like the builder — and nine more found by /review, including two the fixes caused themselves.</p>
+    </div>
+    <div class="stamp">
+      Drawn, built, reviewed <b>22 Sep 2026</b><br>
+      Measured before <i>and after</i>, <b class="mono">390</b> and <b class="mono">360</b><br>
+      Read from the browser on dev &mdash; never a screenshot
+    </div>
+  </div>
+</header>
+
+<nav class="tabs">
+  <div class="tabs-in" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" id="t-brief" aria-controls="p-brief" aria-selected="true">The brief</button>
+    <button class="tab" role="tab" id="t-find" aria-controls="p-find" aria-selected="false">What it does now</button>
+    <button class="tab" role="tab" id="t-mock" aria-controls="p-mock" aria-selected="false">Before &amp; after</button>
+    <button class="tab" role="tab" id="t-rule" aria-controls="p-rule" aria-selected="false">Rulings needed</button>
+    <button class="tab" role="tab" id="t-plan" aria-controls="p-plan" aria-selected="false">Build plan</button>
+    <button class="tab" role="tab" id="t-qa" aria-controls="p-qa" aria-selected="false">QA walk</button>
+  </div>
+</nav>
+
+<div class="wrap">
+
+<section class="panel" id="p-brief" role="tabpanel" aria-labelledby="t-brief">
+  <div class="stack">
+    <div>
+      <h2 class="sec">What this is</h2>
+      <p class="lede">The bench console is the one screen in this product a coach holds at a fence, one-handed, in daylight, with a game going on. It shipped in three passes last month and was never re-read at phone width &mdash; the phone re-evaluation covered the shell, the Overview, the Schedule and the lineup builder, and stopped there. This is the console&rsquo;s turn.</p>
+      <p class="body" style="margin-top:14px">Measuring it turned up two things that are not design preferences. <b style="color:var(--crit)">Every button on the action bar is covered by the phone&rsquo;s navigation bar and cannot be tapped</b> &mdash; including <i>End game</i>. And <b style="color:var(--crit)">every player already on the field is a dead control</b>. Both are reproducible; the evidence is on the next tab.</p>
+      <p class="body" style="margin-top:14px"><b>Re-framed by the owner, 22 September:</b> this screen is for the things a coach updates in the dugout &mdash; <b>game notes, scouting and lineups</b>. Scorekeeping is not one of them, and with the live site parked a running score updates nothing. Tracing it confirmed the call has room to spare (F10): the mid-game score feeds a glance and a pre-filled field, and nothing else in the product reads it. So it comes out, the inning stepper takes the pinned slot, and scouting gets promoted out of a dotted underline.</p>
+    </div>
+    <hr class="rule">
+    <div>
+      <h2 class="sec">What a coach sees change</h2>
+      <ul class="tight">
+        <li><b>The buttons come back.</b> <i>Who&rsquo;s here</i>, <i>Note</i> and <i>End game</i> sit above the navigation bar instead of underneath it, so they work from the moment the screen opens.</li>
+        <li><b>You can tap anybody.</b> Tap the position beside a player&rsquo;s name &mdash; on the field or on the bench &mdash; and the same list of positions opens that the lineup builder opens. Moving a player who is already on the field from second base to shortstop stops being impossible.</li>
+        <li><b>A third of the wasted space comes back.</b> The strip along the top goes; the arrival time and kit stop taking two lines; and only the score and the inning follow you down the page instead of the whole header card. Nine players on screen instead of six.</li>
+        <li><b>The &ldquo;Saved&rdquo; tick stops living at the top.</b> It becomes the pill every other coach screen uses: it appears when something is saving, says <i>Saved</i>, and fades. Only a failure stays put.</li>
+        <li><b>The screen just stays on.</b> The chip goes. Pressing the power button still sleeps the phone, and the phone still sleeps in your pocket &mdash; both of those are the handset, not us.</li>
+        <li><b>The word &ldquo;Home&rdquo; stops appearing twice.</b> The matchup line already says it &mdash; <i>vs</i> for a home game, <i>@</i> for an away one &mdash; so the separate word beside it goes.</li>
+        <li><b>The back arrow loses its word</b> on a phone and keeps going where it already goes: this game&rsquo;s entry on the schedule.</li>
+        <li><b>Scorekeeping comes off the screen.</b> The big running score goes; a quiet <i>Update score</i> row under the bench opens the same score sheet if you want it. Nothing about the record changes &mdash; the final score is still entered when you end the game, exactly as it is today, and that is what families are sent.</li>
+        <li><b>Scouting gets a door you can see.</b> Today the opponent&rsquo;s book is reachable only if you happen to know the opponent&rsquo;s name is tappable. It joins <i>Who&rsquo;s here</i> and <i>Note</i> in the bar, because it is one of the three jobs this screen is actually for.</li>
+        <li><b>The sideways &ldquo;Full grid&rdquo; table goes.</b> Fixing the fifth inning while you stand in the second is now the inning arrows &mdash; the same one-inning-at-a-time read the builder was given yesterday.</li>
+      </ul>
+    </div>
+    <hr class="rule">
+    <div>
+      <h2 class="sec">Who is affected</h2>
+      <p class="body">Head coaches and assistants who run the bench. A helper with schedule-only access sees the same board read-only and is unaffected except that their buttons become reachable too. Nothing here touches the tournament-scored game, the read-only recap the same address serves after the game, or anything a family sees. No new data is recorded, no migration, no route learns a year.</p>
+    </div>
+    <hr class="rule">
+    <div>
+      <h2 class="sec">Priority and success</h2>
+      <p class="body"><b>The two defects are a hotfix</b> &mdash; they make the live screen unusable for its one job, and they are cheap. The redraw is a normal stage, worth doing in the same pass because it touches the same header and the same footer.</p>
+      <p class="body" style="margin-top:10px"><b>Success:</b> a coach can end a game without scrolling; a coach can change any player&rsquo;s position in one tap from the row they are looking at; nine of eleven players read on one screen; and the console stops being the one coach screen with its own save word.</p>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="p-find" role="tabpanel" aria-labelledby="t-find" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">What the screen does now</h2>
+      <p class="lede">Every figure below was read out of the browser against the UAT fixture, at the two phone widths the portal is held to. Nothing here is estimated from a screenshot.</p>
+    </div>
+
+    <div class="findings">
+
+      <article class="find" data-sev="critical">
+        <span class="find-id">F1</span>
+        <div class="find-head"><h4>Every button on the action bar is covered by the navigation bar</h4><span class="sev" data-s="critical">Defect</span></div>
+        <p><i>Who&rsquo;s here</i>, <i>Note</i>, <i>Full grid</i> and <b>End game</b> are drawn underneath the phone&rsquo;s navigation bar and cannot be tapped. They surface only when the page is scrolled to its very last pixel. The bar pins itself to the bottom of the window without accounting for the navigation &mdash; the console is the only screen in the portal using that bar, which is why nothing else caught it.</p>
+        <div class="ev">hit-test at the centre of each button, 390&times;844
+ scrollY   0    all four  <span class="bad">&rarr; blocked by the nav</span>
+ scrollY 200    all four  <span class="bad">&rarr; blocked by the nav</span>
+ scrollY 428    all four  &rarr; the button      <b>(the page end)</b>
+
+ overlap <b>66.6px of 66.6px</b>   bar z-index 2  &middot;  nav z-index 300</div>
+      </article>
+
+      <article class="find" data-sev="critical">
+        <span class="find-id">F2</span>
+        <div class="find-head"><h4>Players on the field cannot be tapped</h4><span class="sev" data-s="critical">Defect</span></div>
+        <p>Every row under <i>On the field</i> is a disabled control unless a bench player has already been selected. Tapping Avery does nothing. The only live thing on the board at rest is a bench row, so the flow only runs backwards &mdash; bench first, then field. If both players are already on the field, there is <b>no path at all</b>: the change can only be made through the dropdowns in the sideways-scrolling <i>Full grid</i> sheet.</p>
+        <div class="ev">the board at rest, nobody selected
+ on-field rows          <b>11</b> rendered, <span class="bad">11 disabled</span>
+ bench rows             live
+ field-to-field move    <span class="bad">no path on the board</span> &mdash; Full grid only</div>
+      </article>
+
+      <article class="find" data-sev="high">
+        <span class="find-id">F3</span>
+        <div class="find-head"><h4>44% of the screen is spent before the first player&rsquo;s name</h4><span class="sev" data-s="high">High</span></div>
+        <p>At 390 the first row starts 369px down an 844px screen, and six of eleven players are visible. At 360 it is worse, because the inning arrows drop onto a second line under the score and the header card grows by 52px. And the whole 216px header card is what pins as you scroll &mdash; the matchup and the kit chips follow you down the page along with the score.</p>
+        <div class="ev">               390&times;844        360&times;844
+ top strip       47.2           47.2
+ header card    <b>215.8</b>          <b>267.8</b>   <span class="bad">score row wraps 50 &rarr; 102</span>
+ first player   <b>368.7</b>          <b>420.7</b>
+ board window    451.1 = <b>6 of 11</b> rows
+ pinned while scrolling   <b>215.8px</b></div>
+      </article>
+
+      <article class="find" data-sev="high">
+        <span class="find-id">F4</span>
+        <div class="find-head"><h4>The &ldquo;Saved&rdquo; tick is the old, retired pattern</h4><span class="sev" data-s="high">High</span></div>
+        <p>The console hand-rolls its own save word and pins it in the top strip, always visible. The portal settled this on 20 September: the word is a floating pill that shows nothing at rest, appears on an edit, says <i>Saved</i>, lingers a couple of seconds and fades &mdash; and only a failure persists. Five screens render the shared piece. The console is a sixth autosaving screen that was never added to the guarded list, which is precisely how it was missed.</p>
+      </article>
+
+      <article class="find" data-sev="medium">
+        <span class="find-id">F5</span>
+        <div class="find-head"><h4>Two ways to change a position, neither of them the builder&rsquo;s</h4><span class="sev" data-s="medium">Medium</span></div>
+        <p>The console asks you to select a bench player, then tap who they go in for. The lineup builder &mdash; redrawn for phones yesterday &mdash; asks you to tap the position beside a name and pick from a sheet. Same data, same save, two grammars. The third way is the <i>Full grid</i> sheet: a sideways-scrolling table of small dropdowns, which is the only route for a field-to-field move.</p>
+      </article>
+
+      <article class="find" data-sev="medium">
+        <span class="find-id">F6</span>
+        <div class="find-head"><h4>&ldquo;Screen staying on&rdquo; costs a whole line of the header</h4><span class="sev" data-s="medium">Medium</span></div>
+        <p>The chip is a 44px-tall button sitting among 26px chips, so the chip row wraps to two lines. It was built because a screen that refuses to sleep without saying so reads as a broken phone. That reasoning no longer holds on its own: the power button sleeps the handset whatever a web page asks for, and the lock already lets go when the tab is hidden. The honesty belongs in the help article, not in the most crowded screen in the portal.</p>
+        <div class="ev">chips row  <b>74.8px</b> at 390 (two lines)  &rarr; projected <b>~37px</b> without the chip</div>
+      </article>
+
+      <article class="find" data-sev="medium">
+        <span class="find-id">F7</span>
+        <div class="find-head"><h4>The back arrow names the page, not where it goes</h4><span class="sev" data-s="medium">Medium</span></div>
+        <p>The destination is already right &mdash; it returns to this game&rsquo;s own entry on the schedule, with the sheet open. The label says <i>Schedule</i>, which describes the page it lands on rather than the thing you go back to, and it spends a third of a 47px strip saying it. Every other action on a phone in this product is icon-only.</p>
+      </article>
+
+      <article class="find" data-sev="low">
+        <span class="find-id">F8</span>
+        <div class="find-head"><h4>The &ldquo;GAME DAY&rdquo; badge announces which screen you are on</h4><span class="sev" data-s="low">Low</span></div>
+        <p>A coach who opened the game-day screen knows they are on the game-day screen. What the badge is genuinely carrying is <b>live</b> &mdash; that this game is inside its window and writes are open &mdash; and that is worth keeping in a much smaller form, because the same address serves a read-only recap outside the window.</p>
+      </article>
+
+      <article class="find" data-sev="low">
+        <span class="find-id">F9</span>
+        <div class="find-head"><h4>The screen says home-or-away twice</h4><span class="sev" data-s="low">Low</span></div>
+        <p>The matchup already encodes it &mdash; the product writes <b>vs</b> for a home game and <b>@</b> for an away one &mdash; and then a separate word <i>Home</i> sits on the right of the same line saying it again, in a different grammar. Found while drawing the replacement, not while measuring: the four chips would not fit one line, and the reason the fourth existed was that this word had nowhere else to go.</p>
+      </article>
+
+      <article class="find" data-sev="high">
+        <span class="find-id">F10</span>
+        <div class="find-head"><h4>The running score is the biggest thing on the screen and nothing reads it</h4><span class="sev" data-s="high">High</span></div>
+        <p>Owner ruling, 22 September: the scorekeeping comes out. Tracing what depends on it says the call is safe with room to spare &mdash; the running score has exactly two consumers, and neither is the season record.</p>
+        <div class="ev">what the mid-game score feeds
+  the header glance              <b>the block itself</b>
+  End game&rsquo;s inputs             <b>a pre-fill you type over</b>
+  the season record              <span class="bad">nothing</span> &mdash; a mid-game result is refused by design
+  the schedule / insights        <span class="bad">nothing</span> &mdash; they read a FINISHED game
+  the recap&rsquo;s W 6&ndash;4 badge       <span class="bad">nothing</span> &mdash; drawn by its own block</div>
+        <p>The result is captured at <b>End game</b>, which has its own two score fields and its own win/loss/tie badge. A coach can also record a score from the schedule without ever opening this screen. So the header block buys a glance, and costs the most valuable 50px on the page.</p>
+      </article>
+
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="p-mock" role="tabpanel" aria-labelledby="t-mock" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">Before &amp; after, at true size</h2>
+      <p class="lede">Both frames are 390 &times; 844 &mdash; a real phone screen, not a scaled diagram. <b>Tap any numbered marker</b> to read what it is.</p>
+    </div>
+
+    <div class="frames">
+      <div class="framecol">
+        <div class="framecap"><h3>Now</h3><span>as it renders on dev today</span></div>
+        <div class="phone">
+          <div class="ph-mast">UAT Test Team <em>&#9662;</em> <b>3-2-1</b></div>
+          <div class="ph-body">
+            <div class="ph-bar">&larr; Schedule <span class="ph-livepill">GAME DAY</span> <span class="ph-saved">&#10003; Saved</span></div>
+            <div class="ph-card">
+              <div class="ph-match"><b>vs Probe Rovers</b><span>Home</span></div>
+              <div class="ph-chips">
+                <span class="ph-chip">Diamond 1</span><span class="ph-chip">Arrive 5:30 p.m.</span><span class="ph-chip">Home kit</span>
+                <span class="ph-chip ph-chip-on">Screen staying on</span>
+              </div>
+              <div class="ph-scorerow">
+                <div><span class="ph-scorelbl">US &mdash; THEM</span><span class="ph-scoreval">&ndash; &ndash; &ndash;</span></div>
+                <div class="ph-period"><span class="ph-step">&#8249;</span><span class="ph-inn">INNING 1 OF 6</span><span class="ph-step">&#8250;</span></div>
+              </div>
+            </div>
+            <p class="ph-grouplbl">On the field &mdash; inning 1</p>
+            <div class="ph-rows">
+              <div class="ph-row dim"><span class="ph-num">1</span><span class="ph-name">Avery Test</span><span class="ph-pos">SS</span></div>
+              <div class="ph-row dim"><span class="ph-num">3</span><span class="ph-name">Casey Test</span><span class="ph-pos">2B</span></div>
+              <div class="ph-row dim"><span class="ph-num">4</span><span class="ph-name">Devon Test</span><span class="ph-pos">LF</span></div>
+              <div class="ph-row dim"><span class="ph-num">5</span><span class="ph-name">Emerson Test</span><span class="ph-pos">RF</span></div>
+              <div class="ph-row dim"><span class="ph-num">6</span><span class="ph-name">Frankie Test</span><span class="ph-pos">C</span></div>
+              <div class="ph-row dim"><span class="ph-num">9</span><span class="ph-name">Indigo Test</span><span class="ph-pos">3B</span></div>
+            </div>
+          </div>
+          <div class="ph-foot buried">
+            <div class="ph-fbtn">Who&rsquo;s here<small>11 HERE &middot; 1 OUT</small></div>
+            <div class="ph-fbtn">Note</div>
+            <div class="ph-fbtn">Full grid</div>
+            <div class="ph-fbtn end">End game</div>
+          </div>
+          <div class="ph-nav">
+            <span class="ph-tab on"><i></i>Overview</span><span class="ph-tab"><i></i>Schedule</span>
+            <span class="ph-tab"><i></i>Chat</span><span class="ph-tab"><i></i>Roster</span><span class="ph-tab"><i></i>More</span>
+          </div>
+          <button class="mk" data-n="b1" style="top:46px;left:12px" aria-label="Note 1: the top strip">1</button>
+          <button class="mk" data-n="b2" style="top:46px;left:352px" aria-label="Note 2: the save word">2</button>
+          <button class="mk" data-n="b3" style="top:216px;left:12px" aria-label="Note 3: the wake chip">3</button>
+          <button class="mk" data-n="b4" style="top:296px;left:352px" aria-label="Note 4: the score and the inning">4</button>
+          <button class="mk" data-n="b5" data-k="crit" style="top:400px;left:352px" aria-label="Note 5: the board">5</button>
+          <button class="mk" data-n="b6" data-k="crit" style="top:792px;left:12px" aria-label="Note 6: the action bar">6</button>
+        </div>
+        <p class="truesize">390 &times; 844 &middot; first player at <b>369px</b> &middot; 6 of 11 rows &middot; action bar 0% reachable</p>
+      </div>
+
+      <div class="framecol">
+        <div class="framecap"><h3>Proposed</h3><span>drawn to the same scale</span></div>
+        <div class="phone">
+          <div class="ph-mast">UAT Test Team <em>&#9662;</em> <b>3-2-1</b></div>
+          <div class="ph-body">
+            <div class="ph-card">
+              <div class="ph-match2"><span class="ph-back">&larr;</span><b>vs Probe Rovers</b><span class="ph-dot"><i></i>LIVE</span></div>
+              <div class="ph-chips">
+                <span class="ph-chip">Diamond 1</span><span class="ph-chip">Arrive 5:30 p.m.</span><span class="ph-chip">Home kit</span>
+              </div>
+            </div>
+            <div class="ph-pin" data-stepper>
+              <span class="ph-pinlbl">PINS AS YOU SCROLL</span>
+              <div class="ph-steprow"><span class="ph-step ph-step-sm">&#8249;</span><span class="ph-inn">INNING 1 OF 6</span><span class="ph-step ph-step-sm">&#8250;</span></div>
+              <div class="ph-dots"><i class="on"></i><i class="open"></i><i></i><i></i><i></i><i></i></div>
+            </div>
+            <p class="ph-grouplbl">On the field &mdash; inning 1</p>
+            <div class="ph-rows">
+              <div class="ph-row"><span class="ph-num">1</span><span class="ph-name">Avery Test</span><span class="ph-warn">1 of 1 pitched</span><span class="ph-pos ph-pos-btn">P</span></div>
+              <div class="ph-row"><span class="ph-num">3</span><span class="ph-name">Casey Test</span><span class="ph-pos ph-pos-btn">2B</span></div>
+              <div class="ph-row"><span class="ph-num">4</span><span class="ph-name">Devon Test</span><span class="ph-pos ph-pos-btn">LF</span></div>
+              <div class="ph-row"><span class="ph-num">5</span><span class="ph-name">Emerson Test</span><span class="ph-pos ph-pos-btn">RF</span></div>
+            </div>
+            <div class="ph-doorrow"><span>Update score</span><b>&ndash; &ndash; &ndash;</b></div>
+          </div>
+          <span class="ph-pillfloat">&#10003; Saved</span>
+          <div class="ph-foot cleared">
+            <div class="ph-fbtn">Who&rsquo;s here<small>11 HERE &middot; 1 OUT</small></div>
+            <div class="ph-fbtn">Note</div>
+            <div class="ph-fbtn">Scouting</div>
+            <div class="ph-fbtn end">End game</div>
+          </div>
+          <div class="ph-nav">
+            <span class="ph-tab on"><i></i>Overview</span><span class="ph-tab"><i></i>Schedule</span>
+            <span class="ph-tab"><i></i>Chat</span><span class="ph-tab"><i></i>Roster</span><span class="ph-tab"><i></i>More</span>
+          </div>
+          <button class="mk" data-n="a1" data-k="good" style="top:46px;left:12px" aria-label="Note 1: the back arrow">1</button>
+          <button class="mk" data-n="a2" data-k="good" style="top:46px;left:352px" aria-label="Note 2: live">2</button>
+          <button class="mk" data-n="a3" data-k="good" style="top:124px;left:352px" aria-label="Note 3: the chips">3</button>
+          <button class="mk" data-n="a4" data-k="good" style="top:176px;left:352px" aria-label="Note 4: the pinned bar">4</button>
+          <button class="mk" data-n="a5" data-k="good" style="top:262px;left:352px" aria-label="Note 5: the position button">5</button>
+          <button class="mk" data-n="a6" data-k="good" style="top:712px;left:12px" aria-label="Note 6: the action bar">6</button>
+          <button class="mk" data-n="a7" data-k="good" style="top:666px;left:352px" aria-label="Note 7: the save pill">7</button>
+          <button class="mk" data-n="a8" data-k="good" style="top:600px;left:352px" aria-label="Note 8: the score door">8</button>
+          <button class="mk" data-n="a9" data-k="good" style="top:712px;left:206px" aria-label="Note 9: scouting">9</button>
+        </div>
+        <p class="truesize">390 &times; 844 &middot; first player at <b>286.7px</b> (built, reviewed) &middot; ~9 rows once scrolled &middot; action bar reachable at rest</p>
+      </div>
+
+      <div class="framecol">
+        <div class="framecap"><h3>One tap in</h3><span>the builder&rsquo;s own sheet</span></div>
+        <div class="phone">
+          <div class="ph-mast">UAT Test Team <em>&#9662;</em> <b>3-2-1</b></div>
+          <div class="ph-body">
+            <div class="ph-card">
+              <div class="ph-match2"><span class="ph-back">&larr;</span><b>vs Probe Rovers</b><span class="ph-dot"><i></i>LIVE</span></div>
+              <div class="ph-chips"><span class="ph-chip">Diamond 1</span><span class="ph-chip">Arrive 5:30 p.m.</span><span class="ph-chip">Home kit</span></div>
+            </div>
+            <div class="ph-pin" data-stepper>
+              <div class="ph-steprow"><span class="ph-step ph-step-sm">&#8249;</span><span class="ph-inn">INNING 1 OF 6</span><span class="ph-step ph-step-sm">&#8250;</span></div>
+              <div class="ph-dots"><i class="on"></i><i class="open"></i><i></i><i></i><i></i><i></i></div>
+            </div>
+            <p class="ph-grouplbl">On the field &mdash; inning 1</p>
+            <div class="ph-rows">
+              <div class="ph-row"><span class="ph-num">1</span><span class="ph-name">Avery Test</span><span class="ph-warn">1 of 1 pitched</span><span class="ph-pos ph-pos-btn">P</span></div>
+              <div class="ph-row" style="outline:2px solid #54700F;outline-offset:1px"><span class="ph-num">3</span><span class="ph-name">Casey Test</span><span class="ph-pos ph-pos-btn">2B</span></div>
+              <div class="ph-row"><span class="ph-num">4</span><span class="ph-name">Devon Test</span><span class="ph-pos ph-pos-btn">LF</span></div>
+              <div class="ph-row"><span class="ph-num">5</span><span class="ph-name">Emerson Test</span><span class="ph-pos ph-pos-btn">RF</span></div>
+              <div class="ph-row"><span class="ph-num">6</span><span class="ph-name">Frankie Test</span><span class="ph-pos ph-pos-btn">C</span></div>
+            </div>
+          </div>
+          <div class="ph-sheet">
+            <div class="ph-sheethead"><span>Casey Test &middot; inning 1</span><span style="color:#8E9186;font-weight:400">&#10005;</span></div>
+            <div class="ph-posgrid">
+              <span class="ph-poscell">P</span><span class="ph-poscell">C</span><span class="ph-poscell">1B</span><span class="ph-poscell on">2B</span>
+              <span class="ph-poscell">3B</span><span class="ph-poscell">SS</span><span class="ph-poscell">LF</span><span class="ph-poscell">CF</span>
+              <span class="ph-poscell">RF</span><span class="ph-poscell">DH</span><span class="ph-poscell">EH</span><span class="ph-poscell">&mdash;</span>
+            </div>
+            <p style="margin:11px 0 0;font-size:12.5px;color:#71746A">Last blank leaves them on the bench this inning</p>
+          </div>
+          <div class="ph-nav">
+            <span class="ph-tab on"><i></i>Overview</span><span class="ph-tab"><i></i>Schedule</span>
+            <span class="ph-tab"><i></i>Chat</span><span class="ph-tab"><i></i>Roster</span><span class="ph-tab"><i></i>More</span>
+          </div>
+          <button class="mk" data-n="s1" data-k="good" style="top:496px;left:12px" aria-label="Note: the position sheet">1</button>
+        </div>
+        <p class="truesize">The same component the builder opens &mdash; one sheet, two screens, no drift</p>
+      </div>
+    </div>
+
+    <div class="note" id="note" aria-live="polite">
+      <p class="note-empty">Tap a numbered marker on any frame to read what it is.</p>
+    </div>
+
+    <hr class="rule">
+
+    <div>
+      <h2 class="sec">The vertical budget</h2>
+      <p class="body" style="margin-bottom:14px">Measured on the left, projected on the right. Every projected figure gets re-measured at build and the real number goes into the plan &mdash; a projection that ships unverified is how a plan starts lying.</p>
+      <div class="tblwrap">
+        <table>
+          <thead><tr><th>Band</th><th>Now &middot; 390</th><th>Now &middot; 360</th><th>Proposed &middot; 390</th><th>What changed</th></tr></thead>
+          <tbody>
+            <tr><td><b>Top strip</b></td><td class="num">47.2</td><td class="num">47.2</td><td class="num delta">0</td><td>Deleted &mdash; back moves into the card, live becomes a dot, Saved becomes the pill</td></tr>
+            <tr><td><b>Matchup line</b></td><td class="num">44</td><td class="num">44</td><td class="num">44</td><td>Now also carries the back arrow and the live dot</td></tr>
+            <tr><td><b>Chips</b></td><td class="num">74.8</td><td class="num">74.8</td><td class="num delta">25.2</td><td><b>Built and measured</b> &mdash; one line; the wake chip and the stray &ldquo;Home&rdquo; both gone</td></tr>
+            <tr><td><b>Score block</b></td><td class="num">50.2</td><td class="num">102.2</td><td class="num delta">0</td><td>Out (F10) &mdash; a quiet &ldquo;Update score&rdquo; row under the board opens the same sheet</td></tr>
+            <tr><td><b>Inning stepper</b></td><td class="num">&mdash;</td><td class="num">&mdash;</td><td class="num delta">~70</td><td>The builder&rsquo;s pinned stepper with its status dots, full width</td></tr>
+            <tr><td><b>First player at</b></td><td class="num">368.7</td><td class="num">420.7</td><td class="num delta">286.7</td><td><b>Built, reviewed and re-measured</b> &mdash; 82px back at 390, 134px at 360</td></tr>
+            <tr><td><b>Pinned while scrolling</b></td><td class="num">215.8</td><td class="num">267.8</td><td class="num delta">76.2</td><td><b>Built and re-measured</b> &mdash; only the inning stepper follows you down</td></tr>
+            <tr><td><b>Rows on screen</b></td><td class="num">6 of 11</td><td class="num">5 of 11</td><td class="num delta">~9 of 11</td><td></td></tr>
+            <tr><td><b>Action bar reachable</b></td><td class="num" style="color:var(--crit)">no</td><td class="num" style="color:var(--crit)">no</td><td class="num delta">yes</td><td>Clears the navigation bar; Full grid out, Scouting in &mdash; still four</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="p-rule" role="tabpanel" aria-labelledby="t-rule" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">Rulings &mdash; all settled</h2>
+      <p class="lede">Ruled 22 September &mdash; <i>"I agree with your recommendations, go ahead and build it"</i>. All four went the recommended way and are built; kept here as the record of what was decided and why.</p>
+      <div class="q" style="border-color:var(--ok);background:var(--ok-soft);margin-top:18px">
+        <div class="q-head"><span class="mono" style="color:var(--ok)">SETTLED</span><h4>Scorekeeping comes off the screen &mdash; owner, 22 Sep</h4></div>
+        <p class="body">The running score block goes; a quiet <i>Update score</i> row under the board opens the same sheet. Checked before drawing it (F10): nothing in the product reads a mid-game score, the season record refuses one by design, and End game keeps its own two fields. Nothing is lost that is not one tap away at the moment you actually want it.</p>
+      </div>
+    </div>
+    <div class="qs">
+
+      <div class="q">
+        <div class="q-head"><span class="mono">G1</span><h4>What shape is the board?</h4></div>
+        <p class="body">You asked for the lineup editor&rsquo;s experience. That splits into two readings.</p>
+        <div class="opts">
+          <div class="opt" data-rec="yes">
+            <h5>A &mdash; the console keeps its board and learns the builder&rsquo;s controls <span class="rec">Recommended</span></h5>
+            <p><i>On the field</i> and <i>Bench</i> stay, with the bench still longest-sitting-first. Each row&rsquo;s position becomes a real button opening the builder&rsquo;s position sheet. The select-then-tap swap stays as a second route for &ldquo;put Casey in for Avery&rdquo;. <i>Full grid</i> goes.</p>
+          </div>
+          <div class="opt">
+            <h5>B &mdash; the console&rsquo;s board becomes the builder&rsquo;s list</h5>
+            <p>The same one-inning-at-a-time list the builder renders: batting order, neighbouring innings in small type, the number as a drag handle. One component, one grammar, nothing to keep in step.</p>
+          </div>
+        </div>
+        <p class="body" style="margin-top:13px"><b>Why A.</b> The board answers &ldquo;who is out there right now&rdquo;; the builder&rsquo;s list answers &ldquo;what is the plan&rdquo;. At a fence the first question is the whole reason this screen exists, and B&rsquo;s batting-order list cannot answer it without the coach reading eleven rows. A gives you the part of your ask that matters &mdash; <i>the edit is one tap and it is the same sheet</i> &mdash; without trading away the read. B is defensible and cheaper to maintain; if one component matters more to you than the read, it is B.</p>
+      </div>
+
+      <div class="q">
+        <div class="q-head"><span class="mono">G2</span><h4>Does the console keep a permanent action bar?</h4></div>
+        <div class="opts">
+          <div class="opt" data-rec="yes">
+            <h5>A &mdash; keep it, fix the clearance, drop to three <span class="rec">Recommended</span></h5>
+            <p>It sits above the navigation bar. <i>Full grid</i> leaves with the sideways table, so <i>Who&rsquo;s here</i>, <i>Note</i> and <i>End game</i> get their labels back a size. Cost: 139px of permanent bottom chrome.</p>
+          </div>
+          <div class="opt">
+            <h5>B &mdash; no bar at all</h5>
+            <p><i>Who&rsquo;s here</i> becomes a fact you tap in the header (&ldquo;11 here &middot; 1 out&nbsp;&rsaquo;&rdquo;), <i>Note</i> and <i>Scouting</i> join the board&rsquo;s foot beside <i>Update score</i>, and <i>End game</i> is a full-width button at the end of the document &mdash; which is where you are when the game ends. Reclaims 67px.</p>
+          </div>
+        </div>
+        <p class="body" style="margin-top:13px"><b>Why A.</b> Big targets you can hit without looking are the reason the bar was built, and that was right. The problem was never that it existed &mdash; it was that it was invisible. B is tempting but makes <i>End game</i> a thing you go looking for.</p>
+      </div>
+
+      <div class="q">
+        <div class="q-head"><span class="mono">G3</span><h4>How is the opponent&rsquo;s scouting book reached?</h4></div>
+        <p class="body">You named scouting as one of the three dugout jobs. Today it has the weakest affordance on the screen: a dotted underline on the opponent&rsquo;s name, which a coach finds only by tapping a word that does not look like a button.</p>
+        <div class="opts">
+          <div class="opt" data-rec="yes">
+            <h5>A &mdash; a door in the bar, and keep the name too <span class="rec">Recommended</span></h5>
+            <p><i>Scouting</i> takes the slot <i>Full grid</i> vacates. The opponent&rsquo;s name keeps its underline as the contextual route &mdash; it already works and costs nothing.</p>
+          </div>
+          <div class="opt">
+            <h5>B &mdash; the bar only</h5>
+            <p>The name becomes plain text. One door, no chance of two routes drifting apart, and the matchup line reads quieter.</p>
+          </div>
+        </div>
+        <p class="body" style="margin-top:13px"><b>Why A.</b> Two routes to one sheet is only a problem when they can disagree; these cannot. The bar makes it findable for the coach who has never found it, and the name stays right for the coach already looking at the opponent. Worth knowing: after the game the recap already offers scouting as a prominent line &mdash; &ldquo;while it&rsquo;s fresh, add to the book?&rdquo; &mdash; so the book is well served <i>after</i> and invisible <i>during</i>. This closes that gap.</p>
+      </div>
+
+      <div class="q">
+        <div class="q-head"><span class="mono">G4</span><h4>The wake lock &mdash; silent, or still disclosed?</h4></div>
+        <div class="opts">
+          <div class="opt" data-rec="yes">
+            <h5>A &mdash; silent, disclosed in help <span class="rec">Recommended</span></h5>
+            <p>The chip goes. The screen stays on while the game is live and lets go when it ends. The help article&rsquo;s paragraph is rewritten to describe the behaviour rather than the control.</p>
+          </div>
+          <div class="opt">
+            <h5>B &mdash; keep an off switch somewhere quieter</h5>
+            <p>Moved off the header entirely &mdash; into the tools row, or a line in the game sheet.</p>
+          </div>
+        </div>
+        <p class="body" style="margin-top:13px"><b>This is the one I&rsquo;d flag.</b> A standing ruling says a screen that refuses to sleep without saying so reads as a broken phone. I think A is still right &mdash; the power button sleeps the handset regardless of what a web page asks, and the lock already releases in your pocket, so nothing is actually trapped &mdash; but this retires a ruling, and that is your call, not mine.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="p-plan" role="tabpanel" aria-labelledby="t-plan" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">Build plan</h2>
+      <p class="lede">One screen, one stylesheet block, one help article. No migration, no new route, no year parameter, nothing a family sees &mdash; and the score-writing paths (the quiet mid-game write, End game, the schedule&rsquo;s own score form) are untouched behind their door.</p>
+    </div>
+
+    <div>
+      <h3 class="sub3">Part 1 &mdash; the two defects</h3>
+      <p class="body">Shippable on its own, ahead of any ruling.</p>
+      <ul class="tight">
+        <li><b>The action bar clears the navigation.</b> It reads the same clearance value the save pill, the docked bar and the sidebar already read, instead of pinning to zero, and its stacking rises above the nav. The console is that bar&rsquo;s only consumer, so nothing else moves.</li>
+        <li><b>Players on the field become tappable at rest.</b> The disabled condition goes; a tap on a field row opens that player&rsquo;s position sheet. The existing select-then-tap swap keeps working when a bench player is already chosen.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="sub3">Part 2 &mdash; the header</h3>
+      <ul class="tight">
+        <li>The top strip is deleted. The back control becomes an icon-only 38px button in a 44px target inside the card&rsquo;s first line, keeping its word above phone width; it returns to where the console was opened from, defaulting to this game&rsquo;s sheet on the schedule.</li>
+        <li><i>GAME DAY</i> becomes a small live dot and word on the matchup line; the read-only recap keeps saying so in its own words.</li>
+        <li>The hand-rolled save word is deleted and the shared pill rendered instead. The console joins the guarded list of autosaving screens, so the next time that word moves this screen moves with it.</li>
+        <li>The wake chip and its switch go; the lock itself stays, still live-window-only and bench-coach-only.</li>
+        <li>The running score block is deleted (F10). The card splits: matchup and chips scroll, and the pinned slot goes to the <b>inning stepper with the builder&rsquo;s status dots</b> &mdash; the same piece, so the two screens step through innings identically. The arrows are 36px inside 44px targets &mdash; the phone-door precedent from stage 2 &mdash; so 360 stops wrapping.</li>
+        <li>A quiet <i>Update score</i> row sits under the board, opening the existing score sheet untouched. End game keeps its own two fields and its win/loss/tie badge &mdash; the result is captured there, as it already is, and the family notification is unchanged.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="sub3">Part 3 &mdash; the board</h3>
+      <ul class="tight">
+        <li>Each row&rsquo;s position becomes a button opening the builder&rsquo;s position sheet. Same component, same cell edit, same save, one undo step &mdash; nothing new is recorded, exactly as the console&rsquo;s founding constraint requires.</li>
+        <li>The bench keeps its frozen longest-sitting-first order and its streak chips; the field keeps its pitch-count and absence warnings. Neither is in the builder&rsquo;s list, and neither is lost.</li>
+        <li><i>Full grid</i> and its sideways table go, and <b>Scouting</b> takes the slot. Correcting a later inning is the inning arrows &mdash; the builder&rsquo;s own answer. The door to the full builder stays, for batting order, modes and caps.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="sub3">Verification at build</h3>
+      <ul class="tight">
+        <li>Re-measure every projected figure at 390 and 360 and write the real numbers into the plan &mdash; read from the browser, never a screenshot.</li>
+        <li>Re-run the hit-test: all three action buttons reachable at scroll 0, mid-scroll and at the page end.</li>
+        <li>The layout sweep&rsquo;s console screen, the tap floor and the field floor; the phone guard; the save-pill guard with the console added to its list; the selector check.</li>
+        <li>A helper with schedule-only access still gets the board read-only with no write controls, and their buttons are reachable too.</li>
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="sub3">Help and docs</h3>
+      <p class="body">One article changes: the game-day section&rsquo;s &ldquo;Who&rsquo;s here, and keeping the screen awake&rdquo; loses the chip and describes the behaviour; its search terms keep <i>screen keeps turning off</i> and <i>phone keeps sleeping</i>, which is what a coach actually types. <i>Full grid</i> and <i>screen staying on</i> leave the search text. Plan, PM brief, TODO and the QA ledger are stamped in the same unit of work.</p>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="p-qa" role="tabpanel" aria-labelledby="t-qa" hidden>
+  <div class="stack">
+    <div>
+      <h2 class="sec">QA walk</h2>
+      <p class="lede">Run on a phone, on a game inside its live window. Tick as you go &mdash; ticks are kept in this browser. Use <b>Copy for paste-back</b> at the end.</p>
+    </div>
+
+    <div class="walkbar">
+      <span class="count" id="count">0 of 30 checked</span>
+      <span style="display:flex;gap:9px">
+        <button class="btn" id="copy">Copy for paste-back</button>
+        <button class="btn" id="reset">Reset</button>
+      </span>
+    </div>
+
+    <div class="walk" id="walk">
+      <div class="step"><input type="checkbox" id="q1"><span class="sid">1</span><label for="q1"><b>Open the game from the schedule.</b> The strip along the top is gone. The card&rsquo;s first line is a back arrow, the opponent, and a small red LIVE.<small>Nothing says &ldquo;GAME DAY&rdquo; and nothing says &ldquo;Schedule&rdquo;.</small></label></div>
+      <div class="step"><input type="checkbox" id="q2"><span class="sid">2</span><label for="q2"><b>The chips are one line</b> &mdash; Home, the diamond, the arrival time, the kit. No &ldquo;Screen staying on&rdquo;.</label></div>
+      <div class="step"><input type="checkbox" id="q3"><span class="sid">3</span><label for="q3"><b>Count the players you can see</b> without scrolling. Nine or more of eleven.</label></div>
+      <div class="step"><input type="checkbox" id="q4"><span class="sid">4</span><label for="q4"><b>Without scrolling at all, tap Who&rsquo;s here.</b> It opens.<small>This is the defect. It must work from the moment the screen loads.</small></label></div>
+      <div class="step"><input type="checkbox" id="q5"><span class="sid">5</span><label for="q5"><b>Without scrolling, tap End game.</b> The wrap opens. Close it without ending.</label></div>
+      <div class="step"><input type="checkbox" id="q6"><span class="sid">6</span><label for="q6"><b>Scroll to the bottom and back.</b> The three buttons stay above the navigation bar the whole way and never disappear behind it.</label></div>
+      <div class="step"><input type="checkbox" id="q7"><span class="sid">7</span><label for="q7"><b>Scroll down.</b> The opponent and the kit scroll away; the inning stepper and its dots stay pinned.</label></div>
+      <div class="step"><input type="checkbox" id="q8"><span class="sid">8</span><label for="q8"><b>Tap the position beside a player on the field.</b> The position sheet opens, named for that player and that inning, with their current position marked.<small>The second defect. On the field, at rest, with nothing else selected.</small></label></div>
+      <div class="step"><input type="checkbox" id="q23"><span class="sid">9</span><label for="q23"><b>With that sheet open, scroll to its bottom.</b> You can see and tap the last row (<i>Leave open</i>) &mdash; the four buttons of the action bar are behind the sheet, not on top of it, and nothing is cut off.<small>Owner-reported 2026-09-22 on the pre-review build; the same root cause as the buried End-game buttons. Check it on a SHORT phone too.</small></label></div>
+      <div class="step"><input type="checkbox" id="q9"><span class="sid">10</span><label for="q9"><b>Move a player who is already on the field</b> from one position to another &mdash; second base to shortstop. It saves.</label></div>
+      <div class="step"><input type="checkbox" id="q19"><span class="sid">11</span><label for="q19"><b>There is no running score anywhere on the screen.</b> No US &mdash; THEM block, no big dashes.<small>A quiet &ldquo;Update score&rdquo; row sits under the bench instead.</small></label></div>
+      <div class="step"><input type="checkbox" id="q20"><span class="sid">12</span><label for="q20"><b>Tap Update score.</b> The score sheet opens with the +1 buttons and the correction, unchanged. Enter a score, close it, reopen it &mdash; it held.</label></div>
+      <div class="step"><input type="checkbox" id="q21"><span class="sid">13</span><label for="q21"><b>Tap Scouting in the bar.</b> The opponent&rsquo;s book opens. Tapping the opponent&rsquo;s name at the top opens the same book.</label></div>
+      <div class="step"><input type="checkbox" id="q22"><span class="sid">14</span><label for="q22"><b>Open End game.</b> Its own two score fields are there with the win/loss/tie badge, pre-filled from whatever you entered. Type over them &mdash; it takes the typed value. Close without ending.<small>The record is captured here, not by the screen. This must not have changed.</small></label></div>
+      <div class="step"><input type="checkbox" id="q24"><span class="sid">15</span><label for="q24"><b>Open any sheet and leave it three other ways.</b> Tap the board behind it &mdash; it closes. Reopen, press Escape &mdash; it closes. Reopen, use the phone&rsquo;s back gesture &mdash; it closes <i>and you are still on the game</i>, not back at the schedule. The X still works too.<small>Owner-reported 2026-09-22: the X was the only way out of any of the six sheets, the substitution confirm included.</small></label></div>
+      <div class="step"><input type="checkbox" id="q25"><span class="sid">16</span><label for="q25"><b>With a sheet open, tap a player&rsquo;s position.</b> The sheet closes and the position sheet opens &mdash; never both at once.</label></div>
+      <div class="step"><input type="checkbox" id="q26"><span class="sid">17</span><label for="q26"><b>Every sheet rises from the bottom as a drawer.</b> Full width, flush to the nav bar, rounded at the top with a small grab line, and the page behind is dimmed. The nav bar stays lit and usable underneath.<small>Try a short phone too — the drawer must not swallow the whole screen.</small></label></div>
+      <div class="step"><input type="checkbox" id="q27"><span class="sid">18</span><label for="q27"><b>The substitution confirm is still a floating card</b> — deliberately, so the board behind it is readable. Tell me if you would rather it matched the rest.</label></div>
+      <div class="step"><input type="checkbox" id="q28"><span class="sid">19</span><label for="q28"><b>The drawer itself is NOT dimmed</b> — only the page behind it. The drawer is clean white (or clean dark in the dark theme); the nav bar underneath stays lit.<small>Owner-reported 2026-09-22 — the first attempt greyed the drawer too.</small></label></div>
+      <div class="step"><input type="checkbox" id="q29"><span class="sid">20</span><label for="q29"><b>Tap the dimmed area over a player row.</b> The drawer closes and NOTHING behind it reacts — the position picker must not open from that same tap.</label></div>
+      <div class="step"><input type="checkbox" id="q30"><span class="sid">21</span><label for="q30"><b>Open Note and type a line.</b> <i>About a player</i> is a single dropdown, not a grid of names, and <b>Save note</b> is on screen without scrolling — check it on a short phone and with your biggest roster. The button is lime, not black.<small>A player’s number should appear once: &ldquo;#2 Blake Test&rdquo;, never &ldquo;2 #2 Blake Test&rdquo;.</small></label></div>
+      <div class="step"><input type="checkbox" id="q10"><span class="sid">22</span><label for="q10"><b>The save pill</b> appears at the foot, says Saved, and fades after a couple of seconds. Nothing is pinned at the top.</label></div>
+      <div class="step"><input type="checkbox" id="q11"><span class="sid">23</span><label for="q11"><b>Tap a bench player, then a player on the field.</b> The swap still works and the hint still names it.</label></div>
+      <div class="step"><input type="checkbox" id="q12"><span class="sid">24</span><label for="q12"><b>The bench is still longest-sitting-first</b> and still shows the straight-innings-sitting chip; the field still shows innings pitched against the cap.</label></div>
+      <div class="step"><input type="checkbox" id="q13"><span class="sid">25</span><label for="q13"><b>Step to inning 5 with the arrows,</b> change a position there, step back to inning 1. Inning 1 is untouched.<small>This replaces the Full grid sheet, which should no longer be in the bar.</small></label></div>
+      <div class="step"><input type="checkbox" id="q14"><span class="sid">26</span><label for="q14"><b>Try it on a narrow phone (360).</b> The pinned stepper stays one line &mdash; arrow, inning, arrow &mdash; and nothing wraps.</label></div>
+      <div class="step"><input type="checkbox" id="q15"><span class="sid">27</span><label for="q15"><b>Tap the back arrow.</b> You land on this game&rsquo;s entry on the schedule with its sheet open &mdash; not the top of the schedule.</label></div>
+      <div class="step"><input type="checkbox" id="q16"><span class="sid">28</span><label for="q16"><b>Leave the phone untouched for two minutes</b> during the live game. The screen does not dim. Press the power button &mdash; it sleeps normally.</label></div>
+      <div class="step"><input type="checkbox" id="q17"><span class="sid">29</span><label for="q17"><b>On a desktop,</b> the same screen still reads properly: the back control keeps its word, nothing is stranded.</label></div>
+      <div class="step"><input type="checkbox" id="q18"><span class="sid">30</span><label for="q18"><b>As a helper with schedule-only access,</b> the board is read-only with the &ldquo;your coach runs the bench&rdquo; line, no write controls appear, and no button is trapped behind the navigation bar.</label></div>
+    </div>
+
+    <textarea class="paste" id="paste" readonly aria-label="Paste-back summary"></textarea>
+  </div>
+</section>
+
+</div>
+
+<script>
+var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+function show(id){
+  tabs.forEach(function(t){
+    var sel = t.id === id;
+    t.setAttribute('aria-selected', sel ? 'true' : 'false');
+    document.getElementById(t.getAttribute('aria-controls')).hidden = !sel;
+  });
+  try { localStorage.setItem('gd-hub-tab', id); } catch(e){}
+}
+tabs.forEach(function(t){
+  t.addEventListener('click', function(){ show(t.id); });
+  t.addEventListener('keydown', function(e){
+    var i = tabs.indexOf(t), n = null;
+    if (e.key === 'ArrowRight') n = tabs[(i+1)%tabs.length];
+    if (e.key === 'ArrowLeft')  n = tabs[(i-1+tabs.length)%tabs.length];
+    if (n){ e.preventDefault(); n.focus(); show(n.id); }
+  });
+});
+try { var savedTab = localStorage.getItem('gd-hub-tab'); if (savedTab && document.getElementById(savedTab)) show(savedTab); } catch(e){}
+
+var NOTES = {
+  b1: ['Now &middot; the top strip', 'A back link naming the page, not the destination',
+       'It costs 47px plus a gap, and it carries three things: a back link labelled <i>Schedule</i>, a badge telling you which screen you are on, and a save tick that never leaves. Every one of the three is answered better somewhere else.'],
+  b2: ['Now &middot; the save word', '&ldquo;Saved&rdquo; pinned to the top, always',
+       'The portal settled this on 20 September: the word is a pill at the foot that appears on an edit, says <i>Saved</i>, lingers and fades &mdash; and only a failure persists. Five screens render the shared piece; this is a sixth that was never added to the guarded list.'],
+  b3: ['Now &middot; the wake chip', 'A 44px button wedged among 26px chips',
+       'It forces the chip row onto two lines &mdash; 74.8px where one line is about 37. It was built so a screen that refuses to sleep would say so. The power button sleeps the handset regardless, and the lock already lets go when the tab hides, so nothing is trapped.'],
+  b4: ['Now &middot; the score and the inning', 'Together, and at 360 they come apart',
+       'At 360 the arrows drop onto a second line under the score and the header card grows from 216 to 268px. The whole card is what pins as you scroll, so the opponent and the kit follow you down the page along with the score.'],
+  b5: ['Now &middot; the board', 'Every player on the field is a disabled control',
+       'Tapping Avery does nothing. The rows are disabled unless a bench player has already been selected, so the flow only runs backwards. A move between two players already on the field has no path here at all &mdash; only the dropdowns inside the sideways-scrolling <i>Full grid</i> sheet.'],
+  b6: ['Now &middot; the action bar', 'Drawn underneath the navigation bar &mdash; 0% reachable',
+       'Who&rsquo;s here, Note, Full grid and End game are all covered. Hit-testing the centre of each at rest and mid-scroll returns the navigation bar every time. They surface only at the page&rsquo;s last pixel.<div class="ev">overlap <b>66.6px of 66.6px</b>   bar z 2  &middot;  nav z 300</div>'],
+
+  a1: ['Proposed &middot; the back arrow', 'Icon only, and it goes where it already went',
+       'A 38px arrow in a 44px target, on the card&rsquo;s first line. The destination is unchanged &mdash; this game&rsquo;s entry on the schedule, with its sheet open. Above phone width it keeps its word.'],
+  a2: ['Proposed &middot; live', 'A dot, not a badge',
+       'What the old badge really carries is that this game is inside its window and writes are open &mdash; worth keeping, because the same address serves a read-only recap outside it. Not worth a brick-red pill announcing which screen you are on.'],
+  a3: ['Proposed &middot; the chips', 'One line, and the stray &ldquo;Home&rdquo; goes',
+       'With the wake chip gone the three chips fit one line. The separate <i>Home</i> word on the right leaves entirely, because the matchup already says it: the product writes <b>vs</b> for a home game and <b>@</b> for an away one. The screen was stating the same fact twice, in two places, in two grammars.'],
+  a8: ['Proposed &middot; the score', 'A quiet row at the foot of the board',
+       'The big US &mdash; THEM block is gone (F10). What is left is one quiet row under the bench, opening the same score sheet unchanged &mdash; the +1 buttons, the correction, the note about families. You meet it on the way to <i>End game</i>, which is when you want it. Nothing about the record changes: End game still carries its own two fields and its own win/loss/tie badge.'],
+  a9: ['Proposed &middot; scouting', 'Out of the dotted underline, into the bar',
+       'Today the opponent&rsquo;s book is reachable only by knowing the opponent&rsquo;s name is tappable. If scouting is one of the three things this screen is for, it gets a door you can see. The name keeps its underline as the contextual second route &mdash; it costs nothing and already works.'],
+  a4: ['Proposed &middot; the pinned stepper', 'The builder’s own stepper, on the console',
+       'With the score gone, the one thing worth pinning is the inning &mdash; which is also the control you use constantly when the job is lineups. So it becomes the <b>same pinned stepper the lineup builder already has</b>, dots and all: filled for an inning that is set, a ring on the one you are reading, amber for one with a hole still in it. What pins drops from 216px to about 70, and a glance tells you which innings still need work. The arrows are 36px inside 44px targets, so 360 never wraps.'],
+  a5: ['Proposed &middot; the position', 'A real button, on every row',
+       'Outlined, 52&times;44, on the field and on the bench alike. Tapping it opens the same position sheet the lineup builder opens &mdash; same component, same cell edit, same save, one undo step. This is the answer to &ldquo;make it the lineup editor&rsquo;s experience&rdquo;.'],
+  a6: ['Proposed &middot; the action bar', 'Above the navigation, and one button lighter',
+       '<i>Full grid</i> leaves with the sideways table, so the three that remain get their labels back a size. The bar reads the same clearance the save pill and the docked bar already read, instead of pinning to zero.'],
+  a7: ['Proposed &middot; the save pill', 'The shared one, and it leaves',
+       'Appears on an edit, says <i>Saved</i>, fades after a couple of seconds. Only a failure stays, as a Retry. The console joins the guarded list, so the next time this word moves, this screen moves with it.'],
+
+  s1: ['The position sheet', 'Built yesterday, for the builder',
+       'The same sheet, unchanged: every position for this sport in a grid, the current one marked, a bench pick allowed and named rather than confirmed. One component serving the builder and the console means the two can never drift into different answers to the same question.']
+};
+var note = document.getElementById('note');
+var current = null;
+Array.prototype.forEach.call(document.querySelectorAll('.mk'), function(m){
+  m.setAttribute('aria-pressed','false');
+  m.addEventListener('click', function(){
+    var k = m.getAttribute('data-n'), n = NOTES[k];
+    if (!n) return;
+    Array.prototype.forEach.call(document.querySelectorAll('.mk'), function(o){ o.setAttribute('aria-pressed','false'); });
+    if (current === k){ current = null; note.innerHTML = '<p class="note-empty">Tap a numbered marker on any frame to read what it is.</p>'; return; }
+    current = k;
+    m.setAttribute('aria-pressed','true');
+    note.innerHTML = '<div class="note-in"><p class="eyebrow">'+n[0]+'</p><h4>'+n[1]+'</h4><p>'+n[2]+'</p></div>';
+  });
+});
+
+var boxes = Array.prototype.slice.call(document.querySelectorAll('#walk input[type=checkbox]'));
+var KEY = 'gd-hub-walk';
+function saveWalk(){
+  var s = {}; boxes.forEach(function(b){ s[b.id] = b.checked; });
+  try { localStorage.setItem(KEY, JSON.stringify(s)); } catch(e){}
+}
+function refresh(){
+  var n = boxes.filter(function(b){ return b.checked; }).length;
+  document.getElementById('count').textContent = n + ' of ' + boxes.length + ' checked';
+  var lines = ['Bench console re-draw — QA walk', ''];
+  boxes.forEach(function(b){
+    var lab = document.querySelector('label[for="' + b.id + '"]');
+    var sid = b.parentNode.querySelector('.sid').textContent;
+    var strong = lab.querySelector('b');
+    var txt = strong ? strong.textContent : lab.textContent;
+    lines.push((b.checked ? '[x] ' : '[ ] ') + sid + '. ' + txt.trim());
+  });
+  lines.push('', n + ' of ' + boxes.length + ' passed');
+  document.getElementById('paste').value = lines.join('\n');
+}
+boxes.forEach(function(b){ b.addEventListener('change', function(){ saveWalk(); refresh(); }); });
+try { var st = JSON.parse(localStorage.getItem(KEY) || '{}'); boxes.forEach(function(b){ b.checked = !!st[b.id]; }); } catch(e){}
+document.getElementById('reset').addEventListener('click', function(){ boxes.forEach(function(b){ b.checked = false; }); saveWalk(); refresh(); });
+document.getElementById('copy').addEventListener('click', function(){
+  var ta = document.getElementById('paste'); ta.select();
+  var btn = this, old = btn.textContent;
+  try { navigator.clipboard.writeText(ta.value); } catch(e){ try { document.execCommand('copy'); } catch(e2){} }
+  btn.textContent = 'Copied'; setTimeout(function(){ btn.textContent = old; }, 1600);
+});
+refresh();
+</script>

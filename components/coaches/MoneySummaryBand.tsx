@@ -50,6 +50,22 @@ export interface MoneyTile {
   /** ≤6 words: the qualifier the figure cannot carry itself. Omitted rather than padded. */
   caption?: ReactNode;
   /**
+   * ⚠⚠ THE CAPTION'S PHONE FORM — and it exists because three tabs had outgrown the contract one
+   * line up (Money phone walk, decision M1, owner 2026-09-22). Measured at 390: Budget Plan's
+   * expenses caption ran to 60 characters and two lines, Player Dues' collected caption to 54, and
+   * at two-up they would have taken a third. The desk caption is NOT wrong — at three tiles across
+   * a 1,100px column it fits on one line and carries detail worth having — so the fix is a phone
+   * form, not a shorter caption everywhere.
+   *
+   * ⚠ OMIT IT WHEN THE CAPTION ALREADY HOLDS. Budget vs. Actual (12–23 characters) and Fundraising
+   * (10–37) pass nothing and render one caption at every width; only a tab that genuinely needs a
+   * second wording declares one. A `captionShort` that merely restates `caption` is drift.
+   *
+   * ⚠ BOTH ARE IN THE DOM and CSS shows one — `display: none` removes the other from the
+   * accessibility tree too, so a screen reader reads the form its width is on and never both.
+   */
+  captionShort?: ReactNode;
+  /**
    * ⚠ A TILE THAT HIDES WHEN ITS ABSENCE IS THE GOOD NEWS (recipe deviation 2) — off-plan spending,
    * money past due. The band re-fits from 4 to 3 rather than printing a decorative zero.
    */
@@ -57,10 +73,20 @@ export interface MoneyTile {
 }
 
 /**
- * ⚠⚠ THE BAND STACKS ALL-OR-NOTHING, AND THAT IS INHERITED KNOWLEDGE, NOT A GUESS. The Club band's
- * own header records why it refused the portal's auto-fit summary grid: at the widths this hub
- * actually gets, an auto-fit row reflows 3 → 2 + 1 and orphans whichever figure lands alone. These
- * tiles are one sentence about one tab, so they hold one row and stack together at 760.
+ * ⚠⚠ THE BAND NARROWS TO TWO-UP, NEVER TO ONE, AND NEVER BY AUTO-FIT (Money phone walk, decision
+ * M1, owner 2026-09-22). The Club band's original refusal of the portal's auto-fit summary grid
+ * still stands and its reason is untouched: an auto-fit row reflows 3 → 2 + 1 and orphans whichever
+ * figure lands alone. What that argument settled was *not auto-fit*; it did not settle *one column*,
+ * and for a year the band read that as the same thing.
+ *
+ * ⚠ THE ONE-COLUMN STACK WAS THE MEASURED DEFECT. At 390 it made a four-tile band 387px — a
+ * Budget vs. Actual tile carries twelve to twenty-three characters of caption, so no amount of
+ * editing the words could shrink it. Budget Plan's first budget line rendered 122px BELOW the
+ * phone's bottom bar, Budget vs. Actual's 34px below: a coach opened the budget and saw no budget.
+ *
+ * A FIXED two-column grid orphans nothing, because the odd tile takes the whole width rather than
+ * sitting beside a gap — see the stylesheet. Every band on every tab is now the same height on a
+ * phone, which is what this component was built for and had never achieved (291–405px before).
  */
 export default function MoneySummaryBand({
   tiles,
@@ -94,7 +120,14 @@ export default function MoneySummaryBand({
                 box, which is what left two of Fundraising's four cards a row shorter than their
                 neighbours and made the row read as ragged. */}
             {t.caption != null && t.caption !== '' && (
-              <span className={styles.moneyBandCaption}>{t.caption}</span>
+              <span className={styles.moneyBandCaption}>
+                {t.captionShort != null && t.captionShort !== '' ? (
+                  <>
+                    <span className={styles.moneyBandCapDesk}>{t.caption}</span>
+                    <span className={styles.moneyBandCapPhone}>{t.captionShort}</span>
+                  </>
+                ) : t.caption}
+              </span>
             )}
           </div>
         ))}

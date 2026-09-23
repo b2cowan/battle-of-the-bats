@@ -346,6 +346,13 @@
 @media (max-width: 768px) {
   .toolbarActions button,
   .toolbarActions a { min-height: var(--tap-min, 44px); }
+  /* ⚠ THE ROW'S OWN GAP TIGHTENS AT TOUCH WIDTHS, and it is worth 24px (Money phone walk · M2,
+     owner 2026-09-22). Budget Plan's phone row measured 363px of content into a 358px bar — over
+     by FIVE — so the desk's 0.75rem column gap was the entire difference between one row and two.
+     The controls themselves are already at the 44px floor and must not shrink; the air between
+     them is what is spare. Vertical stays 0.5rem: when a row DOES wrap, the two lines still need
+     to read as two lines. */
+  .toolbar { column-gap: 0.5rem; }
   /* `fit-content` + `min-width: 0`, and `flex: 0 0 auto` on the CHILD — the container-only
      override never finishes the job; the child carries the property doing the squeezing
      (2026-08-26, the same failure a third time). 0.7rem of side padding is what makes switch +

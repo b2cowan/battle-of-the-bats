@@ -1,0 +1,942 @@
+<title>Money On A Phone</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+/* The identity is the phone programme's, deliberately — the owner reads these two hubs back to
+   back and a second visual world would read as a second project. Tokens copied from
+   COACH_MOBILE_EXPERIENCE_HUB.html. */
+:root{
+  --paper:#F4F5F1; --surface:#FFFFFF; --ink:#1A211B; --ink-2:#4A544B; --muted:#6F796F; --rule:#D8DDD4;
+  --accent:#4C7719; --accent-ink:#37570F; --accent-soft:#E4EDD3; --ask:#8F540C; --ask-soft:#F5E7CF;
+  --mono-bg:#EBEEE6; --push-soft:#EEF1EA; --focus:#2F6FD1; --bad:#9E3030; --bad-soft:#F6E3E1;
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  color-scheme:light dark;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#141A15; --surface:#1B221C; --ink:#E9ECE5; --ink-2:#B9C1B7; --muted:#8B968B; --rule:#2B352C;
+    --accent:#A9D45A; --accent-ink:#C6E58A; --accent-soft:#24301A; --ask:#E3AA5C; --ask-soft:#33271A;
+    --mono-bg:#212A22; --push-soft:#1F271F; --focus:#7FB0FF; --bad:#E08A8A; --bad-soft:#3A2323;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#141A15; --surface:#1B221C; --ink:#E9ECE5; --ink-2:#B9C1B7; --muted:#8B968B; --rule:#2B352C;
+  --accent:#A9D45A; --accent-ink:#C6E58A; --accent-soft:#24301A; --ask:#E3AA5C; --ask-soft:#33271A;
+  --mono-bg:#212A22; --push-soft:#1F271F; --focus:#7FB0FF; --bad:#E08A8A; --bad-soft:#3A2323;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-ink);text-decoration-thickness:1px;text-underline-offset:2px}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;margin:0}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.82em}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button{font:inherit;color:inherit}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ── tabs ── */
+.tabs{max-width:1180px;margin:0 auto;padding:16px 20px 0;display:flex;align-items:flex-end;gap:2px;border-bottom:1px solid var(--rule);flex-wrap:wrap}
+@media (min-width:1040px){.tabs{padding:20px 32px 0}}
+.tabs .tabtitle{font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:auto;padding:0 0 12px}
+.tab{font-family:var(--display);font-weight:600;font-size:15px;padding:8px 14px 11px;border:0;background:none;color:var(--ink-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .st{font-family:var(--mono);font-size:10.5px;color:var(--ask);background:var(--ask-soft);padding:1px 6px;border-radius:3px;letter-spacing:.02em}
+.tab .st.built{color:var(--accent-ink);background:var(--accent-soft)}
+.tab .st.dim{color:var(--muted);background:var(--mono-bg)}
+
+/* ── page frame ── */
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px 90px}
+@media (min-width:1040px){.wrap{padding:0 32px 110px}}
+.masthead{padding:40px 0 30px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+.masthead h1{font-size:clamp(32px,5vw,50px);font-weight:700;line-height:1.02;letter-spacing:-.015em;margin:10px 0 16px}
+.lede{font-size:19.5px;line-height:1.5;max-width:62ch}
+.lede em{font-style:italic}
+section{padding:34px 0;border-bottom:1px solid var(--rule)}
+section:last-child{border-bottom:0}
+section > h2{font-size:26px;font-weight:700;letter-spacing:-.01em;margin-bottom:6px}
+section > h2 .num{font-family:var(--mono);font-size:13px;color:var(--muted);display:block;letter-spacing:.06em;margin-bottom:4px;font-weight:400}
+.sub{font-size:16px;color:var(--ink-2);max-width:66ch;margin-bottom:20px}
+h3{font-size:18px;font-weight:600;margin:26px 0 8px}
+h4{font-size:15px;font-weight:600;margin:18px 0 6px}
+.prose p{font-size:16px;line-height:1.6;max-width:66ch;margin-bottom:12px;color:var(--ink)}
+.prose p:last-child{margin-bottom:0}
+ul.list{margin:0 0 14px;padding-left:1.15em}
+ul.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max-width:64ch}
+ul.list li b,ul.list li strong{color:var(--ink)}
+
+/* ── the data table ── */
+.tbl{border:1px solid var(--rule);border-radius:8px;overflow-x:auto;background:var(--surface);margin:14px 0 6px}
+.tbl table{width:100%;border-collapse:collapse;font-size:14px;font-family:var(--display);min-width:520px}
+.tbl th{font-weight:600;text-align:left;padding:8px 12px;background:var(--mono-bg);color:var(--ink-2);font-size:11.5px;letter-spacing:.06em;text-transform:uppercase;white-space:nowrap}
+.tbl td{padding:8px 12px;border-top:1px solid var(--rule);vertical-align:top;line-height:1.4;color:var(--ink-2)}
+.tbl td:first-child{font-weight:600;color:var(--ink);white-space:nowrap}
+.tbl td.n{font-family:var(--mono);font-size:12.5px;font-variant-numeric:tabular-nums;text-align:right;white-space:nowrap}
+.tbl tr.best td{background:var(--accent-soft)}
+.tbl tr.best td:first-child{color:var(--accent-ink)}
+.tbl .fail{color:var(--bad);font-family:var(--mono);font-size:11.5px}
+.tbl .pass{color:var(--accent-ink);font-family:var(--mono);font-size:11.5px}
+.cap{font-family:var(--display);font-size:13px;color:var(--muted);line-height:1.5;margin-top:8px;max-width:70ch}
+
+/* ── clickable annotations: a chip opens its own explanation (house rule) ── */
+.why{font-family:var(--display);font-size:11.5px;font-weight:600;letter-spacing:.02em;color:var(--ask);
+     background:var(--ask-soft);border:0;border-radius:20px;padding:2px 10px;cursor:pointer;display:inline-flex;
+     align-items:center;gap:5px;line-height:1.5;vertical-align:1px}
+.why:hover{filter:brightness(.96)}
+.why::after{content:"+";font-family:var(--mono);opacity:.7}
+.why[aria-expanded="true"]::after{content:"−"}
+.whybody{margin:8px 0 4px;padding:11px 14px;background:var(--ask-soft);border-radius:8px;font-size:14.5px;
+         line-height:1.55;color:var(--ink);max-width:68ch}
+.whybody .m{font-family:var(--mono);font-size:12.5px}
+
+/* ── decision blocks ── */
+.ask{border:1px solid var(--ask);border-radius:10px;background:var(--surface);padding:18px 20px;margin:20px 0}
+.ask > .k{font-family:var(--mono);font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--ask)}
+.ask h3{margin:4px 0 8px;font-size:20px}
+.opts{display:grid;gap:10px;margin-top:14px}
+.opt{border:1px solid var(--rule);border-radius:8px;padding:12px 14px;background:var(--push-soft)}
+.opt.rec{border-color:var(--accent);background:var(--accent-soft)}
+.opt .t{font-family:var(--display);font-weight:700;font-size:15px;display:flex;flex-wrap:wrap;gap:8px;align-items:baseline}
+.opt .t .tag{font-family:var(--mono);font-size:10.5px;padding:1px 7px;border-radius:3px;background:var(--mono-bg);color:var(--muted);letter-spacing:.04em}
+.opt.rec .t .tag{background:var(--accent);color:#fff}
+.opt.no .t .tag{background:var(--bad-soft);color:var(--bad)}
+.opt p{font-size:14.5px;line-height:1.5;color:var(--ink-2);margin-top:5px;max-width:66ch}
+.opt p b{color:var(--ink)}
+
+/* ══ TRUE-SIZE DRAWINGS — the warm coach portal, at 390px, not reflowed ══
+   Values are the product's own: paper #F6F2EA, card #FFF, hairline rgba(70,55,30,.12). */
+.pair{display:flex;gap:20px;flex-wrap:wrap;margin:18px 0 4px;align-items:flex-start}
+.drawcol{flex:0 0 auto;max-width:100%}
+.drawhead{font-family:var(--display);font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+          color:var(--muted);margin-bottom:7px;display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.drawhead .h{font-family:var(--mono);font-size:11px;color:var(--ask);background:var(--ask-soft);padding:1px 6px;border-radius:3px;text-transform:none;letter-spacing:0}
+.drawhead .h.good{color:var(--accent-ink);background:var(--accent-soft)}
+.ph{width:390px;max-width:100%;background:#F6F2EA;color:#241E15;font-family:"Inter",system-ui,sans-serif;
+    font-size:14px;line-height:1.35;border:1px solid var(--rule);border-radius:12px;overflow:hidden;
+    box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.ph .pad{padding:12px 16px 14px}
+
+/* the masthead line the money tabs sit under, drawn flat so the band's top is honest */
+.phbar{background:#FFF;border-bottom:1px solid rgba(70,55,30,.12);padding:9px 16px;display:flex;
+       align-items:center;justify-content:space-between;font-weight:600;font-size:15px}
+.phbar .rec{font-weight:500;color:#6E6553;font-size:13px}
+.phtabs{display:flex;gap:4px;padding:8px 16px 0;overflow:hidden;font-size:12.5px}
+.phtabs span{padding:5px 9px;border-radius:6px 6px 0 0;color:#6E6553;white-space:nowrap}
+.phtabs span.on{background:#FFF;color:#241E15;font-weight:600}
+
+/* the band itself */
+.band{display:grid;gap:1px;background:rgba(70,55,30,.12);border:1px solid rgba(70,55,30,.12);
+      border-radius:10px;overflow:hidden;margin-bottom:10px}
+.band.one{grid-template-columns:1fr}
+.band.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.band .tile{background:#FFF;padding:.85rem 1rem;display:flex;flex-direction:column;gap:.22rem;min-width:0}
+.band.two .tile{padding:.7rem .75rem}
+.band .tile.wide{grid-column:1/-1}
+.band .lab{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6E6553}
+.band .fig{font-size:24px;font-weight:700;line-height:1.1;letter-spacing:-.01em;font-variant-numeric:tabular-nums;color:#241E15}
+.band.step .fig{font-size:20px}
+.band .fig.good{color:#3F7A1E}
+.band .fig.warn{color:#8F540C}
+.band .fig.bad{color:#9E3030}
+.band .cap2{font-size:12px;line-height:1.45;color:#6E6553;font-variant-numeric:tabular-nums}
+.band .cap2 u{text-decoration-color:rgba(70,55,30,.4)}
+.band .cap2.clip{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.note2{font-size:12px;line-height:1.55;color:#6E6553;margin:0 0 14px}
+.note2 b{color:#4A4335}
+
+/* the toolbar */
+.tbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:12px}
+.tbar .pill,.tbar .btn,.tbar .sq{min-height:44px;display:inline-flex;align-items:center;justify-content:center;
+     gap:6px;border-radius:8px;font-size:13.5px;font-weight:500;padding:0 12px;
+     border:1px solid rgba(70,55,30,.2);background:#FFF;color:#241E15;white-space:nowrap}
+.tbar .pill .k{color:#6E6553;font-size:12px}
+.tbar .pill.lead{border-color:#8FBF4A;box-shadow:inset 0 0 0 1px #8FBF4A}
+.tbar .btn.lime{background:#B9E356;border-color:#9BC93F;font-weight:600}
+.tbar .sq{width:44px;padding:0}
+.tbar .grow{margin-left:auto}
+.tbar .btn.wide{width:100%}
+.rows{margin-left:auto;font-family:var(--mono);font-size:10.5px;color:var(--ask);background:var(--ask-soft);
+      padding:1px 6px;border-radius:3px}
+
+/* the fold marker — the one thing these drawings exist to show */
+.fold{position:relative;border-top:2px dashed #9E3030;margin:0;padding:5px 16px 2px;background:rgba(158,48,48,.06)}
+.fold span{font-family:var(--mono);font-size:10.5px;color:#9E3030;font-weight:500}
+.below{opacity:.42}
+.tablines{border:1px solid rgba(70,55,30,.12);border-radius:8px;overflow:hidden;background:#FFF}
+.tablines div{padding:9px 12px;font-size:13px;display:flex;justify-content:space-between;gap:10px}
+.tablines div + div{border-top:1px solid rgba(70,55,30,.12)}
+.tablines .g{background:#EFEADC;font-weight:600;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;color:#4A4335}
+.tablines .n{font-variant-numeric:tabular-nums;color:#4A4335}
+
+/* metric strip */
+.mets{display:flex;gap:10px;flex-wrap:wrap;margin:14px 0 2px}
+.met{border:1px solid var(--rule);border-radius:8px;background:var(--surface);padding:10px 14px;min-width:132px}
+.met .k{font-family:var(--display);font-size:11px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.met .v{font-family:var(--display);font-size:25px;font-weight:700;line-height:1.15;font-variant-numeric:tabular-nums;color:var(--ink);margin-top:2px}
+.met .v.bad{color:var(--bad)}
+.met .v.good{color:var(--accent-ink)}
+.met .s{font-family:var(--display);font-size:12.5px;color:var(--muted);line-height:1.4}
+
+.flag{border-left:3px solid var(--bad);background:var(--bad-soft);padding:12px 16px;border-radius:0 8px 8px 0;margin:16px 0;max-width:70ch}
+.flag p{font-size:15px;line-height:1.55;color:var(--ink)}
+.flag .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--bad);display:block;margin-bottom:3px}
+.good-flag{border-left-color:var(--accent);background:var(--accent-soft)}
+.good-flag .k{color:var(--accent-ink)}
+
+.foot{padding:26px 0 0;font-family:var(--display);font-size:13.5px;color:var(--muted);line-height:1.6}
+</style>
+
+<nav class="tabs" role="tablist" aria-label="Money on a phone">
+  <span class="tabtitle">Money on a phone</span>
+  <button type="button" class="tab" role="tab" data-tab="built" aria-selected="true" aria-controls="tab-built">What was built<span class="st built">BUILT on dev 22 Sep</span></button>
+  <button type="button" class="tab" role="tab" data-tab="found" aria-selected="false" aria-controls="tab-found">What the walk found<span class="st dim">6 tabs measured 22 Sep</span></button>
+  <button type="button" class="tab" role="tab" data-tab="m1" aria-selected="false" aria-controls="tab-m1">M1 · The band<span class="st built">ruled D + M1a · built</span></button>
+  <button type="button" class="tab" role="tab" data-tab="m2" aria-selected="false" aria-controls="tab-m2">M2 · The toolbar<span class="st built">ruled · built</span><span class="st">one reversal on the built screen</span></button>
+  <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
+  <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
+</nav>
+
+<div class="wrap">
+
+<!-- ══════════════════════ TAB 0 · WHAT WAS BUILT ══════════════════════ -->
+<div id="tab-built" role="tabpanel">
+  <header class="masthead">
+    <div class="eyebrow">Built on dev · 22 September 2026 · walk owed</div>
+    <h1>Built, and re-measured</h1>
+    <p class="lede">Every number below was read out of the running product after the change, at the
+    same two widths the problem was measured at. Two things came out differently from the drawing
+    and both are recorded here rather than quietly absorbed.</p>
+  </header>
+
+  <section>
+    <h2>The result, tab by tab</h2>
+    <div class="tbl"><table>
+      <thead><tr>
+        <th>Tab</th><th class="n">Band before</th><th class="n">Band after</th>
+        <th class="n">Toolbar</th><th>First line of content @390</th></tr></thead>
+      <tbody>
+        <tr class="best"><td>Budget Plan</td><td class="n">326</td><td class="n">176</td><td class="n">148 → 96</td>
+          <td><span class="fail">122px below the bar</span> → <span class="pass">80px above it</span></td></tr>
+        <tr class="best"><td>Budget vs. Actual</td><td class="n">387</td><td class="n">176</td><td class="n">—</td>
+          <td><span class="fail">34px below the bar</span> → <span class="pass">178px above it</span></td></tr>
+        <tr><td>Player Dues</td><td class="n">387</td><td class="n">176</td><td class="n">96</td><td>was already clear</td></tr>
+        <tr><td>Fundraising</td><td class="n">387</td><td class="n">193</td><td class="n">44</td><td>123px → 318px clear</td></tr>
+        <tr><td>Club</td><td class="n">291</td><td class="n">193</td><td class="n">44</td><td>181px → 279px clear</td></tr>
+        <tr><td>Ledger</td><td class="n">—</td><td class="n">—</td><td class="n">179</td><td>was already clear</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Three of the five bands now land on exactly <b>176px</b> — the first time the six
+    Money tabs have opened at a matching height on a phone, which is what the shared band was built
+    for. At 361 every figure and every label fits; nothing overflows on any tab.</p>
+
+    <div class="flag good-flag"><span class="k">Proven, not assumed</span>
+      <p>The layout sweep ran all five screens at <b>361 · 390 · 768 · 1440</b>: <b>no new findings
+      at any width</b>, so nothing above the phone breakpoint moved. Four older tap-floor entries at
+      768 had already stopped reproducing and were pruned. 4,576 unit tests pass; the summary band's
+      guard gained a sixth rule that fails if the band is ever narrowed back to one column, and each
+      of its three assertions was checked to actually flip on a simulated regression.</p></div>
+  </section>
+
+  <section>
+    <h2>Two departures from the drawing</h2>
+
+    <div class="flag"><span class="k">1 · The create keeps its words — found on the built screen</span>
+      <p>The drawing had <b>Add Line</b> collapsing to a bare lime <b>+</b> at ≤640, the shape the
+      Schedule already uses. It was built that way, and the screenshot showed why it cannot stay:
+      the Money hub's page header <b>already</b> collapses <em>Record money</em> to a bare lime
+      <b>+</b> on a phone. Budget Plan drew <b>two identical lime squares, 90px apart</b>, meaning
+      “record a payment” and “add a budget line” — two flows nothing like each other, and no way to
+      tell them apart by looking.</p>
+      <p>Reverted. The toolbar is therefore <b>two rows (96px)</b> at 390 rather than the drawn one
+      — lenses above, the doing below — still down from 148, and the first budget line still clears
+      the bar by 80px. <b>The one-row version is available the day the header's create is
+      re-weighted</b>, which is a Money-hub header decision and not this toolbar's to take.</p></div>
+
+    <div class="flag"><span class="k">2 · Fundraising and Club captions left alone</span>
+      <p>The drawing sketched shortened captions <em>and shortened labels</em> for these two
+      (“Credited”, “Still to pay”, “Waiting”). Only the caption work was done, and only on the tabs
+      that were failing. <b>A label is a name</b>, and renaming one is a vocabulary decision with its
+      own rule behind it — not something to slip into a layout pass. Both tabs sit at 193px instead
+      of 176 because one label wraps; neither was ever failing, and both are now ~300px clear of the
+      bar.</p></div>
+  </section>
+
+  <section>
+    <h2>The six captions that changed</h2>
+    <p class="sub">Each has a desk form and a phone form; the desk reading is untouched. The phone
+    box is about 24 characters, measured — not estimated.</p>
+    <div class="tbl"><table>
+      <thead><tr><th>Tile</th><th>Desk (unchanged)</th><th>Phone</th></tr></thead>
+      <tbody>
+        <tr><td>Total revenue</td><td>Includes player installments, after $17.00 of adjustments</td><td>Includes installments</td></tr>
+        <tr><td>Total expenses</td><td>Your estimate — $14,186.00 itemized is $1,186.00 over · Edit</td><td>Over your estimate · Edit</td></tr>
+        <tr><td>Closing balance</td><td>From $500.00 opening · includes the No date yet amounts</td><td>From $500.00 opening</td></tr>
+        <tr><td>Dues</td><td>13 players · after $17.00 of adjustments</td><td>13 players</td></tr>
+        <tr><td>Collected</td><td>$1,482.65 of it beyond what those families were billed</td><td>$1,482.65 over the bills</td></tr>
+        <tr><td>Balance owing</td><td>excludes $1,482.65 owed back to 2 families</td><td>excludes credit owed back</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Two words were fought for and kept. <b>“Over”</b> on Total expenses stays in
+    words rather than living only in red ink — colour alone is not a statement, and the note that
+    says it at length is not guaranteed to be the status showing. <b>“excludes”</b> on Balance owing
+    stays because without it “2 families in credit” reads as part <em>of</em> the balance, which is
+    the single misreading that caption exists to prevent.</p>
+    <p class="cap"><button type="button" class="why" aria-expanded="false" data-why="w4">What did NOT move</button></p>
+    <div class="whybody" id="w4" hidden>Every control still exists and every figure still shows.
+      <b>Export stays on the toolbar row at every width</b> — it is already icon-only at 45px, and
+      its dialog is a child of its own trigger, which the drawer unmounts on pick; moving it would
+      have meant hoisting controlled state into a component seven Money tabs, Roster and Schedule all
+      share, to buy 45px. The <b>lenses</b> (View · When · Columns) stay on the row, because a lens a
+      coach cannot see is a screen they cannot explain. The <b>“set dues” door</b> survives in the
+      phone caption — M1 moves reading matter, not controls. And <b>nothing above 640px changed</b>.</div>
+  </section>
+
+  <section>
+    <h2>What is still owed</h2>
+    <ul class="list">
+      <li><b>Your walk on a real phone</b> — the QA steps are the next thing to write, and nothing
+        here is committed until you have walked it.</li>
+      <li><b>Player Dues' toolbar stays at 96px.</b> Its 308px view switch is the blocker, and
+        redesigning a segmented control is a different decision from collapsing a toolbar. Its
+        content was never below the fold.</li>
+      <li><b>The Ledger's toolbar is untouched at 179px</b> — its date range is a genuine
+        full-width lens, and the tab's first line already sits 421px clear.</li>
+      <li><b>The tables themselves</b>, which are the other half of “Money is 3,019px”. Different
+        rule, different drawings.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB 1 · FINDINGS ══════════════════════ -->
+<div id="tab-found" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Coaches Portal · the phone programme · Money</div>
+    <h1>Money on a phone</h1>
+    <p class="lede">Money was measured during the phone walk and deliberately set aside — <em>“a book, and
+    not on the owner’s phone-first list.”</em> Every stage since has re-listed it under <em>not reopened</em>.
+    This is that walk, opened on purpose. Six tabs, measured on the UAT fixture at 361 and 390 on
+    22 September 2026. Two things are wrong and both are in shared recipes, so both are fixed once
+    for all six tabs or not at all.</p>
+  </header>
+
+  <section>
+    <h2><span class="num">Finding 1</span>A coach opens the budget on a phone and sees no budget</h2>
+    <p class="sub">Not “has to scroll a bit”. The first budget line is rendered below the bottom
+    navigation bar, so at rest the screen holds a summary, a warning and three rows of buttons — and
+    nothing the coach came for.</p>
+
+    <div class="mets">
+      <div class="met"><div class="k">Budget Plan</div><div class="v bad">122px</div><div class="s">first line <b>below</b> the bar</div></div>
+      <div class="met"><div class="k">Budget vs. Actual</div><div class="v bad">34px</div><div class="s">first line <b>below</b> the bar</div></div>
+      <div class="met"><div class="k">Fundraising</div><div class="v good">123px</div><div class="s">clear of the bar</div></div>
+      <div class="met"><div class="k">Club</div><div class="v good">181px</div><div class="s">clear of the bar</div></div>
+      <div class="met"><div class="k">Ledger</div><div class="v good">421px</div><div class="s">clear of the bar</div></div>
+    </div>
+    <p class="cap">390×844. “The bar” is the phone navigation bar at y=772. Player Dues is not listed:
+    its first row sits inside a horizontally scrolled sticky table and the probe could not read an
+    honest top for it — measured separately during the build.</p>
+
+    <h3>What the chrome costs on Budget Plan, in order</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Block</th><th class="n">Height</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td>Masthead + tabs</td><td class="n">179</td><td>team name, record, the six money tabs</td></tr>
+        <tr><td>Summary band</td><td class="n">326</td><td>three tiles, stacked one per row</td></tr>
+        <tr><td>Warning note</td><td class="n">122</td><td>the over-estimate paragraph</td></tr>
+        <tr><td>Toolbar</td><td class="n">148</td><td>three rows of controls</td></tr>
+        <tr class="best"><td>First budget line</td><td class="n">894</td><td>122px past the bar at 772</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap"><button type="button" class="why" aria-expanded="false" data-why="w1">Why the warning repeats the tile</button></p>
+    <div class="whybody" id="w1" hidden>The Expenses tile’s caption says <span class="m">“Your estimate —
+      $14,186.00 itemized is $1,186.00 over · Edit”</span> and the note below says <span class="m">“Over your
+      estimate by $1,186.00 …”</span>. The same fact, twice, 200px apart, because the caption grew into a
+      sentence and the note was never re-read against it. Holding the caption to the band’s own
+      six-word contract resolves this without deleting either.</div>
+  </section>
+
+  <section>
+    <h2><span class="num">Finding 2</span>The band is 291–405px, and it exists to make six tabs read alike</h2>
+    <p class="sub">The summary component was built because five money tabs drew their summary five
+    different ways. It succeeded on type and colour and never addressed the phone: at ≤760 it stacks
+    all-or-nothing, so three or four tiles become three or four full-width blocks.</p>
+
+    <div class="tbl"><table>
+      <thead><tr><th>Tab</th><th class="n">Tiles</th><th class="n">Band @390</th><th class="n">Band @361</th><th>Caption discipline</th></tr></thead>
+      <tbody>
+        <tr><td>Budget Plan</td><td class="n">3</td><td class="n">326</td><td class="n">343</td><td><span class="fail">sentences</span> — 55–60 chars, two wrap to 2 lines</td></tr>
+        <tr><td>Budget vs. Actual</td><td class="n">4</td><td class="n">387</td><td class="n">387</td><td><span class="pass">holds</span> — 12–23 chars, all one line</td></tr>
+        <tr><td>Player Dues</td><td class="n">4</td><td class="n">387</td><td class="n">405</td><td><span class="fail">sentences</span> — up to 54 chars</td></tr>
+        <tr><td>Fundraising</td><td class="n">4</td><td class="n">387</td><td class="n">387</td><td><span class="pass">holds</span> — 10–37 chars</td></tr>
+        <tr><td>Club</td><td class="n">3</td><td class="n">291</td><td class="n">291</td><td><span class="pass">holds</span> — 24–27 chars</td></tr>
+        <tr><td>Ledger</td><td class="n">—</td><td class="n">—</td><td class="n">—</td><td>no band; its problem is the toolbar</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">The band’s own contract already says a caption is <b>“≤6 words: the qualifier the
+    figure cannot carry itself. Omitted rather than padded.”</b> Three of six tabs write sentences.
+    That half of this is editorial, not CSS.</p>
+
+    <div class="flag"><span class="k">And the well-behaved tabs fail too</span>
+      <p>Budget vs. Actual honours the six-word rule on every tile — twelve to twenty-three characters,
+      one line each — and its band is still <b>387px</b>, the tallest of the six. Four one-line tiles
+      stacked one per row is 387px no matter how short the words are. <b>So this cannot be fixed by
+      editing copy.</b> The stacking is the defect; the captions are a second, smaller one.</p></div>
+  </section>
+
+  <section>
+    <h2><span class="num">Finding 3</span>Two toolbars wrap to three and four rows</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Tab</th><th class="n">Toolbar</th><th class="n">Rows</th><th>What is on it</th></tr></thead>
+      <tbody>
+        <tr><td>Budget Plan</td><td class="n">148</td><td class="n">3</td><td>View · When · Expand all / Export · Add Line / Manage categories &amp; items</td></tr>
+        <tr><td>Ledger</td><td class="n">179</td><td class="n">4</td><td>Add a bill / view / status / the date-range pill</td></tr>
+        <tr><td>Player Dues</td><td class="n">96</td><td class="n">2</td><td>view · who / Export · Send due reminders</td></tr>
+        <tr><td>Fundraising</td><td class="n">44</td><td class="n">1</td><td>one create — already right</td></tr>
+        <tr><td>Club</td><td class="n">44</td><td class="n">1</td><td>one create — already right</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Measured control widths on Budget at 390 (358px of usable row):
+      <span class="mono">Manage categories &amp; items 235 · Add Line 109 · Collapse all 92 · Export 45</span>.
+      One control taking 66&nbsp;% of the row is what forces the third line.</p>
+    <p class="cap"><button type="button" class="why" aria-expanded="false" data-why="w2">Why the create ends up stranded in the middle</button></p>
+    <div class="whybody" id="w2" hidden>The actions slot pins itself to the right edge with an auto
+      margin — correct on a desk, where it separates the lens from the doing. On a phone the row wraps,
+      so the pinned group lands on its own line with the page’s main action (<b>Add&nbsp;Line</b>) in the
+      middle of a three-row block and the biggest button of the three below it. Nothing is
+      misconfigured; the desk arrangement simply has no phone answer yet.</div>
+  </section>
+
+  <section>
+    <h2><span class="num">The rule this is measured against</span>S.4, from the phone walk</h2>
+    <div class="prose">
+      <p><b>“One figure, one qualifier.</b> A phone tile carries a label, a figure and one line. This is
+      the direct answer to <em>‘are we displaying too much on mobile’</em> — the tiles are; the cards
+      mostly are not.”</p>
+      <p>And the precedents that already applied it, all shipped:</p>
+      <ul class="list">
+        <li><b>The team Overview board</b> — six tiles became six rows in one framed list, the icons
+          dropped, the caption kept <em>only when it carries a fact</em> rather than a hint, and the
+          figure stepped down a size. Band 342 → 287; the last row went from 5px clear of the bar to 40.</li>
+        <li><b>The player profile’s glance tiles</b> — four across became <b>two-up</b>, because four
+          tiles on a phone gives each about 80px, “narrower than <em>None set</em>.”</li>
+        <li><b>The Insights scoreboard</b> — its stat blocks wrap two-up rather than running off the side.</li>
+        <li><b>The practice plan’s toolbar</b> — 148px of buttons became a create and one 44px “⋯”
+          holding the rest as a drawer. Exactly the same 148px this walk found on Budget Plan.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB 2 · M1 THE BAND ══════════════════════ -->
+<div id="tab-m1" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Decision M1 · ruling owed</div>
+    <h1>The summary band’s phone form</h1>
+    <p class="lede">Four candidates, each rendered into the live product at 361 and 390 and
+    re-measured — not estimated. Drawings below are true size: <b>390px wide and they do not
+    reflow</b>, so open this tab on a phone to read them at the size a coach will.</p>
+  </header>
+
+  <section>
+    <h2>Budget Plan — as built, and the recommendation</h2>
+    <div class="pair">
+      <div class="drawcol">
+        <div class="drawhead">As built <span class="h">band 326 · first line 122px below the bar</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄</span><span class="rec">3-2-1</span></div>
+          <div class="phtabs"><span class="on">Budget Plan</span><span>Player Dues</span><span>Fund…</span></div>
+          <div class="pad">
+            <div class="band one">
+              <div class="tile"><span class="lab">Total revenue</span><span class="fig good">$15,114.30</span><span class="cap2">Includes player installments, after $17.00 of adjustments</span></div>
+              <div class="tile"><span class="lab">Total expenses</span><span class="fig">$13,000.00</span><span class="cap2">Your estimate — $14,186.00 itemized is $1,186.00 over · <u>Edit</u></span></div>
+              <div class="tile"><span class="lab">Closing balance</span><span class="fig">$2,614.30</span><span class="cap2">From $500.00 opening · includes the No date yet amounts</span></div>
+            </div>
+            <p class="note2"><b>Over your estimate by $1,186.00</b> · Total expenses still reflects your
+              $13,000.00 estimate — the extra is flagged, not added. January 2026 closes ($1,533.00)
+              below zero. Revise your estimate if the higher figure should count instead.</p>
+            <div class="tbar">
+              <span class="pill lead"><span class="k">View</span> List ⌄</span>
+              <span class="pill"><span class="k">When</span> All ⌄</span>
+              <span class="btn">Expand all</span>
+              <span class="sq grow">⤓</span>
+              <span class="btn lime">+ Add Line</span>
+              <span class="btn wide">Manage categories &amp; items</span>
+            </div>
+          </div>
+          <div class="fold"><span>▲ the bottom bar sits here — everything below is off screen</span></div>
+          <div class="pad below">
+            <div class="tablines">
+              <div class="g"><span>Revenue</span><span>$15,114.30</span></div>
+              <div><span>Player installments</span><span class="n">$11,491.30</span></div>
+              <div><span>Fundraising</span><span class="n">$3,623.00</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">Option D — recommended <span class="h good">band 176 · first line 132px above the bar</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄</span><span class="rec">3-2-1</span></div>
+          <div class="phtabs"><span class="on">Budget Plan</span><span>Player Dues</span><span>Fund…</span></div>
+          <div class="pad">
+            <div class="band two step">
+              <div class="tile"><span class="lab">Total revenue</span><span class="fig good">$15,114.30</span><span class="cap2 clip">Includes player dues</span></div>
+              <div class="tile"><span class="lab">Total expenses</span><span class="fig">$13,000.00</span><span class="cap2 clip">Your estimate · <u>Edit</u></span></div>
+              <div class="tile wide"><span class="lab">Closing balance</span><span class="fig">$2,614.30</span><span class="cap2 clip">From $500.00 opening</span></div>
+            </div>
+            <p class="note2"><b>Over your estimate by $1,186.00</b> · Total expenses still reflects your
+              $13,000.00 estimate — the extra is flagged, not added. January 2026 closes ($1,533.00)
+              below zero.</p>
+            <div class="tbar">
+              <span class="pill lead"><span class="k">View</span> List ⌄</span>
+              <span class="pill"><span class="k">When</span> All ⌄</span>
+              <span class="sq">⋯</span>
+              <span class="btn lime sq grow">+</span>
+            </div>
+            <div class="tablines">
+              <div class="g"><span>Revenue</span><span>$15,114.30</span></div>
+              <div><span>Player installments</span><span class="n">$11,491.30</span></div>
+              <div><span>Fundraising</span><span class="n">$3,623.00</span></div>
+              <div><span>Sponsorship</span><span class="n">$0.00</span></div>
+            </div>
+          </div>
+          <div class="fold"><span>▲ the bottom bar sits here</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="cap">Both drawings carry the fixture’s real figures and the product’s real strings. The
+    right-hand captions are the rewrite M1 asks for — see the caption question below. The toolbar on
+    the right is decision <b>M2</b>, drawn here only so the fold is honest.</p>
+  </section>
+
+  <section>
+    <h2>The four candidates, measured</h2>
+    <p class="sub">Every cell is the band’s rendered height in the live product. <span class="fail">✗</span>
+    marks a band where a figure or a label overflowed its tile.</p>
+    <div class="tbl"><table>
+      <thead><tr>
+        <th>Tab</th><th class="n">Today</th><th class="n">A two-up</th><th class="n">B + figure step</th>
+        <th class="n">D + one-line caption</th><th class="n">C no caption</th></tr></thead>
+      <tbody>
+        <tr><td>Budget Plan</td><td class="n">326 / 343</td><td class="n">246 / <span class="fail">✗</span></td><td class="n">211 / 228</td><td class="n">176 / 176</td><td class="n">134 / 134</td></tr>
+        <tr><td>Budget vs. Actual</td><td class="n">387 / 387</td><td class="n">194 / <span class="fail">✗</span></td><td class="n">176 / 176</td><td class="n">176 / 176</td><td class="n">134 / 134</td></tr>
+        <tr><td>Player Dues</td><td class="n">387 / 405</td><td class="n">246 / <span class="fail">✗</span></td><td class="n">228 / 228</td><td class="n">176 / 176</td><td class="n">134 / 134</td></tr>
+        <tr><td>Fundraising</td><td class="n">387 / 387</td><td class="n">212 / 229</td><td class="n">193 / 211</td><td class="n">176 / 193</td><td class="n">134 / 152</td></tr>
+        <tr><td>Club</td><td class="n">291 / 291</td><td class="n">229 / 229</td><td class="n">193 / 211</td><td class="n">176 / 193</td><td class="n">134 / 152</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Each cell reads <b>390px / 361px</b>. Fundraising and Club sit at 193 rather than 176
+    at 361 because a two-word label wraps (“Credited to families”, “Still to pay the club”).</p>
+
+    <div class="opts">
+      <div class="opt no">
+        <div class="t">A · Two-up, nothing else <span class="tag">fails</span></div>
+        <p>The obvious first move, and it does not survive 361px: <b>Headroom +$8,090.02</b>,
+        <b>Season end $11,600.32</b> and <b>Dues $11,491.30</b> all overflow their tile at 24px.
+        Recorded because “just make it two columns” is the idea everyone has first, and this is the
+        measurement that answers it.</p>
+      </div>
+      <div class="opt">
+        <div class="t">B · Two-up + the Overview’s figure step <span class="tag">viable</span></div>
+        <p>The figure steps 24px → 20px and the tile’s side padding tightens, both matching what the
+        Overview board already does on a phone. <b>Every figure and label fits at 361 and 390.</b>
+        Bands land at 176–228px. Leaves the sentence-captions as they are, so Budget and Dues stay
+        the two tallest.</p>
+      </div>
+      <div class="opt rec">
+        <div class="t">D · B, plus the caption held to its own contract <span class="tag">recommended</span></div>
+        <p>B’s geometry, and the three tabs writing sentences are rewritten to the ≤6-word rule the
+        component already states. <b>Every band on every tab becomes 176px</b> — the first time the six
+        tabs have actually matched, which is what the shared band was built for. Budget Plan’s first
+        line moves from 122px below the bar to <b>132px above it</b>: roughly three budget lines
+        visible on opening instead of none.</p>
+      </div>
+      <div class="opt no">
+        <div class="t">C · B, with the caption dropped entirely <span class="tag">against S.4</span></div>
+        <p>Buys another 42px and breaks the rule this walk is applying: S.4 is label + figure + <b>one
+        line</b>, not label + figure. The captions carry things no figure can say — “nobody budgeted
+        this”, “1 overdue”, “lowers their dues”. Shown as the ceiling, not as a candidate.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Two sub-questions inside M1</h2>
+
+    <div class="ask">
+      <div class="k">M1a · the odd tile</div>
+      <h3>With three tiles, which one gets the full-width seat?</h3>
+      <p class="sub">Two-up leaves one tile alone on the second row. It can take the whole width rather
+      than sit beside a gap — the question is which tile that should be.</p>
+      <div class="opts">
+        <div class="opt rec">
+          <div class="t">The last one <span class="tag">recommended</span></div>
+          <p>Positional, no new declaration, and on Budget Plan it lands on <b>Closing balance</b> —
+          which the code already calls “the season’s verdict”. Where a tab disagrees, the tab reorders
+          its own tiles.</p>
+        </div>
+        <div class="opt">
+          <div class="t">A tile declares itself wide</div>
+          <p>Semantic and always right, but it is a new per-tile flag on a shared component, and a new
+          flag with six callers is a thing that drifts. On Club it would move the wide seat from
+          <b>Settled this season</b> to <b>Still to pay the club</b>, which is arguably the better read.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">M1b · the captions</div>
+      <h3>Who rewrites the eleven sentence-captions?</h3>
+      <p class="sub">Option D needs Budget Plan (3), Player Dues (3) and one Club caption cut to six
+      words. These are customer-visible money words on the screen a treasurer reads most carefully.</p>
+      <div class="opts">
+        <div class="opt rec">
+          <div class="t">Drafted here, ruled by you, then <span class="mono">/marketing</span> checks the words <span class="tag">recommended</span></div>
+          <p>Each caption is drafted against its tile and shown to you beside the figure it qualifies,
+          so you rule on the reading and not on a word list.</p>
+        </div>
+        <div class="opt">
+          <div class="t">Mark which captions are hints and drop those on a phone</div>
+          <p>The mechanism the Overview board uses — a tile declares whether its second line is a
+          <em>fact</em> or a <em>hint</em>, and hints do not render on a phone. No rewriting. But most of
+          these captions are facts, so it would leave the long ones long.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The other four tabs at option D</h2>
+    <div class="pair">
+      <div class="drawcol">
+        <div class="drawhead">Budget vs. Actual <span class="h good">387 → 176</span></div>
+        <div class="ph"><div class="pad">
+          <div class="band two step">
+            <div class="tile"><span class="lab">Headroom</span><span class="fig good">+$8,090.02</span><span class="cap2 clip">under budget</span></div>
+            <div class="tile"><span class="lab">Spent</span><span class="fig">$4,909.98</span><span class="cap2 clip">of $13,000.00 planned</span></div>
+            <div class="tile"><span class="lab">Off-plan</span><span class="fig warn">$3,794.98</span><span class="cap2 clip">nobody budgeted this</span></div>
+            <div class="tile"><span class="lab">Season end</span><span class="fig">$11,600.32</span><span class="cap2 clip">plus $1,220.00 possible</span></div>
+          </div>
+        </div></div>
+        <p class="cap">No caption changes — this tab already honours the rule. Pure geometry: −211px.</p>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">Player Dues <span class="h good">387 → 176</span> <span class="h">3 captions rewritten</span></div>
+        <div class="ph"><div class="pad">
+          <div class="band two step">
+            <div class="tile"><span class="lab">Dues</span><span class="fig">$11,491.30</span><span class="cap2 clip">13 players</span></div>
+            <div class="tile"><span class="lab">Collected</span><span class="fig">$5,624.63</span><span class="cap2 clip">$1,482.65 over the bills</span></div>
+            <div class="tile"><span class="lab">Balance owing</span><span class="fig warn">$7,349.32</span><span class="cap2 clip">2 families in credit</span></div>
+            <div class="tile"><span class="lab">Past due</span><span class="fig bad">$97.09</span><span class="cap2 clip">1 family</span></div>
+          </div>
+        </div></div>
+        <p class="cap">Caption drafts shown. Each loses a clause the figure beside it already implies —
+        the detail survives in the table below and in the player’s own row.</p>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">Fundraising <span class="h good">387 → 176</span></div>
+        <div class="ph"><div class="pad">
+          <div class="band two step">
+            <div class="tile"><span class="lab">Raised</span><span class="fig">$6,367.00</span><span class="cap2 clip">$2,116 drives · $4,251 sponsors</span></div>
+            <div class="tile"><span class="lab">Team keeps</span><span class="fig">$4,664.35</span><span class="cap2 clip">after family credits</span></div>
+            <div class="tile"><span class="lab">Credited</span><span class="fig">$1,702.65</span><span class="cap2 clip">lowers their dues</span></div>
+            <div class="tile"><span class="lab">Still to come</span><span class="fig">$770.00</span><span class="cap2 clip">3 sponsors</span></div>
+          </div>
+        </div></div>
+        <p class="cap">One label shortened — <em>Credited to families</em> wraps to two lines at 361.
+        “Credited” with “lowers their dues” under it says the same thing in the room it has.</p>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">Club <span class="h good">291 → 176</span></div>
+        <div class="ph"><div class="pad">
+          <div class="band two step">
+            <div class="tile"><span class="lab">Still to pay</span><span class="fig bad">$1,470.00</span><span class="cap2 clip">3 installments · ⚠ 1 overdue</span></div>
+            <div class="tile"><span class="lab">Waiting</span><span class="fig warn">$450.00</span><span class="cap2 clip">1 request, undecided</span></div>
+            <div class="tile wide"><span class="lab">Settled this season</span><span class="fig">$1,055.00</span><span class="cap2 clip">$1,055.00 out · $0.00 in</span></div>
+          </div>
+        </div></div>
+        <p class="cap">Both long labels shortened; the tab heading above already says “Club”, so
+        “the club” in each label was repeating it. This is the tab where <b>M1a</b> bites — the wide
+        seat goes to Settled rather than to the money that is owed.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB 3 · M2 THE TOOLBAR ══════════════════════ -->
+<div id="tab-m2" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Decision M2 · ruling owed</div>
+    <h1>The toolbar’s phone form</h1>
+    <p class="lede">Budget Plan’s control row is three lines and 148px; the Ledger’s is four and 179px.
+    The portal already settled this shape twice this month — the practice plan’s toolbar went 148px → 44px
+    on exactly this pattern a week ago, and the Schedule’s create became a bare lime square.
+    M2 is whether Money adopts it.</p>
+  </header>
+
+  <section>
+    <h2>Budget Plan, before and after</h2>
+    <div class="pair">
+      <div class="drawcol">
+        <div class="drawhead">As built <span class="h">148px · 3 rows</span></div>
+        <div class="ph"><div class="pad">
+          <div class="tbar">
+            <span class="pill lead"><span class="k">View</span> List ⌄</span>
+            <span class="pill"><span class="k">When</span> All ⌄</span>
+            <span class="btn">Expand all</span>
+            <span class="sq grow">⤓</span>
+            <span class="btn lime">+ Add Line</span>
+            <span class="btn wide">Manage categories &amp; items</span>
+          </div>
+          <div class="tablines"><div class="g"><span>Revenue</span><span>$15,114.30</span></div></div>
+        </div></div>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">Proposed <span class="h good">44px · 1 row · −104px</span></div>
+        <div class="ph"><div class="pad">
+          <div class="tbar">
+            <span class="pill lead"><span class="k">View</span> List ⌄</span>
+            <span class="pill"><span class="k">When</span> All ⌄</span>
+            <span class="sq">⋯</span>
+            <span class="btn lime sq grow">+</span>
+          </div>
+          <div class="tablines">
+            <div class="g"><span>Revenue</span><span>$15,114.30</span></div>
+            <div><span>Player installments</span><span class="n">$11,491.30</span></div>
+            <div><span>Fundraising</span><span class="n">$3,623.00</span></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+
+    <h3>What moves where</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Control</th><th class="n">Width</th><th>Phone</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>View</td><td class="n">—</td><td>stays on the row</td><td>a lens — it changes what the screen <em>is</em></td></tr>
+        <tr><td>When</td><td class="n">—</td><td>stays on the row</td><td>a lens, and only renders when it can narrow something</td></tr>
+        <tr><td>Add Line</td><td class="n">109</td><td>a bare lime <b>+</b></td><td>the page’s one create, the shape the Schedule already uses at ≤640</td></tr>
+        <tr><td>Expand all</td><td class="n">92</td><td>into the ⋯ drawer</td><td>a desk verb, not a lens</td></tr>
+        <tr><td>Export</td><td class="n">45</td><td>into the ⋯ drawer</td><td>nobody exports a spreadsheet from a phone mid-practice</td></tr>
+        <tr><td>Manage categories &amp; items</td><td class="n">235</td><td>into the ⋯ drawer</td><td>66&nbsp;% of the row on its own; it is the control forcing line three</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap"><button type="button" class="why" aria-expanded="false" data-why="w3">Why a drawer and not a popover</button></p>
+    <div class="whybody" id="w3" hidden>Settled portal-wide on 22 September: at ≤640 a menu whose
+      contents are things to <em>do</em> rises from the bottom bar as a drawer with a grab line, rather
+      than hanging off its trigger. It is the same component the practice plan uses, so no label is
+      written twice and the keyboard and dismissal behaviour come with it. <b>One trap comes with
+      it too</b>, and it is already fixed in that component: a dismiss tap on a badly-scoped scrim
+      falls through and presses the button underneath — reproduced next door under touch emulation,
+      where it marked a lineup ready with no path back. A mouse passed that test every time.</div>
+  </section>
+
+  <section>
+    <h2>The Ledger — the same answer, one size up</h2>
+    <div class="pair">
+      <div class="drawcol">
+        <div class="drawhead">As built <span class="h">179px · 4 rows</span></div>
+        <div class="ph"><div class="pad">
+          <div class="tbar">
+            <span class="btn lime">+ Add a bill</span>
+            <span class="pill lead"><span class="k">View</span> Timeline ⌄</span>
+            <span class="pill"><span class="k">Status</span> Bills ⌄</span>
+            <span class="btn wide">Around today · Aug 23 – Oct 22</span>
+          </div>
+        </div></div>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">Proposed <span class="h good">88px · 2 rows · −91px</span></div>
+        <div class="ph"><div class="pad">
+          <div class="tbar">
+            <span class="pill lead"><span class="k">View</span> Timeline ⌄</span>
+            <span class="pill"><span class="k">Status</span> Bills ⌄</span>
+            <span class="sq">⋯</span>
+            <span class="btn lime sq grow">+</span>
+          </div>
+          <div class="tbar"><span class="btn wide">Around today · Aug 23 – Oct 22</span></div>
+        </div></div>
+      </div>
+    </div>
+    <p class="cap">The date range keeps its own full-width row. It is the Ledger’s primary lens — a
+    register read outside its range is the wrong register — and at 277px it cannot share a line
+    honestly. This is a stated deviation from “one row”, not an oversight.</p>
+  </section>
+
+  <section>
+    <div class="ask">
+      <div class="k">M2 · the question</div>
+      <h3>Does Money adopt the practice plan’s toolbar shape?</h3>
+      <div class="opts">
+        <div class="opt rec">
+          <div class="t">Yes — lenses on the row, create as a bare +, the rest behind ⋯ <span class="tag">recommended</span></div>
+          <p>Budget 148 → 44, Ledger 179 → 88, Dues 96 → 44. Nothing is removed; the desk actions are
+          one tap further away on a phone and unchanged on a desk. Two existing components do all of it.</p>
+        </div>
+        <div class="opt">
+          <div class="t">Keep the create worded, collapse only the desk actions</div>
+          <p><b>+ Add Line</b> stays a worded lime button. Honest about what it does, but it measures
+          109px and the row then wraps to two lines at 361 — so this buys 60px rather than 104.</p>
+        </div>
+        <div class="opt no">
+          <div class="t">Leave the toolbar, fix only the band <span class="tag">not enough</span></div>
+          <p>Band D alone moves Budget’s first line to 28px above the bar — technically visible, one row
+          of it. The 148px toolbar is the difference between seeing one line and seeing three.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB 4 · PLAN ══════════════════════ -->
+<div id="tab-plan" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Implementation plan · awaiting M1 + M2</div>
+    <h1>How this gets built</h1>
+    <p class="lede">Two shared recipes, six tabs, no migration and no API change. Nothing here starts
+    until M1 and M2 are ruled.</p>
+  </header>
+
+  <section>
+    <h2>Order of work</h2>
+    <div class="tbl"><table>
+      <thead><tr><th>Step</th><th>What</th><th>Reaches</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>The band’s phone form — two-up, the figure step, the odd-tile seat</td><td>all six tabs at once</td></tr>
+        <tr><td>2</td><td>The eleven caption rewrites, drafted per tile</td><td>Budget Plan · Player Dues · Club</td></tr>
+        <tr><td>3</td><td>The toolbar’s phone form on Budget Plan</td><td>Budget Plan only, as the pilot</td></tr>
+        <tr><td>4</td><td>The same shape on the Ledger and Player Dues</td><td>two more tabs</td></tr>
+        <tr><td>5</td><td>Re-measure all six at 361 / 390 / 768 / 1440 and re-run the layout sweep</td><td>proves nothing above 640 moved</td></tr>
+        <tr><td>6</td><td>Help articles — the Money guide describes the toolbar it had</td><td>in-app help</td></tr>
+      </tbody>
+    </table></div>
+  </section>
+
+  <section>
+    <h2>What is deliberately not in scope</h2>
+    <ul class="list">
+      <li><b>The tables themselves.</b> Money’s tables are the other half of “Money is 3,019px”, and the
+      rule they answer to is different — <em>a table whose columns fit stays a table</em>. That is its
+      own decision with its own drawings.</li>
+      <li><b>Anything above 640px.</b> The desk arrangement is untouched; every change lands in a phone
+      media query or behind the phone check the toolbar component already makes.</li>
+      <li><b>The warning notes.</b> They stay where they are and keep their words, except where a
+      caption rewrite removes a figure the note was repeating.</li>
+      <li><b>The tab strip across the top of Money.</b> Six tabs in a scroller is its own question and
+      the walk did not measure it as a failure.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Risks named up front</h2>
+    <div class="flag"><span class="k">The one that has bitten this repo before</span>
+      <p>A screen built <em>through</em> a shared recipe inherits the recipe’s layout decisions, not just
+      its materials. The Overview board was drawn white, built through the row recipe, and came out
+      olive — nobody caught it because the recipe was the right component. <b>Every one of the six
+      tabs gets looked at after the band changes</b>, not just the two this walk measured as failing.</p></div>
+    <div class="flag good-flag"><span class="k">What makes this cheap</span>
+      <p>The band is one component and the toolbar is one component. Both already have a phone branch;
+      neither needs a new abstraction. The drawer and the bare-<b>+</b> create both exist and are in
+      production. The measured work is CSS in two files plus eleven strings.</p></div>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB 5 · PM BRIEF ══════════════════════ -->
+<div id="tab-brief" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Product brief</div>
+    <h1>What changes for a coach</h1>
+  </header>
+
+  <section>
+    <div class="prose">
+      <h3>The problem, in one sentence</h3>
+      <p>A coach who opens the team budget on their phone sees a summary, a warning and three rows of
+      buttons — and has to scroll past all of it before the first budget line, which today is rendered
+      <b>below the bottom of the screen</b>.</p>
+
+      <h3>What they will see instead</h3>
+      <p>The same three figures, arranged two across instead of stacked, each with a short qualifier
+      rather than a sentence. The control row becomes one line: the two view controls, a “⋯” holding
+      export and the category tools, and the add button as a lime <b>+</b>. Three or four budget lines
+      are then on screen when the page opens.</p>
+      <p>Nothing is removed. Every control still exists and every figure still shows; the desk version
+      is untouched.</p>
+
+      <h3>Who it affects</h3>
+      <p>Every coach and treasurer on a phone, across all six Money tabs — Budget Plan, Budget vs.
+      Actual, Player Dues, Fundraising, Club and the Ledger. Read-only coaches see the same
+      improvement; their toolbar simply has fewer things in the drawer.</p>
+
+      <h3>Why it matters commercially</h3>
+      <p>Money is the Premium tier’s headline capability and the one a treasurer evaluates hardest.
+      It is currently the only part of the portal that has never had a phone pass, and it is the part
+      most likely to be opened in a parking lot rather than at a desk.</p>
+
+      <h3>Success criteria</h3>
+      <ul class="list">
+        <li>Every Money tab’s summary is the <b>same height</b> on a phone — it is 291–405px today.</li>
+        <li>Budget Plan and Budget vs. Actual show real content above the bottom bar at 361 and 390.</li>
+        <li>No control is lost, and no figure stops being readable.</li>
+        <li>Nothing above 640px changes — proven by re-running the layout sweep at 768 and 1440.</li>
+      </ul>
+
+      <h3>Tradeoffs taken</h3>
+      <p><b>Export and the category tools move one tap further away on a phone.</b> Accepted: neither is
+      a thing done standing at a field, and both stay one tap from where they were on a desk.</p>
+      <p><b>Eleven captions get shorter.</b> Some detail moves out of the summary and into the table
+      beneath it. Accepted with the owner ruling on each rewrite, because the summary’s own contract
+      already asked for six words and three tabs had grown past it.</p>
+    </div>
+  </section>
+</div>
+
+<p class="foot">Measured on the UAT fixture, 22 September 2026, at 361×844 and 390×844 with the live
+dev server. Probes: <span class="mono">.probe/money-band-measure.mjs · money-fold-measure.mjs ·
+money-band-twoup.mjs · money-band-variants.mjs · money-toolbar.mjs</span>. Every figure on this page
+was read out of the rendered product, not estimated.</p>
+
+</div>
+
+<script>
+(function(){
+  var tabs = [].slice.call(document.querySelectorAll('.tab[data-tab]'));
+  /* Every tab button needs a panel here — a button with no entry silently falls through and its
+     panel never unhides, which looks exactly like a dead click. */
+  var panels = { built:'tab-built', found:'tab-found', m1:'tab-m1', m2:'tab-m2', plan:'tab-plan', brief:'tab-brief' };
+  function show(k){
+    if(!panels[k]) k = 'built';
+    Object.keys(panels).forEach(function(key){
+      var el = document.getElementById(panels[key]);
+      if(el) el.hidden = (key !== k);
+    });
+    tabs.forEach(function(t){ t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === k)); });
+    window.scrollTo(0,0);
+  }
+  tabs.forEach(function(t){
+    t.addEventListener('click', function(){
+      var k = t.getAttribute('data-tab');
+      show(k);
+      history.replaceState(null, '', '#tab=' + k);
+    });
+  });
+  var m = /#tab=([a-z0-9]+)/i.exec(location.hash);
+  show(m ? m[1] : 'built');
+
+  /* House rule: an annotation opens on CLICK. A hover title is not an explanation. */
+  [].slice.call(document.querySelectorAll('.why')).forEach(function(b){
+    b.addEventListener('click', function(){
+      var body = document.getElementById(b.getAttribute('data-why'));
+      if(!body) return;
+      var open = b.getAttribute('aria-expanded') === 'true';
+      b.setAttribute('aria-expanded', String(!open));
+      body.hidden = open;
+    });
+  });
+})();
+</script>

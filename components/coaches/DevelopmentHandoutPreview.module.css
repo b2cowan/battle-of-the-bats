@@ -41,6 +41,15 @@
   font-size: var(--type-body); color: var(--text-primary); line-height: 1.4; cursor: pointer;
 }
 .choice input { margin-top: 0.3rem; flex: none; width: 1rem; height: 1rem; }
+/* A shelf the paper can hold with nothing in it yet (owner ruling 2026-09-22) — the heading stays
+   so the coach can see the handout's whole shape, and one quiet line says what would fill it. The
+   box is decoration standing where a tickable row would be: there is nothing to tick, so there is
+   no tap floor here and no control to reach. `.group.ghost legend` outranks `.group legend` on
+   specificity rather than on source order — same-specificity rules in one module are settled by
+   position, which a later edit can silently reverse. */
+.group.ghost legend { color: var(--text-tertiary); }
+.ghostLine { display: flex; align-items: flex-start; gap: 0.55rem; margin: 0; padding: 0.35rem 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+.ghostBox { flex: none; width: 1rem; height: 1rem; margin-top: 0.1rem; border: 1px solid var(--border-2); border-radius: 3px; opacity: 0.5; }
 .choiceMeta { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
 .sessionPick { margin-left: 1.6rem; display: flex; flex-direction: column; gap: 0.2rem; font-size: var(--type-support); color: var(--text-tertiary); }
 .sessionPick select { max-width: 100%; }

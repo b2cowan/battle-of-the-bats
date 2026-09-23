@@ -28,13 +28,20 @@ import { readSource, stripComments } from './_source-code.ts';
  */
 const PILL = 'components/coaches/SaveStatusPill.tsx';
 
-/** Every surface that autosaves. Adding one here is the deliberate act; forgetting is the bug. */
+/**
+ * Every surface that autosaves. Adding one here is the deliberate act; forgetting is the bug —
+ * and the game-day console is the proof. It autosaved from the day it shipped (the lineup PUT
+ * and the quiet score PATCH), it was never added to this list, and so when the word moved to the
+ * shared pill on 2026-09-20 the console kept its own hand-rolled "✓ Saved" pinned in its top
+ * strip, always visible, for two days. The owner found it, not the build. It is on the list now.
+ */
 const SURFACES = [
   'app/[orgSlug]/coaches/teams/[teamId]/lineups/[eventId]/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/practice/templates/[templateId]/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/practice/circuits/[circuitId]/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx',
+  'app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx',
 ];
 
 describe('SaveStatusPill — the autosave word', () => {

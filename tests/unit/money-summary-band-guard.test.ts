@@ -266,6 +266,63 @@ describe('every money tab opens the same way', () => {
     }
   });
 
+  /**
+   * ⚠⚠ RULE 6 — THE BAND NARROWS TO TWO-UP, NEVER BACK TO ONE COLUMN (Money phone walk · M1, owner
+   * 2026-09-22). This is a source assertion on the stylesheet for the same reason rules 1–5 are
+   * source assertions on the panels: the thing being protected is a DECISION, and the rendered
+   * proof lives in `scripts/check-layout-invariants.mjs`.
+   *
+   * The decision, with the measurement that forced it: at 390 the one-column stack made a
+   * four-tile band 387px and put Budget Plan's first budget line 122px BELOW the phone's bottom
+   * bar — a coach opened the budget and saw no budget. Budget vs. Actual, whose captions are the
+   * SHORTEST of the six tabs (12–23 characters, one line each), was 387px too, which is the proof
+   * that no amount of editing the words could have fixed it.
+   *
+   * ⚠ The old rule's argument is NOT overturned and must not be re-litigated as if it were. The
+   * Club band refused the portal's AUTO-FIT grid because an auto-fit row reflows 3 → 2 + 1 and
+   * orphans whichever figure lands alone. That is still true. A FIXED two-column grid is not
+   * auto-fit, and the odd tile spans rather than being orphaned.
+   */
+  it('rule 6 — the band’s narrow form is two-up with the odd tile spanning, and the figure steps down', () => {
+    const css = readFileSync(path.join(ROOT, 'app/[orgSlug]/coaches/coaches.module.css'), 'utf8');
+
+    assert.ok(
+      /\.moneyBand\[data-tiles="4"\]\s*\{\s*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/.test(css),
+      'The band must narrow to TWO columns. A `grid-template-columns: 1fr` here is the one-column '
+      + 'stack this rule replaced — it measured 387px for four tiles at 390 and pushed Budget '
+      + 'Plan’s first line 122px below the phone’s bottom bar.',
+    );
+    assert.ok(
+      /\.moneyBandTile:nth-child\(odd\):last-child\s*\{\s*grid-column:\s*1\s*\/\s*-1/.test(css),
+      'A three-tile band leaves one tile alone on the second row; it must SPAN rather than sit '
+      + 'beside a gap (M1a — the last tile by position, so no per-tile flag is added to a component '
+      + 'six tabs share). Without this the band orphans exactly the figure the old auto-fit '
+      + 'argument was written about.',
+    );
+    assert.ok(
+      /\.moneyBandFigure\s*\{\s*font-size:\s*var\(--type-title\)/.test(css),
+      'The figure must step down to `--type-title` at the phone breakpoint. This is not cosmetic: '
+      + 'measured two-up at the desk’s 24px, `+$8,090.02`, `$11,600.32` and `$11,491.30` all '
+      + 'overflowed their tile at 361. It is the same step the Overview board’s phone rows already '
+      + 'take, so the portal has taken this decision once rather than twice.',
+    );
+
+    /* The caption's phone form exists and is DECLARED per tile — a tab whose caption already holds
+       passes nothing, which is what keeps this from becoming a second caption everywhere. */
+    const band = readFileSync(path.join(ROOT, 'components/coaches/MoneySummaryBand.tsx'), 'utf8');
+    assert.ok(
+      band.includes('captionShort?: ReactNode'),
+      'MoneySummaryBand must offer `captionShort` — the ≤6-word phone form. Three tabs had grown '
+      + 'sentence-length captions (Budget Plan 60 characters, Player Dues 54) while the recipe’s '
+      + 'own contract said six words; the desk caption is not wrong, so the fix is a phone form.',
+    );
+    assert.ok(
+      /\.moneyBandCapDesk\s*\{\s*display:\s*inline/.test(css) && /\.moneyBandCapPhone\s*\{\s*display:\s*none/.test(css),
+      'Both caption forms must be declared at BASE, not only inside a media query — the desk '
+      + 'reading is the one that has to survive if a width ever falls between the blocks.',
+    );
+  });
+
   it('rule 5 — the guard does not go blind: every band tab yields real keys', () => {
     for (const tab of Object.keys(BAND_TABS)) {
       const found = tileKeys(tab);

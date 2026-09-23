@@ -486,6 +486,34 @@ describe('D5 — one inning at a time', () => {
     assert.match(editor, /const phoneDots: InningDotState\[\] = Array\.from\(\{ length: inningCount \}, \(_, i\) => \{\s*const n = i \+ 1;\s*return analysis\.conflictInnings\.has\(n\) \? 'clash' : openRolesByInning\.has\(n\) \? 'open' : assignedInnings\.has\(n\) \? 'done' : 'untouched';/);
     assert.match(list, /<div className=\{s\.dots\} aria-hidden data-lineup-dots>/);
   });
+  /* ⚠⚠ A REPRODUCED DEFECT, NOT A STYLE PREFERENCE (owner, 2026-09-22, from a phone screenshot of
+     the pill reading "INNING 2 OF 6 · ⚠ 2 clas…": "if we can't fit this message I think the symbol
+     is enough"). TWO items could give width, so both did: the fact ellipsised itself into a
+     fragment that says nothing the red pill and the ⚠ had not already said, AND the chevron — the
+     door's own affordance — shrank to a sliver beside it. The rule now: the trailing fact reads
+     WHOLE or drops away to the bare mark, and nothing but the fact may ever go. Pinned
+     structurally, because every way back to this bug is small — a `text-overflow` here, a lost
+     `flex: none` there, the mark folded back into the sentence it is supposed to outlive. */
+  it('⚠ the pill\'s trailing fact is ALL-OR-NOTHING — the mark outlives it, it never ellipsises, the chevron never shrinks', () => {
+    const pill = between(list, 'className={s.stepPill}', '</button>', 'the stepper pill');
+    // The mark is its OWN element and comes FIRST, so a dropped sentence still leaves "· ⚠".
+    assert.match(pill, /<small className=\{s\.stepMark\}>· ⚠<\/small>\s*<small className=\{s\.stepFact\}>\{clash\}<\/small>/);
+    assert.doesNotMatch(pill, /stepFact\}>· ⚠/, 'the mark never goes back inside the droppable fact');
+    // The chevron is a SIBLING of the wrapping box — inside it, it would wrap away with the fact.
+    assert.match(pill, /<\/span>\s*<span className=\{s\.stepChev\} aria-hidden>›<\/span>/);
+    // One line tall, wrapping, clipped: the drop is the browser's line breaking, not a measurement.
+    const inner = between(listCss, '.stepInner {', '}', '.stepInner');
+    for (const rule of [/flex-wrap: wrap;/, /align-content: flex-start;/, /line-height: var\(--step-line\);/, /max-height: var\(--step-line\);/, /overflow: hidden;/]) {
+      assert.match(inner, rule);
+    }
+    // Neither the fact nor the chevron may give width — an item that CAN shrink squeezes itself
+    // illegible instead of dropping, which is how "2 clashes" became "2 clas…" with no chevron.
+    assert.match(between(listCss, '.stepFact {', '}', '.stepFact'), /flex: none;/);
+    assert.doesNotMatch(listCss, /\.stepFact \{[^}]*text-overflow/, 'the fact never ellipsises again');
+    assert.match(listCss, /\.stepChev \{ flex: none;/);
+    // The SPOKEN pill is unchanged: the whole fact is in the label whatever the width paints.
+    assert.ok(pill.includes("who is at each position${pillTitle ? ` (${pillTitle})` : ''}"), 'the label still carries the whole fact');
+  });
   it('the phone inning is the VIEW: opens on 1, stepped by ‹ ›, focusInning and the inspector\'s onNavigate keep it in step; the data is untouched', () => {
     assert.match(editor, /const \[phoneInning, setPhoneInning\] = useState\(1\);/);
     assert.match(editor, /onStep=\{setPhoneInning\}/);

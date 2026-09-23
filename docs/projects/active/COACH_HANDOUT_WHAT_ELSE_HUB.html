@@ -1,0 +1,617 @@
+<title>What else goes on a handout</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --doc-bg: #ECEDF1; --doc-panel: #F7F7F9; --doc-ink: #1B1D23; --doc-muted: #5C6070; --doc-line: rgba(27,29,35,0.12);
+    --doc-accent: #57651E; --doc-on: rgba(87,101,30,0.16); --doc-warn: #835006; --doc-bad: #9E3030; --doc-focus: #134FD3;
+    /* the warm coaches portal, as it ships */
+    --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54;
+    --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10);
+    --home-lime: #D9F99D; --home-lime-ink: #241E15; --home-fill: rgba(70,55,30,0.08);
+    /* the print preview's paper — white in either theme, as the component declares */
+    --pp: #FFFFFF; --pp-ink: #1F1F24; --pp-muted: #5A5651; --pp-line: #D9D6CF;
+    --type-heading: 16px; --type-body: 14px; --type-support: 12px; --type-label: 11px;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-bad:#E28B8B; --doc-focus:#7FA3FF; color-scheme: dark; } }
+  :root[data-theme="dark"] { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-bad:#E28B8B; --doc-focus:#7FA3FF; color-scheme: dark; }
+
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--doc-bg); color: var(--doc-ink); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1240px; margin: 0 auto; padding-block: 26px 64px; padding-inline: 20px; }
+
+  /* ── hub chrome ── */
+  .hubbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px 24px; padding:14px 20px; background:var(--doc-ink); color:var(--doc-bg); }
+  .hubbar .t { margin-right:auto; } .hubbar .t strong { display:block; font-size:15px; } .hubbar .t small { color: color-mix(in srgb, var(--doc-bg) 75%, transparent); font-size:12px; }
+  .stages { display:flex; flex-wrap:wrap; gap:4px; list-style:none; margin:0; padding:0; }
+  .stages li { font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:5px 10px; border-radius:999px; color: color-mix(in srgb, var(--doc-bg) 55%, transparent); white-space:nowrap; cursor:default; }
+  .stages li.done { color: var(--doc-bg); }
+  .stages li.current { color:var(--doc-ink); background:var(--doc-accent); }
+  .hubtabs { display:flex; gap:22px; overflow:auto; white-space:nowrap; padding:0 20px; background:var(--doc-panel); border-bottom:1px solid var(--doc-line); }
+  .hubtabs button { min-height:46px; padding:9px 0; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--doc-muted); font:inherit; font-size:14px; cursor:pointer; }
+  .hubtabs button[aria-pressed="true"] { border-bottom-color:var(--doc-accent); color:var(--doc-ink); font-weight:700; }
+  button:focus-visible, [tabindex]:focus-visible, a:focus-visible { outline:2px solid var(--doc-focus); outline-offset:2px; }
+
+  .head { display:grid; gap:8px; max-width:74ch; margin-bottom:26px; }
+  .eyebrow { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-muted); }
+  h1 { margin:0; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.01em; text-wrap:balance; }
+  .lede { margin:0; color:var(--doc-muted); max-width:70ch; } .lede strong { color:var(--doc-ink); font-weight:600; }
+
+  .tag { display:inline-block; font-family:"IBM Plex Mono",monospace; font-size:11px; letter-spacing:.06em; padding:2px 6px; border-radius:4px; border:1px solid var(--doc-line); color:var(--doc-muted); font-weight:500; }
+  .tag.new { color:var(--doc-accent); border-color:var(--doc-accent); }
+  .tag.unch { opacity:.75; }
+  .tag.call { color:var(--doc-warn); border-color:var(--doc-warn); }
+  .tag.rec { color:var(--doc-ink); border-color:var(--doc-accent); background:var(--doc-on); font-weight:600; }
+
+  h2.sec { font-size:20px; margin:40px 0 4px; letter-spacing:-.01em; }
+  h2.sec .n { font-family:"IBM Plex Mono",monospace; font-size:13px; color:var(--doc-muted); margin-right:8px; }
+  .secsub { margin:0 0 18px; color:var(--doc-muted); max-width:74ch; } .secsub b { color:var(--doc-ink); font-weight:600; }
+
+  .row { display:flex; flex-wrap:wrap; gap:28px; align-items:flex-start; margin-bottom:8px; }
+  .spec { display:grid; gap:9px; justify-items:start; }
+  .spec-cap { display:flex; flex-wrap:wrap; align-items:baseline; gap:9px; font-size:13px; color:var(--doc-muted); max-width:34rem; }
+  .spec-cap b { font-family:"IBM Plex Mono",monospace; font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-ink); }
+
+  /* ── the portal, as a specimen ── */
+  .screen { width:880px; max-width:100%; background:var(--home-paper); border:1px solid var(--home-line-strong); border-radius:10px; overflow:hidden; box-shadow:0 1px 2px rgba(70,55,30,.06), 0 12px 34px rgba(20,15,10,.14); color:var(--home-ink); font-size:var(--type-body); line-height:1.45; }
+  .strip { display:flex; align-items:center; gap:10px; padding:9px 14px; background:var(--home-card); border-bottom:1px solid var(--home-line); }
+  .strip .tm { font-weight:800; font-size:15px; line-height:1.15; }
+  .strip .tm small { display:block; font-weight:400; font-size:var(--type-support); color:var(--home-dim); }
+  .strip .sp { margin-left:auto; display:flex; align-items:center; gap:10px; }
+  .chip { font-size:var(--type-support); font-weight:600; padding:4px 10px; border-radius:999px; background:var(--home-olive-soft); color:var(--home-olive); }
+  .qm { width:26px; height:26px; border-radius:50%; border:1px solid var(--home-line-strong); display:inline-flex; align-items:center; justify-content:center; font-size:13px; color:var(--home-dim); }
+  .ph { display:flex; align-items:center; gap:12px; padding:12px 14px; }
+  .back { display:inline-flex; align-items:center; gap:6px; padding:6px 12px; border:1px solid var(--home-line-strong); border-radius:7px; background:var(--home-card); font-size:var(--type-support); font-weight:600; }
+  .picon { width:28px; height:28px; border-radius:50%; background:var(--home-fill); display:inline-flex; align-items:center; justify-content:center; }
+  .ph h3 { margin:0; font-size:19px; font-weight:800; letter-spacing:-.01em; }
+  .body { display:grid; grid-template-columns:300px minmax(0,1fr); gap:16px; padding:0 14px 16px; align-items:start; }
+
+  /* the chooser column */
+  .col { background:var(--home-card); border:1px solid var(--home-line); border-radius:8px; padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
+  .col.solo { width:300px; }
+  .col h4 { margin:0; font-size:var(--type-heading); font-weight:800; letter-spacing:-.01em; }
+  .col .sub { margin:0; font-size:var(--type-support); color:var(--home-dim); line-height:1.45; }
+  .leg { font-size:var(--type-support); font-weight:700; color:var(--home-ink-soft); text-transform:uppercase; letter-spacing:.04em; margin-bottom:2px; }
+  .grp { display:flex; flex-direction:column; gap:2px; }
+  .pick { display:flex; align-items:flex-start; gap:8px; padding:4px 0; }
+  .bx { flex:none; width:15px; height:15px; margin-top:2px; border:1.5px solid var(--home-line-strong); border-radius:3px; background:var(--home-card); display:inline-flex; align-items:center; justify-content:center; }
+  .bx.on { background:var(--home-olive); border-color:var(--home-olive); }
+  .bx.on::after { content:"✓"; color:#fff; font-size:11px; line-height:1; font-weight:700; }
+  .pick .n { font-size:var(--type-body); }
+  .pick .m { display:block; font-size:var(--type-support); color:var(--home-dim); }
+  .ta { min-height:62px; border:1px solid var(--home-line-strong); border-radius:7px; background:var(--home-paper); padding:8px 10px; font-size:var(--type-body); color:var(--home-dim); line-height:1.35; }
+  .lime { align-self:flex-start; padding:9px 15px; border-radius:7px; background:var(--home-lime); color:var(--home-lime-ink); font-weight:700; font-size:var(--type-body); display:inline-flex; align-items:center; gap:7px; }
+  .bnd { margin:0; font-size:var(--type-support); color:var(--home-dim); line-height:1.45; }
+
+  /* THE PROPOSAL — the quiet line */
+  .also { margin:0; font-size:var(--type-support); color:var(--home-dim); line-height:1.5; }
+  .also b { color:var(--home-ink-soft); font-weight:700; }
+  .also .door { display:inline-flex; align-items:center; gap:3px; color:var(--home-olive); font-weight:600; text-decoration:underline; text-underline-offset:2px; }
+  /* THE ALTERNATIVE — ghost groups */
+  .ghost .leg { color:var(--home-dim); opacity:.8; }
+  .ghost .gline { display:flex; align-items:center; gap:8px; padding:4px 0; font-size:var(--type-support); color:var(--home-dim); font-style:italic; }
+  .ghost .bx { opacity:.45; }
+
+  /* the paper */
+  .paper { background:var(--pp); color:var(--pp-ink); border:1px solid var(--home-line); border-radius:6px; padding:18px 20px 14px; box-shadow:0 10px 28px rgba(20,15,10,.15); font-size:var(--type-body); line-height:1.5; }
+  .lh { display:flex; align-items:center; gap:8px; padding-bottom:7px; margin-bottom:10px; border-bottom:1px solid var(--pp-line); font-weight:700; font-size:var(--type-support); }
+  .eb { font-size:var(--type-support); text-transform:uppercase; letter-spacing:.08em; color:var(--pp-muted); }
+  .pnm { margin:2px 0 0; font-size:20px; font-weight:800; line-height:1.2; }
+  .pnm span { font-weight:500; color:var(--pp-muted); font-size:.72em; }
+  .prp { margin:2px 0 0; font-size:var(--type-support); color:var(--pp-muted); }
+  .psec { margin-top:13px; }
+  .psec h5 { margin:0 0 5px; font-size:var(--type-support); text-transform:uppercase; letter-spacing:.06em; color:var(--pp-muted); font-weight:600; }
+  .ptab { width:100%; border-collapse:collapse; }
+  .ptab th, .ptab td { text-align:left; padding:5px 6px 5px 0; border-bottom:1px solid var(--pp-line); vertical-align:top; }
+  .ptab th { font-size:var(--type-support); color:var(--pp-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; }
+  .num { font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums; }
+  .pn { margin:4px 0 0; font-size:var(--type-support); color:var(--pp-muted); }
+  .pf { margin-top:16px; padding-top:7px; border-top:1px solid var(--pp-line); font-size:var(--type-support); color:var(--pp-muted); }
+
+  /* the drawer / modal specimens */
+  .drawer { width:400px; max-width:100%; background:var(--home-card); border:1px solid var(--home-line-strong); border-radius:10px; overflow:hidden; box-shadow:0 14px 36px rgba(20,15,10,.20); color:var(--home-ink); font-size:var(--type-body); }
+  .dh { display:flex; align-items:center; gap:10px; padding:12px 15px; border-bottom:1px solid var(--home-line); background:var(--home-paper); }
+  .dh strong { font-size:var(--type-heading); font-weight:800; }
+  .dh .x { margin-left:auto; color:var(--home-dim); }
+  .db { padding:13px 15px; display:flex; flex-direction:column; gap:11px; }
+  .db p { margin:0; font-size:var(--type-support); color:var(--home-ink-soft); line-height:1.5; }
+  .def { display:grid; grid-template-columns:auto 1fr; gap:4px 9px; align-items:start; }
+  .def .k { grid-column:1/-1; font-weight:700; font-size:var(--type-body); }
+  .def .v { grid-column:1/-1; font-size:var(--type-support); color:var(--home-dim); line-height:1.5; }
+  .state { display:inline-flex; align-items:center; gap:5px; font-size:var(--type-label); font-family:"IBM Plex Mono",monospace; letter-spacing:.04em; text-transform:uppercase; padding:2px 7px; border-radius:999px; white-space:nowrap; }
+  .state.has { background:var(--home-olive-soft); color:var(--home-olive); }
+  .state.none { background:var(--home-fill); color:var(--home-dim); }
+  .drow { display:flex; align-items:baseline; justify-content:space-between; gap:10px; padding:8px 0; border-bottom:1px solid var(--home-line); }
+  .drow:last-of-type { border-bottom:0; }
+  .drow .k { font-weight:700; font-size:var(--type-body); }
+  .drow .v { display:block; font-weight:400; font-size:var(--type-support); color:var(--home-dim); line-height:1.45; margin-top:2px; }
+  .dfoot { padding:11px 15px; border-top:1px solid var(--home-line); background:var(--home-paper); font-size:var(--type-support); color:var(--home-dim); }
+
+  /* notes */
+  .notes { display:grid; gap:11px; margin-top:16px; }
+  .note { display:grid; grid-template-columns:30px 1fr; gap:13px; padding:15px 17px; background:var(--doc-panel); border:1px solid var(--doc-line); border-radius:10px; }
+  .note.warn { border-left:3px solid var(--doc-warn); }
+  .note .n { width:24px; height:24px; border-radius:6px; background:var(--doc-ink); color:var(--doc-bg); font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; margin-top:1px; }
+  .note.warn .n { background:var(--doc-warn); color:#fff; }
+  .note h3 { margin:0 0 4px; font-size:15px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  .note p { margin:0; color:var(--doc-muted); max-width:80ch; font-size:14px; } .note p + p { margin-top:6px; } .note p b { color:var(--doc-ink); font-weight:600; }
+
+  /* decisions + brief */
+  .doc { max-width:80ch; margin:0 auto; padding-block:26px 56px; padding-inline:20px; }
+  .doc h1 { font-size:24px; margin:0 0 4px; } .doc h2 { font-size:18px; margin:30px 0 8px; } .doc h3 { font-size:15px; margin:20px 0 6px; }
+  .doc p, .doc li { color:var(--doc-ink); } .doc ul { padding-left:20px; } .doc li { margin:5px 0; }
+  .doc .meta { color:var(--doc-muted); font-size:13px; margin:0 0 18px; }
+  .doc .callout { padding:12px 16px; border-left:3px solid var(--doc-accent); background:var(--doc-panel); border-radius:0 6px 6px 0; margin:14px 0; }
+  .doc .callout.warn { border-left-color:var(--doc-warn); }
+  .dec { border:1px solid var(--doc-line); border-radius:10px; background:var(--doc-panel); padding:15px 17px; margin-bottom:12px; }
+  .dec .dhr { display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap; margin-bottom:6px; }
+  .dec .dhr strong { font-size:15px; }
+  .dec p { margin:6px 0 0; color:var(--doc-muted); font-size:14px; } .dec p b { color:var(--doc-ink); font-weight:600; }
+  .opts { display:grid; gap:8px; margin-top:10px; }
+  .opt { display:grid; grid-template-columns:auto 1fr; gap:10px; padding:10px 12px; border:1px solid var(--doc-line); border-radius:8px; background:var(--doc-bg); align-items:start; }
+  .opt.win { border-color:var(--doc-accent); background:var(--doc-on); }
+  .opt .lt { font-family:"IBM Plex Mono",monospace; font-size:12px; font-weight:600; color:var(--doc-muted); }
+  .opt.win .lt { color:var(--doc-accent); }
+  .opt .tx { font-size:14px; } .opt .tx b { font-weight:600; }
+  .opt .tx small { display:block; color:var(--doc-muted); font-size:13px; margin-top:3px; }
+
+  [hidden] { display:none !important; }
+  @media (max-width:760px) { .body { grid-template-columns:1fr; } .screen { width:100%; } }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; } }
+</style>
+
+<div class="hubbar">
+  <div class="t">
+    <strong>What else goes on a handout — project hub</strong>
+    <small>Ruled 2026-09-22 — ghost sections (D1 = B), no line and no in-column door (D2 dropped), no shortcut out (D3), masthead <b>?</b> retargeted (D4) · built, reviewed and documented the same day · commit + owner walk owed</small>
+  </div>
+  <ul class="stages" aria-label="Project lifecycle">
+    <li class="done" title="Mockup published 2026-09-22 (this artifact, v1); ruled the same day — ghost sections, no line, no door">Design</li>
+    <li class="done" title="No separate plan document — this hub's PM brief is the record; the change is one component and its own stylesheet">Plan</li>
+    <li class="done" title="Built on dev 2026-09-22; help article synced the same day">Build</li>
+    <li class="current" title="/review 2026-09-22 — two defects found and fixed: the invitation clause was gated on the READ grant, and the help request’s label renamed the masthead button. Guards, help resolution, CSS reach and callers all clean.">Review</li>
+    <li>QA</li>
+    <li>Shipped</li>
+  </ul>
+</div>
+
+<nav class="hubtabs" aria-label="Documents">
+  <button type="button" data-tab="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-tab="call" aria-pressed="false">The call</button>
+  <button type="button" data-tab="brief" aria-pressed="false">PM brief</button>
+</nav>
+
+<!-- ═══════════════════ MOCKUP ═══════════════════ -->
+<section id="tab-mockup" class="wrap">
+  <div class="head">
+    <p class="eyebrow">Preview development handout · the chooser column</p>
+    <h1>A handout that never mentions what it could hold</h1>
+    <p class="lede">Alex has three test results and nothing else on the record, so the chooser shows <strong>one</strong> of its four sections and says nothing about the other three. A coach reads that column as <em>this is what a handout is</em> — and a goal written next week never gets printed, because nobody knew the paper had room for it. Below: the screen as it stands, then two ways to say so, and the two things the saying-so could open.</p>
+  </div>
+
+  <!-- ── 1 · TODAY ── -->
+  <h2 class="sec"><span class="n">1</span>The screen as it ships</h2>
+  <p class="secsub">Whole screen, desktop. The chooser is 300&nbsp;px of a two-column layout; the paper beside it is what prints. <b>Nothing on this screen names the goals section, the observation section, or the fact that either could be here.</b></p>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Today</b> <span class="tag unch">UNCHANGED</span> a coach with results only</div>
+      <div class="screen">
+        <div class="strip">
+          <div class="tm">Milton Bats U13 Purple<small>2027 Season · 2-0</small></div>
+          <div class="sp"><span class="chip">Game day</span><span class="qm">?</span></div>
+        </div>
+        <div class="ph">
+          <span class="back">← Alex Tennant</span>
+          <span class="picon">🖨</span>
+          <h3>Preview development handout</h3>
+        </div>
+        <div class="body">
+          <div class="col">
+            <h4>Choose what belongs in this conversation</h4>
+            <p class="sub">Current season · one player · nothing is stored or sent — a print of the record as of today.</p>
+            <div class="grp">
+              <span class="leg">Selected test results</span>
+              <div class="pick"><span class="bx on"></span><span class="n">30 Yard Sprint<span class="m">5.53 seconds · Sep 22</span></span></div>
+              <div class="pick"><span class="bx on"></span><span class="n">Home to First Sprint<span class="m">3.36 seconds · Sep 22</span></span></div>
+              <div class="pick"><span class="bx on"></span><span class="n">Home to Home Sprint<span class="m">12.62 seconds · Sep 22</span></span></div>
+            </div>
+            <div class="grp">
+              <span class="leg">Next step</span>
+              <div class="ta">In your own words — what you'll work on together next.</div>
+            </div>
+            <div class="pick"><span class="bx"></span><span class="n">Include the full dated result log<span class="m">An appendix — one line per result, every attempt listed.</span></span></div>
+            <span class="lime">🖨 Print / Save as PDF</span>
+            <p class="bnd">Not on the paper: tryout evaluations, other players' figures, internal notes.</p>
+          </div>
+          <div class="paper">
+            <div class="lh"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#4B2E83"></circle><path d="M5 12c3-4 7-4 10 0" stroke="#fff" stroke-width="1.6" fill="none"></path></svg> Milton Bats U13 Purple · 2027 Season</div>
+            <div class="eb">Player development</div>
+            <h4 class="pnm">Alex Tennant <span>#44</span></h4>
+            <p class="prp">Prepared Sep 22, 2026 · a coach</p>
+            <div class="psec">
+              <h5>Selected test results</h5>
+              <table class="ptab">
+                <thead><tr><th>Test</th><th>Result</th><th>Date</th></tr></thead>
+                <tbody>
+                  <tr><td>30 Yard Sprint</td><td class="num">5.53 seconds</td><td>Sep 22</td></tr>
+                  <tr><td>Home to First Sprint</td><td class="num">3.36 seconds</td><td>Sep 22</td></tr>
+                  <tr><td>Home to Home Sprint</td><td class="num">12.62 seconds</td><td>Sep 22</td></tr>
+                </tbody>
+              </table>
+              <p class="pn">30 Yard Sprint: Best of 3 attempts that day (5.53 · 5.56 · 5.66).</p>
+              <p class="pn">Home to First Sprint: Best of 2 attempts that day (3.36 · 3.5).</p>
+            </div>
+            <p class="pf">For this player's development conversation · A record of this season's coaching</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="n">1</span><div>
+      <h3>The screen already has the negative half of the sentence</h3>
+      <p><b>"Not on the paper: tryout evaluations, other players' figures, internal notes."</b> sits at the foot. What the paper <em>can</em> carry has never been written down anywhere on the screen — the chooser was assumed to be the answer, and it only is when the record is full.</p>
+    </div></div>
+    <div class="note warn"><span class="n">2</span><div>
+      <h3>The <b>?</b> in the masthead opens the wrong answer today</h3>
+      <p>It opens the Development guide at its <em>first</em> sub-topic (how the section is laid out), not <b>The development handout — choose what belongs in the conversation</b>, which is already written and already lists all five parts. One line fixes it, and it is the same fix whichever option below wins.</p>
+    </div></div>
+  </div>
+
+  <!-- ── 2 · OPTION A ── -->
+  <h2 class="sec"><span class="n">2</span>Option A — one quiet line <span class="tag call">NOT TAKEN</span></h2>
+  <p class="secsub"><b>Ruled out 2026-09-22.</b> The owner took the ghost sections in §3 instead, and with those in place the line had nothing left to do — its only remaining job was carrying the door to the explanation, and the masthead <b>?</b> already sits three inches away. Kept here because it is the shape this screen would need if the ghost sections ever grow past two or three.</p>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>After</b> <span class="tag new">NEW</span> whole screen — the paper is untouched</div>
+      <div class="screen">
+        <div class="strip">
+          <div class="tm">Milton Bats U13 Purple<small>2027 Season · 2-0</small></div>
+          <div class="sp"><span class="chip">Game day</span><span class="qm">?</span></div>
+        </div>
+        <div class="ph">
+          <span class="back">← Alex Tennant</span>
+          <span class="picon">🖨</span>
+          <h3>Preview development handout</h3>
+        </div>
+        <div class="body">
+          <div class="col">
+            <h4>Choose what belongs in this conversation</h4>
+            <p class="sub">Current season · one player · nothing is stored or sent — a print of the record as of today.</p>
+            <div class="grp">
+              <span class="leg">Selected test results</span>
+              <div class="pick"><span class="bx on"></span><span class="n">30 Yard Sprint<span class="m">5.53 seconds · Sep 22</span></span></div>
+              <div class="pick"><span class="bx on"></span><span class="n">Home to First Sprint<span class="m">3.36 seconds · Sep 22</span></span></div>
+              <div class="pick"><span class="bx on"></span><span class="n">Home to Home Sprint<span class="m">12.62 seconds · Sep 22</span></span></div>
+            </div>
+            <p class="also"><b>Also on a handout:</b> goals and a recent observation — neither is on Alex's record this season. <a class="door" href="#tab-mockup">What goes on a handout ›</a></p>
+            <div class="grp">
+              <span class="leg">Next step</span>
+              <div class="ta">In your own words — what you'll work on together next.</div>
+            </div>
+            <div class="pick"><span class="bx"></span><span class="n">Include the full dated result log<span class="m">An appendix — one line per result, every attempt listed.</span></span></div>
+            <span class="lime">🖨 Print / Save as PDF</span>
+            <p class="bnd">Not on the paper: tryout evaluations, other players' figures, internal notes.</p>
+          </div>
+          <div class="paper">
+            <div class="lh"><svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#4B2E83"></circle><path d="M5 12c3-4 7-4 10 0" stroke="#fff" stroke-width="1.6" fill="none"></path></svg> Milton Bats U13 Purple · 2027 Season</div>
+            <div class="eb">Player development</div>
+            <h4 class="pnm">Alex Tennant <span>#44</span></h4>
+            <p class="prp">Prepared Sep 22, 2026 · a coach</p>
+            <div class="psec">
+              <h5>Selected test results</h5>
+              <table class="ptab">
+                <thead><tr><th>Test</th><th>Result</th><th>Date</th></tr></thead>
+                <tbody>
+                  <tr><td>30 Yard Sprint</td><td class="num">5.53 seconds</td><td>Sep 22</td></tr>
+                  <tr><td>Home to First Sprint</td><td class="num">3.36 seconds</td><td>Sep 22</td></tr>
+                  <tr><td>Home to Home Sprint</td><td class="num">12.62 seconds</td><td>Sep 22</td></tr>
+                </tbody>
+              </table>
+              <p class="pn">30 Yard Sprint: Best of 3 attempts that day (5.53 · 5.56 · 5.66).</p>
+              <p class="pn">Home to First Sprint: Best of 2 attempts that day (3.36 · 3.5).</p>
+            </div>
+            <p class="pf">For this player's development conversation · A record of this season's coaching</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 3 · A vs B, true size ── -->
+  <h2 class="sec"><span class="n">3</span>The two shapes, at the column's real width</h2>
+  <p class="secsub">Both drawn at <b>300&nbsp;px</b> — the chooser's true width on a desktop, and roughly its width on a phone. Judge the real-estate question here, not on the whole-screen frames above.</p>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>A · the line</b> <span class="tag call">NOT TAKEN</span> one paragraph, grows by one clause when a third section is missing</div>
+      <div class="col solo">
+        <div class="grp">
+          <span class="leg">Selected test results</span>
+          <div class="pick"><span class="bx on"></span><span class="n">30 Yard Sprint<span class="m">5.53 seconds · Sep 22</span></span></div>
+          <div class="pick"><span class="bx on"></span><span class="n">Home to First Sprint<span class="m">3.36 seconds · Sep 22</span></span></div>
+          <div class="pick"><span class="bx on"></span><span class="n">Home to Home Sprint<span class="m">12.62 seconds · Sep 22</span></span></div>
+        </div>
+        <p class="also"><b>Also on a handout:</b> goals and a recent observation — neither is on Alex's record this season. <a class="door" href="#tab-mockup">What goes on a handout ›</a></p>
+        <div class="grp">
+          <span class="leg">Next step</span>
+          <div class="ta">In your own words — what you'll work on together next.</div>
+        </div>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>B · ghost sections</b> <span class="tag rec">BUILT</span> the handout's full shape, in the chooser's own order</div>
+      <div class="col solo ghost">
+        <div class="grp">
+          <span class="leg">What we're working on</span>
+          <div class="gline"><span class="bx"></span> No goal this season — add one and it appears here.</div>
+        </div>
+        <div class="grp">
+          <span class="leg">A recent observation</span>
+          <div class="gline"><span class="bx"></span> No observation this season — record one and it appears here.</div>
+        </div>
+        <div class="grp">
+          <span class="leg">Selected test results</span>
+          <div class="pick"><span class="bx on"></span><span class="n">30 Yard Sprint<span class="m">5.53 seconds · Sep 22</span></span></div>
+          <div class="pick"><span class="bx on"></span><span class="n">Home to First Sprint<span class="m">3.36 seconds · Sep 22</span></span></div>
+          <div class="pick"><span class="bx on"></span><span class="n">Home to Home Sprint<span class="m">12.62 seconds · Sep 22</span></span></div>
+        </div>
+        <div class="grp">
+          <span class="leg">Next step</span>
+          <div class="ta">In your own words — what you'll work on together next.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note"><span class="n">3</span><div>
+      <h3>B taken — the handout has four sections and it will not sprout a fifth</h3>
+      <p>The owner's reasoning, 2026-09-22: <i>"I don't expect this to scale too far that this becomes cumbersome."</i> That is the right read — the paper's sections are fixed by what a development record contains, so the worst case is two ghosts, not a growing list. B is the more honest picture: the coach sees the handout's sections in the order they print, and learns the vocabulary in place rather than in a sentence about it.</p>
+      <p>The one shape B could have turned ugly in — a brand-new player with nothing at all, four empty headings over a textarea — <b>never draws</b>: the screen swaps the whole chooser for its empty state when there is nothing to tick (§5, case iii). That was true before this change and is what makes B safe.</p>
+    </div></div>
+  </div>
+
+  <!-- ── 4 · what it opens ── -->
+  <h2 class="sec"><span class="n">4</span>The explanation, and where it is reached from</h2>
+  <p class="secsub"><b>Ruled 2026-09-22: no door in the chooser.</b> With the sections drawn in place the coach can see what a handout holds without opening anything — so the explainer keeps its one existing entrance, the <b>?</b> in the masthead, and that <b>?</b> now opens the handout's own answer instead of the Development guide's first topic (D4). Both panels below stay on the record: C1 is what ships, C2 is the shape a bespoke modal would have taken.</p>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>C1 · the help drawer</b> <span class="tag rec">BUILT</span> reached from the masthead <b>?</b> — content already shipped, nothing new to keep in step</div>
+      <div class="drawer">
+        <div class="dh"><span class="qm">?</span><strong>The development handout</strong><span class="x">✕</span></div>
+        <div class="db">
+          <p>The left side is what you choose; the right side is the paper as it will print, updating as you tick.</p>
+          <div class="def">
+            <span class="k">What we're working on</span>
+            <span class="v">Tick the goals for this conversation. The goal's own "what success looks like" sentence prints beneath it. Goals being worked on are ticked to begin with.</span>
+            <span class="k">A recent observation</span>
+            <span class="v">Tick one or more, each dated with the descriptor and what you saw. The latest is ticked to begin with.</span>
+            <span class="k">Selected test results</span>
+            <span class="v">Each test's latest result is ticked to begin with; a picker chooses another session. The paper prints how it was read — Best of 3 attempts that day (8.12 · 8.05 · 8.2).</span>
+            <span class="k">Next step</span>
+            <span class="v">Your own words. When a chosen goal's review date is still ahead, the paper adds "We'll look at this together again on 24 Jun."</span>
+            <span class="k">The full dated result log</span>
+            <span class="v">An appendix after everything else — one line per session per test.</span>
+          </div>
+        </div>
+        <div class="dfoot">Open full guide →</div>
+      </div>
+      <div class="spec-cap" style="max-width:26rem">The words above are the shipped help article, verbatim — so is the <b>?</b> in the masthead once note&nbsp;2 is fixed. One place to maintain, and the article is already indexed for help search.</div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>C2 · a handout-specific modal</b> <span class="tag call">NOT TAKEN</span> the only version that could mark this player's state — which the ghost sections now do on the screen itself</div>
+      <div class="drawer">
+        <div class="dh"><span class="picon" style="width:24px;height:24px">🖨</span><strong>What goes on a handout</strong><span class="x">✕</span></div>
+        <div class="db">
+          <p>Alex Tennant · 2027 Season. A handout prints these five, in this order — whichever you tick.</p>
+          <div>
+            <div class="drow"><span class="k">What we're working on<span class="v">The goals you tick, each with what success looks like.</span></span><span class="state none">None yet</span></div>
+            <div class="drow"><span class="k">A recent observation<span class="v">Dated, in the words you wrote — the family reads it.</span></span><span class="state none">None yet</span></div>
+            <div class="drow"><span class="k">Selected test results<span class="v">One result per test, with the attempts behind it.</span></span><span class="state has">3 on file</span></div>
+            <div class="drow"><span class="k">Next step<span class="v">Your own words, written here — always available.</span></span><span class="state has">Ready</span></div>
+            <div class="drow"><span class="k">The full dated result log<span class="v">An appendix — every session, every attempt.</span></span><span class="state has">3 on file</span></div>
+          </div>
+          <p>Anything you add to Alex's record this season appears here to tick, next time you open the handout.</p>
+        </div>
+        <div class="dfoot">How the handout works →</div>
+      </div>
+      <div class="spec-cap" style="max-width:26rem">Answers "what have I not populated?" precisely — but it is <b>a second description of the handout</b>, in new words, that has to be re-written every time the paper changes. The help article is the one that is build-checked and searchable.</div>
+    </div>
+  </div>
+
+  <!-- ── 5 · the cases the line must get right ── -->
+  <h2 class="sec"><span class="n">5</span>The three cases the ghost sections must get right</h2>
+  <p class="secsub">This is where a nudge like this goes wrong, and the first is decided by what the coach is <em>allowed</em> to print, not by what the player has. All three are built as drawn.</p>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>i · an assistant without Internal notes</b> <span class="tag new">NEW</span></div>
+      <div class="col solo">
+        <div class="grp">
+          <span class="leg">Selected test results</span>
+          <div class="pick"><span class="bx on"></span><span class="n">30 Yard Sprint<span class="m">5.53 seconds · Sep 22</span></span></div>
+          <div class="pick"><span class="bx on"></span><span class="n">Home to First Sprint<span class="m">3.36 seconds · Sep 22</span></span></div>
+        </div>
+        <div class="grp">
+          <span class="leg">Next step</span>
+          <div class="ta">In your own words — what you'll work on together next.</div>
+        </div>
+        <p class="bnd" style="color:var(--doc-bad)"><b>No ghost sections at all.</b> Goals and observations are not theirs to print, so drawing the headings would promise something the screen will refuse.</p>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>ii · a full record</b> <span class="tag unch">UNCHANGED</span></div>
+      <div class="col solo">
+        <div class="grp">
+          <span class="leg">What we're working on</span>
+          <div class="pick"><span class="bx on"></span><span class="n">First-step quickness off the bag<span class="m">Working on it · Beats the throw from second</span></span></div>
+        </div>
+        <div class="grp">
+          <span class="leg">A recent observation</span>
+          <div class="pick"><span class="bx on"></span><span class="n">Sep 18 · Stayed low through the turn<span class="m">Base running</span></span></div>
+        </div>
+        <div class="grp">
+          <span class="leg">Selected test results</span>
+          <div class="pick"><span class="bx on"></span><span class="n">30 Yard Sprint<span class="m">5.53 seconds · Sep 22</span></span></div>
+        </div>
+        <p class="bnd"><b>No ghosts.</b> Every section is full, so the column is exactly what it is today — the change costs a complete record nothing.</p>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>iii · an empty record</b> <span class="tag unch">UNCHANGED</span></div>
+      <div class="col solo" style="align-items:center;text-align:center;gap:8px;padding:22px 18px">
+        <span class="picon" style="width:34px;height:34px">🖨</span>
+        <strong style="font-size:15px">Nothing to put in a handout yet</strong>
+        <p class="sub" style="text-align:center">Alex Tennant has no goals, observations or results recorded this season. The handout draws only on what is on the record.</p>
+        <p class="sub" style="text-align:center">Open Alex's development →</p>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>iv · notes, but no Development grant</b> <span class="tag new">ADDED BY /review</span> reads every goal · can add none</div>
+      <div class="col solo ghost">
+        <div class="grp">
+          <span class="leg">What we’re working on</span>
+          <div class="gline"><span class="bx"></span> No goal this season.</div>
+        </div>
+        <div class="grp">
+          <span class="leg">A recent observation</span>
+          <div class="gline"><span class="bx"></span> No observation this season.</div>
+        </div>
+        <div class="grp">
+          <span class="leg">Selected test results</span>
+          <div class="pick"><span class="bx on"></span><span class="n">30 Yard Sprint<span class="m">5.53 seconds · Sep 22</span></span></div>
+        </div>
+        <p class="bnd"><b>The headings stay — the invitation goes.</b> They may READ these shelves, so the shape is theirs to see; they may not FILL them, so each line stops at the fact.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note warn"><span class="n">4</span><div>
+      <h3>D3 — no "Add a goal →" shortcut on a ghost section <span class="tag rec">RULED, AGREED</span></h3>
+      <p>Nothing on this screen is stored — not the ticks, not the typed next step. A door that sends the coach away to write a goal <b>silently discards whatever they had already chosen and typed</b>, and they come back to a screen reset to its defaults. The one existing exit ("Save this next step as a review →") earns its place because it <em>carries</em> the words with it; a "go and add a goal" link carries nothing.</p>
+      <p>The empty-record case (iii) is the exception: there is nothing to lose there, and that door already exists.</p>
+    </div></div>
+  </div>
+
+  <h2 class="sec"><span class="n">6</span>What /review changed after the build</h2>
+  <p class="secsub">Two defects, both in the new code, both fixed 2026-09-22. Recorded here because each is a trap the next nudge like this will walk into.</p>
+  <div class="notes">
+    <div class="note warn"><span class="n">5</span><div>
+      <h3>The invitation was gated on the wrong permission <span class="tag rec">FIXED</span></h3>
+      <p>Every ghost line ended <b>"— add one and it appears here"</b>, which reads as an instruction. But <b>reading a shelf and filling it are different grants</b>: reading goals needs Internal notes alone, while adding a goal or an observation also needs the Development grant, and recording a result needs it too. An assistant with notes but no Development grant was being told to add a goal the server would refuse — the exact failure the ghost’s own permission gate was written to prevent, one level down.</p>
+      <p><b>The rule that came out of it:</b> a "nothing here yet" line that NAMES AN ACTION is gated on the <b>write</b> grant, never on the one that let the coach see the shelf. Without it the line states the fact and stops.</p>
+    </div></div>
+    <div class="note warn"><span class="n">6</span><div>
+      <h3>Naming the help answer renamed the <b>?</b> button <span class="tag rec">FIXED</span></h3>
+      <p>Landing the drawer on the handout’s own answer needs only the sub-topic id. Passing a <b>label</b> alongside it also renamed the masthead control to "Help: The development handout" — breaking this one page out of the portal’s "Help: &lt;section&gt;" convention, and making the rendered layout gate report the button’s long-accepted 34px geometry as two <b>brand-new</b> findings, because baseline entries are keyed by accessible name. The label is gone; the drawer still opens exactly where D4 asked.</p>
+    </div></div>
+    <div class="note"><span class="n">7</span><div>
+      <h3>⚠ The rendered layout gate is green over an empty fixture</h3>
+      <p>The sweep’s fixture player is seeded <b>with</b> goals, observations and results — so none of the ghost branches ever render in it, and "✓ No new layout findings" proves nothing about this change. The case to open in a browser is the one this project started from: <b>a player with test results and nothing else</b>.</p>
+    </div></div>
+  </div>
+</section>
+
+<!-- ═══════════════════ THE CALL ═══════════════════ -->
+<section id="tab-call" class="doc" hidden>
+  <h1>The call</h1>
+  <p class="meta">Ruled by the owner 2026-09-22 and built the same day. The recommendation I took in is kept beside each ruling, including the one that was overruled.</p>
+
+  <div class="dec">
+    <div class="dhr"><strong>D1 · What shape tells the coach a section is missing</strong><span class="tag rec">RULED · B</span></div>
+    <p><b>Ghost sections.</b> Owner: <i>"I kind of like the ghost sections, I don’t expect this to scale too far that this become cumbersome."</i> I had recommended A on scaling grounds; the objection does not hold, because the handout’s sections are fixed by what a development record contains — the worst case is two ghosts, and the all-empty case never reaches this column at all.</p>
+    <div class="opts">
+      <div class="opt"><span class="lt">A</span><span class="tx"><b>One quiet line</b> naming the missing sections, ending in the door. <small>My recommendation, not taken. One paragraph however many sections are missing — the right answer only if the list could grow.</small></span></div>
+      <div class="opt win"><span class="lt">B</span><span class="tx"><b>Ghost sections</b> — each missing section drawn dimmed in place. <small>Taken and built. Teaches the handout’s shape and vocabulary in place; costs a heading and a quiet line per empty section.</small></span></div>
+      <div class="opt"><span class="lt">C</span><span class="tx"><b>Both.</b> <small>Two explanations of one absence. I would not.</small></span></div>
+    </div>
+  </div>
+
+  <div class="dec">
+    <div class="dhr"><strong>D2 · What the door opens</strong><span class="tag rec">RULED · NO DOOR</span></div>
+    <p><b>Dropped.</b> Owner: <i>"due to that we don’t need the line for D2."</i> With the sections drawn in place there is nothing left for an in-column link to explain, so the chooser gains no new control at all — the masthead <b>?</b> stays the single entrance, retargeted by D4 to the handout’s own answer. Neither panel below was built as a new surface.</p>
+    <div class="opts">
+      <div class="opt win"><span class="lt">C1</span><span class="tx"><b>The help drawer</b>, opened at <i>The development handout</i> — from the masthead <b>?</b>, not from a new link. <small>Recommended. Zero new copy; it already lists all five parts with what each prints. Same panel the masthead <b>?</b> opens, so the two agree by construction.</small></span></div>
+      <div class="opt"><span class="lt">C2</span><span class="tx"><b>A handout-specific modal</b> listing the five parts with "None yet" / "3 on file" against each. <small>The only version that answers "what have I not populated?" exactly. Cost: a second description of the handout, in new words, to keep in step with the paper forever.</small></span></div>
+    </div>
+  </div>
+
+  <div class="dec">
+    <div class="dhr"><strong>D3 · Does a ghost section offer a door to go and create the missing thing?</strong><span class="tag rec">RULED · NO</span></div>
+    <p>Nothing on this screen is stored. An <b>Add a goal →</b> link discards the coach's ticks and their typed next step on the way out, with no warning and no way back to them. The empty-record state already has its door, and loses nothing.</p>
+  </div>
+
+  <div class="dec">
+    <div class="dhr"><strong>D4 · Point the masthead <b>?</b> at the handout’s own answer</strong><span class="tag rec">RULED · YES</span></div>
+    <p>It currently opens the Development guide at its first sub-topic. The handout's own sub-topic is written and lists every part of the paper. This is a one-line fix and part of why the screen reads as unexplained today — worth doing whichever way D1 and D2 go.</p>
+  </div>
+
+  <h2>Not in scope</h2>
+  <ul>
+    <li><b>The paper never changes.</b> No ghost sections, no "this could say more" on the printed side — the preview shows what prints, and that stays true.</li>
+    <li><b>Nothing becomes stored.</b> The line is computed from the record each time the screen opens, like every other choice here.</li>
+    <li><b>No new "what's missing" logic.</b> The screen already knows which sections it is hiding and why; the line reads the same answer.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════════ PM BRIEF ═══════════════════ -->
+<section id="tab-brief" class="doc" hidden>
+  <h1>PM brief — what else goes on a handout</h1>
+  <p class="meta">Draft, 2026-09-22 · Coaches portal → a player → Skills &amp; Goals → Preview development handout</p>
+
+  <h2>The problem, in one sentence</h2>
+  <p>The handout chooser only shows the sections a player already has something in — so a coach whose players have test results and nothing else believes a handout <em>is</em> a table of test results, and never learns that a goal or an observation would print on the same page.</p>
+
+  <h2>What the coach sees differently</h2>
+  <ul>
+    <li>A section of the handout that this player has nothing in <b>keeps its heading</b> instead of disappearing. Under it sits one quiet line: <b>"No goal this season — add one and it appears here."</b></li>
+    <li>So the chooser always shows the handout’s real shape — what we’re working on, a recent observation, selected test results — in the order they print, whether or not this player has reached them yet.</li>
+    <li>A section that is full looks exactly as it does today. A coach whose record is complete sees no change at all.</li>
+    <li>The <b>?</b> at the top of the page now opens the handout’s own help answer — the five parts of the paper and what each one prints — instead of the general development guide.</li>
+    <li>Nothing else moves: no new buttons, no links out, and the printed preview beside the chooser is untouched.</li>
+  </ul>
+
+  <h2>Why it matters</h2>
+  <p>The handout is the one thing in the development section that a family actually holds. A coach who prints a page of sprint times has a weaker conversation than one who prints the goal, the observation and the next step alongside them — and until now the product gave them no reason to think the second page existed. This is a discovery fix with a direct pull-through into the features underneath it: goals and observations are the parts of Skills &amp; Goals that go unused.</p>
+
+  <h2>Access differences</h2>
+  <p>A coach without <b>Internal notes</b> cannot print goals or observations at all. For them those two headings are not drawn — the product never advertises something it will refuse to print. The boundary line at the foot of the chooser ("Not on the paper: …") is unchanged for everyone.</p>
+
+  <h2>Tradeoffs taken</h2>
+  <ul>
+    <li><b>No shortcut to go and add a goal.</b> The screen stores nothing, so any link out of it throws away the coach’s ticks and their typed next step. Showing the heading is safe; sending them away is not.</li>
+    <li><b>The long explanation stays in help, reached from the <b>?</b> only.</b> The screen says what is missing; help says what a handout holds. One description of the paper to maintain, not two that drift apart.</li>
+    <li><b>The printed preview is untouched.</b> It shows what prints and nothing else.</li>
+  </ul>
+
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach with results-only players can say, without opening help, that a handout also carries goals and observations — because the headings are on the screen.</li>
+    <li>No coach is shown a section they are not permitted to print.</li>
+    <li>The chooser is no taller for a coach whose record is complete, and a player with nothing at all still gets the empty state rather than a column of empty headings.</li>
+  </ul>
+
+  <h2>How to test it</h2>
+  <ol>
+    <li>Open a player with test results and no goals → <i>What we’re working on</i> and <i>A recent observation</i> are drawn as headings with a quiet line under each.</li>
+    <li>Add a goal to that player, reopen the handout → that heading fills with the goal, ticked, and only the observation heading is still a ghost.</li>
+    <li>Open a player with everything on the record → no ghosts anywhere; the column is unchanged.</li>
+    <li>Sign in as an assistant without Internal notes → results only, with no goal or observation heading drawn.</li>
+    <li>Open a player with nothing on the record → the existing empty state, unchanged.</li>
+    <li>Open the <b>?</b> at the top of the page → it lands on <i>The development handout</i>, not the top of the development guide.</li>
+  </ol>
+</section>
+
+<script>
+  (function () {
+    var tabs = document.querySelectorAll('.hubtabs button');
+    var panels = { mockup: document.getElementById('tab-mockup'), call: document.getElementById('tab-call'), brief: document.getElementById('tab-brief') };
+    function show(name) {
+      Object.keys(panels).forEach(function (k) { panels[k].hidden = k !== name; });
+      tabs.forEach(function (b) { b.setAttribute('aria-pressed', String(b.dataset.tab === name)); });
+      window.scrollTo({ top: 0, behavior: 'auto' });
+    }
+    tabs.forEach(function (b) { b.addEventListener('click', function () { show(b.dataset.tab); }); });
+  })();
+</script>

@@ -20,7 +20,8 @@ import s from './LineupInningList.module.css';
  * two neighbouring innings in small type beside it.
  *
  * What it is: a stepper row — ‹ · a pill "Inning 2 of 6 · 8/9" (the inning inspector's DOOR, the
- * grid heading's job; red with the clash sentence when the inning clashes) · › — that PINS under
+ * grid heading's job; red with the clash sentence when the inning clashes — that trailing fact
+ * reads WHOLE or is not there at all, never an ellipsised fragment) · › — that PINS under
  * the masthead as the list scrolls; a row of status dots beneath it (filled done · amber outline
  * open · red a clash · a ring on the inning on screen; decorative, never a tap target); then one
  * 58px row per player: the batting number as the D8 handle (hold lifts, tap opens the row sheet —
@@ -147,8 +148,19 @@ export default function LineupInningList({
           aria-haspopup="dialog" title={pillTitle}
           aria-label={`${periodLabel} ${inning} of ${inningCount} — who is at each position${pillTitle ? ` (${pillTitle})` : ''}`}
           onClick={onOpenInning}>
-          <span className={s.stepWord}>{periodLabel} {inning} of {inningCount}</span>
-          {clash ? <small className={s.stepFact}>· ⚠ {clash}</small> : coverage ? <small className={s.stepFact}>· {coverage.filled}/{coverage.total}</small> : null}
+          {/* ⚠ THE TRAILING FACT IS ALL-OR-NOTHING. `.stepInner` wraps and is exactly one line
+              tall with the overflow hidden, so a fact that no longer fits beside the inning words
+              drops to line 2 and is never painted. The MARK (· ⚠) sits BEFORE the sentence so it
+              survives that drop — a clashing inning always reads as one. The chevron is a SIBLING
+              of the wrapper, not a child, or it would wrap away with the sentence. Nothing is lost
+              to a screen reader: the button's aria-label carries the whole fact at every width. */}
+          <span className={s.stepInner}>
+            <span className={s.stepWord}>{periodLabel} {inning} of {inningCount}</span>
+            {clash ? (<>
+              <small className={s.stepMark}>· ⚠</small>
+              <small className={s.stepFact}>{clash}</small>
+            </>) : coverage ? <small className={s.stepFact}>· {coverage.filled}/{coverage.total}</small> : null}
+          </span>
           <span className={s.stepChev} aria-hidden>›</span>
         </button>
         <button type="button" className={coach.gdStepper} aria-label={`Next ${periodLc}`} disabled={inning >= inningCount} onClick={() => onStep(inning + 1)}>›</button>
