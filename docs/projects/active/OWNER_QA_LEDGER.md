@@ -23003,4 +23003,63 @@ check — another session's Call-ups work in the same tree, **not this change** 
 ⚠ `tsc` also reports `canLineups` undefined in `roster/page.tsx` — likewise another session's
 in-flight file, untouched.
 
-**WALK OWED — on a real phone, before commit.** Steps to write. Not committed.
+**⚠⚠ COMMITTED AND ON PRODUCTION BEFORE THE WALK, BY ANOTHER SESSION.** This work was swept into
+`76dbe79b` (bundled with the game-day console redraw and the handout's ghost sections) by a peer
+cutting a release, then pushed with the rest to `origin/master` under the 2026-09-23 promote, whose
+customer-facing release note says *"Money screens fit a phone screen too."* **§226 was never
+walked** — the walk below is owed against live code, not against a pre-commit tree. Not a
+complaint and not reversible; recorded because a ledger entry that says "walk owed before commit"
+next to a shipped feature teaches the next reader the wrong thing about how this was verified.
+
+**`/review` RUN 2026-09-23 (standard tier, three lenses: correctness · blast-radius ·
+accessibility+cascade). 13 findings → 4 after dedup → 1 confirmed, 9 refuted.**
+
+**⚠⚠ THE CONFIRMED ONE, AND IT WAS REPRODUCED BEFORE IT WAS FIXED.** The Total expenses tile's
+phone caption printed a bare **"0 lines · Set a total"** where the desk form correctly said only
+*"set an estimated total"*. The desk caption has guarded its count with `costLineCount > 0` all
+along; the phone form I wrote did not, and its separator was unconditional. **Two forms of one
+caption have to agree about WHETHER a clause appears, not merely how it is worded** — that is the
+rule this defect exists to state, and it is the one thing the whole `captionShort` idea can get
+wrong. The state is ordinary, not an edge: a coach who sets **player dues first** un-sets
+`trueEmpty`, so the band renders while there is still no expense line and no estimate. Fixed in
+**`30af1c7f`** (local, unpushed at the time of writing).
+
+**⚠ HOW IT WAS PROVEN, because this is the part worth copying.** The UAT fixture cannot reach the
+state (it holds eleven budget lines and a $13,000 estimate) and mutating it would have written to
+the database. Instead the probe **rewrote the budget-plan API RESPONSE in the browser** — Playwright
+route interception, `plan.lines` emptied and `seasonBudgetAmount` nulled while `duesScheduled` stayed
+true — so the real component rendered the real stylesheet in a state the fixture does not hold, with
+nothing written anywhere. Then the guard was **temporarily reverted and the same probe re-run**,
+which printed `"0 lines · Set a total"` — so the finding is a reproduced defect, not a plausible
+reading of the source. `.probe/zero-lines-repro.mjs`.
+
+**Two gaps in the GATE, found by the review and closed by hand.** `check:layout` runs at 361 · 390 ·
+768 · 1440, and **both of this change's breakpoints fall between those widths**: the band's two-up
+rule starts at ≤760 and the shared toolbar gap at ≤768, so **nothing the sweep measures ever lands in
+641–767**. Measured by hand instead — the band at 641 / 700 / 759 (two columns, every figure and
+label fits, exactly one caption form visible) and the six busiest shared toolbars at 700 / 767
+(Schedule, Roster, Player Dues, Fundraising, the Ledger, Skills & Goals: no collisions, no spill).
+⚠ **A pre-existing defect surfaced there and is NOT this change's:** the Ledger scrolls sideways at
+700px, caused by the Money tab strip and the register table — neither is in a toolbar, and a
+*smaller* gap cannot cause overflow. Unowned; it lives at a width nothing tests.
+
+**⚠ AND THE RENDERED GATE WENT STALE MID-BUILD.** `check:layout` was first run BEFORE the last three
+edits (the toolbar gap, the "⋯" moving into the actions slot, the Add Line reversal) and was very
+nearly reported as green. Re-running it is what widened it to Roster and Schedule, the screens the
+shared toolbar change reaches. **A gate run before the last edit is not a gate.**
+
+**Refuted, listed so they are not re-hunted:** a `captionShort`/`caption` gating mismatch (all seven
+tiles checked — none); a control vanishing from both toolbar branches; a first-paint flash from the
+phone check (the panel paints its toolbar only after its own fetch, so the store has already
+resynced); tests double-matching the duplicated caption text; the shared gap regressing any of the
+ten toolbar callers; cascade order between the 760 and 640 blocks; warm-theme collisions (no warm
+rule targets the band); the band inside a narrow container (no such caller); colour as the sole
+signal for "over budget" (the word survives in both forms).
+
+**Advisory, not fixed, with reasons:** *Collapse all* in the phone drawer exposes no toggle state to
+a screen reader — **refuted as a regression**, the desk button it replaced had the identical shape,
+and `menuitemradio` would be wrong (it is not one of a set). The odd-tile span rule would also match
+a one-tile band — harmless today, since no caller can produce one and with no column template it is
+a no-op.
+
+**WALK STILL OWED — §226, on a real phone.** Steps to write.

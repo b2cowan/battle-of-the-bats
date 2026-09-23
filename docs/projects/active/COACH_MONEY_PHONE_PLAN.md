@@ -167,12 +167,61 @@ a phone, which is what the shared band was built for.
 - Probes (read-only, `.probe/`): `money-band-measure` · `money-fold-measure` · `money-band-twoup` ·
   `money-band-variants` · `money-toolbar` · `toolbar-fit`.
 
+## 5a · `/review`, 2026-09-23 — one confirmed defect, reproduced before it was fixed
+
+Standard tier, three lenses (correctness · blast-radius · accessibility+cascade).
+**13 findings → 4 after dedup → 1 confirmed, 9 refuted.**
+
+**⚠⚠ CONFIRMED · the phone caption printed "0 lines".** The Total expenses tile read
+`0 lines · Set a total` where the desk form correctly said only *"set an estimated total"*. The desk
+caption has guarded its count with `costLineCount > 0` all along; the phone form did not, and its
+separator was unconditional. **Two forms of one caption have to agree about WHETHER a clause
+appears, not merely how it is worded** — the one thing the whole `captionShort` idea can get wrong.
+Reachable on an ordinary state: a coach who sets **player dues first** un-sets `trueEmpty`, so the
+band renders with no expense line and no estimate. Fixed in **`30af1c7f`**.
+
+**⚠ HOW IT WAS PROVEN — the method is the reusable part.** The UAT fixture cannot reach the state
+(eleven lines, a $13,000 estimate) and mutating it would have written to the database. The probe
+**rewrote the budget-plan API RESPONSE in the browser** (Playwright route interception:
+`plan.lines` emptied, `seasonBudgetAmount` nulled, `duesScheduled` left true), so the real component
+rendered the real stylesheet in a state the fixture does not hold, writing nothing anywhere. The
+guard was then **temporarily reverted and the probe re-run** — it printed `0 lines · Set a total`,
+making this a reproduced defect rather than a plausible reading of the source.
+`.probe/zero-lines-repro.mjs`.
+
+**⚠⚠ TWO HOLES IN THE GATE, both closed by hand.** `check:layout` runs at 361 · 390 · 768 · 1440 and
+**both of this change's breakpoints fall between those widths** — the band narrows at ≤760, the
+shared toolbar gap tightens at ≤768, and **nothing the sweep measures lands in 641–767.** Measured
+by hand: the band at 641 / 700 / 759 (two columns, every figure and label fits, exactly one caption
+form visible) and the six busiest shared toolbars at 700 / 767 (no collisions, no spill).
+⚠ Pre-existing and NOT this change's: the Ledger scrolls sideways at 700px — the Money tab strip and
+the register table, neither in a toolbar, and a *smaller* gap cannot cause overflow.
+
+**⚠ AND THE RENDERED GATE WENT STALE MID-BUILD.** It was first run BEFORE the last three edits (the
+toolbar gap, the "⋯" moving into the actions slot, the Add Line reversal) and was nearly reported as
+green. Re-running it is what widened it to Roster and Schedule. **A gate run before the last edit is
+not a gate.**
+
+**Refuted, so they are not re-hunted:** a `captionShort`/`caption` gating mismatch (all seven tiles
+checked); a control vanishing from both toolbar branches; a first-paint flash from the phone check;
+tests double-matching the duplicated caption text; the gap regressing any of the ten toolbar
+callers; cascade order between the 760 and 640 blocks; warm-theme collisions; the band in a narrow
+container; colour as the sole signal for "over budget".
+
+**Advisory, not fixed:** *Collapse all* in the drawer exposes no toggle state — **refuted as a
+regression**, the desk button it replaced had the identical shape and `menuitemradio` would be wrong
+(it is not one of a set). The odd-tile span rule would also match a one-tile band — harmless, no
+caller can produce one.
+
 ## 6 · Owed
 
-1. **Owner walk on a real phone** — ledger §226.
-2. `/review` and `/docs` (the Money help guide describes the toolbar it had).
-3. Commit — **private index**: the tree carries other sessions' work in `roster/page.tsx` (a live
-   `canLineups` type error, not mine) and the Call-ups migration drift that fails `check:schema-parity`.
+1. **Owner walk on a real phone** — ledger §226. **Still owed, and now against LIVE code.**
+2. `/docs` — the Money help guide describes the toolbar it had.
+3. ⚠⚠ **NOT owed: the commit.** This work was swept into **`76dbe79b`** by a peer cutting a release
+   (bundled with the game-day console redraw and the handout's ghost sections) and pushed to
+   `origin/master` under the 2026-09-23 promote, whose customer note reads *"Money screens fit a
+   phone screen too."* **It shipped before its walk.** The review fix `30af1c7f` is a separate
+   local commit, unpushed at the time of writing.
 
 ## 7 · Out of scope, stated
 

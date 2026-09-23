@@ -296,6 +296,47 @@ ul.list li b,ul.list li strong{color:var(--ink)}
   </section>
 
   <section>
+    <h2>The review, and the one defect it found</h2>
+    <p class="sub">Three lenses over the change: correctness, blast radius, accessibility and CSS
+    cascade. Thirteen candidate findings, four after removing duplicates, <b>one real</b>.</p>
+
+    <div class="flag"><span class="k">Confirmed · fixed</span>
+      <p>On a phone the <b>Total expenses</b> tile could print <b>“0 lines”</b> where the desktop
+      correctly printed nothing. Reachable on an ordinary state: a coach who <b>sets player dues
+      first</b> and opens Budget Plan before entering any costs. The desktop caption has always
+      suppressed the count at zero; the phone caption I wrote did not, and its separator ran
+      regardless — so it read <em>“0 lines · Set a total”</em>.</p>
+      <p><b>Fixed, and proven both ways.</b> The test fixture can’t reach that state and changing it
+      would have written to the database, so the probe rewrote the page’s data <em>in the browser</em>
+      instead — the real screen, real styles, a state the fixture doesn’t hold, nothing saved
+      anywhere. Then the guard was taken back out and the same probe re-run, which printed the bad
+      caption. So this is a defect that was reproduced, not one inferred from reading the code.</p></div>
+
+    <div class="flag"><span class="k">Two holes in the automated gate, closed by hand</span>
+      <p>The layout sweep checks 361 · 390 · 768 · 1440. <b>Both of this change’s breakpoints fall
+      between those widths</b> — the summary narrows below 760, the toolbar spacing below 768 — so
+      <b>nothing it measures ever lands in 641–767</b>. Measured by hand instead: the summary at 641,
+      700 and 759, and the six busiest control rows across the portal at 700 and 767. All clean.</p>
+      <p>And the sweep had <b>gone stale mid-build</b> — it ran before the last three edits and was
+      nearly reported as green. Re-running it is what widened it to Roster and Schedule, the screens
+      the shared control-row change also reaches. A gate run before the last edit is not a gate.</p></div>
+
+    <p class="cap">Nine candidate findings were checked and dropped, including: captions disagreeing
+    about when they appear (all seven checked), a control vanishing from both toolbar forms, a flash
+    of the wrong layout on first paint, tests matching the duplicated caption text, the shared
+    spacing change regressing any of the ten screens that use that control row, and colour being the
+    only signal for “over budget”. Two advisories were left deliberately unfixed, both because they
+    are pre-existing patterns rather than anything this change introduced.</p>
+    <p class="cap"><button type="button" class="why" aria-expanded="false" data-why="w5">One thing worth knowing about how this shipped</button></p>
+    <div class="whybody" id="w5" hidden>This work was <b>committed and pushed to production by
+      another session</b> before the walk happened — bundled into a release with the game-day console
+      redraw and the handout changes, under a customer release note that says “Money screens fit a
+      phone screen too.” Nothing about the change is different for it, but <b>the walk below is now
+      owed against live code</b> rather than against a branch, and that is worth knowing before you
+      read the steps.</div>
+  </section>
+
+  <section>
     <h2>What is still owed</h2>
     <ul class="list">
       <li><b>Your walk on a real phone</b> — the QA steps are the next thing to write, and nothing
