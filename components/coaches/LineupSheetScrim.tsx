@@ -17,7 +17,16 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * theme — the DEFAULT — two drawers on one screen dimmed the page differently. The colour lives in
  * the stylesheet with its warm remap beside it; this exists so the markup cannot be the next thing
  * to diverge (a missed `aria-hidden`, a sixth spelling of the class).
+ *
+ * ⚠⚠ `overNav` IS THE RULING OF 2026-09-23, AND IT TRAVELS WITH ITS DRAWER OR NOTHING WORKS.
+ * A FORM covers the bottom nav; a MENU sits on top of it (the reasoning is at
+ * `.lineupDrawerOverNav` in `coaches.module.css`, which is the rule's one home). The drawer and
+ * its scrim have to agree: a raised drawer over a scrim that still stops at the bar's top leaves
+ * the nav LIT and TAPPABLE in front of the dim — the exact mixed signal the ruling removes. Pass
+ * it to both, or to neither.
  */
-export default function LineupSheetScrim({ onClose }: { onClose: () => void }) {
-  return <div className={styles.lineupSheetScrim} aria-hidden="true" onClick={onClose} />;
+export default function LineupSheetScrim({ onClose, overNav }: { onClose: () => void; overNav?: boolean }) {
+  // ⚠ The class is spelled ONCE here and nowhere else in the app — the guard counts it.
+  const className = styles.lineupSheetScrim + (overNav ? ` ${styles.lineupDrawerOverNav}` : '');
+  return <div className={className} aria-hidden="true" onClick={onClose} />;
 }

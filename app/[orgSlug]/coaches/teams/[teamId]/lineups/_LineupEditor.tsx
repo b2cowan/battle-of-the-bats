@@ -9,7 +9,10 @@ import { useState, useRef, useEffect } from 'react';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
+import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { X, ChevronUp, ChevronDown, ChevronRight, GripVertical, Shuffle, Eraser, UserPlus } from 'lucide-react';
 import {
   DndContext, closestCenter, MouseSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
@@ -325,6 +328,36 @@ export default function LineupEditor(props: LineupEditorProps) {
   // a phone, seats focus back on the Setup row it opened from (the keyboard is still driving).
   useDismissable(autoFillOpen, autoFillRef, () => setAutoFillOpen(false), () => closePanelToRow());
   useBackStep(autoFillOpen, () => closePanelToRow());
+
+  /**
+   * ⚠⚠ COVERING THE NAV IS NOT THE SAME AS TAKING IT AWAY (/simplify altitude pass, 2026-09-23).
+   *
+   * The 2026-09-23 ruling — a FORM covers the bottom nav, a MENU sits on top of it — was first
+   * built as geometry alone: `bottom: 0` and a z-index above the bar. That defends the THUMB and
+   * nothing else. The bar's tabs stayed in the tab order and in the accessibility tree underneath
+   * the drawer, so the very defect the ruling names — *a coach leaves the builder mid-edit by
+   * hitting Schedule* — was still reachable by Tab + Enter, or by a screen reader, on a surface
+   * that had just been declared modal.
+   *
+   * The portal already solved this generally in July and the builder's drawers never enrolled:
+   * `useOverlayOpen` (lib/coaches-overlay.tsx) drives BOTH halves — `CoachesBottomNav` hides
+   * itself (`visibility: hidden`, no layout shift, so the tabs leave the tree AND the tab order)
+   * and the provider locks body scroll behind the topmost overlay. It is a COUNTER, so the three
+   * drawers here compose with each other and with any confirm opened from inside one.
+   *
+   * ⚠ GATED ON THE NAV BREAKPOINT, and that is a behaviour decision rather than a styling one, so
+   * JS is the right place for it. Above 900 the bar is `display: none` and already out of both
+   * trees — there is no hole to close — while Templates and the call-up sheet are still ordinary
+   * anchored POPOVERS up there, which must not lock the page behind them. Setup is a centered
+   * modal at that width but is deliberately left as it was: its own backdrop already covers the
+   * page, and changing desktop scroll behaviour is not what this ruling asked for.
+   *
+   * ⚠ The geometry does NOT come out. A hidden bar leaves a ~72px blank strip where it was, so
+   * the drawer still has to sit at the screen's foot and the scrim still has to reach it.
+   */
+  const isPhoneNav = useIsPhoneNav();
+  useOverlayOpen(autoFillOpen && isPhoneNav);
+  useOverlayOpen(!!callUps?.sheetOpen && isPhoneNav);
 
   /**
    * ⚠⚠ THE CALL-UP DRAWER REGISTERS THE SAME TWO, AND SHIPPED WITHOUT THEM.
@@ -905,17 +938,14 @@ export default function LineupEditor(props: LineupEditorProps) {
      the bar at ≤640 with its own scroll (`lineupAutoMenu`). Written once, mounted by the one Setup
      & Auto-fill trigger every width renders. */
   const autoFillPanel = (
-    <div id={SETUP_PANEL_ID} className={`${styles.lineupAutoMenu} ${styles.lineupSetupDrawer}`} role="dialog" aria-label="Lineup setup">
-      <div className={styles.lineupSetupDrawerHead}>
-        <p className={styles.lineupSheetTitle}>Lineup setup</p>
-        {/* Close is a DESKTOP-only affordance (CSS-gated, ≥901) — the phone/tablet drawer already
-            has the scrim, Escape, and Generate/Reshuffle to leave by; a true modal's backdrop is
-            less obviously clickable than a small popover's "click anywhere else", so it earns an
-            explicit ×. */}
-        <button type="button" className={styles.lineupSetupDrawerClose} aria-label="Close" onClick={closePanelToRow}>
-          <X size={16} aria-hidden />
-        </button>
-      </div>
+    <div id={SETUP_PANEL_ID} className={`${styles.lineupAutoMenu} ${styles.lineupSetupDrawer} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Lineup setup">
+      {/* ⚰ "Close is a DESKTOP-only affordance" STOPPED BEING RIGHT ON 2026-09-23, when this
+          drawer started covering the bottom nav. The old reasoning — "the phone drawer already has
+          the scrim, Escape, and Generate/Reshuffle to leave by" — rested on a bar that was still
+          tappable underneath; it is not any more. `desktopClose` because this panel is a centered
+          MODAL at ≥901 (Templates, sharing this head, is still a popover there and asks for none);
+          the ≤900 × is width-only and the stylesheet decides it. */}
+      <LineupDrawerHead title="Lineup setup" onClose={closePanelToRow} desktopClose />
       {setupFields}
       <span className={`${styles.lineupSetupLabel} ${styles.lineupPanelSection}`}>Auto-fill</span>
       <label className={styles.lineupControlLabel}>
@@ -1132,7 +1162,9 @@ export default function LineupEditor(props: LineupEditorProps) {
               {/* The scrim (D12): a tap anywhere off the drawer closes it, and the page behind dims so the
                    surface reads as owning the screen. Renders only where the bottom nav does — the class is
                    display:none above 900, so no width branch is needed here. */}
-              <LineupSheetScrim onClose={closePanelToRow} />
+              {/* `overNav` — this drawer is a FORM (owner ruling 2026-09-23), so it covers the
+                  bottom nav and the scrim dims the bar with it. See `.lineupDrawerOverNav`. */}
+              <LineupSheetScrim onClose={closePanelToRow} overNav />
               {/* The true DESKTOP's own dim (owner, 2026-09-23: "should we open a modal for this
                   given its size?"). Above, at 641–900, the scrim just above already covers this —
                   the panel is already the same fixed, bar-anchored drawer a phone gets. Only ≥901
@@ -1175,8 +1207,10 @@ export default function LineupEditor(props: LineupEditorProps) {
                   <span className={styles.headerBtnLabel}>Call up a player</span>
                 </button>
                 {callUps.sheetOpen && (<>
-                  <LineupSheetScrim onClose={callUps.onCloseSheet} />
-                  <div className={styles.lineupAutoMenu} role="dialog" aria-label="Call up a player">
+                  {/* A FORM (a first name, a last name, a number, a phone), so it covers the nav
+                      — the 2026-09-23 ruling at `.lineupDrawerOverNav`. Its own × is the way out. */}
+                  <LineupSheetScrim onClose={callUps.onCloseSheet} overNav />
+                  <div className={`${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Call up a player">
                     {callUps.sheet}
                   </div>
                 </>)}

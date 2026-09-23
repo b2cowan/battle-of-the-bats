@@ -4736,6 +4736,24 @@ a.oneChip:hover { border-color: currentColor; }
     min-width: var(--tap-min, 44px);
   }
 }
+/* ⚠⚠ AND THE FLOOR ABOVE STOPS AT 768, WHICH LEFT A 131px HOLE (/review, 2026-09-23). The bottom
+   nav is visible up to 900, so a drawer wearing `.lineupDrawerOverNav` COVERS it all the way to
+   900 — but the shared × only grows to 44px at ≤768. Between 769 and 900 the call-up sheet, which
+   carries its own head on `.modalCloseBtn` rather than `LineupDrawerHead`, was a nav-covering
+   surface whose only exits were a 28px × and a 12px sliver of scrim. Setup and Templates got
+   their floor from `.lineupDrawerOverNav .lineupSetupDrawerClose`; this is the same guarantee for
+   the one drawer in the family that uses the portal's button instead.
+   ⚠ Scoped to the MODIFIER, never to `.modalCloseBtn` itself: widening that button portal-wide is
+   a decision this file already records as its own unit of work (see `.modalSettlement`). */
+@media (max-width: 900px) {
+  .lineupDrawerOverNav .modalCloseBtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: var(--tap-min, 44px);
+    min-width: var(--tap-min, 44px);
+  }
+}
 /* The back arrow only exists ≤640 (the full-screen-sheet block below shows it and hides the X);
    its floor lives at the same breakpoint so the tablet band never gains a second glyph. */
 @media (max-width: 640px) {
@@ -6941,6 +6959,60 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
      declared LATER in this file at the same specificity, so a media-query copy of it loses and
      would be a dead declaration — the kind `check:css-selectors` cannot see, because the SELECTOR
      is alive. Measured: the sheet keeps 5.6px all round and the grab line sits inside it. */
+
+  /* ══ A FORM COVERS THE NAV; A MENU SITS ON TOP OF IT (owner ruling 2026-09-23, binding) ══════
+     The portal has TWO drawer layers and the test is the surface's CONTRACT, not its size:
+
+       · A MENU — tap an item, it acts, it closes — stops at the bar's top (`--coach-foot-clear`,
+         the default above) and leaves the nav lit and tappable. The bar is the way out of a menu
+         opened by mistake. More, the team switcher, the practice plan's "⋯", the position picker,
+         Print and the row-actions sheet are all menus and NONE of them wear this class.
+       · A FORM — it stays open, you type or set things, you commit — covers the nav. This class.
+         Every `.modalOverlay` in the portal has behaved this way since the polarity flip of
+         2026-07-28 ("safety is opt-in is how modals shipped unsafe"); the builder's drawers are
+         the exception it never reached, because they are dialogs wearing a menu's layering.
+
+     ⚠ THE DEFECT THIS CLOSES IS NOT COSMETIC. A drawer that dims the page but leaves the bar
+     ARMED underneath is the worst of the two: it reads as modal, so nothing warns the coach that
+     a thumb on Schedule leaves the builder — mid-Setup, or with a template name half-typed.
+     Raising the drawer over the nav puts the scrim in front of the bar, so that same tap now
+     dismisses the drawer instead of navigating. (Owner, 2026-09-22: "don't we usually open
+     drawers like this over the nav?" — yes, when there is work inside to lose.)
+
+     ⚠ 390, NOT 400, AND NOT 301. Above the nav (300) so the bar cannot be reached; BELOW
+     `.modalOverlay` (400) and the global confirm (`.modal-overlay`, 1000) so a dialog opened FROM
+     one of these drawers still lands on top of it — Templates' "Start from template?" does
+     exactly that, and a tie at 400 would have been settled by DOM order. ⚠⚠ Do NOT copy this to
+     a docked BAR: a bar clears the nav GEOMETRICALLY, and one raised above it buries its own
+     sheets (the game-day console tried 301 and blocked two of its own buttons).
+
+     ⚠ THE NAME IS `lineup…`, NOT `coach…`, AND THAT IS DELIBERATE (/simplify altitude pass). Every
+     rule that gives this class effect is compounded with a lineup-builder selector
+     (`.lineupAutoMenu`, `.lineupSheetScrim`, `.lineupSetupDrawer`), so dropping it on the More
+     sheet or the practice plan's "⋯" drawer would do NOTHING — and `check:css-selectors` cannot
+     see that, because the class IS declared and IS referenced. A generic name on a class that
+     only works in one family is the silent-CSS trap wearing a helpful face. **The portal-wide
+     half of this ruling is carried by `useOverlayOpen`, not by a class** — see below.
+
+     ⚠ The bottom padding moves with the drawer. At `bottom: 0` the home indicator is no longer
+     the nav's problem, so the container takes the safe-area inset — EXCEPT on the Setup drawer,
+     whose pinned foot owns that padding (see `.lineupSheetFoot`); giving it back to the container
+     re-opens the 14px strip of scrolled content that showed under the foot on 2026-09-22. ONE
+     custom property, because the container and that foot hold the SAME logical value in two
+     positions and must never drift apart — it inherits from the drawer down to the foot. */
+  .lineupAutoMenu.lineupDrawerOverNav {
+    --lineup-drawer-foot-pad: calc(14px + env(safe-area-inset-bottom, 0px));
+    bottom: 0;
+    max-height: calc(100dvh - 12px);
+    z-index: 390;
+    padding-bottom: var(--lineup-drawer-foot-pad);
+  }
+  /* The scrim comes with it, so the bar is DIMMED as well as covered — a lit bar under a modal
+     is the mixed signal this ruling exists to remove. One below the drawer, as it always is.
+     ⚠ The drawer's two OTHER over-nav rules (the foot's padding, the close ×) are deliberately
+     NOT here: each is declared immediately after the base rule it overrides, further down this
+     file, so a reader meets the exception where they meet the thing it excepts. */
+  .lineupSheetScrim.lineupDrawerOverNav { bottom: 0; z-index: 389; }
 }
 
 /* The scrim under all four (D12). A SIBLING of the panel, never a pseudo-element: the panel has a
@@ -6982,9 +7054,19 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   font-weight: 700;
   color: var(--text-primary);
 }
-/* The head row: the title plus a close × that only exists on the true desktop (≥901, below) — a
-   modal backdrop is less obviously clickable than a small popover's "tap anywhere else", so that
-   width earns an explicit close the other two don't need. */
+/* The head row: the title plus a close ×. SHARED by the two builder drawers that carry work —
+   Setup & Auto-fill and Templates (2026-09-23) — because a drawer the scrim has cut off from the
+   control that opened it has to say what it is, and one that covers the navigation has to offer a
+   way back out of it. The markup is spelled once, in `components/coaches/LineupDrawerHead.tsx`.
+
+   The × shows in exactly the two places a backdrop is less obviously clickable than a small
+   popover's "tap anywhere else", and the two are decided DIFFERENTLY on purpose:
+     · ≤900, ANY drawer wearing `.lineupDrawerOverNav` — width-only, so the STYLESHEET decides it.
+     · ≥901, a drawer that is a MODAL at that width — that is not a width question, it is a
+       per-consumer one (Setup is a modal there, Templates is still a popover), so the CALLER
+       decides it by asking for `.lineupDrawerCloseDesktop`. ⚰ This was an ancestor-scoped
+       `.lineupSetupDrawer .lineupSetupDrawerClose` for one afternoon; sniffing an ancestor whose
+       real job is layout silently hands the wrong answer to the next consumer. */
 .lineupSetupDrawerHead {
   display: flex;
   align-items: flex-start;
@@ -7007,7 +7089,32 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .lineupSetupDrawerClose:hover { color: var(--text-primary); }
 @media (min-width: 901px) {
-  .lineupSetupDrawerClose { display: inline-flex; }
+  /* Two classes, so it beats the `display: none` base whatever the source order ends up being. */
+  .lineupSetupDrawerClose.lineupDrawerCloseDesktop { display: inline-flex; }
+}
+/* THE EXPLICIT WAY OUT, NOW THAT THE BAR IS NOT ONE (2026-09-23). The × was gated to >=901 on the
+   argument that "the phone drawer already has the scrim, Escape, and Generate to leave by" — which
+   held only while the nav was still tappable beneath it. It is not, under `.lineupDrawerOverNav`:
+   the visible scrim is a 12px strip, and Escape and the back gesture are both absent on an iPhone
+   running the portal from the home screen. A surface that covers the navigation earns a close
+   control, and it takes the portal's 44px tap floor rather than the desktop's 26px. */
+@media (max-width: 900px) {
+  /* ⚠⚠ NO NEGATIVE MARGIN ON THE INLINE AXIS — CAUGHT BY THE RENDERED CHECK, 2026-09-23. The
+     first build wrote `margin: -6px -6px 0 0` to grow the box to 44px without moving the glyph
+     off the drawer's corner. The right-hand -6px pushed the head past the drawer's content edge
+     and the sweep measured a 6px `content-overflow` at 361, 390 AND 768 — a defect no type check,
+     linter or unit test can see, because it does not exist until a browser resolves the box.
+     ⚠ It also passed at 1440, where the desktop's 26px rule applies instead, which is exactly how
+     a phone-only overflow hides from a desktop read. The block-axis pull is kept (it is absorbed
+     by the drawer's own 6px top padding and costs nothing); the inline one is gone.
+     This is the file's own rule, re-learned: MAKE THE ELEMENT 44 AND SHRINK WHAT IS DRAWN INSIDE
+     IT — clawing space back with negative margins is the cleverness that caused this. */
+  .lineupDrawerOverNav .lineupSetupDrawerClose {
+    display: inline-flex;
+    width: var(--tap-min, 44px);
+    height: var(--tap-min, 44px);
+    margin: -6px 0 0 0;
+  }
 }
 
 /* ONE disclosure for the two per-game overrides (D12 · B). Innings to fill defaults to the whole
@@ -7090,6 +7197,25 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
      The only honest fix is structural: the drawer that HAS a foot gives its bottom padding to
      the foot, so the foot is what fills that space and what a thumb finds there. */
   padding-bottom: 14px;
+}
+/* ⚠ AND 14px IS NOT ENOUGH ONCE THE DRAWER COVERS THE NAV (`.lineupDrawerOverNav`, 2026-09-23).
+   Sitting at `bottom: 0` the drawer inherits the home indicator the bar used to absorb, and the
+   container's own safe-area padding is exactly what this foot took away from it — so the inset
+   has to arrive HERE or Generate lands under the indicator on a notched phone. Same reasoning as
+   the rule above, one layer out: whatever fills the drawer's bottom edge is what a thumb finds. */
+/* ⚠⚠ ASK WHETHER THERE IS A FOOT — DO NOT NAME A DRAWER (/review, 2026-09-23). This pair was
+   first written as `.lineupSetupDrawer.lineupDrawerOverNav …`, which is the same mistake the
+   desktop × made one file-section up: inferring "has a pinned foot" from the identity of the one
+   drawer that happened to have one. **The call-up sheet uses this very same shared
+   `.lineupSheetFoot`** (`CallUpSheet.tsx`), so naming Setup gave that drawer the container's
+   safe-area padding AND a sticky foot inside it — the exact strip of scrolled content showing
+   under the foot that this hand-off exists to close, now inset-sized on a notched phone.
+   `:has()` asks the real question, and any future drawer with a foot is covered for free. */
+@media (max-width: 900px) {
+  .lineupAutoMenu.lineupDrawerOverNav:has(.lineupSheetFoot) { padding-bottom: 0; }
+  .lineupAutoMenu.lineupDrawerOverNav .lineupSheetFoot {
+    padding-bottom: var(--lineup-drawer-foot-pad);
+  }
 }
 .lineupAutoNote { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.4; }
 

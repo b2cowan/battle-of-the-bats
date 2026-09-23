@@ -42,3 +42,43 @@ Stage 0 first (the shell — cheap, and it lifts every other screen); then the f
 - The lineup grid's first row on the first screen at 390 once a lineup exists.
 - No Saved pill at rest anywhere — it appears on an edit and fades after the save; no console text under 12px; the attendance report under 1,600px at 390.
 - The layout sweep green at 361/390/768/1440 on every touched screen, with the new field-floor rule.
+
+## Addendum — the two drawer layers (owner ruling, 23 Sep 2026; built and guarded the same day)
+
+**What the coach sees change.** On a phone, three drawers in the Lineup builder — **Setup &
+Auto-fill**, **Templates**, and **Call up a player** — now cover the bottom navigation while they are
+open, and the dimmed page includes the bar. Two others, **Print** and the **player row menu**, are
+unchanged: the bar stays visible and tappable beneath them. Nothing outside the builder moves — the
+More sheet, the team switcher, the practice plan's "⋯" and the position picker all behave exactly as
+they do today. Two small additions come with it: the Setup drawer's close **×** now appears on a
+phone (it was desktop-only), and the Templates drawer finally **says it is Templates** and has a way
+out of its own.
+
+**Why it matters.** The three drawers that moved are the ones a coach *works in* — settings to set,
+a template name to type, a call-up's details to enter. Until now they dimmed the page like a modal
+but left the navigation bar live underneath, so a thumb on *Schedule* walked the coach out of the
+lineup mid-edit with no warning. Nothing on screen said the bar was still armed. Now that same tap
+closes the drawer, which is what the surface already looked like it would do.
+
+**The rule behind it, in one line:** a **form** covers the navigation; a **menu** sits on top of it.
+The portal has worked this way for dialogs since July; this is the builder catching up.
+
+**One thing a review pass caught before the walk, worth knowing.** The first build covered the bar
+visually but left it reachable by **keyboard and screen reader** — so a coach using either could
+still tab onto *Schedule* and leave the lineup mid-edit, on a screen that had just been declared
+modal. The three drawers now use the same mechanism every other dialog in the portal already
+does: the bar **removes itself** while they are open, rather than being painted over, and the page
+behind them stops scrolling. Nothing changes on a desktop.
+
+**Trade-off.** Two drawers opening from adjacent squares on the same toolbar now behave differently.
+They keep the identical look, and the bar disappears exactly when there is work to lose — which is
+the only moment the difference matters.
+
+**How to test it.** On a phone: open **Setup**, confirm the bar is gone and a tap where *Schedule*
+used to be closes the drawer rather than leaving the lineup; do the same with **Templates** (type a
+name first) and **Call up a player**. Then open **Print** and the **row menu** and confirm the bar is
+still there and still works. Full walk shape in the plan, §13.8.
+
+**Priority:** done — folded into the phone programme rather than sequenced separately.
+**Success criterion:** no drawer in the portal dims the page while leaving the navigation live
+underneath it.

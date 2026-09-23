@@ -7,6 +7,98 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-23 — A FORM COVERS THE NAV; A MENU SITS ON TOP OF IT: the coaches portal has TWO drawer layers and the test is the surface's CONTRACT WITH THE COACH, not what opened it or how big it looks (owner ruling, binding, portal-wide)
+
+**The question.** Owner, reading the observation dialog on a phone: *"what is our rule about opening
+some drawers over the nav and others not?"* — the same instinct they had raised the day before
+against the lineup builder (*"don't we usually open drawers like this over the nav?"*), which was
+recorded then as **an owner ruling owed, not a defect**, and is now answered.
+
+**Decision — two layers, one test.**
+
+- **A MENU** — tap an item, it acts, it closes — **stops at the bar's top** (`--coach-foot-clear`)
+  and leaves the bottom nav **visible, undimmed and tappable**. The bar is the way out of a menu
+  opened by mistake. *More, the team switcher, the practice plan's "⋯", the position picker, the
+  builder's Print menu and its player row-actions sheet.*
+- **A FORM** — it stays open, you type or set things, you commit — **covers the nav**, over a scrim
+  that dims the bar with it. *Every `.modalOverlay` in the portal (unchanged — this has been true
+  since the polarity flip of 2026-07-28), and now the builder's Setup & Auto-fill, Templates, and
+  Call up a player.*
+
+**Why — and the defect is not cosmetic.** A drawer that dims the page while the bar underneath stays
+**armed** reads as modal and is not one. A coach mid-Setup, or with a template name half-typed, puts
+a thumb on *Schedule* and leaves the builder, with nothing on screen having warned them the bar was
+still live. Raising the drawer puts the scrim in front of the bar, so that same tap now **dismisses
+the drawer** instead of navigating. It also reconciles the two widths: Setup became a true centered
+modal on the desktop on 2026-09-23 and was still a bar-anchored drawer on a phone.
+
+**⚠ The rule that was REPLACED, and why the old one was defensible.** The builder's panels sat under
+the nav by the stage-1 decision *"the builder is a page under the bar, not a dialog over it"* — a
+line drawn on **what opened the surface**. That is the wrong axis: three of the builder's five
+drawers hold work and two do not. The surviving half of the old reasoning is the menu layer, which
+is unchanged and is still the default.
+
+**⚠⚠ This does NOT license raising a docked BAR.** A bar clears the nav **geometrically**; one raised
+above it **buries its own sheets** — the game-day console tried `z-index: 301` and blocked two of its
+own buttons. That warning stands and is separate from this ruling.
+
+**Two build details that are part of the decision, not implementation trivia.**
+1. **390, not 400.** Above the nav (300) so the bar cannot be reached; **below** `.modalOverlay`
+   (400) and the global confirm (1000), so a dialog opened *from* a drawer still lands on top of it
+   — Templates' *"Start from template?"* does exactly that, and a tie at 400 would have been settled
+   by DOM order.
+2. **A surface that covers the navigation earns an explicit way out.** The Setup drawer's × was
+   gated to ≥901 on the argument that "the phone drawer already has the scrim, Escape and Generate
+   to leave by" — which held only while the bar was tappable beneath it. It is now shown at every
+   width the drawer is a modal, at the 44px floor. **Templates was given the titled head D12 gave
+   Setup and this drawer was missed** — with the scrim over the square that opened it, nothing on
+   screen said what the surface was.
+
+**⚠⚠ COVERING THE NAV IS NOT THE SAME AS TAKING IT AWAY — the `/simplify` altitude pass caught this
+before the walk, and it is the part worth remembering.** The first build was geometry alone:
+`bottom: 0` and a z-index above the bar. That defends the **thumb** and nothing else. The bar's tabs
+stayed in the tab order and in the accessibility tree underneath the drawer, so the very defect the
+ruling names — *a coach leaves the builder mid-edit by hitting Schedule* — was still reachable by
+**Tab + Enter, or by a screen reader**, on a surface that had just been declared modal. The portal
+had already solved this generally in July (`useOverlayOpen` → `CoachesBottomNav` goes
+`visibility: hidden`, out of both trees, and the page behind locks); the builder's drawers had
+simply never enrolled. **A ruling about who can reach a control is not finished when the pointer
+path is closed.** Gated on the **nav** breakpoint, not the content one: above 900 the bar is already
+`display: none`, and Templates and the call-up sheet are ordinary anchored popovers up there which
+must not lock the page behind them.
+
+**⚠⚠ THE RULING HAS ONE UNFINISHED HALF, AND IT IS NAMED HERE SO IT IS NOT MISTAKEN FOR DONE
+(`/review`, 2026-09-23).** The three drawers declare themselves modal and **do not contain focus**.
+Nothing traps Tab or marks the page behind inert, so from inside an open drawer the keyboard reaches
+the *other* drawers' triggers and can open a **second** over-nav drawer at the same layer while the
+first is still open; a position sheet opened from behind one now renders **underneath** it, where it
+used to render above. Hiding the nav closed the **pointer** path; declaring a surface modal without
+containing focus leaves the same door open by keyboard. The portal already has the answer — the
+shared **dialog floor** (Escape, Tab trapped, focus returned to the opener) that the RSVP, staff,
+drill and position sheets all stand on, while the builder's five drawers hand-roll their own
+dismissal. **Deliberately not done in the same pass**, because that floor also owns back-button
+registration: adopting it rewires the §219 back-step behaviour ruled on 2026-09-17 and pinned by
+this ruling's own guard, which wants its own build and its own walk rather than a tail-end edit.
+
+**⚠ The class is named `lineupDrawerOverNav`, not `coachDrawerOverNav`, and the rename is the
+point.** Every rule that gives it effect is compounded with a lineup-builder selector, so dropping
+it on the More sheet or the practice plan's "⋯" would do **nothing** — and `check:css-selectors`
+cannot see that, because the class *is* declared and *is* referenced. A generic name on a class that
+only works in one family is the silent-CSS trap wearing a helpful face. **The portal-wide half of
+this ruling is carried by the overlay hook, which really is general; the class is local geometry.**
+
+**Applies to:** `.lineupDrawerOverNav` in `app/[orgSlug]/coaches/coaches.module.css` (the geometry's
+one home, with a single `--lineup-drawer-foot-pad` so the container and the pinned foot cannot
+drift), `components/coaches/LineupSheetScrim.tsx` (`overNav` — the drawer and its scrim must agree
+or the nav stays lit in front of the dim), `components/coaches/LineupDrawerHead.tsx` (the title +
+close spelled once; `desktopClose` is a **prop**, not an ancestor — asking "is this a modal at
+≥901?" by sniffing a layout class hands the wrong answer to the next consumer), and the builder's
+five drawers. **Build-enforced** by `tests/unit/coach-lineup-phone-guard.test.ts` → *"The two drawer
+layers"*, which asserts the split **both ways** — the three that enrol and the two that must not —
+so a sixth drawer added without a decision fails whichever side it lands on.
+
+---
+
 ### 2026-09-21 — THE OPPONENT FIELD READS THE SCOUTING BOOK, AND IT IS NOT A TAG: a game's opponent is ONE VALUE THAT NAMES A RECORD, so it gets the Place grammar (type to find, pick to take the book's SPELLING), never a label library (owner, from mockup hub `7BJir7hhGj6C39eVrXGXcn`; plan `COACH_OPPONENT_PICKER_PLAN.md`; built on dev the same day)
 
 **Decision (owner, "looks good, go for it" on D1–D7 as drawn).** The Opponent field on Add Game / Edit

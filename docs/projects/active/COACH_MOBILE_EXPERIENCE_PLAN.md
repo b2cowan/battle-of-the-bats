@@ -408,7 +408,7 @@ capture group matching `var--card-bg`. **Those would have parsed and asserted th
 Write test files through the editor tool, not heredocs; where a heredoc is unavoidable, assert with
 backslash-free `includes()`.
 
-**⚠ Two more on the owner's third read (2026-09-22), both real.** (1) **Back left the page.** *“when I hit back it brings me to the lineup list and not the lineup I am editing — how is this expected to work on a phone if a user tries to leave this drawer they can't get back to the lineup?”* Correct, and it is a **§219 violation that predates D12**: these four panels never registered a level, which was survivable while they were small popovers and is not once they are full-width modal drawers — a coach who opens one and reaches for the back gesture loses the lineup. **All four now register one step each** (Setup, Templates, Print, the row menu), so Back closes the drawer and stays on the lineup, and a second Back leaves to the room. Verified in the browser for all four. The position sheet already had this through its dialog floor; nothing else on the builder did. (2) **A 14px strip under the pinned foot** was showing the game-rule rows scrolling behind it. `position: sticky; bottom: 0` stops at the SCROLLPORT's bottom, which is inside the container's 14px bottom padding. ⚠ **Two non-fixes, both tried and MEASURED:** a negative bottom margin (a sticky element's stop does not move — the strip stayed 14px) and a `box-shadow` band (it covers the strip, but a **tap still lands on the control behind it** — an invisible hit target, which is worse than the bleed). The structural fix stands: the drawer that has a foot gives its bottom padding TO the foot (`lineupSetupDrawer`), so the foot is both what fills that space and what a thumb finds there. Re-measured at 568 · 622 · 667 · 844: **gap 0, a tap in the last 4px finds the foot, Generate and Reshuffle reachable at all four.** Guard 42/42, suite **4,483 pass**, sweep clean. **STILL OPEN, an owner ruling not a defect:** *“don't we usually open drawers like this over the nav?”* — no: all four existing sheets (More, the team switcher, a player's RSVP, the position sheet) sit ABOVE the bar by the stage-1 decision *“the builder is a page under the bar, not a dialog over it”*, and D12 followed them. The owner's instinct matches the platform norm, and there is a substantive argument beyond looks: **the bar is undimmed and tappable while a modal drawer is open**, so a coach can leave mid-edit by tapping Schedule. Changing it is one decision across all five sheets.
+**⚠ Two more on the owner's third read (2026-09-22), both real.** (1) **Back left the page.** *“when I hit back it brings me to the lineup list and not the lineup I am editing — how is this expected to work on a phone if a user tries to leave this drawer they can't get back to the lineup?”* Correct, and it is a **§219 violation that predates D12**: these four panels never registered a level, which was survivable while they were small popovers and is not once they are full-width modal drawers — a coach who opens one and reaches for the back gesture loses the lineup. **All four now register one step each** (Setup, Templates, Print, the row menu), so Back closes the drawer and stays on the lineup, and a second Back leaves to the room. Verified in the browser for all four. The position sheet already had this through its dialog floor; nothing else on the builder did. (2) **A 14px strip under the pinned foot** was showing the game-rule rows scrolling behind it. `position: sticky; bottom: 0` stops at the SCROLLPORT's bottom, which is inside the container's 14px bottom padding. ⚠ **Two non-fixes, both tried and MEASURED:** a negative bottom margin (a sticky element's stop does not move — the strip stayed 14px) and a `box-shadow` band (it covers the strip, but a **tap still lands on the control behind it** — an invisible hit target, which is worse than the bleed). The structural fix stands: the drawer that has a foot gives its bottom padding TO the foot (`lineupSetupDrawer`), so the foot is both what fills that space and what a thumb finds there. Re-measured at 568 · 622 · 667 · 844: **gap 0, a tap in the last 4px finds the foot, Generate and Reshuffle reachable at all four.** Guard 42/42, suite **4,483 pass**, sweep clean. **⚖ CLOSED 2026-09-23 — RULED, BUILT AND GUARDED. See §13 below.** *(It stood open here as: “don't we usually open drawers like this over the nav?” — no, all five sat under the bar by the stage-1 decision “the builder is a page under the bar, not a dialog over it”, with the substantive argument being that **the bar is undimmed and tappable while a modal drawer is open**, so a coach can leave mid-edit by tapping Schedule. That argument won.)*
 
 ⚠⚠ **A DEFECT FOUND AFTER THIS PASS, BY `/review` — recorded here rather than quietly fixed.** The walk above covered what a coach could see; this one no gate and no walk could see. The builder's four drawers each raise a scrim, and THREE of them render it INSIDE the element `useDismissable` watches while the ROW MENU rendered it as a SIBLING. Outside that boundary a scrim tap reads as *outside*: the hook's document-level **pointerdown** fires first and unmounts the overlay, and the **click** that follows lands on whatever the dismissal just revealed at that screen position. **Reproduced under touch emulation on the real page: dismissing the row menu pressed `Mark ready` underneath it and marked the lineup READY** — a state change the coach never asked for, on a lineup that then had to be repaired in the database (there is deliberately no product action back to Draft once a game has started). ⚠ **A MOUSE PASSED IT EVERY TIME; only touch showed it** — the one input this feature exists for. Fixed by wrapping the row menu's scrim and sheet in the ref'd element, so all four now share one boundary and one close path (verified in the browser: all four report scrim and panel under the same watched wrapper). Pinned by a new guard case — 43/43 — because nothing else in the toolchain can see it. **The transferable rule: a scrim belongs INSIDE the element its dismiss hook watches, and a dismissal gesture must be tested with TOUCH.** Passed to the two sessions building phone drawers of their own; one confirmed it would have shipped the same defect. 
 
@@ -1151,9 +1151,254 @@ Guards added with the fixes, so none of the three can come back: the bar’s thi
 door row’s second line spans the row, and no caller can ask for a second word for one state.
 **Re-verified: typecheck clean, 4,582 unit tests pass, every static gate green.**
 
-### 12.9 The QA walk — owed
+### 12.9 /review — five lenses, high-risk tier (2026-09-23, after `1546ae9f`)
+
+Deterministic gate first and clean; then five non-overlapping finder lenses, with the consequential
+findings adjudicated in the main loop against the actual code rather than the claim.
+
+**Six defects confirmed and fixed. All six were mine.**
+
+1. **CRITICAL — the bar's headline could contradict its own breakdown, and the way out could never
+   pin.** The headline read `progress()` and the breakdown read `counts`, which are **two different
+   rules**: the chip helper deliberately EXCLUDES a not-assessed mark on a session with **no stated
+   plan** (the legacy "a mark is not an entry"), while the counts always include one. On any
+   unplanned session holding a mark the bar read *"3 of 5 accounted for · 3 recorded · 1 not
+   assessed"* — the exact "fourteen of twelve" failure § 12.3 was written to stop — and
+   `allAccounted` could never be reached however much the coach recorded. **Every figure now comes
+   off one object**, so they agree by construction; and a session with no plan never claims
+   completeness, because `sessionState()` returns null for one and the list already prints a dash.
+2. **HIGH — the review's write skipped the second grant.** It gated on the Development grant alone;
+   the grid gates a SKILL on Development **and** Internal notes. An assistant deliberately left
+   without notes — one this screen hides the whole skill grid from — could mark a player not
+   assessed on a skill here, or undo a senior coach's mark. The sheet now mirrors the grid's own
+   `readOnly` formula. ⚠ **Neither the route nor RLS draws that line for this table** — pre-existing,
+   named in § 12.10, not silently widened here.
+3. **HIGH — the new write was unguarded end to end.** `markNotAssessed` never sets the page's busy
+   flag, so every `disabled={busy}` in the sheet was decorative; the question panel closed
+   synchronously beside a fire-and-forget write; a refusal set `rowErr`, which paints **above the
+   grid, behind this very sheet**; and both footer buttons were ungated, so a coach could answer for
+   their last outstanding player and leave on the same breath. A write that then failed — a blip, or
+   the 409 *"That result is already recorded"* when another device saved a value meanwhile — took the
+   session's completeness with it, silently. ⚠ **This is the repeat of a trap this file already
+   documents** one function away, for the observation dialog. Now: the sheet owns its own in-flight
+   state, the write is awaited, the panel stays open holding the refusal's own words, and nothing
+   leaves while a write is in the air. `markNotAssessed` returns **the message**, not a boolean —
+   which also removes the observation dialog's stale-closure read of `rowErr`.
+4. **MEDIUM — a mark the review could not reach was permanent.** The review lists only players IN the
+   plan. A player marked and then dropped from the plan kept a "Not assessed" chip with no way to
+   clear it: absent from the review, and stripped of the row's Undo. An out-of-scope row keeps its own.
+5. **MEDIUM — "Recorded" and "editing…" showed at once.** Tapping a saved time to correct it left the
+   chip asserting the record was done beside a caption saying it was mid-edit, on the one line this
+   redraw exists to keep clear. The chip stands down while editing.
+6. **HIGH (help) — the in-app guide taught three things this work made false**: that a test row reads
+   *Saved* while a skill reads *Recorded*; that *Mark not assessed* is a row link; and that
+   *"nothing is stored by a review"*. Each appeared twice — in the article and in the text help
+   search matches on — so a coach searching the phrase landed on an article pointing at a control
+   that had moved. ⚠ **No gate catches this**: "every static gate green" on `1546ae9f` was true and
+   did not cover it.
+
+**Refuted or verified safe** (named, so the next reader does not re-derive them): the tap-to-edit
+focus behaviour — two lenses independently failed to construct a wrong-field or stolen-focus
+sequence; desktop entirely; read-only and past-participant rows; past participants in the review
+(excluded structurally, so no name exists to tap); org/team/season scoping on the route (genuine
+defence in depth — the client's lookups are convenience, the boundary is the server's own re-read
+plus the composite FKs); duplicate marks (an upsert, so a double tap cannot double-write); no
+PII/id leak; CSS integrity, including the `.doorName > small` rule the redraw retired; and the
+existing guard assertions, checked individually for tautologies.
+
+**Coverage gap closed.** The headline change had **no test at all** — nothing tied the row's lost
+controls to the review door that replaces them, so deleting one while keeping the other would have
+passed CI in silence. Five guard cases added: the row carries no mark and no Edit while the review
+carries both; an out-of-scope mark keeps its Undo; the sheet's write is gated like the grid and
+cannot be left mid-flight; a refusal prints inside the panel that asked; and every bar figure comes
+off one object.
+
+**Verification:** typecheck clean · lint clean · `verify:changed` **4,592 unit tests pass, 0 fail**,
+every static gate green · rendered layout sweep at 361/390/768/1440 — **no new findings**.
+
+### 12.10 Named, not fixed
+
+- **The `/not-assessed` route does not check Internal notes**, on any door — it gates on the
+  Development grant only, and RLS matches it. Pre-existing and unchanged by this work; the client is
+  the only place the product's own skill/notes line is drawn. Worth an owner call on its own.
+- **The correction asterisk explains itself through a hover tooltip** — unreadable on a phone, and
+  against the standing "a flag opens its explanation on click" rule.
+- **The focus ref is keyed by player and attempt, not by test**, and the grid is not remounted when
+  the test changes. Safe today because the only thing that sets it is the tap that satisfies it;
+  a comment marks it rather than a defensive key nobody needs yet.
+
+### 12.11 The QA walk — owed
 
 *(owed — a walk in the ledger's §-series, phone at 361 and 390: the name at full width, a blank row with
 no controls, the chip appearing on save, tap-a-value-to-edit landing the caret in the tapped box, the
 tail door under the last player, the move into the bar at full house, and the review sheet's mark and
 undo on two tests.)*
+
+## 13 · The two drawer layers (owner ruling 2026-09-23 — ruled, built and guarded the same day)
+
+**The question, and why it is bigger than the screen it was asked on.** The owner, reading the skill
+observation dialog on a phone: *"what is our rule about opening some drawers over the nav and others
+not?"* The honest answer was that the portal had a rule for **dialogs** (every `.modalOverlay` has
+covered the bar since the polarity flip of 2026-07-28 — "safety is opt-in is how modals shipped
+unsafe") and a *different* rule for **drawers**, drawn on the wrong axis. So this closes the item
+left open at §9 the day before, and it is one decision across all five builder drawers rather than
+five.
+
+### 13.1 The rule
+
+**The test is the surface's contract with the coach, not its size and not what opened it.**
+
+| | Stops at the bar's top, nav **lit and tappable** | **Covers** the nav, scrim dims the bar |
+|---|---|---|
+| **What** | A **MENU** — tap an item, it acts, it closes | A **FORM** — it stays open, you type or set things, you commit |
+| **Why** | The bar is the way out of a menu opened by mistake | The bar going away is the signal that you are *in* something |
+| **Who** | More, the team switcher, the practice plan's "⋯", the position picker, the builder's **Print** and **row-actions** sheets | Every `.modalOverlay` (unchanged), and the builder's **Setup & Auto-fill**, **Templates**, **Call up a player** |
+
+### 13.2 Why — the defect is not cosmetic
+
+A drawer that dims the page while the bar underneath stays **armed** reads as modal and is not one.
+A coach mid-Setup, or with a template name half-typed, puts a thumb on *Schedule* and leaves the
+builder, with nothing on screen having warned them the bar was still live. Raising the drawer puts
+the scrim **in front of** the bar, so that same tap now dismisses the drawer instead of navigating.
+It also reconciles the two widths: Setup became a true centered modal on the desktop on 2026-09-23
+and was still a bar-anchored drawer on a phone.
+
+**What was replaced, and what survives.** The builder's panels sat under the nav by the stage-1
+decision *"the builder is a page under the bar, not a dialog over it"* — a line drawn on **what
+opened the surface**. That is the wrong axis: three of the five drawers hold work and two do not.
+The menu layer that same decision established is **unchanged** and is still the default.
+
+**⚠⚠ This does NOT license raising a docked BAR.** A bar clears the nav **geometrically**; one
+raised above it **buries its own sheets** (the game-day console's `z-index: 301` blocked two of its
+own buttons — §9.4). Separate rule, still standing.
+
+### 13.3 The trade-off, stated
+
+Two drawers opening from adjacent squares on one toolbar now behave differently. Accepted: they keep
+the **identical skin** (flush edges, 18px top radius, grab line, the same warm scrim), so the family
+still reads as one; and the nav disappears exactly when there is something to lose. A coach cannot
+predict it from the icon, but they do not need to — the consequence only matters in the direction
+the rule protects.
+
+### 13.4 Two build details that are part of the decision
+
+1. **390, not 400, and never 301.** Above the nav (300) so the bar cannot be reached; **below**
+   `.modalOverlay` (400) and the global confirm (`.modal-overlay`, 1000), so a dialog opened *from*
+   a drawer still lands on top of it. Templates' *"Start from template?"* does exactly that, and a
+   tie at 400 would have been settled by DOM order.
+2. **A surface that covers the navigation earns an explicit way out.** Setup's × was gated to ≥901
+   on the argument that "the phone drawer already has the scrim, Escape and Generate to leave by" —
+   which held only while the bar was tappable beneath it. The visible scrim is a 12px strip, and
+   Escape and the back gesture are both absent on an iPhone running the portal from the home
+   screen. The × now shows at every width the drawer is a modal, at the **44px floor**, and the
+   ≥901 rule was scoped to Setup's own modal so the desktop Templates popover does not grow one.
+   **Templates was also given the titled head D12 gave Setup and this drawer was missed** — with
+   the scrim over the square that opened it, nothing on screen said what the surface was.
+
+### 13.5 What `/simplify` changed before the walk — three findings, all taken
+
+1. **⚠⚠ Covering the nav is not the same as taking it away.** The first build was geometry alone —
+   the drawer at the screen's foot, a z-index above the bar. That defends the **thumb** and nothing
+   else: the bar's tabs stayed in the tab order and in the accessibility tree underneath the
+   drawer, so *a coach leaves the builder mid-edit by hitting Schedule* was still reachable by
+   **Tab + Enter, or by a screen reader**, on a surface just declared modal. The portal had solved
+   this generally in July — a shared "an overlay is open" signal that makes the bar hide itself
+   (out of both trees) and locks the page behind it — and the builder's drawers had simply never
+   enrolled. All three now do, gated on the **nav** breakpoint: above it the bar is already hidden
+   (no hole to close) and Templates and the call-up sheet are ordinary popovers that must not lock
+   the page. **The geometry stays** — a hidden bar leaves a ~72px blank strip where it was.
+   *The lesson: a ruling about who can reach a control is not finished when the pointer path is
+   closed.*
+2. **The modifier was named as if it were portal-wide and was not.** Every rule giving it effect is
+   compounded with a lineup-builder selector, so dropping it on another drawer family would do
+   nothing — and the CSS gate cannot see that, because the class is declared and referenced.
+   Renamed to name its real family. The portal-wide half of the ruling is carried by the shared
+   overlay signal, which genuinely is general.
+3. **Two smaller ones.** The Templates head I added was a hand-copy of Setup's, so both now come
+   from one shared component (a third, already-drifted copy exists in the call-up sheet and is
+   deliberately left alone — reconciling it means a portal-wide decision about the close button
+   that the stylesheet already records as its own unit of work). And "does this drawer show a ×
+   on the desktop?" was being answered by sniffing an ancestor class whose real job is layout; it
+   is now an explicit prop, because Setup is a modal at that width and Templates is still a
+   popover. The safe-area padding, hand-copied into two places that must never disagree, is now
+   one named value.
+
+Efficiency and simplification both came back clean; simplification independently verified the
+specificity and test-anchor reasoning rather than taking the comments at face value.
+
+### 13.6 What `/review` found — three fixed, three recorded
+
+**Fixed (all three were this diff's own):**
+
+1. **A 6px sideways spill on the Setup drawer at 361, 390 AND 768 — found only by the rendered
+   check.** The first build grew the close × to 44px with a negative margin on both axes to keep
+   the glyph in the drawer's corner; the horizontal half pushed the head past the drawer's content
+   edge. ⚠ It **passed at 1440**, where the desktop's 26px rule applies instead — which is exactly
+   how a phone-only overflow hides from a desktop read. The block-axis pull is kept (the drawer's
+   own top padding absorbs it); the inline one is gone. *No type check, linter or unit test can
+   see this — it does not exist until a browser resolves the box.*
+2. **The call-up drawer's way out was 28px between 769 and 900.** The bottom nav is visible up to
+   900, so a drawer wearing the modifier covers it up to 900 — but the portal's shared close
+   button only grows to the 44px floor at ≤768. Setup and Templates got their floor from the new
+   rule; the call-up sheet carries its own head on the portal button and was missed. In that
+   131px band it was a nav-covering surface whose only exits were a 28px × and a 12px sliver of
+   scrim — the precise inadequacy this ruling says must not exist.
+3. **The safe-area hand-off named a drawer instead of asking a question.** It was scoped to the
+   Setup drawer, but **the call-up sheet uses the same shared pinned foot** — so that drawer got
+   the container's safe-area padding *and* a sticky foot inside it, re-opening the strip of
+   scrolled content under the foot that the hand-off exists to close, now inset-sized on a notched
+   phone. Now scoped to "an over-nav drawer that **has** a foot", which covers both and anything
+   added later. *Same lesson as the desktop × one section up, and it recurred inside one diff.*
+
+**Recorded, not fixed here — each needs its own unit of work:**
+
+4. **⚠ THE THREE DRAWERS DECLARE THEMSELVES MODAL AND DO NOT CONTAIN FOCUS.** Two lenses found
+   this independently. Nothing traps Tab or marks the page behind inert, so from inside an open
+   drawer the keyboard reaches the *other* drawers' triggers — and can open a **second** over-nav
+   drawer at the same layer while the first is still open. A position sheet opened from behind
+   one would now render **underneath** it (it used to render above, when the drawers sat lower).
+   **This is this ruling's own unfinished half:** hiding the nav closed the pointer path, and
+   declaring a surface modal without containing focus leaves the same door open. The portal
+   already has the answer — the shared dialog floor (Escape, Tab trapped, focus returned) that
+   the RSVP, staff, drill and position sheets all stand on; the builder's five drawers hand-roll
+   their own dismissal instead. **Not done here because that floor also owns back-button
+   registration**, so adopting it means rewiring the §219 back-step behaviour the owner ruled on
+   six days ago and that this file's guard pins — a change that deserves its own build and its
+   own walk, not a tail-end edit after a review.
+5. **Pre-existing: answering "Keep current" to *Start from template?* closes the Templates drawer.**
+   The confirm dialog is mounted at the portal root, outside the drawer's dismiss boundary, so the
+   press that answers it also reads as "tapped outside" and closes the drawer underneath. Harmless
+   on the "Load template" path (it closes anyway); on the cancel path the coach is bounced out of
+   Templates after asking to stay. Unchanged by this diff, but this ruling makes the same boolean
+   drive nav-hide and scroll-lock, so it is worth closing.
+6. **Pre-existing tap floors on the builder toolbar.** *Call up a player* is 40px from 641 up (it
+   takes the toolbar row's shared 40px control height, deliberately) and *Game rules* is 16px at
+   768. Both are from the toolbar work committed earlier the same day, both fail the 44px floor on
+   a touch-capable tablet, and the first is an owner-level trade-off (the floor versus one
+   control height across the row) rather than a bug to silently resolve inside this diff.
+
+### 13.7 Verification
+
+Typecheck clean; ESLint clean on all four sources; `check:css-selectors` green (272 modules, no new
+dead/clashing/orphaned); `check:spelling` green; the lineup phone guard **53/53** and the **full
+unit suite 4,593 pass / 0 fail**.
+
+The new *"The two drawer layers"* block asserts the split **both ways** — the three drawers that
+cover the nav *and* the two menus that must not — so a sixth drawer added without a decision fails
+whichever side it lands on. It also pins: each raised drawer's **scrim** carries the modifier with
+it (a raised drawer over a bar-height scrim leaves the nav lit in front of the dim); all three
+enrol in the shared overlay signal **and the two menus do not**; all three keep their §219 back
+step, which is the last way out once the bar is gone; the safe-area formula is spelled **exactly
+once**; and the desktop × is a prop rather than an ancestor, with the old ancestor-scoped selector
+asserted **absent** so it cannot come back.
+
+### 13.8 The QA walk — owed
+
+*(owed — a walk in the ledger's §-series, phone at 361 and 390. The shape of it: open **Setup**,
+confirm the bar is **gone and dimmed** and that a tap where Schedule used to be **dismisses** rather
+than navigates; the × is there and takes a thumb; Generate still sits clear of the home indicator on
+a notched phone. Then **Templates** — it now names itself and has a way out — type a name, tap where
+the nav was, confirm you are still on the lineup. Then **Call up a player**, same three checks. Then
+the other way round: open **Print** and the **row menu** and confirm the bar is still lit and still
+takes you to Schedule. Finally **More**, the **team switcher** and the practice plan's **"⋯"** —
+unchanged, still on top of the bar.)*

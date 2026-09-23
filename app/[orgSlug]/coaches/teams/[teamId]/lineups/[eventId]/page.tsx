@@ -5,7 +5,10 @@ import { useSearchParams } from 'next/navigation';
 import { useDismissable } from '@/lib/overlay-hooks';
 import { useBackStep } from '@/components/coaches/useBackStep';
 import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
+import LineupDrawerHead from '@/components/coaches/LineupDrawerHead';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { ListOrdered, CalendarDays, Undo2, Redo2, Printer, LayoutTemplate } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
@@ -329,6 +332,17 @@ export default function CoachLineupBuilderPage({
      level to the page behind, and the drawer's own exits consume it. */
   useBackStep(templatesOpen, () => setTemplatesOpen(false));
   useBackStep(lineupPdfOpen, () => setLineupPdfOpen(false));
+  /* ⚠ TEMPLATES IS A FORM, SO THE BAR GOES AWAY RATHER THAN BEING PAINTED OVER (2026-09-23; the
+     reasoning lives with the editor's two, in `_LineupEditor.tsx`). Covering the nav with a
+     z-index defends the thumb only — the tabs stayed in the tab order and the accessibility tree
+     underneath, so "a coach leaves mid-edit by hitting Schedule" survived by keyboard on a
+     surface just declared modal. `useOverlayOpen` is the portal's own July mechanism for this:
+     the bar hides itself and the page behind locks.
+     ⚠ PRINT IS NOT HERE AND MUST NOT BE — it is a MENU, and the live bar is its way out.
+     ⚠ Nav breakpoint, not the content one: above 900 the bar is already `display: none` (no hole
+     to close) and this drawer is an ordinary anchored popover that must not lock the page. */
+  const isPhoneNav = useIsPhoneNav();
+  useOverlayOpen(templatesOpen && isPhoneNav);
 
   // Auto-save the lineup ~0.9s after the last change (debounced) — no Save button.
   useEffect(() => {
@@ -814,8 +828,16 @@ export default function CoachLineupBuilderPage({
         </button>
       )}
       {templatesOpen && (<>
-        <LineupSheetScrim onClose={() => setTemplatesOpen(false)} />
-        <div className={styles.lineupAutoMenu}>
+        {/* A FORM — it holds a name field and a Save (owner ruling 2026-09-23) — so it covers the
+            bottom nav and its scrim dims the bar. `.lineupDrawerOverNav` carries the reasoning. */}
+        <LineupSheetScrim onClose={() => setTemplatesOpen(false)} overNav />
+        <div className={`${styles.lineupAutoMenu} ${styles.lineupDrawerOverNav}`} role="dialog" aria-label="Templates">
+          {/* THE HEAD D12 GAVE SETUP AND THIS DRAWER WAS MISSED (2026-09-23). Once the scrim
+              covers the square that opened it, nothing on screen said what this surface was; and
+              now that it covers the navigation it needs a way out that is not a 12px strip of
+              scrim. NO `desktopClose`: at ≥901 this is still a small anchored popover whose way
+              out is "click anywhere else", and it must not grow a control it never had. */}
+          <LineupDrawerHead title="Templates" onClose={() => setTemplatesOpen(false)} />
           <div className={styles.lineupTemplateSection}>
             <span className={styles.lineupTemplateHead}>Start from a saved template</span>
             {templates.length === 0 ? (
