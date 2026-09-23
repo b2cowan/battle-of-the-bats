@@ -44,6 +44,69 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-23',
+    title:
+      'Coaching from a phone, a borrowed player for one game, and a sponsorship that shows where its money went',
+    highlights: [
+      {
+        category: 'new',
+        text: "Your schedule, game-day lineups, and practice plans now open on a phone the way they do on a laptop — today's game or practice first, a lineup you build one inning at a time with big touch-friendly panels, and a practice plan whose skills list fits the screen with a save button you can actually reach.",
+      },
+      {
+        category: 'new',
+        text: "The bench console you use during a game — Who's here, notes, the full grid, End game — now works properly on a phone: every button stays within reach as you scroll, and moving a player between the field and the bench is one tap. Recording the final score moved to one line under the lineup, once the game's done.",
+      },
+      {
+        category: 'new',
+        text: 'Money screens fit a phone screen too — the season summary and the Budget Plan open without part of the page hidden below the bottom bar.',
+      },
+      {
+        category: 'new',
+        text: "Short a player for one game? Call one up. Pick anyone from your season's pool (or add someone new) and they show up in that game's lineup and printed card only — never in dues, skills tracking, awards, or next season's rollover.",
+      },
+      {
+        category: 'new',
+        text: 'The printable development handout now shows every section, even ones a player has nothing in yet — an empty goals or evaluation section says what to add instead of vanishing.',
+      },
+      {
+        category: 'new',
+        text: "A sponsorship credit can now say which family's payments it covers, right where you record it.",
+      },
+      {
+        category: 'new',
+        text: "Recording a sponsor's payment now takes one step instead of several.",
+      },
+      {
+        category: 'new',
+        text: '"Remind this family" sends a specific letter about the family\'s next unpaid payment — never the whole season\'s balance — with a preview before it goes out.',
+      },
+      {
+        category: 'new',
+        text: "Money by Month's detail panel narrows to just the day you tapped, and the running total for the period stays visible while you're entering a line.",
+      },
+      {
+        category: 'new',
+        text: "Typing an opponent's name now searches your scouting book — pick a team you've played before and the spelling matches everywhere it appears.",
+      },
+      {
+        category: 'new',
+        text: 'Cards and forms throughout the coach portal now use a flatter, more consistent look — no tinted backgrounds.',
+      },
+      {
+        category: 'fixed',
+        text: 'Field numbers now read clearly everywhere they show up — "Diamond 1" instead of a bare "1."',
+      },
+      {
+        category: 'fixed',
+        text: 'The season Total column always reflects the full season now, regardless of which view you\'re in.',
+      },
+      {
+        category: 'fixed',
+        text: "The Scouting Book page for an opponent is available as soon as a game is scheduled, not only after it's been played.",
+      },
+    ],
+  },
+  {
     date: '2026-09-21',
     title: 'A place book for your schedule, scrimmages made simple, and a cleaner first screen on your phone',
     highlights: [
