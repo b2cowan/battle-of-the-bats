@@ -221,15 +221,14 @@ test.describe('the template editor — a template carries no people', () => {
 test.describe('the practice plan — the recap and the two-source picker', () => {
   test.skip(!EVENT, 'Set PROBE_EVENT_ID (node scripts/seed-uat-coach-fixture.mjs prints it).');
 
-  test('"How it went" is on the practice, and says who sees it', async ({ page }) => {
+  test('"How it went" is on the practice, and steers away from naming a child', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(planUrl());
     await expect(page.getByRole('heading', { name: 'How it went' })).toBeVisible();
     // ⚠ D17's guardrail, checked at the DOM rather than trusted to a code comment: the placeholder
-    // and the helper both steer away from naming a child.
+    // steers away from naming a child (the standing helper lines went at the §227 walk, 2026-09-23).
     await expect(page.getByLabel('How it went')).toHaveAttribute('placeholder', /what would you do differently/i);
-    await expect(page.getByText(/about the practice, not about a player/i).first()).toBeVisible();
-    await expect(page.getByText(/Families never see this/i).first()).toBeVisible();
+    await expect(page.getByText(/not about a player|Families never see this/i)).toHaveCount(0);
     expect(await horizontalOverflow(page)).toBeLessThanOrEqual(0);
   });
 

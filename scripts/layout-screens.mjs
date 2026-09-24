@@ -202,6 +202,29 @@ async function openLineupPositionSheet(page) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * Put the practice plan into EDITING first (practice plans on a phone, stage 1b, 2026-09-23): a
+ * plan now opens to READ for everyone, so without this the plan, station, groups and docked
+ * entries silently measured the read face — green checks over forms they never saw, and the groups
+ * room (reachable only while editing) timed out at every width (caught by /review, 2026-09-24).
+ * The toolbar's one door reads "Edit" while reading and "Done editing" after; it is pressed only in
+ * its Edit state. Absent for a viewer, and on the template and circuit editors (always writing).
+ */
+async function editThePlan(page) {
+  const door = page.getByTestId('edit-the-plan');
+  if (await door.count() === 0 || !(await door.isVisible())) return;
+  if (!/^\s*Edit\s*$/.test(await door.innerText())) return;
+  await door.click();
+  await page.getByTestId('edit-the-plan').filter({ hasText: 'Done editing' }).waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(200);
+}
+
+/** The first block open WHILE EDITING — the block form, not its read face (see `editThePlan`). */
+async function editThenOpenFirstBlock(page) {
+  await editThePlan(page);
+  await openFirstBlock(page);
+}
+
 async function openFirstBlock(page) {
   const row = page.getByRole('button', { name: /^Open / }).first();
   if (await row.count() === 0) return;
@@ -238,6 +261,7 @@ async function openProgressSheet(page) {
  * "<station> — station N of M".
  */
 async function openCircuitStation(page) {
+  await editThePlan(page);
   const row = page.getByRole('button', { name: /^Open Skills circuit/ }).first();
   if (await row.count() === 0) return;
   await row.click();
@@ -256,6 +280,7 @@ async function openCircuitStation(page) {
  * 816 and the panel at 320: its search box, chips, rows with a grip and Add, and "+ New drill".
  */
 async function dockLibrary(page) {
+  await editThePlan(page);
   const toggle = page.getByTestId('library-toggle');
   if (await toggle.count() === 0 || !(await toggle.isVisible())) return;
   if ((await toggle.getAttribute('aria-pressed')) !== 'true') await toggle.click();
@@ -319,6 +344,7 @@ async function scrollSessionWithDock(page) {
 /** The circuit open and its GROUPS ROOM up (stage 3 revision, D9): the draw row, the pool column,
  *  the group columns with their chips, name boxes and bins, the foot's "+ Add a group" and Done. */
 async function openCircuitGroups(page) {
+  await editThePlan(page);
   const row = page.getByRole('button', { name: /^Open Skills circuit/ }).first();
   if (await row.count() === 0) return;
   await row.click();
@@ -590,8 +616,9 @@ export const SCREENS = [
     ready: '[data-room="practice-plan"][data-room-state="loaded"]',
     // Then the first block is opened in place — the probe practice's written warm-up (six players,
     // two coaching points): the clock row's chips, the two fields, the Players line, the doors.
-    // The blind spot stage 1's review recorded; closed at stage 2.
-    interact: openFirstBlock,
+    // The blind spot stage 1's review recorded; closed at stage 2. Edited first (stage 1b): the
+    // plan opens to read, and this entry is the block FORM.
+    interact: editThenOpenFirstBlock,
   },
   {
     // The same sheet with the CIRCUIT open and its first station's modal up (stage 3): the strip,

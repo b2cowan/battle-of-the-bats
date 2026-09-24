@@ -70,18 +70,20 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.match(card, /\{clock && !phone && <small>/);
   });
 
-  it('K1 · K3 — no reorder pair and no drag on a phone', () => {
+  it('the grip under the time — one handle at every width, no ▲▼ pair anywhere (owner, 09-24)', () => {
     const card = fn('BlockCard');
-    assert.match(card, /const canDrag = !readOnly && !solo && !phone && !sheet && blockCount > 1;/);
-    // The pair only renders inside `canDrag`, so the line above is the whole gate.
-    assert.match(card, /\{canDrag && \(\s*<span className=\{styles\.ppTlMove\}/);
+    assert.match(card, /const canMove = !readOnly && !solo && !sheet && blockCount > 1;/);
+    // The gutter is the handle; the grip inside it is the tap/click menu — no arrows.
+    assert.match(card, /<div ref=\{setHandleRef\} \{\.\.\.\(canMove \? handleListeners : \{\}\)\}/);
+    assert.match(card, /\{canMove && \(\s*<span className=\{styles\.ppTlMove\}>\s*<CoachToolbarMenu label=\{`Move \$\{label\}`\} variant="glyph"/);
+    assert.doesNotMatch(card, /aria-label=\{`Move \$\{label\} up`\}/);
   });
 
   it('K2 — every block reads shut in the timeline while the phone sheet holds the open one', () => {
     assert.match(src, /open=\{soloBlock \|\| \(!phoneSheet && openId === block\.id\)\}/);
     assert.match(src, /openDoors=\{soloBlock \|\| \(!phoneSheet && openId === block\.id\) \? openDoors : NO_DOORS\}/);
     assert.match(src, /\{sheetBlock && sheetWalk && \(/);
-    assert.match(src, /sheet=\{\{ walk: sheetWalk \}\}/);
+    assert.match(src, /sheet=\{\{ walk: sheetWalk, onward: sheetOnward, onEdit, onDoneEditing \}\}/);
   });
 
   it('K2 — ONE wiring for the row and the sheet, so the two cannot drift', () => {
@@ -95,11 +97,28 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.match(sheet, /useDialogFloor\(true, panelRef, \{/);
     assert.match(sheet, /walk: \{ prev: walk\.prev\?\.id \?\? null, next: walk\.next\?\.id \?\? null, onSelect: walk\.onSelect \}/);
     assert.match(sheet, /role="dialog" aria-modal="true"/);
-    assert.match(sheet, /<RoomWalkNav nav=\{walk\} \/>/);
+    // §227 walk, option C (owner 2026-09-23): the foot's walk is COMPACT ("‹ 2 of 3 ›") — a named
+    // pair got ~7 letters a name at 390 — and the next block is named in full at the body's end.
+    assert.match(sheet, /<RoomWalkNav nav=\{walk\} compact \/>/);
+    assert.match(sheet, /<WalkOnward walk=\{walk\} noun="block"/);
     assert.match(sheet, />Done<\/button>/);
     assert.match(sheet, /<div key=\{bodyKey\} className=\{`\$\{styles\.ppTlOpen\} \$\{styles\.ppBlockSheetBody\}`\}>/);
     // It covers the nav as every form does, and takes it out of reach while up.
     assert.match(src, /useOverlayOpen\([^)]*!!sheetBlock\)/);
+  });
+
+  it('§227 option C — the next stop is named in full at the end; the station form follows on a phone only', () => {
+    const onward = fn('WalkOnward');
+    // Both steps are the walk's own — exactly the foot's arrows, never a second navigation.
+    assert.match(onward, /walk\.onSelect\(walk\.next!\.id\)/);
+    assert.match(onward, /walk\.onSelect\(walk\.prev!\.id\)/);
+    assert.match(onward, /That’s the last \{noun\}\./);
+    assert.match(onward, /if \(walk\.total <= 1\) return null;/);
+    // The station form: compact + the onward row on a phone, the named pair kept on a desk.
+    const station = fn('StationModal');
+    assert.match(station, /const phone = useIsPhone\(\);/);
+    assert.match(station, /\{phone && \(\s*<WalkOnward /);
+    assert.match(station, /<RoomWalkNav nav=\{\{ \.\.\.walk, noun: 'stations', onSelect: onStep \}\} compact=\{phone\} \/>/);
   });
 
   it('K2 — the sheet mounts BEFORE the station modal, so every door inside a block opens over it', () => {
@@ -109,15 +128,92 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.ok(sheetAt > 0 && sheetAt < stationAt && sheetAt < groupsAt);
   });
 
-  it('K3 — Move up · Move down · Delete sit on the sheet head, stopped at the ends', () => {
+  it('ONE anatomy — block sheet and station form: head toggle · name first · Delete at the end · walk + Done', () => {
+    // Owner, §227 walk 2026-09-24: "aren't they effectively the same?" — they are now.
     const sheet = fn('BlockSheet');
-    // The walk is the one source for the ends — the same shared arithmetic the station walk uses.
-    assert.match(sheet, /aria-label=\{`Move \$\{label\} up`\}\s*disabled=\{!walk\.prev\}/);
-    assert.match(sheet, /aria-label=\{`Move \$\{label\} down`\}\s*disabled=\{!walk\.next\}/);
+    const station = fn('StationModal');
+    for (const [name, body] of [['block sheet', sheet], ['station form', station]]) {
+      assert.match(body, /<SheetEditToggle readOnly=\{readOnly\} onEdit=\{onEdit\} onDoneEditing=\{onDoneEditing\} \/>/, `${name}: the head's one control`);
+      // The bin rides the head beside ✓ while writing (owner, 09-24: "so the user doesn't have to go
+      // digging for the delete") — and it ASKS first, because the delete has no undo.
+      assert.match(body, /\{!readOnly && \(?\s*<SheetDeleteButton label=\{label\}/, `${name}: the bin in the head, while writing`);
+      assert.match(body, /className=\{styles\.btnPrimary\} onClick=\{onClose\}>Done<\/button>/, `${name}: Done in the foot`);
+    }
+    // …and the desk's open card asks the same question (owner, 2026-09-24) — no bin deletes unasked.
+    assert.match(fn('BlockCard'), /\{!readOnly && !solo && <SheetDeleteButton label=\{label\} message=\{deleteMessage\} onDelete=\{onDelete\} \/>\}/);
+    const bin = fn('SheetDeleteButton');
+    assert.match(bin, /const ok = await confirm\(\{ title: `Delete \$\{label\}\?`, message, confirmText: 'Delete', cancelText: 'Keep it', tone: 'danger' \}\);\s*if \(ok\) onDelete\(\);/);
+    // The toggle is ONE button that flips in place; on a phone the glyph alone, the words its name.
+    const toggle = fn('SheetEditToggle');
+    assert.match(toggle, /const act = readOnly \? onEdit : onDoneEditing;/);
+    assert.match(toggle, /aria-label=\{readOnly \? 'Edit' : 'Done editing'\}/);
+    assert.match(css, /\.ppSheetEditWord \{ display: none; \}/);
+    // Revising K3 (owner, stage 1b): a block moves from the LIST by its grip, never from inside it.
+    assert.doesNotMatch(sheet, /Move \$\{label\} up/);
     assert.match(src, /\.\.\.blockWalk\(plan\.blocks, sheetBlock\.id\)/);
-    assert.match(sheet, /aria-label=\{`Delete \$\{label\}`\}/);
     // Delete from the sheet closes it — the block it showed is gone.
     assert.match(src, /if \(openId === block\.id\) openBlock\(null\);/);
+  });
+
+  it('1b · R1 — a plan opens to READ; only an empty upcoming plan opens to write', () => {
+    const page = stripComments(readSource('app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx'));
+    assert.match(page, /setEditing\(\s*!practiceIsRecord\(body\.event\?\.startsAt, Date\.now\(\), body\.event\?\.endsAt\)\s*&& !practiceHasPlan\(\{ practicePlan: body\.plan \?\? null \}\),\s*\);/);
+    assert.match(page, /const reading = !editing;/);
+    assert.match(page, /const writing = canWrite && !reading;/);
+    // ✎ on a block and a station — only for a reader who may write.
+    assert.match(page, /onEdit=\{canWrite && reading \? startEditing : undefined\}/);
+    // ⚠ The save pill is NOT gated on `writing` (/review, 2026-09-24): "Done editing" does not stop
+    // the autosave, so a save that fails after the press must still be able to say so.
+    assert.match(page, /\{canWrite && \(!recordMode \|\| editedThisVisit \|\| dirty \|\| saving\) && !loading && !loadError && \(\s*<SaveStatusPill /);
+    assert.doesNotMatch(page, /\{writing && !loading && !loadError && \(\s*<SaveStatusPill /);
+    assert.match(page, /onDoneEditing=\{canWrite && !reading && \(hasBlocks \|\| isPracticeRecord\) \? \(\) => setEditing\(false\) : undefined\}/);
+  });
+
+  it('1b · R4 — a row moves by its GRIP: hold (or drag) to move, tap/click for Move up · Move down', () => {
+    assert.match(src, /label="Move up" disabled=\{index === 0\}/);
+    assert.match(src, /label="Move down" disabled=\{index === blockCount - 1\}/);
+    // A finger lifts only on a phone that is writing, after a quarter-second hold — in the circuit
+    // editor too, whose lone block has no grip but whose stations do (2026-09-24).
+    assert.match(src, /const touchGrip = useIsPhone\(!readOnly\);/);
+    // ⚠ ALWAYS two sensors: a list that changed length with the width crashed the page (09-24).
+    assert.match(src, /activationConstraint: touchGrip \? \{ delay: 250, tolerance: 6 \} : \{ distance: Number\.POSITIVE_INFINITY \}/);
+    assert.match(src, /const dragSensors = useSensors\(mouseSensor, touchSensor\);/);
+    // The times preview the drop, from the SAME clock walk over the reordered list.
+    assert.match(src, /walkBlockClocks\(next, eventStartsAt, eventEndsAt\)\.clocks/);
+    // The plan runs edge to edge on a phone — the shell's gutter off, never a negative bleed.
+    assert.match(css, /\.coachesMain:has\(\.ppSheetPair\) \{ padding-inline: 0; \}/);
+    assert.match(css, /\.coachesMain:has\(\.ppSheetPair\) \.teamHeader \{ margin-inline: 0; \}/);
+  });
+
+  /* Owner, 2026-09-24, on the block sheet's station cards: "this should be drag and drop just like
+     blocks are". The ‹ › pair became the block's grip one level down — the same two gestures on one
+     glyph, in the ONE drag context, landing in slots between the columns of its own block only. */
+  it('a station moves by its GRIP too: drag to a slot between columns, tap for Move earlier · Move later', () => {
+    const grip = fn('StationGrip');
+    assert.match(grip, /useDraggable\(\{\s*id: `station:\$\{blockId\}:\$\{stationId\}`/);
+    assert.match(grip, /<CoachToolbarMenu label=\{`Move \$\{label\}`\} variant="glyph" icon=\{<GripVertical/);
+    assert.match(grip, /label="Move earlier" disabled=\{index === 0\}/);
+    assert.match(grip, /label="Move later" disabled=\{index === count - 1\}/);
+    // The arrows are gone — one move control per column, never a pair beside a grip.
+    const cols = fn('StationColumns');
+    assert.doesNotMatch(cols, /ChevronLeft|ChevronRight|ppMoveBtn/);
+    assert.match(cols, /<StationSlot blockId=\{blockId\} index=\{i\} side="before" \/>/);
+    assert.match(cols, /<StationSlot blockId=\{blockId\} index=\{i \+ 1\} side="after" \/>/);
+    // A slot lights for a station of THIS block, never beside its own place.
+    assert.match(fn('StationSlot'), /lifted\?\.kind === 'station' && lifted\.blockId === blockId && index !== lifted\.index && index !== lifted\.index \+ 1/);
+    // A block gap never takes a station; the drop moves it only inside its own block.
+    assert.match(fn('GapTarget'), /const carried = !lifted \|\| lifted\.kind === 'station' \? null/);
+    assert.match(src, /if \(what\.kind === 'station' && what\.blockId === where\.blockId\) moveStationTo\(where\.blockId, what\.stationId, where\.index\);/);
+    // ⚠ The grip's rules reach the TRIGGER only: the menu's panel renders inside the wrapper, and a
+    // bare `button` selector crushed its full-width items to the glyph's 28px box.
+    assert.match(css, /\.ppStColMove button\[aria-haspopup\] \{/);
+    assert.doesNotMatch(css, /\.ppStColMove button \{/);
+    assert.doesNotMatch(css, /\.ppTlMove button \{/);
+    // A slot reaches into the gap only while LIVE (a resting reach read as a 4px spill on every
+    // column at 768 and 1440), and by half the gap PLUS the column's border — 0.3rem alone left a
+    // 2px dead strip at the gap's centre, exactly under the line (/review, 2026-09-24).
+    assert.match(css, /\.ppStColSlot \{ --reach: 0rem;/);
+    assert.match(css, /\.ppStColSlot\[data-target='on'\] \{ --reach: calc\(0\.3rem \+ 1px\); \}/);
   });
 
   it('K4 — one add row on a phone once the plan has a block; the blank plan keeps its ghost row', () => {

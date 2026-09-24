@@ -234,16 +234,18 @@ describe('the record\'s face on the plan page (stage 6, R1 · R2 · R3)', () => 
    * not read as a lost gate.
    */
   it('the record\'s toolbar: Send to staff and Library gated on the live face, a quiet Edit the plan for a writer', () => {
-    assert.ok(page.includes('writing && (data?.staffPeople?.length ?? 0) > 1'), 'Send to staff — gated, never deleted');
+    assert.ok(page.includes('canWrite && !isPracticeRecord && (data?.staffPeople?.length ?? 0) > 1'), 'Send to staff — gated, never deleted (and on the read face since stage 1b)');
     assert.ok(page.includes('data-testid="send-to-staff"') || page.includes("testId: 'send-to-staff'"), 'the who-runs-it build\'s button is still here');
     assert.ok(page.includes('{writing && canDock && ('), 'Library — gated, and still in the ROW: a width decision cannot reach the phone drawer');
-    assert.ok(page.includes('recordMode && canWrite'), 'Edit the plan — a writer, on a record');
-    assert.ok(page.includes("testId: 'edit-the-plan'"));
+    // Stage 1b (R1 · R3): every plan opens to READ; the one door into writing is a visible button.
+    assert.ok(page.includes("const editDoor = canWrite ? (reading ? 'edit' : 'done') : null;"), 'Edit — a writer, on every plan');
+    assert.ok(page.includes('data-testid="edit-the-plan"'));
+    assert.ok(page.includes('const recordMode = isPracticeRecord && reading;'), 'the record\'s FACE is a past practice being read');
   });
   it('the desk actions are ONE list — a phone drawer and a desktop row, never two copies of the words (E1)', () => {
     // One occurrence of each label in the page's code: two would be the one-spelling rule's own
     // failure mode (a phone branch and a desktop branch drifting apart word by word).
-    for (const label of ['Save as template…', 'Print the sheet', 'Send to staff', 'Edit the plan']) {
+    for (const label of ['Save as template…', 'Print the sheet', 'Send to staff']) {
       const hits = page.split(`'${label}'`).length - 1;
       assert.equal(hits, 1, `"${label}" is written ONCE, in deskActions — found ${hits}`);
     }
@@ -285,9 +287,9 @@ describe('the editor\'s read mode is a FACE, not a disabled form (stage 6, R2)',
   it('rows open to read: the ghost row, the gaps and the drag handle stay behind `layout.timeline`, the doors behind `!readOnly`', () => {
     assert.ok(editor.includes('timeline: !readOnly && !soloBlock'));
     assert.ok(editor.includes('{!readOnly && (doors.length > 0 || promoteDoor) && ('));
-    // A phone neither drags nor carries the pair (practice plans on a phone, K1 · K3, 2026-09-23);
-    // read-only still never drags — the first term is the one this test is about.
-    assert.ok(editor.includes('const canDrag = !readOnly && !solo && !phone && !sheet && blockCount > 1;'));
+    // One grip under the time at every width (owner, 2026-09-24) — read-only still never drags;
+    // the first term is the one this test is about.
+    assert.ok(editor.includes('const canMove = !readOnly && !solo && !sheet && blockCount > 1;'));
   });
 });
 

@@ -72,10 +72,14 @@ export interface RoomNav {
  * arrows STOP at the ends — disabled, reading "Start" / "End" — they never wrap; the position
  * count sits between them; `busy` freezes both while a write is in flight. The keys (← / →) are
  * the dialog floor's (`useDialogFloor`'s `walk`), which every host wires beside this.
+ *
+ * `compact` — "‹ 2 of 3 ›", the arrows unnamed on screen (the names stay in their `aria-label`s).
+ * For a phone foot, where a named pair gets ~7 letters a name (§227 walk, owner 2026-09-23): the
+ * practice sheets name the next stop IN FULL at the end of their body instead (`WalkOnward`).
  */
-export function RoomWalkNav({ nav, busy = false }: { nav: RoomNav; busy?: boolean }) {
+export function RoomWalkNav({ nav, busy = false, compact = false }: { nav: RoomNav; busy?: boolean; compact?: boolean }) {
   return (
-    <nav className={s.nav} aria-label={`Other ${nav.noun}`}>
+    <nav className={`${s.nav}${compact ? ` ${s.navCompact}` : ''}`} aria-label={`Other ${nav.noun}`}>
       <button
         type="button"
         className={s.navBtn}
@@ -84,9 +88,9 @@ export function RoomWalkNav({ nav, busy = false }: { nav: RoomNav; busy?: boolea
         onClick={() => { if (nav.prev) nav.onSelect(nav.prev.id); }}
       >
         <ChevronLeft size={16} aria-hidden />
-        <span className={s.navLabel}>{nav.prev?.label ?? 'Start'}</span>
+        {!compact && <span className={s.navLabel}>{nav.prev?.label ?? 'Start'}</span>}
       </button>
-      <span className={s.navCount}>{nav.index} of {nav.total} {nav.noun}</span>
+      <span className={s.navCount}>{nav.index} of {nav.total}{compact ? '' : ` ${nav.noun}`}</span>
       <button
         type="button"
         className={s.navBtn}
@@ -94,7 +98,7 @@ export function RoomWalkNav({ nav, busy = false }: { nav: RoomNav; busy?: boolea
         aria-label={nav.next ? `Next: ${nav.next.label}` : 'No next record'}
         onClick={() => { if (nav.next) nav.onSelect(nav.next.id); }}
       >
-        <span className={s.navLabel}>{nav.next?.label ?? 'End'}</span>
+        {!compact && <span className={s.navLabel}>{nav.next?.label ?? 'End'}</span>}
         <ChevronRight size={16} aria-hidden />
       </button>
     </nav>

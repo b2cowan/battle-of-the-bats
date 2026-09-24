@@ -278,7 +278,12 @@ export function CoachToolbarMenu({
   const asDrawer = drawerOnPhone && isPhone;
 
   return (
-    <div ref={rootRef} className={styles.root} onKeyDown={onKeyDown}>
+    /* ⚠ `data-escape-owner` WHILE OPEN — the other half of the Escape contract (`escapeOwnership.ts`).
+       A menu opened inside an open sheet registers its Escape listener AFTER the sheet's floor, so the
+       floor hears the key first, before `useDismissable` can claim it: Escape closed the menu AND the
+       phone's block sheet behind it (the rotation grid's pills and the station grip alike, measured
+       2026-09-24). Only while open — a closed menu must let Escape reach the dialog. */
+    <div ref={rootRef} className={styles.root} onKeyDown={onKeyDown} data-escape-owner={open ? '' : undefined}>
       <button
         ref={triggerRef}
         type="button"

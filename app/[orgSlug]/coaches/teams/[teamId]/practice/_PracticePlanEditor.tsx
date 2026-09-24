@@ -3,10 +3,10 @@ import { Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from '
 import { createPortal } from 'react-dom';
 import {
   DndContext, DragOverlay, MouseSensor, TouchSensor, pointerWithin, useDraggable, useDroppable, useSensor, useSensors,
-  type DragEndEvent, type DragStartEvent,
+  type DragEndEvent, type DragOverEvent, type DragStartEvent,
 } from '@dnd-kit/core';
 import {
-  ChevronDown, ChevronLeft, ChevronRight, ChevronUp, GripVertical, Library, Pencil, Plus, Repeat, Trash2, Users, X,
+  Check, ChevronLeft, ChevronRight, ChevronUp, GripVertical, Library, Pencil, Plus, Repeat, Trash2, Users, X,
 } from 'lucide-react';
 import {
   MAX_BLOCKS, MAX_COACHING_POINTS, MAX_DESCRIPTION_LEN, MAX_MINUTES, MAX_SHORT_TEXT_LEN,
@@ -42,6 +42,7 @@ import {
 import DrillSheet from '@/components/coaches/DrillSheet';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { RoomWalkNav, type RoomNav } from '@/components/coaches/RoomShell';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { playerDisplayName } from '@/lib/coach-roster-name';
@@ -88,6 +89,8 @@ import styles from '../../../coaches.module.css';
  *  · A block lifts by its GUTTER (the clock cell is the handle; the ▲▼ pair stays) and lands in a
  *    gap. The plan changes on the DROP and never on hover; a drop anywhere that is not a target
  *    snaps back and changes nothing (`pointerWithin` — the target is what the pointer is over).
+ *  · A station lifts by its GRIP (2026-09-24 — the block's grip one level down) and lands in a slot
+ *    between its own block's columns; a block gap never takes it, and it never leaves its block.
  */
 
 export type PracticeRosterPlayer = {
@@ -367,7 +370,7 @@ function StationFields({
             people={staffPeople} onPickPerson={onPickStaffPerson}
             manage={readOnly ? undefined : staffManage} onManageChanged={onStaffTagsChanged}
             onChange={next => onPatch({ staffTagIds: next })}
-            emptyHint="No staff yet — pick someone on the team, or type a name."
+            emptyHint="No staff yet — pick someone on the team, or type a name." placeholder="Add staff…"
             autoFocus={staff.autoFocus} />
         </div>
       )}
@@ -475,12 +478,13 @@ function StationFields({
  * "+ Add a station" is the last column. Three fit comfortably, four are tight, five and more wrap
  * to a second row rather than shrink under the tap floor; on a phone the columns stack as rows.
  *
- * The reorder pair lives on the column's own foot (owner, on the built draw, 2026-09-15 — it had
+ * The move control lives on the column's own foot (owner, on the built draw, 2026-09-15 — it had
  * sat in the modal's head, where a second pair of horizontal arrows beside the foot's stepper read
- * as "which way do I go", not "move this"). Here the arrows sit on the thing that moves and the
- * coach watches it move; the grid's columns follow. Buttons, never drag. A column is therefore a
- * FRAME holding the door (a button named by its content) and the pair beside its "Open ›" — an
- * arrow can't sit inside the door, because a button can't hold a button.
+ * as "which way do I go", not "move this"). Since 2026-09-24 it is the BLOCK'S GRIP, one level
+ * down (owner: "this should be drag and drop just like blocks are"): the ‹ › pair became the ⠿ —
+ * drag it to a slot between two columns, or tap it for Move earlier · Move later. A column is
+ * therefore a FRAME holding the door (a button named by its content) and the grip beside its
+ * "Open ›" — the grip can't sit inside the door, because a button can't hold a button.
  */
 /** The small olive "you" beside a block or station that is the reader's (mig 303). */
 function YouMark() {
@@ -517,16 +521,14 @@ function StationColumns({
               {station.description && <span className={styles.ppStColFirst}>{station.description}</span>}
               <span className={styles.ppStColOpen}>Open ›</span>
             </button>
-            {/* Named "earlier / later", never "left / right" — on a phone the columns stack and the
-                same pair turns to point up and down (CSS), while the order it moves is unchanged. */}
-            {!readOnly && (
-              <span className={styles.ppStColMove}>
-                <button type="button" className={styles.ppMoveBtn} aria-label={`Move ${label} earlier`}
-                  disabled={i === 0} onClick={() => onMove(station.id, -1)}><ChevronLeft size={15} /></button>
-                <button type="button" className={styles.ppMoveBtn} aria-label={`Move ${label} later`}
-                  disabled={i === stations.length - 1} onClick={() => onMove(station.id, 1)}><ChevronRight size={15} /></button>
-              </span>
-            )}
+            {!readOnly && (<>
+              {/* The column's two halves are where a carried station lands — in front of this one,
+                  or after it — so the whole row is a target and a slot is never a 10px strip. */}
+              <StationSlot blockId={blockId} index={i} side="before" />
+              <StationSlot blockId={blockId} index={i + 1} side="after" />
+              <StationGrip blockId={blockId} stationId={station.id} index={i} count={stations.length} label={label}
+                onMove={delta => onMove(station.id, delta)} />
+            </>)}
           </div>
         );
       })}
@@ -567,16 +569,67 @@ function StationDropTarget({ blockId, className, children }: {
   );
 }
 
-/** What is being carried — a panel row (a drill or a circuit) or a block by its gutter. */
+/**
+ * A station's GRIP — the block gutter's grip, one level down (owner, 2026-09-24: "this should be
+ * drag and drop just like blocks are"). The same two gestures on the one glyph: press and drag is
+ * the drag (a mouse after six pixels; a finger after the quarter-second hold, on a writing phone
+ * only — `touchGrip`), press and let go is the menu. Move earlier · Move later, never "left /
+ * right" or "up / down": the columns stand side by side at a desk and stack on a phone, and the
+ * order the words name is the same either way. The column fades while it is carried (CSS `:has`).
+ */
+function StationGrip({ blockId, stationId, index, count, label, onMove }: {
+  blockId: string;
+  stationId: string;
+  index: number;
+  count: number;
+  label: string;
+  onMove: (delta: number) => void;
+}) {
+  const { setNodeRef, listeners, isDragging } = useDraggable({
+    id: `station:${blockId}:${stationId}`, data: { kind: 'station', blockId, stationId, index, label } satisfies DragData,
+  });
+  return (
+    <span ref={setNodeRef} {...listeners} className={styles.ppStColMove} data-lifted={isDragging ? 'on' : undefined}>
+      <CoachToolbarMenu label={`Move ${label}`} variant="glyph" icon={<GripVertical size={16} aria-hidden />}>
+        <CoachToolbarMenuItem label="Move earlier" disabled={index === 0} onSelect={() => onMove(-1)} />
+        <CoachToolbarMenuItem label="Move later" disabled={index === count - 1} onSelect={() => onMove(1)} />
+      </CoachToolbarMenu>
+    </span>
+  );
+}
+
+/**
+ * Half a station column as a landing SLOT for a carried station — `index` is the position the
+ * station lands in front of (0 … n), so the two halves either side of a gap name the same slot and
+ * draw their line on the same pixel. The block's gap rule, one level down: lit only for a station
+ * of THIS block, never for its own two slots (a drop there is no move), and the plan changes on the
+ * drop, never on hover. `pointer-events: none` — the kit measures it; the door under it still clicks.
+ */
+function StationSlot({ blockId, index, side }: { blockId: string; index: number; side: 'before' | 'after' }) {
+  const { setNodeRef, isOver, active } = useDroppable({
+    id: `station-slot:${blockId}:${index}:${side}`, data: { kind: 'stationSlot', blockId, index } satisfies DropData,
+  });
+  const lifted = active?.data.current as DragData | undefined;
+  const applies = lifted?.kind === 'station' && lifted.blockId === blockId && index !== lifted.index && index !== lifted.index + 1;
+  return (
+    <span ref={setNodeRef} className={styles.ppStColSlot} data-side={side}
+      data-target={applies ? 'on' : undefined} data-over={applies && isOver ? 'on' : undefined} aria-hidden />
+  );
+}
+
+/** What is being carried — a panel row (a drill or a circuit), a block by its gutter, or a station
+ *  by its grip. */
 type DragData =
   | { kind: 'drill'; drill: RepTeamDrill }
   | { kind: 'circuit'; circuit: RepTeamCircuit }
-  | { kind: 'block'; blockId: string; index: number; label: string };
+  | { kind: 'block'; blockId: string; index: number; label: string }
+  | { kind: 'station'; blockId: string; stationId: string; index: number; label: string };
 /** Where it can land — a gap between rows (index = the position the new or moved block takes),
- *  or the open block's station door. */
+ *  the open block's station door, or a slot between its station columns. */
 type DropData =
   | { kind: 'gap'; index: number }
-  | { kind: 'station'; blockId: string };
+  | { kind: 'station'; blockId: string }
+  | { kind: 'stationSlot'; blockId: string; index: number };
 
 /**
  * A GAP between two rows — and under the last one — as a drop target (stage 4, L2). Collapsed to
@@ -588,8 +641,9 @@ type DropData =
 function GapTarget({ index, startLabel, blockCount }: { index: number; startLabel: string | null; blockCount: number }) {
   const { setNodeRef, isOver, active } = useDroppable({ id: `gap:${index}`, data: { kind: 'gap', index } });
   const lifted = active?.data.current as DragData | undefined;
-  // One reading of what is carried: does this gap take it, and what the line would say.
-  const carried = !lifted ? null
+  // One reading of what is carried: does this gap take it, and what the line would say. A station
+  // moves inside its own block only — a gap between blocks never takes one.
+  const carried = !lifted || lifted.kind === 'station' ? null
     : lifted.kind === 'block'
       ? { applies: index !== lifted.index && index !== lifted.index + 1, words: [`Move ${lifted.label} here`] }
       : {
@@ -635,7 +689,7 @@ function GapTarget({ index, startLabel, blockCount }: { index: number; startLabe
  * opened it.
  */
 function StationModal({
-  block, station, readOnly, withoutPeople,
+  block, station, readOnly, onEdit, onDoneEditing, withoutPeople,
   staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, equipmentTags, onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   nameOf, onPatch, onDelete, onStep, onClose, onOpenPicker, onDetach, onSwapDrill, onPromote,
@@ -643,6 +697,9 @@ function StationModal({
   block: PracticePlanBlock;
   station: PracticeStation;
   readOnly: boolean;
+  /** The head's Edit / Done editing (`SheetEditToggle`) — the page's doors; this station stays open. */
+  onEdit?: () => void;
+  onDoneEditing?: () => void;
   withoutPeople: boolean;
   staffTags: PickableTag[];
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
@@ -670,6 +727,11 @@ function StationModal({
   const isRotation = blockRotates(block);
   const label = stationLabel(station, index);
   const walk = stationWalk(stations, station.id);
+  /* On a phone the foot's walk is compact and the next station is named in full at the body's end
+     (§227, option C — the block sheet's answer, one level down). The desk keeps the named pair. */
+  const phone = useIsPhone();
+  const nextStation = walk.next ? stations.find(s => s.id === walk.next!.id) : undefined;
+  const nextWho = nextStation ? mergedTagNames(nextStation.staff, nextStation.staffTagIds, staffTags).join(', ') : '';
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogFloor(true, panelRef, {
     onClose,
@@ -682,23 +744,39 @@ function StationModal({
     <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`${label} — station ${index + 1} of ${stations.length}`}
         className={`${styles.modal} ${styles.modalWide} ${styles.modalScrollBody} ${styles.ppStationModal}`}>
-        <CoachModalHeader
-          onClose={onClose}
-          closeAriaLabel="Close"
-          // The head IS the name: text for a drill's, text when read (stage 6, R2), a box to type
-          // into otherwise.
-          title={fromDrill || readOnly ? label : (
-            <input className={`${styles.input} ${styles.ppStationTitle}`} value={station.name}
-              maxLength={MAX_TITLE_LEN} placeholder="Station name" aria-label="Station name"
-              onChange={e => onPatch({ name: e.target.value })} />
+        {/* The one anatomy (owner, §227 walk 2026-09-24): the head says where you are — the block
+            sheet's eyebrow, one level down — and carries Edit / Done editing; the NAME leads the
+            body, as the block's title leads its sheet. */}
+        <CoachModalHeader onClose={onClose} closeAriaLabel="Close" title={
+          <span className={styles.ppBlockSheetEyebrow}>
+            <b>Station {index + 1} of {stations.length}</b>
+            <span>{block.title.trim() || 'This block'}</span>
+          </span>
+        }>
+          {/* The bin comes in to the LEFT of the toggle, never in its place: ✎ and ✓ hold the same spot,
+              so the finger that tapped ✎ is resting on ✓ — not on a bin that just arrived under it
+              (§227 walk, 2026-09-24). The bin's slot is always in the list, so the toggle is one
+              element throughout and keeps focus. */}
+          {!readOnly && (
+            <SheetDeleteButton label={label} onDelete={onDelete}
+              message={`Removes it from ${block.title.trim() || 'this block'}. This can't be undone.`} />
           )}
-        />
+          <SheetEditToggle readOnly={readOnly} onEdit={onEdit} onDoneEditing={onDoneEditing} />
+        </CoachModalHeader>
 
         <div className={`${styles.scrollPane} ${styles.ppStationBody}`}>
           {/* Keyed on the station, so a step (Prev / Next, ← / →) starts the fields fresh: the two
               pickers keep a typed-but-unchosen search as local state, and with Staff now the first
               field a "jen" typed on station 1 carried into station 2's box (/review, 2026-09-20).
               The PANEL is not keyed — the floor's own focus-on-step rule depends on it staying. */}
+          {/* The name: text for a drill's and when read (stage 6, R2), a box to type into otherwise. */}
+          {fromDrill || readOnly
+            ? <p className={styles.ppStationName}>{label}</p>
+            : (
+              <input className={`${styles.input} ${styles.ppStationTitle}`} value={station.name}
+                maxLength={MAX_TITLE_LEN} placeholder="Station name" aria-label="Station name"
+                onChange={e => onPatch({ name: e.target.value })} />
+            )}
           <StationFields
             key={station.id}
             station={station} block={block} sole={false} isRotation={isRotation}
@@ -710,15 +788,16 @@ function StationModal({
             nameOf={nameOf} onPatch={onPatch} onOpenPicker={onOpenPicker}
             onDetach={onDetach} onSwapDrill={onSwapDrill} onPromote={onPromote}
           />
+          {phone && (
+            <WalkOnward walk={{ ...walk, noun: 'stations', onSelect: onStep }} noun="station"
+              kicker="Next station" meta={nextWho || null} />
+          )}
         </div>
 
-        <div className={styles.modalFooter}>
-          {!readOnly && (
-            <button type="button" className={styles.deleteRecordBtn} onClick={onDelete}>
-              <Trash2 size={14} aria-hidden /> Delete this station
-            </button>
-          )}
-          <RoomWalkNav nav={{ ...walk, noun: 'stations', onSelect: onStep }} />
+        {/* The foot: the walk, then Done — the block sheet's own foot. */}
+        <div className={`${styles.modalFooter} ${styles.ppSheetFoot}`}>
+          <RoomWalkNav nav={{ ...walk, noun: 'stations', onSelect: onStep }} compact={phone} />
+          <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>
         </div>
       </div>
     </div>
@@ -1542,16 +1621,111 @@ function isUntouchedNewBlock(block: PracticePlanBlock): boolean {
  * can never exist in one presentation and not the other. The desktop and the 641–768 band keep
  * the block open in place, exactly as the practices re-evaluation ruled it.
  */
+/**
+ * The next stop, named IN FULL at the end of a phone sheet's body (§227 walk, owner 2026-09-23 —
+ * option C). The phone foot's walk is compact ("‹ 2 of 3 ›"), because a named pair got ~7 letters
+ * a name at 390; a coach reaches the end of a block when they are done writing it, which is when
+ * they step on — so that is where "Next · 11:45 p.m. · Small-sided game" is read, as a row that
+ * wraps rather than cuts. The way back is a quiet link under it. Both steps go through the walk's
+ * own `onSelect`, so they are exactly the foot's arrows.
+ */
+function WalkOnward({ walk, noun, kicker, meta }: {
+  walk: RoomNav;
+  noun: 'block' | 'station';
+  /** "Next · 11:45 p.m." — the destination's clock where it has one. */
+  kicker: string;
+  /** One quiet line under the name — the block's length, the station's people. */
+  meta?: string | null;
+}) {
+  if (walk.total <= 1) return null;
+  return (
+    <div className={styles.ppWalkOnward} data-walk-onward>
+      {walk.next ? (
+        <button type="button" className={styles.ppWalkNext} onClick={() => walk.onSelect(walk.next!.id)}>
+          <span className={styles.ppWalkNextText}>
+            <span className={styles.ppWalkNextKicker}>{kicker}</span>
+            <span className={styles.ppWalkNextName}>{walk.next.label}</span>
+            {meta && <span className={styles.ppWalkNextMeta}>{meta}</span>}
+          </span>
+          <ChevronRight size={16} aria-hidden />
+        </button>
+      ) : (
+        <p className={styles.ppWalkEnd}>That’s the last {noun}.</p>
+      )}
+      {walk.prev && (
+        <button type="button" className={styles.ppWalkBack} onClick={() => walk.onSelect(walk.prev!.id)}>
+          <ChevronLeft size={14} aria-hidden /> Back to {walk.prev.label}
+        </button>
+      )}
+    </div>
+  );
+}
+
+/**
+ * ONE ANATOMY FOR THE TWO SHEETS (owner, §227 walk 2026-09-24 — "aren't they effectively the
+ * same?"). The block sheet and the station form grew a week apart from two different drawings and
+ * put the same things in different places. Both now read: the head — back · where you are · this
+ * toggle · the bin (while editing); the body — the name first, the fields, the next stop; the foot —
+ * the walk and Done.
+ *
+ * The toggle is the toolbar's Edit / Done editing, one button that flips in place (so focus stays
+ * on it): ✎ while reading, ✓ while writing. ON A PHONE IT IS THE GLYPH ALONE (owner, §227 walk
+ * 2026-09-24: "just the pencil and checkbox is fine for mobile") — the words stay as its accessible
+ * name, and on a desk they stay on screen. It edits the whole PLAN — the sheet stays open either
+ * way. Absent where the page gives no door (a viewer, the template and circuit editors, the
+ * closed-season reader).
+ */
+function SheetEditToggle({ readOnly, onEdit, onDoneEditing }: {
+  readOnly: boolean;
+  onEdit?: () => void;
+  onDoneEditing?: () => void;
+}) {
+  const act = readOnly ? onEdit : onDoneEditing;
+  if (!act) return null;
+  return (
+    <button type="button" className={`${styles.btnSecondary} ${styles.ppSheetEditDoor}`}
+      aria-label={readOnly ? 'Edit' : 'Done editing'} data-on={readOnly ? undefined : 'on'} onClick={act}>
+      {readOnly ? <Pencil size={15} aria-hidden /> : <Check size={16} aria-hidden />}
+      <span className={styles.ppSheetEditWord} aria-hidden>{readOnly ? 'Edit' : 'Done editing'}</span>
+    </button>
+  );
+}
+
+/**
+ * The head's bin, beside ✓ while editing (owner, §227 walk 2026-09-24: "so the user doesn't have to
+ * go digging for the delete"). ⚠ IT ASKS FIRST, and that is the price of the place: a delete here is
+ * immediate and autosaved with no undo — a block goes with every station in it — and the bin now
+ * sits a thumb's width from ✓. The question names what goes, in the portal's own confirm.
+ */
+function SheetDeleteButton({ label, message, onDelete }: { label: string; message: string; onDelete: () => void }) {
+  const confirm = useConfirm();
+  return (
+    <button type="button" className={styles.ppIconBtn} aria-label={`Delete ${label}`}
+      onClick={async () => {
+        const ok = await confirm({ title: `Delete ${label}?`, message, confirmText: 'Delete', cancelText: 'Keep it', tone: 'danger' });
+        if (ok) onDelete();
+      }}>
+      <Trash2 size={15} />
+    </button>
+  );
+}
+
 function BlockSheet({
-  bodyKey, label, eyebrow, walk, readOnly, onMove, onDelete, onClose, children,
+  bodyKey, label, eyebrow, walk, onward, readOnly, onEdit, onDoneEditing, deleteMessage, onDelete, onClose, children,
 }: {
   bodyKey: string;
   label: string;
   /** "Block 2 of 3" and the block's start ("11:00 p.m."; absent for a template, which has no clock). */
   eyebrow: { place: string; clock: string | null };
   walk: RoomNav;
+  /** The next block's clock and length, for the full-name row at the body's end (`WalkOnward`). */
+  onward: { kicker: string; meta: string | null };
   readOnly: boolean;
-  onMove: (delta: number) => void;
+  /** The head's Edit / Done editing (`SheetEditToggle`) — the page's doors, absent where it gives none. */
+  onEdit?: () => void;
+  onDoneEditing?: () => void;
+  /** What the delete question says goes — "Removes it from the plan, with its 3 stations." */
+  deleteMessage: string;
   onDelete: () => void;
   onClose: () => void;
   children: ReactNode;
@@ -1573,29 +1747,25 @@ function BlockSheet({
             {eyebrow.clock && <span>{eyebrow.clock}</span>}
           </span>
         }>
-          {/* The walk already knows the ends — one source for "first", "last" and "nothing to move". */}
-          {!readOnly && walk.total > 1 && (
-            <>
-              <button type="button" className={styles.ppIconBtn} aria-label={`Move ${label} up`}
-                disabled={!walk.prev} onClick={() => onMove(-1)}><ChevronUp size={16} /></button>
-              <button type="button" className={styles.ppIconBtn} aria-label={`Move ${label} down`}
-                disabled={!walk.next} onClick={() => onMove(1)}><ChevronDown size={16} /></button>
-            </>
-          )}
-          {!readOnly && (
-            <button type="button" className={styles.ppIconBtn} aria-label={`Delete ${label}`} onClick={onDelete}>
-              <Trash2 size={15} />
-            </button>
-          )}
+          {/* ⚠ No Move up · Move down here (stage 1b, R4 — revising K3): a block is moved from the
+              LIST, by the grip on its row, where the other blocks and their times stay in view. The
+              head carries Edit / Done editing, and the bin while editing — which asks first. */}
+          {/* The bin comes in to the LEFT of the toggle, never in its place: ✎ and ✓ hold the same spot,
+              so the finger that tapped ✎ is resting on ✓ — not on a bin that just arrived under it
+              (§227 walk, 2026-09-24). The bin's slot is always in the list, so the toggle is one
+              element throughout and keeps focus. */}
+          {!readOnly && <SheetDeleteButton label={label} message={deleteMessage} onDelete={onDelete} />}
+          <SheetEditToggle readOnly={readOnly} onEdit={onEdit} onDoneEditing={onDoneEditing} />
         </CoachModalHeader>
         <div className={`${styles.scrollPane} ${styles.ppStationBody}`}>
           {/* Keyed on the block, so a step starts the fields fresh (a picker's typed-but-unchosen
               search is local state — the station modal's /review lesson); the PANEL is not keyed,
               so the floor, its focus rule and its history step stay armed across the walk. */}
           <div key={bodyKey} className={`${styles.ppTlOpen} ${styles.ppBlockSheetBody}`}>{children}</div>
+          <WalkOnward walk={walk} noun="block" kicker={onward.kicker} meta={onward.meta} />
         </div>
         <div className={styles.modalFooter}>
-          <RoomWalkNav nav={walk} />
+          <RoomWalkNav nav={walk} compact />
           <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>
         </div>
       </div>
@@ -1604,7 +1774,7 @@ function BlockSheet({
 }
 
 function BlockCard({
-  block, index, blockCount, clock, blockStartMs, open, focusTitle, openDoors, readOnly, withoutPeople, solo,
+  block, index, blockCount, clock, clockPreview = false, blockStartMs, open, focusTitle, openDoors, readOnly, withoutPeople, solo,
   phone = false, sheet, onStartFromDrill,
   restTakenElsewhere, roster, notRepliedIds,
   staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, mineBlocks, mineStations, equipmentTags, onCreateEquipmentTag, nameOf,
@@ -1616,6 +1786,8 @@ function BlockCard({
   index: number;
   blockCount: number;
   clock?: BlockClock;
+  /** The gutter shows a PREVIEWED start that differs from today's (a block is being carried, R4). */
+  clockPreview?: boolean;
   blockStartMs?: number;
   open: boolean;
   /** The circuit editor: the block ALONE on a sheet — no collapse, no bin, no clock, no drag; the
@@ -1625,7 +1797,7 @@ function BlockCard({
    *  reorder pair — the pair lives on the block sheet's head. */
   phone?: boolean;
   /** Render the OPEN block as the phone's full-screen sheet (K2) rather than a card in the spine. */
-  sheet?: { walk: RoomNav };
+  sheet?: { walk: RoomNav; onward: { kicker: string; meta: string | null }; onEdit?: () => void; onDoneEditing?: () => void };
   /** "Start from a drill ›" inside a new, still-empty block's sheet (K4) — absent otherwise. */
   onStartFromDrill?: () => void;
   /** A block the coach JUST added lands with its title focused; a row they opened to read does not. */
@@ -1679,7 +1851,8 @@ function BlockCard({
   onOpenStation: (stationId: string) => void;
   /** The editor's one station patch (the modal writes through it too). */
   onPatchStation: (stationId: string, patch: Partial<PracticeStation>) => void;
-  /** Reorders a station within this block — the pair on the column's foot. */
+  /** Reorders a station within this block — the grip's menu on the column's foot (the drag drops
+   *  through the editor's `onDragEnd`). */
   onMoveStation: (stationId: string, delta: number) => void;
   /** Opens this block's groups room (D9) — the editor owns which block's is open. */
   onOpenGroups: () => void;
@@ -1706,18 +1879,20 @@ function BlockCard({
      (gloves and phones defeat drag — the Roster lesson). Absent, not disabled, on a read-only plan
      and while there is one block: nothing to reorder is not a locked control. */
   const gutterLength = formatDuration(block.duration);
-  /* The gutter is also the block's DRAG HANDLE (stage 4, L2): press and drag anywhere on the clock
-     cell with a mouse and the row lifts; it lands in a gap. The pair under it is SHIELDED from
-     the handle (/review, 2026-09-16): the kit lifts after six pixels of movement, so a press on
-     an arrow that drifted would have become a drag and swallowed the click — the arrows stop the
-     mousedown at their edge, and a press on an arrow is only ever a step. Absent on a read-only
-     plan, with one block, and on the circuit editor's lone block (nothing to move it among). */
-  /* A phone has no mouse to drag with and no pair under the clock (K3 moved it to the sheet's head);
-     the sheet's copy of the block registers under its own id so the list row's handle is not
-     replaced by a disabled twin. */
-  const canDrag = !readOnly && !solo && !phone && !sheet && blockCount > 1;
+  /* THE GRIP UNDER THE TIME — one handle, every width (owner, §227 walk 2026-09-24: "replace the
+     up/down on desktop with the :: so both the desktop and mobile use drag and drop"). The gutter
+     is the block's drag handle (stage 4, L2): a mouse lifts it after six pixels, a finger after a
+     quarter-second hold (phones only — see `touchGrip`). Under the time sits the GRIP, which is also
+     a menu: a click or a tap opens Move up · Move down — the groups room's chip rule, where the
+     tap always works and the drag is the shortcut, and L2's "buttons everywhere" kept by the menu
+     rather than by a pair of arrows. It replaced the desk's ▲▼ pair and the phone's own grip
+     column (stage 1b, R4), so the row gets its width back. The list is where a move is judged: the
+     other blocks and their times stay in view. Absent on a read-only plan, with one block, on the
+     circuit editor's lone block, and on the sheet's copy of a block (registered under its own id
+     so the list row's handle is not replaced by a disabled twin). */
+  const canMove = !readOnly && !solo && !sheet && blockCount > 1;
   const { setNodeRef: setHandleRef, listeners: handleListeners, isDragging } = useDraggable({
-    id: `block:${block.id}${sheet ? ':sheet' : ''}`, data: { kind: 'block', blockId: block.id, index, label } satisfies DragData, disabled: !canDrag,
+    id: `block:${block.id}${sheet ? ':sheet' : ''}`, data: { kind: 'block', blockId: block.id, index, label } satisfies DragData, disabled: !canMove,
   });
   /* A block just added opens its SHEET with the cursor in the title (K4). `autoFocus` alone lost it:
      the sheet's dialog floor seats focus on the panel whenever focus is outside it, and in the dev
@@ -1730,20 +1905,22 @@ function BlockCard({
   }, [sheet, open, focusTitle]);
   const lengthWord = block.duration.restOfPractice ? 'Rest of practice' : gutterLength;
   const gutter = (
-    <div ref={setHandleRef} {...(canDrag ? handleListeners : {})}
-      className={`${styles.ppTlGutter}${canDrag ? ` ${styles.ppTlGutterHandle}` : ''}`}
-      data-lifted={isDragging ? 'on' : undefined}>
+    <div ref={setHandleRef} {...(canMove ? handleListeners : {})}
+      className={`${styles.ppTlGutter}${canMove ? ` ${styles.ppTlGutterHandle}` : ''}`}
+      data-lifted={isDragging ? 'on' : undefined} data-preview={clockPreview ? 'on' : undefined}>
       {/* A template has no clock, so the gutter carries the length — on a phone's 5rem column
           "Rest of practice" is the short "rest" the dated gutter already prints (/review, 2026-09-23). */}
       {clock ? clock.startLabel : phone && block.duration.restOfPractice ? 'rest' : gutterLength || '—'}
       {/* On a phone the length rides the row's facts line instead (K1) — the column narrows to the clock. */}
       {clock && !phone && <small>{block.duration.restOfPractice ? 'rest' : gutterLength || 'no length'}</small>}
-      {canDrag && (
-        <span className={styles.ppTlMove} onMouseDown={e => e.stopPropagation()}>
-          <button type="button" className={styles.ppMoveBtn} aria-label={`Move ${label} up`}
-            disabled={index === 0} onClick={() => onMove(-1)}><ChevronUp size={15} /></button>
-          <button type="button" className={styles.ppMoveBtn} aria-label={`Move ${label} down`}
-            disabled={index === blockCount - 1} onClick={() => onMove(1)}><ChevronDown size={15} /></button>
+      {/* The grip is INSIDE the handle, unshielded: pressing it and moving is the drag; pressing
+          it and letting go is the menu (the kit swallows the click after a real drag). */}
+      {canMove && (
+        <span className={styles.ppTlMove}>
+          <CoachToolbarMenu label={`Move ${label}`} variant="glyph" icon={<GripVertical size={16} aria-hidden />}>
+            <CoachToolbarMenuItem label="Move up" disabled={index === 0} onSelect={() => onMove(-1)} />
+            <CoachToolbarMenuItem label="Move down" disabled={index === blockCount - 1} onSelect={() => onMove(1)} />
+          </CoachToolbarMenu>
         </span>
       )}
     </div>
@@ -1979,7 +2156,7 @@ function BlockCard({
               people={staffPeople} onPickPerson={onPickStaffPerson}
               manage={readOnly ? undefined : staffManage} onManageChanged={onStaffTagsChanged}
               onChange={next => onPatch({ staffTagIds: next })}
-              emptyHint="No staff yet — pick someone on the team, or type a name."
+              emptyHint="No staff yet — pick someone on the team, or type a name." placeholder="Add staff…"
               /* A block that already carries a drill (its own card, own fields) can push this
                  door well down the sheet — opening it with no signal left the field off the
                  top of the screen (owner catch, 2026-09-15). Focusing it here scrolls it into
@@ -2186,6 +2363,9 @@ function BlockCard({
       </div>
   );
 
+  /* What the delete question says goes — the phone sheet's bin and the desk card's bin ask the same. */
+  const deleteMessage = `Removes it from the plan${stationCount >= 2 ? `, with its ${stationCount} stations` : ''}. This can't be undone.`;
+
   if (sheet) {
     return (
       <BlockSheet
@@ -2193,8 +2373,11 @@ function BlockCard({
         label={label}
         eyebrow={{ place: `Block ${index + 1} of ${blockCount}`, clock: clock?.startLabel ?? null }}
         walk={sheet.walk}
+        onward={sheet.onward}
         readOnly={readOnly}
-        onMove={onMove}
+        onEdit={sheet.onEdit}
+        onDoneEditing={sheet.onDoneEditing}
+        deleteMessage={deleteMessage}
         onDelete={onDelete}
         onClose={onClose}
       >
@@ -2218,11 +2401,9 @@ function BlockCard({
             <ChevronUp size={16} />
           </button>
         )}
-        {!readOnly && !solo && (
-          <button type="button" className={styles.ppIconBtn} aria-label={`Delete ${label}`} onClick={onDelete}>
-            <Trash2 size={15} />
-          </button>
-        )}
+        {/* The desk's bin asks too (owner, 2026-09-24): the same no-undo delete as the phone sheet's,
+            which already asked — one question, whichever width the coach deletes from. */}
+        {!readOnly && !solo && <SheetDeleteButton label={label} message={deleteMessage} onDelete={onDelete} />}
       </div>
       {body}
       </div>
@@ -2324,6 +2505,15 @@ interface Props {
    */
   readOnly: boolean;
   /**
+   * ✎ in a block's and a station's head while READING (practice plans on a phone, stage 1b, R3 —
+   * "basically every screen should have an edit button"): the reader who may write switches the
+   * whole plan to writing from where they are, and the block or station they were reading stays
+   * open, now as its form. Absent for anyone who may not write, and on every writing surface.
+   */
+  onEdit?: () => void;
+  /** ✓ Done editing in the same place while writing (owner, §227 walk 2026-09-24) — back to reading. */
+  onDoneEditing?: () => void;
+  /**
    * The sheet is a finished practice's RECORD (stage 6, R1 · R2): the goal line reads "Goal:" —
    * the paper's own word (it prints GOAL) — where the live page says "Tonight:", so the record
    * and the print agree; an unwritten goal reads as silence, never as the future-tense placeholder.
@@ -2361,7 +2551,7 @@ export default function PracticePlanEditor({
   staffTags = [], onCreateStaffTag, equipmentTags = [], onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   focusManage, onFocusTagsChanged,
-  eventStartsAt, eventEndsAt, readOnly, record = false, goalInputId, withoutPeople = false, onStartFrom,
+  eventStartsAt, eventEndsAt, readOnly, onEdit, onDoneEditing, record = false, goalInputId, withoutPeople = false, onStartFrom,
   staffPeople = [], onPickStaffPerson, viewerBlockIds, viewerStationIds,
 }: Props) {
   const [attach, setAttach] = useState<AttachTarget | null>(null);
@@ -2466,7 +2656,24 @@ export default function PracticePlanEditor({
    * still a click, and on touch nothing lifts at all (the sheet and the pair are the path).
    */
   const [lifted, setLifted] = useState<DragData | null>(null);
-  const dragSensors = useSensors(useSensor(MouseSensor, { activationConstraint: { distance: 6 } }));
+  /* ≤640 while writing, a finger lifts a block or a station too — by its GRIP only (stage 1b, R4;
+     stations 2026-09-24): nothing else in this drag context has listeners on a phone (the library
+     panel is a desk's), and the hold is a quarter second, so a swipe that starts on a grip still
+     scrolls the page. Asked in the circuit editor as well — its lone block has no grip, but its
+     stations do. */
+  const touchGrip = useIsPhone(!readOnly);
+  const mouseSensor = useSensor(MouseSensor, { activationConstraint: { distance: 6 } });
+  /* ⚠ ALWAYS TWO SENSORS. The kit keys an effect on the sensor list, so a list that grows and
+     shrinks with the width ("the final argument passed to useEffect changed size") crashed the page
+     the moment the window crossed 640 (owner, §227 walk, 2026-09-24). The touch sensor is always
+     registered; off a writing phone its constraint can never be met, so on a tablet nothing lifts
+     by touch — exactly as before stage 1b. */
+  const touchSensor = useSensor(TouchSensor, {
+    activationConstraint: touchGrip ? { delay: 250, tolerance: 6 } : { distance: Number.POSITIVE_INFINITY },
+  });
+  const dragSensors = useSensors(mouseSensor, touchSensor);
+  /** The gap under a carried block — what the start times preview (R4 · frame 4). */
+  const [overGap, setOverGap] = useState<number | null>(null);
   /**
    * The station OPEN as a modal (stage 3, D4) — one at a time, the editor's to say which, so the
    * stepper in its foot can swap the station while the modal stays mounted (the room's own idiom).
@@ -2489,6 +2696,26 @@ export default function PracticePlanEditor({
   );
   const clockByBlock = useMemo(() => new Map(walk.clocks.map(c => [c.blockId, c])), [walk]);
   const nextStartLabel = walk.nextStartLabel;
+  /* While a BLOCK is carried over a gap, the clocks of the plan as it WOULD be (stage 1b, R4 —
+     "moving the position … without seeing the other blocks limits my visibility into its impact"):
+     the same walk over the reordered list, so every gutter and the gap's own line read the times
+     the drop would give — and a block moved DOWN no longer claims the start time of the block it
+     lands in front of (it gives its own minutes back first). Null the moment nothing would move. */
+  const previewClocks = useMemo(() => {
+    if (lifted?.kind !== 'block' || overGap === null) return null;
+    const from = plan.blocks.findIndex(b => b.id === lifted.blockId);
+    const to = overGap > from ? overGap - 1 : overGap;
+    if (from < 0 || to === from) return null;
+    const next = plan.blocks.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
+    return new Map(walkBlockClocks(next, eventStartsAt, eventEndsAt).clocks.map(c => [c.blockId, c]));
+  }, [lifted, overGap, plan.blocks, eventStartsAt, eventEndsAt]);
+  /** A gap's start line: the carried block's own previewed start over the gap it would land in. */
+  const gapStartLabel = (gap: number, fallback: string | null) =>
+    previewClocks && overGap === gap && lifted?.kind === 'block'
+      ? previewClocks.get(lifted.blockId)?.startLabel ?? fallback
+      : fallback;
   // ⚠ NO NOW-MARKER (owner, 2026-09-17, with the P10 no-clock ruling). Stage 5's P9 put "now" over
   // the clock in the running block's gutter, by the PLAN — and the plan's clock is exactly the
   // thing P10 ruled does not know where the practice is. The sheet is a plan, never a clock.
@@ -2642,9 +2869,9 @@ export default function PracticePlanEditor({
     if (!block) return;
     patchBlock(blockId, { stations: (block.stations ?? []).map(s => (s.id === stationId ? { ...s, ...patch } : s)) });
   };
-  /** Reorder with BUTTONS, never drag — the pair on the station column's foot (owner, 2026-09-15;
-   *  it had been the modal's head). The grid and every group key on the station's ID, so moving
-   *  it never detaches it from its carousel position. */
+  /** Move earlier · Move later — the station grip's menu (the pair on the column's foot until
+   *  2026-09-24; it had been the modal's head). The grid and every group key on the station's ID,
+   *  so moving it never detaches it from its carousel position. */
   const moveStation = (blockId: string, stationId: string, delta: number) => {
     const block = plan.blocks.find(b => b.id === blockId);
     const stations = block?.stations ?? [];
@@ -2653,6 +2880,19 @@ export default function PracticePlanEditor({
     if (at < 0 || target < 0 || target >= stations.length) return;
     const next = stations.slice();
     [next[at], next[target]] = [next[target], next[at]];
+    patchBlock(blockId, { stations: next });
+  };
+  /** The grip's DROP — `slot` is the position the station lands in front of (0 … n), the way
+   *  `moveBlockTo` reads a gap; a slot beside the station's own place moves nothing. */
+  const moveStationTo = (blockId: string, stationId: string, slot: number) => {
+    const block = plan.blocks.find(b => b.id === blockId);
+    const stations = block?.stations ?? [];
+    const from = stations.findIndex(s => s.id === stationId);
+    const to = slot > from ? slot - 1 : slot;
+    if (from < 0 || to === from || to < 0 || to >= stations.length) return;
+    const next = stations.slice();
+    const [moved] = next.splice(from, 1);
+    next.splice(to, 0, moved);
     patchBlock(blockId, { stations: next });
   };
   /** Delete from the modal (D4) — no confirm, as the station card's own bin never asked (a
@@ -2754,18 +2994,28 @@ export default function PracticePlanEditor({
 
   /* ── The drop (L2): the ONE place a drag changes the plan. Every target is exact — a gap takes a
      new block at that index (a drill's, a circuit's) or the moved block; the open block's station
-     door takes a DRILL by D13's rule through the same path the sheet's pick takes. A drop with no
-     target under the pointer does nothing at all. ── */
+     door takes a DRILL by D13's rule through the same path the sheet's pick takes; a slot between
+     station columns takes a station of that same block. A drop with no target under the pointer
+     does nothing at all. ── */
   const onDragStart = (e: DragStartEvent) => setLifted((e.active.data.current as DragData | undefined) ?? null);
+  const onDragOver = (e: DragOverEvent) => {
+    const where = e.over?.data.current as DropData | undefined;
+    setOverGap(where?.kind === 'gap' ? where.index : null);
+  };
   const onDragEnd = (e: DragEndEvent) => {
+    setOverGap(null);
     setLifted(null);
     const what = e.active.data.current as DragData | undefined;
     const where = e.over?.data.current as DropData | undefined;
     if (!what || !where) return;
+    if (where.kind === 'stationSlot') {
+      if (what.kind === 'station' && what.blockId === where.blockId) moveStationTo(where.blockId, what.stationId, where.index);
+      return;
+    }
     if (where.kind === 'gap') {
       if (what.kind === 'drill') addBlockFromDrill(what.drill, where.index);
       else if (what.kind === 'circuit') addBlockFromCircuit(what.circuit, where.index);
-      else moveBlockTo(what.blockId, where.index);
+      else if (what.kind === 'block') moveBlockTo(what.blockId, where.index);
       return;
     }
     // The station door: a drill only, and only the open block's (the target renders there alone).
@@ -3111,7 +3361,9 @@ export default function PracticePlanEditor({
     block,
     index: i,
     blockCount: plan.blocks.length,
-    clock: clockByBlock.get(block.id),
+    // The gutter reads the PREVIEW while a block is carried over a gap (R4), and says which moved.
+    clock: (previewClocks ?? clockByBlock).get(block.id),
+    clockPreview: !!previewClocks && previewClocks.get(block.id)?.startLabel !== clockByBlock.get(block.id)?.startLabel,
     // From the SAME clock walk as the gutter — never a second copy of the arithmetic.
     blockStartMs: clockByBlock.get(block.id)?.startMs,
     solo: soloBlock,
@@ -3162,6 +3414,14 @@ export default function PracticePlanEditor({
     noun: 'blocks',
     onSelect: id => openBlock(plan.blocks.find(b => b.id === id) ?? null),
   } : null;
+  /* The row at the sheet's end names the next block with its clock and length (§227, option C) —
+     the clock the timeline's gutter prints, absent on a template (it has none). */
+  const nextSheetBlock = sheetWalk?.next ? plan.blocks.find(b => b.id === sheetWalk.next!.id) : undefined;
+  const nextSheetClock = nextSheetBlock ? clockByBlock.get(nextSheetBlock.id)?.startLabel : undefined;
+  const sheetOnward = {
+    kicker: nextSheetClock ? `Next · ${nextSheetClock}` : 'Next',
+    meta: nextSheetBlock ? formatDuration(nextSheetBlock.duration) || null : null,
+  };
   /* K4: a block JUST added from "+ Add a block" and still blank offers the library under its title.
      Taking it swaps the blank block for the pick — the drill sheet's own "new block" path — so
      nothing the coach typed can be lost (there is nothing yet). */
@@ -3184,7 +3444,7 @@ export default function PracticePlanEditor({
        beside the sheet — React context crosses a portal). `pointerWithin`: the target is what the
        pointer is over, so a drop on a block row, a column or the page is a drop on nothing. */
     <DndContext sensors={dragSensors} collisionDetection={pointerWithin}
-      onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setLifted(null)}>
+      onDragStart={onDragStart} onDragOver={onDragOver} onDragEnd={onDragEnd} onDragCancel={() => { setLifted(null); setOverGap(null); }}>
     <div className={styles.ppDocBody} data-lifting={lifted ? lifted.kind : undefined}>
       {layout.sheet && (<>
       {/* ── The goal, one line above the timeline (stage 1, D4) ──
@@ -3315,7 +3575,7 @@ export default function PracticePlanEditor({
         {plan.blocks.map((block, i) => (
           <Fragment key={block.id}>
           {layout.timeline && (
-            <GapTarget index={i} startLabel={clockByBlock.get(block.id)?.startLabel ?? null} blockCount={plan.blocks.length} />
+            <GapTarget index={i} startLabel={gapStartLabel(i, clockByBlock.get(block.id)?.startLabel ?? null)} blockCount={plan.blocks.length} />
           )}
           {/* ≤640: every block reads SHUT here and the open one renders as the sheet below (K2). */}
           <BlockCard {...blockCardProps(block, i)}
@@ -3325,7 +3585,7 @@ export default function PracticePlanEditor({
           </Fragment>
         ))}
         {layout.timeline && (
-          <GapTarget index={plan.blocks.length} startLabel={nextStartLabel ?? null} blockCount={plan.blocks.length} />
+          <GapTarget index={plan.blocks.length} startLabel={gapStartLabel(plan.blocks.length, nextStartLabel ?? null)} blockCount={plan.blocks.length} />
         )}
 
         {/* ≤640, once the plan has a block (K4): ONE 44px row under the plan's end time. Its two
@@ -3479,7 +3739,7 @@ export default function PracticePlanEditor({
           open
           openDoors={openDoors}
           phone
-          sheet={{ walk: sheetWalk }}
+          sheet={{ walk: sheetWalk, onward: sheetOnward, onEdit, onDoneEditing }}
           onStartFromDrill={startSheetFromDrill} />
       )}
 
@@ -3490,6 +3750,8 @@ export default function PracticePlanEditor({
           block={openStationBlock}
           station={openStationRow}
           readOnly={readOnly}
+          onEdit={onEdit}
+          onDoneEditing={onDoneEditing}
           withoutPeople={withoutPeople}
           staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
           equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}

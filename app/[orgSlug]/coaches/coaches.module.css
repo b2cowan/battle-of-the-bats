@@ -10385,6 +10385,20 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 @media (max-width: 900px) {
   .savePill { right: 0.75rem; bottom: calc(var(--coach-foot-clear) + 0.6rem); }
 }
+/* ⚠ OVER A FULL-SCREEN FORM (owner, §227 walk 2026-09-23 — "I don't see Saved anywhere"). At ≤640 a
+   form overlay is full-screen at z-index 400 (it covers the nav), so the pill's 250 put it UNDER the
+   very form whose edits it was reporting — the practice plan's block sheet, station form and groups
+   room autosave the plan, and a coach never saw the word. While such a form is open the pill rises
+   over it and sits just above its pinned footer. The in-page sheets at 260 (the lineup builder's,
+   the game-day sheets) are untouched: they are not `.modalOverlay`, and they still sit over the pill. */
+@media (max-width: 640px) {
+  body:has(.modalOverlay:not(.daySheetOverlay):not(.centeredOnMobile)) .savePill {
+    z-index: 410;
+    /* The form's footer is one tap-floor row inside `.modalFooter`'s 1rem padding and its hairline
+       (measured 78px at 390); the pill clears it by 0.6rem, the gap it keeps above the nav. */
+    bottom: calc(var(--tap-min, 44px) + 2rem + 1px + 0.6rem + env(safe-area-inset-bottom, 0px));
+  }
+}
 
 /* A slide-over's head (type chip · back · ✕) stays put while the panel scrolls, so ✕ is never
    below a long list (owner, 2026-09-14, met on the schedule's attendance). A property of EVERY
@@ -10536,11 +10550,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 .ppIconBtn:hover:not(:disabled) { color: var(--text-primary); background: var(--white-8); }
 .ppIconBtn:disabled { opacity: 0.3; cursor: default; }
-/* The reorder pair's button — the timeline gutter's up/down and the station column's earlier/later
-   (owner, 2026-09-15). `.ppIconBtn`'s look at a COMPACT size where a mouse is pointing (the gutter
-   is 5.5rem wide; the 44px floor is a finger rule — owner decision 2026-08-19) and at the tap floor
-   on the touch widths, where the 768 block below restores it. */
-.ppMoveBtn { composes: ppIconBtn; min-width: 1.75rem; min-height: 1.75rem; border-radius: 6px; }
+/* ⚰ `.ppMoveBtn` deleted 2026-09-24 — the reorder pair's button. The gutter's ▲▼ became the block's
+   grip at stage 1b, and the station column's ‹ › became the same grip (`.ppStColMove`). */
 
 /* â”€â”€ Chips (staff, players, focus areas) â”€â”€ */
 .ppChipWrap { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem; min-width: 0; }
@@ -10585,13 +10596,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    2026-09-15) ── each its name · who runs it · tonight's note · the first line of what happens
    there, and an "Open ›"; "+ Add a station" the last column. A column is a FRAME (`.ppStCol`)
    around the DOOR — a button that opens the station's modal, the whole face of the card, the tap
-   floor its own height — and the reorder pair (`.ppStColMove`, owner 2026-09-15) sitting on the
-   "Open ›" row at the foot's right. The pair is absolutely placed: it cannot live inside the door
-   (a button in a button), and a foot row outside the door would take "Open ›" out of the door's
-   name. The "Open ›" row is as tall as the pair and leaves its width free, so an arrow never sits
-   over a content line. Columns fit as many as keep ~10rem each and wrap the rest to a second row
-   rather than shrink under a finger (three ≈ 230px, four ≈ 170px on the letter-wide sheet); on a
-   phone they stack as rows and the pair turns to point up and down. */
+   floor its own height — and the GRIP (`.ppStColMove`; the ‹ › pair until 2026-09-24, now the
+   block gutter's ⠿ one level down) sitting on the "Open ›" row at the foot's right. The grip is
+   absolutely placed: it cannot live inside the door (a button in a button), and a foot row outside
+   the door would take "Open ›" out of the door's name. The "Open ›" row is as tall as the grip and
+   leaves its width free, so the grip never sits over a content line. Columns fit as many as keep
+   ~10rem each and wrap the rest to a second row rather than shrink under a finger (three ≈ 230px,
+   four ≈ 170px on the letter-wide sheet); on a phone they stack as rows. */
 .ppStCols { display: grid; grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr)); gap: 0.6rem; min-width: 0; }
 .ppStCol {
   position: relative; display: flex; flex-direction: column; align-items: stretch; min-width: 0;
@@ -10620,14 +10631,48 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppQuietLink { color: var(--home-olive, var(--blueprint-light)); font-weight: 700; text-decoration: none; }
 .ppQuietLink:hover { text-decoration: underline; }
 /* The door's word in the sheet's quiet-link voice; pinned to the column's foot so three columns'
-   "Open ›" sit on one line however their lines above wrap. As tall as the reorder pair beside it
-   and clear of its width (two 1.75rem buttons and the inset), so the pair overlays only this row. */
+   "Open ›" sit on one line however their lines above wrap. As tall as the grip beside it and clear
+   of its width (one 1.75rem glyph and the inset), so the grip overlays only this row. */
 .ppStColOpen {
   composes: ppQuietLink; display: flex; align-items: center; margin-top: auto; padding-top: 0.2rem;
-  min-height: 1.75rem; padding-right: 4rem; font-size: var(--type-support);
+  min-height: 1.75rem; padding-right: 2.25rem; font-size: var(--type-support);
 }
 .ppStColAdd .ppStColOpen { min-height: 0; padding-right: 0; }
-.ppStColMove { position: absolute; right: 0.5rem; bottom: 0.6rem; display: inline-flex; align-items: center; }
+/* The grip — the wrapper is the drag handle, the glyph inside it the menu's trigger (Move earlier ·
+   Move later). Drawn as the block gutter's grip is (no border, no fill), at a COMPACT box where a
+   mouse is pointing — the 44px floor is a finger rule (owner decision 2026-08-19); the 768 block
+   below restores it. ⚠ The TRIGGER only (`[aria-haspopup]`): the menu's panel renders inside this
+   wrapper, and a bare `button` here crushed its full-width items to the glyph's box. Two classes
+   deep, so it outranks the menu's own `.triggerGlyph` box whatever order the bundles land in. */
+.ppStColMove { position: absolute; right: 0.5rem; bottom: 0.6rem; display: inline-flex; align-items: center; touch-action: auto; }
+.ppStColMove button[aria-haspopup] {
+  width: 1.75rem; height: 1.75rem; border-radius: 6px;
+  border-color: transparent; background: none; box-shadow: none; color: var(--text-tertiary);
+}
+.ppStColMove button[aria-haspopup]:hover { color: var(--text-primary); background: var(--white-8); }
+.ppStCol:has(> .ppStColMove[data-lifted='on']) { opacity: 0.45; }
+/* A carried station's landing SLOTS (2026-09-24) — each column's two halves. Nothing shows until a
+   station of this block is lifted; then a dashed line in every gap it could take, solid under the
+   pointer — the block gap's line, one level down. Both halves either side of a gap name the same
+   slot and draw on the same pixel, so a gap never shows two lines. Measured, never hit: no pointer
+   events, so the door beneath still takes every click.
+   `--reach`: a LIVE slot reaches half the grid gap outward, so the whole row is a target and no gap
+   is a dead strip; at rest it sits inside its column (the layout gate read a resting reach as a
+   4px spill on every column at 768 and 1440 — /review, 2026-09-24). The kit measures the slots
+   after the lift renders, so the reach is in place before the pointer is read. ⚠ Half the gap PLUS
+   the column's 1px border: a slot is placed from the column's padding edge, so 0.3rem alone stopped
+   1px short on each side and left a 2px dead strip at the gap's centre — exactly under the line. */
+.ppStColSlot { --reach: 0rem; position: absolute; top: 0; bottom: 0; width: calc(50% + var(--reach)); pointer-events: none; }
+.ppStColSlot[data-target='on'] { --reach: calc(0.3rem + 1px); }
+.ppStColSlot[data-side='before'] { left: calc(-1 * var(--reach)); }
+.ppStColSlot[data-side='after'] { right: calc(-1 * var(--reach)); }
+.ppStColSlot[data-target='on']::before {
+  content: ''; position: absolute; top: 0.35rem; bottom: 0.35rem; width: 0;
+  border-left: 2px dashed var(--home-olive, var(--logic-lime)); opacity: 0.45;
+}
+.ppStColSlot[data-side='before']::before { left: -1px; }
+.ppStColSlot[data-side='after']::before { right: -1px; }
+.ppStColSlot[data-over='on']::before { border-left-style: solid; opacity: 1; }
 
 /* ── The rotation as ONE line between the block's words and its columns (stage 3, D3) ──
    the "Groups rotate" chip · every N min · the honest rounds line. The draw left the line for
@@ -10659,7 +10704,11 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* Wider than the standing wide modal: the pool and three groups side by side at ~9rem each (the
    drawing's 760); a fourth and more wrap to a second row rather than shrink under a finger. */
 .ppGroupsRoom { max-width: 800px; }
-.ppGroupsBody { display: flex; flex-direction: column; gap: 0.8rem; padding: 0.7rem 0.8rem 0.9rem; }
+.ppGroupsBody { display: flex; flex-direction: column; gap: 0.8rem; padding: 0.7rem 0.8rem 0.9rem;
+  /* The pool column mounts ABOVE the groups when a chip is lifted with everyone placed. Scroll
+     anchoring would scroll the body to hold the groups still, which the drag kit reads as a scroll
+     and mis-places the new column's drop box (measured: the drop missed). The groups slide down. */
+  overflow-anchor: none; }
 .ppDrawRow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.4rem 0.5rem; font-size: var(--type-support); color: var(--text-secondary); }
 .ppDrawWay { display: inline-flex; gap: 0.25rem; }
 /* The count as a menu — the native select in the row's own size. */
@@ -10675,7 +10724,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* While a chip is lifted every column shows its edge; the one under the pointer fills. */
 .ppGroupCols[data-lifting='on'] .ppGroupCol { border-style: dashed; border-color: var(--text-tertiary); }
 .ppGroupCol[data-over='on'] { border-style: solid; border-color: var(--home-olive, var(--primary)); background: var(--home-olive-soft, var(--white-8)); }
-.ppGroupColHead { display: flex; align-items: center; min-width: 0; }
+.ppGroupColHead { display: flex; align-items: center; gap: 0.25rem; min-width: 0; }
 .ppGroupName { width: 100%; min-width: 0; font-weight: 600; }
 .ppGroupPoolName { font-size: var(--type-support); font-weight: 600; color: var(--text-secondary); min-height: 2.2rem; display: inline-flex; align-items: center; }
 /* `align-content: flex-start`: a wrapped flex box that is taller than its lines would otherwise
@@ -10691,6 +10740,34 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppGroupChip[data-reply='no'] > button, .ppChip[data-reply='no'] { border-style: dashed; color: var(--text-secondary); background: var(--home-paper, var(--white-05)); }
 /* The lifted copy, drawn in the overlay: the chip with a shadow. */
 .ppGroupChipLifted { box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28); border-color: var(--home-olive, var(--primary)); cursor: grabbing; }
+/* ── The Groups room on a phone (practice plans on a phone · G1–G3 = A, owner 2026-09-24) ──
+   Measured before at 390: the draw took two rows (~94px) and a group's head was a 44px name box
+   and a bin, so with twelve players the third group started under the bar. The summary line and
+   the heading are RENDERED only ≤640 (the room decides by `useIsPhone` — the shape differs), so
+   they need no media query; the chip is one element at every width, so its trim does.
+   G1 · the draw folded to one line that opens the controls in place (it never draws). */
+.ppDrawSummary {
+  display: flex; align-items: center; gap: 0.4rem; width: 100%; min-height: var(--tap-min, 44px);
+  padding: 0 0.75rem; border-radius: 8px; border: 1px solid var(--home-line-strong, var(--border-2));
+  background: var(--home-card, var(--white-05)); color: var(--text-secondary);
+  font: inherit; font-size: var(--type-support); text-align: left; cursor: pointer;
+}
+.ppDrawSummary b { color: var(--text-primary); font-weight: 700; }
+.ppDrawSummaryDoor {
+  margin-left: auto; display: inline-flex; align-items: center; gap: 0.1rem; white-space: nowrap;
+  color: var(--home-olive, var(--blueprint-light)); font-weight: 700;
+}
+/* G2 · a group's head: the name, its count, and a ⋯ whose 44px box overhangs a 2rem row. */
+.ppGroupHeading { flex: 1 1 auto; min-width: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
+.ppGroupHeadingCount { font-size: var(--type-support); font-weight: 500; color: var(--text-secondary); }
+.ppGroupMore { flex: 0 0 auto; margin: -0.375rem -0.45rem -0.375rem auto; }
+@media (max-width: 640px) {
+  .ppGroupsRoom .ppGroupColHead { min-height: 2rem; }
+  /* G3 · the chips drop their ⠿ dots and tighten their sides; tap and hold are unchanged. Two
+     classes deep so the padding beats the chip's own rule from its module on any bundle order. */
+  .ppGroupCols .ppGroupGrip { display: none; }
+  .ppGroupCols .ppGroupChipTrigger { padding-inline: 0.5rem; }
+}
 
 /* The computed round × station grid — a genuine 2-D comparison, so it scrolls sideways with a
    sticky first column rather than becoming cards (the .tableAsCards / CoachScrollX rule). */
@@ -10958,6 +11035,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    gives back most of the pair's height to the gutter's padding so a two-line row grows by ~half a
    line, not a whole one. */
 .ppTlMove { display: flex; justify-content: flex-end; margin: 0.1rem -0.4rem -0.45rem 0; }
+/* THE GRIP under the time (owner, §227 walk 2026-09-24) — the desk's ▲▼ pair and the phone's grip
+   column both became this one glyph: a menu trigger (Move up · Move down) inside the gutter's drag
+   handle. Drawn as the head's other glyphs are — no border, no fill — so it reads as a handle, not
+   a button competing with the row. The TRIGGER only — the menu's panel renders inside the gutter,
+   and a bare `button` here inked its Move up · Move down in the grip's grey (2026-09-24). */
+.ppTlMove button[aria-haspopup] { border-color: transparent; background: none; box-shadow: none; color: var(--text-tertiary); }
+.ppTlMove button[aria-haspopup]:hover { color: var(--text-primary); background: var(--white-8); }
 /* A closed block is a ROW — the whole row is the button that opens it. */
 .ppTlClosed {
   display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-start; width: 100%;
@@ -11112,6 +11196,11 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 .ppToolbarEnd { margin-left: auto; }
 .ppToolbarEnd[data-on='on'] { color: var(--text-primary); background: var(--white-8); border-color: var(--white-45); }
+/* Edit / Done editing (stage 1b, R3): pressed-looking while editing, so the mode reads on the button. */
+.ppEditDoor[data-on='on'] { color: var(--text-primary); background: var(--white-8); border-color: var(--white-45); }
+/* At a 360 phone "Run practice · ✓ Done editing · ⋯" is 4px wider than the row, and the ⋯ fell to
+   a second line (probe, 2026-09-23); the door's own side padding gives that back. */
+@media (max-width: 640px) { .ppEditDoor { padding-inline: 0.7rem; } }
 .ppLibrary {
   display: flex; flex-direction: column; min-width: 0; width: 100%; max-height: 100%;
   background: var(--card-bg); border: 1px solid var(--home-line-strong, var(--border-2)); border-radius: 6px;
@@ -11155,9 +11244,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppDocRecap { margin: 0.2rem 0 0.9rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--home-line, var(--border-2)); }
 /* A record with no plan: one sentence, the reader's own, in the body's own size. */
 .ppRecordNone { margin: 0.9rem 0 0.2rem; font-size: var(--type-body); font-style: italic; color: var(--text-secondary); }
-/* The record's quiet way into the editor — a text link at the toolbar's right end; on a phone it
-   takes its own tap-height line under the three buttons. */
-.ppEditPlanLink { display: inline-flex; align-items: center; gap: 0.3rem; min-height: var(--tap-min, 44px); font-size: var(--type-support); font-weight: 600; }
 /* The rotation line READ (stage 6): a fact, not a chip and a box — the same words, the same row. */
 .ppRotStripRead { margin: 0; }
 .ppRotFact { display: inline-flex; align-items: center; gap: 0.3rem; font-weight: 600; color: var(--text-primary); }
@@ -11189,13 +11275,12 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
      rule above cannot reach them — the same floor from the modal's own wrapper (the sweep's
      first look at the modal found the name, the goal, the pickers and the note at 35–37px). */
   .ppStationModal input:not([type='checkbox']), .ppStationModal select, .ppStationModal textarea { min-height: var(--tap-min, 44px); }
-  /* The reorder pairs (owner, 2026-09-15) take the floor — both ways, they are icon-only. Two
-     finger-wide buttons side by side are 88px, so the gutter widens to hold them (5.5rem held the
-     clock alone), and the station column's "Open ›" row grows to the pair's height and clears its
-     width, so the pair never sits over a content line. */
-  .ppMoveBtn { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+  /* The station column's grip takes the floor (it is icon-only), and the "Open ›" row grows to the
+     grip's height and clears its width, so the grip never sits over a content line. (The gutter's
+     6.25rem was sized for the ▲▼ pair the block grip replaced at stage 1b.) */
+  .ppStColMove button[aria-haspopup] { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
   .ppTl { --pp-gutter-w: 6.25rem; }
-  .ppStColOpen { min-height: var(--tap-min, 44px); padding-right: 6rem; }
+  .ppStColOpen { min-height: var(--tap-min, 44px); padding-right: 3rem; }
 }
 
 /* 640 = CONTENT reflow: the sheet drops its frame on the phone (the frame's own 390 — no border, no
@@ -11205,11 +11290,20 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    rail from a column to a section; there is no column now, so there is nothing to reflow at 900. */
 @media (max-width: 640px) {
   .ppDoc { padding: 1rem 1rem 1.25rem; border: 0; border-radius: 0; box-shadow: none; }
+  /* The plan runs EDGE TO EDGE on a phone (owner, §227 walk 2026-09-24): the shell's 1rem gutter
+     and the sheet's own 1rem padding were 32px a side before the first letter. The shell's gutter
+     comes off on this page only; the sheet keeps its padding, and the parts around it (the title,
+     the toolbar, the sent line, Recorded here) take the gutter back so nothing touches the glass.
+     Not a negative-margin bleed — the layout gate reads that as an overflow. */
+  .coachesMain:has(.ppSheetPair) { padding-inline: 0; }
+  .coachesMain:has(.ppSheetPair) .page > :not(.ppSheetCol),
+  .coachesMain:has(.ppSheetPair) .ppSheetCol > :not(.ppSheetPair) { margin-inline: 1rem; }
+  /* The team strip bleeds over the shell gutter with a -1rem side margin; with no gutter here that
+     bleed would hang 16px off each edge (probe: the page scrolled sideways by 16px). */
+  .coachesMain:has(.ppSheetPair) .teamHeader { margin-inline: 0; }
   .ppDocHead { flex-direction: column; align-items: flex-start; gap: 0.2rem; }
   .ppDocWhenDay { display: block; }
   .ppDocWhenSep { display: none; }
-  /* The record's edit door takes its own line under the three buttons (stage 6, frame 147). */
-  .ppEditPlanLink { flex-basis: 100%; margin-left: 0; }
   /* 5rem: the clock alone — "12:00 p.m." at the label size measures 66px. The column was 5.75rem
      while the reorder pair (88px) sat under the clock; on a phone the pair moved to the block
      sheet's head (practice plans on a phone, K3, 2026-09-23), and the length to the row's facts
@@ -11220,9 +11314,19 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   .ppTlGhost { padding-left: 0.75rem; }
   .ppTlOpen { margin-left: 0.4rem; }
   /* Columns become rows on a phone (stage 3, D2): one station per row, nothing else re-arranges —
-     except the reorder pair, which turns to point up and down, the way the rows now run. */
+     except a carried station's slots, which turn to run top and bottom, the way the rows now run
+     (every selector here matches its desk twin's weight, so source order decides). */
   .ppStCols { grid-template-columns: minmax(0, 1fr); }
-  .ppStColMove svg { transform: rotate(90deg); }
+  .ppStColSlot { top: auto; bottom: auto; left: 0; right: 0; width: auto; height: calc(50% + var(--reach)); }
+  .ppStColSlot[data-side='before'] { top: calc(-1 * var(--reach)); left: 0; }
+  .ppStColSlot[data-side='after'] { bottom: calc(-1 * var(--reach)); right: 0; }
+  .ppStColSlot[data-target='on']::before {
+    top: auto; bottom: auto; left: 0.35rem; right: 0.35rem; width: auto; height: 0;
+    border-left: 0; border-top: 2px dashed var(--home-olive, var(--logic-lime));
+  }
+  .ppStColSlot[data-side='before']::before { top: -1px; }
+  .ppStColSlot[data-side='after']::before { bottom: -1px; }
+  .ppStColSlot[data-over='on']::before { border-top-style: solid; }
   /* The groups room's columns stack as rows on a phone too (stage 3 revision, D10 · D11): the
      name box on its own line, the chips under it at the floor, the bin at the foot. */
   .ppGroupCols { grid-template-columns: minmax(0, 1fr); }
@@ -11560,6 +11664,9 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    K1 · the shut row: title + one line of facts, a chevron, the whole row the door. */
 .ppTlClosedPhone { position: relative; min-height: 3.5rem; justify-content: center; padding-block: 0.45rem; padding-right: 2.25rem; }
 .ppTlRowChevron { position: absolute; right: 0.4rem; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); }
+/* While a block is carried over a gap, every start time reads as it WILL be — the knock-on effect
+   before the drop (R4 · frame 4). The ones that change are picked out. */
+.ppTlGutter[data-preview='on'] { color: var(--home-olive, var(--primary)); font-weight: 700; }
 /* K4 · "+ Add a block" as one 44px row under the plan's end time — the ghost row's quiet voice. */
 .ppTlAddRow {
   composes: linkBtn ppQuietLink;
@@ -11582,11 +11689,58 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
    LOOK: in a sheet there is no spine to set it in from. (0,2,0) beats `.ppTlOpen` at every width. */
 .ppTlOpen.ppBlockSheetBody { margin: 0; border: 0; border-radius: 0; background: none; }
 .ppBlockSheetBody .ppBlockBody { padding: 0; }
+/* The phone's block sheet is WHITE, not the open card's cream — so its fields take the portal's own
+   field ground (the paper tone on a white card), not the card rule's white (owner, §227 walk
+   2026-09-24: "why do we have different color text inputs?" — the station form already did). */
+.ppTlOpen.ppBlockSheetBody .input, .ppTlOpen.ppBlockSheetBody .textarea, .ppTlOpen.ppBlockSheetBody .select { background: var(--white-05); }
 .ppBlockSheetTitle .ppBlockTitle { width: 100%; font-size: var(--type-heading); font-weight: 700; }
 .ppBlockSheetFromDrill { composes: linkBtn ppQuietLink; display: inline-flex; align-items: center; gap: 0.35rem; align-self: flex-start; margin: -0.35rem 0 0; min-height: var(--tap-min, 44px); font: inherit; font-weight: 600; }
 /* The foot: the walk, then Done — at the floor (a dialog footer's buttons carry none of their own). */
 .ppBlockSheet .modalFooter { align-items: center; }
+/* The compact walk leads (the drawn "‹ 2 of 3 ›  Done"); the room's walk otherwise pushes right. */
+.ppBlockSheet .modalFooter > nav { margin-left: 0; }
 .ppBlockSheet .modalFooter .btnPrimary { min-height: var(--tap-min, 44px); margin-left: auto; }
+/* THE ONE ANATOMY of the block sheet and the station form (owner, §227 walk 2026-09-24). The head's
+   Edit / Done editing — the toolbar's words, at the floor, pressed-looking while editing. */
+.ppSheetEditDoor { min-height: var(--tap-min, 44px); padding-inline: 0.7rem; white-space: nowrap; flex: 0 0 auto; }
+.ppSheetEditDoor[data-on='on'] { color: var(--text-primary); background: var(--white-8); border-color: var(--white-45); }
+.ppSheetEditDoor { display: inline-flex; align-items: center; gap: 0.35rem; }
+/* On a phone the glyph alone (owner, §227 walk 2026-09-24) — a 44px square beside the bin; the
+   words stay as the button's accessible name. */
+@media (max-width: 640px) {
+  /* ...and drawn as the head's other glyphs are — the back arrow and the bin: no border, no fill
+     (owner, §227 walk 2026-09-24: "is there a reason one button has a border and the other does
+     not?" — no; it was the desk's worded button, cut down). */
+  .ppSheetEditDoor, .ppSheetEditDoor[data-on='on'] {
+    width: var(--tap-min, 44px); padding: 0; justify-content: center;
+    background: none; border-color: transparent; box-shadow: none; color: var(--text-tertiary);
+  }
+  .ppSheetEditDoor:hover { color: var(--text-primary); background: var(--white-8); }
+  .ppSheetEditWord { display: none; }
+}
+/* A drill's or a read station's name, leading the body where the typed name's box would be. */
+.ppStationName { margin: 0; font-size: var(--type-heading); font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
+/* The station form's foot is the block sheet's: the walk leads, Done at the right. */
+.ppSheetFoot { align-items: center; }
+.ppSheetFoot > nav { margin-left: 0; }
+.ppSheetFoot .btnPrimary { min-height: var(--tap-min, 44px); margin-left: auto; }
+/* The next stop, named IN FULL at the end of the body (§227 walk, owner 2026-09-23 — option C):
+   the phone foot's walk is compact, so this is where a coach reads where › goes. One row that
+   wraps, never cuts; the way back is a quiet link under it. Block sheet and station form alike. */
+.ppWalkOnward { display: flex; flex-direction: column; align-items: stretch; gap: 0.15rem; margin-top: 1rem; }
+.ppWalkNext {
+  display: flex; align-items: center; gap: 0.75rem; width: 100%; min-height: 56px; padding: 0.6rem 0.8rem;
+  border: 1px solid var(--home-line, var(--border-2)); border-radius: 10px; background: var(--card-bg);
+  color: var(--text-primary); font: inherit; font-size: var(--type-body); line-height: 1.35; text-align: left; cursor: pointer;
+}
+.ppWalkNext:hover { border-color: var(--text-tertiary); }
+.ppWalkNext:focus-visible { outline: 2px solid var(--success); outline-offset: 2px; }
+.ppWalkNextText { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; flex: 1 1 auto; }
+.ppWalkNextKicker { font-family: var(--font-data); font-size: var(--type-label); font-weight: 600; color: var(--text-tertiary); }
+.ppWalkNextName { font-weight: 700; overflow-wrap: anywhere; }
+.ppWalkNextMeta { font-size: var(--type-support); color: var(--text-secondary); }
+.ppWalkBack { composes: linkBtn ppQuietLink; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.2rem; min-height: var(--tap-min, 44px); font-family: inherit; font-size: var(--type-support); font-weight: 600; }
+.ppWalkEnd { font-size: var(--type-support); color: var(--text-tertiary); padding: 0.5rem 0; }
 
 /* Marks a drill the CLUB shares. Coaches use it; only an org admin can change it. */
 .ppSharedChip {

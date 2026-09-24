@@ -105,9 +105,10 @@ export function PracticeScheduleLink({ href }: { href: string }) {
  * where. The closed-season reader mounts it read-only for everyone (R5): a closed season is a
  * record, and writing into it is the one thing the whole ruling forbids.
  *
- * ⚠ **ABOUT THE PRACTICE, NEVER ABOUT A CHILD** — D17's hard guardrail. The placeholder and the
- * helper line both steer away from names, there is deliberately no per-player equivalent, and
- * none may be added: per-child commentary would drift into behavioural profiling on minors.
+ * ⚠ **ABOUT THE PRACTICE, NEVER ABOUT A CHILD** — D17's hard guardrail. The placeholder steers
+ * away from names (the helper line that also did was removed at the §227 walk, owner 2026-09-23),
+ * there is deliberately no per-player equivalent, and none may be added: per-child commentary
+ * would drift into behavioural profiling on minors.
  *
  * ⚠ This does NOT reopen D4. An unhurried note written at home is a different act from an
  * abandoned tick-box mid-drill — nothing at the field records anything, and there are still no
@@ -129,7 +130,6 @@ export function HowItWent({
   return (
     <div className={first ? styles.ppDocRecap : styles.ppDocFoot} data-testid="how-it-went">
       <h2 className={styles.ppRecordedTitle}><NotebookPen size={15} aria-hidden /> How it went</h2>
-      <p className={styles.formHint}>For you and your staff. Families never see this.</p>
       {onChange ? (
         <label className={styles.ppField}>
           <span className="sr-only">How it went</span>
@@ -142,9 +142,11 @@ export function HowItWent({
             aria-label="How it went"
             onChange={e => onChange(e.target.value)}
           />
+          {/* Only the autosave's word, and only while it has one — the standing disclaimers under
+              the box were removed at the §227 walk (owner, 2026-09-23); the placeholder alone now
+              carries D17's steer. The live region stays mounted so the word is announced. */}
           <span className={styles.formHint} aria-live="polite">
-            {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved · about the practice, not about a player'
-              : 'About the practice, not about a player'}
+            {status === 'saving' ? 'Saving…' : status === 'saved' ? 'Saved' : ''}
           </span>
           {error && <span className={styles.errorText} role="alert">{error}</span>}
         </label>

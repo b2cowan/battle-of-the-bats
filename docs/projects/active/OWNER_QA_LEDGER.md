@@ -23076,6 +23076,17 @@ a no-op.
 
 **§227 · /simplify + /review 2026-09-23 (high-risk tier) — four confirmed, all fixed before commit:** (High) "Start from a drill ›" could discard players, staff, a length or coaching points set on a new block before its title — "blank" now means every field untouched; deleting a block from its own screen left keyboard focus nowhere, and Done after walking returned focus to the first row opened — focus now lands on the block last shown, else the add row; a moved blank block re-landed at the end; a template's "Rest of practice" overflowed the phone's time column (now "rest"). Walk still owed; add one real-phone rotation check with a block open.
 
+**§227 · WALKED — PASSED 2026-09-24 (owner: "mark all QA in walk 1 … as complete").** Every part on the hub's "QA walk · 1" tab — A–F (stage 1) and the parts added as the walk went, G–H (stage 1b) and I (one layout for block and station). The walk itself reshaped the product, all built on dev and uncommitted at this line; the plan's §6.6 and §6b carry each ruling with its reason:
+- **"How it went"** lost its two standing lines ("For you and your staff…", "About the practice, not about a player") — D17's steer rests on the placeholder.
+- **The block's foot** = option C: a compact ‹ n of m › and Done, the next block named in full at the body's end; the station form follows on a phone.
+- **Staff** says "Add staff…". **The Groups room:** no empty "Not in a group" box (it returns in place while a player is held), the bin beside the group name, and a *Who replied / Whole team* draw menu (D21 revised — nobody dropped silently still holds).
+- **The Saved pill** was UNDER every full-screen phone form — now over it, above the form's footer.
+- **Stage 1b — read first, edit on purpose** (R1–R5 = A): a plan opens to read for everyone; Edit ↔ Done editing on the toolbar, and ✎ / ✓ on every block and station; blocks move by a ⠿ grip under the start time at EVERY width (the desk's ▲▼ pair retired), with the start times previewing the drop.
+- **One layout for the block sheet and the station form:** ← · where you are · 🗑 · ✎/✓ (glyphs on a phone, the bin asking before it deletes), the name first, the walk and Done at the foot. **The plan runs edge to edge on a phone** (rows 202 → 278px at 390); the sheet's fields take the portal's paper ground.
+- **/review 2026-09-24** (plan §6b): four confirmed and fixed — the save pill hidden by "Done editing" while its save could still fail; the layout sweep measuring the read face (Groups now swept at every width); the shared confirm dialog without a Tab trap; the edge-to-edge rule leaking onto the template, circuit and closed-season screens.
+
+**Still owed on §227 (not the walk):** the commit (after the player-profile page another session is editing builds again) · ~~the desk's block bin~~ — ruled 2026-09-24: it asks too (built) · the Groups-room phone drawing's ruling (G1–G3, hub tab "The Groups room on a phone").
+
 ## §228 · Coaching from a phone · stage 5 — **People: the player's record lands as a record you can read, Edit lives on the section, the player's name opens a sheet of the roster, and Chat says which rooms are not this team's** — owner ruling 2026-09-23 (*"I approve as designed"*): F1 · F2 as redrawn · F3 = B · F4 accepted. Plan §11 (§11.8 is the build record); built on dev 2026-09-23 · **✅ WALKED + PASSED 2026-09-24** (owner: *"looks good, can you mark walk 5 … complete"* — marked on the owner's word, no paste-back; parts A–G, with the mid-walk rulings recorded below all built and folded in). Commit + /docs still owed.
 
 **Why it matters.** At the fence the job is three reads — *has Devon paid, who do I call, what does he throw?* — and the tab a coach landed on was the edit form, 62% of the page. It now lands as the record (the face a coach without roster-write has seen since 13 September, widened — not a second one), with **Edit on each section**; Family & paperwork gets the same treatment and its phone numbers become tap-to-call. The player's name carries the team name's chevron and opens a sheet of the roster that **keeps the tab you were reading** — the ninth player is two taps away, on Season if you were on Season.
@@ -23131,6 +23142,16 @@ The hub's **QA walk · 5** tab (`COACH_MOBILE_EXPERIENCE_HUB.html`) is the check
 
 **Owed:** the walk (8 steps, part J). Not measured on the product: four and five stations (the fixture has three — the drawings cover them).
 
-**§229 · WALKED — PASSED 2026-09-24** (owner: "mark all QA in walk 1 … as complete" — part J is on that tab). Still owed: `/simplify` + `/review` of the rotation-table change (the session /review of 2026-09-24 covered §227's surfaces, not this one's) and the commit. The four- and five-station shapes remain unmeasured on the product (the fixture has three).
+**§229 · WALKED — PASSED 2026-09-24** (owner: "mark all QA in walk 1 … as complete" — part J is on that tab). **Reviewed and approved** (owner, 2026-09-24). Still owed: the commit. The four- and five-station shapes remain unmeasured on the product (the fixture has three).
+
+---
+
+## §230 · Practice plans on a phone · the Groups room — **all the groups on one screen: the draw folds to a line, a group's head is its name and count, the chips lose their dots** — owner rulings 2026-09-24 (*"I agree with your recommendations"* · *"yes build the group rooms"*): G1 = A · G2 = A · G3 = A. Plan `COACH_PRACTICE_PLANS_PHONE_PLAN.md` §6c (§6c.1 is the build record); hub https://claude.ai/artifact/73DbeziBqDjMr4QEhRWTvp — tab "The Groups room on a phone" and "QA walk · 1" part K. Built on dev 2026-09-24. No migration.
+
+**Why.** Once groups are drawn the room's job is arranging, and on a phone it spent its top on the draw controls and each group on a name box and a bin: with twelve players the third group started under the bottom bar.
+
+**What changed, on a phone only:** once groups exist the draw is one line — *3 groups · from who replied · Change ›* — that opens the controls in place and never re-draws by itself; each group's card is headed *Group A · 4* with a ⋯ for **Rename** (the name becomes a box right there) and **Delete** (its players go to *Not in a group*, no question); the chips drop their drag dots (tap to move, press and hold to drag, as before). **Measured at 390:** all four boxes on screen with 70px to spare (the third group started under the bar); at 360 every group's head is above the bar and the last group's second row of chips needs a short scroll. The computer is unchanged.
+
+**Owed:** the walk (part K) · `/simplify` + `/review` · the commit (on the owner's say-so).
 
 ---

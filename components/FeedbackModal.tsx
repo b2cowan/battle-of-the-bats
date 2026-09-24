@@ -39,6 +39,7 @@ export default function FeedbackModal({
   // everywhere else (admin, scorekeeper, consumer) the tolerant variant no-ops.
   useOverlayOpenIfAvailable(isOpen);
   const cancelRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   // Latest-ref for onClose so the focus/Escape effect can key on `isOpen` ALONE.
   // Callers pass an inline-arrow onClose (new identity each render); keying the
@@ -56,7 +57,24 @@ export default function FeedbackModal({
     restoreFocusRef.current = (document.activeElement as HTMLElement) ?? null;
     cancelRef.current?.focus();
     function onKey(e: KeyboardEvent) {
-      if (e.key === 'Escape') onCloseRef.current();
+      if (e.key === 'Escape') { onCloseRef.current(); return; }
+      /* ⚠ TAB STAYS IN THE DIALOG (/review, 2026-09-24). Without this, Tab walked out of an open
+         confirm into the page behind it — and when the page behind was itself a trapped dialog (a
+         practice block's sheet asking "Delete Skills circuit?"), that dialog's own trap then held
+         focus AWAY from the question: a keyboard coach could not get back to Keep it or Delete,
+         and Escape closed the question and the sheet together. The floor under a sheet
+         (`useDialogFloor`) ignores keys from outside its panel, so this trap never fights it. */
+      if (e.key !== 'Tab') return;
+      const box = dialogRef.current;
+      if (!box) return;
+      const focusables = Array.from(box.querySelectorAll<HTMLElement>('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'));
+      if (focusables.length === 0) return;
+      const first = focusables[0];
+      const last = focusables[focusables.length - 1];
+      const active = document.activeElement;
+      const inside = active instanceof Node && box.contains(active);
+      if (e.shiftKey && (!inside || active === first)) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && (!inside || active === last)) { e.preventDefault(); first.focus(); }
     }
     document.addEventListener('keydown', onKey);
     return () => {
@@ -79,6 +97,7 @@ export default function FeedbackModal({
   return (
     <div className="modal-overlay" onClick={onClose} style={{ zIndex: 1000 }}>
       <div
+        ref={dialogRef}
         className={`modal ${styles.dialog}`}
         onClick={e => e.stopPropagation()}
         style={{ maxWidth: 480 }}
@@ -91,7 +110,7 @@ export default function FeedbackModal({
             {getIcon()}
             <h3 id={titleId} className={styles.title} style={{ margin: 0 }}>{title}</h3>
           </div>
-          <button className="btn btn-ghost btn-data" onClick={onClose}>
+          <button className="btn btn-ghost btn-data" aria-label="Close" onClick={onClose}>
             <X size={14} />
           </button>
         </div>

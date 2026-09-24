@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { BookMarked, ClipboardList, Library, MoreHorizontal, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
+import { BookMarked, Check, ClipboardList, Library, MoreHorizontal, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
@@ -253,21 +253,24 @@ export default function CoachPracticePlanPage({
   const [saveTemplateOpen, setSaveTemplateOpen] = useState(false);
   const [sendOpen, setSendOpen] = useState(false);
   /**
-   * "Edit the plan" on a RECORD (stage 6, R2) — this visit only. Never stored, never in the URL;
-   * false on every load, so a record opens as a record and the way back from the editor is the
-   * record. See `recordMode` below.
+   * READ FIRST, EDIT ON PURPOSE (practice plans on a phone, stage 1b — owner rulings R1–R5,
+   * 2026-09-23). A plan opens to READ, for the head coach and the assistants alike: "a coach writes
+   * it up then sends it to assistants to review and understand what they have to do, read mode is
+   * best for that action". Editing is this visit's choice — the toolbar's Edit, or ✎ on a block or
+   * a station — and "Done editing" goes back. Never stored, never in the URL: every load opens to
+   * read. The ONE exception is set at load: an UPCOMING plan with no block opens to write, since
+   * there is nothing to read and the first thing anyone does there is write (R1). A past practice
+   * (stage 6's record) opens to read even when empty — its face says so.
+   *
+   * ⚠ The toolbar's Edit and Done editing are ONE button whose word flips, so focus never falls to
+   * <body> on the press (the old record-only door unmounted under the pointer and had to re-seat
+   * focus on the goal line; this one stays where the finger is).
    */
   const [editing, setEditing] = useState(false);
-  /* The door unmounts under the pointer the moment it is pressed (its branch is the record's), so a
-     keyboard or screen-reader coach would be dropped on <body>. Focus lands on the sheet's first
-     writable field instead — the goal line, which the editor renders as an input once it may write
-     (/review, 2026-09-18). The editor is keyed per practice, not per mode, so nothing remounts and
-     no `autoFocus` fires; this is the one place that moves focus. */
-  useEffect(() => {
-    if (!editing) return;
-    const id = requestAnimationFrame(() => document.getElementById(PLAN_GOAL_INPUT_ID)?.focus());
-    return () => cancelAnimationFrame(id);
-  }, [editing]);
+  /** Whether this visit has been into editing at all — a RECORD keeps the save pill mounted after
+   *  Done editing so the save it started can still say "Saved" (or fail out loud). See the pill. */
+  const [editedThisVisit, setEditedThisVisit] = useState(false);
+  const startEditing = () => { setEditing(true); setEditedThisVisit(true); };
   // Same shared overlay stack as every other sheet in the portal (nav-hide + body-scroll lock).
   useOverlayOpen(copyOpen || saveTemplateOpen || sendOpen);
   /**
@@ -418,8 +421,12 @@ export default function CoachPracticePlanPage({
       setData(body);
       setPlan(body.plan ?? emptyPracticePlan());
       setRecap(body.recap ?? '');
-      // A fresh load is a fresh visit: a record opens as a record (stage 6).
-      setEditing(false);
+      // A fresh load is a fresh visit: it opens to read (stage 1b, R1) — except an upcoming plan
+      // with nothing in it, which opens to write. A record opens as a record (stage 6), empty or not.
+      setEditing(
+        !practiceIsRecord(body.event?.startsAt, Date.now(), body.event?.endsAt)
+        && !practiceHasPlan({ practicePlan: body.plan ?? null }),
+      );
       setPlanTagIds(body.planTagIds ?? []);
       setFocusTags(body.focusTags ?? []);
       setStaffTags(body.staffTags ?? []);
@@ -838,15 +845,21 @@ export default function CoachPracticePlanPage({
    * template… · Print the sheet · a quiet Edit the plan for a writer. Library and Send to staff are
    * the LIVE page's and do not render on a record.
    *
-   * "Edit the plan" is a VISIT, not a state: a page-level boolean, nothing stored, dropped on the
-   * next load. While editing, the page is the live editor exactly as today — the recap at the foot,
-   * Library and Send to staff included — and the way back is the record.
+   * Editing is a VISIT, not a state (stage 1b made it every plan's, not only a record's): a
+   * page-level boolean, nothing stored, dropped on the next load. While editing, the page is the
+   * live editor — the recap at the foot, Library and Send to staff included — and Done editing
+   * goes back to reading (on a record, to the record's face).
+   *
+   * ⚠ TWO QUESTIONS, TWO NAMES. `reading` is "is the sheet a read face right now" (every plan,
+   * until Edit); `recordMode` is "is this a past practice's FACE" — How it went first, "Goal:", no
+   * sent line, no Send to staff. A live plan being read is `reading` and NOT `recordMode`.
    */
   const isPracticeRecord = practiceIsRecord(event?.startsAt, nowMs, event?.endsAt);
-  const recordMode = isPracticeRecord && !editing;
+  const reading = !editing;
+  const recordMode = isPracticeRecord && reading;
   // The pair renders only when the width allows AND the coach chose it — the blank page docks
-  // through its ghost row, which sets `docked` first. Never on a record: the library is a writing tool.
-  const isDocked = canWrite && canDock && docked && !recordMode;
+  // through its ghost row, which sets `docked` first. Never while reading: the library is a writing tool.
+  const isDocked = canWrite && canDock && docked && !reading;
   const previousWithPlans = (data?.previousPlans ?? []).filter(p => p.plan);
   const hasPastSeasonPlans = data?.hasPastSeasonPlans ?? false;
   // Read once here so the picker below (which renders outside the `!data` guard) never has to
@@ -856,8 +869,10 @@ export default function CoachPracticePlanPage({
   // second rule. `plan` is the sheet as edited (an unsaved first block counts, as it does for
   // "How it went"), and the event's start is the schedule's.
   const runState = event ? practicePlanState({ practicePlan: plan, startsAt: event.startsAt, endsAt: event.endsAt }, nowMs) : 'none';
-  /** May write the SHEET now — a writer on a live practice, or one who opened Edit the plan. */
-  const writing = canWrite && !recordMode;
+  /** May write the SHEET now — a writer who chose Edit (or opened an empty upcoming plan). */
+  const writing = canWrite && !reading;
+  /** The toolbar's one edit door — "Edit" while reading, "Done editing" while writing (R3). */
+  const editDoor = canWrite ? (reading ? 'edit' : 'done') : null;
 
   /**
    * ── THE TOOLBAR'S DESK ACTIONS — ONE LIST, TWO PRESENTATIONS (phone re-evaluation stage 4 · E1,
@@ -872,10 +887,14 @@ export default function CoachPracticePlanPage({
    * rule (owner 2026-08-24) is a BUILD GATE on customer-visible copy, and a phone branch that
    * repeats "Save as template…" beside a desktop branch is exactly how a word acquires a second
    * spelling. The GATES are the point of this array and each is load-bearing: `canWrite` for the
-   * promotion, `writing && staff > 1` for Send to staff (the who-runs-it build's — gated, never
-   * deleted; it does not render on a record, and this fixture has one staff member, so it is absent
-   * here too), `recordMode && canWrite` for the record's quiet edit door. Pinned from the other end
-   * by the vocabulary guard, which reads these predicates rather than the rendering.
+   * promotion, `canWrite && !isPracticeRecord && staff > 1` for Send to staff (the who-runs-it
+   * build's — gated, never deleted; it does not render on a record, and this fixture has one staff
+   * member, so it is absent here too; since stage 1b it renders while READING a live plan, because
+   * "write it up, then send it" ends on the read face). Pinned from the other end by the vocabulary
+   * guard, which reads these predicates rather than the rendering.
+   *
+   * ⚠ Edit / Done editing is NOT in this list (stage 1b, R3 = A): it is a VISIBLE button beside Run
+   * practice at every width — the one way into writing, never a row behind "⋯".
    *
    * ⚠ Library is NOT in this list and must not join it. It is a WIDTH decision (`canDock`, from a
    * 1,156px working column up), so on a phone it does not exist at all — and a drawer row that can
@@ -888,22 +907,15 @@ export default function CoachPracticePlanPage({
    * WEIGHT. §10.6 left "does the row keep Run practice once a practice has been run?" open for this
    * build; it was already answered, so it is not reopened here.
    */
-  const deskActions: {
-    key: string; testId: string; icon: ReactNode; label: string; onSelect: () => void;
-    /** The record's edit door: a quiet link at the row's right end on a desktop, an ordinary row in the drawer. */
-    quiet?: boolean;
-  }[] = [];
+  const deskActions: { key: string; testId: string; icon: ReactNode; label: string; onSelect: () => void }[] = [];
   if (canWrite) {
     deskActions.push({ key: 'template', testId: 'save-as-template', icon: <BookMarked size={14} aria-hidden />, label: 'Save as template…', onSelect: () => setSaveTemplateOpen(true) });
   }
   deskActions.push({ key: 'print', testId: 'print-the-sheet', icon: <Printer size={14} aria-hidden />, label: 'Print the sheet', onSelect: handlePrint });
   // ⚠ `data?.` here where the JSX below says `data.` — this list is built ABOVE the render's own
   // `!data ? null :` narrowing, so the optional chain is the same gate, not a looser one.
-  if (writing && (data?.staffPeople?.length ?? 0) > 1) {
+  if (canWrite && !isPracticeRecord && (data?.staffPeople?.length ?? 0) > 1) {
     deskActions.push({ key: 'send', testId: 'send-to-staff', icon: <Send size={14} aria-hidden />, label: 'Send to staff', onSelect: () => setSendOpen(true) });
-  }
-  if (recordMode && canWrite) {
-    deskActions.push({ key: 'edit', testId: 'edit-the-plan', icon: <Pencil size={13} aria-hidden />, label: 'Edit the plan', onSelect: () => setEditing(true), quiet: true });
   }
 
   /**
@@ -1159,6 +1171,18 @@ export default function CoachPracticePlanPage({
                   <Link href={`${base}/practice/${eventId}/run`} className={runState === 'run' ? styles.btnPrimary : styles.btnSecondary} data-testid="run-practice">
                     <Play size={14} aria-hidden /> Run practice
                   </Link>
+                  {/* ── Edit / Done editing (stage 1b, R3 = A) — ONE button whose word flips, beside
+                      Run practice at every width: the one way into writing is never behind "⋯".
+                      Pressed-looking while editing, so the mode is visible on the button itself. */}
+                  {editDoor && (
+                    <button type="button" className={`${styles.btnSecondary} ${styles.ppEditDoor}`} data-testid="edit-the-plan"
+                      aria-pressed={editDoor === 'done'} data-on={editDoor === 'done' ? 'on' : undefined}
+                      onClick={() => (editDoor === 'edit' ? startEditing() : setEditing(false))}>
+                      {editDoor === 'edit'
+                        ? <><Pencil size={13} aria-hidden /> Edit</>
+                        : <><Check size={14} aria-hidden /> Done editing</>}
+                    </button>
+                  )}
                   {/* ── ≤640: one 44px "⋯" square, and the desk work is behind it (E1) ──
                       The square is stage 3's tool-row geometry one member wide, and its panel is
                       D13's drawer rather than a card — the form the portal settled on for every
@@ -1182,16 +1206,11 @@ export default function CoachPracticePlanPage({
                     )
                   ) : (
                     deskActions.map(a => (
-                      /* Above 640 this is byte-for-byte the row it has always been: the three
-                         secondaries in order, then the record's quiet edit link at the right end.
-                         `quiet` is the only thing that varies, and it varies here rather than in
-                         the list, because it is a presentation fact. */
+                      /* Above 640 the secondaries in order, as they have always been. */
                       <button
                         key={a.key}
                         type="button"
-                        className={a.quiet
-                          ? `${styles.ppTlQuietLink} ${styles.ppToolbarEnd} ${styles.ppEditPlanLink}`
-                          : styles.btnSecondary}
+                        className={styles.btnSecondary}
                         data-testid={a.testId}
                         onClick={a.onSelect}
                       >
@@ -1342,6 +1361,9 @@ export default function CoachPracticePlanPage({
                   // READ for a viewer, and for everyone on a record (stage 6, R2) — the same face,
                   // one prop; `record` is the word ("Goal:" for "Tonight:").
                   readOnly={!writing}
+                  /* ✎ on a block and a station (stage 1b, R3): a reader who may write edits from where they are. */
+                  onEdit={canWrite && reading ? startEditing : undefined}
+                  onDoneEditing={canWrite && !reading && (hasBlocks || isPracticeRecord) ? () => setEditing(false) : undefined}
                   record={recordMode}
                   goalInputId={PLAN_GOAL_INPUT_ID}
                   // ⚠ ONE control, THREE sources (frame 05; P3 C2 added the third) — never a
@@ -1411,8 +1433,16 @@ export default function CoachPracticePlanPage({
           morning's title-row home — the title row is pinned nowhere, so the word scrolled away with
           the sheet's head). It appears on an edit, says "Saved" and fades; only an error stays. The
           PLAN's word: on a record nothing about the plan saves (the recap has its own line under
-          its box), so the pill is the live face's (stage 6). */}
-      {writing && !loading && !loadError && (
+          its box), so the pill is the live face's (stage 6).
+          ⚠⚠ NOT GATED ON `writing` (/review, 2026-09-24). Stage 1b made "Done editing" a thing a
+          writer can press, but the autosave runs on regardless — an edit made a breath before the
+          press still saves ~0.9s later. Gated on `writing`, the pill unmounted on the press, and a
+          save that then FAILED said nothing anywhere: the autosave stops after a failure, `dirty`
+          stays true, and the coach, now reading, could leave with the edit unsaved. So on a live
+          plan the pill is always mounted for a writer (absent at rest, as ever); on a record it
+          stays once this visit has edited the plan (so its last save can say "Saved", or fail out
+          loud) — never for a recap-only visit, whose word is under its own box. */}
+      {canWrite && (!recordMode || editedThisVisit || dirty || saving) && !loading && !loadError && (
         <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />
       )}
 

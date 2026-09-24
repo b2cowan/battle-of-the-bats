@@ -110,6 +110,16 @@ describe('escape ownership — a menu inside a dialog closes itself, not the rec
     );
   });
 
+  /* ⚠ …AND THE CLAIM ALONE COVERS ONE ORDERING (2026-09-24). A toolbar menu opened INSIDE an open
+     sheet registers its document listener AFTER the sheet's floor, so the floor reads the key before
+     `useDismissable` claims it: Escape closed the menu AND the phone's block sheet behind it — the
+     rotation grid's pills and the station grip alike, measured in Chromium. The marker is the half
+     that covers that ordering, so the shared menu wears it while open. */
+  it('the shared toolbar menu marks its subtree while open — the floor may hear Escape first', () => {
+    const src = readFileSync(join(ROOT, 'components', 'coaches', 'CoachToolbarMenu.tsx'), 'utf8');
+    assert.match(src, /<div ref=\{rootRef\} className=\{styles\.root\} onKeyDown=\{onKeyDown\} data-escape-owner=\{open \? '' : undefined\}>/);
+  });
+
   it('every self-managed listbox claims Escape and marks its subtree', () => {
     const offenders: string[] = [];
     let scanned = 0;

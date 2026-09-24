@@ -23,7 +23,7 @@ import type { TagManageConfig } from './TagSearchCombobox';
  * other tag gets, just entered from a different door.
  */
 export default function PracticeTagPicker({
-  label, all, ids, legacyNames, onChange, onCreate, disabled, emptyHint,
+  label, all, ids, legacyNames, onChange, onCreate, disabled, emptyHint, placeholder,
   manage, onManageChanged, autoFocus, people, onPickPerson,
 }: {
   /** Omit when a caller prints its own heading above (e.g. to slot other content between the
@@ -37,6 +37,9 @@ export default function PracticeTagPicker({
   onCreate?: (name: string) => Promise<PickableTag | null>;
   disabled?: boolean;
   emptyHint?: string;
+  /** The search box's words, in the field's own noun ("Add staff…") rather than TagPicker's
+   *  generic "Add a tag…" (owner, §227 walk 2026-09-23). */
+  placeholder?: string;
   /** The manage door + drawer (One Tag Idiom Q2). */
   manage?: TagManageConfig;
   onManageChanged?: () => void;
@@ -69,7 +72,7 @@ export default function PracticeTagPicker({
   return (
     <TagPicker
       label={label} all={all} selected={resolvedIds} onChange={onChange}
-      onCreate={onCreate} disabled={disabled} emptyHint={emptyHint}
+      onCreate={onCreate} disabled={disabled} emptyHint={emptyHint} placeholder={placeholder}
       adoptNames={disabled ? undefined : unmatchedLegacy}
       onAdopt={async name => {
         if (!onCreate) return;

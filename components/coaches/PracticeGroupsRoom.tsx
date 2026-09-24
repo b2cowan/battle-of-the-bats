@@ -1,11 +1,11 @@
 'use client';
-import { useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useId, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import {
-  DndContext, DragOverlay, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors,
+  DndContext, DragOverlay, MeasuringStrategy, MouseSensor, TouchSensor, useDraggable, useDroppable, useSensor, useSensors,
   type DragEndEvent, type DragStartEvent,
 } from '@dnd-kit/core';
-import { GripVertical, Plus, Shuffle, Trash2 } from 'lucide-react';
+import { ChevronRight, ChevronUp, GripVertical, MoreHorizontal, Plus, Shuffle, Trash2 } from 'lucide-react';
 import {
   MAX_GROUPS, drawGroups, groupLabel, movePlayerToGroup, newPracticePlanId, unplacedPlayers,
   type DrawMode, type PracticeGroup, type PracticeRotation,
@@ -13,6 +13,7 @@ import {
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
@@ -43,6 +44,15 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *
  * Every change writes straight through to the plan (the coach-editing model: editing surfaces
  * autosave). Done only closes.
+ *
+ * ON A PHONE (practice plans on a phone · owner rulings G1–G3 = A, 2026-09-24 — the room spent its
+ * top on the draw and each group on a name box, so the third group started under the bar), decided
+ * in JS because the SHAPE differs: **G1** once groups exist the draw folds to one line — "⤮ 3 groups
+ * · from who replied · Change ›" — that opens today's controls in place and never redraws by itself;
+ * **G2** a group's head is its name and count ("Group A · 4") with a ⋯ for Rename (the name becomes
+ * a box in place) and Delete (its players go to Not in a group, no question — nothing is lost);
+ * **G3** the chips drop their ⠿ dots (the stylesheet, so no chip listens for the width). The desk
+ * keeps every control it has.
  */
 
 /** The dnd-kit id of the pool column — every other droppable id is a group's own id. */
@@ -130,6 +140,45 @@ export default function PracticeGroupsRoom({
 
   const notRepliedUnplaced = unplaced.filter(p => notReplied.has(p.id)).length;
 
+  /* WHO the draw deals from (owner, §227 walk 2026-09-23 — revising D21's "only who replied yes"):
+     a team that doesn't track attendance here has a handful of stray replies, and "who replied"
+     would deal a draw of three. So once replies exist the coach can say "the whole team"; with
+     none, the whole team is the only pool and the line says so. D21's real rule is untouched —
+     nobody is dropped silently: a no-reply player still wears the dashed chip wherever they land.
+     Local to this visit on purpose: a draw is a one-off act, not a setting. */
+  const [poolChoice, setPoolChoice] = useState<'replied' | 'team'>('replied');
+  const fromTeam = !attendanceKnown || poolChoice === 'team';
+  const pool = fromTeam ? roster : drawPool;
+
+  /* ── The phone's shape (G1 · G2). One listener for the room, never one per chip. ── */
+  const phone = useIsPhone();
+  const drawId = useId();
+  // G1: folded by default once groups exist; a block with none opens with the draw showing.
+  const [drawOpen, setDrawOpen] = useState(false);
+  const showDraw = !phone || groups.length === 0 || drawOpen;
+  // G2: the one group whose name is a box right now, and where focus goes when a head changes
+  // shape under it (the ⋯ that was pressed is gone) — the menu's "and then where?" rule.
+  const [renaming, setRenaming] = useState<string | null>(null);
+  const [refocus, setRefocus] = useState<{ groupId: string | null; at: number } | null>(null);
+  useLayoutEffect(() => {
+    if (!refocus) return;
+    const target = refocus.groupId === null ? null
+      : panelRef.current?.querySelector<HTMLElement>(`[data-group-more="${refocus.groupId}"] button`);
+    (target ?? panelRef.current)?.focus({ preventScroll: true });
+  }, [refocus]);
+  const deleteGroup = (groupId: string) => {
+    const at = groups.findIndex(g => g.id === groupId);
+    const neighbour = groups[at + 1] ?? groups[at - 1] ?? null;
+    removeGroup(groupId);
+    setRefocus(r => ({ groupId: neighbour?.id ?? null, at: (r?.at ?? 0) + 1 }));
+  };
+  // Enter / Escape hand focus back to the ⋯; leaving the box by tapping elsewhere keeps the tap's own
+  // target — pulling focus back to the ⋯ would steal it from whatever the coach just pressed.
+  const endRename = (groupId: string, refocusMore: boolean) => {
+    setRenaming(null);
+    if (refocusMore) setRefocus(r => ({ groupId, at: (r?.at ?? 0) + 1 }));
+  };
+
   return (
     <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
       <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Groups — ${blockTitle}`}
@@ -138,8 +187,22 @@ export default function PracticeGroupsRoom({
 
         <div className={`${styles.scrollPane} ${styles.ppGroupsBody}`}>
           {/* ── The draw: the way as a switch, the number beside it, the pool named, the button.
-              Deliberately dumb — a shuffle and a deal (D21); press again to re-draw. ── */}
-          <div className={styles.ppDrawRow}>
+              Deliberately dumb — a shuffle and a deal (D21); press again to re-draw.
+              On a phone, once groups exist, it folds to one line (G1): the line only opens and closes
+              the controls — it never draws, so a stray tap cannot reshuffle anyone. ── */}
+          {phone && groups.length > 0 && (
+            <button type="button" className={styles.ppDrawSummary} aria-expanded={drawOpen} aria-controls={drawId}
+              onClick={() => setDrawOpen(v => !v)}>
+              <Shuffle size={14} aria-hidden />
+              <b>{groups.length} {groups.length === 1 ? 'group' : 'groups'}</b>
+              <span>· from {fromTeam ? 'the whole team' : 'who replied'}</span>
+              <span className={styles.ppDrawSummaryDoor}>
+                {drawOpen ? <>Close <ChevronUp size={14} aria-hidden /></> : <>Change <ChevronRight size={14} aria-hidden /></>}
+              </span>
+            </button>
+          )}
+          {showDraw && (
+          <div id={drawId} className={styles.ppDrawRow}>
             <span className={styles.ppDrawWay} role="group" aria-label="How to draw the groups">
               <button type="button" className={styles.ppQuickChip} aria-pressed={draw.mode === 'groups'}
                 data-on={draw.mode === 'groups' ? 'on' : undefined} onClick={() => setMode('groups')}>How many groups</button>
@@ -151,36 +214,75 @@ export default function PracticeGroupsRoom({
               onChange={e => setChoice({ mode: draw.mode, n: Number(e.target.value) })}>
               {counts.map(n => <option key={n} value={n}>{n}</option>)}
             </select>
-            <span className={styles.ppRotQuiet}>from {attendanceKnown ? 'who replied' : 'the whole roster'}</span>
-            <button type="button" className={styles.ppDrawBtn} disabled={drawPool.length === 0}
-              onClick={() => onSetRotation({ groups: drawGroups(drawPool.map(p => p.id), draw.mode, draw.n), groupSource: 'random' })}>
+            {attendanceKnown ? (
+              <select className={`${styles.input} ${styles.ppDrawSelect}`} value={poolChoice}
+                aria-label="Draw from" onChange={e => setPoolChoice(e.target.value === 'team' ? 'team' : 'replied')}>
+                <option value="replied">Who replied</option>
+                <option value="team">Whole team</option>
+              </select>
+            ) : (
+              <span className={styles.ppRotQuiet}>from the whole team</span>
+            )}
+            <button type="button" className={styles.ppDrawBtn} disabled={pool.length === 0}
+              onClick={() => onSetRotation({ groups: drawGroups(pool.map(p => p.id), draw.mode, draw.n), groupSource: 'random' })}>
               <Shuffle size={13} aria-hidden /> {rotation.groupSource === 'random' ? 'Draw again' : 'Draw'}
             </button>
           </div>
+          )}
 
-          <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setLifted(null)}>
+          <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setLifted(null)}
+            /* The pool column mounts MID-drag (everyone placed) and pushes the groups down — the
+               droppables must be re-measured during the drag, not snapshotted at the lift. */
+            measuring={{ droppable: { strategy: MeasuringStrategy.Always } }}>
             <div className={styles.ppGroupCols} data-lifting={lifted ? 'on' : undefined}>
-              {/* The pool — where everyone starts, where a binned group lands, the way OUT of a group. */}
-              <GroupColumn id={POOL} pool head={<span className={styles.ppGroupPoolName}>Not in a group</span>}
-                foot={notRepliedUnplaced > 0
-                  ? <span className={styles.ppGroupColHint}>{notRepliedUnplaced === 1 ? "1 hasn't" : `${notRepliedUnplaced} haven't`} replied yes</span>
-                  : null}>
-                {unplaced.length === 0 && <span className={styles.ppRailNone}>nobody</span>}
-                {unplaced.map(p => (
-                  <PlayerChip key={p.id} playerId={p.id} name={nameOf(p.id)} inGroup={null} groups={groups}
-                    noReply={notReplied.has(p.id)} onMove={move} settled={settled} />
-                ))}
-              </GroupColumn>
+              {/* The pool — where everyone starts, where a binned group lands, the way OUT of a group.
+                  ABSENT when everyone is placed (owner, §227 walk 2026-09-23): an empty dashed tile
+                  saying "nobody" is a row of nothing. While a chip is HELD it comes back in its own
+                  place above the first group, so there is always somewhere to drop a player out —
+                  the owner's call over a floating target (the groups slide down on the lift, as
+                  they sit whenever the pool has someone in it). The chip's menu is the other way. */}
+              {(unplaced.length > 0 || lifted) && (
+                <GroupColumn id={POOL} pool
+                  /* On a phone the no-reply count rides the name, as a group's count does (G2's head) —
+                     a foot row for one caption was a row of nothing. */
+                  head={
+                    <span className={styles.ppGroupPoolName}>
+                      Not in a group
+                      {phone && notRepliedUnplaced > 0 && (
+                        <span className={styles.ppGroupHeadingCount}>&nbsp;· {notRepliedUnplaced === 1 ? "1 hasn't" : `${notRepliedUnplaced} haven't`} replied yes</span>
+                      )}
+                    </span>
+                  }
+                  foot={!phone && notRepliedUnplaced > 0
+                    ? <span className={styles.ppGroupColHint}>{notRepliedUnplaced === 1 ? "1 hasn't" : `${notRepliedUnplaced} haven't`} replied yes</span>
+                    : null}>
+                  {unplaced.length === 0 && <span className={styles.ppGroupColHint}>Drop here to take them out of their group</span>}
+                  {unplaced.map(p => (
+                    <PlayerChip key={p.id} playerId={p.id} name={nameOf(p.id)} inGroup={null} groups={groups}
+                      noReply={notReplied.has(p.id)} onMove={move} settled={settled} />
+                  ))}
+                </GroupColumn>
+              )}
               {groups.map(group => (
                 <GroupColumn key={group.id} id={group.id}
-                  head={
-                    <input className={`${styles.input} ${styles.ppGroupName}`} value={group.name} maxLength={60}
-                      aria-label="Group name" onChange={e => renameGroup(group.id, e.target.value)} />
-                  }
-                  foot={
-                    <button type="button" className={styles.ppIconBtn} aria-label={`Remove ${group.name}`}
-                      onClick={() => removeGroup(group.id)}><Trash2 size={14} /></button>
-                  }>
+                  /* The bin rides the name's row (owner, §227 walk) — a whole foot row for one icon
+                     was a row of nothing on a phone. On a phone the head is the name and its count
+                     with a ⋯ (G2); the box appears only while renaming. */
+                  head={phone ? (
+                    <PhoneGroupHead group={group} renaming={renaming === group.id}
+                      onRename={name => renameGroup(group.id, name)}
+                      onStartRename={() => setRenaming(group.id)}
+                      onEndRename={refocusMore => endRename(group.id, refocusMore)}
+                      onDelete={() => deleteGroup(group.id)} />
+                  ) : (
+                    <>
+                      <input className={`${styles.input} ${styles.ppGroupName}`} value={group.name} maxLength={60}
+                        aria-label="Group name" onChange={e => renameGroup(group.id, e.target.value)} />
+                      <button type="button" className={styles.ppIconBtn} aria-label={`Remove ${group.name}`}
+                        onClick={() => removeGroup(group.id)}><Trash2 size={14} /></button>
+                    </>
+                  )}
+                  foot={null}>
                   {group.playerIds.length === 0 && <span className={styles.ppRailNone}>nobody yet</span>}
                   {group.playerIds.map(pid => (
                     <PlayerChip key={pid} playerId={pid} name={nameOf(pid)} inGroup={group.id} groups={groups}
@@ -236,6 +338,57 @@ function GroupColumn({ id, pool = false, head, foot, children }: {
 }
 
 /**
+ * A group's head on a phone (G2): its name and how many are in it, and a ⋯ holding Rename and
+ * Delete. Rename turns the name into a box IN PLACE — every keystroke writes, as the desk's box
+ * does — and Enter, Escape or leaving the box ends it (`data-escape-owner`: the room's floor leaves
+ * that Escape to the box rather than closing the room). The box takes focus before paint, so it
+ * wins the menu's one-frame focus rescue rather than racing it.
+ */
+function PhoneGroupHead({ group, renaming, onRename, onStartRename, onEndRename, onDelete }: {
+  group: PracticeGroup;
+  renaming: boolean;
+  onRename: (name: string) => void;
+  onStartRename: () => void;
+  /** `true` from Enter / Escape (focus returns to the ⋯); `false` from leaving the box. */
+  onEndRename: (refocusMore: boolean) => void;
+  onDelete: () => void;
+}) {
+  const boxRef = useRef<HTMLInputElement>(null);
+  useLayoutEffect(() => {
+    if (!renaming) return;
+    boxRef.current?.focus({ preventScroll: true });
+    boxRef.current?.select();
+  }, [renaming]);
+  const label = group.name || 'Unnamed group';
+  if (renaming) {
+    return (
+      <input ref={boxRef} className={`${styles.input} ${styles.ppGroupName}`} value={group.name} maxLength={60}
+        aria-label="Group name" data-escape-owner="" enterKeyHint="done"
+        onChange={e => onRename(e.target.value)}
+        onBlur={() => onEndRename(false)}
+        onKeyDown={e => {
+          if (e.key !== 'Enter' && e.key !== 'Escape') return;
+          e.preventDefault();
+          onEndRename(true);
+        }} />
+    );
+  }
+  return (
+    <>
+      <span className={styles.ppGroupHeading}>
+        {label}<span className={styles.ppGroupHeadingCount}>&nbsp;· {group.playerIds.length}</span>
+      </span>
+      <span className={styles.ppGroupMore} data-group-more={group.id}>
+        <CoachToolbarMenu label={`${label}: rename or delete`} variant="glyph" icon={<MoreHorizontal size={18} aria-hidden />}>
+          <CoachToolbarMenuItem label={`Rename ${label}`} onSelect={onStartRename} />
+          <CoachToolbarMenuItem label={`Delete ${label}`} onSelect={onDelete} />
+        </CoachToolbarMenu>
+      </span>
+    </>
+  );
+}
+
+/**
  * One player: the chip is the menu's trigger (the tap path) AND the drag handle (the mouse path).
  * The drag listeners sit on a wrapper around the menu's own button so the menu keeps ownership of
  * its trigger; a lift that never activates leaves the click to the button, and one that does is
@@ -269,7 +422,8 @@ function PlayerChip({ playerId, name, inGroup, groups, noReply, onMove, settled 
   return (
     <span ref={el => { setNodeRef(el); wrapRef.current = el; }} {...listeners} className={styles.ppGroupChip}
       data-reply={noReply ? 'no' : undefined} data-lifted={isDragging ? 'on' : undefined}>
-      <CoachToolbarMenu label={name} variant="chip" icon={<GripVertical size={13} aria-hidden />}>
+      <CoachToolbarMenu label={name} variant="chip" triggerClassName={styles.ppGroupChipTrigger}
+        icon={<GripVertical size={13} aria-hidden className={styles.ppGroupGrip} />}>
         {others.map(g => (
           <CoachToolbarMenuItem key={g.id} label={`Move to ${g.name || 'the unnamed group'}`} onSelect={() => onMove(playerId, g.id)} />
         ))}

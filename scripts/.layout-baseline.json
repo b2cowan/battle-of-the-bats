@@ -61,6 +61,14 @@
       "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the record is a mode of it, added to the sweep at practices re-evaluation stage 6, 2026-09-18, so its inherited chrome appears as NEW keys only because the mode was never measured). Nothing on the record's own face is under the floor at any width. Closes with the portal-wide touch-debt project.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
+    "coach-practice-groups|768|tap-floor|button·Help: Practice plan": {
+      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the groups room opens over it). It appears as a NEW key only because the groups entry never rendered until /review 2026-09-24 put the plan into editing first (stage 1b made the plan open to read). Nothing inside the groups room is under the floor at any width. Closes with the portal-wide touch-debt project.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-practice-groups|768|control-width|button·Help: Practice plan": {
+      "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entry on coach-practice-plan (the SAME page: the groups room opens over it). It appears as a NEW key only because the groups entry never rendered until /review 2026-09-24 put the plan into editing first (stage 1b made the plan open to read). Nothing inside the groups room is under the floor at any width. Closes with the portal-wide touch-debt project.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
     "coach-practice-station|768|tap-floor|button·Help: Practice plan": {
       "reason": "Shared coach-portal chrome — the page header's help button at its grandfathered 768 size, identical to the already-baselined entries on coach-practice-plan, -record and -record-open (the SAME page). Reported on the station screen from 2026-09-23 (seen in the sweep run BEFORE the practice-plans-on-a-phone stage 1 change as well as after — not that change's), when the probe practice had aged into a record. Nothing inside the station form is under the floor at any width. Closes with the portal-wide touch-debt project.",
       "detail": "34px tall (floor 44)"

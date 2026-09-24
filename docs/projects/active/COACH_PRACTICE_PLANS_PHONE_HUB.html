@@ -268,6 +268,70 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
 .run .acts .sec{width:76px;height:56px;border:1px solid rgba(70,55,30,.25);border-radius:10px;display:grid;place-items:center;font-weight:600;color:#4A4335}
 .run .acts .pri{flex:1 1 auto;height:56px;border-radius:10px;background:#241E15;color:#F6F2EA;display:grid;place-items:center;font-weight:700;font-size:16px}
 .dock{position:relative;background:#F6F2EA;border-top:1px solid rgba(70,55,30,.15);padding:8px 16px}
+/* the block foot options (§227 walk ask) — the room's named walk, drawn with its real clamp */
+.wk{display:flex;align-items:center;gap:6px;min-width:0;flex:1 1 auto}
+.wk .b{display:inline-flex;align-items:center;gap:4px;height:44px;padding:0 10px;border:1px solid rgba(70,55,30,.25);border-radius:8px;background:#FFF;font-weight:600;font-size:14px;min-width:0;flex:1 1 0}
+.wk .b span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+.wk .b.r{justify-content:flex-end}
+.wk .c{font-size:12.5px;color:#4A4335;white-space:nowrap;flex:0 0 auto}
+.sfoot.two{flex-direction:column;align-items:stretch}
+.sfoot.two .done{margin-left:0}
+.upnext{display:flex;align-items:center;gap:10px;margin-top:16px;padding:10px 12px;min-height:56px;border:1px solid rgba(70,55,30,.25);border-radius:10px;background:#F6F2EA}
+.upnext .k{font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:#6E6553}
+.upnext .n{font-weight:700;font-size:15px}
+.upnext .m{font-size:12.5px;color:#4A4335}
+.upnext::after{content:"›";margin-left:auto;font-size:20px;color:#4A4335}
+.upprev{display:inline-flex;align-items:center;min-height:44px;font-size:14px;font-weight:600;color:#3F5F14;margin-top:4px}
+/* stage 2 · read first, edit on purpose */
+.tbar .btn.on{background:#241E15;color:#F6F2EA;border-color:#241E15}
+.rtxt{font-size:15px;line-height:1.45;color:#4A4335;margin:0 0 4px}
+.rttl{font-size:20px;font-weight:800;letter-spacing:-.01em;margin:0 0 6px}
+.rmeta{font-size:13px;color:#6E6553;margin-bottom:10px}
+.tl .row.slim.g{padding-left:44px}
+.tl .row.slim .grip{position:absolute;left:0;top:50%;transform:translateY(-50%);width:44px;height:44px;display:grid;place-items:center;color:#6E6553;font-size:16px;letter-spacing:-2px}
+.tl .row.lift{background:#FFF;box-shadow:0 10px 24px -8px rgba(0,0,0,.35);border:1px solid rgba(70,55,30,.3);border-radius:8px;transform:translateX(6px) rotate(-.6deg)}
+.tl .ghostrow{height:56px;border:2px dashed #7A8C3E;border-radius:8px;margin:4px 0 4px 8px;background:rgba(122,140,62,.08)}
+.tl .gut.new{color:#3F5F14;font-weight:700}
+.pmenu{position:absolute;z-index:3;background:#FFF;border:1px solid rgba(70,55,30,.25);border-radius:10px;box-shadow:0 12px 28px -10px rgba(0,0,0,.4);padding:4px;min-width:170px}
+.pmenu div{min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;border-radius:6px}
+.pmenu div.dis{color:#A89F8C}
+/* the groups room at 390×844 — absolute boxes at the measured / computed tops, so the drawing IS the arithmetic */
+.gph{position:relative;width:390px;height:844px;max-width:100%;background:#FFF;color:#241E15;font-family:"Inter",system-ui,sans-serif;font-size:14px;line-height:1.35;border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.gph .ghd{position:absolute;left:0;right:0;top:0;height:89px;display:flex;align-items:flex-end;gap:14px;padding:0 16px 14px;font-weight:800;font-size:17px;border-bottom:1px solid rgba(70,55,30,.08)}
+.gph .ghd i{font-style:normal;font-weight:400;font-size:20px;width:44px;height:44px;display:grid;place-items:center;margin:0 -8px -10px -8px}
+.gph .ab{position:absolute;left:15px;right:15px}
+.gph .row{display:flex;gap:8px;align-items:center}
+.gph .pill{height:44px;border-radius:22px;border:1px solid rgba(70,55,30,.3);background:#FFF;display:inline-flex;align-items:center;padding:0 14px;font-weight:600;font-size:14px;white-space:nowrap}
+.gph .pill.on{background:#241E15;color:#FFF;border-color:#241E15}
+.gph .sel{height:44px;border-radius:6px;border:1px solid rgba(70,55,30,.25);background:#F6F2EA;display:inline-flex;align-items:center;justify-content:space-between;padding:0 10px;font-weight:600;font-size:13.5px;white-space:nowrap;gap:10px}
+.gph .btn2{height:44px;border-radius:8px;border:1px solid rgba(70,55,30,.25);background:#FFF;display:inline-flex;align-items:center;padding:0 12px;font-weight:600;font-size:13.5px;white-space:nowrap;gap:6px}
+.gph .col{box-sizing:border-box;border:1px solid rgba(70,55,30,.2);border-radius:10px;background:#F6F2EA;padding:9.6px}
+.gph .col.pool{border-style:dashed;background:#FFF}
+.gph .nm{height:44px;border-radius:6px;border:1px solid rgba(70,55,30,.25);background:#FFF;display:flex;align-items:center;padding:0 12px;font-weight:600;flex:1 1 auto}
+.gph .bin{width:44px;height:44px;display:grid;place-items:center;color:#6E6553;flex:0 0 auto}
+.gph .chips{display:flex;flex-wrap:wrap;gap:5.6px;margin-top:8px}
+.gph .chip{height:44px;border-radius:22px;border:1px solid rgba(70,55,30,.3);background:#FFF;display:inline-flex;align-items:center;gap:4px;padding:0 9.6px 0 6.4px;font-weight:600;font-size:12px;white-space:nowrap;box-sizing:border-box}
+.gph .chip.t{padding:0 8px}
+.gph .chip b{display:inline-block;width:13px;text-align:center}
+.gph .chip.nr{border-style:dashed}
+.gph .chip b{color:#8A8272;font-weight:400;font-size:12px}
+.gph .hint{font-size:12px;color:#6E6553;font-style:italic;margin-top:6px}
+.gph .gh{height:32px;display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px}
+.gph .gh span{font-weight:500;font-size:13px;color:#6E6553}
+.gph .gh .more{margin-left:auto;width:44px;height:44px;margin-right:-10px;display:grid;place-items:center;color:#4A4335;font-weight:700;letter-spacing:.08em}
+.gph .sum{height:44px;border-radius:8px;border:1px solid rgba(70,55,30,.25);background:#FFF;display:flex;align-items:center;gap:8px;padding:0 12px;font-size:13.5px}
+.gph .sum b{font-weight:700}
+.gph .sum em{margin-left:auto;font-style:normal;color:#3F5F14;font-weight:700}
+.gph .gft{position:absolute;left:0;right:0;bottom:0;height:78px;border-top:1px solid rgba(70,55,30,.15);background:#FFF;display:flex;align-items:center;justify-content:flex-end;gap:14px;padding:0 16px;z-index:2}
+.gph .gft span{font-weight:600;color:#241E15}
+.gph .gft .dn{height:44px;padding:0 20px;border-radius:8px;background:#B9E356;border:1px solid #9BC93F;font-weight:700;display:grid;place-items:center}
+.gph .cut{position:absolute;left:0;right:0;z-index:3;border-top:2px dashed #9E3030}
+.gph .cut span{position:absolute;right:10px;top:-22px;font-family:var(--mono);font-size:10.5px;color:#9E3030;background:#FFF;padding:1px 6px;border-radius:3px}
+.gph .spare{position:absolute;left:15px;right:15px;z-index:1;border:2px dashed #7A8C3E;border-radius:10px;display:grid;place-items:center;font-family:var(--mono);font-size:11px;color:#3F5F14;background:rgba(122,140,62,.06)}
+.gph .gmenu{position:absolute;z-index:4;background:#FFF;border:1px solid rgba(70,55,30,.25);border-radius:10px;box-shadow:0 12px 28px -10px rgba(0,0,0,.4);padding:4px;min-width:170px}
+.gph .gmenu div{min-height:44px;display:flex;align-items:center;padding:0 12px;font-size:15px;border-radius:6px}
+.gph .gmenu div.d{color:#9E3030}
+
 /* ══ The rotation table on a phone — LIVE specimens: one data set, five shapes, drawn by the script at the
    foot. The frames are the product's warm light sheet on purpose (a specimen, not the page), so their
    colours are the product's literals, not the hub's tokens. ══ */
@@ -383,14 +447,95 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
 .rtgr b{font-weight:600}
 .rtgr .q{color:#4A4335}
 .rtgr .door{min-height:44px;display:flex;align-items:center}
+
+/* ══ Stage 2 · stations inside a block — true-size frames drawn as absolute boxes at measured or computed
+   tops (the groups-room tab's method: the drawing IS the arithmetic). Product literals, as every frame here. ══ */
+.s2ph{position:relative;width:390px;height:var(--h,844px);max-width:100%;background:#FFF;color:#241E15;font-family:"Inter",system-ui,sans-serif;font-size:14px;line-height:1.35;border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.s2ph.crop{border-radius:12px 12px 0 0;border-bottom:2px dashed var(--muted)}
+.s2crop{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:4px}
+.s2ab{position:absolute;left:15px;right:15px}
+.s2hd{position:absolute;left:0;right:0;top:0;height:69px;display:flex;align-items:flex-end;gap:4px;padding:0 6px 0 8px;background:#FFF;z-index:2}
+.s2hd i{font-style:normal;width:44px;height:44px;display:grid;place-items:center;font-size:19px;color:#4A4335;flex:0 0 auto}
+.s2hd .eb{flex:1 1 auto;min-width:0;font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;line-height:1.3;padding:0 0 5px 4px}
+.s2hd .eb span{display:block;font-weight:500}
+.s2hd .ttl{flex:1 1 auto;font-weight:800;font-size:17px;padding:0 0 11px 8px}
+.s2hd.rule{border-bottom:1px solid rgba(70,55,30,.12)}
+/* today's station card */
+.s2card{position:absolute;left:15px;right:15px;border:1px solid rgba(70,55,30,.28);border-radius:10px;background:#FFF;padding:9.6px 12px;display:flex;flex-direction:column;gap:4px}
+.s2card b{font-size:15px;font-weight:700;line-height:22px}
+.s2card b.un{color:#8A8272;font-style:italic;font-weight:600}
+.s2card .w{font-size:13.5px;color:#4A4335;line-height:19px}
+.s2card .nt{font-size:13.5px;color:#9A6212;line-height:19px}
+.s2card .op{display:flex;align-items:center;height:44px;margin-top:auto;font-size:13.5px;font-weight:700;color:#3F5F14}
+.s2card .gp{position:absolute;right:8px;bottom:9px;width:44px;height:44px;display:grid;place-items:center;color:#6E6553;font-size:17px}
+.s2card.add{border-style:dashed;justify-content:center}
+.s2card.add .op{height:22px;margin:0}
+.s2card.focus{outline:2px solid #2F6FD1;outline-offset:2px}
+/* the proposed row list */
+.s2list{position:absolute;left:15px;right:15px;border:1px solid rgba(70,55,30,.2);border-radius:10px;background:#FFF;overflow:hidden}
+.s2row{display:flex;align-items:center;min-height:56px;border-top:1px solid rgba(70,55,30,.12);padding:0 2px 0 13px;gap:4px}
+.s2row:first-child{border-top:0}
+.s2row.g{padding-left:0}
+.s2row .gp{width:44px;height:44px;flex:0 0 auto;display:grid;place-items:center;color:#6E6553;font-size:17px}
+.s2row .tx{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:1px;padding:7px 0}
+.s2row .tx b{font-size:15px;font-weight:700}
+.s2row .tx span{font-size:13px;color:#4A4335}
+.s2row .tx em{font-style:normal;color:#9A6212;font-weight:600}
+.s2row .cv{width:30px;flex:0 0 auto;text-align:center;color:#6E6553;font-size:20px}
+.s2row.add{min-height:44px;color:#3F5F14;font-weight:700;font-size:14.5px}
+/* fields, sheets, the keyboard */
+.s2lab{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:#6E6553}
+.s2in{height:44px;border:1px solid rgba(70,55,30,.25);border-radius:6px;background:#F6F2EA;padding:0 12px;display:flex;align-items:center;color:#8A8272;font-size:14px}
+.s2in.big{font-size:16px;font-weight:700}
+.s2in.on{border:2px solid #7A8C3E;color:#241E15;background:#FFF}
+.s2caret{display:inline-block;width:2px;height:20px;background:#241E15;margin-right:2px}
+.s2ta{height:52px;border:1px solid rgba(70,55,30,.25);border-radius:6px;background:#F6F2EA}
+.s2q{height:44px;display:flex;align-items:center;gap:6px;color:#3F5F14;font-weight:700;font-size:14px}
+.s2seg{display:flex;border:1px solid rgba(70,55,30,.25);border-radius:8px;overflow:hidden;height:44px}
+.s2seg span{flex:1 1 0;display:grid;place-items:center;font-weight:600;font-size:14px;color:#4A4335}
+.s2seg span + span{border-left:1px solid rgba(70,55,30,.25)}
+.s2seg span.on{background:#241E15;color:#FFF}
+.s2chips{display:flex;gap:6px}
+.s2chips span{height:34px;padding:0 12px;border-radius:17px;border:1px solid rgba(70,55,30,.3);display:grid;place-items:center;font-size:13px;font-weight:600;color:#4A4335}
+.s2dr{position:absolute;left:15px;right:15px;height:64px;border-bottom:1px solid rgba(70,55,30,.12);display:flex;align-items:center;gap:10px}
+.s2dr .bars{flex:1 1 auto;display:flex;flex-direction:column;gap:7px}
+.s2dr .bars span{height:11px;border-radius:3px;background:#E7E1D4}
+.s2dr .bars span + span{height:9px;background:#F0EBE1}
+.s2dr .ad{height:44px;padding:0 14px;border-radius:8px;border:1px solid rgba(70,55,30,.25);display:grid;place-items:center;font-weight:700;font-size:14px;color:#3F5F14}
+.s2muted{position:absolute;left:15px;right:15px;font-size:12px;color:#8A8272;font-style:italic}
+.s2lime{height:31px;border-radius:7px;background:#B9E356;border:1px solid #9BC93F;display:grid;place-items:center;font-weight:700;font-size:14px}
+.s2hint{font-size:14px;line-height:1.45;color:#4A4335}
+.s2same{position:absolute;left:15px;right:15px;border:1.5px dashed rgba(70,55,30,.22);border-radius:8px;display:grid;place-items:center;text-align:center;font-size:12px;line-height:1.4;color:#6E6553;padding:6px 10px}
+.s2ft{position:absolute;left:0;right:0;top:766px;height:78px;border-top:1px solid rgba(70,55,30,.15);background:#FFF;display:flex;align-items:center;gap:6px;padding:0 15px 8px;z-index:3}
+.s2ft .sb{width:44px;height:44px;border:1px solid rgba(70,55,30,.2);border-radius:8px;display:grid;place-items:center;font-size:18px;color:#4A4335}
+.s2ft .ct{font-size:14px;color:#4A4335;padding:0 6px}
+.s2ft .dn{margin-left:auto;height:44px;padding:0 20px;border-radius:8px;background:#B9E356;border:1px solid #9BC93F;font-weight:700;font-size:15px;display:grid;place-items:center}
+.s2kb{position:absolute;left:0;right:0;bottom:0;height:300px;background:#D2D4DA;padding:8px 3px 34px;display:flex;flex-direction:column;gap:11px;z-index:4}
+.s2kb .sug{height:34px;display:flex;justify-content:space-around;align-items:center;font-size:14px;color:#4A4A4A}
+.s2kb .kr{display:flex;justify-content:center;gap:6px;flex:1 1 0}
+.s2kb .kr span{flex:0 0 32px;border-radius:5px;background:#FFF;box-shadow:0 1px 0 #8E8F94}
+.s2kb .kr span.w{flex:0 0 42px;background:#ADB0B8}
+.s2kb .kr span.sp{flex:0 0 190px}
+.s2kb .lb{position:absolute;right:10px;top:-22px;font-family:var(--mono);font-size:10.5px;color:#4A4335;background:#FFF;padding:1px 6px;border-radius:3px}
+.s2ab .rtg{font-size:13px}
+/* the tap sequence: an ink ring with the tap's number, clickable like every dot on this hub */
+.s2ph .mk{z-index:5}
+.mk.tp{width:26px;height:26px;background:#241E15;border:2px solid #FFF;box-shadow:0 0 0 3px rgba(36,30,21,.25),0 1px 3px rgba(0,0,0,.3);font-size:12px;line-height:22px}
+.s2seq{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;margin:14px 0 6px}
+.s2arrow{align-self:center;font-family:var(--display);font-size:22px;color:var(--muted)}
+.tally{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 4px}
 </style>
 
 <nav class="tabs" role="tablist" aria-label="Practice plans on a phone">
   <span class="tabtitle">Practice plans on a phone</span>
   <button type="button" class="tab" role="tab" data-tab="found" aria-selected="true" aria-controls="tab-found">What the walk found<span class="st dim">measured 23 Sep · 390 and 360</span></button>
   <button type="button" class="tab" role="tab" data-tab="s1" aria-selected="false" aria-controls="tab-s1">1 · The block on its own screen<span class="st built">ruled 23 Sep · K1–K4 = A</span></button>
-  <button type="button" class="tab" role="tab" data-tab="qa1" aria-selected="false" aria-controls="tab-qa1">QA walk · 1<span class="st built">built 23 Sep</span><span class="st">§227 walk owed</span></button>
+  <button type="button" class="tab" role="tab" data-tab="qa1" aria-selected="false" aria-controls="tab-qa1">QA walk · 1<span class="st built">§227 + §229 walked · passed 24 Sep</span></button>
+  <button type="button" class="tab" role="tab" data-tab="foot" aria-selected="false" aria-controls="tab-foot">The block’s foot<span class="st built">ruled 23 Sep · C · built</span></button>
+  <button type="button" class="tab" role="tab" data-tab="s2" aria-selected="false" aria-controls="tab-s2">1b · Read first, edit on purpose<span class="st built">ruled 23 Sep · R1–R5 = A · built</span><span class="st">walk: QA parts G–H</span></button>
+  <button type="button" class="tab" role="tab" data-tab="grp" aria-selected="false" aria-controls="tab-grp">The Groups room on a phone<span class="st built">ruled 24 Sep · G1–G3 = A · built</span><span class="st">§230 walk owed</span></button>
   <button type="button" class="tab" role="tab" data-tab="rot" aria-selected="false" aria-controls="tab-rot">The rotation table on a phone<span class="st built">ruled 24 Sep · T1 = A · T2 = A · built · §229 walked · passed 24 Sep</span></button>
+  <button type="button" class="tab" role="tab" data-tab="st" aria-selected="false" aria-controls="tab-st">2 · Stations inside a block<span class="st">drawn 24 Sep · S1 · S2 · S4 owed</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
 </nav>
@@ -409,7 +554,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
     from a screenshot.</p>
     <div class="strip" aria-label="Where the project is">
       <span class="on">Walked 23 Sep</span><span class="on">Stage 1 drawn 23 Sep</span><span class="on">Ruled 23 Sep · K1–K4 = A</span>
-      <span class="on">Built on dev 23 Sep · §227</span><span class="now">QA walk owed</span><span>Committed —</span>
+      <span class="on">Stage 1 built · committed 20f13d5d 23 Sep</span><span class="on">1b + the walk's changes built on dev 24 Sep</span><span class="on">§227 walked · passed 24 Sep</span><span class="on">/review 24 Sep · 4 fixed</span><span class="now">Commit of 1b —</span><span class="now">Stage 2 drawn 24 Sep · S1 · S2 · S4 owed</span>
     </div>
   </header>
 
@@ -459,7 +604,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
       <thead><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr></thead>
       <tbody>
         <tr><td>1 · The block on its own screen</td><td>The plan’s blocks as a compact list on a phone; a block opens as a full-screen sheet with every field at full width and a pinned foot (‹ › between blocks · Done); reorder moves into the sheet; “+ Add a block” as one row.</td><td>K1–K4</td><td>drawn 23 Sep · ruled 23 Sep (all four as recommended)</td></tr>
-        <tr><td>2 · Stations and the rotation</td><td>A station as a 56px row inside the block sheet (the row is the door to the form that already exists); “Write one” adds the station <i>and</i> opens its form in one motion, on a 44px button (four taps → two); the rotation table fitted to a phone (drawn 24 Sep on its own tab: keep the table, take out what makes it too wide); the desktop grid untouched.</td><td>L1–L2 · T1–T2</td><td>rotation table drawn 24 Sep · ruling owed</td></tr>
+        <tr><td>2 · Stations and the rotation</td><td>A station as a 56px row inside the block sheet (the row is the door to the form that already exists); “Write one” adds the station <i>and</i> opens its form in one motion, on a 44px button (four taps → two); the rotation table fitted to a phone (drawn 24 Sep on its own tab: keep the table, take out what makes it too wide); the desktop grid untouched.</td><td>S1–S4 · T1–T2</td><td>rotation table ruled + built 24 Sep (§229) · stations drawn 24 Sep (tab “2 · Stations inside a block”) · S3 ruled 24 Sep elsewhere · S1 · S2 · S4 owed</td></tr>
         <tr><td>3 · The field</td><td>Back · Next · Rotate now docked above the bar on the block and station screens; the plain stop’s order (does the note lead, or the watching-for line?); swipe between stops as an addition — recommended <i>Not yet</i>.</td><td>M1–M3</td><td>—</td></tr>
         <tr><td>4 · The head of the page</td><td>What sits above the first block on a phone: the sent line and “Send again”, the when-block, the goal, About — ~500px before the plan begins.</td><td>N1</td><td>—</td></tr>
       </tbody>
@@ -765,6 +910,512 @@ Notes:</pre>
   </section>
 </div>
 
+<!-- ══════════════════════ TAB · THE BLOCK'S FOOT (asked at the §227 walk) ══════════════════════ -->
+<div id="tab-foot" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Asked at the §227 walk · 23 September 2026 · 390px, true size</div>
+    <h1>The foot of a block: can the coach read where ‹ and › go?</h1>
+    <p class="lede">Today the foot reads <em>‹ Wa… · 2 of 3 blocks · Small-… › · Done</em>. The approved drawing
+    (tab 1) had only <em>‹ 2 of 3 ›</em>; the build reused the money screens’ named Prev / Next, and at 390 its
+    names get about seven letters each. Four frames: today, then three ways to show the names, each the same
+    Skills circuit sheet scrolled to its end. The bottom tabs are covered (a form covers the nav), so none are drawn.</p>
+  </header>
+
+  <section>
+    <h2>Today, and the three options</h2>
+    <p class="sub">The fixture’s blocks: Warm-up (15 min) · Skills circuit (45 min) · Small-sided game (the rest of the practice). The names in the frames are clipped by real CSS, not typed short.</p>
+    <div class="pair">
+
+      <div class="drawcol">
+        <div class="drawhead">Today <span class="h">names cut to ~7 letters</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="sheet">
+            <div class="shead"><span class="sq44">‹</span><span class="eb">Block 2 of 3 · 11:00 p.m.</span><span class="sq44">⌃</span><span class="sq44">⌄</span><span class="sq44">🗑</span></div>
+            <div class="sbody">
+              <div class="lab">What you’re doing</div>
+              <div class="ta">Three stations, groups move on every fifteen minutes.</div>
+              <div class="lab">What you’re watching for</div>
+              <div class="inp">Each player gets a full turn at all three.</div>
+            </div>
+          </div>
+          <div class="sfoot"><span class="wk"><span class="b"><i style="font-style:normal">‹</i><span>Warm-up</span></span><span class="c">2 of 3 blocks</span><span class="b r"><span>Small-sided game</span><i style="font-style:normal">›</i></span></span><span class="done" style="flex:0 0 auto">Done</span></div>
+        </div>
+        <p class="cap">The count repeats the head’s “Block 2 of 3”, and it is what squeezes the names.</p>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">A · Two rows pinned <span class="h">names whole · foot 60 → ~112px</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="sheet">
+            <div class="shead"><span class="sq44">‹</span><span class="eb">Block 2 of 3 · 11:00 p.m.</span><span class="sq44">⌃</span><span class="sq44">⌄</span><span class="sq44">🗑</span></div>
+            <div class="sbody">
+              <div class="lab">What you’re doing</div>
+              <div class="ta">Three stations, groups move on every fifteen minutes.</div>
+              <div class="lab">What you’re watching for</div>
+              <div class="inp">Each player gets a full turn at all three.</div>
+            </div>
+          </div>
+          <div class="sfoot two"><span class="wk"><span class="b"><i style="font-style:normal">‹</i><span>Warm-up</span></span><span class="b r"><span>Small-sided game</span><i style="font-style:normal">›</i></span></span><span class="done">Done</span></div>
+        </div>
+        <p class="cap">The walk gets the whole width, the count leaves (the head already says it), Done spans the second row. Every name in the fixture fits. The cost: ~52px more pinned bar, taken from the writing space on every block, including when the keyboard is up.</p>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">B · One row, no count <span class="h">~13 letters · foot stays 60px</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="sheet">
+            <div class="shead"><span class="sq44">‹</span><span class="eb">Block 2 of 3 · 11:00 p.m.</span><span class="sq44">⌃</span><span class="sq44">⌄</span><span class="sq44">🗑</span></div>
+            <div class="sbody">
+              <div class="lab">What you’re doing</div>
+              <div class="ta">Three stations, groups move on every fifteen minutes.</div>
+              <div class="lab">What you’re watching for</div>
+              <div class="inp">Each player gets a full turn at all three.</div>
+            </div>
+          </div>
+          <div class="sfoot"><span class="wk"><span class="b"><i style="font-style:normal">‹</i><span>Warm-up</span></span><span class="b r"><span>Small-sided game</span><i style="font-style:normal">›</i></span></span><span class="done" style="flex:0 0 auto">Done</span></div>
+        </div>
+        <p class="cap">The smallest change: drop the repeated count. Short names fit; “Small-sided game” still loses its end, and a coach’s own long titles always will.</p>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">C · “Next” at the end of the block <span class="h good">recommended · names whole · foot as drawn in tab 1</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="sheet">
+            <div class="shead"><span class="sq44">‹</span><span class="eb">Block 2 of 3 · 11:00 p.m.</span><span class="sq44">⌃</span><span class="sq44">⌄</span><span class="sq44">🗑</span></div>
+            <div class="sbody">
+              <div class="lab">What you’re watching for</div>
+              <div class="inp">Each player gets a full turn at all three.</div>
+              <div class="upnext"><div><div class="k">Next · 11:45 p.m.</div><div class="n">Small-sided game</div><div class="m">Rest of practice · 30 min</div></div></div>
+              <div class="upprev">‹ Back to Warm-up</div>
+            </div>
+          </div>
+          <div class="sfoot"><span class="stp"><i>‹</i><span>2 of 3</span><i>›</i></span><span class="done">Done</span></div>
+        </div>
+        <p class="cap">When a coach finishes writing a block they reach its end, and that is where the next one is named in full, with its time, as a row that wraps rather than cuts. The pinned foot goes back to the approved compact stepper (‹ 2 of 3 ›, read out by name to a screen reader), so the writing space is the largest of the four. The last block’s card says “That’s the last block”, and the first block has no “Back to”.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="flag good-flag"><span class="k">Ruled 23 Sep 2026 · built on dev the same day</span><p><b>C</b>, and the station form follows it <b>on a phone</b> (a desk keeps its named pair, where the names fit). The QA walk tab has the new steps.</p></div>
+    <div class="ask">
+      <div class="k">One call</div>
+      <h3>How does the block’s foot show where ‹ and › go?</h3>
+      <div class="opts">
+        <div class="opt"><div class="t"><span class="tag">A</span>Two rows pinned</div><p>Names always visible and whole, at the cost of ~52px of writing space on every block.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>One row, count dropped</div><p>A small change, but it still cuts real titles.</p></div>
+        <div class="opt rec"><div class="t"><span class="tag">C · recommended</span>“Next” at the end of the block, compact pinned stepper</div><p>Names whole, placed where the coach is when they would step on. <b>The stepper at the foot no longer names where it goes</b>; the card at the end of the block does, and the head already says which block this is.</p></div>
+      </div>
+      <p style="margin-top:12px">⚠ The station form (a station inside a block) uses the same named footer next to its Delete, so long station names will be cut the same way. Whatever you pick here should apply there as well, or the two screens will disagree.</p>
+    </div>
+    <div class="paste">
+      <div class="k">Paste back into the chat to rule</div>
+<pre>§227 · the block's foot — A / B / C
+Station form follows the same answer — yes / no
+Notes:</pre>
+    </div>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB · STAGE 2 · READ FIRST, EDIT ON PURPOSE ══════════════════════ -->
+<div id="tab-s2" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Stage 1b · drawn, ruled (R1–R5 = A, “basically every screen should have an edit button”) and built on dev 23 September 2026</div>
+    <h1>Read first, edit on purpose</h1>
+    <p class="lede">A coach writes the plan and sends it to the assistants, who open it to learn their part. Today
+    anyone who can edit the plan gets a form to read, and a past practice’s “Edit the plan” has no way back.
+    Proposed: <b>a plan opens to read</b>, <b>Edit</b> is one tap (from the toolbar or from inside a block, which stays
+    open), <b>Done editing</b> goes back, and <b>blocks are reordered from the list</b>, where the other blocks
+    and their times stay in view. Drawings are 390px and do not reflow: open this tab on a phone.</p>
+  </header>
+
+  <section>
+    <h2>Reading, then editing</h2>
+    <p class="sub">The same upcoming practice. Left: how it opens, for the head coach and the assistants alike. Right: a block opened while reading. Dots open notes.</p>
+    <div class="pair">
+      <div class="drawcol">
+        <div class="drawhead">1 · The plan opens to read <span class="h good">no boxes · no grips · no add row</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="ptitle"><span class="back">←</span><span class="ico">📋</span><b>Tuesday practice</b></div>
+          <div class="tbar" style="position:relative"><span class="btn">▷ Run practice</span><span class="btn">✎ Edit</span><span class="sq">···</span>
+            <button type="button" class="mk g" data-note="r1" style="left:150px;top:-8px" aria-label="note 1">1</button></div>
+          <div class="doc">
+            <div class="when"><b>Tue, Sep 29</b><br><b>6:00–7:30 p.m. · 90 min</b><br><span class="m">60 of 90 min planned · 30 rest of practice</span></div>
+            <div class="hr"></div>
+            <div class="goal"><b>Tonight:</b> Sharper decisions under pressure</div>
+            <div class="about">› About this practice</div>
+            <div class="tl" style="--g:66px;position:relative">
+              <div class="gut">6:00 p.m.</div>
+              <div class="row slim"><div class="t">Warm-up</div><div class="meta">15 min · UAT Coach · 6 players</div></div>
+              <div class="gut">6:15 p.m.</div>
+              <div class="row slim"><div class="t">Skills circuit <span class="rot">⟳ ROTATION</span></div><div class="meta">45 min · UAT Coach · 3 stations</div></div>
+              <div class="gut">7:00 p.m.</div>
+              <div class="row slim"><div class="t">Small-sided game</div><div class="meta">Rest of practice · 12 players</div></div>
+              <div class="gut" style="color:#8A8272">7:30 p.m.</div><div></div>
+              <button type="button" class="mk g" data-note="r2" style="right:30px;top:60px" aria-label="note 2">2</button>
+            </div>
+          </div>
+          <div class="nav"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span class="on">MORE</span></div>
+        </div>
+        <ul class="notes">
+          <li id="r1" class="g"><b>1</b><b>Edit</b> sits in the toolbar beside Run practice, a visible button rather than a line in the ⋯ drawer, because it is the one way into writing. Only people who can edit the plan see it; an assistant with view-only access sees Run practice and ⋯.</li>
+          <li id="r2" class="g"><b>2</b>The list is today’s list, minus the writing controls: no “+ Add a block”, no grips. Tap a row and the block opens to read (right).</li>
+        </ul>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">2 · A block, read <span class="h good">words, not boxes · ✎ in the head</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="sheet" style="position:relative">
+            <div class="shead"><span class="sq44">←</span><span class="eb">Block 2 of 3 · 6:15 p.m.</span><span class="sq44" style="font-size:17px">✎</span>
+              <button type="button" class="mk g" data-note="b1" style="right:6px;top:-6px" aria-label="note 1">1</button></div>
+            <div class="sbody">
+              <p class="rttl">Skills circuit</p>
+              <div class="rmeta">45 min · ends 7:00 p.m. · UAT Coach · Whole team</div>
+              <div class="lab">What you’re doing</div>
+              <p class="rtxt">Three stations, groups move on every fifteen minutes. Two coaches float between the ladder and the wall.</p>
+              <div class="lab">What you’re watching for</div>
+              <p class="rtxt">Each player gets a full turn at all three.</p>
+              <div class="lab">Coaching points</div>
+              <p class="rtxt">Rotate on the whistle · Ladder first, then the wall</p>
+              <div class="lab" style="position:relative">Stations<button type="button" class="mk g" data-note="b2" style="left:70px;top:-6px" aria-label="note 2">2</button></div>
+              <div class="strow"><div><div class="n">Footwork ladder</div><div class="w">UAT Coach · Tonight: Only two ladders</div></div></div>
+              <div class="strow"><div><div class="n">Close control</div><div class="w">Sam Assistant</div></div></div>
+            </div>
+          </div>
+          <div class="sfoot"><span class="stp"><i>‹</i><span>2 of 3</span><i>›</i></span><span class="done">Done</span></div>
+        </div>
+        <ul class="notes">
+          <li id="b1" class="g"><b>1</b>The <b>✎</b> takes the place of the up/down arrows. It switches the whole plan to editing and <b>this block stays open</b>, now as the form, with the cursor nowhere in particular. There’s no leaving, switching and coming back. Read-only viewers see no ✎. Delete also leaves the head while reading: nothing is deleted from a read screen.</li>
+          <li id="b2" class="g"><b>2</b>Every field reads as text, with the same labels in the same order. This read face already exists: it’s how a past practice shows a block today. Stage 2 uses it for upcoming practices too, so nothing new is drawn for it.</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>Editing, and moving a block from the list</h2>
+    <p class="sub">After ✎ or Edit. Left: the list while editing, with a grip on each row. Right: Skills circuit being dragged below Small-sided game, with the times already showing where things will land.</p>
+    <div class="pair">
+      <div class="drawcol">
+        <div class="drawhead">3 · The list, editing <span class="h good">grips · Done editing · tap a grip for the menu</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="ptitle"><span class="back">←</span><span class="ico">📋</span><b>Tuesday practice</b></div>
+          <div class="tbar" style="position:relative"><span class="btn">▷ Run practice</span><span class="btn on">✓ Done editing</span><span class="sq">···</span>
+            <button type="button" class="mk g" data-note="e1" style="left:170px;top:-8px" aria-label="note 1">1</button></div>
+          <div class="doc">
+            <div class="goal"><b>Tonight:</b> Sharper decisions under pressure</div>
+            <div class="tl" style="--g:66px;position:relative;margin-top:10px">
+              <div class="gut">6:00 p.m.</div>
+              <div class="row slim g"><span class="grip">⠿</span><div class="t">Warm-up</div><div class="meta">15 min · UAT Coach · 6 players</div></div>
+              <div class="gut">6:15 p.m.</div>
+              <div class="row slim g"><span class="grip">⠿</span><div class="t">Skills circuit <span class="rot">⟳ ROTATION</span></div><div class="meta">45 min · 3 stations</div></div>
+              <div class="gut">7:00 p.m.</div>
+              <div class="row slim g"><span class="grip">⠿</span><div class="t">Small-sided game</div><div class="meta">Rest of practice · 12 players</div></div>
+              <div class="gut" style="color:#8A8272">7:30 p.m.</div>
+              <div class="add">+ Add a block</div>
+              <div class="pmenu" style="left:92px;top:104px"><div>Move up</div><div>Move down</div></div>
+              <button type="button" class="mk g" data-note="e2" style="left:70px;top:70px" aria-label="note 2">2</button>
+            </div>
+          </div>
+          <div class="nav"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span class="on">MORE</span></div>
+        </div>
+        <ul class="notes">
+          <li id="e1" class="g"><b>1</b>While editing, the toolbar’s Edit becomes <b>✓ Done editing</b>, which goes back to reading without leaving the page. Leaving the page ends the edit too: the next visit opens to read. Saving is unchanged, since everything saves as you type.</li>
+          <li id="e2" class="g"><b>2</b>A <b>grip</b> on each row’s left edge, as big as a fingertip. <b>Press and hold</b> it to drag the block; <b>tap</b> it for Move up · Move down (drawn open on Skills circuit). That’s the Groups screen’s rule: tapping always works, and dragging is the shortcut. The rest of the row still opens the block.</li>
+        </ul>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">4 · Mid-drag <span class="h good">the times move with the block</span></div>
+        <div class="ph">
+          <div class="phbar"><span>UAT Test Team ⌄<span class="rec">3-2-1</span></span><span class="q">?</span></div>
+          <div class="ptitle"><span class="back">←</span><span class="ico">📋</span><b>Tuesday practice</b></div>
+          <div class="tbar"><span class="btn">▷ Run practice</span><span class="btn on">✓ Done editing</span><span class="sq">···</span></div>
+          <div class="doc">
+            <div class="goal"><b>Tonight:</b> Sharper decisions under pressure</div>
+            <div class="tl" style="--g:66px;position:relative;margin-top:10px">
+              <div class="gut">6:00 p.m.</div>
+              <div class="row slim g"><span class="grip">⠿</span><div class="t">Warm-up</div><div class="meta">15 min · UAT Coach · 6 players</div></div>
+              <div class="gut new">6:15 p.m.</div>
+              <div class="row slim g"><span class="grip">⠿</span><div class="t">Small-sided game</div><div class="meta">Rest of practice · 12 players</div></div>
+              <div class="gut new">6:45 p.m.</div>
+              <div class="ghostrow"></div>
+              <div class="gut" style="color:#8A8272">7:30 p.m.</div>
+              <div class="add">+ Add a block</div>
+              <div class="row slim g lift" style="position:absolute;left:66px;right:0;top:112px"><span class="grip">⠿</span><div class="t">Skills circuit <span class="rot">⟳ ROTATION</span></div><div class="meta">45 min · 3 stations</div></div>
+              <button type="button" class="mk g" data-note="d1" style="left:20px;top:60px" aria-label="note 1">1</button>
+            </div>
+          </div>
+          <div class="nav"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span class="on">MORE</span></div>
+        </div>
+        <ul class="notes">
+          <li id="d1" class="g"><b>1</b>While the block is held, the list shows where it will land (the dashed gap) and the <b>start times already read as they will be</b>: Small-sided game moves up to 6:15, and Skills circuit would start at 6:45. You see the knock-on effect before you let go. Let go and it’s saved; move it again to undo.</li>
+        </ul>
+        <p class="cap">⚠ “Rest of practice” in the middle of a plan is allowed and fills the time left once the blocks after it are counted; the drawing shows the move, not a recommendation.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The five decisions</h2>
+
+    <div class="ask">
+      <div class="k">R1 · who opens it how</div>
+      <h3>An upcoming plan opens to read, for everyone</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>Read first, except an empty plan</div><p>Every plan with at least one block opens to read, for the head coach as much as the assistants. <b>An empty plan opens straight into editing</b>, since there’s nothing to read and the first thing anyone does is write. <b>Tradeoff:</b> the coach who wrote it pays one tap (Edit) each time they come back to change something.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Read first for everyone but the person who wrote it</div><p>The author lands in editing, everyone else in reading. That saves the author a tap but makes the same link open two ways, and needs the plan to remember its author. Not recommended.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">R2 · where</div>
+      <h3>Phones only, or computers too?</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>Everywhere, one rule</div><p>Assistants review at a desk as often as on a phone, and the read problem is the same there. On a computer, Edit opens the full desk editor (the library beside it, blocks opening in place), exactly as today.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Phones only</div><p>Computers open straight to editing as today. The same practice would then open differently at a desk and on a phone.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">R3 · the doors in and out</div>
+      <h3>An Edit on every screen you can read; Done editing to go back</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>As drawn, on every reading screen (owner, 23 Sep: “basically every screen should have an edit button”)</div><p><b>Edit</b> is a visible toolbar button on the plan. <b>✎</b> sits in the header of <b>a block</b> and of <b>a station</b>, and edits from where you are, staying on that block or station. Those are the three screens reachable while reading. The Groups screen and the “Add a station” sheet only open while editing, so they need none. On a computer, the station form carries the same ✎ while reading. <b>✓ Done editing</b> goes back to reading. Nothing is remembered between visits. A past practice uses exactly the same doors (its “Edit the plan” in the ⋯ drawer becomes this Edit), which also fixes today’s missing way back.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Edit only in the ⋯ drawer</div><p>A quieter toolbar, but the main way to write a plan would be behind a second tap.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">R4 · reordering</div>
+      <h3>From the list, with a grip, not from inside the block</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>Grip on the row: hold to drag, tap for Move up · Move down</div><p>The up/down arrows leave the block’s header, which replaces this morning’s ruling (K3). The other blocks and their times stay in view while you move one, and the times update as you drag. <b>On a computer</b> the block’s own gutter already drags with a mouse and keeps its arrows. Nothing changes there.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Grip that only drags</div><p>No tap menu. Then anyone who can’t drag has no way to move a block on a phone, and your standing rule is that every drag has buttons.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">R5 · Delete</div>
+      <h3>Where does a block’s Delete go?</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>It stays in the block’s header, while editing only</div><p>While editing, the header reads ← · Block 2 of 3 · 🗑. While reading, it reads ← · Block 2 of 3 · ✎. The bin never shows on a read screen.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Also on the grip’s menu</div><p>Move up · Move down · Delete from the list. That’s quicker, but a destructive action sits one tap from the list.</p></div>
+      </div>
+    </div>
+
+    <div class="paste">
+      <div class="k">Paste back into the chat to rule</div>
+<pre>Stage 1b · Read first, edit on purpose
+R1 who opens it how — A / B
+R2 where — A / B
+R3 doors in and out — A / B
+R4 reordering — A / B
+R5 Delete — A / B
+Notes:</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>What else this touches</h2>
+    <ul class="list">
+      <li><b>Send to staff:</b> the link assistants get now opens to read, which is the point. Nothing to change in the message itself.</li>
+      <li><b>Past practices:</b> they keep their record face (How it went first). Their “Edit the plan” becomes the same Edit, and they gain Done editing.</li>
+      <li><b>Templates and circuits</b> are libraries, not plans someone reviews, so they keep opening in the editor. Not in scope.</li>
+      <li><b>The help article</b> for practice plans will need its opening paragraph and the reordering steps rewritten.</li>
+      <li><b>§227’s QA walk</b> assumes the page opens editable; its steps get a “tap Edit first” line when this is built.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ══════════════════════ TAB · THE GROUPS ROOM ON A PHONE ══════════════════════ -->
+<div id="tab-grp" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Asked at the §227 walk · drawn 24 September 2026 · 390×844, true size</div>
+    <h1>The Groups room: all the groups on one screen</h1>
+    <p class="lede">Once the groups are drawn, the job is <em>arranging</em>: seeing everyone and moving a player from one group to another.
+    Today, on a phone, the room spends its top on the draw controls and each group on a name box and two chips a row, so with twelve
+    players the third group starts under the bottom bar. Three changes, drawn below with the heights they add up to. Nothing is renamed, nothing
+    changes on a computer, and every player keeps their full name.</p>
+  </header>
+
+  <section>
+    <h2>Before and after — the same twelve players</h2>
+    <p class="sub">Left: the room today, every top taken from the running product. Middle: the three changes, heights computed from the same
+    measurements. Right: the draw opened again, and a group’s ⋯. The bottom bar (+ Add a group · Done) is pinned in all three.</p>
+    <div class="pair">
+
+      <div class="drawcol">
+        <div class="drawhead">Today (measured) <span class="h">Group C under the bar · 2 players a row</span></div>
+        <div class="gph">
+          <div class="ghd"><i>←</i>Groups</div>
+          <div class="ab row" style="top:100px"><span class="pill on">How many groups</span><span class="pill">Players per group</span></div>
+          <div class="ab row" style="top:151px"><span class="sel" style="width:69px">3 <small>⌄</small></span><span class="sel" style="width:126px">Who replied <small>⌄</small></span><span class="btn2">⤮ Draw again</span></div>
+          <div class="ab col pool" style="top:207px;height:105px;padding-top:8px">
+            <div style="font-weight:600;font-size:13px;color:#4A4335;height:22px">Not in a group</div>
+            <div class="chips" style="margin-top:4px"><span class="chip nr"><b>⠿</b> #11 Kai Test</span></div>
+          </div>
+          <div class="ab col" style="top:322px;height:164px">
+            <div class="row"><span class="nm">Group A</span><span class="bin">🗑</span></div>
+            <div class="chips"><span class="chip"><b>⠿</b> #1 Avery Test</span><span class="chip"><b>⠿</b> #2 Blake Test</span><span class="chip"><b>⠿</b> #3 Casey Test</span><span class="chip"><b>⠿</b> #8 Harper Test</span></div>
+          </div>
+          <div class="ab col" style="top:495px;height:164px">
+            <div class="row"><span class="nm">Group B</span><span class="bin">🗑</span></div>
+            <div class="chips"><span class="chip"><b>⠿</b> #7 Gray Test</span><span class="chip"><b>⠿</b> #9 Indigo Test</span><span class="chip"><b>⠿</b> #10 Jules Test</span><span class="chip"><b>⠿</b> #12 Logan Test</span></div>
+          </div>
+          <div class="ab col" style="top:668px;height:164px">
+            <div class="row"><span class="nm">Group C</span><span class="bin">🗑</span></div>
+            <div class="chips"><span class="chip"><b>⠿</b> #4 Devon Test</span><span class="chip"><b>⠿</b> #5 Emerson Test</span><span class="chip"><b>⠿</b> #6 Frankie Test</span></div>
+          </div>
+          <div class="cut" style="top:766px"><span>Group C: 98px of its 164 under the bar</span></div>
+          <div class="gft"><span>+ Add a group</span><span class="dn">Done</span></div>
+        </div>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">Proposed <span class="h good">all three groups · 74px to spare</span></div>
+        <div class="gph">
+          <div class="ghd"><i>←</i>Groups</div>
+          <div class="ab" style="top:100px"><div class="sum">⤮ <b>3 groups</b> · from who replied <em>Change ›</em></div></div>
+          <div class="ab col pool" style="top:156px;height:100px">
+            <div class="gh">Not in a group <span>· 1 hasn’t replied yes</span></div>
+            <div class="chips" style="margin-top:0"><span class="chip t nr">#11 Kai Test</span></div>
+          </div>
+          <div class="ab col" style="top:266px;height:152px">
+            <div class="gh">Group A <span>· 4</span><span class="more">···</span></div>
+            <div class="chips"><span class="chip t">#1 Avery Test</span><span class="chip t">#2 Blake Test</span><span class="chip t">#3 Casey Test</span><span class="chip t">#8 Harper Test</span></div>
+          </div>
+          <div class="ab col" style="top:428px;height:152px">
+            <div class="gh">Group B <span>· 4</span><span class="more">···</span></div>
+            <div class="chips"><span class="chip t">#7 Gray Test</span><span class="chip t">#9 Indigo Test</span><span class="chip t">#10 Jules Test</span><span class="chip t">#12 Logan Test</span></div>
+          </div>
+          <div class="ab col" style="top:590px;height:102px">
+            <div class="gh">Group C <span>· 3</span><span class="more">···</span></div>
+            <div class="chips"><span class="chip t">#4 Devon Test</span><span class="chip t">#5 Emerson Test</span><span class="chip t">#6 Frankie Test</span></div>
+          </div>
+          <div class="spare" style="top:698px;height:62px">74px free — room for a fourth group’s name</div>
+          <div class="gft"><span>+ Add a group</span><span class="dn">Done</span></div>
+        </div>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">Proposed, opened <span class="h good">the draw · a group’s ⋯</span></div>
+        <div class="gph">
+          <div class="ghd"><i>←</i>Groups</div>
+          <div class="ab" style="top:100px"><div class="sum">⤮ <b>3 groups</b> · from who replied <em>Close ⌃</em></div></div>
+          <div class="ab row" style="top:152px"><span class="pill on">How many groups</span><span class="pill">Players per group</span></div>
+          <div class="ab row" style="top:203px"><span class="sel" style="width:69px">3 <small>⌄</small></span><span class="sel" style="width:126px">Who replied <small>⌄</small></span><span class="btn2">⤮ Draw again</span></div>
+          <div class="ab col pool" style="top:259px;height:100px">
+            <div class="gh">Not in a group <span>· 1 hasn’t replied yes</span></div>
+            <div class="chips" style="margin-top:0"><span class="chip t nr">#11 Kai Test</span></div>
+          </div>
+          <div class="ab col" style="top:369px;height:152px">
+            <div class="gh">Group A <span>· 4</span><span class="more">···</span></div>
+            <div class="chips"><span class="chip t">#1 Avery Test</span><span class="chip t">#2 Blake Test</span><span class="chip t">#3 Casey Test</span><span class="chip t">#8 Harper Test</span></div>
+          </div>
+          <div class="ab col" style="top:531px;height:152px">
+            <div class="gh">Group B <span>· 4</span><span class="more">···</span></div>
+            <div class="chips"><span class="chip t">#7 Gray Test</span><span class="chip t">#9 Indigo Test</span><span class="chip t">#10 Jules Test</span><span class="chip t">#12 Logan Test</span></div>
+          </div>
+          <div class="gmenu" style="right:26px;top:575px"><div>Rename Group B</div><div class="d">Delete Group B</div></div>
+          <div class="ab col" style="top:693px;height:102px">
+            <div class="gh">Group C <span>· 3</span><span class="more">···</span></div>
+          </div>
+          <div class="gft"><span>+ Add a group</span><span class="dn">Done</span></div>
+        </div>
+        <p class="cap">Opening the draw pushes the groups down, which is fine: while choosing a new draw you aren’t arranging. It opens on its own, with no tap, on a block that has no groups yet.</p>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>The arithmetic</h2>
+    <p class="sub">“Today” is measured at 390×844 on the fixture. “Proposed” is computed from the same measurements; the build re-measures every row.</p>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th class="n">Today</th><th class="n">Proposed</th></tr></thead>
+      <tbody>
+        <tr><td>The draw controls, once groups exist</td><td class="n">2 rows · ~110px</td><td class="n">1 line · 44px</td></tr>
+        <tr><td>A group’s head</td><td class="n">44px name box + bin</td><td class="n">32px heading + ⋯</td></tr>
+        <tr><td>Players a row</td><td class="n">2</td><td class="n">3 short names · 2 long (G3)</td></tr>
+        <tr><td>A group of 4</td><td class="n">164px</td><td class="n">152px (2 rows either way)</td></tr>
+        <tr><td>A group of 6</td><td class="n">214px</td><td class="n">202px · 152px if 3 a row</td></tr>
+        <tr><td>12 players, 3 groups (+1 not placed)</td><td class="n">C under the bar</td><td class="n">all on screen, 74px spare — G1 + G2 alone</td></tr>
+        <tr><td>15–18 players, 3 groups of 5–6</td><td class="n">C starts at 655, under the bar</td><td class="n">C’s last ~16px under the bar · all on screen if 3 a row</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">⚠ <b>Measured on the product, not guessed:</b> a chip is its name plus ~35px of dots and padding, at 12px type, in a 338px row.
+    Without the dots three fit only when each name is about 14 characters or fewer with the number — the fixture’s “#5 Emerson Test”
+    fits with 3px to spare, a real “#12 Logan Mitchell” does not. So on most real rosters G3 keeps two a row, and the win comes from G1 and G2.
+    Full names and numbers stay everywhere.</p>
+  </section>
+
+  <section>
+    <h2>The decisions</h2>
+
+    <div class="ask">
+      <div class="k">G1 · the draw controls</div>
+      <h3>Once groups exist, the draw folds to one line</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>A summary line that opens in place</div><p><b>⤮ 3 groups · from who replied · Change ›</b>. Tap it and today’s controls appear under it, <b>Draw again</b> included; <b>Close ⌃</b> folds them. The line never redraws by itself, so a stray tap can’t reshuffle anyone. A block with no groups yet opens with the controls showing, as today.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Leave the controls as they are</div><p>They stay one tap closer, and cost ~66px on every visit to the room.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">G2 · a group’s head</div>
+      <h3>The name as a heading, with a ⋯ for Rename and Delete</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>“Group A · 4” and a ⋯</div><p>The count sits beside the name, and the ⋯ holds <b>Rename</b> (the name becomes a box in place) and <b>Delete</b> (its players go to Not in a group, as today; no question, since nothing is lost). Saves 12px a group and takes the bin off every card. <b>Tradeoff:</b> renaming is one tap deeper, and most coaches keep A, B, C.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Keep the name box, move only the bin into a ⋯</div><p>Renaming stays a tap on the name; the head stays 44px.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">G3 · the player chips</div>
+      <h3>The player chips</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended, as a small extra</span>Drop the ⠿ dots and tighten the chip’s sides</div><p>Each chip loses ~17px. Short names (about 14 characters with the number) go three a row; longer ones stay two — so on most real rosters this changes little, which is why it is an extra and not the fix. The chip works exactly as now: <b>tap</b> for “Move to…”, <b>hold</b> to drag, 44px tall. <b>Tradeoff:</b> the dots were the hint a chip can be dragged; on a phone the tap menu is the main path anyway.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Also shorten names in this room only — “#12 Logan M.”</div><p>Three a row for almost everyone, and a group of six in two rows. Full names stay everywhere else. <b>Tradeoff:</b> two players with the same first name and initial read alike here, and the room would be the one place a coach sees a shortened name. Not recommended unless 16+ player teams find the room still too long.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Leave the chips</div><p>G1 and G2 alone bring twelve players on one screen.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">Where</div>
+      <h3>Phones only</h3>
+      <p>On a computer the groups already stand side by side as columns and the draw controls sit on one line; nothing there changes.
+      Not drawn, and not recommended: groups two-across on a phone. It’s denser for big groups, but at ~170px a column long names get cut and dragging
+      into a narrow column is fiddly. It’s worth trying only if these three aren’t enough.</p>
+    </div>
+
+    <div class="paste">
+      <div class="k">Paste back into the chat to rule</div>
+<pre>The Groups room on a phone
+G1 the draw folds to one line — A / B
+G2 the name as a heading + ⋯ — A / B
+G3 the chips — A / B / C
+Notes:</pre>
+    </div>
+    <div class="flag good-flag"><span class="k">Ruled · owner · 24 September 2026</span>
+      <p><b>G1 = A · G2 = A · G3 = A</b>, as recommended: <i>“for the groups room … I agree with your recommendations.”</i>
+      The same message asked about the rotation table under a rotating block. That is drawn on the next tab.</p></div>
+    <div class="flag good-flag"><span class="k">Built on dev · 24 September 2026 (“yes build the group rooms”)</span>
+      <p>Measured in the running product at 390: <b>all four boxes on screen with 70px to spare</b> (the third group used to start under the bar). The draw
+      line is 44px, a group’s head 32px, a chip about 17px narrower. At 360, every group’s head is above the bar and the last group’s second row of
+      chips needs a short scroll. The computer is unchanged. Walk: <b>QA walk · 1</b>, part K (ledger §230).</p></div>
+  </section>
+</div>
+
 <!-- ══════════════════════ TAB · THE ROTATION TABLE ON A PHONE ══════════════════════
      Live specimens: the frames are drawn by the script at the foot of the file from ONE data set (the
      UAT probe practice's Skills circuit, extended to 4 and 5 stations for the stress), so every shape
@@ -974,10 +1625,407 @@ Notes:</pre>
   </section>
 </div>
 
+<!-- ══════════════════════ TAB · STAGE 2 · STATIONS INSIDE A BLOCK ══════════════════════
+     Measured 24 Sep 2026 (probe .probe/pp-st2-measure.mjs at 390 and 360; --add drove the add path, then deleted
+     the station it made and proved the fixture as found by reload). Every frame is 390px and does not reflow; the
+     boxes sit at the measured tops ("today") or at tops computed from the same measurements ("proposed"). -->
+<div id="tab-st" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Stage 2 · measured and drawn 24 September 2026 · 390×844 and 360×780, true size</div>
+    <h1>Stations inside a block</h1>
+    <p class="lede">Open a rotating block on a phone and its stations are desk cards stacked in a column: 115–138px each,
+    a line of their own for the word “Open ›”, and a two-line “+ Add a station” under them. Writing a new station takes
+    <em>five taps</em> before the first letter, and a station started by mistake stays in the plan for good. The station’s
+    own screen already fits a phone, so it is not redrawn here. Drawn below: the station as one row, and adding a station as one tap.</p>
+    <div class="strip" aria-label="Where stage 2 is">
+      <span class="on">Measured 24 Sep</span><span class="on">Drawn 24 Sep</span><span class="now">S1 · S2 · S4 ruling owed</span><span class="on">S3 ruled 24 Sep in another session · being built</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>What today measures</h2>
+    <p class="sub">The Skills circuit block of the UAT probe practice: three stations (Footwork ladder with a note for
+    tonight, Close control, Finishing), three groups, three rounds. The block’s own screen, read out of the running product.</p>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th class="n">Reading</th><th class="n">Editing</th></tr></thead>
+      <tbody>
+        <tr><td>One station</td><td class="n">138 with a note · 115 without</td><td class="n">138 · 115</td></tr>
+        <tr><td>What a station card holds</td><td class="n">name · who runs it · the note · a 44px “Open ›” line</td><td class="n">the same, and the ⠿ grip on the “Open ›” line</td></tr>
+        <tr><td>Three stations (+ the add card)</td><td class="n">387</td><td class="n">463 · the add card 67, on two lines</td></tr>
+        <tr><td>Where the stations start in the block’s screen</td><td class="n">253 · on screen when it opens</td><td class="n">548 · the first card at the foot of screen one</td></tr>
+        <tr><td>“Edit groups ›”, measured from the first station</td><td class="n">— (not shown while reading)</td><td class="n">826 · under the bar with the stations in view</td></tr>
+        <tr><td>At 360×780</td><td class="n" colspan="2">every height the same (nothing wraps); the cards are 329 wide; “Edit groups ›” 844 below the first station</td></tr>
+      </tbody>
+    </table></div>
+    <div class="tbl"><table>
+      <thead><tr><th>Tap</th><th>What the coach presses</th><th>What happens (measured at 390)</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td>“+ Add a station” (359×67)</td><td>“Add a station” opens full-screen, on <b>From your drills</b> (the team has saved drills); the tabs are 165 and 164 × 44</td></tr>
+        <tr><td>2</td><td>Write one</td><td>A sentence and a lime <b>Write a station</b>, 330×<b>31</b></td></tr>
+        <tr><td>3</td><td>Write a station</td><td>The sheet closes and a blank <b>“Station 4”</b> card appears in the block. <b>Nothing opens</b>, and focus goes back to “+ Add a station”. It autosaves.</td></tr>
+        <tr><td>4</td><td>Station 4’s “Open ›”</td><td>The station’s screen, “Station 4 of 4”. The name box is empty, and <b>the cursor is not in it</b>.</td></tr>
+        <tr><td>5</td><td>The name box</td><td>Now the coach can type.</td></tr>
+        <tr><td>—</td><td>Reload the page</td><td><b>“Station 4” is still there.</b> <button type="button" class="why" data-why="s2w-reload" aria-expanded="false">the plan said otherwise</button><div id="s2w-reload" class="whybody" hidden>The plan’s method note (23 Sep) said a blank station is dropped when the plan saves. It isn’t: the save keeps it on purpose (“the coach pressed Add a station, and autosave must not delete what they are in the middle of creating”), and the probe saw it again after a reload. The earlier probe most likely closed the browser before its save went through. The plan is corrected. The probe then deleted Station 4 (the bin asked first) and reloaded: Footwork ladder, Close control, Finishing, as found.</div></td></tr>
+      </tbody>
+    </table></div>
+    <div class="flag good-flag"><span class="k">Already ruled · not a question on this tab</span>
+      <p><b>Reordering stations was ruled today in another session</b>: <i>“this should be drag and drop just like blocks are.”</i>
+      That session is building it now. The ◀ ▶ pair (which on a phone pointed up and down, the same ▲▼ you retired from blocks) is becoming the block’s ⠿:
+      tap it for <b>Move earlier · Move later</b>, or hold and drag it. The frames below draw it as built. S1 only moves it to the row’s left edge.</p></div>
+  </section>
+
+  <section>
+    <h2>The block’s screen, before and after</h2>
+    <p class="sub">Skills circuit, scrolled until its first station sits under the header. That’s where a coach is when they work on stations.
+    Editing first, then reading. Red dots mark measured problems, green dots mark what the drawing answers. Tap a dot for its note.</p>
+    <div class="pair">
+
+      <div class="drawcol">
+        <div class="drawhead">Today · editing <span class="h">stations 463px · “Edit groups ›” under the bar</span></div>
+        <div class="s2ph">
+          <div class="s2hd"><i>←</i><span class="eb">Block 2 of 4<span>11:00 p.m.</span></span><i>🗑</i><i>✓</i></div>
+          <div class="s2card" style="top:70px;height:138px"><b>Footwork ladder</b><span class="w">UAT Coach</span><span class="nt">Tonight: Only two ladders tonight — run it in pairs.</span><span class="op">Open ›</span><span class="gp">⠿</span></div>
+          <div class="s2card" style="top:218px;height:115px"><b>Close control</b><span class="w">Sam Assistant</span><span class="op">Open ›</span><span class="gp">⠿</span></div>
+          <div class="s2card" style="top:343px;height:115px"><b>Finishing</b><span class="w">Jordan Helper</span><span class="op">Open ›</span><span class="gp">⠿</span></div>
+          <div class="s2card add" style="top:468px;height:67px"><span class="op">+ Add a station</span><span class="w">a drill, or write one</span></div>
+          <div class="s2ab" style="top:545px"><table class="rtg tight"><thead><tr><th></th><th>Footwork ladder</th><th>Close control</th><th>Finishing</th></tr></thead><tbody>
+            <tr><th><span>11:00</span><span>p.m.</span></th><td><span class="rttile">Group A</span></td><td><span class="rttile">Group B</span></td><td><span class="rttile">Group C</span></td></tr>
+            <tr><th><span>11:15</span><span>p.m.</span></th><td><span class="rttile">Group C</span></td><td><span class="rttile">Group A</span></td><td><span class="rttile">Group B</span></td></tr>
+            <tr><th><span>11:30</span><span>p.m.</span></th><td><span class="rttile">Group B</span></td><td><span class="rttile">Group C</span></td><td><span class="rttile">Group A</span></td></tr>
+          </tbody></table></div>
+          <div class="s2ft"><span class="sb">‹</span><span class="ct">2 of 4</span><span class="sb">›</span><span class="dn">Done</span></div>
+          <button type="button" class="mk" data-note="s2e1" style="right:6px;top:62px" aria-label="note 1">1</button>
+          <button type="button" class="mk" data-note="s2e2" style="left:150px;top:180px" aria-label="note 2">2</button>
+          <button type="button" class="mk" data-note="s2e3" style="right:6px;top:460px" aria-label="note 3">3</button>
+          <button type="button" class="mk" data-note="s2e4" style="left:150px;top:756px" aria-label="note 4">4</button>
+        </div>
+        <ul class="notes">
+          <li id="s2e1"><b>1</b>A station is a card: 138px with a note, 115 without. The desk’s column, stacked. Three stations and the add card take 463px, more than half of the 697px the screen gives the block.</li>
+          <li id="s2e2"><b>2</b>Each card ends in a 44px line that holds only the word “Open ›”. The whole card already opens the station, so the line is a label for the tap, paid for on every station.</li>
+          <li id="s2e3"><b>3</b>“+ Add a station” wraps to two lines (67px). It’s the first of five taps before a new station can be named: the sequence below.</li>
+          <li id="s2e4"><b>4</b>With the stations in view, the rest of the block is below the bar: “Edit groups ›” measures 826px under the first station, and the block’s own doors are further still.</li>
+        </ul>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">S1 · A — editing <span class="h good">stations 217px · the whole rotation on this screen</span></div>
+        <div class="s2ph">
+          <div class="s2hd"><i>←</i><span class="eb">Block 2 of 4<span>11:00 p.m.</span></span><i>🗑</i><i>✓</i></div>
+          <div class="s2list" style="top:70px">
+            <div class="s2row g"><span class="gp">⠿</span><span class="tx"><b>Footwork ladder</b><span>UAT Coach · <em>Just for tonight</em></span></span><span class="cv">›</span></div>
+            <div class="s2row g"><span class="gp">⠿</span><span class="tx"><b>Close control</b><span>Sam Assistant</span></span><span class="cv">›</span></div>
+            <div class="s2row g"><span class="gp">⠿</span><span class="tx"><b>Finishing</b><span>Jordan Helper</span></span><span class="cv">›</span></div>
+            <div class="s2row add">+ Add a station</div>
+          </div>
+          <div class="s2ab" style="top:299px"><table class="rtg tight"><thead><tr><th></th><th>Footwork ladder</th><th>Close control</th><th>Finishing</th></tr></thead><tbody>
+            <tr><th><span>11:00</span><span>p.m.</span></th><td><span class="rttile">Group A</span></td><td><span class="rttile">Group B</span></td><td><span class="rttile">Group C</span></td></tr>
+            <tr><th><span>11:15</span><span>p.m.</span></th><td><span class="rttile">Group C</span></td><td><span class="rttile">Group A</span></td><td><span class="rttile">Group B</span></td></tr>
+            <tr><th><span>11:30</span><span>p.m.</span></th><td><span class="rttile">Group B</span></td><td><span class="rttile">Group C</span></td><td><span class="rttile">Group A</span></td></tr>
+          </tbody></table></div>
+          <div class="s2same" style="top:510px;height:130px">“Everyone does everything.” · the three groups and who is not in one, read back<br>unchanged (§229)</div>
+          <div class="s2ab s2q" style="top:650px">Edit groups ›</div>
+          <div class="s2ab s2q" style="top:706px;font-weight:600">+ Coaching points <span style="color:#6E6553;font-weight:400">·</span> ▥ Save to my circuits…</div>
+          <div class="s2ft"><span class="sb">‹</span><span class="ct">2 of 4</span><span class="sb">›</span><span class="dn">Done</span></div>
+          <button type="button" class="mk g" data-note="s2g1" style="right:42px;top:78px" aria-label="answer 1">1</button>
+          <button type="button" class="mk g" data-note="s2g2" style="left:4px;top:62px" aria-label="answer 2">2</button>
+          <button type="button" class="mk g" data-note="s2g3" style="left:150px;top:250px" aria-label="answer 3">3</button>
+          <button type="button" class="mk g" data-note="s2g4" style="left:120px;top:656px" aria-label="answer 4">4</button>
+        </div>
+        <ul class="notes">
+          <li id="s2g1" class="g"><b>1</b>A station is one 56px row: its name, then one line of facts, which are who runs it and, when it has one, <b>Just for tonight</b> (the note’s own label on the station’s screen). The whole row opens the station and the › says so. Nothing is cut: a second or third name wraps the line, never “…”. The note’s words are on the station’s screen, one tap in.</li>
+          <li id="s2g2" class="g"><b>2</b>The ⠿ from today’s ruling, moved to the row’s left edge, the side the block list keeps its grip on. Tap it for Move earlier · Move later; hold it to drag. The rest of the row opens the station, so a tap meant to open never starts a move.</li>
+          <li id="s2g3" class="g"><b>3</b>“+ Add a station” is one 44px row, the last row of the list. The block list ends in “+ Add a block” the same way. It opens a new station’s screen with the cursor in its name (S2).</li>
+          <li id="s2g4" class="g"><b>4</b>At the same scroll, the rotation table, the groups and “Edit groups ›” are all on this screen. Computed from the measurements: the stations and their add row go from 463px to 217, and everything under them rises 246px.</li>
+        </ul>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">Today · reading <span class="h">stations 387px · the next block under the bar</span></div>
+        <div class="s2ph">
+          <div class="s2hd"><i>←</i><span class="eb">Block 2 of 4<span>11:00 p.m.</span></span><i>✎</i></div>
+          <div class="s2card" style="top:70px;height:138px"><b>Footwork ladder</b><span class="w">UAT Coach</span><span class="nt">Tonight: Only two ladders tonight — run it in pairs.</span><span class="op">Open ›</span></div>
+          <div class="s2card" style="top:218px;height:115px"><b>Close control</b><span class="w">Sam Assistant</span><span class="op">Open ›</span></div>
+          <div class="s2card" style="top:343px;height:115px"><b>Finishing</b><span class="w">Jordan Helper</span><span class="op">Open ›</span></div>
+          <div class="s2ab" style="top:469px"><table class="rtg tight"><thead><tr><th></th><th>Footwork ladder</th><th>Close control</th><th>Finishing</th></tr></thead><tbody>
+            <tr><th><span>11:00</span><span>p.m.</span></th><td><span class="nm">Group A</span></td><td><span class="nm">Group B</span></td><td><span class="nm">Group C</span></td></tr>
+            <tr><th><span>11:15</span><span>p.m.</span></th><td><span class="nm">Group C</span></td><td><span class="nm">Group A</span></td><td><span class="nm">Group B</span></td></tr>
+            <tr><th><span>11:30</span><span>p.m.</span></th><td><span class="nm">Group B</span></td><td><span class="nm">Group C</span></td><td><span class="nm">Group A</span></td></tr>
+          </tbody></table></div>
+          <div class="s2same" style="top:657px;height:100px">“Everyone does everything.” · the groups, read back · unchanged</div>
+          <div class="s2ft"><span class="sb">‹</span><span class="ct">2 of 4</span><span class="sb">›</span><span class="dn">Done</span></div>
+          <button type="button" class="mk" data-note="s2r1" style="left:90px;top:170px" aria-label="note 1">1</button>
+          <button type="button" class="mk" data-note="s2r2" style="left:150px;top:756px" aria-label="note 2">2</button>
+        </div>
+        <ul class="notes">
+          <li id="s2r1"><b>1</b>While reading there’s no grip and no add card, but each card still ends in its 44px “Open ›” line. Three lines are the station; the fourth is a word.</li>
+          <li id="s2r2"><b>2</b>“Next · 11:45 p.m.”, the next block named in full at the end of this screen (the block’s foot, option C), measures 60px under the bar from here.</li>
+        </ul>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">S1 · A — reading <span class="h good">stations 172px · the next block on screen</span></div>
+        <div class="s2ph">
+          <div class="s2hd"><i>←</i><span class="eb">Block 2 of 4<span>11:00 p.m.</span></span><i>✎</i></div>
+          <div class="s2list" style="top:70px">
+            <div class="s2row"><span class="tx"><b>Footwork ladder</b><span>UAT Coach · <em>Just for tonight</em></span></span><span class="cv">›</span></div>
+            <div class="s2row"><span class="tx"><b>Close control</b><span>Sam Assistant</span></span><span class="cv">›</span></div>
+            <div class="s2row"><span class="tx"><b>Finishing</b><span>Jordan Helper</span></span><span class="cv">›</span></div>
+          </div>
+          <div class="s2ab" style="top:254px"><table class="rtg tight"><thead><tr><th></th><th>Footwork ladder</th><th>Close control</th><th>Finishing</th></tr></thead><tbody>
+            <tr><th><span>11:00</span><span>p.m.</span></th><td><span class="nm">Group A</span></td><td><span class="nm">Group B</span></td><td><span class="nm">Group C</span></td></tr>
+            <tr><th><span>11:15</span><span>p.m.</span></th><td><span class="nm">Group C</span></td><td><span class="nm">Group A</span></td><td><span class="nm">Group B</span></td></tr>
+            <tr><th><span>11:30</span><span>p.m.</span></th><td><span class="nm">Group B</span></td><td><span class="nm">Group C</span></td><td><span class="nm">Group A</span></td></tr>
+          </tbody></table></div>
+          <div class="s2same" style="top:442px;height:158px">“Everyone does everything.” · the three groups and who is not in one, read back<br>unchanged</div>
+          <div class="s2ab" style="top:611px"><div class="upnext" style="margin-top:0"><div><div class="k">Next · 11:45 p.m.</div><div class="n">Small-sided game</div><div class="m">Rest of practice</div></div></div></div>
+          <div class="s2ft"><span class="sb">‹</span><span class="ct">2 of 4</span><span class="sb">›</span><span class="dn">Done</span></div>
+          <button type="button" class="mk g" data-note="s2h1" style="right:42px;top:78px" aria-label="answer 1">1</button>
+          <button type="button" class="mk g" data-note="s2h2" style="right:40px;top:604px" aria-label="answer 2">2</button>
+        </div>
+        <ul class="notes">
+          <li id="s2h1" class="g"><b>1</b>The same row while reading, without the grip, and no add row. That’s exactly how the block list reads. An assistant finds their station by name and by who runs it; “Just for tonight” says there is something different about tonight, and one tap shows it.</li>
+          <li id="s2h2" class="g"><b>2</b>From the first station down, the whole block reads on one screen: the stations, the rotation, who is in each group, and the next block. That’s the review an assistant does before a practice (your 1b reason).</li>
+        </ul>
+      </div>
+    </div>
+    <p class="cap">Heights: “today” boxes sit at the measured tops. “A” is computed from the same measurements: a 56px row, 1px between rows, the 44px add row,
+    12px to the table as today, and every block below it moved up by exactly the difference. The table and the lines under it are the §229 build,
+    drawn as it renders. At 360 every row is the same height; a station run by two people wraps its facts line to a second line rather than cutting it.</p>
+  </section>
+
+  <section>
+    <h2>Adding a station, tap by tap</h2>
+    <p class="sub">The ink rings are the taps, in order; tap one for what it does. Frames are cropped under the part that matters (✂). Top row: today, measured.
+    Bottom row: S2 · A, where the written path is one tap and the drill path is three.</p>
+
+    <h3>Today: five taps to the first letter</h3>
+    <div class="s2seq">
+      <div class="drawcol">
+        <div class="drawhead">After tap ① on “+ Add a station”</div>
+        <div class="s2ph crop" style="--h:470px">
+          <div class="s2hd rule"><span class="ttl">Add a station</span><i>✕</i></div>
+          <div class="s2ab s2seg" style="top:80px"><span class="on">From your drills</span><span>Write one</span></div>
+          <div class="s2ab s2in" style="top:136px">Search your drills</div>
+          <div class="s2muted" style="top:192px">the team’s saved drills, each with + Add</div>
+          <div class="s2dr" style="top:212px"><span class="bars"><span style="width:62%"></span><span style="width:40%"></span></span><span class="ad">+ Add</span></div>
+          <div class="s2dr" style="top:276px"><span class="bars"><span style="width:48%"></span><span style="width:52%"></span></span><span class="ad">+ Add</span></div>
+          <div class="s2dr" style="top:340px"><span class="bars"><span style="width:70%"></span><span style="width:35%"></span></span><span class="ad">+ Add</span></div>
+          <div class="s2dr" style="top:404px"><span class="bars"><span style="width:55%"></span><span style="width:45%"></span></span><span class="ad">+ Add</span></div>
+          <button type="button" class="mk tp" data-note="s2t2" style="left:340px;top:89px" aria-label="tap 2">2</button>
+        </div>
+        <p class="s2crop">✂ the list continues</p>
+        <ul class="notes"><li id="s2t2"><b>②</b>The sheet opens on the library because the team has saved drills. Writing a station is the second tab: tap “Write one”.</li></ul>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">After tap ② on “Write one”</div>
+        <div class="s2ph crop" style="--h:270px">
+          <div class="s2hd rule"><span class="ttl">Add a station</span><i>✕</i></div>
+          <div class="s2ab s2seg" style="top:80px"><span>From your drills</span><span class="on">Write one</span></div>
+          <div class="s2ab s2hint" style="top:138px">Write it here and it stays with this practice. You can save it to your drills afterwards.</div>
+          <div class="s2ab s2lime" style="top:204px">Write a station</div>
+          <button type="button" class="mk tp" data-note="s2t3" style="left:262px;top:206px" aria-label="tap 3">3</button>
+          <button type="button" class="mk" data-note="s2t3r" style="right:6px;top:200px" aria-label="note">!</button>
+        </div>
+        <p class="s2crop">✂ the rest of the sheet is empty</p>
+        <ul class="notes"><li id="s2t3"><b>③</b>“Write a station”: the only way to write one.</li>
+          <li id="s2t3r"><b>!</b>The button is 31px tall, under the 44px a finger needs, and the name promises more than it does. It makes a station and opens nothing (next frame).</li></ul>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">After tap ③: back on the block</div>
+        <div class="s2ph crop" style="--h:720px">
+          <div class="s2hd"><i>←</i><span class="eb">Block 2 of 4<span>11:00 p.m.</span></span><i>🗑</i><i>✓</i></div>
+          <div class="s2card" style="top:87px;height:138px"><b>Footwork ladder</b><span class="w">UAT Coach</span><span class="nt">Tonight: Only two ladders tonight — run it in pairs.</span><span class="op">Open ›</span><span class="gp">⠿</span></div>
+          <div class="s2card" style="top:235px;height:115px"><b>Close control</b><span class="w">Sam Assistant</span><span class="op">Open ›</span><span class="gp">⠿</span></div>
+          <div class="s2card" style="top:360px;height:115px"><b>Finishing</b><span class="w">Jordan Helper</span><span class="op">Open ›</span><span class="gp">⠿</span></div>
+          <div class="s2card" style="top:485px;height:67px"><b class="un">Station 4</b><span class="op" style="height:22px">Open ›</span><span class="gp" style="bottom:2px">⠿</span></div>
+          <div class="s2card add focus" style="top:562px;height:67px"><span class="op">+ Add a station</span><span class="w">a drill, or write one</span></div>
+          <div class="s2ab" style="top:639px"><table class="rtg tight"><thead><tr><th></th><th>Footwork ladder</th><th>Close control</th><th>Finishing</th></tr></thead></table></div>
+          <button type="button" class="mk tp" data-note="s2t4" style="left:84px;top:516px" aria-label="tap 4">4</button>
+          <button type="button" class="mk" data-note="s2t4r" style="right:6px;top:478px" aria-label="note">!</button>
+          <button type="button" class="mk" data-note="s2t4s" style="right:6px;top:646px" aria-label="note">!</button>
+        </div>
+        <p class="s2crop">✂ the table and the groups continue</p>
+        <ul class="notes"><li id="s2t4"><b>④</b>The new station’s “Open ›”, the fourth tap.</li>
+          <li id="s2t4r"><b>!</b>The sheet closed and a blank “Station 4” card appeared (measured at 485, on screen). Nothing opened, and focus went back to “+ Add a station” (the blue ring), the button the coach started from.</li>
+          <li id="s2t4s"><b>!</b>The table has three columns: a station with no name doesn’t rotate. The list counts four, and the station’s screen says “4 of 4”. <b>This is also what a coach who changed their mind is left with, for good</b>: a reload keeps Station 4 (measured). That’s S4.</li></ul>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">After tap ④: the station’s screen</div>
+        <div class="s2ph crop" style="--h:330px">
+          <div class="s2hd"><i>←</i><span class="eb">Station 4 of 4<span>Skills circuit</span></span><i>🗑</i><i>✓</i></div>
+          <div class="s2ab s2in big" style="top:79px">Station name</div>
+          <div class="s2ab s2lab" style="top:141px">Staff</div>
+          <div class="s2ab s2in" style="top:161px">Add staff…</div>
+          <div class="s2ab s2lab" style="top:221px">What you’re doing</div>
+          <div class="s2ab s2ta" style="top:241px"></div>
+          <button type="button" class="mk tp" data-note="s2t5" style="left:130px;top:88px" aria-label="tap 5">5</button>
+          <button type="button" class="mk" data-note="s2t5r" style="right:6px;top:72px" aria-label="note">!</button>
+        </div>
+        <p class="s2crop">✂ the station’s screen as built (one layout with the block, §227): unchanged</p>
+        <ul class="notes"><li id="s2t5"><b>⑤</b>Into the name box. Only now does the keyboard come up.</li>
+          <li id="s2t5r"><b>!</b>The screen opens with the cursor on nothing: the name box is empty and waiting. A new block’s screen puts the cursor in its title (built at stage 1, and it took a fix to hold); a new station’s doesn’t.</li></ul>
+      </div>
+    </div>
+
+    <h3>S2 · A: one tap to the first letter; the library one tap in</h3>
+    <div class="s2seq">
+      <div class="drawcol">
+        <div class="drawhead">Tap ① on “+ Add a station”</div>
+        <div class="s2ph crop" style="--h:300px">
+          <div class="s2hd"><i>←</i><span class="eb">Block 2 of 4<span>11:00 p.m.</span></span><i>🗑</i><i>✓</i></div>
+          <div class="s2list" style="top:70px">
+            <div class="s2row g"><span class="gp">⠿</span><span class="tx"><b>Footwork ladder</b><span>UAT Coach · <em>Just for tonight</em></span></span><span class="cv">›</span></div>
+            <div class="s2row g"><span class="gp">⠿</span><span class="tx"><b>Close control</b><span>Sam Assistant</span></span><span class="cv">›</span></div>
+            <div class="s2row g"><span class="gp">⠿</span><span class="tx"><b>Finishing</b><span>Jordan Helper</span></span><span class="cv">›</span></div>
+            <div class="s2row add">+ Add a station</div>
+          </div>
+          <button type="button" class="mk tp" data-note="s2a1" style="left:160px;top:252px" aria-label="tap 1">1</button>
+        </div>
+        <p class="s2crop">✂ as the S1 frame above</p>
+        <ul class="notes"><li id="s2a1" class="g"><b>①</b>The one tap. No chooser first: the station is made and its screen opens (next frame).</li></ul>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">The new station’s screen, keyboard up</div>
+        <div class="s2ph">
+          <div class="s2hd"><i>←</i><span class="eb">Station 4 of 4<span>Skills circuit</span></span><i>🗑</i><i>✓</i></div>
+          <div class="s2ab s2in big on" style="top:79px"><span class="s2caret"></span><span style="color:#8A8272;font-weight:600">Station name</span></div>
+          <div class="s2ab s2q" style="top:129px">▥ Start from a drill ›</div>
+          <div class="s2ab s2lab" style="top:187px">Staff</div>
+          <div class="s2ab s2in" style="top:207px">Add staff…</div>
+          <div class="s2ab s2lab" style="top:267px">What you’re doing</div>
+          <div class="s2ab s2ta" style="top:287px"></div>
+          <div class="s2ab s2lab" style="top:355px">What you’re watching for</div>
+          <div class="s2ab s2in" style="top:375px"></div>
+          <div class="s2kb"><span class="lb">the phone’s keyboard</span><div class="sug"><span>I</span><span>The</span><span>Station</span></div>
+            <div class="kr"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="kr"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+            <div class="kr"><span class="w"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span class="w"></span></div>
+            <div class="kr"><span class="w"></span><span class="sp"></span><span class="w"></span></div></div>
+          <button type="button" class="mk g" data-note="s2a2a" style="right:6px;top:72px" aria-label="answer 1">1</button>
+          <button type="button" class="mk tp" data-note="s2a2b" style="left:190px;top:138px" aria-label="tap 2">2</button>
+          <button type="button" class="mk g" data-note="s2a2c" style="left:14px;top:556px" aria-label="answer 3">3</button>
+        </div>
+        <ul class="notes">
+          <li id="s2a2a" class="g"><b>1</b>One tap in: the station exists, its screen is open, the cursor is in its name and the keyboard is up. “Station 4 of 4” says where it landed. It’s the station’s screen as built, with nothing new but the next line.</li>
+          <li id="s2a2b" class="g"><b>②</b><b>Start from a drill ›</b>: the library path, the block’s own door (K4) one level down. It shows only while the new station is untouched and the team has saved drills; type a letter and it goes.</li>
+          <li id="s2a2c" class="g"><b>3</b>Changed your mind? Leave with nothing typed (←, Done, or the phone’s Back) and the station goes with you. Today it would stay as “Station 4” for good. That’s S4.</li>
+        </ul>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">After tap ② on “Start from a drill ›”</div>
+        <div class="s2ph crop" style="--h:430px">
+          <div class="s2hd rule"><span class="ttl">Start from a drill</span><i>✕</i></div>
+          <div class="s2ab s2in" style="top:80px">Search your drills</div>
+          <div class="s2muted" style="top:136px">the team’s saved drills, each with + Add</div>
+          <div class="s2dr" style="top:156px"><span class="bars"><span style="width:62%"></span><span style="width:40%"></span></span><span class="ad">+ Add</span></div>
+          <div class="s2dr" style="top:220px"><span class="bars"><span style="width:48%"></span><span style="width:52%"></span></span><span class="ad">+ Add</span></div>
+          <div class="s2dr" style="top:284px"><span class="bars"><span style="width:70%"></span><span style="width:35%"></span></span><span class="ad">+ Add</span></div>
+          <div class="s2dr" style="top:348px"><span class="bars"><span style="width:55%"></span><span style="width:45%"></span></span><span class="ad">+ Add</span></div>
+          <button type="button" class="mk tp" data-note="s2a3" style="right:92px;top:175px" aria-label="tap 3">3</button>
+        </div>
+        <p class="s2crop">✂ the list continues</p>
+        <ul class="notes"><li id="s2a3" class="g"><b>③</b>The same drill list, same search, same preview-in-place, but no tabs: you’re already writing a station, so “Write one” has nothing to add here. It opens over the station’s screen and closes back to it.</li></ul>
+      </div>
+      <div class="drawcol">
+        <div class="drawhead">After tap ③: the drill is the station</div>
+        <div class="s2ph crop" style="--h:340px">
+          <div class="s2hd"><i>←</i><span class="eb">Station 4 of 4<span>Skills circuit</span></span><i>🗑</i><i>✓</i></div>
+          <div class="s2ab" style="top:80px;font-size:19px;font-weight:800">Passing gates</div>
+          <div class="s2ab s2q" style="top:114px;font-weight:600;font-size:13.5px">✎ Edit just for this practice <span style="color:#6E6553;font-weight:400">·</span> ⟳ Swap drill</div>
+          <div class="s2ab s2lab" style="top:172px">Staff</div>
+          <div class="s2ab s2in" style="top:192px">Add staff…</div>
+          <div class="s2ab s2lab" style="top:252px">What you’re doing</div>
+          <div class="s2ab s2hint" style="top:272px">the drill’s own words, read-only, as a drill station shows them today</div>
+          <button type="button" class="mk g" data-note="s2a4" style="right:6px;top:74px" aria-label="answer">4</button>
+        </div>
+        <p class="s2crop">✂ the drill station’s screen as built · “Passing gates” is the drawing’s name, not a UAT drill</p>
+        <ul class="notes"><li id="s2a4" class="g"><b>4</b>The drill takes the place of the station you were writing, so the spot and the “4 of 4” stay the same. You’re on its screen with “Add staff…” in reach, and who runs a station is the next thing to set. Three taps to here, <b>the same as today</b>: today a picked drill drops you back on the list, and “Open ›” is the third tap.</li></ul>
+      </div>
+    </div>
+
+    <div class="tally">
+      <div class="met"><div class="k">A written station, to its first letter</div><div class="v good">5 → 1</div><div class="s">taps · B: 1 · C: 3 (2 with no saved drills)</div></div>
+      <div class="met"><div class="k">A drill, to “who runs it”</div><div class="v">3 → 3</div><div class="s">taps · B: 2 · C: 3</div></div>
+      <div class="met"><div class="k">Stations + the add row, editing</div><div class="v good">463 → 217</div><div class="s">px at 390 · the same at 360</div></div>
+      <div class="met"><div class="k">Stations, reading</div><div class="v good">387 → 172</div><div class="s">px · the next block comes on screen</div></div>
+    </div>
+  </section>
+
+  <section>
+    <h2>The decisions</h2>
+
+    <div class="ask">
+      <div class="k">S1 · the station row</div>
+      <h3>What a station reads as inside its block, on a phone</h3>
+      <p>Your K2 drawing already showed stations as rows; the build kept the desk cards, because stage 1 changed only the container. This is that row, measured.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>One 56px row: the name, then who runs it · “Just for tonight”</div><p>The whole row opens the station and a › says so. The note shows as its label, not its sentence. While editing, the ⠿ sits at the row’s left edge; while reading it isn’t there. The “Open ›” line and the cut first line of words go. <b>463 → 217px editing, 387 → 172 reading</b>, and the rotation, the groups and the next block come up onto the screen the coach is on. <b>Tradeoff:</b> the note’s words are one tap away: the row says tonight is different, not how.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>A, and the note in full on a third line</div><p>Amber, wrapping, never cut. An assistant reviewing the plan reads “Only two ladders tonight — run it in pairs” without opening the station. At 390 the fixture’s note takes two lines, so that row grows to ~94px, and a long note makes a long row. Not drawn; it’s A with the sentence added.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Keep the card, drop its dead lines</div><p>The “Open ›” line and the first line of words go, and the grip moves up beside the name: about 71–90px a station. The closest thing to the desk’s columns; half the saving. Not drawn.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">S2 · adding a station</div>
+      <h3>“+ Add a station” opens the new station, with the cursor in its name</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>The block’s add (K4), one level down</div><p>“+ Add a station” makes the station and opens its screen: cursor in the name, keyboard up, <b>Start from a drill ›</b> under the name while it’s untouched. <b>“+ Stations”</b> on a block with none or one does the same after “+ Stations makes two”: the block’s own words become station 1 as today, and station 2 opens, ready to name. A written station goes from 5 taps to 1. A drill still takes 3 taps to its screen, which is as many as today. <b>Tradeoff:</b> the library is one tap deeper than today’s first sheet. That matters less than it looks: a rotation you run again arrives whole, from your circuits, not one station at a time.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Two doors on the row: “+ Write a station · From your drills ›”</div><p>Both paths are one tap from the list, and a picked drill opens its station too. The fastest for a coach who builds rotations from saved drills (drill: 2 taps). <b>Tradeoff:</b> the add row stops looking like the block list’s, and with no saved drills it shows one door. Fits on one line at 390 and 360. Not drawn.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Keep today’s sheet; fix “Write one”</div><p>The smallest change: “Write a station” becomes a 44px button that opens the new station with the cursor in its name. Written: 3 taps (2 when the team has no saved drills). Not drawn.</p></div>
+      </div>
+      <p style="margin-top:12px"><b>On a computer:</b> “+ Add a station” keeps its sheet (the computer also has the library panel to drag from), but under A, B or C “Write a station” <b>opens the station it makes, with the cursor in its name, at every width</b>. Today’s dead end is a computer bug too.</p>
+    </div>
+
+    <div class="ask">
+      <div class="k">S3 · reordering stations</div>
+      <h3>Ruled today, not asked again</h3>
+      <p><i>“This should be drag and drop just like blocks are”</i> (you, 24 Sep, in the session that is building it). The ⠿ replaces ◀ ▶ at every width: tap it for the menu, hold or drag it to a slot between two stations. S1 · A only moves it to the row’s left edge. On the merits I’d have recommended the same thing, for three reasons. On a phone the pair already pointed up and down, the ▲▼ you retired from blocks. Two 44px arrows took 88px from every row. And every other move in this editor (a block, a player in the Groups room, a group in the table) is already “tap for a menu, hold to drag”.</p>
+      <p style="margin-top:8px">One thing to look at on its walk: the menu reads <b>Move earlier · Move later</b>, and the block’s reads <b>Move up · Move down</b>. The same gesture on the same screen, in two sets of words. The builder chose words that fit a computer’s columns and a phone’s rows alike.</p>
+    </div>
+
+    <div class="ask">
+      <div class="k">S4 · a new station left untouched</div>
+      <h3>Found by the measurement: a station started by mistake stays for good</h3>
+      <p>Measured: a blank station survives a reload. The list and the walk count it (“4 of 4”); the rotation skips it, because a station needs a name to rotate.
+      S2 · A makes starting a station one tap, so this has to be settled with it.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>It goes when you leave it with nothing in it</div><p>Close the new station’s screen (←, Done, Back, or stepping away with ‹ ›) with no name, no staff, no words, no note and no drill, and it’s removed, with no question, because nothing is lost. The same “untouched” test the block’s “Start from a drill ›” already uses. Only a station made in this visit: blank stations already in a plan are left alone. With “+ Stations makes two”, leaving the new second station untouched puts the block back exactly as it was (D13’s reverse, which already exists). Every width. <b>Tradeoff:</b> you can’t leave empty placeholder stations to fill in later; type a name and it stays.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Keep it, as today</div><p>It stays as “Station 4” until someone deletes it with the bin, which asks first.</p></div>
+      </div>
+      <p style="margin-top:12px">⚠ <b>The same question one level up, not drawn:</b> a block added by mistake keeps its 15 minutes and takes them from “rest of practice”. Say if you want blocks to follow S4.</p>
+    </div>
+
+    <div class="ask">
+      <div class="k">Where, and what doesn’t change</div>
+      <h3>S1 on a phone; the add fix and S4 everywhere</h3>
+      <p>The computer and the 641–768 band keep the station columns (with the grip being built today). Unchanged everywhere: the station’s own screen (one layout with the block), “+ Stations makes two”, the rotation table (§229), the Groups room (§230), every delete asking first, autosave, and Run practice. No new words: “Just for tonight” is the note field’s own label.</p>
+    </div>
+
+    <div class="paste">
+      <div class="k">Paste back into the chat to rule</div>
+<pre>Stage 2 · Stations inside a block
+S1 the station row — A / B / C
+S2 adding a station — A / B / C
+S4 a new station left untouched — A / B
+Blocks follow S4 too — yes / no / later
+Notes:</pre>
+    </div>
+  </section>
+
+  <section>
+    <h2>Also found</h2>
+    <ul class="list">
+      <li><b>The plan was wrong about blank stations.</b> It said the save drops them; the save keeps them on purpose and a reload shows them. Corrected in the plan. It’s the evidence S4 rests on.</li>
+      <li><b>A screen reader hears “No previous record”.</b> On the block’s screen and the station’s, the greyed-out ‹ at the first block or station is announced as “No previous <i>record</i>” (and › at the last as “No next record”): the money screens’ word, from the shared walk control. It already knows it’s walking stations or blocks. A one-word fix, to go with stage 2’s build; the control’s file is open in another session today.</li>
+      <li><b>A new station’s screen opens with focus on the screen itself, not its name.</b> The block had the same bug at stage 1 and needed a fix to hold its title’s cursor in the dev build. S2’s build takes the same fix.</li>
+    </ul>
+  </section>
+</div>
+
 <!-- ══════════════════════ TAB · QA WALK 1 ══════════════════════ -->
 <div id="tab-qa1" role="tabpanel" hidden>
   <header class="masthead">
-    <div class="eyebrow">QA walk · stage 1 · ledger §227 · built on dev 23 September 2026</div>
+    <div class="eyebrow">QA walk · stage 1 · ledger §227 · built on dev 23 September 2026 · <b>walked and passed 24 September 2026</b> (every part, A–J — J is §229, the rotation table)</div>
     <h1>Walk the block on its own screen</h1>
     <p class="lede">On your phone, signed in as the UAT head coach. Tick each step as it holds; mark each part
     Pass or Needs work; the box under a part is for what you saw. Ticks are kept in this browser. When you are
@@ -985,8 +2033,8 @@ Notes:</pre>
   </header>
   <section>
     <div class="qasign"><b>Where:</b> the UAT Test Team → More → <b>Practice plans</b> → <b>UAT probe practice</b>.
-    It is a past practice, so open the <b>⋯</b> beside Run practice and choose <b>Edit the plan</b> first.
-    Parts A–E on a phone; part F on a computer. Part J (ledger §229, the rotation table) is on a phone except its last step.</div>
+    It opens to read (stage 1b): tap <b>Edit</b> beside Run practice first for parts A–F.
+    Parts A–E on a phone; part F on a computer. Part J (ledger §229, the rotation table) and part K (ledger §230, the Groups room) are on a phone except their last steps.</div>
     <p class="qaprog" id="qaProg">0 of 0 steps ticked</p>
     <div id="qaParts"></div>
     <div class="paste">
@@ -1019,6 +2067,8 @@ Notes:</pre>
     <p>≤640 only, decided in JS by the portal’s phone hook so the sheet is never rendered on a desk. The timeline’s shut row loses its two sentence lines and its gutter pair at ≤640 and gains a chevron; the gutter variable drops to the clock’s width. The open block renders inside a full-screen sheet (the “Add a station” sheet’s construction: its own header, the body the scroller, a pinned foot on the shared foot-clearance token — never a hand-copied 16px) with the same field components the card renders today; the sheet’s head carries ✕ · the eyebrow · Move up · Move down · Delete; the foot carries ‹ N of M › and Done; ‹ › change the open block in place. “+ Add a block” is one row that creates a block and opens its sheet; “Start from a drill ›” inside the sheet opens the existing picker. The template editor inherits all of it. No migration, no new route, no year parameter.</p>
     <h3>6 · Verification at build</h3>
     <p>A source guard for the ≤640 row (no sentence lines, no pair) and the sheet (the same field set as the card; the foot on the clearance token; ‹ › bounded); the layout sweep on the plan page with a block open at 361/390/768/1440 plus a new screen for the sheet open; a hit-test on the pinned foot at rest and mid-scroll at 390 and 360; the Saved pill over the sheet; Escape/scrim/Back; the record’s read face in the sheet; driven by hand at 390 and 360: write a three-block plan from blank without returning to the list. A “QA walk · 1” tab added to this hub at build, its § from the ledger.</p>
+    <h3>7 · Stage 2 — stations inside a block (drawn 24 Sep; the plan’s §6e)</h3>
+    <p>Measured at 390 and 360: a station is a 115–138px card with a 44px “Open ›” line; three stations and the add card take 463px editing, 387 reading; a written station is five taps from its first letter (“+ Add a station” → Write one → a 31px “Write a station” that adds a blank card and opens nothing → “Open ›” → the name box); a blank station survives a reload (the §1 note said otherwise — corrected). Decisions on the “2 · Stations inside a block” tab: S1 the station row (A: one 56px row, name · who runs it · “Just for tonight”); S2 adding (A: the block’s K4 shape one level down — the new station opens with the cursor in its name, “Start from a drill ›” inside); S4 an untouched new station goes when its screen closes. S3 (reorder by the block’s grip) was ruled 24 Sep in another session and is being built there.</p>
   </section>
 </div>
 
@@ -1040,6 +2090,8 @@ Notes:</pre>
     <p>Practice plans are the Premium portal’s weekday tool and the one most often written in a car park or a kitchen, not at a desk. The phone programme made every other weekday screen fit a phone; this is the last one that does not.</p>
     <h3>Tradeoffs</h3>
     <p>A coach cannot see the rest of the plan while editing one block on a phone (the sheet’s eyebrow and ‹ › are the mitigation). The plan’s look diverges more between phone and desk than any screen so far (a list vs a timeline with the block open in place). Stage 1 leaves the rotation table wider than a phone; its fix is drawn on its own tab (24 Sep): keep the table and take out what makes it too wide.</p>
+    <h3>Stage 2 — stations inside a block (drawn 24 Sep, ruling owed)</h3>
+    <p>Inside a rotating block, a station becomes one short row (its name, who runs it, and a “Just for tonight” flag when it has a note) instead of a card with a line just for the word “Open”, so the whole rotation reads on one screen. “+ Add a station” opens the new station with the cursor in its name: one tap instead of five, with the library one tap in. A station started by mistake goes away if you leave it empty, instead of staying in the plan for good. Reordering stations by drag and a tap menu was ruled separately the same day.</p>
     <h3>Success criteria</h3>
     <p>At 390: a shut block ≤ 60px and never truncated; a writing field ≥ 350px wide; the minutes chips on one line; opening a block moves nothing else on the page; a three-block plan written from blank without returning to the list; the layout sweep green with the sheet open; the field’s advance button reachable without scrolling on every stop once stage 3 lands.</p>
   </section>
@@ -1056,7 +2108,7 @@ this page on a phone to judge a tap target or a type size.</p>
 (function(){
   var tabs = [].slice.call(document.querySelectorAll('.tab[data-tab]'));
   /* Every tab button needs a panel here — a button with no entry falls through silently. */
-  var panels = { found:'tab-found', s1:'tab-s1', qa1:'tab-qa1', rot:'tab-rot', plan:'tab-plan', brief:'tab-brief' };
+  var panels = { found:'tab-found', s1:'tab-s1', qa1:'tab-qa1', foot:'tab-foot', s2:'tab-s2', grp:'tab-grp', rot:'tab-rot', st:'tab-st', plan:'tab-plan', brief:'tab-brief' };
   function show(k){
     if(!panels[k]) k = 'found';
     Object.keys(panels).forEach(function(key){ var el = document.getElementById(panels[key]); if(el) el.hidden = (key !== k); });
@@ -1082,7 +2134,8 @@ this page on a phone to judge a tap target or a type size.</p>
       'No row shows a sentence cut off with "…" — the words "Dynamic warm-up, then partner work…" are not on the Warm-up row.',
       'Each row has a small › at its right edge. There are no up/down arrows under the times.',
       'The start times (10:45 p.m., 11:00 p.m., 11:45 p.m.) still run down the left, beside the dark line.',
-      'Under the last block is a single "+ Add a block" row — not a paragraph with "or a drill from your library".'
+      'Under the last block is a single "+ Add a block" row — not a paragraph with "or a drill from your library".',
+      'Under the "How it went" heading there is no small print — no "Families never see this", and no "About the practice, not about a player" under the box.'
     ]},
     { id:'B', title:'B · A block opens on its own screen (phone)', steps:[
       'Tap Skills circuit. It fills the screen; the plan list is gone from view and the bottom tabs are covered.',
@@ -1091,11 +2144,12 @@ this page on a phone to judge a tap target or a type size.</p>
       '"What you’re doing" shows its whole sentence without a cut; the box is the width of the screen.',
       'The minute chips 5 · 10 · 15 · 20 · 30 and the minutes box sit on one line.',
       'The three stations (Footwork ladder, Close control, Finishing) and "Edit groups ›" are further down the same screen.',
-      'Scroll to the bottom: the bar with "‹ Warm-up", "2 of 3 blocks", "Small-sided game ›" and Done stays at the foot the whole time.',
-      'Type a word into "What you’re watching for", wait for Saved to fade, then delete it again.'
+      'Scroll to the bottom: the bar with ‹, "2 of 3", › and Done stays at the foot the whole time — no block names in the bar.',
+      'Type a word into "What you’re watching for", wait for Saved to fade, then delete it again.',
+      'At the very end of Skills circuit, a row reads "Next · 11:45 p.m." with "Small-sided game" in full and "Rest of practice" under it; below it a quiet "‹ Back to Warm-up".'
     ]},
     { id:'C', title:'C · Walking, moving and leaving (phone)', steps:[
-      'Tap "Small-sided game ›": the same screen now shows Small-sided game, "Block 3 of 3 · 11:45 p.m.".',
+      'Tap the "Small-sided game" row at the end (or ›): the same screen now shows Small-sided game, "Block 3 of 3 · 11:45 p.m.", and its end reads "That’s the last block."',
       'Tap the up arrow at the top: it becomes "Block 2 of 3"; tap the down arrow to put it back to "Block 3 of 3".',
       'Tap Done: you are back on the list, which has not jumped — the rows are where they were, in the original order.',
       'Open Warm-up and tap any of the quiet "+" doors at the foot of its screen — the field it adds appears right there, full width. Tap its small × to close it again.',
@@ -1112,11 +2166,41 @@ this page on a phone to judge a tap target or a type size.</p>
     { id:'E', title:'E · The doors inside a block (phone)', steps:[
       'Open Skills circuit and tap "Footwork ladder": the station opens over the block, reading "station 1 of 3".',
       'Close the station (Back): you are on Skills circuit again, not on the list.',
-      'Tap "Edit groups ›": the groups room opens; Done brings you back to Skills circuit.'
+      'Tap "Edit groups ›": the groups room opens; Done brings you back to Skills circuit.',
+      'Open Footwork ladder again: its foot reads "Delete this station" and ‹ "1 of 3" › (no names); at the end of the station a "Next station" row names Close control in full, with who runs it.',
+      'In the Staff box of any block or station, the empty search line reads "Add staff…".',
+      'Open "Edit groups ›": each group’s bin sits on the same line as its name — no row of its own under the players.',
+      'With everyone in a group there is no "Not in a group" box. Tap a chip → "Not in a group": the box appears with that player; move them back and it goes away.',
+      'Beside the number, a menu reads "Who replied"; switch it to "Whole team" and press Draw again — players who haven’t replied are dealt in too, still marked as not replied.',
+      'With everyone in a group, press and hold a player: the "Not in a group" box appears in its usual place above Group A (the groups slide down); drop them on it and they come out of their group.',
+      'Back on Skills circuit, change a word in "What you’re watching for": "Saved" shows just above the Done bar, then fades.'
     ]},
     { id:'F', title:'F · Nothing moved on a computer', steps:[
-      'On a desktop browser, the same plan shows the blocks as before — each row with its sentence and the up/down arrows under its time.',
-      'Clicking a block opens it right where it is, inside the list, as before — no full-screen sheet.'
+      'On a desktop browser, the same plan shows the blocks as before — each row with its sentence, and (after Edit) a ⠿ grip under its time instead of the old up/down arrows.',
+      'Clicking a block opens it right where it is, inside the list, as before — no full-screen sheet.',
+      'Open a station: its foot still names where the arrows go ("‹ …", "1 of 3 stations", "Close control ›"), and there is no "Next station" row at the end.'
+    ]},
+    { id:'G', title:'G · 1b — Read first, edit on purpose (phone)', steps:[
+      'Open the UAT probe practice fresh: the toolbar reads Run practice · ✎ Edit · ⋯; there is no "+ Add a block" and no grips on the rows.',
+      'Open Skills circuit: its top shows an Edit button and no bin, and its fields read as sentences, not boxes.',
+      'Tap Edit at its top: Skills circuit stays open, now as boxes, and the button reads "Done editing"; the toolbar behind it reads "Done editing" too.',
+      'Tap Done: each row has a ⠿ grip under its start time (no border), and "+ Add a block" is back under the last block.',
+      'Tap Warm-up’s grip: "Move up" is greyed and "Move down" works; tap Move down and Warm-up becomes the second block. Move it back up.',
+      'Press and hold Warm-up’s grip and drag it down the list: while you hold it, the start times change to what they will be, and the gap under your finger says "Move Warm-up here · <time>". Let go: the order and the times are exactly what was shown. Move it back.',
+      'Tap Done editing: the grips and the add row go away. Open Skills circuit, then Footwork ladder: the station’s top has Edit; tap it and the same station opens as its form.',
+      'Reload the page: it opens to read again.'
+    ]},
+    { id:'I', title:'I · One layout for a block and a station (phone)', steps:[
+      'Open Skills circuit while reading: the top reads "Block 2 of 4 · 11:00 p.m." with a ✎; the bottom reads ‹ 2 of 4 › and Done.',
+      'Open Footwork ladder: the top reads "Station 1 of 3 · Skills circuit" with a ✎; the station’s name is the first line of the screen; the bottom reads ‹ 1 of 3 › and Done — the same places as the block.',
+      'Tap ✎ on the station: it becomes ✓ in the same spot with a bin beside it, and the name becomes a box.',
+      'Tap the bin: a question asks "Delete Footwork ladder?" and says it can’t be undone. Tap Keep it — the station is still there.',
+      'Tap ✓: the station reads as words again, the bin is gone, and the plan’s toolbar reads Edit.',
+      'On Skills circuit while editing, the bin’s question says it goes "with its 3 stations". Keep it.'
+    ]},
+    { id:'H', title:'H · 1b — On a computer', steps:[
+      'The same practice opens to read: blocks open in place as words, and the toolbar has Edit beside Run practice.',
+      'Press Edit: the plan is the desk editor you know — a ⠿ grip under each start time (click it for Move up · Move down, or drag it to a gap — the start times preview while you drag), a block opening in place with its boxes. Press Done editing to read again.'
     ]},
     { id:'J', title:'J · §229 — The rotation table on a phone', steps:[
       'On your phone, open Skills circuit (reading). The table under the station cards shows all three stations — Footwork ladder, Close control and Finishing — with nothing cut off at the right edge.',
@@ -1127,6 +2211,16 @@ this page on a phone to judge a tap target or a type size.</p>
       'Tap Group A at 11:15 → Move to Finishing. Finishing at 11:15 now holds two tiles, one above the other (Group A and Group B); Close control at 11:15 shows "—"; the line "Hand-arranged — the groups no longer move one station on each round. · Back to the standard rotation ›" appears, with its dot.',
       'Tap "Back to the standard rotation ›": the table is back to A · B · C / C · A · B / B · C · A and the hand-arranged line is gone.',
       'On a computer, open the same block and press Edit: each group is still a round pill with ⠿ dots, and the table looks as it did before today.'
+    ]},
+    { id:'K', title:'K · §230 — The Groups room on a phone', steps:[
+      'On your phone, open Skills circuit, tap ✎, then "Edit groups ›". At the top, one line reads "3 groups · from who replied · Change ›" — not the two rows of draw controls.',
+      'Groups A, B and C all fit above the bottom bar (on a smaller phone the last group may need a short scroll). Each card is headed "Group A · 4" with a ⋯ at its right — no name box, no bin.',
+      'The player chips have no ⠿ dots. Tap one: "Move to Group B · Move to Group C · Not in a group", as before. Close it without choosing.',
+      'Tap the "3 groups" line: the usual controls (How many groups · the number · Who replied · Draw again) open under it and the line says "Close". Tap it again: they fold away. Nothing was re-drawn.',
+      'Tap Group A’s ⋯: it offers "Rename Group A" and "Delete Group A". Choose Rename: the name becomes a box, ready to type over. Type "Hawks" and press Done/Enter — the card reads "Hawks · 4".',
+      'Rename it back to "Group A" the same way. Close the room and reopen it: it still reads "Group A".',
+      'Optional (it changes the plan): tap "+ Add a group", then its ⋯ → Delete — the empty group goes, with no question, and nobody moves.',
+      'On a computer, open the same room: the draw controls, the name boxes, the bins and the chips’ dots are all as before.'
     ]}
   ];
   var KEY = 'pp-phone-qa1';

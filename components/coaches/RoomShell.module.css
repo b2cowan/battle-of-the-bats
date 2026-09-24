@@ -228,6 +228,10 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
+/* "‹ 2 of 3 ›" — the arrows are square, the names live in their aria-labels (and, on the practice
+   sheets, in full at the end of the body). */
+.navCompact { gap: 0.4rem; }
+.navCompact .navBtn { justify-content: center; min-width: var(--tap-min, 44px); padding: 0.35rem; }
 
 /* ⚠ THE 44px FLOOR ON EVERY DOOR THE ROOM DRAWS, at the touch widths (the rendered sweep, Phase B
    2026-09-02 — the first time a room was swept at 361/390/768: "Edit drive" 27px, Record 31px,

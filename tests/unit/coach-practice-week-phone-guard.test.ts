@@ -73,7 +73,7 @@ describe('E1 — the practice plan toolbar is one row, and the "⋯" opens a dra
   });
 
   it('ONE list, two presentations — every label written exactly once', () => {
-    for (const label of ['Save as template…', 'Print the sheet', 'Send to staff', 'Edit the plan']) {
+    for (const label of ['Save as template…', 'Print the sheet', 'Send to staff']) {
       const hits = page.split(`'${label}'`).length - 1;
       assert.equal(hits, 1, `"${label}" appears ${hits}× — a second copy is how one word becomes two spellings`);
     }
@@ -81,8 +81,10 @@ describe('E1 — the practice plan toolbar is one row, and the "⋯" opens a dra
 
   it('the gates ride on the list, and each one is still there', () => {
     assert.ok(page.includes('if (canWrite) {'), 'Save as template — a writer only');
-    assert.ok(page.includes('writing && (data?.staffPeople?.length ?? 0) > 1'), 'Send to staff — gated, never deleted');
-    assert.ok(page.includes('recordMode && canWrite'), 'Edit the plan — a writer, on a record');
+    assert.ok(page.includes('canWrite && !isPracticeRecord && (data?.staffPeople?.length ?? 0) > 1'), 'Send to staff — gated, never deleted (and on the read face since stage 1b)');
+    // Stage 1b (R3): Edit / Done editing is a VISIBLE button beside Run practice, never a drawer row.
+    assert.ok(page.includes("const editDoor = canWrite ? (reading ? 'edit' : 'done') : null;"), 'Edit — a writer, on every plan');
+    assert.ok(!page.includes("key: 'edit'"), 'and it is not a member of deskActions');
   });
 
   it('Library is NOT a drawer row — a width decision cannot reach the only surface the drawer has', () => {
