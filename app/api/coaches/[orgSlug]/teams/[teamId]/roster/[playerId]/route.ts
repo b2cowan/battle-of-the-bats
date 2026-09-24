@@ -11,7 +11,7 @@ import {
   getRepPlayerAwardsSummary,
   getRepRosterPlayers,
 } from '@/lib/db';
-import { playerName } from '@/lib/coach-roster-name';
+import { cleanNamePart, playerName } from '@/lib/coach-roster-name';
 import type { RepRosterStatus, LineupProfile } from '@/lib/types';
 import { BATS_OPTIONS, THROWS_OPTIONS, JERSEY_SIZE_OPTIONS, normalizeOption } from '@/lib/rep-roster-options';
 import { getSportPack } from '@/lib/sports';
@@ -105,8 +105,11 @@ export const GET = withObservability(async (_req: Request,
     attendance,
     dues: canViewMoney(capabilities) ? dues : null,
     awards,
-    // Active players in the coach's own (display) order — names only, nothing to redact.
-    roster: rosterRows.filter(p => p.status === 'active').map(p => ({ id: p.id, name: playerName(p) || 'Unnamed player' })),
+    // Active players in the coach's own (display) order — name and jersey number, nothing to redact.
+    // The number is the phone roster sheet's quiet trailing qualifier (stage 5 · F2, 2026-09-23).
+    roster: rosterRows.filter(p => p.status === 'active').map(p => ({
+      id: p.id, name: playerName(p) || 'Unnamed player', number: cleanNamePart(p.playerNumber) || null,
+    })),
   });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/roster/[playerId]' });
 

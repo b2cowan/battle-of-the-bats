@@ -1,7 +1,6 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ChevronRight } from 'lucide-react';
 import type { CoachingAssignment, ClosedCoachingAssignment } from '@/lib/db';
 import sheet from './CoachesBottomNav.module.css';
 
@@ -14,7 +13,8 @@ import sheet from './CoachesBottomNav.module.css';
  * `.dropItem` rules from `CoachesBottomNav.module.css`, so the two sheets are one sheet system
  * (one skin in dark and warm, one grab line, one row density) — not a second copy. The rows are
  * the one "Your teams" list built on the §208 walk (2026-09-20): the current team tinted with
- * `aria-current` and no chevron ("you are here", not a door); a team with no live season carries
+ * `aria-current`; NO row carries a chevron (owner, §228 walk 2026-09-24: the tint is enough to
+ * tell "you are here" from the rest, and every other row is plainly tappable); a team with no live season carries
  * its season's NAME as a quiet trailing qualifier and still opens Season's End. That block used to
  * sit inside More, where it cost 133px above the three tools a coach opens the sheet for; the
  * masthead's name is where TeamSnap and TeamLinkt put the switch, and it is where the walk's
@@ -82,7 +82,6 @@ export default function CoachTeamSwitchSheet({
                 <span style={{ width: 10, height: 10, borderRadius: 2, background: a.teamColor, flexShrink: 0 }} />
               )}
               <span className={sheet.dropItemName}>{a.teamName}</span>
-              {!active && <ChevronRight size={14} className={sheet.dropChevron} />}
             </Link>
           );
         })}
@@ -102,7 +101,6 @@ export default function CoachTeamSwitchSheet({
               )}
               <span className={sheet.dropItemName}>{a.teamName}</span>
               <span className={sheet.dropItemMeta}>{a.programYearName}</span>
-              {!active && <ChevronRight size={14} className={sheet.dropChevron} />}
             </Link>
           );
         })}

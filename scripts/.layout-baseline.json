@@ -177,129 +177,33 @@
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "coach-player|361|tap-floor|input·<input>": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "35px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·How positions guide the lineup": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "20px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·C: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·1B: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·2B: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·3B: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·SS: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·LF: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·CF: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·RF: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|button·★Gold-medal starter — tap to mark": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|select·—LeftRightSwitch": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|select·—LeftRight": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-player|361|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-player-family|361|tap-floor|input·<input>": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "35px tall (floor 44)"
-    },
     "coach-player-family|361|tap-floor|button·Upload document": {
       "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
       "detail": "38px tall (floor 44)"
     },
-    "coach-player|390|tap-floor|input·<input>": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+    "coach-player-family-edit|361|tap-floor|input·<input>": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player-family` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
       "detail": "35px tall (floor 44)"
     },
-    "coach-player|390|tap-floor|button·How positions guide the lineup": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "20px tall (floor 44)"
+    "coach-player-family-edit|361|tap-floor|button·Upload document": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player-family` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "38px tall (floor 44)"
     },
-    "coach-player|390|tap-floor|button·C: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|button·1B: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|button·2B: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|button·3B: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|button·SS: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|button·LF: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|button·CF: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|button·RF: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|button·★Gold-medal starter — tap to mark": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "26px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|select·—LeftRightSwitch": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|select·—LeftRight": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-player|390|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
-      "detail": "37px tall (floor 44)"
-    },
-    "coach-player-family|390|tap-floor|input·<input>": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+    "coach-player-family-edit|390|tap-floor|input·<input>": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player-family` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
       "detail": "35px tall (floor 44)"
+    },
+    "coach-player-family-edit|390|tap-floor|button·Upload document": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player-family` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "38px tall (floor 44)"
+    },
+    "coach-player-family-edit|768|tap-floor|input·<input>": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player-family` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-family-edit|768|tap-floor|button·Upload document": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player-family` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "38px tall (floor 44)"
     },
     "coach-player-family|390|tap-floor|button·Upload document": {
       "reason": "PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
@@ -313,23 +217,11 @@
       "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
       "detail": "20px tall (floor 44)"
     },
-    "coach-player|768|tap-floor|button·C: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
     "coach-player|768|tap-floor|button·1B: blank — fine. Tap to change.": {
       "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
       "detail": "30px tall (floor 44)"
     },
-    "coach-player|768|tap-floor|button·2B: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
     "coach-player|768|tap-floor|button·3B: blank — fine. Tap to change.": {
-      "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
-      "detail": "30px tall (floor 44)"
-    },
-    "coach-player|768|tap-floor|button·SS: blank — fine. Tap to change.": {
       "reason": "PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
       "detail": "30px tall (floor 44)"
     },
@@ -359,6 +251,346 @@
     },
     "coach-player|768|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
       "reason": "PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·C: Never. Tap to change.": {
+      "reason": "Same control; its label changed when the fixture player was filled (stage 5, 2026-09-23). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·2B: Best. Tap to change.": {
+      "reason": "Same control; its label changed when the fixture player was filled (stage 5, 2026-09-23). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·SS: Best. Tap to change.": {
+      "reason": "Same control; its label changed when the fixture player was filled (stage 5, 2026-09-23). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player|768|control-width|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player|768|tap-floor|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player|768|control-width|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player|768|tap-floor|button·Move SS up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player|768|control-width|button·Move SS up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player|768|tap-floor|button·Move SS down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player|768|control-width|button·Move SS down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player|768|tap-floor|select·1 — Ace2345": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player|768|tap-floor|input·No limit": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|input·<input>": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·How positions guide the lineup": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·C: Never. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·1B: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·2B: Best. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·3B: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·SS: Best. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·LF: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·CF: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·RF: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|361|control-width|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|361|tap-floor|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|361|control-width|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|361|tap-floor|button·Move SS up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|361|control-width|button·Move SS up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|361|tap-floor|button·Move SS down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|361|control-width|button·Move SS down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|361|tap-floor|select·1 — Ace2345": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|input·No limit": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|button·★Gold-medal starter — tap to mark": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|select·—LeftRightSwitch": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|select·—LeftRight": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|361|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|input·<input>": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·How positions guide the lineup": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·C: Never. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·1B: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·2B: Best. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·3B: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·SS: Best. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·LF: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·CF: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·RF: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|390|control-width|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|390|tap-floor|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|390|control-width|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|390|tap-floor|button·Move SS up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|390|control-width|button·Move SS up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|390|tap-floor|button·Move SS down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|390|control-width|button·Move SS down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|390|tap-floor|select·1 — Ace2345": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|input·No limit": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|button·★Gold-medal starter — tap to mark": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|select·—LeftRightSwitch": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|select·—LeftRight": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|390|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|input·<input>": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Family & paperwork stopped folding Documents: PlayerDocumentsSection's file input (35px) and Upload button (38px), styled inline in that component. Recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·How positions guide the lineup": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·C: Never. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·1B: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·2B: Best. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·3B: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·SS: Best. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·LF: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·CF: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·RF: blank — fine. Tap to change.": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|768|control-width|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|768|tap-floor|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|768|control-width|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|768|tap-floor|button·Move SS up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|768|control-width|button·Move SS up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|768|tap-floor|button·Move SS down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|768|control-width|button·Move SS down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-edit|768|tap-floor|select·1 — Ace2345": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|input·No limit": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|button·★Gold-medal starter — tap to mark": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when the player page stopped folding its Details tab (roster + player page review): the shared PositionProfileEditor chips (30px) and the A-squad star (26px) sit below the 44px floor at 768. Not this pass's controls — the picker is the depth-chart build's; recorded for COACH_TOUCH_TARGET_DEBT_PLAN rather than fixed in passing.",
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|select·—LeftRightSwitch": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|select·—LeftRight": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-edit|768|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-player` — the same control, now reached behind the section's Edit at ≤640 (swept here so it stays measured, plan §11.5a). Original: PRE-EXISTING, first seen 2026-09-13 when Details stopped being a fold: the portal-wide .select (37px at 768) — a shared form control, portal-wide decision (COACH_TOUCH_TARGET_DEBT_PLAN), not this pass's.",
       "detail": "37px tall (floor 44)"
     },
     "coach-player-family|768|tap-floor|input·<input>": {
@@ -463,6 +695,166 @@
     },
     "coach-roster|361|tap-floor|a·Logan Test": {
       "reason": "An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Avery Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Blake Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Casey Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Devon Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Emerson Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Frankie Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Gray Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Harper Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Indigo Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Jules Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Kai Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|361|tap-floor|a·Logan Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Avery Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Blake Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Casey Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Devon Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Emerson Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Frankie Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Gray Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Harper Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Indigo Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Jules Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Kai Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|390|tap-floor|a·Logan Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: An INLINE TEXT LINK inside a card or a row (a player’s name, a tab link, “Take attendance”) at 19–22px on a phone — pre-existing baseline debt that sat here without a reason until 2026-09-06. Recorded as register F-23: an inline link is a control and takes the touch floor, or the card becomes the door and the link stops being one. Not a table-standard axis; COACH_TOUCH_TARGET_DEBT_PLAN.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|button·Help: Roster": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "34px tall (floor 44)"
+    },
+    "coach-roster-callups|768|control-width|button·Help: Roster": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-roster-callups|768|tap-floor|a·Avery Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Blake Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Casey Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Devon Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·dana.test@example.com": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·(905) 555-0142": {
+      "reason": null,
+      "detail": "19px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Emerson Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Frankie Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Gray Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Harper Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Indigo Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Jules Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Kai Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster-callups|768|tap-floor|a·Logan Test": {
+      "reason": "RELOCATED by phone stage 5 (2026-09-23) from `coach-roster` — the same control, now reached with the Call-ups shelf open. Original: Portal chrome under the 44px floor in the 641–768 band (the help \"?\", Export, Add a bill / Add Line, the roster's add-a-position/contact links, the development history's filter chips) — pre-existing; the touch band moved to 768 on 2026-08-27 and these were never raised. COACH_TOUCH_TARGET_DEBT_PLAN. Not a table part.",
       "detail": "22px tall (floor 44)"
     },
     "coach-budget|361|control-width|button·Scroll tabs right": {
@@ -888,6 +1280,14 @@
     "coach-roster|768|control-width|button·Help: Roster": {
       "reason": "Icon-only PORTAL CHROME under 44px WIDE (tab-bar scroll arrows, the help \"?\", the month pager, a drag grip) — surfaced by the `control-width` rule, born 2026-09-06 with the app-wide table standard (§3.6). Not a table row: register F-21, COACH_TOUCH_TARGET_DEBT_PLAN. Each is its own fix; the rule stays so a new one cannot land silently.",
       "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-roster|768|tap-floor|a·dana.test@example.com": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-roster|768|tap-floor|a·(905) 555-0142": {
+      "reason": null,
+      "detail": "19px tall (floor 44)"
     },
     "coach-budget|768|tap-floor|button·Help: Money": {
       "reason": "2026-08-13 legacy-route retirement: the standalone Money pages became permanent redirects, so every Money screen id now renders the HUB (accounting?section=…) — this is the hub chrome’s own control, identical to the entry already recorded for it on coach-accounting, newly visible under this screen id only because the id’s URL changed. Not new geometry: the >=768px compact control height is the portal-wide grandfathered decision the 2026-08-11 header pass and 2026-08-13 page-level action pass both recorded for these same buttons; <=640px it clears the 44px floor via the header grid / .panelToolbarActions.",
@@ -3165,6 +3565,102 @@
     "coach-schedule-month|768|tap-floor|button·UAT probe game · no lineup": {
       "reason": "The 641–768 band's MONTH keeps the desktop's text chips in its cells (16px, three per day), found the day the sweep first opened the view (phone re-evaluation stage 2 · C2, 2026-09-21). The stage ruled the PHONE's month (dots, the day's rows beneath, ≤640) and said nothing else in the band moves; plan §8.2 notes the band's Week the same way. A 44px chip in a 110px cell is a decision about the band's calendar, owed to the owner with the band's Week — not a floor to apply on the way past. ⚠ THIS FOURTH ENTRY IS THE SAME CONDITION ON A NEW FIXTURE ROW, not a new defect: the month's chips are keyed by the event's visible LABEL, so seeding \"UAT probe game · no lineup\" (stage 3 · Game week, c9ed52b8, 2026-09-22) minted a new key for a condition already accepted three times above. It is NOT caused by the uncommitted tap-floor rework in coaches.module.css — the band was exposed by design before that work existed. Expect one more of these every time a fixture event is added.",
       "detail": "16px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·How positions guide the lineup": {
+      "reason": null,
+      "detail": "20px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·C: Never. Tap to change.": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·1B: blank — fine. Tap to change.": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·2B: Best. Tap to change.": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·3B: blank — fine. Tap to change.": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·SS: Best. Tap to change.": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·LF: blank — fine. Tap to change.": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·CF: blank — fine. Tap to change.": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·RF: blank — fine. Tap to change.": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-switcher|768|control-width|button·Move 2B up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-switcher|768|tap-floor|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-switcher|768|control-width|button·Move 2B down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-switcher|768|tap-floor|button·Move SS up": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-switcher|768|control-width|button·Move SS up": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-switcher|768|tap-floor|button·Move SS down": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-switcher|768|control-width|button·Move SS down": {
+      "reason": null,
+      "detail": "26px wide (floor 44) — icon-only control"
+    },
+    "coach-player-switcher|768|tap-floor|select·1 — Ace2345": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|input·No limit": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|button·★Gold-medal starter — tap to mark": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|select·—LeftRightSwitch": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|select·—LeftRight": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "coach-player-switcher|768|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
     }
   }
 }

@@ -19,7 +19,7 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *
  * Three things, top to bottom:
  *   1. The pinned ABOUT note — the record's own undated `notes` field, moved here from Details
- *      (Q8). It is still the page's form state and still saves through the page's Save bar; this
+ *      (Q8). It is still the page's form state and autosaves with the rest of the record; this
  *      component only draws it. One standing note per player: the things that are always true.
  *   2. One door — "Add a note" — for the general note that fits none of the other sources. A
  *      date (today), the words, and optionally what it is about (a goal, a game or practice).
@@ -60,7 +60,7 @@ export default function PlayerNotesTab({
   teamId: string;
   playerId: string;
   playerFirstName: string;
-  /** The pinned About note — the record's `notes` field, drawn here, saved by the page's Save bar. */
+  /** The pinned About note — the record's `notes` field, drawn here, autosaved by the page. */
   about: { value: string; canEdit: boolean; onChange: (v: string) => void };
 }) {
   const confirm = useConfirm();
@@ -217,7 +217,6 @@ export default function PlayerNotesTab({
               maxLength={1000}
               aria-label={`About ${first}`}
             />
-            <p className={styles.detailPlaceholder} style={{ marginBottom: 0 }}>Saves with the page’s Save bar.</p>
           </div>
         ) : (
           about.value.trim()

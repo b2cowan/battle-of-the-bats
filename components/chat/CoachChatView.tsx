@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useState, type ReactNode } from 'react';
 import { usePathname } from 'next/navigation';
 import { MessageSquare, ChevronLeft, Loader2, UserPlus, Users } from 'lucide-react';
 import Link from 'next/link';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import { useIsDesktop } from '@/lib/hooks/useIsDesktop';
-import { divisionScopeLabel } from '@/lib/chat-display';
+import { divisionScopeLabel, orderRoomsForTeam } from '@/lib/chat-display';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useHelpDrawer } from '@/components/help/help-drawer-context';
 import HelpButton from '@/components/help/HelpButton';
@@ -97,6 +97,9 @@ export default function CoachChatView() {
   const { openHelp } = useHelpDrawer();
   // `/{orgSlug}/coaches/teams/{teamId}/chat` → the portal's own help hub.
   const helpOrgSlug = pathname.match(/^\/([^/]+)\/coaches\//)?.[1];
+  // The team the coach is standing in — this team's rooms list first (stage 5 · F3). Read from the
+  // address, like the help slug above: the room list itself is per-user and knows no team.
+  const teamId = pathname.match(/\/coaches\/teams\/([^/]+)\/chat(?:\/|$)/)?.[1] ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -159,6 +162,7 @@ export default function CoachChatView() {
   } else {
     const selectedRoom = rooms.find((r) => r.room.id === selected) ?? null;
     const multi = rooms.length > 1;
+    const ordered = orderRoomsForTeam(rooms, teamId);
 
     // Chunk B (P1 #17): Chat is a nav destination, so it owes a help icon — but it is deliberately
     // full-bleed and has no `.pageHeader` to hang one on. It goes in the header of whichever surface
@@ -189,11 +193,14 @@ export default function CoachChatView() {
           <span>Your chats</span>
           {!selectedRoom && chatHelp}
         </p>
-        {rooms.map((r) => {
+        {ordered.rooms.map((r, i) => {
           const active = r.room.id === selected;
           return (
+            <Fragment key={r.room.id}>
+            {/* One quiet label, drawn only when a room from another team actually appears — it is
+                what turns a sort into an explanation (stage 5 · F3 = B). */}
+            {i === ordered.dividerAt && <p className={styles.sidebarDivider}>Your other teams</p>}
             <button
-              key={r.room.id}
               type="button"
               className={`${styles.roomRow}${active ? ` ${styles.roomRowActive}` : ''}${r.isStaffRoom ? ` ${styles.roomRowStaff}` : ''}`}
               onClick={() => setSelected(r.room.id)}
@@ -221,6 +228,7 @@ export default function CoachChatView() {
                 </span>
               )}
             </button>
+            </Fragment>
           );
         })}
       </div>

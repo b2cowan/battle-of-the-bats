@@ -42,6 +42,8 @@ const SURFACES = [
   'app/[orgSlug]/coaches/teams/[teamId]/practice/circuits/[circuitId]/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx',
+  // The player's record — its Save/Discard bar retired for autosave (owner, 2026-09-24).
+  'app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx',
 ];
 
 describe('SaveStatusPill — the autosave word', () => {

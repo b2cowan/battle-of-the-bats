@@ -5446,16 +5446,6 @@ a.oneChip:hover { border-color: currentColor; }
   border-radius: 999px;
   padding: 0.14rem 0.55rem;
 }
-/* The one chip that IS a warning. ⚠ Icon + words, never colour alone — the portal's contrast
-   ruling, and the reason this reads at all for a deuteranope. */
-.chipDanger {
-  display: inline-flex; align-items: center; gap: 0.28rem;
-  font-size: var(--type-support); font-weight: 600;
-  color: var(--danger);
-  background: rgba(var(--danger-rgb), 0.12);
-  border-radius: 999px;
-  padding: 0.14rem 0.55rem;
-}
 
 .playerGlanceTiles {
   display: grid;
@@ -5516,8 +5506,6 @@ a.oneChip:hover { border-color: currentColor; }
   border-color: var(--home-olive, var(--logic-lime));
   background: var(--home-olive-soft, rgba(255,255,255,0.03));
 }
-.chipDoor { text-decoration: none; border: 1px solid transparent; }
-.chipDoor:hover, .chipDoor:focus-visible { border-color: currentColor; }
 
 /* ── A flat page section (CoachPageSection) — the collapse section's card and heading, no fold
    (hub F09). Composed from the fold's own card so the two families share one border, radius and
@@ -5549,6 +5537,22 @@ a.oneChip:hover { border-color: currentColor; }
   letter-spacing: 0.04em;
   white-space: nowrap;
 }
+/* The ACTION slot (stage 5, 2026-09-23) — a control on the section, last in the head. Its own class,
+   not `.pageSectionMeta`: the meta slot is uppercase mono FACTS, and a button styled as a fact is the
+   shared component quietly becoming two things. The title takes the slack so meta and action sit
+   together on the right when a section has both. */
+.pageSectionHead > .pageSectionTitle { margin-right: auto; }
+.pageSectionAction { flex: none; display: inline-flex; }
+/* The section's Edit / Done (stage 5) — ICON-ONLY since 2026-09-23 (owner: "to save space and be consistent
+   with our app"). Its box is the lineup builder's `.footerIconBtn` — 44px at ≤900, which covers the only width
+   it renders at (≤640), so the sweep measures a real 44px rect. This class only keeps the section head from
+   growing: the overhang above and below sits inside the head's own padding. */
+.sectionEditBtn { flex: none; margin-block: -0.55rem; }
+/* ...drawn as the practice plan's phone pencil/check is — no border, no fill, the quiet ink (owner,
+   §228 walk 2026-09-24: "remove the border … consistent with the ones on the mobile practice plans").
+   Compound, because `.footerIconBtn` sits later in this file and would otherwise win. */
+.footerIconBtn.sectionEditBtn { border-color: transparent; background: none; color: var(--text-tertiary); }
+.footerIconBtn.sectionEditBtn:hover { color: var(--text-primary); background: var(--white-8); }
 .pageSectionBody { composes: collapseBody; padding-top: 0.4rem; }
 /* A section with no heading (the Skills & Goals tab's one section, a month group) opens with the
    full top padding its missing head row would have left. A class, not an inline style — a size
@@ -5584,11 +5588,39 @@ a.oneChip:hover { border-color: currentColor; }
 }
 .recordList dd { margin: 0; color: var(--text-primary); min-width: 0; overflow-wrap: anywhere; }
 .recordList dd[data-empty] { color: var(--text-tertiary); }
-@media (max-width: 480px) {
-  /* Stacked, as the commitment grid stacks: a label lane plus a long value is a wrap on a phone. */
-  .recordList { grid-template-columns: 1fr; gap: 0.15rem; }
-  .recordList dt { padding-top: 0.45rem; }
+/* ⚠ ON A PHONE THE RECORD IS ROWS, NOT A STACK (phone re-evaluation stage 5 · F1, owner ruling
+   2026-09-23, drawn at true size on the hub's "5 · People" tab). Until then ≤480 stacked the label
+   above its value — fine for the rare coach without roster-write, and it doubled the height of the
+   face a HEAD COACH now lands on: eight label lines over eight value lines. A 108px label lane with
+   a hairline between rows reads as one record at 360 and 390; a long value wraps inside its own lane. */
+@media (max-width: 640px) {
+  /* The lane is AS WIDE AS THIS SECTION'S LONGEST LABEL, capped at 108px (owner, §228 walk
+     2026-09-24: "squeeze these rows over … so we can fit the email on 1 row"). Guardian contact
+     (Name · Phone · Email) gives ~50px back to its values; a section with "Emergency contact" or
+     "Allergies / medical" keeps today's 108px and wraps the label as before. Each card's lane is
+     its own, so two cards' values need not start at the same x — they are separate cards. */
+  .recordList { grid-template-columns: fit-content(108px) minmax(0, 1fr); gap: 0 0.75rem; }
+  .recordList dt, .recordList dd { padding: 0.55rem 0; }
+  .recordList dt:not(:first-of-type), .recordList dt:not(:first-of-type) + dd {
+    border-top: 1px solid var(--home-line, var(--border-2));
+  }
 }
+/* A record value that IS a door — a guardian's phone or email on a phone (stage 5 · F4). The value
+   itself is the 44px box, not a small link wearing a big ::after (the layout sweep measures an
+   element's OWN rect; the roster row's 22px link is the standing example of that trap). */
+.recordLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  min-height: var(--tap-min, 44px);
+  margin-block: -0.55rem;
+  color: var(--blueprint-light);
+  font-weight: 600;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+.recordLink:hover { text-decoration: underline; }
+.recordLinkChevron { flex: none; color: var(--text-tertiary); }
 
 /* The family season recap as ONE quiet row at the foot of the record tab (hub F11): an eye and a
    sentence, the preview opening beneath it in place. The tinted box it lived in is gone. */
@@ -5739,6 +5771,29 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 @media (max-width: 640px) {
   .playerSwitch { max-width: 100%; }
 }
+/* THE NAME IS THE SWITCHER on a phone (stage 5 · F2, 2026-09-23) — the masthead's `.teamHeaderSwitch`
+   one line down: the same 16px chevron `flex: none` OUTSIDE the name's span, and a real 44px box made
+   by an overhang above and below the one-line title, so the header row does not grow (1.1em is
+   `.pageTitle`'s own line box). Unlike the masthead the name WRAPS — stage 4 · E5, a clamped title
+   hides part of a name a coach typed. Rendered only at ≤640 (the page decides), so no media query. */
+.playerNameSwitch {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-width: 0;
+  max-width: 100%;
+  min-height: var(--tap-min, 44px);
+  margin-block: calc((1.1em - var(--tap-min, 44px)) / 2);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.playerNameSwitch:focus-visible { outline: 2px solid var(--primary-light); outline-offset: 2px; border-radius: 4px; }
+.playerNameSwitchChevron { flex: none; color: var(--text-tertiary); }
 
 /* ── Taking a player off the roster ───────────────────────────────────────────────────────
    ⚠ Quiet, and at the FOOT of the form. This is the portal's only delete for a player, and it
@@ -5858,6 +5913,37 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   letter-spacing: 0.04em;
   color: var(--text-tertiary);
 }
+/* F5 · A SECTION'S FIGURES ON A PHONE (owner ruling 2026-09-24, drawn on the stage-5 hub): one line,
+   the number bold and its word after it, no boxes — the player page's Attendance and Playing time.
+   Rendered only at ≤640 (the page decides in JS); above it those sections keep `.statBoxRow`. */
+.figLine {
+  display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1.1rem;
+  margin: 0 0 0.6rem; font-size: var(--type-support); font-weight: 600; color: var(--text-tertiary);
+}
+.figItem b {
+  font-family: var(--font-display); font-size: var(--type-title); font-weight: 800;
+  color: var(--text-primary); font-variant-numeric: tabular-nums; margin-right: 0.2rem;
+}
+/* Present · late · absent in proportion — a 6px bar that reads "mostly here" without reading. The
+   line of figures above it is its key; decorative fills, so they carry no text-contrast duty. */
+.attnSplit { display: flex; gap: 2px; height: 6px; border-radius: 3px; overflow: hidden; margin: 0 0 1rem; }
+.attnSplit i { display: block; flex-basis: 0; }
+.attnSplit i[data-k="in"]   { background: var(--success); }
+.attnSplit i[data-k="late"] { background: var(--warning); }
+.attnSplit i[data-k="out"]  { background: var(--danger); }
+/* The dues ladder as a LEDGER on a phone — a receipt: each line signed, a rule, the balance. */
+.duesLedger { margin: 0 0 0.25rem; font-variant-numeric: tabular-nums; }
+.duesLedger > div { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: baseline; gap: 0 1rem; padding: 0.3rem 0; }
+.duesLedger dt { margin: 0; color: var(--text-tertiary); font-weight: 600; font-size: var(--type-body); }
+.duesLedger dd { margin: 0; color: var(--text-primary); font-weight: 700; font-size: var(--type-body); }
+.duesLedger dd.duesLedgerNote {
+  flex-basis: 100%; font-weight: 400; font-size: var(--type-support); color: var(--text-tertiary);
+}
+.duesLedger > .duesLedgerTotal { border-top: 1.5px solid var(--text-primary); margin-top: 0.3rem; padding-top: 0.55rem; }
+.duesLedgerTotal dt { color: var(--text-primary); font-weight: 800; }
+.duesLedgerTotal dd { font-family: var(--font-display); font-size: var(--type-title); font-weight: 800; }
+.duesLedgerTotal dd[data-tone="danger"] { color: var(--danger); }
+.duesLedgerTotal dd[data-tone="good"]   { color: var(--success); }
 
 /* Compact recent-sessions list */
 .miniListLabel {
@@ -5909,7 +5995,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 
 /* Save bar — pinned to the viewport bottom while editing, so the Save action is
    never hidden below the fold. Offset for the desktop sidebar; above the mobile
-   bottom nav. A matching spacer reserves scroll room so it never covers the last card. */
+   bottom nav. The player page's Save/Discard version retired for autosave (2026-09-24). */
 .saveBar {
   position: fixed;
   left: var(--coach-sidebar-w, 220px);   /* clear the desktop sidebar */
@@ -5920,44 +6006,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
   pointer-events: none;   /* gutters stay click-through; inner bar re-enables */
   background: linear-gradient(to top, var(--pitch-black) 55%, transparent);
 }
-.saveBarInner {
-  pointer-events: auto;
-  max-width: 960px;       /* align with .page content width (left-aligned) */
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  flex-wrap: wrap;
-  padding: 0.7rem 0.9rem 0.7rem 1.1rem;
-  background: var(--card-bg);
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.4);
-  border-radius: 12px;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.5);
-}
-.saveBarStatus {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.45rem;
-  font-size: var(--type-body);
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-.saveBarStatusSaved { color: var(--success); }
-.saveDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--warning);
-  flex-shrink: 0;
-  animation: coachPulseDot 1.5s ease-in-out infinite;
-}
-.saveBarActions {
-  display: flex;
-  gap: 0.5rem;
-  margin-left: auto;
-}
-/* In-flow spacer so the last card can scroll clear of the fixed bar */
-.saveBarSpacer { height: 5.5rem; }
 
 @media (max-width: 900px) {
   .saveBar {

@@ -86,6 +86,39 @@ async function openTeamSheet(page) {
 }
 
 /**
+ * THE PLAYER PAGE'S PHONE GESTURES (phone re-evaluation stage 5, 2026-09-23). At ≤640 Details and
+ * Family land as the record, and each writable section carries its own "Edit <section>" button;
+ * pressing every one on the tab puts the whole form on screen for the sweep. Above 640 there is no
+ * Edit (the form is already there) and this opens nothing. The roster sheet opens from the player's
+ * name — a button with a menu popup INSIDE the h1, only at ≤640 with somewhere to go.
+ */
+async function openSectionEdits(page) {
+  const edits = page.getByRole('button', { name: /^Edit / });
+  const n = await edits.count();
+  for (let i = 0; i < n; i++) {
+    // Always the FIRST remaining one: a pressed Edit becomes "Done editing …" and leaves the set.
+    const btn = page.getByRole('button', { name: /^Edit / }).first();
+    if (!(await btn.isVisible())) break;
+    await btn.click();
+    await page.waitForTimeout(150);
+  }
+  if (n) await page.waitForTimeout(300);
+}
+async function openPlayerSheet(page) {
+  const name = page.locator('h1 button[aria-haspopup="menu"]').first();
+  if (await name.count() === 0 || !(await name.isVisible())) return;
+  await name.click();
+  await page.locator('#coach-player-sheet').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+async function openCallUpShelf(page) {
+  const shelf = page.locator('summary', { hasText: /^\s*Call-ups/ }).first();
+  if (await shelf.count() === 0) return;
+  await shelf.click();
+  await page.waitForTimeout(300);
+}
+
+/**
  * THE SCHEDULE'S PHONE GESTURES (phone re-evaluation stage 2, 2026-09-21). At ≤640 the List · Week ·
  * Month switch is a glyph-only menu beside "+" ("Change view · <current>") and the list is an inner
  * scroller that opens positioned on today; above 640 the switch is the kit toolbar's toggle and the
@@ -394,6 +427,11 @@ export const SCREENS = [
   { id: 'coach-attendance-receipts', session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/history?section=attendance&player=${c.receiptPlayerId}` },
   { id: 'coach-roster',      session: 'coach', path: (c) => `${team(c)}/roster`,      ready: 'h1' },
+  // The roster with its Call-ups shelf OPEN (stage 5, §11.7) — the third collapsed shelf (mig 309)
+  // was never opened by any entry, so its rows were unmeasured. Tolerant of a season with no
+  // call-ups: no shelf, nothing to open, the entry re-measures the roster.
+  { id: 'coach-roster-callups', session: 'coach', path: (c) => `${team(c)}/roster`, ready: 'h1',
+    interact: openCallUpShelf },
   { id: 'coach-lineups',     session: 'coach', path: (c) => `${team(c)}/lineups`,     ready: 'h1' },
   // The Templates tab is a real address since the hub was brought level with the Practice plans
   // room (2026-09-18); before that it was page state and was never swept at any width.
@@ -428,6 +466,28 @@ export const SCREENS = [
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?tab=notes` },
   { id: 'coach-player-family',   session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?tab=family` },
+  /* ⚠⚠ THE EDIT STATES — the LOAD-BEARING half of stage 5's sweep (phone re-evaluation stage 5 ·
+     F1/F4, owner ruling 2026-09-23). At ≤640 Details and Family now LAND as the record, and the
+     form — with roughly twenty baselined sub-floor controls (35px inputs, 30px position chips, the
+     26px star, 37px selects) — sits behind each section's Edit. The sweep visits a screen as it
+     lands, so without these entries those controls would leave the baseline: not fixed, UNSEEN.
+     `COACH_TOUCH_TARGET_DEBT_PLAN.md` forbids exactly that ("converts a visible problem into an
+     invisible decision"); hiding them behind a visit is the same move. These keep every one of them
+     measured, in the state a coach actually meets it. Above 640 there is no Edit (the form already
+     shows) and the gesture is a no-op, so the entry re-measures the landing form. */
+  { id: 'coach-player-edit',     session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}`,
+    interact: openSectionEdits },
+  { id: 'coach-player-family-edit', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}?tab=family`,
+    interact: openSectionEdits },
+  // The roster sheet, open (stage 5 · F2) — the team sheet's twin, scoped to the open sheet. Above
+  // 640 the name is plain text and the page keeps its select, so the scope matches nothing and the
+  // entry falls back to the page, as `coach-team-hub-switcher` does above 900.
+  { id: 'coach-player-switcher', session: 'coach', ready: 'h1',
+    path: (c) => `${team(c)}/roster/${c.receiptPlayerId}`,
+    interact: openPlayerSheet,
+    scope: '#coach-player-sheet' },
   { id: 'coach-lineup-builder',  session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/lineups/${c.gameEventId}` },
   // The builder's phone states (phone re-evaluation stage 3, 2026-09-21): a game with no lineup

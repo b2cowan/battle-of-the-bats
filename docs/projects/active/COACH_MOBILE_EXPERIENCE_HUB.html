@@ -1209,7 +1209,10 @@ button{font:inherit;color:inherit}
     <li class="stage done" title="Stage 1 drawn 20 Sep 2026; ruled 21 Sep — B1, B3, B4 build as drawn; B2 = B (one line everywhere)">Stage 1 ruled 21 Sep</li>
     <li class="stage done" title="Stage 1 built on dev 21 Sep 2026; /review + /docs the same day; §210 walked 24/24, all four parts PASS; committed ff0068bb">Stage 1 built · walked · committed 21 Sep</li>
     <li class="stage done" title="Stage 2 · Schedule drawn 20 Sep 2026; ruled 21 Sep — C1–C4 build as drawn, the desktop phone-first; built on dev 21 Sep; committed bb928e41; §216 walked 35/35 PASS, all six parts">Stage 2 built · walked · committed 21 Sep</li>
-    <li class="stage current" title="Stage 3 · Game week drawn 21 Sep 2026 — D1–D5 at true size on its own tab (D5, the way back, the clock-turned door and the look-only flip added on the owner’s four reads); RULED 21 Sep — D1 = B, D2 = B, D5 · D3 · D4 as drawn; build owed">Stage 3 ruled 21 Sep · D1 = B · D2 = B · D5 D3 D4 as drawn</li>
+    <li class="stage done" title="Stage 3 · Game week — ruled 21 Sep, built, §220 walk complete 22 Sep">Stage 3 built · walked 22 Sep</li>
+    <li class="stage done" title="Stage 4 · Practice week &amp; skills — ruled 22 Sep, built, committed 3a8c69da, §225 passed 23 Sep">Stage 4 built · walked 23 Sep</li>
+    <li class="stage done" title="Stage 5 · People — ruled 23 Sep, built; §228 walked and passed 24 Sep with mid-walk rulings (autosave, F5 Season figures, the medical chip removed, and more); commit + /docs owed">Stage 5 built · walked 24 Sep</li>
+    <li class="stage current" title="Stage 6 · Reports — not drawn yet: tables that fit stay tables; short tab labels; the notification clamp (Q 9.1, 10.1)">Stage 6 · Reports — next</li>
     <li class="stage" title="—">Reviewed</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -1226,7 +1229,8 @@ button{font:inherit;color:inherit}
   <button type="button" class="tab" role="tab" data-tab="qa3" aria-selected="false" aria-controls="tab-qa3">QA walk · 3<span class="st built">§220 · WALK COMPLETE · 22 Sep</span></button>
   <button type="button" class="tab" role="tab" data-tab="stage4" aria-selected="false" aria-controls="tab-stage4">4 · Practice week &amp; skills<span class="st built">RULED 22 Sep — E1 = A · E2 · E3 · E4 · E5 as drawn</span><span class="st built">BUILT on dev 22 Sep · §225</span><span class="st dim">the plan's toolbar · a player is one row · the dialog's docked foot · the count above the bar · one title</span></button>
 <button type="button" class="tab" role="tab" data-tab="qa4" aria-selected="false" aria-controls="tab-qa4">QA walk · 4<span class="st built">§225 · PASSED · 23 Sep</span></button>
-<button type="button" class="tab" role="tab" data-tab="stage5" aria-selected="false" aria-controls="tab-stage5">5 · People<span class="st built">RULED 23 Sep — F1 · F2 (as redrawn) · F3 = B · F4 accepted</span><span class="st">build owed</span><span class="st dim">the record face &amp; Edit · prev/next · this team&rsquo;s rooms first · the family tab</span></button>
+<button type="button" class="tab" role="tab" data-tab="stage5" aria-selected="false" aria-controls="tab-stage5">5 · People<span class="st built">F5 ruled + built 24 Sep</span><span class="st built">RULED 23 Sep — F1 · F2 (as redrawn) · F3 = B · F4 accepted</span><span class="st built">BUILT on dev 23 Sep · §228</span><span class="st dim">the record face &amp; Edit · prev/next · this team&rsquo;s rooms first · the family tab</span></button>
+<button type="button" class="tab" role="tab" data-tab="qa5" aria-selected="false" aria-controls="tab-qa5">QA walk · 5<span class="st built">§228 · PASSED · 24 Sep</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
 </nav>
@@ -4677,6 +4681,214 @@ button{font:inherit;color:inherit}
     means every &ldquo;before&rdquo; number on this tab is a floor rather than a total.</p>
   </header>
 
+  <!-- ══════════════ F5 — added 24 Sep, mid-§228 walk ══════════════ -->
+  <style>
+    #tab-stage5 .f5-sech{display:flex;align-items:baseline;gap:10px;padding:14px 14px 10px}
+    #tab-stage5 .f5-sech h4{margin:0;font-size:16px;font-weight:800;flex:1;font-family:var(--s5-sans);color:var(--s5-ink)}
+    #tab-stage5 .f5-meta{font-family:var(--mono);font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--s5-dim);font-weight:700}
+    #tab-stage5 .f5-in{padding:0 14px 14px}
+    #tab-stage5 .f5-boxes{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px}
+    #tab-stage5 .f5-box{background:var(--s5-band);border:1px solid var(--s5-hair);border-radius:10px;padding:10px 13px;display:flex;flex-direction:column;gap:3px}
+    #tab-stage5 .f5-box[data-dup]{outline:2px dashed #B45309;outline-offset:2px}
+    #tab-stage5 .f5-bv{font-size:22px;font-weight:800;line-height:1.1}
+    #tab-stage5 .f5-bl{font-size:10.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--s5-dim);font-weight:700}
+    #tab-stage5 .f5-figs{display:flex;flex-wrap:wrap;gap:4px 18px;align-items:baseline;margin:0 0 8px}
+    #tab-stage5 .f5-fig{display:inline-flex;align-items:baseline;gap:6px}
+    #tab-stage5 .f5-fig b{font-size:19px;font-weight:800;font-variant-numeric:tabular-nums}
+    #tab-stage5 .f5-fig span{font-size:13px;color:var(--s5-dim);font-weight:600}
+    #tab-stage5 .f5-split{display:flex;height:6px;border-radius:3px;overflow:hidden;background:var(--s5-hair);margin:2px 0 14px;gap:2px}
+    #tab-stage5 .f5-split i{display:block}
+    #tab-stage5 .f5-lbl{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--s5-dim);font-weight:700;margin:0 0 6px}
+    #tab-stage5 .f5-mini{border:1px solid var(--s5-hair);border-radius:10px}
+    #tab-stage5 .f5-mr{display:flex;align-items:center;gap:10px;padding:10px 12px;border-top:1px solid var(--s5-hair);font-size:15px}
+    #tab-stage5 .f5-mr:first-child{border-top:0}
+    #tab-stage5 .f5-mr span:first-child{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    #tab-stage5 .f5-md{font-size:13px;color:var(--s5-dim)}
+    #tab-stage5 .f5-badge{font-size:11px;letter-spacing:.06em;font-weight:800;padding:4px 8px;border-radius:6px;background:#E3EFD6;color:#3F6212}
+    #tab-stage5 .f5-badge[data-t="out"]{background:#F6DED7;color:#9A3412}
+    #tab-stage5 .f5-foot{font-size:13px;color:var(--s5-dim);margin:10px 0 0}
+    #tab-stage5 .f5-foot a{color:var(--s5-limeink);font-weight:700;text-decoration:none}
+    #tab-stage5 .f5-led{margin:0 0 4px;font-variant-numeric:tabular-nums}
+    #tab-stage5 .f5-lr{display:flex;justify-content:space-between;align-items:baseline;padding:5px 0;font-size:15px}
+    #tab-stage5 .f5-lr span{color:var(--s5-dim);font-weight:600}
+    #tab-stage5 .f5-lr b{font-weight:700}
+    #tab-stage5 .f5-lr.f5-tot{border-top:1.5px solid var(--s5-ink);margin-top:4px;padding-top:8px}
+    #tab-stage5 .f5-lr.f5-tot span{color:var(--s5-ink);font-weight:800}
+    #tab-stage5 .f5-lr.f5-tot b{font-size:19px;font-weight:800;color:#B03A22}
+    #tab-stage5 .f5-sub{font-size:12px;color:var(--s5-dim);margin:-3px 0 4px}
+  </style>
+
+  <section class="s5-dec" id="f5">
+    <div class="s5-dtag s5-added">F5 <i>· drawn 24 September, mid-§228 walk · <b>RULED the same day — as drawn, the bar IN; BUILT</b> · walk part G</i></div>
+    <h2>The Season tab&rsquo;s figures become one line each, not a wall of boxes</h2>
+    <p class="s5-lede">Your read: <i>&ldquo;is there a better way to display this on a phone? it&rsquo;s taking up a lot of
+    space.&rdquo;</i> Three sections on this tab draw their figures as boxes — <b>Attendance</b> (five), <b>Playing time</b>
+    (four) and <b>Dues</b> (three to six) — and in each one, <b>boxes repeat the section&rsquo;s own header</b>. The drawing
+    removes the repeats at every width, and on a phone sets what is left as one quiet line. The desktop keeps its boxes for
+    what is left, because they fit on one row there.</p>
+
+    <div class="s5-note s5-note-warn">
+      <h4>What is drawn, and what is measured</h4>
+      <p>The &ldquo;before&rdquo; frames are drawn from your screenshot and the code, not captured, and the heights are read off
+      the screenshot (≈). Attendance&rsquo;s figures are the fixture player you photographed (85%, 11 · 0 · 2 of 13).
+      <b>Playing time and Dues use illustrative figures</b> — Dues is chosen so the arithmetic closes ($1,200.00 − $256.17 − $0.00 = $943.83).
+      I will measure the real heights on the built screen before the walk step is written.</p>
+    </div>
+
+    <!-- ── Attendance ── -->
+    <div class="s5-pair">
+      <div class="s5-col">
+        <div class="s5-cap"><b>Before — Attendance</b><span class="s5-meas">≈ 290px of boxes · 2 of 5 repeat the header</span></div>
+        <div class="s5-scroll"><div class="s5-ph">
+          <div class="s5-mast">UAT Test Team <span class="s5-chev">⌄</span><span class="s5-rec">3-2-1</span></div>
+          <div class="s5-body">
+            <div class="s5-tabs"><span>Details</span><span class="s5-on">Season</span><span>Skills</span><span>Notes</span><span>Family</span></div>
+            <div class="s5-card">
+              <div class="f5-sech"><h4>Attendance</h4><span class="f5-meta">85% · 13 recorded</span></div>
+              <div class="f5-in">
+                <div class="f5-boxes">
+                  <div class="f5-box" data-dup><span class="f5-bv">85%</span><span class="f5-bl">Attendance</span></div>
+                  <div class="f5-box"><span class="f5-bv">11</span><span class="f5-bl">Present</span></div>
+                  <div class="f5-box"><span class="f5-bv">0</span><span class="f5-bl">Late</span></div>
+                  <div class="f5-box"><span class="f5-bv">2</span><span class="f5-bl">Absent</span></div>
+                  <div class="f5-box" data-dup><span class="f5-bv">13</span><span class="f5-bl">Recorded</span></div>
+                </div>
+                <p class="f5-lbl">Last 10 sessions</p>
+                <div class="f5-mini"><div class="f5-mr"><span>UAT probe game</span><span class="f5-md">Sep 24</span><span class="f5-badge">PRESENT</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="s5-bar"><span><i>▦</i>OVERVIEW</span><span><i>▤</i>SCHEDULE</span><span><i>◍</i>CHAT</span><span class="s5-bar-on"><i>☰</i>ROSTER</span><span><i>⋯</i>MORE</span></div>
+          <button class="s5-pin" style="top:150px;left:150px" data-s5pin="f5a" aria-expanded="false" aria-label="Note 1">1</button>
+        </div></div>
+      </div>
+      <div class="s5-col">
+        <div class="s5-cap s5-cap-after"><b>After — Attendance</b><span class="s5-meas">≈ 50px of figures · the sessions list rises ~240px</span></div>
+        <div class="s5-scroll"><div class="s5-ph">
+          <div class="s5-mast">UAT Test Team <span class="s5-chev">⌄</span><span class="s5-rec">3-2-1</span></div>
+          <div class="s5-body">
+            <div class="s5-tabs"><span>Details</span><span class="s5-on">Season</span><span>Skills</span><span>Notes</span><span>Family</span></div>
+            <div class="s5-card">
+              <div class="f5-sech"><h4>Attendance</h4><span class="f5-meta">85% · 13 recorded</span></div>
+              <div class="f5-in">
+                <div class="f5-figs">
+                  <span class="f5-fig"><b>11</b><span>Present</span></span>
+                  <span class="f5-fig"><b>0</b><span>Late</span></span>
+                  <span class="f5-fig"><b>2</b><span>Absent</span></span>
+                </div>
+                <div class="f5-split" role="img" aria-label="11 present, 0 late, 2 absent">
+                  <i style="flex:11;background:#6B8E23"></i><i style="flex:2;background:#C2410C"></i>
+                </div>
+                <p class="f5-lbl">Last 10 sessions</p>
+                <div class="f5-mini">
+                  <div class="f5-mr"><span>UAT probe game</span><span class="f5-md">Sep 24</span><span class="f5-badge">PRESENT</span></div>
+                  <div class="f5-mr"><span>Practice · Lakeside</span><span class="f5-md">Sep 22</span><span class="f5-badge">PRESENT</span></div>
+                  <div class="f5-mr"><span>vs Milton</span><span class="f5-md">Sep 20</span><span class="f5-badge" data-t="out">ABSENT</span></div>
+                  <div class="f5-mr"><span>Practice · Lakeside</span><span class="f5-md">Sep 18</span><span class="f5-badge">PRESENT</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="s5-bar"><span><i>▦</i>OVERVIEW</span><span><i>▤</i>SCHEDULE</span><span><i>◍</i>CHAT</span><span class="s5-bar-on"><i>☰</i>ROSTER</span><span><i>⋯</i>MORE</span></div>
+          <button class="s5-pin" style="top:150px;left:236px" data-s5pin="f5b" aria-expanded="false" aria-label="Note 2">2</button>
+          <button class="s5-pin" style="top:182px;left:330px" data-s5pin="f5c" aria-expanded="false" aria-label="Note 3">3</button>
+        </div></div>
+        <div class="s5-pinlist">
+          <button data-s5note="f5a" aria-expanded="false"><span class="s5-pn">1</span><span class="s5-tx"><b>The two dashed boxes say what the header already says</b><span>&ldquo;85%&rdquo; and &ldquo;13 recorded&rdquo; are the section&rsquo;s own header line, a finger-width above. Five boxes carry three new facts. The repeats go at every width, the desktop included.</span></span></button>
+          <button data-s5note="f5b" aria-expanded="false"><span class="s5-pn">2</span><span class="s5-tx"><b>One line, the numbers bold, no boxes — and a zero stays</b><span>&ldquo;0 Late&rdquo; is kept: it is information (this player is never late), not clutter, and a line whose length changes from player to player is harder to read down a roster of them.</span></span></button>
+          <button data-s5note="f5c" aria-expanded="false"><span class="s5-pn">3</span><span class="s5-tx"><b>The thin split bar is OPTIONAL — rule it in or out</b><span>Present, late and absent as one 6px bar, in proportion. It lets a coach see &ldquo;mostly here&rdquo; without reading. The cost is a colour key it does not have (the line above is the key). Say &ldquo;no bar&rdquo; and it is one line only.</span></span></button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Playing time + Dues ── -->
+    <div class="s5-pair">
+      <div class="s5-col">
+        <div class="s5-cap"><b>Before — Playing time &amp; Dues</b><span class="s5-meas">≈ 190 + 190px of boxes · illustrative figures</span></div>
+        <div class="s5-scroll"><div class="s5-ph">
+          <div class="s5-body" style="padding-top:12px">
+            <div class="s5-card">
+              <div class="f5-sech"><h4>Playing time</h4><span class="f5-meta">22 field · 8 bench</span></div>
+              <div class="f5-in">
+                <div class="f5-boxes">
+                  <div class="f5-box" data-dup><span class="f5-bv">22</span><span class="f5-bl">Field innings</span></div>
+                  <div class="f5-box" data-dup><span class="f5-bv">8</span><span class="f5-bl">Bench innings</span></div>
+                  <div class="f5-box"><span class="f5-bv">73%</span><span class="f5-bl">On the field</span></div>
+                  <div class="f5-box"><span class="f5-bv">5</span><span class="f5-bl">Games</span></div>
+                </div>
+                <p class="f5-foot">From the games with a saved lineup (5 this season) · <a>Playing time report →</a></p>
+              </div>
+            </div>
+            <div class="s5-card">
+              <div class="f5-sech"><h4>Dues</h4><span class="f5-meta">$943.83 owing</span></div>
+              <div class="f5-in">
+                <div class="f5-boxes">
+                  <div class="f5-box"><span class="f5-bv">$1,200.00</span><span class="f5-bl">Dues</span></div>
+                  <div class="f5-box"><span class="f5-bv">$256.17</span><span class="f5-bl">Fundraising</span></div>
+                  <div class="f5-box"><span class="f5-bv">$0.00</span><span class="f5-bl">Paid</span></div>
+                  <div class="f5-box" data-dup><span class="f5-bv" style="color:#B03A22">$943.83 owing</span><span class="f5-bl">Balance</span></div>
+                </div>
+                <p class="f5-foot">0/10 installments paid · next due Oct 1 · <a>Manage dues →</a></p>
+              </div>
+            </div>
+          </div>
+          <button class="s5-pin" style="top:30px;left:250px" data-s5pin="f5d" aria-expanded="false" aria-label="Note 4">4</button>
+        </div></div>
+      </div>
+      <div class="s5-col">
+        <div class="s5-cap s5-cap-after"><b>After — Playing time &amp; Dues</b><span class="s5-meas">≈ 60 + 150px</span></div>
+        <div class="s5-scroll"><div class="s5-ph">
+          <div class="s5-body" style="padding-top:12px">
+            <div class="s5-card">
+              <div class="f5-sech"><h4>Playing time</h4><span class="f5-meta">22 field · 8 bench</span></div>
+              <div class="f5-in">
+                <div class="f5-figs">
+                  <span class="f5-fig"><b>73%</b><span>on the field</span></span>
+                  <span class="f5-fig"><b>5</b><span>games</span></span>
+                </div>
+                <p class="f5-foot" style="margin-top:4px">From the games with a saved lineup (5 this season) · <a>Playing time report →</a></p>
+              </div>
+            </div>
+            <div class="s5-card">
+              <div class="f5-sech"><h4>Dues</h4><span class="f5-meta">$943.83 owing</span></div>
+              <div class="f5-in">
+                <div class="f5-led">
+                  <div class="f5-lr"><span>Dues</span><b>$1,200.00</b></div>
+                  <div class="f5-lr"><span>Fundraising</span><b>− $256.17</b></div>
+                  <div class="f5-lr"><span>Paid</span><b>− $0.00</b></div>
+                  <div class="f5-lr f5-tot"><span>Balance</span><b>$943.83 owing</b></div>
+                </div>
+                <p class="f5-foot">0/10 installments paid · next due Oct 1 · <a>Manage dues →</a></p>
+              </div>
+            </div>
+          </div>
+          <button class="s5-pin" style="top:74px;left:200px" data-s5pin="f5e" aria-expanded="false" aria-label="Note 5">5</button>
+          <button class="s5-pin" style="top:250px;left:230px" data-s5pin="f5f" aria-expanded="false" aria-label="Note 6">6</button>
+        </div></div>
+        <div class="s5-pinlist">
+          <button data-s5note="f5d" aria-expanded="false"><span class="s5-pn">4</span><span class="s5-tx"><b>Same pattern twice more on this tab</b><span>Playing time&rsquo;s header already reads &ldquo;22 field · 8 bench&rdquo; and two of its four boxes repeat it. Dues&rsquo;s Balance box repeats the header&rsquo;s &ldquo;$943.83 owing&rdquo;.</span></span></button>
+          <button data-s5note="f5e" aria-expanded="false"><span class="s5-pn">5</span><span class="s5-tx"><b>Playing time: what the header does not already say, on one line</b><span>The share on the field and the games it covers. The vocabulary stays the playing-time ruling&rsquo;s: innings and shares, never &ldquo;fair&rdquo;.</span></span></button>
+          <button data-s5note="f5f" aria-expanded="false"><span class="s5-pn">6</span><span class="s5-tx"><b>Dues is not a set of figures — it is a SUM, so it becomes a ledger</b><span>The boxes were already in the ladder&rsquo;s order because the order IS the arithmetic (Dues − Fundraising − Other credits − Paid + Handed back = Balance, ruled 7 Sep). A two-column grid breaks that reading on a phone; a receipt restores it — each line signed, a rule, the answer. <b>This is the one place I keep a figure the header repeats:</b> the balance is the sum&rsquo;s answer, and a ledger without its bottom line stops being arithmetic. Lines that are zero still follow the ladder&rsquo;s own rule (Fundraising, Other credits, Handed back show only when they happened).</span></span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="s5-verdict">
+      <h4>Recommendation — F5 as drawn, with or without the bar</h4>
+      <p><b>At every width:</b> drop the boxes that repeat their section&rsquo;s header (Attendance&rsquo;s rate and recorded count,
+      Playing time&rsquo;s field and bench innings). <b>On a phone (≤640):</b> Attendance and Playing time become one line of
+      figures; Dues becomes a ledger. <b>Above 640:</b> the remaining figures stay as boxes, which fit on one row there.</p>
+      <p><b>Your one call:</b> the attendance split bar — in, or out. I lean <b>in</b>: it is the only piece that reads without
+      reading, and it costs 20px.</p>
+      <div class="s5-rides"><b>What rides on it:</b> the shared box style stays for the desktop and for any other screen using
+      it; the Season-tab layout-sweep screen gets a phone reading; the dues ladder&rsquo;s order and zero rule are kept exactly,
+      so this page and the dues table still cannot disagree. <b>Already built, same walk:</b> the Family tab&rsquo;s label column
+      now shrinks to its section&rsquo;s longest label (Guardian contact gives ~50px back, so the email fits on one line), and a
+      long email breaks after the @ rather than mid-word.</div>
+    </div>
+  </section>
+
+
   <div class="s5-note s5-note-warn">
     <h4>⚠ Six of the walk&rsquo;s numbers have moved, and half of station 3 is already fixed</h4>
     <ul>
@@ -5118,6 +5330,168 @@ button{font:inherit;color:inherit}
 </div>
 
 
+<div class="prop qa" id="tab-qa5" role="tabpanel" hidden>
+  <header class="phead">
+    <div class="eyebrow">QA walk · stage 5 · People · ledger §228 · built on dev 23 Sep 2026 · <b>WALKED + PASSED 24 Sep 2026</b></div>
+    <h1>Walk People on a phone</h1>
+    <p class="lede">Thirty-seven steps in six parts. Tick each one as you go (they are remembered on this device), give each part a verdict, and paste
+    the block back to me at the end. <b>Everything below was verified on dev before this tab was written</b> — 54 checks driven under touch at 390 and
+    360 and with a mouse at 768 and 1440, every one asserting on <i>which player the address names</i> rather than on whether something appeared — so
+    the walk is to confirm it reads right to <i>you</i>. <b>Part C is the one that matters</b>: it is the switch a coach makes most, and it is where
+    a wrong tap would cost unsaved work.</p>
+    <div class="signin">
+      <div class="label">Sign in as</div>
+      <table>
+        <tr><td>Where</td><td><code>http://localhost:3000</code> (the dev server) — on a phone, your machine's LAN address on the same port</td></tr>
+        <tr><td>Account</td><td><b>uat-coach@uat-test-org.local</b> · the standing UAT password in <code>.env.local</code> (<code>UAT_COACH_PASSWORD</code>). Part E adds the two assistants</td></tr>
+        <tr><td>Team</td><td><b>UAT Test Team</b> (UAT Test Org, 2026 season) → Roster → <b>Devon Test</b> (#4)</td></tr>
+        <tr><td>Widths</td><td>a phone (390-ish) throughout; A7 and C10 add 360, and each part's last step is the desktop check that nothing moved</td></tr>
+      </table>
+    </div>
+    <div class="qanote">
+      <b>⚠ Devon is the one filled player on the fixture — walk him, not anyone else.</b> All twelve players had a blank record, so the read face
+      could not be seen at all. Devon now carries a date of birth, <b>Best 2B, SS · Never C</b>, a pitching rank (<b>P2 · 2 innings cap</b>), bats and
+      throws, a jersey size, a guardian with a phone and an email, a medical note and an emergency contact. The seeder puts that back on every run,
+      so an edit you make during the walk is repaired by the next re-seed. ⚠ Side effect: Devon now pitches, so the fixture's lineup auto-fill has a
+      second arm.
+    </div>
+    <div class="qanote">
+      <b>⚠ Four things I decided at build and want your read on</b> — each is called out again at the step it belongs to.
+      <ol>
+        <li><b>Leaving an edit.</b> <b>⟳ Superseded 24 Sep — the record autosaves</b> (your call mid-walk). The pencil still becomes a <b>check</b>; the check asks nothing. The Save/Discard bar is gone; a wrong edit is changed back, as on a practice plan. (Steps B5–B7.)</li>
+        <li><b>A section holding unsaved work stays open</b> — even if you never pressed its Edit, e.g. you typed on a wider window and it narrowed
+        to a phone. It turns back into the record once that work has saved. (Step B8, found by /review.)</li>
+        <li><b>Switching players saves first.</b> Since autosave there is almost never a question; only inside the second before a save lands does the page's own "Leave without saving?" appear. (Step C8.)</li>
+        <li><b>In Chat, tournament rooms sit above the divider</b>, not below both groups as the drawing's note said — under a label reading
+        "Your other teams" they would be mislabelled. (Part F.)</li>
+      </ol>
+    </div>
+    <div class="qanote">
+      <b>⚠ What &ldquo;/review&rdquo; changed after the build (four lenses, high-risk tier).</b> Two confirmed, both fixed and re-driven in a
+      browser: <b>(High)</b> a section with unsaved work flipped to the record when the window crossed 640 — the typed values vanished from the screen
+      (not the data) while the bar still said "Unsaved changes"; and <b>(Medium)</b> after Save or Discard, keyboard focus fell to the top of the page
+      — it now lands on the section's Edit. Two refuted by driving them (the sheet reopening by itself after a keyboard "Leave"; a stale value while
+      the discard question is open). Security and regression lenses found nothing.
+    </div>
+    <div class="qanote">
+      <b>⚠ Part F cannot be fully walked on today's fixture — this is written in rather than left as a step you can never tick.</b> The UAT workspace
+      is on Tournament Plus, and a team's own staff room needs Club (or the standalone Premium grant), so <b>UAT Test Team has no room of its own</b>:
+      the two rooms you see belong to other teams. "This team's rooms first" therefore sorts nothing here; it is proven by unit tests on the sort, not
+      by this walk. What you <i>can</i> see is the divider telling the truth (F1). Whether the Chat tab should render at all for a team with no team
+      chat is plan §11.5(b) — a gating call, not this stage's.
+    </div>
+    <div class="qaprog" id="qa5prog"></div>
+  </header>
+
+  <section class="qapart" data-part="A">
+    <h2>A · Details lands as the record</h2>
+    <ol class="steps">
+      <li data-step="A1">Roster → <b>Devon Test</b>. The Details tab opens as a <b>record</b> — label on the left, value on the right, a hairline between rows — not a form. <i>(The page was 2,111px with the form; it is 970px now.)</i></li>
+      <li data-step="A2">It reads: Name · Jersey # <b>4</b> · Date of birth <b>Mar 14, 2013 · age 13</b> · Positions · Pitching <b>P2 · 2 innings cap</b> · A-squad <b>No</b> · Bats / throws <b>Right / Right</b> · Jersey size <b>Youth L</b>.</li>
+      <li data-step="A3">Positions reads <b>Best 2B, SS · Never C</b>. ⚠ The Never half is new: the record used to print Best and silently drop Never — a hard block in every lineup mode, invisible on the face that now lands.</li>
+      <li data-step="A4">The Player section's head carries a <b>pencil icon</b> — a 44px square, no word (your call on first look, 23 Sep: "to save space and be consistent with our app"). The head is no taller than the other sections' heads.</li>
+      <li data-step="A5">There is <b>no "Take off the roster"</b> at the foot of the tab. It lives at the foot of the <i>form</i> (your 26 August ruling), so on a phone it appears only inside Edit — B3.</li>
+      <li data-step="A6">The glance card above (chips + the four tiles) is unchanged. ⚠ Your read: with a filled record beneath, does the card read as the <b>index</b> and the record as the record — or as two records? <i>(Plan §11.6 left this to the seeded player; I kept the card.)</i></li>
+      <li data-step="A7">At <b>360</b>: the same rows, the label lane holding, values wrapping inside their own lane, no sideways scroll.</li>
+      <li data-step="A8">On a <b>desktop</b> (and at 768): Details is the form exactly as before — the inputs, the chips, the star, the selects, the Switch player dropdown in the header. <b>No Edit button.</b></li>
+    </ol>
+    <div class="verdict" data-part="A"></div>
+  </section>
+
+  <section class="qapart" data-part="B">
+    <h2>B · Edit is a visit</h2>
+    <ol class="steps">
+      <li data-step="B1">Tap the <b>pencil</b> on Player. The section becomes the form, and the <b>cursor is already in First Name</b> — you can type without tapping the field.</li>
+      <li data-step="B2">The pencil becomes a <b>check mark</b>, in the same square — the box never changes size. A screen reader hears "Done editing Player". <b>⟳ 24 Sep:</b> the pencil and check are drawn with <b>no border and no fill</b>, like the practice plan's on a phone.</li>
+      <li data-step="B3">At the foot of the form: <b>Take Devon off the roster</b>, with its sentence, exactly as on a desktop.</li>
+      <li data-step="B4">Reload the page while editing. You land on the <b>record</b> — Edit is never remembered and never in the address.</li>
+      <li data-step="B5"><b>⟳ Re-issued 24 Sep — the record now autosaves.</b> Tap the pencil, change the jersey number and stop typing. The <b>small pill</b> above the nav reads <b>Unsaved changes → Saving… → ✓ Saved</b> and fades. There is <b>no Save/Discard bar</b>.</li>
+      <li data-step="B6">Tap the <b>check</b>. It asks nothing and you land on the <b>record showing the new number</b>. Reload: the number is still there. (Put it back to 4 the same way.)</li>
+      <li data-step="B7">Edit Player, <b>clear First Name</b>. A line under the field says a player needs a first name and nothing saves; the pill says it couldn’t save. Type the name back — it saves on its own.</li>
+      <li data-step="B8">⚠ <b>The /review fix, re-read.</b> On a desktop-width window (the form is always open there), type in the jersey number and narrow the window below ~640 straight away. The Player section <b>stays a form showing what you typed until it saves</b>, then shows the record with the new value.</li>
+    </ol>
+    <div class="verdict" data-part="B"></div>
+  </section>
+
+  <section class="qapart" data-part="C">
+    <h2>C · The name is the switcher</h2>
+    <ol class="steps">
+      <li data-step="C1">The header is <b>one line</b>: the back arrow, the icon, and <b>Devon Test ⌄</b>. The 56px row the Switch player dropdown sat on is <b>gone</b>. <i>(Header 100px → 44px.)</i></li>
+      <li data-step="C2">Open the <b>Season</b> tab, then tap the name. A sheet rises from the <b>top of the bottom nav</b> — the team switcher's own sheet: a grab line, the label <b>Players</b>, twelve names in your roster order, each with its <b>#number</b> at the end.</li>
+      <li data-step="C3"><b>⟳ Re-issued 24 Sep.</b> Devon's row is <b>tinted</b>; <b>no row has a chevron</b>, and the jersey numbers line up down the right edge. The <b>team</b> switcher sheet (tap the team name) matches: tinted current team, no chevrons.</li>
+      <li data-step="C4">All twelve fit with <b>no scrolling inside the sheet</b> — at 390 and at 360.</li>
+      <li data-step="C5">The <b>bottom nav is still visible, undimmed and tappable</b> beneath the sheet. <i>(It is a menu, so it sits on top of the nav rather than covering it — your 23 September ruling.)</i></li>
+      <li data-step="C6">Tap <b>Indigo Test</b> (the ninth). You land on Indigo's page <b>on the Season tab</b> — two taps from Devon, and you never went back to Details. The sheet has closed.</li>
+      <li data-step="C7">Open the sheet and tap the <b>dimmed page</b> above it — on top of a tab or the back arrow. The sheet closes and <b>nothing underneath fires</b>: same player, same tab.</li>
+      <li data-step="C8"><b>⟳ Re-issued 24 Sep.</b> On Devon: Edit Player, change the jersey number, wait for <b>✓ Saved</b>, open the sheet, tap another player. It switches <b>with no question</b>; go back to Devon and the number is saved. <i>(Only inside the second before the save lands does the page still ask "Leave without saving?".)</i></li>
+      <li data-step="C9">Open the sheet and press <b>Escape</b> (or the back gesture): it closes and focus is back on the name.</li>
+      <li data-step="C10">Roster → a player <b>taken off the roster</b> (the Off the roster shelf): <b>no chevron</b> on their name — there is no "you are here" row for them. And at 360 the sheet behaves the same as at 390.</li>
+    </ol>
+    <div class="verdict" data-part="C"></div>
+  </section>
+
+  <section class="qapart" data-part="D">
+    <h2>D · Family &amp; paperwork</h2>
+    <ol class="steps">
+      <li data-step="D1">Devon → <b>Family</b>. Guardian contact and Safety are <b>records</b>, each with its own <b>Edit</b>. Documents has <b>no Edit</b> — uploading is not editing.</li>
+      <li data-step="D2">Guardian contact reads Name <b>Dana Test</b>, then <b>Phone</b>, then <b>Email</b> — phone first, because this tab answers "who do I call?".</li>
+      <li data-step="D3">The phone number is a <b>tap target</b> in the link colour with a <b>›</b>: tapping it offers to call <b>(905) 555-0142</b>. The email opens your mail app. Each is a full 44px tap.</li>
+      <li data-step="D4">Safety: the medical note reads in full; the emergency contact <b>Sam Test · (905) 555-0143 ›</b> is a tap-to-call.</li>
+      <li data-step="D5">Edit <b>Guardian contact</b>: only that section becomes a form, with the cursor in First Name. Safety stays a record.</li>
+      <li data-step="D6">With Guardian open, Edit <b>Safety</b> too — both open at once; Save on the bar returns <b>both</b> to the record.</li>
+      <li data-step="D7">On a <b>desktop</b>: both sections are the forms they always were, with the <i>Email guardian · Call or text</i> links under the fields. Nothing moved.</li>
+    </ol>
+    <div class="verdict" data-part="D"></div>
+  </section>
+
+  <section class="qapart" data-part="E">
+    <h2>E · Who sees what</h2>
+    <ol class="steps">
+      <li data-step="E1">Sign in as <b>uat-asst-nomoney@uat-test-org.local</b> (same password) → Devon. The record, <b>no Edit anywhere</b>, and <i>"Only the head coach can edit a player's record."</i> under Details. Date of birth, guardian, medical and emergency read <b>Kept to the head coach</b> — and none of them is a link.</li>
+      <li data-step="E2">Sign in as <b>uat-asst-money@uat-test-org.local</b> → Devon → Family. <b>No Edit</b>, but the phone and email <b>are</b> tap-to-call / tap-to-mail — this assistant holds the contact grant.</li>
+      <li data-step="E3">Both assistants still get the <b>name ⌄ sheet</b> — switching players is reading, not editing.</li>
+    </ol>
+    <div class="verdict" data-part="E"></div>
+  </section>
+
+  <section class="qapart" data-part="F">
+    <h2>F · Chat — this team's rooms first</h2>
+    <ol class="steps">
+      <li data-step="F1">Back as the head coach → <b>Chat</b>. Under <b>Your chats</b> the very next line is <b>Your other teams</b>, then the two rooms (both other teams'). The label tells you what the list could not before: <b>none of these rooms is UAT Test Team's</b>. <i>(See the note at the top — on this fixture there is nothing of this team's to sort first.)</i></li>
+    </ol>
+    <div class="verdict" data-part="F"></div>
+  </section>
+
+  <section class="qapart" data-part="G">
+    <h2>G · Your mid-walk rulings of 24 September (added)</h2>
+    <ol class="steps">
+      <li data-step="G1">On a phone, open <b>Devon → Season</b>. <b>Attendance</b>: the header still reads the rate and the recorded count; beneath it is <b>one line</b> — <b>Present · Late · Absent</b>, the numbers bold — over a thin bar in green / amber / red proportions. No boxes, and no box repeating the header.</li>
+      <li data-step="G2"><b>Playing time</b> (if Devon has saved lineups): one line — <b>N% on the field · N games</b>; field and bench innings only in the header. <i>(No saved lineups → the section says so; skip.)</i></li>
+      <li data-step="G3"><b>Dues</b> is a <b>ledger</b>: Dues, then each deduction with a minus sign (Fundraising / Other credits only if they happened), Paid, a rule, and <b>Balance</b> in bold — red when owing, green when a credit. The installments line and <i>Manage dues →</i> sit under it.</li>
+      <li data-step="G4">Widen the window past ~640px: Attendance shows <b>three boxes</b> (Present, Late, Absent), Playing time <b>two</b> (On the field, Games), Dues its boxes as before.</li>
+      <li data-step="G5"><b>Family</b> tab, phone: Guardian contact&rsquo;s labels sit in a <b>narrower column</b> and <b>dana.test@example.com fits on one line</b>. Safety keeps the wider column (its labels are longer).</li>
+      <li data-step="G6">Safety: <b>Emergency contact</b> reads <b>Sam Test</b> (plain text) and a new row <b>Emergency phone</b> reads <b>(905) 555-0143 ›</b> — only the number is the tap-to-call link, and it no longer wraps mid-number.</li>
+      <li data-step="G7"><b>Documents</b>: the <b>upload glyph sits in the section head</b>, in line with the title like the pencils above it (no border, no fill). Tap it: the upload dialog opens as before. On a desktop it reads <b>Upload</b> with its icon, in the same head position.</li>
+      <li data-step="G8">The section pencils and the check (Player, Guardian contact, Safety) have <b>no border and no fill</b>; the player and team switcher sheets show <b>no chevrons</b>, the current row tinted. <i>(Also in B2 and C3.)</i></li>
+    </ol>
+    <div class="verdict" data-part="G"></div>
+  </section>
+
+  <section class="summary" id="summaryQa5">
+    <h2>Your walk, to paste back</h2>
+    <p>Ticks, verdicts and notes, as one block of text. Nothing leaves this page until you paste it.</p>
+    <button type="button" id="buildSummaryQa5">Build the walk summary</button>
+    <textarea id="summaryOutQa5" hidden aria-label="QA walk summary to paste back"></textarea>
+    <p class="foot">Built on dev 23 September 2026, every figure read from the browser's own geometry at 390×844 and 360×780 on the filled fixture
+    player. Measured after: the player page 970px with the record landing (from 2,111 with the form — itself a floor, the fixture was empty); the header
+    44px (from 100); the Player section 399px; controls under 44px on the face that lands: <b>one</b>, the glance card's Medical notes chip (from 21);
+    the roster sheet twelve 52px rows in a 679px panel, no inner scroll at 390 or 360, the nav live beneath it; the Family tab 1,174px with three 44px
+    tap-to-call / mail rows. Gates: 29 new source assertions, the full unit suite, the layout sweep clean on seven screens × four widths including
+    <b>the two edit states</b>, which keep the ~20 sub-floor form controls measured rather than hidden behind Edit (89 argued reasons carried to their
+    new screens; 56 newly revealed by the filled record left unargued, for the touch-target project), check:css-selectors, typecheck, lint.</p>
+  </section>
+</div>
+
 <div class="doc" id="tab-plan" role="tabpanel" hidden>
   <div class="eyebrow">Plan of record</div>
   <h1>Coaching from a phone — the plan</h1>
@@ -5369,7 +5743,7 @@ button{font:inherit;color:inherit}
      no row here falls through to `showTab('walk')` and its panel never unhides — the tab looks
      wired, clicks without error, and simply does nothing. Found by driving the page rather than
      reading it, when QA walk · 4 was added (2026-09-22). */
-  var panels={walk:'tab-walk',stage0:'tab-stage0',stage1:'tab-stage1',stage2:'tab-stage2',stage3:'tab-stage3',qa0:'tab-qa0',qa1:'tab-qa1',qa2:'tab-qa2',qa3:'tab-qa3',stage4:'tab-stage4',qa4:'tab-qa4',stage5:'tab-stage5',plan:'tab-plan',brief:'tab-brief'};
+  var panels={walk:'tab-walk',stage0:'tab-stage0',stage1:'tab-stage1',stage2:'tab-stage2',stage3:'tab-stage3',qa0:'tab-qa0',qa1:'tab-qa1',qa2:'tab-qa2',qa3:'tab-qa3',stage4:'tab-stage4',qa4:'tab-qa4',stage5:'tab-stage5',qa5:'tab-qa5',plan:'tab-plan',brief:'tab-brief'};
   function showTab(k){
     if(!panels[k])k='walk';
     Object.keys(panels).forEach(function(p){var el=document.getElementById(panels[p]);if(el)el.hidden=(p!==k)});
@@ -5606,6 +5980,46 @@ button{font:inherit;color:inherit}
         lines.push('');
       });
       var out=document.getElementById('summaryOutQa4');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
+    });
+  })();
+
+  // ── the QA walk · 5 (stage 5 · People): the same machinery again, its own state key ──
+  (function(){
+    var QKEY='reeval-phone-v1-qa5';var qs={};
+    try{qs=JSON.parse(localStorage.getItem(QKEY)||'{}')||{}}catch(e){qs={}}
+    function qsave(){try{localStorage.setItem(QKEY,JSON.stringify(qs))}catch(e){}}
+    var steps=Array.prototype.slice.call(document.querySelectorAll('#tab-qa5 .steps li[data-step]'));
+    steps.forEach(function(li){
+      var id=li.getAttribute('data-step');
+      var cb=document.createElement('input');cb.type='checkbox';cb.id='qa5-'+id;cb.checked=!!qs['s-'+id];cb.setAttribute('aria-label','Step '+id+' done');
+      var body=document.createElement('div');var sn=document.createElement('span');sn.className='sn';sn.textContent=id;
+      while(li.firstChild)body.appendChild(li.firstChild);
+      body.insertBefore(sn,body.firstChild);
+      li.appendChild(cb);li.appendChild(body);li.classList.toggle('done',cb.checked);
+      cb.addEventListener('change',function(){qs['s-'+id]=cb.checked;if(!cb.checked)delete qs['s-'+id];qsave();li.classList.toggle('done',cb.checked);prog()});
+    });
+    var V=[['pass','Pass'],['issue','Issue found'],['call','Needs a call']];
+    Array.prototype.forEach.call(document.querySelectorAll('#tab-qa5 .verdict[data-part]'),function(box){
+      var p=box.getAttribute('data-part');
+      V.forEach(function(v){var b=document.createElement('button');b.type='button';b.className=v[0];b.textContent=v[1];b.setAttribute('aria-pressed',String(qs['v-'+p]===v[0]));
+        b.addEventListener('click',function(){qs['v-'+p]=qs['v-'+p]===v[0]?undefined:v[0];if(qs['v-'+p]===undefined)delete qs['v-'+p];qsave();Array.prototype.forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',String(qs['v-'+p]===x.className))})});
+        box.appendChild(b)});
+      var ta=document.createElement('textarea');ta.className='note';ta.rows=2;ta.id='qa5-note-'+p;ta.placeholder='What you saw — a defect, a doubt, a wish';ta.value=qs['n-'+p]||'';
+      ta.addEventListener('input',function(){qs['n-'+p]=ta.value;if(!ta.value)delete qs['n-'+p];qsave()});
+      box.appendChild(ta);
+    });
+    function prog(){var done=steps.filter(function(li){return !!qs['s-'+li.getAttribute('data-step')]}).length;document.getElementById('qa5prog').innerHTML='<b>'+done+'</b> of '+steps.length+' steps ticked'}
+    prog();
+    document.getElementById('buildSummaryQa5').addEventListener('click',function(){
+      var lines=['Coaching from a phone — stage 5 People — QA walk §228 — '+new Date().toISOString().slice(0,10),''];
+      Array.prototype.forEach.call(document.querySelectorAll('#tab-qa5 .qapart'),function(part){
+        var p=part.getAttribute('data-part');var v=qs['v-'+p];
+        lines.push('## Part '+p+' — '+part.querySelector('h2').textContent.replace(/^[A-F] · /,'')+' — '+(v?({pass:'PASS',issue:'ISSUE',call:'NEEDS A CALL'})[v]:'no verdict'));
+        Array.prototype.forEach.call(part.querySelectorAll('li[data-step]'),function(li){var id=li.getAttribute('data-step');lines.push('['+(qs['s-'+id]?'x':' ')+'] '+id+' '+li.querySelector('div').textContent.replace(/^\s*[A-F]\d+\s*/,'').replace(/\s+/g,' ').trim().slice(0,110))});
+        if(qs['n-'+p])lines.push('    notes: '+qs['n-'+p].replace(/\s+/g,' ').trim());
+        lines.push('');
+      });
+      var out=document.getElementById('summaryOutQa5');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
     });
   })();
 

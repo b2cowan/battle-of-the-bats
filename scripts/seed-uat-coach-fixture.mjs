@@ -46,6 +46,7 @@ import { config } from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { insertCommitmentWithRecords, paidOnce } from './lib/seed-commitment-records.mjs';
+import { fillPlayerRecord } from './lib/seed-filled-player.mjs';
 /* ⚠⚠ A SEEDED LINE'S KIND MUST AGREE WITH ITS WORD (mig 280).
    The add-a-line form stopped asking "is this a cost / expected fundraising / expected sponsorship /
    expected other income?" because the answer could contradict the item picked under it — a
@@ -187,6 +188,14 @@ if (players.length === 0) {
   ok(`roster already present (${players.length} active players)`);
 }
 const ids = players.map(p => p.id);
+
+// ── 7b. One FILLED player (phone stage 5 · People) — see scripts/lib/seed-filled-player.mjs.
+// Every other record on this roster is blank, so without this the player page's read face cannot
+// be seen and the sweep measures the empty screen. Asserted on every run.
+try {
+  await fillPlayerRecord(db, { programYearId: py.id });
+  ok('Devon Test has a filled record (DOB, Best + Never, pitching rank, bats/throws, jersey, guardian, medical)');
+} catch (e) { console.error('✗', e.message); process.exit(1); }
 
 // ── 8. A practice with a plan that exercises the whole surface ───────────────
 // Anchored 20 minutes ago so the run screen opens INSIDE the rotation — the state worth probing.

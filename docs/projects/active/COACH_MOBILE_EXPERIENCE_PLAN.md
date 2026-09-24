@@ -50,7 +50,7 @@ Not walked as a phone problem, recorded: Money (3,019px; 136 of 495 words ≤11p
 | 2 Schedule | Today first with the past folded; Week without blanks; Month as dots + a day list; the event sheet ordered by the day — **and the sheet’s 96 baselined findings** | Q 2.1–2.3 | **drawn 2026-09-20 (§8) · C1 redrawn 2026-09-21 on the owner’s first read (the list as the scroller, no fold row, a view menu, one frame) · **RULED 2026-09-21 — C1–C4 build as drawn, the desktop phone-first** · build owed (the build prompt is in the drawing session’s hand-back)** |
 | 3 Game week | The builder's Setup as one self-describing row that opens the builder's panel; undo · redo · print · templates as one icon row; **one inning at a time** with the neighbours in small type and the number as the handle (the owner's read); the sheet's Lineup door at the top and Back to the game; the meta line and the hint | D1–D5 (Q 4.1, 4.2) | **drawn 2026-09-21 (§9), revised on four owner reads the same day · RULED 2026-09-21 — D1 = B, D2 = B, D5 · D3 · D4 as drawn · build owed (the build prompt is in the drawing session's hand-back)** |
 | 4 Practice week & skills | The plan's toolbar as ONE 44px row + a "⋯" drawer; a player is one 56px row and the row is the door; the observation dialog's descriptors as rows with a DOCKED foot and Save & next player; the count and Review docked above the bar; one title, one date, a 44px "+" | E1–E5 (Q 6.1, 7.1, 7.2) | **drawn 2026-09-22 (§10) · RULED 2026-09-22 — E1 = A, E2 · E3 · E4 · E5 as drawn · build owed** |
-| 5 People | The player's Details tab as the RECORD with Edit on the section (F1); the player's NAME carries a chevron and opens a sheet of the roster — the team switcher's own idiom — and the switcher's 56px row goes (F2, REDRAWN 2026-09-23 on the owner's read; the first form was a prev/next stepper and is withdrawn); the chat list this-team-first, sorted CLIENT-side with an `Your other teams` divider (F3). **Plus one the drawing found that the plan never asked: (F4) Family & paperwork is the OTHER tab that lands as a form** — same read face, and `tel:` rows on the tab whose job is "who do I call?". Gate CLEAR: §182 walked 40/40 on 2026-09-13. | Q 3.2, 8.1, 8.2 (+ F4) | **drawn 2026-09-22 (§11) · F2 redrawn 2026-09-23 · RULED 2026-09-23 — F1 · F2 (as redrawn) · F3 = B · F4 accepted · build owed** |
+| 5 People | The player's Details tab as the RECORD with Edit on the section (F1); the player's NAME carries a chevron and opens a sheet of the roster — the team switcher's own idiom — and the switcher's 56px row goes (F2, REDRAWN 2026-09-23 on the owner's read; the first form was a prev/next stepper and is withdrawn); the chat list this-team-first, sorted CLIENT-side with an `Your other teams` divider (F3). **Plus one the drawing found that the plan never asked: (F4) Family & paperwork is the OTHER tab that lands as a form** — same read face, and `tel:` rows on the tab whose job is "who do I call?". Gate CLEAR: §182 walked 40/40 on 2026-09-13. | Q 3.2, 8.1, 8.2 (+ F4) | **drawn 2026-09-22 (§11) · F2 redrawn 2026-09-23 · RULED 2026-09-23 — F1 · F2 (as redrawn) · F3 = B · F4 accepted · built 2026-09-23 (§11.8) · §228 WALKED + PASSED 2026-09-24, with mid-walk rulings (autosave; F5 the Season figures; the medical chip removed; emergency name/phone; Upload in the head) · commit + /docs owed** |
 | 6 Reports | Tables that fit stay tables; short tab labels; the notification clamp | Q 9.1, 10.1 | — |
 
 ## 4 · Stage 0 — the shell (drawn 2026-09-19)
@@ -1041,9 +1041,101 @@ fixed here. **It also means F3 cannot be QA-walked on today's fixture.**
   checkable step for F3 until §11.5(b) is answered or a Club-tier fixture exists — write that into the
   walk rather than leaving a step permanently unticked.
 
-### 11.8 Built as
+### 11.8 Built as (2026-09-23 · dev — every number read from the browser's own geometry at 390×844 and 360×780 on the FILLED fixture player, never a screenshot; probes `s5-after` (54 checks, touch at 390/360, mouse at 768/1440), `s5-assistant`, `s5-kbd-reopen`, `s5-review-fixes`, `s5-chat` in `.probe/`) — **uncommitted; ledger §228 walk (37 steps, hub tab "QA walk · 5") owed**
 
-*(owed — this stage is drawn, not ruled.)*
+**Task zero, done first.** Devon Test — the player the layout sweep opens (`receiptPlayerId`) — now carries a
+full record: DOB, **Best 2B, SS · Never C**, pitching **rank 2 · 2-inning cap**, bats/throws R/R, jersey YL,
+guardian Dana Test with phone and email, a medical note, an emergency contact. One module
+(`scripts/lib/seed-filled-player.mjs`), called by the seeder and ASSERTED on every run (a walk that edits Devon is
+repaired by the next re-seed). Positions go through the product's own `buildLineupProfileWrite`, so the stored
+triplet is what a Save writes. **Side effect, stated:** Devon now pitches, so the fixture's lineup auto-fill has a
+second arm. Devon, not Avery (the drawing's example), because Devon is the swept player — filling anyone else would
+have left the sweep measuring the empty screen this section exists to stop measuring.
+
+**Measured after, 390×844 (filled record):** the player page **970px** (2,111 with the form — itself a floor);
+the header **44px** (100); the Player section **399px**; controls under 44px on the face that lands: **one** — the
+glance card's *Medical notes* chip (26px), pre-existing code, visible only now the fixture has a medical note (21
+before); the roster sheet **twelve 52px rows, 679px panel, no inner scroll at 390 or 360**, the nav live beneath;
+Family **1,174px** with three 44px `tel:`/`mailto:` rows.
+
+**As built, F1–F4:**
+- **One record face, widened.** `RecordRow` gained an optional `href` (the value IS the 44px door, never a small
+  link wearing an `::after`); the face reads the SAVED player, never the form. Never positions now print
+  (`positionsLine`). The ≤480 stack became a **≤640 108px label lane with hairlines** — as drawn — which also
+  changes the phone face a coach without roster-write sees (same face). The date of birth is now formatted
+  (`formatStoredDate` + age) at every width — a raw `2013-03-14` on the non-writer face was a date-rule breach.
+- **Edit is a visit, on the section.** `CoachPageSection` gained an **`action`** slot, apart from `meta` (§11.6's
+  naming question: `action`, and it holds controls only). Page state `{ playerId, sections[] }` — never stored,
+  never in the URL, keyed to the player; focus moved by hand to `pfn` / `gfn` / `medical`. **Done** asks
+  (*"Discard your changes to Player?"*) only when THAT section is dirty and resets only its fields; **Save and the
+  bar's Discard end the whole visit** and hand focus to the first open section's Edit. The removal renders only
+  with the form (its 26 August place, unchanged). Documents has no Edit.
+- **F2 — the name is the switcher.** A `<button aria-haspopup="menu">` inside the h1, a real 44px box by the
+  masthead's overhang (`margin-block: calc((1.1em − 44px)/2)`), chevron outside the name's span, the name WRAPS
+  (E5). The sheet is `CoachPlayerSwitchSheet` — the team sheet's classes from `CoachesBottomNav.module.css`, no
+  local stylesheet, **a third caller and not a fourth container**; nothing was added to the shared system (§11.6's
+  "resist it": the one difference is that focus lands on the CURRENT row rather than the first). A menu: not
+  enrolled in `useOverlayOpen`. Open state keyed to the pathname; dismiss boundary `[name, sheet]` with the scrim
+  inside it. The `<select>` renders above 640 only. The route's roster rows gained `number` (the trailing
+  qualifier — not PII: `PII_FIELDS` omits it and the roster list already shows it to every coach).
+- **⚠ The unsaved-changes question on the sheet is the page guard's, deliberately.** The brief said "every sheet
+  row must ask by hand, as the select does". A select needed that because it is not a link; the rows ARE links, so
+  `UnsavedChangesGuard`'s capture-phase listener sees them first and asks — a hand-written ask would never run.
+  Hit-tested: a dirty switch stays on the player until answered; *Stay* keeps the typing; *Leave* switches.
+- **F3 — `orderRoomsForTeam` in `lib/chat-display.ts`**, called by the view: this team's rooms → rooms with no team
+  (tournament rooms) → the divider → other teams'. **⚠ Departs from the drawing's note**, which put tournament rooms
+  "below both groups": that would put them under a label reading *Your other teams*, which is false of them.
+  `listRoomsForUser` is untouched (guarded — it feeds the consumer inbox). On the fixture (§11.5b) the divider
+  LEADS the list — the truthful answer for a team with no room of its own.
+
+**§11.6, answered:**
+- **A coach without roster-write** — confirmed on the fixture's two assistants, not reasoned: no Edit anywhere;
+  "Only the head coach…" stays on Details; redacted rows read *Kept to the head coach* and are never links; the
+  assistant WITH the contact grant gets the `tel:`/`mailto:` rows. Both get the name sheet (switching is reading).
+- **The four glance tiles stay** above the record. With Devon filled they read as the index (chips + four doors)
+  over the record rather than a second record — but this is the owner's read to give: walk step **A6** asks it.
+- **Sheet order vs the depth chart's** — the same array (`display_order`); a player opened from the depth chart
+  was not separately walked. Not a phone problem; the question stays as stated.
+- **Third caller** — nothing added (above). **Action slot** — `action` (above).
+
+**Verification:** 29 source assertions (`tests/unit/coach-people-phone-guard.test.ts`, including the sort's four
+behaviours and the consumer-inbox service untouched); `verify:changed` exit 0 (full unit suite); typecheck; lint;
+the 54-check touch probe; `check:layout --only=` seven screens × 361/390/768/1440 green, **including the two new
+edit-state screens** (`coach-player-edit`, `coach-player-family-edit`), the open sheet (`coach-player-switcher`)
+and the roster with Call-ups open (`coach-roster-callups`); `check:css-selectors` clean (the form still renders
+above 640, so nothing went stale).
+
+**⚠ The baseline, and the §11.5(a) promise kept.** The ~20 form controls that moved behind Edit are still measured
+— on the edit-state screens. Their **89 argued reasons were carried** to the new keys (the keys embed the chip's
+state, "C: blank" → "C: Never", so a plain re-snapshot would have dropped every one), prefixed *RELOCATED by phone
+stage 5*. **56 entries are NEW and left UNARGUED on purpose** — controls the empty fixture had hidden: the Best
+list's move-up/down arrows (26px), the pitcher-rank select and innings box, the Medical notes chip, and Devon's
+guardian email/phone links on the roster at 768 (19–22px). That is §11.2's "every before-number is a floor"
+arriving; they belong to the touch-target project (§11.5a), not this stage. The file's key order was restored
+after `--init`, so the diff is the change and a peer's eight unrelated entries are intact.
+
+**What `/review` found (high-risk tier, four lenses — correctness, security/PII, regression, state/a11y):**
+1. **(High, fixed) A section holding unsaved work flipped to the record when the window crossed 640** — a tablet's
+   split view, a foldable, a rotated phone. The record showed the SAVED values under a bar still saying "Unsaved
+   changes"; the work was invisible (not lost), and the glance chip (which reads the form) disagreed with the record
+   beneath it. **Now a dirty section is open by definition** (`isEditing` ORs `sectionDirty`); it returns to the
+   record only through Done's question, Save or Discard. Re-driven: type at 900, narrow to 390, the typed value and
+   *Done* are on screen.
+2. **(Medium, fixed) Save/Discard dropped keyboard focus to `<body>`** — the save bar unmounts under the button.
+   Focus now lands on the first open section's Edit (`endVisit`). Re-driven for both a pressed and a
+   dirty-opened section.
+3. **Refuted by driving:** the sheet re-opening by itself after a keyboard "Leave without saving" and Back (the
+   page remounts per player — measured, no sheet); a stale baseline while the discard question is open (the
+   confirm blocks every other action).
+4. **Accepted, low:** *Stay on this page* also closes the sheet (a pointer-down outside it — harmless, one tap
+   reopens); a button inside the h1 (the heading's name is still the player's name); no arrow-key roving in the
+   sheet — inherited from the team sheet, which has none either.
+5. Security/PII and regression lenses: nothing.
+
+**Folded in on the owner's first look (2026-09-23): the section Edit is ICON-ONLY** — *"to save space and be consistent with our app"* (the standing mobile-actions rule). A pencil to open, a check to finish, in the lineup builder's own 44px icon square (`.footerIconBtn`, 44px at ≤900) rather than a fourth icon-button shape; the square never changes size between the two states, and the words stay in the accessible name ("Edit Player" / "Done editing Player") and the tooltip. `.sectionEditBtn` shrank to the head-overhang rule alone. Re-verified: guard 30/30, the 54-check probe (the square 44px at 390 and 360), the sweep clean on the four player screens at 361/390, css-selectors clean; the walk steps A4 · B1 · B2 · B5 · B8 reworded on the hub (v48).
+
+**Owed:** the §228 walk · the commit (private index — the owner's say-so) · `/docs` (the player-page help article
+describes the Details tab as the form and the Switch player dropdown) · §11.5(a) and (b) remain owner calls.
 
 
 ---

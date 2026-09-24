@@ -3,6 +3,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Upload, Download, Trash2, X } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import CoachPageSection from '@/components/coaches/CoachPageSection';
 import type { RepDocumentType } from '@/lib/types';
 
 const DOC_TYPE_LABELS: Record<RepDocumentType, string> = {
@@ -49,6 +51,7 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   useOverlayOpen(uploadOpen);
+  const isPhone = useIsPhone();
 
   async function load() {
     setLoading(true);
@@ -113,26 +116,28 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
     return `${(n / (1024 * 1024)).toFixed(1)} MB`;
   }
 
+  /* ⚠ UPLOAD SITS IN THE SECTION HEAD, where every other section's action does (owner, §228 walk
+     2026-09-24: "the upload button is pushed down, shouldn't it be in line with the header like
+     the other tiles' edit buttons?"). So this component draws its own section rather than the page
+     wrapping it and leaving the button on a row of its own under the title. On a phone it is the
+     glyph alone, drawn as the section pencils are (no border, no fill); above 640 it keeps its word.
+     It names its own object for AT either way (/review 2026-08-02). */
+  const uploadButton = canManage ? (
+    <button
+      type="button"
+      className={isPhone ? `${styles.footerIconBtn} ${styles.sectionEditBtn}` : 'btn btn-ghost'}
+      style={isPhone ? undefined : { fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+      onClick={() => { setUploadOpen(true); setUploadError(''); }}
+      aria-label="Upload document"
+      title={isPhone ? 'Upload' : undefined}
+    >
+      {isPhone ? <Upload size={18} aria-hidden /> : <><Upload size={13} aria-hidden /> Upload</>}
+    </button>
+  ) : undefined;
+
   return (
     <>
-      {/* No title of its own: the profile page's collapse summary carries "Documents" now —
-          a second visible title directly beneath it is the repeated-header defect the
-          2026-07-31 staff ruling retired. The action row stays. */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
-        {canManage && (
-        <button
-          type="button"
-          className="btn btn-ghost"
-          style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-          onClick={() => { setUploadOpen(true); setUploadError(''); }}
-          /* The visible "Documents" context lives in the DOM-distant collapse summary now, so
-             the button names its own object for AT (/review 2026-08-02). */
-          aria-label="Upload document"
-        >
-          <Upload size={13} /> Upload
-        </button>
-        )}
-      </div>
+    <CoachPageSection sectionId="documents" title="Documents" action={uploadButton}>
 
       {loading ? (
         <div className={styles.loadingState} style={{ padding: '0.5rem 0' }}>Loading documents…</div>
@@ -196,7 +201,9 @@ export default function PlayerDocumentsSection({ orgSlug, teamId, playerId, canM
           </table>
         </div>
       )}
+    </CoachPageSection>
 
+      {/* The dialog is a sibling of the section, never inside its card. */}
       {uploadOpen && (
         <div className={`${styles.modalOverlay} ${styles.centeredOnMobile}`}>
           <div className={styles.modal}>

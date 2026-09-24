@@ -1,9 +1,13 @@
 'use client';
-import { use, useState, useEffect, useCallback } from 'react';
+import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { parseDevelopmentAddress, returnLabel } from '@/lib/development-address';
-import { Users, AlertTriangle, Check } from 'lucide-react';
+import { Users, Check, ChevronDown, ChevronRight, Pencil } from 'lucide-react';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { useDismissable } from '@/lib/overlay-hooks';
+import { formatStoredDate } from '@/lib/timezone';
+import CoachPlayerSwitchSheet, { type RosterSheetPlayer } from '@/components/coaches/CoachPlayerSwitchSheet';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachPageSection from '@/components/coaches/CoachPageSection';
@@ -17,6 +21,8 @@ import PlayerNotesTab from '@/components/coaches/PlayerNotesTab';
 import { canViewDevelopmentGoals, canViewMeasurables, canViewPlayerDocuments, canManagePlayerDocuments } from '@/lib/coach-capabilities';
 import PositionProfileEditor, { type PositionProfileValue } from '@/components/coaches/PositionProfileEditor';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
+import SaveStatusPill from '@/components/coaches/SaveStatusPill';
+import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { playerPositionPrefs, pitcherSummary } from '@/lib/lineup-profile';
@@ -113,6 +119,39 @@ function playerToForm(p: RepRosterPlayer, pitcherPos: string | null): EditForm {
   };
 }
 
+/** The PATCH body — the form as the server will store it (trimmed, blanks as null). It is also the
+ *  autosave's signature, so a trailing space typed mid-word is not a change worth a save. */
+function formToPayload(form: EditForm, pitcherPos: string | null) {
+  return {
+    playerFirstName:    form.playerFirstName.trim(),
+    playerLastName:     form.playerLastName.trim() || null,
+    playerDateOfBirth:  form.playerDateOfBirth || null,
+    playerNumber:       form.playerNumber.trim() || null,
+    // Best/Never picker + Pitching section: the server derives primary/secondary + the stored profile.
+    lineupProfile: {
+      preferred: form.positions.best,
+      never: form.positions.never,
+      pitcher: pitcherPos && form.pitcher.isPitcher
+        ? { rank: form.pitcher.rank, maxInnings: form.pitcher.maxInnings.trim() === '' ? null : Number(form.pitcher.maxInnings) }
+        : null,
+      aSquad: form.aSquad,
+    },
+    guardianFirstName:  form.guardianFirstName.trim() || null,
+    guardianLastName:   form.guardianLastName.trim() || null,
+    guardianEmail:      form.guardianEmail.trim() || null,
+    guardianPhone:      form.guardianPhone.trim() || null,
+    notes:              form.notes.trim() || null,
+    medicalNotes:          form.medicalNotes.trim() || null,
+    emergencyContactName:  form.emergencyContactName.trim() || null,
+    emergencyContactPhone: form.emergencyContactPhone.trim() || null,
+    bats:        form.bats || null,
+    throws:      form.throws || null,
+    jerseySize:  form.jerseySize || null,
+  };
+}
+/** One field as it would be stored — what "has this section changed?" compares. */
+const storedValue = (v: unknown) => (typeof v === 'string' ? v.trim() : JSON.stringify(v));
+
 function ageFromDob(dob: string | null | undefined): number | null {
   if (!dob) return null;
   // Parse the YYYY-MM-DD as a LOCAL date — `new Date('2017-01-02')` is UTC midnight,
@@ -132,16 +171,67 @@ function errorMessage(error: unknown, fallback: string) {
   return error instanceof Error ? error.message : fallback;
 }
 
-/** One label / value row of the read-only record (hub F16). */
-function RecordRow({ label, value, kept }: { label: string; value: string | null | undefined; kept?: boolean }) {
+/**
+ * One label / value row of the record (hub F16). Since stage 5 (2026-09-23) this is the face a HEAD
+ * COACH lands on at ≤640 too, not only a coach without roster-write — one face, widened.
+ *
+ * `href` makes the VALUE the tap target (stage 5 · F4: a phone number on a record row is a `tel:`
+ * link, where inside a text box it was text to long-press and copy). Pass it only where the value
+ * should be a door — the page passes it on a phone; above 640 the section keeps its "Email guardian ·
+ * Call or text" foot line exactly as before. Never on a kept-back or empty value.
+ */
+function RecordRow({ label, value, kept, href }: { label: string; value: string | null | undefined; kept?: boolean; href?: string }) {
   const v = (value ?? '').trim();
   const shown = kept ? 'Kept to the head coach' : v || '—';
   return (
     <>
       <dt>{label}</dt>
-      <dd data-empty={shown === v ? undefined : ''}>{shown}</dd>
+      <dd data-empty={shown === v ? undefined : ''}>
+        {href && shown === v ? (
+          <a className={styles.recordLink} href={href}>
+            {/* An email too long for its lane breaks after the @, never mid-word ("example.c / om"). */}
+            {v.includes('@') ? <>{v.slice(0, v.indexOf('@') + 1)}<wbr />{v.slice(v.indexOf('@') + 1)}</> : v}<ChevronRight size={14} aria-hidden className={styles.recordLinkChevron} />
+          </a>
+        ) : shown}
+      </dd>
     </>
   );
+}
+
+/** A section's figures as ONE LINE on a phone (F5, owner ruling 2026-09-24) — the bold number, its
+ *  word after it, no boxes. What the section's header already says is never repeated here. */
+function FigureLine({ figures }: { figures: { value: string | number; label: string }[] }) {
+  return (
+    <p className={styles.figLine}>
+      {figures.map(f => (
+        <span key={f.label} className={styles.figItem}><b>{f.value}</b> {f.label}</span>
+      ))}
+    </p>
+  );
+}
+
+/* ⚠ EDIT IS A VISIT, AND IT LIVES ON THE SECTION (phone re-evaluation stage 5 · F1/F4, owner ruling
+   2026-09-23). At ≤640 Details and Family & paperwork land as the RECORD; each writable section
+   carries its own Edit in the section head. A page-level Edit could not say what it edits — the page
+   has five tabs, two of them hold forms, and Family has two writable sections beside an upload list.
+   The practice record's rule, unchanged: never stored, never in the URL, false on every load; focus
+   is moved by hand to the section's first writable field. Desktop and 641–768 keep the form. */
+type EditSection = 'player' | 'guardian' | 'safety';
+/** The form fields each section owns — the answer to "does THIS section have unsaved changes?". */
+const SECTION_FIELDS: Record<EditSection, (keyof EditForm)[]> = {
+  player: ['playerFirstName', 'playerLastName', 'playerDateOfBirth', 'playerNumber', 'positions', 'pitcher', 'aSquad', 'bats', 'throws', 'jerseySize'],
+  guardian: ['guardianFirstName', 'guardianLastName', 'guardianEmail', 'guardianPhone'],
+  safety: ['medicalNotes', 'emergencyContactName', 'emergencyContactPhone'],
+};
+/** Where focus lands when a section opens for editing — its first writable field's id. */
+const SECTION_FIRST_FIELD: Record<EditSection, string> = { player: 'pfn', guardian: 'gfn', safety: 'medical' };
+const SECTION_TITLE: Record<EditSection, string> = { player: 'Player', guardian: 'Guardian contact', safety: 'Safety' };
+
+/** "Best 2B, SS · Never C" — both halves, because Never is a hard block in every lineup mode and the
+ *  record used to print Best and silently drop it (stage 5). '' when neither is set. */
+function positionsLine(best: string[], never: string[]): string {
+  return [best.length ? `Best ${best.join(', ')}` : '', never.length ? `Never ${never.join(', ')}` : '']
+    .filter(Boolean).join(' · ');
 }
 
 export default function PlayerDetailPage({
@@ -169,11 +259,10 @@ export default function PlayerDetailPage({
   const [dues, setDues] = useState<RepPlayerDuesSummary | null>(null);
   const [awards, setAwards] = useState<RepPlayerAwardsSummary | null>(null);
   const [playingTime, setPlayingTime] = useState<PlayingTime | null>(null);
-  /** The roster, for the Switch player dropdown — the coach's own order, active players only. */
-  const [roster, setRoster] = useState<{ id: string; name: string }[]>([]);
+  /** The roster, for the Switch player dropdown and the phone's roster sheet — the coach's own
+   *  order, active players only. */
+  const [roster, setRoster] = useState<RosterSheetPlayer[]>([]);
   const [fetching, setFetching] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [savedFlash, setSavedFlash] = useState(false);
   const [togglingStatus, setTogglingStatus] = useState(false);
 
   const [feedbackOpen, setFeedbackOpen] = useState(false);
@@ -183,6 +272,55 @@ export default function PlayerDetailPage({
   function showFeedback(type: 'success' | 'danger', msg: string) {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
   }
+
+  /* ⚠ THE RECORD AUTOSAVES (owner ruling 2026-09-24, mid-§228 walk: "why don't we auto save on
+     these forms like we do in other areas?"). The Save/Discard bar it replaces was inherited from
+     the page's first form and never weighed; the portal's line is now CREATING asks for a Save,
+     EDITING what exists saves as you go — the practice plan, the lineup builder, the library
+     rooms. The shared library-room hook: ~0.9s after the last change, stop after a failure, the
+     pill says which. Discard is gone with the bar — a wrong edit is changed back, as on a plan.
+     The write updates the SAVED player only, never the form, so a coach typing while a save is in
+     flight keeps every keystroke (the hook keeps the record dirty for the next pass). */
+  // The body IS the signature — the form as it will be stored — so the write depends on strings only.
+  const sig = form ? JSON.stringify(formToPayload(form, pitcherPos)) : '';
+  const write = useCallback(async (signal: AbortSignal) => {
+    if (!sig) return;
+    const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: sig,
+      signal,
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error ?? 'Could not save this player.');
+    setPlayer(data.player);
+    /* ⚠ THE SERVER CAN STORE SOMETHING OTHER THAN WHAT WAS TYPED (/review, 2026-09-24): the
+       innings cap is rounded and floored at 1, so "0" saves as 1 and "2.5" as 3. Left alone, the
+       form would keep showing "0" beside a saved 1 — and on a phone that section could never close,
+       since it reads as holding unsaved work for ever. So when nothing was typed while the save was
+       out, each field whose STORED value differs takes the server's; a field that differs only by
+       trimming (a trailing space mid-word) is left exactly as the coach has it. */
+    const saved = playerToForm(data.player, pitcherPos);
+    setForm(f => {
+      if (!f || JSON.stringify(formToPayload(f, pitcherPos)) !== sig) return f;
+      let next = f;
+      for (const k of Object.keys(saved) as (keyof EditForm)[]) {
+        if (storedValue(f[k]) !== storedValue(saved[k])) next = { ...next, [k]: saved[k] };
+      }
+      return next;
+    });
+  }, [sig, orgSlug, teamId, playerId, pitcherPos]);
+  const { saving, dirty, saveError, touch, settle, handleSave } = useRecordAutosave({
+    enabled: !!page.capabilities?.rosterWrite,
+    loading: fetching, write,
+    sig,
+    // The server keeps the old first name when none is sent, but an EMPTY one it would store — so a
+    // cleared name is held, not saved, while the coach types the new one.
+    blocked: form && !form.playerFirstName.trim() ? 'Give the player a first name to save.' : null,
+    failText: 'Could not save this player.',
+  });
+  /** Every field's onChange — change the form and mark the record for the next save. */
+  const edit = (fn: (f: EditForm) => EditForm) => { setForm(f => (f ? fn(f) : f)); touch(); };
 
   const load = useCallback(async () => {
     setFetching(true);
@@ -198,12 +336,13 @@ export default function PlayerDetailPage({
       setDues(data.dues ?? null);
       setAwards(data.awards ?? null);
       setRoster(data.roster ?? []);
+      settle();
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to load.'));
     } finally {
       setFetching(false);
     }
-  }, [orgSlug, teamId, playerId, pitcherPos]);
+  }, [orgSlug, teamId, playerId, pitcherPos, settle]);
 
   useEffect(() => { if (!assignmentsLoading) void Promise.resolve().then(load); }, [assignmentsLoading, load]);
 
@@ -237,58 +376,52 @@ export default function PlayerDetailPage({
   }, [assignmentsLoading, tab, caps?.lineups, orgSlug, teamId, playerId]);
 
   // Compare against the cleaned baseline (playerToForm) — not the raw player — so a
-  // legacy literal "null"/"undefined" value doesn't show a phantom "unsaved changes" on load.
-  const isDirty = !!(player && form && JSON.stringify(form) !== JSON.stringify(playerToForm(player, pitcherPos)));
+  // legacy literal "null"/"undefined" value doesn't show a phantom "unsaved changes" on load; and
+  // compare as STORED, so a trailing space the save trimmed is not a change still waiting.
+  const baseline = player ? playerToForm(player, pitcherPos) : null;
+  const sectionDirty = (s: EditSection) =>
+    !!(baseline && form && SECTION_FIELDS[s].some(k => storedValue(form[k]) !== storedValue(baseline[k])));
 
-  async function handleSave() {
-    if (!form || !player) return;
-    setSaving(true);
-    try {
-      const res = await fetch(
-        `/api/coaches/${orgSlug}/teams/${teamId}/roster/${playerId}`,
-        {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            playerFirstName:    form.playerFirstName.trim(),
-            playerLastName:     form.playerLastName.trim() || null,
-            playerDateOfBirth:  form.playerDateOfBirth || null,
-            playerNumber:       form.playerNumber.trim() || null,
-            // Best/Never picker + Pitching section: the server derives primary/secondary + the
-            // stored profile. A-squad (P4) is carried through untouched until that phase ships.
-            lineupProfile: {
-              preferred: form.positions.best,
-              never: form.positions.never,
-              pitcher: pitcherPos && form.pitcher.isPitcher
-                ? { rank: form.pitcher.rank, maxInnings: form.pitcher.maxInnings.trim() === '' ? null : Number(form.pitcher.maxInnings) }
-                : null,
-              aSquad: form.aSquad,
-            },
-            guardianFirstName:  form.guardianFirstName.trim() || null,
-            guardianLastName:   form.guardianLastName.trim() || null,
-            guardianEmail:      form.guardianEmail.trim() || null,
-            guardianPhone:      form.guardianPhone.trim() || null,
-            notes:              form.notes.trim() || null,
-            medicalNotes:          form.medicalNotes.trim() || null,
-            emergencyContactName:  form.emergencyContactName.trim() || null,
-            emergencyContactPhone: form.emergencyContactPhone.trim() || null,
-            bats:        form.bats || null,
-            throws:      form.throws || null,
-            jerseySize:  form.jerseySize || null,
-          }),
-        },
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Failed to save');
-      setPlayer(data.player);
-      setForm(playerToForm(data.player, pitcherPos));
-      setSavedFlash(true);
-      window.setTimeout(() => setSavedFlash(false), 2500);
-    } catch (e: unknown) {
-      showFeedback('danger', errorMessage(e, 'Failed to save.'));
-    } finally {
-      setSaving(false);
-    }
+  /* ≤640 — the CONTENT breakpoint, read live (`useIsPhone`). The page renders only after its own
+     client fetch, so the first frame a coach sees already has the real answer; nothing here renders
+     on the server. The record/form choice is a STRUCTURE decision (different DOM, different tab
+     order), which is why it is JS rather than a stylesheet toggle. */
+  const isPhone = useIsPhone();
+  /* Which sections are open for editing — THIS VISIT ONLY (see EditSection above). Keyed to the
+     player so a switch never carries an open form across to the next child, whether or not the
+     page remounts. */
+  const [editing, setEditing] = useState<{ playerId: string; sections: EditSection[] } | null>(null);
+  /* ⚠ A SECTION HOLDING UNSAVED WORK IS OPEN, whether or not its Edit was pressed (/review,
+     2026-09-23). Otherwise a coach who typed on a wider window and then crossed 640 — a tablet's
+     split view, a foldable, a rotated phone — saw every section flip to the record: the SAVED
+     values, under a bar still saying "Unsaved changes", with the work nowhere on screen (and the
+     glance chip, which reads the form, disagreeing with the record beneath it). A section with edits
+     returns to the record only once they are saved. */
+  const isEditing = (s: EditSection) =>
+    (!!editing && editing.playerId === playerId && editing.sections.includes(s)) || sectionDirty(s);
+  /* The section's Edit button stays mounted and changes its words to Done, so it does not unmount
+     under the pointer — but the form it opens is new DOM, and a keyboard or screen-reader coach
+     belongs in it, so focus is moved by hand to its first writable field (the practice record's
+     rule). A fresh object per open, so opening the same section twice still moves focus. */
+  const [focusField, setFocusField] = useState<{ id: string } | null>(null);
+  useEffect(() => {
+    if (!focusField) return;
+    const raf = requestAnimationFrame(() => document.getElementById(focusField.id)?.focus());
+    return () => cancelAnimationFrame(raf);
+  }, [focusField]);
+
+  function openEdit(s: EditSection) {
+    setEditing(e => ({ playerId, sections: [...(e && e.playerId === playerId ? e.sections : []).filter(x => x !== s), s] }));
+    setFocusField({ id: SECTION_FIRST_FIELD[s] });
+  }
+  /* Done — leaves the visit for ONE section, and asks nothing: the record autosaves, so there is
+     nothing to discard. A change still inside the debounce is saved NOW rather than 0.9s later, and
+     the section stays a form until that save lands (isEditing reads sectionDirty) — the record face
+     it returns to only ever shows what is saved. A save that fails leaves the form, and the pill's
+     Retry, where they are. */
+  function closeEdit(s: EditSection) {
+    if (dirty && !saving) void handleSave();
+    setEditing(e => (e ? { ...e, sections: e.sections.filter(x => x !== s) } : e));
   }
 
   /* ⚠ THIS IS THE DELETE, AND IT NOW SAYS SO (owner ruling 2026-08-26). There is no hard delete in
@@ -314,6 +447,10 @@ export default function PlayerDetailPage({
       });
       if (!ok) return;
     }
+    // A pending edit lands first — the status write would otherwise race it on the same row.
+    // A save already out is not raced by a second copy of itself (/review) — the tap simply waits it out.
+    if (saving) return;
+    if (dirty && !(await handleSave())) return;
     setTogglingStatus(true);
     try {
       const res = await fetch(
@@ -326,8 +463,8 @@ export default function PlayerDetailPage({
       );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to update status');
+      // The SAVED player only — the form holds no status, and a keystroke typed meanwhile is kept.
       setPlayer(data.player);
-      setForm(playerToForm(data.player, pitcherPos));
     } catch (e: unknown) {
       showFeedback('danger', errorMessage(e, 'Failed to update status.'));
     } finally {
@@ -353,6 +490,28 @@ export default function PlayerDetailPage({
     ? { href: returnTo, label: returnLabel(returnTo, base)! }
     : { href: `${base}/roster`, label: 'Roster' };
 
+  /* THE ROSTER SHEET's open state (stage 5 · F2) — the team sheet's own mechanics (stage 1 · B1).
+     It remembers the ADDRESS it was opened on rather than a boolean, so picking a player (a
+     navigation) closes it with no effect to write. Two dismiss boundaries — the name button in the
+     page header and the sheet rendered at the foot of the page — so "outside" means outside both,
+     and the sheet's scrim is a tap INSIDE the boundary that closes it (a scrim outside its own
+     boundary let a dismiss tap press the control beneath it, under touch only — stage 3's /review).
+     Escape returns focus to the name; a tap-away leaves it where the tap went. */
+  const pathname = usePathname() ?? '';
+  const [sheetOpenAt, setSheetOpenAt] = useState<string | null>(null);
+  const nameButtonRef = useRef<HTMLButtonElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const onRoster = roster.some(r => r.id === playerId);
+  // Offered only when there is somewhere to go (a one-player roster gets no chevron, as a one-team
+  // coach gets none), and never for a player who is off the list — there is no "you are here" row.
+  const canSheet = isPhone && onRoster && roster.length > 1;
+  const sheetOpen = canSheet && sheetOpenAt === pathname;
+  const closeSheet = () => setSheetOpenAt(null);
+  useDismissable(sheetOpen, [nameButtonRef, sheetRef], closeSheet, () => {
+    setSheetOpenAt(null);
+    nameButtonRef.current?.focus({ preventScroll: true });
+  });
+
   if (assignmentsLoading || fetching) return <CoachLoading label="Loading this player…" />;
   if (!page.hasAccess) {
     return (
@@ -373,8 +532,12 @@ export default function PlayerDetailPage({
   const attnKnown = attendance ? attendance.attending + attendance.absent + attendance.late : 0;
   const attnRate = attnKnown > 0 ? Math.round((attendance!.attending / attnKnown) * 100) : 0;
   const attnPct = attnKnown > 0 ? `${attnRate}%` : '—';
+  const fieldShare = playingTime && playingTime.fieldInnings + playingTime.benchInnings > 0
+    ? Math.round((playingTime.fieldInnings / (playingTime.fieldInnings + playingTime.benchInnings)) * 100) : 0;
   const age = ageFromDob(player.playerDateOfBirth);
   const bestPositions = form.positions.best;
+  /** What is STORED — the record face reads this, never the form (see the Details record). */
+  const savedPositions = playerPositionPrefs(player, pitcherPos);
   const canWriteRoster = !!page.capabilities?.rosterWrite;
   const pii = !!caps?.rosterPii;
   const firstName = cleanNamePart(player.playerFirstName);
@@ -394,24 +557,24 @@ export default function PlayerDetailPage({
   /* The Switch player dropdown (hub F14, owner R2-5). A native select — the sidebar's team switcher
      is one too — listing the roster in the coach's own order with the current player selected;
      picking one opens that player on the SAME tab (the tab rides in the address). A player who is
-     off the roster is not in the list, so the select starts on a blank prompt for them. */
-  const onList = roster.some(r => r.id === playerId);
+     off the roster is not in the list, so the select starts on a blank prompt for them.
+     ⚠ ABOVE 640 ONLY since stage 5 (2026-09-23): on a phone the NAME is the switcher (below) and
+     the 56px row this select sat on is gone. */
+  const onList = onRoster;
+  const playerHref = (id: string) => playerTabHref(`${base}/roster/${id}`, tab, { returnTo });
   /* ⚠ A SELECT IS NOT A LINK, so the unsaved-changes guard (which intercepts anchor clicks and the
      browser's own leave) never sees this navigation — a dirty form would have been dropped without
-     a word (/review, 2026-09-13). The same question the guard asks, asked here. */
+     a word (/review, 2026-09-13). Since the record autosaves (2026-09-24) there is no question to
+     ask: a change still inside the debounce is saved first, and a save that cannot land (a failure,
+     a cleared first name) keeps the coach here with the pill saying so. */
   async function switchTo(id: string) {
     if (!id || id === playerId) return;
-    if (isDirty) {
-      const ok = await confirm({
-        title: 'Leave without saving?',
-        message: 'You have unsaved changes on this player. Switching players discards them.',
-        confirmText: 'Discard and switch', cancelText: 'Stay', tone: 'danger',
-      });
-      if (!ok) return;
-    }
-    router.push(playerTabHref(`${base}/roster/${id}`, tab, { returnTo }));
+    // A save already out is not raced by a second copy of itself (/review) — the tap simply waits it out.
+    if (saving) return;
+    if (dirty && !(await handleSave())) return;
+    router.push(playerHref(id));
   }
-  const switchPlayer = roster.length > 1 ? (
+  const switchPlayer = !isPhone && roster.length > 1 ? (
     <select
       className={styles.playerSwitch}
       aria-label="Switch player"
@@ -422,20 +585,67 @@ export default function PlayerDetailPage({
       {roster.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
     </select>
   ) : null;
+  /* THE NAME IS THE SWITCHER on a phone (stage 5 · F2) — the masthead's team name one line down:
+     the same 16px chevron, sitting OUTSIDE the name's own span, and a real 44px box (the header
+     row does not grow; see `.playerNameSwitch`). The name WRAPS rather than truncating — stage 4 ·
+     E5's standing rule, clamping hides part of a name a coach typed. */
+  const title = canSheet ? (
+    <button
+      ref={nameButtonRef}
+      type="button"
+      className={styles.playerNameSwitch}
+      aria-haspopup="menu"
+      aria-expanded={sheetOpen}
+      aria-controls={sheetOpen ? 'coach-player-sheet' : undefined}
+      title="Switch player"
+      onClick={() => setSheetOpenAt(o => (o === pathname ? null : pathname))}
+    >
+      <span>{fullName}</span>
+      <ChevronDown size={16} aria-hidden className={styles.playerNameSwitchChevron} />
+    </button>
+  ) : fullName;
+
+  /* The section head's Edit / Done (stage 5 · F1/F4) — a phone control for a writer only. A coach
+     without roster-write sees the record with no Edit at all (nothing to edit), and keeps the
+     "Only the head coach can edit" line. */
+  const editAction = (s: EditSection) => {
+    if (!canWriteRoster || !isPhone) return undefined;
+    const on = isEditing(s);
+    return (
+      <button
+        type="button"
+        id={`edit-${s}`}
+        /* ICON-ONLY (owner, 2026-09-23 — "to save space and be consistent with our app"): the
+           portal's mobile-actions rule. The builder's own 44px icon square (`footerIconBtn`),
+           not a fourth icon-button shape; a pencil to open, a check to finish, so the box never
+           changes size under the thumb. The words live in the accessible name and the title. */
+        className={`${styles.footerIconBtn} ${styles.sectionEditBtn}`}
+        aria-label={on ? `Done editing ${SECTION_TITLE[s]}` : `Edit ${SECTION_TITLE[s]}`}
+        title={on ? 'Done' : 'Edit'}
+        onClick={() => { if (on) closeEdit(s); else openEdit(s); }}
+      >
+        {on ? <Check size={18} aria-hidden /> : <Pencil size={18} aria-hidden />}
+      </button>
+    );
+  };
+  /** The form, or the record? The form is a writer's — above 640 always, on a phone only while
+   *  that section is being edited. */
+  const showForm = (s: EditSection) => canWriteRoster && (!isPhone || isEditing(s));
 
   return (
     <div className={styles.page}>
-      <UnsavedChangesGuard active={isDirty} />
+      <UnsavedChangesGuard active={dirty} />
       {/* Header (page-header ruling 2026-08-11): the player's name, nothing under the title — age
           is a live fact, so it leads the glance card one line down. The jersey number chip that
           used to sit beside it was dropped (owner call, 2026-09-13): it read as an orphaned badge
           floating alone whenever a player carried no other chip, and it is not lost — the Details
           tab's record row still names it. The way back is the ARROW in this header's leading
           corner (amendment 2026-08-26); the trailing slot holds the Switch player dropdown
-          (2026-09-13). */}
+          (2026-09-13) above 640, and on a phone the name itself opens the roster sheet (stage 5 ·
+          F2) — so the trailing slot is empty there, and stays empty: Edit belongs on the section. */}
       <CoachPageHeader
         icon={Users}
-        title={fullName}
+        title={title}
         backTo={backTo}
         actions={switchPlayer}
       />
@@ -443,7 +653,10 @@ export default function PlayerDetailPage({
       {/* ⚠ THE PLAYER, BEFORE THE FORM (owner ruling 2026-08-26), and THE INDEX ON EVERY TAB
           (hub F10, 2026-09-13). The chips are facts; the four tiles are DOORS — each opens the
           section it names, which is what lets Details be the landing tab without losing the
-          mid-season answer. The one warning chip opens Safety (F15).
+          mid-season answer.
+          ⚠ No medical-notes warning chip (owner ruling 2026-09-23, §228 walk — reversed F15): the
+          coach knows their players, and the notes are reference kept on Safety, not an alert to
+          interrupt editing skills or goals.
           ⚠ Off the roster is the ONE state worth stating, so it is the only badge here. */}
       <div className={styles.playerGlance}>
         <div className={styles.playerGlanceChips}>
@@ -458,11 +671,6 @@ export default function PlayerDetailPage({
           {bestPositions.length > 0 && <span className={styles.chipQuiet}>{bestPositions.join(' / ')}</span>}
           {player.lineupProfile?.aSquad && <span className={styles.chipQuiet}>A-squad</span>}
           {age !== null && <span className={styles.chipQuiet}>Age {age}</span>}
-          {player.medicalNotes && (
-            <Link href={tabHref('family', 'safety')} className={`${styles.chipDanger} ${styles.chipDoor}`} title="Medical notes on file — open Safety">
-              <AlertTriangle size={11} aria-hidden /> Medical notes
-            </Link>
-          )}
         </div>
 
         {/* ⚠ FOUR TILES, ALL FROM DATA THIS PAGE HAS ALREADY FETCHED — no extra call for a summary.
@@ -520,36 +728,42 @@ export default function PlayerDetailPage({
         ariaLabel="Player record"
       />
 
-      {/* ── DETAILS: the record. The form for the head coach; a record for everyone else (F16) ── */}
+      {/* ── DETAILS: the record. The form for the head coach above 640; the RECORD for everyone
+          else (F16), and on a phone for the head coach too until they press the section's Edit
+          (stage 5 · F1). ── */}
       {tab === 'details' && (<>
-      <CoachPageSection sectionId="player" title="Player">
-        {canWriteRoster ? (
+      <CoachPageSection sectionId="player" title="Player" action={editAction('player')}>
+        {showForm('player') ? (
         <div className={styles.formGrid}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="pfn">First Name</label>
             <input id="pfn" className={styles.input} type="text"
               value={form.playerFirstName}
-              onChange={e => setForm(f => f ? { ...f, playerFirstName: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, playerFirstName: e.target.value }))}
+              aria-describedby={form.playerFirstName.trim() ? undefined : 'pfn-hint'}
               maxLength={60} />
+            {!form.playerFirstName.trim() && (
+              <p id="pfn-hint" className={styles.formHint} role="alert">A player needs a first name — nothing saves until it has one.</p>
+            )}
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="pln">Last Name</label>
             <input id="pln" className={styles.input} type="text"
               value={form.playerLastName}
-              onChange={e => setForm(f => f ? { ...f, playerLastName: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, playerLastName: e.target.value }))}
               maxLength={60} />
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="pdob">Date of Birth</label>
             <input id="pdob" className={styles.input} type="date"
               value={form.playerDateOfBirth}
-              onChange={e => setForm(f => f ? { ...f, playerDateOfBirth: e.target.value } : f)} />
+              onChange={e => edit(f => ({ ...f, playerDateOfBirth: e.target.value }))} />
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="pnum">Jersey #</label>
             <input id="pnum" className={styles.input} type="text"
               value={form.playerNumber}
-              onChange={e => setForm(f => f ? { ...f, playerNumber: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, playerNumber: e.target.value }))}
               maxLength={10} />
           </div>
           <div className={`${styles.field} ${styles.formGridFull}`}>
@@ -557,14 +771,14 @@ export default function PlayerDetailPage({
             <PositionProfileEditor
               positions={pickerPositions}
               value={form.positions}
-              onChange={next => setForm(f => f ? { ...f, positions: next } : f)} />
+              onChange={next => edit(f => ({ ...f, positions: next }))} />
           </div>
           {pitcherPos && (
             <div className={`${styles.field} ${styles.formGridFull}`}>
               <label className={styles.label}>Pitching</label>
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: 8, fontSize: 14, cursor: 'pointer', color: 'var(--home-ink, rgba(255,255,255,0.85))' }}>
                 <input type="checkbox" checked={form.pitcher.isPitcher}
-                  onChange={e => { const on = e.target.checked; setForm(f => f ? { ...f, pitcher: { ...f.pitcher, isPitcher: on } } : f); }} />
+                  onChange={e => { const on = e.target.checked; edit(f => ({ ...f, pitcher: { ...f.pitcher, isPitcher: on } })); }} />
                 <span>This player pitches</span>
               </label>
               {form.pitcher.isPitcher && (
@@ -573,7 +787,7 @@ export default function PlayerDetailPage({
                     <label className={styles.label} htmlFor="pitcher-rank">Pitcher rank</label>
                     <select id="pitcher-rank" className={styles.select}
                       value={form.pitcher.rank}
-                      onChange={e => setForm(f => f ? { ...f, pitcher: { ...f.pitcher, rank: Number(e.target.value) } } : f)}>
+                      onChange={e => edit(f => ({ ...f, pitcher: { ...f.pitcher, rank: Number(e.target.value) } }))}>
                       <option value={1}>1 — Ace</option>
                       <option value={2}>2</option>
                       <option value={3}>3</option>
@@ -586,7 +800,7 @@ export default function PlayerDetailPage({
                     <input id="pitcher-max" className={styles.input} type="number" min={1} max={20}
                       placeholder="No limit"
                       value={form.pitcher.maxInnings}
-                      onChange={e => setForm(f => f ? { ...f, pitcher: { ...f.pitcher, maxInnings: e.target.value } } : f)} />
+                      onChange={e => edit(f => ({ ...f, pitcher: { ...f.pitcher, maxInnings: e.target.value } }))} />
                   </div>
                 </div>
               )}
@@ -599,7 +813,7 @@ export default function PlayerDetailPage({
             <label className={styles.label}>A-squad</label>
             {/* Gold-medal star (P5) — same treatment as the Depth-chart board so the two surfaces match. */}
             <button type="button" aria-pressed={form.aSquad}
-              onClick={() => setForm(f => f ? { ...f, aSquad: !f.aSquad } : f)}
+              onClick={() => edit(f => ({ ...f, aSquad: !f.aSquad }))}
               style={{ display: 'inline-flex', alignItems: 'center', gap: 10, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
               <span aria-hidden style={{
                 fontSize: 26, lineHeight: 1, transition: '0.12s',
@@ -615,7 +829,7 @@ export default function PlayerDetailPage({
           <div className={styles.field}>
             <label className={styles.label} htmlFor="bats">Bats</label>
             <select id="bats" className={styles.select} value={form.bats}
-              onChange={e => setForm(f => f ? { ...f, bats: e.target.value } : f)}>
+              onChange={e => edit(f => ({ ...f, bats: e.target.value }))}>
               <option value="">—</option>
               {BATS_OPTIONS.map(o => <option key={o} value={o}>{BATS_LABELS[o]}</option>)}
             </select>
@@ -623,7 +837,7 @@ export default function PlayerDetailPage({
           <div className={styles.field}>
             <label className={styles.label} htmlFor="throws">Throws</label>
             <select id="throws" className={styles.select} value={form.throws}
-              onChange={e => setForm(f => f ? { ...f, throws: e.target.value } : f)}>
+              onChange={e => edit(f => ({ ...f, throws: e.target.value }))}>
               <option value="">—</option>
               {THROWS_OPTIONS.map(o => <option key={o} value={o}>{THROWS_LABELS[o]}</option>)}
             </select>
@@ -631,7 +845,7 @@ export default function PlayerDetailPage({
           <div className={styles.field}>
             <label className={styles.label} htmlFor="jersey-size">Jersey Size</label>
             <select id="jersey-size" className={styles.select} value={form.jerseySize}
-              onChange={e => setForm(f => f ? { ...f, jerseySize: e.target.value } : f)}>
+              onChange={e => edit(f => ({ ...f, jerseySize: e.target.value }))}>
               <option value="">—</option>
               {JERSEY_SIZE_OPTIONS.map(o => <option key={o} value={o}>{JERSEY_SIZE_LABELS[o]}</option>)}
             </select>
@@ -647,18 +861,22 @@ export default function PlayerDetailPage({
           {/* ⚠ A RECORD, NOT A FORM THAT REFUSES TO SAVE (hub F16). A coach without roster-write used
               to see the same inputs as the head coach, type, get a Save bar, and be refused by the
               server — with redacted contact fields rendering as blank boxes that read as "nobody
-              filled this in". Label / value rows; "—" for empty; one line for what is kept back. */}
+              filled this in". Label / value rows; "—" for empty; one line for what is kept back.
+              ⚠ Read from the SAVED player, never the form: on a phone this face returns after Done,
+              and it must show what is stored, not what the save bar is still holding. */}
           <dl className={styles.recordList}>
             <RecordRow label="Name" value={fullName} />
             <RecordRow label="Jersey #" value={cleanNamePart(player.playerNumber)} />
-            <RecordRow label="Date of birth" value={player.playerDateOfBirth} kept={!pii} />
-            <RecordRow label="Positions" value={bestPositions.length ? `Best: ${bestPositions.join(', ')}` : ''} />
+            <RecordRow label="Date of birth" value={player.playerDateOfBirth ? `${formatStoredDate(player.playerDateOfBirth)}${age !== null ? ` · age ${age}` : ''}` : ''} kept={!pii} />
+            <RecordRow label="Positions" value={positionsLine(savedPositions.preferred, savedPositions.never)} />
             {pitcherPos && <RecordRow label="Pitching" value={player.lineupProfile?.pitcher ? pitcherSummary(player.lineupProfile.pitcher, 'innings cap') : 'Does not pitch'} />}
             <RecordRow label="A-squad" value={player.lineupProfile?.aSquad ? '★ Yes' : 'No'} />
             <RecordRow label="Bats / throws" value={[optLabel(BATS_LABELS, player.bats), optLabel(THROWS_LABELS, player.throws)].filter(Boolean).join(' / ')} />
             <RecordRow label="Jersey size" value={optLabel(JERSEY_SIZE_LABELS, player.jerseySize)} />
           </dl>
-          <p className={styles.detailPlaceholder} style={{ marginBottom: 0 }}>Only the head coach can edit a player’s record.</p>
+          {!canWriteRoster && (
+            <p className={styles.detailPlaceholder} style={{ marginBottom: 0 }}>Only the head coach can edit a player’s record.</p>
+          )}
         </>
         )}
       </CoachPageSection>
@@ -669,8 +887,10 @@ export default function PlayerDetailPage({
           A destructive act belongs at the end of the thing it destroys, named for its effect, and
           behind a question. It was a ghost button under a child's name.
           ⚠ Head coach (or an assistant granted roster-write) only — the API refuses everyone else,
-          and a control that always fails is worse than no control. */}
-      {canWriteRoster && (
+          and a control that always fails is worse than no control.
+          ⚠ On a phone it stays at the foot of the FORM, so it appears only inside Edit (stage 5 —
+          "not reopened": its place was ruled 26 August; the record face has no form to be the foot of). */}
+      {showForm('player') && (
         <div className={styles.playerDangerZone}>
           <div className={styles.playerDangerCopy}>
             <p className={styles.playerDangerTitle}>
@@ -704,13 +924,33 @@ export default function PlayerDetailPage({
           <p className={styles.detailPlaceholder} style={{ margin: 0 }}>No attendance recorded yet this season.</p>
         ) : (
           <>
-            <div className={styles.statBoxRow}>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attnPct}</span><span className={styles.statBoxLabel}>Attendance</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.attending}</span><span className={styles.statBoxLabel}>Present</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.late}</span><span className={styles.statBoxLabel}>Late</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.absent}</span><span className={styles.statBoxLabel}>Absent</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.total}</span><span className={styles.statBoxLabel}>Recorded</span></div>
-            </div>
+            {/* ⚠ F5 (owner ruling 2026-09-24, drawn on the hub's 5 · People tab): the rate and the
+                recorded count are the header's own line, so they are not boxes again at any width.
+                On a phone the three counts are one line of figures over a proportion bar; above 640
+                they stay boxes, which fit on one row there. A zero stays — "0 late" is information. */}
+            {isPhone ? (
+              <>
+                <FigureLine figures={[
+                  { value: attendance.attending, label: 'Present' },
+                  { value: attendance.late, label: 'Late' },
+                  { value: attendance.absent, label: 'Absent' },
+                ]} />
+                {attnKnown > 0 && (
+                  <div className={styles.attnSplit} role="img"
+                    aria-label={`${attendance.attending} present, ${attendance.late} late, ${attendance.absent} absent`}>
+                    {attendance.attending > 0 && <i data-k="in" style={{ flexGrow: attendance.attending }} />}
+                    {attendance.late > 0 && <i data-k="late" style={{ flexGrow: attendance.late }} />}
+                    {attendance.absent > 0 && <i data-k="out" style={{ flexGrow: attendance.absent }} />}
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className={styles.statBoxRow}>
+                <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.attending}</span><span className={styles.statBoxLabel}>Present</span></div>
+                <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.late}</span><span className={styles.statBoxLabel}>Late</span></div>
+                <div className={styles.statBox}><span className={styles.statBoxValue}>{attendance.absent}</span><span className={styles.statBoxLabel}>Absent</span></div>
+              </div>
+            )}
             {attendance.recent.length > 0 && (
               <>
                 <p className={styles.miniListLabel}>Last {attendance.recent.length} sessions</p>
@@ -746,12 +986,19 @@ export default function PlayerDetailPage({
           {playingTime.fieldInnings + playingTime.benchInnings === 0 ? (
             <p className={styles.detailPlaceholder} style={{ margin: 0 }}>No saved lineups yet this season.</p>
           ) : (
-            <div className={styles.statBoxRow}>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{playingTime.fieldInnings}</span><span className={styles.statBoxLabel}>Field innings</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{playingTime.benchInnings}</span><span className={styles.statBoxLabel}>Bench innings</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{Math.round((playingTime.fieldInnings / (playingTime.fieldInnings + playingTime.benchInnings)) * 100)}%</span><span className={styles.statBoxLabel}>On the field</span></div>
-              <div className={styles.statBox}><span className={styles.statBoxValue}>{playingTime.games}</span><span className={styles.statBoxLabel}>Games</span></div>
-            </div>
+            /* F5: field and bench innings are the header's line; what it does not say is the share
+               and the games it covers — one line on a phone, two boxes above 640. */
+            isPhone ? (
+              <FigureLine figures={[
+                { value: `${fieldShare}%`, label: 'on the field' },
+                { value: playingTime.games, label: playingTime.games === 1 ? 'game' : 'games' },
+              ]} />
+            ) : (
+              <div className={styles.statBoxRow}>
+                <div className={styles.statBox}><span className={styles.statBoxValue}>{fieldShare}%</span><span className={styles.statBoxLabel}>On the field</span></div>
+                <div className={styles.statBox}><span className={styles.statBoxValue}>{playingTime.games}</span><span className={styles.statBoxLabel}>Games</span></div>
+              </div>
+            )
           )}
           <p className={styles.sectionFoot}>
             From the games with a saved lineup ({playingTime.gamesWithLineup} this season) · <Link href={insightsSectionHref(base, 'playing-time')} className={styles.contactLink}>Playing time report →</Link>
@@ -792,6 +1039,31 @@ export default function PlayerDetailPage({
           <p className={styles.detailPlaceholder} style={{ margin: 0 }}>No dues set for this player this season.</p>
         ) : (
           <>
+            {/* F5 · ON A PHONE THE LADDER IS A LEDGER (owner ruling 2026-09-24). It was never a set of
+                figures — it is a SUM, and the boxes were already in the ladder's order because the
+                order is the arithmetic. A two-column grid broke that reading at 390; a receipt keeps
+                it: each line signed, a rule, the answer. The balance repeats the header here on
+                purpose — a ledger without its bottom line stops being arithmetic. Same zero rule as
+                the boxes: Fundraising, Other credits and Handed back show only when they happened. */}
+            {isPhone ? (
+              <dl className={styles.duesLedger}>
+                <div>
+                  <dt>Dues</dt><dd>{formatMoney(dues.ladder.dues)}</dd>
+                  {dues.totalAssessed - dues.ladder.dues > 0.005 && (
+                    <dd className={styles.duesLedgerNote}>
+                      {formatMoney(dues.totalAssessed)} originally charged, after {formatMoney(dues.totalAssessed - dues.ladder.dues)} in adjustments &amp; forgiveness
+                    </dd>
+                  )}
+                </div>
+                {dues.ladder.fundraising > 0 && <div><dt>Fundraising</dt><dd>− {formatMoney(dues.ladder.fundraising)}</dd></div>}
+                {dues.ladder.otherCredits > 0 && <div><dt>Other credits</dt><dd>− {formatMoney(dues.ladder.otherCredits)}</dd></div>}
+                <div><dt>Paid</dt><dd>− {formatMoney(dues.ladder.paid)}</dd></div>
+                {dues.ladder.handedBack > 0 && <div><dt>Handed back</dt><dd>+ {formatMoney(dues.ladder.handedBack)}</dd></div>}
+                <div className={styles.duesLedgerTotal}>
+                  <dt>Balance</dt><dd data-tone={dues.balance > 0 ? 'danger' : 'good'}>{balanceLabel}</dd>
+                </div>
+              </dl>
+            ) : (
             <div className={styles.statBoxRow}>
               <div className={styles.statBox}>
                 <span className={styles.statBoxValue}>{formatMoney(dues.ladder.dues)}</span>
@@ -823,6 +1095,7 @@ export default function PlayerDetailPage({
                 <span className={styles.statBoxLabel}>Balance</span>
               </div>
             </div>
+            )}
             <p className={styles.sectionFoot}>
               {dues.paidInstallmentCount}/{dues.installmentCount} installments paid
               {dues.overdue ? ' · overdue' : dues.nextDueDate ? ` · next due ${formatShortDate(dues.nextDueDate)}` : ''}
@@ -875,7 +1148,7 @@ export default function PlayerDetailPage({
           about={{
             value: form.notes,
             canEdit: canWriteRoster,
-            onChange: v => setForm(f => f ? { ...f, notes: v } : f),
+            onChange: v => edit(f => ({ ...f, notes: v })),
           }}
         />
       )}
@@ -888,31 +1161,35 @@ export default function PlayerDetailPage({
           ⚠ DO NOT MERGE WITH THE "Guardians" SECTION BELOW. That card is the family members who
           can log in (Chunk D). It rides the roster-PII capability and renders nothing at all while
           the guardian tier is off. These fields are the contact details on the ROSTER RECORD. */}
-      <CoachPageSection sectionId="guardian" title="Guardian contact">
+      {/* ⚠ STAGE 5 · F4 (accepted with the ruling, 2026-09-23): on a phone both sections land as
+          the RECORD with their own Edit — the tab whose job is "who do I call?" — and the phone
+          numbers become `tel:` rows a thumb can hit. Documents carries no Edit: uploading is not
+          editing. Same fields, same saves, same redaction. */}
+      <CoachPageSection sectionId="guardian" title="Guardian contact" action={editAction('guardian')}>
         <p className={styles.detailPlaceholder} style={{ marginTop: 0, marginBottom: '0.9rem' }}>
           The contact on this player&apos;s roster record — where dues reminders and team emails go.
         </p>
-        {canWriteRoster ? (
+        {showForm('guardian') ? (
         <div className={styles.formGrid}>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="gfn">First Name</label>
             <input id="gfn" className={styles.input} type="text"
               value={form.guardianFirstName}
-              onChange={e => setForm(f => f ? { ...f, guardianFirstName: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, guardianFirstName: e.target.value }))}
               maxLength={60} />
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="gln">Last Name</label>
             <input id="gln" className={styles.input} type="text"
               value={form.guardianLastName}
-              onChange={e => setForm(f => f ? { ...f, guardianLastName: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, guardianLastName: e.target.value }))}
               maxLength={60} />
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="gem">Email</label>
             <input id="gem" className={styles.input} type="email"
               value={form.guardianEmail}
-              onChange={e => setForm(f => f ? { ...f, guardianEmail: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, guardianEmail: e.target.value }))}
               maxLength={120} />
             {form.guardianEmail.trim() && (
               <a className={styles.contactLink} href={`mailto:${form.guardianEmail.trim()}`}>Email guardian</a>
@@ -922,7 +1199,7 @@ export default function PlayerDetailPage({
             <label className={styles.label} htmlFor="gph">Phone</label>
             <input id="gph" className={styles.input} type="tel"
               value={form.guardianPhone}
-              onChange={e => setForm(f => f ? { ...f, guardianPhone: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, guardianPhone: e.target.value }))}
               maxLength={20} />
             {form.guardianPhone.trim() && (
               <a className={styles.contactLink} href={telHref(form.guardianPhone)}>Call or text</a>
@@ -931,12 +1208,16 @@ export default function PlayerDetailPage({
         </div>
         ) : (
         <>
+          {/* Phone before email on the record: the tab answers "who do I call?" (stage 5 · F4). On a
+              phone the values ARE the doors; above 640 the foot line below stays the door, as before. */}
           <dl className={styles.recordList}>
             <RecordRow label="Name" value={guardianName} kept={!pii} />
-            <RecordRow label="Email" value={player.guardianEmail} kept={!pii} />
-            <RecordRow label="Phone" value={player.guardianPhone} kept={!pii} />
+            <RecordRow label="Phone" value={player.guardianPhone} kept={!pii}
+              href={isPhone && player.guardianPhone ? telHref(player.guardianPhone) : undefined} />
+            <RecordRow label="Email" value={player.guardianEmail} kept={!pii}
+              href={isPhone && player.guardianEmail ? `mailto:${player.guardianEmail}` : undefined} />
           </dl>
-          {pii && (player.guardianEmail || player.guardianPhone) && (
+          {!isPhone && pii && (player.guardianEmail || player.guardianPhone) && (
             <p className={styles.sectionFoot}>
               {player.guardianEmail && <a className={styles.contactLink} href={`mailto:${player.guardianEmail}`}>Email guardian</a>}
               {player.guardianEmail && player.guardianPhone && ' · '}
@@ -947,15 +1228,15 @@ export default function PlayerDetailPage({
         )}
       </CoachPageSection>
 
-      {/* Safety — open, not folded: this is where the ⚠ Medical notes chip lands (hub F15). */}
-      <CoachPageSection sectionId="safety" title="Safety">
-        {canWriteRoster ? (
+      {/* Safety — open, not folded: allergies and the emergency contact are what a coach opens it for. */}
+      <CoachPageSection sectionId="safety" title="Safety" action={editAction('safety')}>
+        {showForm('safety') ? (
         <div className={styles.formGrid}>
           <div className={`${styles.field} ${styles.formGridFull}`}>
             <label className={styles.label} htmlFor="medical">Allergies / medical notes</label>
             <textarea id="medical" className={styles.textarea} rows={3}
               value={form.medicalNotes}
-              onChange={e => setForm(f => f ? { ...f, medicalNotes: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, medicalNotes: e.target.value }))}
               placeholder="Allergies, conditions, medications — visible to coaching staff"
               maxLength={1000} />
           </div>
@@ -963,14 +1244,14 @@ export default function PlayerDetailPage({
             <label className={styles.label} htmlFor="ecn">Emergency contact name</label>
             <input id="ecn" className={styles.input} type="text"
               value={form.emergencyContactName}
-              onChange={e => setForm(f => f ? { ...f, emergencyContactName: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, emergencyContactName: e.target.value }))}
               maxLength={80} />
           </div>
           <div className={styles.field}>
             <label className={styles.label} htmlFor="ecp">Emergency contact phone</label>
             <input id="ecp" className={styles.input} type="tel"
               value={form.emergencyContactPhone}
-              onChange={e => setForm(f => f ? { ...f, emergencyContactPhone: e.target.value } : f)}
+              onChange={e => edit(f => ({ ...f, emergencyContactPhone: e.target.value }))}
               maxLength={20} />
             {form.emergencyContactPhone.trim() && (
               <a className={styles.contactLink} href={telHref(form.emergencyContactPhone)}>Call</a>
@@ -980,7 +1261,12 @@ export default function PlayerDetailPage({
         ) : (
         <dl className={styles.recordList}>
           <RecordRow label="Allergies / medical" value={player.medicalNotes} kept={!pii} />
-          <RecordRow label="Emergency contact" value={[player.emergencyContactName, player.emergencyContactPhone].filter(Boolean).join(' · ')} kept={!pii} />
+          {/* Name and number on their OWN rows (owner, §228 walk 2026-09-24): one link carrying
+              "Sam Test · (905) 555-0143" wrapped mid-number on a phone, and only the number is the
+              thing a tap should call — Guardian contact's own Name / Phone shape. */}
+          <RecordRow label="Emergency contact" value={player.emergencyContactName} kept={!pii} />
+          <RecordRow label="Emergency phone" value={player.emergencyContactPhone} kept={!pii}
+            href={isPhone && player.emergencyContactPhone ? telHref(player.emergencyContactPhone) : undefined} />
         </dl>
         )}
       </CoachPageSection>
@@ -1001,43 +1287,32 @@ export default function PlayerDetailPage({
           guardian-PII clearance. The routes are the real gate (they 403 either way); this keeps the
           surface from advertising a file the coach cannot open. */}
       {caps && canViewPlayerDocuments(caps) && (
-        <CoachPageSection sectionId="documents" title="Documents">
-          <PlayerDocumentsSection
-            orgSlug={orgSlug}
-            teamId={teamId}
-            playerId={playerId}
-            canManage={canManagePlayerDocuments(caps)}
-          />
-        </CoachPageSection>
+        // Draws its own section so Upload can sit in the section head (§228 walk, 2026-09-24).
+        <PlayerDocumentsSection
+          orgSlug={orgSlug}
+          teamId={teamId}
+          playerId={playerId}
+          canManage={canManagePlayerDocuments(caps)}
+        />
       )}
       </>)}
 
-      {/* ⚠ THE SAVE BAR IS OUTSIDE THE TABS ON PURPOSE. The form lives on Details, Family and the
-          Notes tab's About note, but the state lives on this component — so a coach who edits a
-          field and switches tabs still has unsaved work, and a bar that vanished with the tab would
-          be a page quietly holding changes it had stopped mentioning. It stays pinned wherever they
-          are. The spacer reserves scroll room so the bar never covers the last card. */}
-      {(isDirty || savedFlash) && <div aria-hidden className={styles.saveBarSpacer} />}
-      {(isDirty || savedFlash) && (
-        <div className={styles.saveBar} role="region" aria-label="Unsaved changes">
-          <div className={styles.saveBarInner}>
-            <span className={`${styles.saveBarStatus} ${savedFlash && !isDirty ? styles.saveBarStatusSaved : ''}`}>
-              {savedFlash && !isDirty
-                ? <><Check size={15} /> Saved</>
-                : <><span className={styles.saveDot} /> Unsaved changes</>}
-            </span>
-            {isDirty && (
-              <div className={styles.saveBarActions}>
-                <button type="button" className="btn btn-ghost" disabled={saving}
-                  onClick={() => setForm(playerToForm(player, pitcherPos))}>
-                  Discard
-                </button>
-                <button type="button" className="btn btn-lime" onClick={handleSave} disabled={saving}>
-                  {saving ? 'Saving…' : 'Save changes'}
-                </button>
-              </div>
-            )}
-          </div>
+      {/* ⚠ THE PILL IS OUTSIDE THE TABS ON PURPOSE. The form lives on Details, Family and the Notes
+          tab's About note, but the state lives on this component — a coach who edits a field and
+          switches tabs within the debounce still has a save coming, and a failed one must stay in
+          view wherever they are. A writer's only: nothing is ever saved for a reader. */}
+      {canWriteRoster && <SaveStatusPill saving={saving} dirty={dirty} error={saveError} onRetry={handleSave} />}
+
+      {/* THE ROSTER SHEET (stage 5 · F2). `display: contents` so the boundary adds no box to the
+          page; the sheet positions itself against its own fixed anchor at the bar's top edge. */}
+      {sheetOpen && (
+        <div ref={sheetRef} style={{ display: 'contents' }}>
+          <CoachPlayerSwitchSheet
+            players={roster}
+            currentPlayerId={playerId}
+            hrefFor={playerHref}
+            onClose={closeSheet}
+          />
         </div>
       )}
 
