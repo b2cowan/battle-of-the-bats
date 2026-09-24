@@ -1,6 +1,6 @@
 <title>Practice Plans on a Phone</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap">
 <style>
 /* The identity is the phone programme's — the owner reads these hubs back to back (Coaching from a
    phone → Money on a phone → this one), and a third visual world would read as a third project.
@@ -268,6 +268,121 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
 .run .acts .sec{width:76px;height:56px;border:1px solid rgba(70,55,30,.25);border-radius:10px;display:grid;place-items:center;font-weight:600;color:#4A4335}
 .run .acts .pri{flex:1 1 auto;height:56px;border-radius:10px;background:#241E15;color:#F6F2EA;display:grid;place-items:center;font-weight:700;font-size:16px}
 .dock{position:relative;background:#F6F2EA;border-top:1px solid rgba(70,55,30,.15);padding:8px 16px}
+/* ══ The rotation table on a phone — LIVE specimens: one data set, five shapes, drawn by the script at the
+   foot. The frames are the product's warm light sheet on purpose (a specimen, not the page), so their
+   colours are the product's literals, not the hub's tokens. ══ */
+.rtctl{display:flex;flex-wrap:wrap;gap:10px 22px;align-items:center;margin:4px 0 18px;padding:12px 14px;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
+.rtctl .grp{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.rtctl .lb{font-family:var(--display);font-size:12px;font-weight:600;letter-spacing:.07em;text-transform:uppercase;color:var(--muted)}
+.rtseg{display:inline-flex;border:1px solid var(--rule);border-radius:8px;overflow:hidden;background:var(--paper)}
+.rtseg button{border:0;background:none;min-height:40px;padding:0 12px;font-family:var(--display);font-weight:600;font-size:14px;color:var(--ink-2);cursor:pointer}
+.rtseg button + button{border-left:1px solid var(--rule)}
+.rtseg button[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent-ink)}
+.rtmeta{font-family:var(--mono);font-size:11px;color:var(--muted);margin:-3px 0 7px;display:flex;gap:6px;flex-wrap:wrap}
+.rtmeta span{padding:1px 6px;border-radius:3px;background:var(--mono-bg)}
+.rtmeta .bad{color:var(--bad);background:var(--bad-soft)}
+.rtmeta .ok{color:var(--accent-ink);background:var(--accent-soft)}
+.rtcap{font-family:var(--display);font-size:13px;color:var(--ink-2);line-height:1.5;margin-top:9px;max-width:390px}
+.rtcap .why{margin:2px 4px 0 0}
+.rtcap .whybody{font-size:13.5px;margin-top:6px}
+.rtph{width:var(--rtw,390px);max-width:100%;background:#FFF;color:#241E15;font-family:"Inter",system-ui,sans-serif;font-size:14px;line-height:1.4;border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.rtsh{display:flex;align-items:center;gap:8px;height:64px;padding:0 8px 0 6px;border-bottom:1px solid rgba(70,55,30,.12)}
+.rtsh i{font-style:normal;width:44px;height:44px;display:grid;place-items:center;font-size:19px;color:#4A4335}
+.rtsh .eb{flex:1 1 auto;font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:500;line-height:1.3}
+.rtsh .ic{display:flex;color:#4A4335}
+.rtsh .ic span{width:44px;height:44px;display:grid;place-items:center;font-size:15px}
+.rtabove{margin:10px 15px 0;padding:7px 10px;border:1px dashed rgba(70,55,30,.25);border-radius:8px;font-size:12px;color:#6E6553;text-align:center}
+.rtreg{padding:12px 15px 16px;display:flex;flex-direction:column;gap:10px}
+.rtstrip{font-size:13px;color:#4A4335;display:flex;flex-wrap:wrap;gap:4px 7px;align-items:center}
+.rtstrip b{font-weight:600;color:#241E15}
+.rtstrip .sep{color:#A89F8C}
+.rtstrip .chip{display:inline-flex;align-items:center;gap:5px;height:34px;padding:0 11px;border-radius:17px;background:#241E15;color:#FFF;font-weight:600;font-size:12.5px}
+.rtstrip .box{display:inline-grid;place-items:center;width:52px;height:40px;border:1px solid rgba(70,55,30,.25);border-radius:6px;background:#FFF;font-size:14px;color:#241E15}
+.rtcards{display:flex;flex-direction:column;gap:10px}
+.rtcard{position:relative;border:1px solid rgba(70,55,30,.2);border-radius:10px;padding:9px 12px 0;display:flex;flex-direction:column;gap:3px;background:#FFF}
+.rtcard > b{font-size:15px;font-weight:700}
+.rtcard .w{font-size:13px;color:#4A4335}
+.rtcard .nt{font-size:13px;color:#9A6212}
+.rtcard .op{font-size:13px;font-weight:700;color:#3F5F14;min-height:44px;display:flex;align-items:center}
+.rtcard .mv{position:absolute;right:6px;bottom:0;height:44px;display:flex;align-items:center;color:#6E6553;font-size:13px}
+.rtcard .mv span{width:32px;height:32px;display:grid;place-items:center}
+.rtcard .mv span.dis{color:#C9C1B1}
+.rtcard.add{border-style:dashed;padding-bottom:9px}
+.rtcard.add .op{min-height:0}
+.rtcard.add .w{color:#6E6553}
+/* the swipe hint (CoachScrollX's) — drawn only when the table really overflows */
+.rthint{display:flex;align-items:center;gap:6px;font-size:12px;font-weight:600;color:#4A4335;margin:0 0 4px}
+.rtscroll{overflow-x:auto;position:relative}
+.rtcut{position:absolute;top:0;bottom:0;right:0;width:0;border-right:2px dashed #9E3030;pointer-events:none}
+.rtcutl{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:#9E3030;margin-top:4px}
+/* today's grid, and D (the same orientation, tightened) */
+.rtg{border-collapse:collapse;width:100%;font-size:13px}
+.rtg th,.rtg td{border:1px solid rgba(70,55,30,.08);padding:6.4px 8.8px;text-align:left}
+.rtg thead th{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:13.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:#4A4335;line-height:1.25}
+.rtg tbody th{font-family:"IBM Plex Mono",monospace;font-size:12.5px;font-weight:500;color:#4A4335;position:sticky;left:0;background:#FFF;font-variant-numeric:tabular-nums;z-index:1}
+.rtg tbody td{text-align:center;font-weight:600;font-size:14px}
+.rtg.read{table-layout:fixed;min-width:352px}
+.rtg.read thead th:first-child{width:72px}
+.rtg.read th,.rtg.read td{white-space:normal;overflow-wrap:anywhere}
+.rtg.edit{table-layout:auto;width:max-content;min-width:100%}
+.rtg.edit th,.rtg.edit td{white-space:nowrap}
+.rtg.tight th,.rtg.tight td{padding:5px 3px}
+.rtg.tight thead th{white-space:normal;overflow-wrap:break-word;text-align:center;vertical-align:bottom;font-size:13px}
+.rtg.tight thead th:first-child{width:52px}
+.rtg.tight tbody th span{display:block}
+.rtg.tight tbody td{white-space:nowrap;font-size:13px}
+.rtg .nm{display:block}
+.rtph .nm + .nm::before{content:"+ ";color:#8A8272;font-weight:400}
+.rtscroll.cutting{box-shadow:inset -2px 0 0 #9E3030}
+.rtg .none,.rtt .none{color:#A89F8C;font-weight:400}
+.rtg .outc{border-left-style:dashed;color:#6E6553}
+.rtpill{display:inline-flex;align-items:center;gap:5px;height:44px;border-radius:22px;border:1px solid rgba(70,55,30,.3);padding:0 11px 0 9px;font-weight:600;font-size:13.5px;background:#FFF;white-space:nowrap}
+.rtpill b{color:#8A8272;font-weight:400}
+.rtpill + .rtpill{margin-top:4px}
+/* A · the table turned to the phone */
+.rtt{border-collapse:collapse;width:100%;font-size:13px}
+.rtt th,.rtt td{border-bottom:1px solid rgba(70,55,30,.1);padding:5px 3px;vertical-align:middle}
+.rtt thead th{font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:12px;color:#4A4335;line-height:1.25;text-align:center;border-bottom:1.5px solid rgba(70,55,30,.3);padding:2px 3px 6px;white-space:nowrap}
+.rtt thead th span{display:block}
+.rtt tbody th{text-align:left;position:sticky;left:0;background:#FFF;padding:6px 8px 6px 0;min-width:84px;max-width:130px;z-index:1}
+.rtt tbody th b{display:block;font-size:14px;font-weight:700;line-height:1.25}
+.rtt tbody th small{display:block;font-size:12px;color:#6E6553;font-weight:400;margin-top:1px}
+.rtt td{text-align:center;font-weight:600;white-space:nowrap}
+.rtt tr.out th b{color:#6E6553}
+.rtt tr.out th,.rtt tr.out td{border-top:1.5px dashed rgba(70,55,30,.3)}
+.rttile{display:flex;align-items:center;justify-content:center;height:44px;border:1px solid rgba(70,55,30,.28);border-radius:9px;background:#F6F2EA;padding:0 6px;font-weight:600;font-size:13px;white-space:nowrap}
+.rttile + .rttile{margin-top:4px}
+/* B · each station carries its own evening */
+.rtev{margin-top:5px;padding-top:6px;border-top:1px solid rgba(70,55,30,.12);display:grid;grid-template-columns:auto minmax(0,1fr);gap:1px 12px;align-items:center}
+.rtev .t{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#4A4335;white-space:nowrap}
+.rtev .g{font-size:14px;font-weight:600;padding:2px 0}
+.rtev .g .nm{display:block}
+.rtev .g .rttile{justify-content:flex-start;padding:0 12px;margin:2px 0}
+.rtev .none{color:#A89F8C;font-weight:400}
+.rtoutbox{border:1px dashed rgba(70,55,30,.3);border-radius:10px;padding:8px 12px;display:grid;grid-template-columns:auto minmax(0,1fr);gap:2px 12px;align-items:center;font-size:13px}
+.rtoutbox > b{grid-column:1 / -1;font-size:13px;color:#6E6553}
+.rtoutbox .t{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#4A4335}
+/* C · one list per round */
+.rtround{border:1px solid rgba(70,55,30,.2);border-radius:10px;padding:7px 12px 4px}
+.rtround .rh{display:flex;align-items:baseline;justify-content:space-between;padding-bottom:4px;border-bottom:1px solid rgba(70,55,30,.12)}
+.rtround .rh .t{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500}
+.rtround .rh .k{font-size:12px;color:#6E6553}
+.rtround .rl{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:34px;padding:2px 0;border-bottom:1px dotted rgba(70,55,30,.2)}
+.rtround .rl:last-child{border-bottom:0}
+.rtround .rl .s b{font-weight:600;font-size:14px}
+.rtround .rl .s small{font-size:12px;color:#6E6553;margin-left:6px}
+.rtround .rl .g{font-weight:700;font-size:14px;text-align:right;flex:0 0 auto}
+.rtround .rl .g .nm{display:block}
+.rtround .rl .g .rttile{padding:0 12px}
+.rtround .ro{font-size:13px;color:#6E6553;padding:4px 0 3px;border-top:1px dashed rgba(70,55,30,.25)}
+/* under every shape: the statements, the hand-arranged line, the groups read back — unchanged */
+.rtnotes{margin:0;padding-left:18px;font-size:13px;color:#6E6553;display:flex;flex-direction:column;gap:2px}
+.rtq{font-size:13px;color:#4A4335;line-height:1.5}
+.rtq a,.rtgr a{color:#3F5F14;font-weight:700;text-decoration:none}
+.rtgr{display:flex;flex-direction:column;gap:3px;font-size:13px;line-height:1.5}
+.rtgr b{font-weight:600}
+.rtgr .q{color:#4A4335}
+.rtgr .door{min-height:44px;display:flex;align-items:center}
 </style>
 
 <nav class="tabs" role="tablist" aria-label="Practice plans on a phone">
@@ -275,6 +390,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
   <button type="button" class="tab" role="tab" data-tab="found" aria-selected="true" aria-controls="tab-found">What the walk found<span class="st dim">measured 23 Sep · 390 and 360</span></button>
   <button type="button" class="tab" role="tab" data-tab="s1" aria-selected="false" aria-controls="tab-s1">1 · The block on its own screen<span class="st built">ruled 23 Sep · K1–K4 = A</span></button>
   <button type="button" class="tab" role="tab" data-tab="qa1" aria-selected="false" aria-controls="tab-qa1">QA walk · 1<span class="st built">built 23 Sep</span><span class="st">§227 walk owed</span></button>
+  <button type="button" class="tab" role="tab" data-tab="rot" aria-selected="false" aria-controls="tab-rot">The rotation table on a phone<span class="st built">ruled 24 Sep · T1 = A · T2 = A · built · §229 walked · passed 24 Sep</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
 </nav>
@@ -317,7 +433,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
       <tbody>
         <tr><td>A · The plan, blocks shut</td><td>Page 1,650. The timeline is 326 wide: a 92px clock column, a 2px spine, 234 for the row. A shut block is <b>117px</b> — title, a cut sentence, a cut “Watching for”, who. The “Add a block · or a drill from your library” row is <b>130px</b> because its words wrap in 234px. The first block sits at ~535.</td><td>Three blocks cost 351px and say two cut sentences each. <button type="button" class="why" data-why="w-a" aria-expanded="false">why the row is 117</button><div id="w-a" class="whybody" hidden>The row was drawn for a desktop column ~700px wide, where “Dynamic warm-up, then partner work at walking pace.” fits on one line and tells the coach what the block is. At 234px the same line is “Dynamic warm-up, then partn…” — the line is still paid for, and it no longer says anything the title did not.</div></td></tr>
         <tr><td>B · A plain block, open</td><td>Page 1,650 → <b>2,546</b>. The open block is <b>1,013px</b> tall in a 228px column. Fields 197 wide (~28 characters); the title 106 (~15); the five minutes chips wrap to two lines; six player chips take six lines; “Watching for” is a one-line box. Block 2 moves from 651 to <b>1,546</b>.</td><td>The form is nested three deep — the sheet, the spine, the card — and each layer takes its padding; the writing column is what is left. <button type="button" class="why" data-why="w-b" aria-expanded="false">what the margin is</button><div id="w-b" class="whybody" hidden>The 92px clock column is that wide because the ▲▼ reorder pair (two 44px buttons) sits under the clock at ≤640 — the code says so: “12:00 p.m.” needs 66px; the pair needs 88. Narrowing the margin alone gives the fields back ~26px (197 → 223) and leaves the block 1,000px tall in the flow. It is the wrong lever.</div></td></tr>
-        <tr><td>C · A rotating block, open</td><td>Page → <b>3,263</b>; the block <b>1,729px</b>. Three stations as 115–138px rows in a 197px column; “+ Add a station / a drill, or write one” wraps to 67px; the rotation grid is <b>404px wide inside a 197px box</b> — the page’s only sideways scroll; “Edit groups ›” at 2,206.</td><td>The rotation cannot be read without scrolling sideways inside a card inside a page. <button type="button" class="why" data-why="w-c" aria-expanded="false">the grid</button><div id="w-c" class="whybody" hidden>The hand-arranged grid (stations across, rounds down, a group pill in each cell) was ruled for the desktop and set to `width: max-content` so pills never wrap — right there, and 404px on a phone. Stage 2 draws it by round on a phone; stage 1 only widens its box to 358.</div></td></tr>
+        <tr><td>C · A rotating block, open</td><td>Page → <b>3,263</b>; the block <b>1,729px</b>. Three stations as 115–138px rows in a 197px column; “+ Add a station / a drill, or write one” wraps to 67px; the rotation grid is <b>404px wide inside a 197px box</b> — the page’s only sideways scroll; “Edit groups ›” at 2,206.</td><td>The rotation cannot be read without scrolling sideways inside a card inside a page. <button type="button" class="why" data-why="w-c" aria-expanded="false">the grid</button><div id="w-c" class="whybody" hidden>The hand-arranged grid (stations across, rounds down, a group pill in each cell) was ruled for the desktop and set to `width: max-content` so pills never wrap — right there, and 404px on a phone. Stage 1 only widens its box to 358; the table itself is drawn on the “rotation table on a phone” tab (24 Sep).</div></td></tr>
         <tr><td>D · A station</td><td>An existing station’s “Open ›” opens a <b>full-screen form</b>: fields <b>359px</b> wide (~51 characters), the name 296, an eyebrow “Footwork ladder — station 1 of 3”, and a foot with <b>Delete · ‹ · Next: Close control ›</b> (the ‹ › step between stations). Adding one: the “Add a station” sheet is full-screen too (tabs 44, drill rows with “+ Add”); its “Write one” tab is a sentence and a <b>31px</b> lime button that <i>adds a blank station card</i> rather than opening the form — so a new station’s first field is <b>four taps</b> in.</td><td>The form is the shape stage 1 proposes for the block, already built one level down. <button type="button" class="why ok" data-why="w-d" aria-expanded="false">what is already right</button><div id="w-d" class="whybody ok" hidden>The station form is exactly K2: full width, its own header naming “station 1 of 3”, the page untouched behind it, a foot that steps to the next station. The block editor should look like its own station form, not the other way round — and that is why K2 is drawn as a sheet rather than invented. Stage 2’s job is the new-station path (the 31px button, the blank card, then the form) and the station <i>rows</i> inside the block.</div></td></tr>
         <tr><td>E · The groups room</td><td>Full-screen, a pinned foot (+ Add a group · Done), 21 controls all at 44; scrolls 893 in 677.</td><td><span class="pass">Keep.</span> The one editor screen that was drawn for a phone.</td></tr>
         <tr><td>F · The field</td><td>The list <b>916</b> — one screen, rows 61–83, “Who’s here tonight” at 631. A rotating stop: Back · Rotate now at <b>473</b>, all on screen one. A plain stop: at 563. A <b>station</b>: 1,156 tall, Rotate now at <b>996</b> — 224px under the fold (308 at 360).</td><td>Good, as the owner said. The station screen is the one that buries its button; a longer plan buries the block screen’s too. <button type="button" class="why" data-why="w-f" aria-expanded="false">the fixture is a floor</button><div id="w-f" class="whybody" hidden>The probe practice has 8-word notes, two coaching points and three stations. A real block with a paragraph of setup and six stations would put “Rotate now” under the fold on the block screen as well — the number here is the best case, not the typical one.</div></td></tr>
@@ -343,7 +459,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
       <thead><tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr></thead>
       <tbody>
         <tr><td>1 · The block on its own screen</td><td>The plan’s blocks as a compact list on a phone; a block opens as a full-screen sheet with every field at full width and a pinned foot (‹ › between blocks · Done); reorder moves into the sheet; “+ Add a block” as one row.</td><td>K1–K4</td><td>drawn 23 Sep · ruled 23 Sep (all four as recommended)</td></tr>
-        <tr><td>2 · Stations and the rotation</td><td>A station as a 56px row inside the block sheet (the row is the door to the form that already exists); “Write one” adds the station <i>and</i> opens its form in one motion, on a 44px button (four taps → two); the rotation drawn <b>by round</b> on a phone with hand-arrange as the pill’s tap menu; the desktop grid untouched.</td><td>L1–L3</td><td>—</td></tr>
+        <tr><td>2 · Stations and the rotation</td><td>A station as a 56px row inside the block sheet (the row is the door to the form that already exists); “Write one” adds the station <i>and</i> opens its form in one motion, on a 44px button (four taps → two); the rotation table fitted to a phone (drawn 24 Sep on its own tab: keep the table, take out what makes it too wide); the desktop grid untouched.</td><td>L1–L2 · T1–T2</td><td>rotation table drawn 24 Sep · ruling owed</td></tr>
         <tr><td>3 · The field</td><td>Back · Next · Rotate now docked above the bar on the block and station screens; the plain stop’s order (does the note lead, or the watching-for line?); swipe between stops as an addition — recommended <i>Not yet</i>.</td><td>M1–M3</td><td>—</td></tr>
         <tr><td>4 · The head of the page</td><td>What sits above the first block on a phone: the sent line and “Send again”, the when-block, the goal, About — ~500px before the plan begins.</td><td>N1</td><td>—</td></tr>
       </tbody>
@@ -556,7 +672,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
         <ul class="notes">
           <li id="f1" class="g"><b>1</b>A station is a 56px row — name, who runs it, tonight’s note — and the row opens the station form (the desk’s “Open ›” is the row). Today each station is a 115–138px card with its own reorder pair.</li>
           <li id="f2" class="g"><b>2</b>“+ Add a station” as one 44px row (it wraps to 67px today). It opens the sheet that already exists.</li>
-          <li id="f3"><b>3</b>The rotation grid is still the desktop grid in stage 1 — 404px, now in a 358px box, so it still scrolls a little. Stage 2 draws it by round. Drawn honestly rather than fixed on the way past.</li>
+          <li id="f3"><b>3</b>The rotation grid is still the desktop grid in stage 1 — 404px, now in a 358px box, so it still scrolls a little. Drawn honestly rather than fixed on the way past; its own tab (24 Sep) draws the fix.</li>
           <li id="f4" class="g"><b>4</b>The block’s own doors — Edit groups, Save to my circuits — sit at the foot of the sheet where they sit at the foot of the card today. Nothing is renamed and nothing is gated differently.</li>
         </ul>
       </div>
@@ -649,6 +765,215 @@ Notes:</pre>
   </section>
 </div>
 
+<!-- ══════════════════════ TAB · THE ROTATION TABLE ON A PHONE ══════════════════════
+     Live specimens: the frames are drawn by the script at the foot of the file from ONE data set (the
+     UAT probe practice's Skills circuit, extended to 4 and 5 stations for the stress), so every shape
+     shows the same rotation. Today's numbers are MEASURED (probe .probe/pp-rot-measure.mjs, 390 + 360);
+     the drawn heights are the drawing's own and only compare the shapes with each other. -->
+<div id="tab-rot" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Asked 24 September · drawn 24 September 2026 · true size at 390 and 360</div>
+    <h1>The rotation table: stop it being wider than the phone</h1>
+    <p class="lede">The table under a rotating block says which group is at which station at each time. On a phone it is
+    the computer’s table squeezed into the sheet. While you’re editing, it’s wider than the screen at both phone widths. The last
+    station is cut off, and nothing tells you to swipe. Below are five drawings of the same rotation. You can switch the width,
+    reading or editing, the number of stations, and a hand-arranged round, to see where each one holds up and where it breaks.
+    The one that measures best is the <em>smallest</em> change: keep the table the way round it is, and take out what makes it too wide.</p>
+  </header>
+
+  <section>
+    <h2>What today measures</h2>
+    <p class="sub">The Skills circuit block of the UAT probe practice (three stations, three groups, three rounds of 15 minutes),
+    opened in its sheet, read out of the running product at 390×844 and 360×780.</p>
+    <div class="tbl"><table>
+      <thead><tr><th></th><th class="n">390, reading</th><th class="n">390, editing</th><th class="n">360, reading</th><th class="n">360, editing</th></tr></thead>
+      <tbody>
+        <tr><td>The table vs the room it has</td><td class="n">359 in 359 · fits, just</td><td class="n">404 in 359 · <span class="fail">45 cut</span></td><td class="n">352 in 329 · <span class="fail">23 cut</span></td><td class="n">404 in 329 · <span class="fail">75 cut</span></td></tr>
+        <tr><td>What is cut</td><td class="n">—</td><td class="n">Finishing</td><td class="n">Finishing</td><td class="n">Finishing</td></tr>
+        <tr><td>A hint to swipe</td><td class="n">—</td><td class="n"><span class="fail">none</span></td><td class="n"><span class="fail">none</span></td><td class="n"><span class="fail">none</span></td></tr>
+        <tr><td>A round’s row</td><td class="n">52 · clock on 2 lines</td><td class="n">58</td><td class="n">52</td><td class="n">58</td></tr>
+        <tr><td>The station names on top</td><td class="n">2 lines · 52</td><td class="n">1 line · 33</td><td class="n">2 lines · 52</td><td class="n">1 line · 33</td></tr>
+        <tr><td>Who “Group A” is</td><td class="n" colspan="4">245px lower, in the groups list under the table</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">Why 360 cuts even while reading: the table has a 352px minimum width (22rem), and the sheet gives it 329px.
+    While editing, each group is a pill with a ⠿ grip, about 82px wide, so the table grows to 404px at both widths.
+    The table has always been allowed to scroll sideways. But the portal’s own rule for a sideways table says to <b>pin the first column and show
+    “Swipe the table…”</b>, and this one only pins the column.</p>
+  </section>
+
+  <section>
+    <h2>The drawings</h2>
+    <p class="sub">All five show the same thing: one block’s station cards, then its rotation, then the lines under it. That’s the
+    part of the sheet that changes. The heights over each drawing compare the drawings with each other. The build measures
+    the real ones.</p>
+
+    <div class="rtctl" role="group" aria-label="Drawing controls">
+      <div class="grp"><span class="lb" id="rtLbW">Phone width</span>
+        <div class="rtseg" role="group" aria-labelledby="rtLbW"><button type="button" id="rtW390" data-k="w" data-v="390" aria-pressed="true">390</button><button type="button" id="rtW360" data-k="w" data-v="360" aria-pressed="false">360</button></div></div>
+      <div class="grp"><span class="lb" id="rtLbM">Mode</span>
+        <div class="rtseg" role="group" aria-labelledby="rtLbM"><button type="button" id="rtMread" data-k="mode" data-v="read" aria-pressed="false">Reading</button><button type="button" id="rtMedit" data-k="mode" data-v="edit" aria-pressed="true">Editing</button></div></div>
+      <div class="grp"><span class="lb" id="rtLbN">Stations</span>
+        <div class="rtseg" role="group" aria-labelledby="rtLbN"><button type="button" id="rtN3" data-k="n" data-v="3" aria-pressed="true">3</button><button type="button" id="rtN4" data-k="n" data-v="4" aria-pressed="false">4</button><button type="button" id="rtN5" data-k="n" data-v="5" aria-pressed="false">5</button></div></div>
+      <div class="grp"><span class="lb" id="rtLbA">Hand-arranged</span>
+        <div class="rtseg" role="group" aria-labelledby="rtLbA"><button type="button" id="rtAoff" data-k="arr" data-v="0" aria-pressed="true">No</button><button type="button" id="rtAon" data-k="arr" data-v="1" aria-pressed="false">Yes</button></div></div>
+    </div>
+    <p class="cap" style="margin:-8px 0 12px">Four and five stations add “Passing gates” and “1v1 to goal” with one group per station, each round 15 minutes on.
+    “Hand-arranged” moves Group A into Finishing in round 2, where it shares with Group B, and sits Group C out of round 3.
+    That shows all three things a hand-arranged table can hold: a shared station, an empty one and a group sitting out.</p>
+
+    <div class="pair" id="rtFrames">
+
+      <div class="drawcol">
+        <div class="drawhead">Today <span class="h">measured shape</span></div>
+        <div class="rtmeta" id="rtMeta-today"></div>
+        <div class="rtph" id="rtF-today"></div>
+        <div class="rtcap">
+          <button type="button" class="why" data-why="rtw-today1" aria-expanded="false">Why it cuts</button>
+          <button type="button" class="why" data-why="rtw-today2" aria-expanded="false">Changes shape between modes</button>
+          <button type="button" class="why" data-why="rtw-today3" aria-expanded="false">“Group A#1 Avery Test”</button>
+          <p class="whybody" id="rtw-today1" hidden>Three columns of ~95px plus a 72px clock column is the whole 359px at 390. At 360 the
+          table’s 352px minimum is wider than the 329px it gets. While editing, each group is a ~82px pill with a ⠿ grip, and the table
+          grows to 404px at both widths. It swipes, and nothing says so.</p>
+          <p class="whybody" id="rtw-today2" hidden>Reading: station names on two lines, the clock breaks across two lines, rows 52px.
+          Editing: names on one line, the clock on one line, rows 58px, and the table wider than the sheet. The same table takes two
+          shapes, and you can see it in your two screenshots.</p>
+          <p class="whybody" id="rtw-today3" hidden>A separate small bug, found while measuring. On a phone the “·” after a group’s name is
+          hidden, so the list runs “Group A#1 Avery Test” (it’s in your screenshot). A phone rule meant to drop the dot from the block’s clock
+          row hides that dot everywhere on the practice screens, including the groups list and “Not in a group”. The other drawings show the dot
+          back, because any build of this fixes it.</p>
+        </div>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">A · today’s table, tightened <span class="h good">recommended</span></div>
+        <div class="rtmeta" id="rtMeta-tight"></div>
+        <div class="rtph" id="rtF-tight"></div>
+        <div class="rtcap">
+          <button type="button" class="why ok" data-why="rtw-t1" aria-expanded="false">What changes</button>
+          <button type="button" class="why ok" data-why="rtw-t2" aria-expanded="false">What it fits</button>
+          <button type="button" class="why" data-why="rtw-t3" aria-expanded="false">What it costs</button>
+          <p class="whybody ok" id="rtw-t1" hidden>It keeps the way round you ruled (D6), which is also the computer’s: reading down a column
+          is one station’s evening, and reading across a row is where everyone stands at that time. Four things change, on a phone only. The
+          352px minimum goes. The clock sits on two lines in a narrow column. While editing, a group is a tile, not a pill with a ⠿ grip (T2).
+          The portal’s standard swipe hint appears when the table really has to swipe.</p>
+          <p class="whybody ok" id="rtw-t2" hidden>In the drawing: three stations fit at both widths, reading and editing. Four fit at 390,
+          and at 360 while reading. Five fit at 390 while reading. Past that, the times stay pinned and the stations swipe, under “Swipe the
+          table to see every station”. It’s the shortest shape in every combination, and never more than a pixel taller than today.</p>
+          <p class="whybody" id="rtw-t3" hidden>The station names squeeze into narrow columns. With four or five stations they break over two
+          or three lines in capitals. There’s no room in the table for who runs a station, but that’s in the station cards right above it.</p>
+        </div>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">B · turn the table <span class="h">second</span></div>
+        <div class="rtmeta" id="rtMeta-turn"></div>
+        <div class="rtph" id="rtF-turn"></div>
+        <div class="rtcap">
+          <button type="button" class="why" data-why="rtw-u1" aria-expanded="false">What it does well</button>
+          <button type="button" class="why" data-why="rtw-u2" aria-expanded="false">Why it isn’t first</button>
+          <p class="whybody" id="rtw-u1" hidden>The stations go down the side, the way the station cards above them run on a phone. Each name
+          gets a column of its own with who runs it underneath. An assistant finds their own name and reads across: <b>Close control · Sam
+          Assistant — Group B, Group A, Group C</b>.</p>
+          <p class="whybody" id="rtw-u2" hidden>I drew this expecting it to fit more, and it fits less. A station’s name needs a wider column
+          than a two-line clock (“Footwork” alone is wider than “11:00”), so every column of groups gets less room. It starts swiping one
+          station sooner than A: four stations swipe while editing, at both widths. It would also turn the phone’s table the opposite way
+          from the computer’s.</p>
+        </div>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">C · on each station <span class="h">not recommended</span></div>
+        <div class="rtmeta" id="rtMeta-card"></div>
+        <div class="rtph" id="rtF-card"></div>
+        <div class="rtcap">
+          <button type="button" class="why" data-why="rtw-c1" aria-expanded="false">What it does well</button>
+          <button type="button" class="why" data-why="rtw-c2" aria-expanded="false">What it loses</button>
+          <p class="whybody" id="rtw-c1" hidden>There’s no separate table. Each station card lists who comes to it and when, beside its
+          note and its assistant, the way the field’s station screen says “Coming to you”. Nothing to look up elsewhere, and nothing ever swipes.</p>
+          <p class="whybody" id="rtw-c2" hidden>You can no longer see the whole rotation at once. “Where is everyone at 11:15 p.m.?”
+          means reading every card. While editing, every round becomes a 44px row inside a card, so it’s hundreds of pixels taller than today.
+          A sitting-out group needs a box of its own under the cards.</p>
+        </div>
+      </div>
+
+      <div class="drawcol">
+        <div class="drawhead">D · a list per round <span class="h">withdrawn</span></div>
+        <div class="rtmeta" id="rtMeta-round"></div>
+        <div class="rtph" id="rtF-round"></div>
+        <div class="rtcap">
+          <button type="button" class="why" data-why="rtw-r1" aria-expanded="false">Where it came from</button>
+          <button type="button" class="why" data-why="rtw-r2" aria-expanded="false">Why I’m withdrawing it</button>
+          <p class="whybody" id="rtw-r1" hidden>It’s what this plan’s stage 2 said until today: “the rotation drawn by round on a phone”. It is the
+          field’s own shape. A rotating stop in Run practice shows one round as a list of stations with the group at each.</p>
+          <p class="whybody" id="rtw-r2" hidden>It repeats every station name in every round, it’s the tallest shape in every combination, and it turns a
+          comparison into cards, which the portal’s table rule says not to do. The field shows one round at a time because that’s the
+          question there (“where do we go now?”). The plan is where you check the whole rotation.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <h2>The decisions</h2>
+
+    <div class="ask">
+      <div class="k">T1 · the shape</div>
+      <h3>How the rotation reads on a phone</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>Keep today’s table, and stop it being wider than the phone</div><p>The same
+        way round as today and as the computer. The 352px minimum goes, the clock sits on two lines in a narrow column, a group is a tile while
+        editing (T2), and the swipe hint shows when it’s needed. Three stations never swipe. Four don’t swipe at 390, or at 360 while reading. It’s the
+        shortest shape everywhere. <b>Tradeoff:</b> with four or five stations the names on top wrap to two or three lines, and who runs each
+        station stays in the cards above instead of in the table.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Turn the table: stations down the side</div><p>The names get room and each row
+        says who runs it, so an assistant reads their own row. <b>Tradeoff:</b> it swipes one station sooner than A (four, while editing), and the
+        phone’s table would be turned the other way from the computer’s.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Each station carries its own evening</div><p>There’s no table. The times and groups
+        sit in each station card. Nothing to look up elsewhere, but the picture of the whole rotation is gone, and it’s far taller while editing.</p></div>
+        <div class="opt"><div class="t"><span class="tag">D · withdrawn</span>A list per round</div><p>The plan’s earlier note. It repeats every station
+        in every round and is the tallest in every combination.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">T2 · a group in the table, while editing (A or B)</div>
+      <h3>The cell is the button</h3>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>A soft 44px tile, no outline pill, no ⠿ dots</div><p>Tap it for the
+        same menu as today: <b>Move to Close control · Move to Finishing · Sits this round out</b>. Hold-to-drag still moves it within its round.
+        The tile is narrower than today’s ~82px pill, and that’s part of why four stations fit at 390. With pills, four stations would swipe there too.
+        <b>Tradeoff:</b> the dots were the hint that you can drag. On a phone the tap menu is the main way to move a group anyway (D14).</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Keep today’s pill with its dots</div><p>The drag hint stays. Each column is wider,
+        so the table starts swiping sooner.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">Where</div>
+      <h3>Phones only. The rotation itself doesn’t change.</h3>
+      <p>On a computer and on tablets (641–768px) the table stays exactly as it is. Nothing about the rotation changes: the same rounds, the same
+      sentences under it (“Everyone does everything.”, who shares, who sits out), the same menu words, the same “Back to the standard
+      rotation ›”, and the same groups list and “Edit groups ›” below it. Run practice isn’t touched. Its rotating stop already shows one
+      round as a list, and the station screen already says “Coming to you”. This is stage 2’s rotation question, drawn early because you
+      asked. It replaces stage 2’s “by round” note. The missing “·” in the groups list is fixed along with it.</p>
+    </div>
+
+    <div class="paste">
+      <div class="k">Paste back into the chat to rule</div>
+<pre>The rotation table on a phone
+T1 the shape — A today's table, tightened / B turn the table / C on each station / D a list per round
+T2 a group while editing — A the cell is the button / B keep the pill and its dots
+Notes:</pre>
+    </div>
+    <div class="flag good-flag"><span class="k">Ruled · owner · 24 September 2026 · built on dev the same day</span>
+      <p><b>T1 = A · T2 = A</b>, as recommended: <i>“I agree with your recommendations, go ahead.”</i> Measured after, in the running product: the
+      table fits at 390 and at 360, reading and editing (it was cut by 45px and 75px while editing, and 23px reading at 360). Each group is a 44px
+      tile with no dots, its menu unchanged. The groups list has its dots back. The computer is unchanged. Walk: <b>QA walk · 1</b>, part J (ledger §229).</p></div>
+  </section>
+</div>
+
 <!-- ══════════════════════ TAB · QA WALK 1 ══════════════════════ -->
 <div id="tab-qa1" role="tabpanel" hidden>
   <header class="masthead">
@@ -661,7 +986,7 @@ Notes:</pre>
   <section>
     <div class="qasign"><b>Where:</b> the UAT Test Team → More → <b>Practice plans</b> → <b>UAT probe practice</b>.
     It is a past practice, so open the <b>⋯</b> beside Run practice and choose <b>Edit the plan</b> first.
-    Parts A–E on a phone; part F on a computer.</div>
+    Parts A–E on a phone; part F on a computer. Part J (ledger §229, the rotation table) is on a phone except its last step.</div>
     <p class="qaprog" id="qaProg">0 of 0 steps ticked</p>
     <div id="qaParts"></div>
     <div class="paste">
@@ -689,7 +1014,7 @@ Notes:</pre>
     <h3>3 · Standing rulings this plan works inside (not reopened)</h3>
     <p>The plan as a document (practices stage 1); “+ Stations makes two” (D13); the grid as a starting point (D14); drag as an addition, buttons everywhere (L2); no clock at the field (P10); the run list as the first screen (W1–W4); the record’s face (R2); the phone programme’s shell, the transient Saved pill, the field floor, and E1’s toolbar; the tap floor as a touch-only rule and the 641–768 band; the portal’s phone-panel conventions (drawers flush to the bar, the warm scrim, Escape/scrim/Back all close).</p>
     <h3>4 · The ladder</h3>
-    <p><b>Stage 1 · The block on its own screen</b> (K1–K4, drawn 23 Sep, ruling owed) · <b>Stage 2 · Stations and the rotation</b> (L1 the station row and the form one tap in; L2 the rotation by round on a phone; L3 hand-arrange as the pill’s tap menu) · <b>Stage 3 · The field</b> (M1 Back · Next · Rotate now docked; M2 the station screen; M3 swipe as an addition — recommended Not yet) · <b>Stage 4 · The head of the page</b> (N1 what sits above the first block on a phone).</p>
+    <p><b>Stage 1 · The block on its own screen</b> (K1–K4, drawn 23 Sep, ruling owed) · <b>Stage 2 · Stations and the rotation</b> (L1 the station row and the form one tap in; the rotation table fitted to a phone, T1–T2, drawn 24 Sep on its own tab) · <b>Stage 3 · The field</b> (M1 Back · Next · Rotate now docked; M2 the station screen; M3 swipe as an addition — recommended Not yet) · <b>Stage 4 · The head of the page</b> (N1 what sits above the first block on a phone).</p>
     <h3>5 · Stage 1 — build notes, for the session that builds it</h3>
     <p>≤640 only, decided in JS by the portal’s phone hook so the sheet is never rendered on a desk. The timeline’s shut row loses its two sentence lines and its gutter pair at ≤640 and gains a chevron; the gutter variable drops to the clock’s width. The open block renders inside a full-screen sheet (the “Add a station” sheet’s construction: its own header, the body the scroller, a pinned foot on the shared foot-clearance token — never a hand-copied 16px) with the same field components the card renders today; the sheet’s head carries ✕ · the eyebrow · Move up · Move down · Delete; the foot carries ‹ N of M › and Done; ‹ › change the open block in place. “+ Add a block” is one row that creates a block and opens its sheet; “Start from a drill ›” inside the sheet opens the existing picker. The template editor inherits all of it. No migration, no new route, no year parameter.</p>
     <h3>6 · Verification at build</h3>
@@ -714,7 +1039,7 @@ Notes:</pre>
     <h3>Why it matters</h3>
     <p>Practice plans are the Premium portal’s weekday tool and the one most often written in a car park or a kitchen, not at a desk. The phone programme made every other weekday screen fit a phone; this is the last one that does not.</p>
     <h3>Tradeoffs</h3>
-    <p>A coach cannot see the rest of the plan while editing one block on a phone (the sheet’s eyebrow and ‹ › are the mitigation). The plan’s look diverges more between phone and desk than any screen so far (a list vs a timeline with the block open in place). Stage 1 leaves the rotation grid scrolling a little on a phone; stage 2 draws it by round.</p>
+    <p>A coach cannot see the rest of the plan while editing one block on a phone (the sheet’s eyebrow and ‹ › are the mitigation). The plan’s look diverges more between phone and desk than any screen so far (a list vs a timeline with the block open in place). Stage 1 leaves the rotation table wider than a phone; its fix is drawn on its own tab (24 Sep): keep the table and take out what makes it too wide.</p>
     <h3>Success criteria</h3>
     <p>At 390: a shut block ≤ 60px and never truncated; a writing field ≥ 350px wide; the minutes chips on one line; opening a block moves nothing else on the page; a three-block plan written from blank without returning to the list; the layout sweep green with the sheet open; the field’s advance button reachable without scrolling on every stop once stage 3 lands.</p>
   </section>
@@ -731,7 +1056,7 @@ this page on a phone to judge a tap target or a type size.</p>
 (function(){
   var tabs = [].slice.call(document.querySelectorAll('.tab[data-tab]'));
   /* Every tab button needs a panel here — a button with no entry falls through silently. */
-  var panels = { found:'tab-found', s1:'tab-s1', qa1:'tab-qa1', plan:'tab-plan', brief:'tab-brief' };
+  var panels = { found:'tab-found', s1:'tab-s1', qa1:'tab-qa1', rot:'tab-rot', plan:'tab-plan', brief:'tab-brief' };
   function show(k){
     if(!panels[k]) k = 'found';
     Object.keys(panels).forEach(function(key){ var el = document.getElementById(panels[key]); if(el) el.hidden = (key !== k); });
@@ -792,6 +1117,16 @@ this page on a phone to judge a tap target or a type size.</p>
     { id:'F', title:'F · Nothing moved on a computer', steps:[
       'On a desktop browser, the same plan shows the blocks as before — each row with its sentence and the up/down arrows under its time.',
       'Clicking a block opens it right where it is, inside the list, as before — no full-screen sheet.'
+    ]},
+    { id:'J', title:'J · §229 — The rotation table on a phone', steps:[
+      'On your phone, open Skills circuit (reading). The table under the station cards shows all three stations — Footwork ladder, Close control and Finishing — with nothing cut off at the right edge.',
+      'The times down the left read "11:00" with "p.m." under it, for 11:00, 11:15 and 11:30.',
+      'Tap ✎. The table still shows all three stations with nothing cut off, and each group is a soft rounded tile reading "Group A", "Group B" or "Group C" — no ⠿ dots.',
+      'Tap the Group B tile at 11:00: a menu offers Move to Footwork ladder · Move to Finishing · Sits this round out. Close it without choosing — the table is as it was.',
+      'Under the table, the groups list reads "Group A · #…" with a dot between the group and its players, and "Not in a group · #2 Blake Test".',
+      'Tap Group A at 11:15 → Move to Finishing. Finishing at 11:15 now holds two tiles, one above the other (Group A and Group B); Close control at 11:15 shows "—"; the line "Hand-arranged — the groups no longer move one station on each round. · Back to the standard rotation ›" appears, with its dot.',
+      'Tap "Back to the standard rotation ›": the table is back to A · B · C / C · A · B / B · C · A and the hand-arranged line is gone.',
+      'On a computer, open the same block and press Edit: each group is still a round pill with ⠿ dots, and the table looks as it did before today.'
     ]}
   ];
   var KEY = 'pp-phone-qa1';
@@ -857,5 +1192,232 @@ this page on a phone to judge a tap target or a type size.</p>
       if(!was) li.scrollIntoView({ block:'nearest' });
     });
   });
+})();
+</script>
+<script>
+/* ── The rotation table on a phone: five shapes drawn live from ONE rotation. The arithmetic mirrors
+   computeRotation (lib/rep-practice-plan.ts): the standard carousel puts group i at station (i + r) mod S,
+   and the sentences under the table are its exact words. The drawn heights compare the drawings with
+   each other only; the build re-measures the product. ── */
+(function(){
+  var tab = document.getElementById('tab-rot'); if (!tab) return;
+  var ST = [
+    { name:'Footwork ladder', who:'UAT Coach', note:'Tonight: Only two ladders tonight — run it in pairs.' },
+    { name:'Close control', who:'Sam Assistant' },
+    { name:'Finishing', who:'Jordan Helper' },
+    { name:'Passing gates', who:'Sam Assistant' },
+    { name:'1v1 to goal', who:'Jordan Helper' }
+  ];
+  var ROSTER = ['#1 Avery Test','#3 Casey Test','#8 Harper Test','#11 Kai Test','#7 Gray Test','#9 Indigo Test',
+                '#10 Jules Test','#12 Logan Test','#5 Emerson Test','#6 Frankie Test','#4 Devon Test'];
+  var WORDS = ['no','one','two','three','four','five'];
+  var KEYS = ['today','tight','turn','card','round'];
+  var KEY = 'pp-phone-rot';
+  var state = { w:390, mode:'edit', n:3, arr:false };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) Object.keys(state).forEach(function(k){ if (k in saved) state[k] = saved[k]; }); } catch (e) {}
+  var edit = false;
+
+  function gn(i){ return 'Group ' + 'ABCDE'.charAt(i); }
+  function listNames(n){ return n.length <= 1 ? (n[0] || '') : n.length === 2 ? n[0] + ' and ' + n[1] : n.slice(0, -1).join(', ') + ' and ' + n[n.length - 1]; }
+  function clock(r){ var m = 23 * 60 + 15 * r, h = Math.floor(m / 60) % 24, mm = m % 60;
+    return { t: (h % 12 || 12) + ':' + (mm < 10 ? '0' : '') + mm, ap: h < 12 ? 'a.m.' : 'p.m.' }; }
+  function groupsFor(n){ var out = [], at = 0, base = Math.floor(ROSTER.length / n), extra = ROSTER.length % n;
+    for (var i = 0; i < n; i++){ var k = base + (i < extra ? 1 : 0); out.push(ROSTER.slice(at, at + k)); at += k; } return out; }
+
+  function model(){
+    var S = state.n, st = ST.slice(0, S), G = S, rounds = [], notes = [];
+    for (var r = 0; r < S; r++){
+      var cells = st.map(function(){ return []; }), out = [];
+      for (var i = 0; i < G; i++){
+        if (state.arr && r === 2 && i === 2){ out.push(i); continue; }          // Group C sits round 3 out
+        cells[(state.arr && r === 1 && i === 0) ? 2 % S : (i + r) % S].push(i);  // Group A joins Finishing in round 2
+      }
+      rounds.push({ cells: cells, out: out, clock: clock(r) });
+    }
+    rounds.forEach(function(rd, r){
+      var order = [];
+      for (var g = 0; g < G; g++) rd.cells.forEach(function(c, s){ if (c.indexOf(g) >= 0 && order.indexOf(s) < 0) order.push(s); });
+      order.forEach(function(s){ if (rd.cells[s].length > 1) notes.push(listNames(rd.cells[s].map(gn)) + ' share ' + st[s].name + ' in round ' + (r + 1) + '.'); });
+      if (state.arr){
+        var idle = st.filter(function(_, s){ return !rd.cells[s].length; }).map(function(x){ return x.name; });
+        if (idle.length) notes.push(listNames(idle) + (idle.length === 1 ? ' has' : ' have') + ' nobody in round ' + (r + 1) + '.');
+        if (rd.out.length) notes.push(listNames(rd.out.map(gn)) + (rd.out.length === 1 ? ' sits' : ' sit') + ' round ' + (r + 1) + ' out.');
+      }
+    });
+    var missed = false;
+    for (var g2 = 0; g2 < G; g2++){
+      var seen = {};
+      rounds.forEach(function(rd){ rd.cells.forEach(function(c, s){ if (c.indexOf(g2) >= 0) seen[s] = 1; }); });
+      var miss = st.filter(function(_, s){ return !seen[s]; }).map(function(x){ return x.name; });
+      if (miss.length){ notes.push(gn(g2) + " won't reach " + listNames(miss) + '.'); missed = true; }
+    }
+    if (!missed) notes.push('Everyone does everything.');
+    return { S: S, st: st, rounds: rounds, notes: notes, groups: groupsFor(G), anyOut: rounds.some(function(rd){ return rd.out.length; }) };
+  }
+
+  /* A cell's groups: plain names reading; while editing, today's pill or the proposed tile. */
+  function who(list, style, noneWord){
+    if (!list.length) return '<span class="none">' + (noneWord || '—') + '</span>';
+    return list.map(function(g){
+      if (style === 'tile') return '<span class="rttile">' + gn(g) + '</span>';
+      if (style === 'pill') return '<span class="rtpill"><b>⠿</b> ' + gn(g) + '</span>';
+      return '<span class="nm">' + gn(g) + '</span>';
+    }).join('');
+  }
+  function head(){ return '<div class="rtsh"><i aria-hidden="true">←</i><span class="eb">Block 2 of 4<br>11:00 p.m.</span><span class="ic">'
+    + (edit ? '<span aria-hidden="true">🗑</span><span aria-hidden="true">✓</span>' : '<span aria-hidden="true">✎</span>') + '</span></div>'
+    + '<div class="rtabove">↑ the block’s name, length, players, staff and words: unchanged</div>'; }
+  function strip(m){
+    var rounds = '<b>' + m.S + ' rounds of 15 = ' + (m.S * 15) + ' min</b>';
+    return edit
+      ? '<div class="rtstrip"><span class="chip">⟳ Groups rotate</span><span class="sep">·</span><span>every</span><span class="box">15</span><span>min</span><span class="sep">·</span>' + rounds + '</div>'
+      : '<div class="rtstrip"><span>⟳ Groups rotate</span><span class="sep">·</span><span>every 15 min</span><span class="sep">·</span>' + rounds + '</div>';
+  }
+  function evening(m, si){
+    var h = '<div class="rtev">';
+    m.rounds.forEach(function(rd){ h += '<span class="t">' + rd.clock.t + ' ' + rd.clock.ap + '</span><span class="g">' + who(rd.cells[si], edit ? 'tile' : 'text', 'nobody') + '</span>'; });
+    return h + '</div>';
+  }
+  function cards(m, withEvening){
+    var h = '<div class="rtcards">';
+    m.st.forEach(function(s, si){
+      h += '<div class="rtcard"><b>' + s.name + '</b><span class="w">' + s.who + '</span>' + (s.note ? '<span class="nt">' + s.note + '</span>' : '');
+      if (withEvening) h += evening(m, si);
+      h += '<span class="op">Open ›</span>';
+      if (edit) h += '<span class="mv" aria-hidden="true"><span class="' + (si === 0 ? 'dis' : '') + '">⌃</span><span class="' + (si === m.S - 1 ? 'dis' : '') + '">⌄</span></span>';
+      h += '</div>';
+    });
+    if (edit) h += '<div class="rtcard add"><span class="op">+ Add a station</span><span class="w">a drill, or write one</span></div>';
+    return h + '</div>';
+  }
+  function today(m){
+    var h = '<div class="rtscroll" data-today="1"><table class="rtg ' + (edit ? 'edit' : 'read') + '"><thead><tr><th></th>';
+    m.st.forEach(function(s){ h += '<th>' + s.name + '</th>'; });
+    if (m.anyOut) h += '<th class="outc">Sitting out</th>';
+    h += '</tr></thead><tbody>';
+    m.rounds.forEach(function(rd){
+      h += '<tr><th>' + rd.clock.t + ' ' + rd.clock.ap + '</th>';
+      rd.cells.forEach(function(c){ h += '<td>' + who(c, edit ? 'pill' : 'text') + '</td>'; });
+      if (m.anyOut) h += '<td class="outc">' + who(rd.out, edit ? 'pill' : 'text') + '</td>';
+      h += '</tr>';
+    });
+    return h + '</tbody></table></div><p class="rtcutl" hidden>cut here: the rest is a swipe away, and nothing says so</p>';
+  }
+  function turned(m){
+    var h = '<p class="rthint" hidden>↔ Swipe the table to see every round</p><div class="rtscroll"><table class="rtt"><thead><tr><th></th>';
+    m.rounds.forEach(function(rd){ h += '<th><span>' + rd.clock.t + '</span><span>' + rd.clock.ap + '</span></th>'; });
+    h += '</tr></thead><tbody>';
+    m.st.forEach(function(s, si){
+      h += '<tr><th><b>' + s.name + '</b><small>' + s.who + '</small></th>';
+      m.rounds.forEach(function(rd){ h += '<td>' + who(rd.cells[si], edit ? 'tile' : 'text') + '</td>'; });
+      h += '</tr>';
+    });
+    if (m.anyOut){
+      h += '<tr class="out"><th><b>Sitting out</b></th>';
+      m.rounds.forEach(function(rd){ h += '<td>' + who(rd.out, edit ? 'tile' : 'text') + '</td>'; });
+      h += '</tr>';
+    }
+    return h + '</tbody></table></div>';
+  }
+  function tight(m){
+    var h = '<p class="rthint" hidden>↔ Swipe the table to see every station</p><div class="rtscroll"><table class="rtg tight"><thead><tr><th></th>';
+    m.st.forEach(function(s){ h += '<th>' + s.name + '</th>'; });
+    if (m.anyOut) h += '<th class="outc">Sitting out</th>';
+    h += '</tr></thead><tbody>';
+    m.rounds.forEach(function(rd){
+      h += '<tr><th><span>' + rd.clock.t + '</span><span>' + rd.clock.ap + '</span></th>';
+      rd.cells.forEach(function(c){ h += '<td>' + who(c, edit ? 'tile' : 'text') + '</td>'; });
+      if (m.anyOut) h += '<td class="outc">' + who(rd.out, edit ? 'tile' : 'text') + '</td>';
+      h += '</tr>';
+    });
+    return h + '</tbody></table></div>';
+  }
+  function outBox(m){
+    if (!m.anyOut) return '';
+    var h = '<div class="rtoutbox"><b>Sitting out</b>';
+    m.rounds.forEach(function(rd){ if (rd.out.length) h += '<span class="t">' + rd.clock.t + ' ' + rd.clock.ap + '</span><span>' + who(rd.out, edit ? 'tile' : 'text') + '</span>'; });
+    return h + '</div>';
+  }
+  function perRound(m){
+    var h = '<div class="rtcards">';
+    m.rounds.forEach(function(rd, r){
+      h += '<div class="rtround"><div class="rh"><span class="t">' + rd.clock.t + ' ' + rd.clock.ap + '</span><span class="k">Round ' + (r + 1) + ' of ' + m.S + '</span></div>';
+      m.st.forEach(function(s, si){
+        h += '<div class="rl"><span class="s"><b>' + s.name + '</b><small>' + s.who + '</small></span><span class="g">' + who(rd.cells[si], edit ? 'tile' : 'text', 'nobody') + '</span></div>';
+      });
+      if (rd.out.length) h += '<div class="ro">Sitting out · ' + listNames(rd.out.map(gn)) + '</div>';
+      h += '</div>';
+    });
+    return h + '</div>';
+  }
+  function split(groups){
+    var sizes = {}; groups.forEach(function(g){ sizes[g.length] = (sizes[g.length] || 0) + 1; });
+    var ks = Object.keys(sizes).map(Number).sort(function(a, b){ return b - a; });
+    return groups.length + ' groups from ' + ROSTER.length + ' — ' + ks.map(function(k){ return WORDS[sizes[k]] + ' of ' + k; }).join(', ') + '.';
+  }
+  /* Under every shape, unchanged. `bug` draws today's phone as it renders: the dot after a name hidden. */
+  function tail(m, bug){
+    var dot = bug ? '' : ' · ';
+    var h = '<ul class="rtnotes">' + m.notes.map(function(n){ return '<li>' + n + '</li>'; }).join('') + '</ul>';
+    if (state.arr) h += '<p class="rtq">Hand-arranged — the groups no longer move one station on each round.' + (edit ? dot + '<a>Back to the standard rotation ›</a>' : '') + '</p>';
+    h += '<div class="rtgr"><p>' + split(m.groups) + '</p>';
+    m.groups.forEach(function(g, i){ h += '<p><b>' + gn(i) + '</b>' + dot + g.join(', ') + '</p>'; });
+    h += '<p class="q"><b>Not in a group</b>' + dot + '#2 Blake Test</p>';
+    if (edit) h += '<p class="door"><a>Edit groups ›</a></p>';
+    return h + '</div>';
+  }
+
+  function render(){
+    edit = state.mode === 'edit';
+    var m = model();
+    var mid = { today: cards(m, false) + today(m), tight: cards(m, false) + tight(m), turn: cards(m, false) + turned(m), card: cards(m, true) + outBox(m), round: cards(m, false) + perRound(m) };
+    KEYS.forEach(function(k){
+      var el = document.getElementById('rtF-' + k); if (!el) return;
+      el.style.setProperty('--rtw', state.w + 'px');
+      el.innerHTML = head() + '<div class="rtreg">' + strip(m) + mid[k] + tail(m, k === 'today') + '</div>';
+    });
+    measure();
+  }
+  /* Hints first (they take a line), heights after. Nothing to read while the tab is hidden. */
+  function measure(){
+    if (tab.hidden) return;
+    var over = {};
+    KEYS.forEach(function(k){
+      var el = document.getElementById('rtF-' + k), sc = el && el.querySelector('.rtscroll');
+      over[k] = sc ? sc.scrollWidth - sc.clientWidth : 0;
+      var hint = el && el.querySelector('.rthint'); if (hint) hint.hidden = !(over[k] > 1);
+      if (sc && k === 'today'){ sc.classList.toggle('cutting', over[k] > 1); el.querySelector('.rtcutl').hidden = !(over[k] > 1); }
+    });
+    var base = 0;
+    KEYS.forEach(function(k){
+      var el = document.getElementById('rtF-' + k); if (!el) return;
+      var h = el.querySelector('.rtreg').offsetHeight; if (k === 'today') base = h;
+      var parts = ['<span>drawn ' + h + 'px</span>'];
+      if (k !== 'today'){ var d = h - base; parts.push('<span>' + (d > 0 ? '+' : d < 0 ? '−' : '±') + Math.abs(d) + ' vs today</span>'); }
+      if (!el.querySelector('.rtscroll')) parts.push('<span class="ok">nothing to swipe</span>');
+      else if (over[k] > 1) parts.push(k === 'today' ? '<span class="bad">cut · no hint</span>' : '<span>swipes · with the hint</span>');
+      else parts.push('<span class="ok">fits · no swipe</span>');
+      document.getElementById('rtMeta-' + k).innerHTML = parts.join('');
+    });
+  }
+  function sync(){
+    [].slice.call(tab.querySelectorAll('.rtseg button')).forEach(function(b){
+      var k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
+      var on = k === 'arr' ? (v === '1') === !!state.arr : String(state[k]) === v;
+      b.setAttribute('aria-pressed', String(on));
+    });
+  }
+  [].slice.call(tab.querySelectorAll('.rtseg button')).forEach(function(b){
+    b.addEventListener('click', function(){
+      var k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
+      state[k] = (k === 'w' || k === 'n') ? Number(v) : k === 'arr' ? v === '1' : v;
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+      sync(); render();
+    });
+  });
+  new MutationObserver(function(){ measure(); }).observe(tab, { attributes: true, attributeFilter: ['hidden'] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  window.addEventListener('resize', measure);
+  sync(); render();
 })();
 </script>

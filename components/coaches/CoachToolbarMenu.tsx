@@ -63,6 +63,7 @@ export function CoachToolbarMenu({
   drawerTitle,
   open: openProp,
   onOpenChange,
+  triggerClassName = '',
   children,
 }: {
   /** The button's words — a plain string, so it is also the accessible name. */
@@ -145,6 +146,14 @@ export function CoachToolbarMenu({
    */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /**
+   * A caller's own class on the TRIGGER BUTTON, appended after the variant's — so a caller restyles
+   * its trigger through a class it owns instead of reaching into this component by position. First
+   * caller: the practice plan's rotation grid, whose `chip` becomes a soft tile at ≤640 (phone
+   * practice plans · T2, owner ruling 2026-09-24). The two modules resolve by bundle order at equal
+   * specificity, so the caller's rule must out-specify `.triggerChip` (e.g. qualify it by its table).
+   */
+  triggerClassName?: string;
   children: ReactNode;
 }) {
   const [openSelf, setOpenSelf] = useState(false);
@@ -276,7 +285,8 @@ export function CoachToolbarMenu({
         className={
           `${styles.trigger}${variant === 'primary' ? ` ${styles.triggerPrimary}` : variant === 'chip' ? ` ${styles.triggerChip}` : variant === 'glyph' ? ` ${styles.triggerGlyph}` : ''}` +
           `${bareOnPhone ? ` ${styles.triggerBare}` : ''}` +
-          `${open ? ` ${styles.triggerOpen}` : ''}`
+          `${open ? ` ${styles.triggerOpen}` : ''}` +
+          `${triggerClassName ? ` ${triggerClassName}` : ''}`
         }
         disabled={disabled}
         aria-haspopup="menu"

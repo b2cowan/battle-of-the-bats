@@ -10696,6 +10696,39 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppGridName + .ppGridName::before { content: '+'; margin-right: 0.25rem; color: var(--text-tertiary); font-weight: 400; }
 .ppGridNone { color: var(--text-tertiary); font-weight: 400; }
 .ppGridCols th.ppGridOutHead, .ppGridCols td.ppGridOutCell { border-left-style: dashed; color: var(--text-tertiary); }
+/* ── The same grid on a phone (phone practice plans · T1 + T2, owner ruling 2026-09-24) ──
+   Same way round (D6 — the desk's), made to FIT instead of pushing its last station off the sheet
+   (measured before: 404px in 359 while editing at 390, 352 in 329 while reading at 360). What
+   changes, and only here: the 22rem floor goes; both modes size to their content (a name's width is
+   not a fixed share); the clock takes its narrowest width, so "11:00 p.m." breaks at its space; a
+   station heading wraps between WORDS, never inside one (`anywhere` would let min-content shrink the
+   column to a letter); a group's name never wraps; and while editing a group is a soft tile with no
+   grip. When it still cannot fit (four stations editing at 360, five reading at 360), the
+   component-owned scroller swipes and SAYS so. The drawing measured −3 to −84px against today. */
+@media (max-width: 640px) {
+  .ppGridCols { table-layout: auto; width: 100%; min-width: 0; }
+  .ppGrid th, .ppGrid td { padding: 0.3rem 0.2rem; }
+  .ppGridCols thead th {
+    white-space: normal; overflow-wrap: normal; text-align: center; vertical-align: bottom;
+  }
+  .ppGridCols thead th:first-child, .ppGridCols tbody th { width: 1%; }
+  .ppGridCols tbody th { white-space: normal; overflow-wrap: normal; text-align: left; padding-right: 0.35rem; }
+  .ppGridCols tbody td { white-space: nowrap; overflow-wrap: normal; }
+  /* The tile (T2) — the field's own ground, so a tile reads as a thing to press, not a label.
+     ⚠ The chip's rules live in ANOTHER module and one of them is (0,3,0): `.triggerChip:hover:not(
+     :disabled)`. A phone keeps `:hover` on a tapped button until the next tap elsewhere, so a tile
+     written two classes deep went back to the desk chip's hover colours after every tap (/review,
+     2026-09-24). Each state therefore names its hover twin too, which out-ranks every chip rule
+     outright instead of leaning on bundle order. */
+  .ppGridCols .ppGridTile, .ppGridCols .ppGridTile:hover:not(:disabled) {
+    border-radius: 0.55rem; padding: 0 0.6rem; justify-content: center;
+    background: var(--white-05); border-color: var(--home-line-strong, var(--border-2));
+  }
+  .ppGridCols .ppGridTile[aria-expanded='true'], .ppGridCols .ppGridTile[aria-expanded='true']:hover:not(:disabled) {
+    background: var(--home-olive-soft, var(--white-8)); border-color: var(--text-primary);
+  }
+  .ppGridCols .ppGridGrip { display: none; }
+}
 .ppNotes { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.2rem; }
 .ppNotes li { font-size: var(--type-support); color: var(--text-tertiary); }
 
@@ -11151,8 +11184,15 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   .ppRailName { flex-basis: 7.5rem; }
   .ppSheetCol { gap: 0.7rem; }
   /* The clock row wraps to two lines on the phone (the chips, then the minutes and Rest with
-     "ends" beside them — stage 2, D8); the dot between the minutes and Rest is a desktop letter. */
-  .ppClockSep { display: none; }
+     "ends" beside them — stage 2, D8); the dot between the minutes and Rest is a desktop letter.
+     ⚠ SCOPED TO THAT ROW (2026-09-24). Bare, it hid every `.ppClockSep` in the practice screens —
+     the groups read back ran "Group A#1 Avery Test", "Not in a group#2 Blake Test", and the
+     hand-arranged line ran into its own "Back to the standard rotation ›". Everywhere else the dot
+     is the separator between two things, and a phone needs it more than a desk does.
+     The one other exception is the rotation strip ("Groups rotate · every 15 min · 3 rounds…"): its
+     dots are separate FLEX ITEMS in a wrapping row, so on a phone they strand at a line's end or sit
+     alone on a line of their own (measured 2026-09-24 at 360 and 390) — its gap already separates. */
+  .ppClockRow .ppClockSep, .ppRotStrip .ppClockSep { display: none; }
 }
 
 /* 640 = CONTENT reflow: the dense control rows go to one axis so nothing is squeezed. */

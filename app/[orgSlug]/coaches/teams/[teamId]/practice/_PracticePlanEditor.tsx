@@ -40,6 +40,7 @@ import {
   DrillPreviewBody, CircuitPreviewBody,
 } from '@/components/coaches/LibraryRow';
 import DrillSheet from '@/components/coaches/DrillSheet';
+import CoachScrollX from '@/components/coaches/CoachScrollX';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { RoomWalkNav, type RoomNav } from '@/components/coaches/RoomShell';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
@@ -879,6 +880,11 @@ function RotationBoard({
     useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 6 } }),
   );
   const [lifted, setLifted] = useState<{ round: number; groupId: string; name: string } | null>(null);
+  /* ≤640 the grid scrolls inside `CoachScrollX`, which SAYS so when it must (phone practice plans ·
+     T1, owner ruling 2026-09-24 — the bespoke scroller swiped silently, the rule's one breach). The
+     desk keeps its own scroller: the ruling was "phones only", and a swipe chip names a gesture a
+     mouse cannot make (the component's own G3 note). Asked only where a grid can render. */
+  const phone = useIsPhone(!withoutPeople);
   const onDragStart = (e: DragStartEvent) => {
     const d = e.active.data.current as { round: number; groupId: string; name: string } | undefined;
     setLifted(d ?? null);
@@ -941,22 +947,23 @@ function RotationBoard({
     </table>
   );
 
+  const gridBody = canArrange ? (
+    <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setLifted(null)}>
+      {gridTable}
+      {typeof document !== 'undefined' && createPortal(
+        <DragOverlay dropAnimation={null} zIndex={1200}>
+          {lifted && <span className={`${styles.ppChip} ${styles.ppGroupChipLifted}`}><GripVertical size={13} aria-hidden /> {lifted.name}</span>}
+        </DragOverlay>,
+        document.body,
+      )}
+    </DndContext>
+  ) : gridTable;
+
   return (
     <div className={styles.ppRotBoard}>
-      {turned.rows.length > 0 && (
-        <div className={styles.ppGridScroll}>
-          {canArrange ? (
-            <DndContext sensors={sensors} onDragStart={onDragStart} onDragEnd={onDragEnd} onDragCancel={() => setLifted(null)}>
-              {gridTable}
-              {typeof document !== 'undefined' && createPortal(
-                <DragOverlay dropAnimation={null} zIndex={1200}>
-                  {lifted && <span className={`${styles.ppChip} ${styles.ppGroupChipLifted}`}><GripVertical size={13} aria-hidden /> {lifted.name}</span>}
-                </DragOverlay>,
-                document.body,
-              )}
-            </DndContext>
-          ) : gridTable}
-        </div>
+      {turned.rows.length > 0 && (phone
+        ? <CoachScrollX hint="Swipe the table to see every station" frame={false}>{gridBody}</CoachScrollX>
+        : <div className={styles.ppGridScroll}>{gridBody}</div>
       )}
       {/* Plain statements about what THESE cells do — dealt or arranged. A mismatch is STATED —
           never tidied away by inventing a round or dropping a station (D25). */}
@@ -1061,6 +1068,11 @@ function GridCell({ round, stationId, canArrange, children }: {
  * two-ways-one-chip shape the groups room uses; the tap is the whole path on a phone and for a
  * keyboard. Drag activates after six pixels or a quarter-second press, and a drag's drop never
  * opens the menu (the kit swallows that click).
+ *
+ * ≤640 the pill is a soft TILE with no grip (phone practice plans · T2, owner ruling 2026-09-24):
+ * the grip's width is most of what pushed a third station off a phone, and the tap menu is the
+ * phone's path anyway. Decided in the stylesheet (`.ppGridTile` / `.ppGridGrip`), so the desk's pill
+ * is untouched and no chip opens a media listener of its own.
  */
 function GridPill({ round, group, at, stations, onArrange }: {
   round: number;
@@ -1076,7 +1088,8 @@ function GridPill({ round, group, at, stations, onArrange }: {
   const others = stations.filter(s => s.id !== at);
   return (
     <span ref={setNodeRef} {...listeners} className={styles.ppGroupChip} data-lifted={isDragging ? 'on' : undefined}>
-      <CoachToolbarMenu label={group.name} variant="chip" icon={<GripVertical size={13} aria-hidden />}>
+      <CoachToolbarMenu label={group.name} variant="chip" triggerClassName={styles.ppGridTile}
+        icon={<GripVertical size={13} aria-hidden className={styles.ppGridGrip} />}>
         {others.map(s => (
           <CoachToolbarMenuItem key={s.id} label={`Move to ${s.name}`} onSelect={() => onArrange(round, group.id, s.id)} />
         ))}

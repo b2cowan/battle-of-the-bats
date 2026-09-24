@@ -54,7 +54,7 @@ The plan as a document (practices stage 1, 2026-09-14); "+ Stations makes two" (
 | Stage | Covers | Asks | State |
 |---|---|---|---|
 | 1 · The block on its own screen | The plan's blocks as a compact list on a phone (the spine and the clock stay; the row is title + one line of facts; 56px); a block opens as a **full-screen sheet** — the station form's shape — with every field at full width and a pinned foot (‹ N of M › · Done); Move up · Move down · Delete on the sheet's head; "+ Add a block" as one 44px row that opens a blank block's sheet with "Start from a drill ›" inside it. | K1–K4 | **drawn 2026-09-23 · RULED 2026-09-23 — K1–K4 = A as recommended** |
-| 2 · Stations and the rotation | A station as a 56px row inside the block sheet (the row is the door to the form that exists); "Write one" adds the station *and* opens its form in one motion on a 44px button (four taps → two); the rotation drawn **by round** on a phone (Round 1: A → Footwork · B → Close control · C → Finishing …) with hand-arrange as the pill's tap menu (D14's tap path already exists); the desktop grid untouched. | L1–L3 | — |
+| 2 · Stations and the rotation | A station as a 56px row inside the block sheet (the row is the door to the form that exists); "Write one" adds the station *and* opens its form in one motion on a 44px button (four taps → two); the rotation table fitted to a phone — **drawn 2026-09-24 (§6d), T1–T2 ruling owed**; the earlier "by round" note is withdrawn (it is §6d's option D); hand-arrange stays the tap menu (D14); the desktop grid untouched. | L1–L2 · T1–T2 | rotation table drawn 2026-09-24 |
 | 3 · The field | Back · Next · Rotate now docked above the bar on the block and station screens (the E4 idiom; the bar on the clearance token, never above the nav); the station screen's "Coming to you" kept; a plain stop's order (does the note lead, or the watching-for line and the points?); swipe between stops as an addition — recommended *Not yet* (gloves; the browser's back gesture; the docked buttons take most of the value). | M1–M3 | — |
 | 4 · The head of the page | What sits above the first block on a phone: the sent line and "Send again" (~110px), the when-block, the goal, About — ~500px before the plan begins. Drawn unchanged in stage 1 on purpose so stage 1's own gain is not hidden. | N1 | — |
 
@@ -91,7 +91,7 @@ The drawing is the hub's **"1 · The block on its own screen"** tab: the whole s
 - The desktop and the 641–768 band are untouched.
 - Escape, the scrim and the phone's Back close the sheet (the portal's phone-panel convention).
 - The plan-template editor is the same editor and inherits the sheet by construction.
-- The rotation grid is still the desktop grid in stage 1 — 404px in a 358px box, scrolling a little. Drawn honestly; stage 2 draws it by round.
+- The rotation grid is still the desktop grid in stage 1 — 404px in a 358px box, scrolling a little. Drawn honestly; its fix is drawn in §6d.
 
 ### 6.3 Build notes, for the session that builds it (after the ruling)
 
@@ -181,6 +181,40 @@ back to the row, add → title focused → delete → reload shows the plan as f
 included — the probe practice has aged into a RECORD (read-only, so no "Edit groups ›"); the fixture
 wants its usual re-seed, which is not this change's. The help article still describes "the arrows
 under each block's start time … on a phone" — `/docs` owed.
+
+## 6c · The Groups room on a phone (drawn 2026-09-24 — **RULED 2026-09-24: G1 = A · G2 = A · G3 = A**, owner: "I agree with your recommendations")
+
+Hub tab "The Groups room on a phone". G1 the draw folds to one summary line once groups exist ("⤮ 3 groups · from who replied · Change ›", opens in place, never redraws by itself; a block with no groups opens with the controls showing). G2 a group's head is "Group A · 4" + ⋯ (Rename in place · Delete, players to Not in a group, no question). G3 the ⠿ dots leave the chips and their sides tighten (tap for "Move to…", hold to drag, 44px, unchanged). Phones only. Build not started.
+
+## 6d · The rotation table on a phone (drawn 2026-09-24 — **RULED 2026-09-24: T1 = A · T2 = A**, owner: "I agree with your recommendations, go ahead"; built on dev the same day — §6d.1; ledger §229)
+
+The owner's question at the same message was the ROTATION TABLE under a rotating block, not the groups room. Hub tab "The rotation table on a phone": five live specimens (today · A · B · C · D) drawn from one data set, switchable 390/360 · reading/editing · 3/4/5 stations · hand-arranged (a shared station, an empty one, a group sitting out).
+
+**Measured today** (probe `.probe/pp-rot-measure.mjs`, the UAT probe practice's Skills circuit): 390 reading 359 in 359 (fits, just); 390 editing 404 in 359 (45 cut); 360 reading 352 in 329 (23 cut — the table's `min-width: 22rem` alone); 360 editing 404 in 329 (75 cut). Finishing is the cut column every time. **No swipe hint** — `.ppGridScroll` is a bespoke scroller, not `CoachScrollX`, so the portal's "a sideways table says so" rule is broken here. Rows 52 reading (the clock breaks onto two lines in its 4.5rem column) / 58 editing; heads two lines reading, one editing — the same table takes two shapes.
+
+- **T1 · the shape — A recommended: today's table, tightened, phone only.** Keeps D6's orientation (and the desk's). Drops the 22rem floor; the clock on two lines in a ~52px column; while editing a group is a tile, not a pill with a grip (T2); `CoachScrollX` with its hint when it must still swipe ("Swipe the table to see every station"). Drawn: 3 stations fit at both widths in both modes; 4 fit at 390 both modes and at 360 reading; 5 fit at 390 reading. Shortest shape in every combination (−3 to −84px vs today, drawn). Cost: station names wrap to 2–3 lines in capitals at 4–5 stations; who runs a station stays in the cards above. **B** turn the table (stations down the side, who-runs-it on each row) — drawn expecting it to fit more; it fits LESS, because a station name's longest word needs a wider column than a two-line clock: it swipes at 4 stations while editing at both widths, and would turn the phone's table opposite to the desk's. **C** each station carries its own evening (no table) — nothing swipes, the whole-rotation picture is gone, +260–1,000px while editing. **D** a list per round — the plan's earlier stage-2 note, WITHDRAWN: tallest in every combination, repeats every station name every round, and turns a comparison into cards (the portal's table rule: a comparison stays a grid).
+- **T2 · a group while editing — A recommended: the cell is the button** (a soft 44px tile, no outline pill, no ⠿); tap for the same menu ("Move to <station> · Sits this round out"), hold-to-drag within its round kept. Part of why 4 stations fit at 390. B keep the pill.
+- **Not changed:** the desk and 641–768; `computeRotation`; the statements (D25); the menu words; "Back to the standard rotation ›"; the groups read-back and "Edit groups ›"; Run practice.
+- **Side finding, fix with it:** at ≤640 `.ppClockSep { display: none }` (meant for the block's clock row) hides EVERY `ppClockSep` in the practice screens, so the groups read-back renders "Group A#1 Avery Test" and "Not in a group#2 Blake Test" (visible in the owner's 09-24 screenshot). Scope that rule to the clock row.
+
+### 6d.1 Built as (2026-09-24, dev — probes `.probe/pp-rot-after.mjs` at 390 / 360 / 1440 and `.probe/pp-rot-desk-edit.mjs`)
+
+| | Before | After (measured) |
+|---|---|---|
+| 390 reading | 359 in 359 | 359 in 359, rows 49 |
+| 390 editing | **404 in 359 — Finishing cut** | **359 in 359**, rows 55 |
+| 360 reading | **352 in 329 — cut** | **329 in 329**, rows 49 |
+| 360 editing | **404 in 329 — cut** | **329 in 329**, rows 55 |
+| A group while editing | 82px pill with a ⠿ grip | 69×44 tile, radius 0.55rem, the field ground, no grip; the menu unchanged (Move to … · Sits this round out) |
+| The clock column | 72 reading / 91 editing | 46 — "11:00" over "p.m." |
+| Groups read back | "Group A#1 Avery Test" | "Group A · #1 …" |
+| Desk 1440 | — | unchanged: `.ppGridScroll`, fixed equal columns (225), the pill with its grip, no hint |
+
+**What was built.** ≤640 only, all in the stylesheet except the scroller: a `@media (max-width: 640px)` block after the grid rules — `.ppGridCols` (and with `.ppGridPills`) `table-layout: auto; width: 100%; min-width: 0`; tighter cell padding; headings wrap between words only (`overflow-wrap: normal`, so min-content never collapses a column to a letter) and centre over their cells; the clock column `width: 1%` (its min-content, so it breaks at its space); group cells `nowrap`; `.ppGridCols .ppGridTile` (two classes deep — it must out-rank `.triggerChip` from another module) and `.ppGridCols .ppGridGrip { display: none }`. `GridPill` passes `triggerClassName={styles.ppGridTile}` and a classed grip. `CoachToolbarMenu` gained an optional `triggerClassName` (appended after the variant's classes; documented). `RotationBoard` asks `useIsPhone(!withoutPeople)` once and on a phone wraps the grid in `CoachScrollX` (hint "Swipe the table to see every station", `frame={false}`); the desk keeps `.ppGridScroll`. The separator fix: `.ppClockSep { display: none }` → `.ppClockRow .ppClockSep`. Guard: `tests/unit/coach-rotation-grid-phone-guard.test.ts`. Help: the phone section gained a "rotation table" line and search words.
+
+**/simplify + /review (2026-09-24, before commit) — three confirmed, fixed:** (1) the tile at `.ppGridCols .ppGridTile` (0,2,0) lost to `.triggerChip:hover:not(:disabled)` (0,3,0) — a phone keeps `:hover` on a tapped button — so each tile state now also names its `:hover:not(:disabled)` twin (probe `.probe/pp-rot-tilehover.mjs`: rest = hovered = after-close); (2) scoping `.ppClockSep` un-hid the rotation strip's dots, which are FLEX ITEMS in a wrapping row and stranded on a wrap (probe `.probe/pp-rot-strip.mjs`) — `.ppRotStrip .ppClockSep` joins the minutes row's hide; (3) help "always fit" → "usually fit". Simplify: `.ppGridCols, .ppGridCols.ppGridPills` → `.ppGridCols` (the later equal-specificity rule already wins); `functionBody` + `splitPhoneCss` promoted to `tests/unit/_source-code.ts` (older guards keep their copies — not this change's files). Refuted: the wrapper swap remounting the grid when `phone` flips (the open block already moves between `BlockSheet` and the in-place card at the same breakpoint); the tile enlarging the drag surface (69px vs the 82px pill).
+
+**Not measured on the product:** 4 and 5 stations (the fixture has 3) — the drawing's specimens cover them (A: 4 fit at 390 in both modes and at 360 reading); the hint's appearance there is `CoachScrollX`'s own. The layout sweep's grid screens still cannot run — the probe practice has aged into a record (fixture re-seed owed, not this change's).
 
 ## 7 · Not in scope
 

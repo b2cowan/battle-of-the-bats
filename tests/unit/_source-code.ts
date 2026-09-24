@@ -65,3 +65,47 @@ export function stripComments(source: string): string {
 
 /** A repo-relative file, read as CODE — comments gone. The form a source guard should assert on. */
 export const readCode = (rel: string): string => stripComments(readSource(rel));
+
+/**
+ * The body of ONE function in `code` (read it with `readCode` first), from `function name(` to the
+ * next declaration at its own depth. A top-level function ends at the next top-level `function` or
+ * `export default function`. ⚠ An INDENTED one (declared inside a component) ends at the next
+ * declaration at ITS indentation — bounding it at column 0 swallowed the component's whole render,
+ * so a word anywhere in the page satisfied a print-path guard (/review, 2026-09-17; first written in
+ * practice-vocabulary-guard, promoted here 2026-09-24 so new guards stop copying a weaker version).
+ */
+export function functionBody(code: string, name: string): string {
+  const start = code.indexOf(`function ${name}(`);
+  if (start < 0) throw new Error(`function ${name} is gone — the guard reads it`);
+  const lineStart = code.lastIndexOf('\n', start) + 1;
+  const indent = code.slice(lineStart, start).match(/^\s*/)?.[0] ?? '';
+  const rest = code.slice(start);
+  const end = indent
+    ? rest.search(new RegExp(`\\n${indent}(?:async )?function |\\n${indent}const \\w+ = \\(|\\n${indent}(?:if|return) `))
+    : rest.search(/\n(?:async )?function |\nexport default function /);
+  return end > 0 ? rest.slice(0, end) : rest;
+}
+
+/**
+ * A stylesheet split at its `@media (max-width: 640px)` blocks: `phone` is their bodies, joined — what
+ * a phone-only rule must live inside — and `rest` is everything else, what a desk reads. Brace depth
+ * is counted, so a nested block cannot end the query early. (Earlier guards carry their own copy of
+ * the `phone` half; new guards import this one.)
+ */
+export function splitPhoneCss(css: string): { phone: string; rest: string } {
+  const inside: string[] = [];
+  let rest = '';
+  let last = 0;
+  const re = /@media \(max-width: 640px\) \{/g;
+  for (let m = re.exec(css); m; m = re.exec(css)) {
+    let depth = 1;
+    let i = m.index + m[0].length;
+    const from = i;
+    for (; i < css.length && depth > 0; i++) { if (css[i] === '{') depth++; else if (css[i] === '}') depth--; }
+    inside.push(css.slice(from, i - 1));
+    rest += css.slice(last, m.index);
+    last = i;
+    re.lastIndex = i;
+  }
+  return { phone: inside.join('\n'), rest: rest + css.slice(last) };
+}
