@@ -71,4 +71,14 @@ describe('the Groups room on a phone (G1 · G2 · G3)', () => {
     assert.doesNotMatch(desk, /\.ppGroupGrip\b/);
     assert.doesNotMatch(desk, /\.ppGroupChipTrigger\b/);
   });
+
+  it('§231 walk — no Done on a phone: the head’s ← closes; "+ Add a group" is pinned left; a full room has no foot', () => {
+    // Owner 2026-09-25: "remove the done from the group screen". It only closed the room (the ← and
+    // the back gesture do) — the groups save as they change. A desk keeps it beside its ×.
+    assert.match(room, /\{!phone && <button type="button" className=\{styles\.btnPrimary\} onClick=\{onClose\}>Done<\/button>\}/);
+    assert.match(room, /\{\(!phone \|\| groups\.length < MAX_GROUPS\) && \(/);
+    // Left, so "+ Add a group" never lands where a thumb used to find Done.
+    assert.match(phone, /\.ppGroupsRoom \.modalFooter \{ justify-content: flex-start; \}/);
+    assert.doesNotMatch(desk, /\.ppGroupsRoom \.modalFooter/);
+  });
 });

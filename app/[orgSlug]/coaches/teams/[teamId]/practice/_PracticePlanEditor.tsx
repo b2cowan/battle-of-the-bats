@@ -758,8 +758,9 @@ function StationModal({
   /** A station the coach JUST ADDED opens with the cursor in its name (practice plans on a phone,
    *  S2 — the new block's title rule, one level down). */
   focusName?: boolean;
-  /** "Start from a drill ›" under the name — offered only while a just-added station is untouched
-   *  (S2 · K4 one level down); the pick takes this station's place, keeping its id. */
+  /** "Start from a drill ›" under the name — offered while the coach is still on the station they
+   *  just added (S2 · K4 one level down), typed-on or not: the editor asks first when there is
+   *  anything to lose (§231 walk). The pick takes this station's place, keeping its id. */
   onStartFromDrill?: () => void;
   /** The coach typed something on this station — anything (S4): it is theirs now, and never removed
    *  as "left empty". Counted from the typing itself, not from what was saved, because a new staff
@@ -877,11 +878,15 @@ function StationModal({
           )}
         </div>
 
-        {/* The foot: the walk, then Done — the block sheet's own foot. */}
-        <div className={`${styles.modalFooter} ${styles.ppSheetFoot}`}>
-          <RoomWalkNav nav={{ ...walk, noun: 'stations', onSelect: onStep }} compact={phone} />
-          <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>
-        </div>
+        {/* The foot: the walk, then Done on a desk — the block sheet's own foot. On a phone the walk
+            alone (§231 walk, owner 2026-09-25): Done only closed, the head's ← already does, and it
+            sat under ✓ "Done editing", which does the opposite. */}
+        {(!phone || walk.total > 1) && (
+          <div className={`${styles.modalFooter} ${styles.ppSheetFoot}`}>
+            <RoomWalkNav nav={{ ...walk, noun: 'stations', onSelect: onStep }} compact={phone} />
+            {!phone && <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1748,7 +1753,8 @@ function stationDoorFor(key: string): HTMLElement | null {
  * the block's own station form already had one level down (`StationModal`): the fields at the
  * sheet's full width, the block's place and clock in the head, Move up · Move down · Delete beside
  * them (K3 — the reorder pair left the gutter, which is what let the clock column narrow), and a
- * pinned foot that walks the blocks without going back to the list, then Done.
+ * pinned foot that walks the blocks without going back to the list. The way back is the head's ←
+ * (and the phone's back gesture) — the foot's Done left on the §231 walk (see the foot).
  *
  * The BODY is `BlockCard`'s own, byte for byte — this component is only the container, so a field
  * can never exist in one presentation and not the other. The desktop and the 641–768 band keep
@@ -1799,7 +1805,7 @@ function WalkOnward({ walk, noun, kicker, meta }: {
  * same?"). The block sheet and the station form grew a week apart from two different drawings and
  * put the same things in different places. Both now read: the head — back · where you are · this
  * toggle · the bin (while editing); the body — the name first, the fields, the next stop; the foot —
- * the walk and Done.
+ * the walk (and, on a desk only, Done — on a phone the head's ← is the one way back, §231 walk).
  *
  * The toggle is the toolbar's Edit / Done editing, one button that flips in place (so focus stays
  * on it): ✎ while reading, ✓ while writing. ON A PHONE IT IS THE GLYPH ALONE (owner, §227 walk
@@ -1874,7 +1880,7 @@ function BlockSheet({
       <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`${label} — ${eyebrow.place}${eyebrow.clock ? ` · ${eyebrow.clock}` : ''}`}
         className={`${styles.modal} ${styles.modalWide} ${styles.modalScrollBody} ${styles.ppStationModal} ${styles.ppBlockSheet}`}
         data-block-sheet>
-        <CoachModalHeader onClose={onClose} closeAriaLabel="Done" title={
+        <CoachModalHeader onClose={onClose} closeAriaLabel="Close" title={
           <span className={styles.ppBlockSheetEyebrow}>
             <b>{eyebrow.place}</b>
             {eyebrow.clock && <span>{eyebrow.clock}</span>}
@@ -1897,10 +1903,16 @@ function BlockSheet({
           <div key={bodyKey} className={`${styles.ppTlOpen} ${styles.ppBlockSheetBody}`}>{children}</div>
           <WalkOnward walk={walk} noun="block" kicker={onward.kicker} meta={onward.meta} />
         </div>
-        <div className={styles.modalFooter}>
-          <RoomWalkNav nav={walk} compact />
-          <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>
-        </div>
+        {/* ⚠ NO "Done" IN THIS FOOT (§231 walk, owner 2026-09-25). It only closed the sheet — the
+            head's ← and the phone's back gesture already do — and while writing it sat under the
+            head's ✓ "Done editing", which does the opposite: ✓ ends editing and keeps the block
+            open, Done left the block and kept editing. The foot is the walk alone, and a plan of
+            one block has nothing to walk to. */}
+        {walk.total > 1 && (
+          <div className={styles.modalFooter}>
+            <RoomWalkNav nav={walk} compact />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1931,7 +1943,8 @@ function BlockCard({
   phone?: boolean;
   /** Render the OPEN block as the phone's full-screen sheet (K2) rather than a card in the spine. */
   sheet?: { walk: RoomNav; onward: { kicker: string; meta: string | null }; onEdit?: () => void; onDoneEditing?: () => void };
-  /** "Start from a drill ›" inside a new, still-empty block's sheet (K4) — absent otherwise. */
+  /** "Start from a drill ›" inside a just-added block's sheet while the coach is still on it (K4 —
+   *  the editor asks first when there is anything to lose, §231 walk) — absent otherwise. */
   onStartFromDrill?: () => void;
   /** A block the coach JUST added lands with its title focused; a row they opened to read does not. */
   focusTitle: boolean;
@@ -2689,6 +2702,7 @@ export default function PracticePlanEditor({
   eventStartsAt, eventEndsAt, readOnly, onEdit, onDoneEditing, record = false, goalInputId, withoutPeople = false, onStartFrom,
   staffPeople = [], onPickStaffPerson, viewerBlockIds, viewerStationIds,
 }: Props) {
+  const confirm = useConfirm();
   const [attach, setAttach] = useState<AttachTarget | null>(null);
   // The reader's own levels (mig 303), as the rows keep them.
   const mineBlocks = useMemo(() => new Set(viewerBlockIds ?? []), [viewerBlockIds]);
@@ -2764,8 +2778,9 @@ export default function PracticePlanEditor({
    */
   const [drillSheet, setDrillSheet] = useState<
     // `at`: where the new block lands — the end unless the sheet's "Start from a drill" is standing
-    // in for a blank block the coach had already moved (/review, 2026-09-23).
-    | { kind: 'block'; at?: number }
+    // in for a new block the coach had already moved (/review, 2026-09-23). `replaceId`: that block —
+    // the pick takes its place, keeping its id; it stays in the plan until then (§231 walk).
+    | { kind: 'block'; at?: number; replaceId?: string }
     // `startFrom`: opened by a just-added station's "Start from a drill ›" (S2) — drills only, and
     // the pick takes that station's place (`swapId` is the station).
     | { kind: 'station'; blockId: string; swapId?: string; startFrom?: boolean }
@@ -3042,13 +3057,15 @@ export default function PracticePlanEditor({
     next.splice(to, 0, moved);
     patchBlock(blockId, { stations: next });
   };
-  /** Delete from the modal (D4) — no confirm, as the station card's own bin never asked (a
-   *  station is a row the coach can rewrite in a minute, not money). The modal STEPS to the next
-   *  station (or the previous, at the end) rather than closing: the column that opened it is gone
-   *  with the station, so a close would drop focus on the page body; a neighbour keeps the floor
-   *  and the coach clearing several stations stays in the walk (/review, 2026-09-15). With no
-   *  neighbour left to show — one station remains, and a sole station has no modal (D1) — it
-   *  closes. */
+  /** Delete from the modal (D4) — the head's bin has already asked (`SheetDeleteButton`).
+   *  ⚠ THE MODAL CLOSES, back to the block and its stations (§231 walk, owner 2026-09-25: "when I
+   *  delete a station I should be navigated back to the block viewing the stations, not navigated
+   *  back to another station"). It used to STEP to a neighbour (/review, 2026-09-15 — so a close
+   *  would not drop focus on the page body), which read as being sent somewhere else; the close's
+   *  one focus rule (`stationDoorFor`) now answers that — the row is gone, so the add control.
+   *  A delete IS a close, so S4's rule runs on the same pass: fresh stations still holding nothing
+   *  go too, in ONE write — a second pass through `dropFreshEmptyStations` would read this render's
+   *  plan, the deleted station still in it, and write it back. */
   const deleteStation = (blockId: string, stationId: string) => {
     const block = plan.blocks.find(b => b.id === blockId);
     if (!block) return;
@@ -3056,11 +3073,12 @@ export default function PracticePlanEditor({
     // Down to ONE written station on a block with no words of its own: the survivor's words come
     // back up and the block is the activity again — D13's reverse. `collapseSoleStation` holds
     // the one rule (nothing merges, nothing drops) and hands the block back unchanged otherwise.
-    setBlocks(plan.blocks.map(b => (b.id === blockId ? collapseSoleStation({ ...b, stations: remaining }) : b)));
-    touchStation(stationId); // gone — nothing left to track (S4)
-    const walk = stationWalk(block.stations ?? [], stationId);
-    const neighbour = remaining.length >= 2 ? (walk.next ?? walk.prev) : null;
-    setOpenStation(neighbour ? { blockId, stationId: neighbour.id } : null);
+    const next = dropEmptyStations(collapseSoleStation({ ...block, stations: remaining }), freshStations);
+    setBlocks(plan.blocks.map(b => (b.id === blockId ? next : b)));
+    // Every station of this block is settled now — nothing left to track (S4).
+    const inBlock = new Set((block.stations ?? []).map(s => s.id));
+    setFreshStations(prev => new Set([...prev].filter(id => !inBlock.has(id))));
+    setOpenStation(null);
   };
 
   /**
@@ -3089,17 +3107,17 @@ export default function PracticePlanEditor({
    * `blockRotates` is false, so a single picked drill is simply a stretch of practice; adding a
    * second drill to the same block is what turns it into a carousel.
    */
-  function addBlockFromDrill(drill: RepTeamDrill, at: number = plan.blocks.length) {
+  function addBlockFromDrill(drill: RepTeamDrill, at: number = plan.blocks.length, replaceId?: string) {
     // A plan that filled up under the open sheet (another tab's autosave) closes it rather than
-    // leaving a picker whose every pick does nothing.
-    if (plan.blocks.length >= MAX_BLOCKS) { setDrillSheet(null); return; }
+    // leaving a picker whose every pick does nothing. A REPLACEMENT adds no block, so it is never full.
+    if (!replacesABlock(replaceId) && plan.blocks.length >= MAX_BLOCKS) { setDrillSheet(null); return; }
     const block: PracticePlanBlock = {
       id: newPracticePlanId(),
       title: drill.name,
       duration: { minutes: drill.usualMinutes ?? DEFAULT_BLOCK_MINUTES },
       stations: [drillToStation(drill, newPracticePlanId)],
     };
-    insertBlock(block, at);
+    insertBlock(block, at, replaceId);
   }
 
   /**
@@ -3108,15 +3126,28 @@ export default function PracticePlanEditor({
    * fully editable with the provenance line. `circuitToBlock` mints the ids and stamps the id and
    * name; a station that came from a drill still reads "From your drills" inside it.
    */
-  function addBlockFromCircuit(circuit: RepTeamCircuit, at: number = plan.blocks.length) {
-    if (plan.blocks.length >= MAX_BLOCKS) { setDrillSheet(null); return; }
-    insertBlock(circuitToBlock(circuit, newPracticePlanId), at);
+  function addBlockFromCircuit(circuit: RepTeamCircuit, at: number = plan.blocks.length, replaceId?: string) {
+    if (!replacesABlock(replaceId) && plan.blocks.length >= MAX_BLOCKS) { setDrillSheet(null); return; }
+    insertBlock(circuitToBlock(circuit, newPracticePlanId), at, replaceId);
   }
 
-  /** A library thing lands at `at` — the end for the panel's Add and the sheet, a gap for a drop. */
-  function insertBlock(block: PracticePlanBlock, at: number) {
+  /** The pick REPLACES only while its block is still in the plan (/review, §231 walk): one that
+   *  vanished under the picker (another tab's autosave) makes the pick an ordinary insert, which the
+   *  block limit must still govern — the server keeps the first MAX_BLOCKS by position and would
+   *  drop whichever block landed last, silently. */
+  function replacesABlock(replaceId: string | undefined): boolean {
+    return !!replaceId && plan.blocks.some(b => b.id === replaceId);
+  }
+
+  /** A library thing lands at `at` — the end for the panel's Add and the sheet, a gap for a drop —
+   *  or, from a new block's "Start from a drill ›" (`replaceId`), takes that block's place and its
+   *  id, so the row focus returns to on close is the pick's (§231 walk). A block that vanished under
+   *  the picker (another tab's autosave) makes it an ordinary insert at `at`. */
+  function insertBlock(block: PracticePlanBlock, at: number, replaceId?: string) {
     const next = plan.blocks.slice();
-    next.splice(Math.max(0, Math.min(at, next.length)), 0, block);
+    const replacing = replaceId ? next.findIndex(b => b.id === replaceId) : -1;
+    if (replacing >= 0) next[replacing] = { ...block, id: replaceId! };
+    else next.splice(Math.max(0, Math.min(at, next.length)), 0, block);
     setBlocks(next);
     /* Lands SHUT (owner ask, 2026-09-15, revising the earlier "opens in place" call) — the sheet
        the coach just closed showed the drill's full teaching, setup and equipment a breath ago;
@@ -3440,8 +3471,28 @@ export default function PracticePlanEditor({
   /* The station modal's target, resolved the same way — gone means closed. */
   const openStationBlock = openStation ? plan.blocks.find(b => b.id === openStation.blockId) : undefined;
   const openStationRow = openStation ? openStationBlock?.stations?.find(s => s.id === openStation.stationId) : undefined;
-  /* A station just added and still holding nothing — offers "Start from a drill ›" (S2). */
-  const openStationUntouched = !!openStationRow && !readOnly && freshStations.has(openStationRow.id) && stationIsEmpty(openStationRow);
+  /* "Start from a drill ›" (S2) — offered while the coach is still ON the station they just added
+     (`openStation.fresh`: a step away, or a close, ends it) and it is not a drill yet.
+     ⚠ NOT "while it holds nothing" (§231 walk, owner 2026-09-25: "if I start typing something by
+     accident I can't get back to loading a drill"). One stray keystroke took the door away for good.
+     It stays, and when the station holds anything the coach is ASKED first — the pick replaces the
+     whole station (name, staff, words), keeping only its place. */
+  const offerStartFromDrill = !!openStation?.fresh && !!openStationRow && !readOnly && !openStationRow.drillId && drills.length > 0;
+  const startStationFromDrill = async () => {
+    if (!openStation || !openStationRow) return;
+    // Asked when it HOLDS anything, or the coach has TYPED anything (S4's touch, counted on input):
+    // a new staff name is saved a moment after the keystrokes that asked for it (/review, §231).
+    if (!stationIsEmpty(openStationRow) || !freshStations.has(openStationRow.id)) {
+      const ok = await confirm({
+        title: 'Replace this station with a drill?',
+        message: 'The drill you pick takes this station’s place — what you’ve written here goes.',
+        confirmText: 'Choose a drill',
+        cancelText: 'Keep it',
+      });
+      if (!ok) return;
+    }
+    setDrillSheet({ kind: 'station', blockId: openStation.blockId, swapId: openStation.stationId, startFrom: true });
+  };
   /* The groups room's block, resolved the same way — and only while it still ROTATES with two or
      more stations, which is the only shape that has groups; a station deleted under the room
      (another tab's autosave) closes it rather than leaving a room with nothing to arrange. */
@@ -3622,21 +3673,32 @@ export default function PracticePlanEditor({
     kicker: nextSheetClock ? `Next · ${nextSheetClock}` : 'Next',
     meta: nextSheetBlock ? formatDuration(nextSheetBlock.duration) || null : null,
   };
-  /* K4: a block JUST added from "+ Add a block" and still blank offers the library under its title.
-     Taking it swaps the blank block for the pick — the drill sheet's own "new block" path — so
-     nothing the coach typed can be lost (there is nothing yet). */
   /* The foot of the timeline: the ghost row, or — on a phone once the plan has a block — one row (K4). */
   const canAddBlock = layout.timeline && plan.blocks.length < MAX_BLOCKS;
   const phoneAddRow = phoneSheet && !firstBlock;
-  /* ⚠ "Blank" is UNTOUCHED SINCE IT WAS ADDED, field by field — not "no title or words" (/review,
-     2026-09-23: players, staff, a length chip or coaching points set before a title were silently
-     thrown away by the swap). Every field but the id must still be what `addBlock` made, so a field
-     the block type grows later counts as work by default. */
-  const sheetIsBlank = !!sheetBlock && freshId === sheetBlock.id && isUntouchedNewBlock(sheetBlock);
-  const startSheetFromDrill = sheetIsBlank && !readOnly && (drills.length > 0 || circuits.length > 0) ? () => {
-    setBlocks(plan.blocks.filter(b => b.id !== sheetBlock!.id));
-    openBlock(null);
-    setDrillSheet({ kind: 'block', at: sheetIndex });
+  /* K4: a block JUST added from "+ Add a block" offers the library under its title — while the
+     coach is still ON it (`freshId`: a step to another block, or a close, ends it).
+     ⚠ NOT "while it is blank" (§231 walk, owner 2026-09-25 — the station's rule one level up: "if I
+     start typing something by accident I can't get back to loading a drill"). It stays, and when the
+     block holds anything the coach is ASKED first. "Blank" is still UNTOUCHED SINCE IT WAS ADDED,
+     field by field (/review, 2026-09-23: players, staff, a length chip or coaching points set before
+     a title count as work), so the question comes whenever anything at all would go.
+     ⚠ THE BLOCK STAYS until a pick lands: the picker opens OVER the sheet and the pick replaces the
+     block in place (`replaceId`). It used to delete the block on the tap, which was harmless only
+     while nothing could be lost — now a closed picker must leave the block exactly as it was. */
+  const offerSheetFromDrill = !!sheetBlock && freshId === sheetBlock.id && !readOnly && (drills.length > 0 || circuits.length > 0);
+  const startSheetFromDrill = offerSheetFromDrill ? async () => {
+    const block = sheetBlock!;
+    if (!isUntouchedNewBlock(block)) {
+      const ok = await confirm({
+        title: 'Replace this block with a drill?',
+        message: 'What you pick takes this block’s place — what you’ve written here goes.',
+        confirmText: 'Choose a drill',
+        cancelText: 'Keep it',
+      });
+      if (!ok) return;
+    }
+    setDrillSheet({ kind: 'block', at: sheetIndex, replaceId: block.id });
   } : undefined;
 
   return (
@@ -3940,7 +4002,7 @@ export default function PracticePlanEditor({
           openDoors={openDoors}
           phone
           sheet={{ walk: sheetWalk, onward: sheetOnward, onEdit, onDoneEditing }}
-          onStartFromDrill={startSheetFromDrill} />
+          onStartFromDrill={startSheetFromDrill && (() => void startSheetFromDrill())} />
       )}
 
       {/* ── A station, open as a modal (stage 3, D4) — mounted BEFORE the picker and the drill sheet
@@ -3951,9 +4013,7 @@ export default function PracticePlanEditor({
           station={openStationRow}
           readOnly={readOnly}
           focusName={!!openStation.fresh && !readOnly}
-          onStartFromDrill={openStationUntouched && drills.length > 0
-            ? () => setDrillSheet({ kind: 'station', blockId: openStation.blockId, swapId: openStation.stationId, startFrom: true })
-            : undefined}
+          onStartFromDrill={offerStartFromDrill ? () => void startStationFromDrill() : undefined}
           onTouched={() => touchStation(openStation.stationId)}
           onEdit={onEdit}
           onDoneEditing={doneEditingStation}
@@ -4061,7 +4121,7 @@ export default function PracticePlanEditor({
           circuits={openDrillSheet.kind === 'block' ? circuits : undefined}
           equipmentTags={equipmentTags}
           title={
-            openDrillSheet.kind === 'block' ? 'Add a block'
+            openDrillSheet.kind === 'block' ? (openDrillSheet.replaceId ? 'Start from a drill' : 'Add a block')
               : openDrillSheet.startFrom ? 'Start from a drill'
                 : openDrillSheet.swapId ? 'Swap this drill'
                   : 'Add a station'
@@ -4072,12 +4132,12 @@ export default function PracticePlanEditor({
                 : 'Write a station'
           }
           onPick={drill => {
-            if (openDrillSheet.kind === 'block') addBlockFromDrill(drill, openDrillSheet.at);
+            if (openDrillSheet.kind === 'block') addBlockFromDrill(drill, openDrillSheet.at, openDrillSheet.replaceId);
             else addStationFromDrill(openDrillSheet.blockId, drill, openDrillSheet.swapId);
           }}
-          onPickCircuit={openDrillSheet.kind === 'block' ? circuit => addBlockFromCircuit(circuit, openDrillSheet.at) : undefined}
-          // From inside the station being written there is nothing to "write one" into but itself.
-          onWriteOne={openDrillSheet.kind === 'station' && openDrillSheet.startFrom ? undefined : () => {
+          onPickCircuit={openDrillSheet.kind === 'block' ? circuit => addBlockFromCircuit(circuit, openDrillSheet.at, openDrillSheet.replaceId) : undefined}
+          // From inside the station or block being written there is nothing to "write one" into but itself.
+          onWriteOne={(openDrillSheet.kind === 'station' && openDrillSheet.startFrom) || (openDrillSheet.kind === 'block' && openDrillSheet.replaceId) ? undefined : () => {
             if (openDrillSheet.kind === 'block') { addBlock(); setDrillSheet(null); }
             else addBlankStation(openDrillSheet.blockId, openDrillSheet.swapId);
           }}

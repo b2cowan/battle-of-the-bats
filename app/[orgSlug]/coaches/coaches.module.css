@@ -10783,6 +10783,9 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   padding: 0.55rem 0.6rem 0.5rem; border-radius: 10px;
   border: 1px solid var(--home-line-strong, var(--border-2)); background: var(--home-paper, var(--white-05));
 }
+/* On a phone the room's foot is "+ Add a group" alone (its Done left on the §231 walk, owner
+   2026-09-25) — pinned LEFT, so it never sits where a thumb used to find Done. */
+@media (max-width: 640px) { .ppGroupsRoom .modalFooter { justify-content: flex-start; } }
 .ppGroupColPool { border-style: dashed; background: var(--home-card, var(--white-05)); }
 /* While a chip is lifted every column shows its edge; the one under the pointer fills. */
 .ppGroupCols[data-lifting='on'] .ppGroupCol { border-style: dashed; border-color: var(--text-tertiary); }
@@ -10823,7 +10826,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* G2 · a group's head: the name, its count, and a ⋯ whose 44px box overhangs a 2rem row. */
 .ppGroupHeading { flex: 1 1 auto; min-width: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
 .ppGroupHeadingCount { font-size: var(--type-support); font-weight: 500; color: var(--text-secondary); }
-.ppGroupMore { flex: 0 0 auto; margin: -0.375rem -0.45rem -0.375rem auto; }
+.ppGroupMore { flex: 0 0 auto; margin: -0.375rem 0 -0.375rem auto; }
 @media (max-width: 640px) {
   .ppGroupsRoom .ppGroupColHead { min-height: 2rem; }
   /* G3 · the chips drop their ⠿ dots and tighten their sides; tap and hold are unchanged. Two
@@ -10842,6 +10845,11 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* The shared column-heading recipe (see `.insightsTable th`) — the fourth and last of the four
    that had drifted apart. `.ppGridScroll` already scrolls, so the wider heading stays contained. */
 .ppGrid thead th {
+  /* The ⋯ sits 0.45rem into the card's right padding, its glyph on the card's edge. The HEAD
+     reaches there, not the ⋯ past the head: a ⋯ overhanging its own row is content no scroller
+     owns, which the layout sweep flags (§231 /review, 2026-09-25 — the look is unchanged). Only
+     while it HOLDS the ⋯: renaming, the head is the name box alone and keeps the card's padding. */
+  .ppGroupsRoom .ppGroupColHead:has(.ppGroupMore) { margin-right: -0.45rem; }
   font-size: var(--type-support); text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--text-secondary); font-weight: 700;
 }
@@ -11758,11 +11766,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppTlOpen.ppBlockSheetBody .input, .ppTlOpen.ppBlockSheetBody .textarea, .ppTlOpen.ppBlockSheetBody .select { background: var(--white-05); }
 .ppBlockSheetTitle .ppBlockTitle { width: 100%; font-size: var(--type-heading); font-weight: 700; }
 .ppBlockSheetFromDrill { composes: linkBtn ppQuietLink; display: inline-flex; align-items: center; gap: 0.35rem; align-self: flex-start; margin: -0.35rem 0 0; min-height: var(--tap-min, 44px); font: inherit; font-weight: 600; }
-/* The foot: the walk, then Done — at the floor (a dialog footer's buttons carry none of their own). */
-.ppBlockSheet .modalFooter { align-items: center; }
-/* The compact walk leads (the drawn "‹ 2 of 3 ›  Done"); the room's walk otherwise pushes right. */
+/* The foot: the walk ALONE, centred under the thumb (§231 walk, owner 2026-09-25 — its Done left:
+   it only closed, which the head's ← does). The room's walk otherwise pushes right. */
+.ppBlockSheet .modalFooter { align-items: center; justify-content: center; }
 .ppBlockSheet .modalFooter > nav { margin-left: 0; }
-.ppBlockSheet .modalFooter .btnPrimary { min-height: var(--tap-min, 44px); margin-left: auto; }
 /* ── PRACTICE PLANS ON A PHONE · stage 2 (owner ruling S1 · S2 · S4 = A, 2026-09-24) ──
    S1 · the stations as ONE list of rows in the block's phone sheet — RENDERED only there (the
    editor decides by the sheet), so no media query. Measured before: a 115–138px card per station
@@ -11808,6 +11815,14 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
      (owner, §227 walk 2026-09-24: "is there a reason one button has a border and the other does
      not?" — no; it was the desk's worded button, cut down). */
   .ppSheetEditDoor, .ppSheetEditDoor[data-on='on'] {
+/* ⚠ THE ROWS' FOCUS MARK IS THE LIST ROW'S (`.rowListDoor:focus-visible`) — drawn INSIDE the row.
+   The portal's global ring sits 2px OUTSIDE, so on a full-width row of a bordered list it drew a
+   second box over the list's edge (§231 walk, owner 2026-09-25: "this border … is dominating").
+   It is where focus lands when a sheet is closed by Escape or Back, and a keyboard coach needs it —
+   so it is quieted, never removed. The block list's rows are its twin and wear the same mark; the
+   add row takes the list's bottom corners so the mark follows them. */
+.ppTlClosed:focus-visible, .ppTlAddRow:focus-visible, .ppStRowDoor:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
+.ppStList .ppStRowAdd { border-radius: 0 0 9px 9px; }
     width: var(--tap-min, 44px); padding: 0; justify-content: center;
     background: none; border-color: transparent; box-shadow: none; color: var(--text-tertiary);
   }
@@ -11816,7 +11831,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 /* A drill's or a read station's name, leading the body where the typed name's box would be. */
 .ppStationName { margin: 0; font-size: var(--type-heading); font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
-/* The station form's foot is the block sheet's: the walk leads, Done at the right. */
+/* The station form's foot: on a desk the walk leads and Done sits at the right; on a phone it is
+   the block sheet's — the walk alone, centred (§231 walk, owner 2026-09-25). */
 .ppSheetFoot { align-items: center; }
 .ppSheetFoot > nav { margin-left: 0; }
 .ppSheetFoot .btnPrimary { min-height: var(--tap-min, 44px); margin-left: auto; }
@@ -11836,6 +11852,7 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppWalkNextName { font-weight: 700; overflow-wrap: anywhere; }
 .ppWalkNextMeta { font-size: var(--type-support); color: var(--text-secondary); }
 .ppWalkBack { composes: linkBtn ppQuietLink; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.2rem; min-height: var(--tap-min, 44px); font-family: inherit; font-size: var(--type-support); font-weight: 600; }
+@media (max-width: 640px) { .ppSheetFoot { justify-content: center; } }
 .ppWalkEnd { font-size: var(--type-support); color: var(--text-tertiary); padding: 0.5rem 0; }
 
 /* Marks a drill the CLUB shares. Coaches use it; only an org admin can change it. */
@@ -12060,6 +12077,11 @@ span.libCardMain { cursor: default; }
   padding: 0.08rem 0.45rem;
   white-space: nowrap;
 }
+  /* …so on a phone Tags always starts the SECOND line, at the LEFT, and the right anchor above
+     (right for the 320px docked library, where Tags ends the row) hung its menu off the phone's left
+     edge (§231 walk, owner 2026-09-25: "the tags dropdown … is opening off screen on mobile").
+     Left-anchored here, where the row always wraps. */
+  .ppDrillFilters .multiSelectPanel { left: 0; right: auto; }
 .tagReadRow { display: inline-flex; gap: 0.25rem; flex-wrap: wrap; align-items: center; }
 
 /* ══════════════════════════════════════════════════════════════════════════════

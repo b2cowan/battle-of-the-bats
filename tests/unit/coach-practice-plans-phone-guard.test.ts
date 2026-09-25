@@ -26,7 +26,8 @@ describe('blockWalk — the sheet’s walk through the plan', () => {
  *      column made of "what you're doing" and "watching for" — and no reorder pair under the clock.
  *   K2 **THE OPEN BLOCK IS A FULL-SCREEN SHEET**, the shape its own station form already had: the
  *      fields at the sheet's width (197px → 359px measured), the block's place and clock in the head,
- *      a walk to the neighbouring blocks and Done in the foot. The body is `BlockCard`'s OWN — one
+ *      a walk to the neighbouring blocks in the foot (its Done left on the §231 walk, 2026-09-25 —
+ *      the head's ← is the way back). The body is `BlockCard`'s OWN — one
  *      copy of the fields, two containers — and the timeline shows every block shut meanwhile.
  *   K3 **MOVE UP · MOVE DOWN · DELETE ON THE SHEET'S HEAD** — the pair left the gutter, which is
  *      what let the clock column narrow from 5.75rem to 5rem.
@@ -92,7 +93,7 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.equal((src.match(/<BlockCard\b/g) ?? []).length, 2, 'no third, hand-wired BlockCard');
   });
 
-  it('K2 — the sheet is a real dialog on the floor, with the walk, Done and the body keyed per block', () => {
+  it('K2 — the sheet is a real dialog on the floor, with the walk and the body keyed per block', () => {
     const sheet = fn('BlockSheet');
     assert.match(sheet, /useDialogFloor\(true, panelRef, \{/);
     assert.match(sheet, /walk: \{ prev: walk\.prev\?\.id \?\? null, next: walk\.next\?\.id \?\? null, onSelect: walk\.onSelect \}/);
@@ -101,7 +102,10 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     // pair got ~7 letters a name at 390 — and the next block is named in full at the body's end.
     assert.match(sheet, /<RoomWalkNav nav=\{walk\} compact \/>/);
     assert.match(sheet, /<WalkOnward walk=\{walk\} noun="block"/);
-    assert.match(sheet, />Done<\/button>/);
+    // §231 walk (owner 2026-09-25): NO Done in the foot — it only closed, which the head's ← does,
+    // and it sat under ✓ "Done editing", which does the opposite. One block: nothing to walk, no foot.
+    assert.doesNotMatch(sheet, />Done<\/button>/);
+    assert.match(sheet, /\{walk\.total > 1 && \(\s*<div className=\{styles\.modalFooter\}>\s*<RoomWalkNav nav=\{walk\} compact \/>\s*<\/div>/);
     assert.match(sheet, /<div key=\{bodyKey\} className=\{`\$\{styles\.ppTlOpen\} \$\{styles\.ppBlockSheetBody\}`\}>/);
     // It covers the nav as every form does, and takes it out of reach while up.
     assert.match(src, /useOverlayOpen\([^)]*!!sheetBlock\)/);
@@ -128,7 +132,7 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.ok(sheetAt > 0 && sheetAt < stationAt && sheetAt < groupsAt);
   });
 
-  it('ONE anatomy — block sheet and station form: head toggle · name first · Delete at the end · walk + Done', () => {
+  it('ONE anatomy — block sheet and station form: head toggle · name first · Delete at the end · the walk', () => {
     // Owner, §227 walk 2026-09-24: "aren't they effectively the same?" — they are now.
     const sheet = fn('BlockSheet');
     const station = fn('StationModal');
@@ -137,8 +141,12 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
       // The bin rides the head beside ✓ while writing (owner, 09-24: "so the user doesn't have to go
       // digging for the delete") — and it ASKS first, because the delete has no undo.
       assert.match(body, /\{!readOnly && \(?\s*<SheetDeleteButton label=\{label\}/, `${name}: the bin in the head, while writing`);
-      assert.match(body, /className=\{styles\.btnPrimary\} onClick=\{onClose\}>Done<\/button>/, `${name}: Done in the foot`);
     }
+    // The foot's Done: a desk's station form keeps it; on a phone neither sheet has one (§231 walk,
+    // owner 2026-09-25) — the head's ← and the back gesture are the way back.
+    assert.doesNotMatch(sheet, /onClick=\{onClose\}>Done<\/button>/, 'block sheet (phone only): no Done');
+    assert.match(station, /\{!phone && <button type="button" className=\{styles\.btnPrimary\} onClick=\{onClose\}>Done<\/button>\}/, 'station form: Done on a desk only');
+    assert.match(station, /\{\(!phone \|\| walk\.total > 1\) && \(/, 'station form: no empty foot on a phone');
     // …and the desk's open card asks the same question (owner, 2026-09-24) — no bin deletes unasked.
     assert.match(fn('BlockCard'), /\{!readOnly && !solo && <SheetDeleteButton label=\{label\} message=\{deleteMessage\} onDelete=\{onDelete\} \/>\}/);
     const bin = fn('SheetDeleteButton');
@@ -233,10 +241,28 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.match(src, /\{canAddBlock && !phoneAddRow && \(/);
   });
 
-  it('K4 — "Start from a drill" only on a new, still-blank block, and the title takes the cursor', () => {
-    assert.match(src, /const sheetIsBlank = !!sheetBlock && freshId === sheetBlock\.id && isUntouchedNewBlock\(sheetBlock\);/);
+  it('K4 — "Start from a drill" while still on the new block (asks first), the block kept until a pick; the title takes the cursor', () => {
+    // §231 walk (owner 2026-09-25, "agreed, make it match" — the station's rule one level up).
+    assert.match(src, /const offerSheetFromDrill = !!sheetBlock && freshId === sheetBlock\.id && !readOnly && \(drills\.length > 0 \|\| circuits\.length > 0\);/);
+    assert.doesNotMatch(src, /sheetIsBlank/, 'no longer "while it is blank"');
+    const start = src.slice(src.indexOf('const startSheetFromDrill = offerSheetFromDrill ? async () => {'), src.indexOf("setDrillSheet({ kind: 'block', at: sheetIndex, replaceId: block.id });"));
+    assert.ok(start.length > 0);
+    assert.match(start, /if \(!isUntouchedNewBlock\(block\)\) \{\s*const ok = await confirm\(\{/);
+    assert.match(start, /if \(!ok\) return;/);
+    // ⚠ The block is NOT removed on the tap — a closed picker leaves it exactly as it was…
+    assert.doesNotMatch(start, /setBlocks\(|openBlock\(null\)/);
+    // …and the pick takes its place, keeping its id, never counted against the block limit.
+    const body = fn('PracticePlanEditor');
+    const insert = body.slice(body.indexOf('function insertBlock('), body.indexOf('function moveBlockTo('));
+    assert.match(insert, /if \(replacing >= 0\) next\[replacing\] = \{ \.\.\.block, id: replaceId! \};/);
+    // …only while that block is still THERE (/review): a vanished one makes the pick an insert, capped.
+    assert.match(body, /if \(!replacesABlock\(replaceId\) && plan\.blocks\.length >= MAX_BLOCKS\) \{ setDrillSheet\(null\); return; \}/);
+    assert.match(fn('replacesABlock'), /return !!replaceId && plan\.blocks\.some\(b => b\.id === replaceId\);/);
+    assert.match(src, /addBlockFromDrill\(drill, openDrillSheet\.at, openDrillSheet\.replaceId\)/);
+    assert.match(src, /addBlockFromCircuit\(circuit, openDrillSheet\.at, openDrillSheet\.replaceId\)/);
+    assert.match(src, /\(openDrillSheet\.kind === 'block' && openDrillSheet\.replaceId\) \? undefined/, 'no "Write a block" from inside the block');
     // "Blank" is every field untouched — the /review data-loss finding: players, staff or a length
-    // set before a title must never be discarded by the swap.
+    // set before a title are work, so they are ASKED about before the swap.
     const blank = fn('isUntouchedNewBlock');
     assert.match(blank, /Object\.entries\(block\)\.every/);
     assert.match(blank, /d\.minutes === DEFAULT_BLOCK_MINUTES/);
@@ -252,7 +278,12 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.ok(eyebrow.length > 0);
     assert.doesNotMatch(eyebrow, /text-transform/, 'the eyebrow carries a clock — "P.M." is not the house spelling');
     assert.match(css, /\.ppTlOpen\.ppBlockSheetBody \{ margin: 0; border: 0; border-radius: 0; background: none; \}/);
-    assert.match(css, /\.ppBlockSheet \.modalFooter \.btnPrimary \{ min-height: var\(--tap-min, 44px\);/);
+    // The foot is the walk alone, centred; the Done it styled is gone (§231 walk).
+    assert.match(css, /\.ppBlockSheet \.modalFooter \{ align-items: center; justify-content: center; \}/);
+    assert.doesNotMatch(css, /\.ppBlockSheet \.modalFooter \.btnPrimary/);
+    // The rows' focus mark is the list row's, INSIDE the row — the global ring drew a second box
+    // round the station list's edge (§231 walk, owner 2026-09-25). Quieted, never removed.
+    assert.match(css, /\.ppTlClosed:focus-visible, \.ppTlAddRow:focus-visible, \.ppStRowDoor:focus-visible \{ outline: 2px solid var\(--primary-light\); outline-offset: -2px; \}/);
   });
 });
 
@@ -312,13 +343,42 @@ describe('practice plans on a phone · stage 2 (S1 · S2 · S4)', () => {
     assert.match(src, /focusName=\{!!openStation\.fresh && !readOnly\}/);
   });
 
-  it('S2 — "Start from a drill ›" only while the new station holds nothing; the pick keeps its place; no "Write one" there', () => {
-    assert.match(src, /const openStationUntouched = !!openStationRow && !readOnly && freshStations\.has\(openStationRow\.id\) && stationIsEmpty\(openStationRow\);/);
-    assert.match(src, /onStartFromDrill=\{openStationUntouched && drills\.length > 0/);
+  it('S2 — "Start from a drill ›" while still on the new station, typed-on or not (asks first); the pick keeps its place; no "Write one" there', () => {
+    // §231 walk (owner 2026-09-25): "if I start typing something by accident I can't get back to
+    // loading a drill". The door stays while the coach is ON the station they just added…
+    assert.match(src, /const offerStartFromDrill = !!openStation\?\.fresh && !!openStationRow && !readOnly && !openStationRow\.drillId && drills\.length > 0;/);
+    assert.doesNotMatch(src, /openStationUntouched/, 'no longer "while it holds nothing"');
+    assert.match(src, /onStartFromDrill=\{offerStartFromDrill \? \(\) => void startStationFromDrill\(\) : undefined\}/);
+    // …and asks before the pick replaces anything the station holds.
+    const start = src.slice(src.indexOf('const startStationFromDrill = async () => {'), src.indexOf('setDrillSheet({ kind: \'station\', blockId: openStation.blockId, swapId: openStation.stationId, startFrom: true });'));
+    assert.ok(start.length > 0);
+    // Holds anything, OR typed anything (the touch is counted on input — a new staff name saves late).
+    assert.match(start, /if \(!stationIsEmpty\(openStationRow\) \|\| !freshStations\.has\(openStationRow\.id\)\) \{\s*const ok = await confirm\(\{/);
+    assert.match(start, /if \(!ok\) return;/);
     assert.match(src, /swapId: openStation\.stationId, startFrom: true/);
-    assert.match(src, /onWriteOne=\{openDrillSheet\.kind === 'station' && openDrillSheet\.startFrom \? undefined/);
+    assert.match(src, /onWriteOne=\{\(openDrillSheet\.kind === 'station' && openDrillSheet\.startFrom\) \|\| \(openDrillSheet\.kind === 'block' && openDrillSheet\.replaceId\) \? undefined/);
     // The swap path keeps the ORIGINAL id — the rotation's keys and the station's place hold.
     assert.match(fn('PracticePlanEditor'), /s\.id === swapId \? \{ \.\.\.fresh, id: s\.id \} : s/);
+  });
+
+  it('§231 walk — a station deleted from its screen goes back to the block, in ONE write', () => {
+    // Owner 2026-09-25: "when I delete a station I should be navigated back to the block viewing the
+    // stations, not navigated back to another station".
+    const body = fn('PracticePlanEditor');
+    const del = body.slice(body.indexOf('const deleteStation = '), body.indexOf('function addBlock()'));
+    assert.ok(del.length > 0);
+    assert.match(del, /setOpenStation\(null\);/);
+    assert.doesNotMatch(del, /neighbour|stationWalk/, 'no step to another station');
+    // A delete is a close: S4's removal runs on the SAME pass, never a second read of this render's plan.
+    assert.match(del, /const next = dropEmptyStations\(collapseSoleStation\(\{ \.\.\.block, stations: remaining \}\), freshStations\);/);
+    assert.doesNotMatch(del, /dropFreshEmptyStations|closeStation\(/);
+  });
+
+  it('§231 walk — on a phone the drill picker\'s Tags menu opens from the LEFT (Tags starts the wrapped line)', () => {
+    const phoneBlock = css.slice(css.indexOf('.ppDrillFilters .scoutSearch { flex-basis: 100%; }'), css.indexOf('}', css.indexOf('.ppDrillFilters .multiSelectPanel { left: 0; right: auto; }')) + 1);
+    assert.match(phoneBlock, /\.ppDrillFilters \.multiSelectPanel \{ left: 0; right: auto; \}/);
+    // The desk keeps its right anchor (the 320px docked library, where Tags ends the row).
+    assert.match(css, /\.ppDrillFilters \.multiSelectPanel \{ left: auto; right: 0; \}/);
   });
 
   it('S4 — on close, every fresh station still holding nothing goes; a step removes nothing; the collapse brings the block home', () => {

@@ -304,14 +304,21 @@ export default function PracticeGroupsRoom({
           </DndContext>
         </div>
 
-        <div className={styles.modalFooter}>
-          {groups.length < MAX_GROUPS ? (
-            <button type="button" className={styles.ppAddInline} onClick={addGroup}>
-              <Plus size={13} aria-hidden /> Add a group
-            </button>
-          ) : <span />}
-          <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>
-        </div>
+        {/* ⚠ No "Done" on a phone (§231 walk, owner 2026-09-25 — "remove the done from the group
+            screen"): it only closed the room, which the head's ← and the back gesture already do; the
+            groups save as they change. A desk keeps it beside its ×. On a phone the foot is
+            "+ Add a group" alone, pinned LEFT so it never lands where a thumb used to find Done — and
+            a room at its limit has no foot. */}
+        {(!phone || groups.length < MAX_GROUPS) && (
+          <div className={styles.modalFooter}>
+            {groups.length < MAX_GROUPS ? (
+              <button type="button" className={styles.ppAddInline} onClick={addGroup}>
+                <Plus size={13} aria-hidden /> Add a group
+              </button>
+            ) : <span />}
+            {!phone && <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>}
+          </div>
+        )}
       </div>
     </div>
   );
