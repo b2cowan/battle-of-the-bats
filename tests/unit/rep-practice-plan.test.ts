@@ -17,7 +17,7 @@ import {
   settleBlockKit, settleBlockPeople, settlePlanLevels,
   describeRounds, rotationByStation, stationWalk,
   movePlayerToGroup, unplacedPlayers,
-  splitBlockIntoStations, collapseSoleStation,
+  splitBlockIntoStations, collapseSoleStation, dropEmptyStations, stationIsEmpty,
   arrangeGroup, forgetArrangement, settleArrangements,
   sanitizePracticePlan,
   totalPlannedMinutes,
@@ -534,12 +534,66 @@ describe('D13 — "+ Stations" on a written block makes TWO; binning back to one
   });
 
   it('…but NOTHING merges or drops: intro words on the block, a drill, a setup or a note keep the station', () => {
-    const base: PracticePlan['blocks'][number] = { id: 'b1', title: 'X', duration: { minutes: 15 }, stations: [{ id: 's1', name: 'S', description: 'words' }] };
+    // The survivor is named after the block (D13's own station 1), so each case below stands on its
+    // own reason — a mismatched name would keep the station by itself and hide a broken check.
+    const base: PracticePlan['blocks'][number] = { id: 'b1', title: 'X', duration: { minutes: 15 }, stations: [{ id: 's1', name: 'X', description: 'words' }] };
+    assert.equal(collapseSoleStation(base).stations, undefined, 'the control: with nothing else held, it comes home');
     assert.equal(collapseSoleStation({ ...base, goal: 'intro' }).stations?.length, 1);
     assert.equal(collapseSoleStation({ ...base, stations: [{ ...base.stations![0], drillId: 'd1' }] }).stations?.length, 1);
     assert.equal(collapseSoleStation({ ...base, stations: [{ ...base.stations![0], setup: 'cones' }] }).stations?.length, 1);
     assert.equal(collapseSoleStation({ ...base, stations: [{ ...base.stations![0], note: 'tonight' }] }).stations?.length, 1);
     assert.equal(collapseSoleStation({ ...base, stations: [base.stations![0], { id: 's2', name: 'T' }] }).stations?.length, 2, 'two stations are not a collapse');
+  });
+
+  it('…and the station\'s NAME is a word too: a renamed survivor stays, an untitled block takes the name (stage 2 · S4)', () => {
+    const renamed: PracticePlan['blocks'][number] = { id: 'b1', title: 'Skills', duration: { minutes: 15 }, stations: [{ id: 's1', name: 'Ladder' }] };
+    assert.equal(collapseSoleStation(renamed).stations?.length, 1, '"Ladder" is not what the title says — the station stays');
+    const untitled: PracticePlan['blocks'][number] = { id: 'b1', title: '', duration: { minutes: 15 }, stations: [{ id: 's1', name: 'Ladder', description: 'Quick feet.' }] };
+    const out = collapseSoleStation(untitled);
+    assert.equal(out.stations, undefined);
+    assert.equal(out.title, 'Ladder', 'the name the coach typed becomes the block\'s title');
+    assert.equal(out.description, 'Quick feet.');
+    const same: PracticePlan['blocks'][number] = { id: 'b1', title: 'Skills', duration: { minutes: 15 }, stations: [{ id: 's1', name: 'Skills' }] };
+    assert.equal(collapseSoleStation(same).stations, undefined, 'D13\'s own station 1 — named after the block — still comes home');
+  });
+
+  it('S4 — an empty station added this visit goes; one holding a word, a drill or kit stays', () => {
+    assert.equal(stationIsEmpty({ id: 's', name: '' }), true);
+    assert.equal(stationIsEmpty({ id: 's', name: '  ', staff: [], note: ' ' }), true, 'blank strings and empty lists are unset');
+    assert.equal(stationIsEmpty({ id: 's', name: 'Ladder' }), false);
+    assert.equal(stationIsEmpty({ id: 's', name: '', drillId: 'd1' }), false);
+    assert.equal(stationIsEmpty({ id: 's', name: '', equipmentTagIds: ['cones'] }), false, 'kit the settle pass moved on keeps it');
+
+    const three: PracticePlan['blocks'][number] = { id: 'b1', title: 'Skills', duration: { minutes: 45 },
+      stations: [{ id: 'a', name: 'A' }, { id: 'b', name: 'B' }, { id: 'new', name: '' }] };
+    assert.deepEqual(dropEmptyStations(three, new Set(['new'])).stations?.map(s => s.id), ['a', 'b']);
+    assert.equal(dropEmptyStations(three, new Set()), three, 'not added this visit → left alone, the same block back');
+    const named = { ...three, stations: [...three.stations!.slice(0, 2), { id: 'new', name: 'C' }] };
+    assert.equal(dropEmptyStations(named, new Set(['new'])), named, 'a name keeps it');
+
+    // "+ Stations" on a written block, the new second station left empty → the block as it was.
+    const written: PracticePlan['blocks'][number] = { id: 'b1', title: 'Warm-up', duration: { minutes: 15 }, description: 'Jog.' };
+    const split = splitBlockIntoStations(written, { id: 'new', name: '' }, ids);
+    const home = dropEmptyStations(split, new Set(split.stations!.map(s => s.id)));
+    assert.equal(home.stations, undefined);
+    assert.equal(home.description, 'Jog.');
+    assert.equal(home.title, 'Warm-up');
+
+    // "+ Stations" on an EMPTY block, both new blanks left → no stations at all.
+    const blankBlock: PracticePlan['blocks'][number] = { id: 'b2', title: '', duration: { minutes: 15 } };
+    const two = splitBlockIntoStations(blankBlock, { id: 'new', name: '' }, ids);
+    assert.equal(dropEmptyStations(two, new Set(two.stations!.map(s => s.id))).stations, undefined);
+
+    // A ROTATING block's players: "+ Stations" on Warm-up's six deals them into groups; leaving the
+    // new station empty brings every one of them home, in order, once the settle pass runs.
+    const players = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
+    const warm: PracticePlan['blocks'][number] = { id: 'w', title: 'Warm-up', duration: { minutes: 15 }, description: 'Jog.', playerIds: players };
+    const settled = settlePlanLevels({ version: 3, blocks: [splitBlockIntoStations(warm, { id: 'new', name: '' }, ids)] } as PracticePlan).blocks[0];
+    assert.equal(settled.playerIds, undefined, 'the split moved them into the rotation');
+    const back = settlePlanLevels({ version: 3, blocks: [dropEmptyStations(settled, new Set(settled.stations!.map(s => s.id)))] } as PracticePlan).blocks[0];
+    assert.equal(back.stations, undefined);
+    assert.deepEqual(back.playerIds, players, 'every player home, in order');
+    assert.equal(back.rotation, undefined, 'no rotation left behind');
   });
 });
 

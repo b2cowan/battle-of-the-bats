@@ -11725,6 +11725,39 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* The compact walk leads (the drawn "‹ 2 of 3 ›  Done"); the room's walk otherwise pushes right. */
 .ppBlockSheet .modalFooter > nav { margin-left: 0; }
 .ppBlockSheet .modalFooter .btnPrimary { min-height: var(--tap-min, 44px); margin-left: auto; }
+/* ── PRACTICE PLANS ON A PHONE · stage 2 (owner ruling S1 · S2 · S4 = A, 2026-09-24) ──
+   S1 · the stations as ONE list of rows in the block's phone sheet — RENDERED only there (the
+   editor decides by the sheet), so no media query. Measured before: a 115–138px card per station
+   with a line for the word "Open ›"; 463px for three and the add card. A row is the block list's:
+   the name, one facts line, a chevron, the whole row the door; the grip at its LEFT while writing.
+   ⚠ No `overflow: hidden` on the list — the grip's menu renders inside the row and would be cut. */
+.ppStCols.ppStList {
+  gap: 0; border: 1px solid var(--home-line-strong, var(--border-2)); border-radius: 10px;
+  background: var(--home-card, var(--white-8));
+}
+.ppStList > .ppStCol { flex-direction: row; align-items: stretch; border: 0; border-radius: 0; background: none; }
+.ppStList > .ppStCol + .ppStCol { border-top: 1px solid var(--home-line, rgba(255,255,255,0.08)); }
+/* The grip joins the row's flow at its left edge (the column pins it to the foot's right). */
+.ppStList > .ppStCol > .ppStColMove { position: static; flex: 0 0 auto; align-self: center; }
+.ppStRowDoor {
+  display: flex; align-items: center; gap: 0.5rem; flex: 1 1 auto; min-width: 0; min-height: 3.5rem;
+  margin: 0; padding: 0.45rem 0.35rem 0.45rem 0.8rem; border: 0; background: none;
+  cursor: pointer; text-align: left; color: inherit; font: inherit;
+}
+.ppStColMove + .ppStRowDoor { padding-left: 0.1rem; }
+.ppStRowText { display: flex; flex-direction: column; gap: 0.1rem; flex: 1 1 auto; min-width: 0; }
+/* Nothing on the row is cut — a long name or a third coach wraps (S.3: a cut sentence says nothing). */
+.ppStRowName { font-size: var(--type-body); font-weight: 700; color: var(--text-primary); overflow-wrap: anywhere; }
+.ppStRowFacts { font-size: var(--type-support); color: var(--text-secondary); overflow-wrap: anywhere; }
+.ppStRowTonight { color: var(--home-amber, var(--warning)); font-weight: 600; }
+.ppStRowChevron { flex: 0 0 auto; color: var(--text-tertiary); }
+/* "+ Add a station" — one 44px row, the list's last: the block list's "+ Add a block", composed. */
+.ppStList > .ppStColAddWrap { border-top: 1px solid var(--home-line, rgba(255,255,255,0.08)); border-radius: 0 0 10px 10px; }
+.ppStRowAdd { composes: ppTlAddRow; padding: 0 0.8rem; font-size: var(--type-body); }
+/* A carried station's slots meet ON the divider: with no gap between rows, half a pixel of reach
+   puts the two halves' lines on one pixel and leaves no dead strip (the columns' reach is half a
+   0.6rem gap). */
+.ppStList .ppStColSlot[data-target='on'] { --reach: 0.5px; }
 /* THE ONE ANATOMY of the block sheet and the station form (owner, §227 walk 2026-09-24). The head's
    Edit / Done editing — the toolbar's words, at the floor, pressed-looking while editing. */
 .ppSheetEditDoor { min-height: var(--tap-min, 44px); padding-inline: 0.7rem; white-space: nowrap; flex: 0 0 auto; }

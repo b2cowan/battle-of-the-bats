@@ -260,14 +260,23 @@ async function openProgressSheet(page) {
  * hands within the day (the reorder pair on the columns, 2026-09-15). The modal names itself
  * "<station> — station N of M".
  */
-async function openCircuitStation(page) {
+/** The circuit OPEN while editing — on a phone its sheet with the stations as ONE list of rows
+ *  (practice plans on a phone, stage 2 · S1, 2026-09-24), on a desk the card with its columns. */
+async function openCircuit(page) {
   await editThePlan(page);
   const row = page.getByRole('button', { name: /^Open Skills circuit/ }).first();
-  if (await row.count() === 0) return;
+  if (await row.count() === 0) return false;
   await row.click();
-  const column = page.getByRole('button', { name: /Open ›$/ }).first();
-  await column.waitFor({ state: 'attached', timeout: 15_000 });
-  await column.click();
+  await page.locator('[data-station-door]').first().waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+  return true;
+}
+
+async function openCircuitStation(page) {
+  if (!(await openCircuit(page))) return;
+  // The station's door by its marker: the phone row says no "Open ›" (stage 2 · S1), the desk
+  // column still does — the marker is the one thing both carry (`openCircuit` waited for it).
+  await page.locator('[data-station-door]').first().click();
   await page.getByRole('dialog', { name: /station 1 of/ }).waitFor({ state: 'attached', timeout: 15_000 });
   await page.waitForTimeout(300);
 }
@@ -619,6 +628,17 @@ export const SCREENS = [
     // The blind spot stage 1's review recorded; closed at stage 2. Edited first (stage 1b): the
     // plan opens to read, and this entry is the block FORM.
     interact: editThenOpenFirstBlock,
+  },
+  {
+    // The CIRCUIT open while editing (practice plans on a phone, stage 2 · S1, 2026-09-24): on a
+    // phone the sheet with its stations as one list of rows — the grip, the facts line, "+ Add a
+    // station" — the rotation strip and the table under them; on a desk the card's columns. The
+    // station entry below measures the station's own screen on TOP of this, never this.
+    id: 'coach-practice-circuit',
+    session: 'coach',
+    path: (c) => `${team(c)}/practice/${c.practiceEventId}`,
+    ready: '[data-room="practice-plan"][data-room-state="loaded"]',
+    interact: openCircuit,
   },
   {
     // The same sheet with the CIRCUIT open and its first station's modal up (stage 3): the strip,

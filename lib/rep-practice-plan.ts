@@ -121,7 +121,8 @@ export function splitBlockIntoStations(
  * activity, no stations). Nothing merges and nothing is dropped: if the block has intro words of
  * its own, or the survivor is a drill (its words are the drill's, read-only), or the survivor
  * holds something the block has no field for (a setup, a "just for tonight" note, a rotation
- * note), the station STAYS as the block's one station — D1's shape. "Nothing typed vanishes"
+ * note, a name the block's title does not already say), the station STAYS as the block's one
+ * station — D1's shape. "Nothing typed vanishes"
  * (D8) decides it, not tidiness. Kit and people are carried up here so the settle pass finds
  * them at home, as it does whenever the last station goes.
  */
@@ -147,6 +148,32 @@ export function blockOwnPeople(block: Pick<PracticePlanBlock, 'stations' | 'play
   return (count === 1 ? block.stations![0].playerIds : block.playerIds) ?? [];
 }
 
+/** True while a station holds NOTHING — an id and a blank name, every other field unset (an empty
+ *  list or a blank string counts as unset). A field the station type grows later counts as work by
+ *  default. Kit or people the settle pass moved onto a station make it not empty. */
+export function stationIsEmpty(station: PracticeStation): boolean {
+  return Object.entries(station).every(([key, value]) => key === 'id'
+    || value == null
+    || (typeof value === 'string' && !value.trim())
+    || (Array.isArray(value) && value.length === 0));
+}
+
+/**
+ * Practice plans on a phone, stage 2 · S4 (owner ruling 2026-09-24): the stations in `ids` — the
+ * ones the coach added this visit — that still hold nothing are removed when the station's screen
+ * closes. One left → `collapseSoleStation` (D13's reverse: a "+ Stations" left empty puts the block
+ * back as it was); none left → the block has no stations. The same block back when nothing goes.
+ */
+export function dropEmptyStations(block: PracticePlanBlock, ids: ReadonlySet<string>): PracticePlanBlock {
+  const stations = block.stations ?? [];
+  const remaining = stations.filter(s => !(ids.has(s.id) && stationIsEmpty(s)));
+  if (remaining.length === stations.length) return block;
+  if (remaining.length > 0) return collapseSoleStation({ ...block, stations: remaining });
+  const home = { ...block };
+  delete home.stations;
+  return home;
+}
+
 export function collapseSoleStation(block: PracticePlanBlock): PracticePlanBlock {
   const stations = block.stations ?? [];
   if (stations.length !== 1) return block;
@@ -155,8 +182,17 @@ export function collapseSoleStation(block: PracticePlanBlock): PracticePlanBlock
   // A setup, a "just for tonight" note, a rotation note or pre-tag kit NAMES have no field on the
   // block — the station stays rather than lose a word of them.
   if (s.setup?.trim() || s.note?.trim() || s.rotationNote?.trim() || s.equipment?.length) return block;
+  // The station's NAME is a word too. D13 names station 1 after the block, so the usual survivor's
+  // name is the title it came from; one the coach renamed ("Ladder" on a block titled "Skills")
+  // keeps the station, and on an UNTITLED block the name becomes the title (stage 2 on a phone:
+  // an untouched new station leaving a block of two collapses it, and the name the coach typed
+  // into station 1 must not go with it — practice plans on a phone, stage 2 · S4, 2026-09-24).
+  const name = s.name.trim();
+  const title = block.title.trim();
+  if (name && title && name !== title) return block;
   const next: PracticePlanBlock = { ...block };
   delete next.stations;
+  if (name && !title) next.title = name;
   if (s.description?.trim()) next.description = s.description;
   if (s.goal?.trim()) next.goal = s.goal;
   const points = (s.coachingPoints ?? []).filter(p => p.trim());

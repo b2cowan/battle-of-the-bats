@@ -194,9 +194,13 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.match(grip, /<CoachToolbarMenu label=\{`Move \$\{label\}`\} variant="glyph" icon=\{<GripVertical/);
     assert.match(grip, /label="Move earlier" disabled=\{index === 0\}/);
     assert.match(grip, /label="Move later" disabled=\{index === count - 1\}/);
-    // The arrows are gone — one move control per column, never a pair beside a grip.
+    // The arrows are gone — one move control per column, never a pair beside a grip. (A ChevronRight
+    // IS allowed since stage 2: the phone row's "opens" mark, the block row's own — not a move.)
     const cols = fn('StationColumns');
-    assert.doesNotMatch(cols, /ChevronLeft|ChevronRight|ppMoveBtn/);
+    assert.doesNotMatch(cols, /ChevronLeft|ChevronUp|ChevronDown|ppMoveBtn|Move \$\{label\} (earlier|later)/);
+    const chevrons = cols.match(/<ChevronRight[^>]*>/g) ?? [];
+    assert.equal(chevrons.length, 1, 'one ChevronRight — the phone row\'s "opens" mark, never a move arrow');
+    assert.match(chevrons[0], /className=\{styles\.ppStRowChevron\}/);
     assert.match(cols, /<StationSlot blockId=\{blockId\} index=\{i\} side="before" \/>/);
     assert.match(cols, /<StationSlot blockId=\{blockId\} index=\{i \+ 1\} side="after" \/>/);
     // A slot lights for a station of THIS block, never beside its own place.
@@ -223,7 +227,9 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     // Closing the sheet lands focus on the block last shown, else an add row — both add rows carry
     // the marker, or deleting the ONLY block strands focus on <body> (/review, 2026-09-23).
     assert.equal((src.match(/data-pp-add-row onClick=\{addBlock\}/g) ?? []).length, 2);
-    assert.match(src, /document\.getElementById\(`block-\$\{id\}`\)\?\.querySelector<HTMLElement>\('button'\)/);
+    const blockRow = fn('blockRowFor');
+    assert.match(blockRow, /document\.getElementById\(`block-\$\{blockId\}`\)\?\.querySelector<HTMLElement>\('button'\)/);
+    assert.match(blockRow, /\?\? document\.querySelector<HTMLElement>\('\[data-pp-add-row\]'\)/);
     assert.match(src, /\{canAddBlock && !phoneAddRow && \(/);
   });
 
@@ -247,5 +253,94 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.doesNotMatch(eyebrow, /text-transform/, 'the eyebrow carries a clock — "P.M." is not the house spelling');
     assert.match(css, /\.ppTlOpen\.ppBlockSheetBody \{ margin: 0; border: 0; border-radius: 0; background: none; \}/);
     assert.match(css, /\.ppBlockSheet \.modalFooter \.btnPrimary \{ min-height: var\(--tap-min, 44px\);/);
+  });
+});
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════
+ * PRACTICE PLANS ON A PHONE · STAGE 2 — stations inside a block (owner ruling S1 · S2 · S4 = A,
+ * 2026-09-24; plan §6e)
+ *
+ *   S1 **ON A PHONE A STATION IS ONE ROW** in the block's sheet: the name, one facts line (who runs
+ *      it · "Just for tonight" when it has a note), a chevron, the whole row the door — never the
+ *      desk column's "Open ›" line or its cut first line of words. The grip at the row's LEFT.
+ *   S2 **ADDING A STATION OPENS IT**, the cursor in its name: on a phone "+ Add a station" and
+ *      "+ Stations" skip the chooser; at every width "Write a station" opens what it makes. The
+ *      library is "Start from a drill ›" inside, while the new station holds nothing — the pick
+ *      takes its place and keeps its id.
+ *   S4 **A NEW STATION LEFT EMPTY GOES** when its screen closes — measured: a blank station
+ *      survives a reload otherwise, counted in the list, skipped by the rotation.
+ * ══════════════════════════════════════════════════════════════════════════════════════════
+ */
+describe('practice plans on a phone · stage 2 (S1 · S2 · S4)', () => {
+  it('S1 — the phone row: name, one facts line, chevron, whole-row door; the grip first; no "Open ›"', () => {
+    const cols = fn('StationColumns');
+    const phoneBranch = cols.slice(cols.indexOf('if (phone) {'), cols.indexOf('return (\n    <div className={styles.ppStCols}>'));
+    assert.ok(phoneBranch.length > 0, 'a phone branch exists');
+    assert.match(phoneBranch, /className=\{`\$\{styles\.ppStCols\} \$\{styles\.ppStList\}`\}/);
+    assert.doesNotMatch(phoneBranch, /Open ›|ppStColFirst|station\.description/, 'no "Open ›" line and no cut first line of words');
+    assert.match(phoneBranch, /<span className=\{styles\.ppStRowTonight\}>\{DOOR_LABELS\.note\}<\/span>/, 'the note shows as its field\'s own label, not its sentence');
+    assert.match(phoneBranch, /who\.join\(', '\)/, 'every name who runs it');
+    assert.match(phoneBranch, /<ChevronRight size=\{18\} aria-hidden className=\{styles\.ppStRowChevron\} \/>/);
+    // The handles (slots + grip) come BEFORE the door in the row — its left edge; the desk column
+    // keeps them after its door, at the foot.
+    assert.ok(phoneBranch.indexOf('{handles}') < phoneBranch.indexOf('className={styles.ppStRowDoor}'), 'grip left of the door');
+    const deskBranch = cols.slice(cols.indexOf('return (\n    <div className={styles.ppStCols}>'));
+    assert.ok(deskBranch.indexOf('className={styles.ppStColDoor}') < deskBranch.indexOf('{handles}'), 'the desk grip stays at the foot');
+    assert.equal((cols.match(/<StationGrip /g) ?? []).length, 1, 'one grip, built once for both shapes');
+    assert.match(phoneBranch, /\+ Add a station/);
+    // Only the block's PHONE sheet asks for rows — never the desk card, never the circuit editor.
+    assert.match(src, /phone=\{!!sheet\}/);
+  });
+
+  it('S1 — the stylesheet: one bordered list, rows touching, slots meeting on the divider, the grip in the flow', () => {
+    assert.match(css, /\.ppStCols\.ppStList \{\s*gap: 0;/);
+    assert.match(css, /\.ppStList > \.ppStCol > \.ppStColMove \{ position: static;/);
+    assert.match(css, /\.ppStList \.ppStColSlot\[data-target='on'\] \{ --reach: 0\.5px; \}/);
+    const list = css.slice(css.indexOf('.ppStCols.ppStList {'), css.indexOf('}', css.indexOf('.ppStCols.ppStList {')));
+    assert.doesNotMatch(list, /overflow/, 'the grip\'s menu renders inside a row — the list must never clip it');
+    assert.doesNotMatch(css.slice(css.indexOf('.ppStRowName {'), css.indexOf('}', css.indexOf('.ppStRowName {'))), /ellipsis|nowrap/, 'nothing on the row is cut');
+  });
+
+  it('S2 — adding opens the station it made, at every width; on a phone there is no chooser first', () => {
+    assert.match(src, /setOpenStation\(\{ blockId, stationId: made\.id, fresh: true \}\);/);
+    assert.match(src, /onAddStation: \(swapId\?: string\) => \(!swapId && phoneSheet\s*\? addBlankStation\(block\.id\)/);
+    // The cursor in the name — after the floor, so it survives the dev build's double mount.
+    const modal = fn('StationModal');
+    assert.ok(modal.indexOf('useDialogFloor(') < modal.indexOf('if (focusName) nameRef.current?.focus();'), 'the name focus runs after the floor');
+    assert.match(modal, /<input ref=\{nameRef\}/);
+    assert.match(src, /focusName=\{!!openStation\.fresh && !readOnly\}/);
+  });
+
+  it('S2 — "Start from a drill ›" only while the new station holds nothing; the pick keeps its place; no "Write one" there', () => {
+    assert.match(src, /const openStationUntouched = !!openStationRow && !readOnly && freshStations\.has\(openStationRow\.id\) && stationIsEmpty\(openStationRow\);/);
+    assert.match(src, /onStartFromDrill=\{openStationUntouched && drills\.length > 0/);
+    assert.match(src, /swapId: openStation\.stationId, startFrom: true/);
+    assert.match(src, /onWriteOne=\{openDrillSheet\.kind === 'station' && openDrillSheet\.startFrom \? undefined/);
+    // The swap path keeps the ORIGINAL id — the rotation's keys and the station's place hold.
+    assert.match(fn('PracticePlanEditor'), /s\.id === swapId \? \{ \.\.\.fresh, id: s\.id \} : s/);
+  });
+
+  it('S4 — on close, every fresh station still holding nothing goes; a step removes nothing; the collapse brings the block home', () => {
+    const body = fn('PracticePlanEditor');
+    const drop = body.slice(body.indexOf('const dropFreshEmptyStations = '), body.indexOf('const closeStation = () => {'));
+    // The rule itself is the library's, tested by behaviour in rep-practice-plan.test.ts.
+    assert.match(drop, /const next = dropEmptyStations\(block, freshStations\);/);
+    // Never while reading — the page's onChange is a no-op there, and the ids would be forgotten.
+    assert.match(drop, /if \(readOnly \|\| freshStations\.size === 0\) return undefined;/);
+    assert.match(src, /onClose=\{closeStation\}/);
+    // "Done editing" on the station's head drops first, while the plan can still change.
+    assert.match(src, /onDoneEditing=\{doneEditingStation\}/);
+    // Typing anything on a station makes it the coach's — a staff name still being created keeps it.
+    assert.match(fn('StationModal'), /styles\.ppStationBody\}`\} onInput=\{onTouched\}>/);
+    assert.match(src, /onTouched=\{\(\) => touchStation\(openStation\.stationId\)\}/);
+    assert.match(src, /onStep=\{stationId => setOpenStation\(\{ blockId: openStation\.blockId, stationId \}\)\}/, 'a step is only a step');
+  });
+
+  it('focus after a block or station screen closes: ONE rule — the thing last shown, else the add control', () => {
+    const hook = fn('useFocusLastShownOnClose');
+    assert.match(hook, /if \(!dialog\.contains\(target\)\) return;/, 'yields to a dialog that took over, whatever order the dialogs mount in');
+    assert.equal((src.match(/useFocusLastShownOnClose\(/g) ?? []).length, 3, 'the hook and its two callers');
+    assert.match(fn('stationDoorFor'), /\[data-pp-add-station=/);
   });
 });

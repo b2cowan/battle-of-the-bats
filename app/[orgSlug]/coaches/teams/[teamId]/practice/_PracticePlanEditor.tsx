@@ -11,10 +11,10 @@ import {
 import {
   MAX_BLOCKS, MAX_COACHING_POINTS, MAX_DESCRIPTION_LEN, MAX_MINUTES, MAX_SHORT_TEXT_LEN,
   MAX_STATIONS_PER_BLOCK, MAX_TEXT_LEN, MAX_TITLE_LEN,
-  arrangeGroup, blockAsksForTeaching, blockRotates, collapseSoleStation, computeRotation, defaultIntervalMinutes,
+  arrangeGroup, blockAsksForTeaching, blockRotates, collapseSoleStation, computeRotation, defaultIntervalMinutes, dropEmptyStations,
   describeRounds, describeSplit, forgetArrangement, formatDuration, newPracticePlanId, practiceKitBag,
   resolveStationTeaching, mergedTagNames, rotationByStation, settlePlanLevels, splitBlockIntoStations, stationLabel,
-  soleStationOf, stationWalk, blockWalk, tagNamesById, unplacedPlayers, walkBlockClocks,
+  soleStationOf, stationIsEmpty, stationWalk, blockWalk, tagNamesById, unplacedPlayers, walkBlockClocks,
   type BlockClock, type PracticePlan, type PracticePlanBlock,
   type PracticeRotation, type PracticeStation,
 } from '@/lib/rep-practice-plan';
@@ -492,11 +492,13 @@ function YouMark() {
 }
 
 function StationColumns({
-  blockId, stations, readOnly, staffTags, mineStations, onOpen, onMove, onAdd,
+  blockId, stations, readOnly, phone = false, staffTags, mineStations, onOpen, onMove, onAdd,
 }: {
   blockId: string;
   stations: PracticeStation[];
   readOnly: boolean;
+  /** The block's phone sheet — the stations as ONE list of rows (practice plans on a phone, S1). */
+  phone?: boolean;
   staffTags: PickableTag[];
   /** The reader's own stations, by identity — the "you" mark and the olive edge. */
   mineStations: ReadonlySet<string>;
@@ -504,41 +506,97 @@ function StationColumns({
   onMove: (stationId: string, delta: number) => void;
   onAdd: () => void;
 }) {
+  /* ⚠ ON A PHONE A STATION IS ONE ROW (practice plans on a phone, stage 2 · S1 = A, owner
+     2026-09-24). The desk's column, stacked, was a 115–138px card whose last line held only the
+     word "Open ›"; three stations and the add card took 463px of a 697px sheet and pushed the
+     rotation, the groups and "Edit groups ›" under the bar. The row is the block list's: the name,
+     then ONE line of facts — who runs it (every name; it wraps, never "…") and "Just for tonight"
+     (the note field's own label) when there is a note — a chevron, the whole row the door. The
+     note's WORDS are one tap in, on the station's screen. The grip sits at the row's LEFT edge
+     while writing, the side the block list keeps its own. Decided in JS by the sheet's `phone`:
+     the row and the column differ in structure (the grip's place, which lines exist). */
+  /* One reading of each station for both shapes: its facts, its name, and its drag handles — the
+     column's two halves as landing slots (so a slot is never a 10px strip) and the grip. */
+  const cells = stations.map((station, i) => {
+    const label = stationLabel(station, i);
+    const mine = mineStations.has(station.id);
+    const nameClass = phone ? styles.ppStRowName : styles.ppStColName;
+    return {
+      station, mine,
+      who: mergedTagNames(station.staff, station.staffTagIds, staffTags),
+      name: (
+        <span className={station.name.trim() ? nameClass : `${nameClass} ${styles.ppTlUntitled}`}>
+          {label}{mine && <YouMark />}
+        </span>
+      ),
+      handles: !readOnly && (<>
+        <StationSlot blockId={blockId} index={i} side="before" />
+        <StationSlot blockId={blockId} index={i + 1} side="after" />
+        <StationGrip blockId={blockId} stationId={station.id} index={i} count={stations.length} label={label}
+          onMove={delta => onMove(station.id, delta)} />
+      </>),
+    };
+  });
+  const canAdd = !readOnly && stations.length < MAX_STATIONS_PER_BLOCK;
+  if (phone) {
+    return (
+      <div className={`${styles.ppStCols} ${styles.ppStList}`}>
+        {cells.map(({ station, mine, who, name, handles }) => {
+          const tonight = !!station.note?.trim();
+          return (
+            <div key={station.id} id={`station-${station.id}`} className={styles.ppStCol} data-mine={mine ? 'mine' : undefined}>
+              {handles}
+              {/* Named by its content with an "Open" verb in front — the block row's rule. */}
+              <button type="button" className={styles.ppStRowDoor} data-station-door aria-haspopup="dialog" onClick={() => onOpen(station.id)}>
+                <span className="sr-only">Open </span>
+                <span className={styles.ppStRowText}>
+                  {name}
+                  {(who.length > 0 || tonight) && (
+                    <span className={styles.ppStRowFacts}>
+                      {who.join(', ')}
+                      {who.length > 0 && tonight && ' · '}
+                      {tonight && <span className={styles.ppStRowTonight}>{DOOR_LABELS.note}</span>}
+                    </span>
+                  )}
+                </span>
+                <ChevronRight size={18} aria-hidden className={styles.ppStRowChevron} />
+              </button>
+            </div>
+          );
+        })}
+        {canAdd && (
+          <StationDropTarget blockId={blockId} className={styles.ppStColAddWrap}>
+            {() => (
+              <button type="button" className={styles.ppStRowAdd} data-pp-add-station={blockId} onClick={onAdd}>
+                + Add a station
+              </button>
+            )}
+          </StationDropTarget>
+        )}
+      </div>
+    );
+  }
   return (
     <div className={styles.ppStCols}>
-      {stations.map((station, i) => {
-        const who = mergedTagNames(station.staff, station.staffTagIds, staffTags);
-        const label = stationLabel(station, i);
-        const mine = mineStations.has(station.id);
-        return (
-          <div key={station.id} id={`station-${station.id}`} className={styles.ppStCol} data-mine={mine ? 'mine' : undefined}>
-            <button type="button" className={styles.ppStColDoor} onClick={() => onOpen(station.id)}>
-              <span className={station.name.trim() ? styles.ppStColName : `${styles.ppStColName} ${styles.ppTlUntitled}`}>
-                {label}{mine && <YouMark />}
-              </span>
-              {who.length > 0 && <span className={styles.ppStColLine}>{who.join(' · ')}</span>}
-              {station.note && <span className={styles.ppStColNote}>Tonight: {station.note}</span>}
-              {station.description && <span className={styles.ppStColFirst}>{station.description}</span>}
-              <span className={styles.ppStColOpen}>Open ›</span>
-            </button>
-            {!readOnly && (<>
-              {/* The column's two halves are where a carried station lands — in front of this one,
-                  or after it — so the whole row is a target and a slot is never a 10px strip. */}
-              <StationSlot blockId={blockId} index={i} side="before" />
-              <StationSlot blockId={blockId} index={i + 1} side="after" />
-              <StationGrip blockId={blockId} stationId={station.id} index={i} count={stations.length} label={label}
-                onMove={delta => onMove(station.id, delta)} />
-            </>)}
-          </div>
-        );
-      })}
-      {!readOnly && stations.length < MAX_STATIONS_PER_BLOCK && (
+      {cells.map(({ station, mine, who, name, handles }) => (
+        <div key={station.id} id={`station-${station.id}`} className={styles.ppStCol} data-mine={mine ? 'mine' : undefined}>
+          <button type="button" className={styles.ppStColDoor} data-station-door onClick={() => onOpen(station.id)}>
+            {name}
+            {who.length > 0 && <span className={styles.ppStColLine}>{who.join(' · ')}</span>}
+            {station.note && <span className={styles.ppStColNote}>Tonight: {station.note}</span>}
+            {station.description && <span className={styles.ppStColFirst}>{station.description}</span>}
+            <span className={styles.ppStColOpen}>Open ›</span>
+          </button>
+          {handles}
+        </div>
+      ))}
+      {canAdd && (
         /* The one drop target inside an open circuit (stage 4, L2): a drill carried over it fills
            it green and lands as the next column. The written columns beside it are never targets
            — a drop that replaced one would be a silent swap, and Swap drill stays a door. */
         <StationDropTarget blockId={blockId} className={styles.ppStColAddWrap}>
           {over => (
-            <button type="button" className={styles.ppStColAdd} onClick={onAdd}>
+            <button type="button" className={styles.ppStColAdd} data-pp-add-station={blockId} onClick={onAdd}>
               <span className={styles.ppStColOpen}>+ Add a station</span>
               <span className={styles.ppStColFirst}>{over ? 'drop to add it here' : 'a drill, or write one'}</span>
             </button>
@@ -689,7 +747,7 @@ function GapTarget({ index, startLabel, blockCount }: { index: number; startLabe
  * opened it.
  */
 function StationModal({
-  block, station, readOnly, onEdit, onDoneEditing, withoutPeople,
+  block, station, readOnly, focusName = false, onStartFromDrill, onTouched, onEdit, onDoneEditing, withoutPeople,
   staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, equipmentTags, onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   nameOf, onPatch, onDelete, onStep, onClose, onOpenPicker, onDetach, onSwapDrill, onPromote,
@@ -697,6 +755,16 @@ function StationModal({
   block: PracticePlanBlock;
   station: PracticeStation;
   readOnly: boolean;
+  /** A station the coach JUST ADDED opens with the cursor in its name (practice plans on a phone,
+   *  S2 — the new block's title rule, one level down). */
+  focusName?: boolean;
+  /** "Start from a drill ›" under the name — offered only while a just-added station is untouched
+   *  (S2 · K4 one level down); the pick takes this station's place, keeping its id. */
+  onStartFromDrill?: () => void;
+  /** The coach typed something on this station — anything (S4): it is theirs now, and never removed
+   *  as "left empty". Counted from the typing itself, not from what was saved, because a new staff
+   *  name is created over the network and lands a moment after the keystrokes that asked for it. */
+  onTouched?: () => void;
   /** The head's Edit / Done editing (`SheetEditToggle`) — the page's doors; this station stays open. */
   onEdit?: () => void;
   onDoneEditing?: () => void;
@@ -736,8 +804,18 @@ function StationModal({
   useDialogFloor(true, panelRef, {
     onClose,
     walk: { prev: walk.prev?.id ?? null, next: walk.next?.id ?? null, onSelect: onStep },
-    focusKey: station.id,
+    // The drill too: "Start from a drill ›" unmounts under the pick, and the picker's floor hands
+    // focus back to it — detached — so the panel re-seats focus when the station becomes the drill.
+    focusKey: `${station.id}:${station.drillId ?? ''}`,
   });
+  /* A just-added station: the cursor in its name. `autoFocus` alone loses it — the floor seats focus
+     on the panel, and in the dev build's double-mounted effects its cleanup hands focus back to the
+     opener first (the new block's title, §6.5). Declared AFTER the floor, so it runs last in either
+     build. Keyed on the station, so a step to a neighbour never pulls the cursor back here. */
+  const nameRef = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (focusName) nameRef.current?.focus();
+  }, [focusName, station.id]);
   const fromDrill = !!station.drillId;
 
   return (
@@ -764,7 +842,7 @@ function StationModal({
           <SheetEditToggle readOnly={readOnly} onEdit={onEdit} onDoneEditing={onDoneEditing} />
         </CoachModalHeader>
 
-        <div className={`${styles.scrollPane} ${styles.ppStationBody}`}>
+        <div className={`${styles.scrollPane} ${styles.ppStationBody}`} onInput={onTouched}>
           {/* Keyed on the station, so a step (Prev / Next, ← / →) starts the fields fresh: the two
               pickers keep a typed-but-unchosen search as local state, and with Staff now the first
               field a "jen" typed on station 1 carried into station 2's box (/review, 2026-09-20).
@@ -773,10 +851,15 @@ function StationModal({
           {fromDrill || readOnly
             ? <p className={styles.ppStationName}>{label}</p>
             : (
-              <input className={`${styles.input} ${styles.ppStationTitle}`} value={station.name}
+              <input ref={nameRef} className={`${styles.input} ${styles.ppStationTitle}`} value={station.name}
                 maxLength={MAX_TITLE_LEN} placeholder="Station name" aria-label="Station name"
                 onChange={e => onPatch({ name: e.target.value })} />
             )}
+          {onStartFromDrill && !readOnly && (
+            <button type="button" className={`${styles.ppTlQuietLink} ${styles.ppBlockSheetFromDrill}`} onClick={onStartFromDrill}>
+              <Library size={12} aria-hidden /> Start from a drill ›
+            </button>
+          )}
           <StationFields
             key={station.id}
             station={station} block={block} sole={false} isRotation={isRotation}
@@ -1212,12 +1295,16 @@ function DrillPickerSheet({
   equipmentTags: PickableTag[];
   onPick: (drill: RepTeamDrill) => void;
   onPickCircuit?: (circuit: RepTeamCircuit) => void;
-  onWriteOne: () => void;
+  /** Absent when "Start from a drill ›" opens this from INSIDE a station being written — a "Write
+   *  one" tab there would be the screen underneath it (S2). */
+  onWriteOne?: () => void;
   onClose: () => void;
 }) {
   const hasDrills = drills.length > 0;
   const hasCircuits = !!circuits && circuits.length > 0 && !!onPickCircuit;
   const [tab, setTab] = useState<'drills' | 'circuits' | 'write'>(hasDrills ? 'drills' : hasCircuits ? 'circuits' : 'write');
+  // One face and nothing to switch to — no tab row.
+  const tabbed = !!onWriteOne || (!!circuits && !!onPickCircuit);
 
   /* The portal's dialog floor (stage 2, D9): Escape closes, Tab stays inside, focus returns to the
      link that opened this. Mounted only while open, so the floor is armed for its whole life. */
@@ -1235,23 +1322,27 @@ function DrillPickerSheet({
           </button>
         </div>
 
-        <div className={styles.ppDrillTabsWrap}>
-          <div className={`${styles.segChoice} ${styles.segChoiceFull}`} role="tablist">
-            <button type="button" role="tab" aria-selected={tab === 'drills'} disabled={!hasDrills}
-              className={`${styles.segBtn}${tab === 'drills' ? ` ${styles.segBtnActive}` : ''}`}
-              onClick={() => setTab('drills')}>From your drills</button>
-            {circuits && onPickCircuit && (
-              <button type="button" role="tab" aria-selected={tab === 'circuits'} disabled={!hasCircuits}
-                className={`${styles.segBtn}${tab === 'circuits' ? ` ${styles.segBtnActive}` : ''}`}
-                onClick={() => setTab('circuits')}>From your circuits</button>
-            )}
-            <button type="button" role="tab" aria-selected={tab === 'write'}
-              className={`${styles.segBtn}${tab === 'write' ? ` ${styles.segBtnActive}` : ''}`}
-              onClick={() => setTab('write')}>Write one</button>
+        {tabbed && (
+          <div className={styles.ppDrillTabsWrap}>
+            <div className={`${styles.segChoice} ${styles.segChoiceFull}`} role="tablist">
+              <button type="button" role="tab" aria-selected={tab === 'drills'} disabled={!hasDrills}
+                className={`${styles.segBtn}${tab === 'drills' ? ` ${styles.segBtnActive}` : ''}`}
+                onClick={() => setTab('drills')}>From your drills</button>
+              {circuits && onPickCircuit && (
+                <button type="button" role="tab" aria-selected={tab === 'circuits'} disabled={!hasCircuits}
+                  className={`${styles.segBtn}${tab === 'circuits' ? ` ${styles.segBtnActive}` : ''}`}
+                  onClick={() => setTab('circuits')}>From your circuits</button>
+              )}
+              {onWriteOne && (
+                <button type="button" role="tab" aria-selected={tab === 'write'}
+                  className={`${styles.segBtn}${tab === 'write' ? ` ${styles.segBtnActive}` : ''}`}
+                  onClick={() => setTab('write')}>Write one</button>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
-        {tab === 'write' ? (
+        {tab === 'write' && onWriteOne ? (
           <div className={styles.ppDrillWrite}>
             <p className={styles.formHint}>
               {hasDrills
@@ -1604,6 +1695,48 @@ function isUntouchedNewBlock(block: PracticePlanBlock): boolean {
     }
     return value == null || value === '' || (Array.isArray(value) && value.length === 0);
   });
+}
+
+/**
+ * When a dialog closes, focus the row of the thing it LAST showed — not the door that first opened
+ * it (the floor's own restore, captured once for a whole walk), and never a row that no longer
+ * exists: a block or station deleted from its own screen took its row with it and left focus on
+ * <body> (/review, 2026-09-23). `resolve` names the row, or a fallback when it is gone. Runs after
+ * the floor's cleanup (a parent's effects after its children's), and only when EVERY open dialog
+ * holds the target (the block's phone sheet holds its stations) — a dialog that took over in the
+ * same commit ("Start from a drill" hands straight to the drill sheet) keeps focus, whatever order
+ * the dialogs mount in. `resolve` must be stable.
+ */
+function useFocusLastShownOnClose(shownKey: string | null, resolve: (key: string) => HTMLElement | null) {
+  const last = useRef<string | null>(null);
+  useEffect(() => {
+    if (shownKey) { last.current = shownKey; return; }
+    const key = last.current;
+    last.current = null;
+    const target = key ? resolve(key) : null;
+    if (!target) return;
+    for (const dialog of document.querySelectorAll('[role="dialog"][aria-modal="true"]')) {
+      if (!dialog.contains(target)) return;
+    }
+    target.focus();
+  }, [shownKey, resolve]);
+}
+/** A block's sheet closed: its row in the list, else the add row (deleting the only block). */
+function blockRowFor(blockId: string): HTMLElement | null {
+  return document.getElementById(`block-${blockId}`)?.querySelector<HTMLElement>('button')
+    ?? document.querySelector<HTMLElement>('[data-pp-add-row]');
+}
+/** A station's screen closed (the key is `[blockId, stationId]`): its row's door, else the block's
+ *  add control — "+ Add a station", or "+ Stations" once the block collapsed back to none (D13's
+ *  reverse unmounts the one and mounts the other, so the floor's restore target is detached) — else,
+ *  reading (no add control), the block itself: its phone sheet, or its card's first button. */
+function stationDoorFor(key: string): HTMLElement | null {
+  const [blockId, stationId] = JSON.parse(key) as [string, string];
+  return document.getElementById(`station-${stationId}`)?.querySelector<HTMLElement>('[data-station-door]')
+    ?? document.querySelector<HTMLElement>(`[data-pp-add-station="${CSS.escape(blockId)}"]`)
+    ?? document.querySelector<HTMLElement>('[data-block-sheet]')
+    ?? document.getElementById(`block-${blockId}`)?.querySelector<HTMLElement>('button')
+    ?? null;
 }
 
 /**
@@ -2299,6 +2432,7 @@ function BlockCard({
               blockId={block.id}
               stations={stations}
               readOnly={readOnly}
+              phone={!!sheet}
               staffTags={staffTags}
               mineStations={mineStations}
               onOpen={onOpenStation}
@@ -2331,7 +2465,8 @@ function BlockCard({
           <div className={styles.ppDoorsLine}>
             {doors.map((door, i) => {
               const button = (
-                <button type="button" className={styles.ppTlQuietLink} onClick={() => openDoor(door.id)}>
+                <button type="button" className={styles.ppTlQuietLink} onClick={() => openDoor(door.id)}
+                  data-pp-add-station={door.id === 'stations' ? block.id : undefined}>
                   + {door.label}
                 </button>
               );
@@ -2631,7 +2766,9 @@ export default function PracticePlanEditor({
     // `at`: where the new block lands — the end unless the sheet's "Start from a drill" is standing
     // in for a blank block the coach had already moved (/review, 2026-09-23).
     | { kind: 'block'; at?: number }
-    | { kind: 'station'; blockId: string; swapId?: string }
+    // `startFrom`: opened by a just-added station's "Start from a drill ›" (S2) — drills only, and
+    // the pick takes that station's place (`swapId` is the station).
+    | { kind: 'station'; blockId: string; swapId?: string; startFrom?: boolean }
     | null
   >(null);
   /**
@@ -2680,7 +2817,17 @@ export default function PracticePlanEditor({
    * Derived to null when the station is gone (deleted from the modal itself, or under it by an
    * autosave from another tab) so a dead-end dialog never stands over the sheet.
    */
-  const [openStation, setOpenStation] = useState<{ blockId: string; stationId: string } | null>(null);
+  // `fresh`: opened by adding it — the cursor goes to its name (S2). A step to a neighbour drops it.
+  const [openStation, setOpenStation] = useState<{ blockId: string; stationId: string; fresh?: boolean } | null>(null);
+  /**
+   * The stations ADDED this visit (practice plans on a phone, stage 2 · S4 = A, owner 2026-09-24).
+   * One tap now makes a station and opens it, so a station started by mistake would be common —
+   * and a blank station is KEPT by the save (measured: it survives a reload, counted in the list
+   * and the walk, skipped by the rotation). When its screen closes, any of these still holding
+   * nothing at all goes, with no question: nothing is lost. Only these — a blank station already
+   * in the plan is the coach's, and is left alone. Forgotten on that close.
+   */
+  const [freshStations, setFreshStations] = useState<ReadonlySet<string>>(() => new Set());
   /** The block whose GROUPS ROOM is open (stage 3 revision, D9) — one at a time, like a station. */
   const [openGroups, setOpenGroups] = useState<{ blockId: string } | null>(null);
 
@@ -2910,6 +3057,7 @@ export default function PracticePlanEditor({
     // back up and the block is the activity again — D13's reverse. `collapseSoleStation` holds
     // the one rule (nothing merges, nothing drops) and hands the block back unchanged otherwise.
     setBlocks(plan.blocks.map(b => (b.id === blockId ? collapseSoleStation({ ...b, stations: remaining }) : b)));
+    touchStation(stationId); // gone — nothing left to track (S4)
     const walk = stationWalk(block.stations ?? [], stationId);
     const neighbour = remaining.length >= 2 ? (walk.next ?? walk.prev) : null;
     setOpenStation(neighbour ? { blockId, stationId: neighbour.id } : null);
@@ -3055,10 +3203,63 @@ export default function PracticePlanEditor({
       if (stations.length >= MAX_STATIONS_PER_BLOCK) return;
       // The same D13 split for a written station: the block's words become station 1, the blank
       // station 2 — "+ Stations" means you now have two.
-      setBlocks(plan.blocks.map(b => (b.id === blockId ? splitBlockIntoStations(b, { id: newPracticePlanId(), name: '' }) : b)));
+      const made: PracticeStation = { id: newPracticePlanId(), name: '' };
+      const split = splitBlockIntoStations(block, made);
+      setBlocks(plan.blocks.map(b => (b.id === blockId ? split : b)));
+      /* ⚠ AND IT OPENS (practice plans on a phone, stage 2 · S2 = A, owner 2026-09-24). "Write a
+         station" used to add a blank card and open nothing — five taps to the first letter. The
+         station it makes opens now, the cursor in its name, at every width. Every station the split
+         made is FRESH (S4): D13's station 1 carries the block's words, so it is never "untouched". */
+      const before = new Set(stations.map(s => s.id));
+      const fresh = (split.stations ?? []).filter(s => !before.has(s.id)).map(s => s.id);
+      setFreshStations(prev => new Set([...prev, ...fresh]));
+      setOpenStation({ blockId, stationId: made.id, fresh: true });
     }
     setDrillSheet(null);
   }
+
+  /**
+   * The station's screen CLOSES (←, Done, Escape, the scrim, the phone's Back) — and a station added
+   * this visit that still holds nothing at all goes with it (stage 2 · S4 = A, owner 2026-09-24).
+   * Every one of the block's fresh stations, not only the one on screen: D13 on a block with no
+   * words makes TWO blanks, and the second may never have been opened. Removed through
+   * `collapseSoleStation`, so leaving the new second station of a split untouched puts the block
+   * back exactly as it was (D13's reverse). A STEP (‹ ›) removes nothing — the count under the
+   * coach's thumb never renumbers mid-walk; the close settles it. "Nothing at all" is field by
+   * field (`stationIsEmpty`), so kit or people the settle pass moved onto a new station keep
+   * it — the collapse carries them home rather than a removal dropping them — and a station the
+   * coach typed anything into is no longer fresh (`onTouched`), so a staff name still being
+   * created when they close keeps its station (/review, 2026-09-24).
+   * ⚠ Only while WRITING: reading, the page's `onChange` is a no-op, so a removal there would be
+   * lost AND forget the ids. The station head's "Done editing" drops first (`doneEditingStation`).
+   */
+  const dropFreshEmptyStations = (blockId: string): PracticePlanBlock | undefined => {
+    if (readOnly || freshStations.size === 0) return undefined;
+    const block = plan.blocks.find(b => b.id === blockId);
+    if (!block) return undefined;
+    const inBlock = new Set((block.stations ?? []).map(s => s.id));
+    setFreshStations(prev => new Set([...prev].filter(id => !inBlock.has(id))));
+    const next = dropEmptyStations(block, freshStations);
+    if (next !== block) setBlocks(plan.blocks.map(b => (b.id === block.id ? next : b)));
+    return next;
+  };
+  const closeStation = () => {
+    setOpenStation(null);
+    if (openStation) dropFreshEmptyStations(openStation.blockId);
+  };
+  const doneEditingStation = onDoneEditing && (() => {
+    const next = openStation ? dropFreshEmptyStations(openStation.blockId) : undefined;
+    // The station on screen was the empty new one: it went, so its screen goes with it.
+    if (next && openStation && !next.stations?.some(s => s.id === openStation.stationId)) setOpenStation(null);
+    onDoneEditing();
+  });
+  /** The coach typed on this station — it is theirs now (S4). */
+  const touchStation = (stationId: string) => setFreshStations(prev => {
+    if (!prev.has(stationId)) return prev;
+    const next = new Set(prev);
+    next.delete(stationId);
+    return next;
+  });
 
   /**
    * "Edit just for this practice" — keeps every word, drops the drill identity.
@@ -3239,6 +3440,8 @@ export default function PracticePlanEditor({
   /* The station modal's target, resolved the same way — gone means closed. */
   const openStationBlock = openStation ? plan.blocks.find(b => b.id === openStation.blockId) : undefined;
   const openStationRow = openStation ? openStationBlock?.stations?.find(s => s.id === openStation.stationId) : undefined;
+  /* A station just added and still holding nothing — offers "Start from a drill ›" (S2). */
+  const openStationUntouched = !!openStationRow && !readOnly && freshStations.has(openStationRow.id) && stationIsEmpty(openStationRow);
   /* The groups room's block, resolved the same way — and only while it still ROTATES with two or
      more stations, which is the only shape that has groups; a station deleted under the room
      (another tab's autosave) closes it rather than leaving a room with nothing to arrange. */
@@ -3262,23 +3465,15 @@ export default function PracticePlanEditor({
   const sheetIndex = phoneSheet && openId ? plan.blocks.findIndex(b => b.id === openId) : -1;
   const sheetBlock = sheetIndex >= 0 ? plan.blocks[sheetIndex] : undefined;
   useOverlayOpen(!!pickerTarget || !!openDrillSheet || !!openPromoting || !!openStationRow || !!openGroupsBlock || !!openNewDrill || !!sheetBlock);
-  /* When the sheet closes, the list picks out the block the coach was LAST on (K2) — not the row
-     that first opened the sheet (the floor's own restore, captured once for the whole walk), and
-     never a row that no longer exists: a block deleted from its own sheet took its row with it and
-     left focus on <body> (/review, 2026-09-23). Gone → the add row. Runs after the floor's cleanup
-     (a parent's effects after its children's), and yields to any dialog that took over the screen
-     in the same commit ("Start from a drill" hands straight to the drill sheet). */
-  const sheetBlockId = sheetBlock?.id ?? null;
-  const lastSheetBlockId = useRef<string | null>(null);
-  useEffect(() => {
-    if (sheetBlockId) { lastSheetBlockId.current = sheetBlockId; return; }
-    const id = lastSheetBlockId.current;
-    lastSheetBlockId.current = null;
-    if (!id || document.querySelector('[role="dialog"][aria-modal="true"]')) return;
-    const row = document.getElementById(`block-${id}`)?.querySelector<HTMLElement>('button')
-      ?? document.querySelector<HTMLElement>('[data-pp-add-row]');
-    row?.focus();
-  }, [sheetBlockId]);
+  /* When the block's sheet closes, the list picks out the block the coach was LAST on (K2); gone →
+     the add row. */
+  useFocusLastShownOnClose(sheetBlock?.id ?? null, blockRowFor);
+  /* The same for a STATION's screen (stage 2): the station LAST shown, else — S4 removed it, or its
+     bin did — the block's add control. */
+  useFocusLastShownOnClose(
+    openStationRow && openStation ? JSON.stringify([openStation.blockId, openStationRow.id]) : null,
+    stationDoorFor,
+  );
   /* The roster picker's dialog floor (stage 2, D9) — armed while it is open; Escape closes it
      and hands focus back to the "Choose players…" that opened it. ⚠ Escape never closes an open
      BLOCK: a row is not a sheet, and the floor is mounted on the sheets alone. */
@@ -3390,7 +3585,12 @@ export default function PracticePlanEditor({
     },
     onPatch: (patch: Partial<PracticePlanBlock>) => patchBlock(block.id, patch),
     onOpenPicker: setAttach,
-    onAddStation: (swapId?: string) => setDrillSheet({ kind: 'station', blockId: block.id, swapId }),
+    /* On a phone "+ Add a station" and "+ Stations" make the station and open it — no chooser first
+       (S2 = A: the block's own K4, one level down; the library is "Start from a drill ›" inside it).
+       A desk keeps the chooser as its first stop: it has the library panel to drag from as well. */
+    onAddStation: (swapId?: string) => (!swapId && phoneSheet
+      ? addBlankStation(block.id)
+      : setDrillSheet({ kind: 'station', blockId: block.id, swapId })),
     onDetachStation: (stationId: string) => detachStation(block.id, stationId),
     onSwapStation: (stationId: string) => setDrillSheet({ kind: 'station', blockId: block.id, swapId: stationId }),
     onPromoteStation: (stationId: string) => {
@@ -3750,8 +3950,13 @@ export default function PracticePlanEditor({
           block={openStationBlock}
           station={openStationRow}
           readOnly={readOnly}
+          focusName={!!openStation.fresh && !readOnly}
+          onStartFromDrill={openStationUntouched && drills.length > 0
+            ? () => setDrillSheet({ kind: 'station', blockId: openStation.blockId, swapId: openStation.stationId, startFrom: true })
+            : undefined}
+          onTouched={() => touchStation(openStation.stationId)}
           onEdit={onEdit}
-          onDoneEditing={onDoneEditing}
+          onDoneEditing={doneEditingStation}
           withoutPeople={withoutPeople}
           staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
           equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
@@ -3761,7 +3966,7 @@ export default function PracticePlanEditor({
           onPatch={patch => patchStation(openStation.blockId, openStation.stationId, patch)}
           onDelete={() => deleteStation(openStation.blockId, openStation.stationId)}
           onStep={stationId => setOpenStation({ blockId: openStation.blockId, stationId })}
-          onClose={() => setOpenStation(null)}
+          onClose={closeStation}
           onOpenPicker={() => setAttach({ kind: 'station', blockId: openStation.blockId, stationId: openStation.stationId })}
           onDetach={() => detachStation(openStation.blockId, openStation.stationId)}
           onSwapDrill={() => setDrillSheet({ kind: 'station', blockId: openStation.blockId, swapId: openStation.stationId })}
@@ -3857,8 +4062,9 @@ export default function PracticePlanEditor({
           equipmentTags={equipmentTags}
           title={
             openDrillSheet.kind === 'block' ? 'Add a block'
-              : openDrillSheet.swapId ? 'Swap this drill'
-                : 'Add a station'
+              : openDrillSheet.startFrom ? 'Start from a drill'
+                : openDrillSheet.swapId ? 'Swap this drill'
+                  : 'Add a station'
           }
           writeLabel={
             openDrillSheet.kind === 'block' ? 'Write a block'
@@ -3870,7 +4076,8 @@ export default function PracticePlanEditor({
             else addStationFromDrill(openDrillSheet.blockId, drill, openDrillSheet.swapId);
           }}
           onPickCircuit={openDrillSheet.kind === 'block' ? circuit => addBlockFromCircuit(circuit, openDrillSheet.at) : undefined}
-          onWriteOne={() => {
+          // From inside the station being written there is nothing to "write one" into but itself.
+          onWriteOne={openDrillSheet.kind === 'station' && openDrillSheet.startFrom ? undefined : () => {
             if (openDrillSheet.kind === 'block') { addBlock(); setDrillSheet(null); }
             else addBlankStation(openDrillSheet.blockId, openDrillSheet.swapId);
           }}
