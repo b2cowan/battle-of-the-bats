@@ -21,6 +21,7 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { appliedStampPath } from './lib/migration-refresh-gate.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -107,6 +108,12 @@ if (target === 'prod') {
 console.log(`\n📄 Applying ${path.basename(sqlPath)} to ${target} (${PROJECT_REF})…\n`);
 const res = await apiQuery(sql);
 if (res.status >= 200 && res.status < 300) {
+  // The success stamp the snapshot hook reads when an agent's captured output hides the line below
+  // (`| tail -3`, `> log`). See scripts/lib/migration-refresh-gate.mjs. Never let it fail the apply.
+  try {
+    fs.writeFileSync(appliedStampPath(ROOT),
+      JSON.stringify({ target, file: path.basename(sqlPath), at: new Date().toISOString() }));
+  } catch { /* the rendered line below is still there for the hook to read */ }
   console.log(`✅ Migration applied successfully to ${target}.`);
   console.log(res.body && res.body !== '[]' ? `   Response: ${res.body.slice(0, 300)}` : '');
   // Data Dictionary maintenance (see docs/agents/db/DATA_DICTIONARY.md header rules):
@@ -114,7 +121,9 @@ if (res.status >= 200 && res.status < 300) {
   if (target === 'dev') {
     console.log('     • apply to PROD before promoting code to master:  node scripts/apply-migration-api.mjs <file> --prod');
   }
-  console.log('     • node scripts/refresh-db-snapshots.mjs   (regenerates dev+prod snapshots + drift + coverage check)');
+  console.log('     • node scripts/refresh-db-snapshots.mjs   (regenerates dev+prod snapshots + drift + coverage check;' +
+    ' an agent\'s snapshot hook runs it automatically and reports back — run it by hand when you applied' +
+    ' outside an agent, in the background, or the hook reported a failure)');
   console.log('     • node scripts/check-prod-migration-drift.mjs   (verifies prod is not behind dev before a master release)');
   console.log('     • update docs/agents/db/DATA_DICTIONARY.md for any new/changed field (same unit of work).');
 } else {

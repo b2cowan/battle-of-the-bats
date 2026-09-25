@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
+import os from 'node:os';
 import { describe, it } from 'node:test';
-import { shouldRefreshSnapshots } from '../../scripts/lib/migration-refresh-gate.mjs';
+import { shouldRefreshSnapshots, appliedStampPath } from '../../scripts/lib/migration-refresh-gate.mjs';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
@@ -59,5 +60,48 @@ describe('the migration-refresh gate', () => {
     assert.equal(shouldRefreshSnapshots(undefined as never), false);
     assert.equal(shouldRefreshSnapshots({} as never), false);
     assert.equal(shouldRefreshSnapshots({ tool_input: { command: 'node scripts/apply-migration-api.mjs x.sql' } }), false);
+  });
+
+  // ── the /review findings (2026-09-25) ────────────────────────────────────────────────────────
+
+  it('fires on a path with a space or a capitalised folder (the second machine keeps the repo under "Robert Cowan")', () => {
+    assert.equal(shouldRefreshSnapshots(bash('node "C:\\Users\\Robert Cowan\\Documents\\tournament-website\\scripts\\apply-migration-api.mjs" x.sql --prod', ok('prod'))), true);
+    assert.equal(shouldRefreshSnapshots({ tool_name: 'PowerShell', tool_input: { command: '& node "C:\\Users\\Robert Cowan\\Documents\\tournament-website\\scripts\\apply-migration-api.mjs" x.sql' }, tool_response: ok('dev') }), true);
+    assert.equal(shouldRefreshSnapshots(bash('node Scripts\\apply-migration-api.mjs x.sql', ok('dev'))), true);
+  });
+
+  it('stays instant on any command — it runs after every loop command in every session', () => {
+    // The old flag-group pattern backtracked exponentially here: 22 flags took 640 ms, ~30 would hang
+    // the agent for the hook's whole 180 s timeout.
+    const flags = Array.from({ length: 60 }, (_, i) => `--flag${i}=v${i}`).join(' ');
+    const long = [
+      `node ${flags} scripts/apply-migration-api-old.mjs`,
+      `for i in $(seq 1 50); do node ${flags} scripts/other.mjs; done`,
+      'node '.repeat(5000) + 'apply-migration-api',
+    ];
+    for (const command of long) {
+      const t = performance.now();
+      assert.equal(shouldRefreshSnapshots(bash(command, '')), false);
+      assert.ok(performance.now() - t < 50, `took ${Math.round(performance.now() - t)} ms: ${command.slice(0, 60)}…`);
+    }
+  });
+
+  it('fires on the success STAMP when the agent trimmed or redirected the output that carries the line', () => {
+    const trimmed = bash('node scripts/apply-migration-api.mjs x.sql --prod | tail -3', '     • node scripts/check-prod-migration-drift.mjs …\n     • update docs/agents/db/DATA_DICTIONARY.md …\n');
+    const redirected = bash('node scripts/apply-migration-api.mjs x.sql > apply.log', '');
+    assert.equal(shouldRefreshSnapshots(trimmed), false, 'without the stamp the trimmed output proves nothing');
+    assert.equal(shouldRefreshSnapshots(trimmed, { appliedStamp: true }), true);
+    assert.equal(shouldRefreshSnapshots(redirected, { appliedStamp: true }), true);
+  });
+
+  it('never fires on the stamp alone — the command must still be an apply', () => {
+    assert.equal(shouldRefreshSnapshots(bash('for i in 1; do echo x; done', 'x\n'), { appliedStamp: true }), false);
+    assert.equal(shouldRefreshSnapshots(bash('git log -S "apply-migration-api"', ''), { appliedStamp: true }), false);
+  });
+
+  it('keys the stamp per checkout, in the temp dir, whatever the path casing', () => {
+    assert.equal(appliedStampPath('/work/Tournament-Website'), appliedStampPath('/work/tournament-website'));
+    assert.notEqual(appliedStampPath('/work/tournament-website'), appliedStampPath('/work/other-checkout'));
+    assert.ok(appliedStampPath('/work/x').startsWith(os.tmpdir()));
   });
 });

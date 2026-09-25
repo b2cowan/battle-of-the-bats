@@ -159,6 +159,39 @@ registered for both `Bash` and `PowerShell` (agents on this machine apply migrat
   fired exactly one refresh, returned drift 0 to the agent as additionalContext, and left no lock
   behind. Its output was byte-identical to the manual refresh, so the result is deterministic now.
 
+### /review (2026-09-25): four lenses, 9 findings kept, all fixed
+
+The four lenses were SQL correctness, gate correctness, runner concurrency, and blast radius plus
+security. Security was clean: the hook only runs a fixed argv, every prod query is SELECT-only, and
+no token reaches `additionalContext`.
+- **The gate backtracked exponentially** (confirmed: 22 flags took 640 ms, doubling per flag or two;
+  it runs after every loop command). It is now a split on shell segments plus two plain searches, so
+  it is linear, and a test holds three adversarial commands under 50 ms. A lazy single regex was also
+  rejected: it is quadratic on a command full of `node` words.
+- **A path with a space or a capitalised folder was missed** (the second machine keeps the repo under
+  `Robert Cowan`). The check is now case-insensitive and accepts spaces.
+- **Trimmed or redirected output hid the success line** (`| tail -3`, `> log`). apply-migration-api
+  now writes a success stamp in the OS temp dir, keyed per checkout, and the refresh consumes it.
+  The gate accepts the line OR the stamp, but always requires the apply invocation. A migration run
+  in the BACKGROUND still escapes: the hook fires at launch, before the stamp exists. That is
+  documented in the apply script's "Next" list and in release.md.
+- **The runner had no deadline and no lock owner.** A holder killed at the 180 s hook timeout would
+  orphan the lock and break the "queued" promise. Now: a 75 s cap per refresh, no new refresh after
+  90 s (worst case 165 s), the pid in the lock (stale if that pid is dead or the lock is older than
+  200 s), unlock only if we own it, and a guarded PENDING write. A migration still pending when the
+  budget runs out is told to refresh by hand.
+- Also fixed: the `--env` validation now only runs when refresh-db-snapshots is the entrypoint
+  (importers no longer inherit it); release.md no longer tells agents to refresh by hand after a prod
+  apply; and the fkMap tie-break between two FKs of the same kind is documented.
+- **Live proofs:** an apply trimmed to `| tail -3`, with a lock left by a dead pid, took the lock
+  over, refreshed once and reported back. An apply through the PowerShell tool refreshed once. A Bash
+  loop, and a PowerShell `Select-String` that names the script, fired nothing. Nothing was left behind
+  in the temp dir, and after three refreshes the committed snapshot files were byte-identical to HEAD.
+- **Accepted, not fixed:** on Windows the per-refresh timeout kills only the direct child (rare now
+  that a refresh takes about 20 s). A worktree and the main checkout hold separate locks (a refresh is
+  cheap now). **Partitioned tables:** none exist. If partitioning is ever adopted, re-run the
+  old-vs-new constraint comparison, because partition-cloned FKs were never exercised.
+
 ## 8. Success criteria
 
 - `duration:` statements in `postgres_logs` fall from about 500/day to about 0 on both projects,

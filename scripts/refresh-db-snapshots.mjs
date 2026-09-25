@@ -56,11 +56,19 @@ const PROBE = hasFlag('--probe');
 const NO_MARKDOWN = hasFlag('--no-markdown');
 const FAIL_ON_DRIFT = hasFlag('--fail-on-drift');
 
+// buildDrift is imported by the offline parity gate (check-schema-parity.mjs) and CONSTRAINTS_SQL by
+// refresh-db-schema.mjs. An import must never exit, fetch or demand a token, so everything that acts
+// on this process's argv or env is gated on being the entrypoint.
+const isEntrypoint = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
+
 // Validate env selection up front so a typo fails clean (not with a /projects/undefined URL).
-for (const e of ENVS) {
-  if (!PROJECTS[e]) {
-    console.error(`Unknown --env "${e}" (expected dev | prod | both)`);
-    process.exit(1);
+// Entrypoint only: an importer's own argv is none of this module's business.
+if (isEntrypoint) {
+  for (const e of ENVS) {
+    if (!PROJECTS[e]) {
+      console.error(`Unknown --env "${e}" (expected dev | prod | both)`);
+      process.exit(1);
+    }
   }
 }
 
@@ -80,11 +88,8 @@ function loadEnv() {
 }
 loadEnv();
 
-// buildDrift is imported by the offline parity gate (check-schema-parity.mjs), which must run
-// credential-free (no network) — so the token is only required when this file is the entrypoint,
-// never merely on import.
-const isEntrypoint = process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url);
-
+// The offline parity gate must run credential-free (no network), so the token is only required
+// when this file is the entrypoint, never merely on import.
 const TOKEN = process.env.SUPABASE_ACCESS_TOKEN;
 if (isEntrypoint && !TOKEN) {
   console.error('SUPABASE_ACCESS_TOKEN not set in .env.local');

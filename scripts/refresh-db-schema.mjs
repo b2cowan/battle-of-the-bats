@@ -167,7 +167,10 @@ async function main() {
   // Only FKs to public tables get an arrow (an auth.users target has foreign_table null). A column
   // in several FKs shows ONE arrow: a single-column FK wins over a multi-column one, because
   // `team_id → rep_teams.id` says what the column is and a composite's half does not. Composites
-  // are written first so a single-column FK always overwrites them.
+  // are written first so a single-column FK always overwrites them. Between two FKs of the SAME kind
+  // (two composites, or two single-column FKs on one column), the later constraint name in
+  // CONSTRAINTS_SQL's order wins: deterministic, but arbitrary. Today every column shared by
+  // composites also has a single-column FK, so no arrow depends on that tie-break.
   const fkWidth = {};
   for (const r of fkRows) {
     if (r.constraint_type !== 'FOREIGN KEY') continue;

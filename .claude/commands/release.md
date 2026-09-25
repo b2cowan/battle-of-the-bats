@@ -107,9 +107,12 @@ npm run check:migrations
 - ✖ fail → **STOP.** The output lists the tables/columns prod is missing. Apply the matching migration(s) to **prod** first, then re-run the check:
   ```powershell
   node scripts/apply-migration-api.mjs supabase/migrations/<file>.sql --prod
-  node scripts/refresh-db-snapshots.mjs
   npm run check:migrations
   ```
+  The snapshot refresh runs by itself: the project's snapshot hook sees the successful apply,
+  refreshes dev + prod, and says so in the tool result. Run `node scripts/refresh-db-snapshots.mjs`
+  by hand only when that report says the refresh failed or ran out of time, or when the apply ran in
+  the background or outside an agent.
   Only proceed once it passes, or the user **explicitly confirms** the dev/prod drift is intentional and not a pending migration.
 
 **Skip this step for `dev` releases** (the check compares dev↔prod; it's a production gate).
@@ -343,7 +346,7 @@ git log origin/master..origin/dev --oneline
 
 If there are **no commits ahead**, report: "origin/dev and origin/master are already in sync — nothing to promote." and stop.
 
-**Migration drift gate (required):** before showing the summary, run `npm run check:migrations`. If prod is behind dev, **STOP** and report the missing tables/columns — the matching migration(s) must be applied to prod (`node scripts/apply-migration-api.mjs <file> --prod` → `node scripts/refresh-db-snapshots.mjs`) before promoting, unless the user explicitly confirms the drift is intentional.
+**Migration drift gate (required):** before showing the summary, run `npm run check:migrations`. If prod is behind dev, **STOP** and report the missing tables/columns — the matching migration(s) must be applied to prod (`node scripts/apply-migration-api.mjs <file> --prod`; the snapshot hook refreshes the snapshots and reports back) before promoting, unless the user explicitly confirms the drift is intentional.
 
 **No live-demo gate.** The master build re-seeds the public demos itself when the release changes them (§1d-1); `npm run check:demos:prod` is the morning-after check in Phase 2b, never a reason to hold a promote.
 
