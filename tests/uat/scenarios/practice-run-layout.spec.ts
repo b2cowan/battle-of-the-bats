@@ -213,6 +213,53 @@ test.describe('Practice Plans 1b — field run screen', () => {
     await expect(page.locator('[data-testid="run-outline"]')).toBeVisible();
   });
 
+  /**
+   * Practice plans on a phone, stage 3 (M1, owner 2026-09-25): on a phone the buttons are a BAR AT
+   * THE FOOT OF THE SCREEN on every stop and station — above the tab bar at rest AND half a viewport
+   * in (a sticky bar measured only at rest is a bar nobody measured; the game-day console's own
+   * hit-tests missed a real defect by scrolling to the page end first) — and a station carries the
+   * stop's Back, which returns the SAME station a round earlier (an accidental Rotate now used to be
+   * three taps to undo). Resolved boxes and a hit-test on the primary's centre, never a look.
+   */
+  const BAR = '[class*="ppRunActions"]';
+  const PRIMARY = `${BAR} [class*="ppRunPrimary"]`;
+  for (const vp of [{ width: 390, height: 844 }, { width: 360, height: 780 }]) {
+    test(`on a phone the bar sits on the tab bar on a station, at rest and mid-scroll — and Back is the previous round (${vp.width})`, async ({ page }) => {
+      await page.setViewportSize(vp);
+      await openList(page);
+      await page.locator('[data-testid="run-outline"] [data-face="station"]').first().click();
+      await expect(page.getByRole('button', { name: 'All stations' })).toBeVisible();
+      const station = (await page.locator('h1').textContent())?.trim();
+
+      for (const y of [0, Math.round(vp.height / 2)]) {
+        await page.evaluate(v => window.scrollTo({ top: v, behavior: 'instant' }), y);
+        const at = await page.evaluate(([barSel, priSel]) => {
+          const bar = document.querySelector(barSel)!.getBoundingClientRect();
+          const nav = Array.from(document.querySelectorAll('[class*="bottomNav"]'))
+            .map(e => e.getBoundingClientRect()).find(r => r.height >= 50 && r.bottom >= window.innerHeight - 1);
+          const pri = document.querySelector(priSel)!;
+          const q = pri.getBoundingClientRect();
+          const hit = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2);
+          return { bottom: bar.bottom, nav: nav ? nav.top : window.innerHeight, hits: !!hit && pri.contains(hit) };
+        }, [BAR, PRIMARY]);
+        expect(Math.abs(at.bottom - at.nav), `the bar's foot sits on the tab bar at scrollY ${y}`).toBeLessThanOrEqual(1);
+        expect(at.hits, `a tap on the primary lands on it at scrollY ${y}`).toBe(true);
+      }
+
+      // ⚠ INSTANT, not the page's default: `html { scroll-behavior: smooth }` animates a scripted
+      // scroll, and a tap landing mid-animation let the animation finish AFTER the screen's own jump to
+      // the top (measured: 36px at 390). A coach's finger scroll is not animated that way and the run
+      // screen starts no smooth scroll of its own — the probe was racing itself, not the product.
+      await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
+      await page.locator(PRIMARY).click();
+      await expect(page.locator('[class*="ppRunBar"] b')).toHaveText(/Round 2 of/);
+      expect(await page.evaluate(() => window.scrollY), 'the next round opens at its top').toBe(0);
+      await page.locator(BAR).getByRole('button', { name: 'Back', exact: true }).click();
+      await expect(page.locator('[class*="ppRunBar"] b')).toHaveText(/Round 1 of/);
+      await expect(page.locator('h1')).toHaveText(station ?? '');
+    });
+  }
+
   test('every control still clears the 44px tap floor at 361', async ({ page }) => {
     await page.setViewportSize({ width: 361, height: 780 });
     await openRun(page);

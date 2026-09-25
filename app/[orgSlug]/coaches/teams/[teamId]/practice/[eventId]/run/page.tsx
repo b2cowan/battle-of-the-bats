@@ -1,5 +1,5 @@
 'use client';
-import { Fragment, use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, ChevronRight, ClipboardList } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
@@ -10,11 +10,11 @@ import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import {
   blockOwnPeople, blockRotates, buildRunOutline, buildRunSteps, computeRotation, formatDuration,
-  levelsForStaffTags, namesWholeTeam, resolvePracticePlanTagNames, resolveStationTeaching,
+  levelsForStaffTags, namesWholeTeam, resolvePracticePlanTagNames,
   rotationByStation, runStepLengthLabel, soleStationOf, stationLabel,
   type PracticePlan, type PracticePlanBlock, type PracticeStation, type RotationGrid, type RunStep,
 } from '@/lib/rep-practice-plan';
-import PracticeStationView from '../../_PracticeStationView';
+import PracticeStationView, { StationLines } from '../../_PracticeStationView';
 import type { PracticeRosterPlayer } from '../../_PracticePlanEditor';
 import type { PickableTag } from '@/components/coaches/TagPicker';
 import styles from '../../../../../coaches.module.css';
@@ -40,8 +40,19 @@ import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
  * did". "Rotate now" moves the screen and records nothing (D26). The vocabulary is **planned**,
  * never **done**.
  *
- * ⚠ NO SWIPE, NO DRAG, NO LONG-PRESS. Gloves defeat all three and a swipe collides with the
- * browser's own back gesture. Two buttons, both above 56px.
+ * ⚠ NO SWIPE, NO DRAG, NO LONG-PRESS. Two buttons, both above 56px. Re-asked as a swipe between
+ * stops and CLOSED (practice plans on a phone, stage 3 · M3, owner 2026-09-25), on these grounds —
+ * gloves are NOT one of them for a swipe (it is the least precise gesture there is; they do defeat
+ * a drag and a long-press): the phone's own back gesture goes UP ONE LEVEL here (below), so a swipe
+ * from the left edge is the list while the same swipe a thumb's width in would be the previous stop;
+ * on Android the right edge is Back too, so a "next" swipe near it would leave the stop; on a
+ * station "next" means two things (the next station, the next round); the button says what will
+ * happen ("Rotate now" stays in the block, "Next block" leaves it) and a swipe does not; and with
+ * the bar under the thumb (stage 3 · M1) a swipe saves no taps.
+ *
+ * ⚠ ON A PHONE THE BUTTONS ARE A BAR AT THE FOOT OF THE SCREEN, on every stop AND every station, in
+ * one place (stage 3 · M1, owner 2026-09-25); the station carries the stop's own pair, Back included.
+ * The why, the measurements and the construction: `.ppRunActions` at ≤640 in the stylesheet.
  * ⚠ AND THE BROWSER'S OWN BACK GESTURE GOES UP ONE LEVEL, THE SAME LEVEL THE BUTTONS DO (owner,
  * 2026-09-21 — "if I am in a station and I do a swipe back like most people do on phones it takes
  * me out of the practice rather than back to the drill"). A stop stands one history entry behind
@@ -285,6 +296,17 @@ export default function CoachPracticeRunPage({
   useBackStep(openStation !== null, () => chooseStation(null));
 
   /**
+   * EVERY TAP OPENS ITS SCREEN AT THE TOP (practice plans on a phone, stage 3 · M1, owner 2026-09-25).
+   * The list, a stop, a round and a station are one page re-rendered in place, so the browser kept
+   * the scroll: a coach who scrolled down to Rotate now on a long station landed on the next round
+   * 382px down, with "With you now" — the one line that changed — 203px above the screen (measured).
+   * Before paint, so no frame ever shows the old position; every width alike.
+   */
+  useLayoutEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  }, [stepIndex, stationId]);
+
+  /**
    * Everything below re-derives only when the PLAN or the CURSOR moves.
    *
    * ⚠ These live above the render guards on purpose: hooks cannot sit after an early return.
@@ -525,7 +547,8 @@ export default function CoachPracticeRunPage({
   const actionRow = (
     <>
       {isHelper && <p className={styles.ppRunHandedOff}>{whoAdvances}</p>}
-      <div className={styles.ppRunActions}>
+      {/* `data-docked-foot`: the shell's opt-in for a bar docked at the foot (≤640 — see the stylesheet). */}
+      <div className={styles.ppRunActions} data-docked-foot>
         {/* Never disabled: from the first stop, Back is the list (W4). */}
         <button type="button" className={styles.ppRunSecondary} onClick={() => go(-1)}>
           Back
@@ -553,36 +576,18 @@ export default function CoachPracticeRunPage({
           isMine={mineStations.has(openStation.id)}
           nameOf={nameOf}
           onBack={() => chooseStation(null)}
-          actions={
-            /* The same tap as on the block screen, so a station coach never has to back out to a
-               list to move the round on. It moves the screen and records nothing. A helper's line
-               sits above it — see `isHelper` above. */
-            advance.disabled ? null : (
-              <>
-                {isHelper && <p className={styles.ppRunHandedOff}>{whoAdvances}</p>}
-                <div className={styles.ppRunActions}>
-                  <button type="button" className={styles.ppRunPrimary} onClick={() => go(1)}>{advance.label}</button>
-                </div>
-              </>
-            )
-          }
+          /* THE STOP'S OWN BAR (stage 3, owner 2026-09-25): Back · Rotate now, so a round moved on
+             by accident is one tap back. `go` never touches `stationId`, so Back keeps this station
+             open while the previous stop is a round of the same block. With no earlier round (round
+             1, or a station of a block that doesn't rotate) Back is the previous STOP, exactly as on
+             the stop: the station closes, and Next block from there reopens it; from the very first
+             stop it is the list, whose rows reset the station. It moves the screen and records
+             nothing (D4). */
+          actions={actionRow}
         />
       </div>
     );
   }
-
-  /**
-   * What a plain stop teaches.
-   *
-   * ⚠ A block built by picking ONE drill holds its teaching on the STATION, not the block — so
-   * reading `block.description` alone would show a blank screen for exactly the block a coach
-   * assembled in four taps. With a single station the station IS the block, so its words are
-   * resolved through; with two or more they differ from each other and the station list below is
-   * the honest answer, so the block keeps its own.
-   */
-  const soleStation = soleStationOf(block);
-  const { description: stopDescription, goal: stopGoal, coachingPoints: points } =
-    resolveStationTeaching(soleStation ?? {}, block);
 
   /**
    * ONE row, two faces (P7): with `letters` it is the rotation's row — the group letter(s) at this
@@ -621,6 +626,10 @@ export default function CoachPracticeRunPage({
 
   // Who is in a plain block (P5): the one word, or the coach's few as chips — null when the block's
   // people live on its stations.
+  /** A lone station whose name the block's title doesn't already say — see the station list below. */
+  const sole = soleStationOf(block);
+  const soleNameSaysMore = !!sole && !!sole.name.trim() && !!block.title.trim() && sole.name.trim() !== block.title.trim();
+
   const people: ReactNode = wholeTeam ? 'Whole team' : blockPlayers.length > 0 ? (
     <span className={styles.ppRunWho}>
       {blockPlayers.map(name => <span key={name} className={styles.ppRunChip}>{name}</span>)}
@@ -706,13 +715,16 @@ export default function CoachPracticeRunPage({
             the description, goal and coaching points the coach had already typed just vanished. */}
         {step.round == null && (
           <>
-            {stopDescription && <p className={styles.ppRunNote}>{stopDescription}</p>}
-            {stopGoal && <p className={styles.ppRunGoal}>{stopGoal}</p>}
-            {points.length > 0 && (
-              <ol className={styles.ppRunPoints}>
-                {points.map((point, i) => <li key={i}>{point}</li>)}
-              </ol>
-            )}
+            {/* A STOP READS LIKE A STATION (practice plans on a phone, stage 3 · M2 · M4, owner
+                2026-09-25): the station's own lines in its one order (`StationLines`). ⚠ A block
+                built by picking ONE drill holds its words, setup, kit and note on the STATION — with
+                one station the station IS the block (D1), so it is passed through; reading the block
+                alone showed a blank screen for exactly the block a coach assembled in four taps, and
+                the stop used to leave the setup, kit and note out and offer the station as a one-row
+                "Stations" list instead (below: that list now needs two). With two or more stations
+                they differ from each other, so the block keeps its own words. A written block's own
+                kit is not on the stop — as before; not ruled. */}
+            <StationLines station={sole} block={block} />
             {/* Who runs it · who is in it (P5 · P6): "UAT Coach · Whole team", or the coach's few
                 as chips. One quiet line under the words; a block whose people live on its stations
                 says only who runs it. */}
@@ -727,8 +739,11 @@ export default function CoachPracticeRunPage({
         )}
 
         {/* ── The station list on a NON-rotating stop (D28): the same row, no letter column. Yours
-            is picked out because you're tagged on it. ── */}
-        {step.round == null && stations.length > 0 && (
+            is picked out because you're tagged on it. Two or more — a sole station is the block,
+            and its lines are the stop's own (above) — UNLESS the lone station's NAME says what the
+            block's title doesn't ("Ladder" on "Skills", the rule `collapseSoleStation` keeps it
+            for): then its row stays, the one place that name is on the field (/review 2026-09-25). ── */}
+        {step.round == null && (stations.length > 1 || soleNameSaysMore) && (
           <div className={styles.ppRunStations}>
             <p className={styles.ppRunStationsLbl}>Stations</p>
             {stations.map((station, i) => renderStationRow(station, i, null))}
@@ -739,7 +754,10 @@ export default function CoachPracticeRunPage({
 
         {actionRow}
 
-        {/* D8 — who's here tonight, the same fold the list carries. */}
+        {/* D8 — who's here tonight, the same fold the list carries. After the buttons in the page, as
+            it always was — so a computer, where the buttons are not docked, never finds them under an
+            opened roster (/review 2026-09-25); on a phone the bar's flex `order` lays it out after
+            this fold, at the foot of the screen. */}
         {attendanceFold}
       </div>
     </div>

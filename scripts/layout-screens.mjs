@@ -282,6 +282,38 @@ async function openCircuitStation(page) {
 }
 
 /**
+ * Run practice's STATION and STOP (practice plans on a phone, stage 3, 2026-09-25): the list's first
+ * station row — a station with the bar docked at the foot (Back · Rotate now), or the list's first
+ * block row — a plain stop with its headed lines. The run writes nothing (D4), so these are safe on
+ * the shared fixture. `…Scrolled` goes half a viewport in, the E4 lesson: a sticky bar measured only
+ * at rest and at the page's end is a bar nobody measured.
+ */
+async function openRunRow(page, face) {
+  const row = page.locator(`[data-testid="run-outline"] [data-face="${face}"]`).first();
+  if (await row.count() === 0) return false;
+  await row.click();
+  // The bar's Back — on a stop and a station alike — by its role, never a hashed class (the header's contract).
+  await page.getByRole('button', { name: 'Back', exact: true }).first().waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+  return true;
+}
+async function openRunStationScrolled(page) {
+  if (!(await openRunRow(page, 'station'))) return;
+  // INSTANT: `html { scroll-behavior: smooth }` animates a scripted scroll, and a measure taken
+  // mid-animation reads a position the page is still moving through.
+  await page.evaluate(() => window.scrollBy({ top: Math.round(window.innerHeight / 2), behavior: 'instant' }));
+  await page.waitForTimeout(100);
+}
+/** The run screen's shared settings — the list and the screens behind its rows. */
+const RUN_SCREEN = {
+  session: 'coach',
+  path: (c) => `${team(c)}/practice/${c.practiceEventId}/run`,
+  ready: 'h1',
+  skip: ['tap-floor'],
+  note: 'The field screen sets its OWN, HIGHER floor (56px) and is held to it by practice-run-layout.spec.ts — the list, the stops and the stations alike, the phone bar at rest and mid-scroll. Re-checking the 44px floor here would be weaker, not stronger.',
+};
+
+/**
  * DOCK the library beside the sheet (stage 4, L5, 2026-09-16) — the toolbar's quiet "Library" toggle,
  * rendered only from a 1,156px working column up (1440 here) and only once blocks exist. At every
  * narrower width the toggle is absent by design, so the gesture is a no-op and the entry measures
@@ -692,15 +724,18 @@ export const SCREENS = [
   { id: 'coach-practice-templates', session: 'coach', path: (c) => `${team(c)}/practice?section=templates`, ready: 'h1' },
   { id: 'coach-practice-circuits', session: 'coach', path: (c) => `${team(c)}/practice?section=circuits`, ready: 'h1' },
   {
+    ...RUN_SCREEN,
     id: 'coach-practice-run',
-    session: 'coach',
-    path: (c) => `${team(c)}/practice/${c.practiceEventId}/run`,
-    ready: 'h1',
-    skip: ['tap-floor'],
     // Stage 7 (2026-09-18): Run practice opens on the plan as a LIST — that is the screen this entry
-    // measures; the block and station screens behind its rows are held by the spec below.
+    // measures; the stop and the station behind its rows are the three entries after it.
     note: 'The field screen sets its OWN, HIGHER floor (56px) and is held to it by practice-run-layout.spec.ts — the list it opens on (block rows 56, station rows 44) and the block screen alike. Re-checking the 44px floor here would be weaker, not stronger.',
   },
+  // Practice plans on a phone, stage 3 (2026-09-25): the screens BEHIND the list's rows — a plain stop
+  // (the headed lines, "Who's here tonight" above the bar) and a station with the bar docked at the
+  // foot, at rest and half a viewport in. Same floor note as the list: the spec holds the 56px.
+  { ...RUN_SCREEN, id: 'coach-practice-run-stop', interact: (page) => openRunRow(page, 'block') },
+  { ...RUN_SCREEN, id: 'coach-practice-run-station', interact: (page) => openRunRow(page, 'station') },
+  { ...RUN_SCREEN, id: 'coach-practice-run-station-docked', interact: openRunStationScrolled },
 
   // ── Game day (P1–P3) ────────────────────────────────────────────────────────
   {

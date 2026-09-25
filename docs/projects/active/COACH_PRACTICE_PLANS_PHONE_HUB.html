@@ -524,6 +524,81 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
 .s2seq{display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start;margin:14px 0 6px}
 .s2arrow{align-self:center;font-family:var(--display);font-size:22px;color:var(--muted)}
 .tally{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin:14px 0 4px}
+
+/* ══ Stage 3 · the field — LIVE true-size frames, drawn by the script at the foot from ONE data set (the
+   fixture's own words, or a long copy the size of the probe's). The phone is the screen at scroll 0: the
+   team line, the page, the tab bar (and, proposed, the bar above it). The dashed panel under it is the rest
+   of the page, the part a coach scrolls to. Product literals inside the frames, as every frame here. ══ */
+.fdpair{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start;margin:8px 0 4px}
+.fdcol{flex:0 0 auto;max-width:100%;width:var(--fw,390px)}
+.fdph{position:relative;width:100%;height:var(--fh,844px);background:#F6F2EA;color:#241E15;font-family:"Inter",system-ui,sans-serif;font-size:14px;line-height:1.35;border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.fdph.cropped{border-radius:12px 12px 0 0}
+.fdteam{position:absolute;left:0;right:0;top:0;height:37px;z-index:4;background:#FFF;border-bottom:1px solid rgba(70,55,30,.12);display:flex;align-items:center;gap:8px;padding:0 16px;font-weight:700;font-size:15px}
+.fdteam small{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;color:#4A4335;margin-left:6px}
+.fdpage{position:absolute;left:0;right:0;top:0;padding:53px 16px 18px}
+.fdnavpos{position:absolute;left:0;right:0;bottom:0;z-index:4}
+.fddock{position:absolute;left:16px;right:16px;bottom:72px;z-index:3;background:#FFF;border-top:1px solid rgba(70,55,30,.22);padding:8px 0;display:flex;gap:8.8px}
+.fddock.rest{position:relative;left:auto;right:auto;bottom:auto;margin-top:14.4px}
+.fdrest{position:relative;width:100%;overflow:hidden;background:#F6F2EA;color:#241E15;font-family:"Inter",system-ui,sans-serif;font-size:14px;line-height:1.35;border:1px solid var(--rule);border-top:2px dashed #9E3030;border-radius:0 0 12px 12px}
+.fdrest::after{content:"";position:absolute;inset:0;background:rgba(246,242,234,.5);pointer-events:none;z-index:2}
+/* a dot on the phone goes UNDER the team line, the tab bar and the bar (a dot from below the fold must not peek out);
+   in the dimmed panel it sits over the dimming */
+.fdph .mk{z-index:3}
+.fdrest .mk{z-index:5}
+.fdcutl{font-family:var(--mono);font-size:11px;color:var(--muted);margin:5px 0 0}
+.fdcutl.bad{color:var(--bad)}
+.fdhold{border:1px dashed var(--rule);border-radius:12px;padding:18px;font-family:var(--display);font-size:14.5px;color:var(--ink-2);background:var(--surface);max-width:390px}
+/* the product's own run screen, in its own sizes */
+.fdrel{position:relative}
+.fdbar{display:flex;align-items:center;justify-content:space-between;min-height:44px;margin-bottom:14.4px;font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:#6E6553}
+.fdbar b{color:#241E15;font-weight:600}
+.fdbar .r{display:inline-flex;align-items:center;gap:6px}
+.fdq{width:24px;height:24px;margin:0 10px;border-radius:50%;border:1.5px solid #241E15;display:inline-grid;place-items:center;font:700 13px/1 "Inter",system-ui,sans-serif;color:#241E15}
+.fdttl{margin:0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:var(--tt,31.2px);line-height:1.06;letter-spacing:-.01em}
+.fdround,.fdeyebrow{margin:8px 0 0;font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#5C6B1F;line-height:1.55}
+.fdeyebrow{margin:0}
+.fdnote{margin:13.6px 0 0;font-size:16px;line-height:1.5}
+.fdgoal{margin:8px 0 0;font-size:16px;line-height:1.5;font-weight:600}
+.fdpts{margin:12px 0 0;padding-left:19.2px;list-style:none;font-size:16px;font-weight:600;line-height:1.7}
+.fdmeta{margin:12.8px 0 0;font-size:14px;line-height:1.5;color:#4A4335}
+.fdmeta b{color:#241E15;font-weight:600}
+.fdchips{display:flex;flex-wrap:wrap;gap:5.6px;margin-top:4px}
+.fdchip{font-size:14px;font-weight:700;color:#241E15;background:#FFF;border:1px solid rgba(70,55,30,.2);border-radius:999px;padding:4.8px 11.2px}
+.fdnext{margin:15.2px 0 0;padding-top:11.2px;border-top:1px solid rgba(70,55,30,.15);font-size:14px;color:#6E6553}
+.fdnext b{color:#241E15;font-weight:700}
+.fdacts{display:flex;gap:8.8px;margin-top:14.4px}
+.fdsec{width:76px;flex:0 0 auto;height:56px;border:1px solid rgba(70,55,30,.25);border-radius:10px;display:grid;place-items:center;font-size:14px;font-weight:600;color:#4A4335}
+.fdpri{flex:1 1 auto;height:56px;border-radius:10px;background:#241E15;color:#F6F2EA;display:grid;place-items:center;font-size:16px;font-weight:800}
+.fdwho{margin-top:14.4px;background:#FFF;border:1px solid rgba(70,55,30,.2);border-radius:10px;min-height:46px;display:flex;align-items:center;justify-content:space-between;padding:0 12px;font-size:14px;font-weight:600}
+.fdwho small{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#6E6553;font-weight:500}
+.fdrows{margin-top:4.8px;display:flex;flex-direction:column;gap:8px}
+.fdrow{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:11.2px;align-items:center;min-height:56px;padding:8.8px 12px;border:1px solid rgba(70,55,30,.2);border-radius:10px;background:#FFF}
+.fdrow.st{grid-template-columns:minmax(0,1fr) auto;min-height:44px}
+.fdrow .g{font-size:20px;font-weight:900;color:#5C6B1F;line-height:1.05}
+.fdrow .s{display:block;font-size:16px;font-weight:700;line-height:1.25}
+.fdrow .m{display:block;font-size:12px;color:#6E6553;margin-top:2.4px}
+.fdrow .go{font-size:12px;font-weight:700;color:#5C6B1F}
+.fdstlbl{margin:17.6px 0 8px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6E6553}
+.fdname{margin:4px 0 0;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-weight:700;font-size:var(--sn,29.25px);line-height:1.05}
+.fdnow{margin-top:13.6px;padding:11.2px 12.8px;border:1px solid rgba(70,55,30,.2);border-radius:10px;background:#FFF}
+.fdnow .l{margin:0 0 4px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6E6553}
+.fdnow .gn{margin:0;font-size:16px;font-weight:800}
+.fdnow .p{margin:4px 0 0;font-size:14px;line-height:1.5;color:#4A4335}
+.fdblk{margin-top:14.4px}
+.fdblk.first{margin-top:0}
+.fdlbl{margin:0 0 4.8px;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:#6E6553;line-height:1.55}
+.fdtxt{margin:0;font-size:16px;line-height:1.55}
+.fdtxt.b{font-weight:700}
+.fdsoft{margin:0;font-size:14px;line-height:1.55;color:#4A4335}
+.fddiv{height:1px;background:rgba(70,55,30,.15);margin:14.4px 0}
+.fdblk .fdpts{margin-top:12px}
+.fdtn{margin-top:14.4px;padding:10.4px 12px;border-radius:9px;border:1px solid rgba(201,138,31,.32);background:rgba(201,138,31,.1)}
+.fdtn .fdlbl{font-size:14px;margin-bottom:3.2px}
+.fdtn p{margin:0;font-size:14px;line-height:1.5;color:#4A4335}
+.fdup{margin-top:16px;padding-top:11.2px;border-top:1px solid rgba(70,55,30,.15)}
+.fdupr{display:grid;grid-template-columns:60px minmax(0,1fr);gap:9.6px;padding:3.2px 0;font-size:14px;line-height:1.5}
+.fdupr span:first-child{font-family:"IBM Plex Mono",monospace;font-size:12px;color:#6E6553}
+.fdnew{outline:2px dashed #7A8C3E;outline-offset:3px;border-radius:6px}
 </style>
 
 <nav class="tabs" role="tablist" aria-label="Practice plans on a phone">
@@ -535,7 +610,8 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
   <button type="button" class="tab" role="tab" data-tab="s2" aria-selected="false" aria-controls="tab-s2">1b · Read first, edit on purpose<span class="st built">ruled 23 Sep · R1–R5 = A · built</span><span class="st">walk: QA parts G–H</span></button>
   <button type="button" class="tab" role="tab" data-tab="grp" aria-selected="false" aria-controls="tab-grp">The Groups room on a phone<span class="st built">ruled 24 Sep · G1–G3 = A · built · §230 walked · passed 24 Sep</span></button>
   <button type="button" class="tab" role="tab" data-tab="rot" aria-selected="false" aria-controls="tab-rot">The rotation table on a phone<span class="st built">ruled 24 Sep · T1 = A · T2 = A · built · §229 walked · passed 24 Sep</span></button>
-  <button type="button" class="tab" role="tab" data-tab="st" aria-selected="false" aria-controls="tab-st">2 · Stations inside a block<span class="st built">ruled 24 Sep · S1 · S2 · S4 = A · built</span><span class="st">§231 walk owed</span></button>
+  <button type="button" class="tab" role="tab" data-tab="st" aria-selected="false" aria-controls="tab-st">2 · Stations inside a block<span class="st built">ruled 24 Sep · S1 · S2 · S4 = A · built · §231 walked · passed 25 Sep</span></button>
+  <button type="button" class="tab" role="tab" data-tab="field" aria-selected="false" aria-controls="tab-field">3 · The field<span class="st built">ruled 25 Sep · M1–M4 = A · built</span><span class="st">§237 walk owed</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
 </nav>
@@ -554,7 +630,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
     from a screenshot.</p>
     <div class="strip" aria-label="Where the project is">
       <span class="on">Walked 23 Sep</span><span class="on">Stage 1 drawn 23 Sep</span><span class="on">Ruled 23 Sep · K1–K4 = A</span>
-      <span class="on">Stage 1 built · committed 20f13d5d 23 Sep</span><span class="on">1b + the walk's changes built on dev 24 Sep</span><span class="on">§227 walked · passed 24 Sep</span><span class="on">/review 24 Sep · 4 fixed</span><span class="on">1b + walk + Groups room committed 6e15af51 24 Sep</span><span class="on">Stage 2 stations ruled + built 24 Sep</span><span class="now">§231 walk owed</span>
+      <span class="on">Stage 1 built · committed 20f13d5d 23 Sep</span><span class="on">1b + the walk's changes built on dev 24 Sep</span><span class="on">§227 walked · passed 24 Sep</span><span class="on">/review 24 Sep · 4 fixed</span><span class="on">1b + walk + Groups room committed 6e15af51 24 Sep</span><span class="on">Stage 2 stations ruled + built 24 Sep</span><span class="on">§231 walked · passed 25 Sep · committed 6d775e85</span><span class="on">Stage 3 measured + drawn 25 Sep</span><span class="on">Stage 3 ruled 25 Sep · M1–M4 = A</span><span class="on">Stage 3 built on dev 25 Sep</span><span class="now">§237 walk owed</span>
     </div>
   </header>
 
@@ -605,7 +681,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
       <tbody>
         <tr><td>1 · The block on its own screen</td><td>The plan’s blocks as a compact list on a phone; a block opens as a full-screen sheet with every field at full width and a pinned foot (‹ › between blocks · Done); reorder moves into the sheet; “+ Add a block” as one row.</td><td>K1–K4</td><td>drawn 23 Sep · ruled 23 Sep (all four as recommended)</td></tr>
         <tr><td>2 · Stations and the rotation</td><td>A station as a 56px row inside the block sheet (the row is the door to the form that already exists); “Write one” adds the station <i>and</i> opens its form in one motion, on a 44px button (four taps → two); the rotation table fitted to a phone (drawn 24 Sep on its own tab: keep the table, take out what makes it too wide); the desktop grid untouched.</td><td>S1–S4 · T1–T2</td><td>rotation table ruled + built 24 Sep (§229) · stations ruled S1 · S2 · S4 = A and built 24 Sep (tab “2 · Stations inside a block”, §231 walk owed) · S3 ruled + built elsewhere (6e15af51)</td></tr>
-        <tr><td>3 · The field</td><td>Back · Next · Rotate now docked above the bar on the block and station screens; the plain stop’s order (does the note lead, or the watching-for line?); swipe between stops as an addition — recommended <i>Not yet</i>.</td><td>M1–M3</td><td>—</td></tr>
+        <tr><td>3 · The field</td><td>The buttons at the foot of the screen on every stop and station, and each tap opening its screen at the top; a stop that reads like a station (headings, and a drill’s own setup, equipment and note); swipe closed rather than “not yet”; tonight’s note first. Re-framed with you from the planned M1–M3 once measured (tab “3 · The field”).</td><td>M1–M4</td><td>ruled 25 Sep (M1–M4 = A, and a station’s Back) · built on dev 25 Sep · §237 walk owed</td></tr>
         <tr><td>4 · The head of the page</td><td>What sits above the first block on a phone: the sent line and “Send again”, the when-block, the goal, About — ~500px before the plan begins.</td><td>N1</td><td>—</td></tr>
       </tbody>
     </table></div>
@@ -1638,7 +1714,7 @@ Notes:</pre>
     <em>five taps</em> before the first letter, and a station started by mistake stays in the plan for good. The station’s
     own screen already fits a phone, so it is not redrawn here. Drawn below: the station as one row, and adding a station as one tap.</p>
     <div class="strip" aria-label="Where stage 2 is">
-      <span class="on">Measured 24 Sep</span><span class="on">Drawn 24 Sep</span><span class="on">Ruled 24 Sep · S1 · S2 · S4 = A</span><span class="on">Built on dev 24 Sep</span><span class="on">S3 ruled + built 24 Sep · committed 6e15af51</span><span class="now">§231 walk owed · QA walk · 1 part L</span>
+      <span class="on">Measured 24 Sep</span><span class="on">Drawn 24 Sep</span><span class="on">Ruled 24 Sep · S1 · S2 · S4 = A</span><span class="on">Built on dev 24 Sep</span><span class="on">S3 ruled + built 24 Sep · committed 6e15af51</span><span class="on">§231 walked · passed 25 Sep · committed 6d775e85</span>
     </div>
   </header>
 
@@ -2031,10 +2107,268 @@ Notes:</pre>
   </section>
 </div>
 
+<!-- ══════════════════════ TAB · STAGE 3 · THE FIELD ══════════════════════
+     Measured 25 Sep 2026 (probes .probe/pp-field-measure.mjs 390|360 [--heavy] [--helper] and
+     .probe/pp-field-station-scroll.mjs; every app write answered locally — none were made). The frames are
+     drawn live by the third script at the foot of this file; the numbers above each frame are the probe's. -->
+<div id="tab-field" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Stage 3 · measured and drawn 25 September 2026 · 390×844 and 360×780, true size</div>
+    <h1>The field: the button where the thumb is</h1>
+    <p class="lede">Run practice is the screen you called “pretty good”, and the list and the rotating stop measure like it.
+    The trouble is one level down. <em>Every</em> station hides its Rotate now below the tab bar, and a stop with a
+    paragraph of setup hides Next block as well. The words for tonight sit at the bottom of a station, and a stop
+    built from a drill leaves them out. Below: what the running product measures, the four questions it raises,
+    and the screen before and after at true size. Open this tab on a phone to judge a tap target.</p>
+    <div class="strip" aria-label="Where stage 3 is">
+      <span class="on">Measured 25 Sep · 390 and 360 · the real plan and a long copy</span><span class="on">Asks re-framed with you 25 Sep · M1–M4</span><span class="on">Drawn 25 Sep</span><span class="on">Ruled 25 Sep · M1–M4 = A, and a station’s Back</span><span class="on">Built on dev 25 Sep</span><span class="now">§237 walk owed · QA walk · 1 part M</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>What today measures</h2>
+    <p class="sub">The UAT probe practice’s run screen, signed in as the UAT head coach. The probe tapped the big button through the
+    whole practice and opened every station of every round. It did that twice: once on the plan as it is (short notes, three stations),
+    and once on a long copy served to the screen alone and never saved: a paragraph of setup, five coaching points, five
+    stations and five groups, and the small-sided game built from a drill. Nothing was written: the run screen writes nothing,
+    and every write it could have tried was answered locally.</p>
+    <div class="mets">
+      <div class="met"><div class="k">Stations that hide their button</div><div class="v bad">9 of 9</div><div class="s">Real plan, 118–302px under the tab bar at 390. The long copy hides it on 26 of 26 stations, by 323–795px.</div></div>
+      <div class="met"><div class="k">Where the button sits</div><div class="v bad">270 → 1,018</div><div class="s">px down the screen, on the real plan. One button with a different place on every stop.</div></div>
+      <div class="met"><div class="k">After Rotate now on a long station</div><div class="v bad">−203px</div><div class="s">“With you now”, the line that just changed, opens above the top of the screen.</div></div>
+      <div class="met"><div class="k">Tonight’s note on a station</div><div class="v bad">8th line</div><div class="s">It comes after Setup, Equipment and Running it. The tab bar cuts it at 390 and hides it at 360.</div></div>
+    </div>
+
+    <h3>Where the button is, screen by screen</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Screen</th><th class="n">390 · real plan</th><th class="n">390 · long copy</th><th class="n">360 · real plan</th><th class="n">360 · long copy</th></tr></thead>
+      <tbody>
+        <tr><td>The list (the first screen)</td><td class="n">916 · one screen</td><td class="n">985</td><td class="n">867</td><td class="n">1,002</td></tr>
+        <tr><td>A written plain stop (Warm-up)</td><td class="n"><span class="pass">on screen · 153 spare</span></td><td class="n"><span class="fail">181 under</span></td><td class="n"><span class="pass">92 spare</span></td><td class="n"><span class="fail">290 under</span></td></tr>
+        <tr><td>A stop built from a drill</td><td class="n">— none in the plan</td><td class="n"><span class="fail">103 under</span></td><td class="n">—</td><td class="n"><span class="fail">188 under</span></td></tr>
+        <tr><td>A rotating stop (round 1)</td><td class="n"><span class="pass">243 spare</span></td><td class="n"><span class="pass">105 spare · 5 stations</span></td><td class="n"><span class="pass">181 spare</span></td><td class="n"><span class="pass">43 spare</span></td></tr>
+        <tr><td>A station, every one</td><td class="n"><span class="fail">9 of 9 · 118–302</span></td><td class="n"><span class="fail">26 of 26 · 323–709</span></td><td class="n"><span class="fail">9 of 9 · 202–364</span></td><td class="n"><span class="fail">26 of 26 · 431–795</span></td></tr>
+        <tr><td>The button’s top, across the practice</td><td class="n">270 → 1,018</td><td class="n">270 → 1,425</td><td class="n">267 → 1,016</td><td class="n">267 → 1,447</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">“Under” is how far a coach scrolls before the whole button shows (its foot against the top of the tab bar, at 772 on a
+    390×844 phone and 708 on a 360×780 one). The list has no big button: its rows are the doors. <button type="button" class="why" data-why="fdw-224" aria-expanded="false">the plan said 224</button></p>
+    <div id="fdw-224" class="whybody" hidden>On 23 September the plan measured the same station (Footwork ladder) with Rotate now’s <i>top</i> at 996, 224px
+    below the tab bar. Today its top is at 1,018: the station screen is 22px taller than it was then. Measured the new way (until the whole
+    button shows) it is 302.</div>
+
+    <h3>What the measuring found</h3>
+    <ul class="list">
+      <li><b>One button, a new place every time.</b> On the real plan the stops all fit, but Next block is at 563 on Warm-up, 473 on the
+      circuit, 339 on the game and 270 on Block 4. A thumb can’t learn a place that moves. <button type="button" class="why" data-why="fdw-f1" aria-expanded="false">why that matters here</button>
+      <span id="fdw-f1" class="whybody" hidden style="display:block">The field screen was designed for a coach with twelve kids in front of them, glancing at the phone. Your standing
+      principle for this project (S.5) is that the one control that moves the practice on sits where the thumb is. The stations break that outright,
+      and the stops only look like they keep it because the real plan’s notes are eight words long.</span></li>
+      <li><b>After Rotate now, a station opens the next round where you’d scrolled to.</b> To reach Rotate now on a long station the coach
+      scrolls down 433px. The next round then opens at 382, with “With you now” 203px above the top of the screen, and that box is the
+      only thing that changed. On the real plan it opens half under the team line. A long stop does the same to the next stop.
+      <button type="button" class="why" data-why="fdw-f2" aria-expanded="false">how it was measured</button>
+      <span id="fdw-f2" class="whybody" hidden style="display:block">The probe opened a station, scrolled Rotate now into view the way a thumb would, tapped it, and read where the
+      screen was and where “With you now” was: real plan, scrolled to 230 → opened at 178, the box at 1–120 under the 37px team line; long copy, 433 → 382,
+      the box at −203 to −84. Twice each, the same both times. A stop does it too, limited by how long the next page is: at 360, Warm-up on the long copy → the circuit opened 50px down.</span></li>
+      <li><b>A station only goes forward.</b> It has Rotate now and no Back, so undoing an accidental Rotate now takes three taps: ← All stations,
+      Back on the stop, then the station’s row again (measured, 25 Sep, at your ask).</li>
+      <li><b>A plain stop doesn’t say which line is which.</b> Its note, its watching-for line and its points are two paragraphs and a list
+      with no headings. On a station the same words are headed <i>What you’re doing</i>, <i>What you’re watching for</i> and
+      <i>Coaching points</i>. On the stop, the only difference between the first two is that one is a little bolder.</li>
+      <li><b>A stop built from one drill loses three of its lines.</b> A drill’s words live on its one station. The stop shows those words,
+      but not the drill’s setup, its equipment or its note for tonight. Then it adds a “Stations” heading and a single row that repeats the block’s own name.
+      The missing three are one tap in, behind that row.</li>
+      <li><b>“Just for tonight” is the eighth thing on a station.</b> It comes after Setup, Equipment and Running it. On the real plan it runs from
+      759 to 827 at 390, so the tab bar at 772 cuts it, and at 360 it is under the bar entirely. On the long copy it is at 1,041.
+      It is the one line written for tonight: “Only two ladders tonight — run it in pairs.”</li>
+      <li><b>Nothing on the run screen scrolls sideways.</b> That held on all 70 screens the probe read, at both widths. A swipe would have no table to fight. Its only conflict would be with the phone’s own edge gestures (M3).</li>
+      <li><b>A helper’s line takes 42px.</b> An assistant who can’t move the team on sees “Alex Morgan moves everyone on — these buttons move only
+      your screen.” above the buttons (served locally with a made-up name; the fixture’s coach is the head coach).</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The questions, re-framed</h2>
+    <div class="flag good-flag"><span class="k">Put to you before drawing · 25 September 2026 · you chose the re-framed set</span>
+      <p><b>M1</b> (dock the buttons) stands, and it is bigger than the plan said: every station, not just “a station”, and
+      it needs a second half, which is that a tap opens its screen at the top. <b>M2</b> as asked (“does the note lead?”) isn’t the lever. At 390 all three
+      lines sit on screen one in either order, even on the long copy. What’s wrong is the missing headings and a drill’s three missing
+      lines. The order question stays inside M2 as its option B. <b>M3</b> re-asks a rule the field screen was built on (“no swipe, no drag,
+      no long-press”), so it is answered on its merits here. <b>M4</b> is new: where tonight’s note sits.</p></div>
+  </section>
+
+  <section>
+    <h2>The screen, before and after</h2>
+    <p class="sub">Pick a screen, the plan and the phone. Left: today, as the product draws it, with the measured numbers above it. Right: the
+    proposal as recommended (M1 A, M2 A, M4 A). Each frame is the phone at scroll 0, and the dashed panel under it is the rest of the page,
+    the part a coach scrolls to. Red dots mark a measured problem and green dots mark what the drawing answers. Tap a dot for its note.</p>
+    <div class="rtctl" role="group" aria-label="Drawing controls">
+      <div class="grp"><span class="lb" id="fdLbS">Screen</span>
+        <div class="rtseg" role="group" aria-labelledby="fdLbS"><button type="button" id="fdSplain" data-k="scr" data-v="plain" aria-pressed="false">Plain stop</button><button type="button" id="fdSdrill" data-k="scr" data-v="drill" aria-pressed="false">Drill block</button><button type="button" id="fdSrot" data-k="scr" data-v="rotating" aria-pressed="false">Rotating stop</button><button type="button" id="fdSst" data-k="scr" data-v="station" aria-pressed="true">Station</button></div></div>
+      <div class="grp"><span class="lb" id="fdLbC">Plan</span>
+        <div class="rtseg" role="group" aria-labelledby="fdLbC"><button type="button" id="fdClight" data-k="c" data-v="light" aria-pressed="true">Real plan</button><button type="button" id="fdCheavy" data-k="c" data-v="heavy" aria-pressed="false">Long copy</button></div></div>
+      <div class="grp"><span class="lb" id="fdLbW">Phone</span>
+        <div class="rtseg" role="group" aria-labelledby="fdLbW"><button type="button" id="fdW390" data-k="w" data-v="390" aria-pressed="true">390</button><button type="button" id="fdW360" data-k="w" data-v="360" aria-pressed="false">360</button></div></div>
+    </div>
+    <div class="fdpair" id="fdFrames">
+      <div class="fdcol" id="fdF-before"></div>
+      <div class="fdcol" id="fdF-after"></div>
+    </div>
+    <p class="cap">The frames are drawn with the product’s own sizes and spacing, so a line can wrap a word earlier or later than on
+    a real phone. The figures marked “measured” come from the running product. The ones marked “drawn” come from the drawing and only
+    compare today with the proposal. The long copy’s words are about the same length as the probe’s; the probe’s own text was repeated filler.</p>
+  </section>
+
+  <section>
+    <h2>The decisions</h2>
+
+    <div class="ask">
+      <div class="k">M1 · the buttons</div>
+      <h3>Back · Next block · Rotate now at the foot of the screen</h3>
+      <p>Measured: every station hides its button, a written stop with a real paragraph hides it too, and on the stops that fit it sits
+      anywhere from 270 to 619px down. The principle you ruled for this project (S.5) says the control that moves the practice on sits where the thumb is.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>At the foot of the screen, in one place, on every stop and station</div><p>
+        The bar sits just above the tab bar on every screen, and it is <b>one bar</b>: a station carries the same pair as its stop.
+        <b>Back · Rotate now</b> (Next block on the last round), and <b>Back · Back to the plan</b> at the end of the practice.
+        On a station, <b>Back is the previous round</b> and you stay on the same station, so a round moved on by accident is one tap back
+        (your ask, 25 Sep; today it takes three taps through the stop). “← All stations” stays the way up.
+        It is the recording screen’s bar (E4): the width of the page’s column, a top rule, and it clears the tab bar by
+        position and never sits on top of it, so the More sheet and the help panel still open over it. One thing is added to E4: the
+        page fills the screen, so on a short stop the bar still sits at the foot instead of just under the words. “Who’s here tonight” moves above the bar.
+        <b>And every tap opens its screen at the top</b>, so after Rotate now the new group is the first thing on screen.
+        <b>Cost:</b> the bar takes 73px of every screen (662 of 735 left at 390, 598 of 671 at 360). A short stop gets an empty stretch between
+        its words and the bar. A helper’s 42px line stays in the page, just above where the bar rests, not inside it.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>E4 exactly: pinned only when the page is longer than the screen</div><p>A short stop keeps
+        its buttons right under its words, as today, and a long one pins them to the foot. Otherwise the same build, and the same scroll fix.
+        <b>Cost:</b> on the real plan the button still sits somewhere different on every short stop (270 to 619), and that is the part a thumb can’t learn.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>No bar: move Back · Rotate now up a station, under “With you now”</div><p>No new idiom on
+        the field. On a station the buttons sit at about 310, mid-screen. <b>Cost:</b> stops keep their buttons in the page, so a long
+        written stop still hides Next block (181px at 390, 290 at 360), and on a station the button is where the eye is, not where the thumb is.</p></div>
+      </div>
+      <p style="margin-top:12px">Whichever you pick, “a tap opens its screen at the top” is worth having on its own. It is today’s defect, measured.</p>
+      <div class="flag good-flag"><span class="k">Added at your ask · 25 September · “go to and from rounds” on a station</span>
+        <p>A station gets <b>Back</b> beside Rotate now under A, B and C alike, because it is the stop’s own pair and the stop already has it. Measured on the product:
+        today an accidental Rotate now on a station takes <b>three taps</b> to undo (← All stations, Back, the station’s row again), passing through the stop.
+        With Back on the station it takes <b>one</b>. At the edge of the block it still undoes in one tap. Back from round 1 goes to the stop before
+        the circuit, as it does from the stop, and the screen <b>remembers the station</b>: Next block brings you straight back into it.
+        (Measured the other way round: from the station’s last round, Next block went to the game, and Back from the game reopened the same station at round 3.)
+        <b>Not drawn:</b> a “‹ Round 2 of 3 ›” stepper instead. It would be a second kind of control on the field, and the round is already at the top of the station.</p></div>
+    </div>
+
+    <div class="ask">
+      <div class="k">M2 · what a stop says</div>
+      <h3>A stop reads like a station</h3>
+      <p>Asked: does the note lead, or the watching-for line and the coaching points? Measured, the order isn’t the lever. At 390 all three
+      are on screen one in either order, long copy included. What’s wrong is that a plain stop doesn’t say which line is which, and a stop built
+      from a drill loses three lines.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>The station’s headings, today’s order, and a drill’s own lines</div><p>
+        The stop’s three lines get the station’s headings: <b>What you’re doing · What you’re watching for · Coaching points</b>, in today’s order.
+        That is the order D28 set for a coach arriving cold, and the order a coach meets a block in: explain it, then coach it. With headings, a glance
+        mid-drill finds “What you’re watching for” by its label, whatever comes first. A stop built from a drill also shows its <b>Setup</b> and
+        <b>Equipment</b> under the points, and the one-row “Stations” list goes: the drill <i>is</i> the block. The stop and the station then read in one order.
+        <b>Cost:</b> the headings and the station’s spacing add about 104px (computed from the station screen’s own spacing). On the long copy, with the bar, the last
+        coaching points go under the bar at both widths and need one short scroll. On the real plan every line still fits above the bar;
+        only the folded “Who’s here tonight” goes half under it.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>A, with “What you’re watching for” and the points first</div><p>The question as you asked it.
+        The short lines a coach glances back at come first, and the long paragraph read once at the start comes after. Computed gain: on the long copy with
+        the bar, every point stays on screen one at both widths, and the long paragraph goes under the bar instead. <b>Cost:</b> a helper arriving cold reads what to watch for before what the drill is. On the station screen
+        (the cold reader’s screen) the order changes too, or the stop and the station disagree again.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Fix only the drill block</div><p>Its three lines come back and the one-row list goes. The written stop keeps
+        its two unlabelled paragraphs.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">M3 · swipe between stops</div>
+      <h3>Close it, rather than “not yet”</h3>
+      <p>The plan asked it as an addition and recommended “Not yet”. It re-asks a rule the field screen was built on: “no swipe, no drag, no
+      long-press — gloves defeat all three, and swipe collides with the browser’s back gesture” (the original field spec). Tested on its merits:</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>No swipe, and closed</div><p><b>The reasons that hold.</b> Your 21 September
+        ruling made the phone’s back gesture go up one level. So a swipe from the left edge takes a coach to the list, while the same swipe started a thumb’s width in
+        would take them to the previous stop. On Android the right edge is Back too, so a swipe for “next” that starts near the right edge would
+        leave the stop instead. On a station, “next” means two things: the next station, or the next round. The button says what will
+        happen (“Rotate now” stays in the block, “Next block” leaves it), and a swipe doesn’t. And with the bar under the thumb, a swipe saves no
+        taps. <b>The reason that doesn’t hold:</b> gloves. A swipe needs less precision than a tap, so that part of the original rule was wrong and
+        comes out of the record. <b>Cost:</b> a coach who expects to swipe finds buttons.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Not yet: look again once the bar has been used at a real practice</div><p>Keeps the question
+        open. <b>Cost:</b> it comes back at every stage.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Build it: a swipe across the middle of a stop, with the edges left to the phone</div><p>Stops only, not
+        stations. <b>Cost:</b> whether a swipe goes up a level or to the next stop depends on where the thumb started, which a coach can’t see. It is a new
+        gesture with nothing on screen to say it exists.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">M4 · tonight’s note (new)</div>
+      <h3>“Just for tonight” comes first, on a station and on a drill’s stop</h3>
+      <p>Found by the measuring: the one line written for tonight is the eighth thing on a station, after Setup, Equipment and Running it. On the real
+      plan the tab bar cuts it at 390 (759–827, bar at 772) and hides it at 360. On the long copy it is at 1,041. A stop built from a drill doesn’t show it at all.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>Right under “With you now” on a station, under the length on a stop</div><p>
+        The same amber box, moved up, so the line written for tonight is read before the lines written for every night. On the real plan at 390 it moves
+        from 759 to 312. <b>Cost:</b> it departs from the order D28 wrote down (who’s with me · doing · watching for · points · setup · tonight’s
+        note · who’s next), and everything under the note moves down by its height, about 82px on the real plan.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Leave it where D28 put it</div><p>With the bar, a station’s screen one ends at 699, so the
+        note stays out of sight on every station of the real plan.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>A, and a “Just for tonight” flag on the rotation’s rows</div><p>The head coach can see which
+        stations have a note without opening them, the way the editor’s station row already flags it (stage 2, S1). Not drawn, because it adds to the one screen that already works.</p></div>
+      </div>
+    </div>
+
+    <div class="paste">
+      <div class="k">Paste back into the chat to rule</div>
+<pre>Stage 3 · The field
+M1 the buttons — A at the foot, every screen / B pinned only when long / C no bar, Rotate now under "With you now"
+M2 what a stop says — A headings, today's order, a drill's own lines / B headings, watching-for first / C only the drill block
+M3 swipe between stops — A no, closed / B not yet / C build it
+M4 tonight's note — A comes first / B where it is / C A + a flag on the rotation's rows
+Notes:</pre>
+    </div>
+    <div class="flag good-flag"><span class="k">Ruled · owner · 25 September 2026 · built on dev the same day</span>
+      <p><b>M1 = A · M2 = A · M3 = A · M4 = A</b>, and a station gets Back: <i>“looks good, I agree with your recommendations, go ahead.”</i>
+      Measured after, in the running product, at 390 and 360, on the real plan and the long copy: the bar sits on the tab bar
+      (699–772 at 390, 635–708 at 360) on <b>every stop and every station</b>, at rest, half a viewport in and at the page’s end, and a
+      tap on its centre lands on the button every time. After scrolling to the foot of a station, Rotate now opens the next round <b>at the top</b>
+      (“With you now” at 179–298; it used to open 382px down with that box off the screen). On a station, Back returns <b>the same station a round earlier</b>
+      in one tap; from round 1 it goes to Warm-up, and Next block reopens the station. “Just for tonight” moved from 759 to <b>312</b>,
+      its label at 12px like every other. Warm-up has its three headings; the long copy’s drill block shows its note, Setup and Equipment, and no one-row list.
+      The More sheet opens over the bar. Nothing was written to the practice. A computer is unchanged apart from a station’s Back. Walk: <b>QA walk · 1</b>, part M (ledger §237).</p></div>
+    <div class="flag"><span class="k">Found at build · one thing the drawing didn’t show</span>
+      <p>A sticky bar can ride up off the tab bar at the very end of a page. The page keeps a strip of breathing room under everything, and on a phone even a
+      short stop can scroll by it. Measured on the first build: the bar lifted 32px at the end of a station and 55px on a short stop (the recording
+      screen’s bar lifts the same 32). Fixed for this screen: the page drops that strip when it has the bar, and the page runs the full screen. The bar now stays on the tab bar at every
+      scroll position (measured, every screen, both widths).</p></div>
+    <div class="flag"><span class="k">Found at review · 25 September · fixed</span>
+      <p><b>A block with one station</b> lost two things when its one-row “Stations” list went. The station’s <b>rotation note</b> and a <b>name the coach gave it</b>
+      (“Ladder” on a block called “Skills”) could only be reached through that row. The stop now shows the rotation note, and the row stays when the station’s name says something
+      the block’s title doesn’t, which is the same rule the editor uses to keep a lone station. <b>“Who’s here tonight”</b> is back under the buttons on a computer, where the
+      buttons aren’t docked. On a phone it still sits above the bar. <b>The help</b> now says that from a rotation’s first round, Back goes to the block before.</p></div>
+  </section>
+
+  <section>
+    <h2>What doesn’t change</h2>
+    <ul class="list">
+      <li><b>No clock (P10).</b> Nothing counts. “15 min” and “10 min a round” stay plain information.</li>
+      <li><b>Nothing is written (D4).</b> The bar moves the screen and records nothing. Opening at the top is the screen’s own business.</li>
+      <li><b>The list stays the first screen (W1–W4)</b> and is untouched. It has no big button, so it gets no bar. It measured one screen, 916px.</li>
+      <li><b>The rotating stop</b>: its rows, letters, staff line and “Next · Round 2” as they are. On it the bar only changes where the buttons sit.</li>
+      <li><b>“Coming to you”</b> stays on the station, where it is, as the last thing before the bar.</li>
+      <li><b>The field floor (A4)</b>: nothing under 12px. The buttons stay 56px, ink and never lime.</li>
+      <li><b>The bar’s rules from E4</b>: the width of the page’s column, clearing the tab bar by position and never sitting on top of it. The run screen has no autosave pill for it to collide with, because it saves nothing.</li>
+      <li><b>Where it applies</b>: the bar and opening at the top are for phones (≤640). The headings (M2) and the note’s place (M4) change the screen at every width, because it is one narrow column on a computer too.</li>
+      <li><b>The in-app help</b> for running a practice will need its lines about the buttons and the note at build.</li>
+    </ul>
+  </section>
+</div>
+
 <!-- ══════════════════════ TAB · QA WALK 1 ══════════════════════ -->
 <div id="tab-qa1" role="tabpanel" hidden>
   <header class="masthead">
-    <div class="eyebrow">QA walk · stage 1 · ledger §227 · built on dev 23 September 2026 · <b>walked and passed 24 September 2026</b> (every part, A–K — J is §229, the rotation table; K is §230, the Groups room) · <b>part L (§231, stations inside a block) built 24 September, walk owed</b></div>
+    <div class="eyebrow">QA walk · stage 1 · ledger §227 · built on dev 23 September 2026 · <b>walked and passed 24 September 2026</b> (every part, A–K — J is §229, the rotation table; K is §230, the Groups room) · <b>part L (§231, stations inside a block) walked and passed 25 September</b> · <b>part M (§237, the field) built 25 September, walk owed</b></div>
     <h1>Walk the block on its own screen</h1>
     <p class="lede">On your phone, signed in as the UAT head coach. Tick each step as it holds; mark each part
     Pass or Needs work; the box under a part is for what you saw. Ticks are kept in this browser. When you are
@@ -2043,7 +2377,7 @@ Notes:</pre>
   <section>
     <div class="qasign"><b>Where:</b> the UAT Test Team → More → <b>Practice plans</b> → <b>UAT probe practice</b>.
     It opens to read (stage 1b): tap <b>Edit</b> beside Run practice first for parts A–F.
-    Parts A–E on a phone; part F on a computer. Part J (ledger §229, the rotation table) and part K (ledger §230, the Groups room) are on a phone except their last steps. Part L (ledger §231, stations inside a block) is on a phone except its last step; its paths add and remove stations, and each one ends the practice as it found it.</div>
+    Parts A–E on a phone; part F on a computer. Part J (ledger §229, the rotation table) and part K (ledger §230, the Groups room) are on a phone except their last steps. Part L (ledger §231, stations inside a block) is on a phone except its last step; its paths add and remove stations, and each one ends the practice as it found it. <b>Part M</b> (ledger §237, the field) starts from <b>Run practice</b> on the same practice, on a phone except its last step; it writes nothing, except the optional drill-block step, which says how to put the practice back.</div>
     <p class="qaprog" id="qaProg">0 of 0 steps ticked</p>
     <div id="qaParts"></div>
     <div class="paste">
@@ -2078,6 +2412,8 @@ Notes:</pre>
     <p>A source guard for the ≤640 row (no sentence lines, no pair) and the sheet (the same field set as the card; the foot on the clearance token; ‹ › bounded); the layout sweep on the plan page with a block open at 361/390/768/1440 plus a new screen for the sheet open; a hit-test on the pinned foot at rest and mid-scroll at 390 and 360; the Saved pill over the sheet; Escape/scrim/Back; the record’s read face in the sheet; driven by hand at 390 and 360: write a three-block plan from blank without returning to the list. A “QA walk · 1” tab added to this hub at build, its § from the ledger.</p>
     <h3>7 · Stage 2 — stations inside a block (ruled S1 · S2 · S4 = A and built 24 Sep; the plan’s §6e, §6e.5 the build record; ledger §231)</h3>
     <p>Measured at 390 and 360: a station is a 115–138px card with a 44px “Open ›” line; three stations and the add card take 463px editing, 387 reading; a written station is five taps from its first letter (“+ Add a station” → Write one → a 31px “Write a station” that adds a blank card and opens nothing → “Open ›” → the name box); a blank station survives a reload (the §1 note said otherwise — corrected). Decisions on the “2 · Stations inside a block” tab: S1 the station row (A: one 56px row, name · who runs it · “Just for tonight”); S2 adding (A: the block’s K4 shape one level down — the new station opens with the cursor in its name, “Start from a drill ›” inside); S4 an untouched new station goes when its screen closes. S3 (reorder by the block’s grip) was ruled 24 Sep in another session and committed in 6e15af51. Built as measured: 463 → 222px editing, 387 → 177 reading; add → the cursor in the name in one tap; an empty new station gone on close and after a reload; “+ Stations” left empty returns the block unchanged; the desk’s columns unchanged. Found and fixed on the way: a renamed sole station lost its name when its block collapsed back.</p>
+    <h3>8 · Stage 3 — the field (measured + drawn 25 Sep; the plan’s §6f; ruling owed)</h3>
+    <p>Measured at 390 and 360 on the run screen, on the real plan and on a long copy served to the screen alone (nothing written; the screen writes nothing). The list and the rotating stop fit, as you said. Every station hides its button (9 of 9 on the real plan, 118–302px under the tab bar at 390; 26 of 26 on the long copy), a written stop with a real paragraph hides it (181px at 390), and on the stops that fit it sits anywhere from 270 to 619px down. After Rotate now, a station opens the next round where you had scrolled to: on a long one “With you now” opens 203px above the top of the screen. A plain stop’s lines have no headings, a stop built from a drill leaves out its setup, equipment and note for tonight, and on a station “Just for tonight” is the eighth line. Put to you before drawing and re-framed with you: M1 the buttons at the foot of every screen, with each tap opening its screen at the top, and a station carrying the stop’s Back so a round goes back in one tap (your ask the same day; today it takes three); M2 a stop reads like a station (headings in today’s order, a drill’s own lines); M3 swipe closed (the original field spec already said no, and the back gesture going up one level is the collision that holds; gloves are not); M4 tonight’s note first. Decisions and paste-back on the “3 · The field” tab. <b>Ruled 25 Sep: M1–M4 = A, and a station gets Back; built on dev the same day</b> (the plan’s §6f.6): the bar holds its place on the tab bar at every scroll position on every stop and station at both widths, and it is the one thing the drawing didn’t show that needed a fix. A sticky bar rode up off the tab bar at the end of a page until the page dropped its bottom strip. Walk: QA walk · 1 part M, ledger §237.</p>
   </section>
 </div>
 
@@ -2101,13 +2437,16 @@ Notes:</pre>
     <p>A coach cannot see the rest of the plan while editing one block on a phone (the sheet’s eyebrow and ‹ › are the mitigation). The plan’s look diverges more between phone and desk than any screen so far (a list vs a timeline with the block open in place). Stage 1 leaves the rotation table wider than a phone; its fix is drawn on its own tab (24 Sep): keep the table and take out what makes it too wide.</p>
     <h3>Stage 2 — stations inside a block (ruled and built 24 Sep; walk owed, §231)</h3>
     <p>Inside a rotating block, a station becomes one short row (its name, who runs it, and a “Just for tonight” flag when it has a note) instead of a card with a line just for the word “Open”, so the whole rotation reads on one screen. “+ Add a station” opens the new station with the cursor in its name: one tap instead of five, with the library one tap in. A station started by mistake goes away if you leave it empty, instead of staying in the plan for good. Reordering stations by drag and a tap menu was ruled separately the same day.</p>
+    <h3>Stage 3 — the field (ruled and built 25 Sep; walk owed, §237)</h3>
+    <p>At the field the coach never scrolls to move the practice on: Back and Next block (or Rotate now) sit at the foot of the screen, just above the tab bar, in the same place on every stop and station. Today every station hides Rotate now below the tab bar, and a stop with a real paragraph hides Next block. Each tap opens its screen at the top, so after Rotate now the new group is the first thing a station coach sees. A station gets Back beside Rotate now, so a round moved on by accident is one tap back instead of three. A stop reads like a station, with the same headings on its lines. A stop built from a drill shows the drill’s setup, equipment and note for tonight. The note for tonight comes first on a station instead of eighth. There is no swipe: the phone’s back gesture already goes up one level, and a swipe beside it would go somewhere else. The trade-off is 73px of every screen for the bar, and an empty stretch between the words and the bar on a short stop.</p>
     <h3>Success criteria</h3>
     <p>At 390: a shut block ≤ 60px and never truncated; a writing field ≥ 350px wide; the minutes chips on one line; opening a block moves nothing else on the page; a three-block plan written from blank without returning to the list; the layout sweep green with the sheet open; the field’s advance button reachable without scrolling on every stop once stage 3 lands.</p>
   </section>
 </div>
 
 <p class="foot">Measured 23 September 2026 on <span class="mono">dev</span>, signed in as the UAT head coach, on a warm dev
-server. Probes: <span class="mono">.probe/pp-phone-measure.mjs · pp-station-modal.mjs</span>. Every figure on this
+server. Probes: <span class="mono">.probe/pp-phone-measure.mjs · pp-station-modal.mjs</span>; stage 3 (25 September):
+<span class="mono">.probe/pp-field-measure.mjs · pp-field-station-scroll.mjs</span>. Every figure on this
 page was read out of the rendered product, not estimated. Drawings are 390px wide and do not reflow — open
 this page on a phone to judge a tap target or a type size.</p>
 
@@ -2117,7 +2456,7 @@ this page on a phone to judge a tap target or a type size.</p>
 (function(){
   var tabs = [].slice.call(document.querySelectorAll('.tab[data-tab]'));
   /* Every tab button needs a panel here — a button with no entry falls through silently. */
-  var panels = { found:'tab-found', s1:'tab-s1', qa1:'tab-qa1', foot:'tab-foot', s2:'tab-s2', grp:'tab-grp', rot:'tab-rot', st:'tab-st', plan:'tab-plan', brief:'tab-brief' };
+  var panels = { found:'tab-found', s1:'tab-s1', qa1:'tab-qa1', foot:'tab-foot', s2:'tab-s2', grp:'tab-grp', rot:'tab-rot', st:'tab-st', field:'tab-field', plan:'tab-plan', brief:'tab-brief' };
   function show(k){
     if(!panels[k]) k = 'found';
     Object.keys(panels).forEach(function(key){ var el = document.getElementById(panels[key]); if(el) el.hidden = (key !== k); });
@@ -2241,6 +2580,21 @@ this page on a phone to judge a tap target or a type size.</p>
       'Tap "+ Add a station", then "Start from a drill ›": your drills open with no tabs across the top. Tap "+ Add" on one: the new station becomes that drill, still "4 of 4". Delete it with its bin.',
       'Open Warm-up and tap "+ Stations": a station opens reading "Station 2 of 2", the cursor in its name. Tap ← without typing: Warm-up is exactly as it was — its words, its six players, and "+ Stations" back at its foot.',
       'On a computer, open Skills circuit after Edit: the stations are still cards side by side with "Open ›". Press "+ Add a station" → Write one → "Write a station": the new station opens with the cursor in its name. Close it without typing: it goes.'
+    ]},
+    { id:'M', title:'M · §237 — The field (phone)', steps:[
+      'On your phone, open the UAT probe practice and tap Run practice, then Warm-up. Back and Next block sit at the very bottom of the screen, just above the tabs, before you scroll at all.',
+      'Warm-up’s words have headings: "What you’re doing", "What you’re watching for", "Coaching points". "Who’s here tonight" sits just above the two buttons.',
+      'Scroll down as far as it goes and back up: the two buttons stay in the same place, on the tabs, the whole time.',
+      'Tap Next block. Skills circuit opens at its top, with Back · Rotate now in the same place.',
+      'Tap the Footwork ladder row. "Just for tonight — Only two ladders tonight — run it in pairs." sits right under "With you now", before "What you’re doing". Back · Rotate now are at the bottom without scrolling.',
+      'Scroll to the bottom of the station (to "Coming to you"), then tap Rotate now: the station opens at its top, reading "Round 2 of 3", with the next group in "With you now".',
+      'Tap Back: still Footwork ladder, "Round 1 of 3", the first group back in "With you now".',
+      'Tap Back again: you are on Warm-up. Tap Next block: Footwork ladder is open again, round 1.',
+      'Tap More in the tabs: the sheet opens over the buttons. Close it: the buttons are where they were.',
+      'Step on to the last block: the buttons still sit at the bottom of the screen, with empty space above them, and the right one reads "Back to the plan".',
+      'Swipe left and right across a block: nothing happens, by design. Your phone’s own back gesture from the edge goes up one level (a station → its block → the list).',
+      'Optional (it changes the plan): in the plan, press Edit, add a block from a drill that has a setup and equipment, open its station and type a note in "Just for tonight". Run practice → that block: the note first, the headings, then Setup and Equipment, and no "Stations" list with one row. Delete the block afterwards.',
+      'On a computer, open the same Run practice: the buttons sit under the words as before (no bar), with "Who’s here tonight" under them, and a station now has Back beside Rotate now.'
     ]}
   ];
   var KEY = 'pp-phone-qa1';
@@ -2528,6 +2882,257 @@ this page on a phone to judge a tap target or a type size.</p>
       try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
       sync(); render();
     });
+  });
+  new MutationObserver(function(){ measure(); }).observe(tab, { attributes: true, attributeFilter: ['hidden'] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  window.addEventListener('resize', measure);
+  sync(); render();
+})();
+</script>
+<script>
+/* ── Stage 3 · the field: the run screen today and as proposed, drawn live from ONE data set — the fixture's
+   own words (read from the practice-plan route on 25 Sep) or a long copy about the size of the probe's.
+   The MEASURED figures over each frame are the probe's (.probe/pp-field-measure.mjs); the frames themselves
+   use the product's sizes and spacing and only compare today with the proposal. ── */
+(function(){
+  var tab = document.getElementById('tab-field'); if (!tab) return;
+  var KEY = 'pp-phone-field';
+  var state = { scr: 'station', c: 'light', w: 390 };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) Object.keys(state).forEach(function(k){ if (k in saved) state[k] = saved[k]; }); } catch (e) {}
+
+  var SIX = ['#33 Avery Test', '#2 Blake Test', '#3 Casey Test', '#4 Devon Test', '#5 Emerson Test', '#6 Frankie Test'];
+  var PTS = ['Eyes up before the ball arrives, not after', 'First touch across the body and away from pressure',
+    'Call the name of the player you are passing to', 'Reset the line quickly — no standing in the queue',
+    'Weak foot on every second lap, even when it is slow'];
+  var LIGHT_PLAIN = { bar: '1 of 4', title: 'Warm-up', len: '15 min', note: 'Dynamic warm-up, then partner work at walking pace.',
+    goal: 'Everyone moving and talking before the first drill.', pts: ['Heads up', 'Call for it early'], staff: 'UAT Coach', players: SIX,
+    next: ['Up next', 'Skills circuit', ' · 45 min'], primary: 'Next block' };
+  var D = {
+    light: {
+      plain: LIGHT_PLAIN,
+      rotating: { bar: '2 of 4', title: 'Skills circuit', len: 'Round 1 of 3 · 15 min a round',
+        rows: [['A', 'Close control', 'Sam Assistant'], ['B', 'Footwork ladder', 'UAT Coach'], ['C', 'Finishing', 'Jordan Helper']],
+        staff: 'UAT Coach', next: ['Next', 'Round 2', ' · A → Footwork ladder'], primary: 'Rotate now' },
+      station: { round: 'Round 1 of 3', name: 'Footwork ladder', group: 'Group B', with: '#7 Gray Test · #9 Indigo Test · #10 Jules Test · #12 Logan Test',
+        doing: 'Three stations, groups move on every fifteen minutes.', watching: 'Each player gets a full turn at all three',
+        pts: ['Short steps', 'Eyes up, not down'], setup: 'Two ladders along the sideline, ten steps apart.', eq: 'Cones', running: 'UAT Coach',
+        tonight: 'Only two ladders tonight — run it in pairs.',
+        coming: [['Round 2', 'Group A — #33 Avery Test · #2 Blake Test · #3 Casey Test · #8 Harper Test · #11 Kai Test'], ['Round 3', 'Group C — #5 Emerson Test · #6 Frankie Test · #4 Devon Test']],
+        primary: 'Rotate now' }
+    },
+    heavy: {
+      plain: Object.assign({}, LIGHT_PLAIN, {
+        note: 'Set two lines of cones fifteen metres apart and start in pairs at walking pace, then build to three-quarter pace over the first five minutes. Every player touches the ball on every lap, and the pair that finishes first jogs back round the outside so the lines keep moving. Finish with two minutes of dynamic stretches in a circle, the captains calling each one out loud.',
+        goal: 'Everyone moving and talking by the end, first touch out of the feet, eyes up before the pass.',
+        pts: PTS, next: ['Up next', 'Skills circuit', ' · 50 min'] }),
+      drill: { bar: '3 of 4', title: 'Small-sided game', len: 'Rest of practice',
+        note: 'Four against four in a thirty by twenty grid with two small goals at each end. Rolling subs every three minutes from the side; the coach restarts with a new ball the moment one goes out, and a goal only counts if every player on the team touched the ball in that move.',
+        goal: 'Quick decisions under pressure, and everyone involved in every attack we make.', pts: PTS.slice(1, 5), staff: 'UAT Coach', people: 'Whole team',
+        drill: { name: 'Small-sided game', setup: 'Two small goals at each end of a thirty by twenty grid, bibs in two colours and a spare ball behind each goal.',
+          eq: 'Small goals · Bibs · Spare balls', tonight: 'Keepers are away tonight — play to the small goals, no one in net.' },
+        next: ['Up next', 'the next block', ' · 15 min'], primary: 'Next block' },
+      rotating: { bar: '2 of 4', title: 'Skills circuit', len: 'Round 1 of 5 · 10 min a round',
+        rows: [['A', 'Close control', 'UAT Coach'], ['B', 'Footwork ladder', 'Sam Assistant'], ['C', 'Finishing', 'Jordan Helper'], ['D', 'Passing gates', 'Sam Assistant · Riley Parent'], ['E', '1v1 to goal', 'Jordan Helper']],
+        staff: 'UAT Coach', next: ['Next', 'Round 2', ' · A → Footwork ladder'], primary: 'Rotate now' },
+      station: { round: 'Round 1 of 5', name: 'Footwork ladder', group: 'Group B', with: '#8 Harper Test · #11 Kai Test · #7 Gray Test',
+        doing: 'Two ladders side by side. One player goes through with quick feet, both feet in every square, then sprints to the cone and jogs back; the next player goes when the one ahead reaches the fourth rung. Swap the pattern every two minutes: in-in-out-out, then lateral, then one foot only.',
+        watching: 'Quick, light feet with the head up, and a clean sprint out of the last rung.', pts: PTS.slice(0, 4),
+        setup: 'Two ladders along the sideline, ten steps apart, a cone five metres past the end of each, and a spare ladder folded by the bench in case one breaks.',
+        eq: 'Cones', running: 'Sam Assistant', tonight: 'Only two ladders tonight — run it in pairs.',
+        coming: [['Round 2', 'Group A — #33 Avery Test · #2 Blake Test · #3 Casey Test'], ['Round 3', 'Group E'], ['Round 4', 'Group D — #5 Emerson Test · #6 Frankie Test · #4 Devon Test'], ['Round 5', 'Group C — #9 Indigo Test · #10 Jules Test · #12 Logan Test']],
+        primary: 'Rotate now' }
+    }
+  };
+  /* Measured on the product, 25 Sep (the probe): the primary's top and foot, and the page's height. */
+  var MEAS = {
+    '390-light-plain': [563, 619, 916], '390-light-rotating': [473, 529, 916], '390-light-station': [1018, 1074, 1178],
+    '390-heavy-plain': [897, 953, 1117], '390-heavy-drill': [819, 875, 1039], '390-heavy-rotating': [611, 667, 916], '390-heavy-station': [1358, 1414, 1518],
+    '360-light-plain': [560, 616, 852], '360-light-rotating': [471, 527, 852], '360-light-station': [1016, 1072, 1176],
+    '360-heavy-plain': [942, 998, 1163], '360-heavy-drill': [840, 896, 1060], '360-heavy-rotating': [609, 665, 852], '360-heavy-station': [1356, 1412, 1516]
+  };
+  var NOTE_AT = { '390-light': [759, 827], '390-heavy': [1041, 1109], '360-light': [757, 825], '360-heavy': [1039, 1107] };
+  var STOP_TOPS = { 390: '563 here, 473 on the circuit, 339 on the game, 270 on Block 4', 360: '560 here, 471 on the circuit, 361 on the game, 267 on Block 4' };
+  var STATION_RANGE = { '390-light': '9 of 9, 118–302px', '360-light': '9 of 9, 202–364px', '390-heavy': 'all 26, 323–709px', '360-heavy': 'all 26, 431–795px' };
+  var fmt = function(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+  var foldOf = function(w){ return (w === 360 ? 780 : 844) - 72; };
+
+  /* What each dot says. `k` is the anchor in the frame; order is the dot's number. */
+  function notesFor(side){
+    var w = state.w, c = state.c, scr = state.scr, L = c === 'light', fold = foldOf(w);
+    var m = MEAS[w + '-' + c + '-' + scr] || [0, 0, 0], u = m[1] - fold, out = [];
+    if (side === 'before'){
+      if (scr === 'plain'){
+        out.push({ k: 'words', t: 'Two paragraphs and a list, with no headings. On a station the same three are headed “What you’re doing”, “What you’re watching for” and “Coaching points”. Here the only difference between the first two is that the second is a little bolder.' });
+        out.push({ k: 'acts', t: L ? 'Next block at ' + m[0] + ', on screen one with ' + (-u) + 'px to spare. Every stop on the real plan fits. What changes is where the button is: ' + STOP_TOPS[w] + '.'
+          : 'Next block at ' + fmt(m[0]) + ', ' + u + 'px under the tab bar. A paragraph of setup and five coaching points are enough to hide it.' });
+      } else if (scr === 'drill'){
+        out.push({ k: 'missing', t: 'Not on this screen: the drill’s setup, its equipment and its note for tonight (“Keepers are away tonight — play to the small goals, no one in net.”). They are one tap in, behind the row further down.' });
+        out.push({ k: 'stations', t: 'A “Stations” heading and one row that repeats the block. A block built from one drill keeps its words on its one station. The stop shows those words, then offers the station as if it were a second thing.' });
+        out.push({ k: 'acts', t: 'Next block at ' + m[0] + ', ' + u + 'px under the tab bar.' });
+      } else if (scr === 'rotating'){
+        out.push({ k: 'rows', t: L ? 'One row per station, the group’s letter first. This is the screen that already works: it fits with ' + (-u) + 'px to spare.'
+          : 'Five stations still fit, with ' + (-u) + 'px to spare. Each station’s words are one tap in, so the stop stays short.' });
+        out.push({ k: 'acts', t: 'Rotate now at ' + m[0] + ', on screen one. The only thing the bar would change here is that the button sits in the same place as on every other screen.' });
+      } else {
+        out.push({ k: 'now', t: L ? 'After Rotate now, the next round opens where the coach had scrolled to. Measured at 390: this station opens 178px down, with “With you now” half under the team line. A long station opens it 203px above the top of the screen, and it is the one line that changed.'
+          : 'After Rotate now, the next round opens where the coach had scrolled to. Measured at 390: 382px down, with “With you now” 203px above the top of the screen. It is the one line that changed.' });
+        var T = NOTE_AT[w + '-' + c];
+        out.push({ k: 'tonight', t: L ? '“Just for tonight” is the eighth thing on the screen, after Setup, Equipment and Running it: at ' + T[0] + '–' + T[1] + ', ' + (w === 390 ? 'cut by the tab bar at 772.' : 'under the tab bar at 708.')
+          : '“Just for tonight” at ' + fmt(T[0]) + ', ' + (T[0] - fold) + 'px under the tab bar, below a paragraph, four points, the setup, the equipment and who runs it.' });
+        out.push({ k: 'acts', t: 'Rotate now at ' + fmt(m[0]) + ': ' + u + 'px to scroll before the whole button shows. Every station hides it: ' + STATION_RANGE[w + '-' + c] + '. And it only goes forward: undoing an accidental Rotate now takes three taps (← All stations, Back, the station’s row again; measured).' });
+      }
+    } else {
+      var dockTop = fold - 73;
+      if (scr === 'station'){
+        out.push({ k: 'top', t: 'Every tap opens its screen at the top. After Rotate now, “With you now” (the new group) is the first thing on screen. (M1 · A)' });
+        out.push({ k: 'tonight', t: '“Just for tonight” straight under “With you now”, so it is read before the lines written for every night. (M4 · A)' });
+        out.push({ k: 'coming', t: '“Coming to you” stays where it is, the last thing before the bar.' });
+        out.push({ k: 'dock', t: 'The bar: Back · Rotate now, the stop’s own pair (your ask, 25 Sep), just above the tab bar (' + dockTop + '–' + fold + ' at ' + w + '). Back is the previous round, still on this station, so a round moved on by accident is one tap back. Today that takes three taps through the stop. “← All stations” stays the way up. (M1 · A)' });
+      } else {
+        if (scr === 'drill') out.push({ k: 'tonight', t: 'The note for tonight, from the drill’s own station, straight under the length. (M4 · A)' });
+        if (scr !== 'rotating') out.push({ k: 'labels', t: 'The station’s headings on the stop’s own lines, in today’s order. A glance mid-drill finds “What you’re watching for” by its heading. (M2 · A)' });
+        if (scr === 'drill') out.push({ k: 'kit', t: 'The drill’s Setup and Equipment, quietly, under the points, as a station shows them. The one-row “Stations” list is gone, because the drill is the block. (M2 · A)' });
+        if (scr === 'rotating') out.push({ k: 'rows', t: 'Unchanged: the rows, the letters, the staff line and “Next · Round 2”.' });
+        out.push({ k: 'who', t: '“Who’s here tonight” moves above the bar, so on a short stop the bar can still sit at the foot. It stays folded, one tap away.' });
+        out.push({ k: 'dock', t: 'The bar: Back · ' + D[c][scr].primary + ', just above the tab bar (' + dockTop + '–' + fold + ' at ' + w + '), in the same place on every stop and station. It is the recording screen’s bar (E4): the width of the page’s column, a top rule, clearing the tab bar by position. (M1 · A)' });
+      }
+    }
+    return out;
+  }
+
+  function build(side, list){
+    var after = side === 'after', d = D[state.c][state.scr], idx = {};
+    list.forEach(function(n, i){ idx[n.k] = i + 1; });
+    function dot(k, st){
+      if (!idx[k]) return '';
+      return '<button type="button" class="mk' + (after ? ' g' : '') + '" data-fnote="fdn-' + side + '-' + idx[k] + '" aria-label="' + (after ? 'answer ' : 'note ') + idx[k] + '" style="' + (st || 'right:-6px;top:-8px') + '">' + idx[k] + '</button>';
+    }
+    function bar(l, r, help){ return '<div class="fdbar"><span>← ' + l + '</span><span class="r"><b>' + r + '</b>' + (help ? '<span class="fdq">?</span>' : '') + '</span></div>'; }
+    function blk(label, body, cls, extra){ return '<div class="fdblk fdrel' + (cls ? ' ' + cls : '') + '"><p class="fdlbl">' + label + '</p>' + body + (extra || '') + '</div>'; }
+    function soft(t){ return '<p class="fdsoft">' + t + '</p>'; }
+    function pts(p){ return '<ul class="fdpts">' + p.map(function(x){ return '<li>' + x + '</li>'; }).join('') + '</ul>'; }
+    function tonight(t, extra){ return '<div class="fdtn fdrel"><p class="fdlbl">Just for tonight</p><p>' + t + '</p>' + (extra || '') + '</div>'; }
+    function who(extra){ return '<div class="fdwho fdrel">Who’s here tonight <small>9 of 12</small>' + (extra || '') + '</div>'; }
+    function next(n){ return '<p class="fdnext">' + n[0] + '&nbsp; <b>' + n[1] + '</b>' + n[2] + '</p>'; }
+    function acts(back){ return '<div class="fdacts fdrel">' + (back ? '<span class="fdsec">Back</span>' : '') + '<span class="fdpri">' + d.primary + '</span>' + dot('acts', 'left:-8px;top:-10px') + '</div>'; }
+    function meta(){ return '<div class="fdmeta"><b>' + d.staff + '</b> · ' + (d.players ? '<div class="fdchips">' + d.players.map(function(p){ return '<span class="fdchip">' + p + '</span>'; }).join('') + '</div>' : d.people) + '</div>'; }
+    var page = '', dock = '';
+    if (state.scr === 'plain' || state.scr === 'drill'){
+      page = bar('Blocks', d.bar, true) + '<p class="fdttl fdrel">' + d.title + dot('missing', 'right:0;top:4px') + '</p><p class="fdround">' + d.len + '</p>';
+      if (!after){
+        page += '<p class="fdnote fdrel">' + d.note + dot('words') + '</p><p class="fdgoal">' + d.goal + '</p>' + pts(d.pts) + meta()
+          + (d.drill ? '<div class="fdrel"><p class="fdstlbl">Stations</p><div class="fdrow st"><span><span class="s">' + d.drill.name + '</span><span class="m">' + d.staff + '</span></span><span class="go">View</span></div>' + dot('stations') + '</div>' : '')
+          + next(d.next) + acts(true) + who();
+      } else {
+        page += (d.drill ? tonight(d.drill.tonight, dot('tonight')) : '')
+          + blk('What you’re doing', '<p class="fdtxt">' + d.note + '</p>', '', dot('labels'))
+          + blk('What you’re watching for', '<p class="fdtxt b">' + d.goal + '</p>')
+          + '<div class="fddiv"></div>' + blk('Coaching points', pts(d.pts), 'first')
+          + (d.drill ? blk('Setup', soft(d.drill.setup), '', dot('kit')) + blk('Equipment', soft(d.drill.eq)) : '')
+          + meta() + next(d.next) + who(dot('who'));
+        dock = '<span class="fdsec">Back</span><span class="fdpri">' + d.primary + '</span>';
+      }
+    } else if (state.scr === 'rotating'){
+      page = bar('Blocks', d.bar, true) + '<p class="fdttl">' + d.title + '</p><p class="fdround">' + d.len + '</p>'
+        + '<div class="fdrows fdrel">' + d.rows.map(function(r){ return '<div class="fdrow"><span class="g">' + r[0] + '</span><span><span class="s">' + r[1] + '</span><span class="m">' + r[2] + '</span></span><span class="go">View</span></div>'; }).join('') + dot('rows') + '</div>'
+        + '<p class="fdmeta"><b>' + d.staff + '</b></p>' + next(d.next) + (after ? who(dot('who')) : acts(true) + who());
+      dock = '<span class="fdsec">Back</span><span class="fdpri">' + d.primary + '</span>';
+    } else {
+      page = bar('All stations', d.round, false) + '<p class="fdeyebrow">Station</p><p class="fdname fdrel">' + d.name + dot('top', 'right:0;top:4px') + '</p>'
+        + '<div class="fdnow fdrel"><p class="l">With you now</p><p class="gn">' + d.group + '</p><p class="p">' + d.with + '</p>' + dot('now') + '</div>'
+        + (after ? tonight(d.tonight, dot('tonight')) : '')
+        + blk('What you’re doing', '<p class="fdtxt">' + d.doing + '</p>') + blk('What you’re watching for', '<p class="fdtxt b">' + d.watching + '</p>')
+        + '<div class="fddiv"></div>' + blk('Coaching points', pts(d.pts), 'first')
+        + blk('Setup', soft(d.setup)) + blk('Equipment', soft(d.eq)) + blk('Running it', soft(d.running))
+        + (after ? '' : tonight(d.tonight, dot('tonight')))
+        + '<div class="fdup fdrel"><p class="fdlbl">Coming to you</p>' + d.coming.map(function(r){ return '<div class="fdupr"><span>' + r[0] + '</span><span>' + r[1] + '</span></div>'; }).join('') + dot('coming') + '</div>'
+        + (after ? '' : acts(false));
+      /* The stop's own pair (owner, 25 Sep: "the ability to go to and from rounds"): Back is the previous round. */
+      dock = '<span class="fdsec">Back</span><span class="fdpri">' + d.primary + '</span>';
+    }
+    return { page: page, dock: dock + dot('dock', 'left:-8px;top:-10px'), dockRest: dock };
+  }
+
+  function frameHtml(side){
+    var W = state.w, H = W === 360 ? 780 : 844, after = side === 'after', list = notesFor(side), b = build(side, list);
+    var vars = '--fh:' + H + 'px;--tt:' + (W * 0.08).toFixed(1) + 'px;--sn:' + (W * 0.075).toFixed(2) + 'px';
+    return '<div class="drawhead">' + (after ? 'Proposed <span class="h good">M1 A · M2 A · M4 A</span>' : 'Today <span class="h">as the product draws it</span>') + '</div>'
+      + '<div class="rtmeta" data-meta></div>'
+      + '<div class="fdph" style="' + vars + '"><div class="fdteam">UAT Test Team <span aria-hidden="true">⌄</span><small>3-2-1</small></div>'
+      + '<div class="fdpage" data-layer>' + b.page + '</div>'
+      + (after ? '<div class="fddock">' + b.dock + '</div>' : '')
+      + '<div class="nav fdnavpos"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span class="on">MORE</span></div></div>'
+      + '<div class="fdrest" style="' + vars + '"><div class="fdpage" data-rest>' + b.page + (after ? '<div class="fddock rest">' + b.dockRest + '</div>' : '') + '</div></div>'
+      + '<p class="fdcutl" data-cut></p>'
+      + '<ul class="notes">' + list.map(function(n, i){ return '<li id="fdn-' + side + '-' + (i + 1) + '"' + (after ? ' class="g"' : '') + '><b>' + (i + 1) + '</b>' + n.t + '</li>'; }).join('') + '</ul>';
+  }
+
+  function render(){
+    ['before', 'after'].forEach(function(side){
+      var col = document.getElementById('fdF-' + side); if (!col) return;
+      col.style.setProperty('--fw', state.w + 'px');
+      col.innerHTML = (state.scr === 'drill' && state.c === 'light')
+        ? '<div class="fdhold">The real plan has no stop built from a drill. Pick <b>Long copy</b> to see one: its Small-sided game is built from a drill, with a setup, equipment and a note for tonight.</div>'
+        : frameHtml(side);
+    });
+    measure();
+  }
+
+  /* The rest-of-page panel and the figures over each frame need the layout, so nothing is read while hidden. */
+  function measure(){
+    if (tab.hidden) return;
+    var fold = foldOf(state.w);
+    ['before', 'after'].forEach(function(side){
+      var col = document.getElementById('fdF-' + side), ph = col && col.querySelector('.fdph'); if (!ph) return;
+      var after = side === 'after', cut = after ? fold - 73 : fold;
+      var rest = col.querySelector('.fdrest'), rl = col.querySelector('[data-rest]'), cl = col.querySelector('[data-cut]');
+      rest.hidden = false;
+      var over = Math.round(rl.offsetHeight - cut);
+      if (over > 2){
+        rest.style.height = over + 'px'; rl.style.top = (-cut) + 'px'; ph.classList.add('cropped');
+        cl.className = 'fdcutl' + (after ? '' : ' bad');
+        cl.textContent = '✂ ' + over + 'px more page under the ' + (after ? 'bar' : 'tab bar') + ', dimmed: the part a coach scrolls to';
+      } else {
+        rest.hidden = true; ph.classList.remove('cropped'); cl.className = 'fdcutl';
+        cl.textContent = 'Nothing under the ' + (after ? 'bar' : 'tab bar') + ': the whole screen is above it.';
+      }
+      var parts = [], m = MEAS[state.w + '-' + state.c + '-' + state.scr];
+      if (!after){
+        if (m){
+          var u = m[1] - fold;
+          parts.push('<span>measured · page ' + fmt(m[2]) + '</span>');
+          parts.push(u > 0 ? '<span class="bad">button ' + fmt(m[0]) + '–' + fmt(m[1]) + ' · ' + u + 'px under</span>' : '<span class="ok">button ' + m[0] + '–' + m[1] + ' · on screen one</span>');
+        }
+        var a = ph.querySelector('[data-layer] .fdacts');
+        if (a) parts.push('<span>drawn at ' + fmt(Math.round(a.getBoundingClientRect().top - ph.getBoundingClientRect().top - 1)) + '</span>');
+      } else {
+        parts.push('<span>drawn</span>', '<span class="ok">the bar ' + cut + '–' + fold + ' on every screen</span>',
+          over > 2 ? '<span>' + over + 'px of page under the bar</span>' : '<span class="ok">nothing under the bar</span>');
+      }
+      col.querySelector('[data-meta]').innerHTML = parts.join('');
+    });
+  }
+
+  function sync(){
+    [].slice.call(tab.querySelectorAll('.rtseg button')).forEach(function(b){
+      b.setAttribute('aria-pressed', String(String(state[b.getAttribute('data-k')]) === b.getAttribute('data-v')));
+    });
+  }
+  [].slice.call(tab.querySelectorAll('.rtseg button')).forEach(function(b){
+    b.addEventListener('click', function(){
+      var k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
+      state[k] = k === 'w' ? Number(v) : v;
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+      sync(); render();
+    });
+  });
+  /* A dot opens its note under its own frame; a second tap closes it (the hub's rule, delegated because the frames are redrawn). */
+  tab.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('.mk[data-fnote]') : null; if (!b) return;
+    var li = document.getElementById(b.getAttribute('data-fnote')); if (!li) return;
+    var was = li.classList.contains('open');
+    [].slice.call(li.parentElement.children).forEach(function(x){ x.classList.remove('open'); });
+    if (!was){ li.classList.add('open'); li.scrollIntoView({ block: 'nearest' }); }
   });
   new MutationObserver(function(){ measure(); }).observe(tab, { attributes: true, attributeFilter: ['hidden'] });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);

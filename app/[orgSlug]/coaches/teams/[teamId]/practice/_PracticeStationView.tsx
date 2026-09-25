@@ -10,8 +10,8 @@ import styles from '../../../coaches.module.css';
  * The owner's scenario, verbatim: *"a coach shows up assigned to a station but might not know what
  * they need to do or what they are focussing on."* So this screen answers, in this order, the three
  * things a station coach actually needs — **who is with me now and for how long · what am I doing ·
- * what am I watching for** — then the coaching points, the setup, tonight's note, and who arrives
- * next. Nothing else.
+ * what am I watching for** — with tonight's note before them, then the coaching points, the setup,
+ * and who arrives next. Nothing else.
  *
  * ⚠ READ-ONLY, like every other inch of the run (D4). There is no tick, no "we did this", no note
  * typed at the field. The screen moves; nothing is recorded.
@@ -23,6 +23,73 @@ import styles from '../../../coaches.module.css';
  * written before the drill library existed has block-level teaching and no station-level teaching,
  * and it must keep reading correctly for ever.
  */
+
+/**
+ * WHAT A STATION SAYS, in the field's ONE order — shared by this screen and a plain stop (practice
+ * plans on a phone, stage 3, owner 2026-09-25):
+ *   · **tonight's note first** (M4) — the one line written for TONIGHT ("Only two ladders tonight —
+ *     run it in pairs") changes how the station is run, so it is read before the lines written for
+ *     every night. D28's order had it eighth, after the setup, the kit and who runs it — cut by the
+ *     tab bar at 390 on an eight-word plan;
+ *   · **the teaching, HEADED** (M2: "a stop reads like a station") — doing · watching for · points,
+ *     D28's order (explain it, then coach it). A plain stop printed the same three resolved lines as
+ *     two unlabelled paragraphs and a list, told apart only by weight;
+ *   · **the setup and the kit**, set quieter.
+ * A plain stop passes its block's ONE station (the station IS the block, D1 — a block built from a
+ * drill keeps its words, setup, kit and note there), or none for a written block, whose words the
+ * resolver falls back to.
+ */
+export function StationLines({ station, block }: { station: PracticeStation | null; block: PracticePlanBlock }) {
+  const { description, goal, coachingPoints: points } = resolveStationTeaching(station ?? {}, block);
+  return (
+    <>
+      {station?.note && (
+        /* One-off, and never saved back to the station (D27). ⚠ Deliberately NOT attributed: the
+           mockup drew "Note from Brett", but a plan stores the note and not who typed it, and
+           inventing an author would be a fabrication on the one line a coach is most likely to act
+           on. The label is the editor's own name for the field (stage 5 — one label, not three). */
+        <div className={styles.ppStNote}>
+          <p className={styles.ppStLbl}>Just for tonight</p>
+          <p className={styles.ppStNoteTxt}>{station.note}</p>
+        </div>
+      )}
+
+      <StationFactLine label="What you’re doing" text={description} loud />
+      {/* The direct answer to "what am I watching for" — the reason this screen exists. From Phase 2
+          it rides the DRILL, so it is written once and read by whoever is standing at the station. */}
+      <StationFactLine label="What you’re watching for" text={goal} loud bold />
+      {points.length > 0 && (
+        <>
+          <div className={styles.ppStDivider} />
+          <div className={styles.ppStBlock} style={{ marginTop: 0 }}>
+            <p className={styles.ppStLbl}>Coaching points</p>
+            <ol className={styles.ppRunPoints}>
+              {points.map((point, i) => <li key={i}>{point}</li>)}
+            </ol>
+          </div>
+        </>
+      )}
+
+      <StationFactLine label="Setup" text={station?.setup} />
+      <StationFactLine label="Equipment" text={station?.equipment?.join(' · ')} />
+      {/* Here, not only on the station screen: a block with ONE station shows that station through
+          its stop, and a rotation note is one of the words the editor keeps a lone station for
+          (`collapseSoleStation`) — the paper prints it (/review, 2026-09-25). */}
+      <StationFactLine label="Rotation" text={station?.rotationNote} />
+    </>
+  );
+}
+
+/** One headed line — the teaching set loud (`ppStTxt`), a reference line quieter. Nothing when empty. */
+function StationFactLine({ label, text, loud, bold }: { label: string; text?: string; loud?: boolean; bold?: boolean }) {
+  if (!text) return null;
+  return (
+    <div className={styles.ppStBlock}>
+      <p className={styles.ppStLbl}>{label}</p>
+      <p className={loud ? styles.ppStTxt : styles.ppStTxtSoft} style={bold ? { fontWeight: 700 } : undefined}>{text}</p>
+    </div>
+  );
+}
 
 type Props = {
   station: PracticeStation;
@@ -39,13 +106,15 @@ type Props = {
   nameOf: (playerId: string) => string;
   onBack: () => void;
   /**
-   * The run's own advance control, rendered by the parent so there is ONE handler.
+   * The run's own bar — the STOP's, rendered by the parent so there is ONE handler and one bar.
    *
    * ⚠ Deviation from the round-5 mockup, deliberate: that frame drew no controls at all. But the
    * person this screen exists for is the one standing at the station, and without a way to move
    * the round on they would have to back out to the station list, tap, and come back in — three
-   * gloved taps, three times a practice. It is the same tap as "Rotate now" on the block screen
-   * and it records nothing, so D4 and D26 are untouched.
+   * gloved taps, three times a practice. It records nothing, so D4 and D26 are untouched.
+   * ⚠ AND IT GOES BOTH WAYS (stage 3, owner 2026-09-25): Back · Rotate now, exactly the stop's pair —
+   * the forward button alone made an accidental Rotate now three taps to undo. How Back keeps this
+   * station open is at the call site.
    */
   actions?: ReactNode;
 };
@@ -139,9 +208,6 @@ function everyoneHasBeenThrough({ station, block, grid }: StationFacts): boolean
 export default function PracticeStationView(props: Props) {
   const { station, stationIndex, block, rotating, round, grid, isMine, nameOf } = props;
   const name = station.name.trim() || `Station ${stationIndex + 1}`;
-  // ONE resolver, shared with the run screen's block view and the printed sheet, so the three can
-  // never disagree about what this station is teaching.
-  const { description, goal, coachingPoints: points } = resolveStationTeaching(station, block);
 
   // Memoised against the round: these three walk every round in the rotation and look up a name
   // per player, and they need redoing only when the round on screen changes.
@@ -174,74 +240,10 @@ export default function PracticeStationView(props: Props) {
         </div>
       )}
 
-      {description && (
-        <div className={styles.ppStBlock}>
-          <p className={styles.ppStLbl}>What you’re doing</p>
-          <p className={styles.ppStTxt}>{description}</p>
-        </div>
-      )}
-
-      {/* The direct answer to "what am I watching for" — the reason this screen exists. From
-          Phase 2 this rides the DRILL, so it is written once and read by whoever is standing at
-          the station, which is the whole payoff for typing it into the library. */}
-      {goal && (
-        <div className={styles.ppStBlock}>
-          <p className={styles.ppStLbl}>What you’re watching for</p>
-          <p className={styles.ppStTxt} style={{ fontWeight: 700 }}>{goal}</p>
-        </div>
-      )}
-
-      {points.length > 0 && (
-        <>
-          <div className={styles.ppStDivider} />
-          <div className={styles.ppStBlock} style={{ marginTop: 0 }}>
-            <p className={styles.ppStLbl}>Coaching points</p>
-            <ol className={styles.ppRunPoints}>
-              {points.map((point, i) => <li key={i}>{point}</li>)}
-            </ol>
-          </div>
-        </>
-      )}
-
-      {station.setup && (
-        <div className={styles.ppStBlock}>
-          <p className={styles.ppStLbl}>Setup</p>
-          <p className={styles.ppStTxtSoft}>{station.setup}</p>
-        </div>
-      )}
-
-      {station.equipment?.length ? (
-        <div className={styles.ppStBlock}>
-          <p className={styles.ppStLbl}>Equipment</p>
-          <p className={styles.ppStTxtSoft}>{station.equipment.join(' · ')}</p>
-        </div>
-      ) : null}
-
-      {station.staff?.length ? (
-        <div className={styles.ppStBlock}>
-          <p className={styles.ppStLbl}>Running it</p>
-          <p className={styles.ppStTxtSoft}>{station.staff.join(' · ')}</p>
-        </div>
-      ) : null}
-
-      {/* One-off, and never saved back to the station (D27). ⚠ Deliberately NOT attributed: the
-          mockup drew "Note from Brett", but a plan stores the note and not who typed it, and
-          inventing an author would be a fabrication on the one line a coach is most likely to
-          act on. If attribution is wanted it is a model change, not a label change. */}
-      {station.note && (
-        <div className={styles.ppStNote}>
-          {/* The editor's own name for this field (stage 5 — one label, not three: the field said
-              "Note for tonight", the paper "Tonight:", the editor "Just for tonight"). */}
-          <p className={styles.ppStLbl} style={{ marginBottom: '0.2rem' }}>Just for tonight</p>
-          <p>{station.note}</p>
-        </div>
-      )}
-      {station.rotationNote && (
-        <div className={styles.ppStBlock}>
-          <p className={styles.ppStLbl}>Rotation</p>
-          <p className={styles.ppStTxtSoft}>{station.rotationNote}</p>
-        </div>
-      )}
+      {/* Tonight's note, the headed teaching, the setup and the kit — the one order, shared with a
+          plain stop (`StationLines`, the ONE resolver behind it). */}
+      <StationLines station={station} block={block} />
+      <StationFactLine label="Running it" text={station.staff?.join(' · ')} />
 
       {/* ⚠ BOTH "no one else" branches stay in SCHEDULE language. "Everyone's been through" would
           be a claim about what HAPPENED, and this screen only ever knows what was PLANNED — the

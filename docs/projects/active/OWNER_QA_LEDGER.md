@@ -23321,3 +23321,21 @@ Sign in as `uat-coach@uat-test-org.local` (password in `.env.local`) → UAT Tes
 - **G · Help** (1) — "practice award" finds the retitled article.
 
 **✅ §235 PASSED 2026-09-25** — the owner marked the walk complete (*"go ahead with review and commit, mark the qa walk as complete"*). **`/review` (high-risk tier, four lenses — logic · security & tenancy · data, contract & dates · regression), same day: 0 Critical / High / Medium findings.** One advisory applied: the award edit route's event lookup (used only to word a refusal) now re-checks the event belongs to the team — safe before by construction, since an award's event is fixed at creation to the team's own. Two advisories taken as-is (the window's minute clock can lead or lag the server by under a minute at an event's start, the same accepted pattern as game day; a "cancelled" state the window never needs to show for a non-game). `check:layout` on the schedule, attendance, RSVP and awards screens: clean at 361 / 390 / 1440; at 768 the Awards report's three 19px row icons and the "?" help button are the tablet-band items §232 already names, untouched here. Committed on dev 2026-09-25.
+
+## §237 · Practice plans on a phone · stage 3 — **the field: the buttons at the foot of the screen on every stop and station, a station's Back, a stop that reads like a station, tonight's note first** — owner rulings 2026-09-25 (M1 · M2 · M3 · M4 = A, and *"for stations, instead of just 'rotate now' can we have the ability to go to and from rounds … if they go to the next round by accident they can go back"*)
+
+**Why.** Measured on the running product: every station hid Rotate now under the tab bar (9 of 9 on the probe practice, 118–302px; up to 795px on a long plan), a stop with a real paragraph hid Next block, and on the stops that fit the button sat anywhere from 270 to 619px down. After Rotate now a station opened the next round where the coach had scrolled to — "With you now" 203px above the screen on a long station. Undoing an accidental Rotate now took three taps through the stop. A plain stop's words had no headings; a block built from a drill left out its setup, equipment and note for tonight; on a station "Just for tonight" was the eighth line.
+
+**What changed.** On a phone, Back · Next block (Rotate now in a rotation) sit in a bar at the foot of the screen, just above the tabs, in the same place on every stop and station, at every scroll position. A station has the stop's own pair: Back is the previous round on the same station. Every tap opens its screen at the top. A stop reads like a station (the same headings; a drill block's setup, equipment and note; no one-row "Stations" list). "Just for tonight" sits right under "With you now". On a phone "Who's here tonight" sits above the bar. No swipe (closed — the back gesture goes up a level beside it). A computer keeps its buttons under the words; a station gains Back there too. Help's "Running a practice" says all of it.
+
+**Found at build, fixed:** (1) a sticky bar rode up off the tab bar at a page's end — 32px on a station, 55 on a short stop — until the page dropped its bottom strip; (2) an assistant's "these buttons move only your screen" line hid behind the bar on a short stop until it was left with the words. Plan §6f.6 has both, measured.
+
+### The walk — 13 steps, on the hub
+
+Sign in on your phone as the UAT head coach → UAT Test Team → Practice plans → **UAT probe practice** → **Run practice**. The hub's **QA walk · 1** tab, part **M**, is the checkable copy (https://claude.ai/artifact/73DbeziBqDjMr4QEhRWTvp).
+
+- **M1–M3 · The bar** — at the foot before any scroll; the headings on Warm-up; it stays put while scrolling.
+- **M4–M8 · A station** — the circuit opens at its top; tonight's note under "With you now"; Rotate now from the station's foot opens round 2 at the top; Back → the same station, round 1; Back again → Warm-up, Next block → the station again.
+- **M9–M11 · Around it** — More opens over the bar; the last block still has the bar at the foot ("Back to the plan"); swiping does nothing, the edge gesture goes up a level.
+- **M12 · Optional** — a block made from a drill with a note: the note, the headings, Setup and Equipment, no one-row list (delete the block after).
+- **M13 · A computer** — no bar; a station has Back.
