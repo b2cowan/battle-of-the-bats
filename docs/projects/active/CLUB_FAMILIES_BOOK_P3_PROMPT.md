@@ -21,9 +21,10 @@ in this project carried claims the code disproved:
    request that had to be answered · an owner commitment to household money (sibling discount,
    household statement) · the parent-portal decision (§8.2) going live. "It's next in the plan" is
    not a trigger.
-3. **Which migrations are on prod.** P2 shipped migs 251–254 as DEV ONLY. If the promote has
-   happened, the queue is clear; if not, nothing in P3 changes that rule — code never reaches
-   master ahead of its migrations.
+3. **Which migrations are on prod.** ✅ Settled 2026-09-25: migs 251–254 are on production (the
+   P1/P2 commits are ancestors of the prod promote `6b9c8c06`; 251–253 show zero schema drift; 254's
+   two functions verified in prod `pg_proc`). The rule still stands for P3's own migrations — code
+   never reaches master ahead of its migrations. _(Was: "P2 shipped migs 251–254 as DEV ONLY".)_
 4. **For the payment write specifically:** the coach-money QA walks that were owed at P2 time
    (ledger §43–§52 band) have landed. P2 deliberately shipped the family page with **no**
    record-a-payment button because of them.

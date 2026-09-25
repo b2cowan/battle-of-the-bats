@@ -7680,6 +7680,8 @@ production.)*
 
 ## §54 · The Families Book opens — worklist, family page, duplicate queue (P2, chunks 0/A–F)
 
+> **⚠ Truth-up 2026-09-25 (Club Tier Readiness Stage 0):** P1 + P2 are **on production** — their commits (`5f75006e`, `c58ccfed`, `53402943`) are ancestors of the prod promote `6b9c8c06`; tables 251–253 show zero dev↔prod schema drift; the function-only migration 254 is **verified on prod 2026-09-25** (`families_attach_people` and `families_merge_people` both present in `pg_proc`). The "DEV ONLY" line below is history. **This walk has never passed** — it is re-run with §56 as one walk in Club Tier Stage 5, after the four HIGH defects (plan §4E, E01–E04) are fixed.
+
 **Built on dev 2026-08-17, same day as the approved Phase 2 mockups** (`claude.ai/code/artifact/e7cc6d9c-343e-45eb-8b94-fb9984f2b949` — the binding spec; plan §5.3 records the decisions, §5.4 the build). **Migrations 252 + 253 are DEV ONLY.** The messy fixture club is `qa-families-fixture` (reseed: `node scripts/seed-families-fixture.mjs`); the real-shaped world is `riverdale-ridge` (81 people, thin on purpose). ⚠ These screens are in NO rendered sweep — this walk is their only visual coverage.
 
 **A · The permission is really off.** Sign in as a non-owner admin of a Club-band org WITHOUT a Families grant. The admin hub must show **no Families tile at all** (not a locked tease); pasting `/{org}/admin/families` directly must show only "This area needs the Families permission" — **no counts, no names**. Then as owner: Organization Admin → Members → Manage member → Module access — a **Families** row (role default "—" for every role) → Grant. The tile appears for them on next load. The grant is audit-logged like any capability change.
@@ -7719,6 +7721,8 @@ production.)*
 **§54 addendum — post-build `/simplify` + `/review` (2026-08-17, before any QA walk):** all confirmed findings fixed, so walk the CURRENT build. Changes that affect the steps above: **migration 254 joins the dev-only queue** (252 + 253 + 254 — the merge is now one transaction); step D's merge can additionally be probed by double-clicking Merge in two tabs (second gets a clean "Person not found", exactly one audit row); step E's suppression now lives in the shared send path itself; a **revoked guardian is excluded everywhere** (page, export, message — worth one explicit probe: revoke a family link, confirm the person drops off the family page); league-only families now show their waiver consent line; tryout-only people appear under the All lens and in search; all dates render in the org's timezone.
 
 ## §56 · An unsubscribe finally means the same thing everywhere (family email audit + fixes)
+
+> **⚠ Truth-up 2026-09-25 (Club Tier Readiness Stage 0):** on production with the rest of Families P2 (see §54's note). **Never passed** — re-run with §54 as one walk in Club Tier Stage 5.
 
 **Built on dev 2026-08-18.** No migration, no new screen — this is correctness on a promise the
 product already made. Plan: `CLUB_FAMILIES_BOOK_PLAN.md` §5.5. **The audit behind it: ten senders
@@ -23339,3 +23343,25 @@ Sign in on your phone as the UAT head coach → UAT Test Team → Practice plans
 - **M9–M11 · Around it** — More opens over the bar; the last block still has the bar at the foot ("Back to the plan"); swiping does nothing, the edge gesture goes up a level.
 - **M12 · Optional** — a block made from a drill with a note: the note, the headings, Setup and Equipment, no one-row list (delete the block after).
 - **M13 · A computer** — no bar; a station has Back.
+
+## §238 · Club Tier Readiness · Stage 0 ground truth — **a real club to walk, the dead doors open, and the first end-to-end walk of the Club plan** — Stage 0 of `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` (kickoff `CLUB_TIER_STAGE0_KICKOFF_PROMPT.md`), built on dev 2026-09-25. Hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 — tab **QA Walk** is the checkable copy (48 steps, parts A–G).
+
+**Why.** Nobody had walked the club side since the June J4/J10 audits, and it could not be walked: the only club fixture had two people and nothing else, several money controls had answered 401 since the 2026-06-14 org-context hardening, and the tryouts card looped families back home.
+
+**What changed.** (1) **A walk fixture:** a new club `uat-rep-club` ("UAT Rep Club") — board of four (owner · admin with every club module granted · treasurer and registrar on role defaults, deliberately), six rep teams in two groups (one archived), seasons completed/active/draft, a head coach with a sign-in per active team, rosters with three households spanning two programmes, this year's org budget, two allocations (one installment overdue), three payment requests (pending · approved · denied), ledgers with transfers, a hosted tournament with the club's own team linked, a house-league season. Built by `node --env-file=.env.local scripts/seed-club-fixture.mjs` (`--reset` rebuilds). ⚠ Not `uat-club-org`: plan-gating's admin there must stay capability-less and the billing spec can leave it cancelled. (2) **The dead doors:** payee search/create, Org Budget "Add item", the audit log (and its missing page on tournament plans), "View roster" + the sidebar Roster/Documents links, the "Ungrouped" filter, the reminder buttons (now shown only to who the server accepts), the tryouts card (lands on the tryout), and one the new build check found — the Upcoming Payables panel on the Rep Teams hub. (3) **A build check** (`check:org-slug-callers`, in `verify:changed`) so a client call to an org-scoped admin route can never again forget the org. (4) **The security fix** (its own commit): house-league routes tie every division/team/registration id to the season; the tryout, league-registration and status-lookup forms are throttled; the league and tryout emails escape what a family typed; an archive renders only under its own org.
+
+**Sign in as** (dev only; password `UATPassword2026!`, localhost:3000): owner `uat-club-owner@uat-rep-club.local` · admin `uat-club-admin@…` · treasurer `uat-club-treasurer@…` · registrar `uat-club-registrar@…` · coach (15U AAA) `uat-club-coach-15aaa@uat-rep-club.local` — all `@uat-rep-club.local`. Rebuild the fixture before walking on another day (due dates are relative to the build day).
+
+### The walk — 48 steps, on the hub
+
+- **A · Sign in and land** — each role's first screen; the coach lands in 15U AAA's portal.
+- **B · Members and roles** — who sees what; the invite list lacks the board roles (A02/B01 recorded).
+- **C · Teams → coaches → portal** — five teams, groups, a draft season on 9U AA, Jordan Reyes in the portal.
+- **D · The treasurer's money screens** — every Accounting screen opens; the allocation wizard's team list is EMPTY and Rep Teams bounces to the hub (C03/B02 — recorded, Stage 1); the overdue installment nobody calls overdue (C06 — recorded, Stage 3).
+- **E · The admin opens every module** — including Families: the Okafor, Lindqvist and Tremblay households.
+- **F · The public page** — the tryouts card lands on the 15U AAA tryout.
+- **G · The dead doors** — each one that failed before today.
+
+**Not walkable in a browser, machine-covered instead:** the cross-club id checks, the throttle and the email escaping (`tests/unit/league-season-scope-guard.test.ts`, mutation-tested); the caller check (`check:org-slug-callers`, mutation-tested against the four original bugs).
+
+**Committed 2026-09-25:** the security fix `a227fd64` (its own commit, so it can be promoted alone) · the sweep + build check `47455d77` · the fixture, UAT harness and docs with this entry. Walk owed.

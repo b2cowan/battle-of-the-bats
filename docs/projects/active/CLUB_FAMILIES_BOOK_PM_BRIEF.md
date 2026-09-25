@@ -10,7 +10,9 @@ person", message-the-household (which now honours an opt-out made under an old e
 one-click export of everything held about a family. Record-a-payment waits for the money QA walks,
 deliberately. Along the way two real defects were found and fixed: league registrations had been
 silently broken on dev since Phase 1's migration, and the league waiver a guardian must tick is now
-actually stored (it never was). Owner QA §54 owed; production needs two migrations first ·
+actually stored (it never was). **On production** (truth-up 2026-09-25: the Phase 1–2 migrations and
+functions are verified on prod); owner QA §54/§56 never passed — re-run in Club Tier Stage 5 after
+four serious defects are fixed (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §4E) ·
 **Tiers:** Club and League · **Access:** a Families permission, off by default for every role
 
 > **What Phase 1 changed for a customer: nothing, on purpose.** No screen, no menu, no permission, no

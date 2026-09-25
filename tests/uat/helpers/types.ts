@@ -48,6 +48,8 @@ export type UATRole =
   | 'org_admin'
   | 'coach'
   | 'scorekeeper'
+  | 'club_treasurer'
+  | 'club_registrar'
   | 'unauthenticated';
 
 /** Environment config loaded from process.env */
@@ -60,6 +62,32 @@ export interface UATEnv {
   coach:         { email: string; password: string };
   scorekeeper?:     { email: string; password: string };
   plusScorekeeper?: { email: string; password: string };
+  /**
+   * The Club Tier Readiness walk fixture (`uat-rep-club`, built by scripts/seed-club-fixture.mjs):
+   * the club's board plus the 15U AAA head coach. Optional — present only when its env block is
+   * set, so a machine without the fixture keeps a green suite. `UAT_REP_CLUB_*`, not `UAT_CLUB_*`:
+   * `UAT_CLUB_ORG_SLUG` already names the older `uat-club-org`, a different org.
+   */
+  repClub?: {
+    orgSlug: string;
+    owner:     { email: string; password: string };
+    admin:     { email: string; password: string };
+    treasurer: { email: string; password: string };
+    registrar: { email: string; password: string };
+    coach:     { email: string; password: string };
+  };
+}
+
+const REP_CLUB_ROLES = ['OWNER', 'ADMIN', 'TREASURER', 'REGISTRAR', 'COACH'] as const;
+
+function loadRepClub(): UATEnv['repClub'] {
+  const creds = REP_CLUB_ROLES.map(r => ({
+    email: process.env[`UAT_REP_CLUB_${r}_EMAIL`],
+    password: process.env[`UAT_REP_CLUB_${r}_PASSWORD`],
+  }));
+  if (creds.some(c => !c.email || !c.password)) return undefined;
+  const [owner, admin, treasurer, registrar, coach] = creds as Array<{ email: string; password: string }>;
+  return { orgSlug: process.env.UAT_REP_CLUB_ORG_SLUG ?? 'uat-rep-club', owner, admin, treasurer, registrar, coach };
 }
 
 /** Load and validate UAT env vars — throws a descriptive error if any are missing */
@@ -93,5 +121,6 @@ export function loadUATEnv(): UATEnv {
     plusScorekeeper: process.env.UAT_PLUS_SCOREKEEPER_EMAIL && process.env.UAT_PLUS_SCOREKEEPER_PASSWORD
       ? { email: process.env.UAT_PLUS_SCOREKEEPER_EMAIL, password: process.env.UAT_PLUS_SCOREKEEPER_PASSWORD }
       : undefined,
+    repClub: loadRepClub(),
   };
 }

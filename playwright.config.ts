@@ -24,6 +24,12 @@ export const SESSION_FILES = {
   orgOwner:      path.join(__dirname, 'tests/uat/.auth/org-owner.json'),
   orgAdmin:      path.join(__dirname, 'tests/uat/.auth/org-admin.json'),
   coach:         path.join(__dirname, 'tests/uat/.auth/coach.json'),
+  // Club Tier Readiness fixture (uat-rep-club) — see tests/uat/helpers/fixtures.ts
+  repClubOwner:     path.join(__dirname, 'tests/uat/.auth/rep-club-owner.json'),
+  repClubAdmin:     path.join(__dirname, 'tests/uat/.auth/rep-club-admin.json'),
+  repClubTreasurer: path.join(__dirname, 'tests/uat/.auth/rep-club-treasurer.json'),
+  repClubRegistrar: path.join(__dirname, 'tests/uat/.auth/rep-club-registrar.json'),
+  repClubCoach:     path.join(__dirname, 'tests/uat/.auth/rep-club-coach.json'),
 } as const;
 
 export default defineConfig({

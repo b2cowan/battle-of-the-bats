@@ -176,6 +176,18 @@ When the user replies:
   `node scripts/seed-uat-coach-fixture.mjs`), and its standalone-Premium twin `UAT Standalone Team`
   at `/uat-standalone/coaches` — same `UAT_COACH_EMAIL`, no club behind it (rebuild with
   `node scripts/seed-uat-standalone-coach.mjs --null-dangling --reset`; read that script's header first)
+- Club fixture (dev): `uat-rep-club` — "UAT Rep Club" on the Club plan, the Club Tier Readiness walk
+  org: board (owner · admin with every module granted · treasurer and registrar on role defaults),
+  six rep teams in two groups, a head coach per active team, rosters with multi-team households,
+  this year's org budget, allocations (one installment overdue), payment requests in three states,
+  ledgers + transfers, a hosted tournament with the club's own team linked, a house-league season.
+  Build with `node --env-file=.env.local scripts/seed-club-fixture.mjs` (`--reset` to rebuild; read
+  its header). Sessions (optional, `UAT_REP_CLUB_*` in `.env.local`): fixtures `repClubOwnerPage`,
+  `repClubAdminPage`, `repClubTreasurerPage`, `repClubRegistrarPage`, `repClubCoachPage`, and
+  `repClubOrgSlug`; each club page fixture SKIPS its test by itself when the env block or session
+  file is missing (a `test.skip` in the test body cannot — fixtures are set up first). ⚠ Not
+  `uat-club-org` / `UAT_CLUB_ORG_SLUG` — that org is plan-gating's and the billing spec can leave
+  it cancelled.
 - Auth sessions cached in `tests/uat/.auth/` (one JSON per role)
 - Findings log: `UAT_FINDINGS.md` (root of repo)
 - Results JSON: `tests/uat/results/results.json`

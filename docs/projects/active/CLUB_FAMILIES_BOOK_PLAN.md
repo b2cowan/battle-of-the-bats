@@ -1,5 +1,15 @@
 # The Families Book — club-admin family records
 
+> **⚠ Truth-up 2026-09-25 (Club Tier Readiness Stage 0) — read this before the status line below.**
+> Phases 1 AND 2 are **on production**: their commits (`5f75006e`, `c58ccfed`, `53402943`) are
+> ancestors of the prod promote `6b9c8c06`, migrations 251–253 show zero dev↔prod schema drift, and
+> 254's two functions (`families_attach_people`, `families_merge_people`) were verified in prod
+> `pg_proc` on 2026-09-25. Owner QA §54/§56 have **never passed**. The four HIGH defects found in the
+> 2026-09-25 evaluation (a merge undoes itself · an edited guardian email strands the child · family
+> money disagrees with the Money hub · the export overclaims) are fixed in **Club Tier Stage 5**
+> (`CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §4E), which re-runs §54 + §56 as one walk. P3 waits for
+> its triggers (D9: not release-gating). The line below ("Phases 2–5 not built") is history.
+
 **Status:** Planning 2026-08-17. **Phase 1 BUILT on dev 2026-08-17** (migration 251) — records minted,
 nothing in the product reads them. **Awaiting the owner's read of the §5-P1 report** (`node
 scripts/report-families-backfill.mjs`). **Phase 2 mockup session DONE 2026-08-17** (design only, no

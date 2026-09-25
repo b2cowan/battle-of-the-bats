@@ -92,3 +92,18 @@ setup('authenticate: coach', async ({ page }) => {
   await loginOrgUser(page, env().coach.email, env().coach.password, savePath);
   console.log(`  ✓ coach session saved → ${savePath}`);
 });
+
+// ── The Club Tier Readiness fixture (uat-rep-club) — skipped when its env block is absent ──
+// Build it first: node --env-file=.env.local scripts/seed-club-fixture.mjs
+for (const [role, file] of [
+  ['owner', 'rep-club-owner'], ['admin', 'rep-club-admin'], ['treasurer', 'rep-club-treasurer'],
+  ['registrar', 'rep-club-registrar'], ['coach', 'rep-club-coach'],
+] as const) {
+  setup(`authenticate: rep-club ${role}`, async ({ page }) => {
+    const club = env().repClub;
+    setup.skip(!club, 'UAT_REP_CLUB_* not set in .env.local — the Club fixture sessions are optional');
+    const savePath = path.join(__dirname, `.auth/${file}.json`);
+    await loginOrgUser(page, club![role].email, club![role].password, savePath);
+    console.log(`  ✓ rep-club ${role} session saved → ${savePath}`);
+  });
+}

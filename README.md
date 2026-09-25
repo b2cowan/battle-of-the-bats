@@ -38,16 +38,11 @@ Each organization gets its own isolated space at `/{orgSlug}/`. Within that spac
 
 ## Pricing
 
-Four bundled SaaS paid tiers — no à la carte modules:
-
-| Plan | Monthly | Modules |
-|---|---|---|
-| Tournament | Free | Core only |
-| Tournament Plus | $39/mo | Core only, 3 non-archived tournaments |
-| League | $89/mo | Core + Public Site + House League |
-| Club | $179/mo | All modules |
-
-Annual billing saves ~2 months. CAD pricing.
+Bundled SaaS tiers — no à la carte modules. **Plan names, prices, capacity bands, trials and gating
+live in exactly one place: [docs/agents/strategy/PLAN_PRICING_FACTS.md](docs/agents/strategy/PLAN_PRICING_FACTS.md)**
+(kept matched to `lib/plan-config.ts`). This README deliberately does not restate them — the table
+that used to sit here drifted to a Club price and a League module list the facts doc had already
+replaced (found 2026-09-25, Club Tier Readiness evaluation).
 
 **Free floors layer over the paid tiers.** Each operator type can start free in their natural unit — a Free Tournament (org on the `tournament` plan), a Free League Starter (capped house-league entitlement profile), and a Free Basic Coaches Portal (`basic_coach_teams`, no org, no subscription). Free is delivered as scoped per-operator floors unified under one login via `/home`, not as one mega-subscription. See `docs/projects/active/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
 

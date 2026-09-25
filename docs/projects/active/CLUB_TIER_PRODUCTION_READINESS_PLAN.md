@@ -1,0 +1,679 @@
+# Club Tier Production Readiness — Implementation Plan
+
+> **Status:** PLANNED 2026-09-25 — this is the owner-started **full Club capability evaluation** that
+> `PROGRAM_LEAGUE_AND_CLUB.md` parked on 2026-07-28 ("once the Coach Portal work is finalised").
+> **Created:** 2026-09-25 · **Branch:** dev
+> **Companions:** [CLUB_TIER_PRODUCTION_READINESS_PM_BRIEF.md](CLUB_TIER_PRODUCTION_READINESS_PM_BRIEF.md) ·
+> project hub `CLUB_TIER_PRODUCTION_READINESS_HUB.html` = https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 (republish the same path every phase)
+> **Absorbs / supersedes:** the never-walked go/no-go checklist in
+> `docs/projects/archive/LEAGUE_CLUB_EARLY_ACCESS_READINESS_PLAN.md`; the Club half of
+> `ADMIN_IA_MULTIMODULE_NAV_PLAN.md` (Phases A–C fold into Stage 1/4 here); the archived
+> `BILLING_ACCOUNTING_COHERENCE_PLAN.md` (folds into Stage 3); `CLUB_FAMILIES_BOOK_PLAN.md` P3 (Stage 5);
+> `HOUSE_LEAGUE_INSEASON_TRUST_PLAN.md` (Stage 9, last by owner direction).
+> **Release target:** the **Club plan for rep clubs that run no house league.** House league is
+> evaluated last and is expected to ship as its own standalone plan (= un-park **League Plus** — the SKU
+> already exists; see D11) and as a feature of Club. **⚖ 2026-09-25: the release also waits for
+> Permits & bookings (Stage 10) — "we are not rushing to production."** Club · Association is
+> purchasable at launch with proration (D7); Club carries no Founding Season offer (D6).
+
+---
+
+## 0. Goal
+
+Make the Club tier something a real rep club can buy, set up, staff, run a season on, and trust its
+board numbers from — with every club-side screen walked by the owner at least once. Today none of it
+has been QA'd; the last audit of the club president's journey was 2026-06-11 (J4, 50 findings) and
+most of those findings are still open. The club-admin side of the product has been largely static
+since June while the Coaches Portal received three months of intensive work, so the two halves now
+disagree about money, seasons, venues and roles.
+
+## 1. Method — how this evaluation was done
+
+- **Eleven read-only code inventories on 2026-09-25**, one per area (org shell · rep teams & the
+  coach bridge · accounting & the money bridge · venues/scheduling/permits/tournaments · families ·
+  public site · house league · cross-cutting), plus **three re-verification passes** of the June
+  audits (J4-001…025, J4-026…050, J10-001…027) classifying each finding FIXED / OPEN / PARTIAL /
+  SUPERSEDED against the current tree.
+- **Argued from what the code does, not from plan headers.** Several plan/memory headers were found
+  stale during this pass and are corrected in §12 (e.g. Families is on production, not "dev only").
+- **Spot-checked by hand** before being treated as load-bearing: the two dead money-entry controls,
+  the audit-log 401, the non-owner club-admin redirect, the Founding-Season comp leak, the absent Club
+  purchase path, and which club-side commits are on `origin/master`.
+- Tooling caveat recorded for the next pass: `lib/db.ts` contains a NUL byte, so `rg`/Grep silently
+  skip it as binary — use `grep -a`.
+
+## 2. The Club offer — as sold vs as built
+
+| Promised (pricing copy / facts doc / marketing) | What exists | Verdict |
+|---|---|---|
+| Accounting — org ledger, invoicing, expense tracking, payment reconciliation | Ledgers + entries + transfers + budget plan + allocations + BvA. **No invoicing, no reconciliation, no receivables aging.** Two entry controls broken since June. | Overclaims; core unsafe (§4C) |
+| Rep Teams — tryouts, rosters, player documents, season history | Built (module 6A–6N) and the franchise contract holds where there is a UI | Mostly real; oversight layer thin (§4B) |
+| Premium Coaches Portal for the whole coaching staff, no per-team fee | Real for club-native teams via coach assignment; standalone-portal "bridge" into a club needs platform-assisted completion | Real, with a manual seam (§4B) |
+| Public organization page | Home page is tournament-first; rep teams publicly invisible; "Tryouts are open" card loops to home | Not fit for a rep-only club (§4F) |
+| Families (League Plus + Club) | Live on prod; three HIGH defects; P3 never mockup'd | Real, unverified (§4E) |
+| House league (Club includes it) | Built; trust-plan defects open | Last stage (§4I) |
+| "Field bookings" (homepage) / permits | **Nothing built, nothing planned** | Marketing overclaim (§4D) |
+| Club · Association $379, 15–30 teams | Config + Stripe prices exist; **no customer-visible price and no purchase path** | Cannot be bought (§4A) |
+| Team invoicing · payment reconciliation · parent notifications (Club copy) | Not built / false (the League copy fixed "parent notifications" 2026-08-20; the Club copy was missed) | Copy drift → `/marketing` |
+| README pricing table: Club $179, League $89 "Core + Public Site + House League" | Facts doc says $219 / League Plus | Drift → `/strategy` |
+
+## 3. What "release-ready for a rep club" means (exit definition)
+
+A rep club with no house league can, without operator help beyond the initial provisioning decision:
+
+1. **Buy or be provisioned** onto Club (or Club · Association) with the right price, trial and comp
+   state shown, and later cancel or come back with everything restored.
+2. **Staff its board** — owner, an admin who sees the club's modules, a treasurer, a registrar —
+   from the Members screen, including volunteers who already coach elsewhere.
+3. **Create its teams and program years, name coaches, and every coach lands in a populated Premium
+   portal** with no per-team charge; a season can be started and closed on both sides and the two
+   sides agree on what a season is.
+4. **Run its money**: plan a budget for a club year, allocate to teams, receive coach requests, mark
+   money received, and read **one board summary whose every figure is true by construction and
+   guarded by a build gate** — the same discipline the coach money model already has.
+5. **Show a public face** that leads with the rep program: a teams index, tryouts that families can
+   find, the club's colours, and no tournament apology fifty weeks a year.
+6. **Know its families**: the Families book reads the same money the Money hub does, merges don't
+   undo themselves, and a changed guardian email follows the child.
+7. **Keep one venue book** that every module reads, so a rep practice and a tournament game cannot
+   silently share a diamond.
+8. **Coexist with tournaments**: a club's own team can enter its own event and the mirror keeps the
+   coach's schedule true.
+9. **Be tested**: a Club UAT fixture + Playwright suite, admin routes in the layout sweep, help
+   articles that describe today's screens, and the pricing/marketing surfaces telling the truth.
+10. **Hold its permits** (⚖ added 2026-09-25, D4): the club records the field, diamond or ice
+    permits it holds — venue, dates, weekly slots, cost — and every module's scheduling reads them
+    (a slot outside a permit warns; a permit's cost sits in the budget). Stage 10, release-gating.
+
+House league is explicitly **outside** this exit definition (Stage 9, its own release track).
+
+## 4. Inventory & defect ledger by area
+
+Severity: **B** blocker (a club cannot proceed / money or data is wrong / privacy) · **H** high ·
+**M** medium · **L** low. `J4-…`/`J10-…` = the June audit finding this re-verifies. Every row is
+anchored to the current tree (2026-09-25, dev `HEAD` 11 commits ahead of `origin/master` = `6b9c8c06`).
+
+### 4A. Org shell — provisioning, billing, members & roles, settings, navigation
+
+**What exists.** Plan config has `club` ($219, 15 teams, 90-day trial) and `club_large` ($379, 30
+teams) with the full module set (`lib/plan-config.ts:100-144`); Stripe price slots for both bands
+(migs 048/146); capacity enforced at rep-team create/unarchive/transfer (`lib/db.ts:3479-3491`);
+platform-admin plan change with `team_limit` (`app/api/platform-admin/orgs/[id]/plan/route.ts`);
+the whole `admin/org/*` cluster (members + audit, billing, settings, PDF settings, venues,
+coaches-portal-links); a Club onboarding checklist; the 2026-08-06 hard-block cancellation
+(`CancellationGuard`). Roles: `lib/roles.ts` — owner, admin, staff, official, league_admin,
+league_registrar, treasurer, coach.
+
+| ID | Sev | What a club hits | Anchor | Ref |
+|---|---|---|---|---|
+| A01 | B | **Anyone who isn't the owner is treated as a tournament-only user.** Admin/staff have no `module_*` defaults; the hub computes "tournament-only workspace" from the member's caps, not the plan, and redirects them into tournaments — or into the owner-only onboarding, which bounces them back (redirect loop, code-read). Sidebar drops the "All sections" link for them. The role tooltip says admin "manages house league, rep teams and org settings" — false. | `lib/roles.ts:47-53` · `app/[orgSlug]/admin/AdminHubClient.tsx:71-100` · `onboarding/page.tsx:505-508` · `members/page.tsx:95` | J4-040, J10-014, J10-027 |
+| A02 | B | **The board cannot be staffed from the screen.** Invite/Manage offer only Admin/Staff/Official; the API accepts treasurer/league_admin/league_registrar but PATCH silently demotes any other role to `staff`; help still tells owners to pick Treasurer. Treasurer/league_admin then get a bare "Forbidden" on Invite/Resend/Manage/Remove. | `members/page.tsx:903-912,972-981` · `app/api/admin/members/[memberId]/route.ts:305-312` · `lib/help-content/org.tsx:135-153` | J4-039, J10-012 |
+| A03 | B | **A coach who coaches anywhere else cannot join a club's board** (409 "already belongs to another organization") — the policy counts the capability-less coach rows the 2026-08-16 membership model writes; the same block sits on accept, on the invitations card and on reinstate. Contradicts Verified Network (2026-07-24). The "promote a cross-org guest to head coach" instruction sends the admin to an invite that 409s. | `lib/org-membership-policy.ts:40-57` · `app/api/admin/members/invite/route.ts:98-118` · `accept-invite/route.ts:113-118` · `program-years/[yearId]/coaches/route.ts:115-124` | J10-001 (narrowed) |
+| A04 | H | **Org audit log always fails with 401** (page fetches without the org; route requires it since the J3-012 hardening). On tournament tiers the link 404s. | `admin/org/members/audit/page.tsx:77` · `app/api/admin/members/audit/route.ts:31` | J10-003 |
+| A05 | H | **No in-product way to buy Club, or Club · Association at all, even if the gate opens.** Shelf buttons only open the article panel; `canUpgrade` is true only for Tournament Plus; `club_large` is on no customer surface; the rep-team cap error says "Upgrade to Club · Association" with nowhere to go. | `billing/page.tsx:1116-1165,1392` · `PricingSection.tsx:243` · `app/api/admin/rep-teams/teams/route.ts:114-116` | — |
+| A06 | H | **Paid→paid upgrade would open a second Stripe subscription** (checkout never checks/cancels the existing subscription; webhook keys plan on customer). Latent while gated; reachable from onboarding "View plans". | `app/api/billing/create-checkout/route.ts:275-302` · `webhook/route.ts:363-380` | BUSINESS_DECISIONS 2026-06-26 (proration not built) |
+| A07 | H | **Reactivating a cancelled org does not restore it** — resubscribe only restores `plan_downgrade` retentions; `is_public`, `billing_suspended_at`, archived tournaments and the retention intent are left as cancelled; the retention cron later emails a paying customer "window expired". Billing page promises "everything comes back on day one". A cancelled Club also has no reactivate button while the gate is on. | `lib/billing-retention.ts:354-377,544-571` · `billing/page.tsx:593-595,654-656` · `CancellationGuard.tsx:26-31` | — |
+| A08 | H | **The Founding Season comp leaks onto Club orgs.** Every signup mints a comp; a platform-admin move to Club doesn't revoke it; the billing page then says "Club is free through Sept 30 2027" beside a $219 card, hides "Reduce or cancel", and offers a 2028 chooser the API rejects. | `app/api/auth/signup/route.ts:327-339` · `billing/page.tsx:503-505,786-805,912-921,1177,1232` · `choose-next-season/route.ts:83-84` | D6 |
+| A09 | H | **"Listed on /discover" is actually the master switch for the whole public site** (writes `is_public`, which 404s the org home, league pages and every "up" link; the real `is_discoverable` flag has no UI). | `admin/org/settings/page.tsx:526-536` · `app/api/admin/org-settings/route.ts:93-94` · `app/[orgSlug]/page.tsx:42` | — |
+| A10 | M | **Two gating sources disagree**: billing page reads static `PLAN_CONFIG`; checkout and onboarding read the DB `plan_gating` table. A platform flip to `live` would not reach the billing page. | `billing/page.tsx:557,580,593` · `create-checkout:95-101` · `onboarding:510-515` | — |
+| A11 | M | **Club onboarding checklist half-built**: public page / accounting / rep-team steps have no button, accounting can never show done, Families absent, chooser header tournament-only, `?plan=club` never read, Club owners never routed to onboarding on login. | `onboarding/page.tsx:1548-1551,2574-2654` · `lib/user-contexts.ts:410-435` | — |
+| A12 | M | **Admin nav is still tournament-first for a Club**: hub tile order (Tournaments first), "First tournament setup available" banner that never clears for a club with no tournament, billing meters count tournament slots and offer League Plus/Coaches Portal to a Club, cancel/downgrade reviews list tournaments only, phone bottom nav wears the tournament tab bar on the hub root and Families, More sheet has no module/org/billing links. | `AdminHubClient.tsx:180-185,332-359` · `startup-tasks/route.ts:105` · `billing/page.tsx:525-527,946-964,1077-1086` · `AdminBottomNav.tsx:76,188-261,358-369` | J4-041/045/049 (partial), ADMIN_IA Phase A |
+| A13 | M | Members: Role Guide matrix stale vs parity policy; resend email labels "team treasurer"; suspend fires with no confirm and now also emails; capability changes silent to the member; owner-only caps grantable in the override editor; module-revoke warning only for tournaments; no per-row override signal; two save buttons discard unsaved overrides; invited-status members pass the admin gate; accept-invite ignores POST errors; role change skips the seat limit. | `members/page.tsx:51,175-180,451-474,569-573,1113-1117,1181-1232` · `lib/invite-links.ts:40` · `lib/api-auth.ts:146-151` · `accept-invite/page.tsx:91-99` · `[memberId]/route.ts:236-441` | J10-004/005/006/018/020/021/022/023/024 + new |
+| A14 | M | Org Settings copy is tournament-first ("public tournament home page", "Upgrade to Tournament Plus"); theme overlaps the Public Site editor; Venues copy tournament-only; venue save has no `catch` (403 fails silently); `getEffectiveTeamLimit` docstring says override "wins outright" but code takes the max. | `settings/page.tsx:640-687` · `venues/page.tsx:47-70,374-402` · `lib/plan-config.ts:190-207` | — |
+| A15 | M | Billing page: no team-capacity readout ("added in Phase 3"); Club feature list never mentions Families; Stripe checkout collects a card for a 90-day trial while the pricing card says "no credit card required"; billing APIs use a grantable `billing` capability while the UI is owner-only. | `billing/page.tsx:105-118,250-252,531` · `create-checkout:291-302` · `PricingSection.tsx:150-165` | — |
+| A16 | L | Dev/stale: mock-portal `mock-apply` has no org scoping; mojibake `Â·`; dead `isLeagueOrClub` (omits club_large); hard-coded `milton-bats` fallback in the sidebar; UAT specs still test the retired `org_team_addon` flow; owner-only "Coming soon — League Plus & Club" teaser on the hub. | `MockPortalClient.tsx:93` · `AdminSidebar.tsx:52,86,618` · `team-org-billing-stripe-smoke.spec.ts` · `AdminHubClient.tsx:281-330` | — |
+
+**Tests.** A `uat-club-org` fixture exists (`tests/uat/create-uat-accounts.sql:62-85`, owner + admin,
+no team_limit, no coaches, no teams). Covered: `plan-gating.spec.ts:162,181-194` (which *codifies*
+A01 — admins see "Access Restricted"), coaches-portal-links smokes, a handful of unit guards.
+**Not tested anywhere:** Club onboarding, hub/nav for a Club, org Settings/Venues/Members/Audit for a
+Club, create-checkout for club/club_large, webhook plan sync, cancel→reactivate, team-cap enforcement,
+platform-admin plan change to Club, the Founding comp on a non-promo plan.
+
+### 4C. Club money — the accounting module and the money bridge to coach portals
+
+**What exists.** Hub (`accounting/page.tsx`: date filter, Income/Expenses/Net/Pending, a card per
+ledger, Add Ledger, reminder buttons), Org Budget (lines by category, period splits, allocate to
+teams, categories panel, team-items publish panel, XLSX/CSV), the Allocate wizard, Budget vs. Actual
+(headroom, per-category, org expense list, team collection health, PDF/XLSX/CSV), Ledger detail
+(entries, transfers, void, export). Bridge: allocation installments post a team→club transfer when
+marked paid (both sides); coach payment requests (`payment_to_org` / `charge_to_org` with the
+mig-271 "new money or money back" meaning) post a transfer on approval. Gate: `module_accounting`
+on every API route; **owner + treasurer** hold it by default, **admin does not**.
+
+| ID | Sev | What a treasurer hits | Anchor | Ref |
+|---|---|---|---|---|
+| C01 | B | **Payee search and create are dead** on the ledger entry form (component fetches without the org; route requires it since 2026-06-14). Every payee call returns 401. | `accounting/ledger/[ledgerId]/page.tsx:608` · `components/accounting/PayeeCombobox.tsx:42,88` · `app/api/admin/accounting/payees/route.ts:17-18` | — |
+| C02 | B | **"Add item" / "add category" on the Org Budget form are dead** (same missing org; and the category create sends `{newCategoryName}` while the route reads `body.name`). | `accounting/budget/page.tsx:765` · `BudgetItemPicker.tsx:611-613` · `budget-categories/route.ts:141-148` | — |
+| C03 | B | **A default treasurer cannot finish the allocation loop.** The Allocate wizard loads teams/program years from rep-teams routes gated on `module_rep_teams`, which treasurer lacks; the 403 is swallowed and the team dropdown is empty. "View allocation" and the post-save redirect are gated the same way. Reminder buttons are shown to treasurer but both routes allow owner/admin only (always 403). | `allocate/[lineId]/page.tsx:109-120` · `app/api/admin/rep-teams/teams/route.ts:13` · `accounting/page.tsx:409,434-477` · `send-reminders/route.ts:42` | — |
+| C04 | B | **Net Position / Income / Expenses mix coach-held team money and house-league money into the club's figures** (every non-archived ledger counts; nothing ever archives one). No whole-club money picture exists. | `lib/db.ts:2234-2242` · `accounting/page.tsx:184-188` | J4-028, J4-017, J4-006 |
+| C05 | B | **"Org Headroom" on Budget vs. Actual is budget minus at most 50 expenses** (`.limit(50)` then summed). | `budget-vs-actual/route.ts:174,177,316` | J4-025 |
+| C06 | B | **The allocations list can never show an overdue installment** (selects `amount, paid_at`, then filters on `due_date`). Collected is always green. No team names, no Allocated column. | `app/api/admin/rep-teams/allocations/route.ts:57,70-72` · `allocations/page.tsx:106-130` | J4-010, J4-011, J4-019 |
+| C07 | B | **Money moves with no confirmation, no reversal and a race.** Approve request = one click (Deny has a modal); approval throws away the entry id so `accounting_entry_id` is never written and no reversal route exists; status update has no `status='pending'` guard (double-approve posts two transfers); both mark-paid routes post the transfer *before* the conditional stamp (a lost race leaves an orphaned transfer and returns 409). The club has no undo; the coach's refusal message says "ask your club office to reverse it". Entry date is UTC, not org day. | `payment-requests/[id]/route.ts:97-125` · `payment-requests/page.tsx:291` · `installments/[installId]/route.ts:66-87` · coach `installments/[installId]/route.ts:78-99,149-150` | J4-013, J4-014 |
+| C08 | H | **Approval rules contradict**: approve a request = owner/treasurer/admin; mark an installment paid = owner/treasurer. A coach may self-post a transfer to the org ledger by recording an installment paid (contradicts ENHANCEMENTS decision #4). | `payment-requests/[id]/route.ts:29` · `installments/route.ts:38` | J4-014 |
+| C09 | H | **Budget vs. Actual has no actuals** per line/category ("Phase J", "arrives in a future update"); only org-type ledgers count as actuals; team-health "Allocated" spans all years while "Collected" is year-filtered (a team with nothing due yet reads "Behind"); dead "Coming Soon" modal. | `bva route.ts:19,154-158,270-278` · `bva page.tsx:531,655-661` | J4-024 |
+| C10 | H | **The club cannot plan next year** (year dropdown = current year + years with lines); Allocate resolves the line from the *current calendar year* only; there is no fiscal-year concept, no year-end, no rollover, ledgers never archived. Coach side works in program years with close + settlement + carry-forward. The two meet only on a split's `program_year_id`; the wizard offers completed program years. | `budget-plan/route.ts:175-178` · `allocate page:80-90,505-508` · `247_club_money_belongs_to_a_season.sql:22-31` | J4-027 (worse), D2 |
+| C11 | H | **Budget plan arithmetic**: only one allocation per line counted (`Map.set` overwrite); leftover budget can never be allocated (server: one allocation per line) while the UI says "Org retains $X"; the allocation total is the line total even when splits sum to less; inserts are non-atomic and the line tag is written in a separate ignored update (a half-created allocation can be billed again); a line total can be lowered below what is allocated; period saves fail silently and are never re-validated; periods can only be set at create. | `budget-plan/route.ts:98-112` · `allocate-to-teams/route.ts:61-73,85,135,155-158` · `lines/[lineId]/route.ts:52-58` · `budget/page.tsx:239-250` | J4-026 |
+| C12 | H | **Team ledgers half protected**: entry add/edit/void now 403 on team ledgers (J4-021 partial), but the UI still shows the buttons, `POST /transfers` has no ledger-type check (a treasurer can still move money in/out of a coach's books), an entry can be re-typed as a transfer half with no partner, and system-created entries (house-league fees) can be edited or voided. | `entries/route.ts:65` · `ledger page:432-447,504-525` · `transfers/route.ts:58-64` · `entries/[entryId]/route.ts:12,91-97` | J4-021, J4-023 |
+| C13 | H | **Voiding one side of a transfer** is still a tooltip warning; the void route voids one entry. | `ledger page:519` · `entries/[entryId]/route.ts:153` | J4-023 |
+| C14 | M | Silent 1,000-row cap on ledger summaries (unbounded select); hub card (date range) and ledger page (all-time) show two balances for one ledger; exports contain only the loaded page (50 rows), unsigned amounts, void rows included; categories are free text from every ledger incl. teams; badge only knows Org/Tournament (team + league ledgers labelled "Tournament"); no team name on club ledger entries ("Rep allocation payment — installment #N"); payees cannot be listed/renamed/merged. | `lib/db.ts:2381-2388` · `ledgers/[ledgerId]/route.ts:41` · `ledger page:312-321` · `categories/route.ts:16-36` · `accounting/page.tsx:292-305` · `installments route:70` | J4-022, J4-016, J4-031 |
+| C15 | M | **What the club sees of a team is almost nothing**: no admin route reads team budget lines, dues, expenses, fundraisers or surplus; the coach's "new money / money back" classification and budget item are invisible to the club; approved `payment_to_org` money never appears in the club budget's or BvA's "Collected". A pending request blocks the coach's season close and the club is never notified. | `payment-requests/route.ts:53-71` · `lib/coach-season-settlement.ts:160-166` | D1 |
+| C16 | M | Allocation reminders skip anything already overdue and email the admin who clicks, not the coach (dues waves are scheduled via pg_cron; allocation waves are not). Reminder waves fire with no confirmation or recipient preview. | `lib/db.ts:14521` · `send-reminders/route.ts:89-106` · `accounting/page.tsx:434-477` | J4-015 (partial), J4-030 |
+| C17 | M | Pages check only the role, not the plan (an owner on a non-Club plan gets the shell then 403s); the sidebar offers one item ("Ledgers") — Budget and BvA reachable only mid-page; `sourceEntryId` on generic allocations is a pasted, unvalidated UUID; `paid_by` never rendered. | `accounting/page.tsx:173` · `AdminSidebar.tsx:355` · `allocations/new/page.tsx:390` | J4-029 |
+| C18 | M | **Tournament money never reaches a ledger** (fees live on the team row; no automatic entries; tournament ledgers are hand-filled). House-league fee entries: created fire-and-forget on approval (not payment) day; self-registrations get no entry; declined/withdrawn never void; toggling "fee paid" can revive a voided entry; ledger created on read with no race handling. | `lib/mark-paid.ts:67-74` · `lib/db.ts:3201-3233` · `registrations/route.ts:140-144` · `[regId]/route.ts:139-143,302-373` | D1 |
+| C19 | M | Copy overclaims: retention shutdown copy says "invoices, reconciliation"; onboarding says "track invoices"; help repeats the BvA "future update" line. | `lib/billing-retention.ts:103` · `onboarding/page.tsx:2636` · `lib/help-content/accounting.tsx:289` | → `/docs`, `/marketing` |
+
+**The same figure, computed differently:**
+
+| Figure | Computed in | Why they disagree |
+|---|---|---|
+| "Collected from teams" | Budget page/BvA card (budget-linked, all years) · BvA team health (every allocation, year-filtered) · allocations list (all-time) · hub (never — transfers excluded from Income) | four definitions; approved `payment_to_org` requests in none of them |
+| "Headroom" | Budget page = budget − allocated · BvA = budget − ≤50 org expenses | same word, different arithmetic |
+| Ledger balance | hub card (date range) · ledger page (all-time) · house-league page (all-time) | different scopes |
+| Team money | hub team-ledger card (`accounting_entries`) · coach Cash on hand (records + opening balance, per season) | different sources, never reconciled — **D1** |
+
+**Tests.** Static guards only (`budget-category-ownership-guard`, `budget-line-kind-guard`,
+`export-masthead-guard`, `table-recipe-guard`). **Nothing tests** ledger summaries, hub totals,
+budget-plan or BvA arithmetic, allocate-to-teams, transfers, voids, admin mark-paid, request approval
+or house-league fee entries. The coach money build gates (`check-money-report-arithmetic.mjs`,
+`check-register-balance.mjs`) are coach-only and not in `verify:changed`.
+
+**Plans vs code.** `ACCOUNTING_MODULE_PLAN` never built: void-both-sides, receivables aging, automatic
+entries beyond league fees. `ACCOUNTING_ENHANCEMENTS_PLAN` F–K: F built with gaps, G mostly missing,
+H built but differs (a `charge_to_org` approval is a transfer, not an expense — club grants never
+count as club spending), I/J/K partial. `COACH_ORG_MONEY_IN_THE_BUDGET_PLAN` is coach-side only and
+matches the code; nothing in it touches club reports.
+
+### 4D. Venues, scheduling, permits
+
+**What exists.** Three venue books that never meet: the **Org Venue Library** (`org_venues` +
+facilities; house league points at it; tournaments import a copy), the **per-tournament copy**
+(`diamonds`; `source_org_venue_id` stored but never read for clashes and dropped on clone), and the
+**per-team place book** (`rep_team_places`, coach portal only — a deliberate ruling in
+`COACH_ARRIVAL_AND_PLACES_PLAN.md:125`). Admin rep-team schedule = read-only view of the same
+`rep_team_events` the coach writes (writes removed on purpose in `0406d42e`). Per-family calendar
+feed works; team-wide public feed is dead (zero callers). **Permits: nothing built, nothing planned.**
+
+| ID | Sev | What a club hits | Anchor | Ref |
+|---|---|---|---|---|
+| D01 | H | **Double-booking checks stop at module boundaries**: house league checks its own games/practices; tournaments check inside the tournament; rep-team events have no clash check at all. A rep practice, a league game and a tournament game can share a diamond at the same time with no warning. | `lib/league-venue.ts:201-217` · rep events routes | GAME_LOCATION plan ruled coach events out of scope |
+| D02 | H | **Wrong role gate on library writes**: saving a venue requires `create_tournaments`; `league_admin` lacks it, yet the house-league scheduler links them to "Set up your diamonds once". Save/add/delete/load on the Venue Library page have no `catch` (fails silently). | `app/api/admin/org/venues/route.ts:92` · `lib/roles.ts:57-60` · `venues/page.tsx:47-70,152-167,231-239,340-367` | — |
+| D03 | M | **No club-wide schedule or calendar**, internal or public; public `/schedule`, `/teams`, `/news` redirect to a tournament or home. Admin schedule page shows times in the *device* timezone and buckets days by UTC (an 8 p.m. game lands on the next day); W-L widget counts only `league_game`. | `app/[orgSlug]/schedule/page.tsx:11-13` · `program-years/[yearId]/schedule/page.tsx:45-53,205-234,100` | D5 |
+| D04 | M | **The club admin cannot add a game or practice** (coach writes need a coaching assignment; admins get no implicit coach access; a granted `admin` is also refused on house-league schedule writes). Non-owner admins can't even open the read-only rep schedule by default (A01). | `coaches/.../events/route.ts:45-47` · `house-league/.../schedule/route.ts:81` | D3 (franchise ruling stands?) |
+| D05 | M | Venue Library: delete copy omits that house-league games lose their venue link; no "in use" guard (tournament side has one); no facility edit/rename UI (API exists); copy mentions only tournaments; sidebar shows the link only while already on `/admin/org/*`; RLS lets any member row write venues directly (API gate is the only protection). | `venues/page.tsx:294,387,441` · `094_org_venues.sql:46-57` · `AdminSidebar.tsx:62,286` | — |
+| D06 | M | **Permits / field bookings**: nothing exists; the homepage says orgs manage "field bookings" here. Only "Diamond Permits" as a budget word. | `app/page.tsx:597` | D4 · `/marketing` |
+| D07 | L | Team-wide public calendar feed dead (`ensureTeamCalendarToken` has no callers); stale "STUB" header in `lib/export/ics.ts:5`; help says subscription link "planned for a future release"; public team page skips the cancelled-org/public checks that the feed makes. | `lib/family-access.ts:265` · `lib/help-content/exports.tsx:281-284` · `teams/[teamSlug]/page.tsx:33` | — |
+
+**Tests.** None for the Org Venue Library, house-league venue routes (only the pure clash engine),
+admin rep schedule, public rep-team page, team-wide feed, or any club comms. Thin smokes for
+tournament venues and the mirror (which inserts the link with service role, so the admin UI flow is
+not exercised).
+
+### 4E. Families
+
+**What exists — and it is on production.** P1 (records, mig 251) and P2 (the whole area:
+worklist with lenses, family page, duplicate queue with tombstones + one-transaction merge, message
+the household, JSON export) are on `origin/master` (`5f75006e`, `c58ccfed`, `53402943` all
+ancestors of `6b9c8c06`); schema drift dev↔prod is zero. Owner QA **§54 and §56 were never
+passed**. Gate: `module_families` on League/Club bands, no role default, owner short-circuit,
+explicit per-person grant. ⚠ Mig 254 is function-only and no tooling checks functions on prod —
+**✅ confirmed on prod 2026-09-25 (Stage 0, owner-approved read):** `select proname from pg_proc
+where proname like 'families_%'` returns `families_attach_people` and `families_merge_people`, the
+same two as dev. Re-run it at release if any later migration touches either function.
+
+| ID | Sev | What a club hits | Anchor | Ref |
+|---|---|---|---|---|
+| E01 | H | **A merge undoes itself** — the next Families read re-mints an address-less "ghost" person for the merged address (still typed on the source rows); the ghost shows as a childless family and can be re-proposed as the same pair; messaging it mails the kept person's former address. | `254:57-79` · `252:138-146,205-214` | — |
+| E02 | H | **Editing a guardian email never updates the household** — the child stays with the old person, "Message this family" goes to the old address, the new address becomes a childless stranger. This is the founding problem of the project, still open on the most common path. | `lib/db.ts:5494` · `252:205-214` | plan §8.7 |
+| E03 | H | **Family-page money disagrees with the Money hub** — paid/unpaid computed from `installments.paid_at` (stamped only when fully paid since mig 232) instead of `rep_dues_payments`; partial payments invisible; credits summed regardless of `applies_to`. | `lib/families-read.ts:391-409,471-476` | plan §1.3 |
+| E04 | H | **The export overclaims "Everything this organization holds"** — carries only the page payload (no DOB, medical, emergency contacts, notes, tryout consent/IP, links, opt-out source, payment rows, documents); history capped at 30. A privacy statement that is false. | `export/route.ts:28` · `families-read.ts:71-86,507` | PIPEDA |
+| E05 | M | Large clubs silently truncated: 7 unpaged reads (league registrations from every season), unchunked `.in()` lists; at Club · Association scale family pages 404 and counts are wrong. | `families-read.ts:107-143,218-220,257-260,375-386` | — |
+| E06 | M | Duplicate queue proposes real co-parents (same surname + child or phone; first names ignored); kept side arbitrary on ties (no ORDER BY); merge cannot be undone; server never checks the request matches a proposed pair. | `families-read.ts:517-577` | plan §5.3 accepted |
+| E07 | M | No role floor on the grant (a scoped staff member sees every family); no send cap or log; no Reply-To (a parent's reply never reaches the club); attachment runs as a write on every read and hides failures; league co-guardians never included in "message this family"; no audit trail of views/exports. | `lib/families-auth.ts` · `message/route.ts:14-21` · `lib/email.ts:11` · `families-read.ts:611-617` | plan P3-C |
+| E08 | M | The family page counts children as programme rows (one child in rep + league = two) — the real defect behind any sibling discount. | memory note | plan §8.5 |
+| E09 | L | "Portal access · Active" shows from frozen legacy `family_links` rows while the guardian tier is off; label "Named on a tryout" for link-only people; help claims history includes reminders and messages reach "every guardian"; dev seed inserts league registrations without `org_id` and ignores the error. | `families-read.ts:428-436` · `help-content/families.tsx:110,196` · `seed/house-league/route.ts:142-165` | — |
+
+**Not built (P3):** record a payment against the family, date-only send log + cap, second-guardian
+write (blocked by the guardian flag), internal notes, person↔staff match, household money (sibling
+discount / assistance / plan / credit). The P3 mockup session never happened.
+**Tests:** access guards and source-text guards only; nothing on worklist, family page, duplicates,
+merge, message or export; no UAT spec; Families screens in no rendered sweep.
+
+### 4F. Public site & the marketing promise
+
+**What exists.** The public-site editor (tagline, about, contact email, four socials, two tournament
+toggles — last content change 2026-05-08); org home with hero → Tournaments → League → Tryouts (only
+while open) → Past tournaments; section tabs Home/League/Archives (Teams marked "no index page yet");
+a real per-team page at `/{org}/teams/{slug}` (name, division, tryout banner, schedule only at
+"Public link", past seasons) that **nothing links to**; tryout landing + register form; branding via
+Org Settings; `/for-clubs` says "Coming soon — Club is in development".
+
+| ID | Sev | What a family hits | Anchor | Ref |
+|---|---|---|---|---|
+| F01 | H | **"Tryouts Are Open" links to `/{org}/teams`, which redirects to a tournament or back to the home page (a loop).** The card already has `teamSlug` + `programYearId` loaded and doesn't use them. | `app/[orgSlug]/page.tsx:244` · `teams/page.tsx:11-13` · `lib/db.ts:3374-3389` | J4-042, BD 2026-08-01 "known gap" |
+| F02 | H | **Rep teams are publicly invisible**: no teams index, no link from home/nav/tabs/admin/portal/help; not in sitemap, /discover or search. The only generated link is the tryout URL on the admin tryouts page. | `lib/org-public-sections.ts:52,132-137` · `app/sitemap.ts:60-71` | J4-042 |
+| F03 | H | **Home page is tournament-first**: Tournaments section always first with "No active tournaments right now — check back soon!" (default on); every active card wears "Live" under "Upcoming Events"; a rep-only club gets hero + empty block + credit. | `app/[orgSlug]/page.tsx:167-205,172,186` · `public-site/route.ts:64` | J4-043, ADMIN_IA Phase B |
+| F04 | H | The `is_public` master switch is labelled "Listed on /discover" (A09) — unticking it takes down the site the editor's "Preview" link then 404s on. | see A09 | — |
+| F05 | M | Editor controls only tournament display (no rep/league/news/sections/sponsors); placeholder "Milton's Premier Youth Softball Tournament"; social links silently nulled when not `https://` while save reports success; load doesn't check status; Admin role can't open the editor (no `module_public_site` default) though the route allows admin. | `public-site/page.tsx:10-20,51-52,98,163,241-273` · `public-site/route.ts:37,48-54` | J4-044 |
+| F06 | M | Public rep-team, tryout and register pages skip the cancelled-org / is-public / entitlement checks other public pages make — a cancelled or private club keeps serving team pages and tryout forms; only the register API refuses, after the family has filled in the whole form. | `teams/[teamSlug]/page.tsx:32-33` · `tryouts/[yearId]/page.tsx:15-22` · `register/route.ts:39-41` | — |
+| F07 | M | **Any org's archive can be shown under another org's name** (`/{anyOrg}/archives/{id}` loads by id only). Archives index doesn't check is-public. | `archives/[archiveId]/page.tsx:64-73` · `archives/page.tsx:13-16` | — |
+| F08 | M | Team + tryout pages ignore the club's `--primary` colour (hardcoded dark, platform lime CTA); no per-team page title; the navbar shows a FieldLogicHQ "Pricing" link on a paying club's page; footer returns null (no club contact block); coach settings never show the public URL nor a copy button. | `teams/[teamSlug]/page.tsx:66-72,214,233` · `Navbar.tsx:319` · `Footer.tsx:99-100` · `coaches/.../settings/page.tsx:64-76` | — |
+| F09 | L | Closed-tryout "Contact us" never renders (`org.contactEmail` reads an absent column); `/league` renders an empty "No seasons published" for a rep-only Club instead of being absent; `results.module.css` dead; `/register` silently returns a club to home. | `tryouts/[yearId]/page.tsx:152-153` · `lib/db.ts:2048` · `league/page.tsx:141-151` | — |
+| F10 | M | **Marketing truth**: `/for-clubs` "Coming soon"; Club step 02 still claims house league "parent notifications" (the League block corrected it 2026-08-20); homepage "field bookings"; README $179; pricing comparison rows "Team invoicing / Payment reconciliation / Player registration workflows". No Club demo sandbox (`lib/demo-org.ts:104-112`). | `app/for-clubs/page.tsx:89-90,203` · `lib/plan-article-content.ts:321` · `app/page.tsx:597` · `README.md:47-48` | → `/marketing`, `/strategy`, `/demos` |
+
+**Tests.** `anonymous-public-invariant.spec.ts` uses the club fixture only for "no operator door" and
+the sitemap; `family-access-boundary.spec.ts:402-415` asserts the public schedule appears only at
+`public_link`; layout sweep covers marketing pages only. **Not tested:** the editor and its API, org
+home content, the redirect routes, the team page without a public link, tryout landing/register, the
+archive org mismatch, the `is_public` side effects.
+
+### 4G. Tournaments inside a club
+
+**What exists.** A Club lands on the `/admin` hub (not tournaments); tournament limit 9999; club
+tournaments count against nothing; the team cap counts rep teams only. "Host's own team in own
+tournament" (`6cb8d01d`, mig 297 on prod) is one-click for **coach-portal orgs only**; a club's path
+is "Add Team Manually" then link with the rep-team picker; once linked the mirror pulls tournament
+games onto the rep team's schedule. Tournament fees never reach a ledger (C18).
+
+| ID | Sev | What a club hits | Anchor | Ref |
+|---|---|---|---|---|
+| G01 | M | "First tournament setup available" banner shows forever for a club that never runs tournaments (and its link opens the house-league wizard for a Club); pending-registrations item not gated on tournament visibility. | `AdminHubClient.tsx:232,332-359` · `startup-tasks/route.ts:105` | A12 |
+| G02 | M | **No way to message every family at once** — no org-wide announcement; tournament comms go to registered teams' coach emails only ("targeting by org member is not yet implemented"); league broadcast is per season; coach announcements per team; Families one household at a time with no cap. `admin/notifications` is only the bell's "see all"; `admin/org/notifications` redirects to account settings. | `app/api/admin/communications/route.ts:92` · `lib/email.ts` (no audience concept) | J3/J4 comms |
+| G03 | M | A club's own team entering its own event is a two-step manual path with an unlinked team in between (finding F01 of the host-own-team plan); §walk still owed. | `lib/host-own-team.ts:61` · `registrations/page.tsx:308,446-475` | project memory |
+| G04 | L | Dead "Coming Soon" branch on the program-year page; `showFeedback` never passes 'info'. | `program-years/[yearId]/page.tsx:91,466` | — |
+
+### 4B. Rep teams & the coach bridge
+
+**What exists.** The whole `admin/rep-teams/*` cluster (hub with team cards + groups + Add Team +
+archive + Upcoming Payables; team detail with program years; program year with status stepper
+Draft→Active→Completed→Archived, four cards, read-only roster + export; Coaches (assign an *existing
+active member* as head/assistant); read-only Schedule (same `rep_team_events` the coach writes, with
+the tournament mirror sync); Tryouts (shared table + the same accept RPC as the coach side); History
++ Past seasons; Allocations; Assistant coaches oversight; Document templates; Payment requests;
+Rename slugs; Shared library incl. the Club Shared Book org switch). Gate: `module_rep_teams` on the
+layout and every route — **owner only by default** (admin and treasurer lack it). Access truth is
+`rep_team_staff_memberships` (M1, 2026-08-16); `rep_team_coaches` is a per-season projection. A
+club team's coaches get the whole Premium portal by having an assignment — there is no explicit
+"club → Premium" grant. **The coach side's "season" IS the club's program year** (one table, two
+vocabularies). Club Shared Book: complete end to end (org switch → team opt-in → reciprocity), unit
+test only.
+
+| ID | Sev | What a club hits | Anchor | Ref |
+|---|---|---|---|---|
+| B01 | B | **A club admin cannot invite a brand-new head coach as a coach.** Help says "invite from Members using the Coach role"; no Coach role exists in the invite picker or API. The only assignment door is the program-year Coaches page, which lists existing members (including invited-not-accepted ones, which 422) and requires `status='active'`. So a new coach must first be invited as **staff or admin** (admin-panel access), accept, then be assigned. **Nothing notifies the coach** they were assigned (no email exists); they must sign in and find `/coaches` themselves. Between seasons (no live year) a coach cannot be added at all. | `lib/help-content/rep-teams.tsx:164` · `members/page.tsx:907-911` · `invite/route.ts:15` · `program-years/[yearId]/coaches/route.ts:97-145` · `coaches/page.tsx:79-85` · `lib/coach-membership.ts:381-414` | — |
+| B02 | B | **Admin and treasurer lack `module_rep_teams`**, so the rep-teams layout bounces them to `/admin`; the allocation "owner|treasurer" write gate is effectively owner-only; teams/coaches/tryouts write = owner|admin while allocations write = owner|treasurer (two role models). `plan-gating.spec.ts:161-172` expects "Access Restricted" but the layout redirects (test red or stale). | `lib/roles.ts:47-70` · `rep-teams/layout.tsx:28-33` · `allocations/route.ts:99` · `allocations/page.tsx:30` | A01, C03 |
+| B03 | B | **Club teams have no season rollover.** "Start next season / Close / Reopen" is standalone-portal-only; the club's "Add Program Year" creates a blank year (staff copied; **no roster, budget, fee template, opening balance or continuity links** — the standalone roll carries all five). Creating a new year is **blocked while any year is active**, so next season's year (and its tryouts) cannot exist until the admin marks the current season Completed — which locks every coach into read-only Season's End. Draft is treated exactly like Active by the portal (help says use Draft to prepare). Two drafts can coexist; the projection follows the newest and the coaches route 409s on the older. The rollover's "self-heal" auto-completes any other open year — safe only because the route is standalone-only. | `seasons/route.ts:58-72` · `program-years/route.ts:64-101` · `lib/rep-season-rollover.ts:127-140,252-418` · `lib/db.ts:4317` · `rep-teams.tsx:60-61` | CLAUDE.md season ruling |
+| B04 | B | **Adopting a standalone portal into the club ("ownership transfer") orphans most of the team.** The completion RPC (mig 067) re-parents ~17 tables and was never revised; it does **not** move `rep_team_staff_memberships` (the access truth since mig 245) nor ~48 `rep_*` tables created since (attendance, lineups, awards, opponents/scouting, places, tryout rubric/scores, development, money_in, announcements, tags…). After a transfer the head coach is denied by every membership-gated route. Completion is platform-admin-only; the customer UI says "final data reassignment is platform-assisted". The facts doc sells this as the "coach bridge". | `supabase/migrations/067_team_ownership_transfer_rpc.sql:139-276` · `lib/team-ownership-transfer.ts:529-665` · `coaches-portal-links/page.tsx:415` | PLAN_PRICING_FACTS "Coach bridge" |
+| B05 | H | **The coach portal never checks the plan** — org-native coach routes gate on signed-in + not billing-suspended + an assignment row; `module_rep_teams` is never checked under `app/api/coaches/**`. A Club that downgrades to League/Tournament Plus keeps every team's full Premium portal, while the downgrade copy says the portal "shuts down". | `lib/coach-portal-request.ts:33-45` · `coaches/layout.tsx:116-170` · `lib/billing-retention.ts:102` | — |
+| B06 | H | **Dead club-side doors**: "View roster →" and the sidebar Team-group Roster + Documents links go to routes that don't exist (404); the "Ungrouped" filter sends `group=none` into a uuid `.eq()` (500 + "Failed to load" modal); the per-player documents admin API has no UI caller. | `program-years/[yearId]/page.tsx:381` · `AdminSidebar.tsx:452-460` · `rep-teams/page.tsx:511` · `teams/route.ts:37,46` | J4-007 (OPEN) |
+| B07 | H | **Tryout lifecycle contradicts itself**: admin PATCH/POST and the accept RPC never check year status (an admin can accept a player onto a completed roster, toggle tryouts open on a closed year); the public page advertises tryouts only on an *active* year while the register API accepts any status (draft-year tryouts, which help recommends, are reachable only by a copied URL); coach routes act on the active year, admin on the URL's year; stale copy ("accepted players become available for the coach's roster" — accept adds them directly; coach help still mentions a removed fee drawer). | `tryouts/[regId]/route.ts:24-31,111-127` · `teams/[teamSlug]/page.tsx:60-62` · `register/route.ts:52-57` · `tryouts/page.tsx:319,557` · `coaches.tsx:280` | — |
+| B08 | H | **No cross-team oversight** — cards answer Roster / Pending / Families only; no coach-in-place, activity, document-compliance or dues-per-team view; the history Documents tab is a stub; roster counts follow **three rules** (history list counts inactive + call-ups; history detail excludes call-ups; cards count active only) and W-L-T follows **two** (admin schedule widget counts league games only; history uses `countsTowardRecord`). The card's "newest year" badge and the portal's live season can differ. | `rep-teams/page.tsx:704-730` · `lib/db.ts:14649` · `schedule/page.tsx:96-104` · `history/[yearId]/page.tsx:131,329-343` · `teams/route.ts:54-59` | J4-006, J4-008 |
+| B09 | M | **The club-side team page is thin**: no edit for name/division/colour/group, no un-archive; PATCH accepts everything but `groupId` (a team's group can never change though the hub says "assign from the edit form"); coach settings say "Division is managed by your club admin" and the admin has no UI for it. Mark-completed confirmation says "the next season starts with an empty coach list" — false since M1. The Assign panel shows on completed years where the server 409s. | `teams/[teamId]/page.tsx` · `teams/[teamId]/route.ts:72-78` · `coaches/.../settings/page.tsx:526-530` · `program-years/[yearId]/page.tsx:356` | — |
+| B10 | M | **Access still read from season rows in places** (contradicts M1): tournament-history / tournament-games / hosted-tournaments / team-links coach routes deny a staffed coach between seasons; the admin Assistant-coaches list names people from season rows. | `lib/team-workspace-entitlements.ts:260-278` · the four routes · `lib/db.ts:3978-3993` | — |
+| B11 | M | Document templates: team picker is a raw UUID box; server never checks the team belongs to the org; help says templates are "program-year specific" (they are org/team scoped). Payment-request approve/deny, admin mark-paid and the allocation PATCH ignore rep-group scope. | `documents/page.tsx:349-355` · `document-templates/route.ts:55,81-83` · `rep-teams.tsx:190` · `payment-requests/[id]/route.ts` | J4-009 (OPEN) |
+| B12 | M | Team links: a "Basic visibility" link is inert (no club surface reads it); the admin link API has no module/plan gate (League orgs can link); retired billing actions return 410 and `lib/team-org-billing.ts` is self-described dead code; the sidebar Rep Teams section lacks Payment Requests / Assistant Coaches / Shared Library. | `app/api/admin/org/team-links/route.ts:15-34,67-73` · `AdminSidebar.tsx:428-443` | — |
+| B13 | L | Dev seed still inserts roster rows with source `'admin'` (violates the CHECK) and writes `rep_team_coaches` without a membership row (seeded coach fails every gated route); club coaches' Shared Book opt-in is gated on the notes grant, not head-coach-only as the ruling says; "public page remains accessible" on archive unverified. | `app/api/dev/seed/rep-team/route.ts:108,117-123` · `coaches/.../route.ts:196-218` | — |
+
+**What the club owns vs reads.** Club-owned, coach-read: team identity, program years + status,
+tryout registrations, document templates, allocations/installments, payment-request decisions,
+shared tags/awards/drills, the Shared Book switch. Coach-owned, club-read (live, not copied):
+roster (club writes only via tryout accept), schedule + results, payment requests, family
+counts, closed-season W-L-T/roster/staff. **The club sees none of:** attendance, lineups, awards,
+development, opponents, the team's budget/dues/expenses/cash beyond raw ledgers, season settlement.
+**Venues are not shared** (coach place book vs org library). **No admin can view a team's portal.**
+
+**Tests.** No UI/e2e test for any `/admin/rep-teams` page. Membership M1 smoke + projection
+guards exist; the ownership-transfer smoke does not check post-M1 tables were moved; the billing
+smokes exercise retired flows. Zero tests for program-year create/transition, coach assign/remove,
+document templates, request approval, club-side tryout accept.
+
+### 4H. Cross-cutting — help, exports, notifications, provisioning, tests/UAT, demo, design system
+
+**What exists.** Nine admin help hubs (org 473 lines, rep-teams 394, accounting 336, families 237,
+exports 398, house-league 294…); an export catalog whose plan fields are descriptive only; an admin
+notifications page + desktop bell + phone More-sheet row (so admins do have the coach's "one row");
+platform-admin plan change / overrides / add-ons / bulk operations; UAT orgs `uat-test-org`
+(tournament plan, holds the only UAT rep team + coach), `uat-plus-org`, `uat-club-org` (club plan,
+owner + admin, nothing else); a Playwright layout sweep of 111 coach + 9 marketing screens; two demos
+(tournament, coach — **the coach demo already runs on the club plan** with a `coach`-role account).
+
+| ID | Sev | What is missing or wrong | Anchor | Ref |
+|---|---|---|---|---|
+| H01 | B | **Nothing proves the club side works**: no `tests/e2e`; no club fixture with rep teams + coaches + portals (`uat-club-org` has two people); no club UAT suite (`.claude/commands/uat.md` suites = auth/plan-gating/tournament-admin/platform-admin/coaches); admin screens never opened by any spec (rep-teams beyond the denial check, allocations, requests, assistant coaches, shared library, documents, accounting, families, members, venues, settings, public site, notifications); **zero owner/admin screens in the layout sweep** though its session list allows them; the only rendered pass of club screens is the June J4 walk. | `tests/uat/create-uat-accounts.sql:62-85,305-327` · `tests/uat/helpers/fixtures.ts:34-56` · `scripts/layout-screens.mjs:11,1059-1067` · `.claude/commands/uat.md:47-54,175-178` | Stage 0 / 8 |
+| H02 | H | **The only way a Club exists is a manual operator plan change** — platform-admin cannot create an org; onboarding self-selects only `tournament`; checkout 403s while gated; the plan-change route never applies the 90-day club trial, only resets billing for `tournament`, and archives over-cap tournaments but does nothing about rep teams over a lower cap; the early-access CRM has no "provision this lead" action; operator help has no Club-pilot procedure. `dev-club-org` is used by 14 specs and created by no script. | `app/api/platform-admin/orgs/[id]/plan/route.ts:30-134` · `onboarding-plan/route.ts:39-40` · `early-access/[leadId]/route.ts:60-76` | Stage 1 / 8 |
+| H03 | H | **The add-ons route validates nothing** (no key check, no plan check — Rep Teams can be put on a Tournament org); overrides allow `subscription_status`/`comp_period`/`module_addon` but the add-on key list omits `module_families`; bulk operations validate but cannot set a team limit. | `app/api/platform-admin/orgs/[id]/addons/route.ts:13-29` · `overrides/route.ts:45-56` | Stage 1 |
+| H04 | H | **No help for setting up a club**: "Your first 30 days" is tournament-first; the Owner path has no club step; hub topic counts hard-coded and stale (Coaches says 9, has 39; Rep Teams 8 vs 14; Accounting 7 vs 13; Org 6 vs 12); rep-teams help promises "prorated billing" (retired meter), says admins create teams (they cannot), says "team workspace", never mentions assistant-coach approval; exports help claims every list page has an Export button (false for Families, Rep Teams, allocations, requests); org help says Notifications sits under Org Admin (it does not); PDF Settings reachable only from a hub tile; in-context help wired on 7 club pages only (none on Families, requests, assistant coaches, shared library, documents, budget, BvA, members, venues); no admin guide has a screenshot. | `lib/help-content/org.tsx:9-23,334-349` · `rep-teams.tsx:39,64,167,338-372` · `exports.tsx:101,145-156,242` · `help/page.tsx:32-85` · `AdminSidebar.tsx:198-203` | Stage 8 (`/docs`) |
+| H05 | M | **Exports**: no roster across all teams, no rep-teams index / allocations / requests / Families-worklist / all-ledgers export; the catalog's `org-venues` entry claims xlsx/csv on a page with no export (and `check-export-catalog` never checks that a *live* entry's file exports); Data Tools is tournament-only; the PDF-settings preview sample is tournament registrations; the catalog module union has no `families`. | `lib/export/catalog.ts:24-31,43-45,367-369,714-726` · `scripts/check-export-catalog.mjs` · `data-tools/page.tsx:319-444` | Stage 8 |
+| H06 | M | **Notifications**: the org preference grid has Tournaments / Payments / House League / Messaging — no Rep Teams, Accounting or Families; five event types dead; the only rep-team event that reaches an admin is "assistant coach awaiting approval". **Not notified:** a new tryout application, a coach's payment request, a portal link/ownership request, overdue dues, allocations falling due, duplicate families, missing documents. Sidebar worklist counts and the hub's "Needs attention" are tournament-only (+ league registrations + open tryouts). | `lib/notification-labels.ts:75-126` · `lib/assistant-invites.ts:56` · `lib/admin-worklist.tsx:4-24` · `attention-summary/route.ts` | Stage 1 / 7 |
+| H07 | M | **The admin side is not on the warm design system** — it still wears the dark "HUD/blueprint" theme (`--hud-surface`, blueprint grid, lime uppercase data-font titles; Families CSS says "admin dark theme tokens only"); the warm kit is scoped to the coaches-portal marker; the dictionary records admin/scorekeeper as excluded from the theme preference; rep-teams + portal-links predate the locked admin design system (J4-050: 71 raw `rgba(255,255,255,…)` literals, ~72 hex literals across 14 files). | `admin.module.css:11-28` · `admin-common.module.css:37-39` · `globals.css:711-726` · `rep-teams.module.css` | **D12** → `ADMIN_DESIGN_CONTINUITY_PLAN.md` (2026-09-25) |
+| H08 | M | Phone: the More sheet always shows the tournament switcher + Operations/Setup/Admin whatever section you are in — no way on a phone into rep-team sub-pages, budget/BvA, members/billing/settings, families duplicates; Families gets tournament tabs. Org hub Venues tile shows to every role while the sidebar gates it. | `AdminBottomNav.tsx:74-76,216,317-369` · `org/page.tsx:40-44` | A12 |
+| H09 | L | **No club demo**; the for-clubs page says "Coming soon — Club is in development" then offers the two existing demos as "both halves live today"; the coach demo's account is a `coach` and can never show `/admin`. Dead "Coming Soon" modal/branch strings (BvA, program year); billing page "coming soon" ×5. | `lib/demo-org.ts:31` · `scripts/seed-demo-coach.mjs:186-230` · `app/for-clubs/page.tsx:88-127,203` | Stage 8 (`/demos`) |
+
+**Scripts that create orgs (all dev-only):** `seed-demo-coach` (riverdale-ridge, club), `seed-families-fixture` (qa-families-fixture, club), `seed-qa-day-fixtures` (qa-cancel-lab, qa-money-lab, club), `seed-demo-tournament`, `seed-free-tier-org`, `seed-fp5-cluster4/5`, `seed-uat-standalone-coach`. The Stage 0 fixture can be assembled from the money-lab + families-fixture recipes.
+
+### 4I. House league — inventory only (Stage 9, last by direction)
+
+**What exists.** Every admin page and API except **Past Seasons** (sidebar links to it → 404):
+seasons grid + create; season page (edit, lifecycle bar, divisions, link row); registrations
+(status tabs, approve/waitlist/decline/promote, fee-paid, add, message-registrants modal, exports);
+teams (CRUD, randomize, draft overlay); schedule (week/list/practices, game + practice modals,
+generate, health strip, field picker, exports); standings; ledger; notifications composer with
+history. Public: index, season landing, register, schedule (games only), standings, status lookup.
+Gate: `module_house_league` role cap + entitlement on every API; writes need owner|league_admin;
+**the `admin` role has no house-league access by default**. Eight `league_*` tables;
+`league_email_log` has **no CREATE TABLE migration** (only its indexes) — a prod-schema trap.
+
+**Trust-plan headline defects (2026-06-13 list) re-verified:**
+
+| # | Defect | Status | Anchor |
+|---|---|---|---|
+| 1 | Communications silently email nobody / count failures as sent / no guardian dedupe / no reply path / no rainout notice | **OPEN** (J3-058: composer sends `waitlist`/`pending` vs real `waitlisted`/`pending_review` → 0 targets, green "0 delivered"; provider errors labelled "no email on file"; one mail per registration; no `reply_to`; declined mail falls back to a gmail address; schedule changes send nothing; registration mails fire-and-forget; promote-from-waitlist creates no fee entry). Broadcasts now escape + unsubscribe (J3-065 fixed). | `notifications/page.tsx:41-42,236-252` · `email/route.ts:79-127` · `lib/email.ts:12,46-62,638-822` · `[regId]/route.ts:228-382` |
+| 2 | Vanishing season (Blocker) | **OPEN** — a single `.find()` on the index and the org home; seasons sort by `created_at` desc so next year's registration hides this year's season. | `league/page.tsx:46-50` · `app/[orgSlug]/page.tsx:70,292` · `lib/db.ts:2616-2623` |
+| 3 | Schedule honesty | **mostly OPEN** — cancelled games filtered out, postponed shown as live; public schedule has no location; exports slice UTC dates; `':00Z'` appended in three write paths; registration opens/closes on status not dates; practices never public; GF/GA wording; status lookup omits the team. Admin location + storage timezone fixed. | `lib/db.ts:2954` · `league/[seasonSlug]/schedule/page.tsx:28-35,195-280` · `house-league/page.tsx:174-175` · `standings/page.tsx:146` |
+| 4 | Parent payment loop | **OPEN** — no payment instructions/payee/deadline on a season; approval emails never mention payment; pending mails promise "no payment until approved"; ledger income-only and read-only; no fee filter on registrations. | `RegisterForm.tsx:456` · `lib/email.ts:638-804` · `registrations/page.tsx:21-29` |
+| 5 | No real schedule generator | **PARTIAL** — one round-robin cycle; "rounds per week" stacks rounds on the same date/time; one field from the library + warn-only clash + health strip added; no multiple fields/time slots/day choice (a generated schedule warns about clashing with itself); unconditional insert on save; `gamesPerWeek=0` → 500; the tournament generator plan never touched this. | `generate/route.ts:30-167` · `schedule/page.tsx:495-498,1241-1349` |
+| 6 | Email injection | **OPEN** — all seven league templates interpolate user input raw (`escapeEmailHtml` exists, unused); register + status-lookup have **no rate limit**; the attacker chooses the recipient and has 80-char name fields. | `lib/email.ts:395,638-822` · `register/route.ts:66-74` · `status-lookup/route.ts` |
+
+| ID | Sev | Not on the trust list | Anchor |
+|---|---|---|---|
+| I01 | **B (security — fix in Stage 0, not Stage 9)** | **Cross-tenant IDOR:** draft `start` returns full registration rows (guardian email/phone, DOB, player + admin notes) for any `divisionId`; placement `randomize/assign/bulk_assign/clear` and draft `pick/finalize` write `team_id` on other orgs' registrations; standings/teams GETs and teams/registrations POST/PATCH accept division/team IDs unchecked. Division UUIDs are public in URLs. Any owner or league_admin of any entitled org (every Club) can do this. The same class was fixed in `schedule`, `generate` and practices. | `draft/route.ts:84-173` · `placement/route.ts:54-119` · `standings:26-31` · `teams:29-33,68,101` · `registrations:102` · `[regId]:169-177` |
+| I02 | H | Admin "new registration" notification fires only on a manual admin add; a parent's public submission triggers nothing; the label says the opposite. | `registrations/route.ts:148-154` · `lib/notification-labels.ts:52` |
+| I03 | H | The free floor and non-Club orgs write to accounting tables they cannot see (fee-paid toggle posts an entry regardless of `module_accounting`; ledger GET creates a ledger). Treasurer lacks house league so cannot see league ledgers. | `[regId]/route.ts:144-151` · `ledger/route.ts:32` |
+| I04 | H | Deletes silently cascade: deleting a team deletes its games and results; deleting a division deletes its teams and games (only registrations are checked). Season lifecycle and cancel-game fire in one click; only Archive confirms. | `[teamId]/route.ts:74-85` · `divisions/[divisionId]/route.ts:81-95` · `020:56,120-122` · `house-league/page.tsx:629-640` |
+| I05 | M | `league_admin` (and the free floor, plan `tournament`) are locked out of the Venue Library the scheduler links them to (D02); waitlist position is count+1 with no constraint; standings scoring hard-coded (win 2 / tie 1, runs tiebreak) ignoring the sport pack; league pages hard-code hex colours and have no metadata. | `venues/route.ts:52,91-92` · `register/route.ts:130-135` · `lib/db.ts:3105-3144` |
+| I06 | M | Pricing/marketing promise "automated parent notifications" — only registration-status mails are automatic. | `app/pricing/page.tsx:58,91` · `lib/plan-article-content.ts:321` · `app/platform/house-league/page.tsx:7` |
+| I07 | M | Other J3/J9 open items: forward-only lifecycle; approve ignores capacity; notes invisible; no bulk actions; no Withdraw button (API supports it); manual waitlist gets no position; one draft per season; pre-assigned players reappear in the pick list; no snake draft; practices cancel-only; no rollover; coach is free text; Ledger missing from sidebar; no reserved tournament-slug guard; house-league coaches dead-end in the portal; no practices view for coaches. | see agent anchors in §4I source |
+
+**Coupling / standalone plan.** No house-league route requires accounting or rep teams; **the
+`league` plan already has exactly the standalone shape** (house league + public site + families) —
+D11. Shares: org venues (plan-keyed gate), Families (`person_id`, waiver consent, suppression),
+accounting tables (league-season ledgers + fee entries), the email stack, the org home's League
+card, the admin shell. Adding any new plan key touches ~10 plan-keyed checks (venue library,
+tournament-tier proxy bounce, `isLeagueOrClub`, onboarding, shelf/order arrays); the platform-admin
+feature matrix does not change runtime access. **Tests:** the pure clash engine and static guards
+only; nothing covers any house-league API, the generator, standings maths, caps, lifecycle, draft,
+placement, escaping, fee entries or the vanishing-season logic. The one check the parked ledger
+asked for (any org holding house league via comp/override on prod) is still un-run.
+
+---
+
+## 5. Structural decisions (D1–D12) — RULED 2026-09-25
+
+> ⚖ **Owner rulings 2026-09-25** (*"other than that I agree with your recommendations"*): every
+> recommendation below is **ACCEPTED as written** except three, which are ruled differently:
+> - **D4 — Permits are IN SCOPE.** Not deferred. They move to the **end of the walk, with house
+>   league (Stage 10)**, and **the production release waits for them**: *"I am fine waiting on
+>   production release until we have the features that we need, this being one of them. We are not
+>   rushing to production."* The homepage "field bookings" claim is still removed now (it is false
+>   until Stage 10 ships) and comes back when the feature does.
+> - **D6 — NO Founding Season offer for Club.** Full list price; the comp leak (A08) is fixed
+>   either way. Owner's reasoning: this programme will not be ready until the Founding Season window
+>   is over or nearly over. → `/strategy` logs it.
+> - **D7 — Club · Association is PURCHASABLE AT LAUNCH.** Not contact-us. Proration for the paid→paid
+>   move (Club → Club · Association, and the reverse) is **part of this project** (Stage 1b), which
+>   supersedes the 2026-06-26 "in-app paid→paid proration is not built" decision and the pricing-copy
+>   rule "do not publish firm band prices until the early-access cohort opens". → `/strategy` +
+>   `/marketing`.
+>
+> D1, D2, D3, D5, D8, D9, D10, D11, D12: accepted as recommended. D12 is therefore decided now
+> (warm kit adopted screen by screen as each stage's mockup touches a screen; no blanket re-theme),
+> recorded in `memory/design_decisions.md` 2026-09-25.
+>
+> ⚖ **D12 AMENDED later on 2026-09-25 (owner):** *"continuity … including in the tournament modules …
+> light/dark theme in all … the coaches portal as the model."* The whole admin side (club, tournament,
+> house league, scorekeeper and gate) joins the one account theme and the coaches portal's design system,
+> as its own program: **`ADMIN_DESIGN_CONTINUITY_PLAN.md`** (hub https://claude.ai/artifact/R1Zcp2s93gmgaHGHn6SLSZ,
+> rulings R0–R5). Club screens are still redesigned inside each club stage, **drawn in both themes**, on a
+> shared foundation (the frame + every admin screen restyled for both themes) that **lands before the Stage 1
+> build** (R5). The organization's colour leaves the admin chrome (R1); public pages keep it (R2).
+
+These were the places where the club side and the coach side were built on different assumptions,
+or where the ask named a feature that did not exist. Recommendations are kept below as the record
+of what was proposed; the rulings above govern.
+
+| # | Question | Recommendation | Gates |
+|---|---|---|---|
+| **D1** | **Whose number is a team's money?** The club hub sums `accounting_entries` team ledgers into Net Position; the coach's Cash on hand is records + opening balance per season; nothing reconciles them (C04, C15, C18). | **The coach's records are the source of truth for team money; the club READS them** (a per-team rollup: allocated / collected / outstanding / requests / cash on hand, labelled "held by the team", never summed into the club's own position). The team `accounting_ledgers` rows become a projection the club never writes (C12 finishes what J4-021 started) and eventually go away. Club money (org ledger, budget, allocations, request decisions) stays club-owned. Reason: three months of hardening + arithmetic gates on the coach side, none on the club side. | Stage 3 |
+| **D2** | **What is the club's year?** Club works in calendar years (budget `season_year`, hub date range, BvA filters); coaches work in program years with close/settlement/carry-forward; the two meet only on a split's `program_year_id` (C10). | **A club "budget year" is a label the club picks ("2026–27") with a start month; allocations bind to program years; the hub defaults to the current budget year; a year-end exists (lock + carry).** No fiscal-accounting features (no periods/close entries) in the first release. | Stage 3c |
+| **D3** | **Can a club admin write a team's schedule?** The franchise ruling (coaches own day-to-day; admin read-only, writes removed in `0406d42e`) still holds in code (D04). | **Keep it** — but give the admin one door that does not exist today: a club-wide read calendar (D5) and the venue clash check (D01). Do not reopen admin writes. | Stage 6 |
+| **D4** | **Permits / field bookings** — nothing exists; the homepage claims it (D06). | **Out of the first Club release.** Fix the homepage claim now (`/marketing`). Scope a "Permits & bookings" feature as its own project after release: a permit is a venue × date-range × slots × cost record the club holds, that the clash check reads and the budget can cite. | Stage 6 (decision only) |
+| **D5** | **A club-wide calendar** (all teams' games/practices, house-league games, tournaments) — internal and/or public. Nothing exists (D03). | **Internal read-only club calendar in the first release** (it is a read over tables that exist); **public club schedule** deferred unless the owner wants it for families now. | Stage 6 |
+| **D6** | **Does Club get a Founding Season offer?** Today the comp leaks onto a Club org by accident (A08); the decided promo covers Tournament Plus + the Premium portal only. Every coach in a club is free until Sept 2027, so a club pays $219 only for the club-side value. | Commercial call → `/strategy`. Options: (a) full price, no promo (current decision), (b) a Club founding comp for a small invited cohort (the 2026-07-28 "5–10 Club" shape preserved as an input). Either way, **fix the leak** (comp must be plan-scoped). | Stage 1 / 8 |
+| **D7** | **Is Club · Association purchasable at launch** (needs a shelf card, a price on the public surfaces, an upgrade path from Club) or **contact-us only**? (A05) | **Contact-us at launch; self-serve later.** Build the Club → Club · Association upgrade path only after proration (BUSINESS_DECISIONS 2026-06-26) is designed; until then the cap error says "contact us". | Stage 1 |
+| **D8** | **What does a club Admin see by default?** The parity policy says admin = owner minus billing & members; the code gives admin no module caps at all (A01, B02). | **Admin gets every module the plan carries by default (rep teams, accounting, public site, house league, families stays explicit-grant); treasurer gets accounting + a read of rep teams (the allocation loop needs it); registrar/league_admin unchanged.** The hub decides "tournament-only" from the **plan**, never from a member's caps. | Stage 1 |
+| **D9** | **Families P3 for release?** (record a payment, send log + cap, second guardian, notes, staff match, household money). | **No.** The four HIGH defects (E01–E04) + Reply-To + the role floor are release-gating; P3 gets its owner mockup session after release. | Stage 5 |
+| **D10** | **Head-coach onboarding door.** No Coach role exists on Members; a new coach must be invited as staff/admin first (B01). | **Add "Invite a coach" on the program-year Coaches page (and a Coach row in the Members invite picker) that writes the capability-less coach membership + the team staff membership and sends the existing staff-invite email.** The 2026-08-16 model already has the row; it lacks the door and the mail. | Stage 2 |
+| **D11** | **House league as its own standalone plan** = **un-park League Plus** ($89, already in config with public site + house league + families). Confirm no new SKU. The free League floor (`league_starter`) stays `Held`. | Confirm. `/strategy` logs it when Stage 9 opens. | Stage 9 |
+| **D12** | **Does the club-admin side move to the warm design system before the Club release?** The coaches portal is warm; the admin side still wears the dark HUD theme (H07), so a club owner who also coaches flips between two visual worlds, and the rep-teams cluster's raw white-alpha literals break in light mode. | **Rule it inside the Stage 1 mockup session** (the hub, sidebar and phone bar are redrawn there anyway), so no later stage is drawn twice. Recommendation: the club admin adopts the warm kit's tokens and components screen-by-screen as each stage's mockup touches it — no blanket re-theme as a separate project — and the light-mode literals in rep-teams are fixed with Stage 2. | Stage 1 mockups |
+
+## 6. Stages
+
+Every stage = **owner mockup session first** (Artifact, whole-screen before/after, republished on
+the project hub) → build → `/simplify` → `/review` → `/docs` → **owner QA walk** (a `§` on the
+ledger, checkable on the hub) → commit. Stages are sized to be finished in one or two sessions each;
+3 is three. Order follows what a rep club meets in its first sixty days.
+
+### Stage 0 — Ground truth (no mockup; fixes + fixture + rulings)
+**Outcome:** a Club can be provisioned, staffed, given teams and coaches, and every club screen
+opens for owner, admin and treasurer without a 401, 404 or redirect loop; the first end-to-end walk
+is on the ledger; D1/D2/D8 are ruled.
+> **⚙ Stage 0 BUILT on dev 2026-09-25** (kickoff `CLUB_TIER_STAGE0_KICKOFF_PROMPT.md`; walk **§238** on the ledger and the hub's QA Walk tab). **Committed 2026-09-25:** the security fix `a227fd64` (its own commit, promotable alone) · the dead-control sweep + `check:org-slug-callers` `47455d77` · the fixture, UAT harness and docs in the commit that carries this line. `/review`ed: the security fix at the high-risk tier (3 findings fixed), the sweep + guard + fixture at the standard tier (the guard's name heuristic tightened, a two-step base followed, the club sessions made to skip themselves when the fixture is absent). What the session changed against the kickoff, with the reason:
+> - **The fixture is a NEW org `uat-rep-club`, not `uat-club-org`.** `plan-gating.spec.ts` needs `uat-club-org`'s admin capability-less (it codifies A01 until Stage 8), the Stripe billing spec can leave that org cancelled, and its owner is the shared `uat-owner@` (three orgs). Env block `UAT_REP_CLUB_*` (not `UAT_CLUB_*` — `UAT_CLUB_ORG_SLUG` names the old org). The SQL file carries the eight sign-ins only (STEP 9); the script builds the club — an SQL-created empty org would make the script refuse to rebuild.
+> - **The treasurer stays on role defaults, deliberately** — granting Rep Teams would hide C03/B02, which the walk exists to record. The admin carries explicit grants for every module (D8 is Stage 1).
+> - **The tryout-register route had NO rate limiter to copy.** All three public family forms (tryout register, league register, status lookup) now share one throttle (`lib/public-form-throttle.ts`: per IP, a global ceiling, and per recipient email because the caller chooses who is mailed). The tryout confirmation email had the same raw interpolation as the seven league ones — eight builders escaped, not seven.
+> - **I01 was wider than listed:** the email-log read took any season id; practice creation stored an unchecked division; draft picks crossed divisions within a season. All closed; the guard test judges each `action` branch separately (mutation-tested). Dev data holds no cross-season rows (query in the §238 notes); the same query on prod is owner-gated.
+> - **The new guard found a seventh dead control:** the Upcoming Payables panel on the Rep Teams hub (401 since June). C02's "add category" is not dead but ABSENT on the admin form (never rendered there); its payload was fixed, the control not switched on (Stage 3 mockup). A04 also 404'd on tournament tiers (missing page) — fixed. The guard is parsed with the TypeScript compiler, not grepped (JSX apostrophes + nested templates defeat a regex).
+> - **Probe of every club screen per role (2026-09-25):** owner opens all 13; admin (granted) all but Audit log + Org Settings (owner-only); treasurer bounced to the hub from Rep Teams / Allocations / Payment Requests, and the allocation wizard's team list is empty; every non-owner/admin page load fires a 403 on the tournament-only sidebar count (`/api/admin/tournament-worklist`) — noise for Stage 1's nav work.
+- [x] **The Club fixture** — extend `tests/uat/create-uat-accounts.sql` / a new `scripts/seed-club-fixture.mjs`: `uat-club-org` on `club` with `team_limit` 15, owner + admin + treasurer + registrar, **6 rep teams** across two groups (one archived), program years (one completed, one active, one draft), head coaches with real `rep_team_staff_memberships` (the dev seed writes none — B13), rosters with guardians (some shared across teams → Families), a budget year with lines/periods, two allocations (one overdue installment), three requests in three states, two ledgers, a tournament with the club's own team linked, public site on. **Every §-walk in this programme signs in here.**
+- [x] **Fix-now sweep (the dead-control class):** C01 payees, C02 budget item/category create, A04 audit log, B06 dead roster/documents links + `group=none` 500, C03 reminder-button roles, F01 tryouts card destination (use the loaded `teamSlug`/`programYearId`). One `check:org-slug-callers` guard: every client fetch to a `requireOrgSlug` route carries `orgSlug` (grep-level, like `check:org-context`).
+- [x] **Security fix-now (does not wait for Stage 9):** I01 — every house-league draft/placement/standings/teams/registrations route verifies that the division, registration and team IDs it receives belong to the season's org (the pattern already used by `schedule`, `generate` and practices), plus a route-level guard test; F07 — the archive page checks the archive belongs to the org in the URL; the house-league register + status-lookup routes get the tryout-register rate limiter; the seven league email templates go through `escapeEmailHtml`. Ship as one `/review`-ed commit ahead of everything else and promote it on its own.
+- [x] **Rulings:** D1, D2, D8 (and D6/D7 to `/strategy`). — D1–D12 ruled 2026-09-25 (§5); D4/D6/D7 logged in `BUSINESS_DECISIONS.md` the same day.
+- [x] **Walk §A (ground truth)** — written as **§238** (numbered at write time; §237 was taken the same hour), walk owed: provision → staff → teams → coaches → coach lands in portal → treasurer opens every money screen → admin opens every module. Record every wall.
+- [x] **Docs truth-up** (§12) and the Families prod-function check (`pg_proc`). — 2026-09-25: both functions on prod; the Families plan/brief/P3-prompt headers, ledger §54/§56, the Families TODO line, the dictionary `person_id` line, the ADMIN_IA plan header (folded here), the README pricing table (now a pointer to the Facts doc), `lib/export/ics.ts` "STUB" and the exports help "planned for a future release" trued. The Facts doc's "coach bridge" line was already trued earlier the same day. The same owner-approved prod read found **zero** house-league rows pointing across seasons (I01 left no data behind).
+**Exit:** §A on the ledger with zero 401/404/loop rows; rulings logged.
+
+### Stage 1 — The club shell (provision · buy · roles · nav · settings)
+**⚖ Prerequisite (owner, 2026-09-25, R5):** Admin Design Continuity **Phase 1 (the foundation)** lands
+before this stage's build: the admin frame and every admin screen already follow the account theme in both
+palettes, and the frame no longer takes the organization's colour. Stage 1 then rebuilds the club shell on
+that foundation. The Stage 1 mockups carry dark copies of the hub, phone shell and Members (hub v6).
+**Closes:** A01 A02 A03 A05 A07 A08 A09 A10 A11 A12 A13 A14 A15 A16 B02 B05 F04 G01 · J10 (all OPEN rows) · J4-039/040/041/045/047/049.
+- [ ] **Mockups:** the club hub (plan-aware order: what the org runs first, tournaments last; a president's morning brief — numbers + attention items, J4-041/J4-006 wow); desktop sidebar at the hub root; phone bottom bar + More sheet for a club (A12); Members with board roles + the coach row; the billing page for a Club (capacity readout, both band prices and the prorated Club ↔ Club · Association move per D7, comp state correct); Org Settings with `is_public` named honestly ("Public site on/off") and `is_discoverable` exposed; the onboarding checklist for a club; the audit log.
+  - **DRAWN 2026-09-25 — hub v3, Mockups tab, specimens 1–12** (`CLUB_TIER_STAGE1_MOCKUP_PROMPT.md`); dark copies hub v6. **RATIFIED AS DRAWN 2026-09-25 (hub v7; owner: "I agree with your mockups")**, before the Stage 0 walk. A walk finding that a drawing depends on reopens that specimen only. Asks 1–6 recorded as accepted as drawn (each was drawn to its recommendation); 4 and 5 go to `/strategy`. **Build prompt: `CLUB_TIER_STAGE1_BUILD_PROMPT.md` (written 2026-09-25)** — starts only after the Stage 0 commits AND Admin Design Continuity Phase 1 (R5); the foundation owns the frame (club rail + phone bar from specimens 3–4), this stage owns the pages and the role/billing logic. **Six asks open on the hub's Decisions tab:** (1) the treasurer's "read of rep teams" = team names/seasons inside Accounting, no Rep Teams door (no read-only module mode exists; rep-teams write buttons are server-gated only); (2) league roles shown only when the club runs a house league; the rep-side registrar ruled with Stage 2; (3) one constant club phone bar; (4) paid→paid moves: up now prorated, down at renewal with no credit and refused over the smaller band's cap, no second trial (→ `/strategy`); (5) the Club trial takes a card and every surface says so (→ `/strategy`, `/marketing`); (6) coaching staff off the Members board table.
+  - **Found while drawing (added to the ledger here):** **S1-01** a rep club has no registrar role (`league_registrar` = `module_house_league` only); **S1-02** the Accounting "Summary" rail entry has no screen until 3b — Stage 1 ships Budget + BvA only; **S1-03** every coach-role membership (the 2026-08-16 plumbing row) lists on Members beside the board with Manage + Remove (the members GET has no role filter), and Remove there also drops coaching assignments; **S1-04** the new Rep Teams / Accounting / Families notification rows must ship with their events, never as dead toggles. **Drawn deliberately:** no money figure on the hub until Stage 3 (C04 — Net position is known-wrong); the morning brief is counts only (tryout applications, payment requests, installments due in 14 days, assistant coaches awaiting approval).
+- [ ] Role defaults per D8; hub "tournament-only" from the plan; delete the onboarding bounce for non-owners (J10-014); seat check on PATCH; accept-invite error handling; suspend confirm; capability-change notice; owner-only caps not grantable; module-revoke warning per module; Role Guide copy true; invite labels.
+- [ ] Membership policy: coach rows (and pending/suspended) never count as "belongs to another org" (A03, Verified Network); the head-coach promotion path lands somewhere real.
+- [ ] Billing: plan-scoped comp (A08); reactivate restores everything (A07) + a reactivate door for a gated plan (contact-us); a second-subscription guard on checkout (A06); one gating source (A10); capacity readout; Families in the Club feature list; card/no-card copy agreement (A15).
+- [ ] Downgrade honesty: the coach portal checks the plan (B05) **or** the downgrade copy stops claiming it shuts down — recommend the check (fail closed to a "your club's plan no longer includes…" wall, the same idea as `CancellationGuard`).
+- [ ] Help: "Set up your club" hub article; Members/roles article rewritten.
+- [ ] **1b · Buying Club and Club · Association (⚖ D7, 2026-09-25 — purchasable at launch, proration in scope).** Mockups: the pricing page and `/for-clubs` with **both band prices published** (supersedes the "no firm band prices until the cohort opens" copy rule → `/marketing` + `/strategy` drift check), the billing shelf with a real Club purchase, the **Club ↔ Club · Association move as a subscription change with proration** (never a second checkout — this also closes A06), the team-cap error offering the upgrade in place, the 90-day trial/card copy true on every surface, and the Founding Season banner never speaking for Club (D6). Server: checkout refuses when a live subscription exists and routes to the upgrade instead; the webhook applies `plan_id` + clears a stale custom `team_limit` on a band change (the Club Repackaging fast-follow); platform-admin plan change applies the club trial. Stripe sandbox + live verified end to end for `club` and `club_large`, monthly and annual. Prod gate flip stays a Stage 8 runbook step.
+**QA walks §B (shell) · §B2 (buying).** **Migrations:** none expected for the shell; 1b may need a `stripe_prices` row check only (slots exist from migs 048/146).
+
+### Stage 2 — Rep teams & the coach bridge
+**Closes:** B01 B03 B04 B06 B07 B08 B09 B10 B11 B12 B13 G03 · J4-002/006/007/008/009/034/035/037 · Club Shared Book §1.16 walk · host-own-team walk.
+- [ ] **Rulings first:** D10 (coach invite door); **the club season lifecycle** — recommend: a club team gets the same *Start next season* roll the standalone portal has (roster/budget/fee/opening-balance/continuity carry, `lib/rep-season-rollover.ts`) **invoked by the club admin** (head-coach-and-standalone-only stays the rule *inside* the portal), a Draft year may coexist with an Active one (next season's tryouts while this season runs), Draft is a **prep** state the portal treats as not-yet-live, and the roll's "self-heal" is removed before the route is opened to clubs (B03).
+- [ ] **Mockups:** team page with edit (name/division/colour/group/un-archive) and a "what the club sees" panel (coach in place · roster · next event · documents · money owed — the franchise health board, one row per team on the hub); program year with the season controls; Coaches page with "Invite a coach" + a confirm on Remove + last-head-coach guard; tryouts with year-status honesty; document templates with a team picker.
+- [ ] Ownership transfer (B04): either **finish the RPC** (memberships + every `rep_*` table since 067, verified by a test that diffs the table list against the schema) or **retire the transfer and say so** — recommend finishing it, because the facts doc sells the bridge and every early Club buyer has coaches on Founding-Season portals. A build gate: the set of `rep_*` tables with `org_id` must equal the set the RPC re-parents.
+- [ ] Roster/record counts: one rule each (B08); access from memberships everywhere (B10); rep-group scope on money writes (B11); team-links API plan gate (B12); dev seed fixed (B13); stale copy (B09).
+- [ ] Help: rep-teams article rewritten (coach invite, seasons, templates, tryouts).
+**QA walks §C (teams & coaches) · §D (seasons & tryouts) · §1.16 (Shared Book) · host-own-team.**
+**Migrations:** the transfer RPC rewrite (one migration; dictionary); possibly a `program_years.is_prep` semantic if Draft is redefined (prefer reusing `draft`).
+
+### Stage 3 — Club money (three parts)
+**Closes:** C01–C19 · J4-010/011/013/014/015/016/017/019/021/022/023/024/025/026/027/028/029/030/031 + the five new race/atomicity defects.
+**3a — Bookkeeping core & the allocation/request loop.** Rulings D1 applied. Mockups: ledger page
+(team ledgers read-only and labelled; badge knows four types; transfers void both sides; payees
+managed), allocations list (Allocated column, team names, overdue that is true, state colour),
+allocation detail (confirm on mark paid, method/reference, admin undo, team name on the ledger
+line), payment requests (confirm on approve, reversal, the coach's meaning visible, club notified of
+a pending request that blocks a season close). Server: transfer + stamp in **one RPC** (both
+mark-paid routes, approval); `status='pending'` guard; `accounting_entry_id` written; rep-group
+scope; org day for entry dates; General-ledger creation race; ledger summaries paged.
+**3b — Budget, Budget vs. Actual, the whole-club summary.** Rulings D2 applied. Mockups: Org
+Budget (Allocated/Collected columns, many allocations per line, remainder allocatable, periods
+editable, next year selectable), BvA with **actuals by line** (entries carry a budget line — the
+J4-024 root; help stops saying "future update"), one headroom definition, team health with one
+year rule, and the **board summary** (club position · receivables from teams · team-held money
+labelled · approved requests counted · one export). Accounting sidebar gets Budget / BvA / Summary.
+**3c — The club year.** Year label + start month; year-end lock + carry; ledgers archive at
+year-end; the hub defaults to the budget year; allocations offer only open program years.
+**Build gates (new, all three parts):** `check:club-money-arithmetic` (the summary's figures
+recomputed from rows in a pure module, the way `check-money-report-arithmetic.mjs` does for the
+coach), a "same figure, one definition" guard for Collected/Headroom/Balance (the dues-definition
+pattern), and the transfer-atomicity test. All wired into `verify:changed`.
+**QA walks §E (3a) · §F (3b) · §G (3c).** **Migrations:** entry↔budget-line link (J4-024), budget
+year label/start month, allocation `paid_method/reference`, request `accounting_entry_id` backfill
+(none by rule — NULL = legacy), possibly `accounting_ledgers.archived_at`. Dictionary + snapshots each.
+
+### Stage 4 — The club's public face
+**Closes:** F01–F10 · J4-042/043/044/048 · the "no rep-teams index page" gap recorded 2026-08-01.
+- [ ] **Mockups:** the club home for a rep-only club (programs first, tournaments last and absent when none; the club's colours; a footer with contact); a **Teams index** (`/{org}/teams` becomes a page, and "Teams" becomes a tab); the team page in the club's colours with a title; tryouts findable (home card → the tryout; index → team → tryout); the Public Site editor with section controls (show/hide + order: teams, tryouts, league, tournaments, news); the coach's settings showing the public URL with a copy button.
+- [ ] Public pages make the same checks (cancelled/private/entitled) everywhere (F06); archive org check (F07); `/league` absent for a Club that runs none; social-link validation feedback (F05); admin default includes public site (D8).
+- [ ] **Marketing truth (`/marketing`):** `/for-clubs` out of "coming soon" when Stage 8 says so; Club step 02 "parent notifications" removed; homepage "field bookings" removed; README pricing; the comparison rows that promise invoicing/reconciliation/registration workflows reconciled to the facts doc (`/strategy` drift check).
+**QA walk §H.** **Migrations:** `org_public_site_content` section settings (one jsonb or five booleans + an order).
+
+### Stage 5 — Families
+**Closes:** E01–E09 · §54 / §56 walks.
+- [ ] Ghost-merge (E01: attach must respect tombstones/merges), email edit follows the child (E02: re-resolve `person_id` on guardian-email edits, one home — the attach function), money from the dues payments table via the money module's own helper (E03), export that says what it holds and holds what it says (E04), paging (E05), duplicate rule uses first names + a chosen keeper (E06), role floor + send cap + Reply-To to the club (E07), children counted once (E08), copy/help (E09).
+- [ ] Confirm mig 254's function on prod; the P1 report read by the owner (the exit gate that never ran).
+- [ ] **P3 mockup session** scheduled after release (D9).
+**QA walk §54 + §56 (re-run as one).** **Migrations:** possibly a merge tombstone read in the attach function (function-only migration — note the prod-function blind spot in the release checklist).
+
+### Stage 6 — Venues, scheduling, permits (rulings D3/D4/D5 first)
+**Closes:** D01–D07.
+- [ ] **One venue book:** the coach place book learns to *reference* an org venue (a place can be "one of the club's venues" or free-text; the coach still owns the row), tournaments read `source_org_venue_id` for clashes, and a **cross-module clash check** runs on every write to rep events, league games/practices and tournament games ("Diamond 2 is booked by 12U AA practice 6–8 p.m.") — warn, never block.
+- [ ] Venue Library: role gate matches who schedules (league_admin), errors surface, in-use guard, facility edit, copy for all modules, sidebar link everywhere.
+- [ ] **Club calendar** (D5): one read-only page under `/admin` (all teams · house league · tournaments, filter by venue/team/day, org timezone, `.ics`), and the admin rep schedule fixed to org time and org-day buckets (D03).
+- [ ] **Permits** (⚖ D4 ruled IN scope 2026-09-25): built as **Stage 10** at the end of the walk; Stage 6 leaves the venue book and the clash check shaped so a permit can plug in (a clash check that can answer "is this slot ours?" once permits exist).
+**QA walk §I.** **Migrations:** `rep_team_places.org_venue_id` (nullable FK), clash-check indexes.
+
+### Stage 7 — Tournaments inside a club + one door to every family
+**Closes:** G01–G04 · C18 (decision) · the org-wide announcement gap.
+- [ ] Hub banner logic for a club (G01); "Add my team" for a club org (one click; today two steps — G03); tournament fees → the club ledger **by decision** (recommend: an automatic income entry on the org ledger when a fee is marked paid, source_module `tournament_fee`, voided with the payment — the house-league pattern done right, fixing the fire-and-forget/void/revive defects with it).
+- [ ] **Message every family** (G02): one org-wide announcement door on the hub (audience = every guardian across rep rosters + league registrations + Families, through the family-email choke point with suppression, a preview count, a send log, a cap). Reuses the house-league broadcast sender once it is batched.
+**QA walk §J.** **Migrations:** `org_announcements` (+ send log) if the broadcast is recorded.
+
+### Stage 8 — Release readiness
+- [ ] **Club UAT suite:** `tests/uat/scenarios/club-admin.spec.ts` (shell, members/roles, teams→coach→portal, money loop, public pages, families) on the Stage 0 fixture; `/uat club` added to `.claude/commands/uat.md`; the stale `org_team_addon` smokes deleted; `plan-gating.spec.ts:162` rewritten for D8.
+- [ ] **Layout sweep** gains the admin club routes (today COACH + MARKETING only) with a baseline; Families and Accounting screens in it. ⚖ **Moved earlier (2026-09-25):** every admin route joins the sweep in Admin Design Continuity Phase 0 and is swept in both themes in its Phase 1; Stage 8 only confirms the club routes are green.
+- [ ] Help: every club article re-read against its screen (`/docs`); "Set up your club" complete.
+- [ ] Demo: decide whether a **club demo** joins the two sandboxes (`/demos`; today none — F10). Recommend **not for launch**; the coach demo already runs on a club-shaped org (verify its plan) and a club demo is a curation project of its own.
+- [ ] Pricing/marketing: `/marketing` + `/strategy` drift check (README, comparison table, `/for-clubs`, pricing CTA), Club · Association contact-us door, the gate flip runbook (`plan_gating` → `live` for `club`, both sources in agreement — A10), Stripe checkout for `club` verified end to end in sandbox + live, trial/card copy true.
+- [ ] Prod: migrations from Stages 2–7 applied in order (DROP-COLUMN last, minutes before the push); function-only migrations verified by `pg_proc`; `refresh:snapshots`; the J4 walk artifacts archived.
+- [ ] Support posture + rollback runbook (from the June checklist §36–37) written into `docs/agents/ops/`.
+- [ ] `/strategy` logs the release decision and the cohort shape (5–10 Club, invite-only, founder-managed — preserved 2026-07-28), and D6.
+**Exit:** owner go/no-go on the nine-point definition in §3.
+
+### Stage 9 — House league (last; its own release)
+Inventory in §4I. Scope: the trust-plan defect list re-verified (comms that email nobody, the
+vanishing season, schedule honesty, parent payment loop, schedule generator, email injection), the
+coupling check for a standalone League Plus org (house league with no rep teams / no accounting),
+the ledger seam fixed under D1's pattern (C18), venues under Stage 6's book, one-click season changes
+gaining confirms, and the League Plus un-park (D11). Its own PLAN/PM-brief pair when it opens;
+this document only reserves the slot.
+
+### Stage 10 — Permits & bookings (⚖ D4 ruled IN scope 2026-09-25; release-gating; end of the walk)
+**Outcome:** the club records the permits it holds and every module's scheduling reads them.
+Nothing exists today (D06); this is a new feature, so it gets **its own PLAN + PM-brief pair and
+its own owner mockup session** before a line is written. Its shape, as a starting proposal:
+- **A permit is a club-held record**: venue (from the one venue book, Stage 6) · date range ·
+  weekly slots (day, start, end, facility) · cost and payee · the permit's reference/number · who it
+  is for (the club, a program, a team) · a document (the issuer's PDF). Season-scoped.
+- **Scheduling reads permits**: the cross-module clash check (Stage 6) gains a second question —
+  *is this slot inside a permit we hold?* — and warns, never blocks; the house-league generator and
+  the club calendar can offer permitted slots; a coach's game/practice at a club venue shows the
+  permit it sits in (read-only in the portal).
+- **Money reads permits**: a permit's cost can be cited by an org budget line and allocated to
+  teams (Stage 3's allocation loop), so "Diamond permits" stops being just a budget word.
+- **Utilization**: a per-permit view of used vs unused slots — the number a club's facilities person
+  takes to the municipality.
+- **Out of scope for the first cut:** requesting or paying for permits through the platform,
+  municipal integrations, public booking.
+**Sequencing:** after Stage 6 (venue book) and Stage 3 (allocations); can run alongside Stage 9.
+**QA walk §K.** **Migrations:** `org_permits` + `org_permit_slots` (+ document storage), the
+budget-line citation, dictionary + snapshots. **Marketing:** the homepage "field bookings" claim
+comes back with this stage, not before.
+
+## 7. Sequencing & dependencies
+
+```
+Stage 0 ─┬─ Stage 1 (shell + 1b buying) ─┬─ Stage 2 (rep teams) ──┬─ Stage 3a ─ 3b ─ 3c (money) ─┐
+         │                               │                          │                               │
+         │                               ├─ Stage 4 (public face) ──┤                               ├─ Stage 10 (permits) ─ Stage 8 ─ release
+         │                               │                          ├─ Stage 5 (families) ──────────┤
+         │                               │                          ├─ Stage 6 (venues/calendar) ───┤
+         │                               │                          └─ Stage 7 (tournaments+comms) ─┘
+         └─ rulings D1/D2/D8 RULED 2026-09-25 ───────────────────────► Stage 3 may start once Stages 1–2 land
+Stage 9 (house league) ─── its own plan and release track; may run alongside Stage 10
+Admin Design Continuity: Phase 0 (now) ─► Phase 1 foundation ─► gates the Stage 1 BUILD (R5);
+                         Phase 2 = inside each club stage · Phase 3 tournament screens (own project) · Phase 4 with Stage 9
+```
+⚖ **2026-09-25: the release waits for Stage 10 (permits).** Stage 8's go/no-go therefore comes
+after Stages 3, 6 and 10 at the earliest.
+- Stage 1 before everything: no other walk is honest while admins/treasurers are tournament-only users.
+- Stage 2 before 3: the allocation loop needs teams, program years and the season rule (D2 ↔ B03).
+- Stages 4, 5, 6, 7 are independent of each other and of 3; pick by what the first club needs.
+- Stage 6's venue book is a prerequisite for Stage 9's league scheduling, not for the Club release.
+- Every stage that adds a migration lands it **with** its dictionary line and snapshot refresh; prod
+  application order is recorded in `MANUAL_PROD_STEPS.json` as usual.
+
+## 8. Build gates to add (the club side has none of the coach side's)
+
+| Gate | What it pins | Modelled on |
+|---|---|---|
+| `check:org-slug-callers` | every client fetch to a `requireOrgSlug` route carries `orgSlug` | `check:org-context` |
+| `check:club-money-arithmetic` | the board summary's figures recomputed from rows by a pure module | `check-money-report-arithmetic.mjs` |
+| club "one definition" guard | Collected / Headroom / Balance each computed in one helper | `dues-definition-guard.test.ts` |
+| transfer atomicity test | mark-paid / approval cannot post a transfer without its stamp | new (RPC + a race test) |
+| role-defaults guard | the plan's modules ⊆ admin's defaults; treasurer holds what the allocation loop needs | `families-access-guard.test.ts` |
+| transfer-RPC coverage guard | `rep_*` tables with `org_id` == tables the ownership-transfer RPC re-parents | new |
+| layout sweep: admin club routes | the club screens in the invariant sweep with a baseline | `scripts/layout-screens.mjs` |
+| Club UAT suite | the nine-point exit definition as Playwright | `tests/uat/scenarios/*.spec.ts` |
+
+## 9. Release checklist (Stage 8, condensed — the June checklist, re-based on evidence)
+
+- [ ] Provision a Club end to end on the fixture with the owner watching (the "never validated" item, §2 of the parked ledger).
+- [ ] Every § walk in this plan PASSED on the ledger; every J4/J10 row FIXED or SUPERSEDED (§11).
+- [ ] Build gates in §8 green in `verify:changed`; `npm run typecheck` clean; Club UAT suite green.
+- [ ] Migrations applied to prod in order; functions verified; snapshots refreshed; dictionary current.
+- [ ] Pricing facts drift check run; marketing surfaces true (both band prices published — D7); `plan_gating.club` **and `club_large`** flipped by runbook; checkout + the prorated Club ↔ Club · Association move verified in sandbox and live.
+- [ ] Stage 10 (permits) walked and PASSED — the release waits for it (⚖ D4, 2026-09-25); the homepage "field bookings" line returns with it.
+- [ ] Support posture + rollback runbook in `docs/agents/ops/`; `/strategy` entry logged.
+- [ ] Demo decision recorded (`/demos`).
+
+## 10. Open questions for the owner (beyond D1–D11)
+
+1. **Who is the first club?** A real club under the preserved cohort shape (invite-only, founder-managed) or the fixture standing in? The nine-point exit is walkable on the fixture, but the pricing hypothesis only closes with a payer.
+2. **Does the Club release wait for Stage 6 (venues/calendar)** or is the one-venue-book work post-release? The clash check is real value; the calendar is new build.
+3. **Founding Season for Club** (D6) — the leak must be fixed either way; whether a Club comp exists is a commercial call.
+4. **Is the "president's morning brief" (J4-041) a Stage 1 mockup or its own project?** It composes data the product already fetches; the risk is scope creep in the shell stage.
+5. **Scouting:** the ask listed it as a club feature. At club level it is the Shared Book (live) — is a club-admin *view* of the shared books wanted, or is the coach-side sharing enough?
+
+## 11. Register — the June audits re-verified (2026-09-25)
+
+**J4 (club president, 50):** FIXED 001 003 004 005 012 020 036 · PARTIAL 013 015 021 037 043 049 ·
+SUPERSEDED 032 033 038 · OPEN 002 006 007 008 009 010 011 014 016 017 018 019 022 023 024 025 026
+027 028 029 030 031 034 035 039 040 041 042 044 045 046 047 048 050. Mapped: 002/006/007/008/009/
+034/035/037 → Stage 2 · 010/011/013–017/019/021–031 → Stage 3 · 039/040/041/045/047/049 → Stage 1 ·
+042/043/044/048 → Stage 4 · 046 → Stage 9 · 050 → the design-system pass rides each stage's mockup.
+**J10 (invited staff admin, 27):** FIXED 002 009 019 025 · PARTIAL 001 007 017 · SUPERSEDED 026 ·
+OPEN 003 004 005 006 008 010 011 012 013 014 015 016 018 020 021 022 023 024 027 — all → Stage 1.
+**New since June (found while re-verifying):** the mark-paid double-post race; reminder buttons shown
+to roles the routes refuse; group-scoped members acting outside their group on money writes; the
+General-ledger creation race; one-sided voids made worse by the J4-021 fix; the audit log 401 on every
+tier; a coach elsewhere cannot join a board; role change bypasses the seat limit; accept-invite
+ignores errors; the J10-014 loop reaches Club orgs; Families gets tournament tabs on a phone;
+house-league season changes fire in one click; the Rep Teams sidebar incomplete; a retired billing
+mode still labelled; the Members page contradicting itself about Admin.
+
+## 12. Truth-ups made and owed
+
+**Made in this session (2026-09-25):** `PROGRAM_LEAGUE_AND_CLUB.md` header (parked → evaluation
+started); auto-memory `project_club_families_book` (Families is on prod, not dev-only) + new
+`project_club_tier_readiness`; this plan + PM brief; TODO line.
+**Owed (stale claims found, fix as each stage touches them):** `CLUB_FAMILIES_BOOK_PLAN.md:3-7`
+"Phases 2–5 not built" and `_PM_BRIEF.md:13`, `_P3_PROMPT.md:24` "dev only"; `OWNER_QA_LEDGER.md`
+§54/§56 headers; `TODO.md:159` "P1 awaiting owner read"; `DATA_DICTIONARY.md:2123` "nothing reads
+this column yet"; `ADMIN_IA_MULTIMODULE_NAV_PLAN.md` header ("awaiting owner go-ahead" → folded
+here); README pricing table; `PLAN_PRICING_FACTS.md` "coach bridge" line (the transfer is
+platform-assisted and incomplete — B04); `lib/export/ics.ts:5` "STUB"; `lib/help-content/exports.tsx:281-284`.

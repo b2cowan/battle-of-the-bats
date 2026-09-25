@@ -74,6 +74,21 @@ UAT_SCOREKEEPER_EMAIL=uat-scorekeeper@uat-test-org.local
 UAT_SCOREKEEPER_PASSWORD=UATPassword2026!
 UAT_PLUS_SCOREKEEPER_EMAIL=uat-plus-scorekeeper@uat-plus-org.local
 UAT_PLUS_SCOREKEEPER_PASSWORD=UATPassword2026!
+
+# Optional — the Club Tier Readiness walk fixture (built by `node --env-file=.env.local
+# scripts/seed-club-fixture.mjs`). UAT_REP_CLUB_*, NOT UAT_CLUB_*: UAT_CLUB_ORG_SLUG above names
+# the older uat-club-org, a different org. Without this block the five club sessions are skipped.
+UAT_REP_CLUB_ORG_SLUG=uat-rep-club
+UAT_REP_CLUB_OWNER_EMAIL=uat-club-owner@uat-rep-club.local
+UAT_REP_CLUB_OWNER_PASSWORD=UATPassword2026!
+UAT_REP_CLUB_ADMIN_EMAIL=uat-club-admin@uat-rep-club.local
+UAT_REP_CLUB_ADMIN_PASSWORD=UATPassword2026!
+UAT_REP_CLUB_TREASURER_EMAIL=uat-club-treasurer@uat-rep-club.local
+UAT_REP_CLUB_TREASURER_PASSWORD=UATPassword2026!
+UAT_REP_CLUB_REGISTRAR_EMAIL=uat-club-registrar@uat-rep-club.local
+UAT_REP_CLUB_REGISTRAR_PASSWORD=UATPassword2026!
+UAT_REP_CLUB_COACH_EMAIL=uat-club-coach-15aaa@uat-rep-club.local
+UAT_REP_CLUB_COACH_PASSWORD=UATPassword2026!
 ```
 
 > **Wipe protection:** The `UAT_*_EMAIL` vars are also read by the dev-tools

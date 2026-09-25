@@ -1,6 +1,6 @@
 # Admin IA & Multi-Module Navigation — Implementation Plan
 
-> **Status:** SCOPED 2026-06-13 — spun out of the User Journey Audit (Phase 5, FP-7). **NEW project.** Coordinates with ADMIN_ROLE_PARITY (orientation) and the design system. Awaiting owner go-ahead.
+> **Status:** ⚠ **FOLDED 2026-09-25 into [CLUB_TIER_PRODUCTION_READINESS_PLAN.md](CLUB_TIER_PRODUCTION_READINESS_PLAN.md)** — Phases A–C land in that plan's Stage 1 (club shell: hub, sidebar, phone bar) and Stage 4 (public face). Do not build from this document; it is kept as the record of the June scoping. _(Was: SCOPED 2026-06-13 — spun out of the User Journey Audit (Phase 5, FP-7); awaiting owner go-ahead.)_
 > **Branch:** dev. **Companion:** [ADMIN_IA_MULTIMODULE_NAV_PM_BRIEF.md](ADMIN_IA_MULTIMODULE_NAV_PM_BRIEF.md)
 > **Source of truth:** J3/J4/J7/J8 reports + [USER_JOURNEY_AUDIT_SYNTHESIS.md](USER_JOURNEY_AUDIT_SYNTHESIS.md) §4 FP-7 (theme T7).
 

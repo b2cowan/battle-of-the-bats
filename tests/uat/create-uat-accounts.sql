@@ -454,6 +454,60 @@ ON CONFLICT (team_id, user_id)
 
 
 -- ================================================================
+-- STEP 9: Club Tier Readiness walk fixture — SIGN-INS ONLY (2026-09-25)
+-- The club itself (org `uat-rep-club`, teams, coaches, money, public site, house league) is built
+-- by `node --env-file=.env.local scripts/seed-club-fixture.mjs` — never here. If this file created
+-- the org as well, the script would find an EMPTY club, refuse to rebuild it without --reset, and
+-- the walk would sign into nothing. The script re-uses these accounts (and creates them itself if
+-- this step was never run). Board: owner · admin · treasurer · registrar; one head coach per team.
+-- ================================================================
+
+INSERT INTO auth.users (
+  id, instance_id, aud, role,
+  email, encrypted_password, email_confirmed_at,
+  raw_app_meta_data, raw_user_meta_data,
+  created_at, updated_at,
+  confirmation_token, recovery_token,
+  email_change_token_new, email_change
+)
+SELECT
+  gen_random_uuid(),
+  '00000000-0000-0000-0000-000000000000',
+  'authenticated', 'authenticated',
+  v.email,
+  crypt('UATPassword2026!', gen_salt('bf')),
+  now(),
+  '{"provider":"email","providers":["email"]}', '{}',
+  now(), now(), '', '', '', ''
+FROM (VALUES
+  ('uat-club-owner@uat-rep-club.local'),
+  ('uat-club-admin@uat-rep-club.local'),
+  ('uat-club-treasurer@uat-rep-club.local'),
+  ('uat-club-registrar@uat-rep-club.local'),
+  ('uat-club-coach-15aaa@uat-rep-club.local'),
+  ('uat-club-coach-15aa@uat-rep-club.local'),
+  ('uat-club-coach-13aaa@uat-rep-club.local'),
+  ('uat-club-coach-11aa@uat-rep-club.local')
+) AS v(email)
+WHERE NOT EXISTS (SELECT 1 FROM auth.users u WHERE u.email = v.email);
+
+INSERT INTO auth.identities (
+  id, provider_id, user_id, provider,
+  identity_data, last_sign_in_at, created_at, updated_at
+)
+SELECT
+  gen_random_uuid(), u.email, u.id, 'email',
+  jsonb_build_object('sub', u.id::text, 'email', u.email),
+  now(), now(), now()
+FROM auth.users u
+WHERE u.email LIKE 'uat-club-%@uat-rep-club.local'
+AND NOT EXISTS (
+  SELECT 1 FROM auth.identities i
+  WHERE i.provider = 'email' AND i.provider_id = u.email
+);
+
+
+-- ================================================================
 -- DONE -- verify with these queries
 -- ================================================================
 
