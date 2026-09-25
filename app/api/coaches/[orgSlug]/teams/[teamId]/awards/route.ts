@@ -10,10 +10,10 @@ import {
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { denyUnless, canManageAwards } from '@/lib/coach-capabilities';
-import { tournamentToday } from '@/lib/timezone';
+import { tournamentToday, orgDayKey } from '@/lib/timezone';
 import { resolveCoachTeamRead } from '@/lib/coach-team-read';
 import { resolveLiveCoachTeamContext } from '@/lib/coach-route-context';
-import { describeAwardOccasion } from '@/lib/rep-award-occasion';
+import { describeAwardOccasion, awardEventKind, awardUnlockState } from '@/lib/rep-award-occasion';
 import { formatPlayerFirstLast } from '@/lib/player-name';
 
 async function resolveTeamCoachContext(orgSlug: string, teamId: string) {
@@ -98,24 +98,34 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'That award type is not available for this team' }, { status: 400 });
   }
 
-  // A game must have a final score before it can carry an award — mirrors the schedule page's
-  // own gating (can't award a game that hasn't been played).
+  // Any event can carry an award (owner, 2026-09-25) once it can: a game once its final score is
+  // in, anything else once it has started, never a cancelled one — `awardUnlockState`, the same
+  // rule the schedule window reads, so the window never offers what this route refuses.
   let eventId: string | null = null;
+  let eventType: string | null = null;
   let tournamentLabel: string | null = null;
   let awardedAt: string;
   if (typeof body.eventId === 'string' && body.eventId) {
     const event = await getRepTeamEventById(body.eventId);
     if (!event || event.teamId !== teamId) {
-      return NextResponse.json({ error: 'Game not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Event not found' }, { status: 404 });
     }
-    if (event.status === 'cancelled') {
-      return NextResponse.json({ error: 'This game was cancelled' }, { status: 400 });
+    const kind = awardEventKind(event.eventType);
+    const unlock = awardUnlockState(event, Date.now());
+    if (unlock === 'cancelled') {
+      return NextResponse.json({ error: `This ${kind} was cancelled` }, { status: 400 });
     }
-    if (event.teamScore == null || event.opponentScore == null) {
+    if (unlock === 'needs-score') {
       return NextResponse.json({ error: 'Enter a final score before giving an award for this game' }, { status: 400 });
     }
+    if (unlock === 'not-started') {
+      return NextResponse.json({ error: `This ${kind} hasn’t started yet — awards open once it starts` }, { status: 400 });
+    }
     eventId = event.id;
-    awardedAt = event.startsAt.slice(0, 10);
+    eventType = event.eventType;
+    // The event’s calendar day IN THE ORG’S ZONE — never `startsAt.slice(0, 10)`, the UTC day, which
+    // dated an award for any event starting at 8 p.m. Eastern or later a day late.
+    awardedAt = orgDayKey(event.startsAt);
   } else {
     tournamentLabel = typeof body.tournamentLabel === 'string' ? body.tournamentLabel.trim().slice(0, 80) || null : null;
     const requested = typeof body.awardedAt === 'string' ? body.awardedAt : '';
@@ -131,7 +141,7 @@ export const POST = withObservability(async (req: Request,
   if (collision) {
     const playerName = formatPlayerFirstLast(player) || 'That player';
     return NextResponse.json(
-      { error: `${playerName} already has ${awardType.name} ${describeAwardOccasion({ eventId, tournamentLabel, awardedAt })}.` },
+      { error: `${playerName} already has ${awardType.name} ${describeAwardOccasion({ eventId, tournamentLabel, awardedAt }, eventType)}.` },
       { status: 409 },
     );
   }
@@ -155,7 +165,7 @@ export const POST = withObservability(async (req: Request,
     if ((error as { code?: string })?.code === '23505') {
       const playerName = formatPlayerFirstLast(player) || 'That player';
       return NextResponse.json(
-        { error: `${playerName} already has ${awardType.name} ${describeAwardOccasion({ eventId, tournamentLabel, awardedAt })}.` },
+        { error: `${playerName} already has ${awardType.name} ${describeAwardOccasion({ eventId, tournamentLabel, awardedAt }, eventType)}.` },
         { status: 409 },
       );
     }

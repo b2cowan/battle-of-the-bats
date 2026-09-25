@@ -53,6 +53,7 @@ import { CoachRowList, CoachRowBand, CoachRow, CoachRowListFoot } from '@/compon
 import styles from '../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import { gameDayConsolePath, gameDayPeriodKey, gameDayWindow, gameHasStarted, isGameDayEvent, toGameDayEventShape, windowHolds } from '@/lib/coach-game-day';
+import { awardEventKind, awardOccasionLabel, awardUnlockState } from '@/lib/rep-award-occasion';
 import { lineupBuilderHref } from '@/lib/lineups-address';
 import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
@@ -2931,19 +2932,26 @@ export default function CoachesSchedulePage({
     ) : null;
 
     /* Awards given — the "same visit" give-award moment (Coach Tags & Player Awards
-       Phase 2). Gated on a final score, same as the tags/score UI above it. On a phone it does
-       not render before the game has started (C3): once the score leads, exactly as before. */
-    const awardsBlock = isGameEvent && drawerDoors.awards && (!isPhone || scoreLeads) ? (
+       Phase 2). A GAME: gated on a final score, same as the tags/score UI above it; on a phone it
+       does not render before the game has started (C3): once the score leads, exactly as before.
+       ANY OTHER EVENT — a practice, a team event, a whole tournament (awards at any event, owner
+       2026-09-25): the section exists only once the event can carry an award (started, not
+       cancelled — `awardUnlockState`, the same rule the POST route refuses by). Before that there
+       is no section at all, not a locked box: an upcoming practice's window is exactly what it was.
+       Placement differs by kind — see the two orders below. */
+    const awardUnlock = awardUnlockState(ev, nowMs);
+    const awardKind = awardEventKind(ev.eventType);
+    const awardsBlock = drawerDoors.awards && (isGameEvent ? (!isPhone || scoreLeads) : awardUnlock === 'open') ? (
       <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
         <h4 className={styles.formSectionTitle}>Awards given</h4>
-        {ev.status === 'cancelled' ? (
+        {awardUnlock === 'cancelled' ? (
           <p className={styles.formHint}>This game was cancelled.</p>
-        ) : ev.teamScore == null || ev.opponentScore == null ? (
+        ) : awardUnlock === 'needs-score' ? (
           <p className={styles.formHint}>Enter a final score to unlock awards for this game.</p>
         ) : (
           <>
             {teamAwards.filter(a => a.eventId === ev.id).length === 0 ? (
-              <p className={styles.formHint}>No awards given for this game yet.</p>
+              <p className={styles.formHint}>No awards given for this {awardKind} yet.</p>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem', marginBottom: '0.6rem' }}>
                 {teamAwards.filter(a => a.eventId === ev.id).map(a => (
@@ -3419,10 +3427,13 @@ export default function CoachesSchedulePage({
     const tabContent = <>{scoutingTab}{attendanceTab}{lineupTab}</>;
 
     // THE TWO ORDERS — JSX order, never CSS `order` (see the block above).
+    // Awards: a game's follow its score and tags; any other event's close its record, after the
+    // description, links and practice plan and directly above the action row (owner, 2026-09-25).
     const body = !isPhone ? (
       <>
         {titleBlock}{whenLine}{sourceBlock}{movedBlock}{whereBlock}{placeNote}
-        {scoreBlock}{tagsBlock}{awardsBlock}{descriptionBlock}{resourcesBlock}{practiceBlock}
+        {scoreBlock}{tagsBlock}{isGameEvent && awardsBlock}{descriptionBlock}{resourcesBlock}{practiceBlock}
+        {!isGameEvent && awardsBlock}
         {actionsBlock}{peekWarnBlock}{tabsBlock}{tabContent}
       </>
     ) : scoreLeads ? (
@@ -3436,6 +3447,12 @@ export default function CoachesSchedulePage({
       <>
         {titleBlock}{whenLine}{whereBlock}{placeNote}{sourceBlock}{movedBlock}
         {practiceBlock}
+        {/* Only ever a NON-game's awards on this branch (a game's wait for the score to lead), and
+            only once it has started: ABOVE attendance, the place a started game's awards hold on a
+            phone and every event's hold on desktop. First built below attendance; the owner, on the
+            first look at the build (2026-09-25): "why is give awards in a different place in
+            practices vs. games?" — one place on every event. */}
+        {awardsBlock}
         {peekWarnBlock}{tabsBlock}{tabContent}
         {scoreBlock}{tagsBlock}
         {descriptionBlock}{resourcesBlock}{actionsBlock}
@@ -4176,7 +4193,13 @@ export default function CoachesSchedulePage({
           teamId={teamId}
           players={awardPlayers}
           awardTypes={awardTypes}
-          eventContext={{ id: selectedEvent.id, label: `vs ${selectedEvent.opponent ?? 'opponent'} — ${shortDate(selectedEvent.startsAt.slice(0, 10))}` }}
+          eventContext={{
+            id: selectedEvent.id,
+            eventType: selectedEvent.eventType,
+            // The event's own label ("vs Oakville A's", "Practice") on its org-zone day — the UTC slice
+            // read a day late for anything starting at 8 p.m. Eastern or later.
+            label: `${awardOccasionLabel(selectedEvent, null)} — ${shortDate(orgDayKey(selectedEvent.startsAt))}`,
+          }}
           editing={editingAward}
           onClose={() => { setGiveAwardOpen(false); setEditingAward(null); }}
           onChanged={() => { void fetchAwardData(); }}

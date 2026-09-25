@@ -28,6 +28,11 @@ import {
  *   scoreForm, editEvent ↔ `events/[eventId]` PATCH                  (`canManageSchedule`)
  *   awards               ↔ `awards` POST                             (`canManageAwards`)
  *
+ * ⚠ `awards` is PERMISSION ONLY, on every kind of event (awards at any event, owner 2026-09-25).
+ * Whether THIS event can carry an award yet — a game once scored, anything else once started,
+ * never a cancelled one — is the event’s state, not a door: `awardUnlockState` in
+ * `lib/rep-award-occasion.ts` answers it, for the panel and the POST route alike.
+ *
  * ⚠ `seasonAttendanceLink` (the "Season attendance" link into Insights, gated on
  * `hasNonMoneyRecordAccess`) LEFT the panel on 2026-09-21, the owner's first look at the phone
  * sheet: a coach mid-game is likelier to leave the game by accident through it than to read the
@@ -77,7 +82,7 @@ export function scheduleDrawerDoors(
     // door only decides whether the tab exists at all (owner ruling 2026-09-11).
     scoutingTab: ev.isGame && ev.hasOpponent && ev.scoutingAvailable && canLogScoutingObservation(caps),
     scoreForm: ev.isGame && canManageSchedule(caps),
-    awards: ev.isGame && canManageAwards(caps),
+    awards: canManageAwards(caps),
     editEvent: canManageSchedule(caps),
   };
 }

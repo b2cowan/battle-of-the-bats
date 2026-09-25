@@ -363,7 +363,7 @@ export function AwardsPanel({
                     <tbody>
                       {visibleAwards.map(a => {
                         const awardText = `${a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}${a.awardType?.name ?? '—'}`;
-                        const forText = a.eventOpponent ? `vs ${a.eventOpponent}` : (a.tournamentLabel || 'General');
+                        const forText = a.occasionLabel ?? (a.tournamentLabel || 'General');
                         const dateText = new Date(`${a.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
                         const certificateHref = `${base}/history/awards/certificate?awardId=${a.id}`;
                         return (
@@ -445,14 +445,15 @@ export function AwardsPanel({
           teamId={teamId}
           players={players}
           awardTypes={awardTypes}
-          // An event-linked award being edited shows its own game as a fixed "For:" line, same
-          // as giving one from that game's own drawer; a general award (or a fresh give) leaves
-          // this null so the tournament-label input shows instead. Which game an award is FOR is
+          // An event-linked award being edited shows its own event as a fixed "For:" line, same
+          // as giving one from that event's own window; a general award (or a fresh give) leaves
+          // this null so the tournament-label input shows instead. Which event an award is FOR is
           // never editable, so this is read-only context, not a field the form writes back.
           eventContext={editingAward?.eventId
             ? {
                 id: editingAward.eventId,
-                label: `vs ${editingAward.eventOpponent ?? 'opponent'} — ${new Date(`${editingAward.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}`,
+                eventType: editingAward.eventType ?? null,
+                label: `${editingAward.occasionLabel ?? 'This event'} — ${new Date(`${editingAward.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}`,
               }
             : null}
           editing={editingAward}

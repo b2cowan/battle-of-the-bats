@@ -23259,3 +23259,27 @@ The hub's **QA walk · 6** tab is the checkable copy; plan §14.10 is the build 
 **Closed the same day:** `/simplify` (4 lenses; 4 cleanups) · `/review` (high-risk tier, 4 lenses — **one High, three Medium confirmed and fixed**: the More sheet could bury an open reader, a failed Clear from the reader un-read the row, an instant "Open …" could cancel the mark-read, a practice-library link was named "the practice plan"; plan `COACH_NOTIFICATIONS_ONE_ROW_PLAN.md` has the record) · `/docs` (the phone FAQ, the bell tour, and every "link at the top of your notifications page" → the gear) · committed (the commit carrying this entry).
 
 ---
+
+## §235 · Awards at any event — **give a player an award at a practice, a team event or a whole tournament, not only at a scored game** — owner ask + rulings 2026-09-25 (*"I should be able to assign awards at any event, including practices"* · *"looks good, go for it"*): R1 every event · R2 a non-game unlocks at its start time · R3 above attendance, as a game's (revised on the first look at the build — first drawn below it on a phone). Plan `COACH_AWARDS_AT_ANY_EVENT_PLAN.md` (the "Build record" section); hub https://claude.ai/artifact/SbdfdYBKa2rxd35xXRmXTe — tab "QA Walk". Built on dev 2026-09-25. No migration.
+
+**Why.** Awards were built as player-of-the-game: the event window offered them only on a game, and the server refused an award on any event without a final score — a practice never has one. The only recorded reason was "can't award a game that hasn't been played"; no ruling excluded practices.
+
+**What changed.** Any event can carry an award once it has happened — a game once scored (unchanged), anything else once it has started, never a cancelled one. Before that the window has no Awards section at all. A practice's awards sit after its plan and above attendance at both widths — the place a started game's already hold. Every place an award is named now says what it was for — "vs" the opponent for a game, the event's own name otherwise — because opening the door alone would have shipped practice awards reading **"General"** on the Awards report and **"vs opponent"** when edited.
+
+**⚠ Found on the way, fixed:** (1) the award-type merge's confirm said "for the {date} game" for every event; (2) **an award was dated from the UTC day**, so one for any event starting at 8 p.m. Eastern or later — games included, since awards shipped — was dated the next day. New awards take the event's own day; older rows were not repaired (dev: 23 event-linked awards, none affected; prod not audited); (3) the help said the Give form stays open for the next award — it has closed on Save since 2026-07-12.
+
+**One visual difference from the mockup:** no rule between the practice plan and the Awards section — the window stacks its sections without rules, the way a game's score, tags and awards already do.
+
+### The walk — 19 steps in seven parts, on the hub
+
+Sign in as `uat-coach@uat-test-org.local` (password in `.env.local`) → UAT Test Team, on localhost. The hub's **QA Walk** tab is the checkable copy.
+
+- **A · A practice that has started, desktop** (5) — the section's place, the "For:" line and note example, give → 🏆 on the list, the once-per-practice refusal, edit and remove.
+- **B · Before it starts** (2) — an upcoming practice unchanged; a game unchanged.
+- **C · On a phone** (3) — above attendance, as on a game; nothing on an upcoming practice; a game unchanged.
+- **D · A team event** (3) — add "QA pizza night" earlier today; one for tomorrow shows nothing; delete both after E.
+- **E · The Awards report** (4) — the For column, the edit form's label, the phone card, the leaderboard counts it.
+- **F · The merge preview** (1) — "for the {date} practice"; cancel, don't merge.
+- **G · Help** (1) — "practice award" finds the retitled article.
+
+**✅ §235 PASSED 2026-09-25** — the owner marked the walk complete (*"go ahead with review and commit, mark the qa walk as complete"*). **`/review` (high-risk tier, four lenses — logic · security & tenancy · data, contract & dates · regression), same day: 0 Critical / High / Medium findings.** One advisory applied: the award edit route's event lookup (used only to word a refusal) now re-checks the event belongs to the team — safe before by construction, since an award's event is fixed at creation to the team's own. Two advisories taken as-is (the window's minute clock can lead or lag the server by under a minute at an event's start, the same accepted pattern as game day; a "cancelled" state the window never needs to show for a non-game). `check:layout` on the schedule, attendance, RSVP and awards screens: clean at 361 / 390 / 1440; at 768 the Awards report's three 19px row icons and the "?" help button are the tablet-band items §232 already names, untouched here. Committed on dev 2026-09-25.

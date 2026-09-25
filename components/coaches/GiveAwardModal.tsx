@@ -5,20 +5,25 @@ import TagManagerDrawer from '@/components/coaches/TagManagerDrawer';
 import { AWARD_TAG_MANAGE, type ComboTag } from '@/components/coaches/TagSearchCombobox';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepTeamAwardType, RepPlayerAward } from '@/lib/types';
+import { awardEventKind } from '@/lib/rep-award-occasion';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
 /**
  * "Give an award" moment (Coach Tags & Player Awards Phase 2) — opened either from a specific
- * game (eventContext set, no game-picker needed since the coach is already looking at it) or
+ * event (eventContext set, no event-picker needed since the coach is already looking at it) or
  * generally from the awards report page (eventContext null — a free-text tournament/occasion,
- * or left blank for a general season recognition). Resets after each save so a coach can hand
- * out a second/third award in the same visit without reopening anything.
+ * or left blank for a general season recognition). Save closes it (owner, 2026-07-12); a second
+ * award for the same event is a re-tap of "Give an award".
+ *
+ * ⚠ ANY EVENT (owner, 2026-09-25) — a practice, a team event or a whole tournament as well as a
+ * game. The caller builds `eventContext.label` with `awardOccasionLabel` (never "vs …" by hand)
+ * and passes the event's type, which only picks the note's example text here.
  *
  * ⚠ EDIT MODE (`editing` set — Awards One Tag Idiom Part A, 2026-09-11): the same form fixes a
  * mis-given award instead of creating a new one. Pre-filled from `editing`, titled "Edit award",
- * PATCHes `editing.id` rather than POSTing. Which GAME the award is for is NOT editable — a wrong
- * game is remove-and-re-give, same as a tag on the wrong event — so the caller must pass an
+ * PATCHes `editing.id` rather than POSTing. Which EVENT the award is for is NOT editable — a wrong
+ * event is remove-and-re-give, same as a tag on the wrong event — so the caller must pass an
  * `eventContext` that matches `editing` itself (or null for a general award). ⚠ R0 (owner
  * ruling): this form carries no delete control of its own — removing an award is the row's own
  * trash icon with its own confirm, one job per control.
@@ -37,7 +42,7 @@ export default function GiveAwardModal({
   teamId: string;
   players: { id: string; name: string; number: string | null }[];
   awardTypes: RepTeamAwardType[];
-  eventContext: { id: string; label: string } | null;
+  eventContext: { id: string; label: string; eventType?: string | null } | null;
   /** Set to edit an already-given award in place instead of giving a new one. */
   editing?: RepPlayerAward | null;
   onClose: () => void;
@@ -247,7 +252,9 @@ export default function GiveAwardModal({
               className={styles.textarea}
               value={note}
               maxLength={200}
-              placeholder="e.g. Diving catch to end the game"
+              placeholder={eventContext && awardEventKind(eventContext.eventType) !== 'game'
+                ? 'e.g. Ran every drill at full speed'
+                : 'e.g. Diving catch to end the game'}
               onChange={e => setNote(e.target.value)}
             />
           </div>

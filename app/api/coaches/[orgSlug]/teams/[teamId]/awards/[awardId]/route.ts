@@ -4,6 +4,7 @@ import {
   getRepTeamAwardTypeLibrary,
   findRepPlayerAwardCollision,
   getRepPlayerAwardById,
+  getRepTeamEventById,
   updateRepPlayerAward,
   deleteRepPlayerAward,
 } from '@/lib/db';
@@ -40,7 +41,7 @@ export const DELETE = withObservability(async (_req: Request,
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/awards/[awardId]' });
 
 // Fix a mis-given award without a delete-and-redo — same validation as giving one (POST on the
-// collection route), minus eventId: WHICH GAME an award is for is not editable here (a wrong game
+// collection route), minus eventId: WHICH EVENT an award is for is not editable here (a wrong event
 // is remove-and-re-give, the same as a tag on the wrong event). Also not year-scoped, for the
 // same reason DELETE isn't — this curates the team's all-time history.
 export const PATCH = withObservability(async (req: Request,
@@ -88,9 +89,9 @@ export const PATCH = withObservability(async (req: Request,
 
   if (body.tournamentLabel !== undefined) {
     // Mutually exclusive by construction, same as create (see rep_player_awards gotcha 1) — an
-    // event-linked award has no occasion label to edit; the game it's for isn't editable either.
+    // event-linked award has no occasion label to edit; the event it's for isn't editable either.
     if (current.eventId) {
-      return NextResponse.json({ error: 'This award is linked to a game — it has no occasion label to change' }, { status: 400 });
+      return NextResponse.json({ error: 'This award is linked to an event on your schedule — it has no occasion label to change' }, { status: 400 });
     }
     fields.tournamentLabel = typeof body.tournamentLabel === 'string'
       ? body.tournamentLabel.trim().slice(0, 80) || null
@@ -109,6 +110,13 @@ export const PATCH = withObservability(async (req: Request,
   // CURRENT event/date/label — whichever of player/type wasn't in the patch keeps its own value.
   const playerId = fields.playerId ?? current.playerId;
   const awardTypeId = fields.awardTypeId ?? current.awardTypeId;
+  // The refusal names the event's KIND ("for this practice") — read only when a collision needs it.
+  // The lookup is by id alone; `event_id` is fixed at creation to this team's own event, and the
+  // team check below keeps that true even if the invariant ever loosens (/review, 2026-09-25).
+  const occasionClause = async () => {
+    const event = current.eventId ? await getRepTeamEventById(current.eventId) : null;
+    return describeAwardOccasion(current, event && event.teamId === teamId ? event.eventType : null);
+  };
   const collision = await findRepPlayerAwardCollision(
     teamId,
     playerId,
@@ -121,7 +129,7 @@ export const PATCH = withObservability(async (req: Request,
     const player = roster.find(p => p.id === playerId);
     const playerName = formatPlayerFirstLast(player) || 'That player';
     return NextResponse.json(
-      { error: `${playerName} already has ${type?.name ?? 'that award'} ${describeAwardOccasion(current)}.` },
+      { error: `${playerName} already has ${type?.name ?? 'that award'} ${await occasionClause()}.` },
       { status: 409 },
     );
   }
@@ -138,7 +146,7 @@ export const PATCH = withObservability(async (req: Request,
       const player = roster.find(p => p.id === playerId);
       const playerName = formatPlayerFirstLast(player) || 'That player';
       return NextResponse.json(
-        { error: `${playerName} already has ${type?.name ?? 'that award'} ${describeAwardOccasion(current)}.` },
+        { error: `${playerName} already has ${type?.name ?? 'that award'} ${await occasionClause()}.` },
         { status: 409 },
       );
     }

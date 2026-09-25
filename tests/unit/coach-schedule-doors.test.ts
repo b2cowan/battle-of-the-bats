@@ -66,8 +66,16 @@ describe('a default assistant keeps every door they had', () => {
     const d = scheduleDrawerDoors(assistant(), practice);
     assert.equal(d.lineupTab, false);
     assert.equal(d.scoreForm, false);
-    assert.equal(d.awards, false);
     assert.equal(d.attendanceTab, true);
+  });
+
+  /** Awards at any event (owner, 2026-09-25): the door is PERMISSION on every kind of event —
+   *  whether this practice can carry one yet (started, not cancelled) is `awardUnlockState`,
+   *  the event's state, and is pinned in rep-award-occasion.test.ts. */
+  it('holds the awards door on a practice exactly as on a game', () => {
+    assert.equal(scheduleDrawerDoors(assistant(), practice).awards, true);
+    assert.equal(scheduleDrawerDoors(assistant(), practice).awards, scheduleDrawerDoors(assistant(), game).awards);
+    assert.equal(scheduleDrawerDoors(helper(), practice).awards, false, 'a helper cannot give awards anywhere');
   });
 });
 

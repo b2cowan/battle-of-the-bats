@@ -10,7 +10,7 @@ import { applyEntitlementGrants } from './entitlement-grants';
 import { isReservedOrgSlug } from './reserved-slugs';
 import { isDemoOrgSlug } from './demo-org';
 import { moneyInEntryDescription } from './coach-money-in';
-import { resolveAwardTypeMergeCollisions } from './rep-award-occasion';
+import { resolveAwardTypeMergeCollisions, awardOccasionLabel, describeDatedAwardOccasion } from './rep-award-occasion';
 import { dropLegacyLineupProfileKeys } from './lineup-profile';
 import { formatPlayerFirstLast } from './player-name';
 import { analyzeLineup, deriveLineupBadge, inningsNeedingDecision, type LineupBadge } from './lineup-analysis';
@@ -7674,6 +7674,17 @@ export async function previewMergeRepTeamAwardTypes(
   );
   const loserById = new Map(loserAwards.map(l => [l.id, l]));
 
+  // An award can be tied to any event (2026-09-25), so a collision reads the event's kind — "for the
+  // Sep 21 practice", "for Team pizza night" — never "game" for everything.
+  const collidingEventIds = [...new Set(pairedCollisions
+    .map(pair => loserById.get(pair.loserAwardId)?.event_id)
+    .filter((id): id is string => !!id))];
+  const eventsRes = collidingEventIds.length > 0
+    ? await supabaseAdmin.from('rep_team_events').select('id, event_type, name').in('id', collidingEventIds)
+    : { data: [] as { id: string; event_type: string; name: string }[], error: null };
+  if (eventsRes.error) throw eventsRes.error;
+  const eventById = new Map((eventsRes.data ?? []).map(e => [e.id, { eventType: e.event_type, name: e.name }]));
+
   const collisions: { playerId: string; occasionLabel: string }[] = [];
   for (const pair of pairedCollisions) {
     const l = loserById.get(pair.loserAwardId);
@@ -7681,7 +7692,11 @@ export async function previewMergeRepTeamAwardTypes(
     const shortDate = formatStoredDate(l.awarded_at, { withYear: false });
     collisions.push({
       playerId: l.player_id,
-      occasionLabel: l.event_id ? `for the ${shortDate} game` : l.tournament_label ? `for ${l.tournament_label}` : `for ${shortDate}`,
+      occasionLabel: describeDatedAwardOccasion(
+        { eventId: l.event_id, tournamentLabel: l.tournament_label },
+        l.event_id ? (eventById.get(l.event_id) ?? null) : null,
+        shortDate,
+      ),
     });
   }
 
@@ -7767,8 +7782,8 @@ export async function getRepTeamPlayerAwardsHydrated(teamId: string, orgId: stri
   const [playersRes, eventsRes] = await Promise.all([
     supabaseAdmin.from('rep_roster_players').select('id, player_first_name, player_last_name').in('id', playerIds),
     eventIds.length
-      ? supabaseAdmin.from('rep_team_events').select('id, opponent').in('id', eventIds)
-      : Promise.resolve({ data: [] as { id: string; opponent: string | null }[], error: null }),
+      ? supabaseAdmin.from('rep_team_events').select('id, event_type, name, opponent').in('id', eventIds)
+      : Promise.resolve({ data: [] as { id: string; event_type: string; name: string; opponent: string | null }[], error: null }),
   ]);
   if (playersRes.error) throw playersRes.error;
   if (eventsRes.error) throw eventsRes.error;
@@ -7776,13 +7791,15 @@ export async function getRepTeamPlayerAwardsHydrated(teamId: string, orgId: stri
   const typeById = new Map(types.map(t => [t.id, t]));
   const nameById = new Map((playersRes.data ?? []).map(p =>
     [p.id, [p.player_first_name, p.player_last_name].filter(Boolean).join(' ')]));
-  const opponentById = new Map((eventsRes.data ?? []).map(e => [e.id, e.opponent]));
+  // Any event can carry an award (2026-09-25) — the label is the event's, not only an opponent.
+  const eventById = new Map((eventsRes.data ?? []).map(e => [e.id, { eventType: e.event_type, name: e.name, opponent: e.opponent }]));
 
   return awards.map(a => ({
     ...a,
     awardType: typeById.get(a.awardTypeId),
     playerName: nameById.get(a.playerId) ?? 'Unknown player',
-    eventOpponent: a.eventId ? (opponentById.get(a.eventId) ?? null) : null,
+    occasionLabel: awardOccasionLabel(a.eventId ? (eventById.get(a.eventId) ?? null) : null, a.tournamentLabel),
+    eventType: a.eventId ? (eventById.get(a.eventId)?.eventType ?? null) : null,
   }));
 }
 

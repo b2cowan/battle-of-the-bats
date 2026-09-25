@@ -163,7 +163,10 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
     assert.ok(!/[\s;{]order:\s*\d/.test(phoneBlocks(css).slice(phoneBlocks(css).indexOf('.slideOverFoot'))), 'no CSS `order` on the sheet (a `border:` is not an `order:`) — the tab sequence is the reading order');
   });
   it('the awards block does not render before first pitch on a phone', () => {
-    assert.ok(fn.includes('const awardsBlock = isGameEvent && drawerDoors.awards && (!isPhone || scoreLeads) ? ('));
+    // A GAME's awards still wait for the score to lead on a phone. Since awards at any event
+    // (owner, 2026-09-25) the non-game branch opens on the event's own state instead — pinned in
+    // coach-awards-any-event.test.ts.
+    assert.ok(fn.includes('const awardsBlock = drawerDoors.awards && (isGameEvent ? (!isPhone || scoreLeads) : awardUnlock === \'open\') ? ('));
   });
   it('the deep-link tab calls are untouched', () => {
     assert.ok(page.includes("if (sp.get('tab') === 'lineup') setSlideTab('lineup');"));

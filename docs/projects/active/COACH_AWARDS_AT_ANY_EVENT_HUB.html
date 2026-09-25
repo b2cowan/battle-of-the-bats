@@ -1,0 +1,673 @@
+<title>Awards at Any Event</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,[role=button]:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:24px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.hubactions button[aria-pressed=true]{background:var(--lime);color:#1c2417;border-color:var(--lime)}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.frame{width:min(1180px,calc(100% - 32px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a}
+.screen{padding:26px 32px 32px}
+.head{margin-bottom:18px}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.legend{display:flex;gap:6px 14px;flex-wrap:wrap;align-items:center;font-size:12px;color:var(--muted);margin:12px 0 0}
+.intent{padding:16px 28px;background:#fafbf7;font-size:13px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+/* before / after pairs */
+.pair{display:flex;flex-direction:column;gap:22px}
+.frame.phone .pair{flex-direction:row;flex-wrap:wrap;gap:28px}
+.side{min-width:0}
+.sidehead{display:flex;align-items:baseline;gap:10px;margin:0 0 8px}
+.sidehead strong{font-size:13px;letter-spacing:1.2px;text-transform:uppercase}
+.sidehead .meta{font-size:12px}
+.scrollx{overflow-x:auto;padding-bottom:6px}
+.frame:not(.phone) .p-only{display:none!important}
+.frame.phone .d-only{display:none!important}
+.caption{font-size:13px;color:var(--muted);margin:14px 0 0;max-width:70ch}
+.caption strong{color:var(--ink)}
+
+/* clickable highlight tags (template rule 8) */
+.mk{display:inline-block;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #b9d88c}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #b6cfdb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #d3d9cd}
+.mk:hover{filter:brightness(.94)}
+.explain p{font-size:14px}.explain .sub{margin-top:8px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+/* docs tabs */
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage ul,.docpage ol{padding-left:22px;margin:0 0 14px}.docpage li{margin:0 0 6px}
+.docpage code{font:13px ui-monospace,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:4px}
+.docpage table{border-collapse:collapse;width:100%;font-size:14px;margin:0 0 16px}
+.docpage th,.docpage td{border-bottom:1px solid var(--line);padding:8px 10px;text-align:left;vertical-align:top}
+.docpage th{font-size:12px;letter-spacing:.8px;text-transform:uppercase;color:var(--muted)}
+.tablewrap{overflow-x:auto}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.open{background:#f4ecd9;border-color:#e0c98a}
+.qawrap{max-width:820px;margin:0 auto;padding:28px 24px 48px}
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:14px;margin-bottom:20px}
+.signin code{font:13px ui-monospace,Consolas,monospace;background:var(--soft);padding:1px 5px;border-radius:4px;user-select:all}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qapart h3{margin:0 0 4px}.qapart .partnote{font-size:13px;color:var(--muted);margin:0 0 8px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px;cursor:pointer}
+.qastep input{width:20px;height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:44px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700;border-color:var(--olive)}
+.qapart label.notes{display:block;margin-top:10px;font-size:13px;color:var(--muted)}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:6px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+
+/* ================= THE PRODUCT (warm coaches portal tokens) ================= */
+.app{--p:#F8F4ED;--c:#FFFFFF;--i:#241E15;--is:#4A4235;--d:#615A54;--l:rgba(70,55,30,.12);--ls:rgba(70,55,30,.22);--o:#57651E;--os:rgba(87,101,30,.10);--r:#B03A22;--rs:rgba(176,58,34,.09);--g:#34662A;--gs:rgba(52,102,42,.10);font:15px/1.45 Inter,system-ui,sans-serif;color:var(--i)}
+.app button{font-family:Inter,system-ui,sans-serif}
+.vp{background:#b9b3a8;border-radius:10px;overflow:auto;position:relative}
+.vp.desk{width:880px;height:740px;padding:0 0 0 0}
+.vp.ph{width:390px;height:760px;border-radius:26px;border:8px solid #1d1a15;background:var(--p)}
+.sheet{background:var(--c);min-height:100%}
+.vp.desk .sheet{border-radius:10px 10px 0 0;margin:0 auto;width:880px}
+.shtop{display:flex;justify-content:space-between;align-items:center;padding:12px 30px;border-bottom:1px solid var(--l)}
+.vp.ph .shtop{padding:12px 16px}
+.kind{display:inline-flex;align-items:center;gap:8px;background:#EEE4EA;color:#7B5A70;font:700 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;text-transform:uppercase;padding:6px 10px;border-radius:4px}
+.x{font-size:22px;color:var(--is);line-height:1}
+.shbody{padding:6px 30px 30px}
+.vp.ph .shbody{padding:4px 16px 28px}
+.ttl{font:700 28px/1.1 'Barlow Condensed',sans-serif;margin:18px 0 14px;letter-spacing:.01em}
+.when{font-size:16px;margin:0 0 14px}
+.vp.ph .when{font-size:15px}
+.where{display:flex;align-items:center;gap:8px;color:var(--o);font-weight:600;font-size:16px;margin:0 0 20px}
+.lbl{font:700 13px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.07em;text-transform:uppercase;color:var(--is);margin:0 0 8px}
+.plansum{font-size:14px;color:var(--is);margin:0 0 14px}
+.btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;border:1px solid var(--ls);border-radius:6px;background:var(--c);color:var(--i);padding:9px 18px;font-weight:600;font-size:16px}
+.btn.sm{font-size:15px;padding:8px 14px;min-height:40px}
+.rule{border:0;border-top:1px solid var(--l);margin:24px 0}
+.acts{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.acts .spacer{margin-left:auto}
+.ghost{color:var(--is);font-size:16px}
+.del{background:var(--rs);border-color:rgba(176,58,34,.32);color:var(--r)}
+.athead{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 12px}
+.ath{font:700 20px/1 'Barlow Condensed',sans-serif}
+.atctl{display:flex;gap:20px;color:var(--is);font-size:16px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 10px}
+.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ls);background:#F4F1EC;border-radius:999px;padding:4px 12px;font-weight:700;font-size:14px;color:var(--is)}
+.chip.on{background:var(--os);border-color:rgba(87,101,30,.45);color:var(--i)}
+.rows{list-style:none;margin:0;padding:0}
+.rows li{display:flex;align-items:center;gap:12px;min-height:56px;padding:6px 8px 6px 20px;border-bottom:1px solid var(--l);font-weight:600;font-size:17px}
+.vp.ph .rows li{padding-left:6px;font-size:16px}
+.rows .nm{margin-right:auto}
+.pill{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:6px 12px;font-weight:700;font-size:16px;border:1px solid}
+.pill.in{background:var(--gs);color:var(--g);border-color:rgba(52,102,42,.35)}
+.pill.out{background:var(--rs);color:var(--r);border-color:rgba(176,58,34,.35)}
+.chev{color:var(--d);font-size:18px;width:18px;text-align:center}
+/* the awards block — the only new thing in the window */
+.aw{margin:0}
+.awrow{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:15px;margin:0 0 4px;min-height:44px}
+.icons{display:inline-flex;gap:2px}
+.icons span{display:inline-flex;align-items:center;justify-content:center;width:40px;height:40px;border-radius:6px;color:var(--is)}
+.hint{font-size:14px;color:var(--d);margin:0 0 12px}
+.newband{position:relative;outline:2px dashed #9dbb5e;outline-offset:8px;border-radius:4px}
+
+/* give-award modal specimen */
+.gm{background:var(--c);border-radius:12px;border:1px solid var(--l);box-shadow:0 8px 28px rgba(36,30,21,.14)}
+.vp.gmd{width:500px;height:auto;background:#b9b3a8;padding:22px}
+.vp.gmp{width:390px;height:auto;border-radius:26px;border:8px solid #1d1a15;background:#b9b3a8;padding:14px 0 0}
+.vp.gmp .gm{border-radius:14px 14px 0 0}
+.gmhead{display:flex;justify-content:space-between;align-items:center;padding:16px 22px;border-bottom:1px solid var(--l)}
+.gmhead strong{font:700 22px/1 'Barlow Condensed',sans-serif}
+.gmbody{padding:16px 22px;display:flex;flex-direction:column;gap:16px}
+.vp.gmp .gmhead,.vp.gmp .gmbody,.vp.gmp .gmfoot{padding-left:16px;padding-right:16px}
+.for{font-size:14px;color:var(--d);margin:0}.for strong{color:var(--i)}
+.sel{border:1px solid var(--ls);border-radius:6px;padding:10px 12px;font-size:15px;background:var(--c);display:flex;justify-content:space-between}
+.tchips{display:flex;gap:8px;flex-wrap:wrap}
+.tchip{border:1px solid var(--ls);border-radius:999px;padding:7px 12px;font-size:14px;background:var(--c)}
+.tchip.on{background:var(--os);border-color:rgba(87,101,30,.55);font-weight:600}
+.tchip.new{border-style:dashed;color:var(--o)}
+.mlink{color:var(--o);font-size:14px;text-decoration:underline;text-underline-offset:3px}
+.ta{border:1px solid var(--ls);border-radius:6px;padding:10px 12px;font-size:14px;color:#8a837b;min-height:70px}
+.err{color:var(--r);font-size:14px;margin:0}
+.gmfoot{display:flex;justify-content:flex-end;gap:10px;padding:14px 22px;border-top:1px solid var(--l)}
+.primary{background:#57651E;color:#fff;border-color:#57651E}
+.labeltable{border-collapse:collapse;font-size:14px;margin-top:6px;min-width:520px}
+.labeltable th,.labeltable td{padding:8px 12px;border-bottom:1px solid var(--line);text-align:left}
+.labeltable th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}
+
+/* awards report specimen */
+.rep{background:var(--p);border-radius:10px;padding:22px 24px;border:1px solid var(--l)}
+.vp.repp{width:390px;height:auto;border-radius:26px;border:8px solid #1d1a15;background:var(--p);padding:18px 16px}
+.kick{font:700 13px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--d);margin:0 0 10px}
+.rt{border-collapse:collapse;width:100%;min-width:860px;background:var(--c);border:1px solid var(--l);border-radius:8px;font-size:14px}
+.rt th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--d);font-weight:700;text-align:left;padding:10px 12px;border-bottom:1px solid var(--ls)}
+.rt td{padding:11px 12px;border-bottom:1px solid var(--l);vertical-align:top}
+.rt td.mut{color:var(--d)}
+.rt tr.fresh td{background:#FBFCF4}
+.cards{display:flex;flex-direction:column;gap:10px}
+.card{background:var(--c);border:1px solid var(--l);border-radius:10px;padding:12px 56px 12px 14px;position:relative}
+.card .who{font-weight:700;font-size:15px}
+.card .line{font-size:14px;color:var(--is);display:block;margin-top:2px}
+.card .dots{position:absolute;right:6px;top:6px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--is);font-size:20px}
+.card.fresh{background:#FBFCF4}
+
+@media(max-width:700px){.screen{padding:20px 16px 26px}.hubbar{padding:11px 16px;gap:8px}.hubtabs{padding:0 16px}.walk{padding:8px 16px}.docpage{padding:22px 18px 36px}h1{font-size:23px}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Awards at any event — project hub</strong><br><small>Built, reviewed and committed on dev 2026-09-25 · QA §235 passed · ships with the next promote</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Mockup round 1 approved 2026-09-25 (&ldquo;looks good, go for it&rdquo;)">Design</li>
+    <li class="stage done" title="Plan + PM brief written 2026-09-25">Plan</li>
+    <li class="stage done" title="Built on dev 2026-09-25 — 4,739 unit tests pass, typecheck clean">Build</li>
+    <li class="stage done" title="/review 2026-09-25 — four lenses, 0 Critical/High/Medium findings">Review</li>
+    <li class="stage done" title="§235 marked complete by the owner 2026-09-25">QA</li>
+    <li class="stage current" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<!-- ============================== MOCKUP ============================== -->
+<section id="hub-mockup" class="hubsection">
+  <nav class="walk" aria-label="Mockup screens">
+    <a href="#practice">1 · The practice window</a>
+    <a href="#give">2 · Giving the award</a>
+    <a href="#report">3 · The Awards report</a>
+  </nav>
+  <div class="frame" id="frame">
+
+    <!-- ---------- 1 · THE PRACTICE WINDOW ---------- -->
+    <section class="screen" id="practice">
+      <div class="head">
+        <div class="eyebrow">Schedule · the event window</div>
+        <h1 tabindex="-1">A practice, after it has started</h1>
+        <p class="sub">Monday’s 6:00 p.m. practice, opened at 8:10 p.m. to hand out the practice award. Drawn at true size — the grey box is the screen; scroll inside it.</p>
+        <div class="legend">Every tag opens its explanation:
+          <span class="mk" data-k="new" data-note="Not in the product today on a practice. Click any tag on a screen for what that element is.">New</span>
+          <span class="mk" data-k="re" data-note="Exists today and changes in wording or place.">Restyled</span>
+          <span class="mk" data-k="un" data-note="Exists today and is drawn unchanged, so a build cannot drop it by accident.">Unchanged</span>
+        </div>
+      </div>
+
+      <!-- DESKTOP -->
+      <div class="pair d-only">
+        <div class="side">
+          <div class="sidehead"><strong>Today</strong><span class="meta">880px window, as in your screenshot</span></div>
+          <div class="scrollx"><div class="vp desk app" tabindex="0" aria-label="Today, desktop practice window">
+            <div class="sheet">
+              <div class="shtop"><span class="kind">⚾ Practice</span><span class="x">×</span></div>
+              <div class="shbody">
+                <div class="ttl">Practice</div>
+                <p class="when">Mon, Sep 21, 2026 · 6:00 p.m. – 8:00 p.m. · Arrive 5:45 p.m.</p>
+                <p class="where">⌖ Sherwood Park</p>
+                <div class="lbl">Practice plan</div>
+                <p class="plansum">6 blocks · 110 min planned · 1 rotation — Tournament Takeaways</p>
+                <span class="btn">Open the plan →</span>
+                <hr class="rule">
+                <div class="acts"><span class="btn">Edit details</span><span class="ghost spacer">Cancel event</span><span class="btn del">Delete</span></div>
+                <hr class="rule">
+                <div class="athead"><span class="ath">Attendance</span><span class="atctl"><span>⊙ All in</span><span>? Reset</span></span></div>
+                <div class="chips"><span class="chip on">All 12</span><span class="chip">✓ 10</span><span class="chip">◷ 0</span><span class="chip">⊘ 2</span><span class="chip">? 0</span></div>
+                <ul class="rows" data-roster="desk"></ul>
+              </div>
+            </div>
+          </div></div>
+        </div>
+        <div class="side">
+          <div class="sidehead"><strong>Proposed</strong><span class="meta">same window, one section added</span></div>
+          <div class="scrollx"><div class="vp desk app" tabindex="0" aria-label="Proposed, desktop practice window">
+            <div class="sheet">
+              <div class="shtop"><span class="kind">⚾ Practice</span><span class="x">×</span></div>
+              <div class="shbody">
+                <div class="ttl">Practice</div>
+                <p class="when">Mon, Sep 21, 2026 · 6:00 p.m. – 8:00 p.m. · Arrive 5:45 p.m.</p>
+                <p class="where">⌖ Sherwood Park</p>
+                <div class="lbl">Practice plan <span class="mk" data-k="un" data-note="The practice plan block stays first, exactly as today — it is what the window is for before and during the practice.">Unchanged</span></div>
+                <p class="plansum">6 blocks · 110 min planned · 1 rotation — Tournament Takeaways</p>
+                <span class="btn">Open the plan →</span>
+                <hr class="rule">
+                <div class="aw newband">
+                  <div class="lbl">Awards given <span class="mk" data-k="new" data-note="The same Awards given section a scored game has today — same list, same edit and remove icons, same Give an award button. On a practice it sits after the plan and above the action row, which is where a game's awards sit relative to its action row. It appears only once the practice has started (your ruling); before 6:00 p.m. this window is exactly today's.">New</span></div>
+                  <div class="awrow"><span>💪 Hustle Award — Ariella Esmail</span><span class="icons"><span title="Edit">✎</span><span title="Remove">🗑</span></span></div>
+                  <span class="btn sm">🏆 Give an award</span>
+                </div>
+                <hr class="rule">
+                <div class="acts"><span class="btn">Edit details</span><span class="ghost spacer">Cancel event</span><span class="btn del">Delete</span> <span class="mk" data-k="un" data-note="The action row is untouched; it moves down by the height of the awards section.">Unchanged</span></div>
+                <hr class="rule">
+                <div class="athead"><span class="ath">Attendance <span class="mk" data-k="un" data-note="Attendance is untouched. On desktop it starts about 150px lower than today, because the awards section sits above it.">Unchanged</span></span><span class="atctl"><span>⊙ All in</span><span>? Reset</span></span></div>
+                <div class="chips"><span class="chip on">All 12</span><span class="chip">✓ 10</span><span class="chip">◷ 0</span><span class="chip">⊘ 2</span><span class="chip">? 0</span></div>
+                <ul class="rows" data-roster="desk"></ul>
+              </div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+
+      <!-- PHONE -->
+      <div class="pair p-only">
+        <div class="side">
+          <div class="sidehead"><strong>Today</strong><span class="meta">390 × 760 · scroll inside</span></div>
+          <div class="vp ph app" tabindex="0" aria-label="Today, phone practice sheet">
+            <div class="sheet">
+              <div class="shtop"><span class="kind">⚾ Practice</span><span class="x">×</span></div>
+              <div class="shbody">
+                <div class="ttl">Practice</div>
+                <p class="when">Mon, Sep 21 · 6:00 p.m. – 8:00 p.m. · Arrive 5:45 p.m.</p>
+                <p class="where">⌖ Sherwood Park</p>
+                <div class="lbl">Practice plan</div>
+                <p class="plansum">6 blocks · 110 min · 1 rotation — Tournament Takeaways</p>
+                <span class="btn">Open the plan →</span>
+                <hr class="rule">
+                <div class="athead"><span class="ath">Attendance</span><span class="atctl"><span>⊙ All in</span></span></div>
+                <div class="chips"><span class="chip on">All 12</span><span class="chip">✓ 10</span><span class="chip">⊘ 2</span><span class="chip">? 0</span></div>
+                <ul class="rows" data-roster="ph"></ul>
+                <hr class="rule">
+                <div class="acts"><span class="btn">Edit details</span><span class="ghost">Cancel event</span><span class="btn del">Delete</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="side">
+          <div class="sidehead"><strong>Proposed</strong><span class="meta">390 × 760 · scroll inside</span></div>
+          <div class="vp ph app" tabindex="0" aria-label="Proposed, phone practice sheet">
+            <div class="sheet">
+              <div class="shtop"><span class="kind">⚾ Practice</span><span class="x">×</span></div>
+              <div class="shbody">
+                <div class="ttl">Practice</div>
+                <p class="when">Mon, Sep 21 · 6:00 p.m. – 8:00 p.m. · Arrive 5:45 p.m.</p>
+                <p class="where">⌖ Sherwood Park</p>
+                <div class="lbl">Practice plan</div>
+                <p class="plansum">6 blocks · 110 min · 1 rotation — Tournament Takeaways</p>
+                <span class="btn">Open the plan →</span>
+                <div class="aw newband" style="margin-top:22px">
+                  <div class="lbl">Awards given <span class="mk" data-k="new" data-note="Revised on your first look at the build (2026-09-25): above attendance, the place a game’s awards hold on a phone once it has started, and every event’s hold on desktop — one place everywhere. The first drawing put it below attendance. It appears only once the practice has started; before that the plan leads straight into attendance, as today.">New</span></div>
+                  <div class="awrow"><span>💪 Hustle Award — Ariella Esmail</span><span class="icons"><span>✎</span><span>🗑</span></span></div>
+                  <span class="btn sm">🏆 Give an award</span>
+                </div>
+                <hr class="rule">
+                <div class="athead"><span class="ath">Attendance <span class="mk" data-k="un" data-note="Attendance is untouched. Once the practice has started it sits under the awards, the way a started game’s attendance sits under its score and awards. Where attendance lives on this window is the schedule deep dive’s question (the next project).">Unchanged</span></span><span class="atctl"><span>⊙ All in</span></span></div>
+                <div class="chips"><span class="chip on">All 12</span><span class="chip">✓ 10</span><span class="chip">⊘ 2</span><span class="chip">? 0</span></div>
+                <ul class="rows" data-roster="ph"></ul>
+                <hr class="rule">
+                <div class="acts"><span class="btn">Edit details</span><span class="ghost">Cancel event</span><span class="btn del">Delete</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="caption"><strong>Before the practice starts, nothing changes</strong> — no Awards section, no locked box explaining why. The same goes for a team event (a banquet, a pizza night) and a whole tournament on your schedule: the section appears once it has started. <strong>Games don’t change</strong>: they still unlock after the final score. A cancelled event carries no awards, same as a cancelled game. The schedule list’s 🏆 count shows on a practice row too, with no extra work.</p>
+    </section>
+
+    <!-- ---------- 2 · GIVING THE AWARD ---------- -->
+    <section class="screen" id="give" hidden>
+      <div class="head">
+        <div class="eyebrow">The Give an award window</div>
+        <h1 tabindex="-1">The form says what the award is for</h1>
+        <p class="sub">The same window you give a game award in. Only its “For” line, the note’s example text, and one error sentence learn that an event isn’t always a game.</p>
+      </div>
+      <div class="pair">
+        <div class="side">
+          <div class="sidehead"><strong>Today</strong><span class="meta">opened from a scored game</span></div>
+          <div class="scrollx"><div class="vp app" data-gm="Today" tabindex="0" aria-label="Today, give an award from a game">
+            <div class="gm">
+              <div class="gmhead"><strong>Give an award</strong><span class="x">×</span></div>
+              <div class="gmbody">
+                <p class="for">For: <strong>vs Oakville A’s — Sep 19</strong></p>
+                <div><div class="lbl">Player</div><div class="sel"><span>#21 Ariella Esmail</span><span>▾</span></div></div>
+                <div><div class="lbl">Award</div><div class="tchips"><span class="tchip">⭐ MVP</span><span class="tchip">🏏 Best Hitter</span><span class="tchip on">💪 Hustle Award</span><span class="tchip new">+ New</span></div><p style="margin:8px 0 0"><span class="mlink">Manage awards…</span></p></div>
+                <div><div class="lbl">Note</div><div class="ta">e.g. Diving catch to end the game</div></div>
+                <p class="err">Ariella Esmail already has Hustle Award for this game.</p>
+              </div>
+              <div class="gmfoot"><span class="btn sm">Close</span><span class="btn sm primary">Save</span></div>
+            </div>
+          </div></div>
+        </div>
+        <div class="side">
+          <div class="sidehead"><strong>Proposed</strong><span class="meta">opened from the practice</span></div>
+          <div class="scrollx"><div class="vp app" data-gm="Proposed" tabindex="0" aria-label="Proposed, give an award from a practice">
+            <div class="gm">
+              <div class="gmhead"><strong>Give an award</strong><span class="x">×</span></div>
+              <div class="gmbody">
+                <p class="for">For: <strong>Practice — Sep 21</strong> <span class="mk" data-k="re" data-note="Today this line is built as “vs [opponent]”. A practice has no opponent, so it would read “vs opponent — Sep 21”. It now says the event’s own name — the one the schedule shows: “Practice”, or “Batting cages” if you named it that, or “Team pizza night”, or the tournament’s name. A game still reads “vs Oakville A’s”.">Restyled</span></p>
+                <div><div class="lbl">Player <span class="mk" data-k="un" data-note="Same active-roster picker as a game.">Unchanged</span></div><div class="sel"><span>#21 Ariella Esmail</span><span>▾</span></div></div>
+                <div><div class="lbl">Award <span class="mk" data-k="un" data-note="Same award list, same + New and Manage awards… door. No practice-only awards: the list is your team’s one list.">Unchanged</span></div><div class="tchips"><span class="tchip">⭐ MVP</span><span class="tchip">🏏 Best Hitter</span><span class="tchip on">💪 Hustle Award</span><span class="tchip new">+ New</span></div><p style="margin:8px 0 0"><span class="mlink">Manage awards…</span></p></div>
+                <div><div class="lbl">Note <span class="mk" data-k="re" data-note="Only the grey example text changes, and only away from a game: “Diving catch to end the game” reads wrong on a practice. A game keeps its example.">Restyled</span></div><div class="ta">e.g. Ran every drill at full speed</div></div>
+                <p class="err">Ariella Esmail already has Hustle Award for this practice. <span class="mk" data-k="re" data-note="The once-per-occasion rule (a player holds an award once per game) applies to every event unchanged. Only the sentence learns the event’s kind: “for this game”, “for this practice”, “for this tournament”, or “for this event” for a team event.">Restyled</span></p>
+              </div>
+              <div class="gmfoot"><span class="btn sm">Close</span><span class="btn sm primary">Save</span></div>
+            </div>
+          </div></div>
+        </div>
+      </div>
+
+      <h3 style="margin-top:26px">One label, every event</h3>
+      <p class="sub">What the “For” line — and the report’s “For” column on the next screen — says for each kind of event.</p>
+      <div class="scrollx"><table class="labeltable">
+        <thead><tr><th>Event on your schedule</th><th>The award says it was for</th><th>Unlocks</th></tr></thead>
+        <tbody>
+          <tr><td>League or tournament game</td><td><strong>vs Oakville A’s</strong></td><td>Once the final score is in (unchanged)</td></tr>
+          <tr><td>Practice</td><td><strong>Practice</strong> — or its own name, e.g. <strong>Batting cages</strong></td><td>Once it has started</td></tr>
+          <tr><td>Team event</td><td><strong>Team pizza night</strong></td><td>Once it has started</td></tr>
+          <tr><td>A whole tournament</td><td><strong>Sherwood Park Invitational</strong></td><td>Once it has started</td></tr>
+          <tr><td>Not on the schedule (from the Awards report)</td><td>The typed label, or <strong>General</strong></td><td>Any time (unchanged)</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <!-- ---------- 3 · THE AWARDS REPORT ---------- -->
+    <section class="screen" id="report" hidden>
+      <div class="head">
+        <div class="eyebrow">Insights · Awards · Full history</div>
+        <h1 tabindex="-1">The report names the practice, not “General”</h1>
+        <p class="sub">The leaderboard above this table is unchanged and not drawn. The “For” column is the one thing that would have broken quietly.</p>
+      </div>
+
+      <div class="pair d-only">
+        <div class="side">
+          <div class="sidehead"><strong>Without the label fix</strong><span class="meta">what opening the door alone would ship</span></div>
+          <div class="scrollx"><div class="rep app">
+            <p class="kick">Full history</p>
+            <table class="rt">
+              <thead><tr><th>Player</th><th>Award</th><th>For</th><th>Date</th><th>Note</th></tr></thead>
+              <tbody>
+                <tr class="fresh"><td>Ariella Esmail</td><td>💪 Hustle Award</td><td class="mut">General</td><td>Sep 21</td><td class="mut">Ran every drill at full speed</td></tr>
+                <tr><td>Ashlyn Webb</td><td>⭐ MVP</td><td class="mut">vs Oakville A’s</td><td>Sep 19</td><td class="mut">Two hits and a diving catch</td></tr>
+                <tr class="fresh"><td>Chloe Marchetti</td><td>⭐ MVP</td><td class="mut">General</td><td>Sep 12</td><td class="mut">—</td></tr>
+                <tr><td>Alex Tennant</td><td>🏏 Best Hitter</td><td class="mut">Milton Classic</td><td>Aug 30</td><td class="mut">—</td></tr>
+              </tbody>
+            </table>
+          </div></div>
+        </div>
+        <div class="side">
+          <div class="sidehead"><strong>Proposed</strong></div>
+          <div class="scrollx"><div class="rep app">
+            <p class="kick">Full history</p>
+            <table class="rt">
+              <thead><tr><th>Player</th><th>Award</th><th>For <span class="mk" data-k="re" data-note="Today this column reads “vs [opponent]” for an award tied to an event, or the typed label, or “General”. The report only ever asked the event for its opponent, so an award given at a practice would have landed here as “General” — indistinguishable from a season award — and editing it would have said “For: vs opponent”. It now uses the one label from screen 2.">Restyled</span></th><th>Date</th><th>Note</th></tr></thead>
+              <tbody>
+                <tr class="fresh"><td>Ariella Esmail</td><td>💪 Hustle Award</td><td class="mut">Practice</td><td>Sep 21</td><td class="mut">Ran every drill at full speed</td></tr>
+                <tr><td>Ashlyn Webb</td><td>⭐ MVP</td><td class="mut">vs Oakville A’s</td><td>Sep 19</td><td class="mut">Two hits and a diving catch</td></tr>
+                <tr class="fresh"><td>Chloe Marchetti</td><td>⭐ MVP</td><td class="mut">Team pizza night</td><td>Sep 12</td><td class="mut">—</td></tr>
+                <tr><td>Alex Tennant</td><td>🏏 Best Hitter</td><td class="mut">Milton Classic</td><td>Aug 30</td><td class="mut">—</td></tr>
+              </tbody>
+            </table>
+          </div></div>
+        </div>
+      </div>
+
+      <div class="pair p-only">
+        <div class="side">
+          <div class="sidehead"><strong>Without the label fix</strong></div>
+          <div class="vp repp app">
+            <p class="kick">Full history</p>
+            <div class="cards">
+              <div class="card fresh"><span class="who">Ariella Esmail</span><span class="line">💪 Hustle Award · General · Sep 21</span><span class="line">Ran every drill at full speed</span><span class="dots">⋯</span></div>
+              <div class="card"><span class="who">Ashlyn Webb</span><span class="line">⭐ MVP · vs Oakville A’s · Sep 19</span><span class="line">Two hits and a diving catch</span><span class="dots">⋯</span></div>
+              <div class="card fresh"><span class="who">Chloe Marchetti</span><span class="line">⭐ MVP · General · Sep 12</span><span class="dots">⋯</span></div>
+              <div class="card"><span class="who">Alex Tennant</span><span class="line">🏏 Best Hitter · Milton Classic · Aug 30</span><span class="dots">⋯</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="side">
+          <div class="sidehead"><strong>Proposed</strong></div>
+          <div class="vp repp app">
+            <p class="kick">Full history</p>
+            <div class="cards">
+              <div class="card fresh"><span class="who">Ariella Esmail</span><span class="line">💪 Hustle Award · Practice · Sep 21 <span class="mk" data-k="re" data-note="The phone card's middle line uses the same label as the desktop column.">Restyled</span></span><span class="line">Ran every drill at full speed</span><span class="dots">⋯</span></div>
+              <div class="card"><span class="who">Ashlyn Webb</span><span class="line">⭐ MVP · vs Oakville A’s · Sep 19</span><span class="line">Two hits and a diving catch</span><span class="dots">⋯</span></div>
+              <div class="card fresh"><span class="who">Chloe Marchetti</span><span class="line">⭐ MVP · Team pizza night · Sep 12</span><span class="dots">⋯</span></div>
+              <div class="card"><span class="who">Alex Tennant</span><span class="line">🏏 Best Hitter · Milton Classic · Aug 30</span><span class="dots">⋯</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <p class="caption"><strong>Tinted rows</strong> are awards given at a practice and at a team event — the two that only exist after this change. “Milton Classic” is a label typed on this report for a tournament that isn’t on the schedule; that path is unchanged, and it is still how you record awards ahead of a banquet.</p>
+    </section>
+
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<!-- ============================== PM BRIEF ============================== -->
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Awards at any event</h1>
+  <h2>What changes for the coach</h2>
+  <p>A coach can give a player an award at <strong>any event on the schedule</strong> — a practice, a team event like a banquet or pizza night, or a whole tournament — not only at a game. Once the event has started, its window shows the same <strong>Awards given</strong> section a scored game has: give an award, edit it, remove it. Games are unchanged: they still unlock once the final score is in.</p>
+  <p>Wherever an award is shown, it now says what it was for in words the coach recognises: <strong>vs Oakville A’s</strong> for a game, <strong>Practice</strong> (or the practice’s own name) for a practice, and the event’s or tournament’s name otherwise.</p>
+  <h2>Why it matters</h2>
+  <p>Coaches hand out recognition at practices all the time — hustle, effort, most improved this week — and at the year-end party. Today the portal only lets them attach an award to a scored game, so practice recognition either goes unrecorded or gets logged as a vague “General” award on the report page. The awards a coach gives most often at the youngest ages are exactly the ones the portal can’t hold.</p>
+  <h2>Customer impact</h2>
+  <ul>
+    <li><strong>Who:</strong> every Premium coach and the staff they let give awards. Access doesn’t change — whoever can give a game award can give one at any event.</li>
+    <li><strong>Where it shows up:</strong> the event window (practice, team event, tournament), the Give an award form, the Awards report, the player’s profile totals, the season leaderboard and Season Wrapped’s “most awarded” — all count practice awards automatically.</li>
+    <li><strong>Families:</strong> nothing new to see. A family’s season recap already lists award names and dates, and a practice award appears there like any other.</li>
+  </ul>
+  <h2>Tradeoffs</h2>
+  <ul>
+    <li><strong>Awards unlock when the event starts</strong>, not before. That keeps an empty awards box off every upcoming practice. A coach preparing banquet awards days ahead (to print certificates) still records them from the Awards report, as today.</li>
+    <li><strong>On a phone, a practice’s awards sit below attendance</strong> — one scroll down with a full roster — so attendance stays first while the practice is running.</li>
+  </ul>
+  <h2>Priority</h2>
+  <p>Small, owner-requested, no data change. It closes a gap a coach hits the first week of a season, and it rides on the award tools already built and reviewed this month.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach gives an award from a practice window in the same two taps as from a game.</li>
+    <li>No award tied to an event ever reads “General” or “vs opponent” anywhere in the portal.</li>
+    <li>Before an event starts, its window is identical to today’s.</li>
+  </ul>
+</section>
+
+<!-- ============================== FULL PLAN ============================== -->
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full plan</div>
+  <h1>Awards at any event — implementation plan</h1>
+  <div class="note">Source of truth: <code>docs/projects/active/COACH_AWARDS_AT_ANY_EVENT_PLAN.md</code>. This tab mirrors it.</div>
+
+  <h2>Problem / context</h2>
+  <p>The award record already points at <em>any</em> event (<code>rep_player_awards.event_id</code> → <code>rep_team_events</code>), but three gates and five labels assume a game:</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Where</th><th>What it does today</th></tr></thead>
+    <tbody>
+      <tr><td><code>scheduleDrawerDoors</code></td><td><code>awards: ev.isGame &amp;&amp; canManageAwards</code></td></tr>
+      <tr><td>Schedule event window</td><td><code>awardsBlock</code> renders only when <code>isGameEvent</code></td></tr>
+      <tr><td><code>POST /awards</code></td><td>An event-linked award needs <code>teamScore</code> + <code>opponentScore</code> — a practice can never pass</td></tr>
+      <tr><td>Award hydration</td><td>Reads only <code>opponent</code> from the event → <code>eventOpponent</code></td></tr>
+      <tr><td>Awards report “For”</td><td><code>vs {eventOpponent}</code> else label else “General” → a practice award reads “General”</td></tr>
+      <tr><td>Report edit form / schedule give form</td><td>“For: vs {opponent ?? 'opponent'}”</td></tr>
+      <tr><td><code>describeAwardOccasion</code></td><td>“for this game” for every event</td></tr>
+      <tr><td><code>PATCH /awards/[id]</code></td><td>“This award is linked to a game…”</td></tr>
+    </tbody>
+  </table></div>
+  <p>The only recorded reason for the gate (archived Tags &amp; Awards plan) is “can’t award a game that hasn’t been played”. No ruling excluded practices.</p>
+
+  <h2>Scope</h2>
+  <ol>
+    <li><strong>One unlock rule, pure.</strong> <code>awardUnlockState(event, nowMs)</code> in <code>lib/rep-award-occasion.ts</code>: cancelled → <code>cancelled</code>; game kinds → <code>needs-score</code> until both scores exist; any other kind → <code>not-started</code> until <code>startsAt</code>; else <code>open</code>. The POST route and the window both read it.</li>
+    <li><strong>The door.</strong> <code>scheduleDrawerDoors.awards = canManageAwards(caps)</code> — the door is permission; the unlock is the event’s state. Update its doc comment and its unit test.</li>
+    <li><strong>The window.</strong> Games: exactly as today. Any other event: the section renders only when the state is <code>open</code> (no locked box, no cancelled sentence — anti-clutter). Desktop places it after the practice plan / description / resources, directly above the action row; phone places it after the attendance tab content.</li>
+    <li><strong>One occasion label.</strong> <code>awardOccasionLabel(event | null, tournamentLabel)</code>: game kinds → <code>vs {opponent}</code> (falls back to the event name); every other kind → the event’s <code>name</code>; no event → the typed label or “General”. Hydration selects <code>event_type, name</code> too and returns <code>occasionLabel</code> (replacing <code>eventOpponent</code>, whose only reader is the report). The schedule give form builds its label from the same helper.</li>
+    <li><strong>The sentences.</strong> <code>describeAwardOccasion</code> takes the event kind: “for this game / practice / tournament / event”. The PATCH route reads the award’s event to phrase it; its label refusal says “linked to an event on your schedule”.</li>
+    <li><strong>The note example.</strong> Game keeps “Diving catch to end the game”; any other event shows “Ran every drill at full speed”.</li>
+    <li><strong>Help.</strong> Retitle the “Awards (games only, once a final score is in)” article; update the “How do I give a player an award?” FAQ (text + keywords); fix existing drift — both say the form “clears right away” for the next award, but Save has closed it since the owner’s 2026-07-12 correction; the Premium summary’s “MVP given out after games”.</li>
+    <li><strong>Dictionary.</strong> <code>rep_player_awards.event_id</code>’s meaning widens from “the game” to “the event” — a field-meaning change, so <code>DATA_DICTIONARY.md</code> updates in the same unit.</li>
+    <li><strong>Tests.</strong> Pure tests for the unlock state, the label and the sentence (every event kind); the doors test flips the non-game case; source-scan tests that pin “for this game” / “linked to a game” wording get updated.</li>
+  </ol>
+  <div class="note"><strong>Out of scope</strong><p style="margin:6px 0 0">Tags on practices (a game-results vocabulary — “record by tag”). A “For” picker on the report’s Give form that lists schedule events (the natural next step for recording banquet awards ahead of time). Showing awards on the practice review page. The games’ final-score rule. Demo narration — the demo re-seeds itself and no tour anchor changes.</p></div>
+
+  <h2>Approach</h2>
+  <p>Open the door by <strong>event state</strong>, not a list of kinds: the rule is “an award is for something that happened”, and a game proves it with a score while everything else proves it with its start time. The alternative — a per-kind allow-list — would need an edit the next time a kind is added.</p>
+  <p>The label goes in <strong>one pure helper</strong> read by every surface, because the defect this project would otherwise ship is quiet: each surface would read fine alone while calling a practice award three different things.</p>
+
+  <h2>Season rules</h2>
+  <p>No change. Award writes already require a live season; nothing learns a year, so the history-endpoint guard is untouched. A closed season shows awards on its one page as before.</p>
+
+  <h2>Open questions</h2>
+  <p>None. Phone placement was ruled with the mockup — below attendance (see Decisions).</p>
+
+  <h2>Build record (2026-09-25)</h2>
+  <p>Built to the approved mockup, on <code>dev</code>. Typecheck clean; <code>verify:changed</code> green (4,739 unit tests; spelling, date, dictionary, layout and schema gates). No migration.</p>
+  <p><strong>Found while building, fixed in the same unit:</strong></p>
+  <ul>
+    <li><strong>A sixth label.</strong> The award-type merge’s confirm said “would hold MVP twice <em>for the Sep 21 game</em>” for any event-linked award. It now names the kind — “for the Sep 21 practice”, “for Team pizza night” (<code>describeDatedAwardOccasion</code>).</li>
+    <li><strong>An award was dated from the UTC day.</strong> The give route and the schedule’s Give form cut the date from <code>startsAt.slice(0, 10)</code>, so anything starting at 8 p.m. Eastern or later was dated the next day — games too, since awards shipped. Both now use the org-zone day (<code>orgDayKey</code>), the platform’s own rule. Dev holds 23 event-linked awards, all on games, none dated wrong; prod was not audited and nothing was repaired.</li>
+    <li><strong>Help drift.</strong> The article and the FAQ said the form “clears right away” for the next award; Save has closed it since 2026-07-12. Rewritten with the rest of the awards help.</li>
+  </ul>
+  <p><strong>Revised on the first look at the build (same day):</strong> on a phone, a started practice’s awards moved from below attendance to above it — the owner asked why awards sat in a different place on practices than on games. They now hold one place on every event, at both widths. Where attendance itself lives is deferred to the schedule deep dive (see Decisions).</p>
+  <p><strong>One visual difference from the mockup:</strong> the mockup drew a rule between the practice plan and the Awards section. The window stacks its sections without rules — a game’s score, tags and awards stack the same way — so the build matches the window, not the drawing.</p>
+  <p><strong>Review and QA (2026-09-25):</strong> <code>/review</code> at the high-risk tier, four lenses — no Critical, High or Medium findings; one advisory applied (the edit route re-checks that an award's event belongs to the team before reading its type). The owner marked the §235 walk complete. Committed on <code>dev</code>; no migration, so it ships with the next promote.</p>
+  <p><strong>Tests:</strong> the unlock rule, the label, the kind and both sentences across every event type (<code>rep-award-occasion.test.ts</code>); the door on a practice (<code>coach-schedule-doors.test.ts</code>); the wiring — route, window, placement, report, merge preview (<code>coach-awards-any-event.test.ts</code>); the phone guard’s pinned expression updated.</p>
+
+  <h2>Rollout</h2>
+  <p>No migration. The once-per-occasion unique index is keyed on the event, so it covers practices unchanged. Ships with the next promote; the QA walk is added to this hub once it’s built.</p>
+</section>
+
+<!-- ============================== DECISIONS ============================== -->
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<!-- ============================== QA WALK ============================== -->
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="qawrap">
+    <div class="eyebrow">Owner QA walk · ledger §235</div>
+    <h1>Awards at any event — QA walk</h1>
+    <p class="note" style="margin:0 0 14px;padding:12px 14px;border-left:3px solid var(--olive);background:#e3f3d4;border-radius:0 6px 6px 0;font-size:14px"><strong>Passed 2026-09-25</strong> — the owner marked this walk complete. The checklist stays for a re-walk.</p>
+    <p class="sub" style="margin-bottom:18px">Tick as you go; each part gets a verdict. When you are done, press <strong>Build the walk summary</strong> and paste the block back into chat.</p>
+    <div class="signin"><strong>Sign in as</strong><br>
+      URL: <code>http://localhost:3000</code> (dev server up) · Account: <code>uat-coach@uat-test-org.local</code> · Password: <code>UATPassword2026!</code><br>
+      Org / team: <strong>uat-test-org</strong> → <strong>UAT Test Team</strong> (it has past and upcoming practices and scored games). Part D asks you to add a team event; delete it afterwards — an award on a deleted event turns into a “General” one, which is expected.</div>
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button" type="button" id="buildSummary" style="background:var(--lime);border-color:#b9d88c">Build the walk summary</button>
+    <textarea id="summaryOut" rows="10" readonly hidden aria-label="Walk summary"></textarea>
+  </div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+/* hub tabs */
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const s=$('hub-'+h);if(s)s.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+
+/* phone / desktop — swaps the true-size specimens; nothing is scaled */
+$('phone').onclick=()=>{const on=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(on));$('phone').textContent=on?'Desktop width':'Phone width'};
+
+/* the roster — one list, drawn into every attendance specimen */
+const ROSTER=[['44','Alex Tennant',0],['21','Ariella Esmail',1],['19','Ashlyn Webb',1],['11','Aslyn Bye',1],['7','Brooke Hallam',1],['3','Chloe Marchetti',1],['15','Dana Okafor',0],['9','Emma Lindqvist',1],['27','Harper Nguyen',1],['5','Jade Fortin',1],['12','Maya Sandhu',1],['30','Nora Beaulieu',1]];
+document.querySelectorAll('[data-roster]').forEach(ul=>{ul.innerHTML=ROSTER.map(([n,name,inn])=>`<li><span class="nm">#${n} ${esc(name)}</span><span class="pill ${inn?'in':'out'}">${inn?'✓ In':'⊘ Out'}</span><span class="chev">›</span></li>`).join('')});
+/* give-form specimens: desktop vs phone framing */
+function frameGive(){const phone=$('frame').classList.contains('phone');document.querySelectorAll('[data-gm]').forEach(v=>{v.classList.toggle('gmd',!phone);v.classList.toggle('gmp',phone)})}
+frameGive();$('phone').addEventListener('click',frameGive);
+
+/* screen router */
+const intents={
+  practice:'the whole window, before and after, because the risk is not the new section but what it pushes down. Once the event has started, awards sit above attendance at both widths — the place a started game’s awards already hold — at the cost of attendance starting about 150px lower.',
+  give:'reuse the one Give form rather than a practice variant: the only things that learn about events are the words that used to assume a game.',
+  report:'show the defect the label fix prevents. Opening the door without it would ship awards that read “General” here and “vs opponent” when edited.'
+};
+function showScreen(){const id=(location.hash.slice(1)||'practice');const known=intents[id]?id:'practice';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==known);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+known?'page':'false'));$('intent').innerHTML='<strong>Design intent:</strong> '+esc(intents[known]);if(location.hash)document.getElementById(known)?.querySelector('h1')?.focus({preventScroll:true})}
+window.addEventListener('hashchange',showScreen);showScreen();
+
+/* every tag opens its explanation */
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC={new:'Not in the product today.',re:'Exists today and changes in wording or place.',un:'Exists today and is drawn unchanged, so a build cannot drop it by accident.'};
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC[k])+'</p>':''}</div>`)}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})});
+document.addEventListener('click',e=>{const t=e.target.closest('.mk');if(t){e.preventDefault();e.stopPropagation();explainTag(t)}});
+
+/* decisions — append as they happen */
+const DECISIONS=[
+  {date:'2026-09-25',ask:'Which events can carry an award?',ruling:'accepted',label:'Accepted',why:'Every event — practices, team events and whole tournaments (owner: “I should be able to assign awards at any event, including practices”). Games keep their final-score rule.'},
+  {date:'2026-09-25',ask:'When does a practice, team event or tournament unlock awards?',ruling:'accepted',label:'Accepted',why:'From its start time. An award records something that happened, the same reason a game waits for its score; it keeps an empty awards box off every upcoming practice. Recording banquet awards days ahead stays on the Awards report.'},
+  {date:'2026-09-25',ask:'On a phone, does a practice’s Awards section sit below attendance (drawn) or above it?',ruling:'accepted',label:'Revised — above attendance',why:'First approved below attendance with the mockup. Revised the same day on the owner’s first look at the build: “why is give awards in a different place in practices vs. games?” A started game’s awards sit above attendance on a phone, and every event’s do on desktop — so a started practice’s now do too. One place on every event.'},
+  {date:'2026-09-25',ask:'Can attendance be a button that opens its own screen, instead of the list in the window?',ruling:'open',label:'Deferred — schedule deep dive',why:'Owner: to be addressed in the next project, a deep dive on the schedule’s mobile and desktop experience. Notes carried there: do it for every event, not practices only (or the practice/game difference grows); it revisits the 2026-09-21 phone ruling that put ten players on screen one; the summary row should name who is out or has not replied; three “Take attendance” doors deep-link into the event and must open the new screen directly; the lineup warning says “fix the attendance below”.'}
+];
+/* QA walk — identities, never as-of-today figures */
+const QA_PARTS=[
+  {id:'A',title:'A practice that has started — desktop',note:'Open Schedule and pick any practice that is already over.',steps:[
+    'The practice window shows “Awards given” after the practice plan and directly above Edit details / Cancel event / Delete, with “No awards given for this practice yet.” and a 🏆 Give an award button.',
+    'Give an award: the “For:” line reads “Practice — ” and that practice’s date (or the practice’s own name if it has one) — never “vs opponent”. The note’s grey example reads “e.g. Ran every drill at full speed”.',
+    'Pick a player and an award, Save. The form closes, the award is listed under Awards given with a pencil and a bin, and the practice’s row on the schedule list shows 🏆 1.',
+    'Give the same player the same award for this practice again: the form refuses with “… already has … for this practice.”',
+    'Edit it with the pencil (change the award) — the row updates. Remove it with the bin — it asks once, then it is gone and the 🏆 count drops.'
+  ]},
+  {id:'B',title:'Before it starts — nothing changes',note:'',steps:[
+    'Open an upcoming practice: there is no Awards section at all — no locked box, no sentence. The window looks exactly as it did before this change.',
+    'Open a scored game: its Awards given section is where it always was, under the score and tags. An unscored past game still says “Enter a final score to unlock awards for this game.”'
+  ]},
+  {id:'C',title:'On a phone',note:'On your phone, or a desktop browser narrowed to phone width.',steps:[
+    'Open the same past practice: the practice plan, then Awards given, then attendance, then the Edit details / Cancel / Delete foot — awards in the same place as on a scored game.',
+    'Open an upcoming practice: no Awards section.',
+    'Open a scored game: awards still sit right under the score, before the tabs — unchanged.'
+  ]},
+  {id:'D',title:'A team event',note:'Add a team event named “QA pizza night” for today, starting at a time that has already passed.',steps:[
+    'Open it: Awards given is there. Give an award — the “For:” line reads “QA pizza night — ” and today’s date.',
+    'Add a second team event for tomorrow and open it: no Awards section.',
+    'Delete both QA events when you are done with Part E.'
+  ]},
+  {id:'E',title:'The Awards report',note:'Insights → Awards → Full history.',steps:[
+    'The practice award reads the practice’s name (“Practice”) in the For column; the team-event award reads “QA pizza night”; game awards still read “vs ” their opponent. No award tied to an event reads “General”.',
+    'Edit the practice award from the report: its “For:” line reads the practice’s name and date, not “vs opponent”.',
+    'At phone width, the history card’s middle line reads the award · the practice’s name · the date.',
+    'The player who got the practice award counts it on the leaderboard above the history.'
+  ]},
+  {id:'F',title:'The merge preview (look, don’t merge)',note:'Give one player two different awards at the same practice (for example MVP and Hustle Award).',steps:[
+    'Open Manage awards…, start merging one of those two into the other: the confirm says the player would hold it twice “for the ” date “ practice” — not “game”. Cancel; do not merge.'
+  ]},
+  {id:'G',title:'Help',note:'',steps:[
+    'Search help for “practice award”: it finds the awards article, now titled “Awards at any event …”, and it says Save closes the form.'
+  ]}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('awards-any-event-qa')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('awards-any-event-qa',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent='Checked '+c.checked+' of '+c.total}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>'<div class="qapart"><h3>Part '+esc(p.id)+' · '+esc(p.title)+'</h3>'+(p.note?'<p class="partnote">'+esc(p.note)+'</p>':'')+p.steps.map((st,i)=>'<label class="qastep"><input type="checkbox" id="qa-'+p.id+'-'+i+'" data-step="'+p.id+'-'+i+'" '+(qa[p.id+'-'+i]?'checked':'')+'> <span><strong>'+p.id+(i+1)+'</strong> '+esc(st)+'</span></label>').join('')+'<div class="verdictrow">Verdict:'+['pass','issue','call'].map(v=>'<button type="button" data-verdict="'+p.id+'" data-value="'+v+'" aria-pressed="'+(qa['verdict-'+p.id]===v)+'">'+(v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call')+'</button>').join('')+'</div><label class="notes">Notes<textarea id="qa-notes-'+p.id+'" data-notes="'+p.id+'" rows="2" placeholder="Anything worth recording">'+esc(qa['notes-'+p.id]||'')+'</textarea></label></div>').join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=['§235 Awards at any event — QA summary','Checked '+c.checked+' of '+c.total,''];QA_PARTS.forEach(p=>{lines.push('Part '+p.id+' · '+p.title+' — verdict: '+(qa['verdict-'+p.id]||'unset'));p.steps.forEach((st,i)=>lines.push('  ['+(qa[p.id+'-'+i]?'x':' ')+'] '+p.id+(i+1)+' '+st));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
+</script>

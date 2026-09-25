@@ -2053,7 +2053,11 @@ export interface RepPlayerAward {
   // Denormalized for list/report reads (joined at query time, not persisted columns).
   awardType?: RepTeamAwardType;
   playerName?: string;
-  eventOpponent?: string | null;
+  /** What the award was FOR — "vs Oakville A's", "Practice", "Team pizza night", a typed label, or
+   *  "General" (`awardOccasionLabel` in lib/rep-award-occasion.ts; any event can carry an award). */
+  occasionLabel?: string;
+  /** The linked event's type (`rep_team_events.event_type`), or null for an award tied to no event. */
+  eventType?: string | null;
 }
 
 // Player Development (roadmap Phase 3, slice 3A — migration 189)
