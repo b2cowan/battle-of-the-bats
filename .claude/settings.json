@@ -332,21 +332,5 @@
       "\\tmp",
       "C:\\Users\\b2cow\\Documents\\tournament-website\\app\\[orgSlug]\\coaches"
     ]
-  },
-  "hooks": {
-    "PostToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "node scripts/refresh-db-snapshots.mjs",
-            "if": "Bash(*apply-migration-api*)",
-            "timeout": 180,
-            "statusMessage": "Refreshing DB snapshots + schema memory..."
-          }
-        ]
-      }
-    ]
   }
 }
