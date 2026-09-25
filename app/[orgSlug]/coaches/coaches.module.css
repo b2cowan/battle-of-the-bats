@@ -1889,11 +1889,14 @@
    first screen where the fold is the point — a 6px gap and the compact pad keep all six above the
    bar (52px rows, the sixth ending 4px clear). The figure rides the trail: a number at the title
    step in the display face (the tile's figure one step down), words at heading and muted (the
-   tile's own `bigWords` pairing), the danger tone on the figure as the tile carries it. */
-.boardRows { display: none; }
+   tile's own `bigWords` pairing), the danger tone on the figure as the tile carries it.
+   ⚠ SHARED SINCE 2026-09-25 — `components/coaches/CoachFigureRows` owns this markup, and the
+   Insights scoreboard is its second consumer (ruling A1: "the Overview's rows, in one white
+   frame"). Named `.boardRows` / `.boardRowFigure` until then; a change here changes both pages. */
+.figureRows { display: none; }
 @media (max-width: 640px) {
   .boardGrid { display: none; }
-  ul.boardRows { display: block; }
+  ul.figureRows { display: block; }
   /* The ground is the recipe's framed phone form (`phoneFrame` on the list — the block at the foot
      of this file; owner ruling B5, 2026-09-20): one white frame, hairlines, no gaps. The 6px gap
      between row-cards that B3 built went with the row-cards. Only the density is the board's own: */
@@ -1908,8 +1911,8 @@
      floor. Measured: six rows end ~29px above the bar at 390×844 with the built card at 267. The
      ceiling is real: the band starts at 446 and the bar at 772, so 52 is the tallest two-line row
      that keeps all six above the bar with any margin — do not "give it a little more air". */
-  .boardRows .rowListRow, .boardRows .rowListRow:has(.rowCaption) { padding-top: 0.45rem; padding-bottom: 0.45rem; min-height: var(--tap-min, 44px); }
-  .boardRows .rowListTitle, .boardRows .rowListCaption { line-height: 1.3; }
+  .figureRows .rowListRow, .figureRows .rowListRow:has(.rowCaption) { padding-top: 0.45rem; padding-bottom: 0.45rem; min-height: var(--tap-min, 44px); }
+  .figureRows .rowListTitle, .figureRows .rowListCaption { line-height: 1.3; }
   /* No mark on a phone row (B6): six words — Roster, Record, This week, Dues, Budget, Tournaments —
      need no glyph to be recognised, and the column of six was a third of the clutter. The desktop
      tile keeps its eyebrow icon (an eyebrow on a card is a different job from a word in a list).
@@ -1932,11 +1935,11 @@
      (align-content — the default stretch would have split the spare between them). (2) the
      recipe's phone `gap` rule is SERVED as `:is(.rowListRow, .rowListRow:has(.rowCaption))` — the
      pipeline merges a selector list into `:is()`, which takes the specificity of its STRONGEST
-     member, so both branches weigh (0,2,0) and beat a plain `.boardRows .rowListRow` by order.
+     member, so both branches weigh (0,2,0) and beat a plain `.figureRows .rowListRow` by order.
      This rule keeps the same two-selector shape as the padding rule above so it is served at
      (0,3,0) and its row-gap of 0 holds; the air between the two lines is the caption's own top
      margin, which an empty track cannot inherit. */
-  .boardRows .rowListRow, .boardRows .rowListRow:has(.rowCaption) {
+  .figureRows .rowListRow, .figureRows .rowListRow:has(.rowCaption) {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
@@ -1945,16 +1948,16 @@
     align-items: center;
     align-content: center;
   }
-  .boardRows .rowListRow::after { display: none; }
-  .boardRows .rowListTitle { grid-column: 1; grid-row: 1; }
-  .boardRows .rowListCaption { grid-column: 1; grid-row: 2; margin-top: 0.125rem; }
-  .boardRows .rowListTrail { grid-column: 2; grid-row: 1 / span 2; align-self: center; justify-self: end; margin-left: 0; }
-  .boardRows .rowListRow:not(:has(.rowListCaption)) .rowListTrail { grid-row: 1; }
-  .boardRows .boardRowFigure { line-height: 1; }
+  .figureRows .rowListRow::after { display: none; }
+  .figureRows .rowListTitle { grid-column: 1; grid-row: 1; }
+  .figureRows .rowListCaption { grid-column: 1; grid-row: 2; margin-top: 0.125rem; }
+  .figureRows .rowListTrail { grid-column: 2; grid-row: 1 / span 2; align-self: center; justify-self: end; margin-left: 0; }
+  .figureRows .rowListRow:not(:has(.rowListCaption)) .rowListTrail { grid-row: 1; }
+  .figureRows .figureRowFigure { line-height: 1; }
   /* The band before the rows tightens with them (the desktop's 1.5rem/0.75rem stays). */
   .sectionKicker { margin: 0.75rem 0 0.4rem; }
 }
-.boardRowFigure {
+.figureRowFigure {
   font-family: var(--font-display);
   font-size: var(--type-title);
   /* Bold, not the tile's extra-bold (B6): still the loudest thing on its row, no longer shouting
@@ -1965,8 +1968,10 @@
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
-.boardRowFigure[data-tone="danger"] { color: var(--home-live, var(--danger)); }
-.boardRowFigure[data-words] { font-family: var(--font-sans); font-size: var(--type-heading); font-weight: 700; color: var(--text-tertiary); }
+.figureRowFigure[data-tone="danger"] { color: var(--home-live, var(--danger)); }
+/* The Insights run differential's ink — the kit's `bigGood`, so the row and the wide band agree. */
+.figureRowFigure[data-tone="good"] { color: var(--success); }
+.figureRowFigure[data-words] { font-family: var(--font-sans); font-size: var(--type-heading); font-weight: 700; color: var(--text-tertiary); }
 
 /* ── Lineups front door (game list) ─────────────────────────────────────── */
 /* ⚠ `.lineupClearBtn` LIVED HERE — the quiet text link under the grid, grown to a 44px tap
@@ -2111,32 +2116,57 @@
 .wltInsightsLink:hover { text-decoration: underline; }
 
 /* ── Insights — the reports & analytics portal's Dashboard tab (2026-08-18) ──
-   Region 1: borderless scoreboard band (blocks omit without data, re-wrap).
+   Region 1: the scoreboard band (blocks omit without data, re-wrap).
    Region 2: findings strip — the centerpiece (lime-tinted top border).
    Region 3: the all-reports rail — one live line per report.
    Season-over-season comparisons retired; every signal is within-season.
    ⚠ The question-titled DOORWAY TILES that used to be region 3 are gone with the reports
    becoming tabs. ⚰ `.insightsDoors`/`.insightsDoor*` served the Development hub's four door tiles
    after that, and went with them (re-evaluation stage 0, 2026-09-14). */
-.insightsBand { display: flex; flex-wrap: wrap; gap: 0.9rem 0; border-top: 1px solid var(--home-line, rgba(255,255,255,0.09)); border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.09)); padding: 0.9rem 0; margin-bottom: 1.2rem; }
+/* ⚠⚠ THE BAND IS ON THE CARD (owner ruling B1 + C1, 2026-09-25 — "one white frame, five across").
+   It was drawn borderless on 2026-08-18 and kept borderless BY NAME when the shared kit put every
+   other coach dashboard on the card (kit decision D, 2026-09-16: "type only") — but no reason for
+   the bare shape was ever recorded, and once the momentum chart and What stands out beneath it
+   became cards it was the one bare block on a page of cards. It keeps its SHAPE — one strip, the
+   figures side by side, hairlines between them — and wears the kit card's skin: `--card-bg`, the
+   `--home-line` edge, radius 8 (the table frame's, so it shares an edge with every card beside it).
+   Not five cards (B2 was drawn and declined): four of the five open the same Results tab, and five
+   lifted buttons to one place read as five destinations.
+   ⚠ THE HAIRLINES ARE THE GAP, not borders: the band's ground is the line colour and each block
+   paints the card over it, so a 1px gap draws the divider — between blocks on a line AND between
+   the lines when the band wraps (a tablet, or the phone's two-across). A `border-right` divider
+   cannot draw the second, and leaves a stray edge at the end of every wrapped line. Every block
+   grows to fill its line, so the ground never shows through as a hole.
+   The Attendance tab draws its four figures with this same band (C1), at every width. */
+.insightsBand { display: flex; flex-wrap: wrap; gap: 1px; background: var(--home-line, var(--border-2)); border: 1px solid var(--home-line, var(--border-2)); border-radius: 8px; overflow: hidden; margin-bottom: 1.2rem; }
 /* ⚠ A COLUMN FLEX CONTAINER, and that is load-bearing rather than cosmetic. Each tile became an
    <a> holding <span>s when the tiles learned to link to their report (the mockup's own
    affordance): inline children would sit on ONE line and every vertical margin below would
    silently do nothing. Stacking them here is what keeps the label/value/caption geometry the
    same as when they were block <p>s in a <div>. */
-.insightsStat { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 118px; padding: 0 1.1rem; border-right: 1px solid var(--home-line, rgba(255,255,255,0.07)); min-height: 40px; text-decoration: none; color: inherit; border-radius: 8px; transition: background 0.12s ease; }
-.insightsStat:last-child { border-right: 0; }
-/* A tile is a link now, so it needs to say so on hover — quietly: this is a whole band of them and
-   a loud treatment would turn the scoreboard into a row of buttons. */
-a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)); }
+.insightsStat { display: flex; flex-direction: column; flex: 1 1 auto; min-width: 118px; padding: 0.85rem 1.1rem; background-color: var(--card-bg, var(--surface)); min-height: 40px; text-decoration: none; color: inherit; }
+/* A tile is a link, so it says so on hover — quietly: this is a whole band of them and a loud
+   treatment would turn the scoreboard into a row of buttons. The tint is an IMAGE over the card
+   ground rather than the background colour: `--home-olive-soft` is translucent, and in place of the
+   card it would show the band's line-coloured ground through it. */
+a.insightsStat:hover { background-image: linear-gradient(var(--home-olive-soft, rgba(255,255,255,0.05)), var(--home-olive-soft, rgba(255,255,255,0.05))); }
+/* The keyboard ring goes INSIDE the block (/review, 2026-09-25): the band clips to its rounded frame
+   (`overflow: hidden`), and the portal's outset `:focus-visible` ring landed outside every block's
+   edge — cut away above and below every tile and on the band's two ends. The framed row list's own
+   fix (`.rowListDoor:focus-visible`). */
+a.insightsStat:focus-visible { outline-offset: -2px; }
 /* ⚰ `.insightsStatLbl` · `.insightsStatVal` · `.insightsStatCap` (2026-08-18 → 2026-09-16): the band's
    label, figure and caption are the kit's `eye` · `big` · `sub` now (components/coaches/kit; owner
-   ruling D — TYPE ONLY: the band keeps its borderless shape, this tile, its hairlines and its bar).
-   The label was 10px — the badge step — on a role the ladder names as 11px "label"; the figure was
-   the display face where every card figure in the portal is the body face. */
-.insightsSegBar { display: block; height: 6px; max-width: 130px; border-radius: 3px; background: var(--home-card, rgba(255,255,255,0.13)); overflow: hidden; margin-top: 0.4rem; }
+   ruling D). The label was 10px — the badge step — on a role the ladder names as 11px "label"; the
+   figure was the display face where every card figure in the portal is the body face. */
+/* The track is the kit bar's (`--home-line`): it was `--home-card`, which is WHITE in the warm
+   skin — invisible once the band stood on the card. */
+.insightsSegBar { display: block; height: 6px; max-width: 130px; border-radius: 3px; background: var(--home-line, var(--white-10)); overflow: hidden; margin-top: 0.4rem; }
 .insightsSegBar i { display: block; height: 100%; background: var(--logic-lime); border-radius: 3px 0 0 3px; }
-.insightsCalm { color: var(--text-tertiary); font-size: var(--type-body); padding: 0.9rem 0.1rem; border-top: 1px solid var(--home-line, rgba(255,255,255,0.09)); border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.09)); margin-bottom: 1.2rem; }
+/* The phone Record row's one qualifier: the last five and the streak on one line (ruling A1). */
+.insightsFormLine { display: inline-flex; align-items: center; gap: 0.45rem; }
+/* ⚰ `.insightsCalm` — a bare hairlined band for a quiet sentence — had no caller left; it went with
+   the bare band it matched (2026-09-25). */
 /* What stands out — the one lime-TINTED frame on the page (a highlight, not an action). */
 .insightsCallouts { border: 1px solid rgba(var(--blueprint-blue-rgb), 0.25); border-top: 2px solid rgba(var(--logic-lime-rgb), 0.45); border-radius: var(--radius); background: var(--card-bg, var(--surface)); /* the card ground, not `--white-8`: one grey in dark (kit A, 2026-09-16) — the highlight frame itself is deliberately its own */ box-shadow: var(--shadow-sm), var(--highlight-top); padding: 0.95rem 1rem 0.55rem; margin-bottom: 1.25rem; }
 .insightsCo { display: flex; align-items: flex-start; gap: 0.65rem; padding: 0.5rem 0.4rem; border-radius: 10px; text-decoration: none; color: inherit; min-height: 40px; }
@@ -2367,8 +2397,16 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
      2026-09-14): the Practice plans hub's "Needs a plan" chip measured 30px at 768, and the
      tablet-band ruling (§115) holds the touch arrangement to 768, not 640. Same rule, one
      breakpoint up, for the whole chip family — Lineups and the Insights tabs included. */
-  /* Insights scoreboard band wraps to a 2-up grid of stat blocks on phones. */
-  .insightsStat { flex: 1 1 45%; border-right: 0; padding: 0.45rem 0.8rem; }
+  /* The Insights band wraps to two blocks a line on a phone, the hairline gap dividing both ways —
+     the Attendance tab's four figures (ruling C1). The DASHBOARD's band is not drawn here at all:
+     its figures are the Overview's rows (`CoachFigureRows`, ruling A1), and `.insightsScoreboard`
+     is what hides the band beside them. */
+  .insightsStat { flex: 1 1 45%; padding: 0.55rem 0.8rem; }
+  .insightsScoreboard { display: none; }
+  /* The rows take the band's own 1.2rem before the chart. On a WRAPPER, and only here: the row
+     list's `ul.rowList { margin: 0 }` outweighs a caller's class, and above 640 the wrapper holds
+     nothing and must add nothing under the band. */
+  .insightsScoreboardRows { margin-bottom: 1.2rem; }
 }
 /* The chip family's tap floor — 768, not 640 (tablet-band ruling §115; see the note in the 640
    block above). Compact at desktop widths by the portal-wide decision; touch is where the floor

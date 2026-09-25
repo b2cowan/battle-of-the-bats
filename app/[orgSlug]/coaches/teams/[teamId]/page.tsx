@@ -36,7 +36,8 @@ import { canConfigureTeam, canManageStaff, hasNoTeamRecordAccess, hasRecordAcces
 import { isInRunWindow, practicePlanState } from '@/lib/practice-state';
 import { nextOpenEvent } from '@/lib/coach-next-event';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
-import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
+import { CoachRow } from '@/components/coaches/CoachRowList';
+import { CoachFigureRows, CoachFigureRow } from '@/components/coaches/CoachFigureRows';
 import { tallyResults, formatRecord } from '@/lib/coach-season-record';
 import { countsTowardRecord } from '@/lib/season-wrapped';
 import { calendarDaysBetween, tournamentToday, daysBetweenDateStrings, formatInOrgZone, relativeDayLabel } from '@/lib/timezone';
@@ -2272,8 +2273,10 @@ export default function TeamOverviewPage({
             a stack of records, wrong for six doors under a white hero card — where the approved
             drawing was white. `phoneFrame` keeps the desktop frame at ≤640 (walk rule S.7: the
             board's three columns fit a phone), hairlines between rows, no gaps; the sweep's
-            `list-ground` rule reads the declaration and holds the list to that form. */}
-        <CoachRowList className={styles.boardRows} labelledBy="board-title" phoneFrame>
+            `list-ground` rule reads the declaration and holds the list to that form.
+            ⚠ `CoachFigureRows` since 2026-09-25: the Insights scoreboard is the same rows (ruling A1),
+            so the frame, the density and the phone-only visibility live in ONE component. */}
+        <CoachFigureRows labelledBy="board-title">
           {board.slots.map(key => {
             const tile = buildTile(key);
             const qualifier = tile.flag
@@ -2290,21 +2293,21 @@ export default function TeamOverviewPage({
                 )
                 : tile.subIsHint ? undefined : tile.sub;
             return (
-              <CoachRow
+              <CoachFigureRow
                 key={tile.key}
-                as="link"
                 href={tile.href}
-                title={tile.label}
+                label={tile.label}
                 caption={qualifier}
-                trail={<span className={styles.boardRowFigure} data-tone={tile.tone} data-words={tile.tone === 'muted' || undefined}>{tile.value}</span>}
-                door="chevron"
+                figure={tile.value}
+                tone={tile.tone === 'danger' ? 'danger' : undefined}
+                words={tile.tone === 'muted'}
               />
             );
           })}
           {Array.from({ length: board.pendingSlots }, (_, i) => (
             <CoachRow key={`pending-row-${i}`} as="static" title="…" className={styles.rowListMuted} aria-hidden />
           ))}
-        </CoachRowList>
+        </CoachFigureRows>
       </section>
 
       {/* The "Worth a look: … went over the pitching cap" safety bridge stood under the board until

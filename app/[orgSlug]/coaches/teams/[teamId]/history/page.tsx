@@ -8,6 +8,7 @@ import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import CoachTabBar from '@/components/coaches/CoachTabBar';
+import { CoachFigureRows, CoachFigureRow } from '@/components/coaches/CoachFigureRows';
 import SeasonTrendChart from '@/components/charts/SeasonTrendChart';
 import { computeSeasonMomentum } from '@/lib/coach-season-momentum';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
@@ -450,7 +451,12 @@ export default function CoachesInsightsPage({
   const momentumSeries = computeSeasonMomentum([...scoped].reverse());
   const record = tally(scoped);
   const scopedGames = record.w + record.l + record.t;
-  const scopeCaption = 'Games + tournaments · scrimmages left out';
+  // The Overview's Record tile says exactly this under its number, and the record FAQ points coaches
+  // at that line — one wording on both dashboards. It was "Games + tournaments · scrimmages left out"
+  // until 2026-09-25 (owner, on the framed band: "make the record one smaller so attendance can fit on
+  // narrower screens"): the long note made Record 284px wide and wrapped Attendance below a 1,150px
+  // window; three words make it 149px, one line down to 1,010px. Removing it bought only 30px more.
+  const scopeCaption = 'Scrimmages left out';
 
   const last5 = scoped.slice(0, 5).reverse(); // oldest → newest
   let streakCount = 0;
@@ -533,6 +539,27 @@ export default function CoachesInsightsPage({
 
   const hasBand = scopedGames > 0 || last5.length > 0 || scoredGames.length > 0 || attendancePct != null;
 
+  /* The last five, oldest → newest — drawn by the wide band's Form block AND, on a phone, under the
+     Record row (ruling A1, 2026-09-25: Record and Form are ONE row there, as the Overview's Record
+     row already is). One rendering, two homes. */
+  const formPips = last5.length > 0 && (
+    // The label SAYS the results (/review, 2026-09-25): a label on the group replaces its letters in
+    // the link's name, so "Recent form, oldest to newest" alone read no result at all — on the phone's
+    // Record row and the desktop Form tile alike. The Overview's Record row already spells them out.
+    <span className={styles.wltFormPips} aria-label={`Last ${last5.length}, oldest first: ${last5.map(g => (g.result === 'win' ? 'W' : g.result === 'loss' ? 'L' : 'T')).join(' ')}`}>
+      {last5.map((g, i) => (
+        <span key={i} className={styles.wltPip} data-r={g.result ?? undefined}>
+          {g.result === 'win' ? 'W' : g.result === 'loss' ? 'L' : 'T'}
+        </span>
+      ))}
+    </span>
+  );
+  /* The sport pack's labels are Title Case — they are the standings' column heads ("Run Diff"). The
+     wide band's eyebrow is uppercase and reads either way; a phone ROW title sits beside "Close
+     games" and "Attendance", and a row list reads in sentence case (stage 6's R3b ruled "Playing
+     time" the same way, over the Title Case tab label). */
+  const diffLabel = sportPack.score.diff.charAt(0) + sportPack.score.diff.slice(1).toLowerCase();
+
   /* Falls back to the Dashboard's row rather than `!`-asserting: `effectiveSection` is always a
      visible tab by construction, but a lookup that cannot fail is cheaper to keep true than to
      prove. */
@@ -596,7 +623,12 @@ export default function CoachesInsightsPage({
                 a coach reads a number and taps the number, rather than reading a number and
                 then hunting for the tile that explains it. */}
             {hasBand ? (
-              <div className={styles.insightsBand}>
+              <>
+              {/* ⚠ On the card since 2026-09-25 (ruling B1): one white frame, the figures side by
+                  side, hairlines between them — the stylesheet's note on `.insightsBand` says why
+                  not five cards. `.insightsScoreboard` hides it at ≤640, where the rows below draw
+                  the same figures. */}
+              <div className={`${styles.insightsBand} ${styles.insightsScoreboard}`}>
                 {scopedGames > 0 && (
                   <Link href={insightsSectionHref(base, 'results')} className={styles.insightsStat}>
                     <span className={kit.eye}>Record</span>
@@ -607,13 +639,7 @@ export default function CoachesInsightsPage({
                 {last5.length > 0 && (
                   <Link href={insightsSectionHref(base, 'results')} className={styles.insightsStat}>
                     <span className={kit.eye}>Form</span>
-                    <span className={styles.wltFormPips} aria-label="Recent form, oldest to newest">
-                      {last5.map((g, i) => (
-                        <span key={i} className={styles.wltPip} data-r={g.result ?? undefined}>
-                          {g.result === 'win' ? 'W' : g.result === 'loss' ? 'L' : 'T'}
-                        </span>
-                      ))}
-                    </span>
+                    {formPips}
                     {streakLabel && <span className={kit.sub}>{streakLabel}</span>}
                   </Link>
                 )}
@@ -640,6 +666,54 @@ export default function CoachesInsightsPage({
                   </Link>
                 )}
               </div>
+              {/* ── The same figures on a phone: the Overview's rows (ruling A1, 2026-09-25) ──
+                  Measured on the live page at 390×844: the band's two-across blocks were 317px —
+                  more than half the first screen, What stands out starting under the bottom bar;
+                  as rows, 207px. Four rows, not five: Form rides UNDER Record, the Overview's own
+                  Record row. What a row drops, on purpose: the record's scope note ("scrimmages
+                  left out" — the Overview's row and the masthead's record carry none, and Results,
+                  one tap away, says "Scrimmages 0-1 (not counted)"), and the run bar (the words
+                  under the label say the same ratio). The desktop band keeps both. */}
+              <div className={styles.insightsScoreboardRows}>
+              <CoachFigureRows label="Season scoreboard">
+                {scopedGames > 0 && (
+                  <CoachFigureRow
+                    href={insightsSectionHref(base, 'results')}
+                    label="Record"
+                    caption={formPips ? <span className={styles.insightsFormLine}>{formPips}{streakLabel && <span>{streakLabel}</span>}</span> : undefined}
+                    figure={formatRecord(record)}
+                  />
+                )}
+                {scoredGames.length > 0 && (
+                  <CoachFigureRow
+                    href={insightsSectionHref(base, 'results')}
+                    label={diffLabel}
+                    caption={`${scoredFor} scored · ${scoredAgainst} allowed`}
+                    figure={diff >= 0 ? `+${diff}` : diff}
+                    tone={diff >= 0 ? 'good' : 'danger'}
+                  />
+                )}
+                {closeTotal > 0 && (
+                  <CoachFigureRow
+                    href={insightsSectionHref(base, 'results')}
+                    label="Close games"
+                    caption={`in one-${scoreUnitWord} games`}
+                    figure={formatRecord(close)}
+                  />
+                )}
+                {attendancePct != null && canAttendance && (
+                  <CoachFigureRow
+                    href={insightsSectionHref(base, 'attendance')}
+                    label="Attendance"
+                    caption="games + practices"
+                    // A plain "95%", as the Overview's rows draw every figure: the band's small "%"
+                    // came out at 16.67px on a row — off the type ladder (check:layout, 2026-09-25).
+                    figure={`${attendancePct}%`}
+                  />
+                )}
+              </CoachFigureRows>
+              </div>
+              </>
             ) : (
               // Insights is DERIVED — there is nothing to do here, so this teaches (quiet variant,
               // no CTA) and points at the sections that feed it. ⚠ The TAB ROW above stays visible

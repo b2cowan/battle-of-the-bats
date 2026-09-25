@@ -3677,6 +3677,10 @@
     "coach-player-switcher|768|tap-floor|select·—Youth SYouth MYouth LAdult SAdult MAdul": {
       "reason": null,
       "detail": "37px tall (floor 44)"
+    },
+    "coach-history|768|tap-floor|a·#5 Emerson Test has sat the bench most —": {
+      "reason": "The SAME pre-existing debt as the \"#1 Avery Test has sat the bench most\" entry beside it (surfaced 2026-09-16; .insightsCo rows carry a 40px min-height): the fixture's data now names a different player, so the finding's text — and this key — changed. Nothing about the callouts changed (the 2026-09-25 scoreboard work touched only the band above them). The fix stays with the touch-target project (stage 6 ask T, the owner's open call).",
+      "detail": "40px tall (floor 44)"
     }
   }
 }

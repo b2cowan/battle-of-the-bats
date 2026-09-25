@@ -1650,6 +1650,12 @@ Probes (`.probe/`): `s6-measure`, `s6-after`, `s6-review`, `s6-targets`, `s6-fin
 - **Attendance's four figures:** F5's one line measured at 214 → 139px (the band's own spacing kept);
   the table still starts below screen one (the take-attendance card and the month chart place it).
   Not worth the "Recorded" qualifier — the denominator of the other three.
+- ⚠ **SUPERSEDED 2026-09-25 — this check asked the wrong question.** It tested whether a figure
+  repeated a heading, never what the figures COST: 317px of bare paper at 390, What stands out under
+  the bar. The owner raised it ("why transparent instead of white? … not take up so much space"),
+  and it was drawn, ruled (A1 · B1 · C1) and built as its own small project: the band on the white
+  card, the Overview's rows on a phone (207px), Attendance framed two a line (178px). See
+  `INSIGHTS_SCOREBOARD_PLAN.md`, ledger §233.
 
 ### 14.6 Found, not stage 6's (named)
 

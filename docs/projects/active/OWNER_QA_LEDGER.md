@@ -23200,3 +23200,27 @@ The hub's **QA walk · 6** tab is the checkable copy; plan §14.10 is the build 
 **§232 addendum — /review (high-risk tier, four lenses), same day:** 6 confirmed and fixed, 2 refuted. The ones you would notice: the **Awards leaderboard is no longer pinned** (its first column is the rank, so a swipe would have kept "1, 2, 3" and lost the names — it fits a phone anyway); the **two-line clamp now applies only to the week in review** (an admin's tournament announcement is free text whose page does not repeat it, so clamping it would have hidden a rain-delay notice with nowhere to read the rest); **Print stays available** while an award is being removed; the Practice review fold **closes when you change the tag filter**; a keyboard focus rings the whole practice row. Walk steps F1 and C2 read the same. Plan §14.12.
 
 ---
+
+## §233 · Insights scoreboard — **the season figures sit on the white card, and on a phone they are the Overview's rows: Record and Form in one row, 207px where they were 317** — owner ruling 2026-09-25 (*"A: A1 rows · B: B1 one white frame · C: C1 frame, two across on a phone"*, every ask as recommended)
+
+**Why.** The owner asked why the Insights dashboard's figures sat on bare paper when every other dashboard is on a white card, and whether they could take less room on a phone. They were drawn as a borderless strip in August and kept that shape by name when the shared card look arrived (16 Sep) — with no reason recorded. On a phone they took 317px, more than half the first screen, and What stands out began under the bottom bar. Stage 6 (§232) had checked the screen and passed it; it asked whether a figure repeated a heading, not what the figures cost.
+
+**What changed.** **B1** on a computer the strip keeps its shape and dividers inside one white frame (the same white, edge and corner as the chart and What stands out beneath it); same height. **A1** on a phone the Dashboard's figures are the Overview's rows in one white frame — four rows, Record and Form together (the record on the right, the last five results and the streak underneath), every row opening its report; the record's "scrimmages left out" note and the small run bar do not show on a phone. **C1** the Attendance tab's four figures take the same white frame, two a line on a phone. The Overview's phone rows and Insights' now come from one shared piece, so they cannot drift.
+
+**Measured after** (live page, 390 / 360 touch, 768, 1280): Dashboard figures **317 → 207px** at both phone widths; What stands out **655 → 545px** at 390; Attendance figures **214 → 178px**; the computer strip 105 → 103px; nothing scrolls sideways; the Overview's rows unchanged (six rows, 303px).
+
+**⚠ Named, not fixed:** a one-line What stands out row is 40px on a tablet (floor 44) — the same accepted debt the layout baseline already carries for the other findings; it stays with the touch-target project (stage 6 ask T).
+
+### The walk — 10 steps, on the hub's **QA walk** tab
+
+- **A · On a phone** (5) — the four rows in one white frame; the Record row matches the Overview's; each row opens its report; What stands out on the first screen; the Overview beside it.
+- **B · On a computer** (3) — the white frame and dividers, the record's note ("Scrimmages left out") and the run bar's track; the hover; a narrow window wraps cleanly.
+
+**Revised on the owner's first look, same day** (*"make the record one smaller so attendance can fit on narrower screens — maybe remove the 'Scrimmages left out' note"*): the record's note on a computer is now **"Scrimmages left out"** — the Overview's Record tile's own words, which the record FAQ points coaches at (the Overview tile does carry the note on a computer; only the phone rows go without). Record 284 → 149px; all five on one line down to a **1,010px** window (was 1,150). Removing it entirely would have bought 30px more.
+- **C · Attendance** (2) — two a line in the frame on a phone; across in the frame on a computer.
+
+**✅ WALKED 2026-09-25 — 10/10 PASS (A 5/5 · B 3/3 · C 2/2; owner, pasted back, no findings).** The walk covered the revised record note (step B1 was rewritten for it before the walk).
+
+**/review + /docs, same day (after the walk):** /review (three lenses) confirmed two, both fixed and re-checked live — **the keyboard focus ring now sits inside each figure** (the new frame had been clipping it at its edges) and **a screen reader now hears the last five results** ("Last 5, oldest first: W L T W L") on the phone's Record row and the desktop Form tile, where it heard only "Recent form". /docs: "Reading Insights on a phone" now covers the Dashboard's rows, and the Dashboard article says the record leaves scrimmages out. Plan §7.
+
+---

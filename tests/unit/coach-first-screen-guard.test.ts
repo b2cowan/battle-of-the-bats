@@ -21,7 +21,8 @@ import { readSource, stripComments } from './_source-code.ts';
  *
  *   B3 **ON A PHONE A TILE IS A ROW.** The Overview renders its six tiles twice — the grid and the
  *      row list — and the stylesheet shows one per width. The rows are the portal's one row recipe
- *      (`CoachRowList`), not a second card system.
+ *      (`CoachRowList`), not a second card system — through `CoachFigureRows` since 2026-09-25,
+ *      when the Insights scoreboard took the same rows.
  *
  *   B5 **THE BOARD'S GROUND IS ONE WHITE FRAME, NOT SIX ROW-CARDS** (owner, 2026-09-20 — "why are
  *      these tiles grey?"). The recipe's phone form broke the board into six olive-washed cards
@@ -106,10 +107,12 @@ describe('B3 — on a phone a tile is a row', () => {
   const styles = stripComments(readSource(STYLES));
 
   it('the board renders the grid AND the row list from the same tiles', () => {
-    assert.ok(overview.includes('<CoachRowList className={styles.boardRows} labelledBy="board-title" phoneFrame>'), 'the rows are the one row recipe, in its framed phone form (B5)');
+    assert.ok(overview.includes('<CoachFigureRows labelledBy="board-title">'), 'the rows are the shared figure rows (the Insights scoreboard is the second consumer, 2026-09-25)');
+    const figureRows = stripComments(readSource('components/coaches/CoachFigureRows.tsx'));
+    assert.ok(figureRows.includes('<CoachRowList className={styles.figureRows} label={label} labelledBy={labelledBy} phoneFrame>'), 'the figure rows are the one row recipe, in its framed phone form (B5)');
     const grid = (overview.match(/board\.slots\.map\(key => \{\s*const tile = buildTile\(key\);/g) || []).length;
     assert.equal(grid, 2, 'both renderings read buildTile for the same slots — the resolver knows neither exists');
-    assert.match(styles, /\.boardRows \{ display: none; \}/, 'the rows are hidden above 640');
+    assert.match(styles, /\.figureRows \{ display: none; \}/, 'the rows are hidden above 640');
     assert.match(styles, /\.boardGrid \{ display: none; \}/, 'the grid is hidden at ≤640');
   });
 
@@ -126,12 +129,12 @@ describe('B3 — on a phone a tile is a row', () => {
     assert.ok(block.includes('background: var(--card-bg, var(--surface));'), 'the frame paints the card ground');
     const rowRule = block.slice(block.indexOf('.rowListPhoneFrame .rowListItem {'));
     assert.ok(rowRule.includes('background: none;') && rowRule.includes('border-bottom: 1px solid'), 'a row paints nothing; the hairline is the whole separation');
-    assert.ok(!styles.includes('.boardRows .rowListItem { margin-bottom: 6px; }'), 'the 6px gap between row-cards went with the row-cards');
+    assert.ok(!styles.includes('.figureRows .rowListItem { margin-bottom: 6px; }'), 'the 6px gap between row-cards went with the row-cards');
   });
 
   it('a row carries one qualifier — the flag, else the pips, else a sub that is a FACT — and never the bar', () => {
     assert.match(overview, /const qualifier = tile\.flag\s*\?/, 'the flag wins the qualifier slot');
-    const rows = overview.slice(overview.indexOf('<CoachRowList'), overview.indexOf('</CoachRowList>'));
+    const rows = overview.slice(overview.indexOf('<CoachFigureRows'), overview.indexOf('</CoachFigureRows>'));
     assert.ok(!rows.includes('CoachBar'), 'no progress bar on a row — the page it opens has it');
     assert.ok(!rows.includes('tile.progress'), 'no progress label on a row');
     assert.ok(rows.includes(': tile.subIsHint ? undefined : tile.sub;'), 'B6 — a hint sub is not drawn on a phone row; the row stays one line');
@@ -147,9 +150,9 @@ describe('B3 — on a phone a tile is a row', () => {
     assert.equal(hints, subs, `every tile with a sub says whether it is a hint (${hints} of ${subs})`);
     assert.ok(tiles.includes('subIsHint: parts.length <= 1,'), '"in the next 7 days" is a hint; "1 game · 2 other" is a fact');
     assert.ok(tiles.includes('subIsHint: !(tournaments && tournaments.count > 0),'), '"Register for a tournament" is a hint; "next Sep 28" is a fact');
-    assert.ok(styles.includes('.boardRows .rowListRow, .boardRows .rowListRow:has(.rowCaption) { padding-top: 0.45rem; padding-bottom: 0.45rem;'), 'the rows breathe at 0.45rem — the 52px ceiling');
-    assert.ok(!styles.includes('.boardRows .rowListMark'), 'no mark rule on the board rows — there is no mark');
-    const fig = styles.slice(styles.indexOf('.boardRowFigure {'), styles.indexOf('.boardRowFigure[data-tone'));
+    assert.ok(styles.includes('.figureRows .rowListRow, .figureRows .rowListRow:has(.rowCaption) { padding-top: 0.45rem; padding-bottom: 0.45rem;'), 'the rows breathe at 0.45rem — the 52px ceiling');
+    assert.ok(!styles.includes('.figureRows .rowListMark'), 'no mark rule on the board rows — there is no mark');
+    const fig = styles.slice(styles.indexOf('.figureRowFigure {'), styles.indexOf('.figureRowFigure[data-tone'));
     assert.ok(fig.includes('font-weight: 700;'), 'the figure is bold, not extra-bold');
   });
 });
