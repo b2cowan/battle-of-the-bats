@@ -1,18 +1,17 @@
 'use client';
-import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
-import { ArrowLeft, CheckCircle2, ChevronRight, CircleHelp, CircleSlash, ExternalLink, FileText, Link2, MapPin, Pencil, StickyNote, Trash2, Trophy, Video, X } from 'lucide-react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { ArrowLeft, ChevronRight, ClipboardList, ExternalLink, Eye, FileText, Link2, ListOrdered, MapPin, Pencil, Trash2, Trophy, Users, Video, X } from 'lucide-react';
 import { EVENT_ICONS, EVENT_COLORS } from '@/components/coaches/eventTypeMark';
-import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import UnsavedChangesGuard from '@/components/coaches/UnsavedChangesGuard';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
-import CoachLoading from '@/components/coaches/CoachLoading';
+import { useBackStep } from '@/components/coaches/useBackStep';
 import { CoachRowList, CoachRow } from '@/components/coaches/CoachRowList';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import OpponentScoutingPanel from '@/components/coaches/OpponentScoutingPanel';
 import CoachRsvpSheet from '@/components/coaches/CoachRsvpSheet';
-import { ATTENDANCE_OPTIONS } from '@/components/coaches/attendanceOptions';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import ScheduleAttendanceRoom, { type AttendanceRoomRow } from '@/components/coaches/ScheduleAttendanceRoom';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { formatStoredClock as fmtClock } from '@/lib/utils';
 import { surfaceLabel, type SportPack } from '@/lib/sports';
@@ -21,25 +20,27 @@ import type { CoachCapabilities } from '@/lib/coach-capabilities';
 import { canWritePracticePlans } from '@/lib/coach-capabilities';
 import { summarizePracticePlan } from '@/lib/rep-practice-plan';
 import { practiceHasPlan } from '@/lib/practice-state';
-import { playerDisplayName } from '@/lib/coach-roster-name';
+import { cleanNamePart, playerDisplayName, playerName } from '@/lib/coach-roster-name';
 import { isMirroredEvent, type MovedGame } from '@/lib/coach-tournament-games';
-import { gameDayPeriodKey, gameHasStarted } from '@/lib/coach-game-day';
+import { gameHasStarted } from '@/lib/coach-game-day';
 import { awardEventKind, awardOccasionLabel, awardUnlockState } from '@/lib/rep-award-occasion';
 import { lineupBuilderHref } from '@/lib/lineups-address';
 import { sheetOrder } from '@/lib/coach-schedule-phone';
-import { normalizeOpponentName } from '@/lib/coach-opponents';
+import { normalizeOpponentName, recordChip, type OpponentBookEntry } from '@/lib/coach-opponents';
 import { orgDayKey } from '@/lib/timezone';
+import { scheduleDayLabel } from '@/lib/family-schedule-format';
 import { EVENT_LABELS, SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import { GAME_EVENT_TYPES, errorMessage, fmtDate, fmtTime, isLineupEvent, resultColor, shortDate } from '@/lib/coach-schedule-view';
+import {
+  attendanceRowWords, lineupDoor, lineupRowWords, scoutingRowWords, sheetAddressFor,
+  type LineupMismatch, type RowLinePart, type RowPlayer, type SheetView,
+} from '@/lib/coach-schedule-sheet';
 import type {
   RepAttendanceStatus,
-  RepLineupMode,
   RepRosterPlayer,
   RepTeamEvent,
   RepTeamEventAttendance,
-  RepTeamLineup,
   RepTeamLineupEntry,
-  RepProgramYear,
   RepTeamTag,
   RepTeamPlace,
   RepTeamAwardType,
@@ -47,44 +48,46 @@ import type {
 } from '@/lib/types';
 
 /**
- * THE SCHEDULE'S EVENT SHEET — one event's summary and its jobs, over the calendar. Moved out of
- * the schedule page by the Schedule deep dive's split (stage 1 · S6, owner ruling 2026-09-25 —
- * "split first, a pure move"). It owns what exists only while one event is open — its attendance
- * list and the autosave behind it, the lineup it reads, a score being typed, the delete question,
- * the award dialog, the RSVP sheet — and it opens fresh for each event (the page keys it on the
- * event's id), which is the reset `openEvent` used to perform by hand, field by field.
- * The page keeps the season: the events, the book, the awards, the capabilities and the fetches.
+ * THE SCHEDULE'S EVENT SHEET — one event's summary and its jobs, over the calendar (the Schedule
+ * deep dive, stage 1 · E1–E6, owner ruling 2026-09-25: every ask "as drawn").
+ *
+ * ONE SHAPE ON EVERY EVENT, AT EVERY WIDTH (E1, E6). What, when and where on top; then the event's
+ * JOBS as door rows — Attendance, Lineup, Scouting, a practice's plan — each a 64px row of the
+ * portal's row recipe whose second line says where the job stands; then the foot row. The owner's
+ * triggering complaint was that a practice and a game were two shapes (an inline list vs three
+ * tabs); they now differ only in which rows they have. The tabs, the look-only lineup peek with its
+ * inning flip, the separate lineup-warning box and its 97×15px link are gone (E3, E4).
+ *
+ * ATTENDANCE HAS ITS OWN ROOM (E2): the row opens a VIEW inside this same dialog — full screen on a
+ * phone, the dialog's body at a desk — with the whole roster on screen one. Scouting opens the same
+ * way. A view is ONE Back level (§219) with its own address (§222): Back, its arrow and Escape
+ * return to the event; Back again leaves the event. `?tab=attendance` opens the room, so the
+ * Overview's links, Insights' "Take attendance" and the next-step card still land three taps from a
+ * saved answer (E5).
+ *
+ * It owns what exists only while one event is open — its attendance list and the autosave behind
+ * it, the lineup facts the Lineup row reads, a score being typed, the delete question, the award
+ * dialog, the RSVP sheet — and opens fresh for each event (the page keys it on the event's id). The
+ * page keeps the season: the events, the book, the awards, the capabilities and the fetches.
  */
 
-/** The three tabs the sheet can open on. */
-export type SlideTab = 'attendance' | 'lineup' | 'scouting';
-/** Where on the sheet it opens — the deep link's tab, or the place Edit details left from. */
-export interface SheetPlace { tab: SlideTab; filter: RepAttendanceStatus | 'all' }
-export const SHEET_OPEN_PLACE: SheetPlace = { tab: 'attendance', filter: 'all' };
-
-// Attendance statuses, ordered present → not-present → unset. Drives BOTH the per-player icon
-// control and the metric/filter chips (label used by the chips; control is icon-only).
-// Value + word + icon + order now live in ONE shared module (components/coaches/attendanceOptions)
-// because the Game-Day console's Who's here sheet renders the identical rows — two hand-kept
-// copies of four rows is how one screen's control quietly stops matching the other's.
-
-// Quick status → {label, icon} lookup for the per-player status badge.
-const ATTENDANCE_BY_VALUE = Object.fromEntries(
-  ATTENDANCE_OPTIONS.map(o => [o.value, o]),
-) as Record<RepAttendanceStatus, (typeof ATTENDANCE_OPTIONS)[number]>;
-
-interface AttendancePlayerRow {
-  player: RepRosterPlayer;
-  status: RepAttendanceStatus;
-  note: string;
+/** A roster player as a door row names them — "#12 Logan". */
+function rowPlayer(p: RepRosterPlayer): RowPlayer {
+  return { firstName: cleanNamePart(p.playerFirstName) || playerName(p), number: p.playerNumber ?? null };
 }
 
-interface LineupPlayerRow {
-  player: RepRosterPlayer;
-  battingOrder: string;
-  starter: boolean;
-  inningPositions: Record<string, string>;
-  notes: string;
+/** A row's second line, each part in its tone (Out in the danger ink, Late in the warning ink). */
+function RowLine({ parts }: { parts: RowLinePart[] }) {
+  return (
+    <>
+      {parts.map((p, i) => (
+        <span key={i}>
+          {i > 0 && ' · '}
+          <span className={styles.sheetDoorTone} data-tone={p.tone ?? undefined}>{p.text}</span>
+        </span>
+      ))}
+    </>
+  );
 }
 
 /** The played-game scoreline + W/L/T badge. One fragment, shared by the editable (self-entered)
@@ -118,46 +121,6 @@ function resourceIcon(url: string): React.ElementType {
   return Link2;
 }
 
-function sortLineupRows(rows: LineupPlayerRow[]) {
-  return [...rows].sort((a, b) => {
-    const aOrder = Number(a.battingOrder) || 999;
-    const bOrder = Number(b.battingOrder) || 999;
-    if (aOrder !== bOrder) return aOrder - bOrder;
-    if (a.starter !== b.starter) return a.starter ? -1 : 1;
-    return playerDisplayName(a.player).localeCompare(playerDisplayName(b.player));
-  });
-}
-
-// Batting order = the row's position in the (drag-ordered) list — no manual numbers,
-// so a coach can't type the same slot twice. everyone_bats: all bat 1..N; nine_player:
-// starters bat 1..9 in order, bench get no slot.
-function renumberBattingOrder(rows: LineupPlayerRow[], mode: RepLineupMode): LineupPlayerRow[] {
-  let n = 0;
-  return rows.map(r => {
-    if (mode === 'everyone_bats') return { ...r, starter: true, battingOrder: String(++n) };
-    if (r.starter && n < 9) return { ...r, battingOrder: String(++n) };
-    return { ...r, battingOrder: '' };
-  });
-}
-
-function buildLineupRows(
-  players: RepRosterPlayer[],
-  entries: RepTeamLineupEntry[],
-  mode: RepLineupMode,
-) {
-  const entriesByPlayer = new Map(entries.map(entry => [entry.playerId, entry]));
-  return players.map((player, index) => {
-    const existing = entriesByPlayer.get(player.id);
-    return {
-      player,
-      battingOrder: existing?.battingOrder ? String(existing.battingOrder) : mode === 'everyone_bats' ? String(index + 1) : index < 9 ? String(index + 1) : '',
-      starter: existing?.starter ?? (mode === 'everyone_bats' ? true : index < 9),
-      inningPositions: existing?.inningPositions ?? {},
-      notes: existing?.notes ?? '',
-    };
-  });
-}
-
 /** DELETE one event. Shared by the sheet's Delete and the page's duplicate-game "Remove my copy"
  *  flow, which surface the error in different places. Refreshing is the CALLER's job — the sheet
  *  must close the instant the delete succeeds, not sit open through a full refetch. */
@@ -170,8 +133,9 @@ export async function deleteEventRequest(orgSlug: string, teamId: string, eventI
 }
 
 export default function ScheduleEventSheet({
-  orgSlug, teamId, base, event: ev, place, isPhone, nowMs, sportPack, capabilities, drawerDoors,
+  orgSlug, teamId, base, event: ev, initialView, isPhone, nowMs, sportPack, capabilities, drawerDoors,
   places, teamTags, tagIds, teamAwards, awardTypes, awardPlayers, moved: selectedMoved, mirroredGameHref,
+  bookEntry, gameDayLive,
   onClose, onEdit, onAddGame, onEventChanged, onDeleted, refresh, onBookChanged, onAwardsChanged,
 }: {
   orgSlug: string;
@@ -179,7 +143,8 @@ export default function ScheduleEventSheet({
   /** The team root, `/{org}/coaches/teams/{id}`. */
   base: string;
   event: RepTeamEvent;
-  place: SheetPlace;
+  /** The view the sheet opens with — the deep link's `?tab=` (`sheetViewFromTab`) — or none. */
+  initialView: SheetView | null;
   /** ≤640 — the page's own reading, settled before any sheet opens. */
   isPhone: boolean;
   /** The page's minute clock. */
@@ -199,9 +164,13 @@ export default function ScheduleEventSheet({
   moved: MovedGame | null;
   /** The public game page for a mirrored game, when the tournament is publicly visible. */
   mirroredGameHref: string | null;
+  /** The Scouting Book's entry for this game's opponent, when the book has one. */
+  bookEntry: OpponentBookEntry | null;
+  /** The game-day window holds right now — Game day runs live, not as a recap. */
+  gameDayLive: boolean;
   onClose: () => void;
-  /** Edit details — with where on the sheet the coach left from, so the form can return there. */
-  onEdit: (event: RepTeamEvent, place: SheetPlace) => void;
+  /** Edit details — the form returns to this event when it closes. */
+  onEdit: (event: RepTeamEvent) => void;
   /** A tournament's "+ Add game". */
   onAddGame: (event: RepTeamEvent) => void;
   /** A save changed the event (a score, cancel / restore) — the fresh record. */
@@ -214,36 +183,28 @@ export default function ScheduleEventSheet({
   onAwardsChanged: () => void;
 }) {
   const confirm = useConfirm();
-  const [slideTab, setSlideTab] = useState<SlideTab>(place.tab);
+  /** The view open inside the sheet — the attendance room, the scouting panel — or none. */
+  const [view, setView] = useState<SheetView | null>(initialView);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [deleteConfirm, setDeleteConfirm] = useState<{ eventId: string; isRecurring: boolean } | null>(null);
-  /** Ask only for what this coach's grants open (the same answer the panel's tabs read). */
+  /** Ask only for what this coach's grants open (the same answer the rows read). */
   const wantsRead = drawerDoors.lineupTab || drawerDoors.attendanceTab;
-  const [attendanceRows, setAttendanceRows] = useState<AttendancePlayerRow[]>([]);
+  const [attendanceRows, setAttendanceRows] = useState<AttendanceRoomRow[]>([]);
   const [attendanceLoading, setAttendanceLoading] = useState(wantsRead);
   const [attendanceSaving, setAttendanceSaving] = useState(false);
   const [attendanceDirty, setAttendanceDirty] = useState(false);
   const [attendanceError, setAttendanceError] = useState('');
-  // Attendance metric-filter ('all' or a status) + which rows have their note input expanded.
-  const [attendanceFilter, setAttendanceFilter] = useState<RepAttendanceStatus | 'all'>(place.filter);
+  // Attendance metric-filter ('all' or a status) — the room's chips.
+  const [attendanceFilter, setAttendanceFilter] = useState<RepAttendanceStatus | 'all'>('all');
   // Which player's RSVP SHEET is open (one at a time; stage 2 · C3 — it used to be an inline
   // editor under the row). null = closed.
   const [rsvpEditId, setRsvpEditId] = useState<string | null>(null);
-  // The schedule shows a READ-ONLY lineup peek (the editable builder lives on the Lineups page).
-  // These hold the loaded lineup just for that preview.
-  const [lineupMode, setLineupMode] = useState<RepLineupMode>('everyone_bats');
-  const [lineupRows, setLineupRows] = useState<LineupPlayerRow[]>([]);
-  const [lineupInningCount, setLineupInningCount] = useState(sportPack.defaultPeriodCount);
-  // THE PEEK'S LOOK-ONLY INNING FLIP (phone re-evaluation stage 3 · D3, the owner's fourth read,
-  // 2026-09-21): which inning the batting order's position column reads. Set when the sheet opens
-  // — 1, or on a game in play the inning the console last showed on this device (its own per-game
-  // memory, READ here, never written). Every width: a read has no phone-only reason.
-  // Nothing here edits — the doors stay the way to change anything.
-  const [peekInning, setPeekInning] = useState(() => initialPeekInning(ev));
-  // Player ids that are actually in the SAVED lineup — used to flag attendance ↔ lineup drift.
+  // Whether a lineup is SAVED (any position set), and which players it holds — what the Lineup row
+  // reads, and what flags attendance ↔ lineup drift. The look-only peek that rendered the order
+  // retired with the tabs (E3): the builder's first screen IS the order, one inning at a time.
+  const [hasLineup, setHasLineup] = useState(false);
   const [lineupEntryIds, setLineupEntryIds] = useState<Set<string>>(new Set());
-  const [lineupLoading, setLineupLoading] = useState(drawerDoors.lineupTab);
   const [scoreForm, setScoreForm] = useState<{ teamScore: string; opponentScore: string } | null>(null);
   const [giveAwardOpen, setGiveAwardOpen] = useState(false);
   // Editing an already-given award (Awards One Tag Idiom Part A) reuses the give form — null
@@ -252,15 +213,24 @@ export default function ScheduleEventSheet({
   const [awardBusyId, setAwardBusyId] = useState<string | null>(null);
   const [awardActionError, setAwardActionError] = useState('');
 
-  // The console keeps the inning it last showed per game in sessionStorage; a game in play opens
-  // the peek there so the coach reads the inning they are in. Read only — the sheet never writes it.
-  function initialPeekInning(event: RepTeamEvent): number {
-    if (!gameHasStarted(event, nowMs)) return 1;
-    try {
-      const saved = Number(sessionStorage.getItem(gameDayPeriodKey(event.id)) ?? '');
-      return Number.isInteger(saved) && saved >= 1 ? saved : 1;
-    } catch { return 1; }
-  }
+  const isGameEvent = GAME_EVENT_TYPES.includes(ev.eventType);
+  // Scouting Book glance (owner-approved 2026-08-04): games with a real opponent name only —
+  // a TBD bracket slot gets no Scouting row, never a dead end. Read gates on `schedule`, which is
+  // everyone who can open this page — helpers included, by ruling.
+  const scoutingKey = drawerDoors.scoutingTab && ev.opponent
+    ? normalizeOpponentName(ev.opponent)
+    : '';
+  /**
+   * ⚠ EVERY VIEW RIDES A GRANT (staff access review, 2026-09-10 — the rule the tabs kept). A view
+   * the address names but this coach's grants do not open is simply not open: the sheet shows, and
+   * the row that would open it is absent too. The RAW `view` stays as asked, so a grant that loads
+   * a moment late opens the room it named.
+   */
+  const openView: SheetView | null =
+    view === 'attendance' && drawerDoors.attendanceTab ? 'attendance'
+      : view === 'scouting' && scoutingKey ? 'scouting'
+        : null;
+  const closeView = () => setView(null);
 
   // The slide-over is declared a modal dialog (role + aria-modal, stage 0 · A4) — so it stands on
   // the same floor as RoomShell and QuestionShell (/review 2026-09-20): Escape closes through the
@@ -270,18 +240,49 @@ export default function ScheduleEventSheet({
   const slideOverRef = useRef<HTMLDivElement | null>(null);
   /**
    * THE OPEN GAME IS A PLACE (owner, 2026-09-22 — "browser back skips the game"). The sheet's
-   * floor names its ADDRESS: the same `?event=…&tab=…` the page reopens a game from (its deep
-   * link), and already hands the lineup builder as its way back. Every door out of the sheet leads
-   * to another PAGE — the builder, Game day, Run practice, a player — and the level the sheet stood
-   * on carried no place, so Back out of one of them stepped over it onto the bare schedule and the
-   * coach lost the game they came from. With the address on it, Back lands on the game, on the tab
-   * they were reading, and a reload keeps it open. `useBackStep` writes it silently and takes it
-   * away again when the sheet is CLOSED, so a live address always means a sheet is open.
-   * ⚠ The RAW `slideTab`, not the resolved `activeSlideTab` — the fallback for a coach whose
-   * grants open no such tab belongs to the read, and it runs again on the way back in.
+   * floor names its ADDRESS: `?event=…`, the address the page reopens a game from (its deep link).
+   * Every door out of the sheet leads to another PAGE — the builder, Game day, the practice plan —
+   * and Back out of one of them lands on the game, not the bare schedule. `useBackStep` writes it
+   * silently and takes it away again when the sheet is CLOSED, so a live address always means a
+   * sheet is open.
+   * ⚠ ESCAPE GOES UP ONE LEVEL TOO (E2): with a view open it closes the view; the RSVP sheet on top
+   * of the room has a floor of its own and answers first.
    */
-  const sheetAddress = `${base}/schedule?event=${ev.id}&tab=${slideTab}`;
-  useDialogFloor(true, slideOverRef, { onClose: () => { void requestCloseSlideOver(); }, address: sheetAddress });
+  const sheetAddress = sheetAddressFor(base, ev.id, null);
+  useDialogFloor(true, slideOverRef, {
+    onClose: () => { if (openView) closeView(); else void requestCloseSlideOver(); },
+    address: sheetAddress,
+    // A view swapping in or out unmounts the control that had focus; re-seat it on the panel.
+    focusKey: openView ?? 'sheet',
+  });
+  /**
+   * THE VIEW IS ONE LEVEL MORE (§219, E2), and a PLACE of its own (§222): `?event=…&tab=attendance`
+   * — the address the Overview's links already open. Back pops it to the event; Back again leaves
+   * the event. ⚠ DECLARED AFTER THE FLOOR, IN THE SAME COMPONENT, ON PURPOSE: a deep link opens the
+   * sheet and the room in one commit, and effects run in declaration order — the sheet's entry is
+   * pushed first and the room's stands on top of it. Moved to a child, the room's would run first
+   * and Back would close the whole event instead of the room.
+   */
+  /*
+   * ⚠⚠ AND ON ARRIVAL THE VIEW'S STEP WAITS ONE COMMIT (found driving the Overview's "1 out" link,
+   * 2026-09-25). A link that opens the sheet AND the room mounts both steps in one commit, and React's
+   * strict mode (on in dev by default) mounts every effect twice: the sheet's first step and the
+   * room's first step are pushed, both are torn down, and the sheet's second step takes over the
+   * ROOM's dead entry — inheriting the room's home (the event's own address) instead of the page's.
+   * The sheet's first entry was left behind as a dead one, so Back from the event closed it but
+   * stayed on `?event=…`, and a third Back was needed to reach the schedule. Arming the view's step
+   * after the sheet's has settled keeps one step per commit, the shape every tapped-open view has
+   * always had: the room is on screen from the first paint; only its history entry follows a
+   * commit later.
+   */
+  const [viewStepArmed, setViewStepArmed] = useState(false);
+  // eslint-disable-next-line react-hooks/set-state-in-effect -- a deliberate one-commit deferral (above)
+  useEffect(() => { setViewStepArmed(true); }, []);
+  useBackStep(!!openView && viewStepArmed, closeView, openView ? sheetAddressFor(base, ev.id, openView) : null);
+  // A view opens at its top, and the event reads from its top again when the view closes.
+  useLayoutEffect(() => {
+    if (slideOverRef.current) slideOverRef.current.scrollTop = 0;
+  }, [openView]);
 
   const attendanceSig = () => JSON.stringify(attendanceRows.map(r => [r.player.id, r.status, r.note]));
   const attendanceSigRef = useRef('');
@@ -298,25 +299,23 @@ export default function ScheduleEventSheet({
   useEffect(() => {
     let cancelled = false;
     const eventId = ev.id;
-    // Ask only for what this coach's grants open (the same answer the panel's tabs read). A
-    // refused read used to be swallowed here and rendered as "add players to the roster first" —
-    // a false statement about the team, made to a helper who was never going to see the tab.
+    // Ask only for what this coach's grants open (the same answer the rows read). A refused read
+    // used to be swallowed here and rendered as "add players to the roster first" — a false
+    // statement about the team, made to a helper who was never going to see the list.
     const wantLineup = drawerDoors.lineupTab;
     const wantAttendance = drawerDoors.attendanceTab;
 
     async function fetchAttendance() {
       if (!wantLineup && !wantAttendance) {
         setAttendanceRows([]);
-        setLineupRows([]);
+        setHasLineup(false);
         setLineupEntryIds(new Set());
         setAttendanceError('');
         setAttendanceDirty(false);
         setAttendanceLoading(false);
-        setLineupLoading(false);
         return;
       }
       setAttendanceLoading(true);
-      setLineupLoading(wantLineup);
       setAttendanceError('');
       setAttendanceDirty(false);
       try {
@@ -334,21 +333,16 @@ export default function ScheduleEventSheet({
           players?: RepRosterPlayer[];
           callUps?: RepRosterPlayer[];
           attendance?: RepTeamEventAttendance[];
-          lineup?: RepTeamLineup | null;
           entries?: RepTeamLineupEntry[];
-          programYear?: RepProgramYear | null;
         } = await res.json();
         if (cancelled) return;
 
         /**
-         * ⚠⚠ **THIS GAME'S CALL-UPS BELONG IN THE PEEK'S PLAYER LIST (mig 309), and leaving them out
-         * showed a batting order that was not the saved one.** `buildLineupRows` drops any entry it
-         * cannot resolve to a player, and the local `renumberBattingOrder` then closes the gap — so
-         * a call-up batting 4th simply vanished and batters 5–9 each moved up a slot. A coach
-         * checking the order from the schedule read a different lineup from the printed card and the
-         * bench console. Read-only, so nothing was corrupted; it was just quietly wrong.
-         * The builder carries the identical warning; this is the surface that had not been updated
-         * with it. Found by `/review`.
+         * ⚠⚠ **THIS GAME'S CALL-UPS BELONG IN THE PLAYER LIST (mig 309).** A call-up borrowed for
+         * this game is on its attendance and may hold a spot in its lineup; leaving them out of the
+         * list made the peek (retired with the tabs, E3) read a batting order that was not the saved
+         * one, and it would make the Lineup row's check read a call-up in the lineup as nobody at
+         * all. The builder carries the identical rule. Found by `/review`.
          */
         const players = [...(data.players ?? []), ...(data.callUps ?? [])];
         const attendanceByPlayer = new Map((data.attendance ?? []).map(row => [row.playerId, row]));
@@ -361,29 +355,23 @@ export default function ScheduleEventSheet({
           };
         }));
         if (lineupCapable) {
-          const mode = data.lineup?.lineupMode ?? 'everyone_bats';
-          // Players marked Out (absent) are left out of the lineup; they appear under "Not playing".
-          const absentIds = new Set((data.attendance ?? []).filter(a => a.status === 'absent').map(a => a.playerId));
-          const playingPlayers = players.filter(p => !absentIds.has(p.id));
-          setLineupMode(mode);
-          setLineupInningCount(data.lineup?.inningCount ?? sportPack.defaultPeriodCount);
-          setLineupRows(renumberBattingOrder(sortLineupRows(buildLineupRows(playingPlayers, data.entries ?? [], mode)), mode));
-          setLineupEntryIds(new Set((data.entries ?? []).map(e => e.playerId)));
+          const entries = data.entries ?? [];
+          setHasLineup(entries.some(e => Object.values(e.inningPositions ?? {}).some(Boolean)));
+          setLineupEntryIds(new Set(entries.map(e => e.playerId)));
         } else {
-          setLineupRows([]);
+          setHasLineup(false);
           setLineupEntryIds(new Set());
         }
       } catch (e: unknown) {
         if (!cancelled) setAttendanceError(errorMessage(e, 'Failed to load attendance'));
       } finally {
         if (!cancelled) setAttendanceLoading(false);
-        if (!cancelled) setLineupLoading(false);
       }
     }
 
     fetchAttendance();
     return () => { cancelled = true; };
-  }, [orgSlug, ev, teamId, sportPack.defaultPeriodCount, drawerDoors.lineupTab, drawerDoors.attendanceTab]);
+  }, [orgSlug, ev, teamId, drawerDoors.lineupTab, drawerDoors.attendanceTab]);
 
   // Removing an already-given award (Awards One Tag Idiom Part A) — the same undo-a-mis-click
   // confirm the season report page already offers, now reachable from the game it was given on.
@@ -503,7 +491,7 @@ export default function ScheduleEventSheet({
     }
   }
 
-  function setPlayerAttendance(playerId: string, patch: Partial<Pick<AttendancePlayerRow, 'status' | 'note'>>) {
+  function setPlayerAttendance(playerId: string, patch: Partial<Pick<AttendanceRoomRow, 'status' | 'note'>>) {
     setAttendanceRows(rows => rows.map(row => (
       row.player.id === playerId ? { ...row, ...patch } : row
     )));
@@ -546,8 +534,6 @@ export default function ScheduleEventSheet({
     }
   }
 
-  // Tabs for the event slide-over (keeps it short instead of one long stack)
-  const isGameEvent = GAME_EVENT_TYPES.includes(ev.eventType);
   // Batch 4: a MIRRORED tournament game. The organizer owns its time, opponent, venue, score,
   // result and whether it happened; the coach owns arrival time, uniform, field, notes, links,
   // tags — and attendance + the lineup, which is the entire point. The API enforces the same
@@ -556,28 +542,6 @@ export default function ScheduleEventSheet({
   // The page-level create + the panel's Edit / Cancel / Delete — ONE rule, read from the
   // doors object rather than computed a second time beside it (`/review`, 2026-09-10).
   const canAddEvents = drawerDoors.editEvent;
-
-  /**
-   * ⚠ EVERY TAB RIDES A GRANT (staff access review, 2026-09-10). Attendance used to be seeded
-   * unconditionally and Lineup pushed on any game, so a schedule-only helper met both tabs, a
-   * refused read behind each, and three "Build lineup" doors onto a page that says lineups aren't
-   * turned on. The doors object is the single answer for the tab, the fetch and the markup.
-   */
-  const slideTabs: { key: SlideTab; label: string }[] = [];
-  if (drawerDoors.attendanceTab) slideTabs.push({ key: 'attendance', label: 'Attendance' });
-  if (drawerDoors.lineupTab) slideTabs.push({ key: 'lineup', label: 'Lineup' });
-  // Scouting Book glance (owner-approved 2026-08-04): games with a real opponent name only —
-  // a TBD bracket slot gets no tab, never a dead end. Read gates on `schedule`, which is
-  // everyone who can open this page — helpers included, by ruling. Archive absence rides
-  // `scoutingAvailable`, the same flag that gates the roll-up fetch.
-  const scoutingKey = drawerDoors.scoutingTab && ev.opponent
-    ? normalizeOpponentName(ev.opponent)
-    : '';
-  if (scoutingKey) slideTabs.push({ key: 'scouting', label: 'Scouting' });
-  // The first tab this coach actually holds — or none, for a coach whose grants open no tab on
-  // this event (a helper on a game with no named opponent sees the details and nothing under them).
-  const activeSlideTab: SlideTab | null =
-    slideTabs.some(t => t.key === slideTab) ? slideTab : (slideTabs[0]?.key ?? null);
 
   // Compact one-line summary for the slide-over header (replaces the tall label/value list).
   // Tournaments (multi-day containers) show a date range and no clock time; "@" = away.
@@ -600,47 +564,37 @@ export default function ScheduleEventSheet({
   // with the optional field/diamond # appended to the label (the maps query stays the location).
   const locationLabel = [ev.location, surfaceLabel(sportPack.id, ev.fieldNumber)].filter(Boolean).join(' · ');
 
-  // Attendance ↔ lineup mismatch for the open game (top-section warning). Only when a lineup exists.
-  const lineupMismatch = (() => {
+  // Attendance ↔ lineup disagreement for the open game — the Lineup row's warning (E4). Only when a
+  // lineup exists.
+  const lineupMismatch: LineupMismatch | null = (() => {
     if (!isLineupEvent(ev) || lineupEntryIds.size === 0) return null;
     const coming = attendanceRows
       .filter(r => (r.status === 'attending' || r.status === 'late') && !lineupEntryIds.has(r.player.id))
-      .map(r => playerDisplayName(r.player));
+      .map(r => rowPlayer(r.player));
     const out = attendanceRows
       .filter(r => r.status === 'absent' && lineupEntryIds.has(r.player.id))
-      .map(r => playerDisplayName(r.player));
+      .map(r => rowPlayer(r.player));
     return coming.length > 0 || out.length > 0 ? { coming, out } : null;
   })();
 
   /**
    * ══════════════════════════════════════════════════════════════════════════════════════════
-   * THE EVENT SHEET — its blocks, named once, rendered in ONE OF TWO ORDERS (phone re-evaluation
-   * stage 2 · C3, owner ruling 2026-09-21).
+   * THE EVENT SHEET — its blocks, named once, in ONE OF TWO ORDERS, BY THE CLOCK, AT EVERY WIDTH
+   * (stage 1 · E1 + E6, 2026-09-25; the clock is C3's, 2026-09-21 — "tabs before first pitch /
+   * score from first pitch" became "rows before / score from", the same clock).
    *
-   * The desktop (≥641) keeps exactly the order it has had: header · title · when · the source and
-   * moved notes · where · the score · tags · awards · description · resources · the practice plan ·
-   * the actions · the lineup warning · the tabs and the tab's content.
-   *
-   * A phone renders the same blocks in the order they are USED, and "the day" is decided by the
-   * clock the product already keeps (`gameHasStarted` — the same start the game-day console and
-   * the lineup's Ready state turn on):
-   *   · BEFORE FIRST PITCH (an upcoming game, or today's until it starts): header · title · when ·
-   *     the where-ROW · notes · the tabs and the tab's content · then "+ Add final score" as a quiet
-   *     door (a coach who types a score early still finds it) · tags · description · resources ·
-   *     the foot row. The locked awards box ("Enter a final score to unlock awards") does not render
-   *     here — a sentence explaining an absence, on a game morning (the 2026-09-04 anti-clutter rule).
-   *   · FROM FIRST PITCH ON, and whenever a score already exists: the score leads — the door, or
-   *     the scoreline with Edit score and the book row — then tags · awards · the tabs and content ·
-   *     description · resources · the foot row.
-   *   · A PRACTICE keeps its plan block first (the practices re-evaluation's own block, unchanged),
-   *     then attendance (one tab, so no tab row), then the notes and the foot row.
+   *   · ROWS FIRST — a game before first pitch, and every other kind of event: title · when · where
+   *     · notes · (a started non-game's awards, above its rows — the 2026-09-25 placement) · the
+   *     door rows · the quiet "+ Add final score" (a game — a coach who types a score early still
+   *     finds it) · tags · description · resources · the foot row.
+   *   · SCORE FIRST — a game from first pitch, and whenever a score exists: title · when · where ·
+   *     notes · the score (the door, or the scoreline with Edit score and the book row) · tags ·
+   *     awards · the door rows · description · resources · the foot row.
+   * The desktop dialog draws the same blocks in the same order; its action row sits under the rows
+   * (it sat above the tabs), and its awards follow the clock too — no "Enter a final score to unlock
+   * awards" on a game two days away (E6, F08). `isPhone` now decides only a block's FORM (the
+   * where-row, the pinned foot row), never the order.
    * The order is JSX order, never CSS `order`: the tab sequence must match the reading order.
-   * `isPhone` is a real width because the sheet only opens after mount (`useIsPhone`).
-   *
-   * Survives the reorder, by construction: the deep-link tab (`?tab=lineup|scouting` → the sheet's
-   * opening `place`, the fallback to the first held tab), `useDialogFloor` on the panel (Escape
-   * through `requestCloseSlideOver`, the Tab trap, focus return), `data-field-floor` on the
-   * attendance section (A4), `scheduleDrawerDoors` deciding every door exactly as before.
    * ══════════════════════════════════════════════════════════════════════════════════════════
    */
   const hasScore = ev.teamScore != null && ev.opponentScore != null;
@@ -765,7 +719,7 @@ export default function ScheduleEventSheet({
   ) : null;
 
   /* Final score — the headline fact of a played game lives in the header, not behind a
-     tab. W/L/T is always derived from the two numbers (no manual override).
+     door. W/L/T is always derived from the two numbers (no manual override).
      On a MIRRORED game the score is the organizer's: shown, never editable (the API
      refuses it, and the next sync would overwrite a local edit anyway).
      The score is a schedule WRITE (the PATCH behind Save gates on schedule editing), so
@@ -818,9 +772,9 @@ export default function ScheduleEventSheet({
           </button>
           {/* The Scouting Book's capture door — a quiet link at the one moment every
               coach reliably visits after every game (score entry), never a modal
-              (owner ruling). The tab itself is the capture sheet. */}
-          {scoutingKey && activeSlideTab !== 'scouting' && (
-            <button type="button" className={styles.scoutToastDoor} onClick={() => setSlideTab('scouting')}>
+              (owner ruling). It opens the book's panel, the same view the Scouting row opens. */}
+          {scoutingKey && (
+            <button type="button" className={styles.scoutToastDoor} onClick={() => setView('scouting')}>
               Add to the book on {ev.opponent} ›
             </button>
           )}
@@ -837,8 +791,8 @@ export default function ScheduleEventSheet({
         {scoreline(ev)}
         {/* The Scouting Book's capture door stays open to every schedule-holder — the
             bench observes, by ruling — even when the score itself is read-only. */}
-        {scoutingKey && activeSlideTab !== 'scouting' && (
-          <button type="button" className={styles.scoutToastDoor} onClick={() => setSlideTab('scouting')}>
+        {scoutingKey && (
+          <button type="button" className={styles.scoutToastDoor} onClick={() => setView('scouting')}>
             Add to the book on {ev.opponent} ›
           </button>
         )}
@@ -857,16 +811,16 @@ export default function ScheduleEventSheet({
   ) : null;
 
   /* Awards given — the "same visit" give-award moment (Coach Tags & Player Awards
-     Phase 2). A GAME: gated on a final score, same as the tags/score UI above it; on a phone it
-     does not render before the game has started (C3): once the score leads, exactly as before.
+     Phase 2). A GAME: once the score leads — from first pitch, at EVERY width (E6: the desktop
+     no longer draws the locked box on a game days away; a started game still reads "Enter a final
+     score to unlock awards" until it has one).
      ANY OTHER EVENT — a practice, a team event, a whole tournament (awards at any event, owner
      2026-09-25): the section exists only once the event can carry an award (started, not
      cancelled — `awardUnlockState`, the same rule the POST route refuses by). Before that there
-     is no section at all, not a locked box: an upcoming practice's window is exactly what it was.
-     Placement differs by kind — see the two orders below. */
+     is no section at all, not a locked box: an upcoming practice's window is exactly what it was. */
   const awardUnlock = awardUnlockState(ev, nowMs);
   const awardKind = awardEventKind(ev.eventType);
-  const awardsBlock = drawerDoors.awards && (isGameEvent ? (!isPhone || scoreLeads) : awardUnlock === 'open') ? (
+  const awardsBlock = drawerDoors.awards && (isGameEvent ? scoreLeads : awardUnlock === 'open') ? (
     <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
       <h4 className={styles.formSectionTitle}>Awards given</h4>
       {awardUnlock === 'cancelled' ? (
@@ -945,85 +899,106 @@ export default function ScheduleEventSheet({
     </div>
   ) : null;
 
-  /* ── Practice plan (Practice Plans 1a) ──
-     A SUMMARY plus a door, never the editor: the plan is written on its own drill-in
-     where the focus rail and the rotation grid have room. Read rides `schedule` (this
-     whole slide-over already does); writing is head-coach-only and the builder says so.
-     The links section above is left completely alone — some coaches will keep their
-     own document forever, and that is a legitimate outcome (D2).
+  /* ── THE DOOR ROWS (E1) ── one row per job this coach can do on this event, in the order they
+     are done: the practice's plan, then Attendance, then the Lineup, then the book on the
+     opponent. Each is the portal's row recipe at 64px — icon · label · a SECOND LINE THAT SAYS
+     WHERE THE JOB STANDS · chevron — and the whole row is the tap. A door a person cannot use is
+     not drawn (`scheduleDrawerDoors`, unchanged): no row, never a disabled one.
+     Kinds (plan §4.8): a game (and a tournament game, an organizer's game) — Attendance · Lineup ·
+     Scouting (no Scouting row for a TBD opponent); a tournament — Attendance; a practice — the plan
+     · Attendance; a team event — Attendance. */
 
-     ⚠ The archive suppression here is DELETED (2026-08-18), and what it protected still
-     holds: the practice-plan routes resolve the team's ACTIVE program year, so from a
-     closed season "Open the plan →" errored and "Plan this practice →" invited a write
-     into a finished season. This screen is no longer rendered for a closed season at
-     all, so there is nothing left to hide — and READING a past plan has its own home,
-     the practices shelf on the closed-season page, which reaches a year-aware read
-     route rather than this one.
+  /* The practice's plan (Practice Plans 1a): a SUMMARY plus a door, never the editor — the plan is
+     written on its own drill-in where the focus rail and the rotation grid have room. The row
+     replaces the "PRACTICE PLAN" kicker, its summary line and "Open the plan →": the same summary,
+     the same destination (E1).
+     ⚠ NO "Run practice →" HERE (owner, 2026-09-18): the shortcut lives on the next-practice card
+     alone; every other practice is two taps — the plan, then Run practice in the plan's toolbar.
+     ⚠ The door follows the grant the plan page itself writes on — Schedule: View + edit
+     (`canWritePracticePlans`, staff-access pass 2) — never "head coach" (practices re-evaluation
+     stage 6, R8, 2026-09-18). A viewer with no plan to read gets the plan page's own sentence on a
+     row that opens nothing, so the sheet says WHY and not just "no".
+     "Has a plan" is the hub's ONE definition — at least one block (stage 0; stage 6). */
+  const planFace = { mark: <ClipboardList size={20} aria-hidden />, title: 'Practice plan' };
+  const planCaption = practiceHasPlan(ev)
+    ? `${summarizePracticePlan(ev.practicePlan!)}${ev.practicePlan!.goal ? ` — ${ev.practicePlan!.goal}` : ''}`
+    : capabilities && canWritePracticePlans(capabilities)
+      ? 'No plan yet — set out the blocks, stations and groups'
+      : null;
+  const planRow = ev.eventType !== 'practice' ? null : planCaption ? (
+    <CoachRow as="link" href={`${base}/practice/${ev.id}`} {...planFace} caption={planCaption} door="chevron" />
+  ) : (
+    <CoachRow as="static" {...planFace} caption="No plan yet. Writing the plan comes with Schedule: View + edit — ask your head coach." />
+  );
 
-     ⚠ NO "Run practice →" HERE (owner, 2026-09-18). This panel is one practice's
-     surface, like a row on the Practice plans hub, and the field door left every
-     per-practice surface at once: the shortcut lives on the next-practice card alone
-     (the hub's and the Overview's), and every other practice is two taps — Open the
-     plan, then Run practice, first in the plan's toolbar on any day. Before that it was
-     offered on any plan ROW (a goal-only plan got "There's no plan to run yet"), then
-     window-gated (stage 5, P3), then on any planned practice (P10) — three answers in
-     a week, all to a question the plan page already answers. */
-  const practiceBlock = ev.eventType === 'practice' ? (
-    <div className={styles.formSection} style={{ marginTop: '0.75rem' }}>
-      <h4 className={styles.formSectionTitle}>Practice plan</h4>
-      {/* "Has a plan" is the hub's ONE definition — at least one block (stage 0; stage 6
-          applied it here): a goal typed and abandoned is a real, blockless row, and it
-          read "0 blocks — …" with an Open door on this panel while the hub's row said
-          "No plan written". */}
-      {practiceHasPlan(ev) ? (
-        <>
-          <p className={styles.formHint}>
-            {summarizePracticePlan(ev.practicePlan!)}
-            {ev.practicePlan!.goal ? ` — ${ev.practicePlan!.goal}` : ''}
-          </p>
-          <div className={`${styles.ppToolbar} ${styles.ppToolbarFlush}`}>
-            <Link href={`${base}/practice/${ev.id}`} className={styles.btnSecondary}>
-              Open the plan →
-            </Link>
-          </div>
-        </>
-      ) : (
-        /* The door follows the grant the plan page itself writes on — Schedule: View +
-           edit (`canWritePracticePlans`, staff-access pass 2) — never "head coach"
-           (practices re-evaluation stage 6, owner ruling R8, 2026-09-18): an assistant
-           with View + edit read "No plan yet." here and "Plan this practice" on the hub.
-           A viewer gets the plan page's own sentence, so the panel says WHY and not just
-           "no". */
-        capabilities && canWritePracticePlans(capabilities) ? (
-          <>
-            <p className={styles.formHint}>
-              No plan yet — set out the blocks, stations and groups for this practice.
-            </p>
-            <Link href={`${base}/practice/${ev.id}`} className={styles.btnSecondary}>
-              Plan this practice →
-            </Link>
-          </>
-        ) : (
-          <p className={styles.formHint}>
-            No plan yet. Writing the plan comes with Schedule: View + edit — ask your head coach.
-          </p>
-        )
-      )}
-    </div>
+  /* Attendance (E1 · E2): the head carries the counts, the second line NAMES who is out, late or
+     silent (`attendanceRowWords`, pinned) — read without opening anything. The row opens the room. */
+  const attendanceWords = attendanceRowWords(attendanceRows.map(r => ({ player: rowPlayer(r.player), status: r.status })));
+  const attendanceRow = drawerDoors.attendanceTab ? (
+    <CoachRow
+      as="button"
+      onClick={() => setView('attendance')}
+      mark={<Users size={20} aria-hidden />}
+      title={attendanceLoading ? 'Attendance' : attendanceWords.head}
+      caption={attendanceLoading
+        ? 'Loading attendance…'
+        : attendanceError && attendanceRows.length === 0
+          ? attendanceError
+          : <RowLine parts={attendanceWords.parts} />}
+      door="chevron"
+    />
+  ) : null;
+
+  /* The Lineup (E3 · E4): says whether one is saved, or where it disagrees with attendance — in the
+     warning tone — and goes where the job is BY THE CLOCK at every width (`lineupDoor`, pinned):
+     the builder before first pitch, Game day from it (F07: the desk said "Edit in Lineups →" at
+     every hour). The builder is handed the way back to THIS game (stage 3 · D3, §222). */
+  const liveDoor = lineupDoor({ started, hasLineup, mismatch: !!lineupMismatch, liveWindow: gameDayLive });
+  const lineupWords = lineupRowWords({ hasLineup, mismatch: lineupMismatch, door: liveDoor });
+  // A read that failed is not "No lineup yet" — the row says what the Attendance row says (/review).
+  const lineupUnread = !!attendanceError && attendanceRows.length === 0;
+  const editHref = lineupBuilderHref(base, ev.id, { returnTo: `${base}/schedule?event=${ev.id}&tab=lineup` });
+  const lineupRow = drawerDoors.lineupTab && isLineupEvent(ev) ? (
+    <CoachRow
+      as="link"
+      href={liveDoor === 'game-day' ? `${base}/game/${ev.id}` : editHref}
+      mark={<ListOrdered size={20} aria-hidden />}
+      title={attendanceLoading || lineupUnread ? 'Lineup' : lineupWords.head}
+      caption={attendanceLoading
+        ? 'Loading the lineup…'
+        : lineupUnread
+          ? attendanceError
+          : <span className={styles.sheetDoorTone} data-tone={lineupWords.warn ? 'warn' : undefined}>{lineupWords.line}</span>}
+      door="chevron"
+    />
+  ) : null;
+
+  /* Scouting (E3): your record against them and your notes, from the book — or that you have not
+     met them yet. Opens the book's panel as a view, like the room. */
+  const scoutingRow = scoutingKey ? (
+    <CoachRow
+      as="button"
+      onClick={() => setView('scouting')}
+      mark={<Eye size={20} aria-hidden />}
+      title="Scouting"
+      caption={scoutingRowWords(ev.opponent!, bookEntry, recordChip)}
+      door="chevron"
+    />
+  ) : null;
+
+  const doorRows = planRow || attendanceRow || lineupRow || scoutingRow ? (
+    <CoachRowList label="On this event" phoneFrame className={styles.sheetDoorRows}>
+      {planRow}{attendanceRow}{lineupRow}{scoutingRow}
+    </CoachRowList>
   ) : null;
 
   /* Actions — Edit (+ tournament Add game) lead; Cancel/Delete grouped to the right so
-     the destructive pair is separated from the everyday action. Above the tabs on the
-     desktop; on a phone THE FOOT ROW (C3) — three equal 44px cells under a hairline, Delete in
-     the danger ink, "+ Add game" on its own full row beneath; the delete confirmation renders
-     in its place, and a mirrored game shows its sentence there. PINNED to the foot of the sheet
-     (owner, 2026-09-21 — it sat at the END of the sheet and was hard to find under a long
-     list): it joins the form sheets' `.modalFooter` recipe rather than growing a second
-     sticky rule, so the sheet drops its bottom padding and clears the home indicator the way
-     every Save bar already does. Phone only — the class rides the same `isPhone` branch.
-     ⚠ Absent entirely in an archive (Chunk F): the server already refuses these for a
-     past season, but a record that draws Edit / Cancel / Delete and then errors is
-     worse than one that simply doesn't offer them. */
+     the destructive pair is separated from the everyday action. UNDER THE ROWS at every width
+     (E6 — on the desktop it sat above the tabs); on a phone THE FOOT ROW (C3) — three equal 44px
+     cells under a hairline, Delete in the danger ink, "+ Add game" on its own full row beneath; the
+     delete confirmation renders in its place, and a mirrored game shows its sentence there. PINNED
+     to the foot of the sheet on a phone (owner, 2026-09-21): it joins the form sheets'
+     `.modalFooter` recipe rather than growing a second sticky rule. */
   const addGameButton = ev.eventType === 'external_tournament' ? (
     <button className={`${styles.btnSecondary}${isPhone ? ` ${styles.slideOverFootWide}` : ''}`} disabled={saving} onClick={() => onAddGame(ev)}>
       + Add game
@@ -1033,7 +1008,7 @@ export default function ScheduleEventSheet({
     <div className={`${styles.slideOverActions}${isPhone ? ` ${styles.slideOverFoot} ${styles.modalFooter}` : ''}`}>
       {!deleteConfirm ? (
         <>
-          <button className={styles.btnSecondary} disabled={saving} onClick={() => onEdit(ev, { tab: slideTab, filter: attendanceFilter })}>
+          <button className={styles.btnSecondary} disabled={saving} onClick={() => onEdit(ev)}>
             Edit details
           </button>
           {!isPhone && addGameButton}
@@ -1079,298 +1054,75 @@ export default function ScheduleEventSheet({
     </div>
   ) : null;
 
-  const peekWarnBlock = lineupMismatch && drawerDoors.lineupTab ? (
-    <div className={styles.lineupPeekWarn} role="status">
-      {lineupMismatch.coming.length > 0 && (
-        <p>⚠ Marked in but not in the lineup: {lineupMismatch.coming.join(', ')}.</p>
-      )}
-      {lineupMismatch.out.length > 0 && (
-        <p>⚠ In the lineup but marked Out: {lineupMismatch.out.join(', ')}.</p>
-      )}
-      <span>
-        Fix the attendance below, or{' '}
-        <Link href={`${base}/lineups/${ev.id}`} style={{ textDecoration: 'underline', color: 'var(--white-80)' }}>edit the lineup →</Link>
-      </span>
-    </div>
-  ) : null;
-
-  const tabsBlock = slideTabs.length > 1 ? (
-    <div className={styles.slideTabs} role="tablist">
-      {slideTabs.map(t => (
-        <button
-          key={t.key}
-          type="button"
-          role="tab"
-          aria-selected={activeSlideTab === t.key}
-          className={`${styles.slideTab} ${activeSlideTab === t.key ? styles.slideTabActive : ''}`}
-          onClick={() => setSlideTab(t.key)}
-        >
-          {t.label}
-        </button>
-      ))}
-    </div>
-  ) : null;
-
-  const scoutingTab = activeSlideTab === 'scouting' && scoutingKey ? (
-    <OpponentScoutingPanel
-      orgSlug={orgSlug}
-      teamId={teamId}
-      eventId={ev.id}
-      opponentName={ev.opponent!}
-      mirrored={isMirroredEvent(ev)}
-    />
-  ) : null;
-
-  const attendanceTab = activeSlideTab === 'attendance' ? (() => {
-    const filteredRows = attendanceFilter === 'all'
-      ? attendanceRows
-      : attendanceRows.filter(row => row.status === attendanceFilter);
-    // data-field-floor: a surface read standing up — the sweep holds its type floor (A4).
-    return (
-      <div className={styles.attendanceSection} data-field-floor>
-        <div className={styles.attendanceHeader}>
-          <h3 className={styles.attendanceTitle}>Attendance</h3>
-          <div className={styles.attendanceBulkActions}>
-            <button
-              type="button"
-              className={styles.btnGhost}
-              disabled={attendanceLoading || attendanceRows.length === 0}
-              onClick={() => setAllAttendance('attending')}
-            >
-              <CheckCircle2 size={14} /> All in
-            </button>
-            <button
-              type="button"
-              className={styles.btnGhost}
-              disabled={attendanceLoading || attendanceRows.length === 0}
-              onClick={() => setAllAttendance('unknown')}
-            >
-              <CircleHelp size={14} /> Reset
-            </button>
-            {/* ⚠ "Season attendance" (Batch 4's return trip to the Insights report) sat here
-                beside the bulk actions, and as a quiet row under the list on a phone (C3) —
-                until the owner's first look at the built phone sheet (2026-09-21): a coach
-                mid-game is likelier to leave the game by accident through it than to read the
-                season on purpose, and Insights is one nav tap away at every width. Gone from
-                both widths; `scheduleDrawerDoors` no longer decides it. */}
-          </div>
-        </div>
-
-        {/* Metric chips that double as filters — counts are always visible; tap to focus.
-            On a phone: five equal 44px cells (C3). */}
-        {attendanceRows.length > 0 && (
-          <div className={styles.attendanceFilters} role="group" aria-label="Filter attendance by status">
-            <button
-              type="button"
-              aria-pressed={attendanceFilter === 'all'}
-              className={`${styles.attFilter} ${attendanceFilter === 'all' ? styles.attFilterActiveAll : ''}`}
-              onClick={() => setAttendanceFilter('all')}
-            >
-              All <span className={styles.attFilterCount}>{attendanceRows.length}</span>
-            </button>
-            {ATTENDANCE_OPTIONS.map(option => {
-              const Icon = option.icon;
-              const count = attendanceRows.filter(row => row.status === option.value).length;
-              const active = attendanceFilter === option.value;
-              return (
-                <button
-                  key={option.value}
-                  type="button"
-                  data-status={option.value}
-                  aria-pressed={active}
-                  aria-label={`${option.label}: ${count}`}
-                  title={option.label}
-                  className={`${styles.attFilter} ${active ? styles.attFilterActive : ''}`}
-                  onClick={() => setAttendanceFilter(active ? 'all' : option.value)}
-                >
-                  <Icon size={14} /> <span className={styles.attFilterCount}>{count}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {attendanceLoading ? (
-          <CoachLoading label="Loading attendance…" inline />
-        ) : attendanceError && attendanceRows.length === 0 ? (
-          // A read that FAILED is said as a failure. It used to fall through to the empty
-          // line below and claim the roster had no active players.
-          <div className={styles.attendanceEmpty}>{attendanceError}</div>
-        ) : attendanceRows.length === 0 ? (
-          <div className={styles.attendanceEmpty}>Add active players to the roster before marking attendance.</div>
-        ) : filteredRows.length === 0 ? (
-          <div className={styles.attendanceEmpty}>No players in this group.</div>
-        ) : (
-          /* THE ROWS ARE THE PORTAL'S ONE ROW LIST, and THE ROW IS THE TAP (C3, the owner's second
-             read: one frame with hairlines, no gaps — the schedule's own treatment). Each row is a
-             `<button aria-haspopup="dialog">` that raises the RSVP sheet for that player; the
-             status badge is its trail (its word at the body size — on attendance-taking the status
-             IS the looked-for value, A4's field key), the note flag beside it, a chevron says it
-             opens. The per-row button and the inline editor it opened are gone at every width. */
-          <CoachRowList label="Attendance" inset phoneFrame className={styles.attendanceRows}>
-            {filteredRows.map(row => {
-              const cur = ATTENDANCE_BY_VALUE[row.status] ?? ATTENDANCE_BY_VALUE.unknown;
-              const StatusIcon = cur.icon;
-              const name = playerDisplayName(row.player);
-              return (
-                <CoachRow
-                  key={row.player.id}
-                  as="button"
-                  aria-haspopup="dialog"
-                  aria-label={`${name} · ${cur.label}${row.note ? ' · has a note' : ''} · set attendance`}
-                  onClick={() => setRsvpEditId(row.player.id)}
-                  title={name}
-                  trail={
-                    <>
-                      {row.note && (
-                        <span className={styles.attendanceNoteFlag} title={row.note} aria-hidden>
-                          <StickyNote size={13} />
-                        </span>
-                      )}
-                      {/* Current status — same icon + colour as the filter chips. */}
-                      <span className={styles.attendanceStatusBadge} data-status={row.status} data-field-key aria-hidden>
-                        <StatusIcon size={14} />
-                        <span>{cur.label}</span>
-                      </span>
-                    </>
-                  }
-                  door="chevron"
-                />
-              );
-            })}
-          </CoachRowList>
-        )}
-        {/* The autosave word, a transient pill at the window's foot (owner 2026-09-20, revising
-            that morning's home in the sheet's header): appears on an edit, says "Saved" and
-            fades; only an error stays. Fixed to the viewport, so inside this scrolling panel
-            it shows wherever the list is scrolled to. */}
-        {attendanceRows.length > 0 && (
-          <SaveStatusPill saving={attendanceSaving} dirty={attendanceDirty} error={attendanceError} onRetry={handleAttendanceSave} />
-        )}
-      </div>
-    );
-  })() : null;
-
-  const lineupTab = activeSlideTab === 'lineup' && isLineupEvent(ev) ? (
-    <div className={styles.lineupSection}>
-      {(() => {
-        // The builder, with the way back to THIS sheet (stage 3 · D3): stage 2's deep link lands
-        // on the Lineup tab, so the builder's arrow returns the coach to the game they left.
-        const editHref = lineupBuilderHref(base, ev.id, { returnTo: `${base}/schedule?event=${ev.id}&tab=lineup` });
-        const hasLineup = lineupRows.some(r => Object.values(r.inningPositions).some(Boolean));
-        const battingRows = sortLineupRows(lineupRows).filter(r => lineupMode === 'nine_player' ? r.starter : true);
-        // THE DOOR TURNS BY THE CLOCK (stage 3 · D3, owner 2026-09-21: "can we make manual
-        // adjustments during the game here, or is that duplicative?"): before the game it is the
-        // builder; from game time it is the console — already the in-game adjustment surface
-        // (the inning stepper, subs with a this-inning / onward scope, the bench by longest
-        // sitting, the same lineup PUT). The same clock that makes the sheet score-first.
-        const started = gameHasStarted(ev, nowMs);
-        const peekDoor = started
-          ? { href: `${base}/game/${ev.id}`, word: 'Game day' }
-          : { href: editHref, word: 'Edit' };
-        const inningShown = Math.min(Math.max(1, peekInning), Math.max(1, lineupInningCount));
-        return (
-          <>
-            {/* The heading row carries the door on a phone (44px, the accent — the foot door
-                sat 1,067px into the sheet under the whole order); the chip stays. The desktop
-                keeps its foot door and this link is hidden above 640. */}
-            <div className={styles.lineupPeekHeader}>
-              <div className={styles.lineupPeekTitleRow}>
-                <h3 className={styles.attendanceTitle}>Lineup</h3>
-                {/* This is a quick look — "build and edit on the Lineups page" below already
-                    says so — so it claims only what it can see from these rows: whether
-                    anything is saved. The honest Not started/Draft/Ready/Needs review badge
-                    (F02) belongs to the hub, the builder and the Overview, which actually run
-                    the analysis; a plain "has content" fact is exactly right here. */}
-                <span className={styles.lineupFrontChip} data-tone={hasLineup ? 'ok' : 'warn'}>
-                  {hasLineup ? <><CheckCircle2 size={13} aria-hidden /> Has a lineup</> : <><CircleSlash size={13} aria-hidden /> No lineup yet</>}
-                </span>
-                {hasLineup && (
-                  <Link href={peekDoor.href} className={styles.lineupPeekDoor} data-door={started ? 'game-day' : 'edit'}>
-                    {peekDoor.word} <span aria-hidden>›</span>
-                  </Link>
-                )}
-              </div>
-              <p className={styles.attendanceSummary}>
-                {hasLineup ? 'A quick look — build and edit on the Lineups page.' : 'No lineup set for this game yet.'}
-              </p>
-            </div>
-
-            {lineupLoading ? (
-              <CoachLoading label="Loading the lineup…" inline />
-            ) : !hasLineup ? (
-              <div className={styles.lineupPeekEmpty}>
-                <p>Build the batting order and field positions on the full Lineups page.</p>
-                <Link href={editHref} className="btn btn-lime btn-sm">Build lineup →</Link>
-              </div>
-            ) : (
-              <>
-                {/* No count / innings / format strip here (owner 2026-09-21): a quick look
-                    shows the order itself, and the section's own gap is the only rhythm —
-                    the peek's children carry no margins of their own. */}
-                {/* THE LOOK-ONLY INNING FLIP: ‹ › either side of the kicker; the position beside
-                    each name follows the inning. "—" where the cell is open. Never a setter on
-                    the rows — the doors are the way to change anything. */}
-                <div className={styles.lineupPeekFlip} data-lineup-peek-flip>
-                  <button type="button" className={styles.gdStepper} aria-label={`Previous ${sportPack.periodLabel.toLowerCase()}`} disabled={inningShown <= 1} onClick={() => setPeekInning(inningShown - 1)}>‹</button>
-                  <p className={`${styles.sectionKicker} ${styles.lineupPeekKicker}`} aria-live="polite">
-                    {sportPack.orderLabel} · <b>{sportPack.periodLabel} {inningShown} of {lineupInningCount}</b>
-                  </p>
-                  <button type="button" className={styles.gdStepper} aria-label={`Next ${sportPack.periodLabel.toLowerCase()}`} disabled={inningShown >= lineupInningCount} onClick={() => setPeekInning(inningShown + 1)}>›</button>
-                </div>
-                <ol className={styles.lineupPeekOrder}>
-                  {battingRows.map(r => (
-                    <li key={r.player.id}>
-                      <span className={styles.lineupPeekBat}>{r.battingOrder || '–'}</span>
-                      <span className={styles.lineupPeekName}>{playerDisplayName(r.player)}</span>
-                      <span className={styles.lineupPeekPos} data-blank={!r.inningPositions[String(inningShown)] || undefined}>{r.inningPositions[String(inningShown)] || '—'}</span>
-                    </li>
-                  ))}
-                </ol>
-
-                {/* The desktop's foot door; hidden at ≤640 where the heading row carries it. */}
-                <div className={styles.lineupPeekFooter}>
-                  <Link href={editHref} className="btn btn-lime btn-sm">Edit in Lineups →</Link>
-                </div>
-              </>
-            )}
-          </>
-        );
-      })()}
-    </div>
-  ) : null;
-  const tabContent = <>{scoutingTab}{attendanceTab}{lineupTab}</>;
-
-  // THE TWO ORDERS — JSX order, never CSS `order` (see the block above).
-  // Awards: a game's follow its score and tags; any other event's close its record, after the
-  // description, links and practice plan and directly above the action row (owner, 2026-09-25).
-  const body = !isPhone ? (
+  // THE TWO ORDERS — JSX order, never CSS `order` (see the block above), the same at every width.
+  // A started non-game's awards sit above its rows — where a started game's sit (owner, 2026-09-25:
+  // "why is give awards in a different place in practices vs. games?" — one place on every event).
+  const summary = <>{titleBlock}{whenLine}{whereBlock}{placeNote}{sourceBlock}{movedBlock}</>;
+  const body = scoreLeads ? (
     <>
-      {titleBlock}{whenLine}{sourceBlock}{movedBlock}{whereBlock}{placeNote}
-      {scoreBlock}{tagsBlock}{isGameEvent && awardsBlock}{descriptionBlock}{resourcesBlock}{practiceBlock}
-      {!isGameEvent && awardsBlock}
-      {actionsBlock}{peekWarnBlock}{tabsBlock}{tabContent}
-    </>
-  ) : scoreLeads ? (
-    <>
-      {titleBlock}{whenLine}{whereBlock}{placeNote}{sourceBlock}{movedBlock}
+      {summary}
       {scoreBlock}{tagsBlock}{awardsBlock}
-      {peekWarnBlock}{tabsBlock}{tabContent}
+      {doorRows}
       {descriptionBlock}{resourcesBlock}{actionsBlock}
     </>
   ) : (
     <>
-      {titleBlock}{whenLine}{whereBlock}{placeNote}{sourceBlock}{movedBlock}
-      {practiceBlock}
-      {/* Only ever a NON-game's awards on this branch (a game's wait for the score to lead), and
-          only once it has started: ABOVE attendance, the place a started game's awards hold on a
-          phone and every event's hold on desktop. First built below attendance; the owner, on the
-          first look at the build (2026-09-25): "why is give awards in a different place in
-          practices vs. games?" — one place on every event. */}
+      {summary}
       {awardsBlock}
-      {peekWarnBlock}{tabsBlock}{tabContent}
+      {doorRows}
       {scoreBlock}{tagsBlock}
       {descriptionBlock}{resourcesBlock}{actionsBlock}
+    </>
+  );
+
+  /* A VIEW'S HEAD (E2, E6) is the portal's one modal head: "←" back to the event, the view's name,
+     and the day it belongs to. At a desk the arrow names the event ("← UAT probe game") and the
+     dialog keeps its ×; on a phone the arrow is bare — the exit, as on every full-screen sheet — so
+     the event's name rides the subtitle there ("Attendance / UAT probe game · Fri, Sep 25"). */
+  const viewHead = (title: string) => (
+    <CoachModalHeader
+      title={title}
+      titleTag="h2"
+      backLabel={ev.name}
+      subtitle={<><span className={styles.modalBackEcho}>{ev.name} · </span>{ev.startsAt ? scheduleDayLabel(ev.startsAt) : ''}</>}
+      onBack={closeView}
+      onClose={() => { void requestCloseSlideOver(); }}
+      closeIconSize={18}
+      closeAriaLabel="Close"
+    />
+  );
+
+  const panelContent = openView === 'attendance' ? (
+    <>
+      {viewHead('Attendance')}
+      <ScheduleAttendanceRoom
+        attendanceRows={attendanceRows}
+        attendanceLoading={attendanceLoading}
+        attendanceError={attendanceError}
+        attendanceSaving={attendanceSaving}
+        attendanceDirty={attendanceDirty}
+        attendanceFilter={attendanceFilter}
+        setAttendanceFilter={setAttendanceFilter}
+        setAllAttendance={setAllAttendance}
+        setRsvpEditId={setRsvpEditId}
+        handleAttendanceSave={handleAttendanceSave}
+      />
+    </>
+  ) : openView === 'scouting' ? (
+    <>
+      {viewHead('Scouting')}
+      <OpponentScoutingPanel
+        orgSlug={orgSlug}
+        teamId={teamId}
+        eventId={ev.id}
+        opponentName={ev.opponent!}
+        mirrored={isMirroredEvent(ev)}
+      />
+    </>
+  ) : (
+    <>
+      {header}
+      {body}
     </>
   );
 
@@ -1383,23 +1135,23 @@ export default function ScheduleEventSheet({
         <div
           ref={slideOverRef}
           tabIndex={-1}
-          className={`${styles.slideOver}${activeSlideTab === 'lineup' ? ` ${styles.slideOverWide}` : ''}`}
+          className={styles.slideOver}
           role="dialog"
           aria-modal="true"
-          aria-label={ev.name}
-          data-sheet-order={isPhone ? (scoreLeads ? 'score-first' : 'tabs-first') : 'desktop'}
+          aria-label={openView ? `${openView === 'attendance' ? 'Attendance' : 'Scouting'} · ${ev.name}` : ev.name}
+          data-sheet-order={scoreLeads ? 'score-first' : 'rows-first'}
+          data-sheet-view={openView ?? undefined}
           onClick={e => e.stopPropagation()}
         >
-          {header}
-          {body}
+          {panelContent}
         </div>
       </div>
 
-      {/* THE RSVP SHEET (stage 2 · C3) — one player's attendance from the foot of the screen. A
-          SIBLING of the event sheet's overlay, never a child of its panel: its dialog floor stacks
-          over the event sheet's, and a floor answers an Escape from inside ITS panel — nested, one
-          key would close both. Tapping a choice writes it through the list's own path and closes;
-          a typed note rides the same autosave (the transient pill). */}
+      {/* THE RSVP SHEET (stage 2 · C3) — one player's attendance from the foot of the screen, over
+          the room. A SIBLING of the event sheet's overlay, never a child of its panel: its dialog
+          floor stacks over the event sheet's, and a floor answers an Escape from inside ITS panel —
+          nested, one key would close both. Tapping a choice writes it through the list's own path
+          and closes; a typed note rides the same autosave (the transient pill). */}
       {rsvpEditId && (() => {
         const row = attendanceRows.find(r => r.player.id === rsvpEditId);
         if (!row) return null;

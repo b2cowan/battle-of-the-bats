@@ -1,0 +1,1391 @@
+<title>Schedule Deep Dive</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#F4F5F1; --surface:#FFFFFF; --ink:#1A211B; --ink-2:#4A544B; --muted:#6F796F; --rule:#D8DDD4;
+  --accent:#4C7719; --accent-ink:#37570F; --accent-soft:#E4EDD3; --ask:#8F540C; --ask-soft:#F5E7CF;
+  --mono-bg:#EBEEE6; --push-soft:#EEF1EA; --focus:#2F6FD1; --bad:#9E3030; --bad-soft:#F6E3E1;
+  --display:"Bricolage Grotesque","Helvetica Neue",Arial,sans-serif;
+  --body:"Source Serif 4",Georgia,"Times New Roman",serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){color-scheme:dark;
+  --paper:#141A15; --surface:#1B221C; --ink:#E9ECE5; --ink-2:#B9C1B7; --muted:#8B968B; --rule:#2B352C;
+  --accent:#A9D45A; --accent-ink:#C6E58A; --accent-soft:#24301A; --ask:#E3AA5C; --ask-soft:#33271A;
+  --mono-bg:#212A22; --push-soft:#1F271F; --focus:#7FB0FF; --bad:#E08A8A; --bad-soft:#3A2323;}}
+:root[data-theme="dark"]{color-scheme:dark;
+  --paper:#141A15; --surface:#1B221C; --ink:#E9ECE5; --ink-2:#B9C1B7; --muted:#8B968B; --rule:#2B352C;
+  --accent:#A9D45A; --accent-ink:#C6E58A; --accent-soft:#24301A; --ask:#E3AA5C; --ask-soft:#33271A;
+  --mono-bg:#212A22; --push-soft:#1F271F; --focus:#7FB0FF; --bad:#E08A8A; --bad-soft:#3A2323;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:17px;line-height:1.6;-webkit-font-smoothing:antialiased}
+a{color:var(--accent-ink);text-underline-offset:2px}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;margin:0}
+p{margin:0}
+code,.mono{font-family:var(--mono);font-size:.82em}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+button{font:inherit;color:inherit}
+[hidden]{display:none!important}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* ── top: title, stage strip, tabs ── */
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:1px solid var(--rule)}
+.tabs{max-width:1440px;margin:0 auto;padding:14px 20px 0;display:flex;align-items:flex-end;gap:2px;flex-wrap:wrap}
+@media (min-width:1040px){.tabs{padding:16px 32px 0}}
+.tabtitle{font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-right:auto;padding:0 0 12px}
+.tab{font-family:var(--display);font-weight:600;font-size:15px;padding:8px 13px 11px;border:0;background:none;color:var(--ink-2);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;display:inline-flex;align-items:center;gap:7px;min-height:44px}
+.tab:hover{color:var(--ink)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab .st{font-family:var(--mono);font-size:10.5px;color:var(--ask);background:var(--ask-soft);padding:1px 6px;border-radius:3px}
+.stagestrip{display:flex;gap:4px;flex-wrap:wrap;list-style:none;margin:0 0 10px;padding:0;width:100%}
+.stage{padding:4px 10px;font-family:var(--display);font-size:11.5px;font-weight:600;color:var(--muted);border:1px solid var(--rule);border-radius:20px;white-space:nowrap;cursor:help}
+.stage.done{color:var(--accent-ink);background:var(--accent-soft);border-color:transparent}
+.stage.current{color:var(--ink);background:var(--ask-soft);border-color:var(--ask)}
+@media (max-width:640px){.tabs{padding:10px 12px 0;overflow-x:auto;flex-wrap:nowrap}.tabtitle{display:none}.stagestrip{display:none}.tab{white-space:nowrap}}
+
+/* ── the walk ── */
+.shell{display:grid;grid-template-columns:minmax(0,1fr);max-width:1180px;margin:0 auto;padding:0 20px 80px}
+@media (min-width:1040px){.shell{grid-template-columns:220px minmax(0,1fr);gap:44px;padding:0 32px 96px}}
+.rail{display:none}
+@media (min-width:1040px){.rail{display:block;align-self:start;position:sticky;top:120px;padding:36px 16px 24px 0;border-right:1px solid var(--rule)}}
+.railhead{font-family:var(--display);font-weight:600;font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.arc{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.arc a{display:flex;gap:10px;padding:6px 8px;border-radius:6px;text-decoration:none;color:var(--ink-2);font-family:var(--display);font-weight:500;font-size:14px;line-height:1.3}
+.arc a:hover{background:var(--accent-soft);color:var(--ink)}
+.arc .n{font-family:var(--mono);font-size:11px;color:var(--muted);width:1.4em;text-align:right;flex:none;margin-top:2px}
+.masthead{padding:40px 0 34px;border-bottom:1px solid var(--rule)}
+.eyebrow{font-family:var(--display);font-size:13px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--accent-ink)}
+.masthead h1{font-size:clamp(32px,5vw,50px);font-weight:700;line-height:1.03;letter-spacing:-.015em;margin:10px 0 18px}
+.lede{font-size:19px;line-height:1.5;max-width:64ch}
+.how{margin-top:26px;display:grid;gap:22px}
+@media (min-width:760px){.how{grid-template-columns:1fr 1fr}}
+.how h2{font-size:15px;font-weight:600;margin-bottom:8px}
+.how ul{margin:0;padding-left:1.1em}
+.how li{margin:4px 0;font-size:15.5px;line-height:1.5;color:var(--ink-2)}
+.world{margin-top:24px;border:1px solid var(--rule);border-radius:8px;overflow-x:auto}
+.world table{width:100%;border-collapse:collapse;font-size:14.5px}
+.world th{font-family:var(--display);font-weight:600;text-align:left;padding:8px 12px;background:var(--mono-bg);color:var(--ink-2);font-size:12.5px;letter-spacing:.05em;text-transform:uppercase}
+.world td{padding:8px 12px;border-top:1px solid var(--rule);vertical-align:top;line-height:1.45;color:var(--ink-2)}
+.world td:first-child{font-family:var(--display);font-weight:600;white-space:nowrap;width:1%;color:var(--ink)}
+.callout{margin-top:22px;padding:14px 18px;border-left:3px solid var(--ask);background:var(--ask-soft);border-radius:0 8px 8px 0;max-width:72ch;font-size:15.5px;line-height:1.55}
+.callout b{color:var(--ink)}
+.callout.ok{border-left-color:var(--accent);background:var(--accent-soft)}
+.callout.bad{border-left-color:var(--bad);background:var(--bad-soft)}
+
+.station{display:grid;grid-template-columns:minmax(0,1fr);gap:8px 0;padding:44px 0 40px;border-bottom:1px solid var(--rule);scroll-margin-top:110px}
+@media (min-width:760px){.station{grid-template-columns:64px minmax(0,1fr)}}
+.num{font-family:var(--display);font-weight:700;font-size:44px;line-height:1;color:var(--accent);letter-spacing:-.03em}
+@media (min-width:760px){.num{grid-column:1;grid-row:1;padding-top:4px}.station > :not(.num){grid-column:2}}
+.station h2{font-size:clamp(23px,3vw,30px);font-weight:600;line-height:1.15;letter-spacing:-.01em;max-width:32ch}
+.job{font-size:18px;font-style:italic;color:var(--ink-2);max-width:60ch;margin-top:4px}
+.where{margin-top:14px;padding:11px 14px;background:var(--mono-bg);border-radius:6px;font-family:var(--mono);font-size:13px;line-height:1.55;color:var(--ink-2);overflow-x:auto}
+.where b{color:var(--ink);font-weight:500}
+.label{font-family:var(--display);font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 6px}
+.seen{max-width:68ch}
+.seen p{margin:0 0 10px}
+.seen ul{margin:0 0 10px;padding-left:1.15em}
+.seen li{margin:3px 0}
+.u{font-family:var(--mono);font-size:.84em;background:var(--mono-bg);padding:.05em .35em;border-radius:3px}
+.measure{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 14px}
+.measure span{font-family:var(--mono);font-size:12px;color:var(--ink-2);background:var(--mono-bg);border-radius:4px;padding:3px 8px}
+.measure b{color:var(--ink);font-weight:500}
+.mt{border-collapse:collapse;font-size:14px;margin:6px 0 14px;min-width:560px}
+.mtw{overflow-x:auto;max-width:100%}
+.mt th{font-family:var(--display);font-weight:600;text-align:left;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--rule)}
+.mt td{padding:6px 10px;border-bottom:1px solid var(--rule);font-family:var(--mono);font-size:12.5px;color:var(--ink-2);white-space:nowrap}
+.mt td:first-child{font-family:var(--display);font-size:14px;color:var(--ink);white-space:normal}
+.mt td.hi{color:var(--bad);font-weight:500}
+.shot{display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap;margin:14px 0 4px}
+.shot figure{margin:0;flex:0 1 auto;min-width:0}
+.shot figure.p{width:250px;max-width:100%}
+.shot figure.d{width:640px;max-width:100%}
+.shot figure.tall{width:220px}
+.shot img{width:100%;height:auto;border:1px solid var(--rule);border-radius:6px;display:block;background:#fff}
+.shot figcaption{font-family:var(--display);font-size:13px;color:var(--muted);margin-top:6px;line-height:1.4}
+.design{margin:18px 0 0;padding:16px 20px 14px;border:1px solid var(--rule);border-radius:8px;background:var(--surface);max-width:72ch}
+.design h3{font-size:16px;font-weight:600;margin:0 0 8px}
+.design h4{font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:12px 0 4px}
+.design h4.works{color:var(--accent-ink)}
+.design h4.way{color:var(--ask)}
+.design ul{margin:0;padding-left:1.1em}
+.design li{margin:4px 0;font-size:15px;line-height:1.5;color:var(--ink-2)}
+.design li b{color:var(--ink);font-weight:600}
+.ask{margin:18px 0 0;padding:18px 20px 16px;border-left:3px solid var(--ask);background:var(--ask-soft);border-radius:0 8px 8px 0;max-width:72ch}
+.ask .qn{font-family:var(--mono);font-size:12px;color:var(--ask)}
+.ask h3{font-size:19px;font-weight:600;line-height:1.3;margin:4px 0 8px}
+.ask p{font-size:15.5px;line-height:1.55;color:var(--ink-2);margin:0 0 6px}
+.ask .rec{font-size:15px;color:var(--ink);margin-top:8px}
+.ask .rec b{color:var(--accent-ink)}
+.ask .rides{font-size:14px;color:var(--muted);margin-top:6px}
+.ask .rides b{color:var(--ink-2)}
+.ruling{margin-top:12px;display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.ruling button{font-family:var(--display);font-weight:600;font-size:13.5px;padding:8px 14px;min-height:44px;border:1.5px solid var(--rule);background:var(--surface);border-radius:22px;cursor:pointer;color:var(--ink-2)}
+.ruling button:hover{border-color:var(--ink-2);color:var(--ink)}
+.ruling button[aria-pressed="true"]{background:var(--ink);color:var(--paper);border-color:var(--ink)}
+.ruling button[aria-pressed="true"][data-v="Reshape"]{background:var(--ask);border-color:var(--ask);color:#fff}
+.note{width:100%;margin-top:10px;font:inherit;font-size:15px;line-height:1.45;padding:8px 10px;border:1px solid var(--rule);border-radius:6px;background:var(--surface);color:var(--ink);resize:vertical;min-height:44px}
+.standing{padding:46px 0 40px;border-bottom:1px solid var(--rule)}
+.standing h2{font-size:clamp(25px,3.4vw,33px);font-weight:600}
+.standing .intro{max-width:64ch;color:var(--ink-2);margin:10px 0 6px;font-size:17px}
+.ladder{list-style:none;margin:16px 0 0;padding:0;display:grid;gap:10px;max-width:72ch}
+.ladder li{display:flex;gap:12px;align-items:flex-start;font-size:15.5px;line-height:1.5;color:var(--ink-2)}
+.ladder .ln{flex:none;min-width:32px;height:28px;border-radius:14px;background:var(--accent-soft);color:var(--accent-ink);font-family:var(--mono);font-size:12px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;margin-top:1px}
+.ladder li b{color:var(--ink)}
+.stagetable{border-collapse:collapse;font-size:14.5px;margin-top:14px;min-width:680px}
+.stagetable th{font-family:var(--display);font-weight:600;text-align:left;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--rule)}
+.stagetable td{padding:9px 10px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2);line-height:1.45}
+.stagetable td:first-child{font-family:var(--display);font-weight:600;color:var(--ink);white-space:nowrap}
+.stagetable td.state{font-family:var(--mono);font-size:12px}
+.summary{padding:36px 0 0}
+.summary h2{font-size:22px;font-weight:600}
+.summary p{color:var(--ink-2);max-width:64ch;margin:6px 0 14px;font-size:15.5px}
+.btn{font-family:var(--display);font-weight:600;font-size:15px;padding:10px 16px;min-height:44px;border:0;background:var(--accent);color:#fff;border-radius:8px;cursor:pointer}
+.btn.ghost{background:none;border:1.5px solid var(--rule);color:var(--ink-2)}
+.out{width:100%;margin-top:14px;font-family:var(--mono);font-size:12.5px;line-height:1.5;padding:12px;border:1px solid var(--rule);border-radius:8px;background:var(--surface);color:var(--ink);min-height:240px}
+
+/* ── stage tab ── */
+.prop{max-width:1440px;margin:0 auto;padding:0 20px 80px}
+@media (min-width:1040px){.prop{padding:0 32px 96px}}
+.phead{padding:40px 0 28px;border-bottom:1px solid var(--rule)}
+.phead h1{font-size:clamp(29px,4vw,44px);font-weight:700;line-height:1.05;letter-spacing:-.015em;margin:10px 0 16px}
+.spec{padding:36px 0 30px;border-bottom:1px solid var(--rule);scroll-margin-top:110px}
+.spec h2{font-size:clamp(21px,2.6vw,28px);font-weight:600;margin-bottom:6px}
+.spec .why{max-width:72ch;color:var(--ink-2);font-size:16px;margin-bottom:18px}
+.spec .why b{color:var(--ink)}
+.pair{display:flex;gap:28px;flex-wrap:wrap;align-items:flex-start}
+.pair > div{flex:0 0 auto;max-width:100%}
+.pcap{font-family:var(--display);font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.pcap .k{font-size:10.5px;padding:1px 6px;border-radius:3px;background:var(--mono-bg);color:var(--ink-2);letter-spacing:.02em}
+.pcap .k.after{background:var(--accent-soft);color:var(--accent-ink)}
+.pcap .k.meas{font-family:var(--mono);background:var(--ask-soft);color:var(--ask);text-transform:none}
+.cap{width:390px;max-width:100%;height:844px;border:1px solid var(--rule);border-radius:12px;overflow:hidden;background:#fff;position:relative}
+.cap img{display:block;width:100%;height:auto}
+.capw{width:1440px;height:900px}
+.widewrap{overflow-x:auto;max-width:100%;padding-bottom:6px}
+.tagrow{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0 0;max-width:390px}
+.mk{font-family:var(--display);font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:3px 8px;border-radius:3px;cursor:pointer;border:0;min-height:26px}
+.mk.new{background:#DDEBB8;color:#2E4A0C}
+.mk.re{background:#F5E7CF;color:#8F540C}
+.mk.un{background:var(--mono-bg);color:var(--muted)}
+.fl{cursor:pointer;color:#fff;background:#9E3030;border:0;font-family:var(--display);font-size:11px;font-weight:700;border-radius:4px;padding:3px 7px;letter-spacing:.04em;min-height:26px}
+.fl.fix{background:#4C7719}
+.intent{margin-top:14px;max-width:72ch;font-size:15px;color:var(--ink-2)}
+.intent b{color:var(--ink)}
+.opts{margin-top:16px;max-width:72ch;border:1px solid var(--ask);border-radius:8px;overflow:hidden;background:var(--surface)}
+.opts .q{padding:10px 14px;background:var(--ask-soft);font-size:15px;color:var(--ink);line-height:1.45}
+.opts .q b{font-family:var(--display)}
+.opts label{display:flex;gap:10px;align-items:flex-start;padding:10px 14px;border-top:1px solid var(--rule);font-size:15px;color:var(--ink-2);cursor:pointer;min-height:44px}
+.opts input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--accent);flex:none}
+.opts label.rec b{color:var(--accent-ink)}
+.opts textarea{display:block;width:calc(100% - 28px);margin:6px 14px 12px}
+.taps{border-collapse:collapse;font-size:14.5px;margin-top:10px;min-width:560px}
+.taps th{font-family:var(--display);text-align:left;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 10px;border-bottom:1px solid var(--rule)}
+.taps td{padding:8px 10px;border-bottom:1px solid var(--rule);color:var(--ink-2);vertical-align:top}
+.taps td b{color:var(--ink)}
+.taps .up{color:var(--bad);font-weight:600}.taps .dn{color:var(--accent-ink);font-weight:600}
+.flow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:12px 0 0;font-family:var(--display);font-size:14px}
+.flow span.s{padding:8px 12px;border-radius:8px;background:var(--surface);border:1px solid var(--rule);color:var(--ink)}
+.flow span.s.hl{border-color:var(--accent);background:var(--accent-soft)}
+.flow span.a{color:var(--muted);font-family:var(--mono);font-size:12px}
+
+/* ── the drawn product: the phone sheet, warm skin ── */
+.fr{width:390px;height:844px;flex:none;border:1px solid var(--rule);border-radius:12px;overflow:hidden;position:relative;background:#fff;color:#241E15;font-family:"Inter",system-ui,sans-serif;font-size:14px;line-height:1.35;box-shadow:0 1px 0 rgba(0,0,0,.02)}
+.fr *{box-sizing:border-box}
+.fr svg{display:block}
+.sh{position:absolute;inset:0;display:flex;flex-direction:column;background:#fff}
+.shh{height:62px;display:flex;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid rgba(70,55,30,.12);flex:none}
+.shh .bk{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;color:#241E15}
+.shh .ty{color:#3A5A0F}.shh .ty.p{color:#7A3E6C}
+.shh .chip{font-size:12px;font-weight:700;letter-spacing:.06em;padding:4px 9px;border-radius:6px;background:#E4EDD3;color:#3A5A0F}
+.shh .chip.p{background:#F1E4EE;color:#7A3E6C}
+.shh .tt{font-weight:700;font-size:16px;flex:1}
+.shh .sub{font-size:12.5px;color:#615A54;font-weight:500;display:block}
+.shb{flex:1;overflow:hidden;padding:0 16px}
+.sht{font-family:"Barlow Condensed",Inter,sans-serif;font-weight:800;font-size:24px;line-height:1.1;margin:20px 0 8px;letter-spacing:-.005em}
+.shw{font-size:15px;line-height:1.45;color:#241E15}
+.shw .arr{background:#F6E3E1;border-radius:3px;padding:0 3px}
+.shp{display:flex;align-items:center;justify-content:space-between;min-height:52px;border-bottom:1px solid rgba(70,55,30,.12);margin-top:6px;color:#4C6A1F;font-weight:600;font-size:15px;gap:8px}
+.shp span{display:inline-flex;align-items:center;gap:8px}
+.shp .un{color:#241E15;font-weight:400}
+.shp span.pt,.shp span.pt span{display:inline}
+.shp .cv{color:#8C857B}
+.quiet{display:inline-flex;align-items:center;min-height:44px;padding:0 16px;border:1px solid rgba(70,55,30,.2);border-radius:8px;background:#F8F4EC;font-weight:600;font-size:14.5px;margin:14px 0 0;color:#241E15}
+.awbox{margin:12px 0 4px}
+.awbox .k{font-family:"Barlow Condensed",Inter,sans-serif;font-weight:700;font-size:13px;letter-spacing:.06em;text-transform:uppercase;color:#4A4235}
+.awbox p{font-size:13.5px;color:#615A54;margin-top:4px}
+.kick{font-family:"Barlow Condensed",Inter,sans-serif;font-weight:700;font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:#615A54;margin:18px 0 6px}
+.drows{border:1px solid rgba(70,55,30,.14);border-radius:12px;overflow:hidden;margin-top:14px;background:#fff}
+.drow{display:flex;align-items:center;gap:12px;min-height:64px;padding:9px 12px 9px 14px;border-top:1px solid rgba(70,55,30,.1);position:relative}
+.drow:first-child{border-top:0}
+.drow .ic{width:22px;flex:none;color:#4C6A1F}
+.drow .tx{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.drow .tx b{font-size:15.5px;font-weight:600;color:#241E15}
+.drow .tx small{font-size:13.5px;color:#615A54;line-height:1.35}
+.drow .tx small .o{color:#9E3030;font-weight:600}.drow .tx small .l{color:#8F540C;font-weight:600}.drow .tx small .g{color:#3A5A0F;font-weight:600}
+.drow .tx small.warn{color:#8F540C}
+.drow .cv{color:#A29A8E;flex:none}
+.drow .flag{position:absolute;right:34px;top:8px}
+.shf{flex:none;height:62px;border-top:1px solid rgba(70,55,30,.12);display:grid;grid-template-columns:1fr 1fr 1fr;align-items:center;text-align:center;font-weight:600;font-size:15px;background:#fff}
+.shf .del{color:#9E3030}
+.ruler{position:absolute;left:4px;font-family:"IBM Plex Mono",monospace;font-size:10px;color:#8F540C;background:rgba(245,231,207,.95);padding:1px 4px;border-radius:3px;pointer-events:none;z-index:4}
+.fmark{position:absolute;z-index:5;display:flex;gap:4px;flex-wrap:wrap}
+/* the room */
+.rm-chips{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:12px 16px 0}
+.rm-chips span{height:44px;border:1px solid rgba(70,55,30,.16);border-radius:10px;background:#F8F4EC;display:inline-flex;align-items:center;justify-content:center;gap:5px;font-size:15px;font-weight:600;color:#4A4235}
+.rm-chips span.on{background:#E8EDD9;border-color:#4C6A1F;color:#2E4A0C}
+.rm-chips .o{color:#9E3030}.rm-chips .l{color:#8F540C}.rm-chips .g{color:#3A5A0F}
+.rm-act{display:flex;justify-content:flex-end;gap:4px;padding:4px 10px 0}
+.rm-act span{min-height:44px;display:inline-flex;align-items:center;gap:6px;padding:0 10px;font-size:15px;color:#4A4235}
+.rm-rows{margin:4px 16px 0;border-top:1px solid rgba(70,55,30,.1)}
+.rm-row{height:48px;display:flex;align-items:center;gap:10px;border-bottom:1px solid rgba(70,55,30,.1);padding:0 4px 0 8px}
+.rm-row b{flex:1;font-weight:600;font-size:15px}
+.rm-row .bd{display:inline-flex;align-items:center;gap:5px;font-size:14px;font-weight:600;padding:4px 10px;border-radius:14px;border:1px solid}
+.bd.in{color:#3A5A0F;border-color:#B9D3A0;background:#EEF4E3}.bd.la{color:#8F540C;border-color:#E6C79B;background:#FBF1E1}.bd.ou{color:#9E3030;border-color:#E6B3AE;background:#FBEAE8}.bd.nr{color:#615A54;border-color:rgba(70,55,30,.2);background:#fff}
+.rm-row .cv{color:#A29A8E}
+.scrim{position:absolute;inset:0;background:rgba(36,30,21,.32);z-index:6}
+.bsheet{position:absolute;left:0;right:0;bottom:0;height:391px;background:#fff;border-radius:18px 18px 0 0;z-index:7;padding:12px 16px 16px;box-shadow:0 -10px 30px rgba(36,30,21,.18)}
+.bsheet .grab{width:38px;height:4px;border-radius:2px;background:#4A4235;margin:0 auto 18px}
+.bsheet h4{font-family:"Barlow Condensed",Inter,sans-serif;font-weight:800;font-size:18px}
+.bsheet .ev{font-size:13px;color:#615A54;margin:2px 0 10px}
+.bsheet .ch{height:52px;border:1px solid rgba(70,55,30,.18);border-radius:10px;margin-bottom:6px;display:flex;align-items:center;gap:12px;padding:0 14px;font-size:15px;font-weight:600}
+.bsheet .ch.on{background:#EEEEE8}
+.bsheet .ch .t{margin-left:auto}
+/* the desktop dialog */
+.dsk{position:relative;width:1440px;height:900px;border:1px solid var(--rule);border-radius:10px;overflow:hidden;background:#EDE9E1;font-family:"Inter",system-ui,sans-serif;color:#241E15}
+.dsk .bg{position:absolute;inset:0;filter:saturate(.9);opacity:.55}
+.dsk .bg img{width:100%;height:auto;display:block}
+.dsk .dim{position:absolute;inset:0;background:rgba(36,30,21,.28)}
+.dlg{position:absolute;left:360px;top:44px;width:720px;background:#fff;border-radius:14px;box-shadow:0 24px 60px rgba(36,30,21,.3);overflow:hidden}
+.dlg .dh{height:56px;display:flex;align-items:center;gap:10px;padding:0 24px;border-bottom:1px solid rgba(70,55,30,.12)}
+.dlg .dh .x{margin-left:auto;color:#615A54;font-size:20px}
+.dlg .db{padding:4px 24px 20px}
+.dlg .sht{font-size:22px;margin:16px 0 6px}
+.dlg .shw{font-size:14.5px}
+.dlg .shp{min-height:40px;border-bottom:0;font-size:14.5px}
+.dlg .drows{margin-top:12px}
+.dlg .drow{min-height:58px}
+.dlg .acts{display:flex;align-items:center;gap:10px;margin-top:18px;padding-top:16px;border-top:1px solid rgba(70,55,30,.12)}
+.dlg .acts span{display:inline-flex;align-items:center;min-height:36px;padding:0 14px;border:1px solid rgba(70,55,30,.2);border-radius:8px;font-weight:600;font-size:14px}
+.dlg .acts .sp{margin-left:auto;border:0}
+.dlg .acts .del{background:#FBEAE8;color:#9E3030;border-color:#E6B3AE}
+
+/* ── documents ── */
+.doc{max-width:80ch;margin:0 auto;padding:36px 20px 96px}
+.doc h1{font-size:clamp(27px,3.6vw,38px);font-weight:700;letter-spacing:-.015em;line-height:1.1;margin:8px 0 14px}
+.doc h2{font-size:22px;font-weight:600;margin:34px 0 8px;padding-top:12px;border-top:1px solid var(--rule)}
+.doc h3{font-size:17px;font-weight:600;margin:20px 0 6px}
+.doc p{margin:0 0 12px;font-size:16.5px}
+.doc ul,.doc ol{margin:0 0 12px;padding-left:1.2em}
+.doc li{margin:4px 0;font-size:16px;color:var(--ink-2)}
+.doc b,.doc strong{color:var(--ink)}
+.doc blockquote{margin:12px 0 16px;padding:12px 16px;border-left:3px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;font-size:15.5px}
+.doc blockquote p{margin:0;font-size:15.5px}
+.doc .tw{overflow-x:auto;max-width:100%;margin:8px 0 16px}
+.doc table{border-collapse:collapse;font-size:14px;min-width:620px}
+.doc th{font-family:var(--display);text-align:left;font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--rule)}
+.doc td{padding:7px 8px;border-bottom:1px solid var(--rule);vertical-align:top;color:var(--ink-2)}
+.doc code{background:var(--mono-bg);padding:.05em .35em;border-radius:3px;word-break:break-word}
+.decrow{border:1px solid var(--rule);border-radius:10px;background:var(--surface);padding:16px 18px;margin-bottom:12px}
+.decrow .dh{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:4px}
+.decrow .dh strong{font-family:var(--display);font-size:16px}
+.decrow .tag{font-family:var(--display);font-size:12px;font-weight:600;padding:3px 8px;border-radius:5px;white-space:nowrap;background:var(--accent-soft);color:var(--accent-ink)}
+.decrow .tag.std{background:var(--mono-bg);color:var(--ink-2)}
+.decrow .meta{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.decrow p{font-size:15.5px;color:var(--ink-2);margin-top:6px}
+
+dialog{padding:0;border:1px solid var(--rule);border-radius:12px;max-width:580px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}
+dialog::backdrop{background:#16201880}
+.dhead{padding:16px 22px;border-bottom:1px solid var(--rule);display:flex;justify-content:space-between;align-items:center;gap:12px}
+.dhead h2{font-size:18px}
+.dbody{padding:18px 22px 22px;font-size:15.5px;line-height:1.55}
+.dbody h3{font-family:var(--display);font-size:12.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:14px 0 4px}
+.dbody h3:first-child{margin-top:0}
+.dbody .here{background:var(--surface);border:1px solid var(--rule);border-radius:6px;padding:10px 12px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50;background:var(--ink);color:var(--paper);font-family:var(--display);font-weight:600;font-size:14px;padding:9px 18px;border-radius:99px}
+.doc a,.seen a,.callout a{overflow-wrap:anywhere}
+/* ── the QA walk ── */
+.qa{margin-top:34px;padding-top:22px;border-top:1px solid var(--rule)}
+.qa h2{border-top:0;padding-top:0;margin-top:6px}
+.qa-card{border:1px solid var(--rule);border-radius:10px;background:var(--surface);padding:14px 18px;margin:14px 0 8px}
+.qa-card h3{margin:0 0 8px}
+.qa-kv{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;margin:0 0 10px;font-size:15px}
+.qa-kv dt{font-family:var(--display);font-weight:600;color:var(--muted)}
+.qa-kv dd{margin:0;font-family:var(--mono);font-size:13.5px;color:var(--ink);word-break:break-word}
+.qa-small{font-size:14px;color:var(--ink-2);margin:0}
+.qa-part{border:1px solid var(--rule);border-radius:10px;background:var(--surface);padding:12px 16px 14px;margin:14px 0}
+.qa-part h3{margin:4px 0 8px}
+.chk{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px solid var(--rule);font-size:15.5px;line-height:1.5;color:var(--ink-2);cursor:pointer;min-height:44px}
+.chk:first-of-type{border-top:0}
+.chk input{width:20px;height:20px;margin:3px 0 0;flex:none;accent-color:var(--accent)}
+.chk b{color:var(--ink)}
+.verdict{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid var(--rule);font-family:var(--display);font-size:14px}
+.verdict > span{font-weight:600;color:var(--ink)}
+.verdict label{display:inline-flex;gap:6px;align-items:center;min-height:44px;cursor:pointer;color:var(--ink-2)}
+.verdict input{width:18px;height:18px;accent-color:var(--accent)}
+.qa-calls .opts{margin-top:12px}
+.qa-foot{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:18px}
+.qa-foot .out{flex-basis:100%}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></symbol>
+  <symbol id="i-dumb" viewBox="0 0 24 24"><path d="M6 7v10M3 9v6M18 7v10M21 9v6M6 12h12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M12 21s-7-6.2-7-11a7 7 0 0114 0c0 4.8-7 11-7 11z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="10" r="2.5" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" fill="none" stroke="currentColor" stroke-width="2"/><path d="M2.5 20c.8-3.6 3.3-5.5 6.5-5.5s5.7 1.9 6.5 5.5M16 4.8a3.5 3.5 0 010 6.5M18.5 14.8c1.6.8 2.6 2.5 3 5.2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-list" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11M4 6h.01M4 12h.01M4 18h.01" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="3" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="i-plan" viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="17" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 4.5h6M9 10h6M9 14h6M9 18h3" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-in" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 12.5l2.7 2.6L16 9.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="i-late" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M12 7v5l3 2" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-out" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8.5 15.5l7-7" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+  <symbol id="i-q" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9.6 9.3a2.5 2.5 0 014.8 1c0 1.7-2.4 2.1-2.4 3.6M12 17h.01" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></symbol>
+</svg>
+
+<div class="top">
+  <div class="tabs" role="tablist" aria-label="Schedule deep dive">
+    <span class="tabtitle">Schedule deep dive · Coaches Portal</span>
+    <ul class="stagestrip" aria-label="Project lifecycle">
+      <li class="stage done" title="Walk published and stage 1 drawn — 25 Sep 2026">Design</li>
+      <li class="stage done" title="Stage 1 ruled as drawn (E1–E6, split first, calendar fix now) — 25 Sep 2026">Ruled</li>
+      <li class="stage done" title="Stage 1 built on dev and committed — 25 Sep 2026 (part 0 1265bbca the calendar fix · part 1 13929db2 the split · part 2 the sheet)">Build</li>
+      <li class="stage done" title="Stage 1: /simplify, /review (four lenses; three defects fixed) and /docs done — 25 Sep 2026">Review</li>
+      <li class="stage current" title="Stage 1 walk published — ledger §242, the QA walks tab — 25 Sep 2026">QA</li>
+      <li class="stage" title="—">Shipped</li>
+    </ul>
+    <button class="tab" role="tab" data-tab="walk" aria-selected="true">The walk</button>
+    <button class="tab" role="tab" data-tab="s1" aria-selected="false">1 · The event sheet <span class="st">built</span></button>
+    <button class="tab" role="tab" data-tab="brief" aria-selected="false">PM brief</button>
+    <button class="tab" role="tab" data-tab="plan" aria-selected="false">Full plan</button>
+    <button class="tab" role="tab" data-tab="dec" aria-selected="false">Decisions</button>
+    <button class="tab" role="tab" data-tab="qa" aria-selected="false">QA walks <span class="st">§242</span></button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════ THE WALK ═══════════════════════════════ -->
+<div class="shell" id="tab-walk" role="tabpanel">
+<aside class="rail" aria-label="The stations">
+  <div class="railhead">The walk</div>
+  <ol class="arc">
+    <li><a href="#st1"><span class="n">1</span>The list at open</a></li>
+    <li><a href="#st2"><span class="n">2</span>Week and Month at a desk</a></li>
+    <li><a href="#st3"><span class="n">3</span>The event sheet, by kind</a></li>
+    <li><a href="#st4"><span class="n">4</span>Attendance</a></li>
+    <li><a href="#st5"><span class="n">5</span>The doors out of an event</a></li>
+    <li><a href="#st6"><span class="n">6</span>Adding and editing</a></li>
+    <li><a href="#st7"><span class="n">7</span>Tournaments</a></li>
+    <li><a href="#st8"><span class="n">8</span>The coach's calendar</a></li>
+    <li><a href="#st9"><span class="n">9</span>The page itself</a></li>
+    <li><a href="#standing"><span class="n">—</span>Standing back</a></li>
+    <li><a href="#ladder"><span class="n">—</span>The stages</a></li>
+    <li><a href="#paste"><span class="n">—</span>Your rulings</a></li>
+  </ol>
+</aside>
+
+<main>
+<header class="masthead">
+  <div class="eyebrow">Coaches Portal · the Schedule · a deep dive</div>
+  <h1>The schedule, end to end, on a phone and at a desk</h1>
+  <p class="lede">The Schedule is the screen a coach opens most: to see what's next, to take attendance at the fence, to open the lineup, to record the score. This walk reads it as built on <b>25 September 2026</b> at four sizes. For each station you get what's on the screen and its numbers, how it feels to use, and where I'd change its shape. Stage 1 is drawn at true size on its own tab. You read both against the product and tell me what to change or add.</p>
+  <div class="how">
+    <div>
+      <h2>How to read this</h2>
+      <ul>
+        <li>Nine stations, in the order a coach meets them. Each has the screen <b>as built</b> (captures and measurements), <b>my read</b> (what works, what gets in the way, what I'd change) and <b>shape questions</b> with <b>Keep · Reshape · Not yet</b> and a notes box.</li>
+        <li>Then <b>Standing back</b> (six rules that cut across the stations) and <b>the stages</b>. Each stage is drawn, you rule on it, then it's built and walked, one at a time.</li>
+        <li>Every red flag and green chip on a drawing opens its explanation when clicked, and so does every NEW / RESTYLED / UNCHANGED tag.</li>
+      </ul>
+    </div>
+    <div>
+      <h2>Where I walked</h2>
+      <ul>
+        <li>A read-only browser probe at <b>390×844</b> and <b>360×780</b> (phones, touch), <b>768×1024</b> (tablet) and <b>1440×900</b> (desk). It opened sheets and forms and closed them; it never saved an answer.</li>
+        <li>Every number comes from the browser's own geometry, not from a screenshot.</li>
+        <li>The phone Schedule was re-shaped in stage 2 of <i>Coaching from a phone</i> (C1–C4, walked 35/35 in §216). I build on it here and don't reopen it.</li>
+      </ul>
+    </div>
+  </div>
+  <div class="world">
+    <table>
+      <tr><th>Where</th><th>What</th></tr>
+      <tr><td>Team</td><td><b>UAT Test Team</b> · UAT Test Org · 2026 season · signed in as <b>uat-coach@uat-test-org.local</b> on <b>localhost:3000</b> (the dev password in <code>.env.local</code>; dev only, so keep it private)</td></tr>
+      <tr><td>The day</td><td>Fri 25 Sep. <b>UAT probe game</b> vs Probe Rovers started 3:07 p.m.: 10 in, <b>#11 Kai late, #12 Logan out</b>, lineup set. Next: <b>UAT probe game · no lineup</b>, Sun 27 Sep 1:00 p.m., nobody has answered yet. Then <b>Practice review — next week</b>, Mon 28 Sep, a one-block plan.</td></tr>
+      <tr><td>A real season</td><td>The coach demo's <b>Riverdale Ridge 12U</b>: 39 events from 18 Jul to 26 Sep, read through the no-login demo door (the demo account can't write)</td></tr>
+      <tr><td>A tournament</td><td><b>UAT Rep Club 15U AAA</b> in <b>UAT Rep Club Invitational 2026</b> (5–7 Oct), signed in as the club coach. It's the only tournament entry on dev.</td></tr>
+      <tr><td>Not here</td><td>A multi-day tournament event, a team event, a tryout session and an organizer-run (mirrored) game. The fixture has none, and dev has no mirrored game on any team. I read them from the code (station 3) and seeded nothing.</td></tr>
+    </table>
+  </div>
+  <div class="callout"><b>The QA walk of the five built changes</b> (§212 · §214 · §219 · §222 · §236) is its own page, linked on the <b>QA walks</b> tab. It doesn't hold this up; walk it whenever suits you. What it finds goes into the stage it touches.</div>
+</header>
+
+<!-- ───── 1 ───── -->
+<section class="station" id="st1" data-q="1">
+  <div class="num">1</div>
+  <h2>The list at open: a September desktop still starts in April</h2>
+  <p class="job">A coach opens the Schedule to see what's next.</p>
+  <div class="where"><b>Schedule</b> · List · phone (walked §216) and desk</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p><b>On a phone</b> the list opens with today's row directly under its month, 142px down. The list itself scrolls, up into the past and down into the future. That's stage 2's C1, walked and passed.</p>
+    <p><b>On a desk</b> it opens at the top of the season: <span class="u">APRIL 2026 · Apr 2 · @ Lakeside 2–7 LOSS</span> and on down. On the fixture's short season today's row is the 15th, at 852px, and just clears the fold. On a real season (the demo's 12U) the next event sits at <b>1,916px</b>, under 38 finished events. The tablet also opens on 2 Apr, with today at 923px.</p>
+    <div class="measure"><span>phone: today at <b>142px</b> · 6 rows on screen</span><span>desk: first row <b>Apr 2</b> · today at <b>852px</b></span><span>real season: next event at <b>1,916px</b> · 38 rows above</span><span>768: today at <b>923px</b></span></div>
+    <div class="shot">
+      <figure class="d"><img src="{{IMG:list-1440}}" alt="Desktop schedule list opening on April 2026"><figcaption>Capture · 1440 · the fixture opens on Apr 2; today's game (Game day pill) is the bottom row</figcaption></figure>
+      <figure class="d"><img src="{{IMG:demo-list-1440}}" alt="Demo team's desktop list opening on July 18"><figcaption>Capture · 1440 · a real season (demo 12U) opens on 18 Jul; the next event is 1,916px down</figcaption></figure>
+      <figure class="p"><img src="{{IMG:list-390}}" alt="Phone schedule list opening on today"><figcaption>Capture · 390 · the phone opens on today (C1)</figcaption></figure>
+    </div>
+  </div>
+  <div class="design">
+    <h3>How it feels to use: my read</h3>
+    <h4 class="works">What works</h4>
+    <ul><li><b>The phone is right</b> and walked. The rows are the portal's one row recipe at both widths, and the month bands keep you oriented.</li></ul>
+    <h4 class="way">What gets in the way</h4>
+    <ul><li><b>The desk is the last list in the portal that opens on the past.</b> Practice plans, Lineups and the phone all open on what's next. On a real season, a coach at a desk scrolls past two screens of results every time. <button class="fl" data-f="F01" data-here="The fixture fits by luck: 14 finished events. The demo's 38 push the next event to 1,916px.">F01</button></li></ul>
+    <h4>What I'd change</h4>
+    <ul><li><b>Open the desk list on today</b>, with today's row under its month at the top and the season so far above it. Same rows, same data, the phone's rule. C1 left the desk as "re-ask after the walk", and the walk has passed.</li></ul>
+  </div>
+  <div class="ask" data-ask="Q1.1">
+    <div class="qn">Q 1.1 · S2</div>
+    <h3>Should the desktop list open on today, the way the phone does?</h3>
+    <p>This is the question C1 left open. The measurement answers it: on a real season, April costs two screens of scrolling.</p>
+    <div class="rec"><b>Recommendation:</b> Reshape, in stage 2.</div>
+    <div class="rides"><b>What rides on it:</b> nothing off the page. The deep links open a sheet, not the list, the export is still the whole season, and the demo tour's schedule stop anchors on a row, which survives.</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q1.1" placeholder="Your notes on Q 1.1"></textarea>
+  </div>
+</section>
+
+<!-- ───── 2 ───── -->
+<section class="station" id="st2">
+  <div class="num">2</div>
+  <h2>Week and Month at a desk: Month can't say what or when</h2>
+  <p class="job">A coach checks the shape of the week or the month.</p>
+  <div class="where"><b>Schedule</b> · Week · Month · 1440 (the phone was redrawn in C2)</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p><b>Week</b> draws seven columns: an empty day is a card with "—", and a day with events shows each one's time, name and a coloured rail. At 1440 that reads fine. <b>Month</b> draws 165px cells whose chips cut the name (<span class="u">UAT probe prac</span>, <span class="u">Practice revie</span>) and carry no time. The 641–768 band's Month chips (16px) are an owner call still owed from §216 C4.</p>
+    <div class="shot">
+      <figure class="d"><img src="{{IMG:week-1440}}" alt="Desktop week view"><figcaption>Capture · 1440 · Week</figcaption></figure>
+      <figure class="d"><img src="{{IMG:month-1440}}" alt="Desktop month view with truncated chips"><figcaption>Capture · 1440 · Month: the names are cut and there are no times</figcaption></figure>
+    </div>
+  </div>
+  <div class="design">
+    <h3>How it feels to use: my read</h3>
+    <h4 class="works">What works</h4><ul><li><b>Week is a good desk view</b>, one row and seven columns, and I'd leave it alone.</li></ul>
+    <h4 class="way">What gets in the way</h4><ul><li><b>Month reads as colour, not content.</b> You can see that Monday has a practice, but not which one or when. <button class="fl" data-f="F09" data-here="165px cells; the chip is one line of 12px text with no time.">F09</button></li></ul>
+    <h4>What I'd change</h4><ul><li>Put <b>the time and the name on two lines</b> in each chip, with "+N more" when a day overflows. Or give the desk the phone's answer: dots on the grid and the tapped day's rows beneath. I'd draw both in stage 2.</li></ul>
+  </div>
+  <div class="ask" data-ask="Q2.1">
+    <div class="qn">Q 2.1 · S2</div>
+    <h3>Should the desk's Month say what and when, not just that something's on?</h3>
+    <div class="rec"><b>Recommendation:</b> Reshape, in stage 2, with both forms drawn and the 641–768 band ruled at the same time.</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q2.1" placeholder="Your notes on Q 2.1"></textarea>
+  </div>
+</section>
+
+<!-- ───── 3 ───── -->
+<section class="station" id="st3">
+  <div class="num">3</div>
+  <h2>The event sheet, by kind: the job sinks as the day goes on</h2>
+  <p class="job">A coach opens an event: before it, to see who's coming; during it, for the lineup; after it, to record what happened.</p>
+  <div class="where"><b>Schedule → an event</b> · the phone orders the sheet by the clock (C3), the desk has one order for everything</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>The sheet has the right parts. Where attendance lands depends on the kind of event and the time of day. <b>On a phone</b>, before first pitch the tabs and attendance follow the place row. From first pitch the score and the awards box lead, and attendance drops. A practice puts its plan first and has <b>no tabs at all</b>: attendance is one inline list, while a game hides it behind Attendance · Lineup · Scouting. <b>On the desk</b>, every kind uses one order, with the tabs and attendance after the action row.</p>
+    <div class="mtw"><table class="mt">
+      <tr><th>Event (fixture)</th><th>Order</th><th>First player</th><th>On screen one</th><th>Sheet height</th></tr>
+      <tr><td>Game, before first pitch</td><td>tabs first</td><td>414px</td><td>8 of 12</td><td>1,118px</td></tr>
+      <tr><td>Game, started (today)</td><td>score first</td><td class="hi">524px</td><td>6 of 12</td><td>1,171px</td></tr>
+      <tr><td>Game, scored (vs Ridgeview)</td><td>score first</td><td class="hi">696px</td><td class="hi">3 of 13</td><td>1,392px</td></tr>
+      <tr><td>Practice, ahead</td><td>plan first</td><td>445px</td><td>8 of 12</td><td>1,092px</td></tr>
+      <tr><td>Practice, finished</td><td>plan, awards</td><td>591px</td><td>5 of 12</td><td>1,238px</td></tr>
+      <tr><td>Desk (720px dialog), game ahead</td><td>one order</td><td>500px</td><td>7 of 12</td><td>1,064px</td></tr>
+      <tr><td>Tablet 768, game ahead</td><td>one order</td><td>598px</td><td>7 of 12</td><td>1,208px</td></tr>
+    </table></div>
+    <p><b>Kinds not on the fixture, read from the code:</b> a <b>tournament</b> (the multi-day event) carries "+ Add game" and attendance. A <b>team event</b> has attendance only. A <b>tryout session</b> is projected read-only and opens Tryouts. An <b>organizer's game</b> (gold) shows "From the organizer" and "Only … can cancel or remove this game" where Cancel and Delete would be. All of them use the same blocks; none reads wrong on its own terms. The problem is the one shared order, not any single kind.</p>
+    <div class="shot">
+      <figure class="tall"><img src="{{IMG:sheet-390-gFuture-full}}" alt="Whole phone sheet for a game before first pitch"><figcaption>Capture · 390 · the whole sheet, a game ahead: 1,118px</figcaption></figure>
+      <figure class="tall"><img src="{{IMG:sheet-390-gStarted-full}}" alt="Whole phone sheet for today's started game"><figcaption>Capture · 390 · today's game, started: Logan (Out) is the last row</figcaption></figure>
+      <figure class="tall"><img src="{{IMG:sheet-390-pFuture-full}}" alt="Whole phone sheet for a practice"><figcaption>Capture · 390 · a practice: no tabs, one inline list</figcaption></figure>
+    </div>
+  </div>
+  <div class="design">
+    <h3>How it feels to use: my read</h3>
+    <h4 class="works">What works</h4>
+    <ul><li><b>C3 put the job first before a game</b>, with the first player moving from 626px to 414px, and every control on the phone sheet is at least 44px. The foot row (Edit details · Cancel event · Delete) is right.</li></ul>
+    <h4 class="way">What gets in the way</h4>
+    <ul>
+      <li><b>The job sinks as the day goes on.</b> From first pitch the score and awards push attendance to 524px, and on a scored game to 696px, with 3 players showing. <button class="fl" data-f="F02" data-here="Game ahead 414 · started 524 · scored 696; players on screen one 8 · 6 · 3.">F02</button></li>
+      <li><b>A practice and a game are two shapes.</b> One is an inline list, the other three tabs. That's the difference you noticed. <button class="fl" data-f="F03" data-here="The practice sheet has no tablist (one tab hides the row); the game has three.">F03</button></li>
+      <li><b>"Attendance" appears twice</b>: the tab, then a heading with the same word directly under it. <button class="fl" data-f="F04" data-here="Tab at 248px, the heading 'Attendance' at ~290px.">F04</button></li>
+      <li><b>The desk still says "Enter a final score to unlock awards"</b> on a game two days away. The phone stopped doing that in C3. <button class="fl" data-f="F08" data-here="Desktop dialog, UAT probe game · no lineup (Sun 27 Sep).">F08</button></li>
+    </ul>
+    <h4>What I'd change</h4>
+    <ul><li><b>One shape for every event</b>: the event's summary on top (what, when, where, and the kind's own block), then its <b>jobs as rows that say where they stand</b>, then the foot row. On a phone the sheet becomes one screen. Drawn on the <b>1 · The event sheet</b> tab.</li></ul>
+  </div>
+  <div class="ask" data-ask="Q3.1">
+    <div class="qn">Q 3.1 · S1</div>
+    <h3>Should every event's sheet be one shape: the summary on top, its jobs as rows that name their state?</h3>
+    <p>Your question was "can attendance be a button that opens a drawer?". The measurement widens it: a practice and a game disagree because they're two shapes. Moving attendance on the practice alone would add a third.</p>
+    <div class="rec"><b>Recommendation:</b> Reshape, in stage 1 (drawn).</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q3.1" placeholder="Your notes on Q 3.1"></textarea>
+  </div>
+</section>
+
+<!-- ───── 4 ───── -->
+<section class="station" id="st4">
+  <div class="num">4</div>
+  <h2>Attendance: who isn't coming is the last row</h2>
+  <p class="job">The most frequent tap on the page: who's coming, who's out, who hasn't answered.</p>
+  <div class="where"><b>The sheet's Attendance</b> · the RSVP sheet · the Overview's and Insights' links in</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>From the list it takes <b>three taps</b> to a saved answer: the event, the player, the answer (the sheet opens on Attendance). The <b>RSVP sheet</b> is 391px, with four 52px choices and a note, and saving closes it. The <b>Overview carries four links</b> straight into today's attendance ("10 of 12 in", "1 late", "1 out", and the tile), and <b>Insights → Attendance</b> has "Take attendance" for the next event. On today's game, the one player who's <b>Out is the twelfth row, about 1,060px down</b>, under the score and the awards box.</p>
+    <p>When attendance and the lineup disagree, a warning sits over the tabs: "⚠ Marked in but not in the lineup: …  Fix the attendance below, or <u>edit the lineup →</u>". That link is <b>97×15px</b>, the only control under the tap floor on the phone sheet.</p>
+    <div class="measure"><span>list → saved answer: <b>3 taps</b></span><span>Overview links in: <b>4</b> + Insights <b>1</b></span><span>RSVP sheet <b>391px</b> · choices <b>4 × 52px</b></span><span>Logan (Out) at <b>~1,060px</b></span><span>warning link <b>97×15px</b></span></div>
+    <div class="shot">
+      <figure class="p"><img src="{{IMG:sheet-390-gStarted}}" alt="Phone sheet of the started game, screen one"><figcaption>Capture · 390 · today's game, screen one: 6 of 12 players, and nobody who is out</figcaption></figure>
+      <figure class="p"><img src="{{IMG:rsvp-390}}" alt="RSVP sheet over the event sheet"><figcaption>Capture · 390 · the RSVP sheet (stays as built)</figcaption></figure>
+      <figure class="p"><img src="{{IMG:sheet-390-gScored}}" alt="Scored game with the lineup warning"><figcaption>Capture · 390 · a scored game: 3 players showing, and the warning's 15px link</figcaption></figure>
+    </div>
+  </div>
+  <div class="design">
+    <h3>How it feels to use: my read</h3>
+    <h4 class="works">What works</h4>
+    <ul><li><b>The row is the tap, and the RSVP sheet is excellent</b>: big answers, the current one ticked, Escape and Back close it. The Overview's links already land on the right game.</li></ul>
+    <h4 class="way">What gets in the way</h4>
+    <ul>
+      <li><b>The question a coach asks first, "who isn't coming?", is answered at the bottom of the list.</b> Ten "In" rows come before the one that matters. <button class="fl" data-f="F05" data-here="UAT probe game: Kai (Late) is row 11, Logan (Out) row 12.">F05</button></li>
+      <li><b>The warning's door is 15px tall</b>, and "below" only means something while attendance sits under it. <button class="fl" data-f="F06" data-here="vs Ridgeview (4 May): 'edit the lineup →' 97×15px.">F06</button></li>
+    </ul>
+    <h4>What I'd change</h4>
+    <ul>
+      <li><b>Attendance becomes a row that names names</b>: "10 in · 1 late · 1 out", then "Out: Logan · Late: Kai" on the line beneath. Tapping it opens a <b>full-screen room</b> with the whole roster on one screen, All in, Reset, the five filters and the RSVP sheet on top, unchanged.</li>
+      <li><b>The links in open the room directly</b>, so the Overview and Insights stay at three taps.</li>
+      <li><b>The cost, stated:</b> from the list it becomes <b>four</b> taps instead of three. That's worth it only because the row names who's missing and the room shows everyone at once. If you mostly mark attendance from the list at the field, you pay that tap every time.</li>
+    </ul>
+  </div>
+  <div class="ask" data-ask="Q4.1">
+    <div class="qn">Q 4.1 · S1</div>
+    <h3>Should attendance move into its own full-screen room, behind a row that names who's out and who hasn't replied?</h3>
+    <p>You asked this, and I'd answer yes, on the conditions you set: the row names people, and the room is full-screen with every control it has today.</p>
+    <div class="rec"><b>Recommendation:</b> Reshape, in stage 1 (drawn: E1, E2, E5).</div>
+    <div class="rides"><b>What rides on it:</b> the Overview's four links, Insights' "Take attendance" and the next-step card all open the room; the lineup warning's wording (E4); the layout sweep's attendance and RSVP screens get new baseline keys.</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q4.1" placeholder="Your notes on Q 4.1"></textarea>
+  </div>
+</section>
+
+<!-- ───── 5 ───── -->
+<section class="station" id="st5">
+  <div class="num">5</div>
+  <h2>The doors out of an event: the desk's lineup door never turns</h2>
+  <p class="job">From the game to its lineup, the bench console or the scouting book, and back.</p>
+  <div class="where"><b>The sheet's Lineup and Scouting tabs</b> · a practice's plan · Back (§219 · §222, built)</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>The <b>Lineup tab</b> is a look-only peek (the batting order with an inning flip) plus a door. On a phone the door reads <b>"Edit ›"</b> before first pitch and <b>"Game day ›"</b> after, the same clock that makes the sheet score-first. On the desk it reads <b>"Edit in Lineups →"</b> every time, even on a game in progress. The <b>Scouting tab</b> is the book's panel inside the sheet. A practice has "Open the plan →". Back from the builder or the console now returns to the game on its tab (§222, walk owed).</p>
+    <div class="shot">
+      <figure class="p"><img src="{{IMG:lineup-390-gStarted}}" alt="Phone lineup tab on a started game"><figcaption>Capture · 390 · started game: "Game day ›"</figcaption></figure>
+      <figure class="d"><img src="{{IMG:lineup-1440-gStarted}}" alt="Desktop lineup tab on a started game"><figcaption>Capture · 1440 · the same game on a desk: "Edit in Lineups →"</figcaption></figure>
+    </div>
+  </div>
+  <div class="design">
+    <h3>How it feels to use: my read</h3>
+    <h4 class="works">What works</h4><ul><li><b>The phone's door turns by the clock</b>, and Back now comes home to the game.</li></ul>
+    <h4 class="way">What gets in the way</h4><ul>
+      <li><b>The desk and the phone disagree</b> about where a started game's lineup lives. <button class="fl" data-f="F07" data-here="UAT probe game (started): phone 'Game day ›', desk 'Edit in Lineups →'.">F07</button></li>
+      <li><b>Tabs inside a sheet hide two jobs behind one.</b> You can't see the lineup's state from the Attendance tab, or attendance from the Lineup tab.</li></ul>
+    <h4>What I'd change</h4><ul><li><b>Lineup and Scouting become rows of the same shape</b>, each saying where it stands ("Has a lineup · Ready", "2-1 vs them · 3 notes"), and the tabs go. The Lineup row turns by the clock <b>at both widths</b>. The look-only peek retires: since stage 3's D5, the builder's first screen <i>is</i> the order.</li></ul>
+  </div>
+  <div class="ask" data-ask="Q5.1">
+    <div class="qn">Q 5.1 · S1</div>
+    <h3>On a game, should Lineup and Scouting become rows too, with the tabs gone and the lineup door turning by the clock at both widths?</h3>
+    <div class="rec"><b>Recommendation:</b> Reshape, in stage 1 (drawn: E3). Your call on the peek. I lean towards retiring it, and it's a checkbox on the stage tab.</div>
+    <div class="rides"><b>What rides on it:</b> §222's <code>tab=lineup</code> return address now opens the sheet, with the Lineup row on screen one.</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q5.1" placeholder="Your notes on Q 5.1"></textarea>
+  </div>
+</section>
+
+<!-- ───── 6 ───── -->
+<section class="station" id="st6">
+  <div class="num">6</div>
+  <h2>Adding and editing: Edit details asks, and it should keep asking</h2>
+  <p class="job">Put a game on the calendar, or change one.</p>
+  <div class="where"><b>Add Event</b> (§212 · §214 · §236, built; walk owed) · <b>Edit details</b> on the sheet</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p><b>Edit details asks</b>: "Save changes" sits at the foot. At 390 the form is <b>1,286px</b> in an 842px sheet, with 13 fields. The 24 Sep ruling says <i>edit autosaves, create asks</i>, but <b>a saved change to when or where sends families a "schedule changed" notice</b>. The event save decides that, and a series edit asks "this one or all following". An autosaving Edit details would send one notice per field: change the date, then the time, and families get two notices, the first one wrong.</p>
+    <p>Found on the way: today's game reads <span class="u">3:07 p.m. – 5:07 p.m. · Arrive 5:30 p.m.</span>, an arrival after the start, and nothing flags it. A practice's fold reads "More — field, <b>address</b>, links, notes", but the address moved to Places. And a weekly series asks each date's opponent in a plain box, with no Scouting Book behind it.</p>
+    <div class="shot"><figure class="p"><img src="{{IMG:edit-390}}" alt="Edit details form at 390"><figcaption>Capture · 390 · Edit Game: Save changes at the foot</figcaption></figure></div>
+  </div>
+  <div class="design">
+    <h3>How it feels to use: my read</h3>
+    <h4 class="works">What works</h4><ul><li><b>The form is flat, asks the date once, and keeps a place and an arrival lead time</b> (the three built passes; your walk will confirm).</li></ul>
+    <h4 class="way">What gets in the way</h4><ul>
+      <li><b>An arrival after the start passes silently</b>, because a hand-set time stays put when the start moves. <button class="fl" data-f="F12" data-here="UAT probe game: start 3:07 p.m., Arrive 5:30 p.m.">F12</button></li>
+      <li><b>Two small leftovers from the built passes.</b> The practice's label still says "address", and the series' opponent boxes skip the picker. <button class="fl" data-f="F13" data-here="Practice: 'More — field, address, links, notes'. Repeat weekly: one plain Opponent box per date.">F13</button></li></ul>
+    <h4>What I'd change</h4><ul><li><b>Keep the Save on Edit details</b>, as the one named exception to "edit autosaves", because a save here is a message to families. Fix the three leftovers in stage 5.</li></ul>
+  </div>
+  <div class="ask" data-ask="Q6.1">
+    <div class="qn">Q 6.1 · S5</div>
+    <h3>Should Edit details keep its Save, as the named exception to "edit autosaves"?</h3>
+    <p>The ruling's own test is whether a coach can predict it. "A change families are told about asks first" is a line a coach can predict.</p>
+    <div class="rec"><b>Recommendation:</b> Keep.</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q6.1" placeholder="Your notes on Q 6.1"></textarea>
+  </div>
+  <div class="ask" data-ask="Q6.2">
+    <div class="qn">Q 6.2 · S5</div>
+    <h3>Should the form's three leftovers be fixed: the practice's label, the series' opponent boxes, and a line when the arrival falls after the start?</h3>
+    <div class="rec"><b>Recommendation:</b> Reshape, in stage 5 (small).</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q6.2" placeholder="Your notes on Q 6.2"></textarea>
+  </div>
+</section>
+
+<!-- ───── 7 ───── -->
+<section class="station" id="st7">
+  <div class="num">7</div>
+  <h2>Tournaments: the page a tournament weekend starts from never had a phone pass</h2>
+  <p class="job">A coach checks their tournament: are we in, when do we play, who else is coming.</p>
+  <div class="where"><b>Tournaments</b> (the list) → <b>a tournament</b> (the record) · shared with the free portal</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p><b>The list at 390</b>: the tournament card <b>runs off the right edge</b>, cutting its border and the "IN 10 DAYS" badge. Under it, the fan-view line is a 23px-tall link. The page does have its help "?".</p>
+    <p><b>The record at 390</b> is <b>2,139px</b> long, and <b>11 of its 17 controls are under 44px</b>. It has <b>no help "?"</b>. It's titled with the <b>team's</b> name ("UAT Rep Club 15U AAA"), with "UAT Rep Club Invitational 2026 <b>(2026)</b> - UAT Rep Club" under it. "Accepted" appears twice, in a tinted hero and in Status & Payment. The head-coach editor is an inline form with its own "Save head coach". <b>Nothing leads to the tournament's games on your Schedule.</b> At 1440 it's 1,955px. Breakpoints sit at 600px and 901px, off the portal's 640 / 768 / 900.</p>
+    <div class="measure"><span>list: card <b>overflows</b> at 390</span><span>record <b>2,139px</b> at 390</span><span><b>11 / 17</b> controls under 44</span><span>help "?": <b>none</b></span><span>title: the <b>team</b></span></div>
+    <div class="shot">
+      <figure class="p"><img src="{{IMG:tourn-club-list-390}}" alt="Tournaments list at 390, card overflowing"><figcaption>Capture · 390 · the card runs off the edge</figcaption></figure>
+      <figure class="tall"><img src="{{IMG:tourn-club-record-390-full}}" alt="Whole tournament record at 390"><figcaption>Capture · 390 · the whole record, 2,139px (the bottom bar is pinned mid-capture)</figcaption></figure>
+      <figure class="d"><img src="{{IMG:tourn-club-record-1440}}" alt="Tournament record at 1440"><figcaption>Capture · 1440 · the record</figcaption></figure>
+    </div>
+  </div>
+  <div class="design">
+    <h3>How it feels to use: my read</h3>
+    <h4 class="works">What works</h4><ul><li><b>The content is right</b>: are we in, the fee, who's coming, the organizer's links. "Who's coming" is a good read.</li></ul>
+    <h4 class="way">What gets in the way</h4><ul><li><b>It reads like a registration receipt, not a weekend.</b> The record is named after the team, it repeats itself, there's a form in the middle, and there's no road to the games that matter on Saturday. <button class="fl" data-f="F10" data-here="Record at 390: 2,139px, 11/17 under 44, no '?', titled by the team; list card overflows.">F10</button></li></ul>
+    <h4>What I'd change</h4><ul><li>Title the record by the <b>tournament</b>, with the team in its meta line. Give it <b>one help door</b>, a <b>"Games on your Schedule" row</b> that opens the schedule on the tournament's days (with "← Tournament" back), the card inside the screen, and the head-coach editor autosaving. <b>Both portals change</b>, because the free portal draws the same record.</li></ul>
+  </div>
+  <div class="ask" data-ask="Q7.1">
+    <div class="qn">Q 7.1 · S3</div>
+    <h3>Should Tournaments be redrawn as part of the schedule family, with a road from a tournament to its games and back?</h3>
+    <div class="rec"><b>Recommendation:</b> Reshape, in stage 3. The card overflow is a defect and could be fixed sooner if a tournament weekend is close.</div>
+    <div class="rides"><b>What rides on it:</b> the free portal's twin; help gets a Tournaments door.</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q7.1" placeholder="Your notes on Q 7.1"></textarea>
+  </div>
+</section>
+
+<!-- ───── 8 ───── -->
+<section class="station" id="st8">
+  <div class="num">8</div>
+  <h2>The coach's calendar: an 8 p.m. game lands on the wrong day</h2>
+  <p class="job">A coach puts the season into their own phone's calendar.</p>
+  <div class="where"><b>Schedule</b> · phone: the quiet "Export the season ›" row → Calendar · desk: Export → Excel · CSV · Calendar</div>
+  <div class="label">On the screen, as built</div>
+  <div class="seen">
+    <p>The export is a <b>one-time snapshot</b> of the whole season: every kind of event, with the arrival time and uniform in each entry's description and the diamond in its location. There's <b>no subscription</b>. The team feed's issuer has had no caller since the family link was removed on 12 Sep, and the family feed route still exists (and gets the time right).</p>
+    <div class="callout bad"><b>Two defects, verified by running the export's own logic.</b> (1) Any event at <b>8 p.m. or later</b> in summer (7 p.m. in winter) lands on <b>the next day</b> in the coach's calendar. The export reads the date in universal time and the clock in the phone's local time, so a Monday 10:45 p.m. practice becomes Tuesday 10:45 p.m. That's 8 of the 238 events on dev. (2) A <b>cancelled</b> event exports as <b>confirmed</b>.</div>
+  </div>
+  <div class="design">
+    <h3>How it feels to use: my read</h3>
+    <h4 class="works">What works</h4><ul><li><b>On a phone the one export that matters leads</b>: the phone offers only the calendar file, and it carries arrival and uniform.</li></ul>
+    <h4 class="way">What gets in the way</h4><ul><li><b>A calendar that's wrong on evening games is worse than none</b>, because the coach trusts it. <button class="fl" data-f="F11" data-here="Run in America/Toronto: 2026-09-22T02:45Z (Mon 21 Sep, 10:45 p.m.) exports as Tue 22 Sep, 10:45 p.m.">F11</button> And a snapshot goes stale the first time a game moves.</li></ul>
+    <h4>What I'd change</h4><ul><li><b>Fix the two defects now</b>, ahead of the stages. It's a small fix: build each entry from the event's instant in the org's time zone, the way the family feed already does. Then, in stage 4, add <b>a "Subscribe on this phone" row</b> beside the download, carrying every kind, organizer games included, with cancelled events marked cancelled.</li></ul>
+  </div>
+  <div class="ask" data-ask="Q8.1">
+    <div class="qn">Q 8.1 · S4</div>
+    <h3>Should the two export defects be fixed now, before any stage?</h3>
+    <div class="rec"><b>Recommendation:</b> Reshape, now. It's a defect, not a design question, and on your say-so.</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q8.1" placeholder="Your notes on Q 8.1"></textarea>
+  </div>
+  <div class="ask" data-ask="Q8.2">
+    <div class="qn">Q 8.2 · S4</div>
+    <h3>Should the coach get a calendar they subscribe to, not just a download?</h3>
+    <div class="rec"><b>Recommendation:</b> Reshape, in stage 4, drawn as a row, not a feature. It may need a new coach-scoped link token (a migration), decided when drawn.</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q8.2" placeholder="Your notes on Q 8.2"></textarea>
+  </div>
+</section>
+
+<!-- ───── 9 ───── -->
+<section class="station" id="st9">
+  <div class="num">9</div>
+  <h2>The page itself: not a screen, a budget</h2>
+  <p class="job">What any build on this surface has to carry.</p>
+  <div class="where"><b>The Schedule page</b>: 4,211 lines and 60 pieces of state, the largest screen in the portal</div>
+  <div class="label">As built</div>
+  <div class="seen"><p>The event sheet, the add/edit form, and the list, Week and Month all live in one file, and the sheet is drawn in three orders (desk; phone before first pitch; phone after). Every stage in this project rewrites part of it.</p></div>
+  <div class="design">
+    <h3>What I'd change</h3>
+    <ul><li><b>Split it as the first step of stage 1, before anything a coach can see changes.</b> The sheet (and the new room) go into their own files, then the form, then the calendar views. The page keeps the data and hands it down. It's a pure move, walked as "nothing changed". <button class="fl" data-f="F14" data-here="4,211 lines; 60 state variables; the sheet in three JSX orders.">F14</button></li></ul>
+  </div>
+  <div class="ask" data-ask="Q9.1">
+    <div class="qn">Q 9.1 · S6</div>
+    <h3>Should the page be split first, as a pure move, inside stage 1?</h3>
+    <div class="rec"><b>Recommendation:</b> Reshape, as the first commit of stage 1.</div>
+    <div class="ruling"><button data-v="Keep" aria-pressed="false">Keep</button><button data-v="Reshape" aria-pressed="false">Reshape</button><button data-v="Not yet" aria-pressed="false">Not yet</button></div>
+    <textarea class="note" id="note-Q9.1" placeholder="Your notes on Q 9.1"></textarea>
+  </div>
+</section>
+
+<!-- ───── standing back ───── -->
+<section class="standing" id="standing">
+  <h2>Standing back: six rules across the walk</h2>
+  <p class="intro">Rule these and most of the station questions fall out.</p>
+  <ul class="ladder">
+    <li><span class="ln">R1</span><span><b>One shape for every event.</b> The sheet is the event's summary, and its jobs are doors. Your complaint was a practice/game <i>difference</i>, so the fix is one shape on both, not moving attendance on one of them.</span></li>
+    <li><span class="ln">R2</span><span><b>A door names what's behind it.</b> A bare "Attendance ›" is worse than the inline list it would replace. "Out: Logan · Late: Kai" is better than both.</span></li>
+    <li><span class="ln">R3</span><span><b>Today first, at every width.</b> The phone opens on today, and the desk is the last exception.</span></li>
+    <li><span class="ln">R4</span><span><b>A record is titled by what it records.</b> A tournament's page names the tournament.</span></li>
+    <li><span class="ln">R5</span><span><b>A calendar entry is the event's own time.</b> Every screen reads the club's time zone, and the export must too.</span></li>
+    <li><span class="ln">R6</span><span><b>Edit autosaves, except where a save is a message.</b> A change to when or where tells families, and a series edit asks which games it covers. Both need one deliberate save.</span></li>
+  </ul>
+</section>
+
+<!-- ───── the stages ───── -->
+<section class="standing" id="ladder">
+  <h2>The stages</h2>
+  <p class="intro">One at a time: drawn → you read it against the product and send feedback → redrawn until ruled → built → reviewed → walked → the next stage is drawn.</p>
+  <div class="mtw"><table class="stagetable">
+    <tr><th>Stage</th><th>Covers</th><th>Asks</th><th>State</th></tr>
+    <tr><td>0 · The five built changes</td><td>The QA walk of §212 · §214 · §219 · §222 · §236, a separate page</td><td>—</td><td class="state">published 25 Sep; not a gate</td></tr>
+    <tr><td>1 · The event sheet</td><td>One shape on every event; attendance in its own room; Lineup and Scouting as rows; the warning joins the rows; the links open the room; the desk takes the same rows; the page split first</td><td>E1–E6 · S6</td><td class="state">ruled 25 Sep: E1–E6 as drawn, split first; build prompt written</td></tr>
+    <tr><td>2 · The desktop schedule</td><td>Open on today; Month says what and when; the toolbar's two rows; the 641–768 band's Month</td><td>Q 1.1 · Q 2.1</td><td class="state">read on the walk</td></tr>
+    <tr><td>3 · Tournaments</td><td>The list and record at 390 and 1440; titled by the tournament; one help door; the road to its games and back; the off-grid breakpoints; both portals</td><td>Q 7.1</td><td class="state">read on the walk</td></tr>
+    <tr><td>4 · The coach's calendar</td><td>The two defects (ruled: fix now, built as stage 1's part 0); a subscribe row; what it carries</td><td>Q 8.1 · Q 8.2</td><td class="state">defects ruled 25 Sep; the rest read on the walk</td></tr>
+    <tr><td>5 · The forms</td><td>Edit details keeps its Save; the practice's label; the series' opponent picker; an arrival after the start</td><td>Q 6.1 · Q 6.2</td><td class="state">read on the walk</td></tr>
+  </table></div>
+</section>
+
+<section class="summary" id="paste">
+  <h2>Your rulings, to paste back</h2>
+  <p>Your choices and notes are kept in this browser. "Build summary" collects the walk's questions and stage 1's options into one block of text for the chat.</p>
+  <button class="btn" type="button" id="buildWalk">Build summary</button>
+  <textarea class="out" id="outWalk" readonly aria-label="Summary to paste back" hidden></textarea>
+</section>
+</main>
+</div>
+
+<!-- ═══════════════════════════════ STAGE 1 ═══════════════════════════════ -->
+<div id="tab-s1" role="tabpanel" hidden>
+<div class="prop">
+  <header class="phead">
+    <div class="eyebrow">Stage 1 · drawn 25 September 2026 · ruled the same day: every ask as drawn</div>
+    <h1>The event sheet: one shape for every event, attendance in its own room</h1>
+    <p class="lede">Every event reads the same way: what, when and where, then its jobs as rows that tell you where they stand. Attendance, Lineup and Scouting become doors, and Attendance opens a room with the whole roster on one screen. Phone frames are <b>390px and don't reflow</b>, so open this tab on your phone to see them at true size. The desk frame is 1440px and scrolls sideways inside its own box.</p>
+    <div class="callout ok"><b>How to read the frames.</b> "Before" frames are <b>captures</b> of dev on 25 Sep. "After" frames are <b>drawn</b> in the portal's own materials, with the fixture's real names and answers. Numbers on the after frames are drawn estimates and get measured at build.</div>
+  </header>
+
+  <!-- E1 -->
+  <section class="spec" id="e1">
+    <h2>E1 · One shape: the event's summary on top, its jobs as rows</h2>
+    <p class="why">On every event, at every width: header, title, when, the place row, the kind's own block (a practice's plan; from first pitch, a game's score and awards), then <b>door rows</b> and the foot row. A door row is 64px with an icon, a label, a <b>second line that says where the job stands</b>, and a chevron, and the whole row is the tap. <b>On a phone the sheet becomes one screen</b>: a game ahead drops from 1,118px to about 620px, and nothing scrolls.</p>
+    <div class="pair">
+      <div>
+        <div class="pcap">Before <span class="k">capture · 390 · 25 Sep</span><span class="k meas">first player 414 · 8 of 12</span></div>
+        <div class="cap"><img src="{{IMG:sheet-390-gFuture}}" alt="Today's phone sheet, game ahead"></div>
+        <div class="tagrow"><button class="fl" data-f="F03" data-here="A game: three tabs over the list. A practice: the list inline.">F03</button><button class="fl" data-f="F04" data-here="'Attendance' is the tab and the heading under it.">F04</button></div>
+      </div>
+      <div>
+        <div class="pcap">After <span class="k after">drawn · 390</span><span class="k meas">one screen · 3 rows at ~250–440</span></div>
+        <div class="fr"><div class="sh">
+          <div class="shh"><span class="bk"><svg width="22" height="22"><use href="#i-back"/></svg></span><span class="ty"><svg width="20" height="20"><use href="#i-shield"/></svg></span><span class="chip">GAME</span></div>
+          <div class="shb">
+            <div class="sht">UAT probe game · no lineup</div>
+            <div class="shw">Sun, Sep 27, 2026 · 1:00 p.m. – 3:00 p.m. · @ Probe Rovers</div>
+            <div class="shp"><span><svg width="18" height="18"><use href="#i-pin"/></svg>UAT Fields · Diamond 3</span><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+            <div class="drows">
+              <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-users"/></svg><div class="tx"><b>Attendance</b><small>12 haven't replied — Avery, Blake, Casey and 9 more</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+              <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-list"/></svg><div class="tx"><b>Lineup</b><small>No lineup yet</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+              <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-eye"/></svg><div class="tx"><b>Scouting</b><small>Probe Rovers · no games against them yet</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+            </div>
+            <div class="quiet">+ Add final score</div>
+          </div>
+          <div class="shf"><span>Edit details</span><span>Cancel event</span><span class="del">Delete</span></div>
+        </div></div>
+        <div class="tagrow">
+          <button class="mk new" data-note="Attendance, Lineup and Scouting were three tabs over an inline list. Each is now a 64px row whose second line says where the job stands; the whole row opens it.">New · door rows</button>
+          <button class="mk re" data-note="C3's quiet door stays, but it now sits under the rows rather than 1,003px down under the whole roster.">Restyled · + Add final score</button>
+          <button class="mk un" data-note="Header, title, when line, place row and the foot row (Edit details · Cancel event · Delete) are exactly as built.">Unchanged · summary + foot</button>
+          <button class="fl fix" data-f="F03" data-here="The game and the practice (below) draw the same rows.">fixes F03</button><button class="fl fix" data-f="F04" data-here="No tab, so no heading repeating it.">fixes F04</button>
+        </div>
+      </div>
+      <div>
+        <div class="pcap">Before · the practice <span class="k">capture · 390</span><span class="k meas">first player 445 · 8 of 12</span></div>
+        <div class="cap"><img src="{{IMG:sheet-390-pFuture}}" alt="Today's phone sheet, practice"></div>
+      </div>
+      <div>
+        <div class="pcap">After · the practice <span class="k after">drawn · 390</span><span class="k meas">the same shape</span></div>
+        <div class="fr"><div class="sh">
+          <div class="shh"><span class="bk"><svg width="22" height="22"><use href="#i-back"/></svg></span><span class="ty p"><svg width="20" height="20"><use href="#i-dumb"/></svg></span><span class="chip p">PRACTICE</span></div>
+          <div class="shb">
+            <div class="sht">Practice review — next week</div>
+            <div class="shw">Mon, Sep 28, 2026 · 11:05 p.m.</div>
+            <div class="shp"><span><svg width="18" height="18"><use href="#i-pin"/></svg>UAT Fields</span><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+            <div class="drows">
+              <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-plan"/></svg><div class="tx"><b>Practice plan</b><small>1 block · 20 min planned · 1 rotation</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+              <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-users"/></svg><div class="tx"><b>Attendance</b><small>12 haven't replied — Avery, Blake, Casey and 9 more</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+            </div>
+          </div>
+          <div class="shf"><span>Edit details</span><span>Cancel event</span><span class="del">Delete</span></div>
+        </div></div>
+        <div class="tagrow">
+          <button class="mk re" data-note="The 'PRACTICE PLAN' kicker, its summary line and the 'Open the plan →' button become one door row with the same summary as its second line. Same destination.">Restyled · plan row</button>
+          <button class="mk new" data-note="The inline attendance list (All in, Reset, five chips, twelve rows) becomes one row that names who hasn't replied; the list moves into the room (E2).">New · attendance row</button>
+        </div>
+      </div>
+    </div>
+    <p class="intent"><b>Why this shape:</b> the practice and the game now differ only in which jobs they have, not in how the jobs are shown. The same rows work on a tournament (its games, then Attendance), a team event (Attendance), and an organizer's game (all three, with "From the organizer" above them and no Cancel/Delete). A tryout session stays read-only and opens Tryouts.</p>
+    <div class="opts" data-opt="E1">
+      <div class="q"><b>E1 · your ruling</b>: one tick is the answer, and the notes say why.</div>
+      <label class="rec"><input type="checkbox" data-o="As drawn"> <span><b>As drawn</b>, every event, both widths (recommended)</span></label>
+      <label><input type="checkbox" data-o="Games only"> <span>Games only; a practice keeps its inline list</span></label>
+      <label><input type="checkbox" data-o="Keep today's sheet"> <span>Keep today's sheet (C3 as built)</span></label>
+      <label><input type="checkbox" data-o="Something else"> <span>Something else (say what)</span></label>
+      <textarea class="note" id="note-E1" placeholder="Notes on E1"></textarea>
+    </div>
+  </section>
+
+  <!-- E2 -->
+  <section class="spec" id="e2">
+    <h2>E2 · Attendance in its own room, with the whole roster on one screen</h2>
+    <p class="why">The Attendance row opens a <b>full-screen room</b>. It covers the bottom bar, because it's a working surface (your drawer rule: a form covers the nav). The head is ← back to the event, "Attendance", and the event's name and date. Below that come the five filter chips, <b>All in · Reset</b>, and one 48px row per player, where the row is the tap. <b>The RSVP sheet rises over the room, unchanged</b>, and stays the second visible layer. The Saved pill is transient as ever. Drawn at 390×844, the rows start near 160px and <b>all 12 players are on screen one</b> (a 15-player roster fits 14). At 360×780 all 12 still fit.</p>
+    <div class="pair">
+      <div>
+        <div class="pcap">Before · today's game <span class="k">capture · 390</span><span class="k meas">6 of 12 · Logan at ~1,060</span></div>
+        <div class="cap"><img src="{{IMG:sheet-390-gStarted}}" alt="Started game sheet at 390"></div>
+        <div class="tagrow"><button class="fl" data-f="F02" data-here="Score and awards lead from first pitch; the first player is at 524px.">F02</button><button class="fl" data-f="F05" data-here="Kai (Late) and Logan (Out) are rows 11 and 12, off screen one.">F05</button></div>
+      </div>
+      <div>
+        <div class="pcap">After · the same game <span class="k after">drawn · 390</span><span class="k meas">who's missing on screen one</span></div>
+        <div class="fr"><div class="sh">
+          <div class="shh"><span class="bk"><svg width="22" height="22"><use href="#i-back"/></svg></span><span class="ty"><svg width="20" height="20"><use href="#i-shield"/></svg></span><span class="chip">GAME</span></div>
+          <div class="shb">
+            <div class="sht">UAT probe game</div>
+            <div class="shw">Fri, Sep 25, 2026 · 3:07 p.m. – 5:07 p.m. · <span class="arr">Arrive 5:30 p.m.</span> · vs Probe Rovers</div>
+            <div class="shp"><span><svg width="18" height="18"><use href="#i-pin"/></svg><span class="pt">UAT Fields · Diamond 1 <span class="un">· Uniform: Home kit</span></span></span><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+            <div class="quiet">+ Add final score</div>
+            <div class="awbox"><div class="k">Awards given</div><p>Enter a final score to unlock awards for this game.</p></div>
+            <div class="drows">
+              <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-users"/></svg><div class="tx"><b>Attendance · 10 in · 1 late · 1 out</b><small><span class="o">Out: #12 Logan</span> · <span class="l">Late: #11 Kai</span></small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+              <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-list"/></svg><div class="tx"><b>Lineup · Has a lineup</b><small>Game day — the bench console</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+              <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-eye"/></svg><div class="tx"><b>Scouting</b><small>Probe Rovers · no games against them yet</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+            </div>
+          </div>
+          <div class="shf"><span>Edit details</span><span>Cancel event</span><span class="del">Delete</span></div>
+        </div></div>
+        <div class="tagrow">
+          <button class="mk un" data-note="From first pitch the score and awards still lead (C3 and the 25 Sep awards ruling). Only what follows them changes.">Unchanged · score first</button>
+          <button class="mk new" data-note="The row's head carries the counts; its second line names who is out and who is late, in their tones. Before anyone answers it names who hasn't replied; once everyone is in it says 'All 12 in'.">New · names on the row</button>
+          <button class="fl fix" data-f="F02" data-here="The rows sit under the score and awards, on screen one.">fixes F02</button><button class="fl fix" data-f="F05" data-here="Logan and Kai are named without opening anything.">fixes F05</button>
+          <button class="fl" data-f="F12" data-here="The fixture's arrival (5:30 p.m.) is after its start (3:07 p.m.). Drawn as the product shows it; stage 5 adds a line.">F12 · stage 5</button>
+        </div>
+      </div>
+      <div>
+        <div class="pcap">After · the room <span class="k after">drawn · 390</span><span class="k meas">12 of 12 on screen one</span></div>
+        <div class="fr" id="roomFrame"><div class="sh">
+          <div class="shh"><span class="bk"><svg width="22" height="22"><use href="#i-back"/></svg></span><span class="tt">Attendance<span class="sub">UAT probe game · Fri, Sep 25</span></span></div>
+          <div class="rm-chips"><span class="on">All 12</span><span class="g"><svg width="16" height="16"><use href="#i-in"/></svg>10</span><span class="l"><svg width="16" height="16"><use href="#i-late"/></svg>1</span><span class="o"><svg width="16" height="16"><use href="#i-out"/></svg>1</span><span><svg width="16" height="16"><use href="#i-q"/></svg>0</span></div>
+          <div class="rm-act"><span><svg width="16" height="16"><use href="#i-in"/></svg>All in</span><span><svg width="16" height="16"><use href="#i-q"/></svg>Reset</span></div>
+          <div class="rm-rows" id="roomRows"></div>
+        </div></div>
+        <div class="tagrow">
+          <button class="mk new" data-note="A full-screen room over the event (it covers the bottom bar). ← goes back to the event, one level (§219). Everything the inline list had is here: the five filter chips, All in, Reset, the rows.">New · the room</button>
+          <button class="mk un" data-note="Rows, badges, chips and the transient Saved pill are the built pieces, moved, not redrawn.">Unchanged · the rows</button>
+        </div>
+      </div>
+      <div>
+        <div class="pcap">After · a player's answer <span class="k after">drawn · 390</span><span class="k meas">the second layer</span></div>
+        <div class="fr" id="rsvpFrame"><div class="sh">
+          <div class="shh"><span class="bk"><svg width="22" height="22"><use href="#i-back"/></svg></span><span class="tt">Attendance<span class="sub">UAT probe game · Fri, Sep 25</span></span></div>
+          <div class="rm-chips"><span class="on">All 12</span><span class="g"><svg width="16" height="16"><use href="#i-in"/></svg>10</span><span class="l"><svg width="16" height="16"><use href="#i-late"/></svg>1</span><span class="o"><svg width="16" height="16"><use href="#i-out"/></svg>1</span><span><svg width="16" height="16"><use href="#i-q"/></svg>0</span></div>
+          <div class="rm-act"><span>All in</span><span>Reset</span></div>
+          <div class="rm-rows" id="rsvpRows"></div>
+          <div class="scrim"></div>
+          <div class="bsheet"><div class="grab"></div><h4>#12 Logan Test</h4><div class="ev">Fri, Sep 25, 2026 · UAT probe game</div>
+            <div class="ch"><svg width="20" height="20"><use href="#i-in"/></svg>In</div>
+            <div class="ch"><svg width="20" height="20"><use href="#i-late"/></svg>Late</div>
+            <div class="ch on"><svg width="20" height="20"><use href="#i-out"/></svg>Out<span class="t">✓</span></div>
+            <div class="ch"><svg width="20" height="20"><use href="#i-q"/></svg>No reply</div>
+          </div>
+        </div></div>
+        <div class="tagrow"><button class="mk un" data-note="The RSVP sheet exactly as built (391px, four 52px choices, the note, Escape and Back close it). Only what's under it changes: the room instead of the sheet.">Unchanged · RSVP sheet</button></div>
+      </div>
+    </div>
+    <h3 style="margin-top:28px;font-size:18px">The tap cost, stated</h3>
+    <div class="mtw"><table class="taps">
+      <tr><th>Path</th><th>Today</th><th>Drawn</th></tr>
+      <tr><td>From the list, set one player</td><td>event → player → answer = <b>3</b></td><td class="up">event → Attendance → player → answer = <b>4</b></td></tr>
+      <tr><td>From the list, everyone's in</td><td>event → All in = <b>2</b></td><td class="up">event → Attendance → All in = <b>3</b></td></tr>
+      <tr><td>From the Overview, Insights or the next-step card</td><td>link → player → answer = <b>3</b></td><td>link (opens the room) → player → answer = <b>3</b></td></tr>
+      <tr><td>See who isn't coming</td><td>open, then scroll to rows 11–12</td><td class="dn">open and read the row: <b>1</b>, no scroll</td></tr>
+    </table></div>
+    <p class="intent"><b>The trade:</b> one more tap to <i>set</i> attendance from the list, in exchange for <i>reading</i> it without opening anything, the whole roster on one screen, and one shape everywhere. Considered and not drawn: an "All in" button on the row itself. It's a bulk write on a summary a thumb scrolls past.</p>
+    <div class="opts" data-opt="E2">
+      <div class="q"><b>E2 · your ruling</b></div>
+      <label class="rec"><input type="checkbox" data-o="As drawn (full-screen room)"> <span><b>As drawn</b>: a full-screen room (recommended)</span></label>
+      <label><input type="checkbox" data-o="A half-height drawer over the sheet"> <span>A half-height drawer over the sheet instead</span></label>
+      <label><input type="checkbox" data-o="Keep attendance inline"> <span>Keep attendance inline (C3)</span></label>
+      <label><input type="checkbox" data-o="Something else"> <span>Something else (say what)</span></label>
+      <textarea class="note" id="note-E2" placeholder="Notes on E2"></textarea>
+    </div>
+  </section>
+
+  <!-- E3 -->
+  <section class="spec" id="e3">
+    <h2>E3 · On a game, Lineup and Scouting are rows too, and the lineup door turns by the clock at both widths</h2>
+    <p class="why"><b>Lineup</b> says "Has a lineup · Ready" or "No lineup yet". Before first pitch it opens the builder, and from first pitch it opens <b>Game day</b>, on the phone <i>and</i> the desk (today the desk always says "Edit in Lineups →"). <b>Scouting</b> says "2-1 vs them · 3 notes" or "No games against them yet", and opens the book's panel as a room. The look-only peek (the batting order with an inning flip) retires, because since stage 3's D5 the builder's first screen <i>is</i> the order, one inning at a time. That's your call below. Drawn in the E1 and E2 frames above.</p>
+    <div class="tagrow" style="max-width:none"><button class="fl" data-f="F07" data-here="Desk: 'Edit in Lineups →' on a started game.">F07</button><button class="fl fix" data-f="F07" data-here="The Lineup row opens Game day from first pitch at every width.">fixes F07</button></div>
+    <div class="opts" data-opt="E3">
+      <div class="q"><b>E3 · your ruling</b></div>
+      <label class="rec"><input type="checkbox" data-o="As drawn (rows; the peek retires)"> <span><b>As drawn</b>: rows, the tabs go, the peek retires (recommended)</span></label>
+      <label><input type="checkbox" data-o="Rows, but Lineup opens the peek as its own room first"> <span>Rows, but the Lineup row opens the peek as its own room first</span></label>
+      <label><input type="checkbox" data-o="Keep the tabs"> <span>Keep the tabs</span></label>
+      <label><input type="checkbox" data-o="Something else"> <span>Something else (say what)</span></label>
+      <textarea class="note" id="note-E3" placeholder="Notes on E3"></textarea>
+    </div>
+  </section>
+
+  <!-- E4 -->
+  <section class="spec" id="e4">
+    <h2>E4 · The lineup warning joins the rows</h2>
+    <p class="why">When attendance and the lineup disagree, the <b>Lineup row's second line says so</b> in the warning tone ("Kai and Logan are in, but not in the lineup"), and the row opens the builder, where the fix is. The separate warning box, its <b>97×15px link</b> and the words "fix the attendance below" go, because there's no "below" any more.</p>
+    <div class="pair">
+      <div>
+        <div class="pcap">Before <span class="k">capture · 390 · vs Ridgeview</span></div>
+        <div class="cap"><img src="{{IMG:sheet-390-gScored}}" alt="Scored game with the lineup warning"></div>
+        <div class="tagrow"><button class="fl" data-f="F06" data-here="'Marked in but not in the lineup: #11 Kai Test, #12 Logan Test. Fix the attendance below, or edit the lineup →' (97×15px).">F06</button></div>
+      </div>
+      <div>
+        <div class="pcap">After · the two rows <span class="k after">drawn · 390</span></div>
+        <div class="fr" style="height:auto"><div style="padding:14px 16px 16px">
+          <div class="drows" style="margin-top:0">
+            <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-users"/></svg><div class="tx"><b>Attendance · 12 in · 1 no reply</b><small>No reply: #56 bob</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+            <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-list"/></svg><div class="tx"><b>Lineup · Needs a look</b><small class="warn">Kai and Logan are in, but not in the lineup</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+          </div>
+          <p style="font-size:12.5px;color:#615A54;margin-top:10px">The fixture's own game, vs Ridgeview on 4 May: the check finds #11 Kai and #12 Logan marked In with no spot in the lineup. The other direction ("Out but in the lineup") reads the same way on the same row.</p>
+        </div></div>
+        <div class="tagrow"><button class="mk re" data-note="The warning box's sentence becomes the Lineup row's second line, in the warning tone; the row opens the builder, where the fix is. The Attendance row keeps naming who hasn't replied.">Restyled · the warning</button><button class="fl fix" data-f="F06" data-here="No 15px link; each row is a 64px door.">fixes F06</button></div>
+      </div>
+    </div>
+    <div class="opts" data-opt="E4">
+      <div class="q"><b>E4 · your ruling</b></div>
+      <label class="rec"><input type="checkbox" data-o="As drawn"> <span><b>As drawn</b> (recommended)</span></label>
+      <label><input type="checkbox" data-o="Keep a warning box, fix its link"> <span>Keep a warning box above the rows, with a 44px link</span></label>
+      <label><input type="checkbox" data-o="Something else"> <span>Something else (say what)</span></label>
+      <textarea class="note" id="note-E4" placeholder="Notes on E4"></textarea>
+    </div>
+  </section>
+
+  <!-- E5 -->
+  <section class="spec" id="e5">
+    <h2>E5 · The links in open the room, and Back goes up one level</h2>
+    <p class="why">"Take attendance" links (the Overview's four, Insights' one, the next-step card) open the event <b>with the room on top</b>, so a saved answer stays three taps away. Back from the room goes to the event (§219, one level), and Back again returns to wherever the coach came from. The address grammar is unchanged: <code>tab=attendance</code> means "the room is open", <code>tab=lineup</code> (the builder's way home, §222) opens the event with the Lineup row on screen one, and <code>tab=scouting</code> opens Scouting's room.</p>
+    <div class="flow"><span class="s">Overview · "1 out"</span><span class="a">tap →</span><span class="s hl">the room, on today's game</span><span class="a">Back →</span><span class="s">the game</span><span class="a">Back →</span><span class="s">Overview</span></div>
+    <div class="opts" data-opt="E5">
+      <div class="q"><b>E5 · your ruling</b></div>
+      <label class="rec"><input type="checkbox" data-o="As drawn"> <span><b>As drawn</b> (recommended)</span></label>
+      <label><input type="checkbox" data-o="Open the event, not the room"> <span>The links open the event, not the room</span></label>
+      <label><input type="checkbox" data-o="Something else"> <span>Something else (say what)</span></label>
+      <textarea class="note" id="note-E5" placeholder="Notes on E5"></textarea>
+    </div>
+  </section>
+
+  <!-- E6 -->
+  <section class="spec" id="e6">
+    <h2>E6 · At a desk: the same rows in the same dialog</h2>
+    <p class="why">The 720px dialog draws the same summary and the same three rows. A row opens its room <b>inside the dialog</b>, with "← UAT probe game" at its head. The desk's "Enter a final score to unlock awards" on a game ahead goes, following the phone's C3 rule. The rest of the desktop question (open on today, Month) is stage 2.</p>
+    <div class="pcap">Before <span class="k">capture · 1440 · 25 Sep</span><span class="k meas">first player 500 · after the action row</span></div>
+    <div class="widewrap"><div class="cap capw"><img src="{{IMG:sheet-1440-gFuture}}" alt="Desktop dialog today"></div></div>
+    <div class="tagrow" style="max-width:none"><button class="fl" data-f="F08" data-here="'Enter a final score to unlock awards' on a game two days away.">F08</button><button class="fl" data-f="F07" data-here="The desk's lineup door is 'Edit in Lineups →' at every hour.">F07</button></div>
+    <div class="pcap" style="margin-top:22px">After <span class="k after">drawn · 1440</span><span class="k meas">the dialog fits without scrolling</span></div>
+    <div class="widewrap"><div class="dsk">
+      <div class="bg"><img src="{{IMG:list-1440}}" alt=""></div><div class="dim"></div>
+      <div class="dlg">
+        <div class="dh"><span class="ty" style="color:#3A5A0F"><svg width="20" height="20"><use href="#i-shield"/></svg></span><span class="shh" style="height:auto;border:0;padding:0"><span class="chip">GAME</span></span><span class="x">×</span></div>
+        <div class="db">
+          <div class="sht">UAT probe game · no lineup</div>
+          <div class="shw">Sun, Sep 27, 2026 · 1:00 p.m. – 3:00 p.m. · @ Probe Rovers</div>
+          <div class="shp"><span><svg width="18" height="18"><use href="#i-pin"/></svg>UAT Fields · Diamond 3</span></div>
+          <div class="drows">
+            <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-users"/></svg><div class="tx"><b>Attendance</b><small>12 haven't replied — Avery, Blake, Casey and 9 more</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+            <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-list"/></svg><div class="tx"><b>Lineup</b><small>No lineup yet</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+            <div class="drow"><svg class="ic" width="22" height="22"><use href="#i-eye"/></svg><div class="tx"><b>Scouting</b><small>Probe Rovers · no games against them yet</small></div><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>
+          </div>
+          <div class="quiet">+ Add final score</div>
+          <div class="acts"><span>Edit details</span><span class="sp">Cancel event</span><span class="del">Delete</span></div>
+        </div>
+      </div>
+    </div></div>
+    <div class="tagrow" style="max-width:none">
+      <button class="mk new" data-note="The same three rows as the phone; the tabs and the inline list leave the dialog.">New · rows at 1440</button>
+      <button class="mk re" data-note="The action row moves under the rows (it sat above the tabs); the list behind is unchanged in this stage.">Restyled · action row</button>
+      <button class="fl fix" data-f="F08" data-here="No awards line before first pitch.">fixes F08</button><button class="fl fix" data-f="F07" data-here="From first pitch the Lineup row opens Game day here too.">fixes F07</button>
+    </div>
+    <div class="opts" data-opt="E6">
+      <div class="q"><b>E6 · your ruling</b></div>
+      <label class="rec"><input type="checkbox" data-o="As drawn"> <span><b>As drawn</b>: the desk takes the same rows now (recommended)</span></label>
+      <label><input type="checkbox" data-o="Desk keeps today's dialog until stage 2"> <span>The desk keeps today's dialog until stage 2</span></label>
+      <label><input type="checkbox" data-o="Something else"> <span>Something else (say what)</span></label>
+      <textarea class="note" id="note-E6" placeholder="Notes on E6"></textarea>
+    </div>
+  </section>
+
+  <!-- S6 + defects -->
+  <section class="spec" id="e7">
+    <h2>Before the build: the page split, and two defects</h2>
+    <p class="why"><b>The split.</b> The first step of stage 1 moves the sheet, and the new room, out of the 4,211-line page into their own files, then the form, then the calendar views. It's a pure move: nothing a coach sees changes, and it gets walked as such. <b>The defects.</b> The calendar export puts an 8 p.m. game on the next day and marks a cancelled event as confirmed (station 8). They're small and unrelated to this stage's design, so I recommend fixing them now.</p>
+    <div class="opts" data-opt="S6">
+      <div class="q"><b>The split · your ruling</b></div>
+      <label class="rec"><input type="checkbox" data-o="Split first, a pure move"> <span><b>Split first</b>, a pure move (recommended)</span></label>
+      <label><input type="checkbox" data-o="Split as part of the stage"> <span>Split as part of the stage's changes</span></label>
+      <label><input type="checkbox" data-o="Don't split"> <span>Don't split</span></label>
+      <textarea class="note" id="note-S6" placeholder="Notes on the split"></textarea>
+    </div>
+    <div class="opts" data-opt="D1">
+      <div class="q"><b>The two calendar defects · your ruling</b></div>
+      <label class="rec"><input type="checkbox" data-o="Fix now"> <span><b>Fix now</b>, ahead of the stages (recommended)</span></label>
+      <label><input type="checkbox" data-o="Wait for stage 4"> <span>Wait for stage 4</span></label>
+      <textarea class="note" id="note-D1" placeholder="Notes on the defects"></textarea>
+    </div>
+  </section>
+
+  <section class="summary">
+    <h2>Stage 1: your rulings, to paste back</h2>
+    <p>The same summary as the walk's, covering both tabs.</p>
+    <button class="btn" type="button" id="buildS1">Build summary</button>
+    <textarea class="out" id="outS1" readonly aria-label="Summary to paste back" hidden></textarea>
+  </section>
+</div>
+</div>
+
+<!-- ═══════════════════════════════ DOCUMENTS ═══════════════════════════════ -->
+<div id="tab-brief" role="tabpanel" hidden><article class="doc">{{MD:brief}}</article></div>
+<div id="tab-plan" role="tabpanel" hidden><article class="doc">{{MD:plan}}</article></div>
+<div id="tab-dec" role="tabpanel" hidden><article class="doc">
+  <div class="eyebrow">Rulings, one row as each happens</div>
+  <h1>Decisions</h1>
+  <div id="decRows"></div>
+</article></div>
+<div id="tab-qa" role="tabpanel" hidden><article class="doc">
+  <div class="eyebrow">QA walks</div>
+  <h1>Walks on this project</h1>
+  <p><b>Stage 0 · the five built changes</b>: the Add Event form (§212), Arrival &amp; Places (§214), Back goes up one level (§219), the open game is a place (§222) and the Opponent picker (§236), in one walk, phone then desktop: <a href="https://claude.ai/artifact/TuKePWta8N51U41BaY78SR" target="_blank" rel="noopener">https://claude.ai/artifact/TuKePWta8N51U41BaY78SR</a>. Walk it whenever suits you. It doesn't gate the stages.</p>
+  <p>Each stage's walk is added here once that stage is built.</p>
+
+  <section class="qa" id="qa-s1" aria-labelledby="qa-s1-h">
+    <div class="eyebrow">Stage 1 · ledger §242 · built on dev 25 Sep 2026</div>
+    <h2 id="qa-s1-h">Walk: the event sheet, the attendance room, the calendar fix</h2>
+    <p>Tick each line as you see it, give each part a verdict, note anything off, then press <b>Build paste-back</b> at the foot and send me the text. Your ticks stay in this browser. Every line names <b>who or what</b> to look for, never a count that moves as the fixture is re-seeded.</p>
+    <div class="qa-card">
+      <h3>Sign in as</h3>
+      <dl class="qa-kv">
+        <dt>URL</dt><dd>http://localhost:3000 (on your phone: the same dev server, the way you reach it for phone walks)</dd>
+        <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+        <dt>Password</dt><dd>UATPassword2026!</dd>
+        <dt>Team</dt><dd>UAT Test Team → Schedule</dd>
+      </dl>
+      <p class="qa-small">Dev only; keep this page private — it carries a password. <code>UAT_COACH_PASSWORD</code> in <code>.env.local</code> is the source of truth if it has been rotated. <b>The fixture:</b> <b>UAT probe game</b> is re-anchored 30 minutes into the past whenever the fixture is re-seeded, so it is "today's started game" on the day it was seeded; <b>UAT probe game · no lineup</b> is fixed on Sun 27 Sep (after that day, use any upcoming game nobody has answered); <b>vs Ridgeview</b> on 4 May is scored and carries the lineup warning; <b>Practice review — next week</b> is Mon 28 Sep; <b>UAT probe practice</b> is finished.</p>
+    </div>
+
+    <div class="qa-part" data-part="A">
+      <h3>A · A game ahead, on a phone</h3>
+      <label class="chk"><input type="checkbox" data-k="A1"><span><b>A1</b> Schedule → tap <b>UAT probe game · no lineup</b>. It reads: the title, the date and time, the place row, then <b>three rows — Attendance, Lineup, Scouting</b> — each with a second line, then <b>+ Add final score</b>, and the foot row <b>Edit details · Cancel event · Delete</b>. <b>No tabs.</b></span></label>
+      <label class="chk"><input type="checkbox" data-k="A2"><span><b>A2</b> The whole sheet fits on the screen — nothing to scroll.</span></label>
+      <label class="chk"><input type="checkbox" data-k="A3"><span><b>A3</b> Attendance's second line says how many <b>haven't replied</b> and names the first three players, "… and N more".</span></label>
+      <label class="chk"><input type="checkbox" data-k="A4"><span><b>A4</b> Lineup reads <b>No lineup yet</b>; Scouting reads <b>Probe Rovers · no games against them yet</b>.</span></label>
+      <label class="chk"><input type="checkbox" data-k="A5"><span><b>A5</b> No "Awards given" box on a game that hasn't started.</span></label>
+      <div class="verdict" role="radiogroup" aria-label="Part A verdict"><span>Part A</span><label><input type="radio" name="v-A" value="Pass"> Pass</label><label><input type="radio" name="v-A" value="Issue"> Issue</label><label><input type="radio" name="v-A" value="Not walked"> Not walked</label></div>
+      <textarea class="note" data-n="A" placeholder="Notes on part A"></textarea>
+    </div>
+
+    <div class="qa-part" data-part="B">
+      <h3>B · Today's started game, on a phone</h3>
+      <label class="chk"><input type="checkbox" data-k="B1"><span><b>B1</b> Tap <b>UAT probe game</b> (today). <b>+ Add final score</b> leads, then <b>Awards given</b> ("Enter a final score to unlock awards for this game"), then the three rows.</span></label>
+      <label class="chk"><input type="checkbox" data-k="B2"><span><b>B2</b> Attendance's head carries the counts; its second line names <b>Out: #12 Logan</b> in red, then <b>Late: #11 Kai</b> in amber — who isn't coming, without opening anything.</span></label>
+      <label class="chk"><input type="checkbox" data-k="B3"><span><b>B3</b> Lineup reads <b>Has a lineup</b> over <b>Game day — the bench console</b>. Tapping it opens <b>Game day</b>; the phone's Back returns to this game.</span></label>
+      <label class="chk"><input type="checkbox" data-k="B4"><span><b>B4</b> Tap <b>Attendance</b> → the room: "Attendance" with the game's name and date under it, the five count chips, <b>All in · Reset</b>, and <b>every player on the first screen</b> — no scrolling. It covers the bottom bar.</span></label>
+      <div class="verdict" role="radiogroup" aria-label="Part B verdict"><span>Part B</span><label><input type="radio" name="v-B" value="Pass"> Pass</label><label><input type="radio" name="v-B" value="Issue"> Issue</label><label><input type="radio" name="v-B" value="Not walked"> Not walked</label></div>
+      <textarea class="note" data-n="B" placeholder="Notes on part B"></textarea>
+    </div>
+
+    <div class="qa-part" data-part="C">
+      <h3>C · The room, one level at a time</h3>
+      <label class="chk"><input type="checkbox" data-k="C1"><span><b>C1</b> In the room, tap <b>#11 Kai</b> → their answer sheet rises over the room, exactly as before (In · Late · Out · No reply, and a note).</span></label>
+      <label class="chk"><input type="checkbox" data-k="C2"><span><b>C2</b> Close it (Escape on a keyboard, or the phone's Back): only the answer sheet closes — the room stays.</span></label>
+      <label class="chk"><input type="checkbox" data-k="C3"><span><b>C3</b> Change one answer: the <b>Saved</b> pill appears and fades. Back to the game: the Attendance row's second line has changed with it. <i>(Then set it back — the fixture is shared.)</i></span></label>
+      <label class="chk"><input type="checkbox" data-k="C4"><span><b>C4</b> Back from the room → <b>the game</b> (the address loses "&amp;tab=attendance"); Back again → <b>the schedule list</b>.</span></label>
+      <label class="chk"><input type="checkbox" data-k="C5"><span><b>C5</b> A count chip (Out) filters the list to that group; tapping it again shows everyone.</span></label>
+      <div class="verdict" role="radiogroup" aria-label="Part C verdict"><span>Part C</span><label><input type="radio" name="v-C" value="Pass"> Pass</label><label><input type="radio" name="v-C" value="Issue"> Issue</label><label><input type="radio" name="v-C" value="Not walked"> Not walked</label></div>
+      <textarea class="note" data-n="C" placeholder="Notes on part C"></textarea>
+    </div>
+
+    <div class="qa-part" data-part="D">
+      <h3>D · vs Ridgeview (4 May) — the warning in the row</h3>
+      <label class="chk"><input type="checkbox" data-k="D1"><span><b>D1</b> Slide up to May and open <b>vs Ridgeview</b> on 4 May: the score leads, then Awards given (with <b>Give an award</b>), then the rows.</span></label>
+      <label class="chk"><input type="checkbox" data-k="D2"><span><b>D2</b> Lineup reads <b>Needs a look</b>, its second line in amber: <b>"Kai and Logan are in, but not in the lineup"</b>. No separate yellow box, no "Fix the attendance below".</span></label>
+      <label class="chk"><input type="checkbox" data-k="D3"><span><b>D3</b> Tapping Lineup opens the <b>lineup builder</b> (the game is over, so the fix is there — not Game day's recap). The builder's back arrow returns to this game.</span></label>
+      <label class="chk"><input type="checkbox" data-k="D4"><span><b>D4</b> Scouting reads <b>Ridgeview · … vs them · … note(s)</b>; tapping it opens the book's panel inside the sheet with a back arrow, and Back returns to the game.</span></label>
+      <div class="verdict" role="radiogroup" aria-label="Part D verdict"><span>Part D</span><label><input type="radio" name="v-D" value="Pass"> Pass</label><label><input type="radio" name="v-D" value="Issue"> Issue</label><label><input type="radio" name="v-D" value="Not walked"> Not walked</label></div>
+      <textarea class="note" data-n="D" placeholder="Notes on part D"></textarea>
+    </div>
+
+    <div class="qa-part" data-part="E">
+      <h3>E · A practice — the same shape</h3>
+      <label class="chk"><input type="checkbox" data-k="E1"><span><b>E1</b> Open <b>Practice review — next week</b>: a <b>Practice plan</b> row with the plan's summary as its second line, then <b>Attendance</b>. Tapping the plan row opens the plan; Back returns to the practice.</span></label>
+      <label class="chk"><input type="checkbox" data-k="E2"><span><b>E2</b> It reads like the game in part A, minus Lineup and Scouting — one shape, not two.</span></label>
+      <label class="chk"><input type="checkbox" data-k="E3"><span><b>E3</b> Open <b>UAT probe practice</b> (finished): Awards given sits <b>above</b> the rows, where a started game's sits.</span></label>
+      <div class="verdict" role="radiogroup" aria-label="Part E verdict"><span>Part E</span><label><input type="radio" name="v-E" value="Pass"> Pass</label><label><input type="radio" name="v-E" value="Issue"> Issue</label><label><input type="radio" name="v-E" value="Not walked"> Not walked</label></div>
+      <textarea class="note" data-n="E" placeholder="Notes on part E"></textarea>
+    </div>
+
+    <div class="qa-part" data-part="F">
+      <h3>F · The links in</h3>
+      <label class="chk"><input type="checkbox" data-k="F1"><span><b>F1</b> Overview: tap today's game's attendance chip (the "… in · … late · … out" line). It opens <b>the room</b> directly on UAT probe game, every player on the first screen.</span></label>
+      <label class="chk"><input type="checkbox" data-k="F2"><span><b>F2</b> Back → <b>the game</b>. Back → <b>the schedule</b>. Back → <b>the Overview</b>. One level per Back (see call 2).</span></label>
+      <label class="chk"><input type="checkbox" data-k="F3"><span><b>F3</b> Insights → Attendance: a "Take attendance" door on an unmarked event opens its room. <i>(Skip if every event is marked.)</i></span></label>
+      <div class="verdict" role="radiogroup" aria-label="Part F verdict"><span>Part F</span><label><input type="radio" name="v-F" value="Pass"> Pass</label><label><input type="radio" name="v-F" value="Issue"> Issue</label><label><input type="radio" name="v-F" value="Not walked"> Not walked</label></div>
+      <textarea class="note" data-n="F" placeholder="Notes on part F"></textarea>
+    </div>
+
+    <div class="qa-part" data-part="G">
+      <h3>G · At a desk</h3>
+      <label class="chk"><input type="checkbox" data-k="G1"><span><b>G1</b> Open <b>UAT probe game · no lineup</b> on a computer: the same three rows under the place line, then <b>+ Add final score</b>, then <b>Edit details · Cancel event · Delete</b> under them. <b>No</b> "Enter a final score to unlock awards" on a game days away.</span></label>
+      <label class="chk"><input type="checkbox" data-k="G2"><span><b>G2</b> Click <b>Attendance</b>: the dialog's body becomes the room, headed <b>← UAT probe game · no lineup</b> with "Attendance" under it; the × still closes the dialog.</span></label>
+      <label class="chk"><input type="checkbox" data-k="G3"><span><b>G3</b> On <b>UAT probe game</b> (started), the Lineup row opens <b>Game day</b> — the desk used to say "Edit in Lineups →" at every hour.</span></label>
+      <label class="chk"><input type="checkbox" data-k="G4"><span><b>G4</b> <i>(added by the review)</i> Open <b>UAT probe game</b>, click <b>Attendance</b>, then the <b>×</b> (not the back arrow): the dialog closes and the address bar is back to the plain schedule. Reload the page: the game does <b>not</b> reopen. Same from <b>Scouting</b>.</span></label>
+      <div class="verdict" role="radiogroup" aria-label="Part G verdict"><span>Part G</span><label><input type="radio" name="v-G" value="Pass"> Pass</label><label><input type="radio" name="v-G" value="Issue"> Issue</label><label><input type="radio" name="v-G" value="Not walked"> Not walked</label></div>
+      <textarea class="note" data-n="G" placeholder="Notes on part G"></textarea>
+    </div>
+
+    <div class="qa-part" data-part="H">
+      <h3>H · The calendar export (the fix that went first)</h3>
+      <label class="chk"><input type="checkbox" data-k="H1"><span><b>H1</b> Add a practice <b>tomorrow at 9:00 p.m.</b> On a phone, the quiet "Export the season" row → <b>Calendar</b>; open the file in your phone's calendar. The practice sits on <b>tomorrow</b>, at 9:00 p.m. — not the day after.</span></label>
+      <label class="chk"><input type="checkbox" data-k="H2"><span><b>H2</b> Cancel that practice, export again and open it: the calendar shows it <b>cancelled</b>, not confirmed. <i>(Then delete the practice.)</i></span></label>
+      <label class="chk"><input type="checkbox" data-k="H3"><span><b>H3</b> In the same file, vs Ridgeview reads <b>"vs Ridgeview"</b> once — it used to read "vs Ridgeview vs Ridgeview".</span></label>
+      <label class="chk"><input type="checkbox" data-k="H4"><span><b>H4</b> On a computer, Export → <b>Excel</b>: the evening practice's Date column is its own date.</span></label>
+      <div class="verdict" role="radiogroup" aria-label="Part H verdict"><span>Part H</span><label><input type="radio" name="v-H" value="Pass"> Pass</label><label><input type="radio" name="v-H" value="Issue"> Issue</label><label><input type="radio" name="v-H" value="Not walked"> Not walked</label></div>
+      <textarea class="note" data-n="H" placeholder="Notes on part H"></textarea>
+    </div>
+
+    <div class="qa-part qa-calls">
+      <h3>Three calls the build made — tick one per call</h3>
+      <div class="opts" data-call="L1">
+        <div class="q"><b>Call 1 · The Lineup row on a finished game that disagrees with attendance.</b> E3 said "from first pitch, Game day"; E4 said "the row opens the builder, where the fix is". On your own drawn case (vs Ridgeview) the two disagreed: Game day outside its window is a read-only recap. Built: <b>the builder</b> when the game is over and there's a disagreement; Game day during the game; the builder before first pitch.</div>
+        <label class="rec"><input type="checkbox" data-o="As built — the builder"> <span><b>As built</b> — the builder, where the fix is</span></label>
+        <label><input type="checkbox" data-o="Game day by the clock alone"> <span>Game day by the clock alone, even when it can't fix it</span></label>
+        <label><input type="checkbox" data-o="Something else"> <span>Something else (say what)</span></label>
+      </div>
+      <div class="opts" data-call="L2">
+        <div class="q"><b>Call 2 · Back from a linked-in event.</b> Drawn: "the room → Back → the game → Back → the Overview". Built (and standing since §222 for every link into the schedule, Game day's included): the room → Back → the game → Back → <b>the schedule</b> → Back → the Overview.</div>
+        <label class="rec"><input type="checkbox" data-o="Keep — as §222"> <span><b>Keep</b> — one level per Back, the schedule included (as §222)</span></label>
+        <label><input type="checkbox" data-o="Skip the schedule — a later change"> <span>Back from a linked-in event should skip the schedule — draw it as a later change (it touches every link in)</span></label>
+      </div>
+      <div class="opts" data-call="L3">
+        <div class="q"><b>Call 3 · A mixed-answer Attendance row runs long.</b> When all four answers are present (UAT probe practice: "9 in · 1 late · 1 out · 1 no reply", then "Out: #11 Kai · Late: #10 Jules · No reply: #12 Logan") the head and the line each take two lines — the row is 96px instead of 64, still on screen one.</div>
+        <label class="rec"><input type="checkbox" data-o="Fine as is"> <span><b>Fine as is</b> — it's the rare, busy case, and it's all still on the first screen</span></label>
+        <label><input type="checkbox" data-o="Shorten the head"> <span>Shorten the head when the line already names them (e.g. "Attendance · 9 in")</span></label>
+        <label><input type="checkbox" data-o="Something else"> <span>Something else (say what)</span></label>
+      </div>
+    </div>
+
+    <div class="qa-foot">
+      <button class="btn" type="button" id="qaBuild">Build paste-back</button>
+      <button class="btn ghost" type="button" id="qaReset">Clear my ticks</button>
+      <textarea class="out" id="qaOut" readonly aria-label="Walk result to paste back" hidden></textarea>
+    </div>
+  </section>
+</article></div>
+
+<dialog id="dlg" aria-labelledby="dlgT"><div class="dhead"><h2 id="dlgT"></h2><button class="btn ghost" type="button" id="dlgX">Close</button></div><div class="dbody" id="dlgB"></div></dialog>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(id){ return document.getElementById(id); };
+  var all = function(s, r){ return [].slice.call((r || document).querySelectorAll(s)); };
+  var esc = function(v){ return String(v).replace(/[&<>"']/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]; }); };
+  var KEY = 'fl-schedule-deep-dive-v1';
+  var st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+
+  /* tabs, deep-linkable by a bare #token */
+  var TABS = ['walk','s1','brief','plan','dec','qa'];
+  function show(t){
+    if (TABS.indexOf(t) < 0) t = 'walk';
+    TABS.forEach(function(k){ $('tab-' + k).hidden = k !== t; });
+    all('.tab').forEach(function(b){ b.setAttribute('aria-selected', String(b.dataset.tab === t)); });
+    try { st.tab = t; save(); } catch (e) {}
+  }
+  all('.tab').forEach(function(b){ b.addEventListener('click', function(){ show(b.dataset.tab); window.scrollTo(0, 0); }); });
+  var h = (location.hash || '').slice(1);
+  show(TABS.indexOf(h) >= 0 ? h : (st.tab || 'walk'));
+
+  /* the room's twelve rows — the fixture's real answers on today's game */
+  var P = [['#33 Avery Test','in'],['#2 Blake Test','in'],['#3 Casey Test','in'],['#4 Devon Test','in'],['#5 Emerson Test','in'],['#6 Frankie Test','in'],['#7 Gray Test','in'],['#8 Harper Test','in'],['#9 Indigo Test','in'],['#10 Jules Test','in'],['#11 Kai Test','la'],['#12 Logan Test','ou']];
+  var W = {in:['In','i-in'], la:['Late','i-late'], ou:['Out','i-out'], nr:['No reply','i-q']};
+  var rows = P.map(function(p){ var w = W[p[1]]; return '<div class="rm-row"><b>' + p[0] + '</b><span class="bd ' + p[1] + '"><svg width="15" height="15"><use href="#' + w[1] + '"/></svg>' + w[0] + '</span><svg class="cv" width="18" height="18"><use href="#i-chev"/></svg></div>'; }).join('');
+  $('roomRows').innerHTML = rows; $('rsvpRows').innerHTML = rows;
+
+  /* findings + tags: every highlight opens its explanation */
+  var F = {
+    F01:{t:'The desktop list opens on the season’s first day', now:'At 1440 and 768 the list opens at the top of the season (the fixture: 2 Apr). On a real season the next event is 1,916px down.', fix:'Stage 2: open on today, the season above it, as the phone does.'},
+    F02:{t:'The job sinks as the day goes on', now:'First player at 414px before first pitch, 524px once started, 696px on a scored game; 8, 6, then 3 players on screen one.', fix:'Stage 1: the jobs are rows under the summary; on a phone the sheet is one screen at every hour.'},
+    F03:{t:'A practice and a game are two shapes', now:'A practice shows attendance inline with no tabs; a game hides it behind Attendance · Lineup · Scouting.', fix:'Stage 1: every event draws the same door rows; kinds differ only in which rows they have.'},
+    F04:{t:'“Attendance” twice', now:'The tab reads Attendance and the heading directly under it reads Attendance.', fix:'Stage 1: no tab, so no repeat; the room is titled once.'},
+    F05:{t:'Who isn’t coming is the last row', now:'On today’s game, Kai (Late) and Logan (Out) are rows 11 and 12, about 1,060px down.', fix:'Stage 1: the Attendance row names them: “Out: #12 Logan · Late: #11 Kai”.'},
+    F06:{t:'The lineup warning’s 15px door', now:'“Fix the attendance below, or edit the lineup →”; the link is 97×15px, the only control under the floor on the phone sheet.', fix:'Stage 1: the warning becomes the second line of the Lineup and Attendance rows; each is a 64px door.'},
+    F07:{t:'The desktop’s lineup door never turns', now:'Phone: “Edit ›” before first pitch, “Game day ›” after. Desk: “Edit in Lineups →” always.', fix:'Stage 1: the Lineup row turns by the clock at every width.'},
+    F08:{t:'Awards line before a game, on the desk', now:'The desk shows “Enter a final score to unlock awards” on a game two days away; the phone stopped in C3.', fix:'Stage 1: the desk follows C3.'},
+    F09:{t:'Month at a desk says colour, not content', now:'165px cells; chips cut the name (“UAT probe prac”) and carry no time.', fix:'Stage 2: time + name on two lines, or dots + the tapped day’s rows.'},
+    F10:{t:'Tournaments never had a phone pass', now:'The list’s card runs off a 390 screen. The record: 2,139px, 11 of 17 controls under 44, no help “?”, titled by the team, no road to its games.', fix:'Stage 3: titled by the tournament, one help door, a “Games on your Schedule” row and back; both portals.'},
+    F11:{t:'The calendar export is wrong on evening games', now:'The date is read in universal time and the clock in the device’s, so an event at 8 p.m. or later (EDT) lands a day late; a cancelled event exports as confirmed.', fix:'Now, on your say-so: build each entry from the instant in the club’s zone, as the family feed does; pass the cancellation.'},
+    F12:{t:'An arrival after the start passes silently', now:'Today’s game: start 3:07 p.m., “Arrive 5:30 p.m.”. A hand-set arrival stays when the start moves, and nothing says so.', fix:'Stage 5: a line under the field and on the sheet.'},
+    F13:{t:'Two leftovers on the form', now:'A practice’s fold still promises an address; a weekly series asks each date’s opponent in a plain box.', fix:'Stage 5: “More — field, links, notes”; the series’ boxes take the Opponent picker.'},
+    F14:{t:'The largest page in the portal', now:'4,211 lines, 60 pieces of state; the sheet drawn in three orders.', fix:'Stage 1, first: split the sheet, the form and the calendar views into their own files as a pure move.'}
+  };
+  var KIND = {new:'New', re:'Restyled from today', un:'Unchanged from today'};
+  function modal(t, b){ $('dlgT').textContent = t; $('dlgB').innerHTML = b; $('dlg').showModal(); }
+  $('dlgX').addEventListener('click', function(){ $('dlg').close(); });
+  document.addEventListener('click', function(e){
+    var fl = e.target.closest('.fl');
+    if (fl) { var f = F[fl.dataset.f]; if (!f) return;
+      modal(fl.dataset.f + ' · ' + f.t, '<h3>What the product does today</h3><p>' + esc(f.now) + '</p>' + (fl.dataset.here ? '<h3>Where you are looking</h3><p class="here">' + esc(fl.dataset.here) + '</p>' : '') + '<h3>What the proposal does</h3><p>' + esc(f.fix) + '</p>');
+      return; }
+    var mk = e.target.closest('.mk');
+    if (mk) { var k = mk.classList.contains('new') ? 'new' : mk.classList.contains('re') ? 're' : 'un';
+      modal(KIND[k], '<p>' + esc(mk.dataset.note || '') + '</p>'); }
+  });
+
+  /* rulings: Keep / Reshape / Not yet */
+  all('.ask[data-ask]').forEach(function(a){
+    var id = a.dataset.ask;
+    all('.ruling button', a).forEach(function(b){
+      b.setAttribute('aria-pressed', String(st['r_' + id] === b.dataset.v));
+      b.addEventListener('click', function(){
+        st['r_' + id] = st['r_' + id] === b.dataset.v ? '' : b.dataset.v; save();
+        all('.ruling button', a).forEach(function(x){ x.setAttribute('aria-pressed', String(st['r_' + id] === x.dataset.v)); });
+      });
+    });
+  });
+  /* stage options: one checkbox per option */
+  all('.opts[data-opt]').forEach(function(g){
+    var id = g.dataset.opt;
+    all('input[type=checkbox]', g).forEach(function(c){
+      c.checked = !!st['o_' + id + '_' + c.dataset.o];
+      c.addEventListener('change', function(){ st['o_' + id + '_' + c.dataset.o] = c.checked; save(); });
+    });
+  });
+  all('textarea.note').forEach(function(t){
+    if (st['n_' + t.id]) t.value = st['n_' + t.id];
+    t.addEventListener('input', function(){ st['n_' + t.id] = t.value; save(); });
+  });
+
+  function build(){
+    var L = ['SCHEDULE DEEP DIVE — rulings and notes', 'Walk + stage 1 drawn 2026-09-25', '', 'THE WALK'];
+    all('.ask[data-ask]').forEach(function(a){
+      var id = a.dataset.ask, q = a.querySelector('h3').textContent.trim();
+      L.push(id + '  [' + (st['r_' + id] || '—') + ']  ' + q);
+      var n = (st['n_note-' + id] || '').trim(); if (n) L.push('   NOTE: ' + n.replace(/\n/g, '\n         '));
+    });
+    L.push('', 'STAGE 1');
+    all('.opts[data-opt]').forEach(function(g){
+      var id = g.dataset.opt;
+      var picked = all('input[type=checkbox]', g).filter(function(c){ return c.checked; }).map(function(c){ return c.dataset.o; });
+      L.push(id + ': ' + (picked.length ? picked.join(' + ') : '— not ruled —'));
+      var n = (st['n_note-' + id] || '').trim(); if (n) L.push('   NOTE: ' + n.replace(/\n/g, '\n         '));
+    });
+    return L.join('\n');
+  }
+  function out(id){
+    var o = $(id); o.hidden = false; o.value = build(); o.focus(); o.select();
+    try { if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(o.value).then(function(){ toast('Copied'); }, function(){ toast('Selected: copy it'); }); else toast('Selected: copy it'); } catch (e) { toast('Selected: copy it'); }
+  }
+  var tt = null;
+  function toast(m){ var t = $('toast'); t.textContent = m; t.hidden = false; clearTimeout(tt); tt = setTimeout(function(){ t.hidden = true; }, 1600); }
+  $('buildWalk').addEventListener('click', function(){ out('outWalk'); });
+  $('buildS1').addEventListener('click', function(){ out('outS1'); });
+
+  /* decisions */
+  var DEC = [
+    {date:'2026-09-25', ask:'Stage 1 reviewed before commit: /simplify, /review, /docs', tag:'Built', why:'The review’s four lenses found three things, each confirmed before it was fixed. The Attendance row’s names folded every overflow into the last group (3 out + 2 late read as five out); now “and N more” is only ever more of that answer, and an unnamed group is counted (“2 late”). At a desk the × on the room or on Scouting left the game’s address behind, so a reload reopened a game just closed; fixed in the shared back-button rule, walk G4. A failed read said “No lineup yet”; it now shows the error. Kept: a saved order with an Out player in it reads Needs a look even before positions are set, as the list’s ⚠ and the builder already do. The coach guide now describes the rows and the room, with a new FAQ: “Where did the Attendance, Lineup and Scouting tabs go?”'},
+    {date:'2026-09-25', ask:'Stage 1 built on dev — four calls made at build, said before the code', tag:'Built', why:'The Lineup row on a finished game that disagrees with attendance opens the builder (E4 over E3 where Game day is only a recap); a tournament keeps its dates and "+ Add game" (the sheet never listed its games); the row says "Has a lineup", never "Ready"; three names on a row at most, then "and N more". Widened: the Excel/CSV date column had the calendar defect too, fixed with it. Found driving it: a link that opened the event AND the room left a dead history entry under React’s dev strict mode — fixed. Calls 1–3 on the QA walk ask for your ruling.'},
+    {date:'2026-09-25', ask:'Stage 1 · E1–E6: one shape for every event, attendance in its own room, Lineup and Scouting as rows, the warning in the row, the links open the room, the desk takes the same rows', tag:'Ruled', why:'Owner paste-back: every ask as drawn (E2 the full-screen room; E3 rows, the peek retires).'},
+    {date:'2026-09-25', ask:'S6 · the page split', tag:'Ruled', why:'Split first, as a pure move: the first commit of the stage 1 build, walked as nothing changed.'},
+    {date:'2026-09-25', ask:'D1 · the two calendar-export defects', tag:'Ruled', why:'Fix now, as part 0 of the build. Widened: the house-league admin export has the same defect and is fixed with it.'},
+    {date:'2026-09-25', ask:'The walk’s station questions for stages 2–5 (Q 1.1, 2.1, 6.1, 6.2, 7.1, 8.2)', tag:'Open', std:true, why:'Came back unticked. Not ruled; each is asked again when its stage is drawn.'},
+    {date:'2026-09-25', ask:'How this project runs', tag:'Ruled', why:'Owner: “you are supposed to do a walk through and build a plan with stages, in each stage you walk me through what you did and your proposed changes. I read those proposed changes, review with the product and provide feedback on what to change or add.” The kickoff prompt’s step-0 QA gate is withdrawn; that walk stays published and is walked on its own clock.'},
+    {date:'2026-09-21', ask:'C1–C4 (the phone Schedule, stage 2 of Coaching from a phone)', tag:'Standing', std:true, why:'Built and walked 35/35 (§216). Not reopened; stage 1 keeps C3’s clock (rows before first pitch, the score from first pitch).'},
+    {date:'2026-09-24', ask:'Edit autosaves, create asks', tag:'Standing', std:true, why:'Stands. The walk proposes Edit details as its one named exception (Q 6.1), because a save to when/where notifies families.'}
+  ];
+  $('decRows').innerHTML = DEC.map(function(d){ return '<div class="decrow"><div class="dh"><strong>' + esc(d.ask) + '</strong><span class="tag' + (d.std ? ' std' : '') + '">' + esc(d.tag) + '</span></div><div class="meta">' + esc(d.date) + '</div><p>' + esc(d.why) + '</p></div>'; }).join('');
+})();
+</script>
+<script>
+/* THE STAGE 1 QA WALK — ticks, verdicts, notes and calls kept in this browser; one paste-back. */
+(function(){
+  'use strict';
+  var KEY = 'fl-sdd-qa-s1-v1';
+  var root = document.getElementById('qa-s1');
+  if (!root) return;
+  var st = {};
+  try { st = JSON.parse(localStorage.getItem(KEY) || '{}') || {}; } catch (e) { st = {}; }
+  function save(){ try { localStorage.setItem(KEY, JSON.stringify(st)); } catch (e) {} }
+  var q = function(s){ return [].slice.call(root.querySelectorAll(s)); };
+  q('input[data-k]').forEach(function(b){
+    b.checked = !!st['k_' + b.dataset.k];
+    b.addEventListener('change', function(){ st['k_' + b.dataset.k] = b.checked; save(); });
+  });
+  q('.verdict input[type=radio]').forEach(function(r){
+    r.checked = st[r.name] === r.value;
+    r.addEventListener('change', function(){ if (r.checked) { st[r.name] = r.value; save(); } });
+  });
+  q('textarea[data-n]').forEach(function(t){
+    t.value = st['n_' + t.dataset.n] || '';
+    t.addEventListener('input', function(){ st['n_' + t.dataset.n] = t.value; save(); });
+  });
+  q('.opts[data-call]').forEach(function(box){
+    var id = box.dataset.call;
+    [].slice.call(box.querySelectorAll('input[data-o]')).forEach(function(c){
+      c.checked = (st['c_' + id] || []).indexOf(c.dataset.o) >= 0;
+      c.addEventListener('change', function(){
+        var list = (st['c_' + id] || []).filter(function(v){ return v !== c.dataset.o; });
+        if (c.checked) list.push(c.dataset.o);
+        st['c_' + id] = list; save();
+      });
+    });
+  });
+  document.getElementById('qaBuild').addEventListener('click', function(){
+    var lines = ['§242 · Schedule deep dive stage 1 — QA walk'];
+    q('.qa-part[data-part]').forEach(function(p){
+      var part = p.dataset.part;
+      var boxes = [].slice.call(p.querySelectorAll('input[data-k]'));
+      var ticked = boxes.filter(function(b){ return b.checked; }).map(function(b){ return b.dataset.k; });
+      var open = boxes.filter(function(b){ return !b.checked; }).map(function(b){ return b.dataset.k; });
+      lines.push(part + ': ' + (st['v-' + part] || 'no verdict') + ' · ticked ' + ticked.length + '/' + boxes.length + (open.length ? ' (open: ' + open.join(', ') + ')' : ''));
+      var n = (st['n_' + part] || '').trim();
+      if (n) lines.push('  notes: ' + n.replace(/\s+/g, ' '));
+    });
+    ['L1', 'L2', 'L3'].forEach(function(id){ lines.push('Call ' + id.slice(1) + ': ' + ((st['c_' + id] || []).join(' + ') || 'no answer')); });
+    var out = document.getElementById('qaOut');
+    out.hidden = false; out.value = lines.join('\n'); out.focus(); out.select();
+  });
+  document.getElementById('qaReset').addEventListener('click', function(){
+    if (!window.confirm('Clear every tick, verdict, note and call on this walk?')) return;
+    st = {}; save();
+    q('input[data-k], .opts[data-call] input').forEach(function(b){ b.checked = false; });
+    q('.verdict input').forEach(function(r){ r.checked = false; });
+    q('textarea[data-n]').forEach(function(t){ t.value = ''; });
+    var out = document.getElementById('qaOut'); out.hidden = true; out.value = '';
+  });
+})();
+</script>

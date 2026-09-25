@@ -75,6 +75,20 @@ import { addressOf, clickLeavesPage, createPressGate, homeOf, popVerdict, stepOf
  * and the next Back did nothing (/review, 2026-09-25).
  * ⚠ A button that navigates by `router.push`, or a link whose own handler stops the click, is not
  * seen as leaving; every door in the portal's chrome is a plain link, which is the case this covers.
+ * ⚠ TWO STEPS MUST NOT MOUNT IN ONE COMMIT (the Schedule deep dive, 2026-09-25). A sheet and a view
+ * inside it opened together from one address — `?event=…&tab=attendance` — push two steps at once,
+ * and React's dev strict mode tears both down and remounts them: the outer step's second mount then
+ * takes over the INNER step's dead entry and inherits its `home`, leaving a dead entry an extra Back
+ * has to cross. Arm the inner step one commit later (`viewStepArmed` in `ScheduleEventSheet`) — a
+ * general fix in the takeover rule was traced and rejected: it gives a middle step of three the
+ * outermost step's home.
+ * ⚠ …AND TWO STEPS MAY CLOSE IN ONE COMMIT (`/review`, the same day): the × on a view inside a
+ * sheet closes both. The outer step's exit then finds the inner step's entry on top of its own, so
+ * it could neither strip its address nor consume it — the inner step's `back()` landed on the
+ * outer entry, still ADDRESSED, with the sheet closed, and a reload reopened the game the coach
+ * had just closed. The outer step is BURIED instead: when the browser lands on its entry, `onPop`
+ * strips the address and steps back once more. Only a step that closed in the same batch counts
+ * (the one on top is still `closing`); a page left through a link is `left`, and keeps its entries.
  */
 
 interface Step {
@@ -95,6 +109,9 @@ interface Registry {
   nextSeq: number;
   /** Steps that have closed and whose exit is held by the press gate — see the header. */
   closing?: Step[];
+  /** Steps that closed UNDER another closing step in the same commit, their entry still to be
+   *  consumed when the browser lands on it — see the header. */
+  buried?: Step[];
   /** When an exit may run, and whether the tap that closed it left the page (`backStep.ts`). A
    *  registry kept across a hot reload may predate it, so it is attached on first use. */
   gate?: PressGate;
@@ -200,6 +217,15 @@ function restampStep(step: Step): void {
 function onPop(reg: Registry): void {
   const top = topStep(reg.steps);
   const landed = window.history.state;
+  // A step that closed under the one just consumed: its entry is consumed now, address first.
+  const landedSeq = stepOf(landed);
+  const buried = landedSeq === null ? -1 : (reg.buried ?? []).findIndex(s => s.seq === landedSeq);
+  if (buried >= 0) {
+    const [step] = reg.buried!.splice(buried, 1);
+    restampStep({ ...step, address: null });
+    window.history.back();
+    return;
+  }
   const verdict = popVerdict(stepOf(landed), top?.seq ?? null, addressOf(landed) !== null);
   if (verdict === 'stay') return;
   if (verdict === 'step-back') { window.history.back(); return; }
@@ -284,8 +310,13 @@ export function useBackStep(active: boolean, onBack: () => void, address?: strin
         const held = reg.closing?.indexOf(closing) ?? -1;
         if (held >= 0) reg.closing!.splice(held, 1);
         if (left) return;
-        if (stepOf(window.history.state) !== step.seq) return;
-        window.history.back();
+        const current = stepOf(window.history.state);
+        if (current === step.seq) { window.history.back(); return; }
+        // Another step closing in this same commit stands on top of this one's entry (the ×
+        // on a view inside a sheet) — this one's turn comes when that entry is consumed (`onPop`).
+        if (current !== null && current > step.seq && reg.closing?.some(s => s.seq === current)) {
+          (reg.buried ??= []).push(step);
+        }
       });
     };
   }, [active, onBackRef, addressRef]);

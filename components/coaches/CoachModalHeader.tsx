@@ -4,7 +4,8 @@ import { ArrowLeft, X } from 'lucide-react';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
- * Shared modal header: back arrow (mobile-only, base CSS hides it above 640px) + title + X-close.
+ * Shared modal header: back arrow (mobile-only, base CSS hides it above 640px — unless it names
+ * where it goes, `backLabel`) + title + X-close.
  * Every coaches-portal modal opened this same three-piece row by hand; this is the single copy.
  * `closeIconSize`/`titleTag` exist only so the two pre-existing call sites that used a slightly
  * different icon size / heading level keep rendering exactly as before — new adopters can ignore
@@ -23,6 +24,7 @@ export default function CoachModalHeader({
   titleTag: TitleTag = 'h3',
   closeIconSize = 16,
   closeAriaLabel,
+  backLabel,
 }: {
   title: ReactNode;
   /**
@@ -35,6 +37,13 @@ export default function CoachModalHeader({
   /** Where the phone's back arrow goes when the modal has a view BEHIND it (the lineup check
    *  behind an inning) — the X still closes. Absent, the arrow closes, as it always has. */
   onBack?: () => void;
+  /**
+   * A back that NAMES where it goes — for a view with a level behind it at EVERY width (the
+   * schedule sheet's attendance room and scouting book, the Schedule deep dive stage 1 · E6):
+   * the arrow then shows at a desk too, with these words beside it above 640 ("← UAT probe
+   * game"); a phone keeps the bare arrow. Absent, the arrow is phone-only, as it always was.
+   */
+  backLabel?: string;
   children?: ReactNode;
   titleTag?: 'h2' | 'h3';
   closeIconSize?: number;
@@ -42,7 +51,14 @@ export default function CoachModalHeader({
 }) {
   return (
     <div className={`${styles.modalHeader} ${subtitle ? styles.modalHeaderStacked : ''}`}>
-      <button className={styles.modalBackBtn} aria-label="Back" onClick={onBack ?? onClose}><ArrowLeft size={20} /></button>
+      <button
+        className={`${styles.modalBackBtn}${backLabel ? ` ${styles.modalBackLabelled}` : ''}`}
+        aria-label={backLabel ? `Back to ${backLabel}` : 'Back'}
+        onClick={onBack ?? onClose}
+      >
+        <ArrowLeft size={20} />
+        {backLabel && <span className={styles.modalBackWord}>{backLabel}</span>}
+      </button>
       {/* The title keeps its own element when there is no subtitle, so every existing caller's
           markup is byte-identical to before; only the two-line form gets a wrapper. */}
       {subtitle ? (

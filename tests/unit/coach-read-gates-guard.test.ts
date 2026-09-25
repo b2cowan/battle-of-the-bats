@@ -106,9 +106,10 @@ for (const { route, predicate, why } of READ_GATES) {
   });
 }
 
-test('the schedule panel builds its tabs from the doors object, never unconditionally', () => {
+test('the schedule panel builds its door rows from the doors object, never unconditionally', () => {
   // The page derives the doors and hands the one object to the sheet, which has been its own file
-  // since the Schedule deep dive's split (S6, 2026-09-25) — the tabs and every door read it there.
+  // since the Schedule deep dive's split (S6, 2026-09-25) — every door reads it there. Since that
+  // dive's stage 1 (E1 · E3) the tabs are door ROWS; each rides the same grant its tab did.
   const schedulePage = read('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx');
   assert.match(schedulePage, /scheduleDrawerDoors\(/, 'the panel must derive its doors from lib/coach-schedule-doors');
   assert.match(schedulePage, /drawerDoors=\{drawerDoors\}/, 'and the sheet is handed that one object');
@@ -116,11 +117,12 @@ test('the schedule panel builds its tabs from the doors object, never unconditio
   assert.doesNotMatch(page, /scheduleDrawerDoors\(/, 'the sheet never derives a second answer beside the page\'s');
   assert.doesNotMatch(
     page,
-    /slideTabs[^\n]*=\s*\[\s*\{\s*key:\s*'attendance'/,
-    'the Attendance tab must not be seeded for everyone — it rides the attendance grant',
+    /const attendanceRow = (?!drawerDoors\.attendanceTab)/,
+    'the Attendance row must not be drawn for everyone — it rides the attendance grant',
   );
-  assert.match(page, /drawerDoors\.attendanceTab\)\s*slideTabs\.push/, 'the Attendance tab rides drawerDoors.attendanceTab');
-  assert.match(page, /drawerDoors\.lineupTab\)\s*slideTabs\.push/, 'the Lineup tab rides drawerDoors.lineupTab');
+  assert.match(page, /const attendanceRow = drawerDoors\.attendanceTab \?/, 'the Attendance row rides drawerDoors.attendanceTab');
+  assert.match(page, /const lineupRow = drawerDoors\.lineupTab && isLineupEvent\(ev\) \?/, 'the Lineup row rides drawerDoors.lineupTab');
+  assert.match(page, /view === 'attendance' && drawerDoors\.attendanceTab \? 'attendance'/, 'and the address cannot open the room past the grant');
   // `&&` or the ternary's `?` — the sheet's score block became one expression positioned by the
   // phone's order (phone re-evaluation stage 2 · C3, 2026-09-21); the gate is the same door.
   assert.match(page, /drawerDoors\.scoreForm\s*(?:&&|\?)/, 'the score form rides drawerDoors.scoreForm');

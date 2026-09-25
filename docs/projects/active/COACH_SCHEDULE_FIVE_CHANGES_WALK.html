@@ -1,0 +1,747 @@
+<title>Five Schedule Changes</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap">
+
+<style>
+:root{
+  --paper:#F5F1E8; --card:#FFFFFF; --sunk:#EFE9DC;
+  --ink:#221C13; --ink-soft:#463E32; --dim:#6B6357;
+  --rule:rgba(60,48,24,.15); --rule-strong:rgba(60,48,24,.30); --fill:rgba(60,48,24,.045);
+  --olive:#4F5D1B; --olive-soft:rgba(79,93,27,.11);
+  --gold:#835006;  --gold-soft:rgba(131,80,6,.11);
+  --brick:#8C2F1E; --brick-soft:rgba(140,47,30,.10);
+  --shadow:0 1px 2px rgba(60,48,24,.07), 0 10px 26px -16px rgba(60,48,24,.42);
+  --r:13px; --r-sm:8px;
+  --sans:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --disp:'Barlow Condensed','Inter',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,'Cascadia Mono',Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  color-scheme:dark;
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#17130E; --card:#211C15; --sunk:#1B1710;
+  --ink:#F3EDE2; --ink-soft:#D8CFC0; --dim:#A79E92;
+  --rule:rgba(226,214,193,.17); --rule-strong:rgba(226,214,193,.32); --fill:rgba(226,214,193,.05);
+  --olive:#B2CE59; --olive-soft:rgba(178,206,89,.13);
+  --gold:#E4A644;  --gold-soft:rgba(228,166,68,.13);
+  --brick:#E9917B; --brick-soft:rgba(233,145,123,.13);
+  --shadow:0 1px 2px rgba(0,0,0,.45), 0 10px 26px -16px rgba(0,0,0,.85);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.page{max-width:900px;margin:0 auto;padding-inline:22px;padding-block:44px 90px}
+p{margin:0}
+strong,b{font-weight:650}
+a{color:var(--olive)}
+code,.mono{font-family:var(--mono);font-size:.88em}
+code{background:var(--fill);padding:1px 5px;border-radius:4px;border:1px solid var(--rule)}
+.eyebrow{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin:0}
+h1{font-family:var(--disp);font-weight:700;font-size:clamp(38px,6vw,58px);line-height:.96;letter-spacing:-.015em;margin:9px 0 0;text-wrap:balance;max-width:17ch}
+.lede{font-size:16.5px;line-height:1.58;color:var(--ink-soft);max-width:64ch;margin-top:16px}
+.route{display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center;margin-top:18px;font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.07em;text-transform:uppercase;color:var(--dim)}
+.route span.s{padding:3px 10px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink)}
+.route span.a{color:var(--dim)}
+.bar{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--paper);border-bottom:1px solid var(--rule);margin:26px 0 0;padding:11px 0;display:flex;align-items:center;gap:13px;flex-wrap:wrap}
+.track{flex:1 1 180px;height:7px;border-radius:99px;background:var(--fill);border:1px solid var(--rule);overflow:hidden;min-width:130px}
+.fillbar{display:block;height:100%;width:0%;background:var(--olive);transition:width .25s ease}
+.count{font-family:var(--mono);font-size:12.5px;color:var(--dim);white-space:nowrap}
+.count b{color:var(--ink);font-weight:600}
+button{font:inherit;cursor:pointer}
+.btn{font-family:var(--disp);font-weight:600;font-size:12.5px;letter-spacing:.09em;text-transform:uppercase;padding:6px 13px;border-radius:99px;border:1px solid var(--rule-strong);background:var(--card);color:var(--ink);min-height:34px}
+.btn:hover{border-color:var(--olive);color:var(--olive)}
+.btn.ghost{background:none}
+.btn.primary{background:var(--olive);border-color:var(--olive);color:var(--paper)}
+.btn.danger{border-color:var(--brick);color:var(--brick)}
+.card{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);padding:16px 18px;display:flex;flex-direction:column;gap:10px}
+.card h2{font-family:var(--disp);font-weight:700;font-size:20px;margin:0}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 14px;font-family:var(--mono);font-size:12.5px;margin:0}
+.kv dt{color:var(--dim)}
+.kv dd{margin:0;color:var(--ink);overflow-wrap:anywhere}
+.small{font-size:14px;color:var(--ink-soft);max-width:74ch}
+.found{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.found li{background:var(--card);padding:10px 13px;font-size:14px;line-height:1.5;display:grid;grid-template-columns:2.2ch 1fr;gap:10px}
+.found li .n{font-family:var(--disp);font-weight:700;color:var(--gold);font-size:16px;line-height:1.35}
+.found li b{color:var(--ink)}
+.widthhead{margin-top:58px;display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.widthhead h2{font-family:var(--disp);font-weight:700;font-size:40px;line-height:1;margin:0;letter-spacing:-.01em}
+.widthhead p{font-size:14.5px;color:var(--ink-soft);max-width:60ch}
+.parts{display:flex;flex-direction:column;gap:16px;margin-top:20px}
+.step{background:var(--card);border:1px solid var(--rule);border-radius:var(--r);box-shadow:var(--shadow);overflow:hidden;scroll-margin-top:70px}
+.step-head{display:flex;gap:12px;padding:13px 16px;align-items:flex-start;border-bottom:1px solid var(--rule);background:var(--fill)}
+.num{font-family:var(--disp);font-weight:700;font-size:20px;line-height:1;color:var(--dim);min-width:3.2ch;padding-top:2px;font-variant-numeric:tabular-nums}
+.step.done .num{color:var(--olive)}
+.step-t{display:flex;flex-direction:column;gap:5px;min-width:0;flex:1}
+.step-t h3{font-family:var(--disp);font-weight:700;font-size:21px;line-height:1.12;margin:0;text-wrap:balance}
+.tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-family:var(--disp);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:99px;border:1px solid var(--rule-strong);color:var(--dim);white-space:nowrap}
+.tag.phone{border-color:var(--olive);color:var(--olive);background:var(--olive-soft)}
+.tag.call{border-color:var(--gold);color:var(--gold);background:var(--gold-soft)}
+.tag.side{border-color:var(--rule-strong);color:var(--dim)}
+.pc{font-family:var(--mono);font-size:12px;color:var(--dim);white-space:nowrap;padding-top:3px}
+.step-body{padding:13px 16px 15px;display:flex;flex-direction:column;gap:11px}
+.where{font-size:13.5px;color:var(--dim)}
+.where b{color:var(--ink-soft)}
+.why{font-size:14.5px;line-height:1.55;color:var(--ink-soft);max-width:72ch}
+.why b{color:var(--ink)}
+.checks{display:flex;flex-direction:column;gap:1px;background:var(--rule);border:1px solid var(--rule);border-radius:var(--r-sm);overflow:hidden}
+.chk{display:flex;gap:11px;align-items:flex-start;padding:9px 13px;background:var(--card);font-size:14px;line-height:1.5}
+.chk input{margin:3px 0 0;width:18px;height:18px;flex:none;accent-color:var(--olive);cursor:pointer}
+.chk label{cursor:pointer;min-width:0}
+.chk .id{font-family:var(--mono);font-size:11.5px;color:var(--dim);margin-right:6px}
+.chk.on label{color:var(--dim);text-decoration:line-through;text-decoration-color:var(--rule-strong)}
+.chk .hintline{display:block;font-size:12.5px;color:var(--dim);line-height:1.45;margin-top:3px}
+.chk.on .hintline{text-decoration:none}
+.opts{border:1px solid var(--gold);border-radius:var(--r-sm);overflow:hidden;display:flex;flex-direction:column;gap:1px;background:var(--gold-soft)}
+.opts .q{padding:9px 13px;font-size:14px;line-height:1.5;color:var(--ink)}
+.opts .chk{background:var(--card)}
+.opts .chk.on label{text-decoration:none;color:var(--ink);font-weight:600}
+.verdict{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-family:var(--disp);font-weight:600;font-size:12px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
+.vbtn{padding:5px 12px;border-radius:99px;border:1px solid var(--rule-strong);background:none;color:var(--dim);font:inherit;min-height:32px}
+.vbtn[aria-pressed="true"][data-v="pass"]{background:var(--olive-soft);border-color:var(--olive);color:var(--olive)}
+.vbtn[aria-pressed="true"][data-v="issue"]{background:var(--brick-soft);border-color:var(--brick);color:var(--brick)}
+.vbtn[aria-pressed="true"][data-v="call"]{background:var(--gold-soft);border-color:var(--gold);color:var(--gold)}
+textarea{width:100%;min-height:52px;resize:vertical;font:14px/1.5 var(--sans);color:var(--ink);background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:9px 11px}
+textarea::placeholder{color:var(--dim)}
+pre.paste{margin:0;background:var(--sunk);border:1px solid var(--rule);border-radius:var(--r-sm);padding:10px 12px;font:12.5px/1.6 var(--mono);color:var(--ink);overflow-x:auto;white-space:pre}
+.warn,.tip,.ask{padding:10px 14px;border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.5;max-width:74ch}
+.warn{border-left:3px solid var(--brick);background:var(--brick-soft)}
+.tip{border-left:3px solid var(--olive);background:var(--olive-soft)}
+.ask{border-left:3px solid var(--gold);background:var(--gold-soft)}
+.warn b,.tip b,.ask b{color:var(--ink)}
+.foot{margin-top:52px;border-top:2px solid var(--ink);padding-top:18px;display:flex;flex-direction:column;gap:12px}
+.foot h2{font-family:var(--disp);font-weight:700;font-size:29px;margin:0}
+.out{width:100%;min-height:220px;font:12.5px/1.6 var(--mono)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.confirm{display:flex;gap:10px;align-items:center;flex-wrap:wrap;font-size:14px;color:var(--brick)}
+.toastwrap{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);z-index:50}
+.toast{background:var(--ink);color:var(--paper);font-family:var(--disp);font-weight:600;font-size:13px;letter-spacing:.06em;text-transform:uppercase;padding:9px 18px;border-radius:99px;box-shadow:var(--shadow)}
+footer{margin-top:46px;border-top:1px solid var(--rule);padding-top:14px;display:flex;flex-wrap:wrap;gap:6px 22px;font-family:var(--mono);font-size:11.5px;color:var(--dim)}
+:focus-visible{outline:2px solid var(--olive);outline-offset:2px}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+@media (max-width:640px){ .page{padding-inline:16px;padding-block:30px 70px} h1{font-size:36px} .widthhead h2{font-size:32px} .step-head{padding:12px 13px} .step-body{padding:12px 13px 14px} .pc{display:none} }
+</style>
+<div class="page">
+
+<header>
+  <p class="eyebrow">Owner QA · §212 · §214 · §219 · §222 · §236 · Coaches portal → Schedule</p>
+  <h1>Five schedule changes, one walk</h1>
+  <p class="lede">Five changes to the Schedule were built on 21–22 September and never walked: the
+    <b>Add Event form</b> held to the portal's form rules (§212), <b>Arrival &amp; Places</b> (§214),
+    <b>Back goes up one level</b> (§219), <b>the open game is a place</b> (§222) and the
+    <b>Opponent picker</b> (§236). This walk takes them in the order a coach meets them: add a game,
+    set when to arrive and where, pick the opponent, open the game and its lineup, then go back.
+    Phone first, desktop second. Walk it whenever suits you: it doesn't hold up the Schedule deep
+    dive (https://claude.ai/artifact/5yvmCESNKNWnpFiHg8b7Lc), and what you find here goes into the
+    stage it touches.</p>
+  <div class="route" aria-label="The order of the walk">
+    <span class="s">Add a game</span><span class="a">→</span>
+    <span class="s">Arrival &amp; place</span><span class="a">→</span>
+    <span class="s">Opponent</span><span class="a">→</span>
+    <span class="s">Open the game · lineup</span><span class="a">→</span>
+    <span class="s">Back</span>
+  </div>
+</header>
+
+<div class="bar">
+  <span class="count"><b id="cdone">0</b> of <b id="ctotal">0</b> checked</span>
+  <span class="track"><span class="fillbar" id="fillbar"></span></span>
+  <button class="btn primary" id="copyout" type="button">Copy findings</button>
+  <button class="btn ghost" id="resetall" type="button">Reset</button>
+  <span class="confirm" id="resetconfirm" hidden>Clear every tick, verdict and note?
+    <button class="btn danger" id="resetyes" type="button">Clear</button>
+    <button class="btn ghost" id="resetno" type="button">Keep</button></span>
+</div>
+
+<section class="card" aria-labelledby="signin-h">
+  <h2 id="signin-h">Sign in as</h2>
+  <dl class="kv">
+    <dt>URL</dt><dd>http://localhost:3000 (on your phone: the same dev server, the way you reach it for phone walks)</dd>
+    <dt>Email</dt><dd>uat-coach@uat-test-org.local</dd>
+    <dt>Password</dt><dd>UATPassword2026!</dd>
+    <dt>Org</dt><dd>uat-test-org</dd>
+    <dt>Team</dt><dd>UAT Test Team → Schedule</dd>
+    <dt>Also</dt><dd>uat-helper@uat-test-org.local, same password: one step in D5 only</dd>
+  </dl>
+  <p class="small">Dev only. Keep this page private because it carries a password. If the UAT
+    password has been rotated, <code>UAT_COACH_PASSWORD</code> in <code>.env.local</code> is the source
+    of truth, and this card is just a copy.</p>
+  <div class="tip"><b>What the team holds today (checked 25 Sep 2026).</b> The Scouting Book knows
+    Ridgeview, Westbrook, Fairhaven, Northgate, Lakeside and Probe Rovers. The team keeps one place,
+    <b>UAT Fields</b> (Diamond 1, no address). No arrival default is set. <b>UAT probe game</b> has a
+    lineup and has already started, and <b>UAT probe game · no lineup</b> is on Sun 27 Sep. The phone
+    part builds its own future game in P1, so the walk still works after the 27th.</div>
+  <div class="ask"><b>One figure here may move, and it is not what you're checking.</b> The record line
+    under the Opponent field grows when a game against that team is scored. The step passes when it
+    <b>matches the Scouting Book's row</b> for that team, whatever the number is on the day.</div>
+</section>
+
+<section class="card" aria-labelledby="found-h">
+  <h2 id="found-h">Found while writing this walk</h2>
+  <p class="small">I checked each old step against today's product before putting it here. These
+    came out of that. None are steps to tick. They're notes for the deep dive, and the one that needs
+    a ruling has its own box in D2.</p>
+  <ol class="found">
+    <li><span class="n">1</span><span><b>A practice's More still says "address".</b> The fold reads
+      "More — field, address, links, notes", but Address left the form when Places arrived, and the
+      practice's More holds no address box. The game's label doesn't say it. There's a ruling box in D2.</span></li>
+    <li><span class="n">2</span><span><b>A weekly series skips the Opponent picker.</b> Tick Repeat
+      weekly on a game and each date asks for its opponent in a plain box, with no Scouting Book behind
+      it. A coach who enters a season as a series types every name by hand, and the picker exists to
+      stop exactly that spelling drift.</span></li>
+    <li><span class="n">3</span><span><b>The desktop's lineup door doesn't turn by the clock.</b> On a
+      phone, a started game's Lineup tab goes to Game day. On a desktop, the same tab's foot button
+      still reads "Edit in Lineups →". Not a defect in any of the five changes. It's a phone/desktop
+      difference for the deep dive's desktop question.</span></li>
+    <li><span class="n">4</span><span><b>No organizer-run game exists anywhere on dev.</b> So §212's
+      "mirrored game" step and the picker's "tournament games untouched" can't be walked here. Both are
+      left out and recorded as <b>not walked</b>, not as passed.</span></li>
+    <li><span class="n">5</span><span><b>The award form is being rebuilt today</b> in another session
+      (Awards on a phone, §232). §212's "Give an award" step is left to that walk.</span></li>
+    <li><span class="n">6</span><span><b>Three old steps were corrected before publishing.</b> The
+      "Recent" chips under Location are gone, because Places replaced them the same day. The field reads
+      <b>Arrival</b>, not "Arrival time". And UAT Fields shows <b>Diamond 1</b>, not "no address/diamond
+      line".</span></li>
+  </ol>
+</section>
+
+<!-- ═══════════════════════════ ON A PHONE ═══════════════════════════ -->
+<div class="widthhead" id="phone">
+  <h2>On a phone</h2>
+  <p>Use a real phone for P5–P7, because they test the swipe back. P1–P4 also read fine in a desktop
+    browser narrowed to 390 wide.</p>
+</div>
+
+<div class="parts">
+
+<article class="step" data-step="P1">
+  <div class="step-head"><span class="num">P1</span><div class="step-t"><h3>Add a game: the form as a phone sheet</h3>
+    <div class="tags"><span class="tag phone">Phone</span><span class="tag side">§212</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Schedule → <b>+</b> → Game</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="p1-1"><label for="p1-1"><span class="id">P1.1</span>The form fills the screen, titled <b>Add Game</b> with a green dot after it. No "* Required" line, no row of event-type pills.</label></div>
+      <div class="chk"><input type="checkbox" id="p1-2"><label for="p1-2"><span class="id">P1.2</span>Date has its own row, Start time and End time share the next, and <b>Arrival</b> sits under them.</label></div>
+      <div class="chk"><input type="checkbox" id="p1-3"><label for="p1-3"><span class="id">P1.3</span>Opponent and Home / Away stack one above the other. Home / Away is a dropdown already reading Home, and "This is a scrimmage" is one line below the hint.</label></div>
+      <div class="chk"><input type="checkbox" id="p1-4"><label for="p1-4"><span class="id">P1.4</span>The fold reads "＋ More — field, uniform, tags, links, notes". Open it: flat, titled More, with a Hide link.</label></div>
+      <div class="chk"><input type="checkbox" id="p1-5"><label for="p1-5"><span class="id">P1.5</span>At the foot, Cancel and a square lime <b>Add game</b> (no pill shapes) are both reachable above the bottom bar.</label></div>
+      <div class="chk"><input type="checkbox" id="p1-6"><label for="p1-6"><span class="id">P1.6</span>Set the Date <b>three or more days ahead</b>, start 6:00 p.m. Keep the form open for P2–P4.<span class="hintline">This game carries the rest of the phone walk.</span></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-P1" placeholder="Notes for P1"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="P2">
+  <div class="step-head"><span class="num">P2</span><div class="step-t"><h3>Arrival, asked as "how long before"</h3>
+    <div class="tags"><span class="tag phone">Phone</span><span class="tag side">§214</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> the same Add Game form</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="p2-1"><label for="p2-1"><span class="id">P2.1</span>Arrival reads <b>None</b>. Open it: None · 15 · 30 · 45 minutes · 1 hour · 1½ hours · 2 hours before, each with its clock beside it ("45 minutes before · 5:15 p.m." for a 6:00 start), then <b>A specific time…</b></label></div>
+      <div class="chk"><input type="checkbox" id="p2-2"><label for="p2-2"><span class="id">P2.2</span>Pick 45 minutes before. Under it: "<b>Arrive by 5:15 p.m.</b> — shows on the event and the calendar export."</label></div>
+      <div class="chk"><input type="checkbox" id="p2-3"><label for="p2-3"><span class="id">P2.3</span>Change the start to 7:00. The arrival follows: "Arrive by 6:15 p.m."</label></div>
+      <div class="chk"><input type="checkbox" id="p2-4"><label for="p2-4"><span class="id">P2.4</span>Pick A specific time…: the clock box sits <b>under</b> the dropdown, not beside it, and opens an hour before the start. Then put it back on 45 minutes before.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-P2" placeholder="Notes for P2"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="P3">
+  <div class="step-head"><span class="num">P3</span><div class="step-t"><h3>The place: Location is a place the team keeps</h3>
+    <div class="tags"><span class="tag phone">Phone</span><span class="tag side">§214</span><span class="tag side">+ §219</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> the same form → Location</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="p3-1"><label for="p3-1"><span class="id">P3.1</span>Tap Location. The list opens under the field (or above it when the field sits low on the screen), headed <b>Your places</b>: UAT Fields with "Diamond 1" under it (never a bare "1") and its event count. <b>Manage places…</b> is the last row.</label></div>
+      <div class="chk"><input type="checkbox" id="p3-2"><label for="p3-2"><span class="id">P3.2</span>Type <b>Millennium Place</b>. The list offers "＋ Add “Millennium Place” as a place". Choose it, and the <b>Add a place</b> sheet covers the screen with the name filled in.</label></div>
+      <div class="chk"><input type="checkbox" id="p3-3"><label for="p3-3"><span class="id">P3.3</span>Swipe back once. Only the Add a place sheet closes, and the Add Game form is still there with everything you set. Then choose ＋ Add again.<span class="hintline">§219's one-level rule meeting §214's sheet. Neither walk had this step.</span></label></div>
+      <div class="chk"><input type="checkbox" id="p3-4"><label for="p3-4"><span class="id">P3.4</span>Enter any real street address, <b>Diamond 2</b> in Field / Diamond and the note "park behind the arena", then tap Add place. Back on the form, Location reads Millennium Place, with the address · Diamond 2 under it.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-P3" placeholder="Notes for P3"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="P4">
+  <div class="step-head"><span class="num">P4</span><div class="step-t"><h3>The opponent: the field reads the Scouting Book</h3>
+    <div class="tags"><span class="tag phone">Phone</span><span class="tag side">§236 · Opponent picker</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> the same form → Opponent</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="p4-1"><label for="p4-1"><span class="id">P4.1</span>Tap Opponent. The list opens headed <b>Your opponents</b>, with the team you met most recently first, so each row's "Last met" date is older than the one above it. Each row with a result carries its record chip.</label></div>
+      <div class="chk"><input type="checkbox" id="p4-2"><label for="p4-2"><span class="id">P4.2</span>Type "ridge" and Ridgeview is offered. Pick it: the field reads <b>Ridgeview</b> exactly, and a line under it gives your record against them and the date you last met.<span class="hintline">On 25 Sep it read "2-1 vs them · last met May 4, 2026". The pass condition is that it matches Ridgeview's row in the Scouting Book (D9.4), not this figure.</span></label></div>
+      <div class="chk"><input type="checkbox" id="p4-3"><label for="p4-3"><span class="id">P4.3</span>Clear it and type <b>Kanata Coyotes</b>. Instead of a list you get one quiet line: "New to your book — saves as typed. “Kanata Coyotes” gets its own page after this game." No Add sheet, no Manage… row.</label></div>
+      <div class="chk"><input type="checkbox" id="p4-4"><label for="p4-4"><span class="id">P4.4</span>Pick Ridgeview again, then tap <b>Add game</b>. The game is on the list on your day at your time, with Ridgeview's record chip on its row.</label></div>
+    </div>
+    <p class="why">Not walkable here: the <b>"Your club has notes on"</b> group, because the UAT team isn't a sharing Club-plan team (unit tests cover it), and a <b>merged spelling</b> ("Same team as…"), because the book holds no merges.</p>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-P4" placeholder="Notes for P4"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="P5">
+  <div class="step-head"><span class="num">P5</span><div class="step-t"><h3>Open the game, then its lineup, and Back comes home to the game</h3>
+    <div class="tags"><span class="tag phone">Phone</span><span class="tag side">§222</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Game:</b> the one you just added (in the future, no lineup yet). Then <b>UAT probe game</b> for the last step.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="p5-1"><label for="p5-1"><span class="id">P5.1</span>Tap your game. The sheet opens and the address bar gains <code>?event=…</code> (pull the page down to see the bar).</label></div>
+      <div class="chk"><input type="checkbox" id="p5-2"><label for="p5-2"><span class="id">P5.2</span>Tap <b>Lineup</b>. The address gains <code>&amp;tab=lineup</code>, and the tab reads "No lineup yet" with <b>Build lineup →</b>.</label></div>
+      <div class="chk"><input type="checkbox" id="p5-3"><label for="p5-3"><span class="id">P5.3</span>Tap Build lineup and the builder opens. Swipe back: you are <b>on the game, on the Lineup tab</b>, not on the schedule.</label></div>
+      <div class="chk"><input type="checkbox" id="p5-4"><label for="p5-4"><span class="id">P5.4</span>Swipe back again. The game closes and the address drops back to a plain schedule.</label></div>
+      <div class="chk"><input type="checkbox" id="p5-5"><label for="p5-5"><span class="id">P5.5</span>Swipe back once more, and you leave the schedule the way you always did.</label></div>
+      <div class="chk"><input type="checkbox" id="p5-6"><label for="p5-6"><span class="id">P5.6</span>Open the game → Attendance → tap a player's row and their RSVP sheet rises. Swipe back: only the RSVP sheet closes, and the game stays open.</label></div>
+      <div class="chk"><input type="checkbox" id="p5-7"><label for="p5-7"><span class="id">P5.7</span>With the game open on Lineup, <b>reload</b>. The same game is open on the same tab.</label></div>
+      <div class="chk"><input type="checkbox" id="p5-8"><label for="p5-8"><span class="id">P5.8</span>Build lineup again, and this time leave with the builder's own <b>←</b> arrow. You're back on the game.</label></div>
+      <div class="chk"><input type="checkbox" id="p5-9"><label for="p5-9"><span class="id">P5.9</span>Now open <b>UAT probe game</b>. It has started, so the sheet leads with the score; scroll to the tabs. On Lineup the door reads <b>Game day ›</b>. Tap it, then swipe back: you're on the game, on the Lineup tab.<span class="hintline">Once a game starts, that door goes to the bench console instead of the builder (stage 3). §222's rule covers any page reached through the sheet's doors.</span></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-P5" placeholder="Notes for P5"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="P6">
+  <div class="step-head"><span class="num">P6</span><div class="step-t"><h3>Edit details: Back goes up one level</h3>
+    <div class="tags"><span class="tag phone">Phone</span><span class="tag side">§219</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Game:</b> yours again. <b>Edit details</b> is at the foot of the sheet.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="p6-1"><label for="p6-1"><span class="id">P6.1</span>Open it → Edit details → swipe back. You land on the game's details, not the list.</label></div>
+      <div class="chk"><input type="checkbox" id="p6-2"><label for="p6-2"><span class="id">P6.2</span>Same again, but leave with the header's <b>←</b> arrow. The game's details.</label></div>
+      <div class="chk"><input type="checkbox" id="p6-3"><label for="p6-3"><span class="id">P6.3</span>Edit details → More → change the <b>Uniform</b> → Save. You land on the game's details, showing the new uniform.</label></div>
+      <div class="chk"><input type="checkbox" id="p6-4"><label for="p6-4"><span class="id">P6.4</span>Edit details → type in Notes → swipe back: "<b>Discard this change?</b>". Swipe back again: the question closes and the form is still there with your typing. Now Discard: the game's details.</label></div>
+      <div class="chk"><input type="checkbox" id="p6-5"><label for="p6-5"><span class="id">P6.5</span>From the game's details, swipe back to the list. Swipe back again: wherever you were before the schedule.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-P6" placeholder="Notes for P6"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="P7">
+  <div class="step-head"><span class="num">P7</span><div class="step-t"><h3>The same Back, outside the schedule</h3>
+    <div class="tags"><span class="tag phone">Phone</span><span class="tag side">§219</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Practice plans → UAT probe practice → Run practice; then Money</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="p7-1"><label for="p7-1"><span class="id">P7.1</span>In Run practice, tap a station row, then swipe back three times: the block, then the list, then the plan.</label></div>
+      <div class="chk"><input type="checkbox" id="p7-2"><label for="p7-2"><span class="id">P7.2</span>Tap a block row → Next block twice → swipe back. You land on the list: one level, not three.</label></div>
+      <div class="chk"><input type="checkbox" id="p7-3"><label for="p7-3"><span class="id">P7.3</span>Money → open a bill → swipe back. You land on the bills list, never the Money overview.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-P7" placeholder="Notes for P7"></textarea>
+  </div>
+</article>
+
+</div>
+
+<!-- ═══════════════════════════ ON A DESKTOP ═══════════════════════════ -->
+<div class="widthhead" id="desktop">
+  <h2>On a desktop</h2>
+  <p>A full-width browser window. D1–D4 are the form itself, D5–D8 arrival and places, D9 the
+    opponent, D10 the keyboard and the browser's Back, D11–D12 the rest of the portal and help, and
+    D13 tidies up.</p>
+</div>
+
+<div class="parts">
+
+<article class="step" data-step="D1">
+  <div class="step-head"><span class="num">D1</span><div class="step-t"><h3>Add a game</h3>
+    <div class="tags"><span class="tag side">§212</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Schedule → Add Event → Game</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d1-1"><label for="d1-1"><span class="id">D1.1</span>The form opens straight onto its fields: no "* Required" line, no event-type pills. The title reads <b>Add Game</b> with a green dot.</label></div>
+      <div class="chk"><input type="checkbox" id="d1-2"><label for="d1-2"><span class="id">D1.2</span>Date · Start time · End time on one row, with <b>Arrival</b> under them.</label></div>
+      <div class="chk"><input type="checkbox" id="d1-3"><label for="d1-3"><span class="id">D1.3</span>No When / Where / Who boxes or headings. The fields are flat, with a wider gap between the groups.</label></div>
+      <div class="chk"><input type="checkbox" id="d1-4"><label for="d1-4"><span class="id">D1.4</span>Location is a single field. The Recent chips that used to sit under it are gone.</label></div>
+      <div class="chk"><input type="checkbox" id="d1-5"><label for="d1-5"><span class="id">D1.5</span>Opponent and Home / Away share a row. Home / Away is a dropdown (Home · Away · Neutral, with Home chosen), the "@ vs vs" hint sits under the row, and "This is a scrimmage" is below it.</label></div>
+      <div class="chk"><input type="checkbox" id="d1-6"><label for="d1-6"><span class="id">D1.6</span>"＋ More — field, uniform, tags, links, notes" opens flat, titled More, with a Hide link. The footer has Cancel and a square lime <b>Add game</b>.</label></div>
+      <div class="chk"><input type="checkbox" id="d1-7"><label for="d1-7"><span class="id">D1.7</span>Change the start and the end moves to two hours later. Set your own end, then change the start again: your end stays.</label></div>
+      <div class="chk"><input type="checkbox" id="d1-8"><label for="d1-8"><span class="id">D1.8</span>Save. The game sits on your day and time; open it and both times read back correctly.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D1" placeholder="Notes for D1"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D2">
+  <div class="step-head"><span class="num">D2</span><div class="step-t"><h3>A practice and a tournament</h3>
+    <div class="tags"><span class="tag side">§212</span><span class="tag call">One call</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Schedule → Add Event → Practice, then Tournament</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d2-1"><label for="d2-1"><span class="id">D2.1</span>Practice: the dot is the practice colour, End time carries the asterisk, and there is no Opponent row.</label></div>
+      <div class="chk"><input type="checkbox" id="d2-2"><label for="d2-2"><span class="id">D2.2</span>Clear End time: "A practice needs an end time." appears and Add practice greys out. Put the end before the start: "The end needs to be after the start." Fix it and save.</label></div>
+      <div class="chk"><input type="checkbox" id="d2-3"><label for="d2-3"><span class="id">D2.3</span>Tournament, over two days: it still asks Start date / End date, and the button reads <b>Add tournament</b>.</label></div>
+      <div class="chk"><input type="checkbox" id="d2-4"><label for="d2-4"><span class="id">D2.4</span>Open that tournament → <b>+ Add game</b>. There's no "Tournament" heading over "Which tournament?", the date lands on the tournament's first day, and the button reads <b>Add tournament game</b>.</label></div>
+    </div>
+    <div class="opts" data-call="d2-label">
+      <p class="q"><b>Your call, from found-while-writing #1.</b> On the practice, the fold reads "＋ More — field, <b>address</b>, links, notes", but there's no address box inside, because Places carries the address now. The game's label never says "address".</p>
+      <div class="chk"><input type="checkbox" id="d2-o1" data-opt="d2-label"><label for="d2-o1">Drop "address" from the practice's label (e.g. "More — field, links, notes")</label></div>
+      <div class="chk"><input type="checkbox" id="d2-o2" data-opt="d2-label"><label for="d2-o2">Leave it as it is</label></div>
+      <div class="chk"><input type="checkbox" id="d2-o3" data-opt="d2-label"><label for="d2-o3">Something else (say what in the notes)</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D2" placeholder="Notes for D2"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D3">
+  <div class="step-head"><span class="num">D3</span><div class="step-t"><h3>Repeat weekly</h3>
+    <div class="tags"><span class="tag side">§212</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Add Event → Game → tick Repeat weekly</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d3-1"><label for="d3-1"><span class="id">D3.1</span>The fields become Day of week · Start time · End time · Arrival · First date · Last date, and First date is already filled with the day you opened on.</label></div>
+      <div class="chk"><input type="checkbox" id="d3-2"><label for="d3-2"><span class="id">D3.2</span>Set a Last date and one row per date appears. Remove one, and the button counts the rest ("Add 3 games").</label></div>
+      <div class="chk"><input type="checkbox" id="d3-3"><label for="d3-3"><span class="id">D3.3</span>Untick Repeat weekly: the single Date · Start · End row returns with the date intact.</label></div>
+      <div class="chk"><input type="checkbox" id="d3-4"><label for="d3-4"><span class="id">D3.4</span>Tick it again, change the Start time and the First date, then untick. The single row shows the changed date and time, and after you save, the game carries them rather than the earlier ones.</label></div>
+      <div class="chk"><input type="checkbox" id="d3-5"><label for="d3-5"><span class="id">D3.5</span>While repeating, clear the Start time, then untick. Start time is blank and the button greys out until you set one.</label></div>
+      <div class="chk"><input type="checkbox" id="d3-6"><label for="d3-6"><span class="id">D3.6</span>Now add a real series of three dates (D4 edits one of them).<span class="hintline">Notice that each date's Opponent box is plain, with no Scouting Book behind it. That's found-while-writing #2, and you don't need to tick anything for it.</span></label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D3" placeholder="Notes for D3"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D4">
+  <div class="step-head"><span class="num">D4</span><div class="step-t"><h3>Editing</h3>
+    <div class="tags"><span class="tag side">§212</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> any game → Edit details</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d4-1"><label for="d4-1"><span class="id">D4.1</span>The title reads <b>Edit Game</b> with the dot. There's no type row, the button reads Save changes, and the date and both times read back from the saved game.</label></div>
+      <div class="chk"><input type="checkbox" id="d4-2"><label for="d4-2"><span class="id">D4.2</span>Edit one game of D3's series, change anything and tap Save changes. "<b>Apply your changes to:</b>" sits flush at the foot, with no empty band under it.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D4" placeholder="Notes for D4"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D5">
+  <div class="step-head"><span class="num">D5</span><div class="step-t"><h3>Arrival: a specific time, and the team's default</h3>
+    <div class="tags"><span class="tag side">§214</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Add Event → Game (6:00 p.m. start); then <b>Team settings → Schedule</b></p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d5-1"><label for="d5-1"><span class="id">D5.1</span>Pick A specific time…: a clock box appears <b>beside</b> the dropdown, already at 5:00 p.m. (an hour before). Set it to 5:10, then change the start to 6:30: it stays 5:10.</label></div>
+      <div class="chk"><input type="checkbox" id="d5-2"><label for="d5-2"><span class="id">D5.2</span>Add the game. It reads "Arrive by 5:10 p.m.", and Edit details shows Arrival as A specific time, 5:10.</label></div>
+      <div class="chk"><input type="checkbox" id="d5-3"><label for="d5-3"><span class="id">D5.3</span>Add a practice with a 12:30 a.m. start. "1 hour before" and longer are greyed out, because they'd fall on the day before.</label></div>
+      <div class="chk"><input type="checkbox" id="d5-4"><label for="d5-4"><span class="id">D5.4</span>Team settings has a <b>Schedule</b> section, closed, whose summary reads "No arrival default".</label></div>
+      <div class="chk"><input type="checkbox" id="d5-5"><label for="d5-5"><span class="id">D5.5</span>Set Arrive before a game to 45 minutes before. It saves, and the summary reads "Games: 45 minutes before".</label></div>
+      <div class="chk"><input type="checkbox" id="d5-6"><label for="d5-6"><span class="id">D5.6</span>Add Event → Game: Arrival already reads 45 minutes before, with its clock. Add Event → Practice: still None.</label></div>
+      <div class="chk"><input type="checkbox" id="d5-7"><label for="d5-7"><span class="id">D5.7</span>Set Arrive before a practice to 30 minutes, and a new practice opens at 30 minutes before. A game added before you set any default is unchanged.</label></div>
+      <div class="chk"><input type="checkbox" id="d5-8"><label for="d5-8"><span class="id">D5.8</span>Sign in as <b>uat-helper@</b> (a helper without schedule access). The Schedule section shows, with its dropdowns disabled. Then sign back in as the coach.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D5" placeholder="Notes for D5"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D6">
+  <div class="step-head"><span class="num">D6</span><div class="step-t"><h3>Places: the book the team keeps</h3>
+    <div class="tags"><span class="tag side">§214</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Add Event → Game → Location. If you skipped P3, add Millennium Place first (P3.2 and P3.4).</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d6-1"><label for="d6-1"><span class="id">D6.1</span>Your places lists UAT Fields ("Diamond 1", its event count) and Millennium Place (its address · Diamond 2).</label></div>
+      <div class="chk"><input type="checkbox" id="d6-2"><label for="d6-2"><span class="id">D6.2</span>Pick UAT Fields. The name fills in, with "Diamond 1" under the field and no address, because the place has none yet.</label></div>
+      <div class="chk"><input type="checkbox" id="d6-3"><label for="d6-3"><span class="id">D6.3</span>Manage places… (the last row): the Places sheet lists each place. UAT Fields reads "Diamond 1 · on N events", and Millennium Place shows its address, diamond and note.</label></div>
+      <div class="chk"><input type="checkbox" id="d6-4"><label for="d6-4"><span class="id">D6.4</span>Pick Millennium Place → More: Field / Diamond # reads Diamond 2, with "Diamond 2 is Millennium Place’s usual — change it above for this game only." Change it to Diamond 5 and the hint goes. There's no Address box in More.</label></div>
+      <div class="chk"><input type="checkbox" id="d6-5"><label for="d6-5"><span class="id">D6.5</span>Add that game. On its sheet the location opens the address in Maps, and "park behind the arena" reads under the location line.</label></div>
+      <div class="chk"><input type="checkbox" id="d6-6"><label for="d6-6"><span class="id">D6.6</span>Add another game and type "Mill". Millennium Place is offered with its address and event count; pick it and you get Diamond 2 again.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D6" placeholder="Notes for D6"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D7">
+  <div class="step-head"><span class="num">D7</span><div class="step-t"><h3>A typed location, editing a place, removing one</h3>
+    <div class="tags"><span class="tag side">§214</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Add Event → Practice → Location; then Manage places…</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d7-1"><label for="d7-1"><span class="id">D7.1</span>Type "Kanata Rec Centre" but don't pick or add anything. Escape closes the list and the text stays. Save: the practice shows Kanata Rec Centre, with a Maps link that searches the name.</label></div>
+      <div class="chk"><input type="checkbox" id="d7-2"><label for="d7-2"><span class="id">D7.2</span>Manage places… doesn't list Kanata Rec Centre, because nothing was created. Edit that practice: Location holds the text, and More has no Address box.</label></div>
+      <div class="chk"><input type="checkbox" id="d7-3"><label for="d7-3"><span class="id">D7.3</span>Edit Millennium Place and change the address. A box "Also update the N upcoming events at this place" appears, unticked (N is its games still ahead), with the sentence about past events and diamonds.</label></div>
+      <div class="chk"><input type="checkbox" id="d7-4"><label for="d7-4"><span class="id">D7.4</span>Tick it and save. You get "Saved Millennium Place — N upcoming events updated.", and one of those games now shows the new address.</label></div>
+      <div class="chk"><input type="checkbox" id="d7-5"><label for="d7-5"><span class="id">D7.5</span>A Millennium Place game dated in the <b>past</b> (add one first) keeps the old address.</label></div>
+      <div class="chk"><input type="checkbox" id="d7-6"><label for="d7-6"><span class="id">D7.6</span>Edit again and change only the note. The box is disabled, because there's nothing to push.</label></div>
+      <div class="chk"><input type="checkbox" id="d7-7"><label for="d7-7"><span class="id">D7.7</span>Remove Millennium Place. The question names its event count and says the events keep their location as written. Confirm: the games still read Millennium Place with their address, and "Mill" no longer offers it.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D7" placeholder="Notes for D7"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D8">
+  <div class="step-head"><span class="num">D8</span><div class="step-t"><h3>The import matches places</h3>
+    <div class="tags"><span class="tag side">§214</span><span class="tag side">+ §212</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> add a place <b>Bell Park</b> (any address, Diamond 3) as in P3, then Schedule → Import → paste these rows, header included:</p>
+    <pre class="paste">Date,Time,Type,Opponent,Location,Field,Home/Away
+2026-10-10,18:00,Game,Northgate,Bell Park,,
+2026-10-17,18:00,Game,Lakeside,Bell Park,Diamond 1,Home</pre>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d8-1"><label for="d8-1"><span class="id">D8.1</span>Import. The Northgate game carries Bell Park's address and Diamond 3, and its sheet opens the address in Maps.</label></div>
+      <div class="chk"><input type="checkbox" id="d8-2"><label for="d8-2"><span class="id">D8.2</span>The Lakeside row brought its own Field, and keeps Diamond 1.</label></div>
+      <div class="chk"><input type="checkbox" id="d8-3"><label for="d8-3"><span class="id">D8.3</span>Edit the Northgate game. Home / Away reads "—", because the sheet gave no side, not "Home". Pick Away and save.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D8" placeholder="Notes for D8"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D9">
+  <div class="step-head"><span class="num">D9</span><div class="step-t"><h3>The opponent, at the keyboard</h3>
+    <div class="tags"><span class="tag side">§236 · Opponent picker</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Add Event → Game → Opponent; then Insights → Scouting Book</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d9-1"><label for="d9-1"><span class="id">D9.1</span>↓ highlights the first row and ↓ again moves the highlight. Enter picks it, and the line under the field appears.</label></div>
+      <div class="chk"><input type="checkbox" id="d9-2"><label for="d9-2"><span class="id">D9.2</span>With the list open, Escape closes <b>only the list</b> and the form stays. A second Escape reaches the form: untouched, it closes; with something typed, it asks "Discard this game?".</label></div>
+      <div class="chk"><input type="checkbox" id="d9-3"><label for="d9-3"><span class="id">D9.3</span>Type "RIDGEVIEW!" or "the ridgeview". Ridgeview is still offered, because the book ignores case, punctuation and a leading "the".</label></div>
+      <div class="chk"><input type="checkbox" id="d9-4"><label for="d9-4"><span class="id">D9.4</span>In the Scouting Book, Ridgeview's row shows the <b>same record</b> the line under the Opponent field showed in P4.2.</label></div>
+      <div class="chk"><input type="checkbox" id="d9-5"><label for="d9-5"><span class="id">D9.5</span>Edit a game that already has an opponent. The field holds the name, and the line under it shows that team's record.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D9" placeholder="Notes for D9"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D10">
+  <div class="step-head"><span class="num">D10</span><div class="step-t"><h3>Keyboard, focus, and the browser's Back button</h3>
+    <div class="tags"><span class="tag side">§212</span><span class="tag side">§219</span><span class="tag side">§222</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Schedule, using the keyboard and the browser's own Back button</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d10-1"><label for="d10-1"><span class="id">D10.1</span>Escape closes an untouched Add Event form. Type something first, and Escape asks before discarding.</label></div>
+      <div class="chk"><input type="checkbox" id="d10-2"><label for="d10-2"><span class="id">D10.2</span>Tab from the last control wraps back inside the form. After Escape or Cancel, focus is back on the <b>Add Event</b> button.</label></div>
+      <div class="chk"><input type="checkbox" id="d10-3"><label for="d10-3"><span class="id">D10.3</span>Open Add Event with the keyboard, arrow to Practice and press Enter. After you close it, focus is back on Add Event too.</label></div>
+      <div class="chk"><input type="checkbox" id="d10-4"><label for="d10-4"><span class="id">D10.4</span>Open a game → Edit details → the browser's Back button. You land on the game's details.</label></div>
+      <div class="chk"><input type="checkbox" id="d10-5"><label for="d10-5"><span class="id">D10.5</span>Open your future game → Lineup → Build lineup → browser Back. You land on the game, on the Lineup tab.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D10" placeholder="Notes for D10"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D11">
+  <div class="step-head"><span class="num">D11</span><div class="step-t"><h3>The same form rules, elsewhere in the portal</h3>
+    <div class="tags"><span class="tag side">§212</span><span class="tag call">One call</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="why">Not the schedule, but §212 swept these under the same rulings, and they were never walked.
+      Tick what you check. Anything you skip is recorded as not walked.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d11-1"><label for="d11-1"><span class="id">D11.1</span>Roster → Add player: no "* Required" line, and "Adding several? Paste a list →" still leads. Paste a list: "Columns we look for" sits flat, with no box.</label></div>
+      <div class="chk"><input type="checkbox" id="d11-2"><label for="d11-2"><span class="id">D11.2</span>Money → Budget → Add Budget Line, and Money → Dues → a family's credit form: no "* Required" line (the asterisks on the labels stay).</label></div>
+      <div class="chk"><input type="checkbox" id="d11-3"><label for="d11-3"><span class="id">D11.3</span>Team settings → head coach editor, and the interest form at <b>/coaches/start</b>: no "* Required" line.</label></div>
+      <div class="chk"><input type="checkbox" id="d11-4"><label for="d11-4"><span class="id">D11.4</span>A free-tier team's Schedule (the free editor): no "* Required" line.<span class="hintline">Needs the standalone free coach account. Skip it if that isn't to hand.</span></label></div>
+      <div class="chk"><input type="checkbox" id="d11-5"><label for="d11-5"><span class="id">D11.5</span>No "(optional)" on: Add a goal ("Note", "What would success look like?", "Focus tag"), Record a result ("Note"), Review a goal ("How it's going", "Next review"), a skill's "Descriptors to choose from", the game console's Note sheet ("About a player?"), or a scouting note ("Tag").</label></div>
+      <div class="chk"><input type="checkbox" id="d11-6"><label for="d11-6"><span class="id">D11.6</span>Budget line → split into periods: the column reads "Label".</label></div>
+    </div>
+    <div class="opts" data-call="d11-tint">
+      <p class="q"><b>Your call, owed since §212.</b> Money → Bills → Add a bill → <b>Payment schedule</b>. §212 left this one form section on its tinted surface (its own approved drawing) and asked you to rule. The tinted-panel retirement (§215) landed the same day. Look at it:</p>
+      <div class="chk"><input type="checkbox" id="d11-o1" data-opt="d11-tint"><label for="d11-o1">It's already on white: nothing to rule</label></div>
+      <div class="chk"><input type="checkbox" id="d11-o2" data-opt="d11-tint"><label for="d11-o2">Still tinted: flatten it like every other form section</label></div>
+      <div class="chk"><input type="checkbox" id="d11-o3" data-opt="d11-tint"><label for="d11-o3">Still tinted: keep it</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D11" placeholder="Notes for D11"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D12">
+  <div class="step-head"><span class="num">D12</span><div class="step-t"><h3>Help</h3>
+    <div class="tags"><span class="tag side">§212</span><span class="tag side">§214</span><span class="tag side">§236</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="where"><b>Where:</b> Help → Schedule, Game-day details, Team settings, Scouting Book</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d12-1"><label for="d12-1"><span class="id">D12.1</span>Game-day details defines <b>Arrival</b> as how long before the start (not "Arrival / call time"). Its Location topic is "Location: the places your team keeps".</label></div>
+      <div class="chk"><input type="checkbox" id="d12-2"><label for="d12-2"><span class="id">D12.2</span>Searching help for "call time", "places" and "arrive before" finds those articles. Team settings help has a Schedule answer for the two arrival defaults.</label></div>
+      <div class="chk"><input type="checkbox" id="d12-3"><label for="d12-3"><span class="id">D12.3</span>The schedule article's "Adding an event" says the Opponent field offers your Scouting Book's teams as you type. The Scouting Book's "same team twice" answer ends by pointing at that field, and "same spelling" finds it.</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D12" placeholder="Notes for D12"></textarea>
+  </div>
+</article>
+
+<article class="step" data-step="D13">
+  <div class="step-head"><span class="num">D13</span><div class="step-t"><h3>Tidy up</h3>
+    <div class="tags"><span class="tag side">Housekeeping</span></div></div><span class="pc"></span></div>
+  <div class="step-body">
+    <p class="why">This puts the UAT team back the way the layout sweep knows it, so a new event name
+      doesn't show up there as a "new finding" next week.</p>
+    <div class="checks">
+      <div class="chk"><input type="checkbox" id="d13-1"><label for="d13-1"><span class="id">D13.1</span>Delete every event this walk added: your phone game, the desktop games, the series, the tournament, the two imports and the practices. Each Delete asks first.</label></div>
+      <div class="chk"><input type="checkbox" id="d13-2"><label for="d13-2"><span class="id">D13.2</span>Manage places… → remove Bell Park.</label></div>
+      <div class="chk"><input type="checkbox" id="d13-3"><label for="d13-3"><span class="id">D13.3</span>Team settings → Schedule: set both arrival defaults back to blank. The summary reads "No arrival default".</label></div>
+    </div>
+    <div class="verdict">Verdict <button class="vbtn" type="button" data-v="pass" aria-pressed="false">Pass</button><button class="vbtn" type="button" data-v="issue" aria-pressed="false">Issue</button><button class="vbtn" type="button" data-v="call" aria-pressed="false">Needs a call</button></div>
+    <textarea id="n-D13" placeholder="Notes for D13"></textarea>
+  </div>
+</article>
+
+</div>
+
+<section class="foot" aria-labelledby="out-h">
+  <h2 id="out-h">Paste this back</h2>
+  <p class="small">This fills in as you go. <b>Copy findings</b> puts it on your clipboard; if your
+    browser refuses, the text is selected for you to copy.</p>
+  <div class="row"><button class="btn primary" id="copyout2" type="button">Copy findings</button></div>
+  <textarea class="out" id="out" readonly aria-label="Findings to paste back into chat"></textarea>
+</section>
+
+<footer>
+  <span>Source · docs/projects/active/COACH_SCHEDULE_FIVE_CHANGES_WALK.html</span>
+  <span>Written 25 Sep 2026 against dev at 6a2120bb + the shared working tree</span>
+  <span>Ledger · §212 · §214 · §219 · §222 · §236</span>
+  <span>Deep dive · claude.ai/artifact/5yvmCESNKNWnpFiHg8b7Lc</span>
+</footer>
+
+</div>
+
+<div class="toastwrap" id="toastwrap" hidden><div class="toast" id="toast" role="status"></div></div>
+
+<script>
+(function(){
+  var KEY='fl-qa-schedule-five-changes';
+  var state={};
+  try{ state=JSON.parse(localStorage.getItem(KEY)||'{}')||{}; }catch(e){ state={}; }
+  function save(){ try{ localStorage.setItem(KEY, JSON.stringify(state)); }catch(e){} }
+  function all(sel,root){ return [].slice.call((root||document).querySelectorAll(sel)); }
+
+  var steps=all('.step');
+  var checks=all('.checks .chk input');            // verification steps
+  var opts=all('.opts .chk input');                // ruling options (one group = one check)
+  var groups={}; opts.forEach(function(o){ (groups[o.dataset.opt]=groups[o.dataset.opt]||[]).push(o); });
+  var groupIds=Object.keys(groups);
+  var out=document.getElementById('out');
+
+  checks.concat(opts).forEach(function(b){ if(state['c_'+b.id]) b.checked=true; });
+  steps.forEach(function(st){
+    var id=st.dataset.step, ta=st.querySelector('textarea');
+    if(ta && state['n_'+id]) ta.value=state['n_'+id];
+    var v=state['v_'+id]||'';
+    all('.vbtn',st).forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===v?'true':'false'); });
+  });
+
+  function groupDone(g){ return groups[g].some(function(o){ return o.checked; }); }
+  function stepCounts(st){
+    var cs=all('.checks .chk input',st), gs={};
+    all('.opts .chk input',st).forEach(function(o){ gs[o.dataset.opt]=1; });
+    var gk=Object.keys(gs);
+    var done=cs.filter(function(b){return b.checked;}).length + gk.filter(groupDone).length;
+    return {done:done,total:cs.length+gk.length};
+  }
+
+  function paint(){
+    var total=checks.length+groupIds.length;
+    var done=checks.filter(function(b){return b.checked;}).length + groupIds.filter(groupDone).length;
+    document.getElementById('cdone').textContent=done;
+    document.getElementById('ctotal').textContent=total;
+    document.getElementById('fillbar').style.width=(total?done/total*100:0)+'%';
+    checks.concat(opts).forEach(function(b){ b.closest('.chk').classList.toggle('on', b.checked); });
+    steps.forEach(function(st){
+      var c=stepCounts(st);
+      st.classList.toggle('done', c.total>0 && c.done===c.total);
+      var pc=st.querySelector('.pc'); if(pc) pc.textContent=c.done+'/'+c.total;
+    });
+    build();
+  }
+
+  function labelText(input){
+    var lab=input.closest('.chk').querySelector('label').cloneNode(true);
+    all('.hintline',lab).forEach(function(h){ h.remove(); });
+    return lab.textContent.replace(/\s+/g,' ').trim();
+  }
+
+  function build(){
+    var lines=['OWNER QA — Five schedule changes, one walk (§212 · §214 · §219 · §222 · §236)',
+               'Fixture: UAT Test Team · written 2026-09-25 against dev 6a2120bb + working tree',''];
+    var flagged=[], calls=[];
+    steps.forEach(function(st){
+      var id=st.dataset.step, c=stepCounts(st);
+      var title=st.querySelector('h3').textContent.trim();
+      var v=state['v_'+id]||'';
+      var head=id+'  '+title+'   '+c.done+'/'+c.total;
+      if(v) head+='   ['+(v==='call'?'NEEDS A CALL':v.toUpperCase())+']';
+      lines.push(head);
+      all('.checks .chk input',st).forEach(function(b){ lines.push('   ['+(b.checked?'x':' ')+'] '+labelText(b)); });
+      all('.opts',st).forEach(function(g){
+        var picked=all('.chk input',g).filter(function(o){return o.checked;}).map(labelText);
+        lines.push('   CALL ('+g.dataset.call+'): '+(picked.length?picked.join(' + '):'— not ruled —'));
+      });
+      var ta=st.querySelector('textarea'), note=ta&&ta.value.trim();
+      if(note) lines.push('   NOTE: '+note.replace(/\n/g,'\n         '));
+      lines.push('');
+      if(v==='issue') flagged.push(id);
+      if(v==='call') calls.push(id);
+    });
+    var total=checks.length+groupIds.length;
+    var done=checks.filter(function(b){return b.checked;}).length + groupIds.filter(groupDone).length;
+    lines.push('---');
+    lines.push('Checked '+done+' of '+total+'. (A part\'s verdict is an opinion; its fraction is the evidence.)');
+    lines.push(flagged.length?('ISSUES: '+flagged.join(', ')):'No parts marked Issue.');
+    lines.push(calls.length?('NEEDS A CALL: '+calls.join(', ')):'No parts marked Needs a call.');
+    out.value=lines.join('\n');
+  }
+
+  checks.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(); paint(); }); });
+  opts.forEach(function(b){ b.addEventListener('change',function(){ state['c_'+b.id]=b.checked; save(); paint(); }); });
+  steps.forEach(function(st){
+    var id=st.dataset.step, ta=st.querySelector('textarea');
+    if(ta) ta.addEventListener('input',function(){ state['n_'+id]=ta.value; save(); build(); });
+  });
+  all('.vbtn').forEach(function(btn){
+    btn.addEventListener('click',function(){
+      var st=btn.closest('.step'), id=st.dataset.step;
+      var next=state['v_'+id]===btn.dataset.v?'':btn.dataset.v;
+      state['v_'+id]=next; save();
+      all('.vbtn',st).forEach(function(b){ b.setAttribute('aria-pressed', b.dataset.v===next?'true':'false'); });
+      build();
+    });
+  });
+
+  var toastTimer=null;
+  function toast(msg){
+    var w=document.getElementById('toastwrap');
+    document.getElementById('toast').textContent=msg;
+    w.hidden=false; clearTimeout(toastTimer); toastTimer=setTimeout(function(){ w.hidden=true; },1600);
+  }
+  function copy(){
+    build();
+    function fallback(){ out.focus(); out.select(); toast('Selected: copy it'); }
+    try{
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(out.value).then(function(){ toast('Copied'); }, fallback);
+      } else fallback();
+    }catch(e){ fallback(); }
+  }
+  document.getElementById('copyout').addEventListener('click',copy);
+  document.getElementById('copyout2').addEventListener('click',copy);
+
+  var rc=document.getElementById('resetconfirm'), rb=document.getElementById('resetall');
+  rb.addEventListener('click',function(){ rc.hidden=false; rb.hidden=true; });
+  document.getElementById('resetno').addEventListener('click',function(){ rc.hidden=true; rb.hidden=false; });
+  document.getElementById('resetyes').addEventListener('click',function(){
+    state={}; save();
+    checks.concat(opts).forEach(function(b){ b.checked=false; });
+    all('.step textarea').forEach(function(t){ t.value=''; });
+    all('.vbtn').forEach(function(b){ b.setAttribute('aria-pressed','false'); });
+    rc.hidden=true; rb.hidden=false; paint(); toast('Cleared');
+  });
+
+  paint();
+})();
+</script>

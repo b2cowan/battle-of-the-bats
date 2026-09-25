@@ -88,14 +88,29 @@ describe('the schedule\'s game sheet names its address', () => {
   const sheet = readCode('components/coaches/ScheduleEventSheet.tsx');
   const floor = readCode('components/coaches/useDialogFloor.ts');
 
-  it('the open event IS the address, and it carries the tab the coach is reading', () => {
+  it('the open event IS the address, and a view open inside it is a level — and an address — of its own', () => {
+    // Stage 1 of the Schedule deep dive (E2 · E5, 2026-09-25): the tabs became door rows, and the
+    // attendance room and the book's panel are VIEWS inside the sheet. The sheet stands on
+    // `?event=…`; a view stands one level above it on `?event=…&tab=<view>` — the address the
+    // Overview's links already open — so Back pops the view to the event, then leaves the event.
     assert.match(
       sheet,
-      /const sheetAddress = `\$\{base\}\/schedule\?event=\$\{ev\.id\}&tab=\$\{slideTab\}`;/,
-      'the address is the one the deep link below already answers — and the builder\'s `return`',
+      /const sheetAddress = sheetAddressFor\(base, ev\.id, null\);/,
+      'the address is the one the deep link below already answers',
     );
-    assert.match(sheet, /useDialogFloor\(true, slideOverRef, \{[\s\S]*?address: sheetAddress \}\);/);
+    assert.match(sheet, /useDialogFloor\(true, slideOverRef, \{[\s\S]*?address: sheetAddress,/);
+    assert.match(sheet, /useBackStep\(!!openView && viewStepArmed, closeView, openView \? sheetAddressFor\(base, ev\.id, openView\) : null\);/);
+    // ⚠ ORDER IS THE CONTRACT: a deep link opens the sheet and the room at once — the view's step
+    // must stand ABOVE the sheet's, or Back closes the whole event. Declared after the sheet's floor
+    // in the same component, AND armed one commit after mount: under React's strict mode (dev) two
+    // steps mounting in one commit are torn down and remounted, and the sheet's second step then
+    // took over the room's dead entry and inherited its home — Back from the event stayed on
+    // `?event=…` and a third Back was needed (driven in a browser, 2026-09-25).
+    assert.ok(sheet.indexOf('useDialogFloor(true, slideOverRef') < sheet.indexOf('useBackStep(!!openView'), 'the view\'s step after the sheet\'s floor');
+    assert.match(sheet, /const \[viewStepArmed, setViewStepArmed\] = useState\(false\);[\s\S]{0,200}useEffect\(\(\) => \{ setViewStepArmed\(true\); \}, \[\]\);/, 'armed one commit after the sheet mounts');
     assert.match(schedule, /\{selectedEvent && \(\s*<ScheduleEventSheet/, 'the sheet — and so its floor — exists only while a game is open');
+    const grammar = readCode('lib/coach-schedule-sheet.ts');
+    assert.match(grammar, /return `\$\{base\}\/schedule\?event=\$\{eventId\}\$\{view \? `&tab=\$\{view\}` : ''\}`;/);
   });
 
   it('the floor hands its address to the step', () => {
@@ -266,7 +281,16 @@ describe('the hook wires the gate — five listeners, and the marker kept while 
     assert.equal(after[1].trim(), '});', 'the listener closes with no third argument — the bubble phase');
   });
   it('the step\'s exit goes through the gate and consumes only when the tap did not leave', () => {
-    assert.match(hook, /reg\.gate!\.exit\(left => \{[\s\S]{0,160}if \(left\) return;\s*if \(stepOf\(window\.history\.state\) !== step\.seq\) return;\s*window\.history\.back\(\);/);
+    assert.match(hook, /reg\.gate!\.exit\(left => \{[\s\S]{0,160}if \(left\) return;\s*const current = stepOf\(window\.history\.state\);\s*if \(current === step\.seq\) \{ window\.history\.back\(\); return; \}/);
+  });
+  it('two steps closing in one commit (the × on a view inside a sheet): the lower one is BURIED, then consumed address-first when the browser lands on it (/review, 2026-09-25)', () => {
+    // Only a step closing in the SAME batch counts — the one on top must still be `closing`; a page
+    // left through a link returned on `left` above and keeps its entries addressed.
+    assert.match(hook, /if \(current !== null && current > step\.seq && reg\.closing\?\.some\(s => s\.seq === current\)\) \{\s*\(reg\.buried \?\?= \[\]\)\.push\(step\);/);
+    // …and `onPop` answers a landing on a buried entry BEFORE any verdict: strip, then one more back.
+    const pop = hook.slice(hook.indexOf('function onPop('), hook.indexOf('function listen('));
+    assert.match(pop, /const \[step\] = reg\.buried!\.splice\(buried, 1\);\s*restampStep\(\{ \.\.\.step, address: null \}\);\s*window\.history\.back\(\);\s*return;/);
+    assert.ok(pop.indexOf('reg.buried') < pop.indexOf('popVerdict('), 'the buried check comes before the verdict');
   });
   it('while held, the entry keeps its marker — the replaceState wrapper reads the closing steps too, their address already given up', () => {
     assert.match(hook, /const step = liveStep\(reg\.steps\) \?\? liveStep\(reg\.closing \?\? \[\]\);/);

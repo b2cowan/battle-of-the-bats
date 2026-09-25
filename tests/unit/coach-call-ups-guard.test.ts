@@ -473,14 +473,16 @@ describe('call-ups — the mark a coach reads', () => {
     });
   }
 
-  it('the schedule\'s lineup peek reads call-ups, or it shows the wrong batting order', () => {
+  it('the schedule\'s event sheet reads call-ups, or its attendance and its lineup check are wrong', () => {
+    // The look-only lineup peek this first pinned retired with the tabs (the Schedule deep dive,
+    // stage 1 · E3, 2026-09-25). The same read still feeds the sheet's player list: the attendance
+    // room and the Lineup row's attendance ↔ lineup check (E4).
     assert.match(
       // The schedule's event sheet — its own file since the Schedule deep dive's split (S6, 2026-09-25).
       read('components/coaches/ScheduleEventSheet.tsx'), /data\.callUps/,
-      'The schedule sheet\'s lineup peek ignores the call-ups key again. It builds rows by resolving '
-      + 'each saved entry to a player and drops the ones it cannot resolve, then renumbers — so a '
-      + 'call-up batting 4th vanishes and everyone below moves up a slot. The coach reads a different '
-      + 'order there from the one on the printed card and the bench console.',
+      'The schedule sheet ignores the call-ups key again. A call-up borrowed for this game drops out '
+      + 'of its attendance room, and the Lineup row\'s check reads a call-up holding a lineup spot as '
+      + 'nobody — so it never says who is in the lineup but marked Out.',
     );
   });
 

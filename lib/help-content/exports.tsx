@@ -72,6 +72,7 @@ const exportsHelp: HelpPageContent = {
                 every game or event in the export is added to your calendar as a separate entry — with
                 the correct date, time, location, and opponent. Works with Google Calendar, Apple
                 Calendar, Microsoft Outlook, and any other app that supports the standard iCal format.
+                A cancelled game goes into the file marked cancelled, never as a game to get to.
               </p>
               <p>
                 Calendar export is available on the schedule pages that support it — the house league

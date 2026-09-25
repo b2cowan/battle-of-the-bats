@@ -40,8 +40,9 @@ const SURFACES = [
   'app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/practice/templates/[templateId]/page.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/practice/circuits/[circuitId]/page.tsx',
-  // The schedule's attendance autosave — in the event sheet since the Schedule deep dive's split (S6).
-  'components/coaches/ScheduleEventSheet.tsx',
+  // The schedule's attendance autosave — its word in the attendance room since the Schedule deep
+  // dive's stage 1 (E2, 2026-09-25); the autosave itself is the event sheet's.
+  'components/coaches/ScheduleAttendanceRoom.tsx',
   'app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx',
   // The player's record — its Save/Discard bar retired for autosave (owner, 2026-09-24).
   'app/[orgSlug]/coaches/teams/[teamId]/roster/[playerId]/page.tsx',

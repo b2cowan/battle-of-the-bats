@@ -45,7 +45,9 @@ describe('the schedule window offers awards on every event', () => {
 
   it('a non-game event shows its section only once it can carry one', () => {
     assert.match(schedule, /const awardUnlock = awardUnlockState\(ev, nowMs\);/);
-    assert.match(schedule, /drawerDoors\.awards && \(isGameEvent \? \(!isPhone \|\| scoreLeads\) : awardUnlock === 'open'\)/);
+    // A game's section waits for the score to lead — at EVERY width since the Schedule deep dive's
+    // stage 1 · E6 (2026-09-25): the desk no longer draws the locked box on a game days away.
+    assert.match(schedule, /drawerDoors\.awards && \(isGameEvent \? scoreLeads : awardUnlock === 'open'\)/);
   });
 
   it('builds the Give form label from the shared helper, on the org-zone day', () => {
@@ -58,8 +60,12 @@ describe('the schedule window offers awards on every event', () => {
    *  practices vs. games?" — so a started non-game's awards sit ABOVE attendance at both widths,
    *  where a started game's already do. */
   it('places a non-game event\'s awards above attendance at both widths — where a game\'s sit', () => {
-    assert.match(schedule, /\{practiceBlock\}(\r?\n)\s*\{!isGameEvent && awardsBlock\}(\r?\n)\s*\{actionsBlock\}/);
-    assert.match(schedule, /\{practiceBlock\}(\r?\n)\s*\{\/\*[\s\S]{0,500}?\*\/\}(\r?\n)\s*\{awardsBlock\}(\r?\n)\s*\{peekWarnBlock\}\{tabsBlock\}\{tabContent\}/);
+    // Since the Schedule deep dive's stage 1 (E1 · E6, 2026-09-25) there is ONE order per clock at
+    // every width, and attendance is a door ROW: a started non-game's awards sit directly above the
+    // rows, as a started game's awards sit above them in the score-first order.
+    assert.match(schedule, /\) : \((\r?\n)\s*<>(\r?\n)\s*\{summary\}(\r?\n)\s*\{awardsBlock\}(\r?\n)\s*\{doorRows\}/, 'rows first: the awards, then the rows');
+    assert.match(schedule, /\{scoreBlock\}\{tagsBlock\}\{awardsBlock\}(\r?\n)\s*\{doorRows\}/, 'score first: the score, the awards, then the rows');
+    assert.doesNotMatch(schedule, /const body = !isPhone/, 'no second order at a desk');
   });
 });
 

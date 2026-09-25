@@ -43,7 +43,8 @@ import {
   ScheduleEventChip, ScheduleListView, ScheduleMonthView, ScheduleWeekView,
   type ScheduleRowDecor, type ScheduleViewData,
 } from '@/components/coaches/ScheduleCalendarViews';
-import ScheduleEventSheet, { deleteEventRequest, SHEET_OPEN_PLACE, type SheetPlace } from '@/components/coaches/ScheduleEventSheet';
+import ScheduleEventSheet, { deleteEventRequest } from '@/components/coaches/ScheduleEventSheet';
+import { sheetViewFromTab, type SheetView } from '@/lib/coach-schedule-sheet';
 import ScheduleEventForm, {
   addHoursLocal, DEFAULT_EVENT_HOUR, seedAddForm, seedEditForm,
   type EventForm, type ScheduleFormInit,
@@ -136,8 +137,8 @@ export default function CoachesSchedulePage({
   const sportPack = getSportPack(assignments.find(a => a.teamId === teamId)?.teamSport ?? DEFAULT_SPORT);
 
   const [events, setEvents] = useState<RepTeamEvent[]>([]);
-  // Deep-link: /schedule?event=<id>&tab=lineup opens that game straight into its builder (the
-  // Lineups front door and the Overview "Build lineup" button link here). One-shot per mount.
+  // Deep-link: /schedule?event=<id>[&tab=attendance|scouting|lineup] opens that event's sheet (and
+  // the view the tab names — see the effect below). One-shot per mount.
   const deepLinkHandledRef = useRef(false);
   const addDeepLinkHandledRef = useRef(false);
   const [tryoutSessions, setTryoutSessions] = useState<RepTryoutSession[]>([]);
@@ -172,14 +173,13 @@ export default function CoachesSchedulePage({
   const tailRef = useRef<HTMLDivElement | null>(null);
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
-  /** Where on the sheet it opens — the deep link's tab, or the place an Edit details left from. */
-  const [sheetPlace, setSheetPlace] = useState<SheetPlace>(SHEET_OPEN_PLACE);
+  /** The view the sheet opens with — the deep link's `?tab=` (the room, the book) — or none. */
+  const [sheetView, setSheetView] = useState<SheetView | null>(null);
   // Mobile month view: a tapped day with >1 event opens this bottom-sheet day list (a single
   // event opens its detail directly). Desktop keeps the in-cell text chips, so this stays null.
   const [daySheet, setDaySheet] = useState<{ dateKey: string; events: RepTeamEvent[] } | null>(null);
-  /** The open add / edit form, seeded — null when none is open. `seq` keys a fresh form per open. */
-  const [formInit, setFormInit] = useState<(ScheduleFormInit & { seq: number }) | null>(null);
-  const formSeqRef = useRef(0);
+  /** The open add / edit form, seeded — null when none is open (it mounts fresh on every open). */
+  const [formInit, setFormInit] = useState<ScheduleFormInit | null>(null);
   const [addTypeMenuOpen, setAddTypeMenuOpen] = useState(false);
   /** Chunk C (P1 #7) — the schedule importer. */
   const [importOpen, setImportOpen] = useState(false);
@@ -212,7 +212,7 @@ export default function CoachesSchedulePage({
   const page = useCoachSeasonPage(orgSlug, teamId);
 
   // Opponent Scouting Book roll-up (one fetch, no N+1): powers the record chip on upcoming
-  // game rows and the Scouting tab's availability. Non-fatal — a failed load just means no
+  // game rows and the sheet's Scouting row. Non-fatal — a failed load just means no
   // chips this visit. The map is keyed by the book's normalized names AND every merged-away
   // alias (P2): an aliased spelling's events fold into the owner server-side, but the event
   // string a row renders from still normalizes to the alias — without the alias keys, the
@@ -299,10 +299,10 @@ export default function CoachesSchedulePage({
   // An assistant who reaches this page read-only must not be handed an "Add Event" button. Fails
   // CLOSED while the assignment resolves — the empty state only renders past the !assignment guard.
   /**
-   * Which doors the event panel may show THIS coach on the selected event — the tabs, the score
-   * form, the award button, the lineup links, editing, the family email — computed once from the
-   * grants and read by both the fetch and the panel's markup (the sheet is handed this object), so
-   * a tab and the read behind it can never disagree. Fails closed while capabilities load. See
+   * Which doors the event panel may show THIS coach on the selected event — the door rows
+   * (Attendance, Lineup, Scouting), the score form, the award button, editing — computed once from
+   * the grants and read by both the fetch and the panel's markup (the sheet is handed this object),
+   * so a row and the read behind it can never disagree. Fails closed while capabilities load. See
    * `lib/coach-schedule-doors.ts`.
    */
   const drawerDoors = scheduleDrawerDoors(page.capabilities, {
@@ -453,12 +453,12 @@ export default function CoachesSchedulePage({
       if (!eventId) return;
       const ev = events.find(e => e.id === eventId);
       if (!ev) return;
-      // ?tab=lineup (the builder's way home) and ?tab=scouting (the Opponents card's meeting rows,
-      // shared links) open the sheet on that tab. If the event turns out to have no such tab — or
-      // this coach holds no tab on it at all — the sheet falls back to the first tab they do hold,
-      // or to none.
-      const tab = sp.get('tab') === 'lineup' ? 'lineup' : sp.get('tab') === 'scouting' ? 'scouting' : 'attendance';
-      openEvent(ev, { ...SHEET_OPEN_PLACE, tab });
+      // THE ADDRESS GRAMMAR (stage 1 · E5): `?tab=attendance` opens the event WITH THE ROOM OPEN on
+      // top — the Overview's four links, Insights' "Take attendance" and the next-step card stay
+      // three taps from a saved answer; `?tab=scouting` opens the book's panel; `?tab=lineup` (the
+      // builder's way home, §222) and no tab open the sheet itself, the Lineup row on screen one.
+      // A view this coach's grants do not open is simply not opened — the sheet shows.
+      openEvent(ev, sheetViewFromTab(sp.get('tab')));
       // ⚠ THE ADDRESS BELONGS TO THE SHEET, NOT TO THE PAGE UNDER IT. A commit from now the
       // sheet's floor puts `?event=…` on an entry of its OWN (`sheetAddress`), and gives it back
       // when the coach closes the game. This entry — the one the link, the builder's arrow or a
@@ -537,27 +537,21 @@ export default function CoachesSchedulePage({
 
   // ── Add / edit event ────────────────────────────────────────────────────────
 
-  function openForm(init: ScheduleFormInit) {
-    formSeqRef.current += 1;
-    setFormInit({ ...init, seq: formSeqRef.current });
-  }
-
   function openAddForm(type: RepEventType, overrides?: Partial<EventForm>) {
     setAddTypeMenuOpen(false);
-    openForm({ form: seedAddForm(type, { cursorDate, arrivalDefaults, overrides }), editing: null });
+    setFormInit({ form: seedAddForm(type, { cursorDate, arrivalDefaults, overrides }), editing: null });
   }
 
-  function openEditForm(event: RepTeamEvent, place: SheetPlace) {
+  function openEditForm(event: RepTeamEvent) {
     // The form stands where the sheet stood (a modal over a slide-over would be two overlays), so
     // it remembers the game it was opened from and returns there — Back, Cancel, Escape or Save
     // (owner, 2026-09-21: "back … brings me back to the schedule, not back to the game where I
     // came from"). The "+ Add" doors never close a sheet, so they have nothing to return to.
-    // Edit details sits beside every tab, so the return keeps the coach's PLACE on the game — the
-    // tab and the attendance filter they left from — which a fresh sheet would otherwise reset
-    // (/review, 2026-09-21).
-    returnToEventRef.current = { id: event.id, place };
+    // Edit details sits in the sheet's foot row, never inside a view (stage 1 · E2), so the coach
+    // returns to the sheet itself.
+    returnToEventId.current = event.id;
     setSelectedEvent(null);
-    openForm({
+    setFormInit({
       form: seedEditForm(event, tagsByEventId[event.id] ?? []),
       // Batch 4: editing a mirrored tournament game opens the form in restricted mode — the
       // organizer's facts render as context, only the coach's own fields are editable.
@@ -565,15 +559,14 @@ export default function CoachesSchedulePage({
     });
   }
 
-  /** The game the open edit form returns to when it closes, and where on it — see `openEditForm`. */
-  const returnToEventRef = useRef<{ id: string; place: SheetPlace } | null>(null);
-  /** Back on the game the form was opened from, where the coach left it, if it is still on the calendar. */
+  /** The game the open edit form returns to when it closes — see `openEditForm`. */
+  const returnToEventId = useRef<string | null>(null);
+  /** Back on the game the form was opened from, if it is still on the calendar. */
   function returnToEvent(list: RepTeamEvent[]) {
-    const back = returnToEventRef.current;
-    returnToEventRef.current = null;
-    const ev = back ? list.find(e => e.id === back.id) : null;
-    if (!ev || !back) return;
-    openEvent(ev, back.place);
+    const id = returnToEventId.current;
+    returnToEventId.current = null;
+    const ev = id ? list.find(e => e.id === id) : null;
+    if (ev) openEvent(ev);
   }
 
   function closeForm(list: RepTeamEvent[]) {
@@ -581,8 +574,8 @@ export default function CoachesSchedulePage({
     returnToEvent(list);
   }
 
-  function openEvent(event: RepTeamEvent, place: SheetPlace = SHEET_OPEN_PLACE) {
-    setSheetPlace(place);
+  function openEvent(event: RepTeamEvent, view: SheetView | null = null) {
+    setSheetView(view);
     setDaySheet(null);
     setSelectedEvent(event);
     // Opening a moved game IS the acknowledgement — the coach has now seen the new time, so this
@@ -735,7 +728,7 @@ export default function CoachesSchedulePage({
 
   /** What every event row carries, and what all three views draw from. */
   const rowDecor: ScheduleRowDecor = {
-    mismatchIds, awardCountByEventId, movedEventIds, bookRecordFor, gameDayHrefById, openEvent: e => openEvent(e),
+    mismatchIds, awardCountByEventId, movedEventIds, bookRecordFor, gameDayHrefById, openEvent,
   };
   const viewData: ScheduleViewData = {
     events, tryoutSessions, unmirroredGames, sport: sportPack.id, tryoutsHref: `${base}/tryouts`, decor: rowDecor,
@@ -1011,8 +1004,8 @@ export default function CoachesSchedulePage({
       )}
 
       {/* ── Detail slide-over ─────────────────────────────────────────────── */}
-      {/* One sheet per event: keyed on the event, so opening another starts clean — its tab, its
-          filter, a half-typed score, the award dialog. The RSVP sheet is the sheet's own sibling. */}
+      {/* One sheet per event: keyed on the event, so opening another starts clean — its view, the
+          room's filter, a half-typed score, the award dialog. The RSVP sheet is the sheet's own sibling. */}
       {selectedEvent && (
         <ScheduleEventSheet
           key={selectedEvent.id}
@@ -1020,7 +1013,7 @@ export default function CoachesSchedulePage({
           teamId={teamId}
           base={base}
           event={selectedEvent}
-          place={sheetPlace}
+          initialView={sheetView}
           isPhone={isPhone}
           nowMs={nowMs}
           sportPack={sportPack}
@@ -1036,6 +1029,8 @@ export default function CoachesSchedulePage({
           mirroredGameHref={selectedEvent.sourceTournamentGameId
             ? tournamentGames.find(g => g.id === selectedEvent.sourceTournamentGameId)?.href ?? null
             : null}
+          bookEntry={selectedEvent.opponent ? bookByKey.get(normalizeOpponentName(selectedEvent.opponent)) ?? null : null}
+          gameDayLive={gameDayHrefById.has(selectedEvent.id)}
           onClose={() => setSelectedEvent(null)}
           onEdit={openEditForm}
           onAddGame={ev => {
@@ -1093,7 +1088,6 @@ export default function CoachesSchedulePage({
       {/* ── Add / edit event modal ─────────────────────────────────────────── */}
       {formInit && (
         <ScheduleEventForm
-          key={formInit.seq}
           orgSlug={orgSlug}
           teamId={teamId}
           sport={sportPack.id}

@@ -35,6 +35,8 @@ const PAGE = 'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx';
 // event sheet out of the page into files of their own; each assertion reads the file its code lives in.
 const VIEWS = 'components/coaches/ScheduleCalendarViews.tsx';
 const SHEET = 'components/coaches/ScheduleEventSheet.tsx';
+// Stage 1 · E2 (2026-09-25): the attendance list lives in its own room, a view inside the sheet.
+const ROOM = 'components/coaches/ScheduleAttendanceRoom.tsx';
 const STYLES = 'app/[orgSlug]/coaches/coaches.module.css';
 const RSVP = 'components/coaches/CoachRsvpSheet.tsx';
 const MENU = 'components/coaches/CoachToolbarMenu.tsx';
@@ -45,6 +47,7 @@ const PURE = 'lib/coach-schedule-phone.ts';
 const page = readCode(PAGE);
 const views = readCode(VIEWS);
 const sheet = readCode(SHEET);
+const room = readCode(ROOM);
 const css = stripComments(readSource(STYLES));
 
 /** The ≤640 blocks of a stylesheet, joined — what a phone-only rule must live inside. */
@@ -160,41 +163,48 @@ describe('C2 — a week without blanks; a month of dots with the day\'s rows ben
   });
 });
 
+/*
+ * ⚠ C3's CLOCK STANDS; ITS TABS DO NOT (the Schedule deep dive, stage 1 · E1–E6, owner ruling
+ * 2026-09-25). "Tabs before first pitch / score from first pitch" became "ROWS before / score from",
+ * the same clock — and at EVERY width (E6), so the desktop's third order is gone. The rows, the room
+ * and the rest of stage 1 are pinned in coach-schedule-sheet-guard.test.ts; what stays here is the
+ * clock, the RSVP sheet's floor and the phone forms of the where-row and the foot row.
+ */
 describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a dialog on its own floor', () => {
   const fn = sheetFn();
-  it('two block orders, in JSX, switched by gameHasStarted through the pure sheetOrder', () => {
+  it('two block orders, in JSX, switched by gameHasStarted through the pure sheetOrder — at every width (E6)', () => {
     assert.ok(fn.includes('const started = gameHasStarted(ev, nowMs);'));
     assert.ok(fn.includes("const scoreLeads = isGameEvent && sheetOrder({ started, hasScore }) === 'score-first';"));
-    assert.match(fn, /const body = !isPhone \? \(/, 'the desktop order first');
-    assert.match(fn, /\) : scoreLeads \? \(/, 'then the phone\'s two');
-    // The two phone orders differ in WHERE the score block sits: before the tabs, or after them.
-    const phone = fn.slice(fn.indexOf(') : scoreLeads ? ('));
-    const first = phone.slice(0, phone.indexOf(') : ('));
-    const second = phone.slice(phone.indexOf(') : ('));
-    assert.ok(first.indexOf('{scoreBlock}') < first.indexOf('{tabsBlock}'), 'score-first: the score before the tabs');
-    assert.ok(second.indexOf('{tabsBlock}') < second.indexOf('{scoreBlock}'), 'tabs-first: the tabs before the score door');
+    assert.match(fn, /const body = scoreLeads \? \(/, 'the clock picks the order');
+    assert.ok(!/const body = !isPhone/.test(fn), 'the width never does — the desktop draws the same order (E6)');
+    // The two orders differ in WHERE the score block sits: before the door rows, or after them.
+    const first = fn.slice(fn.indexOf('const body = scoreLeads ? ('), fn.indexOf(') : (', fn.indexOf('const body = scoreLeads ? (')));
+    const second = fn.slice(fn.indexOf(') : (', fn.indexOf('const body = scoreLeads ? (')));
+    assert.ok(first.indexOf('{scoreBlock}') < first.indexOf('{doorRows}'), 'score-first: the score before the rows');
+    assert.ok(second.indexOf('{doorRows}') < second.indexOf('{scoreBlock}'), 'rows-first: the rows before the score door');
     assert.ok(!/[\s;{]order:\s*\d/.test(phoneBlocks(css).slice(phoneBlocks(css).indexOf('.slideOverFoot'))), 'no CSS `order` on the sheet (a `border:` is not an `order:`) — the tab sequence is the reading order');
   });
-  it('the awards block does not render before first pitch on a phone', () => {
-    // A GAME's awards still wait for the score to lead on a phone. Since awards at any event
-    // (owner, 2026-09-25) the non-game branch opens on the event's own state instead — pinned in
+  it('the awards block does not render before first pitch — on a phone, and since stage 1 · E6 at a desk too', () => {
+    // A GAME's awards wait for the score to lead, at every width (E6: the desk's "Enter a final score
+    // to unlock awards" on a game days away was F08). Since awards at any event (owner, 2026-09-25)
+    // the non-game branch opens on the event's own state instead — pinned in
     // coach-awards-any-event.test.ts.
-    assert.ok(fn.includes('const awardsBlock = drawerDoors.awards && (isGameEvent ? (!isPhone || scoreLeads) : awardUnlock === \'open\') ? ('));
+    assert.ok(fn.includes('const awardsBlock = drawerDoors.awards && (isGameEvent ? scoreLeads : awardUnlock === \'open\') ? ('));
   });
-  it('the deep-link tab calls are untouched — the address names the tab the sheet opens on', () => {
-    // Since the split (S6) the sheet opens fresh per event with a PLACE; the deep link hands it the tab.
-    assert.ok(page.includes("const tab = sp.get('tab') === 'lineup' ? 'lineup' : sp.get('tab') === 'scouting' ? 'scouting' : 'attendance';"));
-    assert.ok(page.includes('openEvent(ev, { ...SHEET_OPEN_PLACE, tab });'));
-    assert.ok(sheet.includes('const [slideTab, setSlideTab] = useState<SlideTab>(place.tab);'), 'the sheet opens on the place it is handed');
+  it('the deep link still reads the address — and since stage 1 · E5 a tab names a VIEW, not a tab', () => {
+    // tab=attendance → the room; tab=scouting → the book's panel; tab=lineup and none → the sheet
+    // (`sheetViewFromTab`, pinned in coach-schedule-sheet.test.ts).
+    assert.ok(page.includes("openEvent(ev, sheetViewFromTab(sp.get('tab')));"));
+    assert.ok(sheet.includes('const [view, setView] = useState<SheetView | null>(initialView);'), 'the sheet opens on the view it is handed');
   });
-  it('the attendance row is the tap — a button that says it opens a dialog — and the old button is gone', () => {
-    assert.match(fn, /<CoachRowList label="Attendance" inset phoneFrame className=\{styles\.attendanceRows\}>/, 'the portal\'s one row recipe, framed on a phone');
-    assert.match(fn, /<CoachRow\s+key=\{row\.player\.id\}\s+as="button"\s+aria-haspopup="dialog"/, 'the whole row raises the sheet');
-    assert.ok(fn.includes('onClick={() => setRsvpEditId(row.player.id)}'));
-    assert.ok(!/Edit RSVP/.test(page + sheet), 'no "Edit RSVP" anywhere on the page or its sheet');
+  it('the attendance row is the tap — a button that says it opens a dialog — and the old button is gone (in the room, since stage 1 · E2)', () => {
+    assert.match(room, /<CoachRowList label="Attendance" inset phoneFrame className=\{styles\.attendanceRows\}>/, 'the portal\'s one row recipe, framed on a phone');
+    assert.match(room, /<CoachRow\s+key=\{row\.player\.id\}\s+as="button"\s+aria-haspopup="dialog"/, 'the whole row raises the sheet');
+    assert.ok(room.includes('onClick={() => setRsvpEditId(row.player.id)}'));
+    assert.ok(!/Edit RSVP/.test(page + sheet + room), 'no "Edit RSVP" anywhere on the page, its sheet or its room');
     assert.ok(!/Edit RSVP|rsvpEditor|rsvpOption/.test(css), 'nor its editor\'s rules in the stylesheet');
-    assert.match(fn, /<span className=\{styles\.attendanceStatusBadge\} data-status=\{row\.status\} data-field-key aria-hidden>/, 'the badge is the trail and the looked-for value (A4)');
-    assert.ok(fn.includes('<div className={styles.attendanceSection} data-field-floor>'), 'the field floor survives');
+    assert.match(room, /<span className=\{styles\.attendanceStatusBadge\} data-status=\{row\.status\} data-field-key aria-hidden>/, 'the badge is the trail and the looked-for value (A4)');
+    assert.ok(room.includes('<div className={styles.attendanceRoom} data-field-floor>'), 'the field floor survives');
   });
   it('the RSVP sheet is a real dialog on its own floor, rendered as a SIBLING of the event sheet', () => {
     const rsvp = readCode(RSVP);
@@ -204,6 +214,7 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
     assert.ok(!rsvp.includes('useOverlayOpen('), 'the event sheet beneath already holds the lock');
     assert.ok(!fn.includes('<CoachRsvpSheet'), 'never inside the event sheet\'s panel');
     assert.ok(!sheetPanel().includes('<CoachRsvpSheet'), 'never inside the event sheet\'s panel');
+    assert.ok(!room.includes('<CoachRsvpSheet'), 'nor inside the room the panel holds');
     const siteA = sheet.indexOf('<div className={styles.modalOverlay}');
     const siteB = sheet.indexOf('<CoachRsvpSheet');
     assert.ok(siteA > 0 && siteB > siteA, 'rendered after the event sheet\'s overlay, as a sibling');

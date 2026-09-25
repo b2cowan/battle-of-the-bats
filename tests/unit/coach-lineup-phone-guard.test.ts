@@ -850,40 +850,28 @@ describe('D5 — the sheet\'s groups are the depth chart\'s three states', () =>
 });
 
 describe('D3 — the road in and back out', () => {
-  const tab = between(schedule, 'const lineupTab = activeSlideTab', 'const tabContent =', 'the lineup tab');
-  it('the peek\'s heading row carries the clock-turned door; the foot door is phone-hidden', () => {
-    assert.match(tab, /const started = gameHasStarted\(ev, nowMs\);/);
-    assert.match(tab, /const peekDoor = started\s*\? \{ href: `\$\{base\}\/game\/\$\{ev\.id\}`, word: 'Game day' \}\s*: \{ href: editHref, word: 'Edit' \};/);
-    assert.match(tab, /<Link href=\{peekDoor\.href\} className=\{styles\.lineupPeekDoor\}/);
-    const titleRow = between(tab, 'className={styles.lineupPeekTitleRow}', '</div>', 'the title row');
-    assert.match(titleRow, /lineupFrontChip/);
-    assert.match(titleRow, /lineupPeekDoor/);
-    assert.match(css, /\.lineupPeekDoor \{ display: none; \}/, 'hidden above 640');
-    assert.match(phoneCss, /\.lineupPeekDoor \{\s*display: inline-flex;[^}]*min-height: var\(--tap-min, 44px\);/);
-    assert.match(phoneCss, /\.lineupPeekFooter \{ display: none; \}/);
-    assert.match(tab, /className=\{styles\.lineupPeekFooter\}/, 'the desktop keeps its foot door');
+  /*
+   * ⚠ THE SCHEDULE'S PEEK RETIRED (the Schedule deep dive, stage 1 · E3, owner ruling 2026-09-25 —
+   * "rows; the peek retires"): the look-only batting order with its inning flip left the event sheet
+   * with the tabs, because since D5 the builder's first screen IS the order, one inning at a time.
+   * D3's two rules it carried survive on the sheet's Lineup ROW — the door turns by the clock (now
+   * at every width, which ends F07's desk exception), and the builder is handed the way back to the
+   * game. The row's words and its clock are pinned in coach-schedule-sheet(.guard).test.ts.
+   */
+  const row = between(schedule, 'const liveDoor = lineupDoor(', 'const scoutingRow =', 'the Lineup row');
+  it('the Lineup row carries the clock-turned door — the builder before first pitch, Game day from it — at every width', () => {
+    assert.match(schedule, /const started = gameHasStarted\(ev, nowMs\);/);
+    assert.match(row, /const liveDoor = lineupDoor\(\{ started, hasLineup, mismatch: !!lineupMismatch, liveWindow: gameDayLive \}\);/);
+    assert.match(row, /href=\{liveDoor === 'game-day' \? `\$\{base\}\/game\/\$\{ev\.id\}` : editHref\}/);
+    assert.doesNotMatch(row, /isPhone/, 'one door at every width — no phone-only heading door, no desk-only foot door');
+    assert.doesNotMatch(css, /\.lineupPeek(Door|Footer) \{/, 'the peek\'s two door forms are gone from the stylesheet');
   });
-  it('the look-only flip: the order reads inningPositions[<shown inning>] with 44px ‹ › that never call a setter on the rows', () => {
-    assert.match(tab, /const inningShown = Math\.min\(Math\.max\(1, peekInning\), Math\.max\(1, lineupInningCount\)\);/);
-    assert.match(tab, /\{r\.inningPositions\[String\(inningShown\)\] \|\| '—'\}/);
-    assert.doesNotMatch(tab, /inningPositions\['1'\]/, 'no longer hard-wired to the first inning');
-    const flip = between(tab, 'data-lineup-peek-flip', '</div>', 'the flip');
-    assert.match(flip, /className=\{styles\.gdStepper\}[\s\S]*?onClick=\{\(\) => setPeekInning\(inningShown - 1\)\}>‹<\/button>/);
-    assert.match(flip, /className=\{styles\.gdStepper\}[\s\S]*?onClick=\{\(\) => setPeekInning\(inningShown \+ 1\)\}>›<\/button>/);
-    assert.equal((flip.match(/className=\{styles\.gdStepper\}/g) ?? []).length, 2, 'two 44px steppers');
-    assert.doesNotMatch(flip, /setLineupRows|onPositionChange|setPosition/);
-    assert.doesNotMatch(tab, /setLineupRows/, 'the peek never edits');
-  });
-  it('the peek opens on 1, or on a game in play the inning the console last showed — read, never written', () => {
-    assert.match(schedule, /function initialPeekInning\(event: RepTeamEvent\): number \{\s*if \(!gameHasStarted\(event, nowMs\)\) return 1;/);
-    assert.match(schedule, /sessionStorage\.getItem\(gameDayPeriodKey\(event\.id\)\)/);
-    assert.doesNotMatch(schedule, /sessionStorage\.setItem\(gameDayPeriodKey/);
-    // The sheet opens fresh for each event (the page keys it on the event), so its opening inning is
-    // the state's initial value — what `openEvent` used to set by hand before the split (S6).
-    assert.match(schedule, /const \[peekInning, setPeekInning\] = useState\(\(\) => initialPeekInning\(ev\)\);/);
+  it('the peek is gone: no look-only order, no inning flip, and nothing reads the console\'s inning', () => {
+    assert.doesNotMatch(schedule, /peekInning|initialPeekInning|data-lineup-peek-flip|setLineupRows/);
+    assert.doesNotMatch(schedule, /sessionStorage\.(get|set)Item\(gameDayPeriodKey/, 'the console\'s own per-game memory stays the console\'s');
   });
   it('the four doors send their own address; the room\'s rows send none', () => {
-    assert.match(tab, /const editHref = lineupBuilderHref\(base, ev\.id, \{ returnTo: `\$\{base\}\/schedule\?event=\$\{ev\.id\}&tab=lineup` \}\);/);
+    assert.match(row, /const editHref = lineupBuilderHref\(base, ev\.id, \{ returnTo: `\$\{base\}\/schedule\?event=\$\{ev\.id\}&tab=lineup` \}\);/);
     const consolePage = readCode(CONSOLE);
     assert.equal(consolePage.split('lineupBuilderHref(base, eventId, { returnTo: `${base}/game/${eventId}` })').length - 1, 2, 'both console doors');
     assert.doesNotMatch(consolePage, /href=\{`\$\{base\}\/lineups\/\$\{eventId\}`\}/);
