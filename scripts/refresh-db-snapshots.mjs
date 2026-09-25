@@ -27,8 +27,8 @@
  *
  * KNOWN SHAPE QUIRK (matches prior snapshots — do NOT "fix"): FK rows whose target is in the
  * `auth` schema (e.g. FKs to auth.users via created_by/user_id/...) carry foreign_table:null /
- * foreign_column:null, because information_schema.constraint_column_usage only surfaces public
- * targets. This is by design and byte-identical to the previous committed files.
+ * foreign_column:null. The information_schema query this replaced only surfaced public targets,
+ * and CONSTRAINTS_SQL reproduces that on purpose so the committed files keep their shape.
  */
 
 import https from 'https';
@@ -133,6 +133,45 @@ function apiQuery(sql, ref) {
 }
 
 // ── SQL (structure only; zero business-data rows) ─────────────────────────────
+// PK / UNIQUE / FK rows, one per constrained column, read straight from pg_catalog.
+//
+// This replaced an information_schema join (table_constraints × key_column_usage ×
+// constraint_column_usage × referential_constraints) on 2026-09-25. That join took 12–20 s of one
+// full core on every run, on dev AND prod, and a misfiring hook ran it up to ~580 times a day: it
+// was ~90% of all prod query time and pinned dev's CPU (docs/projects/active/DB_SNAPSHOT_REFRESH_LOAD_PLAN.md).
+// This form returns in milliseconds. It was proven row-for-row against the old query on both
+// projects before it replaced it, and the output matches except for one deliberate correction:
+//   • A multi-column FK pairs each column with the referenced column at the SAME position. The old
+//     join matched on constraint name alone, so an N-column FK emitted N×N rows, half of them false
+//     (it recorded rep_player_notes.player_id → rep_roster_players.team_id). Those rows also came
+//     back in a different order on dev and prod.
+//   • Non-public FK targets stay null (the KNOWN SHAPE QUIRK in the header).
+//   • ORDER BY uses the `name`-typed columns, not the ::text aliases: `name` sorts in the C collation,
+//     exactly like information_schema's sql_identifier, so the committed ordering is unchanged.
+// Exported so refresh-db-schema.mjs reads FKs through this one definition instead of its own join.
+export const CONSTRAINTS_SQL = `
+    SELECT cl.relname::text AS table_name,
+           c.conname::text  AS constraint_name,
+           CASE c.contype WHEN 'p' THEN 'PRIMARY KEY' WHEN 'u' THEN 'UNIQUE' ELSE 'FOREIGN KEY' END AS constraint_type,
+           a.attname::text  AS column_name,
+           CASE WHEN fns.nspname = 'public' THEN fcl.relname::text END AS foreign_table,
+           CASE WHEN fns.nspname = 'public' THEN fa.attname::text END  AS foreign_column,
+           CASE c.confdeltype WHEN 'a' THEN 'NO ACTION' WHEN 'r' THEN 'RESTRICT' WHEN 'c' THEN 'CASCADE'
+                              WHEN 'n' THEN 'SET NULL' WHEN 'd' THEN 'SET DEFAULT' END AS delete_rule,
+           CASE c.confupdtype WHEN 'a' THEN 'NO ACTION' WHEN 'r' THEN 'RESTRICT' WHEN 'c' THEN 'CASCADE'
+                              WHEN 'n' THEN 'SET NULL' WHEN 'd' THEN 'SET DEFAULT' END AS update_rule
+    FROM pg_constraint c
+    JOIN pg_class cl      ON cl.oid = c.conrelid AND cl.relkind IN ('r', 'p')
+    JOIN pg_namespace ns  ON ns.oid = cl.relnamespace AND ns.nspname = 'public'
+    CROSS JOIN LATERAL unnest(c.conkey) WITH ORDINALITY AS k(attnum, ord)
+    JOIN pg_attribute a   ON a.attrelid = c.conrelid AND a.attnum = k.attnum AND NOT a.attisdropped
+    LEFT JOIN pg_class fcl     ON fcl.oid = c.confrelid
+    LEFT JOIN pg_namespace fns ON fns.oid = fcl.relnamespace
+    LEFT JOIN pg_attribute fa  ON fa.attrelid = c.confrelid AND fa.attnum = c.confkey[k.ord] AND NOT fa.attisdropped
+    WHERE c.contype IN ('p', 'u', 'f')
+    ORDER BY cl.relname, c.conname, k.ord
+  `;
+
 const SQL = {
   columns: `
     SELECT t.table_name, c.ordinal_position, c.column_name, c.data_type,
@@ -148,23 +187,7 @@ const SQL = {
   // was SET NULL and prod was CASCADE — so deleting a team preserved its games on dev and
   // silently DELETED them on prod. Identical names, opposite behaviour, and completely
   // invisible to every check until these two columns were added.
-  constraints: `
-    SELECT tc.table_name, tc.constraint_name, tc.constraint_type, kcu.column_name,
-           ccu.table_name  AS foreign_table,
-           ccu.column_name AS foreign_column,
-           rc.delete_rule, rc.update_rule
-    FROM information_schema.table_constraints tc
-    LEFT JOIN information_schema.key_column_usage kcu
-      ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-    LEFT JOIN information_schema.constraint_column_usage ccu
-      ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
-     AND tc.constraint_type = 'FOREIGN KEY'
-    LEFT JOIN information_schema.referential_constraints rc
-      ON rc.constraint_name = tc.constraint_name AND rc.constraint_schema = tc.table_schema
-    WHERE tc.table_schema = 'public'
-      AND tc.constraint_type IN ('PRIMARY KEY', 'UNIQUE', 'FOREIGN KEY')
-    ORDER BY tc.table_name, tc.constraint_name, kcu.ordinal_position
-  `,
+  constraints: CONSTRAINTS_SQL,
   indexes: `
     SELECT tablename, indexname, indexdef
     FROM pg_indexes

@@ -20691,13 +20691,6 @@
         "table_name": "rep_development_goal_reviews",
         "column_name": "goal_id",
         "foreign_table": "rep_player_development_goals",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_development_goal_reviews_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_development_goal_reviews",
-        "column_name": "goal_id",
-        "foreign_table": "rep_player_development_goals",
         "foreign_column": "id",
         "constraint_name": "rep_development_goal_reviews_goal_team_fkey"
       },
@@ -20706,13 +20699,6 @@
         "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
         "foreign_column": "team_id",
-        "constraint_name": "rep_development_goal_reviews_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_development_goal_reviews",
-        "column_name": "team_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "id",
         "constraint_name": "rep_development_goal_reviews_goal_team_fkey"
       },
       {
@@ -20731,23 +20717,9 @@
       },
       {
         "table_name": "rep_development_goal_reviews",
-        "column_name": "player_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_development_goal_reviews_player_team_fkey"
-      },
-      {
-        "table_name": "rep_development_goal_reviews",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
-        "constraint_name": "rep_development_goal_reviews_player_team_fkey"
-      },
-      {
-        "table_name": "rep_development_goal_reviews",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
         "constraint_name": "rep_development_goal_reviews_player_team_fkey"
       },
       {
@@ -20955,20 +20927,6 @@
       },
       {
         "table_name": "rep_evaluation_not_assessed",
-        "column_name": "player_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_player_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_evaluation_not_assessed_player_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
@@ -20983,23 +20941,9 @@
       },
       {
         "table_name": "rep_evaluation_not_assessed",
-        "column_name": "session_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_session_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_session_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
         "constraint_name": "rep_evaluation_not_assessed_session_team_fkey"
       },
       {
@@ -21018,23 +20962,9 @@
       },
       {
         "table_name": "rep_evaluation_not_assessed",
-        "column_name": "measurable_type_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
         "column_name": "team_id",
         "foreign_table": "rep_team_measurable_types",
         "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "id",
         "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
       },
       {
@@ -21284,20 +21214,6 @@
       },
       {
         "table_name": "rep_player_continuity_links",
-        "column_name": "current_registration_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
@@ -21312,23 +21228,9 @@
       },
       {
         "table_name": "rep_player_continuity_links",
-        "column_name": "current_roster_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -21354,20 +21256,6 @@
       },
       {
         "table_name": "rep_player_continuity_links",
-        "column_name": "prior_registration_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
@@ -21376,20 +21264,6 @@
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "prior_roster_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
@@ -21592,20 +21466,6 @@
       },
       {
         "table_name": "rep_player_measurables",
-        "column_name": "session_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
@@ -21641,20 +21501,6 @@
       },
       {
         "table_name": "rep_player_notes",
-        "column_name": "goal_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_notes_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_player_notes",
-        "column_name": "team_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_notes_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_player_notes",
         "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
         "foreign_column": "team_id",
@@ -21671,13 +21517,6 @@
         "table_name": "rep_player_notes",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_notes_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_notes",
-        "column_name": "player_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_notes_player_team_fkey"
       },
@@ -21686,13 +21525,6 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
-        "constraint_name": "rep_player_notes_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_notes",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
         "constraint_name": "rep_player_notes_player_team_fkey"
       },
       {
@@ -21712,20 +21544,6 @@
       {
         "table_name": "rep_player_observations",
         "column_name": "goal_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "goal_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_observations_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
         "foreign_column": "id",
         "constraint_name": "rep_player_observations_goal_team_fkey"
@@ -21753,31 +21571,10 @@
       },
       {
         "table_name": "rep_player_observations",
-        "column_name": "player_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_observations_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_observations_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "session_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_session_team_fkey"
       },
       {
         "table_name": "rep_player_observations",
@@ -21790,13 +21587,6 @@
         "table_name": "rep_player_observations",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_observations_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_observations_session_team_fkey"
       },
@@ -21809,34 +21599,6 @@
       },
       {
         "table_name": "rep_player_observations",
-        "column_name": "measurable_type_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "kind",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "measurable_type_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "kind",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
         "column_name": "team_id",
         "foreign_table": "rep_team_measurable_types",
         "foreign_column": "team_id",
@@ -21846,21 +21608,7 @@
         "table_name": "rep_player_observations",
         "column_name": "metric_kind",
         "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "metric_kind",
-        "foreign_table": "rep_team_measurable_types",
         "foreign_column": "kind",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "metric_kind",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "team_id",
         "constraint_name": "rep_player_observations_skill_fkey"
       },
       {
@@ -50981,20 +50729,6 @@
         "table_name": "rep_development_goal_reviews",
         "column_name": "goal_id",
         "foreign_table": "rep_player_development_goals",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_development_goal_reviews_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_development_goal_reviews",
-        "column_name": "goal_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "id",
-        "constraint_name": "rep_development_goal_reviews_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_development_goal_reviews",
-        "column_name": "team_id",
-        "foreign_table": "rep_player_development_goals",
         "foreign_column": "id",
         "constraint_name": "rep_development_goal_reviews_goal_team_fkey"
       },
@@ -51021,23 +50755,9 @@
       },
       {
         "table_name": "rep_development_goal_reviews",
-        "column_name": "player_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_development_goal_reviews_player_team_fkey"
-      },
-      {
-        "table_name": "rep_development_goal_reviews",
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
-        "constraint_name": "rep_development_goal_reviews_player_team_fkey"
-      },
-      {
-        "table_name": "rep_development_goal_reviews",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
         "constraint_name": "rep_development_goal_reviews_player_team_fkey"
       },
       {
@@ -51240,20 +50960,6 @@
         "table_name": "rep_evaluation_not_assessed",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_player_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
-        "column_name": "player_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_evaluation_not_assessed_player_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_evaluation_not_assessed_player_team_fkey"
       },
@@ -51268,13 +50974,6 @@
         "table_name": "rep_evaluation_not_assessed",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_session_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
-        "column_name": "session_id",
-        "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "id",
         "constraint_name": "rep_evaluation_not_assessed_session_team_fkey"
       },
@@ -51283,13 +50982,6 @@
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_session_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
         "constraint_name": "rep_evaluation_not_assessed_session_team_fkey"
       },
       {
@@ -51308,23 +51000,9 @@
       },
       {
         "table_name": "rep_evaluation_not_assessed",
-        "column_name": "measurable_type_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
         "column_name": "team_id",
         "foreign_table": "rep_team_measurable_types",
         "foreign_column": "team_id",
-        "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
-      },
-      {
-        "table_name": "rep_evaluation_not_assessed",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "id",
         "constraint_name": "rep_evaluation_not_assessed_type_team_fkey"
       },
       {
@@ -51569,13 +51247,6 @@
         "table_name": "rep_player_continuity_links",
         "column_name": "current_registration_id",
         "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "current_registration_id",
-        "foreign_table": "rep_tryout_registrations",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
       },
@@ -51585,20 +51256,6 @@
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
         "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_current_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "current_roster_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
         "table_name": "rep_player_continuity_links",
@@ -51612,13 +51269,6 @@
         "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_current_roster_team_fkey"
       },
       {
@@ -51644,20 +51294,6 @@
       },
       {
         "table_name": "rep_player_continuity_links",
-        "column_name": "prior_registration_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
-        "foreign_table": "rep_tryout_registrations",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_registration_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
         "column_name": "team_id",
         "foreign_table": "rep_tryout_registrations",
         "foreign_column": "team_id",
@@ -51666,20 +51302,6 @@
       {
         "table_name": "rep_player_continuity_links",
         "column_name": "prior_roster_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "prior_roster_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
-      },
-      {
-        "table_name": "rep_player_continuity_links",
-        "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_continuity_links_prior_roster_team_fkey"
@@ -51877,20 +51499,6 @@
         "table_name": "rep_player_measurables",
         "column_name": "session_id",
         "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "session_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_measurables_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_measurables",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "id",
         "constraint_name": "rep_player_measurables_session_team_fkey"
       },
@@ -51931,23 +51539,9 @@
       },
       {
         "table_name": "rep_player_notes",
-        "column_name": "goal_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_notes_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_player_notes",
         "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
         "foreign_column": "team_id",
-        "constraint_name": "rep_player_notes_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_player_notes",
-        "column_name": "team_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "id",
         "constraint_name": "rep_player_notes_goal_team_fkey"
       },
       {
@@ -51960,20 +51554,6 @@
       {
         "table_name": "rep_player_notes",
         "column_name": "player_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_notes_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_notes",
-        "column_name": "player_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_notes_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_notes",
-        "column_name": "team_id",
         "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_notes_player_team_fkey"
@@ -52008,23 +51588,9 @@
       },
       {
         "table_name": "rep_player_observations",
-        "column_name": "goal_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
         "column_name": "team_id",
         "foreign_table": "rep_player_development_goals",
         "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_goal_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_player_development_goals",
-        "foreign_column": "id",
         "constraint_name": "rep_player_observations_goal_team_fkey"
       },
       {
@@ -52038,20 +51604,6 @@
         "table_name": "rep_player_observations",
         "column_name": "player_id",
         "foreign_table": "rep_roster_players",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "player_id",
-        "foreign_table": "rep_roster_players",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_observations_player_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_roster_players",
         "foreign_column": "id",
         "constraint_name": "rep_player_observations_player_team_fkey"
       },
@@ -52071,20 +51623,6 @@
       },
       {
         "table_name": "rep_player_observations",
-        "column_name": "session_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_evaluation_sessions",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_observations_session_team_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
         "column_name": "team_id",
         "foreign_table": "rep_team_evaluation_sessions",
         "foreign_column": "team_id",
@@ -52094,21 +51632,7 @@
         "table_name": "rep_player_observations",
         "column_name": "measurable_type_id",
         "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "measurable_type_id",
-        "foreign_table": "rep_team_measurable_types",
         "foreign_column": "id",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "measurable_type_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "kind",
         "constraint_name": "rep_player_observations_skill_fkey"
       },
       {
@@ -52120,37 +51644,9 @@
       },
       {
         "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "id",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "team_id",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "kind",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
         "column_name": "metric_kind",
         "foreign_table": "rep_team_measurable_types",
         "foreign_column": "kind",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "metric_kind",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "team_id",
-        "constraint_name": "rep_player_observations_skill_fkey"
-      },
-      {
-        "table_name": "rep_player_observations",
-        "column_name": "metric_kind",
-        "foreign_table": "rep_team_measurable_types",
-        "foreign_column": "id",
         "constraint_name": "rep_player_observations_skill_fkey"
       },
       {

@@ -1,7 +1,8 @@
 # DB snapshot refresh — stop our tooling from pinning the database CPU
 
-**Status (2026-09-25):** Step 1 DONE on dev (the hook is removed from `.claude/settings.json`; the
-change is not yet committed). Steps 2 and 3 are PLANNED, waiting on the owner's go and on ruling D1 below.
+**Status (2026-09-25):** ALL THREE STEPS BUILT, the same day. Step 1 committed `d7b965d4`. The
+owner ruled D1 = (a), "go ahead with your recommendations". Steps 2 and 3 were built and proven live
+(§7). What stays open is the morning-after check in §2 on both projects.
 PM brief: [DB_SNAPSHOT_REFRESH_LOAD_PM_BRIEF.md](DB_SNAPSHOT_REFRESH_LOAD_PM_BRIEF.md).
 
 ## 1. What happened (evidence, 2026-09-25 investigation)
@@ -48,9 +49,10 @@ on both projects.
 **Goal:** keep the convenience (the snapshots refresh by themselves after a migration) without
 trusting `if`.
 
-- **New `scripts/hooks/after-migration-refresh.mjs`**, registered as a `PostToolUse` / `Bash` hook.
-  Keep `if` as a cheap pre-filter, but the script does the real gating. It reads the hook payload from
-  stdin and exports a pure `shouldRefresh(payload)` that requires BOTH:
+- **New `scripts/after-migration-refresh-hook.mjs`** (as built), registered as a `PostToolUse` hook
+  on `Bash` and `PowerShell`. Keep `if` as a cheap pre-filter, but the script does the real gating.
+  It reads the hook payload from stdin; the pure `shouldRefreshSnapshots(payload)` in
+  `scripts/lib/migration-refresh-gate.mjs` requires BOTH:
   1. `tool_input.command` **invokes** the script: a `node … scripts/apply-migration-api.mjs`
      call anywhere in the command, including inside a loop. A mention in a `grep` or `git log -S` does
      not count.
@@ -127,7 +129,37 @@ even a runaway trigger is harmless.
   published. Find the subscription that raises it.
 - The dev database restarted at 17:00:44 UTC on 2026-09-25; the cause is unknown.
 
-## 7. Success criteria
+## 7. What was built and proven (2026-09-25)
+
+**Step 3 — `CONSTRAINTS_SQL`** (exported from `refresh-db-snapshots.mjs`; `refresh-db-schema.mjs`
+imports it and no longer runs its own join).
+- **Proven row-for-row against the old query, live, on both projects:** dev 875 → 839 rows and prod
+  875 → 839. The only removals are 36 per project, all off-diagonal rows of the 16 composite FKs.
+  Nothing was added, and the remaining rows are in the same order. The old query also returned the
+  composite rows in a DIFFERENT order on dev and prod, so it was nondeterministic as well as wrong.
+- Time: the old query took 19.7 s (dev) and 21.2 s (prod); the new one takes about 1.5 s round trip,
+  mostly Management API latency. A full `refresh:snapshots` now takes 19 s end to end (it took about
+  45–60 s).
+- Committed-file diff: `schema-dump-constraints-{dev,prod}.json` −360 lines each and
+  `schema_dumps.json` foreign_keys 593 → 557 per env. Columns, indexes and rls are unchanged; drift is 0.
+- `reference_db_schema.md` now reads correctly for the composite families. Before, it had e.g.
+  `measurable_type_id → rep_team_measurable_types.kind` and `player_id → rep_roster_players.team_id`.
+  Rule: a single-column FK's arrow wins over a composite's, and composites pair by position.
+- Gates: `check-schema-parity`, `check-snapshot-freshness`, `check-index-coverage` and
+  `check-dictionary-coverage` pass; the five unit suites that read the snapshots pass 46/46.
+
+**Step 2 — `scripts/after-migration-refresh-hook.mjs`** + `scripts/lib/migration-refresh-gate.mjs`,
+registered for both `Bash` and `PowerShell` (agents on this machine apply migrations through either).
+- Unit: `tests/unit/after-migration-refresh-gate.test.ts` passes 7/7. It covers the echo loop that
+  fooled `if`, `git log -S`, a db-query mentioning the name, a grep quoting a whole invocation, a
+  failed apply, dev/prod/flagged/PowerShell-path applies, a loop applying two, and malformed payloads.
+- Runner, offline: a non-matching payload exits 0 with no output; with the lock held, a matching
+  payload writes PENDING and reports "already running … will run once more".
+- **Live:** a `for` loop fired nothing (manifest untouched, no lock). A real apply of `select 1` to dev
+  fired exactly one refresh, returned drift 0 to the agent as additionalContext, and left no lock
+  behind. Its output was byte-identical to the manual refresh, so the result is deterministic now.
+
+## 8. Success criteria
 
 - `duration:` statements in `postgres_logs` fall from about 500/day to about 0 on both projects,
   outside deliberate refreshes.

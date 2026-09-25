@@ -332,5 +332,33 @@
       "\\tmp",
       "C:\\Users\\b2cow\\Documents\\tournament-website\\app\\[orgSlug]\\coaches"
     ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/after-migration-refresh-hook.mjs",
+            "if": "Bash(*apply-migration-api*)",
+            "timeout": 180,
+            "statusMessage": "Refreshing DB snapshots if a migration was applied..."
+          }
+        ]
+      },
+      {
+        "matcher": "PowerShell",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/after-migration-refresh-hook.mjs",
+            "if": "PowerShell(*apply-migration-api*)",
+            "timeout": 180,
+            "statusMessage": "Refreshing DB snapshots if a migration was applied..."
+          }
+        ]
+      }
+    ]
   }
 }

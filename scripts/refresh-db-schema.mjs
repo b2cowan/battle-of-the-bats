@@ -15,6 +15,8 @@ import https from 'https';
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+// Safe to import: refresh-db-snapshots.mjs only runs its main() when it is the entrypoint.
+import { CONSTRAINTS_SQL } from './refresh-db-snapshots.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.resolve(__dirname, '..');
@@ -145,20 +147,10 @@ async function main() {
       WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
       ORDER BY t.table_name, c.ordinal_position
     `),
-    apiQuery(`
-      SELECT
-        tc.table_name,
-        kcu.column_name,
-        ccu.table_name  AS foreign_table,
-        ccu.column_name AS foreign_column
-      FROM information_schema.table_constraints tc
-      JOIN information_schema.key_column_usage kcu
-        ON tc.constraint_name = kcu.constraint_name AND tc.table_schema = kcu.table_schema
-      JOIN information_schema.constraint_column_usage ccu
-        ON ccu.constraint_name = tc.constraint_name AND ccu.table_schema = tc.table_schema
-      WHERE tc.constraint_type = 'FOREIGN KEY' AND tc.table_schema = 'public'
-      ORDER BY tc.table_name, kcu.column_name
-    `),
+    // The snapshot script's catalog query, not a second information_schema join: that join cost
+    // 10–13 s per run, crossed the columns of every multi-column FK, and picked its winner in an
+    // undefined order (see CONSTRAINTS_SQL's comment).
+    apiQuery(CONSTRAINTS_SQL),
     apiQuery(`
       SELECT
         tablename,
@@ -172,10 +164,25 @@ async function main() {
   ]);
 
   // Build FK lookup: table -> col -> "foreign_table.foreign_col"
-  const fkMap = {};
+  // Only FKs to public tables get an arrow (an auth.users target has foreign_table null). A column
+  // in several FKs shows ONE arrow: a single-column FK wins over a multi-column one, because
+  // `team_id → rep_teams.id` says what the column is and a composite's half does not. Composites
+  // are written first so a single-column FK always overwrites them.
+  const fkWidth = {};
   for (const r of fkRows) {
-    fkMap[r.table_name] = fkMap[r.table_name] || {};
-    fkMap[r.table_name][r.column_name] = `${r.foreign_table}.${r.foreign_column}`;
+    if (r.constraint_type !== 'FOREIGN KEY') continue;
+    const k = `${r.table_name}.${r.constraint_name}`;
+    fkWidth[k] = (fkWidth[k] || 0) + 1;
+  }
+  const fkPublic = fkRows.filter(r => r.constraint_type === 'FOREIGN KEY' && r.foreign_table);
+  const fkMap = {};
+  for (const pass of ['composite', 'single']) {
+    for (const r of fkPublic) {
+      const isComposite = fkWidth[`${r.table_name}.${r.constraint_name}`] > 1;
+      if ((pass === 'composite') !== isComposite) continue;
+      fkMap[r.table_name] = fkMap[r.table_name] || {};
+      fkMap[r.table_name][r.column_name] = `${r.foreign_table}.${r.foreign_column}`;
+    }
   }
 
   // Build index lookup: table -> [index names]

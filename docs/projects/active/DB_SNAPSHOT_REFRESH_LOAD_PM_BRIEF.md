@@ -1,6 +1,7 @@
 # PM Brief — Our own tooling stops maxing out the database
 
-**Priority:** High for the fix already made; Medium for the two follow-up steps. · **Date:** 2026-09-25 ·
+**Status:** all three steps done 2026-09-25; D1 ruled "correct it once". The one remaining check
+is tomorrow's slow-query count on both databases. · **Date:** 2026-09-25 ·
 **Plan:** [DB_SNAPSHOT_REFRESH_LOAD_PLAN.md](DB_SNAPSHOT_REFRESH_LOAD_PLAN.md)
 
 ## What was wrong
