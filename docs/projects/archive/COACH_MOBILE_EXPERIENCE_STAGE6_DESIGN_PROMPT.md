@@ -13,14 +13,14 @@ nothing in this session.
 
 ## Read first (in this order, and only these)
 
-1. `docs/projects/active/COACH_MOBILE_EXPERIENCE_PLAN.md` — §1 (the findings table, rows **9 Reports**
+1. `docs/projects/archive/COACH_MOBILE_EXPERIENCE_PLAN.md` — §1 (the findings table, rows **9 Reports**
    and **10 Notifications & help**), §2 (the seven standing rules; **S.4** one figure, one qualifier and
    **S.7** a table stays a table are the two this stage applies), §3 (the stage ladder, row 6), §5 (out
    of scope), §6 (no migrations, no year parameters). ⚠ §2's **S.6 text is stale** — "Saved" is NOT a
    fact in the title row; it is the transient pill (ruled 2026-09-20). The hub's "The walk" tab has the
    current wording.
 2. The project hub — one artifact for the whole project: https://claude.ai/artifact/WqHGTXUmrns81UN6e2PJvC
-   (source `docs/projects/active/COACH_MOBILE_EXPERIENCE_HUB.html`). Read **"The walk"** stations 9 and
+   (source `docs/projects/archive/COACH_MOBILE_EXPERIENCE_HUB.html`). Read **"The walk"** stations 9 and
    10 (Q 9.1, Q 10.1) and the **"5 · People"** tab, especially **F5** — ruled and built 2026-09-24, and
    the nearest precedent you have (below). Match the visual identity of the stage 4 and 5 drawings; the
    stage-5 frame styles (`s5-*`) are scoped to their tab, so a new tab needs its own scope.

@@ -1231,9 +1231,10 @@ button{font:inherit;color:inherit}
 <button type="button" class="tab" role="tab" data-tab="qa4" aria-selected="false" aria-controls="tab-qa4">QA walk · 4<span class="st built">§225 · PASSED · 23 Sep</span></button>
 <button type="button" class="tab" role="tab" data-tab="stage5" aria-selected="false" aria-controls="tab-stage5">5 · People<span class="st built">F5 ruled + built 24 Sep</span><span class="st built">RULED 23 Sep — F1 · F2 (as redrawn) · F3 = B · F4 accepted</span><span class="st built">BUILT on dev 23 Sep · §228</span><span class="st dim">the record face &amp; Edit · prev/next · this team&rsquo;s rooms first · the family tab</span></button>
 <button type="button" class="tab" role="tab" data-tab="qa5" aria-selected="false" aria-controls="tab-qa5">QA walk · 5<span class="st built">§228 · PASSED · 24 Sep</span></button>
-<button type="button" class="tab" role="tab" data-tab="stage6" aria-selected="false" aria-controls="tab-stage6">6 · Reports<span class="st built">RULED 24 Sep — all as recommended</span><span class="st built">BUILT on dev 24 Sep · §232</span><span class="st dim">fit first · the reports finished · Attendance as a table · the current tab in view · the clamp · practice review opens on today</span></button>
-<button type="button" class="tab" role="tab" data-tab="qa6" aria-selected="false" aria-controls="tab-qa6">QA walk · 6<span class="st built">§232 · A B C PASSED · 25 Sep</span><span class="st">D E F owed</span></button>
+<button type="button" class="tab" role="tab" data-tab="stage6" aria-selected="false" aria-controls="tab-stage6">6 · Reports<span class="st built">RULED 24 Sep — all as recommended</span><span class="st built">BUILT on dev 24 Sep · §232 PASSED 25 Sep</span><span class="st dim">fit first · the reports finished · Attendance as a table · the current tab in view · the clamp · practice review opens on today</span></button>
+<button type="button" class="tab" role="tab" data-tab="qa6" aria-selected="false" aria-controls="tab-qa6">QA walk · 6<span class="st built">§232 · PASSED · 25 Sep</span></button>
 <button type="button" class="tab" role="tab" data-tab="stage6w" aria-selected="false" aria-controls="tab-stage6w">6 · Awards, from the walk<span class="st built">RULED 25 Sep — R7 R8 R9 as amended</span><span class="st built">BUILT on dev 25 Sep · §232 part C rewritten</span><span class="st built">part C PASSED 25 Sep</span><span class="st dim">one row of controls · a table that fits · the award in its own sheet</span></button>
+<button type="button" class="tab" role="tab" data-tab="qa7" aria-selected="false" aria-controls="tab-qa7">QA walk · 7<span class="st built">§239 · PASSED · 25 Sep</span><span class="st dim">the skill test row · the lineup drawers</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
 </nav>
@@ -6260,7 +6261,7 @@ button{font:inherit;color:inherit}
 
 <div class="prop qa" id="tab-qa6" role="tabpanel" hidden>
   <header class="phead">
-    <div class="eyebrow">QA walk · stage 6 · Reports · ledger §232 · built on dev 24 Sep 2026 · <b>parts A · B · C PASSED 25 Sep</b> (owner) · D · E · F not yet walked</div>
+    <div class="eyebrow">QA walk · stage 6 · Reports · ledger §232 · built on dev 24 Sep 2026 · <b>WALKED + PASSED 25 Sep</b> (owner) — all six parts; D2's 44px arrows stay</div>
     <h1>Walk Reports on a phone</h1>
     <p class="lede">Twenty-seven steps in six parts. Tick each one as you go (they are remembered on this device), give each part a verdict, and paste
     the block back to me at the end. <b>Everything below was verified on dev before this tab was written</b> — 94 checks driven under touch at 390 and
@@ -6624,6 +6625,84 @@ button{font:inherit;color:inherit}
   </div>
 </div>
 
+<div class="prop qa" id="tab-qa7" role="tabpanel" hidden>
+  <header class="phead">
+    <div class="eyebrow">QA walk · the two that were never walked · ledger §239 · both on production since 23 Sep 2026 · <b>WALKED + PASSED 25 Sep</b> (owner) — L5 fixed after, plan §13.9</div>
+    <h1>Walk the skill test row and the lineup drawers</h1>
+    <p class="lede">The last walk on this project. Two changes shipped on 23 September without one: <b>the skill test row</b> (plan §12 — the
+    name at full width, a tap on a saved value to change it, the way out at the end of the list) and <b>the two drawer layers</b> in the lineup
+    builder (plan §13 — a drawer you fill in covers the bottom bar; a menu sits on top of it). Sixteen steps, about fifteen minutes, <b>on a
+    phone</b>. Tick each one as you go (remembered on this device), give each part a verdict, and paste the block back at the end.
+    <b>Every step was checked against the running product on 25 September before it was written</b> — not copied from the plan's old list, one
+    step of which no longer exists (with a form drawer open there is no Schedule tab to tap: the drawer runs to the foot of the screen, and
+    that spot is the drawer's own button).</p>
+    <div class="signin">
+      <div class="label">Sign in as</div>
+      <table>
+        <tr><td>Where</td><td><code>http://localhost:3000</code> (the dev server) — on a phone, your machine's LAN address on the same port</td></tr>
+        <tr><td>Account</td><td><b>uat-coach@uat-test-org.local</b> · the standing UAT password in <code>.env.local</code> (<code>UAT_COACH_PASSWORD</code>)</td></tr>
+        <tr><td>Team</td><td><b>UAT Test Team</b> (UAT Test Org, 2026 season)</td></tr>
+        <tr><td>What it writes</td><td>One time for Blake Test (T3, cleared in T4) and a few "not assessed" marks (T6–T8, each undone) — the walk puts the fixture back as it found it</td></tr>
+      </table>
+    </div>
+    <div class="qanote" style="margin-top:16px;max-width:78ch;font-size:15.5px;color:var(--ink-2)">
+      <b>✓ Fixed the same day (25 Sep) — L5 now passes.</b> Found while checking this walk: with the builder's <b>Print</b> menu or a player's
+      <b>row menu</b> open, the bottom bar is visible and lit, but a tap on <b>Schedule</b> only closes the menu — it does not take you there.
+      The team switcher and More let the same tap through. It breaks your 23 September ruling (a menu sits on top of the bar and leaves it
+      working). The cause is the Back-button support those two menus were given on 22 September; the fix belongs in that shared piece,
+      not in the two menus, and that is where it was fixed (plan §13.9): the tap on Schedule now goes there, and Back afterwards steps one level at a time.
+    </div>
+  </header>
+  <div class="qaprog" id="qa7prog"></div>
+
+  <section class="qapart" data-part="T">
+    <h2>T · The skill test row, and the way out</h2>
+    <p class="intro" style="max-width:78ch;color:var(--ink-2);margin:0 0 12px;font-size:15.5px">More → <b>Skills &amp; Goals</b> → Sessions →
+    the <b>21 September</b> session, <b>&ldquo;Probe session — results recorded at the seeded practice.&rdquo;</b> The test dropdown should read
+    <b>60-yd sprint · 1 of 12</b>.</p>
+    <ol class="steps">
+      <li data-step="T1">Each player is <b>their name</b> (with the number) across the row and <b>their boxes</b> underneath — nothing else on the name line except a green <b>Recorded</b> on a player who has a time (<b>Avery Test</b>).</li>
+      <li data-step="T2">A player with no time yet (<b>Blake Test</b>) is the name and <b>empty boxes</b> with a <b>+</b> for one more attempt — no &ldquo;Not recorded&rdquo; words and no &ldquo;Mark not assessed&rdquo; on the row.</li>
+      <li data-step="T3">Type <b>2.5</b> in Blake's first box and <b>tap his second box</b> (a time saves when you move on, not on a pause): <b>Recorded</b> appears beside his name, and the bar at the foot reads <b>2 of 12 recorded · 60-yd sprint</b> — one thin line.</li>
+      <li data-step="T4">Tap one of <b>Avery's</b> saved times — the <b>second</b>, 2.4: it opens to edit with the cursor <b>in that box</b>, not the first. Then tap Blake's <b>2.5</b>, delete it and tap another box: his Recorded goes and the bar is back to <b>1 of 12</b>.</li>
+      <li data-step="T5">Scroll to the end: <b>Review session →</b> waits <b>under the last player</b> (Logan Test) — it is not pinned in the bar while players are still to do.</li>
+      <li data-step="T6">Tap <b>Review session →</b>. Under <b>60-yd sprint</b> tap <b>Blake Test</b>: it asks <b>&ldquo;Why was Blake Test not assessed?&rdquo;</b> — Absent · Hurt · Ran out of time · No reason given. Tap <b>Absent</b>: he moves to <b>&ldquo;Not assessed: Blake Test — absent&rdquo;</b> and the counts under the test change. Tap him again → <b>Undo the mark</b>: he is back under Not recorded.</li>
+      <li data-step="T7">Do the same for one player under <b>Throw speed</b>, and undo it — each test keeps <b>its own</b> marks; 60-yd sprint does not change.</li>
+      <li data-step="T8"><b>Everyone accounted for.</b> Back to Sessions → the <b>10 June</b> session, &ldquo;Phase 2 probe — scoped&rdquo; (five players). The bar reads <b>3 of 5 accounted for · 2 recorded · 1 not assessed</b>. In Review session mark <b>Blake Test</b> and <b>Frankie Test</b> Absent under 60-yd sprint, then <b>Keep recording</b>: the bar reads <b>5 of 5 accounted for</b> and <b>Review session →</b> is now <b>in the bar</b>. Undo both marks afterwards.</li>
+      <li data-step="T9">On a <b>computer</b>: the test grid is unchanged — the phone's row applies at phone width only.</li>
+    </ol>
+    <div class="verdict" data-part="T"></div>
+  </section>
+
+  <section class="qapart" data-part="L">
+    <h2>L · The lineup builder: a form covers the bar, a menu sits on top of it</h2>
+    <p class="intro" style="max-width:78ch;color:var(--ink-2);margin:0 0 12px;font-size:15.5px"><b>Lineups</b> → <b>4 May @ Ridgeview</b> →
+    Open lineup.</p>
+    <ol class="steps">
+      <li data-step="L1">Tap the <b>Setup</b> row (&ldquo;Everyone bats · 6 innings · Auto-fill · Competitive&rdquo;): <b>Lineup setup</b> rises and <b>covers the bottom bar</b> — the bar is gone, not dimmed; the drawer runs to the foot of the screen with <b>Reshuffle</b> there. A finger-sized <b>×</b> at the top right closes it.</li>
+      <li data-step="L2">Open Setup again and use the phone's <b>Back</b> gesture (or the browser's Back): the drawer closes and you are <b>still on the lineup</b>.</li>
+      <li data-step="L3"><b>Templates</b>: titled <b>&ldquo;Templates&rdquo;</b>, it covers the bar the same way, has its <b>×</b>, and Back closes it. (Do not save one.)</li>
+      <li data-step="L4"><b>Call up a player</b>: the same three — its title, the bar covered, its <b>×</b> — and Back closes it.</li>
+      <li data-step="L5"><b>Print</b>: the menu (Dugout poster, the batting card) rises <b>above</b> the bar, which stays visible and lit. Tap <b>Schedule</b>: it takes you there <i>(fixed 25 Sep — it only closed the menu)</i>. The same on a player's row menu: tap a player in the batting order → <b>Options for …</b> (Move up · Move down · Remove from lineup · Cancel), then Schedule.</li>
+      <li data-step="L6">The menus that were not changed, for comparison: tap <b>More</b>, or the team name <b>UAT Test Team</b> at the top — each opens above the bar, and a tap on <b>Schedule</b> with it open <b>takes you there</b>.</li>
+      <li data-step="L7">On a <b>computer</b> (wider than 900) there is no bottom bar, so nothing is covered: Setup, Templates and Call up open as they always have there.</li>
+    </ol>
+    <div class="verdict" data-part="L"></div>
+  </section>
+
+  <section class="summary" id="summaryQa7">
+    <h2>Your walk, to paste back</h2>
+    <p>Ticks, verdicts and notes, as one block of text. Nothing leaves this page until you paste it.</p>
+    <button type="button" id="buildSummaryQa7">Build the walk summary</button>
+    <textarea id="summaryOutQa7" hidden aria-label="QA walk summary to paste back"></textarea>
+    <p class="foot">Checked on dev 25 September 2026, under touch at 390×844, by driving each step: the rows, the chip and the bar before and
+    after a time (it saves on moving to the next box), the tap-to-edit label on each saved time, the review sheet's four reasons and its
+    &ldquo;Undo the mark&rdquo;, 5 of 5 on the Phase 2 session with the way out in the bar (every mark undone, the server counts back where they
+    were), the three form drawers hiding the bar with a 44px × and Back closing each, Print and the row menu leaving the bar lit, and the tap
+    on Schedule — lost under those two, let through under More and the team switcher. Probes: <code>.probe/walk7-*.mjs</code>.</p>
+  </section>
+</div>
+
 <script>
 (function(){
   var KEY='reeval-phone-aw';
@@ -6681,7 +6760,7 @@ button{font:inherit;color:inherit}
 <div class="doc" id="tab-plan" role="tabpanel" hidden>
   <div class="eyebrow">Plan of record</div>
   <h1>Coaching from a phone — the plan</h1>
-  <p class="meta">docs/projects/active/COACH_MOBILE_EXPERIENCE_PLAN.md · created 19 Sep 2026 · the source file is the record; this tab renders it</p>
+  <p class="meta">docs/projects/archive/COACH_MOBILE_EXPERIENCE_PLAN.md · created 19 Sep 2026 · the source file is the record; this tab renders it</p>
   <div class="callout">One stage at a time. Each stage: drawn at true size on this hub → owner rules (paste-back) → build prompt → build → /review → QA walk on this hub → owner QA → next stage. No stage starts before the one before it is ruled; a stage may be built before the previous walk is complete when the owner says so.</div>
 
   <h2>0 · What this is</h2>
@@ -6798,7 +6877,7 @@ button{font:inherit;color:inherit}
 <div class="doc" id="tab-brief" role="tabpanel" hidden>
   <div class="eyebrow">PM brief</div>
   <h1>Coaching from a phone</h1>
-  <p class="meta">docs/projects/active/COACH_MOBILE_EXPERIENCE_PM_BRIEF.md · 19 Sep 2026</p>
+  <p class="meta">docs/projects/archive/COACH_MOBILE_EXPERIENCE_PM_BRIEF.md · 19 Sep 2026</p>
 
   <h2>What we are proposing</h2>
   <p>A staged re-shaping of the Premium Coaches Portal for phones — the way most coaches will actually use it in-season. Not a redesign: the screens, words, doors and data stay. What changes is the container each one sits in at phone width, so a coach with one thumb reaches the day’s tool in one tap and reads the day’s facts on the first screen.</p>
@@ -6929,7 +7008,7 @@ button{font:inherit;color:inherit}
      no row here falls through to `showTab('walk')` and its panel never unhides — the tab looks
      wired, clicks without error, and simply does nothing. Found by driving the page rather than
      reading it, when QA walk · 4 was added (2026-09-22). */
-  var panels={walk:'tab-walk',stage0:'tab-stage0',stage1:'tab-stage1',stage2:'tab-stage2',stage3:'tab-stage3',qa0:'tab-qa0',qa1:'tab-qa1',qa2:'tab-qa2',qa3:'tab-qa3',stage4:'tab-stage4',qa4:'tab-qa4',stage5:'tab-stage5',qa5:'tab-qa5',stage6:'tab-stage6',qa6:'tab-qa6',stage6w:'tab-stage6w',plan:'tab-plan',brief:'tab-brief'};
+  var panels={walk:'tab-walk',stage0:'tab-stage0',stage1:'tab-stage1',stage2:'tab-stage2',stage3:'tab-stage3',qa0:'tab-qa0',qa1:'tab-qa1',qa2:'tab-qa2',qa3:'tab-qa3',stage4:'tab-stage4',qa4:'tab-qa4',stage5:'tab-stage5',qa5:'tab-qa5',stage6:'tab-stage6',qa6:'tab-qa6',stage6w:'tab-stage6w',qa7:'tab-qa7',plan:'tab-plan',brief:'tab-brief'};
   function showTab(k){
     if(!panels[k])k='walk';
     Object.keys(panels).forEach(function(p){var el=document.getElementById(panels[p]);if(el)el.hidden=(p!==k)});
@@ -7404,6 +7483,48 @@ button{font:inherit;color:inherit}
       lines.push('');
     });
     var out=document.getElementById('summaryOutQa6');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
+  });
+})();
+</script>
+
+<script>
+/* QA walk · 7 (the two never walked: the skill test row, the lineup drawers) — walk 6's machinery, its own state key. */
+(function(){
+  var QKEY='reeval-phone-v1-qa7';var qs={};
+  try{qs=JSON.parse(localStorage.getItem(QKEY)||'{}')||{}}catch(e){qs={}}
+  function qsave(){try{localStorage.setItem(QKEY,JSON.stringify(qs))}catch(e){}}
+  var steps=Array.prototype.slice.call(document.querySelectorAll('#tab-qa7 .steps li[data-step]'));
+  steps.forEach(function(li){
+    var id=li.getAttribute('data-step');
+    var cb=document.createElement('input');cb.type='checkbox';cb.id='qa7-'+id;cb.checked=!!qs['s-'+id];cb.setAttribute('aria-label','Step '+id+' done');
+    var body=document.createElement('div');var sn=document.createElement('span');sn.className='sn';sn.textContent=id;
+    while(li.firstChild)body.appendChild(li.firstChild);
+    body.insertBefore(sn,body.firstChild);
+    li.appendChild(cb);li.appendChild(body);li.classList.toggle('done',cb.checked);
+    cb.addEventListener('change',function(){qs['s-'+id]=cb.checked;if(!cb.checked)delete qs['s-'+id];qsave();li.classList.toggle('done',cb.checked);prog()});
+  });
+  var V=[['pass','Pass'],['issue','Issue found'],['call','Needs a call']];
+  Array.prototype.forEach.call(document.querySelectorAll('#tab-qa7 .verdict[data-part]'),function(box){
+    var p=box.getAttribute('data-part');
+    V.forEach(function(v){var b=document.createElement('button');b.type='button';b.className=v[0];b.textContent=v[1];b.setAttribute('aria-pressed',String(qs['v-'+p]===v[0]));
+      b.addEventListener('click',function(){qs['v-'+p]=qs['v-'+p]===v[0]?undefined:v[0];if(qs['v-'+p]===undefined)delete qs['v-'+p];qsave();Array.prototype.forEach.call(box.querySelectorAll('button'),function(x){x.setAttribute('aria-pressed',String(qs['v-'+p]===x.className))})});
+      box.appendChild(b)});
+    var ta=document.createElement('textarea');ta.className='note';ta.rows=2;ta.id='qa7-note-'+p;ta.placeholder='What you saw — a defect, a doubt, a wish';ta.value=qs['n-'+p]||'';
+    ta.addEventListener('input',function(){qs['n-'+p]=ta.value;if(!ta.value)delete qs['n-'+p];qsave()});
+    box.appendChild(ta);
+  });
+  function prog(){var done=steps.filter(function(li){return !!qs['s-'+li.getAttribute('data-step')]}).length;var el=document.getElementById('qa7prog');if(el)el.innerHTML='<b>'+done+'</b> of '+steps.length+' steps ticked'}
+  prog();
+  document.getElementById('buildSummaryQa7').addEventListener('click',function(){
+    var lines=['Coaching from a phone — the last walk (test row + lineup drawers) — QA walk §239 — '+new Date().toISOString().slice(0,10),''];
+    Array.prototype.forEach.call(document.querySelectorAll('#tab-qa7 .qapart'),function(part){
+      var p=part.getAttribute('data-part');var v=qs['v-'+p];
+      lines.push('## Part '+p+' — '+part.querySelector('h2').textContent.replace(/^[A-Z] · /,'')+' — '+(v?({pass:'PASS',issue:'ISSUE',call:'NEEDS A CALL'})[v]:'no verdict'));
+      Array.prototype.forEach.call(part.querySelectorAll('li[data-step]'),function(li){var id=li.getAttribute('data-step');lines.push('['+(qs['s-'+id]?'x':' ')+'] '+id+' '+li.querySelector('div').textContent.replace(/^\s*[A-Z]\d+\s*/,'').replace(/\s+/g,' ').trim().slice(0,110))});
+      if(qs['n-'+p])lines.push('    notes: '+qs['n-'+p].replace(/\s+/g,' ').trim());
+      lines.push('');
+    });
+    var out=document.getElementById('summaryOutQa7');out.value=lines.join('\n');out.hidden=false;out.focus();out.select();
   });
 })();
 </script>

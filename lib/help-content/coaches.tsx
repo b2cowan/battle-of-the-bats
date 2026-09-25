@@ -1144,12 +1144,12 @@ const coachesHelp: HelpPageContent = {
         {
           id: 'faq-premium-switch-player',
           question: 'How do I move to the next player without going back to the roster?',
-          answerText: 'Use the Switch player dropdown at the top right of any player\'s page. It lists your roster in the order you set it, and picking a player opens them on the same tab you were on — so logging a note or a result for everyone after practice is open the dropdown, pick the next name, repeat. On a phone the dropdown sits under the player\'s name; the Roster tab on the bottom bar is the other way back.',
-          keywords: ['switch player', 'next player', 'previous player', 'player dropdown', 'move between players', 'jump to a player', 'go through every player', 'after practice'],
+          answerText: 'On a computer or tablet, use the Switch player dropdown at the top right of a player\'s page (it appears once your roster has more than one player). It lists your roster in the order you set it, and picking a player opens them on the same tab you were on — so logging a note or a result for everyone after practice is: open the dropdown, pick the next name, repeat. On a phone, tap the player\'s name at the top of the page — it carries a small arrow when there is another player to switch to. Your roster opens as a list with the player you are on shaded, and tapping a name opens that player on the same tab. The Roster tab on the bottom bar is the other way back.',
+          keywords: ['switch player', 'next player', 'previous player', 'player dropdown', 'move between players', 'jump to a player', 'go through every player', 'after practice', 'tap the name', 'player name', 'roster list on a phone'],
           answer: (
             <>
-              <p>Use the <strong>Switch player</strong> dropdown at the top right of any player&apos;s page. It lists your roster in the order you set it, and picking a player opens them on the <strong>same tab</strong> you were on — so logging a note or a result for everyone after practice is open the dropdown, pick the next name, repeat.</p>
-              <p>On a phone the dropdown sits under the player&apos;s name; the <strong>Roster</strong> tab on the bottom bar is the other way back.</p>
+              <p>On a computer or tablet, use the <strong>Switch player</strong> dropdown at the top right of a player&apos;s page (it appears once your roster has more than one player). It lists your roster in the order you set it, and picking a player opens them on the <strong>same tab</strong> you were on — so logging a note or a result for everyone after practice is: open the dropdown, pick the next name, repeat.</p>
+              <p>On a phone, <strong>tap the player&apos;s name</strong> at the top of the page — it carries a small arrow when there is another player to switch to. Your roster opens as a list with the player you are on shaded; tap a name and that player opens on the same tab. The <strong>Roster</strong> tab on the bottom bar is the other way back.</p>
             </>
           ),
         },

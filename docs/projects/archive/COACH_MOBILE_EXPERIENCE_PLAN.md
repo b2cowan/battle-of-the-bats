@@ -1,6 +1,6 @@
 # Coaching from a phone — the Premium Coaches Portal at phone width, re-evaluated
 
-**Created:** 2026-09-19 · **Owner:** product owner · **Hub (mockup · plan · brief · decisions · QA walks, one artifact for the project's life):** `docs/projects/active/COACH_MOBILE_EXPERIENCE_HUB.html` — published as a Claude Artifact at `https://claude.ai/artifact/WqHGTXUmrns81UN6e2PJvC` (republish the same file path to stack a version).
+**ARCHIVED 2026-09-25** — every stage built, walked and passed (the last walk §239); what the project was still carrying left with its own TODO lines (§15). **Created:** 2026-09-19 · **Owner:** product owner · **Hub (mockup · plan · brief · decisions · QA walks, one artifact for the project's life):** `docs/projects/archive/COACH_MOBILE_EXPERIENCE_HUB.html` — published as a Claude Artifact at `https://claude.ai/artifact/WqHGTXUmrns81UN6e2PJvC` (republish the same file path to stack a version).
 **PM brief:** `COACH_MOBILE_EXPERIENCE_PM_BRIEF.md` · **TODO:** one line under the coach portal group · **Ledger:** no § until a stage is built (a planning entry is not a §).
 
 > **One stage at a time.** Each stage: drawn at true size on the hub → owner rules (paste-back) → build prompt → build → `/review` → QA walk added to the hub → owner QA → next stage. No stage starts before the one before it is ruled; a stage may be built ahead of the previous walk when the owner says so (the Practices precedent).
@@ -1360,7 +1360,11 @@ every static gate green · rendered layout sweep at 361/390/768/1440 — **no ne
   the test changes. Safe today because the only thing that sets it is the tap that satisfies it;
   a comment marks it rather than a defensive key nobody needs yet.
 
-### 12.11 The QA walk — owed
+### 12.11 The QA walk — ledger §239, part T (hub tab "QA walk · 7") — PASSED 2026-09-25
+
+**Superseded by §239 part T**, written after each step was driven on the running product (25 Sep). The list
+below was the plan's own; T1–T9 carry all of it, plus the full-house check on a five-player session.
+
 
 *(owed — a walk in the ledger's §-series, phone at 361 and 390: the name at full width, a blank row with
 no controls, the chip appearing on save, tap-a-value-to-edit landing the caret in the tapped box, the
@@ -1525,7 +1529,13 @@ step, which is the last way out once the bar is gone; the safe-area formula is s
 once**; and the desktop × is a prop rather than an ancestor, with the old ancestor-scoped selector
 asserted **absent** so it cannot come back.
 
-### 13.8 The QA walk — owed
+### 13.8 The QA walk — ledger §239, part L (hub tab "QA walk · 7") — PASSED 2026-09-25, L5 as the known defect
+
+**Superseded by §239 part L.** ⚠ One step of the list below no longer exists: with a form drawer open there is no
+Schedule to tap — the drawer runs to the foot of the screen and that spot is its own button (Reshuffle, Save as
+template, + Someone new). What the step was for — the bar out of reach — is L1–L4. And the Print / row menu step
+fails today (§13.9).
+
 
 *(owed — a walk in the ledger's §-series, phone at 361 and 390. The shape of it: open **Setup**,
 confirm the bar is **gone and dimmed** and that a tap where Schedule used to be **dismisses** rather
@@ -1536,6 +1546,81 @@ the other way round: open **Print** and the **row menu** and confirm the bar is 
 takes you to Schedule. Finally **More**, the **team switcher** and the practice plan's **"⋯"** —
 unchanged, still on top of the bar.)*
 
+
+### 13.9 Found preparing the walk — a tap on the lit bar is lost under the builder's two menus (2026-09-25 · FIXED on dev the same day, the owner's call)
+
+**What a coach sees.** With **Print** or a player's **row menu** open, the bottom bar is visible and lit — as
+ruled — but a tap on **Schedule** only closes the menu. It does not navigate. Under **More** and the **team
+switcher** the same tap goes to Schedule. The ruling (§13.1) is that a menu sits on top of the bar and leaves it
+WORKING, so this is a defect against it, and walk step §239 L5 fails on it.
+
+**Why (measured, `.probe/walk7-race.mjs`).** The history log for that one tap under Print is `back → popstate →
+replace` — no `push` ever happens. The two menus close on an outside pointer-down, and each holds a Back-button
+step (added 2026-09-22 so Back closes the drawer instead of leaving the page, §9.10). Closing the menu drops the
+step, and the step's cleanup consumes its history entry with `history.back()` one tick later — between the
+pointer-down and the click. The router is mid-traversal when the Schedule link's click arrives, and the
+navigation is lost. More and the team switcher hold no Back step, so nothing unwinds under their tap.
+
+**Where the fix belongs — the shared step, not the two menus.** Any menu that holds a Back step and leaves a
+live bar or link behind it has the same race; the two here are the ones this walk reached. Taking the Back step
+away from Print and the row menu would reverse the 22 Sep ruling (Back closes a drawer). The step's cleanup
+already declines to undo "a route pushed on top of it (a link tapped inside the sheet)"; the gap is a link tapped
+OUTSIDE it, whose push has not happened yet when the timer fires. **Owner's call before it is built** — it is a
+change to the Back behaviour every sheet in the portal stands on, and it gets its own guard and walk.
+
+**Fixed (owner, 2026-09-25 — "go ahead and fix it").** In the shared step, not the two menus. A step's exit now
+waits for the press that closed it to END (and its click, when it makes one), and when that click LEAVES the page
+— a link to somewhere else, in this tab (`clickLeavesPage`, pure, beside `popVerdict`) — the entry is not
+consumed: the navigation pushes over it, and the entry becomes the dead one `popVerdict` has always stepped over
+for a link tapped inside a sheet. Presses and clicks are watched in the capture phase on `window`, so they run
+before any sheet's own outside-press handler and before a link's own click. A new tab, a download, a modified
+click, a mailto:/tel: link and a hash on the same page all keep the page, so the entry is consumed as before.
+⚠ A button that navigates by `router.push` is not a link and is not seen — every door in the portal's chrome is a
+link, which is the case this covers.
+
+**Verified** (`.probe/backstep-verify.mjs`, `.probe/backstep-222.mjs`, touch at 390×844, 25/25): under Print and
+under a player's row menu, a tap on Schedule in the lit bar goes to the schedule; Back from there returns to the
+lineup with the menu closed, and one more Back reaches the lineups list — no dead press; a tap on the page closes
+the menu, stays, and ONE Back then leaves (the entry was consumed); Back with the menu open closes it and stays.
+The §222 flow still holds (the schedule's game → "edit the lineup" → Back returns to the game, its address and
+its sheet), and the team switcher is unchanged. Unit: 9 new cases in `back-step-verdict.test.ts` (the rule's six
+cases and the hook's shape); typecheck clean; the full suite 4,825 pass.
+
+**/review (high-risk tier — the Back step stands under every sheet in the portal; four lenses: correctness ·
+concurrency & timing · regression across its callers · tests & the help copy), same day.** 9 confirmed and fixed,
+2 recorded, the rest refuted. The first build was rebuilt around a small pure rule, `createPressGate` in
+`backStep.ts`, so each fix is a unit test that plays the event sequence on a fake clock. What they were:
+- **HIGH, a regression of the first build — "Leave without saving?" → Stay left a dead Back press.** The builder's
+  unsaved-changes guard stops a link tap and asks; the first build had already decided the tap LEFT the page (it
+  read the click in the capture phase, before the guard), so the menu's entry was not consumed. "It left" is now
+  read in the BUBBLE phase, which a stopped click never reaches. Driven in the browser with the lineup's save held
+  open by the probe (nothing written): the guard asks, Stay keeps the lineup, and ONE Back then leaves.
+- **HIGH, widened by the first build — a router re-stamp during the hold wiped the entry's marker.** A closing step
+  is now kept in `closing` until its exit settles, and the `replaceState` wrapper keeps the marker for it.
+- **An exit that arrived a beat late** — after the finger lifted, before its click — ran bare, the original race.
+  The hold now lasts from the press until the click's dispatch is over.
+- **One press's click could answer for another press's exits** (a drag that made no click, then a tap within
+  350ms). A new press now settles whatever an earlier one left held, as a stay; a lost release likewise.
+- **"It left" lived until the next press or key**, so a later exit by a save or a timer could read a stale one. It
+  now lives for one click.
+- `target="_top"` / `"_parent"` are this tab (the portal is never framed); an SVG `<a>` is read by its attribute;
+  the click grace is 500ms, not 350.
+- **Tests:** the capture-phase check was vacuous — four of its five listeners could have lost the capture flag and
+  it still passed (a lens broke it on purpose). Each listener is now checked in its own statement, and six
+  deliberate breaks of the fix are each caught (`.probe/backstep-mutate.cjs`). `back-step-verdict` 31 cases.
+- **Help:** the switch-player answer said the phone's name and the desktop dropdown are always there; both appear
+  only when there is another player to switch to — it now says so (the name carries a small arrow). And "…is open
+  the dropdown…" gained its colon.
+
+**Recorded, not fixed:** (1) two nested steps closing in the SAME tap — the lower one's entry is left for
+`popVerdict` to step over, and an ADDRESSED lower step would be stayed on. The old code did exactly the same, so it
+is not this fix's; no two nested addressed steps close together today. (2) A button that navigates by
+`router.push`, or a link whose own handler stops the click, is read as staying — every door in the chrome is a
+plain link.
+
+**Re-verified after the rebuild:** `.probe/backstep-verify.mjs` (Print and row menu: Schedule goes; Back returns to
+the lineup, then the lineups list; a tap on the page and Back each close and consume), `.probe/backstep-222.mjs`
+(Back to the game), `.probe/backstep-guard.mjs` (the guard's Stay); typecheck, lint, the full suite 4,842 pass.
 
 ## 14 · Stage 6 — Reports (drawn 2026-09-24 · RULED the same day, every ask as recommended · BUILT on dev 2026-09-24, §14.10)
 
@@ -1707,7 +1792,7 @@ recipe**, not as touch-target work. Practice review: +1 (the "All 6" chip, 41×4
 - A **"QA walk · 6"** tab on the hub at build, its § from the ledger.
 
 
-### 14.10 Built as (2026-09-24 · dev — every number read from the browser's own geometry; probes `s6-built` (94 checks, touch at 390/360, mouse at 768/1440), `s6-receipts`, `s6-hub-check`, `s6-qa6-check` in `.probe/`) — **committed `8f221f94` 2026-09-24; ledger §232 parts A · B · C PASSED 2026-09-25 (§14.13d), D · E · F owed**
+### 14.10 Built as (2026-09-24 · dev — every number read from the browser's own geometry; probes `s6-built` (94 checks, touch at 390/360, mouse at 768/1440), `s6-receipts`, `s6-hub-check`, `s6-qa6-check` in `.probe/`) — **committed `8f221f94` 2026-09-24; ledger §232 WALKED + PASSED 2026-09-25, all six parts (§14.13d)**
 
 **Rulings (owner, 2026-09-24 — *"I agree with your recommendations, go ahead and build"*):** R1 = A · R2 as
 drawn · R2b = A · R2c = A · R3 = A · R3b = A · R4 as drawn · R5 = A · R5b = A · R6 = A · T = A.
@@ -2027,4 +2112,22 @@ fixture restored and checked on the server. Not browser-probed: the departed-pla
 check (the fixture has no departed player's award) — pinned by source in `tests/unit/coach-award-edit.test.ts`.
 
 **Verdict: §232 parts A · B · C PASSED 2026-09-25** (owner: *"mark any QA from here as complete"* — marked on the
-owner's word, no paste-back; C = C5–C13). Parts D · E · F are not on record as walked.
+owner's word, no paste-back; C = C5–C13). **Parts D · E · F PASSED the same day** (owner: *"D E and F are complete as
+well"*) — §232 is walked in full. D2, the 44px tab-row arrows on touch screens put up for the owner's veto, stays.
+
+## 15 · What leaves this project (owner, 2026-09-25 — "sure", to closing it)
+
+Seven stages built, walked and passed (§208 · §210 · §216 · §220 · §223 · §225 · §228 · §232). The last walk,
+§239 (§12 and §13), **PASSED 2026-09-25. Everything below leaves with its own TODO line (the first was fixed instead), so this project can be
+archived** — they are real, but none is a phone re-shaping, and carrying them kept the project open.
+
+| Item | Where it went |
+|---|---|
+| A tap on the lit bar is lost under the builder's Print and row menus (§13.9) | **fixed 2026-09-25** (the owner's call, same day) — no longer leaving |
+| The builder's three form drawers do not hold keyboard focus (§13.6 #4) | its own TODO line — needs the shared dialog floor, which owns Back too |
+| Whether Generate wears the lime (stage 3) | the owner-calls TODO line |
+| NO dialog footer in the portal has a phone or tablet tap floor (stage 4) · Call up 40px from 641 and Game rules 16px at 768 (§13.6 #6) | the touch-target project (`COACH_TOUCH_TARGET_DEBT_PLAN.md`) — where §11.5(a) already put the portal's tap-floor debt |
+| The Chat tab renders for a team whose plan has no team chat (§11.5 b) | the owner-calls TODO line |
+| "Keep current" on *Start from template?* closes the Templates drawer (§13.6 #5) | the owner-calls TODO line (a small fix, once called) |
+| The correction asterisk explains itself only on hover; the not-assessed route does not check Internal notes (§12.10) | the owner-calls TODO line |
+| Named, not fixed in stage 6 (§14.10): the attendance receipts screen has no layout baseline; Money → Transactions' date-range menu off the right edge; the practice library's search input off the left edge; `formatShortDate` follows the browser's language at 46 call sites | the owner-calls TODO line, as named items |

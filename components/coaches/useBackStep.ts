@@ -1,7 +1,7 @@
 'use client';
 import { useEffect, useRef } from 'react';
 import { useLatestRef } from './useLatestRef';
-import { addressOf, homeOf, popVerdict, stepOf } from './backStep';
+import { addressOf, clickLeavesPage, createPressGate, homeOf, popVerdict, stepOf, type PressGate } from './backStep';
 
 /**
  * BACK GOES UP ONE LEVEL (owner, 2026-09-21 — "when I hit the back button it brings me back to
@@ -57,6 +57,24 @@ import { addressOf, homeOf, popVerdict, stepOf } from './backStep';
  * ⚠ A BUSY VIEW HOLDS. `onBack` is the consumer's GUARDED, busy-gated closer — this hook never
  * decides whether typed work may be lost (a dirty form asks "Discard?" exactly as it does on
  * Cancel; "Keep editing" leaves the entry standing).
+ *
+ * ⚠⚠ A TAP THAT CLOSES A STEP MAY ALSO BE A TAP ON A LINK — and then the entry is NOT consumed
+ * (§239 walk, 2026-09-25). A menu that holds a step closes on an outside POINTER-DOWN (the lineup
+ * builder's Print and row menus sit over a lit bottom bar, by the drawer-layers ruling). Consuming
+ * the entry the moment the menu closed put a `history.back()` between that press and its click: the
+ * router was mid-traversal when the Schedule link asked to navigate, and the tap did nothing — the
+ * history read `back → popstate → replace`, no push. So an exit taken during a press is HELD until
+ * the press's click has been dispatched, and when that click left the page (`clickLeavesPage`, read
+ * in the BUBBLE phase so a click the unsaved-changes guard stopped does not count) the entry is left
+ * for the navigation to push over — a dead entry `popVerdict` steps over on the way back, exactly
+ * what a link tapped INSIDE the sheet has always left. The rules of the hold, and why each one
+ * exists, live with `createPressGate` in `backStep.ts`, where they are unit-tested as event sequences.
+ * ⚠ WHILE HELD, THE ENTRY KEEPS ITS MARKER. A closing step is out of `steps` (Back must not answer to
+ * it) but in `closing` until its exit settles, and the `replaceState` wrapper keeps the marker for
+ * either — otherwise a router re-stamp inside the hold wiped it, the exit found nothing to consume,
+ * and the next Back did nothing (/review, 2026-09-25).
+ * ⚠ A button that navigates by `router.push`, or a link whose own handler stops the click, is not
+ * seen as leaving; every door in the portal's chrome is a plain link, which is the case this covers.
  */
 
 interface Step {
@@ -72,7 +90,15 @@ interface Step {
  * a hot reload, and a second copy with its own empty list would read every live entry as a dead
  * one and step the coach back off it. One registry per document, first module in wins.
  */
-interface Registry { steps: Step[]; nextSeq: number }
+interface Registry {
+  steps: Step[];
+  nextSeq: number;
+  /** Steps that have closed and whose exit is held by the press gate — see the header. */
+  closing?: Step[];
+  /** When an exit may run, and whether the tap that closed it left the page (`backStep.ts`). A
+   *  registry kept across a hot reload may predate it, so it is attached on first use. */
+  gate?: PressGate;
+}
 const REGISTRY_KEY = '__coachBackSteps';
 function registry(): Registry {
   const w = window as unknown as Record<string, Registry | undefined>;
@@ -80,7 +106,35 @@ function registry(): Registry {
     w[REGISTRY_KEY] = { steps: [], nextSeq: 1 };
     listen(w[REGISTRY_KEY]);
   }
-  return w[REGISTRY_KEY];
+  const reg = w[REGISTRY_KEY];
+  if (!reg.gate) watchPresses(reg);
+  return reg;
+}
+
+/** The press gate's five inputs. Capture phase for the press, its end and the click's START — ahead
+ *  of any sheet's own outside-press handler; the BUBBLE phase for "this click left the page", so a
+ *  click something stopped on the way down (the unsaved-changes guard) is not counted. */
+function watchPresses(reg: Registry): void {
+  const gate = createPressGate({ set: (run, ms) => window.setTimeout(run, ms), clear: h => window.clearTimeout(h as number) });
+  reg.gate = gate;
+  reg.closing = [];
+  window.addEventListener('pointerdown', () => gate.press(), true);
+  window.addEventListener('pointerup', () => gate.release(), true);
+  window.addEventListener('pointercancel', () => gate.cancel(), true);
+  window.addEventListener('click', () => gate.clicked(), true);
+  window.addEventListener('click', event => {
+    const link = (event.target as Element | null)?.closest?.('a[href]');
+    // An SVG <a> answers `.href` with an object, not a string — read the attribute instead.
+    const href = link instanceof HTMLAnchorElement ? link.href : link?.getAttribute('href') ?? null;
+    const leaves = clickLeavesPage({
+      href,
+      target: link?.getAttribute('target') ?? '',
+      download: !!link?.hasAttribute('download'),
+      button: event.button,
+      modified: event.metaKey || event.ctrlKey || event.shiftKey || event.altKey,
+    }, window.location);
+    if (leaves) gate.leaves();
+  });
 }
 
 function topStep(steps: Step[]): Step | null {
@@ -163,7 +217,7 @@ function listen(reg: Registry): void {
     // ⚠ EVERY `replaceState` IN THE APP COMES THROUGH HERE, for the life of the document, and
     // Next's router re-stamps on every state change — so the cheap checks come first and the URL
     // is only PARSED once a step is actually standing on the entry being replaced.
-    const step = liveStep(reg.steps);
+    const step = liveStep(reg.steps) ?? liveStep(reg.closing ?? []);
     if (step && stepOf(data) === null) {
       // The router's re-stamp, or any other replace landing on this step's own entry — see the
       // header. `step.home` is the third case: the re-stamp carries the router's canonical URL,
@@ -221,10 +275,18 @@ export function useBackStep(active: boolean, onBack: () => void, address?: strin
       // undo, and a step opening in the same commit has taken the entry over (above). `back()` is
       // asynchronous in every browser, so calling it synchronously here would land AFTER that
       // step's own push and pop the wrong entry — the sheet would open and close in one breath.
-      setTimeout(() => {
+      // ⚠ And not while the press that closed it is still under way, nor when that press was a tap
+      // on a link that leaves the page — its navigation has not pushed yet (see the header). Until
+      // the exit settles the entry keeps its marker: a closing copy, its address already given up.
+      const closing: Step = { ...step, address: null };
+      reg.closing?.push(closing);
+      reg.gate!.exit(left => {
+        const held = reg.closing?.indexOf(closing) ?? -1;
+        if (held >= 0) reg.closing!.splice(held, 1);
+        if (left) return;
         if (stepOf(window.history.state) !== step.seq) return;
         window.history.back();
-      }, 0);
+      });
     };
   }, [active, onBackRef, addressRef]);
 

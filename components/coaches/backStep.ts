@@ -54,3 +54,103 @@ export function homeOf(state: unknown): string | null {
   const home = (state as { __stepHome?: unknown } | null | undefined)?.__stepHome;
   return typeof home === 'string' && home !== '' ? home : null;
 }
+
+/**
+ * Does this click LEAVE the page — a link to somewhere else, opened in this tab?
+ *
+ * ⚠ WHY A STEP ASKS (§239 walk, 2026-09-25). A menu that holds a step closes on an outside
+ * pointer-down; the step's exit then consumes its entry with `history.back()`. When that outside
+ * press was a tap on a link — the bottom bar's Schedule under the lineup builder's Print menu — the
+ * back arrived between the press and its click, the router was mid-traversal when the link asked to
+ * navigate, and the tap did nothing. A click that leaves the page must be left to push over the
+ * entry instead: the entry becomes a dead one, which `popVerdict` already steps over — the same as
+ * a link tapped INSIDE the sheet.
+ * A new tab, a download, a modified click, a mailto:/tel: link and a link to where the browser already
+ * is all keep the page, so the entry is consumed as usual.
+ */
+export interface LinkClick {
+  /** The link's resolved `href`, or null when the click was not on a link. */
+  href: string | null;
+  /** Its `target` attribute ('' when absent). */
+  target: string;
+  download: boolean;
+  button: number;
+  modified: boolean;
+}
+export function clickLeavesPage(click: LinkClick, location: { origin: string; pathname: string; search: string; href: string }): boolean {
+  if (click.href === null || click.button !== 0 || click.modified || click.download) return false;
+  // _top and _parent ARE this tab — the portal is never framed.
+  if (!['', '_self', '_top', '_parent'].includes(click.target)) return false;
+  let to: URL;
+  try { to = new URL(click.href, location.href); } catch { return false; }
+  if (to.protocol !== 'http:' && to.protocol !== 'https:') return false; // mailto:, tel: — an app opens, the page stays
+  if (to.origin !== location.origin) return true;
+  return to.pathname + to.search !== location.pathname + location.search;
+}
+
+/**
+ * THE PRESS GATE — when a closing step may consume its history entry, and whether the tap that closed
+ * it left the page (§239 walk + its /review, 2026-09-25). Pure: the hook hands it the browser's
+ * timers and its five listeners; the unit test hands it a fake clock and plays event sequences.
+ *
+ * An exit taken while a press is under way is HELD — through the pointer-down, the release, and the
+ * click's whole dispatch — and settles one macrotask after that click with `left` = did the click
+ * leave the page. Every rule below is one way the first build of this got it wrong:
+ *   · `leaves()` is called from the click's BUBBLE phase on `window`, never its capture: a click that
+ *     something stopped on the way down (the unsaved-changes guard, which asks "Leave without
+ *     saving?" and keeps the coach on the page) never reaches it, so the entry IS consumed. Read in
+ *     the capture phase, the guard's "Stay" left a dead entry the next Back press did nothing on.
+ *   · The hold starts at the press and lasts until the click — an exit that arrives a beat late,
+ *     after the finger has lifted but before its click, is held too, not run bare.
+ *   · A new press SETTLES whatever an earlier one left held, as a stay: that press's click never came
+ *     (a drag), or its release was lost. So one press's click can never answer for another's exits.
+ *   · `left` lives for ONE click: an exit taken later, by a save or a timer, never reads a stale one.
+ *   · With no click at all, the hold ends after `graceMs` (a drag's release) or at once (a cancel).
+ * An exit taken with nothing under way — Escape, a save, a timer — settles one macrotask on, as the
+ * hook always did, with `left` false.
+ */
+export type PressExit = (left: boolean) => void;
+export interface PressTimers { set(run: () => void, ms: number): unknown; clear(handle: unknown): void }
+export const PRESS_CLICK_GRACE_MS = 500;
+export interface PressGate {
+  press(): void; release(): void; cancel(): void; clicked(): void; leaves(): void;
+  exit(fn: PressExit): void;
+}
+export function createPressGate(timers: PressTimers, graceMs = PRESS_CLICK_GRACE_MS): PressGate {
+  let pressing = false;
+  let awaitingClick: unknown = null;   // released; the grace timer until its click arrives
+  let inClick = false;                 // a click's dispatch is under way; it settles one macrotask on
+  let left = false;
+  let held: PressExit[] = [];
+  const stopWaiting = () => { if (awaitingClick !== null) { timers.clear(awaitingClick); awaitingClick = null; } };
+  const settle = (didLeave: boolean) => {
+    stopWaiting();
+    const exits = held;
+    held = [];
+    for (const fn of exits) fn(didLeave);
+  };
+  return {
+    press() { settle(false); pressing = true; },
+    release() {
+      pressing = false;
+      stopWaiting();
+      awaitingClick = timers.set(() => { awaitingClick = null; settle(false); }, graceMs);
+    },
+    cancel() {
+      pressing = false;
+      stopWaiting();
+      timers.set(() => settle(false), 0);
+    },
+    clicked() {
+      stopWaiting();
+      if (inClick) return;
+      inClick = true;
+      timers.set(() => { inClick = false; const didLeave = left; left = false; settle(didLeave); }, 0);
+    },
+    leaves() { left = true; },
+    exit(fn) {
+      if (pressing || awaitingClick !== null || inClick) held.push(fn);
+      else timers.set(() => fn(false), 0);
+    },
+  };
+}

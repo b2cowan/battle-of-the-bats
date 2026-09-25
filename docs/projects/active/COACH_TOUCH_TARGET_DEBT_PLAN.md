@@ -147,3 +147,16 @@ or accepted by its owner with a reason — a null-reason baseline entry is not a
 Shared portal chrome at 768 (the help "?", Export) and the icon-only controls the new
 `control-width` rule measures (tab-bar arrows, the month pager, the drag grip) were accepted into
 `scripts/.layout-baseline.json` under one written reason each — register row F-21 points here.
+
+## Handed over 2026-09-25 by "Coaching from a phone" (its plan §15), as that project closed
+
+Two tap-floor findings the phone project named and did not fix, because each moves more than a phone
+re-shaping should — they belong with this file's debt, not with a project that is being archived:
+
+- **No dialog footer in the portal has a phone or tablet tap floor** (phone plan §10, stage 4). Stage 4
+  gave ONE dialog — the skill observation dialog — a 56px docked foot at ≤640; every other sheet's Save
+  and Cancel is still ~33px. Fixing it moves every dialog in the product, which is why it wants an owner
+  ruling of its own rather than a quiet sweep.
+- **The lineup builder's toolbar at tablet widths** (phone plan §13.6 #6): *Call up a player* is 40px from
+  641 up (it takes the toolbar row's shared 40px control height, deliberately), and *Game rules* is 16px at
+  768. The first is a trade-off — the floor against one control height across the row — for the owner.
