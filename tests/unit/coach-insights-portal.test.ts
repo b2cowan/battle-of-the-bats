@@ -227,7 +227,7 @@ describe('a tab is a report’s only entry point, so the hub must render all of 
   const TABS: [CoachInsightsSection, string][] = [
     ['results', 'Results'],
     ['attendance', 'Attendance'],
-    ['playing-time', 'Playing Time'],
+    ['playing-time', 'Playing time'],
     ['development', 'Development'],
     ['awards', 'Awards'],
     ['scouting', 'Scouting Book'],

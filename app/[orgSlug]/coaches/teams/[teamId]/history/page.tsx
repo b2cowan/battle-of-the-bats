@@ -126,7 +126,7 @@ const TABS: readonly TabDef[] = [
   { id: 'dashboard', label: 'Dashboard', gate: null, helpLabel: 'Insights', helpAnchor: 'premium-insights' },
   { id: 'results', label: 'Results', gate: null, helpLabel: 'Insights', helpAnchor: 'premium-insights' },
   { id: 'attendance', label: 'Attendance', gate: c => c.attendance, helpLabel: 'Attendance', helpAnchor: 'recipe-attendance' },
-  { id: 'playing-time', label: 'Playing Time', gate: c => c.lineups, helpLabel: 'Insights', helpAnchor: 'premium-insights' },
+  { id: 'playing-time', label: 'Playing time', gate: c => c.lineups, helpLabel: 'Insights', helpAnchor: 'premium-insights' },
   { id: 'development', label: 'Development', gate: canViewMeasurables, helpLabel: 'Development', helpAnchor: 'premium-development' },
   { id: 'awards', label: 'Awards', gate: canManageAwards, helpLabel: 'Awards', helpAnchor: 'recipe-game-day-details' },
   /* ⚠ "Scouting Book", not "Opponents" — the owner picked the name for what it IS over the name for

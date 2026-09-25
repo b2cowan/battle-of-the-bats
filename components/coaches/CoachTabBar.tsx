@@ -96,6 +96,33 @@ export default function CoachTabBar<Id extends string>({
     return () => { ro.disconnect(); el.removeEventListener('scroll', measure); };
   }, [tabsKey, remeasureKey]);
 
+  /**
+   * ⚠⚠ **THE TAB YOU ARE ON IS IN VIEW** (coaching from a phone · stage 6 · R3, owner 2026-09-24). The row
+   * always opened scrolled to its START, so landing on a report further along — from a finding's chip, the
+   * More sheet, a bookmark — put the current tab off the screen: Insights' Scouting Book tab began 559px
+   * along a 358px row, under a title that only says "Insights". Short labels could not fix it (seven tabs
+   * need 676px). So when the active tab changes, the ROW scrolls to bring it clear of the edge fade.
+   *
+   * ⚠ `scrollTo` on the row, NEVER `element.scrollIntoView` — that also scrolls the WINDOW when the row is
+   * not fully on screen, and the page would jump on a tab press. `instant`, so a landing does not animate
+   * past three tabs. A row that fits does nothing. Every hub on this component gets it (Money too).
+   */
+  useEffect(() => {
+    const el = barRef.current;
+    if (!el) return;
+    const active = el.querySelector<HTMLElement>('[aria-current="page"]');
+    if (!active) return;
+    const EDGE = 48; // the arrow (44px at touch widths) and the 40px fade sit over this much of each edge
+    const bar = el.getBoundingClientRect();
+    const tab = active.getBoundingClientRect();
+    let delta = 0;
+    if (tab.left < bar.left + EDGE) delta = tab.left - bar.left - EDGE;
+    else if (tab.right > bar.right - EDGE) delta = tab.right - bar.right + EDGE;
+    if (Math.abs(delta) > 1) el.scrollTo({ left: el.scrollLeft + delta, behavior: 'instant' });
+    /* `remeasureKey` too (/review, 2026-09-24): it is the caller's signal that the row's usable WIDTH moved
+       without the tabs changing (the Money hub's summary landing) — the same trigger the arrows re-measure on. */
+  }, [activeId, tabsKey, remeasureKey]);
+
   // A row of ONE tab is not navigation. The Practice plans room drops its two library tabs for a
   // coach the libraries would refuse (stage 0, D5), and a lone "Practices" tab would be a row that
   // says nothing — so the bar itself goes. Owned here rather than by that caller because it is a

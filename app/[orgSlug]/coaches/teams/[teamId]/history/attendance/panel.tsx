@@ -462,10 +462,13 @@ export function AttendancePanel({
                 </p>
               )}
 
-              {/* .tableAsCards reflows the table into stacked cards @640 (the Roster idiom), where
-                  each cell's `data-label` restores the per-row wording the column headings replace
-                  on a desktop. That is the whole reason the micro-labels could go. */}
-              <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+              {/* ⚠ A TABLE ON A PHONE TOO (stage 6 · R1/R2, owner 2026-09-24). This used to take
+                  `.tableAsCards` "the Roster idiom" — twelve stacked cards × 148px, 1,775px, with the one
+                  comparison this report exists for (who is missing practice?) spread across three screens.
+                  The standard's first question is now "does it fit?": Player · Games · Practices needs 291px
+                  of the 326 a 360 phone has, every figure on one line, so it stays a table — 675px, the whole
+                  roster in one screen once you reach it. The name link and the receipts chevron keep 44px. */}
+              <div className={styles.tableWrap}>
                 <table className={styles.table}>
                   <thead>
                     <tr>
@@ -549,10 +552,10 @@ export function AttendancePanel({
                             </td>
                           ) : (
                             <>
-                              <td className={`${styles.td} ${styles.tdNum}${games ? '' : ` ${att.quiet}`}`} data-label="Games">
+                              <td className={`${styles.td} ${styles.tdNum}${games ? '' : ` ${att.quiet}`}`}>
                                 {games ?? '—'}
                               </td>
-                              <td className={`${styles.td} ${styles.tdNum}${practices ? '' : ` ${att.quiet}`}`} data-label="Practices">
+                              <td className={`${styles.td} ${styles.tdNum}${practices ? '' : ` ${att.quiet}`}`}>
                                 {practices ?? '—'}
                               </td>
                             </>

@@ -13,7 +13,7 @@ export const GRANT_LABELS: Readonly<Record<keyof Required<AssistantCapabilityGra
   lineups: 'Lineups',
   development: 'Development',
   staffChat: 'Staff chat',
-  scoutingBook: 'Scouting book',
+  scoutingBook: 'Scouting Book',
   documents: 'Documents',
   money: 'Team money',
   rosterPii: 'Contacts & birthdates',

@@ -458,6 +458,23 @@
   color: var(--text-tertiary);
 }
 
+/* ── The preview clamp (coaching from a phone · stage 6 · R4, owner 2026-09-24) ───────────
+   On a phone a preview stops at two lines — but ONLY for a notification whose page says the rest
+   (`itemBodyClamp`, chosen per event type in NotificationFeedBody). The week in review is that one:
+   48 words, six lines at 390, and its link is the Insights Dashboard, whose "What stands out" states the
+   same findings from the same engine. ⚠ NOT every body (/review, 2026-09-24): a tournament
+   announcement is free text an admin typed — a rain delay, a field change — and its link opens a public
+   page that does not repeat it, so clamping it would hide the message with nowhere to read it. This
+   stylesheet is shared with the admin feed. Visual only; the desktop is unchanged. */
+@media (max-width: 640px) {
+  .itemBodyClamp {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
 /* ── Touch widths (≤768): the 44px floor on every control in the body ─────────── */
 /* The frame's controls get theirs from CoachPageHeader's own phone rule; these are the body's.
    Heights only — the chips keep their pill shape and simply grow to a finger. */

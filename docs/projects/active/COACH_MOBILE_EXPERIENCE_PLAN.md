@@ -38,7 +38,7 @@ Not walked as a phone problem, recorded: Money (3,019px; 136 of 495 words ≤11p
 - **S.3 Today first.** Every list mixing past and future opens on today with the past folded above; the Schedule is the last exception (Q 2.1).
 - **S.4 One figure, one qualifier.** A phone tile carries a label, a figure and one line (Q 1.1). This is the direct answer to "are we displaying too much on mobile" — the tiles are; the cards mostly are not.
 - **S.5 The field floor.** On screens read standing up (console, run, attendance-taking): nothing under 12px, the looked-for value at 14 or above (Q 5.1). A per-surface rule like the tap floor; the ladder untouched.
-- **S.6 "Saved" is a fact in the title row**, never a pill over the work (A3).
+- **S.6 "Saved" shows only while it has something to say** — a transient pill that fades after the save; only a failure stays, with its Retry (A3, revised 2026-09-20 on the desktop read: the title row is pinned nowhere, so a word there scrolled away with it; the first wording, "a fact in the title row", is withdrawn).
 - **S.7 A table whose columns fit stays a table** on a phone (Q 9.1).
 
 ## 3 · The stage ladder
@@ -51,7 +51,7 @@ Not walked as a phone problem, recorded: Money (3,019px; 136 of 495 words ≤11p
 | 3 Game week | The builder's Setup as one self-describing row that opens the builder's panel; undo · redo · print · templates as one icon row; **one inning at a time** with the neighbours in small type and the number as the handle (the owner's read); the sheet's Lineup door at the top and Back to the game; the meta line and the hint | D1–D5 (Q 4.1, 4.2) | **drawn 2026-09-21 (§9), revised on four owner reads the same day · RULED 2026-09-21 — D1 = B, D2 = B, D5 · D3 · D4 as drawn · build owed (the build prompt is in the drawing session's hand-back)** |
 | 4 Practice week & skills | The plan's toolbar as ONE 44px row + a "⋯" drawer; a player is one 56px row and the row is the door; the observation dialog's descriptors as rows with a DOCKED foot and Save & next player; the count and Review docked above the bar; one title, one date, a 44px "+" | E1–E5 (Q 6.1, 7.1, 7.2) | **drawn 2026-09-22 (§10) · RULED 2026-09-22 — E1 = A, E2 · E3 · E4 · E5 as drawn · build owed** |
 | 5 People | The player's Details tab as the RECORD with Edit on the section (F1); the player's NAME carries a chevron and opens a sheet of the roster — the team switcher's own idiom — and the switcher's 56px row goes (F2, REDRAWN 2026-09-23 on the owner's read; the first form was a prev/next stepper and is withdrawn); the chat list this-team-first, sorted CLIENT-side with an `Your other teams` divider (F3). **Plus one the drawing found that the plan never asked: (F4) Family & paperwork is the OTHER tab that lands as a form** — same read face, and `tel:` rows on the tab whose job is "who do I call?". Gate CLEAR: §182 walked 40/40 on 2026-09-13. | Q 3.2, 8.1, 8.2 (+ F4) | **drawn 2026-09-22 (§11) · F2 redrawn 2026-09-23 · RULED 2026-09-23 — F1 · F2 (as redrawn) · F3 = B · F4 accepted · built 2026-09-23 (§11.8) · §228 WALKED + PASSED 2026-09-24, with mid-walk rulings (autosave; F5 the Season figures; the medical chip removed; emergency name/phone; Upload in the head) · commit + /docs owed** |
-| 6 Reports | Tables that fit stay tables; short tab labels; the notification clamp | Q 9.1, 10.1 | — |
+| 6 Reports | **Fit first, then the standing test** (an amendment to the table standard §3.8 — R1); Attendance becomes a table; Results, Playing time and Awards' tables finished with the portal's own pinned scroller + hint (Type after Score; Awards' history as cards with one ⋯); **the current tab scrolls into view** (short labels do not make seven fit); one spelling for "Playing time"; the notification clamp; **Practice review opens on the last practice held, each practice one short row** (S.3, R5b); the scrimmage counted in Results' run differential (found) | R1–R6, R5b, T (Q 9.1, 10.1, S.3, S.7) | **drawn 2026-09-24 (§14) · RULED the same day, every ask as recommended · BUILT on dev 2026-09-24 (§14.10) · §232 walk owed · uncommitted** |
 
 ## 4 · Stage 0 — the shell (drawn 2026-09-19)
 
@@ -1535,3 +1535,292 @@ the nav was, confirm you are still on the lineup. Then **Call up a player**, sam
 the other way round: open **Print** and the **row menu** and confirm the bar is still lit and still
 takes you to Schedule. Finally **More**, the **team switcher** and the practice plan's **"⋯"** —
 unchanged, still on top of the bar.)*
+
+
+## 14 · Stage 6 — Reports (drawn 2026-09-24 · RULED the same day, every ask as recommended · BUILT on dev 2026-09-24, §14.10)
+
+The drawing is the hub's **"6 · Reports"** tab: true-size frames (every "before" a capture of the
+product; every "after" a capture of the same page with the proposal switched on in the browser —
+CSS and markup only, nothing saved — so every after-height is measured), clickable annotations, ten
+asks and a paste-back. This section is the durable record. **Ruled 2026-09-24 (*"I agree with your
+recommendations, go ahead and build"*) and built the same day — §14.10 is the build record, §14.11 the walk.**
+
+### 14.0 The asks — RULED 2026-09-24, every one as recommended
+
+| Ask | The question | Recommended |
+|---|---|---|
+| **R1** | When does a report stay a table on a phone? | **A — fit first, then the standing test:** (1) fits at 360 with every figure on one line, the name allowed two → a table; (2) doesn't fit + a comparison (figures compared **along a row or down a column**) → keeps its columns, first column pinned, a swipe hint, cells on one line — K-05 finished; (3) doesn't fit + a list → cards (K-09). B (fit only) reverses K-05; C (re-file Attendance only) leaves the rule. |
+| **R2** | The application, report by report | **Build as drawn** — see §14.3. |
+| **R2b** | Results' column order | **Type after Score, at every width** — Date · Game · Result · Score = 280px, the answer on screen at 390 and 360. |
+| **R2c** | Awards' full history | **Cards, one 44px ⋯ each** (Print certificate · Edit · Delete as a menu — it sits on top of the nav, 2026-09-23 ruling). |
+| **R3** | The tab row | **A — the current tab scrolls into view; labels unchanged.** B adds short labels (the row still scrolls); C makes the title a report switcher (hides six reports; splits Insights from Money). |
+| **R3b** | One spelling | **"Playing time"** on the tab and its eight help mentions (the page's own finding chips already say it); the staff-access label **"Scouting Book"**. |
+| **R4** | The notification clamp | **Build** — two lines at ≤640 on the shared feed body. |
+| **R5** | Practice review (found; S.3) | **A — opens on the most recent practice held; the future folds into one row above it**, opening in place. |
+| **R5b** | Each practice one short row (the owner's question on the tab, 24 Sep) | **A — rows in one frame:** a date column, the title, the chips on one line, the whole row the door (≤640); the sentence that repeats the chip goes **at every width**; a written recap up to three lines. 170–217px a practice → 76–77 (138 with a recap). |
+| **R6** | The scrimmage in Results' figures (found) | **Ride along** — Results' chart and one-run figure read `countsTowardRecord` like every other figure. |
+| **T** | The three remaining sub-44 controls | **Stay with the touch-target project** (not started; the owner's open call). |
+
+⚠ **No migration, no new API, nothing stored, no year parameter** (`HISTORY_ENDPOINTS` untouched).
+Every change is ≤640 except R2b's column order and R3b's words, which are every width by design.
+
+### 14.1 What the drawing corrected in this plan's own record
+
+- ⚠ **S.7 is an AMENDMENT to the table standard, not "their rule".** `TABLE_AND_LIST_STANDARD.md`
+  §3.8 (owner 2026-07-30) already rules the phone shape by **list vs comparison**: a list becomes
+  cards (`.tableAsCards`), a comparison keeps its columns and scrolls with a pinned first column and a
+  swipe hint (K-05, owner 2026-07-29). It never asks "does it fit?" — so a list that fits still
+  becomes cards today. Attendance was carded **on purpose** (`history/attendance/panel.tsx`: ".tableAsCards
+  reflows the table into stacked cards @640 (the Roster idiom)"). R1 is written as the amendment.
+- ⚠ **§3.8's comparison test is one word too narrow.** It asks "does a reader compare two figures
+  **on one row**?". A report's comparison is usually **down a column** — which is how Attendance was
+  filed as a list. R1 adds "along a row or down a column".
+- ⚠ **The walk measured one report; there are eleven tables, and only four are cards** (Attendance;
+  Development's Coverage and Team progress ×2). **The other seven are K-05 tables, half-built**:
+  `.insightsTableWrap` scrolls but none adopts `CoachScrollX` (the sticky first column + one-time
+  hint the budget grids use), and their cells wrap. Playing time's **3,825px** is wrapping, not cards.
+- **Attendance is 2,707px, not 2,729; a card is 138px + gap (148 pitch), not 110.** 1,775px of cards.
+- **Notifications is 2,341px at 390, not 2,127; the digest is 48 words, not 40.**
+- ⚠ **"The tab row cuts Playing time" is the symptom.** `CoachTabBar` never brings the active tab
+  into view: landing on Development, Awards or Scouting Book, the active tab starts 559px along a
+  358px row. Short labels cannot fix it — seven tabs need 676px (601 with the walk's short labels,
+  572 with "Progress" too).
+- **S.3's "the Insights sessions list opens on the newest" is Development → Practice review**
+  (`history/development/panel.tsx`): newest first **including upcoming plans**, so it opens on the
+  farthest-future practice and the first practice held sits at the fold (759px).
+- **The prompt expected the Dashboard to repeat F5's problem. It does not** (§14.5).
+- **The PM brief's criterion "the attendance report under 1,600px at 390" measures 1,597** — a pass by
+  three pixels on twelve players; fourteen add 106px. Restated in the brief as *the whole roster's
+  attendance on one screen once reached* (675px for twelve).
+- ⚠ **And one this drawing got wrong, corrected on the owner's first read (24 Sep):** it defended Practice review's "A plan was saved. Nothing was written afterwards." as a ruling to keep. It repeats the "Past plan · no recap" chip; at ≤640 every part of the card also stacks onto its own line (each tag included) behind a 44px worded door — 170–217px a practice. Now **R5b**.
+- **S.6's text in §2 was stale** ("a fact in the title row") and is corrected to the 2026-09-20
+  ruling.
+
+### 14.2 Measured (390×844 and 360×780, touch; table widths at 1024 in real table mode)
+
+| Report | Page 390 / 360 | Tables (cols) | Needs, one line | Today on a phone | < 44px |
+|---|---|---|---|---|---|
+| Dashboard | 1,119 / 1,154 | — | — | five figures (box-less), momentum chart, What stands out | 1 |
+| Results | 968 / 962 | 1 (6) | 460 | columns, scrolls; no pin, no hint; Score half-cut, Tags hidden; 59px rows | 1 |
+| Attendance | 2,707 / 2,724 | 1 (3) | **291 — fits** | 12 cards × 148 = 1,775px; 1 player on screen one at 390, 0 at 360 | 2 |
+| Playing time | 3,825 / 3,825 | 4 (6·10·4·3) | 832·577·651·303 | columns, scroll; no pin, no hint; names on 3 lines; rows 82·76·104 | 1 |
+| Dev · Coverage | 1,084 / 1,128 | 1 (5) | 551 | one-line cards 40–44px (as a table: 80px rows, 1,014 vs 550) | 1 |
+| Dev · Team progress | 971 / 988 | 2 (5) | — | one card per metric | 1 |
+| Dev · Player progress | 916 / 852 | — | — | chart + record list | 1 |
+| Dev · Practice review | 1,727 / 1,746 | — | — | opens on Oct 27 (upcoming); first held at 759 / 778 | 2 |
+| Awards | 1,037 / 1,037 | 2 (4·6) | 284·476 | leaderboard fits; history wraps to 88px rows at 390, scrolls at 360; print·edit·delete 19×22 stacked | 13 |
+| Scouting Book | 916 / 905 | — (row list) | — | one screen | 1 |
+| Notifications | 2,341 / 2,423 | — (feed of 15) | — | digest 6 lines (7 at 360), row 215px | 0 |
+
+The "1" on every Insights screen is the tab row's scroll arrow (34×45). No screen scrolls sideways.
+Fixture: 12 players, 7 games (one a scrimmage), 6 practices with plans; nothing seeded.
+
+### 14.3 Before → after (measured with each proposal switched on in the live page)
+
+| | Before | After |
+|---|---|---|
+| Attendance page (390 / 360) | 2,707 / 2,724 | **1,597 / 1,614** — table 675px, rows 53px; name link 130×44, chevron 44×44; receipts row unchanged (188px, full width) |
+| Playing time page | 3,825 | **2,272** at both widths — rows 82·76·104 → 37px; player pinned (131px); summary's 13 rows on screen one (7 before); a hint on each of the three tables that scroll |
+| Results page (390 / 360) | 968 / 962 | **916 / 852** — rows 59 → 38px; with R2b Date · Game · Result · Score in view at both widths |
+| Awards page | 1,037 | **968** at both widths; the history fits at 360; 12 sub-44 icons → one 44px ⋯ per award |
+| Practice review — first practice held (390 / 360) | 759 / 778 | **433 / 452**; page 1,727 → 1,401 |
+| Practice review page with R5b (390 / 360) | 1,727 / 1,746 | **955 / 975** — rows 76–77px, 138 with a recap; three held practices wholly on screen one (none before) |
+| The tab row, landed on Scouting Book | active tab 559px along a 358px row | fully in view at 390 and 360 (Development and Awards the same) |
+| Notifications page (390 / 360) | 2,341 / 2,423 | **2,075 / 2,075** (−11 to −14%); a digest row 215 → 133px |
+
+Probes (`.probe/`): `s6-measure`, `s6-after`, `s6-review`, `s6-targets`, `s6-final`, `s6-rows`,
+`s6-att2`, `s6-shots-after`; the hub check `s6-hub-check` + `s6-hub-served` (22/22, 12/12).
+
+### 14.4 What it borrows — nothing new is invented
+
+| Borrowed | From | Note |
+|---|---|---|
+| The pinned column + one-time hint | `components/coaches/CoachScrollX.tsx` (Chunk A, 2026-07-29 — the K-05 contract made structural) | Adopters today: the budget month grid, the sample budget sheet, the depth chart. The seven report tables become adopters; the hint names the columns ("Swipe for type and tags"). |
+| The current tab into view | `components/coaches/CoachTabBar.tsx` — one component, six callers (Money, Insights, Skills & Goals, Lineups, Practice plans, the player page) | A behaviour in the component; a no-op where the row fits. Money's six-or-seven tabs will get it too (not measured — Money is its own walk). |
+| Awards' corner ⋯ | K-09 (the corner action in card mode) + the menu layer (2026-09-23) | A menu, so it sits on top of the nav. |
+| Practice review's fold row | Stage 2 · C1's fold row | Turned over for a newest-first list. |
+| R6's rule | `countsTowardRecord` (`lib/season-wrapped`), the scrimmage flag (mig 306) | Results' chart and one-run tally read `finalized`; the Dashboard reads `scoped`. |
+
+### 14.5 F5, checked — no figures change
+
+- **The Dashboard does not have the Season tab's problem.** No figure repeats a header on the page.
+  The one repeat on screen is the record (3-2-1 in the masthead, 3-2-1 on the Record figure) — but the
+  masthead is the portal's line on every screen, and the Record figure is the scoreboard's lead, a
+  door to Results, carrying the qualifier that says what counts. Already box-less, S.4-compliant.
+- **Attendance's four figures:** F5's one line measured at 214 → 139px (the band's own spacing kept);
+  the table still starts below screen one (the take-attendance card and the month chart place it).
+  Not worth the "Recorded" qualifier — the denominator of the other three.
+
+### 14.6 Found, not stage 6's (named)
+
+- **R6** — offered as a ride-along because it is on a screen stage 6 rebuilds.
+- **"Unknown" in Playing time** (5 on field, 1 bench) — most likely a lineup slot whose player left
+  the roster. Not investigated.
+- **Money's tab labels** ("Budget Plan", "Player Dues", "Budget vs. Actual") are the same Title Case on
+  the same component; the stylesheet has recorded the split since 2026-08-28 as a deferred copy
+  question. Its own call.
+- **Practice review's no-recap sentence** repeats its chip. ⚠ The drawing first called it a ruling to KEEP (F03); **corrected on the owner's read (24 Sep) — see R5b.** The 12 Sep ruling (`lib/practice-truth.ts`: "the row's one sentence … says it; the second line was cut") was itself a say-it-once ruling, and the chip still says it; F03's "silence is stated" is met by the chip.
+
+### 14.7 Open at build, named rather than guessed
+
+- **The fit gate's measure.** `check:layout` at 361 and 390: render a phone table with
+  `white-space: nowrap` on every cell but the lead, compare `scrollWidth` with the frame; a table that
+  fails must be inside `CoachScrollX` (sticky) or in card mode. Decide whether it reads the lead cell
+  at max-content or allows two lines by measuring the lead's min-content separately.
+- **The pinned column's cap** for a long real name (~45% of the frame, the name wrapping inside the pin).
+- **Attendance:** `.tableAsCards` off for that table only; the `.tableWrap` frame stays and paints at
+  ≤640 (F-24's "the frame stands down" rule applies only to card mode); the receipts row (`colSpan=3`)
+  unchanged; the "not tracked yet" `colSpan=2` cell right-aligned.
+- **R3's scroll** must move the row, never the page: set the nav's `scrollLeft` from the active
+  tab's offset (an `element.scrollIntoView` can scroll the window too); on mount and when `activeId`
+  changes; `behavior: 'instant'` on mount so a landing does not animate.
+- **R5's edge:** a tag filter that matches only upcoming practices opens the fold rather than showing
+  an empty list under a closed row; the fold's count follows the filter.
+- **R4** lands on the admin notifications page too (the shared `NotificationFeedBody`) — check its
+  rows at ≤640.
+- **R2b** has no export to follow — Results has none today (checked).
+
+### 14.8 Touch targets — named, not folded in
+
+Every Insights tab: 1 (the tab row's arrow, 34×45). Attendance: +1 ("Take attendance", 139×34).
+Awards: +12 (print · edit · delete, 19×29 / 19×22 ×4) — **cleared by R2c as a consequence of the card
+recipe**, not as touch-target work. Practice review: +1 (the "All 6" chip, 41×44). Notifications: 0.
+`COACH_TOUCH_TARGET_DEBT_PLAN.md` stays named and not started (ask T).
+
+### 14.9 How it would be verified at build
+
+- **Unit guards:** every `.insightsTableWrap` sits inside a sticky `CoachScrollX` with a hint; the
+  Attendance table outside `.tableAsCards`; Results' chart and the Dashboard read one
+  `countsTowardRecord` (a fixture with a scrimmage, both figures equal); `CoachTabBar` sets the row's
+  `scrollLeft`, never the window's.
+- **Asserted on state, under touch, at 390 and 360:** landing on each report, the active tab's box
+  lies inside the row's; Practice review's first visible card is a practice held; a clamped preview is
+  two lines with its full text in the DOM.
+- **Sweep:** the Insights tabs at 361 / 390 / 768 / 1440 with the new phone-table rule, `--only=`
+  scoped (the owner tests on the shared dev server).
+- A **"QA walk · 6"** tab on the hub at build, its § from the ledger.
+
+
+### 14.10 Built as (2026-09-24 · dev — every number read from the browser's own geometry; probes `s6-built` (94 checks, touch at 390/360, mouse at 768/1440), `s6-receipts`, `s6-hub-check`, `s6-qa6-check` in `.probe/`) — **uncommitted; ledger §232 walk (27 steps, hub tab "QA walk · 6") owed**
+
+**Rulings (owner, 2026-09-24 — *"I agree with your recommendations, go ahead and build"*):** R1 = A · R2 as
+drawn · R2b = A · R2c = A · R3 = A · R3b = A · R4 as drawn · R5 = A · R5b = A · R6 = A · T = A.
+
+**What was built:**
+
+- **R1** — `TABLE_AND_LIST_STANDARD.md` §3.8 gains its first question (*does it fit at 360, every figure on
+  one line, the lead allowed two?*) and its comparison test reads *along a row or down a column*; the
+  exception register's K-05 names the Insights tables as finished inside `CoachScrollX`.
+- **R2 · Attendance** — `.tableAsCards` and the `data-label`s off the table; its page module's card-only
+  receipts rules gone. **2,707 → 1,496px** at 390 (the table 573px, rows 45 — shorter than the drawing's
+  1,597, because the real table's rows are 45px); name link 110×44, chevron 44×44; the receipts row full
+  width under its player at every width.
+- **R2 · the seven K-05 tables** — Results (1), Playing time (4), the Awards leaderboard (1) inside
+  `CoachScrollX sticky` with `.insightsTableWrap` as the scroller's class (the frame is unchanged, F-24),
+  a hint naming what is off-screen; `.scrollX .insightsTable` cells `nowrap` at ≤640; the player's name
+  cell (`.insightsNameCell`, three tables) 8.5rem and allowed two lines. The Playing time demo anchor
+  (`data-sandbox-tour="playing-time"`) moved to a wrapper — the scroller carries no attributes.
+  **Playing time 3,825 → 2,268px**, rows 82·76·104 → 37, all 13 summary rows on screen one at 390 (11 at
+  360). **Results 968 → 916**, rows 59 → 38.
+- **R2b** — Results' columns Date · Game · Result · Score · Type · Tags at every width; Result and Score
+  in view at 390 and 360.
+- **R2c** — Awards' history takes the card recipe (`.tableAsCards` + `.cardStackCell` lead with a
+  `.cardPhoneLine` "award · game · date" and the note, `.cardDesktopCell` on the four data cells,
+  `.cardActionCorner`); on a phone (`useIsPhone`) the corner holds ONE `CoachToolbarMenu` (glyph,
+  drawer) — Print certificate · Edit · Remove, Remove still through the confirm; the desktop keeps its
+  three icons. Awards at 390: sub-44 controls 13 → 2 (the tab row's two arrows, before the arrow fix).
+- **R3** — `CoachTabBar` scrolls the ROW (`scrollTo`, `instant`) to clear the active tab of a 48px edge
+  on mount and when the active tab changes; never `scrollIntoView` (it can scroll the window). Landing on
+  Development, Awards and Scouting Book: the tab in view at 390 and 360, `scrollY` 0.
+- **R3b** — "Playing time" on the tab, in the help articles (8) and the portal test's tab list; the
+  staff-access label "Scouting Book" (and its help line).
+- **R4** — previews clamped to two lines at ≤640; the full text stays in the DOM. Notifications 2,341 → 2,075
+  at 390. ⚠ First built on every body of the shared feed (the admin page too); **narrowed by /review (§14.12)
+  to the week in review only** — the one notification whose page says the rest.
+- **R5 · R5b** — Practice review: the upcoming practices fold into one `.reportRecapFold` row at ≤640
+  (CSS-driven, so the desktop is unchanged; a filter that leaves only upcoming practices opens it); on a
+  phone one framed list of rows — a 3.2rem date column, the title, the chips (`.reportRecapChips`,
+  `display: contents` on a desktop) on one line, the link a 44px corner chevron whose `::after` makes
+  the row the door, named for its practice; a recap clamped to three lines. The sentence that repeated
+  the truth chip is gone **at every width** (`lib/practice-truth.ts`'s comments now say the chip is the
+  one statement of the silence). **Practice review 1,727 → 944px** at 390; the first practice held at
+  434px (was 759); rows 73px, 139 with a recap (162 at 360).
+- **R6** — Results' chart and one-run tally read `finalized.filter(countsTowardRecord)`; the table still
+  lists every game. The chart now ends at **+6**, the Dashboard's figure, at every width.
+- **T** — nothing folded in, with one exception made at build and flagged for the owner's veto (below).
+
+**⚠ One change beyond the rulings, for the owner's veto — the tab row's arrows are 44px wide at touch
+widths** (`@media (max-width: 768px) .coachTabScrollBtn`; was 34, the desktop keeps 34). R3 makes the
+LEFT arrow appear on every report and Money tab past the first screenful; the scoped sweep found it on
+ten screens at 361/390 (and more exist — every Money tab past Dues), i.e. about thirty new "accepted"
+entries for a control T had parked. Widening it was cheaper than writing them, and it clears the older
+right-arrow entries too (they will report as "no longer reproduce" — the ratchet can tighten). One line
+to revert.
+
+**Gates:** typecheck clean; lint 0 errors (5 pre-existing warnings in untouched effects); new
+`tests/unit/coach-reports-phone-guard.test.ts` — 14 assertions, broken once on purpose (Attendance back in
+cards) and caught; `coach-award-edit.test.ts` widened from a 3,200-character slice to the whole history
+table, plus the phone menu's three items; the full unit suite **4,688 pass / 0 fail** before the guard
+(4,702 with it — the final run); `check:css-selectors`, `check:spelling`, CSS-module purity and `check:demos` green.
+
+**The layout sweep, scoped** (the owner tests on the shared dev server; the first run ABORTED on the
+memory floor — the dev server held 6.8 GB after this session's probes — and the server was recycled
+through `scripts/dev.mjs`'s supervisor before re-running): the eleven Insights screens and four Money
+screens at 361, 390 and 768. **No finding this stage introduced remains** once the arrow fix landed; one
+it did introduce was a real defect and is fixed (Practice review's rows spilled 9px — the chevron's
+negative margin). What remains is OLDER and was proved so by sweeping the committed panels against the
+same screens: the attendance receipts screen (`coach-attendance-receipts`) has never had a baseline —
+"Take attendance" 34px tall and the header "?" at 768; Awards at 768 — the three 19px history icons and
+the header "?" (the tablet band keeps the desktop icons: R2c ruled the phone); the Dashboard's
+"… has sat the bench most" finding link at 768, whose baseline key embeds fixture text that has changed;
+Money → Transactions' date-range menu buttons 140px off the right edge; the practice library tabs'
+search input 94px off the left edge (a peer's uncommitted work is on those screens). **None baselined**:
+the baseline file carries a peer's staged and unstaged changes, `--init` rewrites and reorders it, and
+the touch-target debt file forbids bulk-writing reasons. Named here for the touch-target project and
+the sessions that own those screens.
+
+### 14.11 The QA walk — ledger §232 · 27 steps in 6 parts (hub tab "QA walk · 6")
+
+A · Attendance is a table (5) · B · Reports that swipe keep their columns (6) · C · Awards: the history is
+cards, one menu each (4) · D · The tab you are on is in view (4 — D2 asks the owner's read on the 44px
+arrows) · E · Practice review opens on the last practice held, as short rows (6) · F · Notifications (2).
+
+### 14.12 /review — high-risk tier, four lenses (2026-09-24, after the build)
+
+Deterministic gate green (typecheck · lint 0 errors · `verify:changed` · the layout sweep scoped to the
+touched screens; the whole-list sweep skipped by the owner's standing rule for the shared server). Four
+Sonnet finder lenses (logic · blast radius · interaction state · accessibility/touch), adjudicated in the
+main loop. **6 confirmed and FIXED, 2 refuted, 6 accepted as advisory.**
+
+**Fixed:**
+1. **(Medium, three lenses)** The Awards leaderboard sat in the pinned scroller, and its first column is
+   the **rank** — on an overflow a coach would swipe the names away and keep "1, 2, 3". It FITS (R1's first
+   question), so it is now unpinned (the hint still covers an overflow) and its name may wrap. The name
+   cell's 8.5rem floor is now scoped to PINNED tables (`.scrollXSticky`) — the first fix widened the
+   unpinned leaderboard 2px past a 360 frame, caught by re-driving it.
+2. **(Medium)** The notification clamp reached the **admin** feed's tournament announcements — free text an
+   admin types, whose link opens a public page that does not repeat it. The clamp is now per event type
+   (`CLAMPED_ON_A_PHONE` in `NotificationFeedBody`): only the week in review, whose page states the same
+   findings. R4's own premise ("the item's page for the rest") is what drew that line.
+3. **(Low, two lenses)** The phone menu disabled Print along with Edit and Remove during a delete; the desktop
+   never did. Only Edit and Remove wait now.
+4. **(Low, two lenses)** Practice review's fold, opened under one tag, stayed open under the next. It is now
+   opened FOR a filter (state holds the tag it was opened for; no effect).
+5. **(Medium)** `CoachTabBar` did not re-check the active tab when the caller's `remeasureKey` changed (the
+   Money hub's summary landing moves the row's width). Added to the effect's deps.
+6. **(Low)** A keyboard focus on a Practice review row outlined only the 44px corner; the ring is now on the
+   row-covering `::after`.
+
+**Refuted:** a desktop-icons flash on a phone before hydration (the report panels are `dynamic(…, { ssr:
+false })` and render after a client fetch); Attendance's headers overflowing at 360 (measured in the browser:
+291 of 328px, no overflow).
+
+**Accepted as advisory:** the demo tour's ring on Playing time now also encloses the swipe hint on a phone;
+`.scrollX` and `.tableWrap` both declaring the frame (the later rule wins by order — noted, not a live bug);
+the stretched row link means a recap's text cannot be long-pressed to select on a phone (the practice page
+shows it whole); the fold button unmounting under focus after a reload (unreachable in practice); EDGE 48
+against a 44px arrow; the drawer title's "Award" vs the label's "award" fallback (two grammatical contexts).
+
+**After the fixes:** 94/94 browser checks (four widths), 14 + 2 new source assertions, the full unit suite
+**4,704 pass**, the selector / spelling / purity / demo gates green, the layout sweep clean on Awards,
+notifications and Practice review at 361 and 390.

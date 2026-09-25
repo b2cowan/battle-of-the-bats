@@ -2206,6 +2206,21 @@ a.insightsStat:hover { background: var(--home-olive-soft, rgba(255,255,255,0.05)
    `.insightsTable` above. */
 .insightsTable th.insightsNumHead { text-align: right; }
 .insightsTable td { padding: var(--table-pad-compact) 0.6rem; border-bottom: 1px solid var(--home-line, rgba(255,255,255,0.06)); color: var(--text-primary); }
+/* ⚠ K-05 FINISHED — EVERY CELL ON ONE LINE, INSIDE THE PINNED SCROLLER (stage 6 · R2, owner 2026-09-24).
+   On a phone a report table keeps its columns and scrolls inside `CoachScrollX` (the first column pinned,
+   a hint naming what is off to the right). Without this its cells WRAPPED instead: Playing time's names
+   went to three lines ("#5 / Emerson / Test") and its rows to 82 · 76 · 104px — 3,825px for four tables.
+   Scoped to `.scrollX` so a report table that takes the card reflow (Awards' history) keeps wrapping.
+   `.insightsNameCell` — the player's name as the pinned column: it may take TWO lines past 8.5rem, so a
+   long real name does not widen the pin past about half the frame (the fixture's names are one line). */
+@media (max-width: 640px) {
+  .scrollX .insightsTable th,
+  .scrollX .insightsTable td { white-space: nowrap; }
+  .scrollX .insightsTable td.insightsNameCell { white-space: normal; }
+  /* The 8.5rem floor only where the name IS the pinned column — an unpinned table that fits (the Awards
+     leaderboard) must not be widened past a 360 frame by it (/review follow-up, measured: +2px). */
+  .scrollXSticky .insightsTable td.insightsNameCell { width: 8.5rem; min-width: 8.5rem; }
+}
 .insightsNum { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
 /* ⚠ THE BAR LEADS ITS NUMBER, and the margin is on the RIGHT for that reason (2026-09-07).
    It used to trail, which made the right edge of the "On field" cell the BAR's edge — so a
@@ -3275,7 +3290,9 @@ a.oneChip:hover { border-color: currentColor; }
    It was its own class with `overflow-x: auto` and nothing else, declared 1,000 lines up among the
    insights recipes — which is how the list frame's card fix reached every list and none of the six
    report tables (Playing Time, Results, Awards, the lineup comparison). A comparison keeps this frame
-   on a phone and scrolls inside it (K-05); it never takes `.tableAsCards`. */
+   on a phone and scrolls inside it (K-05) — inside `CoachScrollX` since stage 6 (2026-09-24), which pins its
+   first column and names what is off to the right. It takes `.tableAsCards` only where the table is a
+   record LIST rather than a comparison: Awards' full history (R2c). */
 .insightsTableWrap { composes: tableWrap; }
 
 .table {
@@ -8760,6 +8777,14 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   z-index: 2;
 }
 .coachTabScrollBtn:hover { color: var(--text-primary); }
+/* ⚠ 44px AT TOUCH WIDTHS (coaching from a phone · stage 6, 2026-09-24). The arrows sat at 34px — a
+   baselined sub-floor control on every hub. Stage 6 · R3 scrolls the row to the tab you are on, which
+   made the LEFT arrow appear on every report and Money tab past the first screenful too; widening the
+   control beat writing thirty new "accepted" entries for it. Touch widths only (the floor is a touch
+   rule, 641–768 included — K-12); a desktop keeps the 34px arrow over its fade. */
+@media (max-width: 768px) {
+  .coachTabScrollBtn { width: var(--tap-min, 44px); }
+}
 .coachTabScrollLeft {
   left: 0;
   background: linear-gradient(to right, var(--home-paper, var(--bg)) 55%, transparent);
@@ -12155,12 +12180,95 @@ span.libCardMain { cursor: default; }
   min-height: var(--tap-min, 44px); display: inline-flex; align-items: center;
 }
 .reportRecapLink:hover { text-decoration: underline; }
+/* The pieces the phone row (≤640, below) re-lays; on a desktop they change nothing. `.reportRecapChips`
+   is `display: contents` there, so the chips stay flex items of the head exactly as before. */
+.reportRecapChips { display: contents; }
+.reportRecapLinkChev { display: none; }
+.reportRecapFold { display: none; }
 
 /* 640 = CONTENT reflow: the recap head stacks so a long practice name never squeezes
    the date or pushes the link off the row. */
 @media (max-width: 640px) {
-  .reportRecapHead { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
-  .reportRecapLink { margin-left: 0; }
+  /* ⚠ ONE FRAME OF SHORT ROWS (stage 6 · R5 + R5b, owner 2026-09-24). The head used to stack into a
+     column here — date, title, chip, EACH tag, a 44px worded door, each on a line — 170–217px a practice.
+     Now: the date a narrow column, the title beside it, the chips on one line under it, the corner chevron
+     the door (its ::after makes the whole row one), a written recap up to three lines. 76px a practice. */
+  .reportRecapRows {
+    background: var(--card-bg, var(--surface));
+    border: 1px solid var(--home-line, var(--border-2));
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .reportRecap {
+    position: relative;
+    margin: 0;
+    border: 0;
+    border-radius: 0;
+    border-bottom: 1px solid var(--home-line, var(--border-2));
+    /* The right padding is the chevron's own inset: its 44px box ends at the row's edge rather than
+       pulling out past it with a negative margin, which spilled 9px sideways (the layout sweep's
+       content-overflow, caught at build). */
+    padding: 0.7rem 0.3rem 0.7rem 0.85rem;
+    min-height: 56px;
+  }
+  .reportRecap:last-child { border-bottom: 0; }
+  .reportRecap[data-none='none'] { border-style: solid; }
+  .reportRecapHead {
+    display: grid;
+    grid-template-columns: 3.2rem minmax(0, 1fr) auto;
+    column-gap: 0.6rem;
+    row-gap: 0.3rem;
+    align-items: start;
+  }
+  .reportRecapDate { grid-column: 1; grid-row: 1; padding-top: 0.15rem; font-variant-numeric: tabular-nums; }
+  .reportRecapTitle { grid-column: 2; grid-row: 1; min-width: 0; }
+  .reportRecapChips { grid-column: 2; grid-row: 2; display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .reportRecapLink {
+    grid-column: 3;
+    grid-row: 1 / span 2;
+    align-self: center;
+    justify-content: center;
+    width: var(--tap-min, 44px);
+    margin: -0.35rem 0;
+    color: var(--text-tertiary);
+  }
+  .reportRecapLink::after { content: ''; position: absolute; inset: 0; }
+  /* The focus ring goes where the tap goes — round the whole row, inset so the frame's overflow keeps it
+     (/review, 2026-09-24: the global ring outlined only the 44px corner square). */
+  .reportRecapLink:focus-visible { outline: none; }
+  .reportRecapLink:focus-visible::after { outline: 2px solid var(--primary); outline-offset: -3px; border-radius: 8px; }
+  .reportRecapLinkWords { display: none; }
+  .reportRecapLinkChev { display: block; }
+  .reportRecap .reportRecapText {
+    margin-left: calc(3.2rem + 0.6rem);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* The future, folded into one row above the list (R5) — it opens in place. */
+  .reportRecapFold {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.6rem;
+    width: 100%;
+    min-height: 48px;
+    margin: 0 0 0.6rem;
+    padding: 0 0.85rem;
+    background: var(--card-bg, var(--surface));
+    border: 1px solid var(--home-line, var(--border-2));
+    border-radius: 10px;
+    font: inherit;
+    font-size: var(--type-body);
+    font-weight: 600;
+    color: var(--text-primary);
+    text-align: left;
+    cursor: pointer;
+  }
+  .reportRecapFoldCaret { flex: none; color: var(--text-tertiary); transition: transform 0.15s ease; }
+  .reportRecapFold[aria-expanded='true'] .reportRecapFoldCaret { transform: rotate(90deg); }
+  .reportRecapList[data-future='folded'] .reportRecap[data-upcoming] { display: none; }
   .ppSourceTab { margin-right: 0.5rem; }
 }
 

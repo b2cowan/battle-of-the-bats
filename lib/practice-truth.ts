@@ -28,11 +28,14 @@ export function practiceTruth(
 
 /** The chip and the quiet line beneath it — the report's words, drawn once. */
 export const PRACTICE_TRUTH_LABELS: Readonly<Record<PracticeTruth, { label: string; meta: string | null }>> = {
-  // Re-evaluation stage 4 (G2 housekeeping, 2026-09-16): an upcoming plan says ONE thing — the row's
-  // sentence, "The practice is still to come." — so its second line went the way past-no-recap's did.
+  // Re-evaluation stage 4 (G2 housekeeping, 2026-09-16): an upcoming plan says ONE thing, so its second
+  // line went the way past-no-recap's did. ⚠ Since stage 6 · R5b of the phone programme (owner
+  // 2026-09-24) that one thing is THIS label: the row's sentence ("The practice is still to come.") said it
+  // a second time and is gone.
   upcoming: { label: 'Upcoming plan', meta: null },
-  // Owner ruling 2026-09-12 (Phase 0 walk, Part A): the row's one sentence — "A plan was saved. Nothing
-  // was written afterwards." — says it; the second line was cut.
+  // Owner ruling 2026-09-12 (Phase 0 walk, Part A): the row's sentence — "A plan was saved. Nothing was
+  // written afterwards." — said it, so the second line was cut. ⚠ Then (stage 6 · R5b, 2026-09-24) the
+  // sentence went too: it repeated this label. The label is now the ONE statement of the silence (F03).
   'past-no-recap': { label: 'Past plan · no recap', meta: null },
   recap: { label: 'Recap recorded', meta: null },
 };

@@ -935,6 +935,21 @@ function PracticeReview({ data, base, tag, setTag, loading, reload }: {
   // chip row (a URL-addressable `tag`, not the library's multi-select dropdown) — wrapped into a
   // one-element set for the shared predicate's now-multi-select contract.
   const shownPractices = filterTagged(practices, '', tag == null ? new Set() : new Set([tag]));
+  /* ⚠ TODAY FIRST, READ BACKWARDS (stage 6 · R5, owner 2026-09-24 — S.3 for a newest-first list). The
+     list runs newest first and INCLUDES the plans still to come, so on a phone it opened on next month's
+     practice — "The practice is still to come" — with the first practice actually held at the fold. On a
+     phone the future folds into ONE row above the list and the list opens on the most recent practice
+     held; the row opens in place. CSS does the folding (the row and the hide are ≤640 only), so the
+     desktop reads exactly as before. A filter that leaves ONLY upcoming practices opens the fold rather
+     than showing an empty list under a closed row. */
+  const upcomingCount = shownPractices.filter(p => p.truth === 'upcoming').length;
+  const heldCount = shownPractices.length - upcomingCount;
+  /* The fold is opened FOR ONE FILTER (/review, 2026-09-24): a choice made under "hitting" must not carry
+     to "test" — that list's future is new to the coach. Stored as the tag it was opened for, so a tag
+     change closes it without an effect (`undefined` = closed; `null` is "All"). */
+  const [futureOpenFor, setFutureOpenFor] = useState<string | null | undefined>(undefined);
+  const futureOpen = futureOpenFor !== undefined && futureOpenFor === tag;
+  const futureShown = futureOpen || heldCount === 0;
   // ⚠ `collectTags`, not a hand-rolled dedup. Its own doc names this list as one of its three
   // callers, and a second copy of "unique tags in first-seen order" is exactly how two surfaces
   // start quietly disagreeing — which is what the shared module exists to prevent.
@@ -995,16 +1010,35 @@ function PracticeReview({ data, base, tag, setTag, loading, reload }: {
 
           {shownPractices.length === 0 ? (
             <p className={styles.formHint}>No practices carry that tag yet.</p>
-          ) : shownPractices.map(p => (
-            <div key={p.eventId} className={styles.reportRecap} data-none={p.recap ? undefined : 'none'}>
+          ) : (
+          <div className={styles.reportRecapList} data-future={futureShown ? 'shown' : 'folded'}>
+          {upcomingCount > 0 && heldCount > 0 && (
+            <button type="button" className={styles.reportRecapFold} aria-expanded={futureOpen}
+              onClick={() => setFutureOpenFor(futureOpen ? undefined : tag)}>
+              <span>{upcomingCount} {upcomingCount === 1 ? 'practice' : 'practices'} still to come</span>
+              <ChevronRight size={18} aria-hidden className={styles.reportRecapFoldCaret} />
+            </button>
+          )}
+          {/* ⚠ ONE FRAME OF SHORT ROWS ON A PHONE (stage 6 · R5b, owner 2026-09-24): each part of a card used to
+              take a line of its own at ≤640 — the date, the title, the chip, EACH tag, a 44px worded door, a
+              two-line sentence — 170–217px a practice. Now the date is a column, the chips share one line, the
+              whole row is the door (the corner chevron's ::after) and a written recap keeps three lines. The
+              desktop keeps its cards. */}
+          <div className={styles.reportRecapRows}>
+          {shownPractices.map(p => (
+            <div key={p.eventId} className={styles.reportRecap} data-none={p.recap ? undefined : 'none'}
+              data-upcoming={p.truth === 'upcoming' ? '' : undefined}>
               <div className={styles.reportRecapHead}>
                 <span className={styles.reportRecapDate}>
                   {formatInOrgZone(p.startsAt, { day: 'numeric', month: 'short' })}
                 </span>
                 <span className={styles.reportRecapTitle}>{p.name}</span>
-                {/* F03 — the truth label, from the one shared table. */}
-                <span className={styles.tagRead} data-truth={p.truth}>{PRACTICE_TRUTH_LABELS[p.truth].label}</span>
-                {p.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
+                {/* F03 — the truth label, from the one shared table. It is also the ONLY statement of a
+                    practice's silence now (R5b): the sentence under it said the same thing again. */}
+                <span className={styles.reportRecapChips}>
+                  <span className={styles.tagRead} data-truth={p.truth}>{PRACTICE_TRUTH_LABELS[p.truth].label}</span>
+                  {p.tags.map(t => <span key={t.id} className={styles.tagRead}>{t.name}</span>)}
+                </span>
                 {/* ⚠ THE PRACTICE'S OWN PAGE (practices re-evaluation stage 6, R5, 2026-09-18).
                     This report is always the team's WORKING season, and a finished practice's own
                     page IS the record's face now — "How it went" first, the sheet read-only — so
@@ -1013,22 +1047,33 @@ function PracticeReview({ data, base, tag, setTag, loading, reload }: {
                     a finished season's shelf only; this list no longer sends anyone to it. The link
                     says what the page holds when a recap exists. */}
                 {p.hasPlan && (
+                  /* On a phone the words give way to the corner chevron and its ::after makes the whole row
+                     the door; the element itself stays a 44px box, so the sweep measures a real target. The
+                     practice's name is in the accessible name — twelve identical "Open the plan" links said
+                     nothing about which one. */
                   <Link href={`${base}/practice/${p.eventId}`}
-                    className={styles.reportRecapLink}>
-                    {p.recap ? 'Open plan and recap →' : 'Open the plan →'}
+                    className={styles.reportRecapLink}
+                    aria-label={`${p.recap ? 'Open plan and recap' : 'Open the plan'} — ${p.name}`}>
+                    <span className={styles.reportRecapLinkWords}>{p.recap ? 'Open plan and recap →' : 'Open the plan →'}</span>
+                    <ChevronRight size={18} aria-hidden className={styles.reportRecapLinkChev} />
                   </Link>
                 )}
               </div>
-              {/* ⚠ Silence is STATED, never rendered blank: a practice with nothing written
-                  must not read as a practice where nothing happened — and a plan alone does not
-                  establish that it did (F03). An upcoming plan says ONE thing (G2 housekeeping) —
-                  its truth label's own line would have said it a second time. */}
-              <p>{p.recap ?? (p.truth === 'upcoming' ? 'The practice is still to come.' : 'A plan was saved. Nothing was written afterwards.')}</p>
+              {/* ⚠ SILENCE IS STATED BY THE CHIP, ONCE (R5b, owner 2026-09-24). F03's rule holds — a practice
+                  with nothing written must never read as one where nothing happened — and "Past plan · no
+                  recap" / "Upcoming plan" says it on every row. The sentence that sat here ("A plan was saved.
+                  Nothing was written afterwards." / "The practice is still to come.") said it a second time; the
+                  12 Sep ruling that cut the quiet meta line was the same say-it-once call, one step short. Only a
+                  RECAP — what actually happened — takes a line. */}
+              {p.recap && <p className={styles.reportRecapText}>{p.recap}</p>}
               {PRACTICE_TRUTH_LABELS[p.truth].meta && (
                 <p className={styles.devCardNote}>{PRACTICE_TRUTH_LABELS[p.truth].meta}</p>
               )}
             </div>
           ))}
+          </div>
+          </div>
+          )}
           <p className={styles.formHint} style={{ marginTop: '0.9rem' }}>
             A topic appearing in a plan does not prove that a specific player worked on or achieved a goal.
           </p>

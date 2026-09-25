@@ -236,9 +236,17 @@ the basis, the caveats and the doors — never a sentence inside a money column.
 
 ### 3.8 Responsive behaviour
 
-- **A LIST becomes cards at ≤ 640; a COMPARISON keeps its columns and scrolls** with the first
-  column pinned and a swipe hint that only shows while the content overflows (K-05). The test:
-  does a reader compare two figures on one row? grid. Does a reader read one record? cards.
+- **First: does it FIT?** (owner 2026-09-24, coaching from a phone · stage 6 · R1.) A table whose
+  columns fit the frame at 360 — **every figure on one line, the lead (a name) allowed two** — stays
+  a table on a phone, whatever kind it is. Fit means ON ONE LINE: a table that "fits" only by wrapping
+  its cells grows taller than its own cards (Insights → Coverage: 80px rows, 1,014px, against 550 as
+  cards). Attendance (Player · Games · Practices, 291 of 326px) is the case that forced this sentence —
+  it had been carded as a list, twelve × 148px, for a comparison down one column.
+- **If it does not fit: a LIST becomes cards at ≤ 640; a COMPARISON keeps its columns and scrolls**
+  with the first column pinned and a swipe hint that only shows while the content overflows (K-05) —
+  the portal's `CoachScrollX` (sticky), every cell on one line inside it. The test: does a reader
+  compare figures — **along a row or down a column**? grid. Does a reader read one record at a time
+  (a log, a roster)? cards.
 - In card mode: headings become `data-label` lines; **the lead cell is the card's title and takes
   no label when its value is a name a human wrote**; an icon-only action is corner-pinned, a
   worded action is a full-width `--tap-min` row (K-09). ⚠ Known limit of both card recipes: the

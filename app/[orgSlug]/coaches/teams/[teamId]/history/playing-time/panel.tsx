@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Scale, BarChart3 } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
+import CoachScrollX from '@/components/coaches/CoachScrollX';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import styles from '../../../../coaches.module.css';
 import type { SeasonLineupAnalytics } from '@/lib/lineup-season-analytics';
@@ -192,8 +193,15 @@ export function PlayingTimePanel({
           <p className={styles.insightsBasis}>One row per player, based on the {analytics.gamesWithLineup} game{analytics.gamesWithLineup === 1 ? '' : 's'} you&apos;ve saved a lineup for.</p>
 
           {/* data-sandbox-tour: the beat the demo's "who's actually been on the field" step rings.
-              Inert off a demo org — no styling, no behaviour. */}
-          <div className={styles.insightsTableWrap} data-sandbox-tour="playing-time">
+              Inert off a demo org — no styling, no behaviour. It sits on a wrapper now, because the
+              scroller below carries no attributes of its own.
+              ⚠ K-05 FINISHED (stage 6 · R2, owner 2026-09-24): every table on this report keeps its columns
+              on a phone INSIDE the portal's pinned scroller — the player pinned, a hint naming what is off
+              to the right, every cell on one line. Before this the names wrapped to three lines (rows 82 ·
+              76 · 104px) and the page was 4.5 screens; the one warning here ("over cap") sat in a column
+              nothing said existed. `.insightsTableWrap` rides on the scroller, so the frame is unchanged. */}
+          <div data-sandbox-tour="playing-time">
+          <CoachScrollX sticky hint="Swipe for sits, positions played and pitching" scrollerClassName={styles.insightsTableWrap}>
             <table className={styles.insightsTable}>
               <thead>
                 <tr>
@@ -215,7 +223,7 @@ export function PlayingTimePanel({
                   const pct = total > 0 ? Math.round((r.fieldInnings / total) * 100) : 0;
                   return (
                     <tr key={r.playerId}>
-                      <td>{r.name}</td>
+                      <td className={styles.insightsNameCell}>{r.name}</td>
                       {/* Bar first, figure last: the cell is right-aligned, so a trailing bar would
                           own the column's right edge and leave the digits floating under a heading
                           that no longer pointed at them. */}
@@ -240,6 +248,7 @@ export function PlayingTimePanel({
                 })}
               </tbody>
             </table>
+          </CoachScrollX>
           </div>
 
           {/* ══ POSITION RECENCY (Reports Portal P2) ═══════════════════════════════════════════
@@ -261,7 +270,7 @@ export function PlayingTimePanel({
               <p className={styles.insightsBasis}>
                 Days since each player last played each spot, from the {recency.gamesRead} game{recency.gamesRead === 1 ? '' : 's'} you&apos;ve saved a lineup for.
               </p>
-              <div className={styles.insightsTableWrap}>
+              <CoachScrollX sticky hint="Swipe for the other positions" scrollerClassName={styles.insightsTableWrap}>
                 <table className={styles.insightsTable}>
                   <thead>
                     <tr>
@@ -279,7 +288,7 @@ export function PlayingTimePanel({
                       .filter((m): m is PositionRecencyMatrix['rows'][number] => !!m)
                       .map(m => (
                         <tr key={m.playerId}>
-                          <td>{m.name}</td>
+                          <td className={styles.insightsNameCell}>{m.name}</td>
                           {recency.positions.map(p => {
                             const cell = m.byPosition[p.code];
                             return cell ? (
@@ -303,7 +312,7 @@ export function PlayingTimePanel({
                       ))}
                   </tbody>
                 </table>
-              </div>
+              </CoachScrollX>
               {/* ⚠ The legend explains the TINT; every cell still prints its own number, so the
                   colour is never the only channel carrying the reading. */}
               <div className={styles.ptMatrixLegend}>
@@ -335,7 +344,7 @@ export function PlayingTimePanel({
           {sportPack.pitcherPosition && analytics.armCare.length > 0 && (
             <section style={{ marginTop: '1.75rem' }}>
               <p className={styles.sectionKicker}>Arm care</p>
-              <div className={styles.insightsTableWrap}>
+              <CoachScrollX sticky hint="Swipe for the last outing and your cap" scrollerClassName={styles.insightsTableWrap}>
                 <table className={styles.insightsTable}>
                   <thead>
                     <tr>
@@ -353,7 +362,7 @@ export function PlayingTimePanel({
                         ?.byPosition[sportPack.pitcherPosition as string];
                       return (
                         <tr key={c.playerId}>
-                          <td>{c.name}</td>
+                          <td className={styles.insightsNameCell}>{c.name}</td>
                           <td>
                             {c.inningsPitched} {periods}
                             <span className={styles.mutedInline}> · {c.gamesPitched} game{c.gamesPitched === 1 ? '' : 's'}</span>
@@ -385,7 +394,7 @@ export function PlayingTimePanel({
                     })}
                   </tbody>
                 </table>
-              </div>
+              </CoachScrollX>
               {/* ⚠ THIS SENTENCE IS THE POINT OF THE WHOLE SECTION, not a footnote to it: it is what
                   stops a coach reading the figures above as a budget they are spending down. */}
               <p className={styles.insightsBasis} style={{ marginTop: '0.5rem' }}>
@@ -401,7 +410,7 @@ export function PlayingTimePanel({
               <p className={styles.insightsQuietText}>No batting order has been reused across multiple games yet — once you run one twice, its record shows up here.</p>
             ) : (
               <>
-                <div className={styles.insightsTableWrap}>
+                <CoachScrollX sticky hint="Swipe for the record" scrollerClassName={styles.insightsTableWrap}>
                   <table className={styles.insightsTable}>
                     <thead><tr><th>Batting order</th><th className={styles.insightsNumHead}>Record</th><th className={styles.insightsNumHead}>Times used</th></tr></thead>
                     <tbody>
@@ -420,7 +429,7 @@ export function PlayingTimePanel({
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </CoachScrollX>
                 <p className={styles.insightsBasis} style={{ marginTop: '0.5rem' }}>Records count only games with a score entered.</p>
               </>
             )}

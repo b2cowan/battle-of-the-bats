@@ -1,13 +1,17 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, use } from 'react';
 import Link from 'next/link';
-import { Award, Check, Printer, Trash2, Pencil } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Award, Check, Printer, Trash2, Pencil, MoreHorizontal } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
 import { canManageAwards } from '@/lib/coach-capabilities';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
+import CoachScrollX from '@/components/coaches/CoachScrollX';
+import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import type { RepPlayerAward, RepTeamAwardType } from '@/lib/types';
 
 // "Who's earning it?" — a new report (not a metric folded into an existing one, unlike the
@@ -43,6 +47,9 @@ export function AwardsPanel({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const { loading: ctxLoading } = useCoaches();
   const confirm = useConfirm();
+  const router = useRouter();
+  // The history's phone card carries ONE corner menu instead of three 19px icons (stage 6 · R2c).
+  const isPhone = useIsPhone();
 
   const [awardTypes, setAwardTypes] = useState<RepTeamAwardType[]>([]);
   const [awards, setAwards] = useState<RepPlayerAward[]>([]);
@@ -313,14 +320,18 @@ export function AwardsPanel({
                     totals across rows (who has more), which is the standard's test for a table, not
                     a card list; as a table it takes the frame, the heading row, the compact density
                     and the figure twin for free, with no recipe of its own. */}
-                <div className={styles.insightsTableWrap}>
+                {/* ⚠ NOT `sticky` (/review, 2026-09-24): the leaderboard FITS a phone (R1's first question), and
+                    its first column is the RANK — a pinned "1, 2, 3" with the names swiped away would tie a figure
+                    to no one. The scroller is only the safety net for an overflow, where its hint still shows; the
+                    name may wrap (`insightsNameCell`) rather than widen the table past the frame. */}
+                <CoachScrollX hint="Swipe for the totals" scrollerClassName={styles.insightsTableWrap}>
                   <table className={styles.insightsTable}>
                     <thead><tr><th className={styles.tdShrink}>#</th><th>Player</th><th>Awards</th><th className={styles.insightsNumHead}>Total</th></tr></thead>
                     <tbody>
                       {leaderboard.map((row, i) => (
                         <tr key={row.playerId}>
                           <td className={`${styles.tdShrink} ${styles.mutedInline}`}>{i + 1}</td>
-                          <td>{row.playerName}</td>
+                          <td className={styles.insightsNameCell}>{row.playerName}</td>
                           <td>
                             <span className={styles.lineupChips}>
                               {Array.from(row.byType.values()).map((t, ti) => (
@@ -333,28 +344,61 @@ export function AwardsPanel({
                       ))}
                     </tbody>
                   </table>
-                </div>
+                </CoachScrollX>
               </section>
 
               <section>
                 <p className={styles.sectionKicker}>Full history</p>
                 {deleteError && <p className={styles.errorText}>{deleteError}</p>}
-                <div className={styles.insightsTableWrap}>
+                {/* ⚠ A LOG IS A LIST (stage 6 · R2c, owner 2026-09-24): you read one award at a time, so on a
+                    phone the history takes the standard's list recipe — the player as the card's title, the award
+                    · the game · the date on one line, the note under it, and ONE 44px "⋯" in the corner (K-09).
+                    Before this it "fit" at 390 only by wrapping every cell into 88px rows, scrolled at 360, and
+                    stacked print · edit · remove at 19×22 with the bin directly under the pencil. The desktop
+                    keeps its table and its three icons. (This is the one report table that takes
+                    `.tableAsCards` — it is a record list, not a comparison.) */}
+                <div className={`${styles.insightsTableWrap} ${styles.tableAsCards}`}>
                   <table className={styles.insightsTable}>
                     <thead><tr><th>Player</th><th>Award</th><th>For</th><th className={styles.tdShrink}>Date</th><th>Note</th><th aria-hidden /></tr></thead>
                     <tbody>
-                      {visibleAwards.map(a => (
+                      {visibleAwards.map(a => {
+                        const awardText = `${a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}${a.awardType?.name ?? '—'}`;
+                        const forText = a.eventOpponent ? `vs ${a.eventOpponent}` : (a.tournamentLabel || 'General');
+                        const dateText = new Date(`${a.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
+                        const certificateHref = `${base}/history/awards/certificate?awardId=${a.id}`;
+                        return (
                         <tr key={a.id}>
-                          <td>{a.playerName}</td>
-                          <td>{a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}{a.awardType?.name ?? '—'}</td>
-                          <td className={styles.mutedInline}>{a.eventOpponent ? `vs ${a.eventOpponent}` : (a.tournamentLabel || 'General')}</td>
-                          <td className={styles.tdShrink}>{new Date(`${a.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</td>
-                          <td className={styles.mutedInline}>{a.note || '—'}</td>
-                          <td>
+                          <td className={styles.cardStackCell}>
+                            {a.playerName}
+                            <span className={styles.cardPhoneLine}>{awardText} · {forText} · {dateText}</span>
+                            {a.note && <span className={styles.cardPhoneLine}>{a.note}</span>}
+                          </td>
+                          <td className={styles.cardDesktopCell}>{awardText}</td>
+                          <td className={`${styles.mutedInline} ${styles.cardDesktopCell}`}>{forText}</td>
+                          <td className={`${styles.tdShrink} ${styles.cardDesktopCell}`}>{dateText}</td>
+                          <td className={`${styles.mutedInline} ${styles.cardDesktopCell}`}>{a.note || '—'}</td>
+                          <td className={styles.cardActionCorner}>
+                            {isPhone ? (
+                              /* A MENU, so it sits on top of the nav (owner, 2026-09-23). Remove still asks. */
+                              <CoachToolbarMenu
+                                variant="glyph"
+                                drawerOnPhone
+                                drawerTitle={`${a.playerName} · ${a.awardType?.name ?? 'Award'}`}
+                                label={`More for ${a.playerName}'s ${a.awardType?.name ?? 'award'}`}
+                                icon={<MoreHorizontal size={18} aria-hidden />}
+                              >
+                                {/* Print stays live while this award is being removed, exactly as the desktop's
+                                    print link does; Edit and Remove wait, as the desktop's two buttons do. */}
+                                <CoachToolbarMenuItem icon={<Printer size={16} aria-hidden />} label="Print certificate" onSelect={() => router.push(certificateHref)} />
+                                <CoachToolbarMenuItem icon={<Pencil size={16} aria-hidden />} label="Edit" disabled={busyId === a.id} onSelect={() => { setEditingAward(a); setGiveOpen(true); }} />
+                                <CoachToolbarMenuItem icon={<Trash2 size={16} aria-hidden />} label="Remove" disabled={busyId === a.id} onSelect={() => handleDelete(a)} />
+                              </CoachToolbarMenu>
+                            ) : (
+                            <>
                             {/* Two clicks from the history the coach already keeps (3.4). */}
                             <Link
                               title="Print certificate"
-                              href={`${base}/history/awards/certificate?awardId=${a.id}`}
+                              href={certificateHref}
                               style={{ color: 'var(--white-45)', padding: '0.2rem', display: 'inline-block' }}
                             >
                               <Printer size={13} aria-hidden />
@@ -380,9 +424,12 @@ export function AwardsPanel({
                             >
                               <Trash2 size={13} />
                             </button>
+                            </>
+                            )}
                           </td>
                         </tr>
-                      ))}
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

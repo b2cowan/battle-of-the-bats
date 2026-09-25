@@ -23154,4 +23154,33 @@ The hub's **QA walk · 5** tab (`COACH_MOBILE_EXPERIENCE_HUB.html`) is the check
 
 **Owed:** the walk (part K) · `/simplify` + `/review` · the commit (on the owner's say-so).
 
+## §232 · Coaching from a phone · stage 6 — **Reports: a report is read down its columns — Attendance is a table, the reports that swipe pin their first column and say what is off to the right, the tab you are on is in view, and Practice review opens on the last practice held, as short rows** — owner ruling 2026-09-24 (*"I agree with your recommendations, go ahead and build"*): R1 = A · R2 · R2b = A · R2c = A · R3 = A · R3b = A · R4 · R5 = A · R5b = A · R6 = A · T = A. Plan `COACH_MOBILE_EXPERIENCE_PLAN.md` §14 (§14.10 is the build record); hub https://claude.ai/artifact/WqHGTXUmrns81UN6e2PJvC — tab "6 · Reports" and "QA walk · 6". Built on dev 2026-09-24. No migration.
+
+**Why.** The one question a coach brings to the attendance report — *who is missing practice?* — was twelve stacked cards over three screens (1,775px of them). Playing time was 4.5 screens because every player's name wrapped to three lines, and its one warning ("over cap") sat in a column nothing said was there. Three of the seven reports opened with their own tab off the screen, under a title that only says "Insights". Practice review opened on next month's plan with the first practice held at the fold. And one season read **+6** on the Dashboard and **+1** on Results, one tap apart — Results' chart counted a scrimmage the line above it says is not counted.
+
+**What changed.** **R1** the table standard asks "does it fit?" first (every figure on one line at 360, the name allowed two); a comparison that doesn't fit keeps its columns — now "along a row or down a column". **R2** Attendance is a table on a phone; Results, Playing time and the Awards leaderboard sit in the portal's pinned scroller — the first column pinned, a hint naming what is off-screen, every cell on one line. **R2b** Results reads Date · Game · Result · Score · Type · Tags at every width. **R2c** Awards' full history is cards on a phone with one "⋯" (Print certificate · Edit · Remove). **R3** the tab row scrolls to the tab you are on (every hub on the shared row, Money too). **R3b** "Playing time", one spelling (the tab, eight help mentions; the staff label "Scouting Book"). **R4** notification previews stop at two lines on a phone. **R5 · R5b** Practice review folds the future into one row on a phone and each practice is a short row — the sentence that repeated its status chip is gone at every width. **R6** Results' chart and one-run tally follow the record rule.
+
+**Measured after** (probe `.probe/s6-built.mjs`, 94 checks at 390 / 360 touch and 768 / 1440 mouse): Attendance **2,707 → 1,496px**; Playing time **3,825 → 2,268** (all 13 summary rows on screen one); Results 968 → 916 with the answer on screen at 390 and 360; Awards' sub-44 controls on a phone 13 → the tab arrows only; Practice review **1,727 → 944**, the first practice held at 434px (was 759); notifications 2,341 → 2,075; the chart and the Dashboard both **+6**.
+
+**⚠ One change beyond the rulings, for the owner's veto (walk step D2):** the tab row's arrows are **44px wide at touch widths** (were 34; the desktop keeps 34). R3 made the left arrow appear on every report and Money tab past the first screenful — about thirty new sweep entries for a control T had parked; widening it was cheaper and clears the old right-arrow entries too.
+
+**⚠ Named, not fixed (older, proved by sweeping the committed panels):** the attendance receipts screen has never had a layout baseline ("Take attendance" 34px, the header "?" at 768); Awards at the 768 tablet band keeps the three 19px desktop icons (R2c ruled the phone); a Dashboard finding's baseline key embeds fixture text that changed; Money → Transactions' date-range menu 140px off the right edge; the practice library's search input 94px off the left edge (a peer's screens). The first sweep run **aborted on the memory floor** (the dev server at 6.8 GB after this session's probes) — the server was recycled through its supervisor and the sweep re-run clean of anything this stage introduced.
+
+### The walk — 27 steps in six parts, on the hub
+
+The hub's **QA walk · 6** tab is the checkable copy; plan §14.10 is the build record. Tick there, give each part a verdict, press **Build the walk summary** and paste the block back.
+
+- **A · Attendance is a table** (5) — the rows, the column that shows who is missing, the missed-sessions drill-in, the name, 360.
+- **B · Reports that swipe keep their columns** (6) — Results' pinned date and hint, its column order, **+6 on the chart**; Playing time pinned and one line; Arm care's warning a swipe away; the desktop.
+- **C · Awards** (4) — cards with one ⋯, the menu over the bar, Edit / Remove (asks) / Print, the desktop.
+- **D · The tab you are on is in view** (4) — Scouting Book, Awards, Development; **D2 the 44px arrows (your veto)**; Money; "Playing time".
+- **E · Practice review** (6) — the fold row, short rows with no repeated sentence, the whole row a door, the fold opening, a recap, the desktop.
+- **F · Notifications** (2) — two lines on a phone; the digest opens Insights.
+
+**Owed:** the walk · `/review` · `/docs` (the Insights and Practice review help: a table on a phone, the pinned scroller, the fold, the one-spelling "Playing time" already done) · the commit (private index, on the owner's say-so).
+
+---
+
+**§232 addendum — /review (high-risk tier, four lenses), same day:** 6 confirmed and fixed, 2 refuted. The ones you would notice: the **Awards leaderboard is no longer pinned** (its first column is the rank, so a swipe would have kept "1, 2, 3" and lost the names — it fits a phone anyway); the **two-line clamp now applies only to the week in review** (an admin's tournament announcement is free text whose page does not repeat it, so clamping it would have hidden a rain-delay notice with nowhere to read the rest); **Print stays available** while an award is being removed; the Practice review fold **closes when you change the tag filter**; a keyboard focus rings the whole practice row. Walk steps F1 and C2 read the same. Plan §14.12.
+
 ---

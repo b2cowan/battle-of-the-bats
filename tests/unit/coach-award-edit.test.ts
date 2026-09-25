@@ -114,10 +114,27 @@ describe('the schedule game drawer — awards given get their own controls', () 
 
 describe('the season report page — Edit sits beside the existing Print and Remove', () => {
   it('renders Pencil, Printer and Trash2 on each history row', () => {
+    // The whole history table, not a fixed-length slice: the phone's menu (below) sits in the same
+    // cell ahead of the desktop icons, and a 3,200-character window stopped short of them.
     const tableStart = reportPanel.indexOf('Full history');
-    const table = reportPanel.slice(tableStart, tableStart + 3200);
+    const table = reportPanel.slice(tableStart, reportPanel.indexOf('</tbody>', tableStart));
     assert.match(table, /<Pencil size=\{13\}/);
     assert.match(table, /<Printer size=\{13\}/);
     assert.match(table, /<Trash2 size=\{13\}/);
+  });
+
+  it('on a phone the same three live in ONE corner menu (coaching from a phone · stage 6 · R2c)', () => {
+    const tableStart = reportPanel.indexOf('Full history');
+    const table = reportPanel.slice(tableStart, reportPanel.indexOf('</tbody>', tableStart));
+    assert.match(table, /isPhone \? \(/, 'the phone branch is the menu, the desktop keeps its icons');
+    assert.match(table, /<CoachToolbarMenu[\s\S]*?drawerOnPhone/);
+    const menu = table.slice(table.indexOf('<CoachToolbarMenu'), table.indexOf('</CoachToolbarMenu>'));
+    for (const label of ['Print certificate', 'Edit', 'Remove']) {
+      assert.match(menu, new RegExp(`<CoachToolbarMenuItem .*label="${label}"`), `${label} is missing from the phone menu`);
+    }
+    assert.match(table, /label="Remove" disabled=\{busyId === a\.id\} onSelect=\{\(\) => handleDelete\(a\)\}/, 'Remove still goes through the confirm, and waits on a delete in flight');
+    // Print stays live during a delete, as the desktop's print link does (/review, 2026-09-24).
+    assert.doesNotMatch(menu, /label="Print certificate" disabled/);
+    assert.doesNotMatch(menu.slice(0, menu.indexOf('<CoachToolbarMenuItem')), /disabled=/, 'the whole menu is never disabled — only Edit and Remove wait');
   });
 });

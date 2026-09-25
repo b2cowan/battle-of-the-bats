@@ -12,6 +12,7 @@ import { formatRecord, tallyResults, splitByCompetition } from '@/lib/coach-seas
 import { competitionOf, countsTowardRecord, type Competition } from '@/lib/season-wrapped';
 import { COACH_GAME_EVENT_TYPES as GAME_EVENT_TYPES, sideWord } from '@/lib/coach-tournament-games';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
+import CoachScrollX from '@/components/coaches/CoachScrollX';
 
 /** The Type column's word for ONE row — the competition, singular (the split above the table
  *  says it in the plural). A scrimmage is a Game with the box ticked (mig 306). */
@@ -168,7 +169,13 @@ export function ResultsPanel({
   // By COMPETITION (game · tournament · scrimmage) — the same split Season's End draws; the
   // scrimmage line is listed and says it is not counted.
   const byType = splitByCompetition(finalized);
-  const scored = finalized.filter(e => e.teamScore != null && e.opponentScore != null);
+  /* ⚠ THE FIGURES READ THE RECORD RULE; THE ROWS LIST EVERYTHING (stage 6 · R6, owner 2026-09-24). The
+     chart and the one-run tally used to read `finalized` — scrimmages included — while the Dashboard's run
+     differential and the header line above ("Scrimmages 0-1 (not counted)") read `countsTowardRecord`, so
+     one season read +6 on the Dashboard and +1 here, one tap apart: a reader the scrimmage flag's sweep
+     (mig 306) missed. The table still LISTS the scrimmage; only the figures follow the rule. */
+  const counted = finalized.filter(countsTowardRecord);
+  const scored = counted.filter(e => e.teamScore != null && e.opponentScore != null);
   const close = tally(scored.filter(e => Math.abs((e.teamScore ?? 0) - (e.opponentScore ?? 0)) === 1));
   const closeGames = close.w + close.l + close.t;
 
@@ -176,7 +183,7 @@ export function ResultsPanel({
   // is sorted newest-first for the table above; the chart needs oldest → newest so the line and
   // the result strip both read left-to-right chronologically, and the strip's tone array must be
   // the SAME chronological order the momentum reduction indexes into.
-  const chronological = [...finalized].reverse();
+  const chronological = [...counted].reverse();
   const trendSeries = computeSeasonMomentum(chronological);
   const trendStrip: ChartResultTone[] = chronological.map(e => e.result);
 
@@ -261,8 +268,8 @@ export function ResultsPanel({
                 sampleNoun="game"
                 emptyDescription="The trend line appears once a game gets a final score."
                 strip={trendStrip}
-                startLabel={formatStoredDate(orgDayKey(chronological[0].startsAt), { withYear: false })}
-                endLabel={formatStoredDate(orgDayKey(chronological[chronological.length - 1].startsAt), { withYear: false })}
+                startLabel={chronological.length ? formatStoredDate(orgDayKey(chronological[0].startsAt), { withYear: false }) : undefined}
+                endLabel={chronological.length ? formatStoredDate(orgDayKey(chronological[chronological.length - 1].startsAt), { withYear: false }) : undefined}
               />
 
               {tagChips.length > 0 && (
@@ -289,19 +296,25 @@ export function ResultsPanel({
                 </div>
               )}
 
-              <div className={styles.insightsTableWrap}>
+              {/* ⚠ K-05 FINISHED (stage 6 · R2, owner 2026-09-24): a comparison keeps its columns on a phone and
+                  scrolls INSIDE the portal's pinned scroller — the date pinned, a hint naming what is off to the
+                  right, every cell on one line (`.insightsTable` at ≤640). `.insightsTableWrap` rides on the
+                  scroller, so the frame is still the table frame (F-24).
+                  ⚠ RESULT AND SCORE BESIDE THE GAME, TYPE AFTER THEM (R2b), at every width: Date · Game · Result ·
+                  Score is 280px, so the answer is on screen at 390 and 360 and Type is what you swipe for. */}
+              <CoachScrollX sticky hint={tagChips.length > 0 ? 'Swipe for type and tags' : 'Swipe for the game type'} scrollerClassName={styles.insightsTableWrap}>
                 <table className={styles.insightsTable}>
-                  <thead><tr><th className={styles.tdShrink}>Date</th><th>Game</th><th>Type</th><th>Result</th><th className={styles.insightsNumHead}>Score</th>{tagChips.length > 0 && <th>Tags</th>}</tr></thead>
+                  <thead><tr><th className={styles.tdShrink}>Date</th><th>Game</th><th>Result</th><th className={styles.insightsNumHead}>Score</th><th>Type</th>{tagChips.length > 0 && <th>Tags</th>}</tr></thead>
                   <tbody>
                     {visibleGames.map(e => (
                       <tr key={e.id}>
                         <td className={styles.tdShrink}>{new Date(e.startsAt).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' })}</td>
                         <td>{gameTitle(e)}</td>
-                        <td className={styles.mutedInline}>{typeLabel(e)}</td>
                         <td><span className={styles.wltPip} data-r={e.result ?? undefined}>{e.result === 'win' ? 'W' : e.result === 'loss' ? 'L' : 'T'}</span></td>
                         <td className={styles.insightsNum}>
                           {e.teamScore != null && e.opponentScore != null ? `${e.teamScore}–${e.opponentScore}` : '—'}
                         </td>
+                        <td className={styles.mutedInline}>{typeLabel(e)}</td>
                         {tagChips.length > 0 && (
                           <td>
                             {(tagsByEventId[e.id] ?? []).length > 0 ? (
@@ -320,7 +333,7 @@ export function ResultsPanel({
                     ))}
                   </tbody>
                 </table>
-              </div>
+              </CoachScrollX>
             </>
           )}
 

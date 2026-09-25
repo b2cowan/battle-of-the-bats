@@ -27,6 +27,16 @@ export interface FeedEmptyCopy {
 
 const DEFAULT_EMPTY: FeedEmptyCopy = { headline: 'No notifications yet' };
 
+/**
+ * The notifications whose preview stops at two lines on a phone (coaching from a phone · stage 6 · R4,
+ * owner 2026-09-24): ONLY those whose linked page says the rest. The week in review opens the Insights
+ * Dashboard, whose "What stands out" states the same findings from the same engine. ⚠ Not every body
+ * (/review, 2026-09-24): a tournament announcement is free text an admin typed and its public page does
+ * not repeat it — clamping it would hide the message with nowhere to read it. Add a type here only when
+ * its page repeats its body.
+ */
+const CLAMPED_ON_A_PHONE: ReadonlySet<AppNotification['eventType']> = new Set(['coach_insights_digest']);
+
 const CHIPS: { key: ZoneFilter; label: string }[] = [
   { key: 'all',      label: 'All' },
   { key: 'needs',    label: 'Needs attention' },
@@ -62,7 +72,7 @@ export default function NotificationFeedBody({
         <span className={styles.icon}>{iconFor(n.eventType)}</span>
         <div className={styles.content}>
           <p className={styles.itemTitle}>{n.title}</p>
-          {n.body && <p className={styles.itemBody}>{n.body}</p>}
+          {n.body && <p className={`${styles.itemBody}${CLAMPED_ON_A_PHONE.has(n.eventType) ? ` ${styles.itemBodyClamp}` : ''}`}>{n.body}</p>}
           {isAct ? (
             /* Clear rides the meta line rather than the row's right edge: it costs no width, so a
                two-line body never squeezes to make room for it (mockup 9427bc24, plate 04-C). Both

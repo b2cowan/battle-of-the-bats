@@ -9,8 +9,9 @@
    already own lives here instead, where its blast radius is one screen.
 
    The table itself is NOT here: it is the shared `.tableWrap / .table / .th / .td / .thNum /
-   .tdNum / .tableAsCards` idiom from coaches.module.css, unchanged, so this report opens the
-   same way as every list table in the portal (and stacks into the same cards at 640).
+   .tdNum` idiom from coaches.module.css, unchanged, so this report opens the same way as every
+   list table in the portal. ⚠ It no longer stacks into cards at 640 (stage 6 · R2, 2026-09-24):
+   its three columns fit a 360 phone on one line, so it stays a table there too.
    ════════════════════════════════════════════════════════════════════════════════════════ */
 
 /* The ONE empty state, alone on the page (owner rule, 2026-08-15): "a page shows one empty
@@ -196,10 +197,9 @@
   color: var(--text-tertiary);
 }
 
-/* Stacked-card widths: the receipts become their own card directly under the player's, so the
-   tint has to survive the reflow and the row needs a little pull-up to read as attached. */
+/* On a phone the receipts are a full-width row under the player's, inside the same table (the
+   stacked-card pull-up and zero padding went with the cards, 2026-09-24); only the day column
+   gives up its desktop minimum so a long session label still fits beside it. */
 @media (max-width: 640px) {
-  .receiptsRow { margin-top: -0.5rem; }
-  .receiptsRow > .receiptsCell { padding-left: 0; padding-right: 0; }
   .receiptsDay { min-width: 0; }
 }
