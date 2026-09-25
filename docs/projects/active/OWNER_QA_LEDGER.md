@@ -23352,7 +23352,7 @@ Sign in on your phone as the UAT head coach → UAT Test Team → Practice plans
 - **M12 · Optional** — a block made from a drill with a note: the note, the headings, Setup and Equipment, no one-row list (delete the block after).
 - **M13 · A computer** — no bar; a station has Back.
 
-## §238 · Club Tier Readiness · Stage 0 ground truth — **a real club to walk, the dead doors open, and the first end-to-end walk of the Club plan** — Stage 0 of `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` (kickoff `CLUB_TIER_STAGE0_KICKOFF_PROMPT.md`), built on dev 2026-09-25. Hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 — tab **QA Walk** is the checkable copy (48 steps, parts A–G).
+## §238 ✅ Club Tier Readiness · Stage 0 ground truth — **a real club to walk, the dead doors open, and the first end-to-end walk of the Club plan** — Stage 0 of `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` (kickoff `CLUB_TIER_STAGE0_KICKOFF_PROMPT.md`), built on dev 2026-09-25. Hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 — tab **QA Walk** is the checkable copy (48 steps, parts A–G).
 
 **Why.** Nobody had walked the club side since the June J4/J10 audits, and it could not be walked: the only club fixture had two people and nothing else, several money controls had answered 401 since the 2026-06-14 org-context hardening, and the tryouts card looped families back home.
 
@@ -23372,7 +23372,9 @@ Sign in on your phone as the UAT head coach → UAT Test Team → Practice plans
 
 **Not walkable in a browser, machine-covered instead:** the cross-club id checks, the throttle and the email escaping (`tests/unit/league-season-scope-guard.test.ts`, mutation-tested); the caller check (`check:org-slug-callers`, mutation-tested against the four original bugs).
 
-**Committed 2026-09-25:** the security fix `a227fd64` (its own commit, so it can be promoted alone) · the sweep + build check `47455d77` · the fixture, UAT harness and docs with this entry. Walk owed.
+**Committed 2026-09-25:** the security fix `a227fd64` (its own commit, so it can be promoted alone) · the sweep + build check `47455d77` · the fixture, UAT harness and docs with this entry (`00466e4c`).
+
+**§238 · ✅ WALKED + PASSED 2026-09-25** (owner: *"you can mark this QA as complete and commit"* — marked on the owner's word, no paste-back, so which of the 48 steps were ticked is not on record). The walls the walk exists to RECORD stand as recorded, each owned by a later stage: the treasurer bounced from Rep Teams / Cost Allocations / Payment Requests and the allocation wizard's empty team list (C03/B02 → Stage 1, ruling D8); no Treasurer / Registrar / Coach in the invite list (A02/B01 → Stages 1–2); admin refused Org Settings and the audit log (owner-only → Stage 1, D8); the overdue installment nothing calls overdue (C06 → Stage 3a); the tournament-first public home (F03 → Stage 4). Stage 0's exit is met.
 
 ---
 
