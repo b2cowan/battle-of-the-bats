@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, getRegistrationsForDivision, bulkAssignTeams } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { LeagueDraftState } from '@/lib/types';
+import { divisionInSeason, registrationsInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -20,7 +21,11 @@ async function loadDraft(seasonId: string): Promise<LeagueDraftState | null> {
     .select('draft_state')
     .eq('id', seasonId)
     .single();
-  return (data?.draft_state as LeagueDraftState | null) ?? null;
+  const draft = (data?.draft_state as LeagueDraftState | null) ?? null;
+  // A draft saved before the ownership checks below existed could name another org's division;
+  // every read of the remaining-player pool goes through here, so it is not this season's draft.
+  if (draft && !(await divisionInSeason(seasonId, draft.divisionId))) return null;
+  return draft;
 }
 
 async function saveDraft(seasonId: string, state: LeagueDraftState | null): Promise<void> {
@@ -85,6 +90,14 @@ export const POST = withObservability(async (req: Request,
     if (!divisionId || !Array.isArray(pickOrder) || pickOrder.length === 0) {
       return NextResponse.json({ error: 'divisionId and pickOrder required' }, { status: 400 });
     }
+    // Ownership: `start` returns the division's full registration rows (guardian contacts, dates
+    // of birth, notes) — a foreign division id must read as not found (plan I01).
+    if (!(await divisionInSeason(seasonId, divisionId))) {
+      return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+    }
+    if (!(await teamsInSeason(seasonId, pickOrder, { divisionId }))) {
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+    }
 
     const { currentTeamId, round } = advance(1, pickOrder);
     const newDraft: LeagueDraftState = {
@@ -113,6 +126,10 @@ export const POST = withObservability(async (req: Request,
 
     const draft = await loadDraft(seasonId);
     if (!draft) return NextResponse.json({ error: 'No active draft' }, { status: 409 });
+    // The pick must come from this draft's pool — this season, and this draft's division.
+    if (!(await registrationsInSeason(seasonId, [registrationId], { divisionId: draft.divisionId }))) {
+      return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
+    }
 
     const pickedIds = new Set(draft.picks.map(p => p.registrationId));
     if (pickedIds.has(registrationId)) {
@@ -161,6 +178,15 @@ export const POST = withObservability(async (req: Request,
   if (action === 'finalize') {
     const draft = await loadDraft(seasonId);
     if (!draft) return NextResponse.json({ error: 'No active draft' }, { status: 409 });
+
+    // Picks were checked one at a time as they were made; re-check the set here, because finalize
+    // is the write and a draft saved before those checks existed carries unchecked ids.
+    if (
+      !(await registrationsInSeason(seasonId, draft.picks.map(p => p.registrationId), { divisionId: draft.divisionId })) ||
+      !(await teamsInSeason(seasonId, draft.picks.map(p => p.teamId), { divisionId: draft.divisionId }))
+    ) {
+      return NextResponse.json({ error: 'This draft names a player or team outside the season' }, { status: 409 });
+    }
 
     if (draft.picks.length > 0) {
       await bulkAssignTeams(

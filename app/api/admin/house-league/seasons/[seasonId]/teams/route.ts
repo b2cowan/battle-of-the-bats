@@ -6,6 +6,7 @@ import { getLeagueSeasonById, createLeagueTeam, getTeamsForSeason, getTeamsForDi
 import { houseLeagueTeamCap, leagueCapHit } from '@/lib/free-floor';
 import { writePlatformEvent } from '@/lib/platform-events';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { divisionInSeason } from '@/lib/league-season-scope';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -27,6 +28,10 @@ export const GET = withObservability(async (req: Request,
   const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
   if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
   const divisionId = url.searchParams.get('divisionId');
+  // Ownership: a division filter reads teams by division id alone — it must be this season's.
+  if (divisionId && !(await divisionInSeason(seasonId, divisionId))) {
+    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  }
 
   const teams = divisionId
     ? await getTeamsForDivision(divisionId)
@@ -67,6 +72,10 @@ export const POST = withObservability(async (req: Request,
   const body = await req.json();
   const { divisionId } = body;
   if (!divisionId) return NextResponse.json({ error: 'divisionId required' }, { status: 400 });
+  // Ownership: a team filed under a foreign division would appear in that org's division lists.
+  if (!(await divisionInSeason(seasonId, divisionId))) {
+    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  }
 
   // Support single { name } or bulk { teams: [{name}] }
   const defs: Array<{ name: string; color?: string | null; coachName?: string | null }> =

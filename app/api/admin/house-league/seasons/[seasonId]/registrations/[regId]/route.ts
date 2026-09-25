@@ -14,6 +14,7 @@ import {
   getLeagueSeasonLedger,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { divisionInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import {
   leagueAdminApprovedHtml,
   leagueAdminWaitlistedHtml,
@@ -168,6 +169,13 @@ export const PATCH = withObservability(async (req: Request,
   // ── divisionId / teamId reassignment ────────────────────────────────────────
   if ('divisionId' in body || 'teamId' in body) {
     if (!isAdminOrOwner) return forbidden();
+    // Ownership: null clears; anything else must be this season's division / team (plan I01).
+    if (body.divisionId != null && !(await divisionInSeason(seasonId, body.divisionId))) {
+      return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+    }
+    if (body.teamId != null && !(await teamsInSeason(seasonId, [body.teamId]))) {
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+    }
     const patch: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if ('divisionId' in body) patch.division_id = body.divisionId ?? null;
     if ('teamId'     in body) patch.team_id     = body.teamId     ?? null;

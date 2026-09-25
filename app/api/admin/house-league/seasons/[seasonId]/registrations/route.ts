@@ -4,6 +4,7 @@ import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, createRegistration, createLeagueRegistrationFeeEntry } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { divisionInSeason } from '@/lib/league-season-scope';
 import { notify } from '@/lib/notify';
 import type { LeagueRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
@@ -109,6 +110,10 @@ export const POST = withObservability(async (req: Request,
   }
   if (!divisionId) {
     return NextResponse.json({ error: 'divisionId is required for manual registrations' }, { status: 400 });
+  }
+  // Ownership: a registration filed under a foreign division would land in that org's draft pool.
+  if (!(await divisionInSeason(seasonId, divisionId))) {
+    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
   }
 
   const statusRaw = typeof body.status === 'string' ? body.status : 'active';

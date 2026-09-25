@@ -68,6 +68,9 @@ export default async function ArchiveDetailPage({
   ]);
   if (!archive) notFound();
   if (!org || org.subscriptionStatus === 'canceled') notFound();
+  // The archive is loaded by id alone — without this, any org's archive rendered under the name
+  // in the URL (Club Tier Readiness F07).
+  if (archive.orgId !== org.id) notFound();
 
   const ctx = await getAuthContextWithScope().catch(() => null);
   const isAdmin = ctx?.org?.id === archive.orgId;

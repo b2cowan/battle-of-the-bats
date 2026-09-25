@@ -10,6 +10,7 @@ import { isOrgBillingSuspended } from '@/lib/org-billing-access';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { withObservability } from '@/lib/observability';
 import { clientIpFrom } from '@/lib/rate-limit';
+import { throttlePublicForm, throttlePublicFormRecipient } from '@/lib/public-form-throttle';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,6 +28,9 @@ function str(v: unknown, max?: number): string | null {
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; teamSlug: string; yearId: string }> },) => {
   const { orgSlug, teamSlug, yearId } = await params;
+
+  const throttled = throttlePublicForm(req);
+  if (throttled) return throttled;
 
   const org = await getOrganizationBySlug(orgSlug);
   if (!org) return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
@@ -100,6 +104,9 @@ export const POST = withObservability(async (req: Request,
   if (Object.keys(errors).length > 0) {
     return NextResponse.json({ errors }, { status: 400 });
   }
+
+  const recipientThrottled = throttlePublicFormRecipient(guardianEmail!);
+  if (recipientThrottled) return recipientThrottled;
 
   const registration = await createRepTryoutRegistration({
     programYearId:    programYear.id,

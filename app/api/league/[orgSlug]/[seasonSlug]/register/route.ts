@@ -13,6 +13,7 @@ import {
 } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { withObservability } from '@/lib/observability';
+import { throttlePublicForm, throttlePublicFormRecipient } from '@/lib/public-form-throttle';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,6 +35,9 @@ function str(v: unknown, max?: number): string | null {
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> },) => {
   const { orgSlug, seasonSlug } = await params;
+
+  const throttled = throttlePublicForm(req);
+  if (throttled) return throttled;
 
   // 1. Resolve org + season
   // Gate the public register API exactly like the league index/sub-pages (audit J3-068):
@@ -134,6 +138,11 @@ export const POST = withObservability(async (req: Request,
       .eq('status', 'waitlisted');
     waitlistPosition = (wlCount ?? 0) + 1;
   }
+
+  // Last gate before the write + mail, so a family retrying after a late refusal (a stale
+  // division, a full season) has not spent any of its budget on an email that never went.
+  const recipientThrottled = throttlePublicFormRecipient(guardianEmail!);
+  if (recipientThrottled) return recipientThrottled;
 
   // 6. Insert registration
   const waiverAcceptedAt = season.waiverText && waiverAccepted ? new Date().toISOString() : null;

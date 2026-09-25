@@ -402,6 +402,20 @@ function escapeEmailHtml(value: string): string {
 }
 
 /**
+ * Every string field of a builder's params, HTML-escaped; numbers pass through. For the builders
+ * whose every field is family- or organizer-typed text — the house-league and tryout emails, which
+ * a PUBLIC form triggers with names the submitter chose and sends to an address the submitter chose
+ * (trust-plan defect 6 / Club Tier Readiness I01, 2026-09-25). Escape once at the top so no single
+ * interpolation can be missed; `tests/unit/league-season-scope-guard.test.ts` pins every such
+ * builder to it.
+ */
+function escapeEmailFields<T extends object>(p: T): T {
+  const out: Record<string, unknown> = {};
+  for (const [k, v] of Object.entries(p)) out[k] = typeof v === 'string' ? escapeEmailHtml(v) : v;
+  return out as T;
+}
+
+/**
  * Organizer announcement broadcast (Communications → email channel). Wraps the organizer's
  * plain-text title + body in the FieldLogicHQ shell with a contact line and a portal link, so a
  * coach gets a branded, actionable email instead of a raw, unstyled, link-less blob. The body is
@@ -635,7 +649,7 @@ export function gameDayReminderHtml(p: {
 
 // ── House League registration emails ──────────────────────────────────────────
 
-export function leagueRegistrationApprovedHtml(p: {
+export function leagueRegistrationApprovedHtml(input: {
   playerFirstName: string;
   playerLastName: string;
   guardianFirstName: string;
@@ -644,6 +658,7 @@ export function leagueRegistrationApprovedHtml(p: {
   registrationId: string;
   contactEmail?: string;
 }) {
+  const p = escapeEmailFields(input);
   const ref = p.registrationId.slice(0, 8).toUpperCase();
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
@@ -662,7 +677,7 @@ export function leagueRegistrationApprovedHtml(p: {
   `);
 }
 
-export function leagueRegistrationPendingHtml(p: {
+export function leagueRegistrationPendingHtml(input: {
   playerFirstName: string;
   playerLastName: string;
   guardianFirstName: string;
@@ -671,6 +686,7 @@ export function leagueRegistrationPendingHtml(p: {
   registrationId: string;
   contactEmail?: string;
 }) {
+  const p = escapeEmailFields(input);
   const ref = p.registrationId.slice(0, 8).toUpperCase();
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received</h2>
@@ -689,7 +705,7 @@ export function leagueRegistrationPendingHtml(p: {
   `);
 }
 
-export function leagueRegistrationWaitlistHtml(p: {
+export function leagueRegistrationWaitlistHtml(input: {
   playerFirstName: string;
   playerLastName: string;
   guardianFirstName: string;
@@ -699,6 +715,7 @@ export function leagueRegistrationWaitlistHtml(p: {
   registrationId: string;
   contactEmail?: string;
 }) {
+  const p = escapeEmailFields(input);
   const ref = p.registrationId.slice(0, 8).toUpperCase();
   return wrap(`
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
@@ -720,7 +737,7 @@ export function leagueRegistrationWaitlistHtml(p: {
 
 // ── House League admin-triggered status-change emails ─────────────────────────
 
-export function leagueAdminApprovedHtml(p: {
+export function leagueAdminApprovedHtml(input: {
   playerFirstName: string;
   playerLastName: string;
   guardianFirstName: string;
@@ -729,6 +746,7 @@ export function leagueAdminApprovedHtml(p: {
   registrationId: string;
   contactEmail?: string;
 }) {
+  const p = escapeEmailFields(input);
   const ref = p.registrationId.slice(0, 8).toUpperCase();
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
@@ -747,7 +765,7 @@ export function leagueAdminApprovedHtml(p: {
   `);
 }
 
-export function leagueAdminWaitlistedHtml(p: {
+export function leagueAdminWaitlistedHtml(input: {
   playerFirstName: string;
   playerLastName: string;
   guardianFirstName: string;
@@ -757,6 +775,7 @@ export function leagueAdminWaitlistedHtml(p: {
   waitlistPosition: number;
   contactEmail?: string;
 }) {
+  const p = escapeEmailFields(input);
   const ref = p.registrationId.slice(0, 8).toUpperCase();
   return wrap(`
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">Added to Waitlist</h2>
@@ -776,7 +795,7 @@ export function leagueAdminWaitlistedHtml(p: {
   `);
 }
 
-export function leagueWaitlistPromotedHtml(p: {
+export function leagueWaitlistPromotedHtml(input: {
   playerFirstName: string;
   playerLastName: string;
   guardianFirstName: string;
@@ -785,6 +804,7 @@ export function leagueWaitlistPromotedHtml(p: {
   registrationId: string;
   contactEmail?: string;
 }) {
+  const p = escapeEmailFields(input);
   const ref = p.registrationId.slice(0, 8).toUpperCase();
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 You're Off the Waitlist!</h2>
@@ -803,7 +823,7 @@ export function leagueWaitlistPromotedHtml(p: {
   `);
 }
 
-export function leagueRegistrationDeclinedHtml(p: {
+export function leagueRegistrationDeclinedHtml(input: {
   playerFirstName: string;
   playerLastName: string;
   guardianFirstName: string;
@@ -812,6 +832,7 @@ export function leagueRegistrationDeclinedHtml(p: {
   registrationId: string;
   contactEmail?: string;
 }) {
+  const p = escapeEmailFields(input);
   const contact = p.contactEmail ?? ADMIN_EMAIL;
   return wrap(`
     <h2 style="color:#EF4444;font-size:1.4rem;margin:0 0 1rem;">Registration Update</h2>
@@ -829,7 +850,7 @@ export function leagueRegistrationDeclinedHtml(p: {
 
 // ── Rep Teams tryout registration email ──────────────────────────────────────
 
-export function tryoutRegistrationConfirmationHtml(p: {
+export function tryoutRegistrationConfirmationHtml(input: {
   guardianFirstName: string;
   playerFirstName: string;
   playerLastName: string;
@@ -838,6 +859,7 @@ export function tryoutRegistrationConfirmationHtml(p: {
   registrationId: string;
   contactEmail?: string;
 }) {
+  const p = escapeEmailFields(input);
   const ref = p.registrationId.slice(0, 8).toUpperCase();
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tryout Application Received</h2>

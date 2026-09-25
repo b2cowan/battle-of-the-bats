@@ -3,6 +3,7 @@ import { getLeagueSeasonBySlug, getDivisionsForSeason } from '@/lib/db';
 import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { throttlePublicForm } from '@/lib/public-form-throttle';
 
 export const dynamic = 'force-dynamic';
 
@@ -22,10 +23,16 @@ export const dynamic = 'force-dynamic';
  * Privacy: the response is deliberately uniform — an invalid email/code pair and a
  * never-registered email both return `{ registrations: [] }`, so the endpoint can't be
  * used to enumerate which emails are registered.
+ *
+ * Throttled (2026-09-25): the reference code is the only secret, so an unlimited endpoint let a
+ * caller who knows an email walk the code space at will.
  */
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ orgSlug: string; seasonSlug: string }> },) => {
   const { orgSlug, seasonSlug } = await params;
+
+  const throttled = throttlePublicForm(req);
+  if (throttled) return throttled;
 
   const org = await resolvePublicLeagueContext(orgSlug);
   if (!org) return NextResponse.json({ error: 'Not found' }, { status: 404 });

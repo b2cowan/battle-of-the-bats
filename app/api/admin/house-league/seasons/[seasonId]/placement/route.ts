@@ -10,6 +10,7 @@ import {
   bulkAssignTeams,
 } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { divisionInSeason, registrationsInSeason, teamsInSeason } from '@/lib/league-season-scope';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -51,6 +52,12 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   }
 
+  // Ownership: every action below writes `team_id` on registrations — the division, and any
+  // registration or team id in the body, must be this season's (plan I01).
+  if (!(await divisionInSeason(seasonId, divisionId))) {
+    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  }
+
   if (action === 'randomize') {
     const teams = await getTeamsForDivision(divisionId);
     if (!teams.length) {
@@ -73,6 +80,12 @@ export const POST = withObservability(async (req: Request,
     if (!registrationId) {
       return NextResponse.json({ error: 'registrationId required' }, { status: 400 });
     }
+    if (!(await registrationsInSeason(seasonId, [registrationId]))) {
+      return NextResponse.json({ error: 'Registration not found' }, { status: 404 });
+    }
+    if (teamId && !(await teamsInSeason(seasonId, [teamId]))) {
+      return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+    }
     if (teamId) {
       await assignRegistrationToTeam(registrationId, teamId);
     } else {
@@ -87,8 +100,14 @@ export const POST = withObservability(async (req: Request,
 
   if (action === 'bulk_assign') {
     const { assignments } = body;
-    if (!Array.isArray(assignments)) {
+    if (!Array.isArray(assignments) || assignments.some(a => !a || typeof a !== 'object')) {
       return NextResponse.json({ error: 'assignments array required' }, { status: 400 });
+    }
+    if (
+      !(await registrationsInSeason(seasonId, assignments.map(a => a.registrationId))) ||
+      !(await teamsInSeason(seasonId, assignments.map(a => a.teamId)))
+    ) {
+      return NextResponse.json({ error: 'Registration or team not found' }, { status: 404 });
     }
     await bulkAssignTeams(assignments);
     return NextResponse.json({ assigned: assignments.length });

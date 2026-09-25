@@ -23,6 +23,9 @@ export const GET = withObservability(async (_req: Request,
   if (ctx!.role !== 'owner' && ctx!.role !== 'league_admin') return forbidden();
 
   const { seasonId } = await params;
+  // Ownership: the log is read by season id alone — the season must be this org's.
+  const season = await getLeagueSeasonById(seasonId, ctx!.org.id);
+  if (!season) return NextResponse.json({ error: 'Season not found' }, { status: 404 });
   try {
     const log = await getLeagueEmailLog(seasonId);
     return NextResponse.json({ log });

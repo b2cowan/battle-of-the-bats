@@ -7,6 +7,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, getPracticesForTeam, createPractices } from '@/lib/db';
 import { resolveLeagueVenueSelection, checkLeagueBookings, resolveEndInstant } from '@/lib/league-venue';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { divisionInSeason } from '@/lib/league-season-scope';
 import { withObservability } from '@/lib/observability';
 import { zonedWallClockToUtc } from '@/lib/timezone';
 
@@ -108,6 +109,9 @@ export const POST = withObservability(async (req: NextRequest,
   if (!teamId) return NextResponse.json({ error: 'teamId required' }, { status: 400 });
   const team = await verifyTeamInSeason(teamId, seasonId);
   if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+  if (divisionId != null && !(await divisionInSeason(seasonId, divisionId))) {
+    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
+  }
 
   // Field comes from the org venue library (display string derived server-side); free text
   // only when nothing is picked — same rules as games.

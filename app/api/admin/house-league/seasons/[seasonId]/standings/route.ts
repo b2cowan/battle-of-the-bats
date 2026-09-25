@@ -3,6 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth'
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getLeagueSeasonById, computeStandings } from '@/lib/db';
+import { divisionInSeason } from '@/lib/league-season-scope';
 import { withObservability } from '@/lib/observability';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
@@ -26,6 +27,10 @@ export const GET = withObservability(async (req: Request,
   const divisionId = url.searchParams.get('divisionId');
   if (!divisionId) {
     return NextResponse.json({ error: 'divisionId required' }, { status: 400 });
+  }
+  // Ownership: standings are read by division id alone — it must be this season's (plan I01).
+  if (!(await divisionInSeason(seasonId, divisionId))) {
+    return NextResponse.json({ error: 'Division not found' }, { status: 404 });
   }
 
   const standings = await computeStandings(divisionId);
