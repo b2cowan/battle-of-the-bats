@@ -914,7 +914,11 @@ export default function CoachPracticePlanPage({
   deskActions.push({ key: 'print', testId: 'print-the-sheet', icon: <Printer size={14} aria-hidden />, label: 'Print the sheet', onSelect: handlePrint });
   // ⚠ `data?.` here where the JSX below says `data.` — this list is built ABOVE the render's own
   // `!data ? null :` narrowing, so the optional chain is the same gate, not a looser one.
-  if (canWrite && !isPracticeRecord && (data?.staffPeople?.length ?? 0) > 1) {
+  // ONE gate for every way into the send sheet — this item and the desk sent line's "Send again".
+  // They were two, and a past practice being edited offered "Send again" beside a toolbar with no
+  // Send in it (owner, 2026-09-25, looking for it in ⋯).
+  const canSend = canWrite && !isPracticeRecord && (data?.staffPeople?.length ?? 0) > 1;
+  if (canSend) {
     deskActions.push({ key: 'send', testId: 'send-to-staff', icon: <Send size={14} aria-hidden />, label: 'Send to staff', onSelect: () => setSendOpen(true) });
   }
 
@@ -996,10 +1000,10 @@ export default function CoachPracticePlanPage({
     </Link>
   ) : null;
 
-  /* N2 · the sent state's words (mig 303's stamp) — ONE copy for the desk line and the phone row, so
-     the one-spelling rule cannot be broken by a second hand-written sentence. A hand-pick's line
-     NAMES them — "Sent to Jen Okafor" — so tomorrow's reader knows who has it and who doesn't; the
-     count and the word only when a name no longer resolves (they left the staff). */
+  /* The sent state's words (mig 303's stamp) — ONE copy for the desk line and the send sheet's
+     first line, so the one-spelling rule cannot be broken by a second hand-written sentence. A
+     hand-pick's line NAMES them — "Sent to Jen Okafor" — so tomorrow's reader knows who has it and
+     who doesn't; the count and the word only when a name no longer resolves (they left the staff). */
   const sentFacts = data?.sent ? (
     <>
       <b>Sent to {sentNames ? joinNames(sentNames) : data.sent.count ?? 0}</b>
@@ -1008,8 +1012,6 @@ export default function CoachPracticePlanPage({
       {' · '}<span className={styles.ppSentWhen}>{sentWhenLabel(data.sent.at, nowMs)}</span>
     </>
   ) : null;
-  /** "Send again" — a writer, on a team with someone to send to (re-sending needs no reason; ruling H deferred "changed since"). */
-  const canSendAgain = canWrite && (data?.staffPeople?.length ?? 0) > 1;
 
   /** The picker's name search, shared by the two practice sources so they cannot drift. */
   const matchesQuery = (name: string) => {
@@ -1300,26 +1302,23 @@ export default function CoachPracticePlanPage({
                   the toolbar: who, which audience, which channels, when. Re-sending is always allowed
                   and needs no reason (ruling H deferred "changed since you sent it"). The live page's:
                   a record shows neither the line nor the button (stage 6, R2). */}
-              {/* N2 on a phone: the same words as ONE row that is "Send again" — today's own 44px row
-                  for the two words went (82px → one row). A reader who can't send keeps the fact alone. */}
-              {!recordMode && hasBlocks && data.sent && (isPhone && canSendAgain ? (
-                <button type="button" className={styles.ppSentRow} data-testid="sent-to-staff" onClick={() => setSendOpen(true)}>
-                  <span className={styles.ppSentRowText}>
-                    {sentFacts}{' · '}<span className={styles.ppSentRowAgain}>Send again</span>
-                  </span>
-                  <ChevronRight size={18} aria-hidden className={styles.ppRowChevron} />
-                </button>
-              ) : (
+              {/* ⚠ NOT ON A PHONE (owner, 2026-09-25 — "sending to coaches should be in the ... drawer
+                  with print and save, no need for the banner then wasting space"). There ⋯ → Send to
+                  staff is the one door, and the last send is the send sheet's first line — read at the
+                  moment of deciding whether to send again, where it answers a question. Stage 4's
+                  "Sent to … · Send again ›" row (N2) went with it; a reader who can't send loses a
+                  line that told them about a notification they already had. */}
+              {!isPhone && !recordMode && hasBlocks && data.sent && (
                 <p className={styles.ppSentLine} data-testid="sent-to-staff">
                   {/* One span: the words flow as one sentence inside the line's flex row (its no-wrap
                       date must not become a flex item of its own and wrap alone). */}
                   <span>{sentFacts}</span>
-                  {canSendAgain && (
+                  {canSend && (
                     <button type="button" className={styles.ppLinkBtn} onClick={() => setSendOpen(true)}>Send again</button>
                   )}
                 </p>
-              ))}
-              {/* N4 on a phone: the scouting note's one row, after the page's own buttons and the sent line. */}
+              )}
+              {/* N4 on a phone: the scouting note's one row, under the page's own buttons. */}
               {isPhone && scoutRow}
 
               {/* ── THE PAIR (L5): the sheet, and beside it — docked, on a wide desktop — the library
@@ -1556,6 +1555,7 @@ export default function CoachPracticePlanPage({
           staffTags={staffTags}
           plan={plan}
           viewerUserId={data.viewerUserId ?? ''}
+          lastSent={sentFacts}
           message={{
             dayLabel: practiceDayLabel(event.startsAt, nowMs, { weekday: fmtWeekday, shortDate: fmtShortDate }),
             startLabel: fmtTime(event.startsAt),

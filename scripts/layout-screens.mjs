@@ -669,8 +669,8 @@ export const SCREENS = [
   },
   {
     // THE HEAD OF THE PAGE, nothing open (practice plans on a phone, stage 4 · N1–N4, 2026-09-25):
-    // the toolbar, the sent line as ONE row that is "Send again" (a writer on a live face — Edit takes
-    // the aged probe practice off its record face), the sheet's head as one door to the schedule
+    // the toolbar (and above 640 the sent line — on a phone the last send moved into the send sheet,
+    // owner 2026-09-25; Edit takes the aged probe practice off its record face), the sheet's head as one door to the schedule
     // (where + arrival on a phone), the goal, the timeline, and About UNDER it on a phone. Every other
     // plan entry opens something over this, so the head itself had never been swept at rest.
     // ⚠ The fixture carries no scouting book for a game this week and names nobody's linked tag, so

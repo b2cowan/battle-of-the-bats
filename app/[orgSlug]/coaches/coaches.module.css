@@ -11419,8 +11419,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
      the toolbar, the sent line, Recorded here) take the gutter back so nothing touches the glass.
      Not a negative-margin bleed — the layout gate reads that as an overflow. */
   .coachesMain:has(.ppSheetPair) { padding-inline: 0; }
-  .coachesMain:has(.ppSheetPair) .page > :not(.ppSheetCol),
-  .coachesMain:has(.ppSheetPair) .ppSheetCol > :not(.ppSheetPair) { margin-inline: 1rem; }
+  /* ⚠ NEVER A FIXED CHILD. The page's own dialogs — the copy picker, Save as template…, Send to
+     staff — and the "Saved" pill render as children of `.page`, and a FIXED box handed a side margin
+     moves off its edges: a dialog stopped 16px short of the glass on both sides with the page showing
+     through (owner, 2026-09-25: "weird spacing around it"), and the pill sat 28px in from the right
+     where every other screen puts it at 12. Both from this rule's first day (09-24). */
+  .coachesMain:has(.ppSheetPair) .page > :not(.ppSheetCol):not(.modalOverlay):not(.savePill),
+  .coachesMain:has(.ppSheetPair) .ppSheetCol > :not(.ppSheetPair):not(.modalOverlay) { margin-inline: 1rem; }
   /* The team strip bleeds over the shell gutter with a -1rem side margin; with no gutter here that
      bleed would hang 16px off each edge (probe: the page scrolled sideways by 16px). */
   .coachesMain:has(.ppSheetPair) .teamHeader { margin-inline: 0; }
@@ -12314,23 +12319,20 @@ span.libCardMain { cursor: default; }
    gap the owner caught, 2026-09-18). */
 .ppSentLine { margin: -0.3rem 0 0; font-size: var(--type-support); color: var(--text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.35rem; }
 .ppSentLine b { color: var(--text-primary); font-weight: 600; }
-/* THE SENT LINE AS ONE ROW, on a phone (stage 4 · N2 = A, owner 2026-09-25) — the same words, ending
-   "· Send again", and the whole row is the button that opens the send sheet (the page renders it ≤640
-   for someone who can send; a reader keeps `.ppSentLine`). Measured before: 82px — two lines of facts
-   and "Send again" on a 44px row of its own. Stretched by the column (a flex item), never `width: 100%`:
-   the edge-to-edge rule gives it 1rem a side, and a 100% width would overhang by 32px. */
-.ppSentRow {
-  display: flex; align-items: center; gap: 0.6rem; min-height: var(--tap-min, 44px);
-  margin: -0.3rem 0 0; padding: 0; background: none; border: 0; text-align: left; cursor: pointer;
-  font: inherit; font-size: var(--type-support); line-height: 1.6; color: var(--text-secondary);
-}
-.ppSentRowText { flex: 1 1 auto; min-width: 0; }
-.ppSentRowText b { color: var(--text-primary); font-weight: 600; }
-.ppSentRowAgain { font-weight: 700; color: var(--home-olive, var(--logic-lime)); white-space: nowrap; }
-/* The send's date and clock never break across lines ("Sep / 18, 9:30 a.m." — measured at 360) — desk line and phone row. */
+/* ⚰ `.ppSentRow` · `.ppSentRowText` · `.ppSentRowAgain` (stage 4 · N2, → 2026-09-25): the phone's
+   "Sent to … · Send again ›" row. The owner moved sending into ⋯ beside Print and Save as template…,
+   and the last send became the send sheet's first line (`.ppSendLast`). */
+/* The send's date and clock never break across lines ("Sep / 18, 9:30 a.m." — measured at 360) — the desk line and the send sheet's. */
 .ppSentWhen { white-space: nowrap; }
-/* The "opens something" chevron on the head's phone rows (the sent row, the scouting row). */
+/* The "opens something" chevron on the head's phone row (the scouting row). */
 .ppRowChevron { flex: none; color: var(--home-olive, var(--logic-lime)); }
+/* The send sheet's scrolling body (`.scrollPane` does the scroll and lines it up with the title) and
+   its first line, the last send — the page's own words, read before deciding to send again. */
+.ppSendBody { display: flex; flex-direction: column; gap: 0.7rem; }
+.ppSendLast { margin: 0; font-size: var(--type-support); color: var(--text-secondary); line-height: 1.5; }
+.ppSendLast b { color: var(--text-primary); font-weight: 600; }
+/* A refusal sits outside the scroll, just above the foot, so it is seen wherever the list was left. */
+.ppSendError { flex-shrink: 0; margin-top: 0.6rem; }
 .ppSendAudiences { display: flex; flex-direction: column; gap: 0.5rem; margin: 0 0 0.75rem; padding: 0; border: 0; }
 .ppSendAudience, .ppSendEmail {
   display: grid; grid-template-columns: 1.25rem 1fr; gap: 0.15rem 0.6rem; align-items: start;

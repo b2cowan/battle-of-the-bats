@@ -1,6 +1,6 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { X } from 'lucide-react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import {
   AUDIENCE_LABEL, FIELD_KINDS, MAX_CHOSEN_RECIPIENTS, PRACTICE_PLAN_AUDIENCES, PRACTICE_PLAN_GROUP_AUDIENCES, mineTagIdsOf, myLabelsOnPlan,
@@ -38,6 +38,15 @@ import styles from '../../../coaches.module.css';
  * notification settings say and whether or not their account is paused — a colleague addressing
  * colleagues, on the dues-reminder / @mention ground. Off by default; the sheet remembers the
  * team's last choice with the audience (ruling B).
+ *
+ * ⚠ THE LAST SEND IS THE SHEET'S FIRST LINE (owner, 2026-09-25): on a phone the page no longer
+ * carries a "Sent to …" line — ⋯ → Send to staff is the one door — so the fact is read where it
+ * answers a question, at the moment of deciding whether to send again. The words are the page's
+ * one copy (`lastSent`), never a second sentence.
+ *
+ * The shape is the portal's sheet recipe, whole: the shared header (← on a phone, × above 640),
+ * one `.scrollPane` that lines up with the title, and the foot OUTSIDE it, so Cancel · Send pin
+ * to the bottom of the screen instead of scrolling with the list.
  */
 export type SendSheetChoice = { audience: PracticePlanSendAudience; email: boolean; userIds?: string[] };
 
@@ -63,13 +72,15 @@ export function readSendChoice(teamId: string): RememberedChoice | null {
 }
 
 export default function PracticeSendSheet({
-  teamId, people, staffTags, plan, viewerUserId, message, onSend, onClose,
+  teamId, people, staffTags, plan, viewerUserId, lastSent, message, onSend, onClose,
 }: {
   teamId: string;
   people: readonly PracticeStaffPerson[];
   staffTags: readonly PickableTag[];
   plan: PracticePlan | null;
   viewerUserId: string;
+  /** "Sent to 5 (coaches and helpers) · bell and push · Sep 23, 6:00 p.m." — the page's words; null before the first. */
+  lastSent: ReactNode;
   /** The message's fixed parts, from the page's own clock labels — the preview reads as one person will. */
   message: { dayLabel: string; startLabel: string; arriveLabel: string | null };
   onSend: (choice: SendSheetChoice) => Promise<{ ok: boolean; error?: string }>;
@@ -161,13 +172,9 @@ export default function PracticeSendSheet({
     <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget && !busy) onClose(); }}>
       <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Send to staff"
         aria-busy={busy || undefined} className={`${styles.modal} ${styles.modalScrollBody}`}>
-        <div className={styles.modalHeader}>
-          <h3 className={styles.modalTitle}>Send to staff</h3>
-          <button type="button" className={styles.modalCloseBtn} aria-label="Close" onClick={onClose}>
-            <X size={18} />
-          </button>
-        </div>
-        <div className={styles.ppDrillWrite}>
+        <CoachModalHeader title="Send to staff" onClose={onClose} closeAriaLabel="Close" />
+        <div className={`${styles.scrollPane} ${styles.ppSendBody}`}>
+          {lastSent && <p className={styles.ppSendLast} data-testid="send-sheet-last">{lastSent}</p>}
           <p className={styles.formHint}>
             A bell and a push, with a link to this plan. Never you; never someone whose access
             doesn&rsquo;t include the schedule.
@@ -245,14 +252,16 @@ export default function PracticeSendSheet({
             </div>
           )}
 
-          {error && <p className={styles.errorText} role="alert">{error}</p>}
+        </div>
 
-          <div className={styles.modalFooter}>
-            <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
-            <button type="button" className={styles.btnPrimary} disabled={busy || count === 0} onClick={submit}>
-              {busy ? 'Sending…' : count === 0 ? (audience === 'chosen' && reachable.length > 0 ? 'Tick someone' : 'Nobody to send to') : `Send to ${count}`}
-            </button>
-          </div>
+        {/* Outside the scroll, beside the foot, so a refusal is seen wherever the list was left. */}
+        {error && <p className={`${styles.errorText} ${styles.ppSendError}`} role="alert">{error}</p>}
+
+        <div className={styles.modalFooter}>
+          <button type="button" className={styles.btnGhost} onClick={onClose}>Cancel</button>
+          <button type="button" className={styles.btnPrimary} disabled={busy || count === 0} onClick={submit}>
+            {busy ? 'Sending…' : count === 0 ? (audience === 'chosen' && reachable.length > 0 ? 'Tick someone' : 'Nobody to send to') : `Send to ${count}`}
+          </button>
         </div>
       </div>
     </div>

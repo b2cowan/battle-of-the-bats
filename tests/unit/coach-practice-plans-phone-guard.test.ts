@@ -415,6 +415,11 @@ describe('practice plans on a phone · stage 2 (S1 · S2 · S4)', () => {
  *      arrive (the page never said either; the paper and the notification did), the plan's fit; the
  *      whole block links to the schedule — no separate "View on schedule" row, no nested link.
  *   N2 **THE SENT LINE IS ONE ROW THAT IS "SEND AGAIN"** — the same words, one copy of them.
+ *      ⤷ REVISED the same day (owner, on the built screen): "sending to coaches should be in the ...
+ *        drawer with print and save, no need for the banner". On a phone there is NO sent line —
+ *        ⋯ → Send to staff is the one door, and the last send is the send sheet's first line. The
+ *        sheet took the portal's sheet recipe whole, and the edge-to-edge rule stopped handing the
+ *        page's dialogs (and the "Saved" pill) a side margin.
  *   N3 **ABOUT WAITS UNDER THE PLAN** on a phone (JS order, never CSS `order`), and the "Started
  *      from" banner is GONE at every width — the template picker makes that promise at the choice.
  *   N4 **THE SCOUTING NOTE IS ONE ROW UNDER THE TOOLBAR**, opening the book; the desk keeps its card.
@@ -456,10 +461,34 @@ describe('practice plans on a phone · stage 4 (N1–N4) — the head of the pag
     assert.match(sheet, /practicePlaceLabel\(event, sport\)/, 'the paper\'s where-line uses the same join');
   });
 
-  it('N2 — on a phone, someone who can send gets ONE button row; the words are written once', () => {
-    assert.match(page, /isPhone && canSendAgain \? \(\s*<button type="button" className=\{styles\.ppSentRow\} data-testid="sent-to-staff" onClick=\{\(\) => setSendOpen\(true\)\}>/);
+  it('N2, revised — no sent line on a phone; ⋯ → Send to staff is the one door, and the sheet reads the last send', () => {
+    assert.match(page, /\{!isPhone && !recordMode && hasBlocks && data\.sent && \(\s*<p className=\{styles\.ppSentLine\} data-testid="sent-to-staff">/);
+    assert.doesNotMatch(page, /ppSentRow|canSendAgain/, 'the phone row and its second gate are gone');
+    assert.doesNotMatch(css, /\.ppSentRow\s*\{/);
     assert.equal((page.match(/'bell, push and email'/g) ?? []).length, 1, 'one copy of the sent line\'s words (`sentFacts`)');
-    assert.equal((page.match(/\{sentFacts\}/g) ?? []).length, 2, 'the row and the desk line');
+    assert.match(page, /lastSent=\{sentFacts\}/, 'the sheet reads the page\'s words, never a second sentence');
+    assert.match(page, /<span>\{sentFacts\}<\/span>/, 'the desk line');
+    // ONE gate for every way into the sheet: a past practice being edited offered "Send again" beside
+    // a toolbar with no Send in it.
+    assert.match(page, /const canSend = canWrite && !isPracticeRecord && \(data\?\.staffPeople\?\.length \?\? 0\) > 1;\s*if \(canSend\) \{\s*deskActions\.push\(\{ key: 'send'/);
+    assert.match(page, /\{canSend && \(\s*<button type="button" className=\{styles\.ppLinkBtn\} onClick=\{\(\) => setSendOpen\(true\)\}>Send again<\/button>/);
+  });
+
+  it('N2, revised — the send sheet is the portal\'s sheet recipe whole: the shared header, one pane, the foot outside it', () => {
+    const sheet = readCode('app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticeSendSheet.tsx');
+    assert.match(sheet, /<CoachModalHeader title="Send to staff" onClose=\{onClose\} closeAriaLabel="Close" \/>/, '← on a phone, × above 640 — a hand-rolled × alone sat beside the title');
+    assert.doesNotMatch(sheet, /ppDrillWrite/, 'its 2.4rem inset put the body 14px inside the title on a phone');
+    const pane = sheet.indexOf('<div className={`${styles.scrollPane} ${styles.ppSendBody}`}>');
+    const last = sheet.indexOf('{lastSent && <p className={styles.ppSendLast} data-testid="send-sheet-last">{lastSent}</p>}');
+    const hint = sheet.indexOf('A bell and a push, with a link to this plan.');
+    const error = sheet.indexOf('{error && <p className={`${styles.errorText} ${styles.ppSendError}`} role="alert">{error}</p>}');
+    const foot = sheet.indexOf('<div className={styles.modalFooter}>');
+    assert.ok(pane > 0 && pane < last && last < hint && hint < error && error < foot, 'pane → the last send → the hint … → the error → the foot');
+    // The pane closes BEFORE the error: nothing but the pane's own `</div>` (and a stripped comment's
+    // `{ }`) between the preview's end and the error line.
+    assert.match(sheet, /\)\}\s*<\/div>\s*(\{ \}\s*)?\{error && <p className=\{`\$\{styles\.errorText\} \$\{styles\.ppSendError\}`\}/, 'the error and the foot sit outside the scroll');
+    // The edge-to-edge rule's gutter skips every fixed child of the page.
+    assert.match(css, /\.coachesMain:has\(\.ppSheetPair\) \.page > :not\(\.ppSheetCol\):not\(\.modalOverlay\):not\(\.savePill\),\s*\.coachesMain:has\(\.ppSheetPair\) \.ppSheetCol > :not\(\.ppSheetPair\):not\(\.modalOverlay\) \{ margin-inline: 1rem; \}/);
   });
 
   it('N3 — About renders under the timeline on a phone, before the focus rail; in JS order', () => {
@@ -490,8 +519,6 @@ describe('practice plans on a phone · stage 4 (N1–N4) — the head of the pag
     assert.match(css, /\.ppDocHead\.ppWhenDoor \{\s*display: block; position: relative;/, 'two classes deep: the ≤640 column rule is one');
     assert.match(css, /\.ppWhenBit \{ white-space: nowrap; \}/, 'a clock never breaks across lines');
     assert.match(css, /\.ppWhenDoor \.ppDocWhenLine \{ padding-right: 1\.75rem; \}/, 'the chevron beside the first line only');
-    assert.match(css, /\.ppSentRow \{[^}]*min-height: var\(--tap-min, 44px\)/);
-    assert.doesNotMatch(css.slice(css.indexOf('.ppSentRow {'), css.indexOf('}', css.indexOf('.ppSentRow {'))), /width: 100%/, 'the edge-to-edge margins would overhang it');
     assert.match(css, /\.ppScoutRow \{[^}]*min-height: var\(--tap-min, 44px\)/);
     const base = css.indexOf('.ppYoureOnItem { color: var(--text-primary);');
     const floor = css.indexOf('@media (max-width: 768px) { .ppYoureOnItem { min-height: var(--tap-min, 44px); } }');
