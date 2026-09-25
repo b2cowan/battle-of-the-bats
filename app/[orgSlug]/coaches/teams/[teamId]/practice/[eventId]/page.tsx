@@ -1,7 +1,7 @@
 'use client';
 import { use, useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
-import { BookMarked, Check, ClipboardList, Library, MoreHorizontal, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
+import { BookMarked, Check, ChevronRight, ClipboardList, Library, MoreHorizontal, Pencil, Play, Printer, Ruler, Send, Telescope, X } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import { useOrg } from '@/lib/org-context';
@@ -13,7 +13,7 @@ import SaveStatusPill from '@/components/coaches/SaveStatusPill';
 import {
   buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
-import { buildPracticeSheet } from '@/lib/practice-sheet';
+import { buildPracticeSheet, practicePlaceLabel } from '@/lib/practice-sheet';
 import { canWriteDevelopment } from '@/lib/coach-capabilities';
 import { formatInOrgZone, orgDayKey } from '@/lib/timezone';
 import { formatStoredClock } from '@/lib/utils';
@@ -24,7 +24,7 @@ import {
   practicePlanLevels,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
-import { HowItWent, NoPlanRecord, PracticeScheduleLink, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
+import { HowItWent, NoPlanRecord, PracticeScheduleLink, PracticeWhenDoor, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
@@ -939,6 +939,78 @@ export default function CoachPracticePlanPage({
     );
   }
 
+  /**
+   * ── THE HEAD ON A PHONE (practice plans on a phone, stage 4 — owner rulings N1–N4 = A, 2026-09-25) ──
+   * Measured before: 478px above the first block on the test practice — where the short rows still
+   * fit under it — and, in a REAL week (a game with a scouting note, a plan from a template, a sentence
+   * of goal and of About), the first block under the tab bar: 777px down, 858 for an assistant named
+   * on the plan. Four changes, ≤640 only, decided here in JS because the DOM differs (a door, a row):
+   *   N1 the sheet's head is ONE door to the schedule that also says where and when to arrive;
+   *   N2 the sent line is one row that IS "Send again";
+   *   N3 About waits under the plan (the editor's call), and the "Started from" banner is gone at
+   *      every width (below, where it stood);
+   *   N4 the scouting note is one row under the toolbar, opening the book.
+   * A computer and the 641–768 band keep every piece exactly as it was.
+   */
+  function renderDocHead(record: boolean) {
+    if (isPhone && event?.startsAt) {
+      // ⚠ The arrival goes by the DATE (`isPracticeRecord`), not the face: a past practice opened
+      // for editing is not a record FACE (`recordMode` is false) but is still past, and "Arrive by"
+      // on it would instruct nobody (/review, 2026-09-25).
+      return (
+        <PracticeWhenDoor startsAt={event.startsAt} endsAt={event.endsAt} plan={plan} record={record}
+          href={`${base}/schedule?event=${eventId}`} place={practicePlaceLabel(event, assignment?.teamSport)}
+          arrivalTime={isPracticeRecord ? null : event.arrivalTime} />
+      );
+    }
+    return (
+      <div className={styles.ppDocHead}>
+        {/* The sheet's first line (stage 1, D3) — on a record a FACT: no "Set it on the schedule ›"
+            (stage 6, R2). The invitation is a WRITER's: a viewer who cannot edit the schedule is not
+            asked to (the same stage found it shown to one); a record is never being written. */}
+        <div className={styles.ppDocWhen}>
+          <PracticeWhenLine startsAt={event?.startsAt} endsAt={event?.endsAt} plan={plan} record={record}
+            scheduleHref={writing ? `${base}/schedule?event=${eventId}` : undefined} />
+        </div>
+        {event && <PracticeScheduleLink href={`${base}/schedule?event=${eventId}`} />}
+      </div>
+    );
+  }
+
+  /* N4 · the practice-week scouting bridge (Scouting Book P3). ONE lead, both presentations: the desk's
+     card above the toolbar ("— the book:" then the book's line, the freshest observation and "Full
+     book"), and on a phone one row under the toolbar and the sent line — the "one quiet line" its
+     ruling described — whose door is the book itself. Absent on a RECORD, as ever. */
+  const bridge = data?.scoutingBridge && !recordMode ? data.scoutingBridge : null;
+  const bookHref = bridge ? `${base}/history/opponents/${encodeURIComponent(bridge.opponentKey)}` : '';
+  const bridgeLead = bridge ? (
+    <>You play <strong>{bridge.opponentName}</strong>{' '}{formatInOrgZone(bridge.gameStartsAt, { weekday: 'long' })} — the book</>
+  ) : null;
+  /** Whether the toolbar-and-sheet stretch renders at all — the phone's scouting row lives in it when it does. */
+  const sheetShown = recordMode ? hasBlocks : hasPlan || canWrite;
+  const scoutRow = bridge ? (
+    <Link href={bookHref} className={styles.ppScoutRow} data-testid="scouting-bridge">
+      <Telescope size={14} aria-hidden />
+      <span className={styles.ppScoutRowText}>{bridgeLead}</span>
+      <ChevronRight size={18} aria-hidden className={styles.ppRowChevron} />
+    </Link>
+  ) : null;
+
+  /* N2 · the sent state's words (mig 303's stamp) — ONE copy for the desk line and the phone row, so
+     the one-spelling rule cannot be broken by a second hand-written sentence. A hand-pick's line
+     NAMES them — "Sent to Jen Okafor" — so tomorrow's reader knows who has it and who doesn't; the
+     count and the word only when a name no longer resolves (they left the staff). */
+  const sentFacts = data?.sent ? (
+    <>
+      <b>Sent to {sentNames ? joinNames(sentNames) : data.sent.count ?? 0}</b>
+      {!sentNames && data.sent.audience && <> ({AUDIENCE_SENT_LABEL[data.sent.audience]})</>}
+      {' · '}{data.sent.email ? 'bell, push and email' : 'bell and push'}
+      {' · '}<span className={styles.ppSentWhen}>{sentWhenLabel(data.sent.at, nowMs)}</span>
+    </>
+  ) : null;
+  /** "Send again" — a writer, on a team with someone to send to (re-sending needs no reason; ruling H deferred "changed since"). */
+  const canSendAgain = canWrite && (data?.staffPeople?.length ?? 0) > 1;
+
   /** The picker's name search, shared by the two practice sources so they cannot drift. */
   const matchesQuery = (name: string) => {
     const q = copyQuery.trim().toLowerCase();
@@ -1063,37 +1135,34 @@ export default function CoachPracticePlanPage({
               surfaces. Absent when the week has no booked opponent with book content, absent
               on a RECORD (the bridge is an instrument for planning a week that is still ahead —
               stage 6, R2), and never a pop-up. */}
-          {data.scoutingBridge && !recordMode && (
+          {bridge && !isPhone && (
             <div className={styles.ppScoutBridge}>
               <p className={styles.ppScoutBridgeLead}>
                 <Telescope size={14} aria-hidden />
-                <span>
-                  You play <strong>{data.scoutingBridge.opponentName}</strong>{' '}
-                  {formatInOrgZone(data.scoutingBridge.gameStartsAt, { weekday: 'long' })} — the book:
-                </span>
+                <span>{bridgeLead}:</span>
               </p>
-              {data.scoutingBridge.summary && (
-                <p className={styles.ppScoutBridgeLine}>&ldquo;{data.scoutingBridge.summary}&rdquo;</p>
+              {bridge.summary && (
+                <p className={styles.ppScoutBridgeLine}>&ldquo;{bridge.summary}&rdquo;</p>
               )}
-              {data.scoutingBridge.latestObservation && (
+              {bridge.latestObservation && (
                 <p className={styles.ppScoutBridgeObs}>
-                  {data.scoutingBridge.latestObservation.body}
-                  {data.scoutingBridge.latestObservation.createdByName && (
-                    <span> — {data.scoutingBridge.latestObservation.createdByName}</span>
+                  {bridge.latestObservation.body}
+                  {bridge.latestObservation.createdByName && (
+                    <span> — {bridge.latestObservation.createdByName}</span>
                   )}
                 </p>
               )}
-              <Link
-                href={`${base}/history/opponents/${encodeURIComponent(data.scoutingBridge.opponentKey)}`}
-                className={styles.ppScoutBridgeLink}
-              >
+              <Link href={bookHref} className={styles.ppScoutBridgeLink}>
                 Full book
-                {data.scoutingBridge.observationCount > 0
-                  ? ` · ${data.scoutingBridge.observationCount} observation${data.scoutingBridge.observationCount === 1 ? '' : 's'}`
+                {bridge.observationCount > 0
+                  ? ` · ${bridge.observationCount} observation${bridge.observationCount === 1 ? '' : 's'}`
                   : ''} ›
               </Link>
             </div>
           )}
+          {/* On a phone the row sits under the toolbar (below); with no toolbar-and-sheet stretch at all
+              (a reader, no plan yet) it keeps the top, still one row. */}
+          {isPhone && !sheetShown && scoutRow}
 
           {/* ── A RECORD WITH NO PLAN (stage 6, R2) — for the head coach AND the assistant ──
               The hub's row already says "No plan written · Open" (D3); the page it opens agrees:
@@ -1105,12 +1174,7 @@ export default function CoachPracticePlanPage({
               definition of "no plan" (no BLOCK) decides it, so the row and the page agree. */}
           {recordMode && !hasBlocks && (
             <div className={styles.ppDoc} data-room="practice-plan" data-room-state="loaded" data-record="no-plan">
-              <div className={styles.ppDocHead}>
-                <div className={styles.ppDocWhen}>
-                  <PracticeWhenLine startsAt={event?.startsAt} endsAt={event?.endsAt} plan={plan} record />
-                </div>
-                {event && <PracticeScheduleLink href={`${base}/schedule?event=${eventId}`} />}
-              </div>
+              {renderDocHead(true)}
               {renderHowItWent(true)}
               <NoPlanRecord />
             </div>
@@ -1141,7 +1205,7 @@ export default function CoachPracticePlanPage({
             />
           )}
 
-          {(recordMode ? hasBlocks : hasPlan || canWrite) && (
+          {sheetShown && (
             <>
               {/* ── The toolbar — only once there is a plan (stage 1, D5) ──
                   The blank page has no toolbar and no disabled Print: its one action is the
@@ -1236,20 +1300,27 @@ export default function CoachPracticePlanPage({
                   the toolbar: who, which audience, which channels, when. Re-sending is always allowed
                   and needs no reason (ruling H deferred "changed since you sent it"). The live page's:
                   a record shows neither the line nor the button (stage 6, R2). */}
-              {!recordMode && hasBlocks && data.sent && (
+              {/* N2 on a phone: the same words as ONE row that is "Send again" — today's own 44px row
+                  for the two words went (82px → one row). A reader who can't send keeps the fact alone. */}
+              {!recordMode && hasBlocks && data.sent && (isPhone && canSendAgain ? (
+                <button type="button" className={styles.ppSentRow} data-testid="sent-to-staff" onClick={() => setSendOpen(true)}>
+                  <span className={styles.ppSentRowText}>
+                    {sentFacts}{' · '}<span className={styles.ppSentRowAgain}>Send again</span>
+                  </span>
+                  <ChevronRight size={18} aria-hidden className={styles.ppRowChevron} />
+                </button>
+              ) : (
                 <p className={styles.ppSentLine} data-testid="sent-to-staff">
-                  {/* A hand-pick's line NAMES them — "Sent to Jen Okafor" — so tomorrow's reader
-                      knows who has it and who doesn't; the count and the word only when a name no
-                      longer resolves (they left the staff). */}
-                  <b>Sent to {sentNames ? joinNames(sentNames) : data.sent.count ?? 0}</b>
-                  {!sentNames && data.sent.audience && <> ({AUDIENCE_SENT_LABEL[data.sent.audience]})</>}
-                  {' · '}{data.sent.email ? 'bell, push and email' : 'bell and push'}
-                  {' · '}{sentWhenLabel(data.sent.at, nowMs)}
-                  {canWrite && (data.staffPeople?.length ?? 0) > 1 && (
+                  {/* One span: the words flow as one sentence inside the line's flex row (its no-wrap
+                      date must not become a flex item of its own and wrap alone). */}
+                  <span>{sentFacts}</span>
+                  {canSendAgain && (
                     <button type="button" className={styles.ppLinkBtn} onClick={() => setSendOpen(true)}>Send again</button>
                   )}
                 </p>
-              )}
+              ))}
+              {/* N4 on a phone: the scouting note's one row, after the page's own buttons and the sent line. */}
+              {isPhone && scoutRow}
 
               {/* ── THE PAIR (L5): the sheet, and beside it — docked, on a wide desktop — the library
                   panel's HOST. The editor renders the panel into it through a portal, so the page
@@ -1260,16 +1331,7 @@ export default function CoachPracticePlanPage({
               {/* ── THE SHEET (stage 1, D2) — the page is a document. Its first line is when and
                   how long (D3); the goal, the folds and the timeline are the editor's. */}
               <div className={styles.ppDoc} data-room="practice-plan" data-room-state="loaded" data-record={recordMode ? 'record' : undefined}>
-                <div className={styles.ppDocHead}>
-                  {/* The sheet's first line (stage 1, D3) — on a record a FACT: no "Set it on the
-                      schedule ›" (stage 6, R2). The invitation is a WRITER's: a viewer who cannot
-                      edit the schedule is not asked to (the same stage found it shown to one). */}
-                  <div className={styles.ppDocWhen}>
-                    <PracticeWhenLine startsAt={event?.startsAt} endsAt={event?.endsAt} plan={plan} record={recordMode}
-                      scheduleHref={writing ? `${base}/schedule?event=${eventId}` : undefined} />
-                  </div>
-                  {event && <PracticeScheduleLink href={`${base}/schedule?event=${eventId}`} />}
-                </div>
+                {renderDocHead(recordMode)}
 
                 {/* ── "How it went" FIRST on the record (stage 6, R2) — the record's one live field,
                     before what was planned; the live page puts the same block at the foot. ── */}
@@ -1293,25 +1355,13 @@ export default function CoachPracticePlanPage({
                   </div>
                 )}
 
-                {/* ── The provenance line (D14, frame 05) ──
-                    ⚠ It is doing real work, not decoration: without it a coach reasonably fears that
-                    fixing tonight's warm-up rewrites the template for every future Tuesday. It says
-                    the quiet part out loud — every edit here is THIS practice's. It survives every
-                    edit, because "this plan started from Standard Tuesday" stays true however much
-                    they change; that is the opposite of a drill's provenance, and deliberately so. */}
-                {plan.templateName && (
-                  <p className={styles.ppProvenance}>
-                    <BookMarked size={14} aria-hidden />
-                    {/* One sentence (stage 4, L7): the two halves that do the work — "edit anything"
-                        and "the template won't change" — and the template's name bold, because it is
-                        the fact. Survives every edit, as it always has. Read, the fact alone: there is
-                        nothing to edit here (stage 6, R2). */}
-                    <span>
-                      Started from <strong>{plan.templateName}</strong>
-                      {writing ? <> — edit anything here; the template won&apos;t change.</> : null}
-                    </span>
-                  </p>
-                )}
+                {/* ⚰ THE "STARTED FROM …" BANNER IS GONE, at every width (owner, 2026-09-25, on the stage 4
+                    drawing: "not necessary … takes up space and they know they can edit"). Its one job
+                    was "the template won't change", and that promise is made where it matters: a plan
+                    starts from a template ONE way, the "Start this plan from…" picker, whose template
+                    tab says so under the choice (`COPY_SOURCES`). The plan still stores its
+                    `templateId`/`templateName` (the template's "Started N plans" reads them); only
+                    the line went. Do not bring back a standing banner to repeat the picker. */}
 
                 <PracticePlanEditor
                   // Keyed per practice so the editor's own state (which block is open, the folds)

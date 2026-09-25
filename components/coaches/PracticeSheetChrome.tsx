@@ -1,7 +1,8 @@
 'use client';
 import Link from 'next/link';
-import { CalendarDays, NotebookPen } from 'lucide-react';
+import { CalendarDays, ChevronRight, NotebookPen } from 'lucide-react';
 import { formatInOrgZone } from '@/lib/timezone';
+import { formatStoredClock } from '@/lib/utils';
 import {
   practiceLengthMinutes, practicePlanFit, practicePlannedLabel, practiceRemainderLabel,
 } from '@/lib/practice-state';
@@ -44,30 +45,22 @@ export function PracticeWhenLine({
   where?: string | null;
 }) {
   if (!startsAt) return <span className={styles.ppDocWhenLine}>Plan this practice.</span>;
-  const practiceLength = practiceLengthMinutes(startsAt, endsAt ?? null);
-  const fit = practicePlanFit(plan, practiceLength);
-  const remainderLabel = practiceRemainderLabel(fit);
-  // Unplanned time and an overrun are both worth a coach's eye; the rest block is spoken for.
-  const remainderTone = fit.remainder?.kind === 'rest' ? undefined : styles.ppDocWhenAmber;
+  const fit = planFit(startsAt, endsAt, plan, record);
   // The day and the clock share one line on a desktop; the phone stacks them (the frame's 390).
   const when = (
     <span className={styles.ppDocWhenLine}>
       <span className={styles.ppDocWhenDay}>{withYear ? fmtDate(startsAt) : fmtDay(startsAt)}</span>
       <span className={styles.ppDocWhenSep}> · </span>
       {fmtTime(startsAt)}
-      {practiceLength != null && endsAt ? `–${fmtTime(endsAt)} · ${practiceLength} min` : ''}
+      {fit.length != null && endsAt ? `–${fmtTime(endsAt)} · ${fit.length} min` : ''}
       {where ? ` · ${where}` : ''}
     </span>
   );
-  if (practiceLength == null) {
-    // Without an end the frame cannot be drawn; the fix is on the schedule. An end that IS set
-    // but sits at or before the start is said so — "no end set" would be a lie about a field
-    // the coach can see filled (/review, 2026-09-14).
-    const why = endsAt ? 'the end is before the start' : 'no end set';
+  if (fit.why) {
     return (
       <>
         {when}
-        {practicePlannedLabel(fit, { record })} · {why}
+        {fit.planned} · {fit.why}
         {!record && scheduleHref && (
           <>
             {' · '}
@@ -82,9 +75,89 @@ export function PracticeWhenLine({
   return (
     <>
       {when}
-      {practicePlannedLabel(fit, { record })}
-      {remainderLabel && <> · <span className={remainderTone}>{remainderLabel}</span></>}
+      {fit.planned}
+      {fit.remainder && <> · <span className={fit.tone}>{fit.remainder}</span></>}
     </>
+  );
+}
+
+/**
+ * How the plan fills the practice — the when-line's second half, shared by the desk line and the
+ * phone door so the two can never word it differently: "75 of 90 min planned · 15 rest of
+ * practice", or, with no usable end, "20 min planned" and the reason (`why`).
+ */
+function planFit(startsAt: string, endsAt: string | null | undefined, plan: PracticePlan, record: boolean) {
+  const length = practiceLengthMinutes(startsAt, endsAt ?? null);
+  const fit = practicePlanFit(plan, length);
+  const planned = practicePlannedLabel(fit, { record });
+  // Without an end the frame cannot be drawn; the fix is on the schedule. An end that IS set but
+  // sits at or before the start is said so — "no end set" would be a lie about a field the coach
+  // can see filled (/review, 2026-09-14).
+  const why = length == null ? (endsAt ? 'the end is before the start' : 'no end set') : null;
+  return {
+    length, planned, why,
+    remainder: why ? null : practiceRemainderLabel(fit),
+    // Unplanned time and an overrun are both worth a coach's eye; the rest block is spoken for.
+    tone: fit.remainder?.kind === 'rest' ? undefined : styles.ppDocWhenAmber,
+  };
+}
+
+/**
+ * THE SHEET'S HEAD ON A PHONE (practice plans on a phone, stage 4 · N1 = A, owner 2026-09-25) — one
+ * door to the schedule where the desk has the when-line and a "View on schedule" link of its own.
+ * Line 1 the day and the time together; line 2 WHERE, and when to arrive — the page never said
+ * either, though the printed sheet and the notification both do; line 3 how the plan fills the
+ * practice, in the desk's words. The whole block is the link, a chevron says so, and its accessible
+ * name starts "View on schedule". A record states the place and no arrival: an arrival time is an
+ * instruction, and a record has nobody to instruct.
+ * ⚠ The desk's "Set it on the schedule ›" is itself a link and cannot sit inside this one; on a
+ * phone the block IS that door, so the fit line keeps only its words.
+ */
+export function PracticeWhenDoor({
+  startsAt, endsAt, plan, record, href, place, arrivalTime,
+}: {
+  startsAt: string;
+  endsAt: string | null | undefined;
+  plan: PracticePlan;
+  record: boolean;
+  /** The practice on the schedule. */
+  href: string;
+  /** Where — `practicePlaceLabel`, the paper's own join. Empty when the schedule has none. */
+  place: string;
+  /** The schedule's stored "HH:mm", or null. Never shown on a record. */
+  arrivalTime: string | null | undefined;
+}) {
+  const fit = planFit(startsAt, endsAt, plan, record);
+  const arrive = !record && arrivalTime ? `Arrive by ${formatStoredClock(arrivalTime)}` : null;
+  /* ⚠ A clock never breaks across lines ("Arrive by 5:45 / p.m." — measured at 360 on the first
+     build): every piece that carries a time or a count is its own no-wrap bit, so a line breaks at a
+     "·" between pieces. The place alone may wrap — a long park name must not push the page sideways.
+     The chevron sits beside the FIRST line only, so the two lines under it get the column's whole
+     width (with it beside all three, "75 of 90 min planned · 15 rest of practice" wrapped at 360). */
+  return (
+    <Link href={href} className={`${styles.ppDocHead} ${styles.ppWhenDoor}`} data-testid="practice-when">
+      <span className={styles.ppDocWhen}>
+        <span className="sr-only">View on schedule: </span>
+        <span className={styles.ppDocWhenLine}>
+          {fmtDay(startsAt)} · <span className={styles.ppWhenBit}>{fmtTime(startsAt)}{fit.length != null && endsAt ? `–${fmtTime(endsAt)}` : ''}</span>
+        </span>
+        {/* A space between the lines: they are blocks on screen, but the link's accessible name is
+            their text run together ("7:30 p.m.UAT Fields") without one. It renders nothing. */}
+        {' '}
+        {(place || arrive) && (
+          <span className={styles.ppWhenLine}>
+            {place}{place && arrive ? ' · ' : ''}{arrive && <span className={styles.ppWhenBit}>{arrive}</span>}
+          </span>
+        )}
+        {' '}
+        <span className={styles.ppWhenLine}>
+          <span className={styles.ppWhenBit}>{fit.planned}</span>
+          {fit.why ? <> · <span className={styles.ppWhenBit}>{fit.why}</span></>
+            : fit.remainder ? <> · <span className={`${styles.ppWhenBit}${fit.tone ? ` ${fit.tone}` : ''}`}>{fit.remainder}</span></> : null}
+        </span>
+      </span>
+      <ChevronRight size={18} aria-hidden className={styles.ppWhenDoorChevron} />
+    </Link>
   );
 }
 

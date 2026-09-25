@@ -1,6 +1,6 @@
 <title>Practice Plans on a Phone</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,600;12..96,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,400;0,8..60,600;1,8..60,400&family=IBM+Plex+Mono:wght@400;500&display=swap">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@600&display=swap">
 <style>
 /* The identity is the phone programme's — the owner reads these hubs back to back (Coaching from a
    phone → Money on a phone → this one), and a third visual world would read as a third project.
@@ -619,6 +619,100 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
 .fbsec{flex:0 0 auto;width:76px;height:56px;border:1px solid rgba(70,55,30,.25);border-radius:10px;display:grid;place-items:center;font-size:14px;font-weight:600;color:#4A4335;background:#FFF}
 .fbquiet{flex:1 1 auto;text-align:center;font-size:13px;color:#6E6553}
 .fbroundlink{display:inline-flex;align-items:center;min-height:44px;margin-left:8px;font-family:"Inter",system-ui,sans-serif;font-size:13px;letter-spacing:0;text-transform:none;font-weight:700;color:#3F5F14}
+
+/* ══ Stage 4 · the head of the page — frames drawn live by the fifth script from the product's OWN values,
+   read out of the running page on 25 Sep (.probe/pp-head-anatomy.mjs): the paper #F8F4ED, the sheet #FFF, ink
+   #241E15, secondary #4A4235, tertiary #615A54, olive #57651E; the sizes and gaps below are the product's
+   rem values at 16px. The phone is the screen at scroll 0: the team line, the page, the tab bar. The dashed
+   panel under it is the rest of the page. Product literals inside the frames, as every frame here. ══ */
+.hdph{position:relative;width:100%;height:var(--fh,844px);background:#F8F4ED;color:#241E15;font-family:"Inter",system-ui,sans-serif;font-size:16px;line-height:1.6;border:1px solid var(--rule);border-radius:12px;overflow:hidden;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.hdph.cropped{border-radius:12px 12px 0 0}
+.hdteam{position:absolute;left:0;right:0;top:0;height:37px;z-index:4;background:#F8F4ED;border-bottom:1px solid rgba(70,55,30,.12);display:flex;align-items:center;justify-content:space-between;padding:0 16px;font-size:16px;font-weight:700;line-height:1}
+.hdteam small{font-family:"IBM Plex Mono",monospace;font-size:12px;font-weight:500;color:#4A4235;margin-left:10px}
+.hdq{width:22px;height:22px;border-radius:50%;border:1.5px solid #241E15;display:inline-grid;place-items:center;font:700 12px/1 "Inter",system-ui,sans-serif}
+.hdpage{position:absolute;left:0;right:0;top:0;padding-top:53px}
+.hdnav{position:absolute;left:0;right:0;bottom:0;z-index:4;background:#F8F4ED}
+.hdrest{position:relative;width:100%;overflow:hidden;background:#F8F4ED;color:#241E15;font-family:"Inter",system-ui,sans-serif;font-size:16px;line-height:1.6;border:1px solid var(--rule);border-top:2px dashed #9E3030;border-radius:0 0 12px 12px}
+.hdrest::after{content:"";position:absolute;inset:0;background:rgba(248,244,237,.55);pointer-events:none;z-index:2}
+.hdph .mk{z-index:3}
+.hdrest .mk{z-index:5}
+.hdrel{position:relative}
+.hdhdr{display:flex;align-items:center;gap:10px;height:44px;margin:0 16px 12px}
+.hdhdr .bk{width:44px;height:44px;margin-left:-8px;margin-right:-4px;display:grid;place-items:center;font-size:17px;color:#4A4235}
+.hdhdr .rl{width:1px;height:39px;background:rgba(70,55,30,.12)}
+.hdhdr .ic{width:34px;height:34px;border-radius:12px;background:rgba(87,101,30,.12);border:1px solid rgba(87,101,30,.3);display:grid;place-items:center;color:#57651E;font-size:15px}
+.hdhdr b{font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:20px;line-height:22px;font-weight:700;letter-spacing:.2px}
+.hdcol{display:flex;flex-direction:column;gap:11.2px}
+.hdbar{display:flex;gap:8px;margin:0 16px}
+.hdbtn{height:44px;display:inline-flex;align-items:center;gap:7px;padding:0 14.4px;border:1px solid rgba(70,55,30,.2);border-radius:6px;background:#FFF;font-size:14px;font-weight:600;line-height:1;color:#4A4235;white-space:nowrap}
+.hdbtn.ed{padding:0 11.2px}
+.hdbtn.on{background:#EFEAE0;border-color:rgba(70,55,30,.45);color:#241E15}
+.hdbtn.sq{width:44px;padding:0;justify-content:center;margin-left:auto;letter-spacing:.1em}
+.hdsent{margin:-4.8px 16px 0;font-size:12px;line-height:19.2px;color:#4A4235;display:flex;flex-wrap:wrap;align-items:center;gap:0 5.6px}
+.hdsent b{color:#241E15;font-weight:600}
+.hdsent .lk{display:inline-flex;align-items:center;min-height:44px;padding:0 4px;font-weight:700;color:#57651E}
+.hdsentrow{margin:-4.8px 16px 0;min-height:44px;display:flex;align-items:center;gap:10px;font-size:12px;line-height:19.2px;color:#4A4235}
+.hdsentrow .t{flex:1 1 auto;min-width:0}
+.hdsentrow b{color:#241E15;font-weight:600}
+.hdsentrow em{font-style:normal;font-weight:700;color:#57651E}
+.hdcv{flex:0 0 auto;color:#57651E;font-size:20px;line-height:1;font-weight:600}
+.hdscout{margin:0 16px 14.4px;padding:9.6px 13.6px;border:1px solid rgba(70,55,30,.12);border-left:3px solid #57651E;border-radius:8px;background:#FFF;display:flex;flex-direction:column;gap:4.8px}
+.hdscout .ld{display:flex;gap:6.4px;font-size:14px;line-height:19.6px;font-weight:600}
+.hdscout .ld i{font-style:normal;color:#57651E;flex:0 0 auto}
+.hdscout .ld strong{font-weight:900}
+.hdscout .qt{font-size:14px;line-height:20.3px;font-style:italic;color:#4A4235}
+.hdscout .ob{font-size:12px;line-height:16.8px;color:#4A4235}
+.hdscout .ob span{color:#615A54}
+.hdscout .lk{font-size:12px;line-height:19.2px;font-weight:600;color:#57651E}
+.hdscout.row{flex-direction:row;align-items:center;gap:10px;min-height:44px;padding-top:4px;padding-bottom:4px}
+.hdscout.row .ld{flex:1 1 auto;min-width:0}
+.hddoc{background:#FFF;padding:16px 16px 20px}
+.hdwhen{display:flex;flex-direction:column;align-items:flex-start;gap:3.2px;border-bottom:2px solid #241E15;padding-bottom:9.6px;margin-bottom:14.4px}
+.hdwl{font-family:"IBM Plex Mono",monospace;font-size:12px;line-height:18.6px;color:#4A4235;font-variant-numeric:tabular-nums}
+.hdwl b{display:block;font-size:14px;line-height:21.7px;font-weight:600;color:#241E15}
+.hdwl span{display:block}
+.hdsched{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-size:12px;line-height:19.2px;font-weight:700;color:#57651E}
+.hdwhen.door{flex-direction:row;align-items:center;gap:10px}
+.hdwhen.door .hdwl{flex:1 1 auto;min-width:0}
+.hdrecap{margin:3.2px 0 14.4px;padding-bottom:14.4px;border-bottom:1px solid rgba(70,55,30,.12)}
+.hdrecap .h{display:flex;gap:6.4px;align-items:center;margin:0 0 3.2px;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:17px;line-height:20px;font-weight:700}
+.hdrecap .ta{height:86px;border:1px solid rgba(70,55,30,.25);border-radius:8px;background:#F8F4ED;padding:10px 12px;font-size:16px;line-height:1.5;color:#8A8272}
+.hdyou{border:1px solid rgba(87,101,30,.35);border-radius:10px;padding:8.8px 12.8px;margin:0 0 14.4px;display:flex;flex-wrap:wrap;align-items:baseline;gap:5.6px 14.4px;font-size:12px;line-height:16.8px}
+.hdyou .l{font-size:11px;line-height:15.4px;font-weight:700;letter-spacing:1.1px;text-transform:uppercase;color:#57651E}
+.hdyou a{flex:1 1 100%;display:inline-flex;flex-wrap:wrap;align-items:center;gap:6.4px;min-height:var(--ym,32px);font-weight:600;color:#241E15;text-decoration:none}
+.hdyou a i{font-style:normal;font-family:"IBM Plex Mono",monospace;font-weight:500;color:#57651E}
+.hdyou a em{font-style:normal;font-weight:400;color:#4A4235}
+.hdprov{display:flex;gap:8px;align-items:flex-start;margin:0 0 14.4px;padding:9.6px 12px;border-radius:10px;border:1px solid rgba(87,101,30,.28);background:rgba(87,101,30,.08);font-size:14px;line-height:20.3px;color:#4A4235}
+.hdprov i{font-style:normal;color:#57651E;flex:0 0 auto}
+.hdprov strong{color:#241E15}
+.hdbody{display:flex;flex-direction:column;gap:8px}
+.hdgoal{display:flex;align-items:baseline;gap:6.4px;font-size:16px;line-height:25.6px}
+.hdgoal b{flex:0 0 auto;font-weight:700}
+.hdgoal .in{flex:1 1 auto;min-width:0;min-height:44px;display:flex;align-items:center;border-bottom:1px dashed rgba(70,55,30,.35);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdfold{display:flex;flex-wrap:wrap;align-items:center;gap:7.2px;min-height:44px;padding:5.6px 0;font-size:14px;line-height:22.4px;color:#4A4235}
+.hdfold i{font-style:normal;color:#615A54;width:14px;text-align:center}
+.hdfold b{color:#57651E;font-weight:700}
+.hdfold .sum{min-width:0;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdabout .pv{margin:1.6px 0 0;font-size:14px;line-height:22.4px;color:#4A4235;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hdtl{margin-top:6.4px}
+.hdrow{display:grid;grid-template-columns:80px minmax(0,1fr)}
+.hdrow .gt{font-family:"IBM Plex Mono",monospace;font-size:11px;line-height:15.4px;color:#4A4235;text-align:right;padding:12px 6.4px 12px 0;border-right:2px solid #241E15;white-space:nowrap}
+.hdrow .gt .gp{display:grid;place-items:center;width:44px;height:44px;margin:4px -6.4px 0 auto;color:#615A54;font-family:"Inter",system-ui,sans-serif;font-size:16px;letter-spacing:-2px}
+.hdrow .rw{position:relative;min-height:59px;padding:7.2px 36px 7.2px 12px;border-bottom:1px solid rgba(70,55,30,.2);display:flex;flex-direction:column;justify-content:center;gap:2.4px}
+.hdrow .rw::after{content:"›";position:absolute;right:12px;top:50%;transform:translateY(-50%);color:#615A54;font-size:20px;line-height:1}
+.hdrow .rw b{display:flex;align-items:center;flex-wrap:wrap;gap:8px;font-size:14px;line-height:22.4px;font-weight:700}
+.hdrow .rw b.un{font-style:italic;font-weight:600;color:#8A8272}
+.hdrow .rw .mt{font-size:12px;line-height:19.2px;color:#615A54}
+.hdrow .add{display:flex;align-items:center;gap:8px;min-height:44px;padding:0 12px;font-size:14px;font-weight:700;color:#57651E}
+.hdyoum{font-family:"IBM Plex Mono",monospace;font-size:9.6px;line-height:12.5px;font-weight:700;letter-spacing:.96px;text-transform:uppercase;color:#57651E;border:1px solid rgba(87,101,30,.5);border-radius:4px;padding:.8px 4.8px}
+.hdrot{font-size:11px;line-height:18px;font-weight:700;letter-spacing:.06em;border:1px solid rgba(70,55,30,.3);border-radius:5px;padding:0 6px;color:#4A4235}
+.hdbelow{margin-top:18px}
+.hdrec{margin:20px 16px 0;padding:13.6px 16px;border-radius:12px;border:1px solid rgba(70,55,30,.2);background:#FFF}
+.hdrec .h{margin:0 0 3.2px;font-family:"Barlow Condensed","Arial Narrow",sans-serif;font-size:17px;font-weight:700;line-height:22px}
+.hdrec p{margin:0;font-size:14px;line-height:1.45;color:#4A4235}
+.hdrec p.l{margin-top:6px;text-decoration:underline;color:#4A4235}
+.hdnew{outline:2px dashed #7A8C3E;outline-offset:3px;border-radius:6px}
+.hdrule{font-family:var(--mono);font-size:11px;color:var(--muted);margin:4px 0 0}
 </style>
 
 <nav class="tabs" role="tablist" aria-label="Practice plans on a phone">
@@ -633,6 +727,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
   <button type="button" class="tab" role="tab" data-tab="st" aria-selected="false" aria-controls="tab-st">2 · Stations inside a block<span class="st built">ruled 24 Sep · S1 · S2 · S4 = A · built · §231 walked · passed 25 Sep</span></button>
   <button type="button" class="tab" role="tab" data-tab="field" aria-selected="false" aria-controls="tab-field">3 · The field<span class="st built">ruled 25 Sep · M1–M4 = A · built · committed</span><span class="st built">walked + passed with 3b · §240</span></button>
   <button type="button" class="tab" role="tab" data-tab="fieldfoot" aria-selected="false" aria-controls="tab-fieldfoot">3b · The field, full screen<span class="st built">ruled 25 Sep · M5 = A · M6 = B · built · §240 passed</span></button>
+  <button type="button" class="tab" role="tab" data-tab="head" aria-selected="false" aria-controls="tab-head">4 · The head of the page<span class="st built">ruled 25 Sep · N1–N4 = A · built</span><span class="st">walk: QA part N · §241</span></button>
   <button type="button" class="tab" role="tab" data-tab="plan" aria-selected="false" aria-controls="tab-plan">Plan</button>
   <button type="button" class="tab" role="tab" data-tab="brief" aria-selected="false" aria-controls="tab-brief">PM brief</button>
 </nav>
@@ -651,7 +746,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
     from a screenshot.</p>
     <div class="strip" aria-label="Where the project is">
       <span class="on">Walked 23 Sep</span><span class="on">Stage 1 drawn 23 Sep</span><span class="on">Ruled 23 Sep · K1–K4 = A</span>
-      <span class="on">Stage 1 built · committed 20f13d5d 23 Sep</span><span class="on">1b + the walk's changes built on dev 24 Sep</span><span class="on">§227 walked · passed 24 Sep</span><span class="on">/review 24 Sep · 4 fixed</span><span class="on">1b + walk + Groups room committed 6e15af51 24 Sep</span><span class="on">Stage 2 stations ruled + built 24 Sep</span><span class="on">§231 walked · passed 25 Sep · committed 6d775e85</span><span class="on">Stage 3 measured + drawn 25 Sep</span><span class="on">Stage 3 ruled 25 Sep · M1–M4 = A</span><span class="on">Stage 3 built, reviewed · committed a44987b1 + d81e4523 25 Sep</span><span class="now">§237 walk owed</span>
+      <span class="on">Stage 1 built · committed 20f13d5d 23 Sep</span><span class="on">1b + the walk's changes built on dev 24 Sep</span><span class="on">§227 walked · passed 24 Sep</span><span class="on">/review 24 Sep · 4 fixed</span><span class="on">1b + walk + Groups room committed 6e15af51 24 Sep</span><span class="on">Stage 2 stations ruled + built 24 Sep</span><span class="on">§231 walked · passed 25 Sep · committed 6d775e85</span><span class="on">Stage 3 measured + drawn 25 Sep</span><span class="on">Stage 3 ruled 25 Sep · M1–M4 = A</span><span class="on">Stage 3 built, reviewed · committed a44987b1 + d81e4523 25 Sep</span><span class="on">Stage 3b built · committed 6141f97f · §240 walked + passed 25 Sep</span><span class="on">Stage 4 measured + drawn 25 Sep</span><span class="on">Stage 4 ruled + built 25 Sep</span><span class="now">§241 walk owed</span>
     </div>
   </header>
 
@@ -704,7 +799,7 @@ ol.list li{font-size:15.5px;line-height:1.55;margin:6px 0;color:var(--ink-2);max
         <tr><td>2 · Stations and the rotation</td><td>A station as a 56px row inside the block sheet (the row is the door to the form that already exists); “Write one” adds the station <i>and</i> opens its form in one motion, on a 44px button (four taps → two); the rotation table fitted to a phone (drawn 24 Sep on its own tab: keep the table, take out what makes it too wide); the desktop grid untouched.</td><td>S1–S4 · T1–T2</td><td>rotation table ruled + built 24 Sep (§229) · stations ruled S1 · S2 · S4 = A and built 24 Sep (tab “2 · Stations inside a block”, §231 walk owed) · S3 ruled + built elsewhere (6e15af51)</td></tr>
         <tr><td>3 · The field</td><td>The buttons at the foot of the screen on every stop and station, and each tap opening its screen at the top; a stop that reads like a station (headings, and a drill’s own setup, equipment and note); swipe closed rather than “not yet”; tonight’s note first. Re-framed with you from the planned M1–M3 once measured (tab “3 · The field”).</td><td>M1–M4</td><td>ruled 25 Sep (M1–M4 = A, and a station’s Back) · built on dev 25 Sep · its phone bar replaced by 3b the same day · walked + passed with 3b (§240) 25 Sep</td></tr>
         <tr><td>3b · The field, full screen</td><td>Asked at the end of stage 3: Run practice over the app like the block sheet (no team line, no tab bar), and a foot shaped like the sheet’s stepper — ‹ Block 2 of 4 › — with a round row in a rotation (Rotate now, and from round 2 a labelled ‹ Round 1). Each block remembers its round while the run is open (tab “3b · The field, full screen”).</td><td>M5–M6</td><td>ruled 25 Sep (M5 = A, M6 = B) · built on dev 25 Sep · §240 walked + passed 25 Sep</td></tr>
-        <tr><td>4 · The head of the page</td><td>What sits above the first block on a phone: the sent line and “Send again”, the when-block, the goal, About — ~500px before the plan begins.</td><td>N1</td><td>—</td></tr>
+        <tr><td>4 · The head of the page</td><td>What sits above the first block on a phone. Re-measured 25 Sep: 478px on the test practice (the plan still starts on screen one there), but in a real week the first block starts under the tab bar (777; 858 for an assistant). Re-framed with you into four asks: the when-block says where and when to arrive and opens the schedule; the sent line becomes one row; About waits under the plan and the “Started from” banner goes (amended at your ask, 25 Sep); the scouting note becomes one row under the toolbar (tab “4 · The head of the page”).</td><td>N1–N4</td><td>ruled 25 Sep (N1–N4 = A) · built on dev 25 Sep · §241 walk owed</td></tr>
       </tbody>
     </table></div>
     <h3>Not in scope</h3>
@@ -2090,7 +2185,7 @@ Notes:</pre>
         <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>It goes when you leave it with nothing in it</div><p>Close the new station’s screen (←, Done, Back, or stepping away with ‹ ›) with no name, no staff, no words, no note and no drill, and it’s removed, with no question, because nothing is lost. The same “untouched” test the block’s “Start from a drill ›” already uses. Only a station made in this visit: blank stations already in a plan are left alone. With “+ Stations makes two”, leaving the new second station untouched puts the block back exactly as it was (D13’s reverse, which already exists). Every width. <b>Tradeoff:</b> you can’t leave empty placeholder stations to fill in later; type a name and it stays.</p></div>
         <div class="opt"><div class="t"><span class="tag">B</span>Keep it, as today</div><p>It stays as “Station 4” until someone deletes it with the bin, which asks first.</p></div>
       </div>
-      <p style="margin-top:12px">⚠ <b>The same question one level up, not drawn:</b> a block added by mistake keeps its 15 minutes and takes them from “rest of practice”. Say if you want blocks to follow S4.</p>
+      <p style="margin-top:12px">⚠ <b>The same question one level up, not drawn:</b> a block added by mistake keeps its 15 minutes and takes them from “rest of practice”. Say if you want blocks to follow S4. <b>Ruled 25 Sep: yes — a block added by mistake goes when left empty, as a station does (build owed).</b></p>
     </div>
 
     <div class="ask">
@@ -2520,10 +2615,270 @@ Notes:</pre>
   </section>
 </div>
 
+<!-- ══════════════════════ TAB · STAGE 4 · THE HEAD OF THE PAGE ══════════════════════
+     Measured 25 Sep 2026 (probes .probe/pp-head-measure.mjs 390|360|768|1440 and .probe/pp-head-anatomy.mjs; every
+     variant SERVED to the screen alone by rewriting the plan's GET; every app write answered locally — none were
+     made). The frames are drawn live by the fifth script at the foot of this file from the product's own values;
+     "measured" figures are the probe's, "drawn" ones the drawing's. -->
+<div id="tab-head" role="tabpanel" hidden>
+  <header class="masthead">
+    <div class="eyebrow">Stage 4 · measured and drawn 25 September 2026 · 390×844 and 360×780, true size</div>
+    <h1>The head of the page: the plan on the first screen</h1>
+    <p class="lede">Above the first block, a phone shows the title, the toolbar, who the plan was sent to, the date and time,
+    a link to the schedule, the goal and About. In a real week it also shows the game’s scouting note, “Started from …” and,
+    for an assistant, “You’re on”. On the test practice the plan still starts on screen one, because stage 1 made the blocks short.
+    <em>In a real week it doesn’t</em>: the first block starts under the tab bar, for the head coach and for an assistant.
+    Below: what the product measures, four decisions, and the screen before and after at true size.</p>
+    <div class="strip" aria-label="Where stage 4 is">
+      <span class="on">Measured 25 Sep · 390 · 360 · every face</span><span class="on">Re-framed with you 25 Sep</span><span class="on">Drawn 25 Sep</span><span class="on">Ruled 25 Sep · N1–N4 = A</span><span class="on">Built on dev 25 Sep</span><span class="now">§241 walk owed</span>
+    </div>
+  </header>
+
+  <section>
+    <h2>What today measures</h2>
+    <p class="sub">The UAT probe practice’s plan page, signed in as the UAT head coach, read out of the running product. Every face below
+    is the same practice. The date, the permissions and the extra lines were changed in what the page received, never in the
+    database, and every write the page could have made was answered locally. Nothing was written.</p>
+    <div class="mets">
+      <div class="met"><div class="k">The head, on the test practice</div><div class="v bad">478px</div><div class="s">of the 735 between the team line and the tab bar at 390. It was ~500 on 23 Sep. It hasn’t shrunk; the blocks under it have.</div></div>
+      <div class="met"><div class="k">A real week · first block</div><div class="v bad">777</div><div class="s">px down, under the tab bar at 772 (390) and 708 (360). For an assistant named on the plan: 858.</div></div>
+      <div class="met"><div class="k">Rows that are only a link</div><div class="v bad">2 × 44px</div><div class="s">“Send again” and “View on schedule”, each a whole row.</div></div>
+      <div class="met"><div class="k">Where, and when to arrive</div><div class="v bad">not shown</div><div class="s">The printed sheet and the notification both say them. The page doesn’t.</div></div>
+    </div>
+
+    <h3>Where the first block starts, face by face</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Face</th><th class="n">390 · first block at</th><th class="n">390 · blocks on screen one</th><th class="n">360 · first block at</th><th class="n">360 · blocks on screen one</th></tr></thead>
+      <tbody>
+        <tr><td>The test practice, as sent (reading)</td><td class="n">515</td><td class="n"><span class="pass">4 of 4</span></td><td class="n">541</td><td class="n">2 + part of 1</td></tr>
+        <tr><td>Not yet sent</td><td class="n">426</td><td class="n"><span class="pass">4 of 4</span></td><td class="n">452</td><td class="n"><span class="pass">4 of 4</span></td></tr>
+        <tr><td>Editing (the test practice)</td><td class="n">534</td><td class="n">3 + part of 1</td><td class="n">534</td><td class="n">2 + part of 1</td></tr>
+        <tr><td>A past practice (How it went first)</td><td class="n">566</td><td class="n">3 + part of 1</td><td class="n">566</td><td class="n">2 + part of 1</td></tr>
+        <tr><td>Someone who can’t edit it</td><td class="n">471</td><td class="n"><span class="pass">4 of 4</span></td><td class="n">497</td><td class="n">3 + part of 1</td></tr>
+        <tr><td>An assistant named on it (“You’re on”)</td><td class="n">596</td><td class="n">2 + part of 1</td><td class="n">621</td><td class="n">1 + part of 1</td></tr>
+        <tr><td><b>A real week · head coach, reading</b></td><td class="n"><span class="fail">777</span></td><td class="n"><span class="fail">none</span></td><td class="n"><span class="fail">777</span></td><td class="n"><span class="fail">none</span></td></tr>
+        <tr><td><b>A real week · head coach, editing</b></td><td class="n"><span class="fail">790</span></td><td class="n"><span class="fail">none</span></td><td class="n"><span class="fail">790</span></td><td class="n"><span class="fail">none</span></td></tr>
+        <tr><td><b>A real week · assistant named on it</b></td><td class="n"><span class="fail">858</span></td><td class="n"><span class="fail">none</span></td><td class="n"><span class="fail">858</span></td><td class="n"><span class="fail">none</span></td></tr>
+        <tr><td>Every piece at its longest (stress)</td><td class="n"><span class="fail">1,016</span></td><td class="n"><span class="fail">none</span></td><td class="n"><span class="fail">1,081</span></td><td class="n"><span class="fail">none</span></td></tr>
+        <tr><td>An empty plan (a writer)</td><td class="n" colspan="2">“Add the first block” at 371</td><td class="n" colspan="2">371</td></tr>
+        <tr><td>A template</td><td class="n">586</td><td class="n">2 + part of 1</td><td class="n">586</td><td class="n">1 + part of 1</td></tr>
+        <tr><td>A computer (1440), once</td><td class="n" colspan="4">476 of 900, the whole plan on screen: nothing to fix there (768: 436)</td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">“First block at” is the top of the first block’s row at scroll 0, in px from the top of the screen. The tab bar starts at 772 (390×844) and
+    708 (360×780). <b>A real week</b> is the test practice as a team in season has it: a game this week whose scouting book has an entry, a plan started from
+    a template (“Started from Standard Tuesday”), a one-sentence goal (“First touch away from pressure, eyes up before the ball arrives.”) and two sentences
+    in About. <b>The stress</b> adds a long goal and About, a longer scouting note, and a plan sent by name to six people.
+    <button type="button" class="why" data-why="hdw-cost" aria-expanded="false">what each piece costs</button></p>
+    <div id="hdw-cost" class="whybody" hidden>A real week, head coach, reading, at 390 (the same at 360 except where it says): the title 44 · <b>the scouting note 131</b>, above Run practice · the toolbar 44 ·
+    <b>“Sent to …” 82</b> (three lines: the count, the audience, the channels and the time, then “Send again” as a 44px row of its own) · <b>the when-block 121</b> (the day on
+    its own line, the time and length, the plan’s fit, then “View on schedule” as a 44px row) · <b>“Started from” 41</b> · the goal 51 (two lines, in the 287px column
+    beside “Tonight:”) · <b>About 87</b> (its title, its tags and kit on a second line, a cut line of description). For an assistant named on it, <b>“You’re on” 110</b>
+    and “Sent to” 38 (no “Send again”). On a past practice, “How it went” takes 125, ruled to come first.</div>
+
+    <h3>What the measuring found</h3>
+    <ul class="list">
+      <li><b>The head didn’t shrink; the plan did.</b> On the test practice it is 478px, where 23 Sep measured ~500. The four blocks fit under it only because stage 1 made each one a 59px row.</li>
+      <li><b>A real week pushes the plan onto screen two.</b> The optional lines are what a team in season has, and the test practice has none of them. With them, the first block
+      starts at 777 (390) for the head coach and 858 for an assistant: under the tab bar at both widths.</li>
+      <li><b>Two whole rows are only links.</b> “Send again” sits alone under the sent line (and the ⋯ menu already has “Send to staff”, which opens the same sheet).
+      “View on schedule” sits alone under the time. The day also takes a line of its own.</li>
+      <li><b>The head never says where, or when to arrive.</b> The printed sheet says “6:00 p.m. · Arrive 5:45 p.m. · UAT Fields”; the notification an assistant taps says
+      “Arrive by 5:45 p.m. for 6:00 p.m.”; the page it opens says neither. <button type="button" class="why" data-why="hdw-where" aria-expanded="false">your note assumed otherwise</button>
+      <span id="hdw-where" class="whybody" hidden style="display:block">The session prompt describes “the when-block (the practice’s date, time and place)”. The place is not there: the plan page’s
+      first line carries the day, the time, the length and how the plan fills it. Only the finished-season reader passes a place in. So N1 is not only a question of size.</span></li>
+      <li><b>The scouting note sits above Run practice.</b> It is the only thing between the title and the page’s own buttons, and it is 131px (168 with longer words). The Scouting Book
+      ruling that added it called it “one quiet line above the sheet”.</li>
+      <li><b>Two controls are under the tap floor</b>, and the layout sweep has never seen them, because the test practice has neither: <b>“You’re on” rows are 32px</b> tall (a later rule of the same
+      weight undoes the 44px floor meant for them), and <b>“Full book · 4 observations ›” is 19px</b>. Both get fixed in this stage whatever you rule.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>The questions, re-framed</h2>
+    <div class="flag good-flag"><span class="k">Put to you before drawing · 25 September 2026 · you chose the re-framed set</span>
+      <p>The ~500px held, but the plan already starts on screen one on the test practice, so shrinking <i>that</i> head is not the target. The target is <b>a real
+      week, at 360: the first block on screen one</b>. That makes four questions, not one. <b>N1</b> the when-block says when, where and when to arrive, and is itself
+      the way to the schedule. <b>N2</b> the sent line becomes one row. <b>N3</b> About (and “Started from”, while reading) waits under the plan on a phone.
+      <b>N4</b> the scouting note becomes one row under the toolbar. The two tap-floor fixes come with the build whatever is ruled.</p></div>
+  </section>
+
+  <section>
+    <h2>The screen, before and after</h2>
+    <p class="sub">Pick a face and a phone. Left: today, drawn from the product’s own sizes, with the measured figure above it. Right: all four as
+    recommended (N1 A · N2 A · N3 A · N4 A). Each frame is the phone at scroll 0; the dashed panel under it is the rest of the page. Red dots mark
+    a measured problem and green dots mark what the drawing answers. Tap a dot for its note.</p>
+    <div class="rtctl" role="group" aria-label="Drawing controls">
+      <div class="grp"><span class="lb" id="hdLbF">Face</span>
+        <div class="rtseg" role="group" aria-labelledby="hdLbF"><button type="button" data-k="face" data-v="week" aria-pressed="true">Real week · head coach</button><button type="button" data-k="face" data-v="assistant" aria-pressed="false">Real week · assistant</button><button type="button" data-k="face" data-v="edit" aria-pressed="false">Real week · editing</button><button type="button" data-k="face" data-v="fixture" aria-pressed="false">Test practice</button><button type="button" data-k="face" data-v="record" aria-pressed="false">Past practice</button><button type="button" data-k="face" data-v="stress" aria-pressed="false">Stress</button></div></div>
+      <div class="grp"><span class="lb" id="hdLbW">Phone</span>
+        <div class="rtseg" role="group" aria-labelledby="hdLbW"><button type="button" data-k="w" data-v="390" aria-pressed="true">390</button><button type="button" data-k="w" data-v="360" aria-pressed="false">360</button></div></div>
+    </div>
+    <div class="fdpair">
+      <div class="fdcol" id="hdF-today"></div>
+      <div class="fdcol" id="hdF-prop"></div>
+    </div>
+    <p class="cap">The frames use the product’s sizes and spacing, so a line can wrap a word earlier or later than on a real phone; above each “today” frame the
+    measured and the drawn first-block figures are printed side by side. The proposal’s figures are the drawing’s. The build re-measures every one of them.</p>
+
+    <h3>Where the first block starts, today and proposed</h3>
+    <div class="tbl"><table>
+      <thead><tr><th>Face</th><th class="n">390 · today (measured)</th><th class="n">390 · proposed (drawn)</th><th class="n">360 · today (measured)</th><th class="n">360 · proposed (drawn)</th></tr></thead>
+      <tbody>
+        <tr><td><b>A real week · head coach</b></td><td class="n"><span class="fail">777 · none on screen one</span></td><td class="n"><span class="pass">456 · 4 of 4</span></td><td class="n"><span class="fail">777 · none</span></td><td class="n"><span class="pass">456 · 4 of 4</span></td></tr>
+        <tr><td><b>A real week · assistant named on it</b></td><td class="n"><span class="fail">858 · none</span></td><td class="n"><span class="pass">599 · 2 + part of 1</span></td><td class="n"><span class="fail">858 · none</span></td><td class="n"><span class="pass">599 · 1 + part of 1</span></td></tr>
+        <tr><td><b>A real week · editing</b></td><td class="n"><span class="fail">790 · none</span></td><td class="n"><span class="pass">449 · 3 + part of 1</span></td><td class="n"><span class="fail">790 · none</span></td><td class="n"><span class="pass">449 · 2 + part of 1</span></td></tr>
+        <tr><td>The test practice, as sent</td><td class="n">515 · 4 of 4</td><td class="n"><span class="pass">355 · 4 of 4</span></td><td class="n">541 · 2 + part of 1</td><td class="n"><span class="pass">381 · 4 of 4</span></td></tr>
+        <tr><td>A past practice</td><td class="n">566 · 3 + part of 1</td><td class="n"><span class="pass">444 · 4 of 4</span></td><td class="n">566 · 2 + part of 1</td><td class="n"><span class="pass">444 · 4 of 4</span></td></tr>
+        <tr><td>Every piece at its longest (stress)</td><td class="n"><span class="fail">1,016 · none</span></td><td class="n">695 · 1 + part of 1</td><td class="n"><span class="fail">1,081 · none</span></td><td class="n"><span class="fail">740 · none</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="cap">The target, <b>the first block on screen one in a real week at 360</b>, is met for the head coach (456, all four blocks) and for an assistant (599). <b>The stress
+    case misses it at 360 by 32px</b> (740 against the tab bar at 708): a plan sent by name to six people, a three-line goal and a long scouting note is more than four changes to the head
+    can absorb, and the blocks start one short scroll down. Today’s drawn figures land within 1px of the measured ones on every face at both widths (probe <span class="mono">.probe/pp-head-hubcheck.mjs</span>).</p>
+  </section>
+
+  <section>
+    <h2>The decisions</h2>
+
+    <div class="ask">
+      <div class="k">N1 · the when-block</div>
+      <h3>When, where and when to arrive; the block is the way to the schedule</h3>
+      <p>Measured: 121px (the day alone on a line, the time and length, how the plan fills it, then “View on schedule” as a 44px row of its own), and no place or arrival
+      time, though the printed sheet and the notification both carry them.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>Three lines, and the whole block opens the schedule</div><p>
+        <b>Sat, Sep 26 · 6:00 p.m.–7:30 p.m.</b> on one line; under it <b>UAT Fields · Arrive by 5:45 p.m.</b> (the Schedule’s own words; the field number joins the
+        place when it is set, as the printed sheet already does); then today’s <b>75 of 90 min planned · 15 rest of practice</b>. A › at the right says the block opens
+        the practice on the schedule, and the “View on schedule” row goes (a screen reader still hears “View on schedule”). <b>121 → 70px drawn, and it says more.</b>
+        A past practice shows the place and not the arrival: an arrival time is an instruction, and a record has nobody to instruct. <b>Cost:</b> “View on schedule” is no longer
+        written out, and “90 min” leaves the first line (the third line already says “of 90 min”).</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>The same, without the new line</div><p>The day and the time on one line, the plan’s fit under it, and the block as the
+        door. About 52px. Where and when to arrive stay one tap away, on the schedule.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Leave it</div><p>121px, the link as its own row, no place.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">N2 · the sent line</div>
+      <h3>One row, the same words, and the row is Send again</h3>
+      <p>Measured: 82px for the head coach. The count, the audience, the channels and the time wrap onto two lines, then “Send again” takes a 44px row of its own.
+      The ⋯ menu already holds “Send to staff”, which opens the same sheet.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>Today’s words on one row ending “· Send again ›”</div><p>
+        <b>Sent to 5 (coaches and helpers) · bell and push · Sep 18, 9:30 a.m. · Send again ›</b>. The whole row is the button and opens the send sheet, as “Send again”
+        does today. The words are unchanged, so the line still names who it went to (the sent line’s own rule). Two lines of text in a 44px row: <b>82 → 44</b>.
+        For someone who can’t send (an assistant), nothing changes: the fact alone, 38px. <b>Cost:</b> “Send again” is no longer a button of its own; the row is.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Move it under the plan</div><p>The fact and “Send again” as they are, below the last block. Nothing above the plan.
+        <b>Cost:</b> the head coach can’t see at a glance whether the plan went out.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Leave it</div><p>82px above the plan.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">N3 · About this practice, and the “Started from” banner</div>
+      <h3>About waits under the plan on a phone; the “Started from” banner goes</h3>
+      <p>Measured: About is 87px in a real week (its title; its tags and kit on a second line, because they don’t fit beside the title; one cut line of the description).
+      “Started from Standard Tuesday” is 41 while reading and 62 while editing (“— edit anything here; the template won’t change.”).</p>
+      <div class="flag good-flag"><span class="k">Amended at your ask · 25 September · “not necessary … takes up space and they know they can edit”</span>
+        <p>The first drawing kept the banner while editing, for its “the template won’t change”. I agree it can go, for a stronger reason than space: <b>that promise is
+        already made at the moment it matters.</b> A plan starts from a template in one way only, the “Start this plan from…” picker, and its template tab says under the choice:
+        <i>“This copies the template onto tonight. The template is left exactly as it is, and anything you change here stays here.”</i> A banner on every later visit repeats it.
+        Nothing is lost underneath: the plan still remembers its template, for the template’s “Started N plans”. <b>Editing:</b> the first block goes from 525 to <b>449</b> (drawn).</p></div>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>About under the last block; the banner gone, reading and editing</div><p>
+        The About fold moves under the timeline on a phone, closed as today, with its line of tags and kit. <b>87 + 41 (reading) or 62 (editing) → 0 above the plan.</b>
+        The template editor is the same editor and gets the same order. <b>The banner goes at every width</b> (recommended: your reason holds on a computer too, and a banner the phone calls
+        unnecessary would be a second answer to one question); say “phone only” if you’d rather keep it on a computer. <b>Cost:</b> what to bring and the description are a scroll down;
+        nobody sees which template a plan came from.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Keep About above the plan as one row; the banner gone</div><p>The fold’s title alone, 44px; its tags and kit move inside it, and the description’s cut
+        line goes. 87 → 44.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Leave About; the banner gone</div><p>87px above the plan in a real week.</p></div>
+      </div>
+      <p style="margin-top:12px"><b>The same line one level down, not changed unless you say:</b> a block placed from a circuit carries <i>“Started from Tee stations · changes here stay here”</i>
+      inside the block’s own screen. It costs no space in the head, and the circuit picker makes the same promise. Say if it should go the same way.</p>
+    </div>
+
+    <div class="ask">
+      <div class="k">N4 · the scouting note (a game this week)</div>
+      <h3>One row, under the toolbar</h3>
+      <p>Measured: 131px, above Run practice: the opponent and the day, the book’s line in italics, the latest observation, and a 19px “Full book · 4 observations ›” link.
+      It shows only when the week has a game whose book has something in it, and never on a past practice.</p>
+      <div class="opts">
+        <div class="opt rec"><div class="t"><span class="tag">A · recommended</span>“You play Riverside Rockets Monday — the book ›”</div><p>
+        One row, the whole row opening the book, the “one quiet line” its ruling described. The book’s line and the latest observation are one tap in, in the book.
+        It sits under the toolbar and the sent line, so nothing comes between the title and Run practice. <b>131 → 49 drawn</b> (the line wraps to two at both widths; a shorter opponent’s name fits one, 44).
+        The 19px link goes with it. <b>Cost:</b> the quote (“They press high for the first ten minutes.”) is no longer on the plan page.</p></div>
+        <div class="opt"><div class="t"><span class="tag">B</span>Keep the card, under the toolbar</div><p>The page’s buttons come first; the card stays 131px, its link at the tap floor.</p></div>
+        <div class="opt"><div class="t"><span class="tag">C</span>Leave it above the toolbar</div><p>Its link fixed to 44px, nothing else.</p></div>
+      </div>
+    </div>
+
+    <div class="ask">
+      <div class="k">Fixed whatever you rule</div>
+      <h3>Two controls under the tap floor</h3>
+      <p><b>“You’re on” rows</b> go from 32 to 44px (a later rule of the same weight was undoing the phone floor). For two entries that is +24px, and it is the one thing on this tab
+      that grows. <b>“Full book” (19px)</b> becomes the row under A, or a 44px link under B and C. The layout sweep can’t see either on the test practice, so the build adds a
+      way to sweep a plan that has them.</p>
+    </div>
+
+    <div class="paste">
+      <div class="k">Paste back into the chat to rule</div>
+<pre>Stage 4 · The head of the page
+N1 the when-block — A when, where, arrive by; the block opens the schedule / B the same without the new line / C leave it
+N2 the sent line — A one row, the row is Send again / B under the plan / C leave it
+N3 About under the plan, the "Started from" banner gone — A / B About as one row above the plan / C leave About
+   The banner goes — everywhere / phone only
+   A circuit's "Started from" line inside a block — leave it / it goes too
+N4 the scouting note — A one row under the toolbar / B the card under the toolbar / C leave it
+Notes:</pre>
+    </div>
+    <div class="flag good-flag"><span class="k">Ruled · owner · 25 September 2026 · built on dev the same day</span>
+      <p><b>N1 = A · N2 = A · N3 = A · N4 = A</b>: <i>“I approve your recommendations.”</i> The “Started from” banner goes <b>at every width</b>; a circuit’s “Started from” line inside a block stays.
+      <b>Measured on the build</b>, in the running product at 390 and 360: a real week’s first block at <b>443</b> at both widths (was 777; all four blocks on the first screen), an assistant’s at
+      <b>586</b> (was 858), editing 436 (was 790), the test practice 355 and 381, a past practice 444 (was 566). The stress case starts at 682 at 390 and 727 at 360, still 19px under the tab bar there.
+      The date block is 70px at both widths, the field number included. Every control in the head lands on itself when tapped; nothing was written. A computer and the 768 band are unchanged
+      apart from the banner. Walk: <b>QA walk · 1</b>, part N (ledger §241).</p></div>
+    <div class="flag"><span class="k">Found at build · two things the drawing didn’t show</span>
+      <p><b>A clock broke across two lines.</b> The test team’s field has a number, so the place line read “UAT Fields, Diamond 2 · Arrive by 5:45” with “p.m.” alone on the next line, and the
+      plan’s fit line wrapped too. Fixed: the › sits beside the first line only, so the other two get the whole width, and a time or a count never breaks inside itself. The same fix keeps
+      the sent line’s date whole (“Sep / 18” had split). <b>The build lands 13px higher than drawn at 390</b> (443 against 456): the drawing gave the scouting row the card’s bottom margin.</p></div>
+    <div class="flag"><span class="k">Found at review · 25 September · fixed</span>
+      <p><b>A past practice showed its arrival time while you edited it.</b> Whether to show “Arrive by” went by the page being in read mode, not by the date, so opening a finished
+      practice for editing brought back an instruction nobody can follow. It now goes by the date: a past practice shows the place and no arrival, reading or editing. The walk’s
+      step N3 had written the wrong behaviour down and is corrected. <b>Accepted:</b> turning the phone sideways while typing in About moves the section and drops the cursor (the saved
+      words stay) — the same trade stage 1 accepted for an open block.</p></div>
+  </section>
+
+  <section>
+    <h2>Also found, not asked</h2>
+    <ul class="list">
+      <li><b>The template editor’s head</b> has two things a practice doesn’t: “Retire this template” on a row of its own under the title (the header grows from 44 to 100px on a phone)
+      and a standing three-line explanation of what a template is. Its first block is at 586 on both phones. N3 reaches it, because it is the same editor. The rest isn’t
+      drawn; say if you want it in this stage.</li>
+      <li><b>The goal wraps beside “Tonight:”</b>, in a 287px column at 390 (257 at 360), so a one-sentence goal takes two lines. Letting it run under the kicker saves a line
+      only on some goals; not drawn.</li>
+      <li><b>A computer and the 641–768 band are out of scope</b>, measured once to be sure: at 1440 the first block is at 476 of 900 with the whole plan on screen; at 768, 436.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>What doesn’t change</h2>
+    <ul class="list">
+      <li><b>The title and the toolbar row</b>: Run practice first, Edit, ⋯ (E1), and a plan that opens to read (1b).</li>
+      <li><b>A past practice’s face</b>: “How it went” first, under the when-block.</li>
+      <li><b>The blocks</b>: the rows, the grip while editing, “+ Add a block”, the block’s sheet.</li>
+      <li><b>“You’re on”</b> stays where it is, under the when-block, for a reader named on the plan; only its rows grow to the tap floor.</li>
+      <li><b>The printed sheet, Run practice, the send sheet and its words.</b> No migration, no new route, no year.</li>
+      <li><b>A computer and the 641–768 band</b>: every change here is ≤640.</li>
+    </ul>
+  </section>
+</div>
+
 <!-- ══════════════════════ TAB · QA WALK 1 ══════════════════════ -->
 <div id="tab-qa1" role="tabpanel" hidden>
   <header class="masthead">
-    <div class="eyebrow">QA walk · stage 1 · ledger §227 · built on dev 23 September 2026 · <b>walked and passed 24 September 2026</b> (every part, A–K — J is §229, the rotation table; K is §230, the Groups room) · <b>part L (§231, stations inside a block) walked and passed 25 September</b> · <b>part M (§240 with §237, the field, full screen) walked and passed 25 September</b></div>
+    <div class="eyebrow">QA walk · stage 1 · ledger §227 · built on dev 23 September 2026 · <b>walked and passed 24 September 2026</b> (every part, A–K — J is §229, the rotation table; K is §230, the Groups room) · <b>part L (§231, stations inside a block) walked and passed 25 September</b> · <b>part M (§240 with §237, the field, full screen) walked and passed 25 September</b> · <b>part N (§241, the head of the page) built 25 September, walk owed</b></div>
     <h1>Walk the block on its own screen</h1>
     <p class="lede">On your phone, signed in as the UAT head coach. Tick each step as it holds; mark each part
     Pass or Needs work; the box under a part is for what you saw. Ticks are kept in this browser. When you are
@@ -2532,7 +2887,7 @@ Notes:</pre>
   <section>
     <div class="qasign"><b>Where:</b> the UAT Test Team → More → <b>Practice plans</b> → <b>UAT probe practice</b>.
     It opens to read (stage 1b): tap <b>Edit</b> beside Run practice first for parts A–F.
-    Parts A–E on a phone; part F on a computer. Part J (ledger §229, the rotation table) and part K (ledger §230, the Groups room) are on a phone except their last steps. Part L (ledger §231, stations inside a block) is on a phone except its last step; its paths add and remove stations, and each one ends the practice as it found it. <b>Part M</b> (ledger §240, walked for §237 too — the field, full screen) starts from <b>Run practice</b> on the same practice, on a phone except its last step; it writes nothing, except the optional drill-block step, which says how to put the practice back.</div>
+    Parts A–E on a phone; part F on a computer. Part J (ledger §229, the rotation table) and part K (ledger §230, the Groups room) are on a phone except their last steps. Part L (ledger §231, stations inside a block) is on a phone except its last step; its paths add and remove stations, and each one ends the practice as it found it. <b>Part M</b> (ledger §240, walked for §237 too — the field, full screen) starts from <b>Run practice</b> on the same practice, on a phone except its last step; it writes nothing, except the optional drill-block step, which says how to put the practice back. <b>Part N</b> (ledger §241, the head of the page) is on a phone except its last step; it opens UAT probe practice (a past practice, then Edit) and Practice review — next week, and writes nothing except its optional “You’re on” step, which says how to undo it. The scouting row is not in it: the test team has no game with a scouting book this week (it was measured by probe instead).</div>
     <p class="qaprog" id="qaProg">0 of 0 steps ticked</p>
     <div id="qaParts"></div>
     <div class="paste">
@@ -2571,6 +2926,8 @@ Notes:</pre>
     <p>Measured at 390 and 360 on the run screen, on the real plan and on a long copy served to the screen alone (nothing written; the screen writes nothing). The list and the rotating stop fit, as you said. Every station hides its button (9 of 9 on the real plan, 118–302px under the tab bar at 390; 26 of 26 on the long copy), a written stop with a real paragraph hides it (181px at 390), and on the stops that fit it sits anywhere from 270 to 619px down. After Rotate now, a station opens the next round where you had scrolled to: on a long one “With you now” opens 203px above the top of the screen. A plain stop’s lines have no headings, a stop built from a drill leaves out its setup, equipment and note for tonight, and on a station “Just for tonight” is the eighth line. Put to you before drawing and re-framed with you: M1 the buttons at the foot of every screen, with each tap opening its screen at the top, and a station carrying the stop’s Back so a round goes back in one tap (your ask the same day; today it takes three); M2 a stop reads like a station (headings in today’s order, a drill’s own lines); M3 swipe closed (the original field spec already said no, and the back gesture going up one level is the collision that holds; gloves are not); M4 tonight’s note first. Decisions and paste-back on the “3 · The field” tab. <b>Ruled 25 Sep: M1–M4 = A, and a station gets Back; built on dev the same day</b> (the plan’s §6f.6): the bar holds its place on the tab bar at every scroll position on every stop and station at both widths, and it is the one thing the drawing didn’t show that needed a fix. A sticky bar rode up off the tab bar at the end of a page until the page dropped its bottom strip. Walk: QA walk · 1 part M, ledger §237.</p>
     <h3>9 · Stage 3b — the field, full screen (asked, drawn, ruled M5 = A · M6 = B and built 25 Sep; the plan’s §6g; ledger §240)</h3>
     <p>Asked at the end of stage 3: why doesn’t Run practice open over the nav like the block sheet, and could its foot be the sheet’s arrows, with somewhere to rotate? Drawn on the “3b · The field, full screen” tab and ruled the same day. On a phone the run is a full screen of its own, the block sheet’s construction: a pinned head, the words scrolling, a foot below them, over the team line and the tab bar and registered with the portal’s overlay signal (the tab bar hides, the page behind stops scrolling). It replaced stage 3’s bar above the tab bar and the three pieces that held it there. The foot is ‹ Block 2 of 4 › always (› skips to the next block even mid-rotation; ‹ from the first block is the list; the last block’s › is “Done”, back to the plan), with a round row above it in a rotation (Rotate now, and from round 2 a labelled ‹ Round 1). A button with nowhere to go is absent, never greyed, and the dark one is the one you’ll tap next. Each block remembers its round while the run is open; nothing is written. Measured after at 390 and 360: 713px of words on a plain block (604 before), 651 in a rotation; the head and foot fixed at every scroll position; every foot button hit-tested. A computer is unchanged.</p>
+    <h3>10 · Stage 4 — the head of the page (measured, drawn, ruled N1–N4 = A and built 25 Sep; the plan’s §6i; ledger §241)</h3>
+    <p>Re-measured first, at 390 and 360, on every face (upcoming reading and editing, sent and not, a past practice, a reader who can’t edit, an assistant named on the plan, the empty plan, a template), with each variant served to the screen alone and every write answered locally. The head had not shrunk: 478px on the test practice (~500 on 23 Sep). But the plan already starts on screen one there, because stage 1’s rows are short. What fails is a real week: a game with a scouting note, a plan started from a template, a sentence of goal and two of About put the first block at 777 (390 and 360), under the tab bar; 858 for an assistant named on the plan. Found on the way: two whole rows are only links (“Send again”, “View on schedule”); the head never says where or when to arrive, though the printed sheet and the notification do; the scouting note sits above Run practice; “You’re on” rows are 32px and the scouting link 19px, under the tap floor and never swept. Put to you before drawing and re-framed with you: N1 the when-block says when, where and when to arrive and is itself the door to the schedule; N2 the sent line is one row that is Send again; N3 About waits under the plan on a phone, and the “Started from” banner goes (amended at your ask the same day: the template picker already promises the template won’t change); N4 the scouting note is one row under the toolbar. Drawn as recommended: 777 → 456 in a real week (all four blocks on screen one at both widths), 858 → 599 for an assistant, 790 → 449 while editing; the stress case still misses at 360 by 32px. Decisions and paste-back on the “4 · The head of the page” tab.</p>
   </section>
 </div>
 
@@ -2598,6 +2955,8 @@ Notes:</pre>
     <p>At the field the coach never scrolls to move the practice on: Back and Next block (or Rotate now) sit at the foot of the screen, just above the tab bar, in the same place on every stop and station. Today every station hides Rotate now below the tab bar, and a stop with a real paragraph hides Next block. Each tap opens its screen at the top, so after Rotate now the new group is the first thing a station coach sees. A station gets Back beside Rotate now, so a round moved on by accident is one tap back instead of three. A stop reads like a station, with the same headings on its lines. A stop built from a drill shows the drill’s setup, equipment and note for tonight. The note for tonight comes first on a station instead of eighth. There is no swipe: the phone’s back gesture already goes up one level, and a swipe beside it would go somewhere else. The trade-off is 73px of every screen for the bar, and an empty stretch between the words and the bar on a short stop.</p>
     <h3>Stage 3b — the field, full screen (ruled, built, walked and passed 25 Sep, §240)</h3>
     <p>On a phone, Run practice fills the screen, with no team line and no tab bar, so a stray tap can’t leave the practice. The run keeps nothing once you leave it, so a stray tap used to lose the coach’s place. The foot is a stepper like the block sheet’s, ‹ Block 2 of 4 ›, which can skip to the next block even mid-rotation. A rotating block adds a row above it with Rotate now and, from round 2, a labelled ‹ Round 1. Each block remembers its round while the run is open, so a skip by mistake is one ‹ back. The words get 109px more on a plain block (713px at 390). The trade-off: checking Chat mid-practice means leaving the run and coming back to the list.</p>
+    <h3>Stage 4 — the head of the page (ruled and built 25 Sep; walk owed, §241)</h3>
+    <p>In a real week a coach opening the plan on a phone sees no plan at all on the first screen: the scouting note, who it was sent to, the date and a link to the schedule, “Started from …”, the goal and About come first, and the first block starts under the tab bar. An assistant named on the plan has “You’re on” too. Proposed: the date, time, <b>place and arrival time</b> in one block that opens the schedule (today the page never says where, or when to arrive); the sent line as one row that is also “Send again”; About under the plan on a phone, and no “Started from” banner (the template picker already says the template won’t change); the scouting note as one row under the toolbar. Built: the first block moves from 777px to 443 for the head coach, with all four blocks on the first screen, and from 858 to 586 for an assistant (measured at 390 and 360). The trade-offs: what to bring and the description are a scroll down, and the scouting quote moves into the book, one tap in. A computer is unchanged.</p>
     <h3>Success criteria</h3>
     <p>At 390: a shut block ≤ 60px and never truncated; a writing field ≥ 350px wide; the minutes chips on one line; opening a block moves nothing else on the page; a three-block plan written from blank without returning to the list; the layout sweep green with the sheet open; the field’s advance button reachable without scrolling on every stop once stage 3 lands.</p>
   </section>
@@ -2605,7 +2964,8 @@ Notes:</pre>
 
 <p class="foot">Measured 23 September 2026 on <span class="mono">dev</span>, signed in as the UAT head coach, on a warm dev
 server. Probes: <span class="mono">.probe/pp-phone-measure.mjs · pp-station-modal.mjs</span>; stage 3 (25 September):
-<span class="mono">.probe/pp-field-measure.mjs · pp-field-station-scroll.mjs</span>. Every figure on this
+<span class="mono">.probe/pp-field-measure.mjs · pp-field-station-scroll.mjs</span>; stage 4 (25 September):
+<span class="mono">.probe/pp-head-measure.mjs · pp-head-anatomy.mjs · pp-head-hubcheck.mjs</span>. Every figure on this
 page was read out of the rendered product, not estimated. Drawings are 390px wide and do not reflow — open
 this page on a phone to judge a tap target or a type size.</p>
 
@@ -2615,7 +2975,7 @@ this page on a phone to judge a tap target or a type size.</p>
 (function(){
   var tabs = [].slice.call(document.querySelectorAll('.tab[data-tab]'));
   /* Every tab button needs a panel here — a button with no entry falls through silently. */
-  var panels = { found:'tab-found', s1:'tab-s1', qa1:'tab-qa1', foot:'tab-foot', s2:'tab-s2', grp:'tab-grp', rot:'tab-rot', st:'tab-st', field:'tab-field', fieldfoot:'tab-fieldfoot', plan:'tab-plan', brief:'tab-brief' };
+  var panels = { found:'tab-found', s1:'tab-s1', qa1:'tab-qa1', foot:'tab-foot', s2:'tab-s2', grp:'tab-grp', rot:'tab-rot', st:'tab-st', field:'tab-field', fieldfoot:'tab-fieldfoot', head:'tab-head', plan:'tab-plan', brief:'tab-brief' };
   function show(k){
     if(!panels[k]) k = 'found';
     Object.keys(panels).forEach(function(key){ var el = document.getElementById(panels[key]); if(el) el.hidden = (key !== k); });
@@ -2757,6 +3117,16 @@ this page on a phone to judge a tap target or a type size.</p>
       'Swipe left and right across a block: nothing happens, by design. Your phone’s own back gesture from the edge goes up one level (a station → its block → the list → the plan).',
       'Optional (it changes the plan): in the plan, press Edit, add a block from a drill that has a setup and equipment, open its station and type a note in "Just for tonight". Run practice → that block: the note first, the headings, then Setup and Equipment, and no "Stations" list with one row. Delete the block afterwards.',
       'On a computer, open the same Run practice: a page with the sidebar, "1 of …" at the top right of a block, Back and Next block under the words with "Who’s here tonight" under them, and a station has Back beside Rotate now. On the last block the big button reads "Done" and takes you to the plan.'
+    ]},
+    { id:'N', title:'N · §241 — The head of the page (phone)', steps:[
+      'On your phone, open UAT probe practice (a past practice). At the top of the white sheet: "Mon, Sep 21 · 10:45 p.m.–12:15 a.m." on one line, "UAT Fields, Diamond 2" under it, then "75 of 90 min planned · 15 rest of practice", with a › at the right. There is no separate "View on schedule" line, and no arrival time (the practice is past).',
+      'Tap anywhere on that block: the practice opens on the Schedule. Go back.',
+      'Tap Edit. The date block stays as it was, with no arrival time: the practice is past, and editing it doesn’t change that. Under the toolbar, one row reads "Sent to 5 (coaches and helpers) · bell and push · Sep 18, 9:30 a.m. · Send again" with a › at the right; "Send again" has no line of its own.',
+      'Tap that row: the Send to staff sheet opens. Close it without sending.',
+      'Scroll down: "About this practice" sits under the last block, not above Warm-up. Tap it and it opens there. Nothing on the page says "Started from". Tap Done editing.',
+      'Open Practice review — next week: it opens to read, with the same kind of date block (UAT Fields under the date and time, a › at the right) and the plan straight under the goal. Optional (it changes the event): give it an arrival time on the Schedule, then reopen its plan — the block reads "UAT Fields · Arrive by …", the time whole on one line.',
+      'Optional (it changes the plan; undo it after): on UAT probe practice tap Edit, open Warm-up and add yourself (Coach Bobert) under Staff, then go back. A "You’re on" box appears under the date block; each line in it is a full finger-height row, and tapping one takes you to that block. Remove yourself from Warm-up again.',
+      'On a computer, open UAT probe practice: the date line with "View on schedule" beside it, and after Edit the "Sent to …" line with its "Send again" link and About above the plan, all as before. There is no "Started from" line.'
     ]}
   ];
   var KEY = 'pp-phone-qa1';
@@ -3464,6 +3834,217 @@ this page on a phone to judge a tap target or a type size.</p>
   tab.addEventListener('click', function(e){
     var b = e.target.closest ? e.target.closest('.mk[data-fbnote]') : null; if (!b) return;
     var li = document.getElementById(b.getAttribute('data-fbnote')); if (!li) return;
+    var was = li.classList.contains('open');
+    [].slice.call(li.parentElement.children).forEach(function(x){ x.classList.remove('open'); });
+    if (!was){ li.classList.add('open'); li.scrollIntoView({ block: 'nearest' }); }
+  });
+  new MutationObserver(function(){ measure(); }).observe(tab, { attributes: true, attributeFilter: ['hidden'] });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(measure);
+  window.addEventListener('resize', measure);
+  sync(); render();
+})();
+</script>
+<script>
+/* ── Stage 4 · the head of the page: today and the four recommendations, drawn live from ONE model per face — the
+   fixture's own words (read from the plan route on 25 Sep) or the served "real week" and stress copies the probe
+   measured. MEASURED figures are the probe's (.probe/pp-head-measure.mjs); the frames use the product's own
+   values (.probe/pp-head-anatomy.mjs) and the drawn figures are the drawing's. ── */
+(function(){
+  var tab = document.getElementById('tab-head'); if (!tab) return;
+  var KEY = 'pp-phone-head';
+  var state = { face: 'week', w: 390 };
+  try { var saved = JSON.parse(localStorage.getItem(KEY) || 'null'); if (saved) Object.keys(state).forEach(function(k){ if (k in saved) state[k] = saved[k]; }); } catch (e) {}
+
+  var WEEK_GOAL = 'First touch away from pressure, eyes up before the ball arrives.';
+  var WEEK_ABOUT = 'Last practice before Saturday’s game. Short warm-up, then decisions under pressure in small numbers.';
+  var LONG_GOAL = 'Sharper decisions under pressure — first touch away from pressure, eyes up before the ball arrives, and a quick switch of play when the middle closes. Everyone talks on every rep.';
+  var LONG_ABOUT = 'The last practice before Saturday’s game. We keep the warm-up short and spend most of the time on decisions under pressure: small numbers, tight spaces, the coach calling the switch.';
+  var SCOUT_WEEK = { opp: 'Riverside Rockets', day: 'Monday', quote: 'They press high for the first ten minutes.', obs: 'Their keeper comes off the line early.', by: 'Jen Okafor', n: 4 };
+  var SCOUT_LONG = { opp: 'Riverside Rockets', day: 'Monday', quote: 'They press high for the first ten minutes and leave the far side open.', obs: 'Their keeper rushes out early on through balls.', by: 'Jen Okafor', n: 4 };
+  var SENT_GROUP = { who: 'Sent to 5', rest: '(coaches and helpers) · bell and push · Sep 18, 9:30 a.m.' };
+  var SENT_NAMES = { who: 'Sent to Jen Okafor, Marcus Delacroix-Whitfield, Priya Raman, Sam Oduya, Alexandra Fitzgerald and Tom Nguyen', rest: '· bell, push and email · 2:44 p.m.' };
+  var LIVE_TIMES = ['6:00 p.m.', '6:15 p.m.', '7:00 p.m.', '7:30 p.m.', '7:45 p.m.'];
+  var REC_TIMES = ['10:45 p.m.', '11:00 p.m.', '11:45 p.m.', '12:15 a.m.'];
+
+  /* One model per face. `mine` = the reader is named on the plan (the YOU mark, "You're on"). */
+  var F = {
+    week:      { label: 'a real week · head coach', write: true,  editing: false, sent: SENT_GROUP, scout: SCOUT_WEEK, prov: 'Standard Tuesday', goal: WEEK_GOAL, about: WEEK_ABOUT, mine: false },
+    assistant: { label: 'a real week · an assistant named on it', write: false, editing: false, sent: SENT_GROUP, scout: SCOUT_WEEK, prov: 'Standard Tuesday', goal: WEEK_GOAL, about: WEEK_ABOUT, mine: true },
+    edit:      { label: 'a real week · head coach, editing', write: true,  editing: true,  sent: SENT_GROUP, scout: SCOUT_WEEK, prov: 'Standard Tuesday', goal: WEEK_GOAL, about: WEEK_ABOUT, mine: false },
+    fixture:   { label: 'the test practice, as sent', write: true,  editing: false, sent: SENT_GROUP, scout: null, prov: null, goal: 'Sharper decisions under pressure.', about: null, mine: false },
+    record:    { label: 'a past practice', write: true, editing: false, record: true, sent: null, scout: null, prov: null, goal: 'Sharper decisions under pressure.', about: null, mine: false },
+    stress:    { label: 'every piece at its longest', write: true, editing: false, sent: SENT_NAMES, scout: SCOUT_LONG, prov: 'Standard Tuesday — decisions', goal: LONG_GOAL, about: LONG_ABOUT, mine: true }
+  };
+  /* Measured on the product, 25 Sep: the first block's top at scroll 0, and each piece's height. */
+  var MEAS = {
+    '390-week': { first: 777, scout: 131, sent: 82, when: 121, prov: 41, goal: 51, about: 87 },
+    '360-week': { first: 777, scout: 131, sent: 82, when: 121, prov: 41, goal: 51, about: 87 },
+    '390-assistant': { first: 858, scout: 131, sent: 38, when: 121, you: 110, prov: 41, goal: 51, about: 87 },
+    '360-assistant': { first: 858, scout: 131, sent: 38, when: 121, you: 110, prov: 41, goal: 51, about: 87 },
+    '390-edit': { first: 790, scout: 131, sent: 82, when: 121, prov: 62, goal: 44, about: 87 },
+    '360-edit': { first: 790, scout: 131, sent: 82, when: 121, prov: 62, goal: 44, about: 87 },
+    '390-fixture': { first: 515, sent: 82, when: 121, goal: 26, about: 63 },
+    '360-fixture': { first: 541, sent: 82, when: 121, goal: 51, about: 63 },
+    '390-record': { first: 566, when: 121, recap: 125, goal: 26, about: 63 },
+    '360-record': { first: 566, when: 121, recap: 125, goal: 26, about: 63 },
+    '390-stress': { first: 1016, scout: 168, sent: 82, when: 121, you: 110, prov: 41, goal: 128, about: 87 },
+    '360-stress': { first: 1081, scout: 168, sent: 102, when: 121, you: 110, prov: 62, goal: 154, about: 87 }
+  };
+  var fmt = function(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ','); };
+  var navTop = function(){ return (state.w === 360 ? 780 : 844) - 72; };
+
+  function dot(side, n, st){ return '<button type="button" class="mk' + (side === 'prop' ? ' g' : '') + '" data-hdnote="hdn-' + side + '-' + n + '" aria-label="' + (side === 'prop' ? 'answer ' : 'note ') + n + '" style="' + (st || 'right:-6px;top:-8px') + '">' + n + '</button>'; }
+
+  /* The notes, in the order the dots appear; each is {k, t}. Numbers come from MEAS (today) or the drawing (proposed). */
+  function notesFor(side){
+    var f = F[state.face], m = MEAS[state.w + '-' + state.face], out = [];
+    if (side === 'today'){
+      if (f.scout) out.push({ k: 'scout', t: 'The scouting note: ' + m.scout + 'px, above Run practice. The opponent and the day, the book’s line, the latest observation, and “Full book · 4 observations ›”, a link 19px tall. Its own ruling called it “one quiet line”.' });
+      if (f.sent) out.push({ k: 'sent', t: '“Sent to …”: ' + m.sent + 'px. ' + (f.write ? 'The facts wrap onto two lines, then “Send again” takes a 44px row of its own. The ⋯ menu already holds “Send to staff”, which opens the same sheet.' : 'Someone who can’t send sees the fact alone, on two lines.') });
+      out.push({ k: 'when', t: 'The when-block: ' + m.when + 'px. The day on a line of its own, the time and length, how the plan fills the practice, then “View on schedule” as a 44px row. No place and no arrival time, though the printed sheet and the notification carry both.' });
+      if (f.record) out.push({ k: 'recap', t: '“How it went”: ' + m.recap + 'px, first on a past practice (ruled; not a question here).' });
+      if (f.mine) out.push({ k: 'you', t: '“You’re on”: ' + m.you + 'px, the reason an assistant opens the page. Its rows are 32px tall, under the 44px floor.' });
+      if (f.prov) out.push({ k: 'prov', t: '“Started from …”: ' + m.prov + 'px. ' + (f.editing ? 'While editing it says the template won’t change, which is real work.' : 'While reading it is only a fact.') });
+      if (f.about) out.push({ k: 'about', t: 'About: ' + m.about + 'px. Its tags and kit don’t fit beside the title, so they take a second line; then one line of the description, cut.' });
+      out.push({ k: 'first', t: 'The first block at ' + fmt(m.first) + ' (measured)' + (m.first + 59 > navTop() ? ', ' + (m.first > navTop() ? 'under the tab bar at ' + navTop() + '. The plan starts on screen two.' : 'cut by the tab bar at ' + navTop() + '.') : '.') });
+    } else {
+      if (f.sent && f.write) out.push({ k: 'sent', t: 'N2 · A: today’s words on one row, ending “· Send again ›”. The whole row opens the send sheet. Two lines of text in a 44px row.' });
+      if (f.scout) out.push({ k: 'scout', t: 'N4 · A: one row under the toolbar and the sent line, the whole row opening the book. Nothing comes between the title and Run practice. The quote and the latest observation are in the book, one tap in.' });
+      out.push({ k: 'when', t: 'N1 · A: the day and the time on one line; where and when to arrive under it' + (f.record ? ' (a past practice shows the place, not the arrival)' : '') + '; the plan’s fit as today. The block opens the practice on the schedule, and the › says so.' });
+      if (f.mine) out.push({ k: 'you', t: '“You’re on” where it is, its rows at the 44px floor (a fix, whatever is ruled). It grows by 24px.' });
+      out.push({ k: 'first', t: 'The first block at [first] (drawn), [onscreen] on screen one above the tab bar at ' + navTop() + '.' });
+      out.push({ k: 'below', t: 'N3 · A: About under the last block, closed as today, with its line of tags and kit.' + (f.prov ? ' The “Started from” banner is gone, reading and editing (your call, 25 Sep): the template picker already says the template won’t change at the moment you choose it.' : '') });
+    }
+    return out;
+  }
+
+  function build(side){
+    var f = F[state.face], prop = side === 'prop', list = notesFor(side), idx = {};
+    list.forEach(function(n, i){ idx[n.k] = i + 1; });
+    var d = function(k, st){ return idx[k] ? dot(side, idx[k], st) : ''; };
+    var times = f.record ? REC_TIMES : LIVE_TIMES;
+
+    var hdr = '<div class="hdhdr"><span class="bk" aria-hidden="true">←</span><span class="rl"></span><span class="ic" aria-hidden="true">☷</span><b>UAT probe practice</b></div>';
+    var bar = '<div class="hdbar"><span class="hdbtn">▷ Run practice</span>'
+      + (f.write ? (f.editing ? '<span class="hdbtn ed on">✓ Done editing</span>' : '<span class="hdbtn ed">✎ Edit</span>') : '')
+      + '<span class="hdbtn sq">···</span></div>';
+    var scout = '';
+    if (f.scout){
+      var s = f.scout;
+      scout = prop
+        ? '<div class="hdscout row hdrel"><span class="ld"><i>⌖</i><span>You play <strong>' + s.opp + '</strong> ' + s.day + ' — the book</span></span><span class="hdcv">›</span>' + d('scout') + '</div>'
+        : '<div class="hdscout hdrel"><p class="ld"><i>⌖</i><span>You play <strong>' + s.opp + '</strong> ' + s.day + ' — the book:</span></p><p class="qt">“' + s.quote + '”</p><p class="ob">' + s.obs + ' <span>— ' + s.by + '</span></p><span class="lk">Full book · ' + s.n + ' observations ›</span>' + d('scout') + '</div>';
+    }
+    var sent = '';
+    if (f.sent){
+      sent = prop && f.write
+        ? '<div class="hdsentrow hdrel"><span class="t"><b>' + f.sent.who + '</b> ' + f.sent.rest + ' · <em>Send again</em></span><span class="hdcv">›</span>' + d('sent') + '</div>'
+        : '<p class="hdsent hdrel"><b>' + f.sent.who + '</b><span>' + f.sent.rest + '</span>' + (f.write ? '<span class="lk">Send again</span>' : '') + d('sent') + '</p>';
+    }
+    var when;
+    if (prop){
+      var place = f.record ? 'UAT Fields' : 'UAT Fields · Arrive by 5:45 p.m.';
+      when = '<div class="hdwhen door hdrel"><div class="hdwl"><b>' + (f.record ? 'Mon, Sep 21 · 10:45 p.m.–12:15 a.m.' : 'Sat, Sep 26 · 6:00 p.m.–7:30 p.m.') + '</b><span>' + place + '</span><span>75 of 90 min planned · 15 rest of practice</span></div><span class="hdcv">›</span>' + d('when') + '</div>';
+    } else {
+      when = '<div class="hdwhen hdrel"><div class="hdwl"><b>' + (f.record ? 'Mon, Sep 21' : 'Sat, Sep 26') + '</b><b>' + (f.record ? '10:45 p.m.–12:15 a.m.' : '6:00 p.m.–7:30 p.m.') + ' · 90 min</b><span>75 of 90 min planned · 15 rest of practice</span></div><span class="hdsched">▦ View on schedule</span>' + d('when') + '</div>';
+    }
+    var recap = f.record ? '<div class="hdrecap hdrel"><p class="h">✎ How it went</p><div class="ta">What would you do differently next time?</div>' + d('recap') + '</div>' : '';
+    var you = f.mine ? '<div class="hdyou hdrel" style="--ym:' + (prop ? 44 : 32) + 'px"><span class="l">You’re on</span><a><i>6:00 p.m.</i>Warm-up</a><a><i>6:15 p.m.</i>Skills circuit <em>› Footwork ladder</em></a>' + d('you') + '</div>' : '';
+    var provHtml = function(){ return '<div class="hdprov hdrel"><i>▤</i><span>Started from <strong>' + f.prov + '</strong>' + (f.editing ? ' — edit anything here; the template won’t change.' : '') + '</span>' + d('prov') + '</div>'; };
+    var provTop = f.prov && !prop ? provHtml() : '';
+    var goal = '<div class="hdgoal"><b>' + (f.record ? 'Goal:' : 'Tonight:') + '</b>' + (f.editing ? '<span class="in">' + f.goal + '</span>' : '<span>' + f.goal + '</span>') + '</div>';
+    var about = '<div class="hdabout hdrel"><div class="hdfold"><i>›</i><b>About this practice</b><span class="sum">test · Skills · Cones, Bibs, Spare balls</span></div>' + (f.about ? '<p class="pv">' + f.about + '</p>' : '') + (prop ? '' : d('about')) + '</div>';
+    var rows = [
+      ['Warm-up', f.mine ? '<span class="hdyoum">you</span>' : '', '15 min · UAT Coach · 6 players'],
+      ['Skills circuit', '<span class="hdrot">⇄ ROTATION</span>', '45 min · UAT Coach · 3 stations'],
+      ['Small-sided game', '', 'Rest of practice · 12 players'],
+      ['Block 4', '', '15 min · Whole team', true]
+    ];
+    var tl = '<div class="hdtl">' + rows.map(function(r, i){
+      return '<div class="hdrow"><div class="gt">' + times[i] + (f.editing ? '<span class="gp" aria-hidden="true">⠿</span>' : '') + '</div>'
+        + '<div class="rw' + (i === 0 ? ' hdrel' : '') + '" data-block="' + i + '"' + (f.editing ? ' style="min-height:78px"' : '') + '><b' + (r[3] ? ' class="un"' : '') + '>' + r[0] + r[1] + '</b><span class="mt">' + r[2] + '</span>' + (i === 0 ? d('first', 'right:34px;top:-8px') : '') + '</div></div>';
+    }).join('') + (f.editing ? '<div class="hdrow"><div class="gt">' + times[4] + '</div><div class="add">+ Add a block</div></div>' : '') + '</div>';
+    var below = '';
+    if (prop) {
+      below = '<div class="hdbelow hdrel">' + about + d('below', 'right:-6px;top:-10px') + '</div>';
+    }
+    var doc = '<div class="hddoc">' + when + recap + you + provTop + '<div class="hdbody">' + goal + (prop ? '' : about) + tl + below + '</div></div>';
+    var rec = '<div class="hdrec"><p class="h">⎍ Recorded here</p><p>Evaluation sessions recorded at this practice — a session here takes the practice’s date.</p><p class="l">Sep 21, 2026 — Probe session — results recorded at the seeded practice.</p><p class="l">Sep 15, 2026 — Probe session — results recorded at the seeded practice.</p></div>';
+    var col = prop
+      ? '<div class="hdcol">' + bar + sent + scout + doc + rec + '</div>'
+      : '<div class="hdcol">' + scout + bar + sent + doc + rec + '</div>';
+    return { page: hdr + col, list: list };
+  }
+
+  function frameHtml(side){
+    var W = state.w, H = W === 360 ? 780 : 844, prop = side === 'prop', b = build(side);
+    var head = prop ? 'Proposed <span class="h good">N1 A · N2 A · N3 A · N4 A</span>' : 'Today <span class="h">' + F[state.face].label + '</span>';
+    return '<div class="drawhead">' + head + '</div><div class="rtmeta" data-meta></div>'
+      + '<div class="hdph" style="--fh:' + H + 'px"><div class="hdteam"><span>UAT Test Team <span aria-hidden="true">⌄</span><small>3-2-1</small></span><span class="hdq">?</span></div>'
+      + '<div class="hdpage" data-layer>' + b.page + '</div>'
+      + '<div class="nav hdnav"><span>OVERVIEW</span><span>SCHEDULE</span><span>CHAT</span><span>ROSTER</span><span class="on">MORE</span></div></div>'
+      + '<div class="hdrest"><div class="hdpage" data-rest>' + b.page + '</div></div>'
+      + '<p class="fdcutl" data-cut></p>'
+      + '<ul class="notes">' + b.list.map(function(n, i){ return '<li id="hdn-' + side + '-' + (i + 1) + '"' + (prop ? ' class="g"' : '') + '><b>' + (i + 1) + '</b><span data-t>' + n.t + '</span></li>'; }).join('') + '</ul>';
+  }
+
+  function render(){
+    ['today', 'prop'].forEach(function(side){
+      var col = document.getElementById('hdF-' + side); if (!col) return;
+      col.style.setProperty('--fw', state.w + 'px');
+      col.innerHTML = frameHtml(side);
+    });
+    measure();
+  }
+
+  /* The figures over each frame and the rest-of-page panel need the layout, so nothing is read while hidden. */
+  function measure(){
+    if (tab.hidden) return;
+    var fold = navTop(), m = MEAS[state.w + '-' + state.face];
+    ['today', 'prop'].forEach(function(side){
+      var col = document.getElementById('hdF-' + side), ph = col && col.querySelector('.hdph'); if (!ph) return;
+      var top0 = ph.getBoundingClientRect().top + 1;
+      var rows = [].slice.call(ph.querySelectorAll('[data-layer] [data-block]'));
+      var first = rows.length ? Math.round(rows[0].getBoundingClientRect().top - top0) : 0;
+      var whole = rows.filter(function(r){ return r.getBoundingClientRect().bottom - top0 <= fold + 0.5; }).length;
+      var part = rows.filter(function(r){ var t = r.getBoundingClientRect().top - top0, bt = r.getBoundingClientRect().bottom - top0; return t < fold && bt > fold + 0.5; }).length;
+      var on = whole + ' of ' + rows.length + (part ? ' + part of ' + part : '');
+      var rest = col.querySelector('.hdrest'), rl = col.querySelector('[data-rest]'), cl = col.querySelector('[data-cut]');
+      rest.hidden = false;
+      var over = Math.round(rl.offsetHeight - fold);
+      if (over > 2){ rest.style.height = over + 'px'; rl.style.top = (-fold) + 'px'; ph.classList.add('cropped'); cl.textContent = '✂ ' + fmt(over) + 'px more page under the tab bar, dimmed: the part a coach scrolls to'; }
+      else { rest.hidden = true; ph.classList.remove('cropped'); cl.textContent = 'Nothing under the tab bar.'; }
+      var parts = [];
+      if (side === 'today'){
+        parts.push(m.first > fold ? '<span class="bad">measured · first block ' + fmt(m.first) + ' · under the tab bar</span>' : '<span>measured · first block ' + fmt(m.first) + '</span>');
+        parts.push('<span>drawn ' + fmt(first) + '</span>');
+      } else {
+        parts.push('<span>drawn</span>', first < fold ? '<span class="ok">first block ' + fmt(first) + ' · ' + on + ' on screen one</span>' : '<span class="bad">first block ' + fmt(first) + '</span>');
+        parts.push('<span class="ok">' + fmt(m.first - first) + 'px higher</span>');
+        [].slice.call(col.querySelectorAll('.notes [data-t]')).forEach(function(t){ t.textContent = t.textContent.replace('[first]', fmt(first)).replace('[onscreen]', on); });
+      }
+      col.querySelector('[data-meta]').innerHTML = parts.join('');
+      col.setAttribute('data-first', first); col.setAttribute('data-on', on);
+    });
+  }
+
+  function sync(){
+    [].slice.call(tab.querySelectorAll('.rtseg button')).forEach(function(b){
+      b.setAttribute('aria-pressed', String(String(state[b.getAttribute('data-k')]) === b.getAttribute('data-v')));
+    });
+  }
+  [].slice.call(tab.querySelectorAll('.rtseg button')).forEach(function(b){
+    b.addEventListener('click', function(){
+      var k = b.getAttribute('data-k'), v = b.getAttribute('data-v');
+      state[k] = k === 'w' ? Number(v) : v;
+      try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+      sync(); render();
+    });
+  });
+  /* A dot opens its note under its own frame; a second tap closes it (delegated: the frames are redrawn). */
+  tab.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('.mk[data-hdnote]') : null; if (!b) return;
+    var li = document.getElementById(b.getAttribute('data-hdnote')); if (!li) return;
     var was = li.classList.contains('open');
     [].slice.call(li.parentElement.children).forEach(function(x){ x.classList.remove('open'); });
     if (!was){ li.classList.add('open'); li.scrollIntoView({ block: 'nearest' }); }

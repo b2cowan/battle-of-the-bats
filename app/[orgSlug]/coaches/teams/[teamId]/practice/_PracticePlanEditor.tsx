@@ -3701,6 +3701,114 @@ export default function PracticePlanEditor({
     setDrillSheet({ kind: 'block', at: sheetIndex, replaceId: block.id });
   } : undefined;
 
+  /* "About this practice" — ONE fold, rendered in one of two places. On a phone it waits UNDER the
+     plan (practice plans on a phone, stage 4 · N3 = A, owner 2026-09-25): measured, the fold was
+     87px above the first block in a real week (its title, its tags and kit wrapping to a second
+     line, one cut line of description) and, with the rest of the head, pushed the plan under the
+     tab bar. It is what the plan is ABOUT; the blocks are the plan. Decided in JS (`phoneSheet`),
+     never CSS `order`, so the reading and focus order are the order a coach sees. */
+  const aboutAfterPlan = phoneSheet;
+  // Built only where it can render (`layout.sheet`): the circuit editor re-renders on every
+  // keystroke and never shows it.
+  const aboutFold = layout.sheet && (
+    <div className={`${styles.ppAbout}${aboutAfterPlan ? ` ${styles.ppAboutAfter}` : ''}`}>
+      <FoldHead title="About this practice" summary={aboutSummary || undefined} summaryClassName={styles.ppAboutSummary}
+        open={aboutOpen} onToggle={() => setAboutOpen(o => !o)} />
+      {/* Closed, the fold still reads like a closed BLOCK (owner catch, 2026-09-15): a written
+          description does not disappear just because the fold is shut, it truncates to one line
+          the same way a block's own note does when its row is closed. */}
+      {!aboutOpen && plan.description && (
+        <p className={styles.ppAboutPreview}>{plan.description}</p>
+      )}
+      {aboutOpen && <div className={styles.ppAboutBody}>
+        {/* The paragraph under the goal's headline (owner ask 2026-09-14): what the practice is,
+            in the coach's own words. Shape — a template keeps it, the sheet prints it. */}
+        <div className={styles.ppFieldRow}>
+          <FieldLabel>Description</FieldLabel>
+          {readOnly ? (
+            <p className={plan.description ? styles.ppAboutRead : styles.ppAboutNone}>{plan.description || 'No description written'}</p>
+          ) : (
+            <textarea className={styles.textarea} rows={3} value={plan.description ?? ''}
+              maxLength={MAX_DESCRIPTION_LEN} aria-label="Description"
+              placeholder={withoutPeople ? 'What this template is, and when to reach for it' : "What tonight's practice is, in your own words"}
+              onChange={e => onChange({ ...plan, description: e.target.value })} />
+          )}
+        </div>
+        {/**
+         * ⚠ **What this practice is about — TAGS, replacing slice 1a's free-text "Kind of
+         * practice"** (owner ruling 2026-08-01: categories became tags).
+         *
+         * The free-text version was a SECOND vocabulary sitting beside the one the drills and
+         * the focus areas already share, so "Hitting" typed here could never match "Hitting"
+         * chosen there. These are the same tags, which is exactly what makes the focus rail
+         * below soften truthfully and what makes "show me every hitting practice I've run"
+         * answerable at all.
+         *
+         * Absent in the template room, whose tags live on the template row: asking the same
+         * question in two places is how the two answers start disagreeing.
+         */}
+        {/* Read (stage 6, R2): a field with nothing chosen is ABSENT — a disabled picker with no
+            chips is a label over nothing. The tags print as chips through the picker's own
+            disabled face (chips, no search box), the same face the paper prints from. */}
+        {onChangePlanTags && (!readOnly || (planTagIds?.length ?? 0) > 0) && (
+          <>
+            <TagPicker
+              label="What this practice is about"
+              all={focusTags}
+              selected={planTagIds ?? []}
+              onChange={onChangePlanTags}
+              onCreate={readOnly ? undefined : onCreateFocusTag}
+              // The same quiet manage door Equipment carries below — two tag groups, one grammar.
+              manage={readOnly ? undefined : focusManage} onManageChanged={onFocusTagsChanged}
+              disabled={readOnly}
+              emptyHint="No tags yet — type a word to make your first one."
+            />
+          </>
+        )}
+        {/* ⚠ Read-only, and only on a plan written before tags existed. Never editable and
+            never migrated: the coach's old words keep matching the rail, and there is
+            exactly ONE control for saying what a practice is about. */}
+        {onChangePlanTags && (plan.practiceTypes?.length ?? 0) > 0 && (
+          <div className={styles.ppFieldRow}>
+            <FieldLabel>Also tagged</FieldLabel>
+            <div className={styles.ppChipWrap}>
+              {plan.practiceTypes!.map(t => <span key={t} className={styles.ppChip}>{t}</span>)}
+            </div>
+          </div>
+        )}
+        {/* The bag's derived half, said where the coach is looking (D11): what rose from the
+            blocks and stations below is shown here and removed THERE — the picker under it holds
+            only the extras that belong to no block, the rule the practice's tags already follow
+            ("from the drills in this practice"). Both live under ONE "Equipment" heading (owner
+            catch, 2026-09-15) — the derived line used to float between the tags above and the
+            picker below with no heading of its own, reading as a trailing note on "What this
+            practice is about" rather than the start of Equipment. */}
+        {/* Read (stage 6, R2): the bag as one line of chips when there is a bag, the field absent
+            when there is not — the derived half and the extras read as one list, which is what
+            the paper prints. */}
+        {readOnly ? (
+          <ReadChips label="Equipment" names={kitBag.all} />
+        ) : (
+          <div className={styles.ppField}>
+            <FieldLabel>Equipment</FieldLabel>
+            {kitBag.fromBlocks.length > 0 && (
+              <p className={styles.ppRailDerived}>
+                {kitBag.fromBlocks.join(' · ')} <span>— from the blocks below</span>
+              </p>
+            )}
+            <PracticeTagPicker all={equipmentTags} ids={plan.equipmentTagIds ?? []}
+              legacyNames={plan.equipment} onCreate={onCreateEquipmentTag}
+              manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
+              onChange={next => onChange({ ...plan, equipmentTagIds: next })}
+              emptyHint={kitBag.fromBlocks.length > 0
+                ? 'Anything else to bring that belongs to no block — water, the first-aid kit.'
+                : 'No equipment yet — type an item to add your first one.'} />
+          </div>
+        )}
+      </div>}
+    </div>
+  );
+
   return (
     /* ONE drag context over the sheet AND the docked panel (which portals into the page's host
        beside the sheet — React context crosses a portal). `pointerWithin`: the target is what the
@@ -3729,103 +3837,10 @@ export default function PracticePlanEditor({
 
       {/* ── "About this practice" — tags and equipment, folded (stage 1, D4) ──
           Order and weight, not removal: the sheet prints both and the rail softens by tag, so they
-          stay; they are simply no longer the first thing a coach is asked before writing a minute. */}
-      <div className={styles.ppAbout}>
-        <FoldHead title="About this practice" summary={aboutSummary || undefined} summaryClassName={styles.ppAboutSummary}
-          open={aboutOpen} onToggle={() => setAboutOpen(o => !o)} />
-        {/* Closed, the fold still reads like a closed BLOCK (owner catch, 2026-09-15): a written
-            description does not disappear just because the fold is shut, it truncates to one line
-            the same way a block's own note does when its row is closed. */}
-        {!aboutOpen && plan.description && (
-          <p className={styles.ppAboutPreview}>{plan.description}</p>
-        )}
-        {aboutOpen && <div className={styles.ppAboutBody}>
-          {/* The paragraph under the goal's headline (owner ask 2026-09-14): what the practice is,
-              in the coach's own words. Shape — a template keeps it, the sheet prints it. */}
-          <div className={styles.ppFieldRow}>
-            <FieldLabel>Description</FieldLabel>
-            {readOnly ? (
-              <p className={plan.description ? styles.ppAboutRead : styles.ppAboutNone}>{plan.description || 'No description written'}</p>
-            ) : (
-              <textarea className={styles.textarea} rows={3} value={plan.description ?? ''}
-                maxLength={MAX_DESCRIPTION_LEN} aria-label="Description"
-                placeholder={withoutPeople ? 'What this template is, and when to reach for it' : "What tonight's practice is, in your own words"}
-                onChange={e => onChange({ ...plan, description: e.target.value })} />
-            )}
-          </div>
-          {/**
-           * ⚠ **What this practice is about — TAGS, replacing slice 1a's free-text "Kind of
-           * practice"** (owner ruling 2026-08-01: categories became tags).
-           *
-           * The free-text version was a SECOND vocabulary sitting beside the one the drills and
-           * the focus areas already share, so "Hitting" typed here could never match "Hitting"
-           * chosen there. These are the same tags, which is exactly what makes the focus rail
-           * below soften truthfully and what makes "show me every hitting practice I've run"
-           * answerable at all.
-           *
-           * Absent in the template room, whose tags live on the template row: asking the same
-           * question in two places is how the two answers start disagreeing.
-           */}
-          {/* Read (stage 6, R2): a field with nothing chosen is ABSENT — a disabled picker with no
-              chips is a label over nothing. The tags print as chips through the picker's own
-              disabled face (chips, no search box), the same face the paper prints from. */}
-          {onChangePlanTags && (!readOnly || (planTagIds?.length ?? 0) > 0) && (
-            <>
-              <TagPicker
-                label="What this practice is about"
-                all={focusTags}
-                selected={planTagIds ?? []}
-                onChange={onChangePlanTags}
-                onCreate={readOnly ? undefined : onCreateFocusTag}
-                // The same quiet manage door Equipment carries below — two tag groups, one grammar.
-                manage={readOnly ? undefined : focusManage} onManageChanged={onFocusTagsChanged}
-                disabled={readOnly}
-                emptyHint="No tags yet — type a word to make your first one."
-              />
-            </>
-          )}
-          {/* ⚠ Read-only, and only on a plan written before tags existed. Never editable and
-              never migrated: the coach's old words keep matching the rail, and there is
-              exactly ONE control for saying what a practice is about. */}
-          {onChangePlanTags && (plan.practiceTypes?.length ?? 0) > 0 && (
-            <div className={styles.ppFieldRow}>
-              <FieldLabel>Also tagged</FieldLabel>
-              <div className={styles.ppChipWrap}>
-                {plan.practiceTypes!.map(t => <span key={t} className={styles.ppChip}>{t}</span>)}
-              </div>
-            </div>
-          )}
-          {/* The bag's derived half, said where the coach is looking (D11): what rose from the
-              blocks and stations below is shown here and removed THERE — the picker under it holds
-              only the extras that belong to no block, the rule the practice's tags already follow
-              ("from the drills in this practice"). Both live under ONE "Equipment" heading (owner
-              catch, 2026-09-15) — the derived line used to float between the tags above and the
-              picker below with no heading of its own, reading as a trailing note on "What this
-              practice is about" rather than the start of Equipment. */}
-          {/* Read (stage 6, R2): the bag as one line of chips when there is a bag, the field absent
-              when there is not — the derived half and the extras read as one list, which is what
-              the paper prints. */}
-          {readOnly ? (
-            <ReadChips label="Equipment" names={kitBag.all} />
-          ) : (
-            <div className={styles.ppField}>
-              <FieldLabel>Equipment</FieldLabel>
-              {kitBag.fromBlocks.length > 0 && (
-                <p className={styles.ppRailDerived}>
-                  {kitBag.fromBlocks.join(' · ')} <span>— from the blocks below</span>
-                </p>
-              )}
-              <PracticeTagPicker all={equipmentTags} ids={plan.equipmentTagIds ?? []}
-                legacyNames={plan.equipment} onCreate={onCreateEquipmentTag}
-                manage={equipmentManage} onManageChanged={onEquipmentTagsChanged}
-                onChange={next => onChange({ ...plan, equipmentTagIds: next })}
-                emptyHint={kitBag.fromBlocks.length > 0
-                  ? 'Anything else to bring that belongs to no block — water, the first-aid kit.'
-                  : 'No equipment yet — type an item to add your first one.'} />
-            </div>
-          )}
-        </div>}
-      </div>
+          stay; they are simply no longer the first thing a coach is asked before writing a minute.
+          ⚠ ≤640 it waits UNDER the plan (practice plans on a phone, stage 4 · N3 = A, 2026-09-25) —
+          see `aboutFold` above the return for why. */}
+      {!aboutAfterPlan && aboutFold}
       </>)}
 
       {/* ── The timeline (stage 1, D2 · D5) ──
@@ -3891,6 +3906,10 @@ export default function PracticePlanEditor({
           </div>
         )}
       </div>
+
+      {/* ≤640 (stage 4 · N3): About under the last block, before the players' focus rail — About is
+          the plan's, the rail the players'. The template editor inherits it (the same editor). */}
+      {aboutAfterPlan && aboutFold}
 
       {/* ── The focus rail, an ADDITION to the plan (owner ruling 2026-09-14) ──
           On the sheet only once the coach put it there (the ghost row's quiet link), open on

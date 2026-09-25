@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { readSource, stripComments } from './_source-code.ts';
+import { functionBody, readCode, readSource, stripComments } from './_source-code.ts';
 import { blockWalk } from '../../lib/rep-practice-plan.ts';
 
 describe('blockWalk — the sheet’s walk through the plan', () => {
@@ -402,5 +402,102 @@ describe('practice plans on a phone · stage 2 (S1 · S2 · S4)', () => {
     assert.match(hook, /if \(!dialog\.contains\(target\)\) return;/, 'yields to a dialog that took over, whatever order the dialogs mount in');
     assert.equal((src.match(/useFocusLastShownOnClose\(/g) ?? []).length, 3, 'the hook and its two callers');
     assert.match(fn('stationDoorFor'), /\[data-pp-add-station=/);
+  });
+});
+
+/**
+ * ══════════════════════════════════════════════════════════════════════════════════════════
+ * PRACTICE PLANS ON A PHONE · STAGE 4 — the head of the page (owner rulings N1–N4 = A, 2026-09-25;
+ * plan §6i). Measured before: in a REAL week the first block started under the tab bar (777px down at
+ * 390; 858 for an assistant named on the plan) — the head, not the plan, was the screen.
+ *
+ *   N1 **THE SHEET'S HEAD IS ONE DOOR** on a phone: the day and time on one line, WHERE and when to
+ *      arrive (the page never said either; the paper and the notification did), the plan's fit; the
+ *      whole block links to the schedule — no separate "View on schedule" row, no nested link.
+ *   N2 **THE SENT LINE IS ONE ROW THAT IS "SEND AGAIN"** — the same words, one copy of them.
+ *   N3 **ABOUT WAITS UNDER THE PLAN** on a phone (JS order, never CSS `order`), and the "Started
+ *      from" banner is GONE at every width — the template picker makes that promise at the choice.
+ *   N4 **THE SCOUTING NOTE IS ONE ROW UNDER THE TOOLBAR**, opening the book; the desk keeps its card.
+ *   + two controls under the tap floor, fixed: "You're on" rows, the scouting card's link.
+ * ══════════════════════════════════════════════════════════════════════════════════════════
+ */
+describe('practice plans on a phone · stage 4 (N1–N4) — the head of the page', () => {
+  const PAGE = 'app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/page.tsx';
+  const CHROME = 'components/coaches/PracticeSheetChrome.tsx';
+  const page = readCode(PAGE);
+  const chrome = readCode(CHROME);
+
+  it('N1 — both of the page\'s sheet heads go through ONE renderer, which is the door on a phone', () => {
+    const head = functionBody(page, 'renderDocHead');
+    assert.match(head, /if \(isPhone && event\?\.startsAt\)/);
+    assert.match(head, /<PracticeWhenDoor [\s\S]*place=\{practicePlaceLabel\(event, assignment\?\.teamSport\)\}/);
+    // /review 2026-09-25: the arrival goes by the DATE — a past practice opened for editing is not a
+    // record face, but "Arrive by" on it would instruct nobody.
+    assert.match(head, /arrivalTime=\{isPracticeRecord \? null : event\.arrivalTime\}/);
+    assert.match(readCode('app/[orgSlug]/coaches/teams/[teamId]/history/development/practices/[eventId]/page.tsx'),
+      /where=\{practicePlaceLabel\(data\.event, assignment\?\.teamSport\) \|\| null\}/, 'the finished-season reader uses the one join too');
+    assert.equal((page.match(/renderDocHead\((true|recordMode)\)/g) ?? []).length, 2, 'the no-plan record and the sheet');
+    assert.equal((page.match(/<PracticeScheduleLink /g) ?? []).length, 1, 'the desk\'s link lives in the renderer alone');
+  });
+
+  it('N1 — the door: one link (never a link inside it), "View on schedule" as its name, where + arrival, no arrival on a record', () => {
+    // Bounded by hand: `functionBody` ends a top-level function at the next bare `function`, and the
+    // next one here is `export function PracticeScheduleLink` (which holds a Link of its own).
+    const doorAt = chrome.indexOf('export function PracticeWhenDoor(');
+    const door = chrome.slice(doorAt, chrome.indexOf('export function ', doorAt + 10));
+    assert.ok(doorAt > 0, 'PracticeWhenDoor exists');
+    assert.equal((door.match(/<Link /g) ?? []).length, 1, 'a nested link is invalid — the desk\'s "Set it on the schedule ›" keeps only its words here');
+    assert.match(door, /className=\{`\$\{styles\.ppDocHead\} \$\{styles\.ppWhenDoor\}`\}/);
+    assert.match(door, /<span className="sr-only">View on schedule: <\/span>/);
+    assert.match(door, /!record && arrivalTime \? `Arrive by \$\{formatStoredClock\(arrivalTime\)\}`/, 'the Schedule\'s words, the house clock; a record has nobody to instruct');
+    assert.match(chrome, /function planFit\(/, 'the desk line and the door word the fit through ONE helper');
+    const sheet = readCode('lib/practice-sheet.ts');
+    assert.match(sheet, /export function practicePlaceLabel\(/);
+    assert.match(sheet, /practicePlaceLabel\(event, sport\)/, 'the paper\'s where-line uses the same join');
+  });
+
+  it('N2 — on a phone, someone who can send gets ONE button row; the words are written once', () => {
+    assert.match(page, /isPhone && canSendAgain \? \(\s*<button type="button" className=\{styles\.ppSentRow\} data-testid="sent-to-staff" onClick=\{\(\) => setSendOpen\(true\)\}>/);
+    assert.equal((page.match(/'bell, push and email'/g) ?? []).length, 1, 'one copy of the sent line\'s words (`sentFacts`)');
+    assert.equal((page.match(/\{sentFacts\}/g) ?? []).length, 2, 'the row and the desk line');
+  });
+
+  it('N3 — About renders under the timeline on a phone, before the focus rail; in JS order', () => {
+    assert.match(src, /const aboutAfterPlan = phoneSheet;/);
+    const before = src.indexOf('{!aboutAfterPlan && aboutFold}');
+    const tl = src.indexOf('<div className={styles.ppTl}>');
+    const after = src.indexOf('{aboutAfterPlan && aboutFold}', tl);
+    const rail = src.indexOf('{canOfferFocus && (');
+    assert.ok(before > 0 && before < tl && tl < after && after < rail, 'goal → About (desk) → timeline → About (phone) → focus rail');
+    assert.doesNotMatch(css, /\.ppAbout[^{]*\{[^}]*\border:/, 'never CSS `order` — the reading order is the order seen');
+  });
+
+  it('N3 — the "Started from" banner is gone at every width (the picker already promises the template won\'t change)', () => {
+    assert.doesNotMatch(page, /ppProvenance|Started from/);
+    assert.doesNotMatch(css, /\.ppProvenance\s*\{/);
+    assert.match(page, /The template is left exactly as it is, and anything you change here stays here\./, 'the promise the banner repeated, in the picker');
+  });
+
+  it('N4 — the desk keeps its card; a phone gets one row, under the toolbar and the sent line (the top only with no toolbar)', () => {
+    assert.match(page, /\{bridge && !isPhone && \(\s*<div className=\{styles\.ppScoutBridge\}>/);
+    assert.match(page, /\{isPhone && !sheetShown && scoutRow\}/);
+    assert.match(page, /\{isPhone && scoutRow\}/);
+    assert.match(page, /<Link href=\{bookHref\} className=\{styles\.ppScoutRow\}/);
+    assert.equal((page.match(/\{bridgeLead\}/g) ?? []).length, 2, 'one lead, both presentations');
+  });
+
+  it('the stylesheet: the door stays a row, the rows take the floor, and the two floors that lost come AFTER their base rules', () => {
+    assert.match(css, /\.ppDocHead\.ppWhenDoor \{\s*display: block; position: relative;/, 'two classes deep: the ≤640 column rule is one');
+    assert.match(css, /\.ppWhenBit \{ white-space: nowrap; \}/, 'a clock never breaks across lines');
+    assert.match(css, /\.ppWhenDoor \.ppDocWhenLine \{ padding-right: 1\.75rem; \}/, 'the chevron beside the first line only');
+    assert.match(css, /\.ppSentRow \{[^}]*min-height: var\(--tap-min, 44px\)/);
+    assert.doesNotMatch(css.slice(css.indexOf('.ppSentRow {'), css.indexOf('}', css.indexOf('.ppSentRow {'))), /width: 100%/, 'the edge-to-edge margins would overhang it');
+    assert.match(css, /\.ppScoutRow \{[^}]*min-height: var\(--tap-min, 44px\)/);
+    const base = css.indexOf('.ppYoureOnItem { color: var(--text-primary);');
+    const floor = css.indexOf('@media (max-width: 768px) { .ppYoureOnItem { min-height: var(--tap-min, 44px); } }');
+    assert.ok(base > 0 && floor > base, '"You\'re on" rows: the touch floor must follow the 32px base rule it overrides');
+    const linkBase = css.indexOf('.ppScoutBridgeLink {');
+    const linkFloor = css.indexOf('@media (max-width: 768px) { .ppScoutBridgeLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); } }');
+    assert.ok(linkBase > 0 && linkFloor > linkBase, 'the card\'s "Full book" link takes the floor in the touch band');
   });
 });

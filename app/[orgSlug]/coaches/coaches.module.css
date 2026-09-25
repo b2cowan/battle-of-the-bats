@@ -11060,6 +11060,23 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 /* The template's head is a line of facts (shape · use) in the same voice, no link beside it. */
 .ppDocHeadFacts { font-family: var(--font-data); font-size: var(--type-support); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+/* THE HEAD AS ONE DOOR, on a phone (practice plans on a phone, stage 4 · N1 = A, owner 2026-09-25) —
+   `PracticeWhenDoor`, rendered ≤640 by the page (JS). The day and the time on one line, where and when
+   to arrive, the plan's fit; the whole block links to the practice on the schedule and a chevron says
+   so — the desk's separate "View on schedule" row does not render. A BLOCK, not the head's flex row:
+   the chevron is placed beside the first line alone. Two classes deep so the ≤640 `.ppDocHead` rule
+   (same weight, later in the file) cannot turn it back into a flex column.
+   Measured before: 121px with the link as its own 44px row. */
+.ppDocHead.ppWhenDoor {
+  display: block; position: relative;
+  min-height: var(--tap-min, 44px); color: inherit; text-decoration: none;
+}
+/* The chevron beside the FIRST line only: the lines under it keep the column's whole width. */
+.ppWhenDoor .ppDocWhenLine { padding-right: 1.75rem; }
+.ppWhenLine { display: block; }
+/* A piece carrying a clock or a count never breaks inside itself — "5:45 / p.m." (measured at 360). */
+.ppWhenBit { white-space: nowrap; }
+.ppWhenDoorChevron { position: absolute; top: 0.15rem; right: 0; color: var(--home-olive, var(--logic-lime)); }
 .ppDocBody { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
 /* The template's name and tags — the sheet's title block, above its goal line. */
 .ppDocFields { display: flex; flex-direction: column; gap: 0.7rem; margin-bottom: 0.6rem; }
@@ -11113,6 +11130,9 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppAboutNone { margin: 0; font-size: var(--type-body); color: var(--text-tertiary); font-style: italic; }
 .ppAboutBody { display: flex; flex-direction: column; gap: 0.7rem; padding: 0.2rem 0 0.9rem 1.35rem; }
 .ppFold { border-top: 1px solid var(--home-line, var(--border-2)); margin-top: 0.6rem; }
+/* About UNDER the plan on a phone (stage 4 · N3 = A, 2026-09-25) — ruled off from the last block the
+   way the players' focus rail below it is, so it reads as a section after the plan, not a row of it. */
+.ppAbout.ppAboutAfter { border-top: 1px solid var(--home-line, var(--border-2)); margin-top: 0.6rem; }
 .ppFoldCount { color: var(--text-secondary); }
 .ppFoldBody { display: flex; flex-direction: column; gap: 0.5rem; padding: 0 0 0.6rem 1.35rem; }
 /* The rail is an addition (2026-09-14): both rooms carry the block head's trash at the head's far right. */
@@ -11366,9 +11386,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   /* The block's quiet links — the doors line and "Choose players…" — take the floor the ghost
      row's links already hold (stage 2, D8); the chips take it with the suggest-chip family. */
   .ppDoorsLine .ppTlQuietLink, .ppWhoLine .ppTlQuietLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
-  /* "You're on …" (mig 303) already takes the inline-flex recipe at every width — only the floor
-     itself is a touch-band concern; a mouse row can stay tighter. */
-  .ppYoureOnItem { min-height: var(--tap-min, 44px); }
+  /* ("You're on …"'s floor moved beside its own base rule, 2026-09-25 — from here, earlier in the file
+     at the same weight, the base rule's 32px won and the rows measured 32px on a phone.) */
   .ppRecordedList a { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
   /* The groups read-out's door (stage 3 revision) takes the floor; the room's draw row, its name
      boxes and its bins take it from the room's own wrapper, which sits outside the open block. */
@@ -12253,19 +12272,9 @@ span.libCardMain { cursor: default; }
    baseline that must never be widened to satisfy a probe.
    ══════════════════════════════════════════════════════════════════════════════ */
 
-/* -- The provenance line on a plan started from a template (D14, frame 05) --
-   It is doing real work, not decoration: without it a coach reasonably fears that
-   fixing tonight's warm-up rewrites the template for every future Tuesday. */
-.ppProvenance {
-  display: flex; align-items: flex-start; gap: 0.5rem;
-  margin: 0 0 0.9rem; padding: 0.6rem 0.75rem;
-  border-radius: 10px;
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.28);
-  background: rgba(var(--blueprint-blue-rgb), 0.08);
-  font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary);
-}
-.ppProvenance svg { flex: none; margin-top: 0.15rem; color: var(--blueprint-light); }
-.ppProvenance strong { color: var(--text-primary); font-weight: 700; }
+/* ⚰ `.ppProvenance` is GONE (2026-09-25): the plan's "Started from … — edit anything here; the template
+   won't change" banner was removed at every width (owner, on the stage 4 drawing — the template picker
+   already makes that promise at the moment of choosing). */
 
 /* ── A station knows who runs it (mig 303, 2026-09-17) ──
    The "You're on …" line under the where-line (ruling G): one support-size line, only for a reader
@@ -12286,6 +12295,11 @@ span.libCardMain { cursor: default; }
 /* On a phone each entry takes its own line, so a station list wraps under its block's clock rather
    than the clock splitting across two lines beside it (the probe's 390 read). */
 @media (max-width: 640px) { .ppYoureOnItem { flex: 1 1 100%; flex-wrap: wrap; } }
+/* The touch band's floor, AFTER the base rule it overrides (stage 4, 2026-09-25). It used to sit in the
+   ≤768 block ~900 lines up, where the base rule's `min-height: 32px` — the same weight, later in the
+   file — beat it: the rows measured 32px on a 390 phone, and the sweep never saw them (the test
+   practice names nobody's linked tag). A mouse row stays at 32. */
+@media (max-width: 768px) { .ppYoureOnItem { min-height: var(--tap-min, 44px); } }
 .ppYoureOnDetail { color: var(--text-secondary); font-weight: 400; }
 .ppYouMark {
   display: inline-block; font-family: var(--font-data);
@@ -12300,6 +12314,23 @@ span.libCardMain { cursor: default; }
    gap the owner caught, 2026-09-18). */
 .ppSentLine { margin: -0.3rem 0 0; font-size: var(--type-support); color: var(--text-secondary); display: flex; flex-wrap: wrap; align-items: center; gap: 0 0.35rem; }
 .ppSentLine b { color: var(--text-primary); font-weight: 600; }
+/* THE SENT LINE AS ONE ROW, on a phone (stage 4 · N2 = A, owner 2026-09-25) — the same words, ending
+   "· Send again", and the whole row is the button that opens the send sheet (the page renders it ≤640
+   for someone who can send; a reader keeps `.ppSentLine`). Measured before: 82px — two lines of facts
+   and "Send again" on a 44px row of its own. Stretched by the column (a flex item), never `width: 100%`:
+   the edge-to-edge rule gives it 1rem a side, and a 100% width would overhang by 32px. */
+.ppSentRow {
+  display: flex; align-items: center; gap: 0.6rem; min-height: var(--tap-min, 44px);
+  margin: -0.3rem 0 0; padding: 0; background: none; border: 0; text-align: left; cursor: pointer;
+  font: inherit; font-size: var(--type-support); line-height: 1.6; color: var(--text-secondary);
+}
+.ppSentRowText { flex: 1 1 auto; min-width: 0; }
+.ppSentRowText b { color: var(--text-primary); font-weight: 600; }
+.ppSentRowAgain { font-weight: 700; color: var(--home-olive, var(--logic-lime)); white-space: nowrap; }
+/* The send's date and clock never break across lines ("Sep / 18, 9:30 a.m." — measured at 360) — desk line and phone row. */
+.ppSentWhen { white-space: nowrap; }
+/* The "opens something" chevron on the head's phone rows (the sent row, the scouting row). */
+.ppRowChevron { flex: none; color: var(--home-olive, var(--logic-lime)); }
 .ppSendAudiences { display: flex; flex-direction: column; gap: 0.5rem; margin: 0 0 0.75rem; padding: 0; border: 0; }
 .ppSendAudience, .ppSendEmail {
   display: grid; grid-template-columns: 1.25rem 1fr; gap: 0.15rem 0.6rem; align-items: start;
@@ -12355,6 +12386,23 @@ span.libCardMain { cursor: default; }
 .ppScoutBridgeObs span { color: var(--text-tertiary); }
 .ppScoutBridgeLink { align-self: flex-start; font-size: var(--type-support); font-weight: 600; color: var(--logic-lime); text-decoration: none; }
 .ppScoutBridgeLink:hover { text-decoration: underline; }
+/* The touch band (641–768 keeps the card): the link took 19px of height — under the floor, unswept
+   because the test practice has no game with a book (stage 4, 2026-09-25). */
+@media (max-width: 768px) { .ppScoutBridgeLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); } }
+/* THE SCOUTING NOTE AS ONE ROW, on a phone (stage 4 · N4 = A, owner 2026-09-25) — its ruling's "one
+   quiet line": the lead alone, the whole row the door to the book (its line and freshest observation
+   are one tap in, there). Under the toolbar and the sent line, never above Run practice. The card's
+   own frame (the lime spine, the hairline, the card ground) so it reads as the same thing.
+   Measured before: 131px above the toolbar in a real week. */
+.ppScoutRow {
+  display: flex; align-items: center; gap: 0.5rem; min-height: var(--tap-min, 44px);
+  padding: 0.3rem 0.6rem 0.3rem 0.85rem;
+  border: 1px solid var(--border-2); border-left: 3px solid var(--logic-lime); border-radius: 8px;
+  background: var(--card-bg); color: var(--text-primary); text-decoration: none;
+  font-size: var(--type-body); font-weight: 600; line-height: 1.4;
+}
+.ppScoutRow > svg:first-child { flex: none; color: var(--logic-lime); }
+.ppScoutRowText { flex: 1 1 auto; min-width: 0; }
 
 /* -- ONE picker, TWO sources (frame 05). Not a second door: the tabs sit inside the
    control 1a already ships. -- */

@@ -7,9 +7,8 @@ import { useOrg } from '@/lib/org-context';
 import CoachPageHeader from '@/components/coaches/CoachPageHeader';
 import { insightsSectionHref } from '@/lib/coach-insights-links';
 import { buildFilename, downloadPracticeSheet, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
-import { buildPracticeSheet } from '@/lib/practice-sheet';
+import { buildPracticeSheet, practicePlaceLabel } from '@/lib/practice-sheet';
 import { practiceHasPlan } from '@/lib/practice-state';
-import { surfaceLabel } from '@/lib/sports';
 import { emptyPracticePlan, type PracticePlan } from '@/lib/rep-practice-plan';
 import { HowItWent, NoPlanRecord, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
 import PracticePlanEditor from '../../../../practice/_PracticePlanEditor';
@@ -252,7 +251,7 @@ export default function CoachPastPracticePlanPage({
               <div className={styles.ppDocWhen}>
                 <PracticeWhenLine
                   startsAt={data.event.startsAt} endsAt={data.event.endsAt} plan={plan} record withYear
-                  where={[data.event.location, surfaceLabel(assignment?.teamSport, data.event.fieldNumber)].filter(Boolean).join(', ') || null}
+                  where={practicePlaceLabel(data.event, assignment?.teamSport) || null}
                 />
               </div>
             </div>

@@ -668,6 +668,20 @@ export const SCREENS = [
     interact: editThenOpenFirstBlock,
   },
   {
+    // THE HEAD OF THE PAGE, nothing open (practice plans on a phone, stage 4 · N1–N4, 2026-09-25):
+    // the toolbar, the sent line as ONE row that is "Send again" (a writer on a live face — Edit takes
+    // the aged probe practice off its record face), the sheet's head as one door to the schedule
+    // (where + arrival on a phone), the goal, the timeline, and About UNDER it on a phone. Every other
+    // plan entry opens something over this, so the head itself had never been swept at rest.
+    // ⚠ The fixture carries no scouting book for a game this week and names nobody's linked tag, so
+    // the scouting row and "You're on" are NOT seen here — probed instead (.probe/pp-head-measure.mjs).
+    id: 'coach-practice-plan-head',
+    session: 'coach',
+    path: (c) => `${team(c)}/practice/${c.practiceEventId}`,
+    ready: '[data-room="practice-plan"][data-room-state="loaded"]',
+    interact: editThePlan,
+  },
+  {
     // The CIRCUIT open while editing (practice plans on a phone, stage 2 · S1, 2026-09-24): on a
     // phone the sheet with its stations as one list of rows — the grip, the facts line, "+ Add a
     // station" — the rotation strip and the table under them; on a desk the card's columns. The

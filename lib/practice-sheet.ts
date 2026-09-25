@@ -60,6 +60,19 @@ export type PracticeSheetInput = {
   settings: OrgPdfSettings;
 };
 
+/**
+ * WHERE a practice is — the place and its field, joined the paper's way ("UAT Fields, Diamond 2").
+ * ONE join for the printed sheet's where-line and the plan page's phone head (practice plans on a
+ * phone, stage 4 · N1, owner 2026-09-25), so the page and the paper can never name the same field
+ * two ways. Empty when the schedule has neither.
+ */
+export function practicePlaceLabel(
+  event: { location?: string | null; fieldNumber?: string | null },
+  sport: string | null | undefined,
+): string {
+  return [event.location, surfaceLabel(sport, event.fieldNumber)].filter(Boolean).join(', ');
+}
+
 export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOptions {
   const { plan, event, teamName, sport, roster, goals, canViewFocus, staffTags, equipmentTags, planTagIds, focusTags, settings } = input;
   // Resolved to CURRENT tag names (mig 266) — see `resolvePracticePlanTagNames`. The sheet, like
@@ -203,7 +216,7 @@ export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOpti
   const whereLabel = [
     event.startsAt ? fmtTime(event.startsAt) : '',
     event.arrivalTime ? `Arrive ${formatStoredClock(event.arrivalTime)}` : '',
-    [event.location, surfaceLabel(sport, event.fieldNumber)].filter(Boolean).join(', '),
+    practicePlaceLabel(event, sport),
   ].filter(Boolean).join('  ·  ');
 
   return {
