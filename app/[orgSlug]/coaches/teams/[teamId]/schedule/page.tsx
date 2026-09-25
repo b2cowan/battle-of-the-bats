@@ -19,9 +19,10 @@ import { sessionTitle } from '@/lib/development-session-view';
 import { getSportPack, surfaceLabel, DEFAULT_SPORT } from '@/lib/sports';
 import { scheduleDrawerDoors } from '@/lib/coach-schedule-doors';
 import {
-  downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
+  downloadXLSX, generateCSV, downloadCSVBlob, downloadICSFromInstants,
   buildFilename, serializeRows, serializeHeaders,
-  type ExportColumnDef, type ICSEventInput,
+  coachScheduleCalendarEntries, coachScheduleSheetRows,
+  type ExportColumnDef,
 } from '@/lib/export';
 import CoachExportButton from '@/components/coaches/CoachExportButton';
 import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
@@ -65,7 +66,7 @@ import { tournamentToday, formatInOrgZone, orgDayKey, utcToZonedInputs } from '@
 import { formatTryoutSessionTime, tryoutSessionDay } from '@/lib/tryout-session-label';
 import {
   EVENT_LABELS, EVENT_NAME_PREFIX, HOME_AWAY_CHOICES, SCRIMMAGE_LABEL,
-  needsOpponent, needsRecurrence, RECURRABLE_TYPES, deriveGameName, isAutoShapedName, eventTypeCell,
+  needsOpponent, needsRecurrence, RECURRABLE_TYPES, deriveGameName, isAutoShapedName,
 } from '@/lib/coach-schedule-vocab';
 import { generateWeeklyOccurrences, type RecurrenceOccurrenceInput } from '@/lib/coach-recurrence';
 import ScheduleImportSheet from '@/components/coaches/ScheduleImportSheet';
@@ -2098,25 +2099,10 @@ export default function CoachesSchedulePage({
 
 
 
-  function buildExportRows() {
-    return events.map(e => ({
-      date:      e.startsAt ? e.startsAt.slice(0, 10) : '',
-      time:      e.startsAt ? new Date(e.startsAt).toLocaleTimeString('en-CA', { hour: 'numeric', minute: '2-digit', hour12: true }) : '',
-      arrival:   e.arrivalTime ? fmtClock(e.arrivalTime) : '',
-      // "Scrimmage" for a ticked Game, else the kind's label — one column, two words (mig 306).
-      eventType: eventTypeCell(e),
-      name:      e.name,
-      opponent:  e.opponent ?? '',
-      location:  e.location ?? '',
-      address:   e.locationAddress ?? '',
-      field:     e.fieldNumber ?? '',
-      uniform:   e.uniform ?? '',
-      homeAway:  e.homeAway ?? '',
-    }));
-  }
-
+  // The rows and the calendar entries are written in `lib/export/schedule-calendar`, from the
+  // instant in the org's zone — see its header for the day-late defect this replaced (D-1).
   function handleExportXLSX() {
-    const rows = buildExportRows();
+    const rows = coachScheduleSheetRows(events);
     const headers = serializeHeaders(SCHEDULE_EXPORT_COLS);
     const data    = serializeRows(rows, SCHEDULE_EXPORT_COLS);
     const filename = buildFilename(
@@ -2127,7 +2113,7 @@ export default function CoachesSchedulePage({
   }
 
   function handleExportCSV() {
-    const rows = buildExportRows();
+    const rows = coachScheduleSheetRows(events);
     const headers = serializeHeaders(SCHEDULE_EXPORT_COLS);
     const data    = serializeRows(rows, SCHEDULE_EXPORT_COLS);
     const filename = buildFilename(
@@ -2138,33 +2124,15 @@ export default function CoachesSchedulePage({
   }
 
   async function handleExportICS() {
-    const icsEvents: ICSEventInput[] = events
-      .filter(e => e.startsAt)
-      .map(e => {
-        // Game-day detail rides the calendar entry: field/diamond joins the location, while
-        // arrival + uniform lead the description so they sync to a coach's/parent's phone.
-        const prefixLines = [
-          e.arrivalTime ? `Arrive by ${fmtClock(e.arrivalTime)}` : null,
-          e.uniform ? `Uniform: ${e.uniform}` : null,
-        ].filter(Boolean);
-        const description = [prefixLines.join('\n'), e.description ?? ''].filter(Boolean).join('\n\n') || undefined;
-        return {
-          gameId:    e.id,
-          title:     e.opponent ? `${e.name} vs ${e.opponent}` : e.name,
-          date:      e.startsAt!.slice(0, 10),
-          time:      new Date(e.startsAt!).toTimeString().slice(0, 5),
-          durationHours: e.endsAt
-            ? Math.max(0.5, (new Date(e.endsAt).getTime() - new Date(e.startsAt!).getTime()) / 3600000)
-            : 2,
-          location:  [[e.location, surfaceLabel(sportPack.id, e.fieldNumber)].filter(Boolean).join(' · '), e.locationAddress].filter(Boolean).join(', ') || undefined,
-          description,
-        };
-      });
     const filename = buildFilename(
       { org: currentOrg?.slug, dataset: 'schedule', scope: assignment?.teamName },
       'ics',
     );
-    await downloadICS(filename, icsEvents);
+    await downloadICSFromInstants(
+      filename,
+      coachScheduleCalendarEntries(events, sportPack.id),
+      `${assignment?.teamName ?? 'Team'} schedule`,
+    );
   }
 
   // ── Rendering ───────────────────────────────────────────────────────────────

@@ -15,8 +15,9 @@ export { downloadXLSX } from './xlsx';
 export type { XlsxNote, XlsxMasthead, XlsxFooterMark } from './xlsx';
 export { loadBrandMark, BRAND_MARK_SRC } from './brand-mark';
 
-export type { ICSEventInput } from './ics';
-export { downloadICS } from './ics';
+export type { ICSEventInput, ICSInstantEventInput } from './ics';
+export { downloadICS, downloadICSFromInstants } from './ics';
+export { coachScheduleCalendarEntries, coachScheduleSheetRows, houseLeagueCalendarEntries } from './schedule-calendar';
 
 export type { OrgPdfSettings, ReportShape, LineupPosterOptions, LineupPosterPlayer, LineupPosterOrientation, DevelopmentSummaryOptions, PracticeSheetOptions, PracticeSheetBlock, PracticeSheetStation, PracticeSheetRotation, TryoutBoardSummaryOptions, FamilyDuesStatementRender, FamilyDuesStatementsOptions } from './pdf';
 export { BRANDING_TEXT, DEFAULT_PDF_SETTINGS, downloadPDF, fetchResolvedPdfSettings, abbreviateHeadings, downloadLineupPoster, downloadBattingOrderCard, buildPositionLegend, downloadDevelopmentSummary, downloadPracticeSheet, downloadTryoutBoardSummary, downloadFamilyDuesStatements } from './pdf';

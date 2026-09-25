@@ -10,6 +10,13 @@
  * - Cancelled games: STATUS:CANCELLED
  * - Timezone: America/Toronto for all Canadian orgs (V1)
  * - Duration: 2h default for games, 1.5h for practices
+ *
+ * ⚠⚠ TWO INPUT SHAPES, AND THE CALLER'S DATA DECIDES WHICH (the Schedule deep dive's D-1,
+ * 2026-09-25). `downloadICS` takes a LOCAL date + clock and writes them as the device's local time
+ * — right only for a caller that stores a local date and clock (a tournament game's `game_date` /
+ * `game_time`, the free team calendar). A caller that holds an INSTANT (`startsAt`, `scheduledAt`)
+ * must use `downloadICSFromInstants`: slicing an instant for its date reads the UNIVERSAL day, and
+ * every evening event then lands on the next one. Both exports that did exactly that were moved.
  */
 
 import type { EventAttributes } from 'ics';
@@ -156,7 +163,28 @@ export async function downloadICS(
     console.error('[export/ics] Failed to generate iCal events:', error);
     return;
   }
+  saveICSFile(filename, value);
+}
 
+/**
+ * Generate and download an .ics file from events identified by INSTANTS — the browser half of
+ * `composeICSFromInstants`. Anchored in UTC, so the entry lands on the event's own day and time
+ * whatever zone the downloading device is in (see the header for why an instant must never be
+ * sliced into a local date).
+ */
+export async function downloadICSFromInstants(
+  filename: string,
+  events: ICSInstantEventInput[],
+  calendarName: string,
+  orgDomain = 'fieldlogichq.ca',
+): Promise<void> {
+  const value = await composeICSFromInstants(events, calendarName, orgDomain);
+  if (!value) return;
+  saveICSFile(filename, value);
+}
+
+/** The one blob-and-anchor path both downloads end in. */
+function saveICSFile(filename: string, value: string): void {
   const blob = new Blob([value], { type: 'text/calendar;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const a = Object.assign(document.createElement('a'), {

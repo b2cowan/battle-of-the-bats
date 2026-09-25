@@ -11,8 +11,8 @@ import { fieldNounFor } from '@/lib/sports';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import {
-  downloadXLSX, generateCSV, downloadCSVBlob, downloadICS,
-  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef, type ICSEventInput,
+  downloadXLSX, generateCSV, downloadCSVBlob, downloadICSFromInstants, houseLeagueCalendarEntries,
+  buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
 import styles from '../../../house-league.module.css';
@@ -1112,7 +1112,9 @@ export default function SchedulePage() {
         ? `${g.homeScore} – ${g.awayScore}`
         : '';
       return {
-        date:     g.scheduledAt ? g.scheduledAt.slice(0, 10) : '',
+        // The org-local DAY, the one `dt.time` beside it is read in — the universal slice put every
+        // evening game on the next date (the Schedule deep dive's D-1, 2026-09-25).
+        date:     g.scheduledAt ? isoToDateInput(g.scheduledAt) : '',
         time:     dt?.time ?? '',
         homeTeam: home?.name ?? '',
         awayTeam: away?.name ?? '',
@@ -1145,26 +1147,17 @@ export default function SchedulePage() {
     downloadCSVBlob(filename, generateCSV(headers, data));
   }
 
+  // From the instant, never a universal date beside a zoned clock — see `lib/export/schedule-calendar`.
   async function handleExportICS() {
-    const icsEvents: ICSEventInput[] = games
-      .filter(g => g.scheduledAt)
-      .map(g => {
-        const home = teamMap.get(g.homeTeamId);
-        const away = teamMap.get(g.awayTeamId);
-        return {
-          gameId:    g.id,
-          title:     `${home?.name ?? 'Home'} vs ${away?.name ?? 'Away'}`,
-          date:      g.scheduledAt!.slice(0, 10),
-          time:      isoToTimeInput(g.scheduledAt!),
-          location:  g.location ?? undefined,
-          cancelled: g.status === 'cancelled',
-        };
-      });
     const filename = buildFilename(
       { org: currentOrg?.slug, dataset: 'hl-schedule', scope: season?.name },
       'ics',
     );
-    await downloadICS(filename, icsEvents);
+    await downloadICSFromInstants(
+      filename,
+      houseLeagueCalendarEntries(games, id => teamMap.get(id)?.name),
+      `${season?.name ?? 'House league'} schedule`,
+    );
   }
 
   // ── Render ─────────────────────────────────────────────────────────────────
