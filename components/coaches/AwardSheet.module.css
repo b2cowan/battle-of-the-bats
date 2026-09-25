@@ -1,0 +1,84 @@
+/* AwardSheet — what differs from the phone's one sheet system it stands in
+   (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown` / `.sheetGrab`).
+   Doubled selectors on purpose, as the RSVP sheet's are: the nav module writes the same properties
+   at (0,1,0) inside its ≤900 block, and which of two same-weight rules wins across modules is
+   bundle order — (0,2,0) wins whichever comes first. The sheet only renders at ≤640. */
+
+/* EDITING — a form covers the nav (owner ruling 2026-09-23). The anchor drops from the bar's top
+   edge to the SCREEN'S foot, above the nav (300) and below `.modalOverlay` (400), so the award-type
+   library and the icon chooser, and the confirm (1000), still land on top of it. The bar itself is
+   taken away by `useOverlayOpen`; this is only the geometry. */
+.anchorForm.anchorForm {
+  bottom: 0;
+  z-index: 390;
+}
+
+.panel.panel {
+  padding: 6px 16px 14px;
+}
+/* The whole screen is the sheet's to rise into, less a strip of scrim above it; the foot leaves the
+   transient "Saved" a corner to sit in, as a page carrying the pill does (`.savePillPage`). */
+.panelForm.panelForm {
+  max-height: calc(100dvh - 12px);
+  padding-bottom: calc(var(--save-pill-h, 2.25rem) + 1.25rem + env(safe-area-inset-bottom, 0px));
+}
+
+/* The head — the bin, then the pencil / ✓, at the right. No title: the facts name the award. */
+.head {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.25rem;
+  margin: 0 -8px 2px;
+}
+/* The head's two buttons are the portal's own `.ppIconBtn` (coaches.module.css) — a 44px square with
+   no border and no fill, quiet ink: the practice plan's head glyphs and the roster's section pencil
+   (owner, §227 and §228 walks). No private copy here. */
+
+/* The facts — a label column and a value column, read down. Editing, each value is its field. */
+.facts {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.65rem 1rem;
+  align-items: baseline;
+  margin: 0;
+  padding: 2px 2px 12px;
+}
+.factsEditing { align-items: start; }
+.facts > dt {
+  padding-top: 2px;
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.factsEditing > dt { padding-top: 0.7rem; }
+.facts > dt label { cursor: pointer; }
+.facts > dd {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.note { font-style: italic; }
+.none { color: var(--text-tertiary); }
+.fixed { display: inline-block; padding-top: 0.55rem; color: var(--text-secondary); }
+.held { margin: 0.35rem 0 0; }
+.noteBox { width: 100%; min-height: 64px; }
+
+/* Print certificate — the one worded action left once the pencil and the bin went to the head. */
+.printRow {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: var(--tap-min, 44px);
+  margin: 0 -2px;
+  padding: 0 2px;
+  border-top: 1px solid var(--home-line, var(--border-2));
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.printRow > svg { color: var(--home-olive, var(--logic-lime)); flex: none; }

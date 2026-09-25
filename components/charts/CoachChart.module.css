@@ -72,11 +72,29 @@
   fill: var(--text-tertiary);
 }
 
-.chartCard .bigLabel {
-  font-size: 11px;
-  font-weight: 700;
-  fill: var(--logic-lime);
+/* The trend line's end figure (+6) — HTML over the drawing, NOT SVG text, because SVG text scales
+   with the drawing and the 720-wide drawing is ~half size on a phone card (the label read as ~6px).
+   `left`/`top` arrive inline as percentages of the drawing; the label sits 6px above its dot.
+   `.plot`'s top margin is the headroom a season-high end point's label rises into — without it the
+   label climbs into the card title on a phone. */
+.plot {
+  position: relative;
+  margin-top: 0.6rem;
 }
+
+.endLabel {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - 6px));
+  font-family: var(--font-data, ui-monospace, monospace);
+  font-size: 0.875rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--logic-lime);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.endLabel[data-anchor='end'] { transform: translate(-100%, calc(-100% - 6px)); }
 
 .chartCard line.secondary {
   stroke: var(--home-line-strong, rgba(255, 255, 255, 0.14));

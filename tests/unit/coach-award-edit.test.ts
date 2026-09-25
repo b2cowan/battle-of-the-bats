@@ -62,7 +62,7 @@ describe('the award PATCH route — R5 once per occasion, and no editable game',
 
   it('checks findRepPlayerAwardCollision before writing, excluding the row being edited', () => {
     assert.match(awardIdRoute, /findRepPlayerAwardCollision\(/);
-    assert.match(awardIdRoute, /findRepPlayerAwardCollision\(\s*[\s\S]{0,200}awardId,\s*\)/);
+    assert.match(awardIdRoute, /findRepPlayerAwardCollision\(\s*[\s\S]{0,200}awardId,?\s*\)/);
   });
 
   it('answers a collision with 409, not a silent success', () => {
@@ -79,6 +79,20 @@ describe('the award PATCH route — R5 once per occasion, and no editable game',
     const catchBlock = awardIdRoute.slice(catchIdx, catchIdx + 700);
     assert.match(catchBlock, /already has/);
     assert.match(catchBlock, /status:\s*409/);
+  });
+
+  /** /review 2026-09-25: a departed player's award could not be edited at all — fixing its note
+   *  failed on "That player is not on the active roster", a player the coach never touched. */
+  it('keeps the award\'s own player even once they have left the roster; only a CHANGE must be active', () => {
+    assert.match(awardIdRoute, /if \(body\.playerId !== current\.playerId\) \{\s*const player = roster\.find\(p => p\.id === body\.playerId && p\.status === 'active'\);/);
+  });
+
+  /** /review 2026-09-25: renaming a general award's occasion onto one the player already holds it
+   *  for is the same collision — and the check read the OLD label. */
+  it('checks the occasion AS IT WILL BE — the patched label, not the stored one', () => {
+    assert.match(awardIdRoute, /tournamentLabel: fields\.tournamentLabel !== undefined \? fields\.tournamentLabel : current\.tournamentLabel,/);
+    assert.match(awardIdRoute, /findRepPlayerAwardCollision\(teamId, playerId, awardTypeId, occasion, awardId\)/);
+    assert.match(awardIdRoute, /describeAwardOccasion\(occasion, /, 'the refusal names the occasion the coach typed');
   });
 });
 
@@ -116,25 +130,118 @@ describe('the season report page — Edit sits beside the existing Print and Rem
   it('renders Pencil, Printer and Trash2 on each history row', () => {
     // The whole history table, not a fixed-length slice: the phone's menu (below) sits in the same
     // cell ahead of the desktop icons, and a 3,200-character window stopped short of them.
+    // The DESKTOP table — the phone's own table (the row opens the award's sheet) comes first, so the
+    // slice runs to the LAST tbody (phone plan §14.13).
     const tableStart = reportPanel.indexOf('Full history');
-    const table = reportPanel.slice(tableStart, reportPanel.indexOf('</tbody>', tableStart));
+    const table = reportPanel.slice(tableStart, reportPanel.lastIndexOf('</tbody>'));
     assert.match(table, /<Pencil size=\{13\}/);
     assert.match(table, /<Printer size=\{13\}/);
     assert.match(table, /<Trash2 size=\{13\}/);
   });
 
-  it('on a phone the same three live in ONE corner menu (coaching from a phone · stage 6 · R2c)', () => {
-    const tableStart = reportPanel.indexOf('Full history');
-    const table = reportPanel.slice(tableStart, reportPanel.indexOf('</tbody>', tableStart));
-    assert.match(table, /isPhone \? \(/, 'the phone branch is the menu, the desktop keeps its icons');
-    assert.match(table, /<CoachToolbarMenu[\s\S]*?drawerOnPhone/);
-    const menu = table.slice(table.indexOf('<CoachToolbarMenu'), table.indexOf('</CoachToolbarMenu>'));
-    for (const label of ['Print certificate', 'Edit', 'Remove']) {
-      assert.match(menu, new RegExp(`<CoachToolbarMenuItem .*label="${label}"`), `${label} is missing from the phone menu`);
+  it('the remove confirm asks once and never offers an undo it then denies (2026-09-25)', () => {
+    const at = reportPanel.indexOf('const ok = await confirm({', reportPanel.indexOf('async function handleDelete'));
+    const del = reportPanel.slice(at, reportPanel.indexOf('});', at));
+    assert.doesNotMatch(del, /Undo /, '"Undo MVP for …? This can\'t be undone." offered and denied an undo');
+    assert.match(del, /title: `Remove \$\{award\.playerName \?\? 'this player'\}’s \$\{award\.awardType\?\.name \?\? 'award'\}\?`/);
+    assert.match(del, /message: 'This can’t be undone\.'/);
+  });
+});
+
+/**
+ * THE AWARD'S SHEET (coaching from a phone §14.13, owner 2026-09-25) — on a phone a row opens the
+ * award: read first, the bin and the pencil in its head, the award edited in place.
+ */
+describe('the award\'s sheet on a phone', () => {
+  const sheet = read('components/coaches/AwardSheet.tsx');
+  const sheetCss = read('components/coaches/AwardSheet.module.css');
+
+  it('the report mounts it for a phone, outside the loading branch, keyed on the award', () => {
+    assert.match(reportPanel, /\{isPhone && openAward && \(\s*<AwardSheet\s+key=\{openAward\.id\}/);
+    assert.match(reportPanel, /onSaved=\{reloadAwardsQuietly\}/, 'a save re-reads the list QUIETLY — no "Loading report…" behind the sheet');
+    // a save cannot change the award-type library, so it re-reads the awards alone; a library change re-reads both
+    assert.match(reportPanel, /const reloadAwardsQuietly = useCallback\(\(\) => \{ void load\(undefined, \{ quiet: true, withTypes: false \}\); \}, \[load\]\);/);
+    assert.match(reportPanel, /onLibraryChanged=\{reloadQuietly\}/);
+    assert.match(reportPanel, /onRemove=\{handleDelete\}/, 'the bin goes through the report\'s own confirm');
+  });
+
+  it('has no title — its head is the bin, then the pencil that flips to ✓ in the same button', () => {
+    assert.doesNotMatch(sheet, /drawerTitle|<h2|<h3/);
+    const head = sheet.slice(sheet.indexOf('className={own.head}'), sheet.indexOf('{editing ? (\n            <dl'));
+    assert.ok(head.indexOf('<Trash2') > -1 && head.indexOf('<Trash2') < head.indexOf('<Pencil'), 'the bin sits LEFT of the pencil');
+    assert.match(head, /\{editing \? <Check size=\{18\} aria-hidden \/> : <Pencil size=\{18\} aria-hidden \/>\}/, 'one button, the glyph flips — ✓ where ✎ was');
+    assert.equal((head.match(/<button/g) ?? []).length, 2, 'two buttons in the head, no third');
+  });
+
+  it('the head buttons are the portal\'s own borderless square, in both states (the §227 / §228 rulings)', () => {
+    const head = sheet.slice(sheet.indexOf('className={own.head}'), sheet.indexOf('{editing ? (\n            <dl'));
+    assert.equal((head.match(/className=\{shared\.ppIconBtn\}/g) ?? []).length, 2, 'the bin and the pencil/✓ are .ppIconBtn');
+    assert.doesNotMatch(sheetCss, /\.iconBtn\b/, 'no private copy of the icon square');
+  });
+
+  it('editing saves as you go and holds a change the product would refuse, with the route\'s own sentence', () => {
+    assert.match(sheet, /useRecordAutosave\(/);
+    assert.doesNotMatch(sheet, />\s*Save( changes)?\s*</, 'no Save button — ✓ means finished, not save');
+    assert.match(sheet, /sameAwardOccasion\(o, occasion\)/);
+    assert.match(sheet, /already has \$\{typeOf\(form\.typeId\)\?\.name \?\? 'that award'\} \$\{describeAwardOccasion\(occasion, award\.eventType\)\}\./);
+    assert.match(sheet, /if \(blocked \|\| finishingRef\.current\) return;/, '✓ with a change held stays in the edit — and a second ✓ never sends the PATCH twice');
+    assert.match(sheet, /method: 'PATCH'/);
+    const patch = sheet.slice(sheet.indexOf('const patch = {'), sheet.indexOf('};', sheet.indexOf('const patch = {')));
+    assert.doesNotMatch(patch, /eventId:/, 'which event an award is FOR is never editable');
+    assert.match(sheet, /body: JSON\.stringify\(patch\)/);
+  });
+
+  // /review 2026-09-25 — each of these was a way the sheet failed a coach who did nothing wrong.
+  it('sends only what CHANGED since the last write — never re-asserts a field the coach did not touch', () => {
+    const patch = sheet.slice(sheet.indexOf('const patch = {'), sheet.indexOf('};', sheet.indexOf('const patch = {')));
+    for (const [field, key] of [['playerId', 'playerId'], ['typeId', 'awardTypeId'], ['label', 'tournamentLabel'], ['note', 'note']]) {
+      assert.match(patch, new RegExp(`f\\.${field} !== saved\\.${field} \\? \\{ ${key}:`), `${key} only when it changed`);
     }
-    assert.match(table, /label="Remove" disabled=\{busyId === a\.id\} onSelect=\{\(\) => handleDelete\(a\)\}/, 'Remove still goes through the confirm, and waits on a delete in flight');
-    // Print stays live during a delete, as the desktop's print link does (/review, 2026-09-24).
-    assert.doesNotMatch(menu, /label="Print certificate" disabled/);
-    assert.doesNotMatch(menu.slice(0, menu.indexOf('<CoachToolbarMenuItem')), /disabled=/, 'the whole menu is never disabled — only Edit and Remove wait');
+    assert.match(sheet, /if \(Object\.keys\(patch\)\.length === 0\) return;/, 'typed and put back sends nothing (the route answers an empty patch with 400)');
+  });
+
+  it('the scrim and Escape always leave — a held change closes without it, instead of trapping the coach', () => {
+    assert.match(sheet, /if \(editing && !blocked\) void finish\('close'\); else onClose\(\);/);
+  });
+
+  it('a save and a removal never cross: the bin waits for a save, the autosave pauses for a removal', () => {
+    assert.match(sheet, /enabled: !removing,/);
+    const bin = sheet.slice(sheet.indexOf('aria-label={`Remove ${readPlayer}'), sheet.indexOf('<Trash2'));
+    assert.match(bin, /disabled=\{removing \|\| saving\}/);
+  });
+
+  it('the award\'s own player stays in the select after leaving the roster', () => {
+    assert.match(sheet, /\{!players\.some\(p => p\.id === award\.playerId\) && \(\s*<option value=\{award\.playerId\}>/);
+  });
+
+  it('a removal re-reads the report quietly — the list keeps its place', () => {
+    const del = reportPanel.slice(reportPanel.indexOf('async function handleDelete'), reportPanel.indexOf("return 'removed';"));
+    assert.match(del, /reloadQuietly\(\);/);
+    assert.doesNotMatch(del, /void load\(\);/);
+  });
+
+  it('reading is a menu above the bar; editing is a form that covers it (the 2026-09-23 drawer layers)', () => {
+    assert.match(sheet, /useOverlayOpen\(editing\);/, 'only while editing does the bar go — out of the tab order too');
+    assert.match(sheet, /className=\{`\$\{sheet\.sheetAnchor\} \$\{editing \? own\.anchorForm : ''\}`\}/);
+    assert.match(sheetCss, /\.anchorForm\.anchorForm \{\s*bottom: 0;\s*z-index: 390;/, 'above the nav (300), below .modalOverlay (400)');
+  });
+
+  it('the picker\'s drawers render beside the panel, never inside it (the floor answers keys inside its panel)', () => {
+    const panelEnd = sheet.lastIndexOf('</div>\n      </div>\n      {picker.overlays}');
+    assert.ok(panelEnd > -1, 'picker.overlays renders as a sibling of the anchor, after the panel closes');
+    assert.match(sheet, /useDialogFloor\(true, panelRef, \{ onClose: requestClose, busy: removing \}\);/);
+  });
+
+  it('the picker\'s create row: Escape puts away the row alone, and focus lands back on "+ New"', () => {
+    const picker = read('components/coaches/AwardTypePicker.tsx');
+    assert.match(picker, /if \(e\.key === 'Escape'\) \{ claimEscape\(e\); closeCreateRow\(\); \}/, 'claimed, so the sheet around it stays open');
+    assert.match(picker, /requestAnimationFrame\(\(\) => newBtnRef\.current\?\.focus\(\)\)/, 'the row unmounts under the focus — it never drops to <body>, outside the sheet\'s Tab trap');
+    assert.match(picker, /<button ref=\{newBtnRef\} type="button" className=\{styles\.tagChipCreate\}/);
+    assert.match(picker, /<div className=\{styles\.tagChips\} role="group" aria-label="Award">/, 'the chips have a name — the sheet\'s "Award" is a <dt>, not a label');
+  });
+
+  it('Print certificate is the one worded action, and only while reading', () => {
+    const read = sheet.slice(sheet.indexOf(') : (\n            <>'), sheet.indexOf('<SaveStatusPill'));
+    assert.match(read, /<Link href=\{certificateHref\} className=\{own\.printRow\}>/);
   });
 });

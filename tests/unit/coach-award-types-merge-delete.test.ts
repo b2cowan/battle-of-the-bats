@@ -152,8 +152,20 @@ describe('TagManagerList — the merge-or-retire policy (R2)', () => {
   });
 });
 
-describe('GiveAwardModal — the door', () => {
-  const modal = read('components/coaches/GiveAwardModal.tsx');
+/* The chips, "+ New" and the library's door moved out of the Give window into ONE picker the
+   award's sheet on a phone shares (`AwardTypePicker`, phone plan §14.13, 2026-09-25) — the door
+   travels with the chips, so both hosts have the whole library. */
+describe('the award picker — the door (Give window + the award\'s sheet)', () => {
+  const modal = read('components/coaches/AwardTypePicker.tsx');
+  it('both hosts use the one picker, and render its drawers OUTSIDE their own panel', () => {
+    for (const f of ['components/coaches/GiveAwardModal.tsx', 'components/coaches/AwardSheet.tsx']) {
+      const src = read(f);
+      assert.match(src, /useAwardTypePicker\(\{/, `${f} must use the shared picker`);
+      assert.match(src, /\{picker\.chips\}/);
+      assert.match(src, /\{picker\.overlays\}/);
+      assert.doesNotMatch(src, /<TagManagerDrawer/, `${f} must not draw a second copy of the library drawer`);
+    }
+  });
   it('renders "Manage awards…" beside "+ New"', () => {
     assert.match(modal, /AWARD_TAG_MANAGE\.door/);
     assert.match(modal, /\+ New/);
@@ -169,7 +181,7 @@ describe('GiveAwardModal — the door', () => {
    *  devtools panel) a coach never saw it and the create read as having silently done nothing. */
   it('a failed create-type shows its OWN error right beside the +New row, not the shared bottom-of-form error', () => {
     assert.match(modal, /const \[createTypeError, setCreateTypeError\] = useState/);
-    const createFn = modal.slice(modal.indexOf('async function handleCreateType'), modal.indexOf('async function handleSave'));
+    const createFn = modal.slice(modal.indexOf('async function handleCreateType'), modal.indexOf('const chips ='));
     assert.match(createFn, /setCreateTypeError\(/, 'handleCreateType must use its own error state, not the shared `error`');
     assert.doesNotMatch(createFn, /(?<!setC)setError\(/, 'handleCreateType must not fall back to the shared `error` state');
     // The error paragraph must render inside the `creatingType &&` block (beside the Add row),

@@ -576,7 +576,7 @@ export function AttendancePanel({
                            that visibly fails to add up to the thing it explains. */
                         <tr className={`${styles.tr} ${att.receiptsRow}`}>
                           <td className={`${styles.td} ${att.receiptsCell}`} colSpan={3} id={receiptsId}>
-                            <p className={att.receiptsHead}>Sessions missed &mdash; the records behind these figures</p>
+                            <p className={att.receiptsHead}>Sessions missed</p>
                             {r.absences.length === 0 ? (
                               <p className={att.receiptsNone}>
                                 {tracked

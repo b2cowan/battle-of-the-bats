@@ -150,7 +150,10 @@ describe('the keepsakes a finished season is opened for', () => {
       'load() must stamp its own generation and treat a newer generation as stale — that is what '
       + 'protects the write-triggered reloads, which call load() with no argument.',
     );
-    const bareCalls = (code(awards).match(/void load\(\);/g) ?? []).length;
+    // A reload that passes no predicate — bare, or the quiet `load(undefined, { quiet… })` the
+    // report's saves and removals use since the phone award sheet (/review, 2026-09-25) — rests on
+    // the generation counter alone, which is the shape this pins.
+    const bareCalls = (code(awards).match(/void load\((undefined, \{[^}]*\})?\);/g) ?? []).length;
     assert.ok(
       bareCalls >= 2,
       `expected the write-triggered reloads to still call load() bare (found ${bareCalls}). If they `

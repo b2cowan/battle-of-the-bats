@@ -1,11 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
-import AwardIconPicker from '@/components/coaches/AwardIconPicker';
-import TagManagerDrawer from '@/components/coaches/TagManagerDrawer';
-import { AWARD_TAG_MANAGE, type ComboTag } from '@/components/coaches/TagSearchCombobox';
+import { useState } from 'react';
+import { useAwardTypePicker } from '@/components/coaches/AwardTypePicker';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import type { RepTeamAwardType, RepPlayerAward } from '@/lib/types';
-import { awardEventKind } from '@/lib/rep-award-occasion';
+import { awardNotePlaceholder } from '@/lib/rep-award-occasion';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 
@@ -62,62 +60,15 @@ export default function GiveAwardModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const [creatingType, setCreatingType] = useState(false);
-  const [newTypeName, setNewTypeName] = useState('');
-  const [newTypeEmoji, setNewTypeEmoji] = useState<string | null>('🏅');
-  const [createTypeError, setCreateTypeError] = useState('');
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [manageOpen, setManageOpen] = useState(false);
-
-  // The active library, PLUS the currently selected type even if it has since been retired —
-  // an edit must never refuse to show the award's own type just because it fell out of the
-  // picker for NEW awards (same "keep what it already has" rule the route enforces).
-  function withCurrentType(library: RepTeamAwardType[]): RepTeamAwardType[] {
-    const active = library.filter(t => t.isActive);
-    if (typeId && !active.some(t => t.id === typeId)) {
-      const current = library.find(t => t.id === typeId) ?? (typeId === editing?.awardTypeId ? editing.awardType : undefined);
-      if (current) return [...active, current];
-    }
-    return active;
-  }
-  const [localTypes, setLocalTypes] = useState(() => withCurrentType(awardTypes));
-
-  // Recomputes from the `awardTypes` PROP rather than its own fetch — a rename/merge/retire in
-  // the manager drawer calls the host's own onChanged, which re-fetches award-types and flows
-  // the fresh library back down here; deriving from that avoids a second, redundant GET this
-  // component would otherwise fire on every drawer action.
-  useEffect(() => {
-    setLocalTypes(withCurrentType(awardTypes));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [awardTypes]);
-
-  async function handleCreateType() {
-    const name = newTypeName.trim();
-    if (!name) return;
-    setCreateTypeError('');
-    try {
-      const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, emoji: newTypeEmoji }),
-      });
-      const d = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(d.error ?? 'Could not create award type');
-      setLocalTypes(prev => [...prev, d.awardType]);
-      setTypeId(d.awardType.id);
-      setNewTypeName('');
-      setNewTypeEmoji('🏅');
-      setCreatingType(false);
-      onChanged();
-    } catch (e: unknown) {
-      // Shown right beside the +New row it belongs to (below), NOT the shared `error` state at
-      // the bottom of the form — this modal scrolls internally (max-height: 90vh), and a coach on
-      // a shorter viewport (a docked devtools panel, a small laptop) never sees new content
-      // appended past the Note field with nothing prompting them to scroll for it. A duplicate
-      // name silently "doing nothing" was reported as exactly that (2026-09-12).
-      setCreateTypeError(e instanceof Error ? e.message : 'Could not create award type');
-    }
-  }
+  // The chips, "+ New" and the library's door — shared with the award's own sheet on a phone
+  // (`AwardTypePicker`). `overlays` renders OUTSIDE this window, as the drawer always has.
+  const picker = useAwardTypePicker({
+    orgSlug, teamId, awardTypes,
+    value: typeId,
+    onChange: setTypeId,
+    keepType: editing?.awardType ?? null,
+    onLibraryChanged: onChanged,
+  });
 
   async function handleSave() {
     setError('');
@@ -197,53 +148,7 @@ export default function GiveAwardModal({
 
           <div className={styles.formSection}>
             <h4 className={styles.formSectionTitle}>Award</h4>
-            <div className={styles.tagChips}>
-              {localTypes.map(t => (
-                <button
-                  key={t.id}
-                  type="button"
-                  className={`${styles.tagChip} ${typeId === t.id ? styles.tagChipActive : ''}`}
-                  onClick={() => setTypeId(t.id)}
-                >
-                  {t.emoji ? `${t.emoji} ` : ''}{t.name}
-                </button>
-              ))}
-              <button type="button" className={styles.tagChipCreate} onClick={() => { setCreateTypeError(''); setCreatingType(v => !v); }}>
-                + New
-              </button>
-            </div>
-            <button type="button" className={styles.tagManageLink} onClick={() => setManageOpen(true)}>
-              {AWARD_TAG_MANAGE.door}
-            </button>
-            {creatingType && (
-              <>
-                <div className={styles.tagPickerRow} style={{ marginTop: '0.5rem' }}>
-                  <button type="button" className={styles.awardEmojiPickBtn} onClick={() => setPickerOpen(true)}>
-                    {newTypeEmoji || '🏅'}
-                  </button>
-                  <input
-                    className={styles.input}
-                    value={newTypeName}
-                    maxLength={40}
-                    placeholder="New award name"
-                    onChange={e => setNewTypeName(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter' && newTypeName.trim()) void handleCreateType(); }}
-                  />
-                  <button className={styles.btnSecondary} disabled={!newTypeName.trim()} onClick={handleCreateType}>Add</button>
-                </div>
-                {/* Right beside the row that failed, not the shared error at the bottom of a
-                    modal that scrolls (max-height: 90vh) — a coach on a short viewport never saw
-                    a duplicate-name refusal that only appeared past the Note field. */}
-                {createTypeError && <p className={styles.errorText} style={{ marginTop: '0.4rem' }}>{createTypeError}</p>}
-              </>
-            )}
-            {pickerOpen && (
-              <AwardIconPicker
-                value={newTypeEmoji}
-                onClose={() => setPickerOpen(false)}
-                onSelect={emoji => { setNewTypeEmoji(emoji); setPickerOpen(false); }}
-              />
-            )}
+            {picker.chips}
           </div>
 
           <div className={styles.formSection}>
@@ -252,9 +157,7 @@ export default function GiveAwardModal({
               className={styles.textarea}
               value={note}
               maxLength={200}
-              placeholder={eventContext && awardEventKind(eventContext.eventType) !== 'game'
-                ? 'e.g. Ran every drill at full speed'
-                : 'e.g. Diving catch to end the game'}
+              placeholder={awardNotePlaceholder(!!eventContext, eventContext?.eventType)}
               onChange={e => setNote(e.target.value)}
             />
           </div>
@@ -268,19 +171,7 @@ export default function GiveAwardModal({
         </div>
       </div>
     </div>
-    {manageOpen && (
-      <TagManagerDrawer
-        teamId={teamId}
-        tags={awardTypes as ComboTag[]}
-        title={AWARD_TAG_MANAGE.title}
-        itemNoun={AWARD_TAG_MANAGE.itemNoun}
-        countNoun={AWARD_TAG_MANAGE.countNoun}
-        basePath={`/api/coaches/${orgSlug}/teams/${teamId}/award-types`}
-        policy={{ icon: true, inUseRemove: 'merge-or-retire' }}
-        onClose={() => setManageOpen(false)}
-        onChanged={onChanged}
-      />
-    )}
+    {picker.overlays}
     </>
   );
 }

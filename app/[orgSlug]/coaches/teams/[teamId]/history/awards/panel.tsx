@@ -1,18 +1,25 @@
 'use client';
 import { useState, useEffect, useCallback, useRef, use } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { Award, Check, Printer, Trash2, Pencil, MoreHorizontal } from 'lucide-react';
+import { Award, ChevronRight, Printer, Trash2, Pencil } from 'lucide-react';
 import { useCoaches, useCoachSeasonPage } from '@/lib/coaches-context';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import GiveAwardModal from '@/components/coaches/GiveAwardModal';
+import AwardSheet from '@/components/coaches/AwardSheet';
+import MultiSelectDropdown from '@/components/coaches/MultiSelectDropdown';
 import { canManageAwards } from '@/lib/coach-capabilities';
 import styles from '../../../../coaches.module.css';
 import { CoachListToolbar } from '@/components/coaches/kit';
 import CoachScrollX from '@/components/coaches/CoachScrollX';
-import { CoachToolbarMenu, CoachToolbarMenuItem } from '@/components/coaches/CoachToolbarMenu';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import type { RepPlayerAward, RepTeamAwardType } from '@/lib/types';
+import { formatStoredDate } from '@/lib/timezone';
+import { awardTypeLabel } from '@/lib/rep-award-occasion';
+
+/** "Apr 28" — the house formatter, never the browser's locale (the certificate's own lesson). */
+const shortDate = (a: RepPlayerAward) => formatStoredDate(a.awardedAt, { withYear: false });
+/** What an award was for, as both history tables print it. */
+const awardFor = (a: RepPlayerAward) => a.occasionLabel ?? (a.tournamentLabel || 'General');
 
 // "Who's earning it?" — a new report (not a metric folded into an existing one, unlike the
 // "vs tag" report) because a player leaderboard is a genuinely different shape: players ranked
@@ -47,8 +54,8 @@ export function AwardsPanel({
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const { loading: ctxLoading } = useCoaches();
   const confirm = useConfirm();
-  const router = useRouter();
-  // The history's phone card carries ONE corner menu instead of three 19px icons (stage 6 · R2c).
+  // On a phone the history is a table whose ROW opens the award's sheet (phone plan §14.13); the
+  // desktop keeps its five columns and three icons.
   const isPhone = useIsPhone();
 
   const [awardTypes, setAwardTypes] = useState<RepTeamAwardType[]>([]);
@@ -57,7 +64,10 @@ export function AwardsPanel({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [loadedFor, setLoadedFor] = useState<string | null>(null);
-  const [activeTypeId, setActiveTypeId] = useState<string | null>(null);
+  // The Award filter — empty = every award (MultiSelectDropdown's own rule).
+  const [selectedTypeIds, setSelectedTypeIds] = useState<Set<string>>(() => new Set());
+  // The award whose sheet is open (a phone), by id so a quiet re-read hands it the fresh record.
+  const [openAwardId, setOpenAwardId] = useState<string | null>(null);
   const [giveOpen, setGiveOpen] = useState(false);
   // Editing an already-given award (Awards One Tag Idiom Part A) reuses the give form — null
   // when the modal is giving a NEW award instead.
@@ -91,22 +101,29 @@ export function AwardsPanel({
    * comment exists — which is the only kind of guard that survives.
    */
   const runRef = useRef(0);
-  const load = useCallback(async (isCancelled: () => boolean = () => false) => {
+  const load = useCallback(async (isCancelled: () => boolean = () => false, { quiet = false, withTypes = true }: { quiet?: boolean; withTypes?: boolean } = {}) => {
     const myRun = ++runRef.current;
     // Superseded by a newer run (any caller), or cancelled by the effect (unmount / season change).
     const isStale = () => isCancelled() || runRef.current !== myRun;
-    setLoading(true);
-    setError('');
+    // ⚠ QUIET = the award's sheet saved (phone plan §14.13). It autosaves as the coach edits, and a
+    // loud reload swapped the whole report for "Loading report…" behind the open sheet on every
+    // pause in typing. Quiet re-reads the list in place, and a failed quiet read leaves the report
+    // as it stands — the save itself already landed. `withTypes: false` = a save on the award's sheet
+    // (a player, a note), which cannot have changed the award-type library, so it is not re-read.
+    if (!quiet) {
+      setLoading(true);
+      setError('');
+    }
     try {
       const [typesRes, awardsRes] = await Promise.all([
-        fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`),
+        withTypes ? fetch(`/api/coaches/${orgSlug}/teams/${teamId}/award-types`) : Promise.resolve(null),
         fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards`),
       ]);
       // No active program year is a legitimate state, not a retryable failure — the same
       // honest-empty branch this report's three siblings already have (WI-7). ⚠ Far RARER now:
       // with a season on the request the routes resolve that season and answer normally, which is
       // what gives a coach with no live assignment their own past season's awards at all.
-      if (typesRes.status === 404 || awardsRes.status === 404) {
+      if (typesRes?.status === 404 || awardsRes.status === 404) {
         if (isStale()) return;
         setNoSeason(true);
         setAwardTypes([]);
@@ -114,16 +131,16 @@ export function AwardsPanel({
         setPlayers([]);
         return;
       }
-      if (!typesRes.ok || !awardsRes.ok) throw new Error();
-      const types = await typesRes.json();
+      if ((typesRes && !typesRes.ok) || !awardsRes.ok) throw new Error();
+      const types = typesRes ? await typesRes.json() : null;
       const data = await awardsRes.json();
       if (isStale()) return;
       setNoSeason(false);
-      setAwardTypes(types.tags ?? []);
+      if (types) setAwardTypes(types.tags ?? []);
       setAwards(data.awards ?? []);
       setPlayers(data.players ?? []);
     } catch {
-      if (!isStale()) setError('This report couldn’t be loaded — refresh to try again.');
+      if (!isStale() && !quiet) setError('This report couldn’t be loaded — refresh to try again.');
     } finally {
       if (!isStale()) {
         setLoadedFor(loadKey);
@@ -131,6 +148,8 @@ export function AwardsPanel({
       }
     }
   }, [orgSlug, teamId, loadKey]);
+  const reloadQuietly = useCallback(() => { void load(undefined, { quiet: true }); }, [load]);
+  const reloadAwardsQuietly = useCallback(() => { void load(undefined, { quiet: true, withTypes: false }); }, [load]);
 
   useEffect(() => {
     if (ctxLoading) return;
@@ -163,14 +182,22 @@ export function AwardsPanel({
     );
   }
 
-  // Filter chips are built from types with at least one award (self-hides an unused type,
-  // same convention as the "vs tag" report's per-tag chip self-hide).
+  // The Award filter's options are the types with at least one award (an unused type self-hides,
+  // as the chips it replaced did), most-given first, each with its count.
   const typeChips = awardTypes
     .map(t => ({ type: t, count: awards.filter(a => a.awardTypeId === t.id).length }))
     .filter(c => c.count > 0)
     .sort((a, b) => b.count - a.count);
-  const activeType = typeChips.find(c => c.type.id === activeTypeId)?.type ?? null;
-  const visibleAwards = activeType ? awards.filter(a => a.awardTypeId === activeType.id) : awards;
+  /* ⚠ ONE FILTER, BOTH TABLES (phone plan §14.13 · R9, owner 2026-09-25). The owner asked for a
+     multi-select on the history; the chips above the leaderboard already filtered BOTH tables, so a
+     second, history-only filter would have put two filters over one field on one screen — the
+     chip says MVP, the history's says big bat, and the history comes up empty. The one multi-select
+     REPLACES the chips. A chosen type that no longer has an award (removed, merged) drops out. */
+  const selected = new Set([...selectedTypeIds].filter(id => typeChips.some(c => c.type.id === id)));
+  const visibleAwards = selected.size ? awards.filter(a => selected.has(a.awardTypeId)) : awards;
+  // Print is for ONE award at a time — a stack of mixed certificates is not a thing a coach prints.
+  const printType = selected.size === 1 ? typeChips.find(c => selected.has(c.type.id))?.type ?? null : null;
+  const openAward = openAwardId ? awards.find(a => a.id === openAwardId) ?? null : null;
 
   const leaderboard = (() => {
     const byPlayer = new Map<string, { playerId: string; playerName: string; total: number; byType: Map<string, { type: RepTeamAwardType | undefined; count: number }> }>();
@@ -185,27 +212,37 @@ export function AwardsPanel({
     return Array.from(byPlayer.values()).sort((a, b) => b.total - a.total);
   })();
 
-  async function handleDelete(award: RepPlayerAward) {
+  /** Asks, then removes. 'removed' / 'kept' (the coach said no) / the sentence of a failure — the
+   *  award's sheet shows that sentence itself, since the page's own line sits behind the sheet. */
+  async function handleDelete(award: RepPlayerAward): Promise<'removed' | 'kept' | string> {
+    // ⚠ It used to ask "Undo MVP for Blake Test? This can't be undone." — offering an undo and
+    // denying one in the same breath (found drawing the phone sheet, 2026-09-25).
     const ok = await confirm({
-      title: 'Remove this award?',
-      message: `Undo ${award.awardType?.name ?? 'this award'} for ${award.playerName}? This can’t be undone.`,
+      title: `Remove ${award.playerName ?? 'this player'}’s ${award.awardType?.name ?? 'award'}?`,
+      message: 'This can’t be undone.',
       confirmText: 'Remove',
       cancelText: 'Cancel',
       tone: 'danger',
     });
-    if (!ok) return;
+    if (!ok) return 'kept';
     setDeleteError('');
     setBusyId(award.id);
     try {
       const res = await fetch(`/api/coaches/${orgSlug}/teams/${teamId}/awards/${award.id}`, { method: 'DELETE' });
       if (res.ok) {
-        void load();
-      } else {
-        const d = await res.json().catch(() => ({ error: res.statusText }));
-        setDeleteError(d.error ?? 'Could not remove this award');
+        // Quietly, in place — a loud load swapped the whole report for "Loading report…" and lost the
+        // coach's place in the list (/review, 2026-09-25).
+        reloadQuietly();
+        return 'removed';
       }
+      const d = await res.json().catch(() => ({ error: res.statusText }));
+      const message = d.error ?? 'Could not remove this award';
+      setDeleteError(message);
+      return message;
     } catch {
-      setDeleteError('Could not remove this award — check your connection and try again.');
+      const message = 'Could not remove this award — check your connection and try again.';
+      setDeleteError(message);
+      return message;
     } finally {
       setBusyId(null);
     }
@@ -233,33 +270,34 @@ export function AwardsPanel({
         </div>
       ) : (
         <>
-          {/* ⚠ A CLASS, not inline flex styles. The row is the panel toolbar the page-level
-              action ruling (2026-08-13) puts beside the thing it names, and it needs a 44px tap
-              floor on its controls — `check:layout` flagged "Give an award" at 33px and "Manage
-              award types" at 15px on a 361px phone. Scoped HERE rather than on `.btnPrimary` /
-              `.tagManageLink`: those are portal-wide primitives on screens this project has no
-              rendered coverage of, and re-geometrying every coach button is not a P1 change. */}
-          {/* The kit's list toolbar (2026-09-16): the primary leads, the print door is the action
-              pinned right — the row every list in the portal draws; the tap floor is the kit's. */}
+          {/* ⚠⚠ ONE ROW OF CONTROLS, directly above the leaderboard (phone plan §14.13 · R7 + R9, owner
+              2026-09-25): the Award filter at the left, "Give an award" at the right. The kit's list
+              toolbar — the tap floor is the kit's.
+              · "Give an award" is WHITE, the weight a finished game's own sheet gives the same button.
+                Insights reads a season back to a coach; the lime fill made the report's one instrument
+                its loudest mark. It cannot go: this is the only door for an award that is not for an
+                event on the schedule (season's end, a tournament recorded ahead).
+              · The line "N awards given this season across N award types" is GONE, and so is the
+                narrowed form of it ("🏆 MVP: 3 given") — the counts live in the filter's list, the
+                leaderboard's totals, and the Print link.
+              · With fewer than two award types in use the filter self-hides, as the chips did, and
+                Give sits alone at the right. */}
           <CoachListToolbar
-            actions={activeType && visibleAwards.length > 0 && (
-              /* Chunk D 3.4 — awards night, printed. Offered only for a chosen award TYPE:
-                 "print every award this season" is a stack of mismatched certificates, not a
-                 thing a coach wants. ⚠ Carries the year: the certificate names the season it was
-                 won in, and that page reads it from the URL. */
-              <Link
-                href={`${base}/history/awards/certificate?typeId=${activeType.id}`}
-                className={styles.tagManageLink}
-              >
-                <Printer size={13} aria-hidden /> Print {visibleAwards.length} certificate{visibleAwards.length === 1 ? '' : 's'}
-              </Link>
+            actions={players.length > 0 && (
+              <button className={`${styles.btnSecondary} ${styles.tapFloor}`} onClick={() => { setEditingAward(null); setGiveOpen(true); }}>🏆 Give an award</button>
             )}
           >
             {/* A rosterless team gets a reason, not a blank player picker (WI-7). */}
             {players.length === 0 ? (
               <p className={styles.insightsBasis} style={{ margin: 0 }}>🏆 Add players to your roster first — then you can give awards.</p>
-            ) : (
-              <button className={`${styles.btnPrimary} ${styles.tapFloor}`} onClick={() => { setEditingAward(null); setGiveOpen(true); }}>🏆 Give an award</button>
+            ) : typeChips.length > 1 && (
+              <MultiSelectDropdown
+                label="Award"
+                options={typeChips.map(c => ({ id: c.type.id, label: `${c.type.emoji ? `${c.type.emoji} ` : ''}${c.type.name}`, count: c.count }))}
+                selected={selected}
+                onChange={setSelectedTypeIds}
+                restQuiet
+              />
             )}
           </CoachListToolbar>
 
@@ -273,44 +311,6 @@ export function AwardsPanel({
             </div>
           ) : (
             <>
-              {activeType ? (
-                <div className={styles.insightsTagSummary}>
-                  <span className={styles.insightsTagSummaryLbl}>{activeType.emoji ? `${activeType.emoji} ` : ''}{activeType.name}:</span>
-                  <span className={styles.insightsTagSummaryRec}>{visibleAwards.length} given</span>
-                </div>
-              ) : (
-                <p className={styles.insightsBasis}>
-                  {/* ⚠ "this season" is now TRUE. Until 2026-08-16 this line counted every award
-                      the team had ever given, because the route filtered by team and not by the
-                      season's roster — a wrong number on a live screen, not just an archive one. */}
-                  {awards.length} award{awards.length === 1 ? '' : 's'} given this season across {typeChips.length} award type{typeChips.length === 1 ? '' : 's'}
-                </p>
-              )}
-
-              {typeChips.length > 1 && (
-                <div className={styles.lineupFilterBar} role="group" aria-label="Filter by award">
-                  <button
-                    type="button"
-                    aria-pressed={!activeType}
-                    className={`${styles.lineupFilterChip} ${!activeType ? styles.lineupFilterChipActive : ''}`}
-                    onClick={() => setActiveTypeId(null)}
-                  >
-                    {!activeType && <Check size={12} aria-hidden />} All
-                  </button>
-                  {typeChips.map(c => (
-                    <button
-                      key={c.type.id}
-                      type="button"
-                      aria-pressed={activeType?.id === c.type.id}
-                      className={`${styles.lineupFilterChip} ${activeType?.id === c.type.id ? styles.lineupFilterChipActive : ''}`}
-                      onClick={() => setActiveTypeId(c.type.id)}
-                    >
-                      {activeType?.id === c.type.id && <Check size={12} aria-hidden />} {c.type.emoji ? `${c.type.emoji} ` : ''}{c.type.name} <b className={styles.lineupFilterCount}>{c.count}</b>
-                    </button>
-                  ))}
-                </div>
-              )}
-
               <section style={{ marginBottom: '1.75rem' }}>
                 <p className={styles.sectionKicker}>Leaderboard</p>
                 {/* A TABLE, on the same frame as the history under it (table standard, 2026-09-16).
@@ -348,91 +348,127 @@ export function AwardsPanel({
               </section>
 
               <section>
-                <p className={styles.sectionKicker}>Full history</p>
-                {deleteError && <p className={styles.errorText}>{deleteError}</p>}
-                {/* ⚠ A LOG IS A LIST (stage 6 · R2c, owner 2026-09-24): you read one award at a time, so on a
-                    phone the history takes the standard's list recipe — the player as the card's title, the award
-                    · the game · the date on one line, the note under it, and ONE 44px "⋯" in the corner (K-09).
-                    Before this it "fit" at 390 only by wrapping every cell into 88px rows, scrolled at 360, and
-                    stacked print · edit · remove at 19×22 with the bin directly under the pencil. The desktop
-                    keeps its table and its three icons. (This is the one report table that takes
-                    `.tableAsCards` — it is a record list, not a comparison.) */}
-                <div className={`${styles.insightsTableWrap} ${styles.tableAsCards}`}>
-                  <table className={styles.insightsTable}>
-                    <thead><tr><th>Player</th><th>Award</th><th>For</th><th className={styles.tdShrink}>Date</th><th>Note</th><th aria-hidden /></tr></thead>
-                    <tbody>
-                      {visibleAwards.map(a => {
-                        const awardText = `${a.awardType?.emoji ? `${a.awardType.emoji} ` : ''}${a.awardType?.name ?? '—'}`;
-                        const forText = a.occasionLabel ?? (a.tournamentLabel || 'General');
-                        const dateText = new Date(`${a.awardedAt}T00:00:00`).toLocaleDateString('en-CA', { month: 'short', day: 'numeric' });
-                        const certificateHref = `${base}/history/awards/certificate?awardId=${a.id}`;
-                        return (
-                        <tr key={a.id}>
-                          <td className={styles.cardStackCell}>
-                            {a.playerName}
-                            <span className={styles.cardPhoneLine}>{awardText} · {forText} · {dateText}</span>
-                            {a.note && <span className={styles.cardPhoneLine}>{a.note}</span>}
-                          </td>
-                          <td className={styles.cardDesktopCell}>{awardText}</td>
-                          <td className={`${styles.mutedInline} ${styles.cardDesktopCell}`}>{forText}</td>
-                          <td className={`${styles.tdShrink} ${styles.cardDesktopCell}`}>{dateText}</td>
-                          <td className={`${styles.mutedInline} ${styles.cardDesktopCell}`}>{a.note || '—'}</td>
-                          <td className={styles.cardActionCorner}>
-                            {isPhone ? (
-                              /* A MENU, so it sits on top of the nav (owner, 2026-09-23). Remove still asks. */
-                              <CoachToolbarMenu
-                                variant="glyph"
-                                drawerOnPhone
-                                drawerTitle={`${a.playerName} · ${a.awardType?.name ?? 'Award'}`}
-                                label={`More for ${a.playerName}'s ${a.awardType?.name ?? 'award'}`}
-                                icon={<MoreHorizontal size={18} aria-hidden />}
-                              >
-                                {/* Print stays live while this award is being removed, exactly as the desktop's
-                                    print link does; Edit and Remove wait, as the desktop's two buttons do. */}
-                                <CoachToolbarMenuItem icon={<Printer size={16} aria-hidden />} label="Print certificate" onSelect={() => router.push(certificateHref)} />
-                                <CoachToolbarMenuItem icon={<Pencil size={16} aria-hidden />} label="Edit" disabled={busyId === a.id} onSelect={() => { setEditingAward(a); setGiveOpen(true); }} />
-                                <CoachToolbarMenuItem icon={<Trash2 size={16} aria-hidden />} label="Remove" disabled={busyId === a.id} onSelect={() => handleDelete(a)} />
-                              </CoachToolbarMenu>
-                            ) : (
-                            <>
-                            {/* Two clicks from the history the coach already keeps (3.4). */}
-                            <Link
-                              title="Print certificate"
-                              href={certificateHref}
-                              style={{ color: 'var(--white-45)', padding: '0.2rem', display: 'inline-block' }}
-                            >
-                              <Printer size={13} aria-hidden />
-                            </Link>
-                            {/* Fix a mis-given award without a delete-and-redo (Awards One Tag
-                                Idiom Part A) — same live-instrument posture as Remove below. */}
-                            <button
-                              title="Edit"
-                              disabled={busyId === a.id}
-                              onClick={() => { setEditingAward(a); setGiveOpen(true); }}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--white-45)', padding: '0.2rem' }}
-                            >
-                              <Pencil size={13} />
-                            </button>
-                            {/* ⚠ Removing an award UNDOES a night that has happened. It is a live
-                                instrument, and the DELETE route resolves the ACTIVE year — so it
-                                cannot reach a closed season whatever this screen renders. */}
-                            <button
-                              title="Remove"
-                              disabled={busyId === a.id}
-                              onClick={() => handleDelete(a)}
-                              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--white-45)', padding: '0.2rem' }}
-                            >
-                              <Trash2 size={13} />
-                            </button>
-                            </>
-                            )}
-                          </td>
-                        </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+                {/* Print N certificates sits at the heading's right, beside the rows it prints (phone plan
+                    §14.13): the toolbar that carried it is now the filter's row, which has no room for it
+                    at 390 once the filter is narrowed. Chunk D 3.4 — awards night, printed — offered only
+                    for ONE chosen award type: "print every award this season" is a stack of mismatched
+                    certificates, not a thing a coach wants. ⚠ Carries the year: the certificate names the
+                    season it was won in, and that page reads it from the URL. */}
+                <div className={styles.awardsHistoryHead}>
+                  <p className={styles.sectionKicker}>Full history</p>
+                  {printType && visibleAwards.length > 0 && (
+                    <Link
+                      href={`${base}/history/awards/certificate?typeId=${printType.id}`}
+                      className={`${styles.linkBtnAccent} ${styles.awardsPrintLink}`}
+                    >
+                      <Printer size={13} aria-hidden /> Print {visibleAwards.length} certificate{visibleAwards.length === 1 ? '' : 's'}
+                    </Link>
+                  )}
                 </div>
+                {deleteError && <p className={styles.errorText}>{deleteError}</p>}
+                {isPhone ? (
+                  /* ⚠⚠ ON A PHONE, A TABLE THAT FITS (phone plan §14.13 · R8, owner 2026-09-25 — reversing
+                     stage 6's R2c cards after seeing them built). Date · Player · Award, what the award was
+                     for under it, and no note in the row: the note is read in the award's sheet. It fits
+                     at 360 with nothing to swipe (R1's first question) because it chose its columns —
+                     R2c's option B, the five columns swiped, kept each row's actions off to the right.
+                     · THE ROW OPENS THE AWARD, and its last column is a CHEVRON — the 2026-09-03 ruling:
+                       one chevron on every row, "this opens", opening what the row's tap opens. The
+                       chevron is a real button named for its award (the 2026-09-01 rule: a clickable row
+                       is mouse-only without one); the row's own tap is the bigger target. A row tap that
+                       ends a text selection is a selection, not a door (the Club tab's rule).
+                     · A NAME CLAIMS ITS WIDTH FIRST (`.awardsPlayerCell`): a long occasion ("Practice
+                       review — written up") widened the Award column and wrapped every name in the table;
+                       now the occasion wraps under its own award. */
+                  /* It FITS (R1's first question), so the scroller is only the safety net for an overflow —
+                     a very long name — where its hint still shows. Unpinned, as the leaderboard is. */
+                  <CoachScrollX hint="Swipe for the award" scrollerClassName={styles.insightsTableWrap} wrapCells>
+                    <table className={`${styles.insightsTable} ${styles.awardsHistoryPhone}`}>
+                      <thead><tr><th className={styles.tdShrink}>Date</th><th>Player</th><th>Award</th><th aria-hidden /></tr></thead>
+                      <tbody>
+                        {visibleAwards.map(a => {
+                          const awardText = awardTypeLabel(a.awardType, '—');
+                          const forText = awardFor(a);
+                          return (
+                            <tr
+                              key={a.id}
+                              className={styles.rowTappable}
+                              onClick={() => { if (window.getSelection()?.toString()) return; setOpenAwardId(a.id); }}
+                            >
+                              <td className={styles.tdShrink}>{shortDate(a)}</td>
+                              <td className={styles.awardsPlayerCell}>{a.playerName}</td>
+                              <td>{awardText}<span className={styles.listRowSub}>{forText}</span></td>
+                              <td className={styles.awardsChevronCell}>
+                                <button
+                                  type="button"
+                                  className={`${styles.linkBtn} ${styles.listRowToggle}`}
+                                  aria-label={`Open ${a.playerName ?? 'this player'}’s ${a.awardType?.name ?? 'award'}`}
+                                  onClick={e => { e.stopPropagation(); setOpenAwardId(a.id); }}
+                                >
+                                  <ChevronRight size={18} className={styles.listRowChevron} aria-hidden />
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </CoachScrollX>
+                ) : (
+                  /* The desktop and tablet keep their five columns, the note among them, and three icons. */
+                  <CoachScrollX hint="Swipe for the note and the actions" scrollerClassName={styles.insightsTableWrap}>
+                    <table className={styles.insightsTable}>
+                      <thead><tr><th>Player</th><th>Award</th><th>For</th><th className={styles.tdShrink}>Date</th><th>Note</th><th aria-hidden /></tr></thead>
+                      <tbody>
+                        {visibleAwards.map(a => {
+                          const awardText = awardTypeLabel(a.awardType, '—');
+                          const forText = awardFor(a);
+                          const certificateHref = `${base}/history/awards/certificate?awardId=${a.id}`;
+                          return (
+                          <tr key={a.id}>
+                            <td>{a.playerName}</td>
+                            <td>{awardText}</td>
+                            <td className={styles.mutedInline}>{forText}</td>
+                            <td className={styles.tdShrink}>{shortDate(a)}</td>
+                            <td className={styles.mutedInline}>{a.note || '—'}</td>
+                            <td>
+                              {/* Two clicks from the history the coach already keeps (3.4). */}
+                              <Link
+                                title="Print certificate"
+                                href={certificateHref}
+                                style={{ color: 'var(--white-45)', padding: '0.2rem', display: 'inline-block' }}
+                              >
+                                <Printer size={13} aria-hidden />
+                              </Link>
+                              {/* Fix a mis-given award without a delete-and-redo (Awards One Tag
+                                  Idiom Part A) — same live-instrument posture as Remove below. */}
+                              <button
+                                title="Edit"
+                                disabled={busyId === a.id}
+                                onClick={() => { setEditingAward(a); setGiveOpen(true); }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--white-45)', padding: '0.2rem' }}
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              {/* ⚠ Removing an award UNDOES a night that has happened. It is a live
+                                  instrument, and the DELETE route resolves the ACTIVE year — so it
+                                  cannot reach a closed season whatever this screen renders. */}
+                              <button
+                                title="Remove"
+                                disabled={busyId === a.id}
+                                onClick={() => { void handleDelete(a); }}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--white-45)', padding: '0.2rem' }}
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </td>
+                          </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </CoachScrollX>
+                )}
               </section>
             </>
           )}
@@ -459,6 +495,26 @@ export function AwardsPanel({
           editing={editingAward}
           onClose={() => { setGiveOpen(false); setEditingAward(null); }}
           onChanged={() => { void load(); }}
+        />
+      )}
+
+      {/* The award's sheet (a phone) — outside the loading branch like the Give window, so a quiet
+          re-read after a save never unmounts it; keyed on the award, so another award starts fresh. */}
+      {isPhone && openAward && (
+        <AwardSheet
+          key={openAward.id}
+          orgSlug={orgSlug}
+          teamId={teamId}
+          award={openAward}
+          awards={awards}
+          awardTypes={awardTypes}
+          players={players}
+          certificateHref={`${base}/history/awards/certificate?awardId=${openAward.id}`}
+          dateText={shortDate(openAward)}
+          onClose={() => setOpenAwardId(null)}
+          onSaved={reloadAwardsQuietly}
+          onLibraryChanged={reloadQuietly}
+          onRemove={handleDelete}
         />
       )}
     </>

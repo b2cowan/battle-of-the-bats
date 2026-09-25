@@ -23192,7 +23192,7 @@ The hub's **QA walk · 6** tab is the checkable copy; plan §14.10 is the build 
 
 - **A · Attendance is a table** (5) — the rows, the column that shows who is missing, the missed-sessions drill-in, the name, 360.
 - **B · Reports that swipe keep their columns** (6) — Results' pinned date and hint, its column order, **+6 on the chart**; Playing time pinned and one line; Arm care's warning a swipe away; the desktop.
-- **C · Awards** (4) — cards with one ⋯, the menu over the bar, Edit / Remove (asks) / Print, the desktop.
+- **C · Awards** (8, rewritten 25 Sep — see addendum 2) — one row of controls, the Award filter and Print, the table that fits, the award's sheet: read, edit in place, held change, the bin asks; the desktop.
 - **D · The tab you are on is in view** (4) — Scouting Book, Awards, Development; **D2 the 44px arrows (your veto)**; Money; "Playing time".
 - **E · Practice review** (6) — the fold row, short rows with no repeated sentence, the whole row a door, the fold opening, a recap, the desktop.
 - **F · Notifications** (2) — two lines on a phone; the digest opens Insights.
@@ -23202,6 +23202,40 @@ The hub's **QA walk · 6** tab is the checkable copy; plan §14.10 is the build 
 ---
 
 **§232 addendum — /review (high-risk tier, four lenses), same day:** 6 confirmed and fixed, 2 refuted. The ones you would notice: the **Awards leaderboard is no longer pinned** (its first column is the rank, so a swipe would have kept "1, 2, 3" and lost the names — it fits a phone anyway); the **two-line clamp now applies only to the week in review** (an admin's tournament announcement is free text whose page does not repeat it, so clamping it would have hidden a rain-delay notice with nowhere to read the rest); **Print stays available** while an award is being removed; the Practice review fold **closes when you change the tag filter**; a keyboard focus rings the whole practice row. Walk steps F1 and C2 read the same. Plan §14.12.
+
+**§232 addendum 2 — the Awards report re-cut from this walk (2026-09-25), part C REWRITTEN as C5–C12.** Your walk
+reached Awards and asked for a quieter "Give an award" and a table history with a multi-select filter; ruled from
+the hub tab "6 · Awards, from the walk" (R7 · R8 · R9 as amended, plan §14.13) and built on dev the same day, once
+"Awards at any event" (§235) was committed. What part C now walks: one row above the leaderboard (the **Award ▾**
+filter left, a white **Give an award** right); no count line or chips; **Print N certificates** at the Full history
+heading, one award at a time; on a phone the history is a table — Date · Player · Award, a chevron on every row —
+and the whole row opens **the award's sheet** (no title; a borderless bin and pencil; the pencil edits it in place,
+saving as you go, with ✓ in the pencil's spot and the bottom bar covered; a change it refuses is held with its
+reason; the bin asks "Remove Blake Test's MVP? This can't be undone."). The desktop is unchanged. The old C1–C4
+(cards and the ⋯ menu) are retired; the new steps are numbered C5–C12 so an earlier tick can't land on them.
+Probe `.probe/aw-built.mjs`: 64 checks at 390 / 360 / 1280. Build record: plan §14.13b.
+
+**§232 addendum 3 — certificates on paper (2026-09-25, from the same walk).** Two certificates printed on four
+sheets: the portal's sidebar and header printed with them, the header cut each frame's top, each certificate sat
+shoved right, and a blank sheet came last. Now only the certificates reach the paper — one to a Letter-landscape
+sheet, the frame whole, the type sized for paper (the name the largest line), the date "May 14" for every coach
+(it followed the browser's language before). The "turn on background graphics" note is gone — the frame is a
+border and prints without it. **And no browser date, page title, web address or page number** around it (your
+second look): the page leaves the browser no margin to print them in, and keeps its own margin inside the sheet.
+(Firefox and Safari have their own "headers and footers" switch in the print dialog.) Walk step **C13**. Plan §14.13c.
+
+**§232 addendum 4 — ✅ parts A · B · C PASSED 2026-09-25** (owner: *"go ahead with simplify, review, and commit.
+mark any QA from here as complete"* — marked on the owner's word, no paste-back; C = C5–C13). Two fixes from the
+walk ride with it: **A** — the missed-sessions heading reads "Sessions missed" (the "— the records behind these
+figures" tail is gone); **B** — the run-differential chart's end figure is readable on a phone (it was about 9px)
+and its zero line and shading sit at true zero. `/simplify`, then `/review` (high-risk tier — the award save route
+changed; four lenses): **11 confirmed and fixed, 7 refuted or taken as-is.** The ones you would notice: an award
+for a player who has left the roster can be edited again (fixing its note used to fail); renaming a general
+award's occasion onto one the player already holds is refused like any other repeat; the sheet saves only what
+you changed; with a change held, tapping outside or Escape now closes the sheet instead of trapping you; Escape in
+the "+ New" box puts away the box, not the sheet; removing an award no longer flashes "Loading report…". Probes
+`.probe/aw-built.mjs` 64/64 and `.probe/aw-review.mjs` 11/11; `check:layout` on Awards clean at all four widths.
+Plan §14.13d. **Parts D · E · F are not on record as walked.** Committed on dev 2026-09-25.
 
 ---
 

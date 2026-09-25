@@ -43,7 +43,12 @@ export default function MultiSelectDropdown({
    * ⚠ Do not widen this to brighten up a filter: an option list where colour means nothing is a
    * legend the reader has to invent.
    */
-  options: readonly { id: string; label: string; swatch?: 'org' | 'own' }[];
+  options: readonly {
+    id: string; label: string; swatch?: 'org' | 'own';
+    /** How many records carry this option — quiet, at the row's end ("MVP · 3"). The Awards
+     *  report's filter keeps the count its chips showed (§14.13 of the phone plan, 2026-09-25). */
+    count?: number;
+  }[];
   /** Empty = every option, i.e. "All". */
   selected: ReadonlySet<string>;
   onChange: (next: Set<string>) => void;
@@ -98,6 +103,7 @@ export default function MultiSelectDropdown({
               />
             )}
             {o.label}
+            {o.count != null && <span className={styles.multiSelectCount}>{o.count}</span>}
           </label>
         ))}
       </div>

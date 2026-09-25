@@ -48,7 +48,12 @@ describe('R1 · R2 — every report table on a phone is a table, a pinned scroll
     assert.equal(count(playing, /<CoachScrollX sticky hint="[^"]+" scrollerClassName=\{styles\.insightsTableWrap\}>/), 4, 'Playing time: all four tables');
     // The leaderboard FITS and its first column is the rank: a scroller for the overflow, never a pinned rank
     // with the names swiped away (/review, 2026-09-24).
-    assert.equal(count(awards, /<CoachScrollX hint="[^"]+" scrollerClassName=\{styles\.insightsTableWrap\}>/), 1, 'Awards leaderboard, unpinned');
+    // Three unpinned scrollers since §14.13: the leaderboard, the phone's history (it fits — the scroller
+    // is the overflow's safety net) and the desktop's five-column history.
+    assert.equal(count(awards, /<CoachScrollX hint="[^"]+" scrollerClassName=\{styles\.insightsTableWrap\}( wrapCells)?>/), 3, 'Awards: leaderboard + both histories, unpinned');
+    // the phone history FITS: the scroller's wrap-cells option, not a per-table override of K-05
+    assert.match(awards, /<CoachScrollX hint="Swipe for the award" scrollerClassName=\{styles\.insightsTableWrap\} wrapCells>/);
+    assert.doesNotMatch(css, /awardsHistoryPhone td \{ white-space/);
     assert.equal(count(awards, /<CoachScrollX sticky/), 0, 'the leaderboard must not pin its rank column');
     assert.match(awards, /<td className=\{styles\.insightsNameCell\}>\{row\.playerName\}<\/td>/, 'a long name wraps rather than widening the leaderboard');
   });
@@ -72,12 +77,28 @@ describe('R1 · R2 — every report table on a phone is a table, a pinned scroll
     assert.match(attendance, /<div className=\{styles\.tableWrap\}>\s*<table className=\{styles\.table\}>/);
   });
 
-  it('Awards history is the ONE report table that takes the card reflow, with one corner menu on a phone', () => {
+  /* §14.13 (owner, 2026-09-25) reverses R2c after the owner saw the cards built: on a phone the
+     history is a TABLE THAT FITS — Date · Player · Award (the occasion under it) · a chevron — and
+     the row opens the award's sheet. No report table takes the card reflow any more. */
+  it('Awards history on a phone is a table that fits, and no report table takes the card reflow', () => {
     const hist = awards.slice(awards.indexOf('Full history'));
-    assert.match(hist, /<div className=\{`\$\{styles\.insightsTableWrap\} \$\{styles\.tableAsCards\}`\}>/);
-    assert.match(hist, /<td className=\{styles\.cardStackCell\}>/);
-    assert.match(hist, /<td className=\{styles\.cardActionCorner\}>\s*\{isPhone \? \(/);
-    assert.equal(count(hist, 'styles.cardDesktopCell'), 4, 'award · for · date · note hide on the phone card');
+    assert.doesNotMatch(awards, /tableAsCards/, 'the history is no longer cards');
+    assert.match(hist, /\{isPhone \? \(/, 'the phone draws its own table; the desktop keeps five columns');
+    const phone = hist.slice(hist.indexOf('{isPhone ? ('), hist.indexOf(') : ('));
+    assert.match(phone, /<th className=\{styles\.tdShrink\}>Date<\/th><th>Player<\/th><th>Award<\/th><th aria-hidden \/>/);
+    assert.doesNotMatch(phone, /a\.note/, 'the note is read in the award\'s sheet, never in the phone row');
+    assert.match(phone, /<span className=\{styles\.listRowSub\}>\{forText\}<\/span>/, 'what it was for sits under the award');
+    assert.match(phone, /<td className=\{styles\.awardsPlayerCell\}>/, 'a name claims its width before a long occasion');
+  });
+
+  it('the whole row opens the award, and its last column is a real, named chevron button (2026-09-01 / 09-03)', () => {
+    const hist = awards.slice(awards.indexOf('Full history'));
+    const phone = hist.slice(hist.indexOf('{isPhone ? ('), hist.indexOf(') : ('));
+    assert.match(phone, /className=\{styles\.rowTappable\}\s*onClick=\{\(\) => \{ if \(window\.getSelection\(\)\?\.toString\(\)\) return; setOpenAwardId\(a\.id\); \}\}/);
+    assert.match(phone, /<button\s+type="button"\s+className=\{`\$\{styles\.linkBtn\} \$\{styles\.listRowToggle\}`\}\s+aria-label=\{`Open /);
+    assert.match(phone, /onClick=\{e => \{ e\.stopPropagation\(\); setOpenAwardId\(a\.id\); \}\}/);
+    assert.match(phone, /<ChevronRight size=\{18\}/);
+    assert.doesNotMatch(awards, /CoachToolbarMenu|MoreHorizontal/, 'the row\'s ⋯ menu is retired');
   });
 
   it('R2b — Results reads Date · Game · Result · Score · Type, at every width', () => {

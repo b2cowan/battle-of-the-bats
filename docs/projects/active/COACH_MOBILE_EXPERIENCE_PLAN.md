@@ -1707,7 +1707,7 @@ recipe**, not as touch-target work. Practice review: +1 (the "All 6" chip, 41×4
 - A **"QA walk · 6"** tab on the hub at build, its § from the ledger.
 
 
-### 14.10 Built as (2026-09-24 · dev — every number read from the browser's own geometry; probes `s6-built` (94 checks, touch at 390/360, mouse at 768/1440), `s6-receipts`, `s6-hub-check`, `s6-qa6-check` in `.probe/`) — **uncommitted; ledger §232 walk (27 steps, hub tab "QA walk · 6") owed**
+### 14.10 Built as (2026-09-24 · dev — every number read from the browser's own geometry; probes `s6-built` (94 checks, touch at 390/360, mouse at 768/1440), `s6-receipts`, `s6-hub-check`, `s6-qa6-check` in `.probe/`) — **committed `8f221f94` 2026-09-24; ledger §232 parts A · B · C PASSED 2026-09-25 (§14.13d), D · E · F owed**
 
 **Rulings (owner, 2026-09-24 — *"I agree with your recommendations, go ahead and build"*):** R1 = A · R2 as
 drawn · R2b = A · R2c = A · R3 = A · R3b = A · R4 as drawn · R5 = A · R5b = A · R6 = A · T = A.
@@ -1830,3 +1830,201 @@ against a 44px arrow; the drawer title's "Award" vs the label's "award" fallback
 **After the fixes:** 94/94 browser checks (four widths), 14 + 2 new source assertions, the full unit suite
 **4,704 pass**, the selector / spelling / purity / demo gates green, the layout sweep clean on Awards,
 notifications and Practice review at 361 and 390.
+
+### 14.13 From the §232 walk — the Awards report, R7–R9 (drawn and RULED 2026-09-25 · BUILT on dev 2026-09-25, after `afcab4f6` — §14.13b; walk = §232 part C, rewritten C5–C12 · **PASSED 2026-09-25**, §14.13d)
+
+Owner, walking §232: *"do we need 'Give an award' to be so prominent?"* and *"the full history seems more
+fitted for a table, with a filter dropdown with multi select to filter by awards."* Drawn as captures (hub
+tab "6 · Awards, from the walk"; round 1 = three options per ask, hub v58; round 2 = the ruling, hub v59;
+the ⋯ amendment, hub v60).
+
+**Rulings (owner's reply, 2026-09-25):**
+- **R7 · Give an award** — white (`btnSecondary`, the game sheet's weight), moved onto the Award filter's
+  row at the RIGHT, directly above the leaderboard. The count line *"N awards given this season across N
+  award types"* is **removed**.
+- **R8 · the full history on a phone (≤640)** — **C, amended:** a table that fits (Date · Player · Award,
+  the occasion as the award cell's second line), **no note in the row**. **The row's ⋯ opens THE AWARD**
+  (owner's amendments, same day — *"the details are 1 click instead of 2"*, then *"we don't need this label"*):
+  the same drawer, **no title**; its head is two 44px icon buttons — **bin left, pencil right**, **no border, no fill, quiet ink**
+  in BOTH states (owner, 25 Sep: "our other buttons don't have borders" — the §227 practice-plan phone glyphs
+  and the §228 roster pencil; reuse `.ppIconBtn` / the `.ppSheetEditDoor` phone rule, not a bordered square); below, the read-back (Award · Player · For · Date · Note, "No note" when
+  empty), then **Print certificate** (the one labelled action). **Pencil → edit IN the sheet:** each detail
+  becomes its field in place (award chips incl. + New and the type-library door — the picker needs its whole
+  library; the player select; the note); For and Date stay fixed, as in today's edit form. **✓ takes the
+  pencil's exact spot** (the §227 practice-plan rule — the bin never lands under the thumb). Behaviour, each
+  from a standing ruling: **autosaves** (09-24 edit-autosaves; ✓ = finished, not save; the transient
+  "Saved"); a **refused change is HELD** with the server's sentence under the field ("Casey Test already has
+  MVP for this game.", R5 once-per-occasion); **while editing the sheet is a FORM and covers the nav**
+  (09-23 drawer layers — enrol in `useOverlayOpen`, the geometry alone is not enough), reading it stays a
+  menu above the bar; **the bin asks** (today's confirm). The bin shows while READING too (owner's ask —
+  practice plans show it only while editing; harmless here, Remove already asks). Measured: reading 321px
+  (top 451 on 390×844), editing 322px to the bottom edge. Superseded drafts: Details as a menu item (hub
+  v59); details over a Print · Edit · Remove list (v60); bordered head buttons (v61); the ⋯ in the row (v62); as it stands = v63. **The WHOLE ROW opens the sheet, and the row's
+  last column is a CHEVRON, not a ⋯** (owner, same day — *"should we replace the ... with a chevron to be
+  consistent"*; the 2026-09-03 ruling: one chevron on every row, "this opens", opening what the row opens).
+  The chevron is a real 44px `<button>` whose accessible name names the award ("Open Blake Test's MVP") —
+  the 2026-09-01 rule that a chevron on a clickable row must be a control, not an `aria-hidden` glyph.
+  **A name claims its width first:** a long occasion ("Practice review — written up", the other project's
+  practice label) widened the Award column and wrapped EVERY name; the Player cell takes a 6.5rem floor
+  (probe-measured: one line for a typical first + last name at 360, still 326/326); the occasion wraps
+  instead. With five awards (the fixture gained a practice award 25 Sep): today 1,151px, 1 of 5 on screen
+  one at 390; as ruled, rows end 599 · 656 · 713 · 770 · 826 → 4 of 5 (screen one ends at 772). A
+  long note wraps; the sheet must scroll if it outgrows the screen. **Copy fix rides along:** today's confirm
+  "Undo MVP for Blake Test? This can't be undone." offers an undo and denies one → "Remove Blake Test's MVP?
+  This can't be undone." Desktop keeps its Edit modal + Save for now (a candidate under 09-24, not folded in).
+- **R9 · the filter** — one **Award ▾** `MultiSelectDropdown` (quiet at rest, counts kept in its options)
+  **replaces** the chips and narrows the leaderboard and the history together. A second, history-only
+  filter was declined: two filters over one field on one screen can disagree into an empty history.
+
+**Decided in the drawing (owner may veto — hub round 2 "Three things that follow"):**
+1. The narrowed count box (`insightsTagSummary`, "🏆 MVP: 3 given") goes with the count line.
+2. "Print N certificates" moves to the Full history heading, right, still one-award-only, keeping a 44px
+   floor (the toolbar that gave it one is gone; the filter row cannot hold it at 390 — 127 + Print + 149 > 358).
+3. Desktop/tablet unchanged: the five-column history with Note and its three icons; the award sheet is phone-only.
+   Under two award types in use the filter self-hides (as the chips do), leaving Give alone at the row's right.
+
+**Not drawn, named:** nothing in a row says the award has a note (a coach opens the ⋯ to find it). A small mark after
+the award name that opens the sheet is the obvious answer if the owner wants one.
+
+**Rides along at build:** help — the leaderboard answer and the certificates answer say "the chips"; the
+certificates answer says every history row has a print icon. §232 part C (Awards) is re-written to match.
+Results' tag chips are NOT part of this — if R9 ships, Results is the one report still on chips (a separate ask).
+
+**⚠ Sequencing — the build waited (it began once `afcab4f6` committed).** `COACH_AWARDS_AT_ANY_EVENT_PLAN.md` is being built in another chat and
+has `history/awards/panel.tsx`, `GiveAwardModal.tsx`, `lib/rep-award-occasion.ts` and `lib/types.ts` open
+uncommitted (the history's "For" now reads `occasionLabel`). Start this build only after that commits; its
+occasion label is exactly this table's second line (a practice award reads "Practice", not "General").
+
+### 14.13b Built as (2026-09-25 · dev — the owner's "build as mocked" once `afcab4f6` landed; probe `.probe/aw-built.mjs`, 64 checks, touch at 390/360, mouse at 1280)
+
+**What a coach sees.** One row above the leaderboard: the **Award ▾** multi-select (quiet at rest, olive when
+narrowed, each option with its count) at the left, a white **Give an award** at the right; no count line, no
+chips, no narrowed count box. **Print N certificates** at the Full history heading's right, one award at a time,
+44px. On a phone the history is a table — Date · Player · Award (the occasion under it) · a named 44px chevron
+— and the whole row opens **the award's sheet**: no title, the bin and the pencil borderless in its head, the
+facts, Print certificate; the pencil edits in place (autosave, ✓ in the pencil's spot, the sheet covers the nav),
+a refused change is held with the route's sentence, the bin asks "Remove Blake Test's MVP? This can't be
+undone." The desktop/tablet table and its three icons are unchanged.
+
+**Measured (390×844, the fixture's five awards):** history 356 of 356 (360: 326 of 326), names one line, rows
+57px (76 with the practice's long occasion); the reading sheet ends at 772 above the bar, the editing sheet at
+844 with the nav `visibility: hidden`; ✓ at the pencil's x exactly; the held switch sends **0** PATCH; a note
+typed saves (PATCH 200) with no "Loading report…" behind the sheet; Kai's test note was written and cleared
+(server-verified null). `check:layout --only=coach-history-awards` clean after recording 10 entries with reasons.
+
+**How (the parts worth knowing before touching them):**
+- `components/coaches/AwardSheet.tsx` (+ module) — the phone's one sheet system (`.sheetAnchor`/`.dropdown`,
+  the team switcher's anchor); `useDialogFloor` (Escape, Tab trap, back step); `useOverlayOpen(editing)` only
+  while editing (`.anchorForm`: bottom 0, z 390 — above the nav, below `.modalOverlay`); `useRecordAutosave` with
+  a `blocked` sentence from `sameAwardOccasion` / `describeAwardOccasion`; the `SaveStatusPill` rendered INSIDE
+  the panel (paints above the sheet, Retry stays in the trap; `[data-award-sheet='editing'] .savePill` drops it to
+  the corner `.panelForm` leaves).
+- `components/coaches/AwardTypePicker.tsx` — `useAwardTypePicker` returns `{ chips, overlays }`: the Give window
+  and the sheet share the chips, + New and the library door; the overlays (icon chooser, TagManagerDrawer) render
+  as SIBLINGS of the host's panel, because the floor answers every key inside its panel. The Give window's
+  set-state-in-effect copy of the library is gone (a type created here is kept in `created`, the rest derived);
+  the award's OWN type stays in the row for the whole edit even if retired.
+- The report — `load(…, { quiet })` (a save re-reads the list in place), `handleDelete` → 'removed' | 'kept' | the
+  failure sentence (the sheet shows it; the page's line sits behind the sheet), `MultiSelectDropdown` gained an
+  optional `count`.
+- **Two traps met at build:** (1) the phone table in `CoachScrollX` (the report guard's rule — every report table
+  in the scroller) inherited K-05's one-line cells and ran to 399px in 356 — `.scrollX .insightsTable.awardsHistoryPhone
+  td { white-space: normal }` (0,3,1); (2) `.tagManageLink`'s 0.5rem top margin, 3,000 lines later at one class,
+  beat `.awardsPrintLink` and set Print 4px under the kicker's centre — now `.awardsHistoryHead > .awardsPrintLink`.
+- A probe trap, not a product one: "Kai" is in the LEADERBOARD first — a row locator by name must be scoped to the
+  history section.
+
+**Tests:** `coach-reports-phone-guard` (the phone table that fits · the named chevron · no card reflow · three unpinned
+scrollers), `coach-award-edit` (the sheet: no title, bin left of the flipping pencil, borderless, autosave + held
+sentence, the two layers, overlays outside the panel, Print while reading; the confirm never offers an undo),
+`coach-award-types-merge-delete` (the door moved to the shared picker; both hosts use it). Full suite 4,764 pass;
+typecheck, lint, CSS-selector and spelling gates clean.
+
+**Help:** the certificates answer, the leaderboard answer (also corrected: the history never linked back to the game,
+and awards come from any event now) and "Reading Insights on a phone".
+
+**Found, not fixed (a peer's route):** the award PATCH checks the once-per-occasion rule against the award's OLD typed
+label when a general award's label changes. Migration 289's partial unique index still refuses a real duplicate
+(23505 → 409), so no bad row can land — only the refusal sentence could name the old label.
+
+### 14.13c Certificates on paper (owner, 2026-09-25, from the same walk — "the certificate printing is pretty awful")
+
+**Found:** two certificates printed on FOUR sheets. The page lives inside the coaches portal's shell and its
+print rules hid only its own toolbar — so sheet one was the sidebar and team header alone, the shell's header
+ran across the top of every sheet (cutting off the frame's top edge), each certificate was pushed right by the
+sidebar's width, and a blank sheet came last. The date was the browser locale's ("14 May" for one coach, "May
+14" for the next). A "turn on background graphics" note sat above the Print button.
+
+**Built:** the page portals a COPY of the certificates onto <body>; in print every other child of <body> leaves
+the page (`:global(body):has(> .printCopy) > :global(*):not(.printCopy)`) — the shell is never chased by its
+classes, so no shell ruling can put it back on the paper. An inline `@page { size: 11in 8.5in; margin: 0.35in }`
+rides with the copy; each sheet is 7.75in of the 7.8in printable height, `break-after: page`, the last `auto`.
+Sized for paper in pt (award 60, name 54, org 14, meta 14, note 15 within 7in) — the screen's rem/vw sizes made
+a narrow band in an empty 10-inch frame. The frame is a border, so it prints without background graphics; the
+note is gone (owner). The date is `formatStoredDate(…, { withYear: false, longMonth: true })` ("May 14"). The
+Print button gained the 44px tap floor; the pre-existing set-state-in-effect warning on its load is gone.
+
+**Verified:** printed to PDF through Chromium's print path (probe `.probe/cert-pdf.mjs`, rasterised with pdf.js,
+`.probe/pdf-raster.mjs`): big bat 2 awards → 2 pages, MVP 3 awards (one with a long note) → 3 pages, at desktop and
+phone widths alike (byte-identical PDFs — the screen no longer shapes the paper). Guard:
+`tests/unit/coach-award-certificate-print.test.ts`. Help: the certificates answer drops the background-graphics
+sentence and says "one to a sheet".
+
+**Then (owner, same day — "do we need these?"):** the browser's OWN header and footer (date and time, page title,
+web address, page number) printed around the certificate, in the 0.35in @page margin. Now `@page { margin: 0 }`
+— Chrome and Edge print those in the margin, so with none they have nowhere to go — and the printer's 0.35in
+moves inside each sheet as `.printPage` padding (padding, never a margin, which a page break can drop).
+Verified with Chromium's header/footer ON: none printed, still one certificate per sheet. Firefox and Safari keep
+their own header/footer switch in the print dialog; no page can turn it off there.
+
+**Named, not fixed:** `formatShortDate` (browser-locale month/day) has 46 other call sites across the portal — the
+same "14 May" / "May 14" split wherever it is read on an en-GB browser.
+
+### 14.13d The walk's two small fixes, /review, and the verdict (2026-09-25)
+
+**Part A — Attendance.** The missed-sessions receipts' heading read "Sessions missed — the records behind these
+figures"; it reads **"Sessions missed"** (owner: the second half told a coach nothing).
+
+**Part B — Results.** The run-differential chart's end figure was SVG text that scaled with the drawing — about
+9px on a phone. It is an HTML label over the plot now, 0.875rem bold in lime, anchored to whichever side keeps it
+on the chart. The zero line, its "0" and the shaded area now sit at **true zero**; they sat on the chart's lower
+bound, so a season that never went negative drew its area from the wrong line. (The Results table's swipe note:
+raised, then disregarded by the owner.)
+
+**/review — high-risk tier (the award save route changed), four lenses: correctness · concurrency & state ·
+regression · accessibility; run after /simplify.** 11 confirmed and fixed, 7 refuted or taken as-is. What a
+coach would notice:
+- **A departed player's award could not be edited at all** — fixing its note failed on "That player is not on the
+  active roster". The route keeps the award's own player, as it already kept a retired award type; only a CHANGE
+  of player has to be active. The sheet lists that player in its select, "(not on the roster)".
+- **Renaming a general award's occasion onto one the player already holds it for slipped past the
+  once-per-occasion rule** — the check read the old label. It checks the award as it will be, and the refusal
+  names the new occasion.
+- **The sheet sends only what changed.** A type merged away in the library drawer while the sheet was open, or a
+  departed player, no longer fails a save that only fixed the note. Typed-and-put-back sends nothing.
+- **A held change trapped the coach** — the scrim and Escape did nothing while one was held. They now close the
+  sheet without it (a held change was never written); ✓ still stays, to show why.
+- **A save and a removal could cross.** The bin waits for a save in flight, autosave pauses during a removal, and a
+  second quick ✓ can no longer send the same save twice.
+- **Escape in the "+ New" award box closed the whole sheet.** It puts the box away alone, and focus returns to
+  "+ New" — as it does after adding a type (it fell to the page, outside the sheet's Tab trap). The chips are
+  announced as the "Award" group.
+- **Removing an award re-reads the report quietly** — the list keeps its place instead of flashing "Loading
+  report…" (the desktop too).
+
+Refuted or taken as-is: the dialog's name reads the award as saved, not as it is being typed (it names the
+record); the reading sheet is `aria-modal` (a menu that holds focus, as the team switcher does); print leans on
+`:has()` (every browser the portal supports); the certificate page's one load has no cancel guard (nothing can
+supersede it); two regression-lens notes that did not reproduce. **Named, not fixed:** award chips (the portal's
+`.tagChip`) sit under the 44px floor on a phone — every tag picker in the portal, not this sheet's.
+
+**Verified:** the award unit tests (89) and the full suite (4,808); typecheck; lint; every `verify:changed` step —
+the demo check green once the dev database answered again; `check:layout --only=coach-history-awards` — no new
+findings at 361 / 390 / 768 / 1440 (one old 768 entry no longer reproduces; left for a deliberate prune). Probes:
+`.probe/aw-built.mjs` 64/64 and `.probe/aw-review.mjs` 11/11 — a held change plus Escape closes the sheet with 0
+saves sent; Escape in "+ New" keeps the sheet with focus on "+ New"; a note-only save sends `{"note":…}` alone; the
+fixture restored and checked on the server. Not browser-probed: the departed-player keep and the renamed-occasion
+check (the fixture has no departed player's award) — pinned by source in `tests/unit/coach-award-edit.test.ts`.
+
+**Verdict: §232 parts A · B · C PASSED 2026-09-25** (owner: *"mark any QA from here as complete"* — marked on the
+owner's word, no paste-back; C = C5–C13). Parts D · E · F are not on record as walked.

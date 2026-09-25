@@ -43,6 +43,20 @@ export function awardEventKind(eventType: string | null | undefined): AwardEvent
   return 'event';
 }
 
+/** An award type as a line reads it — "🏆 MVP", or the fallback when the type is missing. One
+ *  spelling for the report's two tables, the award's sheet and the certificate. */
+export function awardTypeLabel(type: { emoji?: string | null; name?: string } | null | undefined, fallback = 'Award'): string {
+  return `${type?.emoji ? `${type.emoji} ` : ''}${type?.name ?? fallback}`;
+}
+
+/** The note field's example — a game's is a play; any other event's is effort. The Give window and
+ *  the award's sheet both write the same note, so they suggest the same thing. */
+export function awardNotePlaceholder(hasEvent: boolean, eventType?: string | null): string {
+  return hasEvent && awardEventKind(eventType) !== 'game'
+    ? 'e.g. Ran every drill at full speed'
+    : 'e.g. Diving catch to end the game';
+}
+
 /** What an award reads an event by. Every event has a `name` — what the schedule shows it as. */
 export interface AwardEventRef {
   eventType: string;

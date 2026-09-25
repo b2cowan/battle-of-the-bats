@@ -81,6 +81,9 @@ export default function SeasonTrendChart({
   }
   const span = max - min || 1;
   const yAt = (v: number) => yBase - ((v - min) / span) * (yBase - yTop);
+  // ⚠ The "0" rule and the fill both sit on TRUE zero, not on `yBase` — `yBase` is the season's
+  // LOWEST point, which is only zero for a team that never trailed. Drawn at `yBase`, a team that
+  // went 0-3 and clawed back read as never having been under water.
   const yZero = yAt(0);
 
   const last = points[points.length - 1];
@@ -88,12 +91,16 @@ export default function SeasonTrendChart({
   const lastY = yAt(last.cumulative);
   const lastLabel = `${last.cumulative >= 0 ? '+' : ''}${last.cumulative}`;
   const labelAnchor = lastX > VIEW_W - 60 ? 'end' : 'middle';
+  // The drawing's own coordinates as percentages of the drawing — the end label is HTML laid over
+  // the SVG at these, so it keeps its real size at every width (see `.endLabel`).
+  const lastLeft = `${((lastX / VIEW_W) * 100).toFixed(2)}%`;
+  const lastTop = `${((lastY / viewH) * 100).toFixed(2)}%`;
 
   const linePath = points.length >= 2
     ? points.map((p, i) => `${i === 0 ? 'M' : 'L'}${xAt(p.index).toFixed(1)},${yAt(p.cumulative).toFixed(1)}`).join(' ')
     : null;
   const areaPath = linePath && fill
-    ? `${linePath} L${xAt(last.index).toFixed(1)},${yBase} L${xAt(points[0].index).toFixed(1)},${yBase} Z`
+    ? `${linePath} L${xAt(last.index).toFixed(1)},${yZero.toFixed(1)} L${xAt(points[0].index).toFixed(1)},${yZero.toFixed(1)} Z`
     : null;
 
   const ariaLabel = scoredCount === totalCount
@@ -116,34 +123,42 @@ export default function SeasonTrendChart({
         <span className={styles.ccTitle}>{title}</span>
         <span className={`${styles.ccCap} ${styles.secondary}`}>{caption}</span>
       </div>
-      <svg viewBox={`0 0 ${VIEW_W} ${viewH}`} role="img" aria-label={ariaLabel} className={styles.svg}>
-        <line className={styles.secondary} x1={PAD_X - 4} y1={yBase} x2={VIEW_W - PAD_X + 12} y2={yBase} />
-        <text className={styles.secondary} x={PAD_X - 10} y={yBase + 3} textAnchor="end">0</text>
-        {areaPath && <path d={areaPath} className={styles.area} />}
-        {linePath && <path d={linePath} className={styles.line} />}
-        <circle cx={lastX} cy={lastY} r={points.length === 1 ? 4 : 3.5} className={styles.dot} />
-        <text x={lastX} y={lastY - 12} textAnchor={labelAnchor} className={styles.bigLabel}>{lastLabel}</text>
-        {unscoredIndexes.map(i => (
-          <g key={i}>
-            <circle cx={xAt(i)} cy={yZero} r="2.5" className={styles.gapDot} />
-            <line x1={xAt(i)} y1={yZero + 6} x2={xAt(i)} y2={yBase} className={styles.gapTick} />
-          </g>
-        ))}
-        {strip && (
-          <g>
-            {Array.from({ length: totalCount }, (_, i) => {
-              const tone = strip[i];
-              const cls = unscoredSet.has(i) ? styles.pipGap
-                : tone === 'win' ? styles.pipWin
-                : tone === 'loss' ? styles.pipLoss
-                : styles.pipTie;
-              return <rect key={i} x={xAt(i) - 6} y={yBase + 16} width="12" height="12" rx="3" className={cls} />;
-            })}
-          </g>
-        )}
-        {startLabel && <text className={styles.secondary} x={PAD_X} y={viewH - 6}>{startLabel}</text>}
-        {endLabel && <text className={styles.secondary} x={VIEW_W - PAD_X} y={viewH - 6} textAnchor="end">{endLabel}</text>}
-      </svg>
+      <div className={styles.plot}>
+        <svg viewBox={`0 0 ${VIEW_W} ${viewH}`} role="img" aria-label={ariaLabel} className={styles.svg}>
+          <line className={styles.secondary} x1={PAD_X - 4} y1={yZero} x2={VIEW_W - PAD_X + 12} y2={yZero} />
+          <text className={styles.secondary} x={PAD_X - 10} y={yZero + 3} textAnchor="end">0</text>
+          {areaPath && <path d={areaPath} className={styles.area} />}
+          {linePath && <path d={linePath} className={styles.line} />}
+          <circle cx={lastX} cy={lastY} r={points.length === 1 ? 4 : 3.5} className={styles.dot} />
+          {unscoredIndexes.map(i => (
+            <g key={i}>
+              <circle cx={xAt(i)} cy={yZero} r="2.5" className={styles.gapDot} />
+              <line x1={xAt(i)} y1={yZero + 6} x2={xAt(i)} y2={yBase} className={styles.gapTick} />
+            </g>
+          ))}
+          {strip && (
+            <g>
+              {Array.from({ length: totalCount }, (_, i) => {
+                const tone = strip[i];
+                const cls = unscoredSet.has(i) ? styles.pipGap
+                  : tone === 'win' ? styles.pipWin
+                  : tone === 'loss' ? styles.pipLoss
+                  : styles.pipTie;
+                return <rect key={i} x={xAt(i) - 6} y={yBase + 16} width="12" height="12" rx="3" className={cls} />;
+              })}
+            </g>
+          )}
+          {startLabel && <text className={styles.secondary} x={PAD_X} y={viewH - 6}>{startLabel}</text>}
+          {endLabel && <text className={styles.secondary} x={VIEW_W - PAD_X} y={viewH - 6} textAnchor="end">{endLabel}</text>}
+        </svg>
+        {/* The season's answer, at the end of its line. ⚠ HTML, not SVG `<text>`: text inside the drawing
+            scales with it, and a 720-wide drawing on a phone card is drawn at about half size — the
+            label was 11px on a desktop and ~6px on a phone. Aria-hidden: the drawing's own label
+            already says "currently +6". */}
+        <span className={styles.endLabel} data-anchor={labelAnchor} style={{ left: lastLeft, top: lastTop }} aria-hidden>
+          {lastLabel}
+        </span>
+      </div>
       {footText && <div className={styles.foot}>{footText}</div>}
     </div>
   );

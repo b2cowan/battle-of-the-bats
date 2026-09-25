@@ -31,7 +31,8 @@ describe('the give route opens on the same rule the window shows by', () => {
 
   it('names the event kind in its refusals', () => {
     assert.match(awardsRoute, /describeAwardOccasion\(\{ eventId, tournamentLabel, awardedAt \}, eventType\)/);
-    assert.match(awardIdRoute, /describeAwardOccasion\(\s*current,/);
+    // the occasion AS IT WILL BE — a renamed label included (/review, 2026-09-25)
+    assert.match(awardIdRoute, /describeAwardOccasion\(\s*occasion,/);
     assert.doesNotMatch(awardIdRoute, /linked to a game/);
   });
 });
@@ -67,7 +68,7 @@ describe('every label reads the one occasion helper', () => {
   });
 
   it('the report reads occasionLabel for its "For" column and its edit form', () => {
-    assert.match(reportPanel, /const forText = a\.occasionLabel/);
+    assert.match(reportPanel, /const awardFor = \(a: RepPlayerAward\) => a\.occasionLabel \?\? \(a\.tournamentLabel \|\| 'General'\)/);
     assert.doesNotMatch(reportPanel, /eventOpponent/);
   });
 

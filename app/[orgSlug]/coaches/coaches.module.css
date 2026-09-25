@@ -2250,7 +2250,31 @@ a.insightsStat:focus-visible { outline-offset: -2px; }
   /* The 8.5rem floor only where the name IS the pinned column — an unpinned table that fits (the Awards
      leaderboard) must not be widened past a 360 frame by it (/review follow-up, measured: +2px). */
   .scrollXSticky .insightsTable td.insightsNameCell { width: 8.5rem; min-width: 8.5rem; }
+  /* ⚠ A TABLE THAT FITS IS NOT A TABLE THAT SWIPES — `CoachScrollX wrapCells` (phone plan §14.13). A table
+     that chose columns to fit a phone stands in the scroller only as the overflow's safety net; its cells
+     wrap, as a fitting table's do. Without it the rule above held "Practice review — written up" on one
+     line and pushed the Awards history to 399px in a 356px frame (the build's own probe). A shrink-to-fit
+     cell (a date) stays on one line. */
+  .scrollX.scrollXWrapCells .insightsTable td { white-space: normal; }
+  .scrollX.scrollXWrapCells .insightsTable td.tdShrink { white-space: nowrap; }
 }
+/* ── The Awards report's Full history (coaching from a phone §14.13, owner 2026-09-25) ──────────────
+   The heading carries "Print N certificates" at its right when one award is chosen. The margins are
+   the kicker's own (1.5rem / 0.75rem, 1rem / 0.5rem at ≤640) moved onto the row, so the heading sits
+   exactly where a bare kicker would; the link keeps the 44px floor the toolbar it left gave it. */
+.awardsHistoryHead { display: flex; align-items: center; justify-content: space-between; gap: 0.6rem; margin: 1.5rem 0 0.75rem; }
+.awardsHistoryHead > .sectionKicker { margin: 0; }
+/* The link is the portal's worded accent link (`.linkBtnAccent`): no layout margin of its own to cancel. */
+.awardsPrintLink { white-space: nowrap; }
+@media (max-width: 900px) { .awardsPrintLink { min-height: var(--tap-min, 44px); } }
+@media (max-width: 640px) { .awardsHistoryHead { margin: 1rem 0 0.5rem; } }
+/* The phone's table that fits — Date · Player · Award (its occasion under it) · a chevron. Text reads
+   from the top of the row; the chevron centres on it. A NAME CLAIMS ITS WIDTH FIRST: 6.5rem holds a
+   typical first and last name on one line at 360 (probe-measured, and still 326 of 326), so a long
+   occasion wraps under its own award instead of pushing every name onto two lines. */
+.awardsHistoryPhone td { vertical-align: top; }
+.awardsHistoryPhone td.awardsPlayerCell { min-width: 6.5rem; }
+.awardsHistoryPhone td.awardsChevronCell { width: var(--tap-min, 44px); padding: 0; vertical-align: middle; text-align: right; }
 .insightsNum { font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
 /* ⚠ THE BAR LEADS ITS NUMBER, and the margin is on the RIGHT for that reason (2026-09-07).
    It used to trail, which made the right edge of the "On field" cell the BAR's edge — so a
@@ -9335,6 +9359,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   font-size: var(--type-body); color: var(--text-secondary); cursor: pointer; white-space: nowrap;
 }
 .multiSelectOption:hover { background: var(--white-8); }
+/* An option's count, quiet at the row's end — the number its filter chip used to carry. */
+.multiSelectCount { margin-left: auto; padding-left: 0.75rem; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 /* ⚠ NO `.multiSelectSwatch` HERE, deliberately. The dropdown's optional per-option swatch reuses
    `.tagComboDot` / `.tagComboDotOrg` / `.tagComboDotOwn` above — the SAME dot the tag picker and
    the row chips draw. A private swatch rule here was written first and gave org-vs-team a second
@@ -10447,6 +10473,13 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 @media (prefers-reduced-motion: reduce) { .savePill { transition: none; } }
 @media (max-width: 900px) {
   .savePill { right: 0.75rem; bottom: calc(var(--coach-foot-clear) + 0.6rem); }
+}
+/* The award's sheet while EDITING (Awards report, phone plan §14.13): a bottom sheet over the nav,
+   not a `.modalOverlay`, so the rule below never raises the pill. The pill renders INSIDE the sheet
+   (it paints above it, and its Retry stays in the sheet's Tab trap); with the nav gone it drops to
+   the corner the sheet's foot leaves it (`AwardSheet.module.css` → `.panelForm`). */
+@media (max-width: 640px) {
+  [data-award-sheet='editing'] .savePill { bottom: calc(1rem + env(safe-area-inset-bottom, 0px)); }
 }
 /* ⚠ OVER A FULL-SCREEN FORM (owner, §227 walk 2026-09-23 — "I don't see Saved anywhere"). At ≤640 a
    form overlay is full-screen at z-index 400 (it covers the nav), so the pill's 250 put it UNDER the

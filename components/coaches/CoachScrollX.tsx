@@ -39,6 +39,7 @@ export default function CoachScrollX({
   affordance = 'hint',
   scrollerRef,
   onOverflowChange,
+  wrapCells = false,
 }: {
   children: ReactNode;
   /** What the coach gains by going sideways — name the columns, not the gesture. Read aloud as
@@ -59,6 +60,9 @@ export default function CoachScrollX({
   scrollerRef?: MutableRefObject<HTMLDivElement | null>;
   /** Fires when the content starts or stops overflowing its box — the pager's show/hide. */
   onOverflowChange?: (overflows: boolean) => void;
+  /** The table FITS a phone by its columns — the scroller is only the overflow's safety net — so its
+   *  cells wrap instead of taking the one-line K-05 rule (a date cell stays on one line). */
+  wrapCells?: boolean;
 }) {
   const innerRef = useRef<HTMLDivElement | null>(null);
   const [overflows, setOverflows] = useState(false);
@@ -112,7 +116,7 @@ export default function CoachScrollX({
         // Stable handle for the layout probes: a `[class*="scrollX"]` selector also matches the
         // hint, which sits earlier in the DOM and has no overflow of its own.
         data-testid="coach-scrollx"
-        className={`${styles.scrollX} ${sticky ? styles.scrollXSticky : ''} ${overflows ? styles.scrollXOverflowing : ''} ${frame ? '' : styles.scrollXBare} ${scrollerClassName}`}
+        className={`${styles.scrollX} ${sticky ? styles.scrollXSticky : ''} ${overflows ? styles.scrollXOverflowing : ''} ${frame ? '' : styles.scrollXBare} ${wrapCells ? styles.scrollXWrapCells : ''} ${scrollerClassName}`}
         onScroll={e => { if (!scrolled && e.currentTarget.scrollLeft > 8) setScrolled(true); }}
         // Keyboard and screen-reader users get a real scrollable region rather than a
         // silently clipped one; the label carries the same information as the hint.

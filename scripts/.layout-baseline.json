@@ -2921,6 +2921,46 @@
       "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen.",
       "detail": "34px tall (floor 44)"
     },
+    "coach-history-awards|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred — the Awards report's Award filter (phone plan §14.13, 2026-09-25) is the portal's MultiSelectDropdown, and the TARGET is its label row, not this box: each option is a <label> carrying the 44px min-height (`.multiSelectOption` at ≤768), and a tap anywhere in it toggles the checkbox. This check measures every element's own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub's filter checkboxes (coach-transactions, 2026-08-20) and the handout preview; a 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-history-awards|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred — the Awards report's Award filter (phone plan §14.13, 2026-09-25) is the portal's MultiSelectDropdown, and the TARGET is its label row, not this box: each option is a <label> carrying the 44px min-height (`.multiSelectOption` at ≤768), and a tap anywhere in it toggles the checkbox. This check measures every element's own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub's filter checkboxes (coach-transactions, 2026-08-20) and the handout preview; a 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-history-awards|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred — the Awards report's Award filter (phone plan §14.13, 2026-09-25) is the portal's MultiSelectDropdown, and the TARGET is its label row, not this box: each option is a <label> carrying the 44px min-height (`.multiSelectOption` at ≤768), and a tap anywhere in it toggles the checkbox. This check measures every element's own height, so the 1rem painted box reports even though nobody has to hit it. Same decision as the Money hub's filter checkboxes (coach-transactions, 2026-08-20) and the handout preview; a 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "coach-history-awards|768|control-width|button·Help: Awards": {
+      "reason": "The page-header Help button is portal chrome, identical on every coach screen — recorded as shell, not as this screen (the same button's tap-floor entry above; `control-width` is the newer icon-only rule, 2026-09).",
+      "detail": "34px wide (floor 44) — icon-only control"
+    },
+    "coach-history-awards|768|tap-floor|a·Print certificate": {
+      "reason": "PRE-EXISTING, first measured here (2026-09-25). The desktop/tablet history's three row icons (Print · Edit · Remove, 19px) date from Chunk D 3.4 and Awards One Tag Idiom Part A (2026-09-11); this screen was last swept at 361/390 only (stage 6 · §14.10), so the 768 band had never measured them. The §14.13 ruling keeps the tablet on the desktop table (\"desktop and tablet keep their five columns and three icons\"), and the owner's standing call T (stage 6 · §14.0) keeps sub-44 controls with the touch-target project, not folded into a report change. At ≤640 the phone history has none of them — its rows open the award's sheet through a 44px chevron.",
+      "detail": "29px tall (floor 44)"
+    },
+    "coach-history-awards|768|control-width|a·Print certificate": {
+      "reason": "PRE-EXISTING, first measured here (2026-09-25). The desktop/tablet history's three row icons (Print · Edit · Remove, 19px) date from Chunk D 3.4 and Awards One Tag Idiom Part A (2026-09-11); this screen was last swept at 361/390 only (stage 6 · §14.10), so the 768 band had never measured them. The §14.13 ruling keeps the tablet on the desktop table (\"desktop and tablet keep their five columns and three icons\"), and the owner's standing call T (stage 6 · §14.0) keeps sub-44 controls with the touch-target project, not folded into a report change. At ≤640 the phone history has none of them — its rows open the award's sheet through a 44px chevron.",
+      "detail": "19px wide (floor 44) — icon-only control"
+    },
+    "coach-history-awards|768|tap-floor|button·Edit": {
+      "reason": "PRE-EXISTING, first measured here (2026-09-25). The desktop/tablet history's three row icons (Print · Edit · Remove, 19px) date from Chunk D 3.4 and Awards One Tag Idiom Part A (2026-09-11); this screen was last swept at 361/390 only (stage 6 · §14.10), so the 768 band had never measured them. The §14.13 ruling keeps the tablet on the desktop table (\"desktop and tablet keep their five columns and three icons\"), and the owner's standing call T (stage 6 · §14.0) keeps sub-44 controls with the touch-target project, not folded into a report change. At ≤640 the phone history has none of them — its rows open the award's sheet through a 44px chevron.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-awards|768|control-width|button·Edit": {
+      "reason": "PRE-EXISTING, first measured here (2026-09-25). The desktop/tablet history's three row icons (Print · Edit · Remove, 19px) date from Chunk D 3.4 and Awards One Tag Idiom Part A (2026-09-11); this screen was last swept at 361/390 only (stage 6 · §14.10), so the 768 band had never measured them. The §14.13 ruling keeps the tablet on the desktop table (\"desktop and tablet keep their five columns and three icons\"), and the owner's standing call T (stage 6 · §14.0) keeps sub-44 controls with the touch-target project, not folded into a report change. At ≤640 the phone history has none of them — its rows open the award's sheet through a 44px chevron.",
+      "detail": "19px wide (floor 44) — icon-only control"
+    },
+    "coach-history-awards|768|tap-floor|button·Remove": {
+      "reason": "PRE-EXISTING, first measured here (2026-09-25). The desktop/tablet history's three row icons (Print · Edit · Remove, 19px) date from Chunk D 3.4 and Awards One Tag Idiom Part A (2026-09-11); this screen was last swept at 361/390 only (stage 6 · §14.10), so the 768 band had never measured them. The §14.13 ruling keeps the tablet on the desktop table (\"desktop and tablet keep their five columns and three icons\"), and the owner's standing call T (stage 6 · §14.0) keeps sub-44 controls with the touch-target project, not folded into a report change. At ≤640 the phone history has none of them — its rows open the award's sheet through a 44px chevron.",
+      "detail": "22px tall (floor 44)"
+    },
+    "coach-history-awards|768|control-width|button·Remove": {
+      "reason": "PRE-EXISTING, first measured here (2026-09-25). The desktop/tablet history's three row icons (Print · Edit · Remove, 19px) date from Chunk D 3.4 and Awards One Tag Idiom Part A (2026-09-11); this screen was last swept at 361/390 only (stage 6 · §14.10), so the 768 band had never measured them. The §14.13 ruling keeps the tablet on the desktop table (\"desktop and tablet keep their five columns and three icons\"), and the owner's standing call T (stage 6 · §14.0) keeps sub-44 controls with the touch-target project, not folded into a report change. At ≤640 the phone history has none of them — its rows open the award's sheet through a 44px chevron.",
+      "detail": "19px wide (floor 44) — icon-only control"
+    },
     "coach-history-scouting|768|tap-floor|button·Help: Scouting Book": {
       "reason": "The portal-wide help \"?\" at a desktop width — the same 34px control already accepted on every Money tab (button·Help: Money) and on the coach pages beside these. It appears under three NEW keys only because the Insights portal varies its help topic BY TAB (SECTION_HELP), so the button's accessible name changes with the open report; the control, its geometry and the decision behind it are unchanged. Desktop widths keep the compact height by a portal-wide decision; the phone breakpoint enforces the floor and these clear it there.",
       "detail": "34px tall (floor 44)"

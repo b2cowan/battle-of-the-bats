@@ -21,13 +21,8 @@
   margin-bottom: 1.25rem;
 }
 
-.barNote {
-  flex: 1;
-  min-width: 12rem;
-  font-size: var(--type-body);
-  color: var(--white-55);
-  line-height: 1.45;
-}
+/* The Print button sits at the bar's right — the note that used to push it there is gone (2026-09-25). */
+.printBtn { margin-left: auto; }
 
 .sheet {
   /* One certificate = one sheet. 11:8.5 is Letter landscape. */
@@ -114,17 +109,69 @@
   color: #5B5B5B; /* token-exempt: print ink */
 }
 
+/* ── PAPER (owner, 2026-09-25 — "the certificate printing is pretty awful") ─────────────────────
+   Two certificates used to print on four sheets: the coaches portal's shell printed around them —
+   the sidebar and team header alone on sheet one, the shell's header over the top of every sheet
+   (cutting the frame's top edge), each certificate shoved right by the sidebar's width, and a blank
+   last sheet. This block never chases the shell's own classes (they change with every shell
+   ruling): the page portals a COPY of the certificates onto <body>, and in print every other child
+   of <body> leaves the paper. The copy is sized for the sheet in inches and points — the screen
+   preview's rem and vw sizes were made for a 900px column, not for 11 inches of paper.
+   The page size itself (Letter landscape) rides with the copy as an inline @page, so it applies only
+   while this page is mounted.
+   ⚠ THE PAGE HAS NO MARGIN; THE SHEET CARRIES ITS OWN (owner, 2026-09-25 — "do we need these?"). A
+   browser prints its own header and footer — the date and time, the page title, the web address, a
+   page number — in the page's MARGIN. With a 0.35in @page margin Chrome and Edge had room and printed
+   all four around the certificate. @page margin 0 leaves them nowhere to go; the 0.35in a home printer
+   cannot reach moves INSIDE the sheet, as `.printPage`'s padding (padding, never a margin — a margin
+   beside a page break can be dropped). Firefox and Safari keep their own header/footer switch in the
+   print dialog; a page cannot turn it off there. */
+.printCopy { display: none; }
+
 @media print {
-  .bar { display: none; }
-  .screen { max-width: none; margin: 0; padding: 0; }
-  .sheet {
-    margin: 0;
-    /* Fill the sheet rather than honouring the on-screen aspect box. */
-    aspect-ratio: auto;
-    height: 100vh;
-    border-radius: 0;
+  :global(body):has(> .printCopy) > :global(*):not(.printCopy) { display: none !important; }
+  :global(body):has(> .printCopy) {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #FFFFFF !important; /* token-exempt: paper, whatever the portal's theme */
+  }
+  .printCopy {
+    display: block;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  /* One certificate, one sheet. The PAGE is the whole of Letter landscape (no @page margin), a hair
+     under so a rounding error can never spill a blank sheet between two certificates; its padding is
+     the margin a printer needs, and the framed certificate fills what is left. */
+  .printCopy .printPage {
+    box-sizing: border-box;
+    width: 11in;
+    height: 8.45in;
+    padding: 0.35in;
+    overflow: hidden;
     break-after: page;
     break-inside: avoid;
   }
-  .sheet:last-child { break-after: auto; }
+  .printCopy .printPage:last-child { break-after: auto; }
+  .printCopy .sheet {
+    box-sizing: border-box;
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    margin: 0;
+    padding: 0.75in 1in;
+    gap: 0.14in;
+    border-width: 5pt;
+    border-radius: 0;
+  }
+  .printCopy .sheet::before { inset: 0.14in; border-width: 0.75pt; }
+  /* Sized for the PAPER — at the screen's sizes the words sat in a narrow band in the middle of an
+     empty 10-inch frame. The name is the hero; a long one wraps to two lines inside the frame. */
+  .printCopy .org { font-size: 14pt; letter-spacing: 0.26em; }
+  .printCopy .award { font-size: 60pt; }
+  .printCopy .to { font-size: 16pt; margin-top: 0.12in; }
+  .printCopy .kid { font-size: 54pt; }
+  .printCopy .meta { font-size: 14pt; }
+  .printCopy .note { font-size: 15pt; max-width: 7in; }
+  .printCopy .signature { width: 3.8in; margin-top: 0.5in; padding-top: 0.08in; font-size: 11pt; }
 }

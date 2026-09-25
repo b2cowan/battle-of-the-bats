@@ -65,9 +65,15 @@ export const PATCH = withObservability(async (req: Request,
     if (typeof body.playerId !== 'string') {
       return NextResponse.json({ error: 'playerId must be a string' }, { status: 400 });
     }
-    const player = roster.find(p => p.id === body.playerId && p.status === 'active');
-    if (!player) {
-      return NextResponse.json({ error: 'That player is not on the active roster' }, { status: 400 });
+    // The award's OWN player is always a keep, even once they have left the roster — the same rule
+    // as a retired award type below. Refusing it made a departed player's award uneditable: fixing
+    // its note failed on a player the coach never touched (/review, 2026-09-25). Only a CHANGE of
+    // player has to land on someone active.
+    if (body.playerId !== current.playerId) {
+      const player = roster.find(p => p.id === body.playerId && p.status === 'active');
+      if (!player) {
+        return NextResponse.json({ error: 'That player is not on the active roster' }, { status: 400 });
+      }
     }
     fields.playerId = body.playerId;
   }
@@ -106,24 +112,26 @@ export const PATCH = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
   }
 
-  // R5 (owner, 2026-09-11): a player holds a given award once per occasion. Uses the award's
-  // CURRENT event/date/label — whichever of player/type wasn't in the patch keeps its own value.
+  // R5 (owner, 2026-09-11): a player holds a given award once per occasion. Checked against the
+  // award AS IT WILL BE — whichever of player / type / occasion label wasn't in the patch keeps its
+  // own value. ⚠ The label is part of the occasion: renaming a general award's occasion onto one the
+  // player already holds it for is the same collision, and the check used to read the OLD label
+  // (/review, 2026-09-25). The event and the date are fixed, so they are always the award's own.
   const playerId = fields.playerId ?? current.playerId;
   const awardTypeId = fields.awardTypeId ?? current.awardTypeId;
+  const occasion = {
+    eventId: current.eventId,
+    tournamentLabel: fields.tournamentLabel !== undefined ? fields.tournamentLabel : current.tournamentLabel,
+    awardedAt: current.awardedAt,
+  };
   // The refusal names the event's KIND ("for this practice") — read only when a collision needs it.
   // The lookup is by id alone; `event_id` is fixed at creation to this team's own event, and the
   // team check below keeps that true even if the invariant ever loosens (/review, 2026-09-25).
   const occasionClause = async () => {
     const event = current.eventId ? await getRepTeamEventById(current.eventId) : null;
-    return describeAwardOccasion(current, event && event.teamId === teamId ? event.eventType : null);
+    return describeAwardOccasion(occasion, event && event.teamId === teamId ? event.eventType : null);
   };
-  const collision = await findRepPlayerAwardCollision(
-    teamId,
-    playerId,
-    awardTypeId,
-    { eventId: current.eventId, tournamentLabel: current.tournamentLabel, awardedAt: current.awardedAt },
-    awardId,
-  );
+  const collision = await findRepPlayerAwardCollision(teamId, playerId, awardTypeId, occasion, awardId);
   if (collision) {
     const type = awardTypes.find(t => t.id === awardTypeId);
     const player = roster.find(p => p.id === playerId);
