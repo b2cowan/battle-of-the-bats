@@ -1,7 +1,8 @@
 'use client';
+import type { ReactNode } from 'react';
 import { BellOff, CheckCheck, ChevronRight } from 'lucide-react';
 import type { AppNotification } from '@/lib/types';
-import { iconFor, notificationTime, BUNDLE_NOUN, groupActivityItems } from '@/lib/notification-view';
+import { iconFor, notificationTime, BUNDLE_NOUN, groupActivityItems, type ActivityEntry } from '@/lib/notification-view';
 import type { NotificationFeed, ZoneFilter } from './useNotificationFeed';
 import styles from './notifications-page.module.css';
 
@@ -34,6 +35,11 @@ const DEFAULT_EMPTY: FeedEmptyCopy = { headline: 'No notifications yet' };
  * (/review, 2026-09-24): a tournament announcement is free text an admin typed and its public page does
  * not repeat it — clamping it would hide the message with nowhere to read it. Add a type here only when
  * its page repeats its body.
+ * ⚠⚠ THAT PREMISE WAS HALF TRUE, AND THE READER IS WHAT MAKES THE CLAMP SAFE NOW (owner ruling
+ * 2026-09-25, D3 option B). Insights describes the team TODAY, so it repeated only the NEWEST
+ * review: an older one was cut mid pitching-cap warning with nowhere on a phone to read the rest.
+ * On the coach feed a tap now opens the whole message in the reader, whatever its age. A type added
+ * here still needs a surface that shows the rest — on the coach feed, the reader is that surface.
  */
 const CLAMPED_ON_A_PHONE: ReadonlySet<AppNotification['eventType']> = new Set(['coach_insights_digest']);
 
@@ -43,19 +49,67 @@ const CHIPS: { key: ZoneFilter; label: string }[] = [
   { key: 'activity', label: 'Activity' },
 ];
 
+/**
+ * The zone pills (All · Needs attention · Activity). Exported because a frame that draws its OWN
+ * toolbar row (the coach page, below) still needs them — one copy of the pills, whichever row
+ * they sit in. Hidden on phones by the stylesheet (owner, 2026-09-06), never by the caller.
+ */
+export function NotificationZoneChips({ feed }: { feed: NotificationFeed }) {
+  const { filter, setFilter, needsCount } = feed;
+  return (
+    <div className={styles.chips} role="group" aria-label="Filter notifications">
+      {CHIPS.map(c => (
+        <button
+          key={c.key}
+          type="button"
+          aria-pressed={filter === c.key}
+          className={`${styles.chip} ${filter === c.key ? styles.chipActive : ''}`}
+          onClick={() => setFilter(c.key)}
+        >
+          {c.label}
+          {c.key === 'needs' && needsCount > 0 && (
+            <span className={styles.chipCount} aria-label={`${needsCount} waiting`}>{needsCount}</span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
 export default function NotificationFeedBody({
   feed,
   emptyCopy = DEFAULT_EMPTY,
+  toolbar,
+  onOpen,
 }: {
   feed: NotificationFeed;
   emptyCopy?: FeedEmptyCopy;
+  /**
+   * The row above the list, when the frame draws its own. The coach page does (one-row ruling,
+   * owner 2026-09-25): it puts the read switch and "Mark all read" in the portal's list toolbar,
+   * so a phone carries one row there instead of a gear row plus a switch row. Omitted → the admin
+   * frame's default row (pills + the admin toggle), unchanged.
+   */
+  toolbar?: ReactNode;
+  /**
+   * A tap OPENS the notification rather than going to its page (the coach reader, owner ruling
+   * 2026-09-25 — D3 option B: "open, read, close" without leaving the page). The frame owns the
+   * reader; the row only says which entry was opened, and announces a dialog. Omitted → the admin
+   * feed's tap, unchanged: mark read and go.
+   */
+  onOpen?: (entry: ActivityEntry) => void;
 }) {
   const {
     items, loading, loadingMore, hasMore, error, isEmpty,
-    unreadOnly, setUnreadOnly, filter, setFilter,
+    unreadOnly, setUnreadOnly,
     reload, loadMore, markRead, bundleClick, clearRow,
-    needsAttention, activityGroups, showNeeds, showActivity, needsCount, groupedAt,
+    needsAttention, activityGroups, showNeeds, showActivity, groupedAt,
   } = feed;
+
+  // A tap opens the reader where the frame has one, and marks read + goes where it does not.
+  const openOne = (n: AppNotification) => (onOpen ? onOpen({ kind: 'item', notification: n }) : markRead(n));
+  const openBundle = (eventType: string, members: AppNotification[]) =>
+    (onOpen ? onOpen({ kind: 'bundle', eventType, members }) : bundleClick(members));
 
   // ── Row renderers ─────────────────────────────────────────────────────────────
   function row(n: AppNotification, isAct: boolean) {
@@ -64,10 +118,11 @@ export default function NotificationFeedBody({
       <div
         key={n.id}
         className={`${styles.item} ${isUnread ? styles.unread : styles.read}${isAct ? ` ${styles.actItem}` : ''}`}
-        onClick={() => markRead(n)}
+        onClick={() => openOne(n)}
         role="button"
+        aria-haspopup={onOpen ? 'dialog' : undefined}
         tabIndex={0}
-        onKeyDown={e => e.key === 'Enter' && markRead(n)}
+        onKeyDown={e => e.key === 'Enter' && openOne(n)}
       >
         <span className={styles.icon}>{iconFor(n.eventType)}</span>
         <div className={styles.content}>
@@ -106,10 +161,11 @@ export default function NotificationFeedBody({
       <div
         key={`bundle-${eventType}-${newest.id}`}
         className={`${styles.item} ${anyMemberUnread ? styles.unread : styles.read}`}
-        onClick={() => bundleClick(members)}
+        onClick={() => openBundle(eventType, members)}
         role="button"
+        aria-haspopup={onOpen ? 'dialog' : undefined}
         tabIndex={0}
-        onKeyDown={e => e.key === 'Enter' && bundleClick(members)}
+        onKeyDown={e => e.key === 'Enter' && openBundle(eventType, members)}
       >
         <span className={styles.icon}>{iconFor(eventType)}</span>
         <div className={styles.content}>
@@ -160,23 +216,8 @@ export default function NotificationFeedBody({
 
   return (
     <>
-      <div className={styles.toolbar}>
-        <div className={styles.chips} role="group" aria-label="Filter notifications">
-          {CHIPS.map(c => (
-            <button
-              key={c.key}
-              type="button"
-              aria-pressed={filter === c.key}
-              className={`${styles.chip} ${filter === c.key ? styles.chipActive : ''}`}
-              onClick={() => setFilter(c.key)}
-            >
-              {c.label}
-              {c.key === 'needs' && needsCount > 0 && (
-                <span className={styles.chipCount} aria-label={`${needsCount} waiting`}>{needsCount}</span>
-              )}
-            </button>
-          ))}
-        </div>
+      {toolbar ?? <div className={styles.toolbar}>
+        <NotificationZoneChips feed={feed} />
         <div className={styles.segToggle} role="group" aria-label="Read filter">
           <button
             type="button"
@@ -195,7 +236,7 @@ export default function NotificationFeedBody({
             All
           </button>
         </div>
-      </div>
+      </div>}
 
       <div className={styles.list}>
         {loading ? (

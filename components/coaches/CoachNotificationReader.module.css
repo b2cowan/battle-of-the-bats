@@ -1,0 +1,139 @@
+/* CoachNotificationReader — what differs from the More / team / RSVP sheets it shares a container
+   with (`CoachesBottomNav.module.css`: `.sheetAnchor` / `.sheetScrim` / `.dropdown` / `.sheetGrab`).
+   Doubled selectors where this file overrides the nav module: both write at (0,1,0), and which of
+   two same-weight rules wins across modules is bundle order — (0,2,0) wins whichever comes first.
+
+   ⚖ ON A PHONE THE ANCHOR IS THE SHARED ONE, AT THE BAR'S TOP EDGE — the MENU layer of the drawer
+   ruling (2026-09-23): a reader holds nothing that can be lost, so the bar stays visible and
+   tappable under it, exactly as it does under More. Nothing here moves the anchor below 901px. */
+
+.panel.panel {
+  padding: 6px 20px 16px;
+}
+
+/* The grab line as a 44px control — the sheet's own way out, beside the scrim, Escape and Back. */
+.grabBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: var(--tap-min, 44px);
+  margin: -6px 0 0;
+  padding: 0;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+.grabBtn > span { margin: 0; }
+
+/* What it is and when — the kind in the feed's own words, then the day AND the clock (a sheet has
+   no day heading above it to lean on, unlike the row it was opened from). */
+.eyebrow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  margin: 0;
+  font-family: var(--font-data);
+  font-size: var(--type-support, 0.75rem);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.icon { font-size: 1rem; letter-spacing: 0; line-height: 1; }
+/* ⏰ The day and clock keep their own case — "7:00 p.m." is the house spelling, and the eyebrow's
+   uppercase would paint it "P.M." (text-transform changes what the coach reads, not the source). */
+.stamp { font-family: var(--font-sans, inherit); font-weight: 500; letter-spacing: 0; text-transform: none; }
+
+.title {
+  margin: 8px 0 0;
+  font-size: var(--type-heading, 1.05rem);
+  font-weight: 700;
+  line-height: 1.3;
+  color: var(--text-primary);
+  text-wrap: balance;
+}
+
+/* The whole message — the point of the sheet. `pre-line` keeps a sender's own line breaks; a long
+   unbroken token (a link pasted into an announcement) wraps rather than widening the sheet. */
+.body {
+  margin: 8px 0 0;
+  font-size: var(--type-body, 0.875rem);
+  line-height: 1.55;
+  color: var(--text-secondary);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+/* A bundle opens as its members, newest first — each one's own words and time. */
+.members { list-style: none; margin: 10px 0 0; padding: 0; }
+.member { padding: 10px 0; border-top: 1px solid var(--home-line, var(--white-10)); }
+.member:first-child { border-top: 0; padding-top: 4px; }
+.memberTitle { margin: 0; font-size: var(--type-body, 0.875rem); font-weight: 600; color: var(--text-primary); }
+.memberBody {
+  margin: 3px 0 0;
+  font-size: var(--type-body, 0.875rem);
+  line-height: 1.5;
+  color: var(--text-secondary);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.memberTime { margin: 3px 0 0; font-family: var(--font-data); font-size: var(--type-support, 0.75rem); color: var(--text-tertiary); }
+
+/* The way on, then the ways out. On a phone the onward button spans the sheet at the thumb's
+   reach; Clear and Close share the row beneath. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 16px;
+}
+.actions > button { flex: 1 1 0; justify-content: center; min-height: var(--tap-min, 44px); }
+.go.go {
+  flex: 1 1 100%;
+  justify-content: center;
+  min-height: 48px;
+  text-decoration: none;
+}
+
+/* ABOVE THE NAV BREAKPOINT the nav module draws nothing (its sheet rules are ≤900), so the same
+   panel is a small centered dialog — the RSVP sheet's answer, for the same reason. The anchor
+   becomes a zero-height box at the screen's foot (a full-screen fixed element is CHROME to the
+   rendered sweep); the scrim rises from it over the viewport and the panel is centred against it.
+   The footer reads left to right as the portal's dialogs do: the ways out, then the way on. */
+@media (min-width: 901px) {
+  .floor.floor {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 0;
+    z-index: 400;
+  }
+  .scrim.scrim {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6); /* token-exempt: modal scrim, the RSVP sheet's value */
+  }
+  .panel.panel {
+    position: absolute;
+    left: 50%;
+    bottom: 50vh;
+    transform: translate(-50%, 50%);
+    width: min(480px, calc(100vw - 2rem));
+    max-height: calc(100vh - 4rem);
+    overflow-y: auto;
+    padding: 1.1rem 1.35rem 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
+    border-radius: var(--radius);
+  }
+  .grabBtn { display: none; }
+  .actions { justify-content: flex-end; }
+  .actions > button { flex: 0 0 auto; min-height: 0; }
+  .go.go { flex: 0 0 auto; min-height: 0; order: 1; }
+}

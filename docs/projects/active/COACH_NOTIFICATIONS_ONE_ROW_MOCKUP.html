@@ -1,0 +1,664 @@
+<title>One Row for Notifications</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@700&family=IBM+Plex+Mono:wght@400;500;700&family=IBM+Plex+Sans:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+<style>
+  /* ── Document chrome: a cool drafting-table ground, so the warm product frames read as specimens ── */
+  :root {
+    --doc-bg: #E6E9EE;
+    --doc-panel: #F5F7F9;
+    --doc-ink: #18202B;
+    --doc-soft: #4A5566;
+    --doc-line: #C8CFD8;
+    --doc-accent: #2B55C4;
+    --tag-new: #17724A;
+    --tag-moved: #2B55C4;
+    --tag-restyled: #8E5400;
+    --tag-same: #667184;
+    --tag-no: #A1352A;
+    /* Product tokens — the warm coach portal's real values (app/globals.css). Fixed in both themes:
+       the portal is a light surface, and these frames are pictures of it. */
+    --p-paper: #F8F4ED;
+    --p-card: #FFFFFF;
+    --p-ink: #241E15;
+    --p-soft: #4A4235;
+    --p-dim: #615A54;
+    --p-line: rgba(70, 55, 30, 0.12);
+    --p-line-strong: rgba(70, 55, 30, 0.20);
+    --p-olive: #57651E;
+    --p-olive-soft: rgba(87, 101, 30, 0.10);
+    --p-amber: #835006;
+    --f-doc: 'IBM Plex Sans', system-ui, sans-serif;
+    --f-mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --f-ui: 'Inter', system-ui, sans-serif;
+    --f-display: 'Barlow Condensed', 'Arial Narrow', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --doc-bg: #121519;
+      --doc-panel: #1A1F26;
+      --doc-ink: #E3E8EF;
+      --doc-soft: #A3AEBD;
+      --doc-line: #2C343F;
+      --doc-accent: #8DAAFF;
+      --tag-new: #5FCB95;
+      --tag-moved: #8DAAFF;
+      --tag-restyled: #E7A94B;
+      --tag-same: #97A2B3;
+      --tag-no: #F08A7C;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --doc-bg: #121519;
+    --doc-panel: #1A1F26;
+    --doc-ink: #E3E8EF;
+    --doc-soft: #A3AEBD;
+    --doc-line: #2C343F;
+    --doc-accent: #8DAAFF;
+    --tag-new: #5FCB95;
+    --tag-moved: #8DAAFF;
+    --tag-restyled: #E7A94B;
+    --tag-same: #97A2B3;
+    --tag-no: #F08A7C;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--doc-bg);
+    color: var(--doc-ink);
+    font: 15px/1.55 var(--f-doc);
+    padding-inline: 20px;
+    padding-block: 28px 64px;
+  }
+  .wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 44px; }
+  h1, h2, h3 { text-wrap: balance; margin: 0; }
+  p { margin: 0; }
+  .masthead { display: grid; gap: 10px; max-width: 74ch; }
+  .eyebrow { font: 600 12px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--doc-soft); }
+  .masthead h1 { font-size: 32px; line-height: 1.15; font-weight: 700; letter-spacing: -0.01em; }
+  .ruled { display: grid; gap: 8px; background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 14px 16px; font-size: 14.5px; color: var(--doc-soft); }
+  .ruled strong { color: var(--doc-ink); }
+  .ruled a { color: var(--doc-accent); font-weight: 600; }
+  .evidence { background: var(--doc-panel); border: 1px solid var(--doc-line); border-left: 3px solid var(--tag-no); border-radius: 8px; padding: 14px 16px; display: grid; gap: 8px; max-width: 86ch; font-size: 14.5px; color: var(--doc-soft); }
+  .evidence strong { color: var(--doc-ink); }
+  .evidence q { font-family: var(--f-mono); font-size: 13px; color: var(--doc-ink); quotes: "“" "”"; }
+  /* D3 specimens */
+  .meta { display: flex; align-items: center; gap: 10px; }
+  .morebtn { display: inline-flex; align-items: center; min-height: 30px; padding: 0 0.8rem; border: 1px solid var(--p-line-strong); border-radius: 999px; background: var(--p-card);
+             font: 700 10.5px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-soft); }
+  .item .b.full { display: block; -webkit-line-clamp: unset; overflow: visible; }
+  .scrim { position: absolute; inset: 0; background: rgba(36, 30, 21, 0.38); }
+  .rsheet { position: absolute; left: 0; right: 0; bottom: 0; background: var(--p-card); border-radius: 18px 18px 0 0; padding: 10px 24px 26px; display: grid; gap: 12px;
+            box-shadow: 0 -8px 30px rgba(36, 30, 21, 0.18); }
+  .rsheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--p-line-strong); margin: 0 auto 4px; }
+  .rsheet .eb { font: 700 10.5px/1 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-dim); }
+  .rsheet .rt { font: 600 17px/1.3 var(--f-ui); color: var(--p-ink); margin: 0; }
+  .rsheet .rb { font: 400 14.5px/1.55 var(--f-ui); color: var(--p-soft); margin: 0; }
+  .rsheet .go { min-height: 48px; border-radius: 8px; background: var(--p-ink); color: var(--p-paper); font: 600 15px/1 var(--f-ui); display: grid; place-items: center; }
+  .rsheet .close { min-height: 44px; display: grid; place-items: center; font: 600 14px/1 var(--f-ui); color: var(--p-dim); }
+  .item.unread { background: rgba(87, 101, 30, 0.06); }
+  .item.unread .t { font-weight: 600; color: var(--p-ink); }
+  .lede { font-size: 17px; color: var(--doc-soft); }
+  .lede strong { color: var(--doc-ink); }
+
+  section { display: grid; gap: 18px; }
+  .sec-head { display: grid; gap: 8px; max-width: 78ch; }
+  .sec-head h2 { font-size: 22px; font-weight: 700; }
+  .sec-head h2 .num { font-family: var(--f-mono); font-weight: 500; color: var(--doc-accent); margin-right: 8px; }
+  .sec-head p { color: var(--doc-soft); }
+  .sec-head p strong { color: var(--doc-ink); }
+
+  .tag { display: inline-block; font: 700 10.5px/1 var(--f-mono); letter-spacing: 0.07em; text-transform: uppercase; padding: 4px 6px; border-radius: 4px; border: 1px solid currentColor; vertical-align: 2px; }
+  .t-new { color: var(--tag-new); }
+  .t-moved { color: var(--tag-moved); }
+  .t-restyled { color: var(--tag-restyled); }
+  .t-same { color: var(--tag-same); }
+  .t-no { color: var(--tag-no); }
+  .t-rec { color: var(--doc-bg); background: var(--doc-accent); border-color: var(--doc-accent); }
+
+  /* The specimen row scrolls sideways on its own — frames are TRUE SIZE and never reflow. */
+  .specimens { display: flex; gap: 28px; overflow-x: auto; padding-bottom: 8px; align-items: flex-start; }
+  .spec { display: grid; gap: 10px; flex: none; }
+  .spec-cap { display: grid; gap: 6px; width: 390px; }
+  .spec-cap h3 { font-size: 16px; font-weight: 700; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .spec-cap p { font-size: 14px; color: var(--doc-soft); }
+  .measure { font: 500 12.5px/1.45 var(--f-mono); color: var(--doc-ink); background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 6px; padding: 7px 9px; }
+  .measure b { color: var(--doc-accent); font-weight: 700; }
+
+  /* ── Product frame: 390 CSS px, the viewport the build is checked at ── */
+  .phone {
+    width: 390px; height: 690px; position: relative; overflow: hidden;
+    border-radius: 22px;
+    box-shadow: 0 0 0 1px var(--doc-line), 0 14px 30px rgba(20, 28, 40, 0.14);
+    background-color: var(--p-paper);
+    background-image:
+      linear-gradient(rgba(70, 55, 30, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(70, 55, 30, 0.05) 1px, transparent 1px);
+    background-size: 40px 40px;
+    font-family: var(--f-ui); color: var(--p-ink);
+  }
+  .scr { padding: 36px 32px 0; }
+  .hdr { display: flex; align-items: center; gap: 10px; min-height: 44px; }
+  .hdr .left { display: flex; align-items: center; gap: 10px; margin-right: auto; min-width: 0; }
+  .tile { width: 36px; height: 36px; border-radius: 9px; display: grid; place-items: center; flex: none;
+          background: var(--p-olive-soft); border: 1px solid rgba(87, 101, 30, 0.28); color: var(--p-olive); }
+  .ptitle { font: 700 23px/1 var(--f-display); letter-spacing: 0.01em; color: var(--p-ink); margin: 0; }
+  .help { width: 44px; height: 44px; display: grid; place-items: center; color: var(--p-ink); flex: none; }
+  .ibtn { width: 44px; height: 44px; display: grid; place-items: center; flex: none; background: var(--p-card);
+          border: 1px solid var(--p-line-strong); border-radius: 6px; color: var(--p-soft); }
+  .row2 { display: flex; justify-content: flex-end; margin-top: 12px; }
+  .tb { display: flex; align-items: center; gap: 8px; margin-top: 12px; }
+  .tb .end { margin-left: auto; display: flex; gap: 8px; }
+  /* A control drawn only while something is unread: marked by the DOCUMENT's accent, not the product's. */
+  .only-unread { outline: 2px dashed var(--doc-accent); outline-offset: 3px; }
+
+  /* Today's Unread/All — the admin feed's own toggle, as it renders in the warm portal. */
+  .seg-old { display: inline-flex; gap: 2px; padding: 2px; background: var(--p-paper); border-radius: 999px; }
+  .seg-old span { min-height: 44px; display: inline-flex; align-items: center; padding: 0 0.9rem; border-radius: 999px;
+                  font: 700 10.2px/1 var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--p-dim); }
+  .seg-old span.on { background: rgba(87, 101, 30, 0.35); color: var(--p-ink); }
+  /* The portal's own two-part switch — Roster's List | Depth chart (measured: 1px warm border, 7px radius,
+     dark fill on the chosen half, 14px/600). */
+  .seg-new { display: inline-flex; border: 1px solid var(--p-line-strong); border-radius: 7px; overflow: hidden; }
+  .seg-new span { min-height: 44px; min-width: 72px; display: inline-flex; align-items: center; justify-content: center; padding: 0 0.8rem;
+                  font: 600 14px/1 var(--f-ui); color: var(--p-dim); background: var(--p-paper); border-right: 1px solid var(--p-line); }
+  .seg-new span:last-child { border-right: 0; }
+  .seg-new span.on { background: var(--p-ink); color: var(--p-paper); }
+
+  .list { margin-top: 12px; background: var(--p-card); border: 1px solid rgba(87, 101, 30, 0.2); border-radius: 10px; overflow: hidden; }
+  .day { padding: 10px 17px 5px; font: 700 10.2px/1.2 var(--f-mono); letter-spacing: 0.08em; text-transform: uppercase; color: var(--p-dim); background: var(--p-paper); }
+  .item { display: flex; gap: 12px; padding: 13px 17px; border-top: 1px solid var(--p-line); }
+  .item .ic { font-size: 16px; line-height: 1.3; flex: none; }
+  .item .t { font: 500 14px/1.35 var(--f-ui); color: var(--p-soft); margin: 0 0 3px; }
+  .item .b { font: 400 13px/1.45 var(--f-ui); color: var(--p-dim); margin: 0 0 3px;
+             display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .item .d { font: 400 11px/1 var(--f-mono); color: var(--p-dim); }
+
+  .bar { position: absolute; left: 0; right: 0; bottom: 0; height: 72px; display: grid; grid-template-columns: repeat(5, 1fr);
+         background: var(--p-paper); border-top: 1px solid var(--p-line); }
+  .bar.static { position: static; width: 390px; border: 1px solid var(--p-line); border-radius: 12px; box-shadow: 0 0 0 1px var(--doc-line); }
+  .tab { display: grid; justify-items: center; align-content: center; gap: 5px; color: var(--p-dim); }
+  .tab .iw { width: 46px; height: 30px; border-radius: 999px; display: grid; place-items: center; position: relative; }
+  .tab .lb { font: 700 10.5px/1 var(--f-ui); letter-spacing: 0.05em; text-transform: uppercase; }
+  .tab.on .iw { background: var(--p-olive-soft); color: var(--p-ink); }
+  .tab.on .iw::after { content: ''; position: absolute; bottom: 1px; left: 50%; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--p-olive); }
+  .tab .badge { position: absolute; top: -3px; right: 5px; min-width: 16px; height: 16px; border-radius: 8px; background: #B03A22; color: #fff;
+                font: 700 10px/16px var(--f-ui); text-align: center; padding: 0 4px; }
+
+  /* ── Desktop band: the page's 688px content column, true size ── */
+  .desk { width: 688px; flex: none; background-color: var(--p-paper); padding: 22px 0 0; font-family: var(--f-ui); color: var(--p-ink);
+          border-radius: 12px; box-shadow: 0 0 0 1px var(--doc-line), 0 10px 24px rgba(20, 28, 40, 0.10); overflow: hidden; }
+  .desk .in { padding: 0 0 0; margin: 0 0; }
+  .desk .hdr { padding: 0 0; }
+  .dbtn { display: inline-flex; align-items: center; gap: 6px; background: var(--p-card); border: 1px solid var(--p-line-strong); border-radius: 6px;
+          padding: 0.45rem 0.9rem; font: 600 14px/1.2 var(--f-ui); color: var(--p-soft); white-space: nowrap; }
+  .dhelp { width: 34px; height: 34px; display: grid; place-items: center; color: var(--p-ink); }
+  .dtb { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 16px; }
+  .dtb .grp { display: flex; align-items: center; gap: 10px; flex-wrap: nowrap; }
+  .dtb .end { margin-left: auto; display: flex; gap: 8px; }
+  .pills { display: inline-flex; gap: 6px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--p-line); border-radius: 999px; padding: 0.3rem 0.7rem;
+          font: 700 10.5px/1.2 var(--f-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--p-dim); white-space: nowrap; }
+  .pill.on { background: rgba(87, 101, 30, 0.35); border-color: transparent; color: var(--p-ink); }
+  .pill .n { color: var(--p-amber); letter-spacing: 0; }
+  .seg-old.d span { min-height: 22px; padding: 0 0.75rem; border-radius: 4px; font-size: 10.2px; }
+  .seg-old.d { border-radius: 6px; }
+  .seg-new.d span { min-height: 34px; min-width: 76px; }
+  .desk .list { margin-top: 14px; border-bottom: 0; border-radius: 10px 10px 0 0; }
+  .desk .item { padding: 12px 17px; }
+  .dpad { padding: 0 24px; }
+
+  .note-rows { display: grid; gap: 10px; }
+  .desk-grid { display: grid; gap: 22px; }
+  .desk-grid .spec-cap { width: auto; max-width: 688px; }
+
+  /* ── Reasons / verdict blocks ── */
+  .cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 22px; align-items: start; }
+  .card { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 10px; padding: 18px 20px; display: grid; gap: 10px; }
+  .card h3 { font-size: 16px; font-weight: 700; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  .card p, .card li { font-size: 14.5px; color: var(--doc-soft); }
+  .card p strong, .card li strong { color: var(--doc-ink); }
+  .card ol { margin: 0; padding-left: 20px; display: grid; gap: 8px; }
+  code.path { font: 500 13px var(--f-mono); color: var(--doc-ink); }
+
+  .sheet { width: 390px; background: var(--p-card); border-radius: 16px 16px 0 0; box-shadow: 0 0 0 1px var(--doc-line); font-family: var(--f-ui); overflow: hidden; }
+  .sheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--p-line-strong); margin: 8px auto 6px; }
+  .sheet .rowi { display: flex; align-items: center; gap: 12px; padding: 0 18px; min-height: 48px; font: 500 15px/1 var(--f-ui); color: var(--p-soft); }
+  .sheet .rowi.on { background: var(--p-olive-soft); color: var(--p-ink); font-weight: 600; box-shadow: inset 3px 0 0 var(--p-olive); }
+  .sheet .rowi .cnt { margin-left: auto; font: 700 11px/1 var(--f-ui); color: #fff; background: #B03A22; border-radius: 8px; padding: 3px 6px; }
+  .sheet .div { height: 1px; background: var(--p-line); }
+  .sheet .rowi.dim { color: var(--p-dim); }
+
+  .arrowhdr { width: 390px; background: var(--p-paper); border-radius: 12px; box-shadow: 0 0 0 1px var(--doc-line); padding: 14px 32px; font-family: var(--f-ui); }
+  .back { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-left: -10px; color: var(--p-soft); flex: none; }
+  .rule { width: 1px; align-self: stretch; margin: 6px 0; background: var(--p-line); flex: none; }
+  .overflow-mark { position: relative; }
+  .overflow-mark::after { content: ''; position: absolute; top: -6px; bottom: -6px; right: -1px; width: 2px; background: var(--tag-no); }
+
+  /* ── Reply block ── */
+  .reply { background: var(--doc-panel); border: 1px solid var(--doc-line); border-radius: 12px; padding: 22px; display: grid; gap: 18px; max-width: 900px; }
+  .reply h2 { font-size: 20px; }
+  fieldset { border: 0; padding: 0; margin: 0; display: grid; gap: 8px; }
+  legend { font-weight: 700; font-size: 15px; margin-bottom: 6px; padding: 0; }
+  .opt { display: flex; gap: 10px; align-items: flex-start; font-size: 14.5px; color: var(--doc-soft); cursor: pointer; }
+  .opt input { margin-top: 4px; accent-color: var(--doc-accent); }
+  .opt strong { color: var(--doc-ink); }
+  .out { display: flex; gap: 10px; align-items: stretch; flex-wrap: wrap; }
+  .out output { flex: 1 1 320px; font: 500 13.5px/1.5 var(--f-mono); background: var(--doc-bg); border: 1px solid var(--doc-line); border-radius: 8px; padding: 10px 12px; color: var(--doc-ink); white-space: pre-wrap; }
+  .copy { font: 600 14px var(--f-doc); background: var(--doc-accent); color: var(--doc-bg); border: 0; border-radius: 8px; padding: 0 18px; min-height: 44px; cursor: pointer; }
+  .copy:focus-visible, .opt input:focus-visible { outline: 2px solid var(--doc-accent); outline-offset: 2px; }
+  .fine { font-size: 13px; color: var(--doc-soft); }
+
+  svg.i { width: var(--s, 18px); height: var(--s, 18px); fill: none; stroke: currentColor; stroke-width: var(--w, 1.8); stroke-linecap: round; stroke-linejoin: round; display: block; }
+  @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-checks" viewBox="0 0 24 24"><path d="M18 6 7 17l-5-5"/><path d="m22 10-7.5 7.5L13 16"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+    <symbol id="i-dash" viewBox="0 0 24 24"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-chat" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M13.4 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.4"/><path d="M2 6h4M2 10h4M2 14h4M2 18h4"/><path d="M21.38 5.62a1 1 0 0 0-3-3L13 8v3h3z"/></symbol>
+  </defs>
+</svg>
+
+<main class="wrap">
+
+  <header class="masthead">
+    <span class="eyebrow">Coaches portal · Notifications · phone first · mockup for your ruling</span>
+    <h1>One row for the filters, and a way back that’s already on screen</h1>
+    <p class="lede"><strong>Ask 1: yes.</strong> I’d do it slightly differently from how you asked, for a desktop reason (Option A below). <strong>Ask 2: I’d hold off on the arrow.</strong> The real problem on this page is that nothing in the bottom bar lights up. Every frame is drawn at true size: 390px wide for the phone, 688px for the desktop column.</p>
+    <div class="ruled">
+      <p><span class="tag t-new">ruled 09-25 · built</span> <strong>D1: Option A · D1b: the portal’s own switch · D2: light More, no arrow.</strong> Plus your follow-up: the gear is now a bare icon like the “?”, with no white box. Measured on the dev server: the list starts <strong>56px higher</strong> at 360 and 390, and More plus the Notifications row in the sheet are lit.</p>
+      <p><span class="tag t-new">ruled 09-25 · built</span> <strong>D3: Option B, a tap opens the notification.</strong> Your reason carried it: you can open one, read it and close it, and it’s marked read without you leaving the page. Nothing offered that before. The button names where it goes (“Open Insights”), the phone’s back gesture closes the reader, and the bottom bar stays usable under it. <a href="#d3">See D3</a>.</p>
+    </div>
+  </header>
+
+  <!-- ═════════════════════════════ DECISION 1 ═════════════════════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2><span class="num">D1</span>Two half-empty rows become one</h2>
+      <p>On a phone today, three rows stack above the first notification: the title, a row that holds <strong>only the gear</strong> (pinned right), and a row that holds <strong>only Unread / All</strong> (pinned left). Merging them gives back <strong>about 56px</strong>. That figure is projected from the rows measured on the live page and gets re-measured after the build.</p>
+    </div>
+
+    <div class="specimens">
+      <!-- TODAY -->
+      <div class="spec">
+        <div class="phone" aria-label="Phone today">
+          <div class="scr">
+            <div class="hdr">
+              <div class="left"><span class="tile"><svg class="i" style="--s:18px"><use href="#i-bell"/></svg></span><p class="ptitle">Notifications</p></div>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-help"/></svg></span>
+            </div>
+            <div class="row2"><span class="ibtn"><svg class="i" style="--s:15px"><use href="#i-gear"/></svg></span></div>
+            <div class="tb"><span class="seg-old"><span>Unread</span><span class="on">All</span></span></div>
+            <div class="list">
+              <div class="day">Earlier</div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 has missed three practices in a row and #7 is due a check-in</p><span class="d">Sep 20</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 has missed three practices in a row and #7 is due a check-in</p><span class="d">Sep 13</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">Three wins from four at home this month</p><span class="d">Sep 6</span></div></div>
+            </div>
+          </div>
+          <nav class="bar" aria-label="Bottom bar, nothing lit">
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-dash"/></svg></span><span class="lb">Overview</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-cal"/></svg></span><span class="lb">Schedule</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-chat"/></svg></span><span class="lb">Chat</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-users"/></svg></span><span class="lb">Roster</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-more"/></svg></span><span class="lb">More</span></span>
+          </nav>
+        </div>
+        <div class="spec-cap">
+          <h3>Today <span class="tag t-same">as shipped</span></h3>
+          <p>The gear gets a row to itself. Unread / All gets another. The switch is the admin feed’s style: its track is the same colour as the page, so “Unread” has no edge and the chosen half shows as a round olive patch. That’s the odd-looking control you highlighted.</p>
+          <div class="measure">Measured at 390: gear row <b>92–136</b> · switch row <b>148–196</b> · list begins ≈<b>208</b> · lit tabs: <b>none</b></div>
+        </div>
+      </div>
+
+      <!-- OPTION A -->
+      <div class="spec">
+        <div class="phone" aria-label="Phone, option A">
+          <div class="scr">
+            <div class="hdr">
+              <div class="left"><span class="tile"><svg class="i" style="--s:18px"><use href="#i-bell"/></svg></span><p class="ptitle">Notifications</p></div>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-gear"/></svg></span>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-help"/></svg></span>
+            </div>
+            <div class="tb">
+              <span class="seg-new"><span>Unread</span><span class="on">All</span></span>
+              <span class="end"><span class="ibtn only-unread"><svg class="i" style="--s:16px"><use href="#i-checks"/></svg></span></span>
+            </div>
+            <div class="list">
+              <div class="day">Earlier</div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 has missed three practices in a row and #7 is due a check-in</p><span class="d">Sep 20</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 has missed three practices in a row and #7 is due a check-in</p><span class="d">Sep 13</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">Three wins from four at home this month</p><span class="d">Sep 6</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">First week of the season on the books</p><span class="d">Aug 30</span></div></div>
+            </div>
+          </div>
+          <nav class="bar" aria-label="Bottom bar, More lit">
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-dash"/></svg></span><span class="lb">Overview</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-cal"/></svg></span><span class="lb">Schedule</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-chat"/></svg></span><span class="lb">Chat</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-users"/></svg></span><span class="lb">Roster</span></span>
+            <span class="tab on"><span class="iw"><svg class="i" style="--s:22px;--w:2.5"><use href="#i-more"/></svg></span><span class="lb">More</span></span>
+          </nav>
+        </div>
+        <div class="spec-cap">
+          <h3>Option A <span class="tag t-rec">recommended</span></h3>
+          <p><span class="tag t-moved">moved</span> The gear sits in the title row beside the “?”, and since your follow-up it’s a bare icon drawn like the “?”. <span class="tag t-moved">moved</span> <strong>Mark all read</strong> joins Unread / All, next to the list it marks. It shows only while something is unread (dashed). <span class="tag t-restyled">restyled</span> The switch becomes the portal’s own, the one Roster uses for List | Depth chart. <span class="tag t-new">new</span> More is lit (D2).</p>
+          <div class="measure">Projected: list begins ≈<b>152</b> (−56px) · title row stays 44px tall, because the “?” already sets it</div>
+        </div>
+      </div>
+
+      <!-- OPTION B -->
+      <div class="spec">
+        <div class="phone" aria-label="Phone, option B">
+          <div class="scr">
+            <div class="hdr">
+              <div class="left"><span class="tile"><svg class="i" style="--s:18px"><use href="#i-bell"/></svg></span><p class="ptitle">Notifications</p></div>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-help"/></svg></span>
+            </div>
+            <div class="tb">
+              <span class="seg-new"><span>Unread</span><span class="on">All</span></span>
+              <span class="end">
+                <span class="ibtn"><svg class="i" style="--s:15px"><use href="#i-gear"/></svg></span>
+                <span class="ibtn only-unread"><svg class="i" style="--s:16px"><use href="#i-checks"/></svg></span>
+              </span>
+            </div>
+            <div class="list">
+              <div class="day">Earlier</div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 has missed three practices in a row and #7 is due a check-in</p><span class="d">Sep 20</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 has missed three practices in a row and #7 is due a check-in</p><span class="d">Sep 13</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">Three wins from four at home this month</p><span class="d">Sep 6</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">First week of the season on the books</p><span class="d">Aug 30</span></div></div>
+            </div>
+          </div>
+          <nav class="bar" aria-label="Bottom bar, More lit">
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-dash"/></svg></span><span class="lb">Overview</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-cal"/></svg></span><span class="lb">Schedule</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-chat"/></svg></span><span class="lb">Chat</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-users"/></svg></span><span class="lb">Roster</span></span>
+            <span class="tab on"><span class="iw"><svg class="i" style="--s:22px;--w:2.5"><use href="#i-more"/></svg></span><span class="lb">More</span></span>
+          </nav>
+        </div>
+        <div class="spec-cap">
+          <h3>Option B <span class="tag t-new">ruled · built</span></h3>
+          <p><span class="tag t-moved">moved</span> The gear and <strong>Mark all read</strong> both join Unread / All. <span class="tag t-restyled">restyled</span> Same switch as A. On a phone it saves the same space as A. The difference only shows on a desktop, below.</p>
+          <div class="measure">Projected: list begins ≈<b>152</b> (−56px) · same as A</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Desktop consequence -->
+    <div class="desk-grid">
+      <div class="sec-head">
+        <h3 style="font-size:17px">What each option does to the desktop</h3>
+        <p>Desktop isn’t broken today: the title and its buttons share one row. The zone pills (All · Needs attention · Activity) stay on desktop, as ruled on 09-06, so the row above the list is already busy there. Each band below is 688px wide, the real column, with something unread so <strong>Mark all read</strong> is showing.</p>
+      </div>
+
+      <div class="specimens">
+        <div class="spec">
+          <div class="desk dpad-wrap">
+            <div class="dpad">
+              <div class="hdr">
+                <div class="left"><span class="tile"><svg class="i"><use href="#i-bell"/></svg></span><p class="ptitle">Notifications</p></div>
+                <span class="dbtn"><svg class="i" style="--s:14px"><use href="#i-gear"/></svg>Notification settings</span>
+                <span class="dbtn"><svg class="i" style="--s:14px"><use href="#i-checks"/></svg>Mark all read</span>
+                <span class="dhelp"><svg class="i" style="--s:20px"><use href="#i-help"/></svg></span>
+              </div>
+              <div class="dtb">
+                <span class="pills"><span class="pill on">All</span><span class="pill">Needs attention <span class="n">3</span></span><span class="pill">Activity</span></span>
+                <span class="end"><span class="seg-old d"><span class="on">Unread</span><span>All</span></span></span>
+              </div>
+              <div class="list"><div class="day">Today</div></div>
+            </div>
+          </div>
+          <div class="spec-cap" style="width:688px"><h3>Desktop today <span class="tag t-same">as shipped</span></h3></div>
+        </div>
+      </div>
+
+      <div class="specimens">
+        <div class="spec">
+          <div class="desk">
+            <div class="dpad">
+              <div class="hdr">
+                <div class="left"><span class="tile"><svg class="i"><use href="#i-bell"/></svg></span><p class="ptitle">Notifications</p></div>
+                <span class="dhelp"><svg class="i" style="--s:20px"><use href="#i-gear"/></svg></span>
+                <span class="dhelp"><svg class="i" style="--s:20px"><use href="#i-help"/></svg></span>
+              </div>
+              <div class="dtb">
+                <span class="grp"><span class="pills"><span class="pill on">All</span><span class="pill">Needs attention <span class="n">3</span></span><span class="pill">Activity</span></span>
+                <span class="seg-new d"><span class="on">Unread</span><span>All</span></span></span>
+                <span class="end"><span class="dbtn"><svg class="i" style="--s:14px"><use href="#i-checks"/></svg>Mark all read</span></span>
+              </div>
+              <div class="list"><div class="day">Today</div></div>
+            </div>
+          </div>
+          <div class="spec-cap" style="width:688px">
+            <h3>Desktop, Option A <span class="tag t-rec">recommended</span></h3>
+            <p>Still two rows. Each control sits where the rest of the portal puts its kind: a door to another page in the header, a control over the list in the row above the list. That’s where Roster keeps its export. The row fits in 688px with no wrapping.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="specimens">
+        <div class="spec">
+          <div class="desk">
+            <div class="dpad">
+              <div class="hdr">
+                <div class="left"><span class="tile"><svg class="i"><use href="#i-bell"/></svg></span><p class="ptitle">Notifications</p></div>
+                <span class="dhelp"><svg class="i" style="--s:20px"><use href="#i-help"/></svg></span>
+              </div>
+              <div class="dtb">
+                <span class="grp"><span class="pills"><span class="pill on">All</span><span class="pill">Needs attention <span class="n">3</span></span><span class="pill">Activity</span></span>
+                <span class="seg-new d"><span class="on">Unread</span><span>All</span></span></span>
+                <span class="end"><span class="dbtn"><svg class="i" style="--s:14px"><use href="#i-gear"/></svg>Notification settings</span><span class="dbtn"><svg class="i" style="--s:14px"><use href="#i-checks"/></svg>Mark all read</span></span>
+              </div>
+              <div class="list"><div class="day">Today</div></div>
+            </div>
+          </div>
+          <div class="spec-cap" style="width:688px">
+            <h3>Desktop, Option B <span class="tag t-no">costs a row</span></h3>
+            <p>The row above the list needs about 770px and gets 688, so it breaks onto a second line whenever something is unread. The only way to avoid that is to put the buttons in different places on a phone and on a desktop. That means two copies of each control, and one more thing that can drift.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════════════════════ DECISION 2 ═════════════════════════════ -->
+  <section>
+    <div class="sec-head">
+      <h2><span class="num">D2</span>The way back: light More instead of adding an arrow</h2>
+      <p><strong>What I measured:</strong> on this page, <strong>no tab in the bottom bar is lit</strong>. Open Practice plans from More and More lights up. Open Notifications from More and nothing does. Notifications lives outside the team’s address, and the check that lights More doesn’t look there. So the page looks like it’s off the map, and that’s what makes you reach for a Back button.</p>
+    </div>
+
+    <div class="specimens">
+      <div class="spec">
+        <nav class="bar static" aria-label="Today: nothing lit">
+          <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-dash"/></svg></span><span class="lb">Overview</span></span>
+          <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-cal"/></svg></span><span class="lb">Schedule</span></span>
+          <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-chat"/></svg></span><span class="lb">Chat</span></span>
+          <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-users"/></svg></span><span class="lb">Roster</span></span>
+          <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-more"/></svg></span><span class="lb">More</span></span>
+        </nav>
+        <div class="spec-cap"><h3>Today on Notifications <span class="tag t-same">as shipped</span></h3><p>Five tabs and none of them says “you are here”.</p></div>
+      </div>
+      <div class="spec">
+        <nav class="bar static" aria-label="Proposed: More lit">
+          <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-dash"/></svg></span><span class="lb">Overview</span></span>
+          <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-cal"/></svg></span><span class="lb">Schedule</span></span>
+          <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-chat"/></svg></span><span class="lb">Chat</span></span>
+          <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-users"/></svg></span><span class="lb">Roster</span></span>
+          <span class="tab on"><span class="iw"><svg class="i" style="--s:22px;--w:2.5"><use href="#i-more"/></svg></span><span class="lb">More</span></span>
+        </nav>
+        <div class="spec-cap"><h3>Proposed <span class="tag t-rec">recommended</span> <span class="tag t-new">new</span></h3><p>More is lit, exactly as it is on Practice plans, Money, Insights and the rest of the pages inside More. Any tab is one tap away, and so is the phone’s own back swipe.</p></div>
+      </div>
+      <div class="spec">
+        <div class="sheet" aria-label="More sheet, Notifications row lit">
+          <div class="grab"></div>
+          <div class="rowi on"><svg class="i" style="--s:17px"><use href="#i-bell"/></svg>Notifications</div>
+          <div class="div"></div>
+          <div class="rowi dim"><svg class="i" style="--s:17px"><use href="#i-note"/></svg>Practice plans</div>
+        </div>
+        <div class="spec-cap"><h3>Inside the More sheet <span class="tag t-new">new</span></h3><p>Open More from this page and the Notifications row is marked as the current one, the same way a Practice plans row is marked on its own page.</p></div>
+      </div>
+    </div>
+
+    <div class="cols">
+      <div class="card">
+        <h3>Why not the arrow <span class="tag t-no">not recommended</span></h3>
+        <ol>
+          <li><strong>Every arrow in the portal goes up to a page it names:</strong> “← Templates”, “← Practice plans”, “← All opponents”, nine screens in all. Notifications has no page above it. You open it from the bell on any desktop page, or from More on a phone. An arrow here would have to be the browser’s Back wearing the same icon: same symbol, different behaviour, and no destination to name.</li>
+          <li><strong>Sometimes there’s nothing to go back to.</strong> Opened from an email, a new tab, or after a refresh, Back would leave the app or do nothing. The arrow would need a made-up fallback, and nothing on screen would say what it was.</li>
+          <li><strong>Its neighbours don’t have one.</strong> None of the eleven other pages in More (Practice plans, Lineups, Money, Insights…) shows an arrow. Adding one here raises the same question for all eleven.</li>
+          <li><strong>No room at 360px with Option A.</strong> Arrow, divider, tile, title, gear and “?” need about 311px, and the title row has 296.</li>
+        </ol>
+      </div>
+      <div class="card">
+        <h3>If you still want it, this is where it would go</h3>
+        <div class="arrowhdr">
+          <div class="hdr">
+            <div class="left">
+              <span class="back"><svg class="i" style="--s:16px"><use href="#i-left"/></svg></span>
+              <span class="rule"></span>
+              <span class="tile"><svg class="i"><use href="#i-bell"/></svg></span><span class="ptitle">Notifications</span>
+            </div>
+            <span class="help"><svg class="i" style="--s:22px"><use href="#i-help"/></svg></span>
+          </div>
+        </div>
+        <p>It would take the same leading corner as the drill-in arrows, with a hairline after it and the bell tile staying. It would work only with Option B, where the gear has left the title row. It would mean “go back to wherever you were”, which no other arrow in the portal means.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════════════════════ DECISION 3 ═════════════════════════════ -->
+  <section id="d3">
+    <div class="sec-head">
+      <h2><span class="num">D3</span>A message that’s cut off has nowhere to be read</h2>
+      <p>You asked whether tapping a notification should open the whole message, with a button on to the place that deals with it. The problem is real, and it’s worse than it looks. But it affects <strong>one kind of notification</strong>, not the tap on every row.</p>
+    </div>
+
+    <div class="evidence">
+      <p><strong>What the phone hides.</strong> On 09-24 we cut the week in review to two lines on a phone, on the grounds that tapping it opens Insights, “which says the rest”. That holds only for <strong>this</strong> week. Insights describes the team today, not the week a review was written about. The real text from the test team:</p>
+      <p>Sep 20: <q>…at home · ⚠ #12 Logan Test went over the pitching cap in 3 games (14 innings pitched vs a cap of 2/game) · #5 Emerson Test has sat the bench most — 12 innings so far.</q><br>
+         Sep 13: <q>…at home · ⚠ #12 Logan Test went over the pitching cap in 3 games (14 innings pitched vs a cap of 2/game) · #1 Avery Test has sat the bench most — 11 innings so far.</q></p>
+      <p>Both are cut at <q>⚠ #12 Logan Tes…</q>. The cut lands in the middle of a <strong>pitching-cap warning</strong>, and the two weeks differ only in the part you can’t see. Of the 40 notifications in that feed, the three weekly reviews are the only ones longer than 92 characters. Everything else, like “Game moved… now 3:15 p.m. at Diamond 4”, already fits on its row.</p>
+    </div>
+
+    <div class="specimens">
+      <!-- D3 A -->
+      <div class="spec">
+        <div class="phone" aria-label="Phone, D3 option A">
+          <div class="scr">
+            <div class="hdr">
+              <div class="left"><span class="tile"><svg class="i" style="--s:18px"><use href="#i-bell"/></svg></span><p class="ptitle">Notifications</p></div>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-gear"/></svg></span>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-help"/></svg></span>
+            </div>
+            <div class="tb"><span class="seg-new"><span>Unread</span><span class="on">All</span></span></div>
+            <div class="list">
+              <div class="day">Earlier</div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 Logan Test went over the pitching cap in 3 games (14 innings pitched vs a cap of 2/game) · #5 Emerson Test has sat the bench most — 12 innings so far.</p><div class="meta"><span class="d">Sep 20</span><span class="morebtn only-unread">Show more</span></div></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b full">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 Logan Test went over the pitching cap in 3 games (14 innings pitched vs a cap of 2/game) · #1 Avery Test has sat the bench most — 11 innings so far.</p><div class="meta"><span class="d">Sep 13</span><span class="morebtn">Show less</span></div></div></div>
+              <div class="item"><span class="ic">🗓️</span><div><p class="t">Game moved: U13 Hawks vs Northside Thunder</p><p class="b">Was 2:00 p.m. at Diamond 2 — now 3:15 p.m. at Diamond 4.</p><span class="d">Sep 6</span></div></div>
+            </div>
+          </div>
+          <nav class="bar" aria-label="Bottom bar, More lit">
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-dash"/></svg></span><span class="lb">Overview</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-cal"/></svg></span><span class="lb">Schedule</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-chat"/></svg></span><span class="lb">Chat</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-users"/></svg></span><span class="lb">Roster</span></span>
+            <span class="tab on"><span class="iw"><svg class="i" style="--s:22px;--w:2.5"><use href="#i-more"/></svg></span><span class="lb">More</span></span>
+          </nav>
+        </div>
+        <div class="spec-cap">
+          <h3>Option A <span class="tag t-same">not chosen</span></h3>
+          <p><span class="tag t-new">new</span> A row that’s cut off gets <strong>Show more</strong> on its date line (dashed), the same spot where <strong>Clear</strong> sits on a Needs attention row. Tap it and the whole message opens in place (Sep 13, above). <strong>Show less</strong> folds it back. Tapping the row itself still goes to Insights, the same as every other notification. A row that already fits, like “Game moved”, gets no button and still goes straight to the schedule in one tap.</p>
+          <div class="measure">Changes nothing for 37 of the 40 rows · the button meets the 44px tap floor on a phone, as Clear does</div>
+        </div>
+      </div>
+
+      <!-- D3 B -->
+      <div class="spec">
+        <div class="phone" aria-label="Phone, D3 option B">
+          <div class="scr">
+            <div class="hdr">
+              <div class="left"><span class="tile"><svg class="i" style="--s:18px"><use href="#i-bell"/></svg></span><p class="ptitle">Notifications</p></div>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-gear"/></svg></span>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-help"/></svg></span>
+            </div>
+            <div class="tb"><span class="seg-new"><span>Unread</span><span class="on">All</span></span></div>
+            <div class="list">
+              <div class="day">Earlier</div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 Logan Test went over the pitching cap</p><span class="d">Sep 20</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 Logan Test went over the pitching cap</p><span class="d">Sep 13</span></div></div>
+            </div>
+          </div>
+          <div class="scrim"></div>
+          <div class="rsheet" role="dialog" aria-label="Reader sheet">
+            <span class="grab"></span>
+            <span class="eb">Week in review · Sep 13</span>
+            <p class="rt">Your week in review — UAT Test Team</p>
+            <p class="rb">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 Logan Test went over the pitching cap in 3 games (14 innings pitched vs a cap of 2/game) · #1 Avery Test has sat the bench most — 11 innings so far.</p>
+            <span class="go">Open Insights</span>
+            <span class="close">Close</span>
+          </div>
+        </div>
+        <div class="spec-cap">
+          <h3>Option B <span class="tag t-same">as you asked</span></h3>
+          <p><span class="tag t-new">new</span> Every tap opens the message in a sheet first, and a button there takes you on. It reads well for the weekly review. The cost falls on everything else: “Game moved” already says all it has to say on its row, and it would now take <strong>two taps</strong> to reach the schedule. Each of the <strong>23 kinds</strong> of notification also needs its own button wording (“Open the schedule”, “Review the request”…).</p>
+          <div class="measure">+1 tap on all 40 rows to help 3 · 23 button labels to write and keep in sync</div>
+        </div>
+      </div>
+
+      <!-- D3 C -->
+      <div class="spec">
+        <div class="phone" aria-label="Phone, D3 option C">
+          <div class="scr">
+            <div class="hdr">
+              <div class="left"><span class="tile"><svg class="i" style="--s:18px"><use href="#i-bell"/></svg></span><p class="ptitle">Notifications</p></div>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-gear"/></svg></span>
+              <span class="help"><svg class="i" style="--s:22px"><use href="#i-help"/></svg></span>
+            </div>
+            <div class="tb"><span class="seg-new"><span>Unread</span><span class="on">All</span></span></div>
+            <div class="list">
+              <div class="day">Earlier</div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b full">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 Logan Test went over the pitching cap in 3 games (14 innings pitched vs a cap of 2/game) · #5 Emerson Test has sat the bench most — 12 innings so far.</p><span class="d">Sep 20</span></div></div>
+              <div class="item"><span class="ic">📊</span><div><p class="t">Your week in review — UAT Test Team</p><p class="b full">All 2 losses have come on the road — you’re 2-0-1 at home · ⚠ #12 Logan Test went over the pitching cap in 3 games (14 innings pitched vs a cap of 2/game) · #1 Avery Test has sat the bench most — 11 innings so far.</p><span class="d">Sep 13</span></div></div>
+            </div>
+          </div>
+          <nav class="bar" aria-label="Bottom bar, More lit">
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-dash"/></svg></span><span class="lb">Overview</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-cal"/></svg></span><span class="lb">Schedule</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-chat"/></svg></span><span class="lb">Chat</span></span>
+            <span class="tab"><span class="iw"><svg class="i" style="--s:22px"><use href="#i-users"/></svg></span><span class="lb">Roster</span></span>
+            <span class="tab on"><span class="iw"><svg class="i" style="--s:22px;--w:2.5"><use href="#i-more"/></svg></span><span class="lb">More</span></span>
+          </nav>
+        </div>
+        <div class="spec-cap">
+          <h3>Option C <span class="tag t-same">undo the 09-24 cut</span></h3>
+          <p>Every message is shown whole, with nothing new to learn. The cost is length: each weekly review runs to about six lines on a 390px phone instead of two, and one arrives every Sunday, so over a season they take over the feed. That length is the reason we cut them on 09-24.</p>
+          <div class="measure">≈4 more lines (≈75px) per weekly review at 390</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═════════════════════════════ REPLY ═════════════════════════════ -->
+  <div class="reply">
+    <h2>Ruled</h2>
+    <p class="fine"><strong>09-25:</strong> D1: Option A · D1b: the portal’s own switch · D2: light More, no arrow · the gear is a bare icon like the “?” · <strong>D3: Option B</strong>, a tap opens the notification. All built on the dev server, and your walk is §234 in the QA ledger, passed 09-25.</p>
+  </div>
+
+</main>
+

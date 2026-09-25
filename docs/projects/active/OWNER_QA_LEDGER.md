@@ -23224,3 +23224,38 @@ The hub's **QA walk · 6** tab is the checkable copy; plan §14.10 is the build 
 **/review + /docs, same day (after the walk):** /review (three lenses) confirmed two, both fixed and re-checked live — **the keyboard focus ring now sits inside each figure** (the new frame had been clipping it at its edges) and **a screen reader now hears the last five results** ("Last 5, oldest first: W L T W L") on the phone's Record row and the desktop Form tile, where it heard only "Recent form". /docs: "Reading Insights on a phone" now covers the Dashboard's rows, and the Dashboard article says the record leaves scrimmages out. Plan §7.
 
 ---
+
+## §234 · Notifications on a phone — **one row above the list, a bare gear beside the "?", More lit on this page, and a tap opens the notification** — owner rulings 2026-09-25 from the mockup (*"D1: A · D1b: wear the portal's own switch · D2: light More … no arrow"* + *"I don't want the settings gear to have the white background … the same format as the help button"*). Plan `COACH_NOTIFICATIONS_ONE_ROW_PLAN.md`; mockup https://claude.ai/artifact/CNimUy8dmco8thDa778zND. Built on dev 2026-09-25. No migration.
+
+**Why.** A phone stacked three rows over the first notification — the title, a row holding only the gear, a row holding only Unread / All — and lit no tab in the bottom bar, so the page read as off the map (which is what prompted the ask for a back arrow).
+
+**What changed.** The gear is a bare icon beside the "?" in the title row (desktop too). "Mark all read" sits beside Unread / All (an icon on a phone, labelled on a desktop). Unread / All is the portal's own two-part switch (Roster's). On this page the bottom bar lights **More**, and the Notifications row in the More sheet is marked. Measured: the list starts **56px higher** at 360 and 390; nothing wraps at 1280.
+
+### The walk — 8 steps (phone first, then a desktop)
+
+- [x] **1** Phone: open More → Notifications. The title row reads bell · Notifications · ⚙ · ?, and the gear is a plain icon like the "?", with no white box.
+- [x] **2** The next row is Unread | All, with the chosen half filled dark. No row holds only the gear.
+- [x] **3** With something unread, a ✓✓ button sits at the right end of that same row; tap it and the unread activity rows go read (Needs attention stays).
+- [x] **4** The bottom bar shows **More** lit on this page.
+- [x] **5** Open More: the **Notifications** row is marked as the current page.
+- [x] **6** Tap ⚙: the notification settings open, and "← Back to your Coaches Portal" returns here.
+- [x] **7** Desktop: title row bell · Notifications … ⚙ ?; the row below holds All · Needs attention · Activity, then Unread | All, then "Mark all read" when something is unread, all on one line.
+- [x] **8** Nothing on the page scrolls sideways at phone width.
+
+**Part B · a tap opens the notification (D3, ruled B the same day — owner: *"open modal, read, close without having to leave the notifications page"*).** Supersedes §232 walk step F1.
+
+- [x] **9** Phone: tap a **week in review**. A sheet rises from just above the bottom bar with the kind, the day and time ("Sun, Sep 13 · 7:00 p.m.", lower-case p.m.), the title and the **whole** message, including the part the row cuts off.
+- [x] **10** The bottom bar is still visible under the sheet.
+- [x] **11** Tap **Close**: you're still on Notifications, and that row now reads as read (not bold, no dot).
+- [x] **12** Open it again and swipe **Back** (or the phone's back button): the sheet closes and you stay on Notifications.
+- [x] **13** Open it again and tap **Open Insights**: you land on that team's Insights.
+- [x] **14** Open an **older** week's review: its own figures are there in full (on the test team, Sep 13 names #1 Avery; Sep 20 names #5 Emerson).
+- [x] **15** A row that says "N scores submitted" (or similar) opens as a list of each one, scrolling inside the sheet.
+- [x] **16** If a **Needs attention** item exists, open it: **Clear** is in the sheet and takes it off the list.
+- [x] **17** Desktop: a tap opens a small centred box with Close and the onward button; Escape closes it. The bell's drop-down in the top bar still goes straight to the page.
+
+**§234 · ✅ WALKED + PASSED 2026-09-25** (owner: *"looks good, mark QA as complete"* — marked on the owner's word, no paste-back; all 17 steps, parts A and B). Supersedes §232 walk step F1 (two lines on a phone — the row still clamps; the reader shows the rest).
+
+**Closed the same day:** `/simplify` (4 lenses; 4 cleanups) · `/review` (high-risk tier, 4 lenses — **one High, three Medium confirmed and fixed**: the More sheet could bury an open reader, a failed Clear from the reader un-read the row, an instant "Open …" could cancel the mark-read, a practice-library link was named "the practice plan"; plan `COACH_NOTIFICATIONS_ONE_ROW_PLAN.md` has the record) · `/docs` (the phone FAQ, the bell tour, and every "link at the top of your notifications page" → the gear) · committed (the commit carrying this entry).
+
+---

@@ -179,9 +179,15 @@ export default function CoachesBottomNav() {
   // section (2026-08-15, plan Phase 4), in the same change as the sidebar's. An item is visible or
   // it is not; nothing relocates itself mid-season. See the sidebar for the full reasoning.
 
-  const isOnTeamMore = teamBase
+  // ⚠ NOTIFICATIONS IS A MORE PAGE WITHOUT A TEAM ADDRESS (owner ruling 2026-09-25). It is the first
+  // row in the sheet, but it lives at `/coaches/notifications`, outside `teamBase`, so the team check
+  // below never saw it and the bar lit NOTHING on that page — which read as a page off the map and
+  // is what made a coach reach for a Back arrow. The ruling was to light More rather than add one:
+  // every arrow in the portal goes UP to a page it names, and this page has none above it.
+  const isOnNotifications = pathname === `${base}/notifications`;
+  const isOnTeamMore = isOnNotifications || (teamBase
     ? ALL_MORE_KEYS.some(key => pathname.startsWith(`${teamBase}${key}`))
-    : false;
+    : false);
 
   function tabIsActive(key: string): boolean {
     if (!teamBase) return false;
@@ -278,7 +284,7 @@ export default function CoachesBottomNav() {
             {currentOrg?.id && (
               <>
                 <Link
-                  className={styles.dropItem}
+                  className={`${styles.dropItem} ${isOnNotifications ? styles.dropActive : ''}`}
                   href={`${base}/notifications`}
                   onClick={() => setMoreOpen(false)}
                   role="menuitem"

@@ -78,6 +78,41 @@
   border-color: rgba(var(--blueprint-blue-rgb, 30 58 138), 0.7);
 }
 
+/* ── The coach frame's settings door ──────────────────────────────────────────── */
+/* A BARE GLYPH, the twin of the help "?" beside it (owner, 2026-09-25: "the same format as the help
+   button"). It sits in the title row next to the "?" at every width, so the pair must read as one
+   kind of chrome — a boxed button beside a bare glyph is two kinds. The values MIRROR
+   `.helpButtonIconOnly` (components/help/help.module.css): a 34px hit box that paints nothing, the
+   same ink, the same hover and focus ring. Change one and change the other. At touch widths the
+   header's own rule lifts the height to the 44px floor; the width follows here.
+   ⚠ THE WIDTH FLOOR RUNS TO 768, WHICH IS ONE PLACE THIS DELIBERATELY DOES *NOT* MIRROR THE "?".
+   The "?" is 34px wide through 641–768 and is BASELINED debt for it (register F-21, the touch-target
+   debt plan); copying that here would have added a second entry to a known defect rather than a
+   twin. The glyphs still match — only the invisible hit box is wider. */
+.settingsDoor {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--white);
+  transition: color 0.12s;
+}
+.settingsDoor:hover { color: var(--primary-light); }
+.settingsDoor:focus-visible {
+  outline: 2px solid var(--primary-light);
+  outline-offset: 2px;
+}
+@media (max-width: 768px) {
+  .settingsDoor { width: auto; min-width: var(--tap-min, 44px); }
+}
+
 /* ── Toolbar (filter chips + unread toggle) ──────────────────────────────────── */
 
 .toolbar {

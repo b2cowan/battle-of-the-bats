@@ -1226,3 +1226,13 @@ sequential; each is independently shippable.
   `actionsPhoneInTitleRow` so it keeps the title line's corner on a phone, `actionsPhoneHidden`
   for a coach who cannot build. The hub's own header is unchanged (no actions). Logged in the
   guard's `SITES`.
+
+- **2026-09-25** — **Notifications: one row above the list** (`components/coaches/CoachNotificationsPage.tsx`,
+  owner ruling from the mockup "One Row for Notifications", option A). A phone stacked three rows
+  over the first notification — the title, a row holding only the gear, a row holding only Unread /
+  All. The header now holds ONLY the settings door, as a bare gear drawn like the "?" beside it
+  (owner: "the same format as the help button"), with `actionsPhoneInTitleRow` — legal because it is
+  one compact control. "Mark all read" LEFT the header for the kit's list toolbar beside the read
+  switch: it acts on the list, which is house rule 2's reasoning for exports, and moving it is what
+  let the phone lose a row without the desktop gaining one (option B, both buttons in the toolbar,
+  needed ~770px of 688 on a desktop and wrapped). Logged in the guard's `SITES`.

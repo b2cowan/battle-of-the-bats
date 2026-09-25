@@ -25,6 +25,11 @@ function postAction(body: Record<string, unknown>) {
     method:  'POST',
     headers: { 'Content-Type': 'application/json' },
     body:    JSON.stringify(body),
+    // The coach reader marks a row read WITHOUT awaiting it, and its onward link is a full-document
+    // load — a coach who opens a notification and taps "Open …" at once would otherwise unload the
+    // page with the mark-read still in flight and the browser free to cancel it (/review 2026-09-25).
+    // `keepalive` lets the request outlive the page; the bodies here are a few bytes.
+    keepalive: true,
   }).catch(console.error);
 }
 
@@ -78,26 +83,30 @@ export function useNotificationFeed(orgId: string | undefined) {
     }
   }, [orgId, loadingMore, items]);
 
-  // ── Mark read (single) + navigate ────────────────────────────────────────────
-  const markRead = useCallback(async (n: AppNotification) => {
-    if (!n.readAt) {
-      setItems(prev => prev.map(x => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x)));
-      await postAction({ action: 'mark-read', id: n.id });
-    }
-    if (n.link) window.location.href = n.link;
+  // ── Mark read WITHOUT leaving (the coach reader, owner ruling 2026-09-25) ────────
+  // Opening a notification in the reader reads it; going on to its page is a second, separate
+  // choice. One call for a single row and a bundle alike — a bundle is read when it is opened.
+  const markSeen = useCallback(async (members: AppNotification[]) => {
+    const unreadIds = members.filter(m => !m.readAt).map(m => m.id);
+    if (unreadIds.length === 0) return;
+    const idSet = new Set(unreadIds);
+    const now = new Date().toISOString();
+    setItems(prev => prev.map(x => (idSet.has(x.id) ? { ...x, readAt: now } : x)));
+    await Promise.all(unreadIds.map(id => postAction({ action: 'mark-read', id })));
   }, []);
 
-  // ── Bundle: mark every member read at once, then open the type's list ─────────
+  // ── Mark read (single) + navigate — the ADMIN feed's tap (the coach feed opens the reader) ──
+  const markRead = useCallback(async (n: AppNotification) => {
+    await markSeen([n]);
+    if (n.link) window.location.href = n.link;
+  }, [markSeen]);
+
+  // ── Bundle: mark every member read at once, then open the type's list (admin tap) ──
   const bundleClick = useCallback(async (members: AppNotification[]) => {
-    const unreadIds = members.filter(m => !m.readAt).map(m => m.id);
-    if (unreadIds.length > 0) {
-      const idSet = new Set(unreadIds);
-      setItems(prev => prev.map(x => (idSet.has(x.id) ? { ...x, readAt: new Date().toISOString() } : x)));
-      await Promise.all(unreadIds.map(id => postAction({ action: 'mark-read', id })));
-    }
+    await markSeen(members);
     const link = members.find(m => m.link)?.link;
     if (link) window.location.href = link;
-  }, []);
+  }, [markSeen]);
 
   // ── Clear — "I am finished with this one" (2026-09-06, mockup 9427bc24) ──────
   // The ONLY thing that takes a row out of "Needs attention". Opening one no longer does, which
@@ -173,7 +182,7 @@ export function useNotificationFeed(orgId: string | undefined) {
   return {
     items, loading, loadingMore, hasMore, error, isEmpty,
     unreadOnly, setUnreadOnly, filter, setFilter,
-    reload: load, loadMore, markRead, bundleClick, markAllRead, clearRow,
+    reload: load, loadMore, markRead, markSeen, bundleClick, markAllRead, clearRow,
     ...view,
   };
 }

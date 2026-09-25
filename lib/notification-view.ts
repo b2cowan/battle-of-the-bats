@@ -101,6 +101,11 @@ export function dayBucket(iso: string, now: Date = new Date()): DayBucket {
  *                 tell WHICH day's 12:53 it was; the whole point of this function is that the day
  *                 is always answered by exactly one of the heading or the row.
  */
+/** A Date's local clock in the house spelling ("6:21 p.m.") — the list's time and the reader's stamp. */
+function clockOf(d: Date): string {
+  return formatTime(`${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`);
+}
+
 export function notificationTime(
   iso: string,
   now: Date = new Date(),
@@ -117,7 +122,7 @@ export function notificationTime(
     return `${Math.floor(mins / 60)}h ago`;
   }
 
-  const clock = formatTime(`${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`);
+  const clock = clockOf(d);
   // "Earlier this week" and "Earlier" already name their day, so only Yesterday needs the prefix.
   if (bucket === 'Yesterday')         return withDay ? `Yesterday, ${clock}` : clock;
   // The heading covers several days here, so the row has to name which one.
@@ -166,4 +171,80 @@ export function groupActivityItems(items: AppNotification[]): ActivityEntry[] {
     }
   }
   return out;
+}
+
+// ── The reader (coach feed, owner ruling 2026-09-25 — D3 option B) ─────────────
+// A tap on a coach notification opens it in a reader sheet: the whole message, when it arrived,
+// and ONE button on to the place that deals with it. Marking it read no longer means leaving the
+// page — the reason the owner gave for the ruling ("open, read, close").
+
+/**
+ * The reader's date line — the day AND the clock, always. The list can lean on its day headings
+ * ("Earlier", "Yesterday"); a sheet over the list has no heading above it, so it names both.
+ * "Sun, Sep 20 · 7:00 p.m." — the clock through formatTime(), the house spelling.
+ */
+export function notificationStamp(iso: string): string {
+  const d = new Date(iso);
+  const day = d.toLocaleDateString('en-CA', { weekday: 'short', month: 'short', day: 'numeric' });
+  return `${day} · ${clockOf(d)}`;
+}
+
+/** Every notification an entry stands for — one row's own, or a bundle's members (newest first). */
+export function entryMembers(entry: ActivityEntry): AppNotification[] {
+  return entry.kind === 'bundle' ? entry.members : [entry.notification];
+}
+
+/**
+ * Where a coach team route opens, in the NAV'S OWN WORDS — the sidebar and the More sheet name
+ * these pages, so the reader's button says the same word the coach will land on. Keyed by the
+ * segment after `/coaches/teams/{id}`; the empty key is the team's Overview.
+ * ⚠ A THIRD COPY OF THE NAV'S PAGE NAMES, AND PINNED TO THEM: `coach-nav-groups.test.ts` reads the
+ * phone nav's `{ key, label }` pairs and fails when a name here differs from the nav's, or a page
+ * here is one the nav no longer has — so a rename cannot leave "Open Skills & Goals" behind.
+ */
+export const COACH_TEAM_PAGE: Record<string, string> = {
+  '':              'Overview',
+  schedule:        'Schedule',
+  practice:        'Practice plans',
+  lineups:         'Lineups',
+  tournaments:     'Tournaments',
+  development:     'Skills & Goals',
+  history:         'Insights',
+  accounting:      'Money',
+  announcements:   'Email families',
+  roster:          'Roster',
+  chat:            'Chat',
+  tryouts:         'Tryouts',
+  staff:           'Staff',
+  documents:       'Documents',
+  settings:        'Settings',
+};
+
+/** The practice hub's library routes — pages under `/practice/` that are NOT one practice. */
+const PRACTICE_LIBRARIES: ReadonlySet<string> = new Set(['templates', 'circuits']);
+
+/**
+ * The reader's onward button, named for where it goes: "Open Insights", "Open the practice plan",
+ * "Open Chat". Null when the notification has no link (the reader then offers only Close).
+ * ⚠ Named from the LINK, not the event type: 23 kinds of notification point at far fewer places,
+ * and a label keyed on the kind would be one more table to keep true every time a sender changes
+ * its link. An unknown place still gets a working button — "Open" — never a guessed name.
+ * ⚠ `/admin/` links reach a coach through the parked recipient-scoping bug (notifications review
+ * D4): the button says so plainly rather than dressing an admin page up as a coach one.
+ */
+export function notificationDestination(link: string | null | undefined): string | null {
+  if (!link) return null;
+  const path = link.split(/[?#]/)[0];
+  const team = /\/coaches\/teams\/[^/]+(?:\/([^/]+))?(\/[^/]+)?/.exec(path);
+  if (team) {
+    const segment = team[1] ?? '';
+    // One practice is `/practice/{eventId}`; `/practice/templates` and `/practice/circuits` are the
+    // libraries, not a plan — they fall through to the hub's name (/review 2026-09-25).
+    if (segment === 'practice' && team[2] && !PRACTICE_LIBRARIES.has(team[2].slice(1))) return 'Open the practice plan';
+    const page = COACH_TEAM_PAGE[segment];
+    return page ? `Open ${page}` : 'Open';
+  }
+  if (/^\/chat(\/|$)/.test(path) || /\/coaches\/chat(\/|$)/.test(path)) return 'Open Chat';
+  if (/^\/[^/]+\/admin(\/|$)/.test(path)) return 'Open in admin';
+  return 'Open';
 }

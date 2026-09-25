@@ -8,6 +8,7 @@ import {
 } from '../../lib/coach-nav-visibility.ts';
 import { resolveCoachCapabilities } from '../../lib/coach-capabilities.ts';
 import { stripComments } from './_source-code.ts';
+import { COACH_TEAM_PAGE } from '../../lib/notification-view.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
@@ -406,5 +407,29 @@ describe('the phone sheet\'s hot row is a shortcut, never a regrouping', () => {
     const listed = keysIn('const MORE_SECTIONS');
     assert.equal(hot.length, 3, 'three tiles, as drawn — a fourth is a design decision, not a tweak');
     for (const key of hot) assert.ok(listed.includes(key), `${key} is a hot tile but not a More section item`);
+  });
+});
+
+/**
+ * The notification reader's onward button names the page it opens in the NAV'S OWN WORDS ("Open
+ * Insights", "Open Skills & Goals" — owner ruling 2026-09-25, D3 option B). That table is a third
+ * copy of these page names, in `lib/notification-view.ts`; this block is what ties it to the nav, so
+ * a rename in the nav fails here instead of leaving the reader's button naming a page the coach can
+ * no longer find by that name. Read from the phone nav's `{ key, icon, label }` literals — the tabs
+ * and the More sheet together are every team page the portal names.
+ */
+describe('the notification reader names pages the way the nav does', () => {
+  const navPages = new Map(
+    [...BOTTOM_CODE.matchAll(/\{ key: '(\/?[a-z-]*)',\s+icon: \w+,\s+label: '([^']+)'/g)]
+      .map((m) => [m[1].replace(/^\//, ''), m[2]] as const),
+  );
+  it('reads the nav (a guard that found nothing would pass over everything)', () => {
+    assert.ok(navPages.size >= 12, `read only ${navPages.size} pages from the phone nav — the literals changed shape`);
+  });
+  it('every page the reader names carries the nav’s name for it', () => {
+    for (const [segment, label] of Object.entries(COACH_TEAM_PAGE)) {
+      assert.ok(navPages.has(segment), `the reader names /${segment} ("${label}") but the nav has no such page`);
+      assert.equal(label, navPages.get(segment), `the reader calls /${segment} "${label}"; the nav calls it "${navPages.get(segment)}"`);
+    }
   });
 });

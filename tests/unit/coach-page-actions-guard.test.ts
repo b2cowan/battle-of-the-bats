@@ -175,16 +175,18 @@ const SITES: Site[] = [
   },
   {
     // The coach frame around the shared notifications feed (coach-notifications review, owner
-    // D1 2026-09-03). Outside the team layout, so the header draws its own "?". Two secondaries,
-    // both `.headerBtnLabel` icon-only on phones in the standard right-pinned row; no primary.
-    // "Mark all read" renders only while an unread ACTIVITY row exists (D3).
+    // D1 2026-09-03). Outside the team layout, so the header draws its own "?".
+    // ⚖ ONE ROW ABOVE THE LIST (owner ruling 2026-09-25, option A): the header now holds ONLY the
+    // settings door — a bare gear drawn like the "?" beside it — and keeps the title row's corner on
+    // a phone. "Mark all read" LEFT the header for the list toolbar, beside the read switch: it acts
+    // on the list (house rule 2's reasoning), and it took the phone's half-empty second row with it.
     file: 'components/coaches/CoachNotificationsPage.tsx', occurrence: 0,
     screen: 'Notifications (the coach "See all" feed)',
     variant: 'standard', helpHost: 'own',
     actions: {
       from: 'inline', slot: 'action',
-      holds: 'Notification settings (the universal settings page, carrying the way back) + Mark all read (Activity only)',
-      phoneHidden: null, phoneInTitleRow: null,
+      holds: 'Notification settings (the universal settings page, carrying the way back) — a bare gear beside the "?"',
+      phoneHidden: null, phoneInTitleRow: 'true',
     },
   },
 
