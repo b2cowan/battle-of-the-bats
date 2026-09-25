@@ -140,7 +140,8 @@ describe('the club group (D5)', () => {
 
 describe('source scans — the rules a build could drop by accident', () => {
   const combo = readFileSync('components/coaches/OpponentCombobox.tsx', 'utf8');
-  const page = readFileSync('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx', 'utf8');
+  // The schedule's add / edit form — its own file since the Schedule deep dive's split (S6, 2026-09-25).
+  const page = readFileSync('components/coaches/ScheduleEventForm.tsx', 'utf8');
   const route = readFileSync('app/api/coaches/[orgSlug]/teams/[teamId]/opponents/route.ts', 'utf8');
 
   it('picking writes the DISPLAY spelling, never the normalized key (the row chips key off the game\'s own text)', () => {

@@ -23,7 +23,8 @@ const modal = read('components/coaches/GiveAwardModal.tsx');
 const awardsRoute = read('app/api/coaches/[orgSlug]/teams/[teamId]/awards/route.ts');
 const awardIdRoute = read('app/api/coaches/[orgSlug]/teams/[teamId]/awards/[awardId]/route.ts');
 const scheduleAwardSection = (() => {
-  const page = read('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx');
+  // The schedule's event sheet — its own file since the Schedule deep dive's split (S6, 2026-09-25).
+  const page = read('components/coaches/ScheduleEventSheet.tsx');
   // NOT `indexOf('Awards given')` — an earlier comment ("...the slide-over's \"Awards given\"
   // section...") contains that same phrase and would anchor the slice hundreds of lines too
   // early. The JSX heading is unique.

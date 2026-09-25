@@ -31,6 +31,10 @@ import { readCode, readSource, stripComments } from './_source-code.ts';
  * ══════════════════════════════════════════════════════════════════════════════════════════
  */
 const PAGE = 'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx';
+// The Schedule deep dive's split (stage 1 · S6, 2026-09-25) moved the list / week / month and the
+// event sheet out of the page into files of their own; each assertion reads the file its code lives in.
+const VIEWS = 'components/coaches/ScheduleCalendarViews.tsx';
+const SHEET = 'components/coaches/ScheduleEventSheet.tsx';
 const STYLES = 'app/[orgSlug]/coaches/coaches.module.css';
 const RSVP = 'components/coaches/CoachRsvpSheet.tsx';
 const MENU = 'components/coaches/CoachToolbarMenu.tsx';
@@ -39,6 +43,8 @@ const ROSTER = 'app/[orgSlug]/coaches/teams/[teamId]/roster/page.tsx';
 const PURE = 'lib/coach-schedule-phone.ts';
 
 const page = readCode(PAGE);
+const views = readCode(VIEWS);
+const sheet = readCode(SHEET);
 const css = stripComments(readSource(STYLES));
 
 /** The ≤640 blocks of a stylesheet, joined — what a phone-only rule must live inside. */
@@ -54,17 +60,24 @@ function phoneBlocks(source: string): string {
 }
 const phoneCss = phoneBlocks(css);
 
-/** The sheet's render function, sliced out of the page. */
+/** The sheet's blocks and its orders — from the clock it reads to the return that draws the panel. */
 function sheetFn(): string {
-  const a = page.indexOf('function renderEventSheet(');
-  const b = page.indexOf('\n  return (\n    <div className={`${styles.page}', a);
-  assert.ok(a > 0 && b > a, 'the sheet is rendered by renderEventSheet(), declared before the page\'s return');
-  return page.slice(a, b);
+  const a = sheet.indexOf('const hasScore = ev.teamScore != null');
+  const b = sheet.indexOf('\n  return (\n    <>\n      <div className={styles.modalOverlay}', a);
+  assert.ok(a > 0 && b > a, 'the sheet builds its blocks, then returns the overlay');
+  return sheet.slice(a, b);
+}
+/** The event sheet's PANEL — the overlay's own markup, up to the siblings that follow it. */
+function sheetPanel(): string {
+  const a = sheet.indexOf('<div className={styles.modalOverlay}');
+  const b = sheet.indexOf('{rsvpEditId && (() => {', a);
+  assert.ok(a > 0 && b > a, 'the overlay, then the RSVP sheet after it');
+  return sheet.slice(a, b);
 }
 
 describe('C1 — the list is the scroller and opens on today', () => {
   it('the schedule list declares the recipe\'s framed phone form', () => {
-    assert.match(page, /<CoachRowList label="Schedule" phoneFrame>/, 'one white frame with hairlines at ≤640 (S.7; B5\'s second phone form)');
+    assert.match(views, /<CoachRowList label="Schedule" phoneFrame>/, 'one white frame with hairlines at ≤640 (S.7; B5\'s second phone form)');
   });
   it('the band pins inside the scroller, and the frame clips with `clip`, not `hidden` — both at ≤640', () => {
     assert.match(phoneCss, /\.scheduleScroller \.rowListBand \{[^}]*position: sticky;[^}]*top: 0;/, 'the month band is sticky at the scroller\'s top');
@@ -82,12 +95,12 @@ describe('C1 — the list is the scroller and opens on today', () => {
     assert.ok(effect.includes('scroller.scrollTop ='), 'it sets the scroller\'s position directly — no smooth scroll');
     assert.ok(!effect.includes('scrollIntoView') && !effect.includes("behavior: 'smooth'"), 'no scroll to watch');
     // The three row kinds carry their club-local day.
-    assert.match(page, /data-day=\{event\.startsAt \? dayStr\(event\.startsAt\) : undefined\}/, 'an event row: orgDayKey through dayStr');
-    assert.match(page, /'data-day': game\.gameDate \?\? undefined,/, 'a tournament game row: its game day');
-    assert.match(page, /data-day=\{tryoutSessionDay\(session\.startsAt\)\}/, 'a tryout row: its session day');
+    assert.match(views, /data-day=\{event\.startsAt \? dayStr\(event\.startsAt\) : undefined\}/, 'an event row: orgDayKey through dayStr');
+    assert.match(views, /'data-day': game\.gameDate \?\? undefined,/, 'a tournament game row: its game day');
+    assert.match(views, /data-day=\{tryoutSessionDay\(session\.startsAt\)\}/, 'a tryout row: its session day');
   });
   it('there is no "Earlier this season" fold — the past is above, in the same list', () => {
-    assert.ok(!/Earlier this season/i.test(page), 'the first draft\'s fold row was ruled out on 2026-09-21');
+    assert.ok(!/Earlier this season/i.test(page + views), 'the first draft\'s fold row was ruled out on 2026-09-21');
     assert.ok(!/Earlier this season/i.test(css));
   });
   it('the view control renders BOTH forms — the kit toolbar\'s toggle and the glyph menu — and CSS decides', () => {
@@ -124,19 +137,19 @@ describe('C1 — the list is the scroller and opens on today', () => {
 
 describe('C2 — a week without blanks; a month of dots with the day\'s rows beneath', () => {
   it('Week renders both forms from one set of cells, grouped by the pure helper', () => {
-    assert.ok(page.includes('const groups = groupWeekDays(cells);'));
-    assert.match(page, /className=\{`\$\{styles\.calWeekGrid\} \$\{styles\.calWeekWide\}`\}/, 'the seven cards');
-    assert.match(page, /className=\{styles\.calWeekPhone\}/, 'the grouped stack');
-    assert.match(page, /<p key=\{g\.from\} className=\{styles\.calWeekQuiet\}>\{weekEmptyLine\(g\.label\)\}<\/p>/, 'a run of empty days is one quiet line, spelled once');
+    assert.ok(views.includes('const groups = groupWeekDays(cells);'));
+    assert.match(views, /className=\{`\$\{styles\.calWeekGrid\} \$\{styles\.calWeekWide\}`\}/, 'the seven cards');
+    assert.match(views, /className=\{styles\.calWeekPhone\}/, 'the grouped stack');
+    assert.match(views, /<p key=\{g\.from\} className=\{styles\.calWeekQuiet\}>\{weekEmptyLine\(g\.label\)\}<\/p>/, 'a run of empty days is one quiet line, spelled once');
     assert.match(css, /\.calWeekPhone \{ display: none; \}/);
     assert.match(phoneCss, /\.calWeekWide \{ display: none; \}/);
   });
   it('Month: the cell is the tap, the dots are decoration, the selected day\'s rows sit under the grid', () => {
     assert.match(page, /const \[selectedDay, setSelectedDay\] = useState\(\(\) => tournamentToday\(\)\);/, 'today pre-selected');
-    assert.match(page, /className=\{styles\.calMonthDayBtn\}\s+aria-pressed=\{isSelected\}/, 'a real button over the cell');
-    assert.match(page, /<span className=\{styles\.calMonthDots\} aria-hidden>/);
-    assert.match(page, /<CoachRowBand>\{selectedLong\}<\/CoachRowBand>/, 'the day names the band');
-    assert.match(page, /Nothing on \{selectedLong\}/, 'an empty day says so');
+    assert.match(views, /className=\{styles\.calMonthDayBtn\}\s+aria-pressed=\{isSelected\}/, 'a real button over the cell');
+    assert.match(views, /<span className=\{styles\.calMonthDots\} aria-hidden>/);
+    assert.match(views, /<CoachRowBand>\{selectedLong\}<\/CoachRowBand>/, 'the day names the band');
+    assert.match(views, /Nothing on \{selectedLong\}/, 'an empty day says so');
     assert.match(phoneCss, /\.calMonthDayEvents \{ display: none; \}/, 'the chips and "+N more" leave the phone');
     assert.match(css, /\.calMonthDayRows \{ display: none; \}/, 'the rows are phone-only');
   });
@@ -168,15 +181,17 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
     // coach-awards-any-event.test.ts.
     assert.ok(fn.includes('const awardsBlock = drawerDoors.awards && (isGameEvent ? (!isPhone || scoreLeads) : awardUnlock === \'open\') ? ('));
   });
-  it('the deep-link tab calls are untouched', () => {
-    assert.ok(page.includes("if (sp.get('tab') === 'lineup') setSlideTab('lineup');"));
-    assert.ok(page.includes("if (sp.get('tab') === 'scouting') setSlideTab('scouting');"));
+  it('the deep-link tab calls are untouched — the address names the tab the sheet opens on', () => {
+    // Since the split (S6) the sheet opens fresh per event with a PLACE; the deep link hands it the tab.
+    assert.ok(page.includes("const tab = sp.get('tab') === 'lineup' ? 'lineup' : sp.get('tab') === 'scouting' ? 'scouting' : 'attendance';"));
+    assert.ok(page.includes('openEvent(ev, { ...SHEET_OPEN_PLACE, tab });'));
+    assert.ok(sheet.includes('const [slideTab, setSlideTab] = useState<SlideTab>(place.tab);'), 'the sheet opens on the place it is handed');
   });
   it('the attendance row is the tap — a button that says it opens a dialog — and the old button is gone', () => {
     assert.match(fn, /<CoachRowList label="Attendance" inset phoneFrame className=\{styles\.attendanceRows\}>/, 'the portal\'s one row recipe, framed on a phone');
     assert.match(fn, /<CoachRow\s+key=\{row\.player\.id\}\s+as="button"\s+aria-haspopup="dialog"/, 'the whole row raises the sheet');
     assert.ok(fn.includes('onClick={() => setRsvpEditId(row.player.id)}'));
-    assert.ok(!/Edit RSVP/.test(page), 'no "Edit RSVP" anywhere on the page');
+    assert.ok(!/Edit RSVP/.test(page + sheet), 'no "Edit RSVP" anywhere on the page or its sheet');
     assert.ok(!/Edit RSVP|rsvpEditor|rsvpOption/.test(css), 'nor its editor\'s rules in the stylesheet');
     assert.match(fn, /<span className=\{styles\.attendanceStatusBadge\} data-status=\{row\.status\} data-field-key aria-hidden>/, 'the badge is the trail and the looked-for value (A4)');
     assert.ok(fn.includes('<div className={styles.attendanceSection} data-field-floor>'), 'the field floor survives');
@@ -188,11 +203,12 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
     assert.match(rsvp, /aria-pressed=\{on\}/, 'the four choices say which one holds');
     assert.ok(!rsvp.includes('useOverlayOpen('), 'the event sheet beneath already holds the lock');
     assert.ok(!fn.includes('<CoachRsvpSheet'), 'never inside the event sheet\'s panel');
-    const siteA = page.indexOf('{selectedEvent && renderEventSheet(selectedEvent)}');
-    const siteB = page.indexOf('<CoachRsvpSheet');
-    assert.ok(siteA > 0 && siteB > siteA, 'rendered after the event sheet, as a sibling');
-    assert.ok(page.includes('onPick={status => { setPlayerAttendance(row.player.id, { status }); setRsvpEditId(null); }}'), 'a choice writes through the list\'s own path and closes');
-    assert.ok(page.includes('onNote={note => setPlayerAttendance(row.player.id, { note })}'), 'a note rides the same autosave');
+    assert.ok(!sheetPanel().includes('<CoachRsvpSheet'), 'never inside the event sheet\'s panel');
+    const siteA = sheet.indexOf('<div className={styles.modalOverlay}');
+    const siteB = sheet.indexOf('<CoachRsvpSheet');
+    assert.ok(siteA > 0 && siteB > siteA, 'rendered after the event sheet\'s overlay, as a sibling');
+    assert.ok(sheet.includes('onPick={status => { setPlayerAttendance(row.player.id, { status }); setRsvpEditId(null); }}'), 'a choice writes through the list\'s own path and closes');
+    assert.ok(sheet.includes('onNote={note => setPlayerAttendance(row.player.id, { note })}'), 'a note rides the same autosave');
   });
   it('the where-row and the foot row are phone forms; the desktop keeps its inline link and its action row', () => {
     assert.ok(fn.includes('isPhone && mappable ? ('), 'the where-row only where the map opens');

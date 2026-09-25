@@ -83,15 +83,19 @@ describe('stepOf — the marker an entry carries', () => {
  */
 describe('the schedule\'s game sheet names its address', () => {
   const schedule = readCode('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx');
+  // The sheet — its own file since the Schedule deep dive's split (S6, 2026-09-25). It is mounted
+  // only while a game is open, so its floor stands for exactly as long as the game does.
+  const sheet = readCode('components/coaches/ScheduleEventSheet.tsx');
   const floor = readCode('components/coaches/useDialogFloor.ts');
 
   it('the open event IS the address, and it carries the tab the coach is reading', () => {
     assert.match(
-      schedule,
-      /const sheetAddress = selectedEvent \? `\$\{base\}\/schedule\?event=\$\{selectedEvent\.id\}&tab=\$\{slideTab\}` : null;/,
+      sheet,
+      /const sheetAddress = `\$\{base\}\/schedule\?event=\$\{ev\.id\}&tab=\$\{slideTab\}`;/,
       'the address is the one the deep link below already answers — and the builder\'s `return`',
     );
-    assert.match(schedule, /useDialogFloor\(!!selectedEvent, slideOverRef, \{[\s\S]*?address: sheetAddress \}\);/);
+    assert.match(sheet, /useDialogFloor\(true, slideOverRef, \{[\s\S]*?address: sheetAddress \}\);/);
+    assert.match(schedule, /\{selectedEvent && \(\s*<ScheduleEventSheet/, 'the sheet — and so its floor — exists only while a game is open');
   });
 
   it('the floor hands its address to the step', () => {

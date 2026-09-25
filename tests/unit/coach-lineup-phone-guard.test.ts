@@ -61,7 +61,8 @@ import type { RepRosterPlayer } from '../../lib/types.ts';
  */
 const EDITOR = 'app/[orgSlug]/coaches/teams/[teamId]/lineups/_LineupEditor.tsx';
 const BUILDER = 'app/[orgSlug]/coaches/teams/[teamId]/lineups/[eventId]/page.tsx';
-const SCHEDULE = 'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx';
+// The schedule's event sheet — its own file since the Schedule deep dive's split (stage 1 · S6, 2026-09-25).
+const SCHEDULE = 'components/coaches/ScheduleEventSheet.tsx';
 const CONSOLE = 'app/[orgSlug]/coaches/teams/[teamId]/game/[eventId]/page.tsx';
 const OVERVIEW = 'app/[orgSlug]/coaches/teams/[teamId]/page.tsx';
 const LIST = 'components/coaches/LineupInningList.tsx';
@@ -877,8 +878,9 @@ describe('D3 — the road in and back out', () => {
     assert.match(schedule, /function initialPeekInning\(event: RepTeamEvent\): number \{\s*if \(!gameHasStarted\(event, nowMs\)\) return 1;/);
     assert.match(schedule, /sessionStorage\.getItem\(gameDayPeriodKey\(event\.id\)\)/);
     assert.doesNotMatch(schedule, /sessionStorage\.setItem\(gameDayPeriodKey/);
-    const open = between(schedule, 'function openEvent(event: RepTeamEvent) {', '\n  }', 'openEvent');
-    assert.match(open, /setPeekInning\(initialPeekInning\(event\)\);/);
+    // The sheet opens fresh for each event (the page keys it on the event), so its opening inning is
+    // the state's initial value — what `openEvent` used to set by hand before the split (S6).
+    assert.match(schedule, /const \[peekInning, setPeekInning\] = useState\(\(\) => initialPeekInning\(ev\)\);/);
   });
   it('the four doors send their own address; the room\'s rows send none', () => {
     assert.match(tab, /const editHref = lineupBuilderHref\(base, ev\.id, \{ returnTo: `\$\{base\}\/schedule\?event=\$\{ev\.id\}&tab=lineup` \}\);/);

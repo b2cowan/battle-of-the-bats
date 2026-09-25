@@ -175,7 +175,8 @@ describe('the station view\'s one-off note takes the editor\'s own label (stage 
 const READER = 'app/[orgSlug]/coaches/teams/[teamId]/history/development/practices/[eventId]/page.tsx';
 const SEASON_END = 'app/[orgSlug]/coaches/teams/[teamId]/season-end/page.tsx';
 const CHROME = 'components/coaches/PracticeSheetChrome.tsx';
-const SCHEDULE = 'app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx';
+// The schedule's event sheet — its own file since the Schedule deep dive's split (S6, 2026-09-25).
+const SCHEDULE = 'components/coaches/ScheduleEventSheet.tsx';
 const HELPER = 'components/coaches/CoachHelperHome.tsx';
 /** What a coach READS — comments stripped first (the `development-vocabulary-guard` idiom). */
 const prose = (rel: string) => read(rel)
@@ -305,8 +306,9 @@ describe('the shelf is "Practices" (stage 6, R6) — the product never says "ran
 describe('who sees what (stage 6, R8 · R9) — one grant, one definition of "has a plan"', () => {
   it('the Schedule panel\'s door follows the plan page\'s grant, never "head coach", and says why', () => {
     const schedule = prose(SCHEDULE);
-    assert.ok(schedule.includes('canWritePracticePlans(page.capabilities)'));
-    assert.ok(!schedule.includes('page.capabilities?.isHeadCoach ?'));
+    // The sheet is handed the page's `capabilities` (the live season's, `page.capabilities`).
+    assert.ok(schedule.includes('capabilities && canWritePracticePlans(capabilities)'));
+    assert.ok(!/capabilities\?\.isHeadCoach \?/.test(schedule));
     assert.ok(schedule.includes('No plan yet. Writing the plan comes with Schedule: View + edit — ask your head coach.'));
     // The sheet renders from a non-null parameter since the phone re-evaluation's stage 2 (C3,
     // 2026-09-21): `renderEventSheet(ev)`. The definition it reads is what this pins.

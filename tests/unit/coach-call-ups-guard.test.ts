@@ -475,7 +475,8 @@ describe('call-ups — the mark a coach reads', () => {
 
   it('the schedule\'s lineup peek reads call-ups, or it shows the wrong batting order', () => {
     assert.match(
-      read('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx'), /data\.callUps/,
+      // The schedule's event sheet — its own file since the Schedule deep dive's split (S6, 2026-09-25).
+      read('components/coaches/ScheduleEventSheet.tsx'), /data\.callUps/,
       'The schedule sheet\'s lineup peek ignores the call-ups key again. It builds rows by resolving '
       + 'each saved entry to a player and drops the ones it cannot resolve, then renumbers — so a '
       + 'call-up batting 4th vanishes and everyone below moves up a slot. The coach reads a different '

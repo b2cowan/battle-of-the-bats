@@ -107,8 +107,13 @@ for (const { route, predicate, why } of READ_GATES) {
 }
 
 test('the schedule panel builds its tabs from the doors object, never unconditionally', () => {
-  const page = read('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx');
-  assert.match(page, /scheduleDrawerDoors\(/, 'the panel must derive its doors from lib/coach-schedule-doors');
+  // The page derives the doors and hands the one object to the sheet, which has been its own file
+  // since the Schedule deep dive's split (S6, 2026-09-25) — the tabs and every door read it there.
+  const schedulePage = read('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx');
+  assert.match(schedulePage, /scheduleDrawerDoors\(/, 'the panel must derive its doors from lib/coach-schedule-doors');
+  assert.match(schedulePage, /drawerDoors=\{drawerDoors\}/, 'and the sheet is handed that one object');
+  const page = read('components/coaches/ScheduleEventSheet.tsx');
+  assert.doesNotMatch(page, /scheduleDrawerDoors\(/, 'the sheet never derives a second answer beside the page\'s');
   assert.doesNotMatch(
     page,
     /slideTabs[^\n]*=\s*\[\s*\{\s*key:\s*'attendance'/,

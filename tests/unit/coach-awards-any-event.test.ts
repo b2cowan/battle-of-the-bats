@@ -11,7 +11,8 @@ import { describe, it } from 'node:test';
 import { readFileSync } from 'node:fs';
 
 const read = (p: string) => readFileSync(p, 'utf8');
-const schedule = read('app/[orgSlug]/coaches/teams/[teamId]/schedule/page.tsx');
+// The schedule's event sheet — its own file since the Schedule deep dive's split (S6, 2026-09-25).
+const schedule = read('components/coaches/ScheduleEventSheet.tsx');
 const awardsRoute = read('app/api/coaches/[orgSlug]/teams/[teamId]/awards/route.ts');
 const awardIdRoute = read('app/api/coaches/[orgSlug]/teams/[teamId]/awards/[awardId]/route.ts');
 const reportPanel = read('app/[orgSlug]/coaches/teams/[teamId]/history/awards/panel.tsx');
@@ -48,8 +49,9 @@ describe('the schedule window offers awards on every event', () => {
   });
 
   it('builds the Give form label from the shared helper, on the org-zone day', () => {
-    assert.match(schedule, /label: `\$\{awardOccasionLabel\(selectedEvent, null\)\} — \$\{shortDate\(orgDayKey\(selectedEvent\.startsAt\)\)\}`/);
-    assert.doesNotMatch(schedule, /vs \$\{selectedEvent\.opponent \?\? 'opponent'\}/);
+    // The sheet names its event `ev` (it is handed one; the page's `selectedEvent` is that event).
+    assert.match(schedule, /label: `\$\{awardOccasionLabel\(ev, null\)\} — \$\{shortDate\(orgDayKey\(ev\.startsAt\)\)\}`/);
+    assert.doesNotMatch(schedule, /vs \$\{(selectedEvent|ev)\.opponent \?\? 'opponent'\}/);
   });
 
   /** Owner, first look at the build (2026-09-25): "why is give awards in a different place in
