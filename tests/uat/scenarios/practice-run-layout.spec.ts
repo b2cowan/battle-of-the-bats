@@ -60,7 +60,8 @@ async function openList(page: Page) {
 async function openRun(page: Page) {
   await openList(page);
   await page.locator('[data-testid="run-outline"] [data-face="block"]').first().click();
-  await expect(page.getByRole('button', { name: 'Back', exact: true })).toBeVisible();
+  // The block's own title — a phone has no "Back" button any more (its foot is the block stepper,
+  // stage 3b), so the landing is waited on by the one thing every width draws.
   await expect(page.locator('h1')).toHaveText(/warm-up/i);
 }
 
@@ -86,7 +87,9 @@ test.describe('Practice Plans 1b — field run screen', () => {
 
       // "Next block" / "Rotate now" — whichever the cursor is on. Read the RESOLVED box, not the
       // declared min-height, so a padding or line-height change can't quietly shrink it.
-      const primary = page.getByRole('button', { name: /Rotate now|Next block/ });
+      // `.first()`: in a rotation a phone's foot carries BOTH "Rotate now" and the block arrow ("Next
+      // block: …") — the round row comes first in the DOM, and it is the one you'll tap next (stage 3b).
+      const primary = page.getByRole('button', { name: /Rotate now|Next block/ }).first();
       await expect(primary).toBeVisible();
       const box = await primary.boundingBox();
       expect(box, 'primary control has no box').not.toBeNull();
@@ -206,57 +209,82 @@ test.describe('Practice Plans 1b — field run screen', () => {
     await page.getByRole('button', { name: 'Blocks' }).click();
     await expect(page.locator('[data-testid="run-outline"]')).toBeVisible();
 
-    // A block row opens that block; Back from the first stop returns to the list.
+    // A block row opens that block; ‹ on the first block returns to the list (the phone's block
+    // stepper, stage 3b — a computer's Back does the same).
     await blockRows.nth(0).click();
     await expect(page.locator('h1')).toHaveText(/warm-up/i);
-    await page.getByRole('button', { name: 'Back', exact: true }).click();
+    await page.getByRole('button', { name: 'Back to the list' }).click();
     await expect(page.locator('[data-testid="run-outline"]')).toBeVisible();
   });
 
   /**
-   * Practice plans on a phone, stage 3 (M1, owner 2026-09-25): on a phone the buttons are a BAR AT
-   * THE FOOT OF THE SCREEN on every stop and station — above the tab bar at rest AND half a viewport
-   * in (a sticky bar measured only at rest is a bar nobody measured; the game-day console's own
-   * hit-tests missed a real defect by scrolling to the page end first) — and a station carries the
-   * stop's Back, which returns the SAME station a round earlier (an accidental Rotate now used to be
-   * three taps to undo). Resolved boxes and a hit-test on the primary's centre, never a look.
+   * Practice plans on a phone, stage 3b (M5 · M6, owner 2026-09-25): on a phone Run practice is a FULL
+   * SCREEN OF ITS OWN — over the team line and the tab bar, the tab bar hidden — with a pinned head and
+   * a foot BELOW the words that neither moves as the words scroll nor is covered by anything. The foot
+   * is the block stepper with a round row in a rotation; each block remembers its round while the run
+   * is open, so a › by mistake is undone by one ‹ — the same station, the same round.
+   * Resolved boxes and hit-tests at the scroller's top, half-way and end, never a look.
    */
-  const BAR = '[class*="ppRunActions"]';
-  const PRIMARY = `${BAR} [class*="ppRunPrimary"]`;
+  const SCREEN = '[data-run-scroll]';
+  const FOOT = `${SCREEN} ~ [class*="ppRunFoot"]`;
+  /** Scroll the run's OWN scroller (never the window — the words scroll inside the screen), and read it back. */
+  const scrollRun = (page: Page, where: 'top' | 'mid' | 'end') => page.evaluate(([sel, at]) => {
+    const s = document.querySelector(sel)!;
+    s.scrollTo({ top: at === 'end' ? s.scrollHeight : at === 'mid' ? Math.round(s.clientHeight / 2) : 0, behavior: 'instant' });
+  }, [SCREEN, where] as const);
+  const runScrollTop = (page: Page) => page.evaluate(sel => document.querySelector(sel)!.scrollTop, SCREEN);
   for (const vp of [{ width: 390, height: 844 }, { width: 360, height: 780 }]) {
-    test(`on a phone the bar sits on the tab bar on a station, at rest and mid-scroll — and Back is the previous round (${vp.width})`, async ({ page }) => {
+    test(`on a phone the run covers the app and its foot stays put — rounds and blocks from the foot (${vp.width})`, async ({ page }) => {
       await page.setViewportSize(vp);
       await openList(page);
-      await page.locator('[data-testid="run-outline"] [data-face="station"]').first().click();
+      await expect(page.getByRole('dialog', { name: /^Run practice/ })).toBeVisible();
+      await page.locator('[data-testid="run-outline"] [data-face="station"]').nth(1).click();
       await expect(page.getByRole('button', { name: 'All stations' })).toBeVisible();
       const station = (await page.locator('h1').textContent())?.trim();
+      const foot = page.locator(FOOT);
+      const rotate = foot.getByRole('button', { name: 'Rotate now', exact: true });
 
-      for (const y of [0, Math.round(vp.height / 2)]) {
-        await page.evaluate(v => window.scrollTo({ top: v, behavior: 'instant' }), y);
-        const at = await page.evaluate(([barSel, priSel]) => {
-          const bar = document.querySelector(barSel)!.getBoundingClientRect();
-          const nav = Array.from(document.querySelectorAll('[class*="bottomNav"]'))
-            .map(e => e.getBoundingClientRect()).find(r => r.height >= 50 && r.bottom >= window.innerHeight - 1);
-          const pri = document.querySelector(priSel)!;
-          const q = pri.getBoundingClientRect();
-          const hit = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2);
-          return { bottom: bar.bottom, nav: nav ? nav.top : window.innerHeight, hits: !!hit && pri.contains(hit) };
-        }, [BAR, PRIMARY]);
-        expect(Math.abs(at.bottom - at.nav), `the bar's foot sits on the tab bar at scrollY ${y}`).toBeLessThanOrEqual(1);
-        expect(at.hits, `a tap on the primary lands on it at scrollY ${y}`).toBe(true);
+      for (const at of ['top', 'mid', 'end'] as const) {
+        await scrollRun(page, at);
+        const m = await page.evaluate(([footSel]) => {
+          const footEl = document.querySelector(footSel)!;
+          const f = footEl.getBoundingClientRect();
+          const head = document.querySelector('[class*="ppRunScreen"] [class*="ppRunBar"]')!.getBoundingClientRect();
+          const tabBar = Array.from(document.querySelectorAll('[class*="bottomNav"]'))
+            .some(e => getComputedStyle(e).visibility !== 'hidden' && e.getBoundingClientRect().height > 0);
+          const misses = Array.from(footEl.querySelectorAll('button, a')).filter(e => {
+            const q = e.getBoundingClientRect();
+            const hit = document.elementFromPoint(q.left + q.width / 2, q.top + q.height / 2);
+            return !hit || !e.contains(hit);
+          }).map(e => e.getAttribute('aria-label') ?? e.textContent);
+          return { footBottom: f.bottom, headTop: head.top, tabBar, misses, winScroll: window.scrollY };
+        }, [FOOT]);
+        expect(Math.abs(m.footBottom - vp.height), `the foot sits at the screen's foot (${at})`).toBeLessThanOrEqual(1);
+        expect(m.headTop, `the head stays pinned (${at})`).toBe(0);
+        expect(m.tabBar, 'the tab bar is hidden under the run').toBe(false);
+        expect(m.misses, `a tap on every foot control lands on it (${at})`).toEqual([]);
+        expect(m.winScroll, 'the words scroll inside the screen, never the page').toBe(0);
       }
 
-      // ⚠ INSTANT, not the page's default: `html { scroll-behavior: smooth }` animates a scripted
-      // scroll, and a tap landing mid-animation let the animation finish AFTER the screen's own jump to
-      // the top (measured: 36px at 390). A coach's finger scroll is not animated that way and the run
-      // screen starts no smooth scroll of its own — the probe was racing itself, not the product.
-      await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: 'instant' }));
-      await page.locator(PRIMARY).click();
+      // Rotate now from the words' end → the next round, opened at its top; round 1 had no round back.
+      await expect(foot.getByRole('button', { name: /^Back to round/ })).toHaveCount(0);
+      await scrollRun(page, 'end');
+      await rotate.click();
       await expect(page.locator('[class*="ppRunBar"] b')).toHaveText(/Round 2 of/);
-      expect(await page.evaluate(() => window.scrollY), 'the next round opens at its top').toBe(0);
-      await page.locator(BAR).getByRole('button', { name: 'Back', exact: true }).click();
+      expect(await runScrollTop(page), 'the next round opens at its top').toBe(0);
+
+      // › skips the rest of the rotation; ‹ comes back to the SAME station on the SAME round.
+      await foot.getByRole('button', { name: /^Next block:/ }).click();
+      await expect(page.locator('h1')).not.toHaveText(station ?? '');
+      await foot.getByRole('button', { name: /^Previous block:/ }).click();
+      await expect(page.locator('h1')).toHaveText(station ?? '');
+      await expect(page.locator('[class*="ppRunBar"] b')).toHaveText(/Round 2 of/);
+
+      // "‹ Round 1" goes back a round on the same station, and is gone on round 1.
+      await foot.getByRole('button', { name: 'Back to round 1' }).click();
       await expect(page.locator('[class*="ppRunBar"] b')).toHaveText(/Round 1 of/);
       await expect(page.locator('h1')).toHaveText(station ?? '');
+      await expect(foot.getByRole('button', { name: /^Back to round/ })).toHaveCount(0);
     });
   }
 
@@ -268,7 +296,8 @@ test.describe('Practice Plans 1b — field run screen', () => {
     // global "Skip to content" link and the bottom nav — and fails this feature for chrome it does
     // not own. (Same trap the frozen-season spec documents: scope to the coaches main, not <body>.)
     const short = await page.evaluate(() => {
-      const root = document.querySelector('[class*="ppRunPage"]');
+      // The phone's whole screen — its foot sits outside the page column (stage 3b).
+      const root = document.querySelector('[class*="ppRunScreen"]') ?? document.querySelector('[class*="ppRunPage"]');
       if (!root) return [{ label: 'RUN SCREEN DID NOT RENDER', h: -1 }];
       const bad: { label: string; h: number }[] = [];
       for (const el of Array.from(root.querySelectorAll('button, a[href], summary'))) {

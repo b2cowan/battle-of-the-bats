@@ -114,7 +114,8 @@ type Props = {
    * gloved taps, three times a practice. It records nothing, so D4 and D26 are untouched.
    * ⚠ AND IT GOES BOTH WAYS (stage 3, owner 2026-09-25): Back · Rotate now, exactly the stop's pair —
    * the forward button alone made an accidental Rotate now three taps to undo. How Back keeps this
-   * station open is at the call site.
+   * station open is at the call site. On a PHONE the run's own foot moves it (stage 3b — "‹ Round 1"
+   * · Rotate now over the block stepper) and this slot carries only a helper's line, with the words.
    */
   actions?: ReactNode;
 };

@@ -11580,8 +11580,8 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 
 /* ≥56px, well above the 44px floor — and no swipe, drag or long-press anywhere on this screen: a
    drag and a long-press are what gloves defeat; a swipe collides with the phone's back gesture,
-   which goes up ONE level here (the page's header has the whole reasoning, stage 3 · M3). On a
-   phone this row is the bar at the foot of the screen — see the ≤640 block after the buttons. */
+   which goes up ONE level here (the page's header has the whole reasoning, stage 3 · M3). A
+   computer's row; on a phone the run's own foot moves it instead (`.ppRunFoot`, stage 3b). */
 .ppRunActions { display: flex; gap: 0.55rem; margin-top: 0.9rem; }
 
 /* What a HELPER sees where the "Next block" / "Rotate now" pair would be (Phase 4, frame H3).
@@ -11601,66 +11601,133 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   border: 1px solid var(--home-ink, var(--white-90));
   font-size: var(--type-heading); font-weight: 800; line-height: 1.25;
 }
-.ppRunPrimary:hover { background: var(--home-ink-soft, var(--white-80)); border-color: var(--home-ink-soft, var(--white-80)); }
 .ppRunSecondary {
   width: 4.75rem; flex: 0 0 auto; min-height: 3.5rem; display: grid; place-items: center;
   border-radius: 10px; border: 1px solid var(--border-2); background: none; cursor: pointer;
   color: var(--text-secondary); font-size: var(--type-body); font-weight: 600;
 }
-.ppRunSecondary:hover:not(:disabled) { color: var(--text-primary); border-color: var(--border); }
-.ppRunSecondary:disabled { opacity: 0.35; cursor: default; }
+/* A pointer that HOVERS only: a phone keeps the last-tapped button in its hover state, and the foot's
+   ink means "the one you'll tap next" (stage 3b) — a Rotate now or a "‹ Round 1" left in its hover
+   shade after the tap read as a different button. (No `:disabled` face: neither button ever is — W4,
+   and the foot's absent-never-greyed rule.) */
+@media (hover: hover) {
+  .ppRunPrimary:hover { background: var(--home-ink-soft, var(--white-80)); border-color: var(--home-ink-soft, var(--white-80)); }
+  .ppRunSecondary:hover { color: var(--text-primary); border-color: var(--border); }
+}
 
-/* ── ON A PHONE THE BUTTONS ARE A BAR AT THE FOOT OF THE SCREEN (practice plans on a phone, stage 3 ·
-   M1, owner 2026-09-25) — on every stop and every station, in ONE place: every station hid Rotate
-   now under the tab bar (9 of 9 on the fixture, 118–302px) and the stops that fit put the button
-   anywhere from 270 to 619px down. The station carries the stop's own row, Back included.
-   ⚠ THE RECORDING SCREEN'S BAR (E4, `DevelopmentSession.module.css` `.dock`), rule for rule: sticky
-   at `--coach-foot-clear` — NOT zero (a bar at zero is drawn under the nav) — with NO safe-area
-   padding (that inset is already inside the token) and z-index 2, NOT above the nav (a bar raised
-   over the nav buries the sheets that open from it: the More sheet and the help panel must open
-   OVER this). The column's own width — no negative margin guessing at a gutter two elements up.
-   The card ground and a top rule, so the page reads as scrolling under it. No save pill on this
-   screen to clear: the run writes nothing (D4).
-   ⚠ AND TWO ADDITIONS TO E4, so the bar never moves (measured on the build, 2026-09-25):
-   · the page fills the screen — a flex column at least the screen less the masthead
-     (`--coach-header-h`, published by the masthead) and the main's 1rem top gutter — and a growing
-     `::after`, ordered before the bar, takes the slack: on a SHORT stop the bar still sits at the
-     foot, on a long one it keeps its ordinary 0.9rem above it. ⚠ `100vh`, NOT `100dvh` — the
-     SHELL's own unit (`.coachesShell { min-height: 100vh }`), which is the LARGE viewport on a phone
-     whose toolbar collapses. Sized to the visible screen (`dvh`) while the shell sizes to the large
-     one, a short stop could scroll by the toolbar's height further than the page reached, and the
-     bar would ride up by it at the end (/review 2026-09-25 — CSS arithmetic; a fixed-viewport
-     browser cannot show it, so no probe does);
-   · the shell drops the main's 2rem foot for a page that opts in with `data-docked-foot` on its
-     bar. A sticky bar pins only while its own place in the page is below the pin line, and at the
-     page's END its place was that foot above the tab bar — the bar rode up 32px on a long station
-     and 55px on a short stop the shell still lets scroll 72px. (E4's recording bar lifts the same
-     32 at its end; wearing the marker is its fix too — a follow-up, with its own hit-tests.)
-   ⚠ A HELPER'S LINE STAYS WITH THE WORDS. On a short stop the bar is held 72px above its own place
-   (the column runs to the screen's foot, under the tab bar), so whatever sits just above that place
-   is behind the bar at rest — the first build pushed "these buttons move only your screen" there
-   (721–763 under a bar at 699–772). At the end of a long page it sits just above the bar anyway.
-   Follow-ups the /simplify altitude pass named, not taken here (they move other screens): the shell
-   reserves the nav twice (`.coachesShell` min-height 100vh inside a main that already pads the nav),
-   which is the short page's 72px of travel; and this is the third hand copy of the docked-bar recipe
-   (`.dock`, `.gdFooter`) — one shared class wearing the marker would end the drift. */
-@media (max-width: 640px) {
-  .ppRunPage:has(> .ppRunActions) {
-    display: flex;
-    flex-direction: column;
-    min-height: calc(100vh - var(--coach-header-h, 0px) - 1rem);
-  }
-  .ppRunPage:has(> .ppRunActions)::after { content: ''; flex: 1 1 auto; order: 1; }
-  .coachesMain:has([data-docked-foot]) { padding-bottom: 0; }
-  .ppRunActions {
-    order: 2;
-    position: sticky;
-    bottom: var(--coach-foot-clear);   /* NOT zero, and no safe-area padding — see above */
-    z-index: 2;                        /* and NOT above the nav — see above */
-    padding: 0.5rem 0;
-    border-top: 1px solid var(--home-line, var(--border-2));
-    background: var(--card-bg, var(--surface));
-  }
+/* ── ON A PHONE, RUN PRACTICE IS A FULL SCREEN OF ITS OWN (practice plans on a phone, stage 3b · M5,
+   owner 2026-09-25 — "if anything during a run you want to avoid navigating away by mistake"). The
+   block sheet's construction: fixed over the team line and the tab bar at the overlay layer (400,
+   `.modalOverlay`'s phone z — above the nav's 300; the help drawer still opens over it at 700), a
+   body that scrolls on its own, the page's head pinned at the top of that body, and a foot BELOW the
+   body, never over it. `FieldScreen` registers it with the portal's overlay signal, so the tab bar
+   hides and the page behind stops scrolling. The shell's ground, so it reads as the portal's page.
+   ⚰ IT RETIRED STAGE 3's BAR (M1), the recording screen's sticky bar pinned at `--coach-foot-clear`,
+   and the three pieces that held it still: the shell dropping its foot for a page wearing
+   `data-docked-foot`, the page column stretched to the screen, and the `::after` spacer ordered
+   before the bar. A foot outside the scroller cannot ride up at the page's end or hide the band
+   above its own place, so none of it has a job. (E4's `.dock` keeps its own recipe and its 32px
+   lift at a long page's end — the follow-up named there stands.)
+   The words gain the team line (37px) and the tab bar (72) — 109px at 390 (drawn). ── */
+.ppRunScreen {
+  position: fixed;
+  inset: 0;
+  z-index: 400;
+  display: flex;
+  flex-direction: column;
+  background: var(--pitch-black);
+}
+.ppRunScroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-bottom: 1.25rem;
+}
+/* The column carries the side gutter so the head, its direct child, can bleed to it — its own
+   parent's padding, never a guessed gutter further up. */
+.ppRunScreen .ppRunPage { padding-inline: 1rem; }
+.ppRunScreen .ppRunBar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  margin: 0 -1rem 0.9rem;
+  padding: calc(0.4rem + env(safe-area-inset-top, 0px)) 0.75rem 0.4rem 1rem;
+  background: var(--pitch-black);
+  border-bottom: 1px solid var(--home-line, var(--border-2));
+}
+/* The foot (M6, `RunFoot`): the block stepper always, a round row above it in a rotation. It clears
+   the home indicator itself — nothing under it does any more. */
+.ppRunFoot {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.5rem 1rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
+  border-top: 1px solid var(--home-line, var(--border-2));
+  background: var(--card-bg, var(--surface));
+}
+.ppRunFootRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 30rem;
+  margin-inline: auto;
+}
+/* "‹ Round 1" — the secondary button, sized to its words: the grid lays the chevron and the words
+   in a row, not stacked. */
+.ppRunRoundBack { width: auto; grid-auto-flow: column; gap: 0.15rem; padding: 0 0.85rem 0 0.6rem; }
+/* The last round's line, where Rotate now was — a note, never a greyed button. */
+.ppRunFootNote {
+  flex: 1 1 auto;
+  margin: 0;
+  text-align: center;
+  font-size: var(--type-body);
+  line-height: 1.35;
+  color: var(--text-tertiary);
+}
+/* The block arrows and, on the last block, "Done" (back to the plan) in the › place — the field's 56px,
+   outlined, INK when it is the one you'll tap next (`data-ink`). Never lime (the rules above). */
+.ppRunArrow, .ppRunEnd {
+  flex: 0 0 auto;
+  min-width: 3.5rem;
+  min-height: 3.5rem;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  border: 1px solid var(--border-2);
+  background: var(--card-bg, var(--surface));
+  color: var(--text-secondary);
+  cursor: pointer;
+  font: inherit;
+}
+.ppRunEnd {
+  flex: 1 1 auto;
+  padding: 0.4rem 0.75rem;
+  text-align: center;
+  text-decoration: none;
+  font-size: var(--type-body);
+  font-weight: 700;
+  line-height: 1.2;
+}
+.ppRunArrow[data-ink], .ppRunEnd[data-ink] {
+  background: var(--home-ink, var(--white-90));
+  border-color: var(--home-ink, var(--white-90));
+  color: var(--home-paper, var(--bg));
+}
+.ppRunEnd[data-ink] { font-size: var(--type-heading); font-weight: 800; }
+.ppRunCount {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  font-family: var(--font-data);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
 }
 
 /* D8 — who's coming, folded shut. Already recorded, already true; one tap to open. */

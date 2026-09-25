@@ -1,27 +1,36 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { readCode, splitPhoneCss } from './_source-code.ts';
+import { functionBody, readCode, splitPhoneCss } from './_source-code.ts';
 
 /**
  * ══════════════════════════════════════════════════════════════════════════════════════════
  * PRACTICE PLANS ON A PHONE · STAGE 3 — the field (owner ruling M1–M4 = A, 2026-09-25, with the
  * station's Back asked for the same day; plan docs/projects/active/COACH_PRACTICE_PLANS_PHONE_PLAN.md §6f)
  *
- *   M1 **THE BUTTONS ARE A BAR AT THE FOOT OF THE SCREEN** on a phone, on every stop AND every
- *      station, in one place. A station carries the STOP's own row, Back included. Every tap opens
- *      its screen at the top. (The measurements live in the stylesheet's comment.)
+ *   M1 **THE BUTTONS AT THE FOOT OF THE SCREEN** on a phone, on every stop AND every station, in one
+ *      place; a station carries the STOP's own moves, back-a-round included; every tap opens its
+ *      screen at the top. ⚠ Built as a bar pinned above the tab bar, then REPLACED by stage 3b (below)
+ *      the same day — the foot is now the full screen's own.
  *   M2 **A STOP READS LIKE A STATION**: ONE shared piece holds the headed lines; a drill block (one
  *      station — the station IS the block) shows that station's setup and kit, and no one-row
  *      "Stations" list.
  *   M3 **NO SWIPE, CLOSED.** Nothing to build — held here so a gesture handler cannot arrive quietly.
  *   M4 **"JUST FOR TONIGHT" FIRST** — it was a station's eighth line.
+ *
+ * STAGE 3b — the field, full screen (owner ruling M5 = A, M6 = B, 2026-09-25; plan §6g)
+ *   M5 **ON A PHONE RUN PRACTICE IS A FULL SCREEN OF ITS OWN**, the block sheet's construction, over
+ *      the team line and the tab bar — a stray tab tap threw the coach's place away (the run keeps
+ *      nothing between opens). Stage 3's pinned bar and the three pieces holding it are retired.
+ *   M6 **ITS FOOT IS THE BLOCK STEPPER** — "‹ Block 2 of 4 ›" always, a round row above it in a
+ *      rotation (Rotate now, and from round 2 a labelled "‹ Round 1"); absent, never greyed; each
+ *      block remembers its round while the run is open.
  * ══════════════════════════════════════════════════════════════════════════════════════════
  */
 
 const RUN = readCode('app/[orgSlug]/coaches/teams/[teamId]/practice/[eventId]/run/page.tsx');
 const STATION = readCode('app/[orgSlug]/coaches/teams/[teamId]/practice/_PracticeStationView.tsx');
 const CSS = readCode('app/[orgSlug]/coaches/coaches.module.css');
-/** Every ≤640 rule in the stylesheet — the phone's bar lives there and nowhere else. */
+/** Every ≤640 rule in the stylesheet — none of them may serve the run's retired bar any more. */
 const { phone: phoneBar } = splitPhoneCss(CSS);
 const rule = (block: string, selector: string) => {
   const at = block.indexOf(`${selector} {`);
@@ -31,45 +40,96 @@ const rule = (block: string, selector: string) => {
 /** The shared piece, from its export to the line helper after it. */
 const LINES = STATION.slice(STATION.indexOf('export function StationLines('), STATION.indexOf('function StationFactLine('));
 
-describe('M1 · the bar at the foot of the screen — the recording screen\'s construction (E4)', () => {
-  const bar = rule(phoneBar, '.ppRunActions');
-  it('sticks at the clearance token, never at zero, and never above the nav', () => {
-    assert.match(bar, /position:\s*sticky/);
-    assert.match(bar, /bottom:\s*var\(--coach-foot-clear\)/, 'a bar at zero is drawn under the nav');
-    assert.match(bar, /z-index:\s*2;/, 'a bar raised over the nav buries the sheets that open from it');
-    assert.doesNotMatch(bar, /env\(safe-area/, 'the inset is already inside the token — counting it twice floats the bar');
-    assert.doesNotMatch(bar, /margin-inline:\s*-/, 'the column\'s own width — never a guessed gutter');
+/** The phone's frame and foot — module-level components in the run page. */
+const FRAME = functionBody(RUN, 'FieldScreen');
+const FOOT = functionBody(RUN, 'RunFoot');
+
+describe('3b · M5 — on a phone, Run practice is a full screen of its own', () => {
+  it('fixed over the app at the overlay layer, on the shell\'s ground', () => {
+    const screen = rule(CSS, '.ppRunScreen');
+    assert.match(screen, /position:\s*fixed;/);
+    assert.match(screen, /inset:\s*0;/);
+    assert.match(screen, /z-index:\s*400;/, 'the phone overlay layer — over the nav (300), under the help drawer (700)');
+    assert.match(screen, /flex-direction:\s*column;/);
+    assert.match(screen, /background:\s*var\(--pitch-black\);/, 'an explicit ground — a fixed surface with none shows the page through it');
   });
-  it('sits at the foot on a short stop too — the page fills the screen, a spacer before the bar takes the slack', () => {
-    assert.match(phoneBar, /\.ppRunPage:has\(> \.ppRunActions\)::after \{ content: ''; flex: 1 1 auto; order: 1; \}/);
-    assert.match(bar, /order:\s*2;/, 'the spacer is ordered before the bar');
-    assert.doesNotMatch(bar, /margin-top:\s*auto/, 'the bar keeps its 0.9rem above it on a long page — the spacer takes the slack');
-    const page = rule(phoneBar, '.ppRunPage:has(> .ppRunActions)');
-    assert.match(page, /flex-direction:\s*column/);
-    assert.match(page, /min-height:\s*calc\(100vh - var\(--coach-header-h, 0px\) - 1rem\)/,
-      'the SHELL\'s unit (100vh, the large viewport) and the masthead\'s published height — never 100dvh, never a copied 37');
+  it('registers with the portal\'s overlay signal — the tab bar hides, the page behind stops scrolling', () => {
+    assert.match(FRAME, /useOverlayOpen\(phone\);/);
+    assert.ok(RUN.includes("import { useOverlayOpen } from '@/lib/coaches-overlay';"));
   });
-  it('the shell drops the main\'s foot for a page whose bar opts in — the page never reaches up by its own class names', () => {
-    assert.match(phoneBar, /\.coachesMain:has\(\[data-docked-foot\]\) \{ padding-bottom: 0; \}/,
-      'the main\'s 2rem foot is what let the bar ride up at the page\'s end (measured 32px on a station, 55 on a short stop)');
-    assert.ok(RUN.includes('<div className={styles.ppRunActions} data-docked-foot>'), 'the bar opts in');
+  it('a modal, as the block sheet — what is under it is covered, and the layout sweep measures it alone', () => {
+    assert.ok(FRAME.includes('role="dialog" aria-modal="true" aria-label={label}'));
   });
-  it('a helper\'s line stays with the words — never pushed down behind a bar held above its own place', () => {
-    assert.doesNotMatch(phoneBar, /\.ppRunHandedOff/,
-      'pushed to the foot of a short stop it sat at 721–763 under the bar at 699–772 (measured on the first build)');
+  it('the foot sits BELOW the scroller, never over the words; the head pins inside it', () => {
+    assert.match(FRAME, /<div ref=\{scrollRef\} className=\{styles\.ppRunScroll\} data-run-scroll>\{children\}<\/div>\s*\{foot && <div className=\{styles\.ppRunFoot\}>\{foot\}<\/div>\}/);
+    const scroll = rule(CSS, '.ppRunScroll');
+    assert.match(scroll, /overflow-y:\s*auto;/);
+    assert.match(scroll, /min-height:\s*0;/, 'a flex child that may shrink below its content, or the foot is pushed off the screen');
+    const head = rule(CSS, '.ppRunScreen .ppRunBar');
+    assert.match(head, /position:\s*sticky;/);
+    assert.match(head, /top:\s*0;/);
+    assert.match(rule(CSS, '.ppRunFoot'), /padding:[^;]*env\(safe-area-inset-bottom, 0px\)/, 'nothing under the foot clears the home indicator any more');
   });
-  it('a station carries the stop\'s own row — Back included — never the forward button alone', () => {
-    assert.ok(RUN.includes('actions={actionRow}'), 'one bar for the stop and the station');
-    assert.ok(!/actions=\{\s*advance\.disabled/.test(RUN), 'the forward-only station row is gone');
+  it('ONE frame for the whole run — loading, the list, a station and a stop all return it', () => {
+    assert.equal(RUN.match(/return frame\(/g)?.length, 4, 'a screen drawn outside the frame would unregister the overlay — the tab bar flashes back');
   });
-  it('"Who\'s here tonight" stays after the buttons in the page — a phone lays the bar out last by its order', () => {
+  it('stage 3\'s pinned bar is retired, with the three pieces that held it', () => {
+    assert.ok(!RUN.includes('data-docked-foot') && !CSS.includes('data-docked-foot'), 'the shell\'s opt-in has no page left to serve');
+    assert.doesNotMatch(CSS, /\.ppRunPage:has\(> \.ppRunActions\)/, 'the stretched column and its spacer');
+    assert.doesNotMatch(phoneBar, /\.ppRunActions/, 'no phone rule for a computer\'s row');
+    assert.match(RUN, /const actionRow = phone \? helperLine : \(/, 'a phone draws no Back / Next row — the foot moves the run');
+  });
+  it('a helper\'s line stays with the words', () => {
+    assert.doesNotMatch(phoneBar, /\.ppRunHandedOff/);
+    assert.ok(RUN.includes('actions={actionRow}'), 'the station takes the stop\'s own — on a phone, the helper\'s line alone');
+  });
+  it('"Who\'s here tonight" stays after the buttons — a computer never finds them under an opened roster', () => {
     const stop = RUN.slice(RUN.lastIndexOf('className={styles.ppRunNext}'));
-    assert.ok(stop.indexOf('{actionRow}') < stop.indexOf('{attendanceFold}'),
-      'a computer\'s buttons are not docked — an opened roster above them would push them down (/review 2026-09-25)');
-    assert.ok(STATION.indexOf('{props.actions}') > STATION.indexOf('Coming to you'), 'the station\'s bar is its last child');
+    assert.ok(stop.indexOf('{actionRow}') < stop.indexOf('{attendanceFold}'));
+    assert.ok(STATION.indexOf('{props.actions}') > STATION.indexOf('Coming to you'), 'the station\'s moves are its last child');
   });
-  it('every tap opens its screen at the top — before paint, keyed on the stop and the station', () => {
-    assert.match(RUN, /useLayoutEffect\(\(\) => \{\s*window\.scrollTo\(\{ top: 0, left: 0, behavior: 'instant' \}\);\s*\}, \[stepIndex, stationId\]\);/);
+  it('every tap opens its screen at the top — before paint; on a phone the screen\'s own scroller', () => {
+    assert.match(RUN, /useLayoutEffect\(\(\) => \{\s*const top = \{ top: 0, left: 0, behavior: 'instant' \} as const;\s*if \(scrollRef\.current\) scrollRef\.current\.scrollTo\(top\);\s*else window\.scrollTo\(top\);\s*\}, \[stepIndex, stationId\]\);/);
+  });
+});
+
+describe('3b · M6 — the foot is the block stepper, with a round row in a rotation', () => {
+  it('the block stepper always: ‹ Block n of N ›, ‹ from the first block is the list, the last block\'s › is the plan', () => {
+    assert.ok(FOOT.includes('<nav className={styles.ppRunFootRow} aria-label="Blocks">'));
+    assert.ok(FOOT.includes("aria-label={prevTitle ? `Previous block: ${prevTitle}` : 'Back to the list'}"));
+    assert.ok(FOOT.includes('Block {blockIndex + 1} of {blocks.length}'));
+    assert.match(FOOT, /\{nextTitle \? \([\s\S]*?aria-label=\{`Next block: \$\{nextTitle\}`\}[\s\S]*?\) : \([\s\S]*?aria-label="Done — back to the plan">Done<\/Link>/);
+  });
+  it('the practice ends on "Done" — a phone and a computer alike; the coach finishing, never a claim it ran', () => {
+    assert.equal(RUN.match(/aria-label="Done — back to the plan">Done<\/Link>/g)?.length, 2, 'the phone\'s › place and the computer\'s last stop');
+    assert.ok(!RUN.includes('>Back to the plan<'), 'one name for the one way out of the practice');
+  });
+  it('the round row only in a rotation: Rotate now, and a LABELLED back from round 2', () => {
+    assert.match(FOOT, /\{round != null && \(/);
+    assert.match(FOOT, /\{round > 1 && \(/, 'no back on round 1 — Rotate now takes the row');
+    assert.ok(FOOT.includes('aria-label={`Back to round ${round - 1}`}') && FOOT.includes('Round {round - 1}'),
+      'labelled — a bare ‹ over the block\'s ‹ was two identical arrows moving different things');
+    assert.match(FOOT, /\{lastRound\s*\? <p className=\{styles\.ppRunFootNote\}>Last round/, 'the last round has a note where Rotate now was');
+  });
+  it('absent, never greyed — nothing in the foot is ever disabled', () => {
+    assert.doesNotMatch(FOOT, /disabled/);
+  });
+  it('the ink is the one you\'ll tap next — Rotate now, else the block\'s ›', () => {
+    assert.ok(FOOT.includes("const ink = lastRound ? '' : undefined;"), 'no Rotate now left — the block\'s way on is the next tap');
+    assert.equal(FOOT.match(/data-ink=\{ink\}/g)?.length, 2, 'the › and, on the last block, "Done"');
+    assert.ok(FOOT.includes('className={styles.ppRunPrimary} onClick={() => onRound(1)}>Rotate now</button>'));
+  });
+  it('every foot control is the field\'s 56px', () => {
+    const arrows = rule(CSS, '.ppRunArrow, .ppRunEnd');
+    assert.match(arrows, /min-width:\s*3\.5rem;/);
+    assert.match(arrows, /min-height:\s*3\.5rem;/);
+  });
+  it('a block remembers its round while the run is open — a ref, never written anywhere', () => {
+    assert.ok(RUN.includes('const lastStopOf = useRef(new Map<number, number>());'));
+    assert.match(RUN, /useEffect\(\(\) => \{\s*if \(step\) lastStopOf\.current\.set\(step\.blockIndex, index\);\s*\}, \[step, index\]\);/);
+    assert.ok(RUN.includes('else if (target < blocks.length) setStepIndex(stopFor(target));'), 'the block arrows land on the remembered stop');
+    assert.equal(RUN.match(/onClick=\{\(\) => openBlock\(row\.index, /g)?.length, 2, 'the list\'s block and station rows do too');
+    assert.doesNotMatch(RUN, /localStorage|sessionStorage/, 'nothing survives an open (P10)');
   });
 });
 

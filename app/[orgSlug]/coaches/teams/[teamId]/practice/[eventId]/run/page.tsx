@@ -1,8 +1,10 @@
 'use client';
-import { Fragment, use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Fragment, use, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, ChevronRight, ClipboardList } from 'lucide-react';
+import { ArrowLeft, ChevronLeft, ChevronRight, ClipboardList } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import CoachNotOnTeam from '@/components/coaches/CoachNotOnTeam';
 import CoachEmptyState from '@/components/coaches/CoachEmptyState';
 import { useBackStep } from '@/components/coaches/useBackStep';
@@ -38,21 +40,34 @@ import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
  * write a coach with twelve kids reliably finishes, it is already built, and a second one gets
  * half-done and then poisons every downstream coverage surface with data that *looks* like "what we
  * did". "Rotate now" moves the screen and records nothing (D26). The vocabulary is **planned**,
- * never **done**.
+ * never **done**. (The last stop's "Done" button — owner, 2026-09-25 — is the COACH finishing, an
+ * imperative, not a claim that the practice ran: it writes nothing and lands on "How it went".)
  *
- * ⚠ NO SWIPE, NO DRAG, NO LONG-PRESS. Two buttons, both above 56px. Re-asked as a swipe between
+ * ⚠ NO SWIPE, NO DRAG, NO LONG-PRESS. Buttons, every one 56px. Re-asked as a swipe between
  * stops and CLOSED (practice plans on a phone, stage 3 · M3, owner 2026-09-25), on these grounds —
  * gloves are NOT one of them for a swipe (it is the least precise gesture there is; they do defeat
  * a drag and a long-press): the phone's own back gesture goes UP ONE LEVEL here (below), so a swipe
  * from the left edge is the list while the same swipe a thumb's width in would be the previous stop;
  * on Android the right edge is Back too, so a "next" swipe near it would leave the stop; on a
- * station "next" means two things (the next station, the next round); the button says what will
- * happen ("Rotate now" stays in the block, "Next block" leaves it) and a swipe does not; and with
- * the bar under the thumb (stage 3 · M1) a swipe saves no taps.
+ * station "next" means two things (the next station, the next round); a button says what will
+ * happen ("Rotate now" stays in the block, the block arrow leaves it) and a swipe does not; and
+ * with the buttons under the thumb a swipe saves no taps.
  *
- * ⚠ ON A PHONE THE BUTTONS ARE A BAR AT THE FOOT OF THE SCREEN, on every stop AND every station, in
- * one place (stage 3 · M1, owner 2026-09-25); the station carries the stop's own pair, Back included.
- * The why, the measurements and the construction: `.ppRunActions` at ≤640 in the stylesheet.
+ * ⚠ ON A PHONE, RUN PRACTICE IS A FULL SCREEN OF ITS OWN (practice plans on a phone, stage 3b · M5,
+ * owner 2026-09-25 — "if anything during a run you want to avoid navigating away by mistake"). The
+ * block sheet's construction (`FieldScreen`): a pinned head, a body that scrolls, its own foot, over
+ * the team line and the tab bar — and registered with the portal's overlay signal, so the tab bar
+ * hides and the page behind stops scrolling. The run keeps nothing between opens (P10), so a stray
+ * tab tap did not just go somewhere else: it threw the coach's place away. The list's "← Plan" is the
+ * way out. It retired stage 3's bar pinned above the tab bar (M1), and the three pieces that held it
+ * there. A computer and the 641–768 band keep the page, with Back / Next under the words.
+ * ⚠ ITS FOOT IS THE BLOCK STEPPER (M6, `RunFoot`): "‹ Block 2 of 4 ›" on every stop and station —
+ * › skips to the next block even mid-rotation, ‹ from the first block is the list, and the last
+ * block's › is "Done" (back to the plan) — with a round row above it in a rotation: Rotate now, and from
+ * round 2 a LABELLED "‹ Round 1" (a bare ‹ over the block's ‹ was two identical arrows moving
+ * different things). A button with nowhere to go is ABSENT, never greyed; the ink one is the one
+ * you'll tap next. EACH BLOCK REMEMBERS ITS ROUND WHILE THE RUN IS OPEN (`lastStopOf`), so a › by
+ * mistake is undone by one ‹, on the round — and the station — the coach left.
  * ⚠ AND THE BROWSER'S OWN BACK GESTURE GOES UP ONE LEVEL, THE SAME LEVEL THE BUTTONS DO (owner,
  * 2026-09-21 — "if I am in a station and I do a swipe back like most people do on phones it takes
  * me out of the practice rather than back to the drill"). A stop stands one history entry behind
@@ -78,8 +93,9 @@ import type { RepAttendanceStatus, RepTeamEvent } from '@/lib/types';
  * tapped Next and then a row. Without a clock the screen cannot guess where you are; with a list
  * it does not have to. The list (`buildRunOutline`): one row per block in order — number, name,
  * who runs it, the plan's LENGTH on the right (W2: "15 min", never a planned clock) — a block's
- * stations as rows beneath it (W3), every row a door (a block row → that block at its first stop;
- * a station row → the same stop with that station open), and "that's you" on the reader's own
+ * stations as rows beneath it (W3), every row a door (a block row → that block at its first stop,
+ * or the round it was left on while the run is open — stage 3b; a station row → the same stop with
+ * that station open), and "that's you" on the reader's own
  * rows from the same identity walk the block screen reads. On a block, "← Blocks" goes back to
  * the list (W4); the plan's door is on the list's bar; the last block still ends at the plan.
  *
@@ -160,6 +176,9 @@ export default function CoachPracticeRunPage({
 }) {
   const { orgSlug, teamId, eventId } = use(paramsPromise);
   const { assignments, loading: ctxLoading } = useCoaches();
+  // ≤640 — the full screen and its block stepper (stage 3b). The run renders after its fetch, on the
+  // client, so the answer is the real one by the time anything below is drawn.
+  const phone = useIsPhone();
   const base = `/${orgSlug}/coaches/teams/${teamId}`;
   const planHref = `${base}/practice/${eventId}`;
 
@@ -258,17 +277,44 @@ export default function CoachPracticeRunPage({
     });
   }, [steps.length]);
 
-  /** A row on the list: open this stop — with one of its stations open, when a station row. */
-  const openStop = useCallback((at: number, station: string | null) => {
-    setStepIndex(Math.min(steps.length - 1, Math.max(0, at)));
+  /**
+   * A BLOCK REMEMBERS ITS ROUND WHILE THE RUN IS OPEN (stage 3b · M6, owner 2026-09-25): the stop
+   * each block was last on. A block is entered there — by the phone's block arrows and by the list's
+   * rows — so a › tapped by mistake is undone by one ‹, back on the round the coach left. A ref, not
+   * state: nothing renders from it. It lives for this open only, like the cursor: nothing is written
+   * (D4) and nothing survives a reload (P10).
+   */
+  const lastStopOf = useRef(new Map<number, number>());
+  const stopFor = useCallback((blockIndex: number) => (
+    lastStopOf.current.get(blockIndex) ?? Math.max(0, steps.findIndex(s => s.blockIndex === blockIndex))
+  ), [steps]);
+
+  /** A row on the list: open this block — with one of its stations open, when a station row. */
+  const openBlock = useCallback((blockIndex: number, station: string | null) => {
+    setStepIndex(stopFor(blockIndex));
     setStationId(station);
-  }, [steps.length]);
+  }, [stopFor]);
 
   /** "← Blocks" — back to the list from a stop (W4). */
   const toList = useCallback(() => {
     setStepIndex(null);
     setStationId(null);
   }, []);
+
+  // Every stop the cursor lands on is the one its block comes back to.
+  useEffect(() => {
+    if (step) lastStopOf.current.set(step.blockIndex, index);
+  }, [step, index]);
+
+  /** The phone's block arrows (M6): a neighbouring block, on the stop it was left on; ‹ from the first
+   *  block is the list. The chosen station is kept — a block without it shows its stop, and the ‹ that
+   *  comes back reopens it. */
+  const goBlock = useCallback((delta: -1 | 1) => {
+    if (!step) return;
+    const target = step.blockIndex + delta;
+    if (target < 0) toList();
+    else if (target < blocks.length) setStepIndex(stopFor(target));
+  }, [step, blocks.length, toList, stopFor]);
 
 
   const rotating = !!block && blockRotates(block);
@@ -300,10 +346,14 @@ export default function CoachPracticeRunPage({
    * The list, a stop, a round and a station are one page re-rendered in place, so the browser kept
    * the scroll: a coach who scrolled down to Rotate now on a long station landed on the next round
    * 382px down, with "With you now" — the one line that changed — 203px above the screen (measured).
-   * Before paint, so no frame ever shows the old position; every width alike.
+   * Before paint, so no frame ever shows the old position; every width alike. On a phone the thing
+   * that scrolls is the full screen's body (stage 3b), not the window.
    */
+  const scrollRef = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    const top = { top: 0, left: 0, behavior: 'instant' } as const;
+    if (scrollRef.current) scrollRef.current.scrollTo(top);
+    else window.scrollTo(top);
   }, [stepIndex, stationId]);
 
   /**
@@ -391,7 +441,19 @@ export default function CoachPracticeRunPage({
     );
   }
 
-  if (loading) return <div className={styles.page}>{backToPlan}<div className={styles.loadingState}>Loading practice…</div></div>;
+  const practiceName = data?.event.name?.trim() || 'Practice';
+  // The frame every run screen shares — see `FieldScreen`. Loading is drawn in it too, so a phone
+  // does not flash the tab bar up for the length of the fetch.
+  const frame = (children: ReactNode, foot?: ReactNode) => (
+    <FieldScreen phone={phone} label={data ? `Run practice — ${practiceName}` : 'Run practice'} foot={foot} scrollRef={scrollRef}>
+      {children}
+    </FieldScreen>
+  );
+
+  // ⚠ An error and an empty plan stay ORDINARY pages, deliberately: there is no run to protect, and
+  // the coach's next move is to leave (the plan, the tabs) — covering the app there would only hide
+  // the way out.
+  if (loading) return frame(<>{backToPlan}<div className={styles.loadingState}>Loading practice…</div></>);
   if (loadError) return <div className={styles.page}>{backToPlan}<p className={styles.errorText}>{loadError}</p></div>;
 
   if (blocks.length === 0) {
@@ -445,8 +507,8 @@ export default function CoachPracticeRunPage({
      each stands 56 (a station row 44). Nothing here is remembered between opens. */
   if (onList) {
     const rosterIds = (data?.roster ?? []).map(p => p.id);
-    return (
-      <div className={styles.page}>
+    return frame(
+      <>
         <div className={styles.ppRunPage} data-field-floor>
           <div className={styles.ppRunBar}>
             <Link href={planHref} className={styles.ppRunBackLink}>
@@ -478,7 +540,7 @@ export default function CoachPracticeRunPage({
                     className={styles.ppRunRow}
                     data-face="block"
                     data-mine={row.mine ? 'mine' : undefined}
-                    onClick={() => openStop(row.stepIndex, null)}
+                    onClick={() => openBlock(row.index, null)}
                   >
                     <span className={styles.ppRunRowG}>{row.index + 1}</span>
                     <span>
@@ -503,7 +565,7 @@ export default function CoachPracticeRunPage({
                             className={styles.ppRunRow}
                             data-face="station"
                             data-mine={s.mine ? 'mine' : undefined}
-                            onClick={() => openStop(row.stepIndex, s.station.id)}
+                            onClick={() => openBlock(row.index, s.station.id)}
                           >
                             <span>
                               <span className={styles.ppRunRowS}>{s.label}</span>
@@ -522,7 +584,7 @@ export default function CoachPracticeRunPage({
 
           {attendanceFold}
         </div>
-      </div>
+      </>,
     );
   }
 
@@ -544,48 +606,54 @@ export default function CoachPracticeRunPage({
   const isHelper = data?.canAdvance === false;
   const whoAdvances = `${data?.headCoachName?.trim() || 'Your coach'} moves everyone on — these buttons move only your screen.`;
 
-  const actionRow = (
+  const helperLine = isHelper ? <p className={styles.ppRunHandedOff}>{whoAdvances}</p> : null;
+  /* A computer's buttons, under the words — unchanged by stage 3b; on a phone the foot moves the run
+     (`RunFoot`) and only the helper's line stays with the words. */
+  const actionRow = phone ? helperLine : (
     <>
-      {isHelper && <p className={styles.ppRunHandedOff}>{whoAdvances}</p>}
-      {/* `data-docked-foot`: the shell's opt-in for a bar docked at the foot (≤640 — see the stylesheet). */}
-      <div className={styles.ppRunActions} data-docked-foot>
+      {helperLine}
+      <div className={styles.ppRunActions}>
         {/* Never disabled: from the first stop, Back is the list (W4). */}
         <button type="button" className={styles.ppRunSecondary} onClick={() => go(-1)}>
           Back
         </button>
-        {/* The last stop still ends at the plan — the practice is over and "How it went" is there. */}
+        {/* The last stop still ends at the plan — the practice is over and "How it went" is there.
+            "Done" (owner, 2026-09-25 — "more of an indication the practice has reached its conclusion"):
+            the coach finishing, never a claim the practice ran — it writes nothing (D4), and the one
+            thing that IS written about the night, "How it went", is where it lands. Named for a screen
+            reader by where it goes; the one word on a phone and a computer alike. */}
         {advance.disabled ? (
-          <Link href={planHref} className={styles.ppRunPrimary}>Back to the plan</Link>
+          <Link href={planHref} className={styles.ppRunPrimary} aria-label="Done — back to the plan">Done</Link>
         ) : (
           <button type="button" className={styles.ppRunPrimary} onClick={() => go(1)}>{advance.label}</button>
         )}
       </div>
     </>
   );
+  const foot = phone ? <RunFoot step={step} blocks={blocks} planHref={planHref} onBlock={goBlock} onRound={go} /> : null;
 
   if (openStation) {
-    return (
-      <div className={styles.page}>
-        <PracticeStationView
-          station={openStation}
-          stationIndex={openStationIndex}
-          block={block}
-          rotating={rotating}
-          grid={grid}
-          round={step.round}
-          isMine={mineStations.has(openStation.id)}
-          nameOf={nameOf}
-          onBack={() => chooseStation(null)}
-          /* THE STOP'S OWN BAR (stage 3, owner 2026-09-25): Back · Rotate now, so a round moved on
-             by accident is one tap back. `go` never touches `stationId`, so Back keeps this station
-             open while the previous stop is a round of the same block. With no earlier round (round
-             1, or a station of a block that doesn't rotate) Back is the previous STOP, exactly as on
-             the stop: the station closes, and Next block from there reopens it; from the very first
-             stop it is the list, whose rows reset the station. It moves the screen and records
-             nothing (D4). */
-          actions={actionRow}
-        />
-      </div>
+    return frame(
+      <PracticeStationView
+        station={openStation}
+        stationIndex={openStationIndex}
+        block={block}
+        rotating={rotating}
+        grid={grid}
+        round={step.round}
+        isMine={mineStations.has(openStation.id)}
+        nameOf={nameOf}
+        onBack={() => chooseStation(null)}
+        /* THE STOP'S OWN MOVES (stage 3, owner 2026-09-25), so a round moved on by accident is one
+           tap back — on a phone the foot's "‹ Round 1" (stage 3b), on a computer Back beside Rotate
+           now. `go` never touches `stationId`, so going back a round keeps this station open. On a
+           computer, with no earlier round (round 1, or a station of a block that doesn't rotate)
+           Back is the previous STOP, exactly as on the stop: the station closes, and Next block from
+           there reopens it; from the very first stop it is the list, whose rows reset the station.
+           It moves the screen and records nothing (D4). */
+        actions={actionRow}
+      />,
+      foot,
     );
   }
 
@@ -652,8 +720,8 @@ export default function CoachPracticeRunPage({
     );
   }
 
-  return (
-    <div className={styles.page}>
+  return frame(
+    <>
       {/* data-field-floor (owner 2026-09-20, stage 0 · A4): the field's screen is read standing up —
           nothing under 12px inside; the sweep's `field-floor` rule holds it. */}
       <div className={styles.ppRunPage} data-field-floor>
@@ -664,9 +732,10 @@ export default function CoachPracticeRunPage({
             <ArrowLeft size={13} aria-hidden /> Blocks
           </button>
           {/* Help stays in the 0.7rem chrome line, never in the body — at arm's length in the sun
-              there is room for exactly one idea, and it isn't this one. */}
+              there is room for exactly one idea, and it isn't this one. On a phone the block's
+              place is the foot's ("Block 2 of 4"), so the head does not say it twice. */}
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
-            <b>{step.blockIndex + 1} of {blocks.length}</b>
+            {!phone && <b>{step.blockIndex + 1} of {blocks.length}</b>}
             {helpButton}
           </span>
         </div>
@@ -754,13 +823,105 @@ export default function CoachPracticeRunPage({
 
         {actionRow}
 
-        {/* D8 — who's here tonight, the same fold the list carries. After the buttons in the page, as
-            it always was — so a computer, where the buttons are not docked, never finds them under an
-            opened roster (/review 2026-09-25); on a phone the bar's flex `order` lays it out after
-            this fold, at the foot of the screen. */}
+        {/* D8 — who's here tonight, the same fold the list carries. After the buttons, as it always
+            was — so a computer never finds its buttons under an opened roster (/review 2026-09-25);
+            on a phone the buttons are the screen's foot and this is the words' last line. */}
         {attendanceFold}
       </div>
+    </>,
+    foot,
+  );
+}
+
+/**
+ * THE FIELD'S FRAME (stage 3b · M5 — the header has the why). On a phone, a full screen of its own
+ * over the app, as the block sheet is: the page's head pins in its scroller (the stylesheet) and the
+ * foot sits below it, never over the words; everywhere else, the ordinary page.
+ *
+ * ⚠ ONE INSTANCE for the whole run. Every screen returns it at the page's root, so the list, a stop
+ * and a station are the same element re-rendered — moving between them never unregisters the overlay,
+ * which would flash the tab bar back for a frame.
+ * ⚠ `aria-modal`, as the block sheet wears it: what is under it is covered, and the layout sweep
+ * measures the topmost modal alone — without it a fixed full-screen surface reads to the sweep as
+ * chrome standing over every word on the page.
+ */
+function FieldScreen({ phone, label, foot, scrollRef, children }: {
+  phone: boolean;
+  label: string;
+  foot?: ReactNode;
+  scrollRef: RefObject<HTMLDivElement | null>;
+  children: ReactNode;
+}) {
+  useOverlayOpen(phone);
+  if (!phone) return <div className={styles.page}>{children}</div>;
+  return (
+    <div className={styles.ppRunScreen} role="dialog" aria-modal="true" aria-label={label} data-field-floor>
+      <div ref={scrollRef} className={styles.ppRunScroll} data-run-scroll>{children}</div>
+      {foot && <div className={styles.ppRunFoot}>{foot}</div>}
     </div>
+  );
+}
+
+/**
+ * THE PHONE'S FOOT (stage 3b · M6, owner 2026-09-25) — the block sheet's stepper, at the field's
+ * 56px, in two rows only when there are rounds to move through:
+ *   · rounds (a rotating block) — Rotate now, and from round 2 a LABELLED "‹ Round 1": the owner's
+ *     back-a-round (stage 3) needs a home once the arrows move between blocks, and a bare ‹ stacked
+ *     over the block's ‹ was two identical arrows moving different things (the first drawing);
+ *   · blocks, always — "‹ Block 2 of 4 ›". › skips to the next block even mid-rotation (running
+ *     late); ‹ from the first block is the list; the last block's › is "Done", back to the plan
+ *     where the practice ends (a computer's last stop says the same — see the action row).
+ * A button with nowhere to go is ABSENT, never greyed (no back on round 1 — Rotate now takes the row;
+ * no Rotate now on the last round). The INK control is the one you'll tap next: › on a plain block,
+ * Rotate now in a rotation, › again on the last round. Not `RoomWalkNav`, deliberately: that stepper
+ * greys its ends, sits at 44px, and its ‹ at the first record has nowhere to go — here it has the list.
+ */
+function RunFoot({ step, blocks, planHref, onBlock, onRound }: {
+  step: RunStep;
+  /** The plan's blocks — the count, and the neighbours' titles for the arrows' spoken names. */
+  blocks: readonly PracticePlanBlock[];
+  planHref: string;
+  onBlock: (delta: -1 | 1) => void;
+  onRound: (delta: -1 | 1) => void;
+}) {
+  const { round, rounds, blockIndex } = step;
+  const lastRound = round == null || round >= rounds;
+  const ink = lastRound ? '' : undefined;
+  // The neighbour's title as the list shows it; null at the ends.
+  const titleOf = (i: number) => blocks[i]?.title.trim() || `Block ${i + 1}`;
+  const prevTitle = blockIndex > 0 ? titleOf(blockIndex - 1) : null;
+  const nextTitle = blockIndex < blocks.length - 1 ? titleOf(blockIndex + 1) : null;
+  return (
+    <>
+      {round != null && (
+        <div className={styles.ppRunFootRow}>
+          {round > 1 && (
+            <button type="button" className={`${styles.ppRunSecondary} ${styles.ppRunRoundBack}`}
+              aria-label={`Back to round ${round - 1}`} onClick={() => onRound(-1)}>
+              <ChevronLeft size={18} aria-hidden /> Round {round - 1}
+            </button>
+          )}
+          {lastRound
+            ? <p className={styles.ppRunFootNote}>Last round</p>
+            : <button type="button" className={styles.ppRunPrimary} onClick={() => onRound(1)}>Rotate now</button>}
+        </div>
+      )}
+      <nav className={styles.ppRunFootRow} aria-label="Blocks">
+        <button type="button" className={styles.ppRunArrow}
+          aria-label={prevTitle ? `Previous block: ${prevTitle}` : 'Back to the list'} onClick={() => onBlock(-1)}>
+          <ChevronLeft size={24} aria-hidden />
+        </button>
+        <span className={styles.ppRunCount}>Block {blockIndex + 1} of {blocks.length}</span>
+        {nextTitle ? (
+          <button type="button" className={styles.ppRunArrow} data-ink={ink}
+            aria-label={`Next block: ${nextTitle}`} onClick={() => onBlock(1)}>
+            <ChevronRight size={24} aria-hidden />
+          </button>
+        ) : (
+          <Link href={planHref} className={styles.ppRunEnd} data-ink={ink} aria-label="Done — back to the plan">Done</Link>
+        )}
+      </nav>
+    </>
   );
 }
 
