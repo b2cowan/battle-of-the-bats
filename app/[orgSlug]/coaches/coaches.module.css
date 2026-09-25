@@ -11595,6 +11595,21 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   color: var(--text-tertiary);
 }
 .ppRunPrimary {
+  flex: 1 1 auto; min-height: 3.5rem; display: grid; place-items: center; text-align: center;
+  padding: 0.5rem 0.9rem; border-radius: 10px; cursor: pointer;
+  background: var(--home-ink, var(--white-90)); color: var(--home-paper, var(--bg));
+  border: 1px solid var(--home-ink, var(--white-90));
+  font-size: var(--type-heading); font-weight: 800; line-height: 1.25;
+}
+.ppRunPrimary:hover { background: var(--home-ink-soft, var(--white-80)); border-color: var(--home-ink-soft, var(--white-80)); }
+.ppRunSecondary {
+  width: 4.75rem; flex: 0 0 auto; min-height: 3.5rem; display: grid; place-items: center;
+  border-radius: 10px; border: 1px solid var(--border-2); background: none; cursor: pointer;
+  color: var(--text-secondary); font-size: var(--type-body); font-weight: 600;
+}
+.ppRunSecondary:hover:not(:disabled) { color: var(--text-primary); border-color: var(--border); }
+.ppRunSecondary:disabled { opacity: 0.35; cursor: default; }
+
 /* ── ON A PHONE THE BUTTONS ARE A BAR AT THE FOOT OF THE SCREEN (practice plans on a phone, stage 3 ·
    M1, owner 2026-09-25) — on every stop and every station, in ONE place: every station hid Rotate
    now under the tab bar (9 of 9 on the fixture, 118–302px) and the stops that fit put the button
@@ -11647,21 +11662,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
     background: var(--card-bg, var(--surface));
   }
 }
-
-  flex: 1 1 auto; min-height: 3.5rem; display: grid; place-items: center; text-align: center;
-  padding: 0.5rem 0.9rem; border-radius: 10px; cursor: pointer;
-  background: var(--home-ink, var(--white-90)); color: var(--home-paper, var(--bg));
-  border: 1px solid var(--home-ink, var(--white-90));
-  font-size: var(--type-heading); font-weight: 800; line-height: 1.25;
-}
-.ppRunPrimary:hover { background: var(--home-ink-soft, var(--white-80)); border-color: var(--home-ink-soft, var(--white-80)); }
-.ppRunSecondary {
-  width: 4.75rem; flex: 0 0 auto; min-height: 3.5rem; display: grid; place-items: center;
-  border-radius: 10px; border: 1px solid var(--border-2); background: none; cursor: pointer;
-  color: var(--text-secondary); font-size: var(--type-body); font-weight: 600;
-}
-.ppRunSecondary:hover:not(:disabled) { color: var(--text-primary); border-color: var(--border); }
-.ppRunSecondary:disabled { opacity: 0.35; cursor: default; }
 
 /* D8 — who's coming, folded shut. Already recorded, already true; one tap to open. */
 .ppRunFold {
