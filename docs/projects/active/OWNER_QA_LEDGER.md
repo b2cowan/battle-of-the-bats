@@ -23421,7 +23421,7 @@ Sign in on your phone as the UAT head coach → UAT Test Team → Practice plans
 
 **Not in this walk:** a helper's view — the line naming who moves everyone on now sits with the words, above the foot. It needs a helper's sign-in on the practice, which this walk does not use; the build guard holds the line's place ("a helper's line stays with the words").
 
-## §241 · Practice plans on a phone · stage 4 — **the head of the page: the plan starts on the first screen in a real week** — owner rulings 2026-09-25 (N1–N4 = A: *"I approve your recommendations"*; the "Started from" banner gone at every width at the owner's own ask on the drawing) · built on dev 2026-09-25 · /simplify + /review applied · **committed `a58d2c4e` 2026-09-25** · **N2 revised on the built screen the same day (plan §6i.7)** · **✅ WALKED AND PASSED 2026-09-25** · plan `COACH_PRACTICE_PLANS_PHONE_PLAN.md` §6i
+## §241 · Practice plans on a phone · stage 4 — **the head of the page: the plan starts on the first screen in a real week** — owner rulings 2026-09-25 (N1–N4 = A: *"I approve your recommendations"*; the "Started from" banner gone at every width at the owner's own ask on the drawing) · built on dev 2026-09-25 · /simplify + /review applied · **committed `a58d2c4e` 2026-09-25** · **N2 revised on the built screen the same day (plan §6i.7), committed `8e74eab8`** · **✅ WALKED AND PASSED 2026-09-25** · plan `COACH_PRACTICE_PLANS_PHONE_PLAN.md` §6i
 
 **Why.** In a real week (a game with a scouting note, a plan started from a template, a sentence of goal and of About) the first block started under the tab bar on a phone — 777px down at 390 and 360, 858 for an assistant named on the plan. The head, not the plan, was the first screen.
 
