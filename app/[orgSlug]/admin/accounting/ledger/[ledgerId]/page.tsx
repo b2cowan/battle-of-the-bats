@@ -605,7 +605,7 @@ export default function LedgerDetailPage() {
               <div className={styles.field}>
                 <label className={styles.label}>Payee / Payer</label>
                 <PayeeCombobox
-                  payeesApiUrl="/api/admin/accounting/payees"
+                  payeesApiUrl={`/api/admin/accounting/payees${orgQuery}`}
                   value={payeeSelection}
                   onChange={setPayeeSelection}
                 />

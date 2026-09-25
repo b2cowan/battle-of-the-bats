@@ -1438,6 +1438,12 @@
 }
 .archivesCta:hover { border-color: var(--primary); }
 
+/* One "Tryouts Are Open" card per open tryout — spaced like any stack of cards. */
+.tryoutCards {
+  display: grid;
+  gap: 0.75rem;
+}
+
 .archivesCtaIcon {
   color: var(--primary-light);
   flex-shrink: 0;

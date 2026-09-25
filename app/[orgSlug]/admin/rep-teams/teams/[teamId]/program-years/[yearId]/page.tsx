@@ -378,7 +378,8 @@ export default function ProgramYearOverviewPage({
         <div className={styles.summaryCard}>
           <span className={styles.summaryCardLabel}>Roster</span>
           <span className={styles.summaryCardValue}>{summary?.rosterCount ?? 0}</span>
-          <Link href={`${yearBase}/roster`} className={styles.summaryCardLink}>View roster →</Link>
+          {/* The roster lives on THIS page (below); there is no /roster route — the link 404'd. */}
+          <Link href={`${yearBase}#roster`} className={styles.summaryCardLink}>View roster →</Link>
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryCardLabel}>Tryouts Pending</span>
@@ -398,7 +399,7 @@ export default function ProgramYearOverviewPage({
       </div>
 
       {/* ── Roster section ─────────────────────────────────────────────────── */}
-      <div style={{ marginTop: '2rem' }}>
+      <div id="roster" style={{ marginTop: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
           <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#f0f0f0' }}>
             Roster

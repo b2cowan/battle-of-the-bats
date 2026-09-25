@@ -7,6 +7,7 @@ import HelpCallout from '@/components/help/HelpCallout';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useTournament } from '@/lib/tournament-context';
 import { hasCapability } from '@/lib/roles';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './accounting.module.css';
 import type { LedgerSummary } from '@/lib/types';
@@ -405,8 +406,13 @@ export default function AccountingOverviewPage() {
             </div>
           </div>
 
-          {/* Reminders section — owners and treasurers only */}
-          {(isOwner || userRole === 'treasurer') && (
+          {/* Reminders section — shown to exactly who the two reminder routes accept: owner or
+              admin, holding Rep Teams on a plan that carries it. It used to show to treasurers,
+              whom both routes refuse (every press a 403), and hid from admins, whom they accept.
+              The routes decide; the buttons follow them (Club Tier Readiness C03). */}
+          {(isOwner || userRole === 'admin')
+            && hasCapability(userRole ?? '', userCapabilities, 'module_rep_teams')
+            && !!currentOrg && hasModuleEntitlement(currentOrg, 'module_rep_teams') && (
             <div style={{ marginTop: '2rem' }}>
               <div style={{
                 fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',

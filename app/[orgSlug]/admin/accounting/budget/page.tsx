@@ -762,8 +762,11 @@ export default function OrgBudgetPage() {
                     categories={categories}
                     value={addPicker}
                     onChange={handlePickerChange}
+                    /* org-slug-ok: the picker appends `/{catId}/items`, so the org travels
+                       separately as `adminOrgSlug` and is added after the path. */
                     createItemEndpoint="/api/admin/accounting/budget-categories"
                     createItemMode="admin"
+                    adminOrgSlug={orgSlug}
                     /* This form BUILDS A BUDGET LINE, so a suggested amount is a real question here
                        and `handlePickerChange` pre-fills the line's amount with it — one of the two
                        surfaces that opt in (owner ruling 2026-09-02; see `suggestAmount`). */

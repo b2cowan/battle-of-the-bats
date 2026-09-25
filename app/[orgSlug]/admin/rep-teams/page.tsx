@@ -550,7 +550,7 @@ export default function RepTeamsPage() {
       {summaries.length > 0 && hasCapability(userRole ?? '', userCapabilities, 'module_rep_teams') && (
         <div style={{ marginTop: '2.5rem' }}>
           <UpcomingPayablesPanel
-            apiUrl="/api/admin/rep-teams/upcoming-payables"
+            apiUrl={`/api/admin/rep-teams/upcoming-payables${orgQuery}`}
             reviewQueueUrl={`${base}/rep-teams/payment-requests`}
           />
         </div>

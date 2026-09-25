@@ -159,6 +159,11 @@ interface Props {
   // For admin route the endpoint needs [catId] in the path; for coach it's a body field.
   // Specify which pattern to use.
   createItemMode: 'admin' | 'coach';
+  /** Admin mode: the org the admin routes act on. They read it from the QUERY STRING and refuse
+   *  without it (the 2026-06-14 org-context hardening) — which left "Add item" answering 401 on
+   *  the Org Budget form for three months. It cannot ride inside `createItemEndpoint`, because
+   *  admin mode appends `/{catId}/items` to that path. Coach mode carries the org in its path. */
+  adminOrgSlug?: string;
   /** Coach mode: which team owns an item created here (mig 240). An item belongs to ONE team and
    *  appears in no other team's picker, so the server requires this and refuses without it. */
   teamId?: string;
@@ -268,6 +273,7 @@ export default function BudgetItemPicker({
   direction,
   createItemEndpoint,
   createItemMode,
+  adminOrgSlug,
   teamId,
   allowCreateCategory = false,
   suggestAmount = false,
@@ -281,6 +287,7 @@ export default function BudgetItemPicker({
   newItemNote,
   paperGround = false,
 }: Props) {
+  const adminOrgQuery = adminOrgSlug ? `?orgSlug=${encodeURIComponent(adminOrgSlug)}` : '';
   const [query, setQuery] = useState('');
   const [open, setOpen] = useState(false);
   /** Where the menu opens, how tall it may be, and the rect it is pinned to. See `openDropdown`. */
@@ -543,7 +550,7 @@ export default function BudgetItemPicker({
       const suggested = suggestAmount && newItemAmount ? Number(newItemAmount) : null;
 
       if (createItemMode === 'admin') {
-        url  = `${createItemEndpoint}/${newItemCatId}/items`;
+        url  = `${createItemEndpoint}/${newItemCatId}/items${adminOrgQuery}`;
         body = { name, suggestedAmount: suggested, direction };
       } else {
         url  = createItemEndpoint;
@@ -600,7 +607,7 @@ export default function BudgetItemPicker({
     setCatError('');
 
     try {
-      const res = await fetch(createItemEndpoint, {
+      const res = await fetch(createItemMode === 'admin' ? `${createItemEndpoint}${adminOrgQuery}` : createItemEndpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         /* ⚠⚠ `teamId` TRAVELS WITH THE NAME (fixed 2026-09-09). Since mig 277 a category belongs to
@@ -608,9 +615,11 @@ export default function BudgetItemPicker({
            named it answered 400 "teamId is required and must be a team you coach" to every coach
            who tried, from every money form, for five days. Nothing reported it: the sentence was
            shown in the create panel's error slot and read as the coach's own mistake. */
+        // The admin route reads `name` (the coach route reads `newCategoryName`). No admin screen
+        // turns category creation on today — this keeps the path honest for the day one does.
         body: JSON.stringify(createItemMode === 'coach'
           ? { newCategoryName: name, teamId }
-          : { newCategoryName: name }),
+          : { name }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to create category');

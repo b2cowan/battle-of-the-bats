@@ -154,7 +154,9 @@ export default function UpcomingPayablesPanel({ apiUrl, reviewQueueUrl, fullSche
     setLoading(true);
     setError('');
     try {
-      const res = await fetch(`${apiUrl}?days=${days}`);
+      // The admin caller's URL already carries `?orgSlug=`; the coach caller's carries the org in
+      // its path. Append, never assume the first `?`.
+      const res = await fetch(`${apiUrl}${apiUrl.includes('?') ? '&' : '?'}days=${days}`);
       if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error ?? 'Failed to load');
       const data = await res.json();
       setLanes(data.lanes ?? []);

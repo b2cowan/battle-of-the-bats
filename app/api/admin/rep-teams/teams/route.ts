@@ -34,7 +34,12 @@ export const GET = withObservability(async (req: Request) => {
   const includeArchived = searchParams.get('archived') === 'true';
 
   // Scoped member: ignore caller ?group= and enforce their assigned group IDs
-  const groupFilter = searchParams.get('group') || undefined;
+  // "Ungrouped" (`group=none`) means teams with NO group — it is not a group id. It used to go
+  // straight into the uuid comparison, which failed and turned the list into a 500 + "Failed to
+  // load" (Club Tier Readiness B06). It filters below instead.
+  const groupParam = searchParams.get('group') || undefined;
+  const ungrouped = groupParam === 'none';
+  const groupFilter = ungrouped ? undefined : groupParam;
   /**
    * Chunk D 3.6 — how many families each team has actually connected, for the club.
    *
@@ -46,7 +51,8 @@ export const GET = withObservability(async (req: Request) => {
     getRepTeams(ctx!.org.id, groupFilter, ctx!.repGroupIds ?? undefined),
     getOrgFamilyRollup(ctx!.org.id),
   ]);
-  const visible = includeArchived ? teams : teams.filter(t => !t.isArchived);
+  const visible = (includeArchived ? teams : teams.filter(t => !t.isArchived))
+    .filter(t => !ungrouped || !t.groupId);
 
   // Fetch summary counts per team in one query each
   const summaries = await Promise.all(visible.map(async team => {

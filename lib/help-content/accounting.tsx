@@ -17,7 +17,7 @@ const accountingHelp: HelpPageContent = {
           <p>Accounting is included with the <strong>Club</strong> plan. If your organization doesn&apos;t have it, the Accounting area shows an <strong>Access Restricted</strong> message — ask your organization owner about moving to Club.</p>
           <p>Once it&apos;s enabled, who can do what:</p>
           <ul>
-            <li><strong>Owners and treasurers</strong> — full access: create ledgers, record entries, run budgets and reminders.</li>
+            <li><strong>Owners and treasurers</strong> — full access: create ledgers, record entries and run budgets. (The two &ldquo;send now&rdquo; reminder buttons are for owners, and admins who hold Rep Teams — see Automated reminders below.)</li>
             <li><strong>Admins</strong> — can use Accounting only if the owner grants them the accounting permission. Without it, the module stays hidden.</li>
           </ul>
         </>
@@ -251,7 +251,7 @@ const accountingHelp: HelpPageContent = {
       heading: 'Automated reminders and planning tools',
       summary: 'Send dues and allocation reminders, and open the Org Budget and Budget vs. Actual tools.',
       keywords: ['reminders', 'dues reminders', 'allocation reminders', 'org budget', 'budget vs actual', 'planning'],
-      searchText: 'automated reminders dues reminders 30-day 7-day wave guardians allocation reminders org budget budget vs actual planning tools owner treasurer send reminders automatic daily send now runs on its own do i have to click',
+      searchText: 'automated reminders dues reminders 30-day 7-day wave guardians allocation reminders org budget budget vs actual planning tools owner treasurer admin send reminders automatic daily send now runs on its own do i have to click',
       content: (
         <>
           <p>The Accounting Overview gives owners and treasurers two planning tools and two reminder actions.</p>
@@ -261,7 +261,7 @@ const accountingHelp: HelpPageContent = {
             <li><strong>Budget vs. Actual</strong> — track allocation and team collection status (see below).</li>
           </ul>
           <p><strong>Dues Reminders</strong> now go out <strong>automatically</strong>. Each day, guardians of players with an upcoming installment receive a reminder email — one about a week ahead and one about a month ahead — for any team whose <strong>Automatic Dues Reminders</strong> switch is on (each coach controls their own team&apos;s switch under Team settings → Money). A guardian is never emailed twice in the same week for the same installment, and quiet days send nothing. You don&apos;t have to do anything to keep this running.</p>
-          <p><strong>Manual actions</strong> (owners and treasurers only) — for when you want to act now rather than wait for the daily send:</p>
+          <p><strong>Manual actions</strong> (owners, and admins who hold the Rep Teams permission — the sends reach every team&apos;s families) — for when you want to act now rather than wait for the daily send:</p>
           <ul>
             <li><strong>Dues Reminders — Send now</strong> — fire a 30-day or 7-day wave immediately to every team that has the toggle on. Same emails as the automatic send.</li>
             <li><strong>Allocation Reminders</strong> — email yourself a list of all team allocation installments due within the next 30 days.</li>

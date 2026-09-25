@@ -2,7 +2,8 @@
  * lib/export/ics.ts
  * iCal (.ics) event building and download.
  *
- * STUB — Full implementation in Phase D (E1 in build order).
+ * Built (Phase D, E1 in build order) — `composeICSFromInstants` + `downloadICS` below. (The
+ * "STUB" this header carried outlived the implementation; trued 2026-09-25.)
  *
  * Design decisions documented in MERGED_EXPORTS_IMPLEMENTATION_PLAN.md Phase D:
  * - Deterministic UIDs: {gameId}@fieldlogichq.ca — re-importing de-duplicates

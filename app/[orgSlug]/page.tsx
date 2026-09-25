@@ -6,6 +6,7 @@ import {
   getOrgPublicSiteContent, getArchivesByOrg,
   getLeagueSeasons, getDivisions, getOpenTryoutsByOrg,
 } from '@/lib/db';
+import type { OpenTryout } from '@/lib/db';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { isFreePlan } from '@/lib/plan-config';
 import { isFollowableOrg } from '@/lib/directory';
@@ -34,6 +35,45 @@ function eventCardTheme(t: Pick<Tournament, 'themePreset' | 'themePrimary' | 'th
     '--primary-light': theme.primaryLight,
     '--primary-rgb': theme.primaryRgb,
   } as React.CSSProperties;
+}
+
+/**
+ * "Tryouts Are Open" — one card per open tryout, each landing ON that tryout.
+ *
+ * ⚠ It used to be one card linking to `/{org}/teams`, which is a redirect to a tournament's team
+ * list or back to this page (a loop) — a family could see the invitation and never reach the form
+ * (Club Tier Readiness F01, J4-042). The data always carried the team slug and program year; there
+ * is still no club-wide tryouts index, so several open tryouts are several cards, not one card
+ * pointing nowhere. The same card rendered in three branches of this page; this is the one copy.
+ */
+function OpenTryoutsSection({ orgSlug, tryouts }: { orgSlug: string; tryouts: OpenTryout[] }) {
+  return (
+    <section className="section">
+      <div className="container">
+        <div className="section-header">
+          <span className="eyebrow"><Users size={12} /> Rep Teams</span>
+          <h2 className="display-md">Try Out</h2>
+        </div>
+        <div className={styles.tryoutCards}>
+          {tryouts.map(t => (
+            <Link
+              key={t.programYearId}
+              href={`/${orgSlug}/teams/${t.teamSlug}/tryouts/${t.programYearId}`}
+              className={`card ${styles.archivesCta}`}
+            >
+              <div>
+                <div className={styles.archivesCtaTitle}>Tryouts Are Open</div>
+                <div className={styles.archivesCtaSub}>
+                  {t.teamName} — {t.programYearName} is accepting applications
+                </div>
+              </div>
+              <ChevronRight size={18} className={styles.archivesCtaChevron} />
+            </Link>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
 }
 
 export default async function HomePage({ params }: { params: Promise<{ orgSlug: string }> }) {
@@ -234,27 +274,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         )}
 
         {/* Rep Teams Tryouts CTA */}
-        {showTryouts && (
-          <section className="section">
-            <div className="container">
-              <div className="section-header">
-                <span className="eyebrow"><Users size={12} /> Rep Teams</span>
-                <h2 className="display-md">Try Out</h2>
-              </div>
-              <Link href={`/${orgSlug}/teams`} className={`card ${styles.archivesCta}`}>
-                <div>
-                  <div className={styles.archivesCtaTitle}>Tryouts Are Open</div>
-                  <div className={styles.archivesCtaSub}>
-                    {openTryouts.length === 1
-                      ? `${openTryouts[0].teamName} — ${openTryouts[0].programYearName} is accepting applications`
-                      : `${openTryouts.length} programs are currently accepting applications`}
-                  </div>
-                </div>
-                <ChevronRight size={18} className={styles.archivesCtaChevron} />
-              </Link>
-            </div>
-          </section>
-        )}
+        {showTryouts && <OpenTryoutsSection orgSlug={orgSlug} tryouts={openTryouts} />}
 
         {/* Archives CTA */}
         {showArchives && (
@@ -368,27 +388,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
           </section>
         )}
 
-        {defaultShowTryouts && (
-          <section className="section">
-            <div className="container">
-              <div className="section-header">
-                <span className="eyebrow"><Users size={12} /> Rep Teams</span>
-                <h2 className="display-md">Try Out</h2>
-              </div>
-              <Link href={`/${orgSlug}/teams`} className={`card ${styles.archivesCta}`}>
-                <div>
-                  <div className={styles.archivesCtaTitle}>Tryouts Are Open</div>
-                  <div className={styles.archivesCtaSub}>
-                    {defaultOpenTryouts.length === 1
-                      ? `${defaultOpenTryouts[0].teamName} — ${defaultOpenTryouts[0].programYearName} is accepting applications`
-                      : `${defaultOpenTryouts.length} programs are currently accepting applications`}
-                  </div>
-                </div>
-                <ChevronRight size={18} className={styles.archivesCtaChevron} />
-              </Link>
-            </div>
-          </section>
-        )}
+        {defaultShowTryouts && <OpenTryoutsSection orgSlug={orgSlug} tryouts={defaultOpenTryouts} />}
         {showBuiltOnCredit && <BuiltOnCredit />}
       </div>
     );
@@ -480,27 +480,7 @@ export default async function HomePage({ params }: { params: Promise<{ orgSlug: 
         </section>
       )}
 
-      {defaultShowTryouts && (
-        <section className="section">
-          <div className="container">
-            <div className="section-header">
-              <span className="eyebrow"><Users size={12} /> Rep Teams</span>
-              <h2 className="display-md">Try Out</h2>
-            </div>
-            <Link href={`/${orgSlug}/teams`} className={`card ${styles.archivesCta}`}>
-              <div>
-                <div className={styles.archivesCtaTitle}>Tryouts Are Open</div>
-                <div className={styles.archivesCtaSub}>
-                  {defaultOpenTryouts.length === 1
-                    ? `${defaultOpenTryouts[0].teamName} — ${defaultOpenTryouts[0].programYearName} is accepting applications`
-                    : `${defaultOpenTryouts.length} programs are currently accepting applications`}
-                </div>
-              </div>
-              <ChevronRight size={18} className={styles.archivesCtaChevron} />
-            </Link>
-          </div>
-        </section>
-      )}
+      {defaultShowTryouts && <OpenTryoutsSection orgSlug={orgSlug} tryouts={defaultOpenTryouts} />}
       {showBuiltOnCredit && <BuiltOnCredit />}
     </div>
   );

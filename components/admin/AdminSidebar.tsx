@@ -449,15 +449,16 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
                 {navLink('rt-tryouts', ClipboardList, 'Tryouts',
                   `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/tryouts`,
                   pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/tryouts`))}
+                {/* Roster is a section of the season's overview page, not a route of its own (the
+                    old /roster link 404'd). The per-team "Documents" link that sat below Schedule
+                    pointed at a page that never existed and is gone; the club's document templates
+                    are under Rep Teams above. (Club Tier Readiness B06, 2026-09-25) */}
                 {navLink('rt-roster', Users, 'Roster',
-                  `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/roster`,
-                  pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/roster`))}
+                  `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}#roster`,
+                  pathname === `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}`)}
                 {navLink('rt-schedule', Calendar, 'Schedule',
                   `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/schedule`,
                   pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/schedule`))}
-                {navLink('rt-documents', FileText, 'Documents',
-                  `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/documents`,
-                  pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/documents`))}
                 {navLink('rt-coaches', UserCheck, 'Coaches',
                   `${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/coaches`,
                   pathname.startsWith(`${base}/rep-teams/teams/${currentRepTeamId}/program-years/${currentRepYearId}/coaches`))}

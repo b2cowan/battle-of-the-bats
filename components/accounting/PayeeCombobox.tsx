@@ -39,7 +39,10 @@ export default function PayeeCombobox({
 
   const search = useCallback(async (q: string) => {
     try {
-      const res  = await fetch(`${payeesApiUrl}?q=${encodeURIComponent(q)}`);
+      // The admin caller's URL already carries `?orgSlug=` (its route refuses without it); the
+      // coach callers' URLs carry the org in the path. Append, never assume the first `?`.
+      const sep  = payeesApiUrl.includes('?') ? '&' : '?';
+      const res  = await fetch(`${payeesApiUrl}${sep}q=${encodeURIComponent(q)}`);
       const data = await res.json();
       setResults(data.payees ?? []);
     } catch { setResults([]); }

@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ScrollText, Users2, ArrowLeft } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { isTournamentTier } from '@/lib/billing-urls';
 import ExportMenu from '@/components/admin/ExportMenu';
 import {
   downloadXLSX, generateCSV, downloadCSVBlob,
@@ -74,7 +75,9 @@ export default function AuditLogPage() {
     setFetching(true);
     setErrorMsg('');
     try {
-      const res = await fetch(`/api/admin/members/audit?page=${p}`);
+      // The route refuses without the org (2026-06-14 hardening) — this page answered 401 on every
+      // tier until 2026-09-25 (Club Tier Readiness A04).
+      const res = await fetch(`/api/admin/members/audit?page=${p}&orgSlug=${encodeURIComponent(currentOrg?.slug ?? '')}`);
       if (!res.ok) {
         const d = await res.json();
         throw new Error(d.error ?? 'Failed to load audit log');
@@ -143,7 +146,11 @@ export default function AuditLogPage() {
             disabled={!data || data.rows.length === 0}
           />
           <Link
-            href={`/${currentOrg?.slug}/admin/org/members`}
+            // Tournament tiers are bounced out of /admin/org/* — they reach Members (and this page)
+            // under Tournament settings, the same split the Members page makes for its audit link.
+            href={isTournamentTier(currentOrg?.planId)
+              ? `/${currentOrg?.slug}/admin/tournaments/settings/members`
+              : `/${currentOrg?.slug}/admin/org/members`}
             className="btn btn-outline btn-sm"
             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}
           >

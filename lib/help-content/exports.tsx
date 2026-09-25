@@ -280,8 +280,7 @@ const exportsHelp: HelpPageContent = {
           <p>
             <strong>Note:</strong> The Calendar export is a snapshot taken at the moment you
             download it. If games are changed or cancelled afterward, your calendar will not update
-            automatically. Re-download and re-import to get the latest schedule. A live,
-            automatically-updating calendar subscription link is planned for a future release.
+            automatically. Re-download and re-import to get the latest schedule.
           </p>
         </>
       ),
