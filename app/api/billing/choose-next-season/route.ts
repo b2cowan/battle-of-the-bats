@@ -1,4 +1,5 @@
 import { getAuthContext, requireCapability, unauthorized } from '@/lib/api-auth';
+import { foundingCompAppliesToPlan } from '@/lib/founding-season';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { ensureStripeCustomer, recordNextSeasonChoice, getOrgBillingFacts } from '@/lib/billing-setup';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
@@ -70,7 +71,8 @@ export const POST = withObservability(async (req: Request) => {
     .is('revoked_at', null)
     .limit(1)
     .maybeSingle();
-  if (!comp) {
+  // ⚖ D6: a Club is never on the Founding Season, even with a comp row an operator's move missed.
+  if (!comp || !foundingCompAppliesToPlan(auth.org.planId)) {
     return json({ error: 'This account is not on a Founding Season plan.' }, 403);
   }
 

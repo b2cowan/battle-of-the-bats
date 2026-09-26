@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
-import { listPendingInvitesForUser, reconcilePendingInvitesForUser } from '@/lib/invite-reconciliation';
+import { listPendingInvitesForUser, reconcilePendingInvitesForUser, withInvitationDetails } from '@/lib/invite-reconciliation';
 import { withObservability } from '@/lib/observability';
 
 async function getAuthenticatedUser() {
@@ -36,6 +36,6 @@ export const GET = withObservability(async () => {
     emailConfirmedAt: user.email_confirmed_at,
   });
 
-  const invitations = await listPendingInvitesForUser(user.id);
+  const invitations = await withInvitationDetails(await listPendingInvitesForUser(user.id));
   return NextResponse.json({ ok: true, invitations });
 }, { route: '/api/auth/invitations' });

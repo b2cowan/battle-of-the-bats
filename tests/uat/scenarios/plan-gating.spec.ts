@@ -4,8 +4,8 @@
  * Verifies plan- and capability-based gating in the admin UI:
  * - Free (tournament) plan shows an upgrade prompt on the auto-schedule generator
  * - Plus-only tournament pages load on tournament_plus/league/club
- * - Module pages (house league, accounting, rep teams) require the module capability,
- *   so an org-admin (who lacks those caps) sees "Access Restricted"
+ * - Module pages: an org-admin opens every program the plan carries (ruling D8, 2026-09-25);
+ *   Families stays an explicit grant, so an admin without it is refused
  * - Org billing is owner-managed: an org-admin can view it but sees a read-only notice
  *
  * Orgs used (slugs from env, with dev defaults):
@@ -15,7 +15,7 @@
  *
  * NOTE: module access and org billing are gated by CAPABILITY/ROLE, not by plan
  * (proxy.ts only tier-redirects /admin/org/* away from tournament tiers). Owners hold
- * every capability; admins lack module_* and billing. These tests assert that real model.
+ * every capability; admins hold every program module but never billing (D8). These tests assert that model.
  */
 
 import { test, expect } from '../helpers/fixtures';
@@ -146,31 +146,39 @@ test.describe('Plan gating / tournament_plus features', () => {
   });
 });
 
-// ── Module capability gates ──────────────────────────────────────────────────
-// Module pages render "Access Restricted" when the viewer lacks the module capability.
-// Org-admins lack module_house_league / module_accounting / module_rep_teams (ROLE_DEFAULTS
-// in lib/roles.ts), so an admin session is denied while an owner would see the full module.
+// ── Module access: an admin opens every program the plan carries (⚖ ruling D8) ────────────────
+// Until 2026-09-25 this block asserted the OPPOSITE — that a club's admin met "Access Restricted" on
+// every program — and so codified the defect A01 (a club's vice-president treated as a
+// tournament-only user). D8 ruled it: an admin gets every module the plan carries by default, and
+// Families stays an explicit grant. Both halves are asserted here, on the club org (every program
+// entitled at the plan level). The unit-level twin is tests/unit/role-defaults-guard.test.ts.
 
-test.describe('Plan gating / module access requires capability', () => {
+test.describe('Plan gating / an admin opens every program the plan carries (D8)', () => {
   const MODULES = [
-    { label: 'house league', segment: 'house-league' },
-    { label: 'accounting', segment: 'accounting' },
-    { label: 'rep teams', segment: 'rep-teams' },
+    { label: 'house league', segment: 'house-league', heading: 'House League' },
+    { label: 'accounting', segment: 'accounting', heading: 'Accounting Overview' },
+    { label: 'rep teams', segment: 'rep-teams', heading: 'Rep Teams' },
   ] as const;
 
-  for (const { label, segment } of MODULES) {
-    test(`${label} module shows Access Restricted for org-admin`, async ({ adminPage }) => {
-      // Run on the club org: all three modules are entitled at the plan level (so the
-      // module layout doesn't redirect — rep-teams in particular redirects when the
-      // module isn't entitled), and the org-admin lacks the module capability, so each
-      // page renders "Access Restricted".
+  for (const { label, segment, heading } of MODULES) {
+    test(`${label} opens for an org-admin`, async ({ adminPage }) => {
       await adminPage.goto(`/${CLUB_ORG_SLUG}/admin/${segment}`);
       await expect(adminPage).not.toHaveURL(/\/auth\/login/);
-      await expect(
-        adminPage.getByRole('heading', { name: 'Access Restricted' }),
-      ).toBeVisible({ timeout: 20_000 });
+      // The program's own title is the positive signal (a refusal would be "Access Restricted",
+      // and a refused Rep Teams layout redirects to the hub, which this URL check also catches).
+      await expect(adminPage.getByRole('heading', { name: heading, level: 1 })).toBeVisible({ timeout: 20_000 });
+      await expect(adminPage).toHaveURL(new RegExp(`/${CLUB_ORG_SLUG}/admin/${segment}`));
+      await expect(adminPage.getByRole('heading', { name: 'Access Restricted' })).toHaveCount(0);
     });
   }
+
+  test('Families stays an explicit grant: an org-admin without it is refused', async ({ adminPage }) => {
+    await adminPage.goto(`/${CLUB_ORG_SLUG}/admin/families`);
+    await expect(adminPage).not.toHaveURL(/\/auth\/login/);
+    await expect(
+      adminPage.getByRole('heading', { name: /needs the Families permission/ }),
+    ).toBeVisible({ timeout: 20_000 });
+  });
 });
 
 // ── Org billing is owner-managed ─────────────────────────────────────────────

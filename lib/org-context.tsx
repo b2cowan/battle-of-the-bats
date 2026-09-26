@@ -5,6 +5,8 @@ import React, {
 import type { User } from '@supabase/supabase-js';
 import { createClient } from './supabase-browser';
 import type { Organization, OrgRole } from './types';
+import type { Capability } from './roles';
+import { canOpenModule } from './member-access';
 
 interface OrgContextType {
   user: User | null;
@@ -13,6 +15,13 @@ interface OrgContextType {
   userCapabilities: Record<string, boolean> | null;
   loading: boolean;
   refresh: () => Promise<void>;
+  /**
+   * Can the signed-in person open this module HERE — their role holds the capability AND the org's
+   * plan carries it (`canOpenModule`, the one gate every route asks, Club Tier Stage 1). A screen
+   * that shows or hides a door asks this rather than rebuilding the member from the fields above,
+   * so it can never offer a door the server refuses.
+   */
+  canOpen: (cap: Capability) => boolean;
 }
 
 type OrgProviderProps = {
@@ -29,6 +38,7 @@ const OrgContext = createContext<OrgContextType>({
   userCapabilities: null,
   loading: true,
   refresh: async () => {},
+  canOpen: () => false,
 });
 
 export function OrgProvider({
@@ -111,8 +121,11 @@ export function OrgProvider({
     return () => subscription.unsubscribe();
   }, [load]);
 
+  const canOpen = (cap: Capability): boolean => !!currentOrg && !!userRole
+    && canOpenModule({ role: userRole, capabilities: userCapabilities }, currentOrg, cap);
+
   return (
-    <OrgContext.Provider value={{ user, currentOrg, userRole, userCapabilities, loading, refresh }}>
+    <OrgContext.Provider value={{ user, currentOrg, userRole, userCapabilities, loading, refresh, canOpen }}>
       {children}
     </OrgContext.Provider>
   );

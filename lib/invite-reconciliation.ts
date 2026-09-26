@@ -1,4 +1,6 @@
 import { supabaseAdmin } from './supabase-admin';
+import { roleLabel, roleOpensSentence } from './member-access';
+import { invitationSender } from './member-names';
 
 /**
  * Invite reconciliation (mig 128).
@@ -200,4 +202,42 @@ export async function listPendingInvitesForUser(userId: string): Promise<Reconci
       role: row.role,
     };
   });
+}
+
+export type PendingInviteDetails = ReconciledInvite & {
+  /** The role's name as the card shows it ("Treasurer"). */
+  roleLabel: string;
+  /** What the role opens, said to the invitee — the sentence the invite dropdown shows the owner. */
+  roleOpens: string;
+  /** Who sent it and in what role, and when (null when the invitation predates the audit log). */
+  inviterName: string | null;
+  inviterRole: string | null;
+  invitedAt: string | null;
+};
+
+/**
+ * The invitation card's details (Club Tier Stage 1 specimen 6): who is asking, when, and what the
+ * role opens. Kept OUT of `listPendingInvitesForUser`, which the badge count and the sign-in
+ * resolver also call and which must stay one cheap read; only the surfaces that DRAW invitations
+ * (Home and the invitations list) pay for the sender lookups.
+ */
+export async function withInvitationDetails(invites: ReconciledInvite[]): Promise<PendingInviteDetails[]> {
+  if (invites.length === 0) return [];
+  const { data: rows } = await supabaseAdmin
+    .from('organization_members')
+    .select('id, user_id')
+    .in('id', invites.map(i => i.memberId));
+  const userByMember = new Map((rows ?? []).map(r => [r.id as string, r.user_id as string]));
+  return Promise.all(invites.map(async invite => {
+    const userId = userByMember.get(invite.memberId);
+    const sender = userId ? await invitationSender(invite.organizationId, userId) : null;
+    return {
+      ...invite,
+      roleLabel: roleLabel(invite.role),
+      roleOpens: roleOpensSentence(invite.role),
+      inviterName: sender?.name ?? null,
+      inviterRole: sender?.role ? roleLabel(sender.role) : null,
+      invitedAt: sender?.sentAt ?? null,
+    };
+  }));
 }

@@ -56,6 +56,8 @@ export type UATRole =
 export interface UATEnv {
   baseUrl: string;
   orgSlug: string;
+  /** The coach fixture's org — UAT_COACH_ORG_SLUG, else UAT_ORG_SLUG (Club Tier Stage 1, B05). */
+  coachOrgSlug: string;
   platformAdmin: { email: string; password: string };
   orgOwner:      { email: string; password: string };
   orgAdmin:      { email: string; password: string };
@@ -111,6 +113,7 @@ export function loadUATEnv(): UATEnv {
   return {
     baseUrl:       process.env.UAT_BASE_URL ?? 'http://localhost:3000',
     orgSlug:       process.env.UAT_ORG_SLUG!,
+    coachOrgSlug:  process.env.UAT_COACH_ORG_SLUG || process.env.UAT_ORG_SLUG!,
     platformAdmin: { email: process.env.UAT_PLATFORM_ADMIN_EMAIL!, password: process.env.UAT_PLATFORM_ADMIN_PASSWORD! },
     orgOwner:      { email: process.env.UAT_ORG_OWNER_EMAIL!,      password: process.env.UAT_ORG_OWNER_PASSWORD! },
     orgAdmin:      { email: process.env.UAT_ORG_ADMIN_EMAIL!,      password: process.env.UAT_ORG_ADMIN_PASSWORD! },

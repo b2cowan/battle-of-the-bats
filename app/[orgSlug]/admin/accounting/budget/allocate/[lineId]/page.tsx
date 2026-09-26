@@ -57,9 +57,10 @@ function computeAmount(method: string, value: string, total: number, splitCount:
 export default function AllocateBudgetLinePage({ params }: { params: Promise<{ lineId: string; orgSlug: string }> }) {
   const { lineId } = use(params);
   const router  = useRouter();
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, userRole, userCapabilities, loading, canOpen } = useOrg();
   const base    = `/${currentOrg?.slug ?? ''}/admin`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+  const canOpenRepTeams = canOpen('module_rep_teams');
 
   const [step, setStep] = useState(1);
   const [lineInfo, setLineInfo]   = useState<BudgetLineInfo | null>(null);
@@ -103,30 +104,21 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
       .finally(() => setLineLoading(false));
   }, [currentOrg, lineId]);
 
-  // Load teams + program years
+  // Load teams + program years — from ACCOUNTING's own read (names and seasons only). It used to
+  // come from the Rep Teams routes, which refuse a treasurer; the refusal was swallowed and the
+  // team list came back empty (C03). One request now, not one per team.
   useEffect(() => {
     if (!currentOrg) return;
-    fetch(`/api/admin/rep-teams/teams${orgQuery}`)
+    fetch(`/api/admin/accounting/team-options${orgQuery}`)
       .then(r => r.json())
       .then(data => {
-        const teamList: TeamOption[] = (data.teams ?? []).map((s: any) => ({
-          id: s.team.id, name: s.team.name, years: [],
+        const teamList: TeamOption[] = (data.teams ?? []).map((t: { id: string; name: string; programYears?: ProgramYearOption[] }) => ({
+          id: t.id, name: t.name, years: t.programYears ?? [],
         }));
         setTeams(teamList);
-        Promise.all(
-          teamList.map(t =>
-            fetch(`/api/admin/rep-teams/teams/${t.id}/program-years${orgQuery}`)
-              .then(r => r.json())
-              .then(d => ({ teamId: t.id, years: d.programYears ?? [] })),
-          ),
-        ).then(results => {
-          setTeams(prev => prev.map(t => {
-            const r = results.find(x => x.teamId === t.id);
-            return r ? { ...t, years: r.years } : t;
-          }));
-        }).finally(() => setTeamsLoading(false));
       })
-      .catch(() => setTeamsLoading(false));
+      .catch(() => {})
+      .finally(() => setTeamsLoading(false));
   }, [currentOrg, orgQuery]);
 
   if (loading || lineLoading) return <p className={styles.muted}>Loading…</p>;
@@ -346,7 +338,12 @@ export default function AllocateBudgetLinePage({ params }: { params: Promise<{ l
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Failed to create allocation');
-      router.push(`${base}/rep-teams/allocations/${data.allocation.id}`);
+      // The allocation's own page lives under Rep Teams. Someone who can't open Rep Teams (a
+      // treasurer, Ask 1) would be bounced from it to the hub, so they return to the budget,
+      // where the line now shows as allocated.
+      router.push(canOpenRepTeams
+        ? `${base}/rep-teams/allocations/${data.allocation.id}`
+        : `${base}/accounting/budget`);
     } catch (e: any) {
       setError(e.message ?? 'Failed to create allocation.');
     } finally {

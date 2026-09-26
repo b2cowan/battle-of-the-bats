@@ -59,7 +59,10 @@ const GAME_MAX_LEAD_MS = 30 * 60_000;      // starts at most 30m from now
 export async function resolveUatContext() {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  const orgSlug = process.env.UAT_ORG_SLUG;
+  // The coach fixture's org (Club Tier Stage 1, B05): the coaches portal now checks the club's PLAN,
+  // so the coach fixture must live in an org whose plan carries it — UAT Rep Club. Falls back to
+  // UAT_ORG_SLUG, so nothing moves until UAT_COACH_ORG_SLUG is set.
+  const orgSlug = process.env.UAT_COACH_ORG_SLUG || process.env.UAT_ORG_SLUG;
 
   if (!url || !key || !orgSlug) {
     throw new FixtureError(
@@ -80,7 +83,8 @@ export async function resolveUatContext() {
   if (org.error) throw new FixtureError(`organizations lookup failed: ${org.error.message}`);
   if (!org.data) throw new FixtureError(`No organization with slug "${orgSlug}".`);
 
-  const team = await db.from('rep_teams').select('id, name').eq('org_id', org.data.id).limit(1).maybeSingle();
+  // By SLUG, never "the org's first team": in a club the coach's team is one of several.
+  const team = await db.from('rep_teams').select('id, name').eq('org_id', org.data.id).eq('slug', 'uat-test-team').maybeSingle();
   if (team.error) throw new FixtureError(`rep_teams lookup failed: ${team.error.message}`);
   if (!team.data) throw new FixtureError(`No rep team in org "${orgSlug}".`);
 

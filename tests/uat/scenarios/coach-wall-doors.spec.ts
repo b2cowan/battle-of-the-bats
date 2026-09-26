@@ -13,9 +13,14 @@
  * itself 404. It now renders only when the shared `isOrgHomeRealDestination` predicate says the
  * org's public page is a real place, so the wall can never hand a revoked coach a second dead end.
  *
- * Fixture: the uat-test-org OWNER is an org admin with no coaching assignment, which is exactly
- * one of the named cases. That org's public page is deliberately NOT public (`/uat-test-org`
- * 404s), so it also exercises the "hide the door" branch.
+ * Fixture: the uat-test-org OWNER is an org admin with no coaching assignment. That org's public page
+ * is deliberately NOT public (`/uat-test-org` 404s), so it also exercises the "hide the door" branch.
+ *
+ * ⚖ SINCE CLUB TIER STAGE 1 (B05, 2026-09-25) the portal checks the club's PLAN first. uat-test-org is
+ * a tournament org, so its owner now meets the PLAN wall ("The Coaches Portal isn't part of …'s plan"),
+ * and every door claim below holds for that wall too — it carries the same exits, which the first cut
+ * of it did not (a phone user had no way out). The NOT-ASSIGNED wall is reproduced where it now lives:
+ * a CLUB (whose plan carries the portal) opened by its owner, who coaches no team.
  */
 import { test, expect } from '@playwright/test';
 import path from 'path';
@@ -26,9 +31,26 @@ const ORG = '/uat-test-org';
 const WALL = `${ORG}/coaches`;
 
 test.describe('R2 — the coach wall renders inside the portal frame', () => {
-  test('the fixture still reproduces the wall (an org member with no coaching assignment)', async ({ page }) => {
+  test('the fixture still reproduces a wall: a tournament org\'s portal is the PLAN wall (B05)', async ({ page }) => {
     await page.goto(WALL, { waitUntil: 'networkidle' });
-    await expect(page.getByRole('heading', { name: /not assigned to any teams/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /the coaches portal isn.t part of .* plan right now/i })).toBeVisible();
+    // The owner can act on it — their one door is the plans page for THIS tier.
+    await expect(page.locator('main').getByRole('link', { name: 'See plans' }))
+      .toHaveAttribute('href', `${ORG}/admin/tournaments/settings/subscription`);
+  });
+
+  test('a club member with no coaching assignment meets the NOT-ASSIGNED wall, with its doors', async ({ browser }) => {
+    const ctx = await browser.newContext({ storageState: path.join(process.cwd(), 'tests/uat/.auth/rep-club-owner.json') });
+    const page = await ctx.newPage();
+    try {
+      await page.goto('/uat-rep-club/coaches', { waitUntil: 'networkidle' });
+      await expect(page.getByRole('heading', { name: /not assigned to any teams/i })).toBeVisible();
+      const main = page.locator('main');
+      await expect(main.getByRole('link', { name: /go to home/i })).toBeVisible();
+      await expect(main.getByRole('button', { name: /sign out/i })).toBeVisible();
+    } finally {
+      await ctx.close();
+    }
   });
 
   test('the operator strip mounts above it — the wall is not chrome-less any more', async ({ page }) => {

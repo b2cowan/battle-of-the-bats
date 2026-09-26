@@ -85,6 +85,18 @@ help articles that describe today's screens, and marketing copy that promises on
 | 8 · Release readiness | UAT suite, layout sweep, help, demo decision, pricing gate flip, Stripe checkout, support posture | Go/no-go |
 | 9 · House league (last) | Trust-plan defects; un-park League Plus as the standalone plan; coupling check | Separate release |
 
+**Stage 1, the behind-the-screens half — built 2026-09-25.** A club's admin now opens every
+program the plan carries, and a treasurer's allocation wizard lists the club's teams. The board can
+be staffed with real roles, and someone who coaches, or sits on a board, at another club can join
+(only a scorekeeper keeps one home club). Invitations say who is asking and what the role opens, and
+a failed join says so and retries honestly. A club's coaches meet a plain wall when the club's plan
+stops including their portal. On billing: a Club never carries the Founding Season offer; a paying
+club moves between the two Club sizes on the one subscription it has (up now at Stripe's quoted
+price, down at renewal, refused while it has too many teams); and coming back after cancelling
+restores everything. All of this was verified against Stripe's sandbox. The club's
+redesigned screens (the second half) are built on top of this and reach customers on the new admin
+design's release day.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money

@@ -27,8 +27,11 @@ import path from 'path';
  */
 test.use({ storageState: path.join(__dirname, '..', '.auth', 'coach.json') });
 
-const SLUG = 'uat-test-org';
-const TEAM = '3127a094-458f-4b78-8726-17342a8e37a6';
+// The coach fixture's org and team. The fixture moves to UAT Rep Club when UAT_COACH_ORG_SLUG is set
+// (Club Tier Stage 1, B05 — the portal now checks the club's plan); its team then has a new id, which
+// `node scripts/seed-uat-coach-fixture.mjs` prints — pass it as PROBE_TEAM_ID, as PROBE_EVENT_ID already is.
+const SLUG = process.env.UAT_COACH_ORG_SLUG || 'uat-test-org';
+const TEAM = process.env.PROBE_TEAM_ID || (SLUG === 'uat-test-org' ? '3127a094-458f-4b78-8726-17342a8e37a6' : '');
 const EVENT = process.env.PROBE_EVENT_ID ?? '';
 
 const runUrl = () => `/${SLUG}/coaches/teams/${TEAM}/practice/${EVENT}/run`;

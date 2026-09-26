@@ -20,7 +20,7 @@ export const GET = withObservability(async (req: Request) => {
 
   const { data, error } = await supabaseAdmin
     .from('organizations')
-    .select('name, slug, logo_url, is_public, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization')
+    .select('name, slug, logo_url, is_public, is_discoverable, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization')
     .eq('id', org.id)
     .single();
 
@@ -33,6 +33,11 @@ export const GET = withObservability(async (req: Request) => {
     slug:                     data.slug,
     logoUrl:                  data.logo_url                  ?? null,
     isPublic:                 data.is_public,
+    // A09 (Club Tier Stage 1), additive: the directory flag, and what it means in effect. The
+    // directory lists an org only while its public site is ON, so the switch reads off (and the
+    // screen greys it) whenever the site is off — the stored choice returns with the site.
+    isDiscoverable:           data.is_discoverable ?? true,
+    listedInDirectory:        Boolean(data.is_public) && (data.is_discoverable ?? true),
     themePreset:              data.theme_preset              ?? 'platform',
     themePrimary:             data.theme_primary             ?? null,
     themeAccent:              data.theme_accent              ?? null,
@@ -90,8 +95,15 @@ export const PATCH = withObservability(async (req: Request) => {
     updates.slug = slug;
   }
 
+  // A09: `isPublic` is the MASTER SWITCH for the whole public site (the org home, the league pages,
+  // the section tabs, the org's place in search and follows). It was labelled "Listed on /discover",
+  // which is `isDiscoverable` — a separate flag that had no control at all until now.
   if (body.isPublic !== undefined) {
     updates.is_public = Boolean(body.isPublic);
+  }
+
+  if (body.isDiscoverable !== undefined) {
+    updates.is_discoverable = Boolean(body.isDiscoverable);
   }
 
   // ── Theme fields ─────────────────────────────────────────────────────────────
@@ -168,7 +180,7 @@ export const PATCH = withObservability(async (req: Request) => {
     .from('organizations')
     .update(updates)
     .eq('id', org.id)
-    .select('name, slug, logo_url, is_public, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization')
+    .select('name, slug, logo_url, is_public, is_discoverable, theme_preset, theme_primary, theme_accent, hero_banner_url, theme_font, theme_card_style, require_score_finalization')
     .single();
 
   if (error) {
@@ -180,6 +192,11 @@ export const PATCH = withObservability(async (req: Request) => {
     slug:                     updated.slug,
     logoUrl:                  updated.logo_url                  ?? null,
     isPublic:                 updated.is_public,
+    // A09 (Club Tier Stage 1), additive: the directory flag, and what it means in effect. The
+    // directory lists an org only while its public site is ON, so the switch reads off (and the
+    // screen greys it) whenever the site is off — the stored choice returns with the site.
+    isDiscoverable:           updated.is_discoverable ?? true,
+    listedInDirectory:        Boolean(updated.is_public) && (updated.is_discoverable ?? true),
     themePreset:              updated.theme_preset              ?? 'platform',
     themePrimary:             updated.theme_primary             ?? null,
     themeAccent:              updated.theme_accent              ?? null,

@@ -277,6 +277,22 @@ export async function listActiveStaffKindsForOrg(orgId: string): Promise<Map<str
     [`${r.team_id}:${r.user_id}`, r.staff_kind ?? null]));
 }
 
+/**
+ * The teams in an org that have an ACTIVE head coach — one read for the whole org. The club's setup
+ * checklist asks "does every team have a head coach?" (Club Tier Stage 1, A11) and must ask the
+ * access truth (this table), never the per-season projection.
+ */
+export async function listTeamsWithActiveHeadCoach(orgId: string): Promise<Set<string>> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('team_id')
+    .eq('org_id', orgId)
+    .eq('status', 'active')
+    .eq('coach_role', 'head_coach');
+  if (error) throw error;
+  return new Set((data ?? []).map((r: { team_id: string }) => r.team_id));
+}
+
 /** Every ACTIVE member of a team's staff (head coach first, then assistants oldest-first). */
 async function getTeamStaffMembershipList(teamId: string): Promise<TeamStaffMembership[]> {
   const { data, error } = await supabaseAdmin

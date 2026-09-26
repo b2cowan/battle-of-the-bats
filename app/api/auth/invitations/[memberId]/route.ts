@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
+import { checkCrossOrgJoin, crossOrgJoinRefusalForInvitee } from '@/lib/org-membership-policy';
+import { destinationAfterAccept } from '@/lib/invite-acceptance';
 import { withObservability, captureAndJson } from '@/lib/observability';
 
 async function getAuthenticatedUser() {
@@ -76,13 +77,11 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     return NextResponse.json({ ok: true, declined: true });
   }
 
-  // Single-org by default (decision 2026-06-19): don't accept into a SECOND real org. The user's
-  // own Coaches Portal is exempt (one-login coach+club). Closes the long-open cross-org accept guard.
-  if (await userBelongsToOtherRealOrg(user.id, member.organization_id)) {
-    return NextResponse.json(
-      { error: 'Your account already belongs to another organization. Ask an admin to remove you there before joining this one.' },
-      { status: 409 }
-    );
+  // ⚖ Verified Network (A03): belonging to another organization no longer blocks joining this one —
+  // only a scorekeeper keeps one home organization. (Coaching rows elsewhere never counted.)
+  const join = await checkCrossOrgJoin(user.id, member.organization_id, member.role);
+  if (join.blocked) {
+    return NextResponse.json({ error: crossOrgJoinRefusalForInvitee(join), code: 'one_home_org' }, { status: 409 });
   }
 
   // Accept: flip to active. Mirrors /api/auth/accept-invite POST, but targets this
@@ -113,10 +112,13 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
     return captureAndJson(error, { error: error.message }, 500);
   }
 
+  const orgSlug = orgSlugFromRelation(member.organizations);
   return NextResponse.json({
     ok: true,
     accepted: true,
-    orgSlug: orgSlugFromRelation(member.organizations),
+    orgSlug,
     role: member.role,
+    // J10-011 (added 2026-09-25): where this role starts — the resolver sign-in uses.
+    destination: await destinationAfterAccept(user.id, orgSlug),
   });
 }, { route: '/api/auth/invitations/[memberId]' });

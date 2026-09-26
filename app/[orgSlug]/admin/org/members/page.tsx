@@ -517,6 +517,10 @@ export default function MembersPage() {
   }
 
   const planCfg = currentOrg ? PLAN_CONFIG[currentOrg.planId] : PLAN_CONFIG.tournament;
+  // J10-012: Invite / Resend / Manage / Remove are shown only to someone the member routes accept.
+  // A treasurer holds the members LIST but not the right to manage it, and met "Forbidden" on every
+  // button. (Club Tier Stage 1 — today's screen, until the rebuilt Members replaces it.)
+  const canManageMembers = !!userRole && hasCapability(userRole, userCapabilities, 'manage_members');
   const isTournamentPlan = isTournamentTier(currentOrg?.planId);
   const billingHref = currentOrg ? getBillingHref(currentOrg.slug, currentOrg.planId) : '#';
   const auditHref = isTournamentPlan
@@ -615,7 +619,12 @@ export default function MembersPage() {
                       </button>
                     </div>
                   )}
-                  {!isSelf && m.role !== 'owner' && (
+                  {!isSelf && m.role === 'coach' && (
+                    // S1-03: a coaching-staff row is the plumbing a team's staff invite writes; it is
+                    // managed on that team's staff page, and the member routes now refuse it here.
+                    <span className={styles.dimCell}>Managed on the team’s staff page</span>
+                  )}
+                  {!isSelf && m.role !== 'owner' && m.role !== 'coach' && canManageMembers && (
                     <div className={styles.actionGroup}>
                       {m.status === 'invited' && (
                         <button
@@ -737,14 +746,16 @@ export default function MembersPage() {
             disabled={members.length === 0}
             planId={currentOrg?.planId}
           />
-          <button
-            className="btn btn-lime btn-data"
-            onClick={() => setInviteOpen(true)}
-            id="members-invite-btn"
-          >
-            <UserPlus size={15} />
-            Invite Member
-          </button>
+          {canManageMembers && (
+            <button
+              className="btn btn-lime btn-data"
+              onClick={() => setInviteOpen(true)}
+              id="members-invite-btn"
+            >
+              <UserPlus size={15} />
+              Invite Member
+            </button>
+          )}
         </div>
       </div>
 
@@ -858,10 +869,12 @@ export default function MembersPage() {
             <p className={styles.muted} style={{ fontSize: '0.85rem', maxWidth: 400, margin: '0 auto 1rem' }}>
               Add a Staff member to manage game-day operations, or a Scorekeeper to submit results from the field.
             </p>
-            <button className="btn btn-lime btn-data" onClick={() => setInviteOpen(true)}>
-              <UserPlus size={15} />
-              Invite Member
-            </button>
+            {canManageMembers && (
+              <button className="btn btn-lime btn-data" onClick={() => setInviteOpen(true)}>
+                <UserPlus size={15} />
+                Invite Member
+              </button>
+            )}
           </div>
         ) : (
           <>

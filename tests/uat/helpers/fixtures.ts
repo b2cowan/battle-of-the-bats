@@ -50,6 +50,8 @@ const SESSION = {
 type UATFixtures = {
   /** Convenience: the org slug from env */
   orgSlug: string;
+  /** The coach fixture's org (UAT_COACH_ORG_SLUG, else UAT_ORG_SLUG) — for coaches-portal URLs. */
+  coachOrgSlug: string;
   /** Page authenticated as platform admin */
   platformAdminPage: Page;
   /** Page authenticated as org owner */
@@ -100,6 +102,10 @@ export const test = base.extend<UATFixtures>({
     await use(getEnv().orgSlug);
   },
 
+  coachOrgSlug: async ({}, use) => {
+    await use(getEnv().coachOrgSlug);
+  },
+
   platformAdminPage: async ({ browser }, use) => {
     const ctx  = await browser.newContext({ storageState: SESSION.platformAdmin });
     const page = await ctx.newPage();
@@ -129,7 +135,11 @@ export const test = base.extend<UATFixtures>({
   },
 
   anonPage: async ({ browser }, use) => {
-    const ctx  = await browser.newContext();
+    // ⚠ An EXPLICITLY empty session. Inside the test runner `browser.newContext()` inherits the
+    // project's `use.storageState` — the org-OWNER session in playwright.config.ts — so a bare
+    // newContext() was signed in as the owner, and every "signed-out visitor" test was really an
+    // owner test (the login page redirected away; protected routes opened). Found 2026-09-25.
+    const ctx  = await browser.newContext({ storageState: { cookies: [], origins: [] } });
     const page = await ctx.newPage();
     await use(page);
     await ctx.close();

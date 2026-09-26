@@ -48,7 +48,7 @@ const admin = createClient(
   { auth: { persistSession: false } },
 );
 
-const ORG_SLUG = process.env.UAT_ORG_SLUG!;
+const ORG_SLUG = process.env.UAT_COACH_ORG_SLUG || process.env.UAT_ORG_SLUG!; // the coach fixture's org
 const COACH_EMAIL = process.env.UAT_COACH_EMAIL!;
 const READ_EMAIL = 'uat-asst-money-read@uat-test-org.local';
 const PASSWORD = process.env.UAT_COACH_PASSWORD!;

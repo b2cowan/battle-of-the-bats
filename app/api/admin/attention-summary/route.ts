@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { hasCapability } from '@/lib/roles';
+import { canOpenModule } from '@/lib/member-access';
 import { withObservability } from '@/lib/observability';
 
 export const GET = withObservability(async (req: Request) => {
@@ -11,9 +11,12 @@ export const GET = withObservability(async (req: Request) => {
 
   const orgId = ctx.org.id;
 
-  const canSeeTournaments = hasCapability(ctx.role, ctx.capabilities, 'module_tournaments');
-  const canSeeHouseLeague = hasCapability(ctx.role, ctx.capabilities, 'module_house_league');
-  const canSeeRepTeams    = hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams');
+  // The role holds the capability AND the plan carries the module — the one gate every route asks.
+  // (Since D8 an admin holds the program capabilities by default, so a capability-only check here
+  // counted a club's rep-team and league work for an org whose plan no longer carries them.)
+  const canSeeTournaments = canOpenModule(ctx, ctx.org, 'module_tournaments');
+  const canSeeHouseLeague = canOpenModule(ctx, ctx.org, 'module_house_league');
+  const canSeeRepTeams    = canOpenModule(ctx, ctx.org, 'module_rep_teams');
 
   const [
     pendingTournamentCount,
@@ -89,7 +92,9 @@ export const GET = withObservability(async (req: Request) => {
       const { count } = await supabaseAdmin
         .from('rep_tryout_registrations')
         .select('*', { count: 'exact', head: true })
-        .eq('status', 'pending')
+        // `pending_review` is the waiting state (mig 168's CHECK has no 'pending'). This asked for
+        // 'pending' and so always answered 0 — the hub never showed a tryout waiting (found 2026-09-25).
+        .eq('status', 'pending_review')
         .in('program_year_id', yearIds);
       return count ?? 0;
     })(),

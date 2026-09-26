@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { memberSection, whatTheyCanOpen } from '@/lib/member-access';
+import type { OrgRole } from '@/lib/types';
 
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -69,7 +71,16 @@ export const GET = withObservability(async (req: Request) => {
 
   const result = members.map(m => {
     const authUser = userMap.get(m.user_id);
+    const role = m.role as OrgRole;
+    const capabilities = (m.capabilities as Record<string, boolean> | null) ?? null;
     return {
+      // ── Added 2026-09-25 (Club Tier Stage 1), additively — every field below them is unchanged:
+      //   section — which part of Members the row belongs to (the board, scorekeepers, or coaching
+      //             staff; S1-03 / Ask 6). Coaching-staff rows are refused by the board endpoints.
+      //   access  — "what they can open": one row per program the plan carries, computed by the SAME
+      //             `canOpenModule` every gate asks (A13 / J10-024), with the override chip's state.
+      section:               memberSection(role),
+      access:                whatTheyCanOpen({ role, capabilities }, org),
       id:                    m.id,
       userId:                m.user_id,
       email:                 authUser?.email ?? '(unknown)',

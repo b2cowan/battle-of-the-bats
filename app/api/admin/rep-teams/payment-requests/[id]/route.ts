@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { canOpenRepMoney } from '@/lib/member-access';
 import {
   getRepTeam,
   getOrCreateRepTeamLedger,
@@ -10,10 +9,11 @@ import {
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 
+// The club ↔ team money loop: Rep Teams OR Accounting, on an org that runs rep teams (D8 + Ask 1 —
+// a treasurer reaches it from Accounting). The write handlers below keep their own role checks.
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_rep_teams')) return forbidden();
+  if (!canOpenRepMoney(ctx, ctx.org)) return forbidden();
   return null;
 }
 

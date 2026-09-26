@@ -30,6 +30,9 @@ import ConfirmProvider from '@/components/coaches/ConfirmProvider';
 import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import { isOrgBillingSuspended } from '@/lib/org-billing-access';
 import SubscriptionEndedWall from '@/components/billing/SubscriptionEndedWall';
+import CoachPlanWall from '@/components/coaches/CoachPlanWall';
+import { orgPlanCarriesCoachesPortal } from '@/lib/coach-portal-plan';
+import { orgOwnerDisplayName } from '@/lib/member-names';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
 import styles from './coaches.module.css';
 
@@ -176,6 +179,49 @@ export default async function CoachesLayout({
     seenClosedTeams.add(a.teamId);
     return true;
   });
+
+  // B05 (Club Tier Stage 1): the CLUB'S PLAN must carry the Coaches Portal. Decided here, on the
+  // server, before any portal screen mounts — fail closed: an org whose plan does not carry Rep Teams
+  // (a Club that moved down, or an unknown plan) is walled. Before this the portal never asked, so a
+  // downgraded club kept every team's full portal while its downgrade screen said it "shuts down".
+  // After the billing wall (a cancelled club is told it is cancelled, the right remedy) and before
+  // the not-assigned wall (the plan is the reason, whoever is looking).
+  if (!orgPlanCarriesCoachesPortal(authCtx.org)) {
+    const ownTeams = [...new Set([...assignments, ...closedAssignments].map(a => a.teamName))];
+    const viewerIsOwner = initialUserRole === 'owner';
+    const ownerName = viewerIsOwner ? null : await orgOwnerDisplayName(authCtx.org.id);
+    return (
+      <OrgProvider initialOrg={authCtx.org} initialUserRole={initialUserRole}>
+        <div style={{ display: 'contents' }} {...coachWarmAttr}>
+          <CoachThemeColor />
+          <div className={styles.coachesShell}>
+            {/* wall: identity + exits only, like the other two walls. */}
+            <CoachTopStrip wall />
+            <main className={styles.coachesMain}>
+              <CoachPlanWall
+                orgName={authCtx.org.name}
+                orgSlug={authCtx.org.slug}
+                planId={authCtx.org.planId}
+                teamName={ownTeams.length === 1 ? ownTeams[0] : null}
+                ownerName={ownerName}
+                viewerIsOwner={viewerIsOwner}
+              />
+              {/* The same exits as the not-assigned wall below (R2). The strip is desktop-only, so on
+                  a phone these ARE the way out — without them the wall was a dead end there. The
+                  org home is offered only when the shared resolver says it is a real page. */}
+              <div className={styles.notAssignedDoors}>
+                <Link href="/discover" className={styles.notAssignedDoor}>Go to Home</Link>
+                {publicHref && (
+                  <Link href={publicHref} className={styles.notAssignedDoor}>{`Back to ${authCtx.org.name}`}</Link>
+                )}
+                <CoachWallSignOut />
+              </div>
+            </main>
+          </div>
+        </div>
+      </OrgProvider>
+    );
+  }
 
   if (assignments.length === 0 && closedAssignments.length === 0) {
     const { name: orgName, contactEmail } = authCtx.org;

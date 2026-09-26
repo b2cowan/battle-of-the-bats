@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithScope, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { withObservability } from '@/lib/observability';
+import { withObservability, captureAndJson } from '@/lib/observability';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 
 // ---------------------------------------------------------------------------
@@ -88,14 +88,21 @@ export const POST = withObservability(async (req: Request) => {
   const ctx = await getAuthContextWithScope({ orgSlug, requireOrgSlug: true });
   if (!ctx) return unauthorized();
   // Org Venue Library is a League/Club org-admin feature (matches the page-level gate).
-  if (!hasOrgVenueLibrary(ctx.org.planId)) return forbidden();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) return forbidden();
+  // A14 (Club Tier Stage 1): every refusal below says WHY, with a code — the page swallowed a bare
+  // "Forbidden" and a save simply did nothing. (Who may write is Stage 6's D02; this names it.)
+  if (!hasOrgVenueLibrary(ctx.org.planId)) {
+    return venueRefusal(403, 'plan_lacks_venue_library', 'The venue library comes with League Plus and Club.');
+  }
+  if (!hasCapability(ctx.role, ctx.capabilities, 'create_tournaments')) {
+    return venueRefusal(403, 'no_venue_permission', 'Your role can’t change the venue library. Ask your organization’s owner.');
+  }
 
   try {
     const { action, id, data } = await req.json();
 
     // -- save-venue ---------------------------------------------------------
     if (action === 'save-venue') {
+      if (!String(data?.name ?? '').trim()) return venueRefusal(400, 'name_required', 'Give the venue a name.');
       const { data: newVenue, error } = await supabaseAdmin.from('org_venues').insert({
         org_id:    ctx.org.id,
         name:      data.name,
@@ -112,7 +119,7 @@ export const POST = withObservability(async (req: Request) => {
       // Verify ownership
       const { data: existing } = await supabaseAdmin
         .from('org_venues').select('org_id').eq('id', id).single();
-      if (existing?.org_id !== ctx.org.id) return forbidden();
+      if (existing?.org_id !== ctx.org.id) return notInLibrary();
 
       const updates: Record<string, unknown> = {};
       if (data.name    !== undefined) updates.name    = data.name;
@@ -127,7 +134,7 @@ export const POST = withObservability(async (req: Request) => {
     if (action === 'delete-venue' && id) {
       const { data: existing } = await supabaseAdmin
         .from('org_venues').select('org_id').eq('id', id).single();
-      if (existing?.org_id !== ctx.org.id) return forbidden();
+      if (existing?.org_id !== ctx.org.id) return notInLibrary();
 
       // org_venue_facilities cascade via FK
       const { error } = await supabaseAdmin.from('org_venues').delete().eq('id', id);
@@ -137,9 +144,10 @@ export const POST = withObservability(async (req: Request) => {
 
     // -- add-facility -------------------------------------------------------
     if (action === 'add-facility') {
+      if (!String(data?.name ?? '').trim()) return venueRefusal(400, 'name_required', 'Give the field a name.');
       const { data: venue } = await supabaseAdmin
         .from('org_venues').select('org_id').eq('id', data.orgVenueId).single();
-      if (venue?.org_id !== ctx.org.id) return forbidden();
+      if (venue?.org_id !== ctx.org.id) return notInLibrary();
 
       const { data: newFac, error } = await supabaseAdmin.from('org_venue_facilities').insert({
         org_venue_id:  data.orgVenueId,
@@ -159,7 +167,7 @@ export const POST = withObservability(async (req: Request) => {
       // Every sibling action here has it; these two were mutating by raw id.
       const { data: fac } = await supabaseAdmin
         .from('org_venue_facilities').select('org_id').eq('id', id).single();
-      if (fac?.org_id !== ctx.org.id) return forbidden();
+      if (fac?.org_id !== ctx.org.id) return notInLibrary();
 
       const updates: Record<string, unknown> = {};
       if (data.name          !== undefined) updates.name          = data.name;
@@ -175,7 +183,7 @@ export const POST = withObservability(async (req: Request) => {
     if (action === 'delete-facility' && id) {
       const { data: fac } = await supabaseAdmin
         .from('org_venue_facilities').select('org_id').eq('id', id).single();
-      if (fac?.org_id !== ctx.org.id) return forbidden();
+      if (fac?.org_id !== ctx.org.id) return notInLibrary();
 
       const { error } = await supabaseAdmin.from('org_venue_facilities').delete().eq('id', id);
       if (error) throw error;
@@ -185,7 +193,17 @@ export const POST = withObservability(async (req: Request) => {
     return NextResponse.json({ error: 'Unsupported action.' }, { status: 400 });
 
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Unknown server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    // A supabase-js error is a plain object, not an `Error`, so every database failure used to come
+    // back as "Unknown server error" with the cause thrown away. Record the real one; tell the
+    // person what happened in words they can act on.
+    return captureAndJson(err, { error: 'We couldn’t save that just now. Try again.', code: 'save_failed' }, 500);
   }
 }, { route: '/api/admin/org/venues' });
+
+function venueRefusal(status: number, code: string, error: string) {
+  return NextResponse.json({ error, code }, { status });
+}
+
+function notInLibrary() {
+  return venueRefusal(404, 'not_in_library', 'That isn’t in your venue library any more. Reload the page.');
+}

@@ -392,6 +392,11 @@ export function paymentConfirmationHtml(p: {
   `);
 }
 
+/** "a scorekeeper" / "an administrator" — the invite mails said "as a administrator". */
+function withArticle(noun: string): string {
+  return `${/^[aeiou]/i.test(noun) ? 'an' : 'a'} ${noun}`;
+}
+
 function escapeEmailHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -1072,13 +1077,18 @@ export function orgInviteHtml(p: {
   inviteUrl: string;
   ctaLabel: string;
   scorekeeperNote?: boolean;
+  /** Who sent it (J10-010, Club Tier Stage 1) — named when known, so the invitee knows who is asking. */
+  inviterName?: string | null;
 }) {
   const note = p.scorekeeperNote
     ? `<p style="color:rgba(241,245,249,0.7);">As a scorekeeper, you'll have access to the scorekeeper app to submit game results from your assigned tournaments. After setup, you'll land directly in Scorekeeper View.</p>`
     : '';
+  // org.name and the sender's name are editable by other people → escape before interpolating.
+  const org = escapeEmailHtml(p.orgName);
+  const who = p.inviterName ? `<strong>${escapeEmailHtml(p.inviterName)}</strong> invited you` : "You've been invited";
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You're invited</h2>
-    <p>You've been invited to join <strong>${p.orgName}</strong> on <strong>FieldLogicHQ</strong> as a ${p.roleLabel}.</p>
+    <p>${who} to join <strong>${org}</strong> on <strong>FieldLogicHQ</strong> as ${withArticle(p.roleLabel)}.</p>
     ${note}
     <p style="color:rgba(241,245,249,0.7);">Click below to accept your invitation and set up your account.</p>
     <a href="${p.inviteUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">${p.ctaLabel} &rarr;</a>
@@ -1127,7 +1137,7 @@ export function orgMemberAddedHtml(p: {
     : 'No action is required — just sign in to get started.';
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">You've been added to ${p.orgName}</h2>
-    <p>You now have access to <strong>${p.orgName}</strong> on <strong>FieldLogicHQ</strong> as a ${p.roleLabel}.</p>
+    <p>You now have access to <strong>${p.orgName}</strong> on <strong>FieldLogicHQ</strong> as ${withArticle(p.roleLabel)}.</p>
     <p style="color:rgba(241,245,249,0.7);">${note}</p>
     <a href="${p.signInUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">${p.ctaLabel} &rarr;</a>
     <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you weren't expecting this, you can safely ignore this email.</p>
@@ -1142,11 +1152,37 @@ export function orgMemberAddedHtml(p: {
 export function memberSuspendedHtml(p: {
   orgName: string;
 }) {
+  // org.name is admin-editable → escape before interpolating into the (different) recipient's HTML
+  // body, as memberRemovedHtml below already did.
+  const org = escapeEmailHtml(p.orgName);
   return wrap(`
-    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your access to ${p.orgName} was suspended</h2>
-    <p>An administrator at <strong>${p.orgName}</strong> has suspended your access on <strong>FieldLogicHQ</strong>.</p>
-    <p style="color:rgba(241,245,249,0.7);">You won't be able to sign in to this workspace until your access is restored. If you think this was a mistake, please contact an administrator at ${p.orgName} directly.</p>
-    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This message is about your access to ${p.orgName} only; any other organizations or workspaces on your account are unaffected.</p>
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your access to ${org} was suspended</h2>
+    <p>An administrator at <strong>${org}</strong> has suspended your access on <strong>FieldLogicHQ</strong>.</p>
+    <p style="color:rgba(241,245,249,0.7);">You won't be able to sign in to this workspace until your access is restored. If you think this was a mistake, please contact an administrator at ${org} directly.</p>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This message is about your access to ${org} only; any other organizations or workspaces on your account are unaffected.</p>
+  `);
+}
+
+/**
+ * member_access_changed — sent when an owner or admin changes a member's role or the programs they
+ * can open (J10-020, Club Tier Stage 1). `changes` are the sentences `describeAccessChange` builds
+ * (lib/member-access.ts), already worded for the member; each is escaped here.
+ */
+export function memberAccessChangedHtml(p: {
+  orgName: string;
+  changes: string[];
+  signInUrl: string;
+}) {
+  const org = escapeEmailHtml(p.orgName);
+  const items = p.changes
+    .map(line => `<li style="margin:0 0 0.4rem;">${escapeEmailHtml(line)}</li>`)
+    .join('');
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Your access to ${org} changed</h2>
+    <p>An administrator at <strong>${org}</strong> changed what you can do on <strong>FieldLogicHQ</strong>:</p>
+    <ul style="margin:0.75rem 0 1rem;padding-left:1.25rem;">${items}</ul>
+    <a href="${p.signInUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">Sign In &rarr;</a>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">If you think this was a mistake, please contact an administrator at ${org} directly. This message is about your access to ${org} only.</p>
   `);
 }
 

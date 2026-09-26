@@ -22,7 +22,8 @@ export type Capability =
   | 'module_tournaments'
   | 'module_communications'
   | 'module_members'
-  // Default-off: reserved for future premium modules (no ROLE_DEFAULTS entry)
+  // The programs a paid plan adds. Off for staff/official by default; ON for admin (ruling D8,
+  // 2026-09-25 — see ROLE_DEFAULTS.admin); each role that runs one program holds that one.
   | 'module_public_site'
   | 'module_accounting'
   | 'module_house_league'
@@ -50,6 +51,14 @@ export const ROLE_DEFAULTS: Record<OrgRole, Set<Capability>> = {
     'post_rules', 'send_communications', 'seal_tournaments', 'manage_branding', 'manage_members',
     // default-on module caps
     'module_tournaments', 'module_communications', 'module_members',
+    // ⚖ RULING D8 (owner, 2026-09-25): an admin opens EVERY program the plan carries. These four
+    // are only ever half the answer — every gate pairs the role's capability with the org's
+    // entitlement (`canOpenModule` in lib/member-access.ts), so on a plan without a program the
+    // admin still cannot open it. Before D8 an admin held none of them, so the hub read a club's
+    // vice-president as a tournament-only user and bounced them out (A01, J4-040, J10-027).
+    // ⚠ NOT `module_families` (explicit grant only, CLUB_FAMILIES_BOOK_PLAN §1.2) and NEVER
+    // `billing` / `org_settings` (owner-only powers). tests/unit/role-defaults-guard.test.ts pins all three.
+    'module_rep_teams', 'module_accounting', 'module_public_site', 'module_house_league',
   ]),
   staff: new Set<Capability>([
     'update_schedule', 'submit_scores', 'check_in_teams', 'post_announcements',

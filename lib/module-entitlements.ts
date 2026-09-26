@@ -31,13 +31,53 @@ export function hasModuleEntitlement(org: EntitlementOrg, cap: Capability): bool
   // But the PREDICATE must not be restated: if suspension ever grows a second condition, an
   // inline copy here would silently reopen exactly the gap the rail exists to close.
   if (isOrgBillingSuspended(org)) return false;
+  return planCarriesModule(org, cap);
+}
 
+/**
+ * Does the org's plan CARRY this program — its tier, a free-floor profile, or a purchased add-on —
+ * regardless of whether the account is currently suspended?
+ *
+ * The access question is `hasModuleEntitlement` (above), which also closes everything while the
+ * org is cancelled. This is the SHAPE question: "what kind of organization is this?" A cancelled
+ * club is still a club — asking the access question there reads it as a tournament-only workspace
+ * and routes its people into tournament setup (Club Tier Stage 1, `isTournamentOnlyWorkspace`).
+ * Never use this to decide whether someone may open a screen.
+ */
+export function planCarriesModule(org: EntitlementOrg, cap: Capability): boolean {
   const plan = PLAN_CONFIG[org.planId];
-  if (plan.moduleEntitlements.includes(cap)) return true;
+  if (plan?.moduleEntitlements.includes(cap)) return true;
   // Free-floor profile (e.g. League Starter) grants module_house_league on top of the paid plan —
   // never module_public_site (the full org site stays a paid-League differentiator).
   if (freeFloorModules(org.freeFloor).includes(cap)) return true;
   return org.enabledAddons.includes(cap);
+}
+
+/** The programs a paid plan ADDS on top of the tournament tools every plan has. */
+export const PROGRAM_MODULES_BEYOND_TOURNAMENTS: readonly Capability[] = [
+  'module_rep_teams', 'module_accounting', 'module_public_site', 'module_house_league', 'module_families',
+];
+
+/**
+ * "Tournament-only" is a fact about the PLAN, never about the person (ruling D8, 2026-09-25).
+ *
+ * True when the org carries nothing beyond the tournament tools. Before this existed the admin hub
+ * derived it from the SIGNED-IN MEMBER's capabilities, so on a Club the vice-president (who held
+ * no module capability) was treated as a tournament-only user and redirected out of the club's own
+ * hub (A01) — or into owner-only onboarding, which bounced them back (the J10-014 loop). The hub
+ * and the post-login destination resolver both call this; neither may restate it.
+ */
+export function isTournamentOnlyWorkspace(org: EntitlementOrg): boolean {
+  return !PROGRAM_MODULES_BEYOND_TOURNAMENTS.some(cap => planCarriesModule(org, cap));
+}
+
+/**
+ * Is this plan one of the Club bands? Asked where Club differs by ruling rather than by what the
+ * plan carries: no Founding Season offer (D6), the owner's first stop is the club checklist, and
+ * a club's setup never opens the house-league wizard. One definition, so a third band is one edit.
+ */
+export function isClubPlan(planId: string | null | undefined): boolean {
+  return planId === 'club' || planId === 'club_large';
 }
 
 /**

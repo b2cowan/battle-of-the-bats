@@ -79,6 +79,8 @@ type AuthOrgRow = {
 };
 
 type AuthMemberOrgRow = {
+  /** 'invited' | 'active' — suspended rows never reach here (filtered in the query). */
+  status?: string | null;
   organizations: AuthOrgRow | null;
 };
 
@@ -121,10 +123,15 @@ export const getAuthenticatedUser = cache(async (): Promise<User | null> => {
  * the DB happens to return first. Returns undefined when the user has no non-null org membership.
  */
 function pickHomeMembership(rows: AuthMemberOrgRow[]): AuthMemberOrgRow | undefined {
-  const withOrg = rows.filter((row): row is { organizations: AuthOrgRow } => row.organizations !== null);
+  const withOrg = rows.filter((row): row is AuthMemberOrgRow & { organizations: AuthOrgRow } => row.organizations !== null);
   if (withOrg.length <= 1) return withOrg[0];
   const isTeamWorkspace = (o: AuthOrgRow) => o.account_kind === 'team_workspace' || o.plan_id === 'team';
   return [...withOrg].sort((a, b) => {
+    // A membership the person has ACCEPTED before one still waiting on them (J10-006): a pending
+    // invite is not a workspace yet, and the role-aware gates below refuse it.
+    const ap = a.status === 'invited' ? 1 : 0;
+    const bp = b.status === 'invited' ? 1 : 0;
+    if (ap !== bp) return ap - bp;
     const at = isTeamWorkspace(a.organizations) ? 1 : 0;
     const bt = isTeamWorkspace(b.organizations) ? 1 : 0;
     if (at !== bt) return at - bt;                                                  // real org before Coaches Portal stub
@@ -145,7 +152,7 @@ export async function getAuthContext(options: AuthContextOptions = {}): Promise<
   // Suspended members are treated as unauthenticated — all routes return 401.
   const { data: memberData } = await supabaseAdmin
     .from('organization_members')
-    .select('organizations(*)')
+    .select('status, organizations(*)')
     .eq('user_id', user.id)
     .neq('status', 'suspended')
     .returns<AuthMemberOrgRow[]>();
@@ -210,17 +217,33 @@ export interface AuthContextWithRole extends AuthContext {
   repGroupIds: string[] | null;
 }
 
+/**
+ * The person's ACCEPTED membership of this org — the one read behind every role-aware gate
+ * (getAuthContextWithRole, getAuthContextWithScope, requireCapability).
+ *
+ * J10-006: a role is something a person has ACCEPTED. A pending invitee ('invited') used to pass
+ * every role-aware gate — the admin shell included — before they had said yes. They resolve here
+ * as no member; Home carries their invitation card instead. (Plain `getAuthContext` still
+ * resolves their org, so a coach whose only org row is a pending board invite keeps the portal
+ * their coaching assignment gives them.) A new role-aware gate reads through this, so it cannot
+ * forget the filter.
+ */
+async function getAcceptedMember(orgId: string, userId: string) {
+  const { data } = await supabaseAdmin
+    .from('organization_members')
+    .select('id, role, capabilities')
+    .eq('organization_id', orgId)
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .maybeSingle();
+  return data;
+}
+
 export async function getAuthContextWithRole(options: AuthContextOptions = {}): Promise<AuthContextWithRole | null> {
   const ctx = await getAuthContext(options);
   if (!ctx) return null;
 
-  const { data: member } = await supabaseAdmin
-    .from('organization_members')
-    .select('id, role, capabilities')
-    .eq('organization_id', ctx.org.id)
-    .eq('user_id', ctx.user.id)
-    .maybeSingle();
-
+  const member = await getAcceptedMember(ctx.org.id, ctx.user.id);
   if (!member) return null;
 
   const role = member.role as OrgRole;
@@ -261,13 +284,7 @@ export async function getAuthContextWithScope(options: AuthContextOptions = {}):
   const ctx = await getAuthContext(options);
   if (!ctx) return null;
 
-  const { data: member } = await supabaseAdmin
-    .from('organization_members')
-    .select('id, role, capabilities')
-    .eq('organization_id', ctx.org.id)
-    .eq('user_id', ctx.user.id)
-    .maybeSingle();
-
+  const member = await getAcceptedMember(ctx.org.id, ctx.user.id);
   if (!member) return null;
 
   const role = member.role as OrgRole;
@@ -310,12 +327,7 @@ export function forbidden() {
  * Now reads capabilities column (Phase 1+).
  */
 export async function requireCapability(ctx: AuthContext, cap: Capability): Promise<Response | null> {
-  const { data } = await supabaseAdmin
-    .from('organization_members')
-    .select('role, capabilities')
-    .eq('organization_id', ctx.org.id)
-    .eq('user_id', ctx.user.id)
-    .single();
+  const data = await getAcceptedMember(ctx.org.id, ctx.user.id);
 
   if (!data || !hasCapability(data.role as OrgRole, (data.capabilities as Record<string, boolean> | null) ?? null, cap)) {
     return forbidden();

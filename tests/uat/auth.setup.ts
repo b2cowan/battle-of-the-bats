@@ -61,7 +61,9 @@ async function loginPlatformAdmin(
   // The layout does a Supabase query before redirecting, so this can take several seconds.
   await expect.poll(async () => {
     if (!new URL(page.url()).pathname.startsWith('/platform-admin/login')) return true;
-    return page.getByRole('heading', { name: /Overview|Action Queue/ }).isVisible();
+    // `.first()`: the home shows BOTH headings whenever its Action Queue has something in it, and a
+    // strict-mode locator then refuses to answer (found 2026-09-25, when the queue first had work).
+    return page.getByRole('heading', { name: /Overview|Action Queue/ }).first().isVisible();
   }, { timeout: 45_000 }).toBe(true);
 
   await page.context().storageState({ path: savePath });

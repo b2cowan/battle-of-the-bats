@@ -29,15 +29,19 @@ const WorklistContext = createContext<WorklistCounts>({});
 const REFRESH_MS = 90_000;
 
 export function AdminWorklistProvider({ children }: { children: ReactNode }) {
-  const { currentOrg } = useOrg();
+  const { currentOrg, canOpen } = useOrg();
   const { currentTournament } = useTournament();
   const [counts, setCounts] = useState<WorklistCounts>({});
 
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
+  // Ask only when the person can open tournaments. The route answers 403 to everyone else, and
+  // this provider wraps the WHOLE admin shell on a 90-second timer, so a club treasurer fired a
+  // refused request on every page load (Club Tier Stage 0 probe). Same gate the route applies.
+  const canOpenTournaments = canOpen('module_tournaments');
 
   const fetchCounts = useCallback(async () => {
-    if (!tournamentId || !orgSlug) {
+    if (!tournamentId || !orgSlug || !canOpenTournaments) {
       setCounts({});
       return;
     }
@@ -54,7 +58,7 @@ export function AdminWorklistProvider({ children }: { children: ReactNode }) {
     } catch {
       /* nav counts are non-critical — ignore */
     }
-  }, [tournamentId, orgSlug]);
+  }, [tournamentId, orgSlug, canOpenTournaments]);
 
   useEffect(() => {
     fetchCounts();

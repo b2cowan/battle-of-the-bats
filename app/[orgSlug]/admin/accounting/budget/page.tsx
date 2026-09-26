@@ -62,9 +62,10 @@ const BLANK_PERIOD: PeriodDraft = { label: '', periodDate: '', amount: '' };
 function blankPeriods(): PeriodDraft[] { return [{ ...BLANK_PERIOD }]; }
 
 export default function OrgBudgetPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, userRole, userCapabilities, loading, canOpen } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'treasurer';
+  const canOpenRepTeams = canOpen('module_rep_teams');
 
   const [year, setYear]     = useState(new Date().getFullYear());
   const [plan, setPlan]     = useState<PlanData | null>(null);
@@ -523,7 +524,9 @@ export default function OrgBudgetPage() {
                     Allocate to Teams
                   </Link>
                 )}
-                {line.allocation && (
+                {/* The allocation's page lives under Rep Teams, which a treasurer cannot open (Ask 1:
+                    no Rep Teams door) — a link they would only be bounced from is not shown. */}
+                {line.allocation && canOpenRepTeams && (
                   <Link
                     href={`${base}/rep-teams/allocations/${line.allocation.id}`}
                     className="btn btn-ghost"

@@ -15,6 +15,8 @@ import {
 } from '@/lib/billing-setup';
 import { NEXT_SEASON_CHOICE_KIND, classifyNextSeasonSubscription } from '@/lib/next-season-choice';
 import { PLAN_RANK } from '@/lib/plan-features';
+import { applyPlanChangeSideEffects } from '@/lib/plan-move';
+import { restoreAfterReactivation } from '@/lib/billing-reactivation';
 import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { cancelScheduledEmail } from '@/lib/email-sender';
@@ -376,6 +378,22 @@ export const POST = withObservability(async (req: Request) => {
         if (updatedOrg) {
           const restoreResult = await restoreRetainedDowngradeTournaments(updatedOrg.id, cfg.tournamentLimit);
 
+          // Club Tier Stage 1b — what only the webhook sees change the plan (a scheduled down-move
+          // reaching its renewal, a checkout onto Club): a custom team limit set for the old band is
+          // cleared, and a move onto Club revokes the Founding Season comp (⚖ D6).
+          await applyPlanChangeSideEffects({
+            orgId: updatedOrg.id,
+            fromPlan: currentOrg?.plan_id ?? null,
+            toPlan: planKey,
+            actor: 'stripe-webhook',
+          });
+          // A07: coming back from a cancellation restores what it took — the site, the retained
+          // tournaments and records (so the retention emails stop), and the cancellation intent.
+          const reactivation = currentOrg?.subscription_status === 'canceled'
+            && (sub.status === 'active' || sub.status === 'trialing')
+            ? await restoreAfterReactivation(updatedOrg.id, cfg.tournamentLimit)
+            : null;
+
           // Moved onto a paid plan — cancel any pending free-tier upsell email so the
           // org doesn't get a now-stale "you're missing Tournament Plus" nudge.
           if (planKey !== 'tournament') {
@@ -440,7 +458,7 @@ export const POST = withObservability(async (req: Request) => {
                   defaultHtml: welcomeBackHtml({
                     orgName: updatedOrg.name,
                     planLabel,
-                    restoredTournaments: restoreResult.restoredCount,
+                    restoredTournaments: restoreResult.restoredCount + (reactivation?.restoredTournamentIds.length ?? 0),
                     dashboardUrl,
                   }),
                 });

@@ -68,8 +68,11 @@ interface BVAData {
 }
 
 export default function OrgBudgetVsActualPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const { currentOrg, userRole, userCapabilities, loading, canOpen } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
+  // A team card opens Rep Teams — only for someone who can open it. A treasurer (Ask 1: no Rep
+  // Teams door) sees the same card as a plain panel instead of a link they'd be bounced from.
+  const canOpenRepTeams = canOpen('module_rep_teams');
 
   const [year, setYear]     = useState(new Date().getFullYear());
   const [data, setData]     = useState<BVAData | null>(null);
@@ -600,7 +603,7 @@ export default function OrgBudgetVsActualPage() {
                     : styles.progressFillDanger;
 
                   return (
-                    <Link key={t.teamId} href={`${base}/rep-teams`} className={cardClass}>
+                    <TeamCard key={t.teamId} href={canOpenRepTeams ? `${base}/rep-teams` : null} className={cardClass}>
                       <div className={styles.teamCardHeader}>
                         <span className={styles.teamCardName}>{t.teamName}</span>
                         <span className={badgeClass}>{badgeLabel}</span>
@@ -637,7 +640,7 @@ export default function OrgBudgetVsActualPage() {
                           style={{ width: `${Math.min(t.collectionPct, 100)}%` }}
                         />
                       </div>
-                    </Link>
+                    </TeamCard>
                   );
                 })}
               </div>
@@ -661,4 +664,11 @@ export default function OrgBudgetVsActualPage() {
       />
     </div>
   );
+}
+
+/** A team-health card: a link into Rep Teams when the viewer can open it, a plain panel otherwise. */
+function TeamCard({ href, className, children }: { href: string | null; className: string; children: React.ReactNode }) {
+  return href
+    ? <Link href={href} className={className}>{children}</Link>
+    : <div className={className}>{children}</div>;
 }

@@ -14,7 +14,7 @@ import {
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL } from '@/lib/plan-config';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import { isFreeFloorLeague, houseLeagueDivisionCap, freeFloorModules } from '@/lib/free-floor';
 import type { FreeFloor, OrgPlan, TournamentFormat, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS } from '@/lib/types';
@@ -479,8 +479,10 @@ export default function OnboardingPage() {
     const onboardOrgQuery = currentOrg.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
     const seasonsRequest = hasModuleEntitlement(currentOrg, 'module_house_league')
       ? fetch(`/api/admin/house-league/seasons${onboardOrgQuery}`)
-        .then(r => r.ok ? r.json() : [])
-        .then(d => Array.isArray(d) && d.length > 0)
+        .then(r => r.ok ? r.json() : { seasons: [] })
+        // The route answers `{ seasons }`, never a bare array — reading it as an array made this
+        // "no season yet" for every org, so the season step never showed done (found 2026-09-25).
+        .then(d => Array.isArray(d?.seasons) && d.seasons.length > 0)
         .catch(() => false)
       : Promise.resolve(null);
     seasonsRequest.then(setSeasonsDone);
@@ -573,6 +575,11 @@ export default function OnboardingPage() {
     // Trigger the house-league setup wizard whenever the org has the module — via the paid
     // League/Club plan OR the League Starter free-floor profile (plan_id stays 'tournament').
     if (!hasModuleEntitlement(currentOrg, 'module_house_league')) return;
+    // …but never for a CLUB. A club's plan carries house league without the club running one, and a
+    // rep club opening its setup was dropped straight into "create your first season" (A11). Since
+    // Club Tier Stage 1 a Club owner lands on this page at first sign-in, so this matters now.
+    const planForWizard = normalizePlanId(currentOrg.planId);
+    if (isClubPlan(planForWizard)) return;
 
     void showWizardStep('league-season');
   }, [loading, currentOrg, userRole, planChoiceRequired, seasonsDone, activeModal, planChooserOpen, wizardDismissed, workflowRedirecting]);
@@ -1525,12 +1532,12 @@ export default function OnboardingPage() {
   const planLabel = PLAN_CONFIG[activePlanId].label;
   const isTournamentPlan = activePlanId === 'tournament' || activePlanId === 'tournament_plus';
   const isLeaguePlan = activePlanId === 'league';
-  const isClubPlan = activePlanId === 'club' || activePlanId === 'club_large';
+  const onClubPlan = isClubPlan(activePlanId);
   const shouldRedirectFromTournamentOnboarding = isTournamentPlan && startupProgress?.wizardAvailable === false;
   const todayDate = getTodayDateValue();
   const allDone = isLeaguePlan
     ? seasonsDone === true
-    : isClubPlan
+    : onClubPlan
       ? seasonsDone === true || repTeamsDone === true || publicSiteDone === true
       : false;
 

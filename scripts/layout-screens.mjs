@@ -1180,7 +1180,10 @@ export const SCREENS = [
   // The wizard exists only for an org that has NOT finished onboarding — the rep club has, so it is
   // redirected to the hub; the plain Club-plan org has not (its owner is the org-owner login). It
   // opens on the house-league step by itself, reading only.
-  { id: 'admin-onboarding',    area: 'hub', session: 'orgOwner',      ready: '[role="dialog"]', path: (c) => `/${c.onboardingOrgSlug}/admin/onboarding` },
+  // The CLUB org's setup page. It used to open the house-league wizard on arrival, and this waited
+  // for that dialog; Club Stage 1 (A11) stopped it — a rep club was dropped into "create your first
+  // season" — so the page itself is what is ready now.
+  { id: 'admin-onboarding',    area: 'hub', session: 'orgOwner',      ready: 'h1', path: (c) => `/${c.onboardingOrgSlug}/admin/onboarding` },
   { id: 'admin-notifications', area: 'hub', session: 'repClubOwner',  ready: 'h1', path: (c) => `/${c.clubSlug}/admin/notifications` },
 
   // ── Organization ──

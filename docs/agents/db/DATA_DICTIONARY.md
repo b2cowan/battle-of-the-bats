@@ -101,7 +101,7 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 **`is_public`** (bool, NOT NULL, default true) — gates the **org-home/league** landing pages ([app/[orgSlug]/page.tsx:17](../../../app/[orgSlug]/page.tsx#L17)) and the public tournaments feed; **does NOT gate tournament pages or registration** ([lib/public-tournament-data.ts:57](../../../lib/public-tournament-data.ts#L57)). Force-cleared to `false` on cancel/suspend. _Writes:_ org-settings PATCH.
 
 <!-- dict:col:organizations.is_discoverable -->
-**`is_discoverable`** (bool, NOT NULL, default true; partial index `WHERE email_marketing_opt_out=true` is a *different* column — this one is unindexed) — gates whether the org appears in the **team→org link directory/search** ([lib/team-org-links.ts:341](../../../lib/team-org-links.ts#L341)); shadow orgs are provisioned `false`. **Not** editable via org-settings (distinct from `is_public`).
+**`is_discoverable`** (bool, NOT NULL, default true; partial index `WHERE email_marketing_opt_out=true` is a *different* column — this one is unindexed) — gates whether the org appears in the **team→org link directory/search** ([lib/team-org-links.ts:341](../../../lib/team-org-links.ts#L341)); shadow orgs are provisioned `false`. **Editable via org-settings since 2026-09-25** (`isDiscoverable`, Club Tier Stage 1 · A09 — the checkbox that said "Listed on /discover" was writing `is_public`, the master switch for the whole public site); org-settings also returns `listedInDirectory` = `is_public && is_discoverable`, because the directory lists an org only while its site is on.
 
 <!-- dict:col:organizations.require_score_finalization -->
 **`require_score_finalization`** (bool, NOT NULL, default false) — org default for the score-lock workflow; `tournaments.require_score_finalization` overrides per-event ([lib/public-tournament-data.ts:51](../../../lib/public-tournament-data.ts#L51)). _Writes:_ org-settings PATCH.
@@ -160,7 +160,7 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 2. **`role='owner'` short-circuits authorization before capabilities are read** — `hasCapability` returns true unconditionally ([lib/roles.ts:82](../../../lib/roles.ts#L82)), and owners skip both scope tables (unrestricted).
 3. **`capabilities` is additive *and subtractive*.** An explicit `capabilities[cap]` (true OR false) **wins** over the role default; absent → role default ([lib/roles.ts:83-85](../../../lib/roles.ts#L83)). Owner-only to edit.
 4. **`mapMember` maps only 6 of 11 columns** ([lib/db.ts:2504](../../../lib/db.ts#L2504)) — it drops `capabilities`, `status`, `display_name`, `title`, `invited_email`; the `OrganizationMember` type lacks them too. The members admin API reads what it needs via its own select.
-5. **Suspended = unauthenticated platform-wide.** `getAuthContext` filters `.neq('status','suspended')` ([lib/api-auth.ts:87](../../../lib/api-auth.ts#L87)) → a suspended member gets 401 (not 403) on every `/api/admin/*` route. **Last-owner protection** blocks deleting/demoting/suspending the final owner.
+5. **Suspended = unauthenticated platform-wide.** `getAuthContext` filters `.neq('status','suspended')` ([lib/api-auth.ts:87](../../../lib/api-auth.ts#L87)) → a suspended member gets 401 (not 403) on every `/api/admin/*` route. **An `invited` row holds no role (J10-006, 2026-09-25):** `getAuthContextWithRole`, `getAuthContextWithScope` and `requireCapability` require `status='active'`, so a pending invitee no longer passes the admin shell or any role-aware route (plain `getAuthContext` still resolves their org, so a coach whose only row is a pending board invite keeps the portal their assignment gives them). **Last-owner protection** blocks deleting/demoting/suspending the final owner.
 6. **One-org-per-user is enforced in app code, not schema** — invite rejects a user already in any other org. The DB UNIQUE is only `(organization_id, user_id)`. Pending invites can also be **reconciled by `invited_email`** (mig 128) when the invitee authenticates under a different identity than the one the invite minted.
 
 **Fields** (boilerplate `id` omitted):
@@ -172,13 +172,13 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 **`user_id`** (FK → auth.users, NOT NULL, ON DELETE CASCADE) — the identity key (NOT email); email resolved via `auth.admin.getUserById` (auth.users isn't PostgREST-joinable). Deleting the auth user cascades the member row + its scope rows.
 
 <!-- dict:col:organization_members.role -->
-**`role`** (text, NOT NULL, default `'admin'`, **no CHECK**) — `OrgRole` (gotcha 1). Capability defaults per role in `ROLE_DEFAULTS` ([lib/roles.ts:30-66](../../../lib/roles.ts#L30)). `coach` routes the user to the premium Coaches Portal; PATCH role-change is limited to `admin|staff|official` and can never promote to owner.
+**`role`** (text, NOT NULL, default `'admin'`, **no CHECK**) — `OrgRole` (gotcha 1). Capability defaults per role in `ROLE_DEFAULTS` ([lib/roles.ts:30-66](../../../lib/roles.ts#L30)). `coach` routes the user to the premium Coaches Portal; PATCH role-change accepts the roles the org can hand out ([lib/board-roles.ts](../../../lib/board-roles.ts): admin, staff, official always; treasurer where the plan carries Accounting; league_admin/league_registrar when the org runs a house league) and REFUSES anything else (it used to coerce an unknown role to `staff`); never owner, never coach. A `coach` row is refused by the member PATCH/DELETE/resend (managed on the team's staff page, S1-03) (2026-09-25).
 
 <!-- dict:col:organization_members.capabilities -->
 **`capabilities`** (jsonb, nullable) — per-member capability overrides (gotcha 3); `Record<Capability, boolean> | null`, sanitized to `ALL_CAPABILITY_KEYS`, empty→null. **Key catalog** = the `Capability` union ([lib/roles.ts:3-28](../../../lib/roles.ts#L3)): action caps (`create_tournaments`, `manage_registrations`, `manage_schedule_structure`, `update_schedule`, `submit_scores`, `check_in_teams`, `manage_contacts`, `post_announcements`, `post_rules`, `send_communications`, `seal_tournaments`, `manage_members`, `org_settings`, `billing`) + module gates (`module_tournaments`/`_communications`/`_members` default-on; `module_public_site`/`_accounting`/`_house_league`/`_rep_teams` default-off). Owner-only PATCH; **not written at invite time** (new members run on role defaults).
 
 <!-- dict:col:organization_members.status -->
-**`status`** (text, NOT NULL, default `'active'`; CHECK `invited|active|suspended`) — lifecycle: `invited` (pending-invite insert) → `active` (accept, or direct-add of an existing auth user) → `suspended`/`active` (owner-only toggle). Auth filters non-suspended; notification recipients filter `'active'` ([lib/notify.ts:122](../../../lib/notify.ts#L122)); owners can't be suspended.
+**`status`** (text, NOT NULL, default `'active'`; CHECK `invited|active|suspended`) — lifecycle: `invited` (pending-invite insert) → `active` (accept, or direct-add of an existing auth user) → `suspended`/`active` (owner-only toggle). Auth filters non-suspended; the role-aware gates require `active` (gotcha 5); notification recipients filter `'active'` ([lib/notify.ts:122](../../../lib/notify.ts#L122)); owners can't be suspended.
 
 <!-- dict:col:organization_members.invited_at -->
 <!-- dict:col:organization_members.accepted_at -->
@@ -252,7 +252,7 @@ The **tenant backbone**: an **organization** is the root every other domain FKs 
 **`org_id`** (FK → organizations.id ON DELETE CASCADE, NOT NULL) — the granted org; every query filters on it (partial index `idx_org_overrides_org_active` covers `WHERE revoked_at IS NULL`).
 
 <!-- dict:col:org_overrides.type -->
-**`type`** (text, NOT NULL; CHECK `subscription_status|comp_period|module_addon|plan_tier`) — grant discriminant (gotcha 3).
+**`type`** (text, NOT NULL; CHECK `subscription_status|comp_period|module_addon|plan_tier`) — grant discriminant (gotcha 3). ⚖ D6 (2026-09-25): a Founding Season `comp_period` never applies to a Club band — it is **revoked** (`revoked_at`, `revoked_by` = operator email or `'stripe-webhook'`/the mover) when an org moves onto `club`/`club_large` by the operator, a checkout or a band move ([lib/founding-season.ts](../../../lib/founding-season.ts) `revokeFoundingSeasonComp`), and the status endpoint reads false for a Club even if a row survives.
 
 <!-- dict:col:org_overrides.value -->
 **`value`** (text, nullable) — scalar grant value: the status string for `subscription_status` (the live reader path, gotcha 4); `null`/`'granted'` for `comp_period`; `null` for `module_addon` (data is in `target`).
@@ -6137,7 +6137,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **Purpose:** the **header** of a data-retention hold — one row per downgrade/cancellation event recording the plan transition + what is kept vs retained. The actual lifecycle lives on the child `billing_retained_records`. Written by the owner confirm flows, platform-admin cancel, and the Stripe webhook.
 
 **Gotchas (read first):**
-1. **`status` is FROZEN at `'applied'`** — always inserted `'applied'`, never updated; `pending|canceled|restored|purged` are **dead enum values**. The webhook dedup guard depends on `status='applied'` ([webhook/route.ts:383](../../../app/api/billing/webhook/route.ts#L383)). Real progress is on `billing_retained_records.retained_state`.
+1. **`status` is inserted `'applied'`; `'restored'` is written by reactivation (2026-09-25, A07).** `restoreAfterReactivation` ([lib/billing-reactivation.ts](../../../lib/billing-reactivation.ts)) closes an org's applied **cancellation** intents when it comes back — before this nothing ever updated the row, so a reactivated org kept an `applied` cancellation forever and a later Stripe-side end read as "already handled" and skipped suspension. `pending|canceled|purged` remain dead; downgrade intents are still never updated. The webhook dedup guard depends on `status='applied'` ([webhook/route.ts:383](../../../app/api/billing/webhook/route.ts#L383)). Real progress is on `billing_retained_records.retained_state`.
 2. **`keep_tournament_ids` (uuid[]) is the KEEP set, not the retained set** — on downgrade, the tournaments the org keeps active; retained = non-archived tournaments NOT in this array. Always `[]` for cancellations.
 3. **NO `stripe_*` columns** — `from_plan`/`target_plan` are FieldLogicHQ plan keys validated against `PLAN_ORDER` ([lib/billing-retention.ts:92](../../../lib/billing-retention.ts#L92)); `'team'` is excluded as a downgrade target. The Stripe trigger that creates webhook-initiated intents is the Stripe/Billing phase.
 4. **`effective_at` is vestigial** (never read/written by code, only the DB default); **`applied_at` is the real one** (always set; the webhook dedup orders by it). **`created_by_email`** survives `created_by` being nulled (sentinel `'stripe-webhook'`).
@@ -6151,7 +6151,7 @@ The org's **internal double-entry bookkeeping** plus two satellites filed here b
 **`intent_type`** (text, NOT NULL; CHECK `downgrade|cancellation`) — `downgrade` keeps the org alive on a lower plan; `cancellation` = full account/Coaches-Portal teardown.
 
 <!-- dict:col:billing_retention_intents.status -->
-**`status`** (text, NOT NULL, default `'applied'`; CHECK `pending|applied|canceled|restored|purged`) — frozen at `'applied'` (gotcha 1; note US spelling `canceled`).
+**`status`** (text, NOT NULL, default `'applied'`; CHECK `pending|applied|canceled|restored|purged`) — `'applied'`, then `'restored'` when a cancelled org reactivates (gotcha 1; note US spelling `canceled`).
 
 <!-- dict:col:billing_retention_intents.from_plan -->
 <!-- dict:col:billing_retention_intents.target_plan -->

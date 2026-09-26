@@ -13,10 +13,10 @@ import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import { hasPlanFeature, hasOrgVenueLibrary as hasOrgVenueLibraryPlan, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import ReleaseDot from '@/components/whats-new/ReleaseDot';
 import { signOut } from '@/lib/auth';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { hasCapability, type Capability } from '@/lib/roles';
+import { hasCapability } from '@/lib/roles';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { getBillingHref, isTournamentTier } from '@/lib/billing-urls';
 import { useAdminWorklist } from '@/lib/admin-worklist';
@@ -48,7 +48,7 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
 } = {}) {
   const pathname = usePathname();
   const router   = useRouter();
-  const { currentOrg, userRole, userCapabilities } = useOrg();
+  const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
   const base = `/${currentOrg?.slug ?? 'milton-bats'}/admin`;
   const currentOrgSlug = currentOrg?.slug;
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
@@ -79,9 +79,9 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
 
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const canUseModule = (capability: Capability) => currentOrg && userRole
-    ? hasCapability(userRole, userCapabilities, capability) && hasModuleEntitlement(currentOrg, capability)
-    : false;
+  // The role holds the capability AND the plan carries the module — the one gate every route asks,
+  // shared with the kit rail so the two can never offer different doors.
+  const canUseModule = canOpen;
 
   const isLeagueOrClub = !!currentOrg && ['league', 'club'].includes(currentOrg.planId);
   const tournamentSlotLimit = currentOrg?.tournamentLimit ?? 9999;
@@ -137,7 +137,9 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
   const coachAccess = useCurrentOrgCoachAccess(currentOrgSlug, !isCanceled);
   const coachDoor = coachDoorFor(coachAccess, currentOrgSlug);
 
-  const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
+  // ⚖ D8: decided from the PLAN (the same helper the hub and the post-login resolver call), never
+  // from this member's capabilities — a club's staff member is not a tournament-only user.
+  const hasOnlyTournamentWorkspace = !!currentOrg && canUseModule('module_tournaments') && isTournamentOnlyWorkspace(currentOrg);
   // Org venue library is a League/Club-band feature — the shared predicate keeps this
   // matched to the API + page gates (omitting 'club_large' here once hid the nav for a
   // paid band).

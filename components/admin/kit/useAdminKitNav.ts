@@ -8,8 +8,8 @@
 import { usePathname } from 'next/navigation';
 import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
-import { hasCapability, type Capability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { hasCapability } from '@/lib/roles';
+import { isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
@@ -19,28 +19,23 @@ import { kitTournamentGroups } from './kit-tournament-groups';
 
 export function useAdminKitNav() {
   const pathname = usePathname();
-  const { currentOrg, userRole, userCapabilities } = useOrg();
+  const { currentOrg, userRole, userCapabilities, canOpen } = useOrg();
   const { currentTournament } = useTournament();
   const isSandbox = useIsSandbox();
   const orgSlug = currentOrg?.slug ?? '';
   const base = `/${orgSlug}/admin`;
   const isCanceled = currentOrg?.subscriptionStatus === 'canceled';
 
-  // Today's rail's `canUseModule`, verbatim: the role holds the capability AND the plan carries the
-  // module. (Club Stage 1 names this pair `canOpenModule`; the kit moves onto it when that lands.)
-  const canUse = (capability: Capability): boolean => Boolean(
-    currentOrg && userRole
-      && hasCapability(userRole, userCapabilities ?? null, capability)
-      && hasModuleEntitlement(currentOrg, capability),
-  );
+  // The role holds the capability AND the plan carries the module — `canOpen`, the ONE gate every
+  // route asks (Club Stage 1, lib/member-access.ts), so the rail can never offer a door the server
+  // refuses.
+  const canUse = canOpen;
 
   const programs = kitPrograms({ base, canUse });
-  // Today's rail's `hasOnlyTournamentWorkspace`, verbatim: someone whose whole admin is tournaments.
-  // ⚠ Club Stage 1 (ruling D8) moves the rail's copy onto the PLAN (`isTournamentOnlyWorkspace`) —
-  // this line must move with it in that commit, or a club's staff member reads as tournament-only
-  // here and not there.
-  const tournamentOnly = canUse('module_tournaments') && !canUse('module_public_site')
-    && !canUse('module_accounting') && !canUse('module_house_league') && !canUse('module_rep_teams');
+  // ⚖ D8 (Club Stage 1): "tournament-only" is a fact about the PLAN, never the person — the same
+  // helper the hub, today's sidebar and the post-login resolver call, so a club's staff member is
+  // not tournament-only here while being a club member there.
+  const tournamentOnly = canUse('module_tournaments') && !!currentOrg && isTournamentOnlyWorkspace(currentOrg);
   const canSeeMembers = Boolean(userRole)
     && (userRole === 'owner' || hasCapability(userRole!, userCapabilities, 'module_members'))
     && canUse('module_members');

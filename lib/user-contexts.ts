@@ -5,6 +5,7 @@ import { getBasicCoachTournamentSummary, countClaimableRegistrationsForUser } fr
 import { getFanFollowSummary } from './fan-follows';
 import { COACHES_HOME_PATH, COACHES_TOURNAMENTS_PATH, coachTeamPath } from './coaches-portal-routes';
 import { isTeamWorkspaceOrg } from './team-workspace-entitlements';
+import { isClubPlan, isTournamentOnlyWorkspace, planCarriesModule, type EntitlementOrg } from './module-entitlements';
 import { WORKSPACE_KIND_LABEL } from './workspace-labels';
 import { getBillingHref } from './billing-urls';
 import type { OrgAccountKind, OrgPlan } from './types';
@@ -63,13 +64,6 @@ type ActiveMemberRow = MemberRow & {
   id: string;
   organizations: (OrgRelation & { name?: string | null }) | (OrgRelation & { name?: string | null })[] | null;
 };
-
-const MODULE_ADDONS = [
-  'module_public_site',
-  'module_accounting',
-  'module_house_league',
-  'module_rep_teams',
-];
 
 const PLAN_LABELS: Record<string, string> = {
   tournament: 'Tournament',
@@ -407,18 +401,24 @@ export async function getDestinationForMembership(member: MemberRow): Promise<st
     return `/${slug}/admin/house-league`;
   }
 
-  const enabledAddons = org?.enabled_addons ?? [];
   const onboardingCompletedAt = org?.onboarding_completed_at ?? null;
-  const hasOnlyTournamentWorkspace =
-    (planId === 'tournament' || planId === 'tournament_plus') &&
-    !enabledAddons.some(addon => MODULE_ADDONS.includes(addon));
+  // "Tournament-only" is decided from the PLAN (ruling D8) — the same helper the admin hub calls.
+  const entitlementOrg = {
+    planId: (planId ?? 'tournament') as OrgPlan,
+    subscriptionStatus: 'active' as const,
+    enabledAddons: org?.enabled_addons ?? [],
+    freeFloor: (org?.free_floor ?? null) as EntitlementOrg['freeFloor'],
+  };
+  // Onboarding is the OWNER's (its page sends everyone else straight back to /admin). Routing a
+  // non-owner there was one half of the J10-014 loop: /admin → onboarding → /admin → …
+  const isOwner = role === 'owner';
 
-  if (orgId && hasOnlyTournamentWorkspace) {
+  if (orgId && isTournamentOnlyWorkspace(entitlementOrg)) {
     if (await hasNonArchivedTournament(orgId)) {
       return `/${slug}/admin/tournaments/dashboard`;
     }
 
-    if (await hasSkippedFirstTournamentWizard(orgId)) {
+    if (!isOwner || await hasSkippedFirstTournamentWizard(orgId)) {
       return `/${slug}/admin/tournaments`;
     }
 
@@ -430,6 +430,22 @@ export async function getDestinationForMembership(member: MemberRow): Promise<st
     return planChosen
       ? `/${slug}/admin/onboarding?continueSetup=1`
       : `/${slug}/admin/onboarding?choosePlan=1`;
+  }
+
+  // A role that runs ONE program starts in it (Stage 1 specimen 6: "accepting lands Jordan where a
+  // Treasurer starts, Accounting" — J10-011). Everyone else starts on the hub.
+  if (role === 'treasurer' && planCarriesModule(entitlementOrg, 'module_accounting')) {
+    return `/${slug}/admin/accounting`;
+  }
+  if ((role === 'league_admin' || role === 'league_registrar') && planCarriesModule(entitlementOrg, 'module_house_league')) {
+    return `/${slug}/admin/house-league`;
+  }
+
+  // A Club owner who has not finished setting up lands on the club's setup checklist (A11,
+  // specimen 10) rather than an empty hub. Everyone else — and the owner once setup is done or
+  // dismissed — lands on the hub.
+  if (isOwner && !onboardingCompletedAt && isClubPlan(planId)) {
+    return `/${slug}/admin/onboarding?plan=club`;
   }
 
   return `/${slug}/admin`;

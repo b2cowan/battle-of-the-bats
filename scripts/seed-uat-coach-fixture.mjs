@@ -66,7 +66,10 @@ config({ path: path.join(here, '..', '.env.local'), quiet: true });
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
-const orgSlug = process.env.UAT_ORG_SLUG;
+// The coach fixture's org (Club Tier Stage 1, B05): the coaches portal now checks the club's PLAN,
+// so the coach fixture must live in an org whose plan carries it — UAT Rep Club. Falls back to
+// UAT_ORG_SLUG, so nothing moves until UAT_COACH_ORG_SLUG is set.
+const orgSlug = process.env.UAT_COACH_ORG_SLUG || process.env.UAT_ORG_SLUG;
 const coachEmail = process.env.UAT_COACH_EMAIL;
 
 if (!url || !key || !orgSlug || !coachEmail) {
@@ -88,7 +91,8 @@ if (!org) { console.error(`✗ No organization with slug "${orgSlug}".`); proces
 ok(`org ${org.slug} (${org.id})`);
 
 // ── 2. Team ──────────────────────────────────────────────────────────────────
-let { data: team } = await db.from('rep_teams').select('id, name').eq('org_id', org.id).limit(1).maybeSingle();
+// By SLUG, never "the org's first team": in a club the coach's team is one of several.
+let { data: team } = await db.from('rep_teams').select('id, name').eq('org_id', org.id).eq('slug', 'uat-test-team').maybeSingle();
 if (!team) {
   const ins = await db.from('rep_teams')
     .insert({ org_id: org.id, name: 'UAT Test Team', slug: 'uat-test-team' })
@@ -1108,11 +1112,13 @@ if (!existingLines?.length) {
        because the claim was the useful part. The two-line item it describes is seeded below. */
     { description: 'Diamond permits',   total_amount: 3200, notes: null,                   line_kind: 'cost',    ...taxonomyFor('Diamond permits'), sort_order: 2 },
     { description: 'Spring classic entry', total_amount: 2500, notes: null,                line_kind: 'cost',    ...taxonomyFor('Spring classic entry'), sort_order: 3 },
-    { description: 'Chocolate sale',    total_amount: 1800, notes: 'Expected team share',  line_kind: 'funding', ...taxonomyFor('Chocolate sale'), sort_order: 4 },
-    /* ⚠ NO NOTE, DELIBERATELY — this is the sub-line that must render as its schedule ("Oct")
-       rather than echoing "Chocolate sale" one row above it. A note here would silently remove the
-       only coverage of decision B2's fallback branch. */
-    { description: 'Spring chocolate round', total_amount: 600, notes: null,                line_kind: 'funding', ...taxonomyFor('Spring chocolate round'), sort_order: 5 },
+    /* ⚠ ONE WORD, ONE LINE (mig 286, owner ruling 2026-09-09). This used to seed a second line,
+       "Spring chocolate round" ($600, no note), on the SAME word — a shape the database has refused
+       since that migration (unique on program year + team + item), so a FRESH seed stopped here while
+       an old fixture kept a row the migration had already folded. It is folded the way migration 286
+       folds a pair: one line, the totals summed ($1,800 + $600), and the $600 round kept as that line's
+       October period (below). Found 2026-09-25 when the coach fixture was first seeded into a new org. */
+    { description: 'Chocolate sale',    total_amount: 2400, notes: 'Expected team share',  line_kind: 'funding', ...taxonomyFor('Chocolate sale'), sort_order: 4 },
   ].map((r) => ({ ...r, org_id: org.id, team_id: team.id, program_year_id: py.id }));
 
   // Every row's kind, re-derived from the word it names (mig 280) — see `seededKind`.
@@ -1614,10 +1620,9 @@ const WHEN_ANSWERS_SEED = [
      three quarters of its target as having been asked for nothing — true under the basis, and
      useless as the one revenue row a walk can read a real to-date variance on. */
   { description: 'Chocolate sale',    periods: [['Mar', `${py.year}-03-01`, 900],
-                                                ['Apr', `${py.year}-04-01`, 900]] },
-  /* Its whole total in one month — so the note-less sub-line above has a schedule to be named by,
-     and reads "Oct" rather than repeating its parent's word. */
-  { description: 'Spring chocolate round', periods: [['Oct', `${py.year}-10-01`, 600]] },
+                                                ['Apr', `${py.year}-04-01`, 900],
+                                                // The folded spring round (mig 286) — its October month.
+                                                ['Oct', `${py.year}-10-01`, 600]] },
 ];
 for (const want of WHEN_ANSWERS_SEED) {
   const { data: target } = await db.from('rep_budget_lines')
@@ -1956,6 +1961,9 @@ if (chocolate) {
   const want = [
     { player: ids[2], amount: 240, date: '2026-08-20' },
     { player: ids[3], amount: 180, date: '2026-08-24' },
+    // The THIRD entry, seeded rather than assumed: the rooms spec needs three rows, and until a fresh
+    // seed into a new org (2026-09-25) nobody noticed the third only ever came from an earlier walk.
+    { player: ids[4], amount: 150, date: '2026-08-28' },
   ].filter(w => w.player && !loggedIds.has(w.player));
   if ((logged ?? []).length < 3 && want.length) {
     const pct = Number(chocolate.player_rebate_percent ?? 0);

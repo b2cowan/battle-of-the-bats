@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck, AlertCircle, Rocket, Lock, Contact } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { hasModuleEntitlement, isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasCapability, type Capability } from '@/lib/roles';
 
 interface AttentionSummary {
@@ -68,7 +68,10 @@ export default function AdminHubClient() {
   const [startupErrorOrgSlug, setStartupErrorOrgSlug] = useState<string | null>(null);
   const [startupTimeoutOrgSlug, setStartupTimeoutOrgSlug] = useState<string | null>(null);
 
-  const hasOnlyTournamentWorkspace = canSeeTournaments && !canSeePublicSite && !canSeeAccounting && !canSeeHouseLeague && !canSeeRepTeams;
+  // ⚖ D8: "tournament-only" is a fact about the PLAN, never about the signed-in person. It used to
+  // be computed from this member's capabilities, which read a club's vice-president (no module
+  // capabilities) as a tournament-only user and redirected them out of the club's hub (A01).
+  const hasOnlyTournamentWorkspace = canSeeTournaments && !!currentOrg && isTournamentOnlyWorkspace(currentOrg);
   const startupError = currentOrg ? startupErrorOrgSlug === currentOrg.slug : false;
   const startupTimedOut = currentOrg ? startupTimeoutOrgSlug === currentOrg.slug && !startupProgress : false;
 
@@ -84,7 +87,9 @@ export default function AdminHubClient() {
       return;
     }
 
-    if (startupProgress.tasks.tournament === 'skipped') {
+    // Setup is the owner's page, and it sends everyone else straight back here — so a non-owner
+    // routed into it looped /admin → onboarding → /admin forever (J10-014). They go to tournaments.
+    if (startupProgress.tasks.tournament === 'skipped' || userRole !== 'owner') {
       router.replace(`${base}/tournaments`);
       return;
     }

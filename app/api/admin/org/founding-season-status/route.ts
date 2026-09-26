@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { foundingCompAppliesToPlan } from '@/lib/founding-season';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
@@ -61,8 +62,11 @@ export const GET = withObservability(async (req: Request) => {
     : null;
 
   const compUntil = (data?.expires_at as string | undefined) ?? null;
+  // ⚖ D6: no Founding Season offer is ever computed for a Club, whatever comp rows the org still
+  // carries (an operator's move to Club revokes them; this holds even if one was missed).
+  const planTakesComp = foundingCompAppliesToPlan(ctx.org.planId);
   return NextResponse.json({
-    isFoundingSeason: compUntil ? isFoundingSeasonCompExpiry(compUntil) : false,
+    isFoundingSeason: planTakesComp && compUntil ? isFoundingSeasonCompExpiry(compUntil) : false,
     compUntil,
     card,
     nextSeason,

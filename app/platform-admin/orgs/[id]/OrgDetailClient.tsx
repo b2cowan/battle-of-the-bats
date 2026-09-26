@@ -163,6 +163,8 @@ type ApiErrorBody = {
   /** Plan PATCH: the over-cap tournaments a downgrade archived, and the warning when it couldn't. */
   archivedTournaments?: { id: string; name: string }[];
   archiveWarning?: string;
+  /** Plan PATCH: a later part of the change (trial check, side effects, reactivation) that failed. */
+  planChangeWarning?: string;
 };
 type ApiInternalNote = {
   id: string;
@@ -394,14 +396,16 @@ export default function OrgDetailClient({
       // warning the operator would read plain success while the org sits over its cap with a
       // possibly-live tournament still running. Silent success on a half-applied change is the
       // exact failure this whole audit was about. (/review 2026-08-06.)
-      setPlanArchiveNote(
-        data.archiveWarning
-          ? `⚠ ${data.archiveWarning}`
-          : data.archivedTournaments?.length
-            ? `${data.archivedTournaments.length} over-cap tournament${data.archivedTournaments.length === 1 ? '' : 's'} archived: `
-              + data.archivedTournaments.map(t => t.name).join(', ')
-            : '',
-      );
+      const archiveNote = data.archiveWarning
+        ? `⚠ ${data.archiveWarning}`
+        : data.archivedTournaments?.length
+          ? `${data.archivedTournaments.length} over-cap tournament${data.archivedTournaments.length === 1 ? '' : 's'} archived: `
+            + data.archivedTournaments.map(t => t.name).join(', ')
+          : '';
+      // The same rule for the rest of the change (Club Tier Stage 1): a half-applied change is
+      // never read as plain success.
+      setPlanArchiveNote([data.planChangeWarning ? `⚠ ${data.planChangeWarning}` : '', archiveNote]
+        .filter(Boolean).join(' '));
       setPlanReason('');
       setPlanConfirmOpen(false);
       router.refresh();

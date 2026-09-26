@@ -19,7 +19,7 @@ import { getFollowFeed } from '@/lib/follow-feed';
 import { rollupFollowFeedByTournament, mergeWholeEventIntoRollup, type ConsumerHomePayload } from '@/lib/home-following';
 import { getWholeEventFollowCards, getOrgFollowRollups } from '@/lib/entity-follow-status';
 import { getCoachedRegistrationTeamIds } from '@/lib/basic-coach-teams';
-import { reconcilePendingInvitesForUser, listPendingInvitesForUser } from '@/lib/invite-reconciliation';
+import { reconcilePendingInvitesForUser, listPendingInvitesForUser, withInvitationDetails } from '@/lib/invite-reconciliation';
 
 const EMPTY: ConsumerHomePayload = {
   signedIn: false,
@@ -42,7 +42,8 @@ export const GET = withObservability(async () => {
 
   const [contexts, pendingInvites, follows, followedTournaments, followedOrgs, lapsed] = await Promise.all([
     getUserAccessContexts({ id: user.id, email: user.email }),
-    listPendingInvitesForUser(user.id),
+    // The card names who is asking and what the role opens (specimen 6).
+    listPendingInvitesForUser(user.id).then(withInvitationDetails),
     getFollowedTeamsForUser(user.id),
     getFollowedTournamentsForUser(user.id),
     getFollowedOrgsForUser(user.id),

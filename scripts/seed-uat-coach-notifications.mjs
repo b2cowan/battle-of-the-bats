@@ -40,11 +40,15 @@ if (/\.supabase\.co/.test(url) && url.includes('qcttcboqysynwcdyghil')) {
   process.exit(1);
 }
 const sb = createClient(url, key, { auth: { persistSession: false } });
-const { data: org } = await sb.from('organizations').select('id,slug').eq('slug','uat-test-org').single();
+// The coach fixture's org (Club Tier Stage 1, B05: it lives in the club fixture once UAT_COACH_ORG_SLUG is set).
+const coachOrgSlug = get('UAT_COACH_ORG_SLUG') || 'uat-test-org';
+const { data: org } = await sb.from('organizations').select('id,slug').eq('slug', coachOrgSlug).single();
 const { data: users } = await sb.auth.admin.listUsers({ page:1, perPage:1000 });
 const coach = users.users.find(u => u.email === 'uat-coach@uat-test-org.local');
 const { data: existing } = await sb.from('notifications').select('link').eq('user_id', coach.id).eq('org_id', org.id).like('link','%/coaches/teams/%').limit(1);
-const teamId = existing?.[0]?.link?.match(/teams\/([0-9a-f-]{36})/)?.[1];
+// The fixture team by its slug (a fresh org has no notification links to borrow one from yet).
+const { data: fixtureTeam } = await sb.from('rep_teams').select('id').eq('org_id', org.id).eq('slug', 'uat-test-team').maybeSingle();
+const teamId = fixtureTeam?.id ?? existing?.[0]?.link?.match(/teams\/([0-9a-f-]{36})/)?.[1];
 if (!teamId) throw new Error('no team id');
 await sb.from('notifications').delete().eq('user_id', coach.id).eq('org_id', org.id).contains('metadata', { seed: 'notif-review' });
 const H = 3_600_000, D = 24*H; const ago = ms => new Date(Date.now() - ms).toISOString();

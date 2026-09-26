@@ -5,6 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, updateRepTeam, getRepProgramYears, getNonArchivedRepTeamCount } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { teamLimitRefusal } from '@/lib/team-cap';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -85,13 +86,8 @@ export const PATCH = withObservability(async (req: Request,
     if (cap < 9999) {
       const currentCount = await getNonArchivedRepTeamCount(ctx!.org.id);
       if (currentCount >= cap) {
-        const nextStep = ctx!.org.planId === 'club'
-          ? ' Upgrade to Club · Association to add up to 30 teams.'
-          : ' Contact us to raise your team limit for a larger association.';
-        return NextResponse.json(
-          { error: `You've reached your plan's limit of ${cap} teams.${nextStep}`, code: 'team_limit_reached' },
-          { status: 409 },
-        );
+        // Structured next step (Stage 1b): the screen offers the move up in place, or "contact us".
+        return teamLimitRefusal(ctx!.org.planId, cap, currentCount);
       }
     }
   }

@@ -12,19 +12,19 @@ import { test, expect } from '../helpers/fixtures';
 // ── Portal access ────────────────────────────────────────────────────────────
 
 test.describe('Coaches portal / access', () => {
-  test('coach can access coaches portal root', async ({ coachPage, orgSlug }) => {
-    await coachPage.goto(`/${orgSlug}/coaches`);
+  test('coach can access coaches portal root', async ({ coachPage, coachOrgSlug }) => {
+    await coachPage.goto(`/${coachOrgSlug}/coaches`);
     await expect(coachPage).not.toHaveURL(/\/auth\/login/, { timeout: 8_000 });
     await expect(coachPage.locator('main, [class*="layout"], nav').first()).toBeVisible();
   });
 
-  test('unauthenticated user is redirected from coaches portal', async ({ anonPage, orgSlug }) => {
-    await anonPage.goto(`/${orgSlug}/coaches`);
+  test('unauthenticated user is redirected from coaches portal', async ({ anonPage, coachOrgSlug }) => {
+    await anonPage.goto(`/${coachOrgSlug}/coaches`);
     await expect(anonPage).toHaveURL(/\/auth\/login/, { timeout: 8_000 });
   });
 
-  test('coaches portal layout renders without error', async ({ coachPage, orgSlug }) => {
-    await coachPage.goto(`/${orgSlug}/coaches`);
+  test('coaches portal layout renders without error', async ({ coachPage, coachOrgSlug }) => {
+    await coachPage.goto(`/${coachOrgSlug}/coaches`);
     await expect(coachPage.locator('text=Something went wrong')).not.toBeVisible();
     await expect(coachPage.locator('text=500')).not.toBeVisible();
     await expect(coachPage.locator('text=Internal Server Error')).not.toBeVisible();
@@ -34,8 +34,8 @@ test.describe('Coaches portal / access', () => {
 // ── Coach help page ──────────────────────────────────────────────────────────
 
 test.describe('Coaches portal / help', () => {
-  test('coach help page loads', async ({ coachPage, orgSlug }) => {
-    await coachPage.goto(`/${orgSlug}/coaches/help`);
+  test('coach help page loads', async ({ coachPage, coachOrgSlug }) => {
+    await coachPage.goto(`/${coachOrgSlug}/coaches/help`);
     await expect(coachPage).not.toHaveURL(/\/auth\/login/);
     await expect(coachPage.locator('main, article, [class*="help"]').first()).toBeVisible({ timeout: 8_000 });
   });
@@ -50,20 +50,20 @@ test.describe('Coaches portal / team pages', () => {
    * rather than failing — the page-load check is the key gate.
    */
 
-  test('coaches team list or redirect resolves without error', async ({ coachPage, orgSlug }) => {
-    await coachPage.goto(`/${orgSlug}/coaches`);
+  test('coaches team list or redirect resolves without error', async ({ coachPage, coachOrgSlug }) => {
+    await coachPage.goto(`/${coachOrgSlug}/coaches`);
     await coachPage.waitForLoadState('networkidle');
     // Either we're on a team page or a list/empty state — no error
     await expect(coachPage.locator('text=500')).not.toBeVisible();
     await expect(coachPage.locator('text=Something went wrong')).not.toBeVisible();
   });
 
-  test('coaches portal has no console errors on load', async ({ coachPage, orgSlug }) => {
+  test('coaches portal has no console errors on load', async ({ coachPage, coachOrgSlug }) => {
     const errors: string[] = [];
     coachPage.on('console', msg => {
       if (msg.type() === 'error') errors.push(msg.text());
     });
-    await coachPage.goto(`/${orgSlug}/coaches`);
+    await coachPage.goto(`/${coachOrgSlug}/coaches`);
     await coachPage.waitForLoadState('networkidle');
     const appErrors = errors.filter(e =>
       !e.includes('chrome-extension') &&

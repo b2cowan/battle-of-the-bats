@@ -50,7 +50,7 @@ const admin = createClient(
   { auth: { persistSession: false } },
 );
 
-const ORG_SLUG = process.env.UAT_ORG_SLUG!;
+const ORG_SLUG = process.env.UAT_COACH_ORG_SLUG || process.env.UAT_ORG_SLUG!; // the coach fixture's org
 const PASSWORD = process.env.UAT_COACH_PASSWORD!;
 const GRANTED = 'uat-asst-development@uat-test-org.local';
 const NOT_GRANTED = 'uat-asst-nomoney@uat-test-org.local';

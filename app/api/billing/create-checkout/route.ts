@@ -4,6 +4,9 @@ import { getBillingHref } from '@/lib/billing-urls';
 import { isBillingMockEnabled, isStripeConfigured } from '@/lib/billing-mock';
 import { normalizeBillingCycle, PLAN_CONFIG, isFoundingSeasonSignupOpen, FOUNDING_SEASON_END, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import { ensureFoundingSeasonCompPeriod } from '@/lib/founding-season';
+import { hadSubscriptionBefore, hasLiveSubscription, moveDirection } from '@/lib/plan-move';
+import { restoreAfterReactivation } from '@/lib/billing-reactivation';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
 import { getPlanConfigOverride } from '@/lib/plan-config-db';
 import { getStripePriceId } from '@/lib/stripe-prices';
 import { getPlanGatingMap } from '@/lib/plan-gating-server';
@@ -100,6 +103,28 @@ export const POST = withObservability(async (req: Request) => {
     });
   }
 
+  // A06 (Club Tier Stage 1b): an org already paying on a live subscription never opens a SECOND
+  // one — the webhook keys the org on its Stripe customer, so two subscriptions fight over one
+  // plan. It changes the plan of the subscription it has (POST /api/billing/move). A dev mock
+  // subscription is not a Stripe one (hasLiveSubscription says so) and keeps the mock checkout working.
+  const liveSubscription = hasLiveSubscription({
+    id: auth.org.id,
+    planId: auth.org.planId,
+    stripeSubscriptionId: auth.org.stripeSubscriptionId ?? null,
+    subscriptionStatus: auth.org.subscriptionStatus ?? null,
+  });
+  if (liveSubscription) {
+    const direction = moveDirection(auth.org.planId, planKey);
+    return new Response(JSON.stringify({
+      error: 'This organization already has a subscription. Change its plan instead of starting a second one.',
+      code: 'subscription_exists',
+      move: direction ? { planKey, direction } : null,
+    }), {
+      status: 409,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  }
+
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? '';
   const fallbackReturnTo = getBillingHref(auth.org.slug, auth.org.planId);
   const safeReturnTo = returnTo?.startsWith(`/${auth.org.slug}/admin/`)
@@ -124,6 +149,11 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     const restoreResult = await restoreRetainedDowngradeTournaments(auth.org.id, plan.tournamentLimit);
+    // A07: coming back from a cancellation restores the site, the tournaments and the retention
+    // records, and closes the cancellation (the Stripe path does the same from the webhook).
+    if (auth.org.subscriptionStatus === 'canceled' && !isTeamWorkspaceOrg(auth.org)) {
+      await restoreAfterReactivation(auth.org.id, plan.tournamentLimit);
+    }
     await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
 
     // Upgraded off the free Tournament plan — cancel any pending upsell email.
@@ -286,6 +316,14 @@ export const POST = withObservability(async (req: Request) => {
 
   const customerId = await ensureStripeCustomer(auth.org, auth.user.email);
 
+  // NO SECOND TRIAL (Ask 4, 2026-09-25). An organization that has already had a paid subscription
+  // — a cancelled club coming back is the common case — pays from day one; the trial is for a
+  // first purchase. A Founding Season next-season choice is a promise to pay, not a subscription
+  // they used, so it does not count. (Asked of Stripe only when there is a trial to withhold.)
+  const trialDays = mergedConfig.trialDays > 0 && !(await hadSubscriptionBefore(customerId))
+    ? mergedConfig.trialDays
+    : 0;
+
   await resetStartupTasksForEditableOnboarding(auth.org.id, isOnboardingPlanSelection);
 
   const session = await stripe.checkout.sessions.create({
@@ -293,7 +331,7 @@ export const POST = withObservability(async (req: Request) => {
     customer: customerId,
     line_items: [{ price: priceId, quantity: 1 }],
     subscription_data: {
-      trial_period_days: mergedConfig.trialDays,
+      ...(trialDays > 0 ? { trial_period_days: trialDays } : {}),
       metadata: { orgId: auth.org.id, planKey, billingCycle },
     },
     metadata: { orgId: auth.org.id, planKey, billingCycle },

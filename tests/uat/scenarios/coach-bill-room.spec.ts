@@ -51,7 +51,7 @@ const admin = createClient(
   { auth: { persistSession: false } },
 );
 
-const ORG_SLUG = process.env.UAT_ORG_SLUG!;
+const ORG_SLUG = process.env.UAT_COACH_ORG_SLUG || process.env.UAT_ORG_SLUG!; // the coach fixture's org
 const COACH_EMAIL = process.env.UAT_COACH_EMAIL!;
 const READ_EMAIL = 'uat-asst-money-read@uat-test-org.local';
 const PASSWORD = process.env.UAT_COACH_PASSWORD!;
@@ -191,14 +191,20 @@ test.describe('the team bill’s room', () => {
     // ── The walk: named destinations, a position count, and it actually moves. ──
     const walk = bill.getByRole('navigation', { name: 'Other bills' });
     await expect(walk).toContainText(/\d+ of \d+ bills/);
+    /* ⚠ EITHER NEIGHBOUR. The claim is that the walk names where it goes and moves there — not that
+       the fixture's bill has a NEXT one. It did only because older walks had left bills sorted after
+       it; a fresh seed (the coach fixture moved to UAT Rep Club, 2026-09-25) puts it last. The disabled
+       arrow is labelled "No next record", so the named one is always the one to take. */
     const next = walk.getByRole('button', { name: /^Next: / });
-    const nextName = (await next.getAttribute('aria-label'))!.replace(/^Next: /, '');
-    await next.click();
-    await expect(bill).toHaveAttribute('aria-label', `${nextName} — bill`, { timeout: 30_000 });
+    const forward = (await next.count()) > 0;
+    const step = forward ? next : walk.getByRole('button', { name: /^Previous: / });
+    const stepName = (await step.getAttribute('aria-label'))!.replace(/^(Next|Previous): /, '');
+    await step.click();
+    await expect(bill).toHaveAttribute('aria-label', `${stepName} — bill`, { timeout: 30_000 });
     await expect(page).not.toHaveURL(new RegExp(`bill=${billId}`));
     // ...and back, by the arrow key the floor binds on a desktop.
     await bill.click({ position: { x: 5, y: 5 } });
-    await page.keyboard.press('ArrowLeft');
+    await page.keyboard.press(forward ? 'ArrowLeft' : 'ArrowRight');
     await expect(bill).toHaveAttribute('aria-label', `${BILL_NAME} — bill`, { timeout: 30_000 });
 
     // Close is the shell's — no "back to Ledger" label survives — and focus returns to the door.

@@ -4,7 +4,38 @@ import {
   FOUNDING_SEASON_COMP_EXPIRIES,
   isFoundingSeasonCurrentExpiry,
 } from './plan-config';
+import { isClubPlan } from './module-entitlements';
 import { supabaseAdmin } from './supabase-admin';
+
+/**
+ * ⚖ D6 (owner, 2026-09-25): NO Founding Season offer for Club. The Founding comp is written at every
+ * signup (every new org starts on the free tier, which may claim it) — so it is PLAN-SCOPED on the
+ * read side: an org on a Club band is never "in the Founding Season", whatever rows it carries, and
+ * an operator's move to Club revokes the rows (`revokeFoundingSeasonComp`). Before this a Club moved
+ * there by an operator kept the comp: its billing page said "Club is free through September 30,
+ * 2027" beside a $219 price, hid "Reduce or cancel", and offered a 2028 chooser the API refused (A08).
+ */
+export function foundingCompAppliesToPlan(planId: string | null | undefined): boolean {
+  return !isClubPlan(planId);
+}
+
+/**
+ * Revokes every live Founding Season comp row an org holds (current or legacy instant). Returns how
+ * many were revoked. Idempotent — a second call finds nothing live. The audience and desk queries
+ * all filter `revoked_at IS NULL`, so a revoked org leaves every Founding surface at once.
+ */
+export async function revokeFoundingSeasonComp(orgId: string, revokedBy: string): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from('org_overrides')
+    .update({ revoked_at: new Date().toISOString(), revoked_by: revokedBy })
+    .eq('org_id', orgId)
+    .eq('type', 'comp_period')
+    .in('expires_at', [...FOUNDING_SEASON_COMP_EXPIRIES])
+    .is('revoked_at', null)
+    .select('id');
+  if (error) throw error;
+  return data?.length ?? 0;
+}
 
 /**
  * Ensures an org has a Founding Season `comp_period` override expiring at FOUNDING_SEASON_END.

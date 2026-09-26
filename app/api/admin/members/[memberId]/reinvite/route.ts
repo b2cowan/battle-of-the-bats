@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, requireCapability } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { sendPendingInviteLink } from '@/lib/invite-links';
+import { coachingStaffRowRefusal } from '@/lib/board-roles';
 import { withObservability, captureAndJson } from '@/lib/observability';
 
 type Params = { params: Promise<{ memberId: string }> };
@@ -27,6 +28,9 @@ export const POST = withObservability(async (req: Request, { params }: Params) =
   if (!member) {
     return NextResponse.json({ error: 'Member not found' }, { status: 404 });
   }
+
+  // S1-03: a coaching-staff row belongs to a team's staff page — the board endpoints refuse it.
+  if (member.role === 'coach') return coachingStaffRowRefusal();
 
   if (member.status !== 'invited') {
     return NextResponse.json({ error: 'This member has already accepted their invitation' }, { status: 400 });

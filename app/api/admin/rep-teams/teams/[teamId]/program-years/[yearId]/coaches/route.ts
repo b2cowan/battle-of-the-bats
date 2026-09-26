@@ -5,7 +5,6 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, getRepProgramYear, getRepTeamCoaches, getRepTeamCoachForUserYear, getActiveRepProgramYear } from '@/lib/db';
 import { addStaffMember, removeStaffMember } from '@/lib/coach-membership';
-import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
 import { revokeStaleChatMembershipsForCoach } from '@/lib/chat-service';
 import { withObservability } from '@/lib/observability';
 
@@ -107,21 +106,12 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'User is not an active member of this organization' }, { status: 422 });
   }
 
-  // Preserve cross-org guest ASSISTANT coaching (a ratified freedom) but block the SILENT escalation
-  // of such a guest into a HEAD-coach seat: a capability-less guest membership (role 'coach') whose
-  // holder is still active in ANOTHER real org is a cross-org guest, not a genuine local member — they
-  // must be invited as a full member of THIS org first. Assistant assignment and same-org head coaches
-  // (whose membership role is admin/staff/official/etc., or who have no other real org) are unaffected.
-  if (
-    coachRole === 'head_coach' &&
-    member.role === 'coach' &&
-    (await userBelongsToOtherRealOrg(userId, ctx!.org.id))
-  ) {
-    return NextResponse.json(
-      { error: 'This coach is a guest from another organization. Invite them as a full member of this organization before making them a head coach.' },
-      { status: 403 },
-    );
-  }
+  // ⚖ A coach who also belongs to another organization may be a HEAD coach here (Verified Network,
+  // 2026-07-24 — rep and assistant coaching are open across organizations; applied 2026-09-25, A03).
+  // This route used to refuse it and tell the admin to "invite them as a full member first" — an
+  // invite that answered "already a member" (they hold this org's coach row), so the promotion
+  // path led nowhere. Head coach is a TEAM seat: it grants no org capability, so there is no
+  // escalation to guard here. (Club Tier Stage 1: "the head-coach promotion path lands somewhere real".)
 
   // M1 (2026-08-16): an admin adds someone to the TEAM's staff, not to a season. A finished
   // season's staff list is a record — it names who really coached it and is never edited.

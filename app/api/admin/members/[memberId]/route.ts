@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { ALL_CAPABILITY_KEYS, hasCapability } from '@/lib/roles';
-import { userBelongsToOtherRealOrg } from '@/lib/org-membership-policy';
+import { ALL_CAPABILITY_KEYS, hasCapability, countsAsSeat, seatExemptRoles } from '@/lib/roles';
+import { checkCrossOrgJoin, crossOrgJoinRefusalForAdmin } from '@/lib/org-membership-policy';
+import { describeAccessChange, isOwnerOnlyCapability } from '@/lib/member-access';
+import { coachingStaffRowRefusal, isAssignableRole } from '@/lib/board-roles';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 import type { OrgRole } from '@/lib/types';
-import { sendEmail, memberSuspendedHtml, memberRemovedHtml } from '@/lib/email';
+import { sendEmail, memberSuspendedHtml, memberRemovedHtml, memberAccessChangedHtml } from '@/lib/email';
 import {
   cleanupBasicCoachTeamsForUserDeletion,
   countActiveBasicCoachTeamMembershipsForUser,
@@ -14,6 +17,13 @@ import { withObservability } from '@/lib/observability';
 const VALID_CAPABILITIES = new Set<string>(ALL_CAPABILITY_KEYS);
 
 type Params = { params: Promise<{ memberId: string }> };
+
+function ownerRowRefusal() {
+  return NextResponse.json(
+    { error: 'Only an owner can change or remove another owner.', code: 'owner_row' },
+    { status: 403 },
+  );
+}
 
 async function ownerCount(orgId: string): Promise<number> {
   const { count } = await supabaseAdmin
@@ -110,6 +120,12 @@ export const DELETE = withObservability(async (req: Request, { params }: Params)
   if (!target) {
     return NextResponse.json({ error: 'Member not found' }, { status: 404 });
   }
+
+  if (target.role === 'coach') return coachingStaffRowRefusal();
+
+  // Only an owner removes an owner — "manage members" is the board's power over the board, not
+  // over the people who own the club.
+  if (target.role === 'owner' && ctx.role !== 'owner') return ownerRowRefusal();
 
   // Prevent removing the last owner
   if (target.role === 'owner' && (await ownerCount(org.id)) <= 1) {
@@ -269,6 +285,8 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     return NextResponse.json({ error: 'Member not found' }, { status: 404 });
   }
 
+  if (target.role === 'coach') return coachingStaffRowRefusal();
+
   // Prevent demoting the last owner
   if (hasRoleUpdate && target.role === 'owner' && (await ownerCount(org.id)) <= 1) {
     return NextResponse.json(
@@ -285,30 +303,82 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     );
   }
 
-  // Reinstate must re-check the one-org rule: if a suspended member has since become active in
-  // ANOTHER real org, reinstating them here would silently create a double real-org membership.
-  // Hard-block (owner-decided) — re-invite them if they have genuinely left the other org.
-  if (
-    hasStatusUpdate &&
-    body.status === 'active' &&
-    target.status === 'suspended' &&
-    (await userBelongsToOtherRealOrg(target.user_id, org.id))
-  ) {
-    return NextResponse.json(
-      { error: 'This member is now active in another organization. They must leave it before they can be reinstated here — re-invite them once they have.' },
-      { status: 409 }
-    );
+  // A role is changed only when it CHANGES — today's Manage dialog sends `role` only when edited,
+  // and re-sending a member's own role must never trip the checks below.
+  const roleChanging = hasRoleUpdate && body.role !== target.role;
+
+  if (roleChanging) {
+    // Only an owner changes an owner's role, and no one below owner changes their OWN: "manage
+    // members" delegated to a board member must not let them promote themselves (a staff member
+    // holding it could make themselves Admin), and must not reach the club's owners.
+    if (target.role === 'owner' && ctx.role !== 'owner') return ownerRowRefusal();
+    if (target.user_id === ctx.user.id && ctx.role !== 'owner') {
+      return NextResponse.json(
+        { error: 'You can’t change your own role. Ask the club’s owner.', code: 'own_role' },
+        { status: 403 },
+      );
+    }
+    // A13 / A02: the board roles are assignable (treasurer; the league roles when the club runs a
+    // house league — Ask 2), and anything else is REFUSED. This used to coerce every unrecognised
+    // role to 'staff', so choosing Treasurer silently demoted the person (J4-039).
+    if (!(await isAssignableRole({ ...org, id: org.id }, body.role))) {
+      return NextResponse.json(
+        { error: 'That role can’t be given in this organization.', code: 'role_not_assignable' },
+        { status: 400 },
+      );
+    }
+    // A role change respects the seat limit, exactly as an invite does: a free scorekeeper who
+    // becomes staff takes a seat (the invite checked this; the role change never did).
+    const planCfg = PLAN_CONFIG[org.planId];
+    if (!countsAsSeat(target.role, planCfg) && countsAsSeat(body.role, planCfg)) {
+      const { count: seatCount } = await supabaseAdmin
+        .from('organization_members')
+        .select('id', { count: 'exact', head: true })
+        .eq('organization_id', org.id)
+        .not('role', 'in', `(${seatExemptRoles(planCfg).join(',')})`);
+      if ((seatCount ?? 0) >= planCfg.seatLimit) {
+        return NextResponse.json(
+          {
+            error: `Seat limit reached (${planCfg.seatLimit} seat${planCfg.seatLimit === 1 ? '' : 's'} on the ${planCfg.label} plan). Upgrade to add more members.`,
+            code: 'seat_limit_reached',
+          },
+          { status: 403 },
+        );
+      }
+    }
+    // Becoming a scorekeeper here is the one role Verified Network keeps to one home org.
+    const join = await checkCrossOrgJoin(target.user_id, org.id, body.role);
+    if (join.blocked) {
+      return NextResponse.json({ error: crossOrgJoinRefusalForAdmin(join), code: 'one_home_org' }, { status: 409 });
+    }
+  }
+
+  // Reinstate re-asks the membership rule for the role they hold (Verified Network, A03): being
+  // active in another organization no longer blocks it; only a scorekeeper keeps one home org.
+  if (hasStatusUpdate && body.status === 'active' && target.status === 'suspended') {
+    const join = await checkCrossOrgJoin(target.user_id, org.id, target.role);
+    if (join.blocked) {
+      return NextResponse.json({ error: crossOrgJoinRefusalForAdmin(join), code: 'one_home_org' }, { status: 409 });
+    }
+  }
+
+  // J10-022: plan & billing and organization settings stay with the owner. A body that tries to
+  // GRANT one is refused outright rather than half-applied.
+  if (hasCapabilitiesUpdate && body.capabilities && typeof body.capabilities === 'object') {
+    const granted = Object.entries(body.capabilities as Record<string, unknown>)
+      .filter(([key, val]) => isOwnerOnlyCapability(key) && val === true);
+    if (granted.length > 0) {
+      return NextResponse.json(
+        { error: 'Plan & billing and organization settings stay with the owner; they can’t be handed out.', code: 'owner_only_power' },
+        { status: 400 },
+      );
+    }
   }
 
   const update: Record<string, unknown> = {};
 
-  if (hasRoleUpdate) {
-    // Accept admin | staff | official; never allow promoting to owner via this endpoint
-    update.role =
-      body.role === 'admin' ? 'admin'
-      : body.role === 'staff' ? 'staff'
-      : body.role === 'official' ? 'official'
-      : 'staff';
+  if (roleChanging) {
+    update.role = body.role as OrgRole;
   }
 
   if (hasStatusUpdate) {
@@ -324,7 +394,9 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     } else if (typeof body.capabilities === 'object') {
       const sanitized: Record<string, boolean> = {};
       for (const [key, val] of Object.entries(body.capabilities as Record<string, unknown>)) {
-        if (VALID_CAPABILITIES.has(key) && typeof val === 'boolean') {
+        // Owner-only powers are never stored as an override (a `true` was refused above; a stray
+        // `false` is meaningless for a non-owner and would show as a phantom change).
+        if (VALID_CAPABILITIES.has(key) && typeof val === 'boolean' && !isOwnerOnlyCapability(key)) {
           sanitized[key] = val;
         }
       }
@@ -397,7 +469,7 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
   }
 
   // Audit log — one row per logical change type
-  if (hasRoleUpdate && update.role !== target.role) {
+  if (roleChanging) {
     void supabaseAdmin.from('org_audit_log').insert({
       org_id: org.id, actor_id: ctx.user.id, target_id: target.user_id,
       action: 'role_changed', payload: { before: target.role, after: update.role },
@@ -437,5 +509,36 @@ export const PATCH = withObservability(async (req: Request, { params }: Params) 
     }
   }
 
-  return NextResponse.json({ ok: true, ...(hasRoleUpdate ? { role: update.role } : {}) });
+  // J10-020: a member whose access changed is told what changed — their role, and the programs
+  // they gained or lost — computed by the same `whatTheyCanOpen` the gates use, so the email can
+  // never announce a door the server would refuse. A change that alters nothing they can open
+  // (an override that restates the default) sends nothing. Best-effort, like the other notices.
+  // Only for someone who has joined: a pending invitee hears about the role in their invitation.
+  if ((roleChanging || hasCapabilitiesUpdate) && (update.status ?? target.status) === 'active') {
+    const before = { role: target.role as OrgRole, capabilities: (target.capabilities as Record<string, boolean> | null) ?? null };
+    const after = {
+      role: (update.role as OrgRole | undefined) ?? before.role,
+      capabilities: hasCapabilitiesUpdate ? ((update.capabilities as Record<string, boolean> | null) ?? null) : before.capabilities,
+    };
+    const changes = describeAccessChange(before, after, org);
+    if (changes.length > 0) {
+      void (async () => {
+        try {
+          const { data: { user: changedUser } } = await supabaseAdmin.auth.admin.getUserById(target.user_id);
+          if (changedUser?.email) {
+            const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
+            await sendEmail(
+              changedUser.email,
+              `Your access to ${org.name} changed`,
+              memberAccessChangedHtml({ orgName: org.name, changes, signInUrl: `${appUrl}/auth/login` }),
+            );
+          }
+        } catch (e) {
+          console.error('[members] access-change email failed:', e);
+        }
+      })();
+    }
+  }
+
+  return NextResponse.json({ ok: true, ...(hasRoleUpdate ? { role: update.role ?? target.role } : {}) });
 }, { route: '/api/admin/members/[memberId]' });

@@ -43,7 +43,7 @@ if ((process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').includes(PROD_PROJECT_REF)) {
 }
 const admin = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, { auth: { persistSession: false } });
 
-const ORG_SLUG = process.env.UAT_ORG_SLUG!;
+const ORG_SLUG = process.env.UAT_COACH_ORG_SLUG || process.env.UAT_ORG_SLUG!; // the coach fixture's org
 const COACH = process.env.UAT_COACH_EMAIL!;
 const PASSWORD = process.env.UAT_COACH_PASSWORD!;
 
@@ -249,7 +249,9 @@ test.describe('the three views and the exact addresses, rendered', () => {
     await expect(page.getByRole('link', { name: 'Record in Skills & Goals →' })).toBeVisible();
 
     // The name is a link into the record's Results view, carrying the metric and the way back.
-    const href = await devonRow.getByRole('link', { name: /Devon Test/ }).getAttribute('href');
+    // The NAME link ("#4 Devon Test"), not the row's own door ("Open Devon Test’s progress", added with
+    // the row-list recipe) — both match /Devon Test/, and strict mode refuses an ambiguous locator.
+    const href = await devonRow.getByRole('link', { name: /Devon Test$/ }).getAttribute('href');
     expect(href).toContain('section=development');
     expect(href).toContain('view=results');
     expect(href).toContain(`metric=${ts.id}`);
