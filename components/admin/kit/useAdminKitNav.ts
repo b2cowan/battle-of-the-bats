@@ -14,8 +14,9 @@ import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import { isTournamentTier } from '@/lib/billing-urls';
 import { useCurrentOrgCoachAccess, coachDoorFor } from '@/lib/use-current-org-coach-access';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
-import { kitPrograms, kitOrgLinks, activeKitSection } from '@/lib/admin-kit-nav';
+import { kitPrograms, kitOrgLinks, kitOrgLockedRows, activeKitSection, clubProgramOrder } from '@/lib/admin-kit-nav';
 import { kitTournamentGroups } from './kit-tournament-groups';
+import { useClubBrief } from './club/ClubBriefProvider';
 
 export function useAdminKitNav() {
   const pathname = usePathname();
@@ -31,7 +32,13 @@ export function useAdminKitNav() {
   // refuses.
   const canUse = canOpen;
 
-  const programs = kitPrograms({ base, canUse });
+  // ⚖ The plan-aware order (Club Tier Stage 1): what the club RUNS leads, what the plan merely
+  // carries is the quiet "Also on your plan" group. Read from the morning brief's `shape`, which the
+  // hub reads too — so the rail, the phone bar and the hub list the programs in one order.
+  const club = useClubBrief();
+  const order = clubProgramOrder(club.shape);
+  const programs = kitPrograms({ base, canUse, order: order.lead });
+  const alsoOnPlan = kitPrograms({ base, canUse, order: order.also });
   // ⚖ D8 (Club Stage 1): "tournament-only" is a fact about the PLAN, never the person — the same
   // helper the hub, today's sidebar and the post-login resolver call, so a club's staff member is
   // not tournament-only here while being a club member there.
@@ -51,6 +58,10 @@ export function useAdminKitNav() {
   // The person's own Coaches Portal door — the rail's foot and the More sheet's "You" both show it.
   const coachDoor = coachDoorFor(useCurrentOrgCoachAccess(currentOrg?.slug, !isCanceled), currentOrg?.slug);
 
+  // The owner's areas a non-owner sees as locked rows — on the rail AND in the phone's More sheet
+  // (specimens 2–3, J10-016) — never doors.
+  const orgLockedRows = isTournamentTier(currentOrg?.planId) ? [] : kitOrgLockedRows({ role: userRole, isCanceled });
+
   return {
     pathname,
     orgSlug,
@@ -58,8 +69,11 @@ export function useAdminKitNav() {
     isCanceled,
     canUse,
     programs,
+    alsoOnPlan,
+    brief: club.brief,
     tournamentOnly,
     orgLinks,
+    orgLockedRows,
     coachDoor,
     tournamentGroups: kitTournamentGroups({ status: currentTournament?.status, isSandbox, role: userRole }),
     section: activeKitSection(pathname, base),

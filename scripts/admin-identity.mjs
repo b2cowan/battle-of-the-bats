@@ -98,7 +98,9 @@ const val = (f) => argv.find((a) => a.startsWith(`${f}=`))?.split('=')[1];
 const only = val('--only')?.split(',').map((s) => s.trim()).filter(Boolean);
 const widthArg = val('--width');
 
-const ADMIN = SCREENS.filter((s) => s.area);
+// The identity check is SWITCH OFF by definition — a `kitOnly` screen (Club Tier Stage 1) has no
+// switch-off version to compare.
+const ADMIN = SCREENS.filter((s) => s.area && !s.kitOnly);
 const screens = only ? ADMIN.filter((s) => only.includes(s.area) || only.includes(s.id)) : ADMIN;
 const widths = widthArg ? WIDTHS.filter((w) => w.name === widthArg) : WIDTHS;
 

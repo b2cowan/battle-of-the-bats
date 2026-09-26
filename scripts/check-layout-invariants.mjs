@@ -177,6 +177,9 @@ const dumpFile = val('--dump');
 // lib/admin-kit-preview.ts; `tests/unit/admin-kit-switch-guard.test.ts` pins the name). The baseline
 // was recorded switch-OFF, so a kit run is a --dump comparison, never an --init (refused below).
 const adminKit = has('--admin-kit');
+// A `kitOnly` entry (Club Tier Stage 1) exists only with the admin kit switch on — measured by an
+// `--admin-kit` run, never in the switch-off baseline.
+const sweepable = (s) => !s.kitOnly || adminKit;
 if (theme && theme !== 'dark' && theme !== 'warm') {
   console.error(`✗ --theme must be dark or warm (got "${theme}")`);
   process.exit(1);
@@ -292,7 +295,13 @@ if (has('--changed') && !onlyIds) {
       ...SCREENS.filter((s) => widened.some((w) => w.pick(s))).map((s) => s.id),
       ...hit.map((s) => s.id),
     ]);
-    onlyIds = SCREENS.map((s) => s.id).filter((id) => picked.has(id));
+    // A `kitOnly` screen (Club Tier Stage 1) is swept only with `--admin-kit` — drop it here, not
+    // later, so the count below says what is actually swept and a kit-only diff says so plainly.
+    const kitOnlySkipped = SCREENS.filter((s) => picked.has(s.id) && !sweepable(s)).map((s) => s.id);
+    onlyIds = SCREENS.filter((s) => picked.has(s.id) && sweepable(s)).map((s) => s.id);
+    if (kitOnlySkipped.length) {
+      console.log(`--changed: ${kitOnlySkipped.length} switch-on-only screen(s) touched, swept only with --admin-kit — ${kitOnlySkipped.join(', ')}`);
+    }
     if (!onlyIds.length) {
       console.log('--changed: no listed screen is affected by this diff. Nothing to sweep.');
       process.exit(0);
@@ -316,7 +325,7 @@ if (has('--list')) {
   process.exit(0);
 }
 
-const screens = onlyIds ? SCREENS.filter((s) => onlyIds.includes(s.id)) : SCREENS;
+const screens = (onlyIds ? SCREENS.filter((s) => onlyIds.includes(s.id)) : SCREENS).filter(sweepable);
 
 /**
  * `--changed` defaults to a representative PAIR of widths — the narrow phone and the desktop —

@@ -19,7 +19,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useState, type ElementType } from 'react';
 import {
-  LayoutGrid, ChevronRight, Plus, Home, Users2, HelpCircle, LogOut, DollarSign, Trophy,
+  LayoutGrid, ChevronRight, Plus, Home, Users2, HelpCircle, LogOut, DollarSign, Trophy, Lock,
 } from 'lucide-react';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import FeedbackLauncher from '@/components/feedback/FeedbackLauncher';
@@ -34,8 +34,9 @@ import { getBillingHref } from '@/lib/billing-urls';
 import { useAdminWorklist } from '@/lib/admin-worklist';
 import { useChatUnread } from '@/lib/use-chat-unread';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
-import { isKitLinkActive, kitTournamentLabel, ORGANIZATION_ICON, type KitLink } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, kitTournamentLabel, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
+import { briefPageCount, briefProgramCount } from './club/ClubBriefProvider';
 import styles from './AdminKitFrame.module.css';
 
 type SeasonOption = { id: string; name: string };
@@ -60,15 +61,32 @@ function RailRow({ href, label, active, icon: Icon, sub, count = 0, chatUnread }
 }
 
 /** A program (or Organization) row: the door to its first screen, open while you are inside it. */
-function ProgramRow({ href, label, icon: Icon, open, hasPages }: {
-  href: string; label: string; icon: ElementType; open: boolean; hasPages: boolean;
+function ProgramRow({ href, label, icon: Icon, open, hasPages, count = 0 }: {
+  href: string; label: string; icon: ElementType; open: boolean; hasPages: boolean; count?: number;
 }) {
   return (
     <Link href={href} className={`${styles.item}${open ? ` ${styles.programOpen}` : ''}`}>
       <Icon size={14} aria-hidden />
       <span>{label}</span>
+      {/* The morning brief's waiting items for this program (Club Tier Stage 1, specimen 3) — the
+          same number the hub's door and the phone tab show. Hidden while open: its pages carry it. */}
+      {count > 0 && !open && <span className={styles.count} aria-label={`${count} waiting`}>{count > 9 ? '9+' : count}</span>}
       {hasPages && <ChevronRight size={13} className={`${styles.chevron}${open ? ` ${styles.chevronOpen}` : ''}`} aria-hidden />}
     </Link>
+  );
+}
+
+/**
+ * An owner's area as a non-owner sees it: a LOCKED ROW that says whose it is (specimens 2–3, J10-016)
+ * — not a link, so it opens nothing and widens nobody's reach; it replaces a surprise refusal.
+ */
+function LockedRow({ label, icon: Icon }: { label: string; icon: ElementType }) {
+  return (
+    <div className={`${styles.item} ${styles.sub} ${styles.locked}`} aria-label={`${label}, owner only`}>
+      <Icon size={13} aria-hidden />
+      <span>{label}</span>
+      <span className={styles.lockedNote}><Lock size={11} aria-hidden /> Owner only</span>
+    </div>
   );
 }
 
@@ -76,7 +94,10 @@ export default function AdminKitRail() {
   const pathname = usePathname();
   const router = useRouter();
   const nav = useAdminKitNav();
-  const { base, orgSlug, programs, orgLinks, section, tournamentOnly, isCanceled, onTournaments, coachDoor } = nav;
+  const {
+    base, orgSlug, programs, alsoOnPlan, brief, orgLinks, orgLockedRows, section, tournamentOnly, isCanceled,
+    onTournaments, coachDoor,
+  } = nav;
   const repMatch = pathname.match(/\/rep-teams\/teams\/([^/]+)\/program-years\/([^/]+)/);
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
   const [creating, setCreating] = useState(false);
@@ -94,8 +115,37 @@ export default function AdminKitRail() {
   }
 
   const pageRow = (link: KitLink) => (
-    <RailRow key={link.key} href={link.href} label={link.label} active={isKitLinkActive(pathname, link)} sub />
+    <RailRow
+      key={link.key}
+      href={link.href}
+      label={link.label}
+      active={isKitLinkActive(pathname, link)}
+      sub
+      count={briefPageCount(brief, link.key)}
+    />
   );
+
+  // One program's group: its row, and — while you are inside it — its pages.
+  const programGroup = (p: KitProgram) => {
+    const open = section === p.key;
+    return (
+      <div key={p.key}>
+        <ProgramRow
+          href={p.href}
+          label={p.label}
+          icon={p.icon}
+          open={open}
+          hasPages={p.pages.length > 0}
+          count={briefProgramCount(brief, p.key)}
+        />
+        {open && p.pages.map(pageRow)}
+        {open && p.key === 'rep-teams' && repMatch && (
+          <RepTeamBlock y={`${base}/rep-teams/teams/${repMatch[1]}/program-years/${repMatch[2]}`} />
+        )}
+        {open && p.key === 'house-league' && seasonId && <SeasonBlock seasonId={seasonId} />}
+      </div>
+    );
+  };
 
   return (
     <>
@@ -112,19 +162,15 @@ export default function AdminKitRail() {
             {!tournamentOnly && !isCanceled && programs.length > 0 && (
               <>
                 <div className={styles.label}>Programs</div>
-                {programs.map(p => {
-                  const open = section === p.key;
-                  return (
-                    <div key={p.key}>
-                      <ProgramRow href={p.href} label={p.label} icon={p.icon} open={open} hasPages={p.pages.length > 0} />
-                      {open && p.pages.map(pageRow)}
-                      {open && p.key === 'rep-teams' && repMatch && (
-                        <RepTeamBlock y={`${base}/rep-teams/teams/${repMatch[1]}/program-years/${repMatch[2]}`} />
-                      )}
-                      {open && p.key === 'house-league' && seasonId && <SeasonBlock seasonId={seasonId} />}
-                    </div>
-                  );
-                })}
+                {programs.map(programGroup)}
+              </>
+            )}
+            {/* What the plan carries but the club does not run yet (specimens 1 and 3): quiet, one
+                row each — they join Programs the day the club starts its first season or event. */}
+            {!tournamentOnly && !isCanceled && alsoOnPlan.length > 0 && (
+              <>
+                <div className={styles.label}>Also on your plan</div>
+                {alsoOnPlan.map(programGroup)}
               </>
             )}
             {tournamentOnly && !isCanceled && (
@@ -141,6 +187,7 @@ export default function AdminKitRail() {
                     <>
                       <ProgramRow href={`${base}/org`} label="Organization" icon={ORGANIZATION_ICON} open={section === 'org'} hasPages />
                       {section === 'org' && orgLinks.map(pageRow)}
+                      {section === 'org' && orgLockedRows.map(r => <LockedRow key={r.key} label={r.label} icon={r.icon} />)}
                     </>
                   )}
               </>

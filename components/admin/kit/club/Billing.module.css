@@ -1,0 +1,105 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   PLAN & BILLING for a Club, on the kit (Club Tier Stage 1 + 1b, specimen 7) — the plan-and-capacity
+   card (an ADC Phase 0 kit gap), the bands table, the includes list, the reactivate card, and the
+   move window's figures. Kit only. TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ── The plan-and-capacity card: the plan on the left, the teams it holds on the right ── */
+.planCard { --card-pad: 1.1rem 1.25rem; margin-bottom: 1.75rem; }
+.planGrid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 1.5rem; }
+@media (max-width: 760px) {
+  .planGrid { grid-template-columns: minmax(0, 1fr); gap: 1.1rem; }
+  .capSide { border-top: 1px solid var(--home-line); padding-top: 1rem; }
+}
+.planSide,
+.capSide { display: flex; flex-direction: column; gap: 0.35rem; min-width: 0; }
+.planName {
+  margin: 0.15rem 0 0;
+  font-family: var(--font-display);
+  font-size: var(--type-title);
+  font-weight: 750;
+  line-height: 1.15;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+.planPrice { margin: 0; font-size: var(--type-body); color: var(--text-secondary); font-variant-numeric: tabular-nums; }
+.scheduled { margin: 0.2rem 0 0; font-size: var(--type-support); color: var(--warning); }
+.planActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.5rem; }
+.planActions button,
+.planActions a { display: inline-flex; align-items: center; gap: 0.35rem; }
+
+/* The capacity readout: a count, never money. */
+.capFigure {
+  margin: 0.1rem 0 0.2rem;
+  font-size: var(--type-figure);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+.capFigure small { font-size: var(--type-support); font-weight: 600; color: var(--text-tertiary); letter-spacing: 0; }
+.capBar {
+  height: 10px;
+  border-radius: 5px;
+  background: var(--home-line);
+  overflow: hidden;
+  margin: 0.15rem 0 0.35rem;
+}
+.capFill { height: 100%; border-radius: 5px; background: var(--home-olive); }
+/* Near the cap the bar turns amber (13 of 15); at the cap it is the danger ink, and the WORDS name the
+   move — colour never carries it alone (the deutan ruling). */
+.capNear { background: var(--warning); }
+.capFull { background: var(--home-live); }
+
+.afterTable { margin-top: 0.6rem; }
+
+.includes { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.45rem 1.5rem; }
+@media (max-width: 640px) {
+  .includes { grid-template-columns: minmax(0, 1fr); }
+}
+.includes li { display: flex; align-items: flex-start; gap: 0.45rem; font-size: var(--type-body); color: var(--text-secondary); line-height: 1.45; }
+.includes svg { color: var(--home-olive); flex-shrink: 0; margin-top: 0.2rem; }
+
+.cancelCopy { margin: 0 0 0.75rem; max-width: 64ch; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); }
+.dangerText { color: var(--home-live); }
+
+/* ── Cancelled: the reactivate card ── */
+.reactivate { --card-pad: 1.1rem 1.25rem; --card-gap: 0.6rem; }
+.cardTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+.restores { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+.restores li { display: flex; align-items: center; gap: 0.45rem; font-size: var(--type-body); color: var(--text-secondary); }
+.restores svg { color: var(--home-olive); flex-shrink: 0; }
+.reactivateRow { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; margin-top: 0.35rem; }
+.cycleField { display: inline-flex; min-width: 12rem; }
+
+/* ── A non-owner, who reaches the page by a link ── */
+.lockedCard { margin-top: 1.5rem; padding: 1.5rem 1.25rem; border: 1px dashed var(--home-line-strong); border-radius: 8px; background: var(--card-bg); }
+.lockedTitle { margin: 0 0 0.35rem; font-family: var(--font-display); font-size: var(--type-heading); font-weight: 700; text-transform: none; letter-spacing: normal; color: var(--text-primary); }
+.lockedBody { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── The move window's two figures ── */
+.figures { margin: 0.2rem 0 0.8rem; display: flex; flex-direction: column; gap: 0.5rem; }
+.figures > div {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--home-card);
+}
+.figures dt { font-size: var(--type-support); color: var(--text-secondary); }
+.figures dd { margin: 0; font-size: var(--type-body); font-weight: 700; color: var(--text-primary); font-variant-numeric: tabular-nums; white-space: nowrap; }

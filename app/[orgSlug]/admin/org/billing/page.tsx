@@ -1,6 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import { isClubPlan } from '@/lib/module-entitlements';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, Star, ArrowRight, Users, CalendarRange, Building2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
@@ -148,7 +151,18 @@ const PRODUCT_SHELF_ICON: Partial<Record<OrgPlan, React.ReactElement>> = {
   club:   <Building2 size={18} />,
 };
 
+// Admin Design Continuity switch (Club Tier Stage 1): on, for a Club band → the kit's Plan & billing;
+// otherwise today's page, untouched below (the drawings cover the Club's billing only — owner,
+// 2026-09-26). The release slice deletes this wrapper; slice 6 closes the other plans' gap first.
+const BillingKit = dynamic(() => import('@/components/admin/kit/club/BillingKit'));
+
 export default function BillingPage() {
+  const kit = useAdminKit();
+  const { currentOrg } = useOrg();
+  return kit && isClubPlan(currentOrg?.planId) ? <BillingKit /> : <BillingPageLegacy />;
+}
+
+function BillingPageLegacy() {
   const { currentOrg, refresh: refreshOrg, userRole } = useOrg();
   usePageTitle('Plan & Billing');
   const { tournaments, refresh: refreshTournaments }  = useTournament();

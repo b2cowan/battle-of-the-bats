@@ -113,6 +113,31 @@ async function openAdminMoreSheet(page) {
   await page.waitForTimeout(300);
 }
 
+/**
+ * Club Tier Stage 1's kit windows (screens session, 2026-09-26) — each opens a KitDialog without
+ * writing anything (Save, Send and "Take it offline" are never pressed), and the entry's `scope`
+ * measures the window alone. `[data-kit-dialog]` is the window's own marker (KitDialog.tsx).
+ */
+async function openKitDialogBy(page, locator) {
+  const door = locator.first();
+  if (await door.count() === 0) return;
+  await door.click();
+  await page.locator('[data-kit-dialog]').first().waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+/** Members › Invite. */
+async function openKitInvite(page) {
+  await openKitDialogBy(page, page.locator('#members-invite-btn:visible'));
+}
+/** Members › Manage — the first board row that can be managed (the table at a desk, the row list on a phone). */
+async function openKitManage(page) {
+  await openKitDialogBy(page, page.locator('button[aria-label^="Manage "]:visible, table button:visible:has-text("Manage")'));
+}
+/** Settings › Your public site — pressing the ON switch asks first; the question is what we measure. */
+async function openKitTakeOffline(page) {
+  await openKitDialogBy(page, page.locator('#settings-public[aria-checked="true"]'));
+}
+
 /** The scorekeeper's score SHEET, raised from the first game a volunteer can still score. Opening
  *  it writes nothing — only its Save does. Tolerant of a day with nothing left to score. */
 async function openScoreSheet(page) {
@@ -1198,6 +1223,23 @@ export const SCREENS = [
   { id: 'admin-org-members-audit',     area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members/audit` },
   { id: 'admin-org-billing',           area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/billing` },
   { id: 'admin-org-settings',          area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings` },
+
+  // ── Club Tier Stage 1's screens, SWITCH ON ONLY (`kitOnly`) — screens and windows that exist only
+  // in the kit version (the club setup checklist for a club that finished setup, the open kit
+  // windows) or that today's version is not measured for (the treasurer's hub and board). The runner
+  // skips them without `--admin-kit`, and the switch-off identity check never sees them; with it, a
+  // kit run is a `--dump` comparison, never a baseline (the baseline is today's, switch off).
+  // The six screens above are the SAME entries switch on: `--admin-kit --only=admin-hub,…` measures
+  // their kit versions. The release slice drops `kitOnly` when the legacy versions go.
+  { id: 'admin-hub-treasurer',         area: 'hub', session: 'repClubTreasurer', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin` },
+  { id: 'admin-club-setup',            area: 'hub', session: 'repClubOwner', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/onboarding?plan=club` },
+  { id: 'admin-org-members-treasurer', area: 'org', session: 'repClubTreasurer', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/org/members` },
+  { id: 'admin-org-members-invite',    area: 'org', session: 'repClubOwner', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/org/members`,
+    interact: openKitInvite, scope: '[data-kit-dialog]' },
+  { id: 'admin-org-members-manage',    area: 'org', session: 'repClubOwner', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/org/members`,
+    interact: openKitManage, scope: '[data-kit-dialog]' },
+  { id: 'admin-org-settings-offline',  area: 'org', session: 'repClubOwner', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/org/settings`,
+    interact: openKitTakeOffline, scope: '[data-kit-dialog]' },
   { id: 'admin-org-settings-pdf',      area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings/pdf` },
   { id: 'admin-org-venues',            area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues` },
   { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/coaches-portal-links` },

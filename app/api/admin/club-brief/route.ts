@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { canOpenModule, canOpenRepMoney } from '@/lib/member-access';
+import { planCarriesModule } from '@/lib/module-entitlements';
+import { orgRunsHouseLeague } from '@/lib/board-roles';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability, captureAndJson } from '@/lib/observability';
 import { tournamentToday, addCalendarDays } from '@/lib/timezone';
@@ -20,9 +22,21 @@ import type { OrgRole } from '@/lib/types';
  * the person can act"). Two questions, both asked with the SAME rules the acting routes use:
  * can they reach the program (`canOpenModule` / `canOpenRepMoney`), and does their role pass that
  * route's write check. A key that is absent means "not yours to act on"; a present 0 means
- * "yours, and nothing waits". Session 2's hub renders this and collapses to one line at all-zero.
+ * "yours, and nothing waits". The hub renders this and collapses to one line at all-zero.
  *
  * Scoped members (rep-group scopes) count only their groups' teams, as every Rep Teams list does.
+ *
+ * ── Added by the screens session (Club Tier Stage 1, 2026-09-26), additively ──────────────────────
+ *   shape  — { runsHouseLeague, hostsTournaments }: what the club RUNS, the two facts the plan cannot
+ *            answer. The hub, the desktop rail and the phone bar order the programs by it
+ *            (`clubProgramOrder`, lib/admin-kit-nav.ts), so all three read it from this one place.
+ *            Facts about the ORG, not the person — present for everyone who reaches the hub.
+ *   teams  — { active, groups }: the Rep Teams door's line ("9 teams in 2 groups") and the capacity
+ *            readout ("9 of 15 teams"). Present only for someone who can open Rep Teams — the same
+ *            count the rep-team cap enforces (active = not archived).
+ *   detail — the drawn sub-lines of two cards: tryouts { teams, oldest: { teamId, programYearId } }
+ *            (how many teams have one waiting; the card opens the team with the OLDEST application)
+ *            and paymentRequests { oldestDays }. Present only where the count itself is present.
  */
 
 /** Who may act, per count — copied from the route that performs the action, never widened. */
@@ -38,8 +52,13 @@ const ACTING_ROLES = {
 } as const satisfies Record<string, readonly OrgRole[]>;
 
 type ClubBriefCounts = Partial<Record<keyof typeof ACTING_ROLES, number>>;
+type ClubBriefDetail = {
+  tryoutApplications?: { teams: number; oldest: { teamId: string; programYearId: string } | null };
+  paymentRequests?: { oldestDays: number | null };
+};
 
 const DUE_WINDOW_DAYS = 14;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export const GET = withObservability(async (req: Request) => {
   const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
@@ -58,84 +77,125 @@ export const GET = withObservability(async (req: Request) => {
     assistantCoaches: repTeams && actsAs('assistantCoaches'),
   };
   const today = tournamentToday();
-  if (!Object.values(want).some(Boolean)) {
-    return NextResponse.json({ asOf: today, counts: {} satisfies ClubBriefCounts });
-  }
-
-  // Teams in the person's reach: non-archived, and inside their rep-group scope when they have one.
-  let teamQuery = supabaseAdmin.from('rep_teams').select('id').eq('org_id', org.id).eq('is_archived', false);
-  if (ctx.repGroupIds) teamQuery = teamQuery.in('group_id', ctx.repGroupIds);
-  const { data: teamRows, error: teamErr } = await teamQuery;
-  if (teamErr) return captureAndJson(teamErr, { error: 'Could not read this morning’s brief.' }, 500);
-  const teamIds = (teamRows ?? []).map(t => t.id as string);
-
-  const counts: ClubBriefCounts = {};
-  if (teamIds.length === 0) {
-    for (const [key, on] of Object.entries(want)) if (on) counts[key as keyof ClubBriefCounts] = 0;
-    return NextResponse.json({ asOf: today, counts });
-  }
-
-  const reads: Promise<void>[] = [];
   const fail: { error: unknown } = { error: null };
 
-  if (want.tryoutApplications) {
-    reads.push((async () => {
-      // Waiting = pending_review (the only undecided state, mig 168), on a season that is still
-      // open (draft or active). A registration left on a finished season is a record, not a task.
-      const { count, error } = await supabaseAdmin
-        .from('rep_tryout_registrations')
-        .select('id, rep_program_years!inner(status)', { count: 'exact', head: true })
-        .eq('org_id', org.id)
-        .eq('status', 'pending_review')
-        .in('team_id', teamIds)
-        .in('rep_program_years.status', ['draft', 'active']);
-      if (error) fail.error = error; else counts.tryoutApplications = count ?? 0;
-    })());
+  // ── The shape: what the club runs (every reader of the hub, whatever their role) ──────────────
+  const shapeRead = (async () => {
+    const [runsHouseLeague, tournamentsRes] = await Promise.all([
+      orgRunsHouseLeague({ ...org, id: org.id }),
+      planCarriesModule(org, 'module_tournaments')
+        ? supabaseAdmin.from('tournaments').select('id', { count: 'exact', head: true })
+            .eq('org_id', org.id).neq('status', 'archived')
+        : Promise.resolve({ count: 0, error: null }),
+    ]);
+    if (tournamentsRes.error) fail.error = tournamentsRes.error;
+    return { runsHouseLeague, hostsTournaments: (tournamentsRes.count ?? 0) > 0 };
+  })();
+
+  // Teams in the person's reach: non-archived, and inside their rep-group scope when they have one.
+  const needTeams = repTeams || Object.values(want).some(Boolean);
+  let teamRows: { id: string; group_id: string | null }[] = [];
+  if (needTeams && planCarriesModule(org, 'module_rep_teams')) {
+    let teamQuery = supabaseAdmin.from('rep_teams').select('id, group_id').eq('org_id', org.id).eq('is_archived', false);
+    if (ctx.repGroupIds) teamQuery = teamQuery.in('group_id', ctx.repGroupIds);
+    const { data, error: teamErr } = await teamQuery;
+    if (teamErr) return captureAndJson(teamErr, { error: 'Could not read this morning’s brief.' }, 500);
+    teamRows = (data ?? []) as { id: string; group_id: string | null }[];
+  }
+  const teamIds = teamRows.map(t => t.id);
+
+  const counts: ClubBriefCounts = {};
+  const detail: ClubBriefDetail = {};
+  const reads: Promise<void>[] = [];
+
+  if (teamIds.length === 0) {
+    for (const [key, on] of Object.entries(want)) if (on) counts[key as keyof ClubBriefCounts] = 0;
+    if (want.tryoutApplications) detail.tryoutApplications = { teams: 0, oldest: null };
+    if (want.paymentRequests) detail.paymentRequests = { oldestDays: null };
+  } else {
+    if (want.tryoutApplications) {
+      reads.push((async () => {
+        // Waiting = pending_review (the only undecided state, mig 168), on a season that is still
+        // open (draft or active). A registration left on a finished season is a record, not a task.
+        // Rows, not a head count: the card says how many TEAMS have one waiting and opens the team
+        // with the oldest (specimen 1). Bounded by what is waiting, which is the point of the card.
+        const { data, error } = await supabaseAdmin
+          .from('rep_tryout_registrations')
+          .select('team_id, program_year_id, created_at, rep_program_years!inner(status)')
+          .eq('org_id', org.id)
+          .eq('status', 'pending_review')
+          .in('team_id', teamIds)
+          .in('rep_program_years.status', ['draft', 'active'])
+          .order('created_at', { ascending: true });
+        if (error) { fail.error = error; return; }
+        const rows = (data ?? []) as { team_id: string; program_year_id: string }[];
+        counts.tryoutApplications = rows.length;
+        detail.tryoutApplications = {
+          teams: new Set(rows.map(r => r.team_id)).size,
+          oldest: rows[0] ? { teamId: rows[0].team_id, programYearId: rows[0].program_year_id } : null,
+        };
+      })());
+    }
+
+    if (want.paymentRequests) {
+      reads.push((async () => {
+        const { data, error } = await supabaseAdmin
+          .from('rep_team_payment_requests')
+          .select('created_at')
+          .eq('org_id', org.id)
+          .eq('status', 'pending')
+          .in('team_id', teamIds)
+          .order('created_at', { ascending: true });
+        if (error) { fail.error = error; return; }
+        const rows = (data ?? []) as { created_at: string }[];
+        counts.paymentRequests = rows.length;
+        // Whole days since the oldest request was sent — an age, never an amount (C04).
+        detail.paymentRequests = {
+          oldestDays: rows[0] ? Math.max(0, Math.floor((Date.now() - Date.parse(rows[0].created_at)) / DAY_MS)) : null,
+        };
+      })());
+    }
+
+    if (want.installmentsDue) {
+      reads.push((async () => {
+        // "Due in 14 days" counts what must be paid by then — so an overdue installment counts too.
+        // Dates are the org's calendar day (`tournamentToday`), never the server's UTC day.
+        const { count, error } = await supabaseAdmin
+          .from('rep_allocation_installments')
+          .select('id', { count: 'exact', head: true })
+          .eq('org_id', org.id)
+          .is('paid_at', null)
+          .lte('due_date', addCalendarDays(today, DUE_WINDOW_DAYS))
+          .in('team_id', teamIds);
+        if (error) fail.error = error; else counts.installmentsDue = count ?? 0;
+      })());
+    }
+
+    if (want.assistantCoaches) {
+      reads.push((async () => {
+        // `pending_approval` is the only state the approve action accepts (assistant-coaches POST).
+        const { count, error } = await supabaseAdmin
+          .from('assistant_invite_tokens')
+          .select('id', { count: 'exact', head: true })
+          .eq('org_id', org.id)
+          .eq('status', 'pending_approval')
+          .in('team_id', teamIds);
+        if (error) fail.error = error; else counts.assistantCoaches = count ?? 0;
+      })());
+    }
   }
 
-  if (want.paymentRequests) {
-    reads.push((async () => {
-      const { count, error } = await supabaseAdmin
-        .from('rep_team_payment_requests')
-        .select('id', { count: 'exact', head: true })
-        .eq('org_id', org.id)
-        .eq('status', 'pending')
-        .in('team_id', teamIds);
-      if (error) fail.error = error; else counts.paymentRequests = count ?? 0;
-    })());
-  }
-
-  if (want.installmentsDue) {
-    reads.push((async () => {
-      // "Due in 14 days" counts what must be paid by then — so an overdue installment counts too.
-      // Dates are the org's calendar day (`tournamentToday`), never the server's UTC day.
-      const { count, error } = await supabaseAdmin
-        .from('rep_allocation_installments')
-        .select('id', { count: 'exact', head: true })
-        .eq('org_id', org.id)
-        .is('paid_at', null)
-        .lte('due_date', addCalendarDays(today, DUE_WINDOW_DAYS))
-        .in('team_id', teamIds);
-      if (error) fail.error = error; else counts.installmentsDue = count ?? 0;
-    })());
-  }
-
-  if (want.assistantCoaches) {
-    reads.push((async () => {
-      // `pending_approval` is the only state the approve action accepts (assistant-coaches POST).
-      const { count, error } = await supabaseAdmin
-        .from('assistant_invite_tokens')
-        .select('id', { count: 'exact', head: true })
-        .eq('org_id', org.id)
-        .eq('status', 'pending_approval')
-        .in('team_id', teamIds);
-      if (error) fail.error = error; else counts.assistantCoaches = count ?? 0;
-    })());
-  }
-
-  await Promise.all(reads);
+  const [shape] = await Promise.all([shapeRead, ...reads]);
   // A count that failed is not a zero — say so rather than print a calm 0 (the brief is a to-do list).
   if (fail.error) return captureAndJson(fail.error, { error: 'Could not read this morning’s brief.' }, 500);
 
-  return NextResponse.json({ asOf: today, counts });
+  return NextResponse.json({
+    asOf: today,
+    counts,
+    shape,
+    ...(repTeams && planCarriesModule(org, 'module_rep_teams')
+      ? { teams: { active: teamIds.length, groups: new Set(teamRows.map(t => t.group_id).filter(Boolean)).size } }
+      : {}),
+    detail,
+  });
 }, { route: '/api/admin/club-brief' });

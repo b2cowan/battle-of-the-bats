@@ -1,6 +1,8 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import {
   AlertCircle,
   ArrowRight,
@@ -379,7 +381,18 @@ async function markStartupTask(taskId: StartupActionTaskId | LeagueStartupAction
   });
 }
 
+// Admin Design Continuity switch (Club Tier Stage 1, specimen 10): on, for a Club's owner → the
+// club's setup checklist on the kit; otherwise today's setup page, untouched below. The release slice
+// deletes this wrapper (slice 2 restyles today's page for every other plan first).
+const ClubSetupKit = dynamic(() => import('@/components/admin/kit/club/ClubSetupKit'));
+
 export default function OnboardingPage() {
+  const kit = useAdminKit();
+  const { currentOrg, userRole } = useOrg();
+  return kit && userRole === 'owner' && isClubPlan(currentOrg?.planId) ? <ClubSetupKit /> : <OnboardingPageLegacy />;
+}
+
+function OnboardingPageLegacy() {
   const { currentOrg, userRole, loading, refresh: refreshOrgContext } = useOrg();
   const { refresh: refreshTournamentContext } = useTournament();
   const router = useRouter();

@@ -1,5 +1,5 @@
 'use client';
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, createContext, useContext } from 'react';
 import {
   MapPin, Plus, Pencil, Trash2, X, Check,
   ChevronRight, ExternalLink,
@@ -10,7 +10,15 @@ import { getMapsUrl } from '@/components/LocationLink';
 import type { OrgVenue, OrgVenueFacility, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS, FACILITY_TYPES } from '@/lib/types';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from './venues-admin.module.css';
+
+// Club Tier Stage 1 (A14), behind the Admin Design Continuity switch: a venue save that is refused
+// SAYS so — the routes answer with a code and a sentence (session 1). With the switch off there is no
+// reporter and each save rethrows exactly as it always has.
+const VenueRefusal = createContext<((message: string) => void) | null>(null);
+const refusalText = (e: unknown) => (e instanceof Error ? e.message : 'That didn’t save. Try again.');
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -43,6 +51,8 @@ function VenueModal({
   const [address, setAddress] = useState(existing?.address ?? '');
   const [notes, setNotes]     = useState(existing?.notes   ?? '');
   const [saving, setSaving]   = useState(false);
+  const report = useContext(VenueRefusal);
+  const [refused, setRefused] = useState<string | null>(null);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -64,6 +74,9 @@ function VenueModal({
         }),
       });
       onSaved();
+    } catch (e) {
+      if (!report) throw e;
+      setRefused(refusalText(e));
     } finally {
       setSaving(false);
     }
@@ -77,6 +90,7 @@ function VenueModal({
           <button type="button" className="btn btn-ghost btn-data" onClick={onClose}><X size={16} /></button>
         </div>
         <form onSubmit={handleSubmit}>
+          {refused && <p className={styles.addFacilityError} role="alert">{refused}</p>}
           <div className="form-group" style={{ marginBottom: '1rem' }}>
             <label className="form-label">Venue Name *</label>
             <input
@@ -141,6 +155,7 @@ function AddFacilityRow({
   const [facilityType, setFacilityType] = useState<FacilityType>('other');
   const [saving, setSaving]           = useState(false);
   const nameRef                       = useRef<HTMLInputElement>(null);
+  const report                        = useContext(VenueRefusal);
 
   const isDuplicate = name.trim().length > 0 &&
     existingFacilities.some(f => f.name.toLowerCase() === name.trim().toLowerCase());
@@ -162,6 +177,9 @@ function AddFacilityRow({
       setFacilityType('other');
       onAdded();
       nameRef.current?.focus();
+    } catch (e) {
+      if (!report) throw e;
+      report(refusalText(e));
     } finally {
       setSaving(false);
     }
@@ -227,14 +245,21 @@ function VenueCard({
 }) {
   const [expanded, setExpanded] = useState(false);
   const facilities = venue.facilities ?? [];
+  const report = useContext(VenueRefusal);
 
   async function deleteFacility(facilityId: string) {
     const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
-    await requestJson(`/api/admin/org/venues${orgQuery}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete-facility', id: facilityId }),
-    });
+    try {
+      await requestJson(`/api/admin/org/venues${orgQuery}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete-facility', id: facilityId }),
+      });
+    } catch (e) {
+      if (!report) throw e;
+      report(refusalText(e));
+      return;
+    }
     onRefresh();
   }
 
@@ -327,6 +352,8 @@ export default function OrgVenueLibraryPage() {
   const { currentOrg } = useOrg();
   usePageTitle('Venue Library');
   const orgSlug = currentOrg?.slug;
+  const kit = useAdminKit();
+  const [refusal, setRefusal] = useState<string | null>(null);
 
   // Venue Library is a League/Club feature only
   const planAllowed = hasOrgVenueLibrary(currentOrg?.planId);
@@ -357,11 +384,18 @@ export default function OrgVenueLibraryPage() {
 
   async function confirmDelete() {
     if (!deleteId || !orgSlug) return;
-    await requestJson(`/api/admin/org/venues?orgSlug=${encodeURIComponent(orgSlug)}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action: 'delete-venue', id: deleteId }),
-    });
+    try {
+      await requestJson(`/api/admin/org/venues?orgSlug=${encodeURIComponent(orgSlug)}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'delete-venue', id: deleteId }),
+      });
+    } catch (e) {
+      if (!kit) throw e;
+      setDeleteId(null);
+      setRefusal(refusalText(e));
+      return;
+    }
     setDeleteId(null);
     void refresh();
   }
@@ -377,22 +411,49 @@ export default function OrgVenueLibraryPage() {
   }
 
   return (
+    <VenueRefusal.Provider value={kit ? setRefusal : null}>
     <div className={styles.page}>
-      {/* Page header */}
-      <div className={styles.pageHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerIcon}><MapPin size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Venue Library</h1>
-            <p className={styles.pageSub}>Define your org&apos;s playing locations once — import into any tournament</p>
-          </div>
-        </div>
-        <div className={styles.headerActions}>
-          <button className="btn btn-lime btn-data" onClick={openAdd} id="org-venue-add-btn">
-            <Plus size={16} /> Add Venue
+      {/* Page header — today's, unchanged, as `legacy` while the switch is off */}
+      <AdminPageHeader
+        eyebrow="Organization"
+        title="Venue library"
+        actions={
+          <button className="btn btn-lime" onClick={openAdd} id="org-venue-add-btn">
+            <Plus size={16} /> Add venue
           </button>
-        </div>
-      </div>
+        }
+        legacy={
+          <div className={styles.pageHeader}>
+            <div className={styles.headerLeft}>
+              <div className={styles.headerIcon}><MapPin size={20} /></div>
+              <div>
+                <h1 className={styles.pageTitle}>Venue Library</h1>
+                <p className={styles.pageSub}>Define your org&apos;s playing locations once — import into any tournament</p>
+              </div>
+            </div>
+            <div className={styles.headerActions}>
+              <button className="btn btn-lime btn-data" onClick={openAdd} id="org-venue-add-btn">
+                <Plus size={16} /> Add Venue
+              </button>
+            </div>
+          </div>
+        }
+      />
+      {/* F3's re-home with A14's copy (specimen 9): the header's line becomes the page's lede, covering
+          every module that reads the library today (house league points at it; tournaments import a
+          copy). Rep teams' own place books join in Stage 6, so it does not claim them yet. Kit only. */}
+      {kit && (
+        <p className={styles.kitLede}>
+          Your fields, diamonds and rinks. House league schedules use them, and tournaments import them. Add a
+          place once, with its fields.
+        </p>
+      )}
+      {kit && refusal && (
+        <p className={styles.kitRefusal} role="alert">
+          {refusal}{' '}
+          <button type="button" className={styles.kitRefusalClose} onClick={() => setRefusal(null)}>Dismiss</button>
+        </p>
+      )}
 
       {/* Content */}
       {loading ? null : venues.length === 0 ? (
@@ -451,5 +512,6 @@ export default function OrgVenueLibraryPage() {
         </div>
       )}
     </div>
+    </VenueRefusal.Provider>
   );
 }

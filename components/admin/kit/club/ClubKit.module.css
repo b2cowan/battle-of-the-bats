@@ -1,0 +1,312 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE CLUB SCREENS' KIT LAYER — what the hub, Members, the audit log, Plan & billing, Settings and
+   the setup checklist share (Club Tier Stage 1, screens session). The coaches portal's recipes,
+   by value, for a shell that does not load the portal's 16,000-line stylesheet (the same reason
+   `AdminPageHeader` restates `CoachPageHeader`): the section heads, the framed row list (F-17), the
+   table standard's ground (`docs/agents/design/TABLE_AND_LIST_STANDARD.md`), the collapsed section,
+   the fields, the settings switch row (a kit gap, ADC Phase 0) and the inline notices.
+
+   ⚠ KIT ONLY — every screen that uses this renders only with the switch on.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder.
+   ⚠ MONOSPACE ONLY ON EYEBROWS, CHIPS AND READOUTS (F2): headings, labels and buttons are the body face.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.page { max-width: 68rem; }
+.pageNarrow { max-width: 52rem; }
+
+/* ── A section: its eyebrow row, then its body ── */
+.section { margin: 0 0 1.75rem; }
+.sectionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin: 0 0 0.6rem;
+}
+.sectionTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+.lede { margin: 0 0 0.9rem; max-width: 64ch; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+.muted { color: var(--text-tertiary); }
+.strong { color: var(--text-primary); font-weight: 650; }
+
+/* ── The quiet row: one line per fact, a hairline above (the hub's "Also on your plan" lines) ── */
+.quietRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1.4rem;
+  padding: 0.8rem 0.1rem 0;
+  margin-top: 0.9rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.quietRow + .quietRow { border-top: 0; margin-top: 0; padding-top: 0.45rem; }
+.quietItem { display: inline-flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+.quietItem svg { color: var(--text-tertiary); flex-shrink: 0; }
+.link {
+  color: var(--home-olive);
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 650;
+  cursor: pointer;
+}
+.link:hover { color: var(--text-primary); }
+@media (max-width: 768px) {
+  .quietItem .link { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
+
+/* ── The framed row list (F-17's recipe): one white frame, a row per item, facts in line two ── */
+.list {
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow: hidden;
+}
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 52px;
+  padding: 0.45rem 0.9rem;
+  border-top: 1px solid var(--home-line);
+  color: inherit;
+  text-decoration: none;
+  background: none;
+  width: 100%;
+  text-align: left;
+  font: inherit;
+}
+.row:first-child { border-top: 0; }
+button.row, a.row { cursor: pointer; }
+button.row:hover, a.row:hover { background: var(--home-olive-soft); }
+.rowMain { flex: 1; min-width: 0; }
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
+}
+.rowSub {
+  display: block;
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.rowEnd { display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0; color: var(--text-tertiary); }
+.rowLocked { color: var(--text-tertiary); }
+
+/* ── The table standard's ground: quiet sans heads, hairline rows, a white frame ── */
+.tableFrame {
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow-x: auto;
+}
+.table { width: 100%; border-collapse: collapse; font-size: var(--type-body); }
+.table th {
+  text-align: left;
+  font-family: var(--font-sans);
+  font-size: var(--type-support);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+  padding: 0.6rem 0.9rem;
+  border-bottom: 1px solid var(--home-line-strong);
+  white-space: nowrap;
+}
+.table td {
+  padding: 0.65rem 0.9rem;
+  border-bottom: 1px solid var(--home-line);
+  color: var(--text-secondary);
+  vertical-align: middle;
+}
+.table tr:last-child td { border-bottom: 0; }
+.table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.table .actions { text-align: right; white-space: nowrap; }
+.cellTitle { color: var(--text-primary); font-weight: 650; }
+.cellSub { display: block; font-size: var(--type-support); color: var(--text-tertiary); }
+.rowMuted td { opacity: 0.62; }
+
+/* ── A collapsed section (details/summary): quieter than the list above it ── */
+.collapse {
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  margin-top: 0.75rem;
+}
+.collapseHead {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  min-height: 52px;
+  padding: 0.45rem 0.9rem;
+  cursor: pointer;
+  list-style: none;
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-primary);
+}
+.collapseHead::-webkit-details-marker { display: none; }
+.collapseHead::marker { content: ''; }
+.collapseChevron { margin-left: auto; color: var(--text-tertiary); transition: transform 0.2s ease; flex-shrink: 0; }
+.collapse[open] > .collapseHead .collapseChevron { transform: rotate(90deg); }
+.collapseNote { display: block; font-weight: 400; font-size: var(--type-support); color: var(--text-tertiary); }
+.collapseBody { border-top: 1px solid var(--home-line); }
+.collapseBody .table th:first-child,
+.collapseBody .table td:first-child { padding-left: 0.9rem; }
+
+/* ── Fields ── */
+.field { display: flex; flex-direction: column; gap: 0.3rem; margin: 0 0 0.9rem; }
+.label { font-size: var(--type-support); font-weight: 650; color: var(--text-secondary); }
+.required { color: var(--home-live); margin-left: 0.15rem; }
+.input,
+.select,
+.textarea {
+  width: 100%;
+  min-height: 40px;
+  padding: 0.5rem 0.65rem;
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+}
+.textarea { min-height: 5rem; resize: vertical; }
+.input:focus,
+.select:focus,
+.textarea:focus { outline: none; border-color: var(--home-olive); }
+.select option,
+.select optgroup { background: var(--home-card); color: var(--text-primary); }
+.hint { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+@media (max-width: 768px) {
+  .input, .select { min-height: var(--tap-min, 44px); }
+}
+
+/* ── The settings switch row (a kit gap, ADC Phase 0): a switch, its name, what it does ── */
+.switchRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  padding: 0.85rem 0;
+  border-top: 1px solid var(--home-line);
+}
+.switchRow:first-child { border-top: 0; padding-top: 0.2rem; }
+.switchText { flex: 1; min-width: 0; }
+.switchName { display: block; font-size: var(--type-body); font-weight: 650; color: var(--text-primary); }
+.switchRowOff .switchName,
+.switchRowOff .hint { color: var(--text-tertiary); }
+/* The button is the hit box; `::before` draws the track and `::after` the thumb, so the tap floor
+   can grow on a phone without the drawn switch growing with it. */
+.switch {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.75rem;
+  height: 1.6rem;
+  margin-top: 0.1rem;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+}
+.switch::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1.6rem;
+  transform: translateY(-50%);
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  background: var(--home-line);
+  transition: background 0.15s, border-color 0.15s;
+}
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 0.25rem;
+  width: 1.1rem;
+  height: 1.1rem;
+  border-radius: 50%;
+  background: var(--card-bg);
+  box-shadow: var(--shadow-sm);
+  transform: translateY(-50%);
+  transition: left 0.15s;
+}
+.switch[aria-checked='true']::before { background: var(--home-olive); border-color: var(--home-olive); }
+.switch[aria-checked='true']::after { left: calc(100% - 1.35rem); }
+.switch:disabled { cursor: not-allowed; opacity: 0.45; }
+.switch:focus-visible { outline: 2px solid var(--home-olive); outline-offset: 2px; border-radius: 999px; }
+@media (max-width: 768px) {
+  .switch { height: var(--tap-min, 44px); margin: -0.5rem 0; }
+}
+
+/* ── Inline notices: a refusal, a failure, a done ── */
+.notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 0 0 0.9rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid var(--home-line-strong);
+  background: var(--home-olive-soft);
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.notice svg { flex-shrink: 0; margin-top: 0.1rem; }
+.noticeWarn { border-color: rgba(var(--warning-rgb), 0.35); background: rgba(var(--warning-rgb), 0.08); }
+.noticeWarn svg { color: var(--warning); }
+.noticeBad { border-color: rgba(var(--danger-rgb), 0.35); background: rgba(var(--danger-rgb), 0.07); }
+.noticeBad svg { color: var(--home-live); }
+.noticeGood svg { color: var(--home-olive); }
+.noticeBody { flex: 1; min-width: 0; }
+
+/* ── An identity chip beside a name ("You", "Invited") — the kit's chip, neutral ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 0.12rem 0.45rem;
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  white-space: nowrap;
+}
+.chipGood { color: var(--home-olive); background: rgba(var(--success-rgb), 0.07); border-color: rgba(var(--success-rgb), 0.25); }
+.chipWarn { color: var(--warning); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
+
+/* A loading line the layout sweep can wait out (it reads "Loading…"). */
+.loading { padding: 1.25rem 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* Icon-only actions on a phone (the mobile admin convention): the words hide, the label stays. */
+@media (max-width: 640px) {
+  .iconOnlyPhone .btnWord { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .iconOnlyPhone { min-width: var(--tap-min, 44px); justify-content: center; }
+}

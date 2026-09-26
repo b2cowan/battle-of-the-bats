@@ -1841,7 +1841,7 @@ dialog.truesize::backdrop{background:#16201899}
 
 <section id="hub-qa" class="hubsection" hidden>
   <div class="eyebrow">Owner QA walk</div>
-  <h1 style="padding:0 24px">Club Tier Readiness — QA walk §238 · Stage 0 ground truth · ✅ passed 2026-09-25</h1>
+  <h1 style="padding:0 24px">Club Tier Readiness — QA walks · §243 Stage 1 club screens (open) · §244 buying (open) · §238 Stage 0 ✅ passed 2026-09-25</h1>
   <div style="padding:0 24px 24px">
     <div class="signin"><strong>Sign in as</strong> — dev only, keep this private. URL <strong>http://localhost:3000</strong> (dev server up) · club <strong>UAT Rep Club</strong> (<code>uat-rep-club</code>) · every account’s password is <strong>UATPassword2026!</strong>
       <ul style="margin:8px 0 6px 18px;padding:0">
@@ -1851,6 +1851,7 @@ dialog.truesize::backdrop{background:#16201899}
         <li>Registrar — Riley Okonkwo — <code>uat-club-registrar@uat-rep-club.local</code> (role defaults)</li>
         <li>Coach, 15U AAA — Jordan Reyes — <code>uat-club-coach-15aaa@uat-rep-club.local</code></li>
       </ul>
+      <strong>§243 and §244 walk the NEW screens, which sit behind the design preview switch.</strong> Turn it on once per browser (and once per private window): <code>http://localhost:3000/api/dev/admin-kit?on=1&amp;next=/uat-rep-club/admin</code> — and off again with <code>?on=0</code>. Warm is the default look; Dark is in the account menu → Appearance.
       Switch roles by signing out, or use a separate private window per role. The fixture was built 2026-09-25; installment due dates are set relative to the day it was built, so rebuild it before walking on another day: <code>node --env-file=.env.local scripts/seed-club-fixture.mjs --reset</code>. Steps pin names and relationships, never amounts.</div>
     <div class="qaprogress" id="qaCount"></div>
     <div id="qaParts"></div>
@@ -1937,14 +1938,97 @@ const DECISIONS=[
 $('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
 
 const QA_PARTS=[
- {id:"A",title:"Sign in and land — one door per role",steps:[
+ {id:"S0",title:"§243 · Turn the preview on, and off",steps:[
+  "In each browser or private window you walk in, open http://localhost:3000/api/dev/admin-kit?on=1&next=/uat-rep-club/admin — you land on the NEW Overview (warm, a “Club” eyebrow over “UAT Rep Club”, a “This morning” strip). Nothing on production can do this.",
+  "Last step of the walk: http://localhost:3000/api/dev/admin-kit?on=0&next=/uat-rep-club/admin brings back today’s hub, exactly as it was (tiles, dark)."
+ ]},
+ {id:"S1",title:"§243 · Overview as the owner (Morgan Ellis) — specimen 1",steps:[
+  "“This morning” shows four cards — Tryout applications, Payment requests, Installments due, Assistant coaches — each a count with a short line under it (“waiting on a decision · N teams”, “from coaches · oldest N days”, “in the next 14 days”, “awaiting your approval”). No dollar amount appears anywhere on the page.",
+  "Tryout applications opens the Tryouts page of the team with the OLDEST waiting application; Payment requests opens Rep Teams › Payment requests; Assistant coaches opens Rep Teams › Assistant coaches.",
+  "“Your programs” leads with Rep Teams, and Tournaments is the LAST program. Rep Teams’ door reads “N teams … · tryouts, rosters, coaches and allocations” and, when something waits, a “N waiting” chip (payment requests + assistant coaches). Public site carries an Online/Offline chip.",
+  "A program the plan carries but the club doesn’t run yet appears only as a quiet line under the doors (“House league: not running · Start a season” / “Tournaments: none yet · Run a tournament”) — never a tile or a banner. (UAT Rep Club runs both, so expect neither line.)",
+  "The quiet Organization line reads “Organization: members, plan & billing (N of 15 teams), settings”, each word a link. While setup is unfinished a line “Setup: n of 5 steps done · Continue setup” sits beside it.",
+  "No “You also coach …” line (Morgan coaches no team). No “First tournament setup” banner, no Founding Season anywhere."
+ ]},
+ {id:"S2",title:"§243 · Overview as the admin and the treasurer — specimen 2",steps:[
+  "Admin (Dana Kowalski): the same four cards and the same program order. Below, an Organization list: Members (a link) and Plan & billing / Settings as greyed rows marked “Owner only” with a lock — tapping them does nothing.",
+  "Treasurer (Avery Chen): “This morning” shows only Payment requests and Installments due, and NEITHER card is a link (their pages come with Stage 3a — owner ruling 2026-09-26). “Your programs” shows Accounting only. Organization: Members reads “View the board”, with the two locked rows."
+ ]},
+ {id:"S3",title:"§243 · The rail and the phone bar — specimens 3 and 4",steps:[
+  "Desktop rail: Overview at the top, then Programs in the hub’s order, then Organization. Rep Teams shows a count while something waits; opened, its Payment requests and Assistant coaches rows carry their own counts.",
+  "Owner → Organization opens: Members, Audit log, Plan & billing, Settings, Venue library, PDF settings, Coaches Portal links. As the admin: Audit log, Plan & billing and Settings are greyed “Owner only” rows.",
+  "Phone (390 wide or a real phone): the bar is Overview + the first three programs + More; the tab of the program you are in lights. Rep Teams’ tab carries the waiting count.",
+  "More: “More programs” lists the rest of the programs; “Organization” lists its pages — and as the admin, the owner’s three areas appear as locked “Owner only” rows there too."
+ ]},
+ {id:"S4",title:"§243 · Members as the owner — specimen 5",steps:[
+  "“The board · N people”: each row names the person (email · title under it), the role, “What they can open”, the status and the last sign-in. Morgan reads “Everything, including plan & billing”; Dana reads “Every program on the plan” with a “+ Families” chip (the fixture grants it).",
+  "The order is fixed: owner first, then Admin, Treasurer, league roles, Staff — and an unanswered invitation last. Reload twice: the order does not change.",
+  "Scorekeepers and Coaching staff are two collapsed sections under the board. Coaching staff rows say “Managed on the team’s staff page” and have no Manage button.",
+  "Below: “What each role can open” — rows are programs, columns are the roles this club hands out (Owner … Coach). The Treasurer column reads “team names only” for Rep Teams and “view” for Members.",
+  "Phone: the table becomes one row per person with the role and what they open as line two; tapping a row opens Manage filling the screen, over the bar, with ← at the top left."
+ ]},
+ {id:"S5",title:"§243 · Invite and Manage — specimen 5",steps:[
+  "Invite: ONE Role list, grouped — Runs the club (Admin, Treasurer, Staff), House league (League admin, League registrar — shown because the club runs one), Volunteers (Scorekeeper). There is no Coach choice. Choosing Treasurer shows “You’d run the club’s books …” under the list; Scorekeeper adds “Helping with”. Cancel — don’t send.",
+  "Manage Riley Okonkwo (a safe target): the identity line under the title (“League registrar since …”); Role list; Title and Display name (no “(optional)” tags); “What Riley can open” with Role default / Turn on or Turn off per program.",
+  "Set Accounting → Turn on: a sentence appears under the row saying what Riley would now see. Set it back to Role default: the sentence goes. Open “Tournaments ›”: the fine controls and the tournament list fold out there.",
+  "Plan & billing and organization settings are not offered anywhere in the window.",
+  "Suspend… asks first (“Suspend Riley Okonkwo?”, what is kept, the email) → Cancel. Remove… asks first and says whether their account is kept → Cancel. Change only the Title → Save → a line says the changes are saved (and says an email went ONLY when access changed)."
+ ]},
+ {id:"S6",title:"§243 · Members as the treasurer; the audit log — specimens 5 and 11",steps:[
+  "Treasurer (Avery): the board reads, with no Invite button and no Manage on any row.",
+  "Owner → Organization → Audit log: columns When · Who · What happened · To, times like “Today, 9:14 a.m.” (lowercase, periods), rows reading as sentences (“Role changed: Staff → Admin”, “Access changed: Families turned on”), names rather than emails where known. “1–N of M changes” with Newer / Older. Export downloads the same rows. No billing events in the list."
+ ]},
+ {id:"S7",title:"§243 · Plan & billing as the owner — specimen 7",steps:[
+  "The plan card: “Your plan” with a status chip, “Club”, the price, and — beside it — “Teams on your plan: N of 15 teams” with a bar and the sentence about Club · Association holding 30. No Founding Season, no tournament-slot or seat meter, no League Plus / Coaches Portal shelf.",
+  "“Club’s two sizes”: Club (up to 15) and Club · Association (15 to 30) with monthly and yearly prices; Club reads “Your plan”; while Club · Association is not on sale its button reads “Contact us to move”. Under it: “More than 30 teams? Contact us …”.",
+  "“What Club includes” names Families and says nothing about invoicing or payment reconciliation.",
+  "“Reduce or cancel” names the club’s programs (Rep Teams and every team’s coach portal, Accounting, Families, the public site, house league, tournaments) and how long they are kept. “Cancel and suspend UAT Rep Club…” opens the review → “Keep Club”. DO NOT confirm here — §244 does that on purpose."
+ ]},
+ {id:"S8",title:"§243 · Settings, venues, the public site editor — specimen 9",steps:[
+  "Settings opens with “Your public site”: Public site (a switch, with the page’s address and what turning it off takes offline) and “Listed in the club directory”.",
+  "Press Public site OFF: a question asks first and names ONLY the home page and league pages → “Keep it online”. (Optional: turn the site off and back on — the directory switch goes grey and off while the site is off.)",
+  "Hero banner reads “Shown across the top of your club’s home page.” The other cards are today’s, on the new look: logo, name and URL slug (with its warning), colour theme (its preview keeps the club’s own colours), font, card style, and Delete organization at the foot.",
+  "Change the name, then click a rail link: “Save your changes?” → Stay on page → Discard.",
+  "Organization → Venue library: the line “Your fields, diamonds and rinks …” under the title. Public site editor: an Online/Offline chip beside its title and “Turn it on or off in Settings”."
+ ]},
+ {id:"S9",title:"§243 · Set up your club — specimen 10",steps:[
+  "Open http://localhost:3000/uat-rep-club/admin/onboarding?plan=club (or “Continue setup” on Overview): “Set up your club” over “Get UAT Rep Club ready for the season”.",
+  "Five steps — Staff your board, Add your teams, Name a head coach for every team, Put your club online, Plan the club’s budget — each ticked or numbered, each with a fact line (e.g. “n of m teams have a head coach”) and a button that opens the screen that does the job.",
+  "“Meet your families” below them (not a step). No plan chooser at the top, no Founding Season. At the foot: “Go to Overview” with “You can come back to this checklist from Overview at any time.” beside it."
+ ]},
+ {id:"S10",title:"§243 · The invitee’s pages and the plan-check wall (session 1)",steps:[
+  "Invite a test address you can open (or reuse one from session 1): the invitation card on that person’s Home names who sent it, the date, and one sentence of what the role opens; the email link’s first screen names the club, the role and the inviter.",
+  "The plan-check wall: a coach whose organization’s plan does not carry the Coaches Portal (session 1’s UAT tournament-org coach) meets “The Coaches Portal isn’t part of … plan right now”, naming the owner, with ways out — never a blank page."
+ ]},
+ {id:"S11",title:"§243 · The same screens in Dark",steps:[
+  "Account menu → Appearance → Dark. Walk Overview, Members (with Manage open), Plan & billing and Settings again: every word is readable, the rail and bar are the coaches portal’s dark ones, and no club colour tints the frame (the colour theme preview on Settings keeps it — that one is a picture of the public page).",
+  "Switch the preview off (S0’s second step) and confirm today’s screens are back, unchanged."
+ ]},
+ {id:"P1",title:"§244 · Buying — prerequisites",steps:[
+  "Dev only: plan gates open (NEXT_PUBLIC_PLAN_GATES=live in .env.local, or the dev plan-gates toggle) and the Stripe SANDBOX keys configured; the preview switch on. Test card 4242 4242 4242 4242, any future date, any CVC.",
+  "With gates CLOSED first: Plan & billing’s other size reads “Contact us to move”; after P2 a cancelled club reads “Contact us to reactivate”. Then open the gates for the rest."
+ ]},
+ {id:"P2",title:"§244 · Cancel, then come back (A07)",steps:[
+  "Owner → Plan & billing → “Cancel and suspend UAT Rep Club…” → the review names what goes offline → confirm. The page becomes “UAT Rep Club is cancelled” with the day it happened, four lines (public site back online · every team’s coach portal reopens · archived tournaments return · retention reminders stop) and “Kept until …”.",
+  "Pick Monthly or Yearly in the dropdown → “Reactivate Club” → Stripe checkout → pay with the test card → back on Plan & billing: status Active.",
+  "Check the four promises: the public site is online again; the 15U AAA coach’s portal opens; archived tournaments are back; (reminders can’t be checked by hand — skip)."
+ ]},
+ {id:"P3",title:"§244 · Move up, then down (Ask 4)",steps:[
+  "“Move to Club · Association”: the window shows what is charged TODAY for the rest of the period (Stripe’s figure) and the new price from the renewal date → Move → a line says UAT Rep Club is on Club · Association; Teams on your plan now reads “of 30 teams”. In the Stripe dashboard the club still has ONE subscription.",
+  "“Move to Club”: the window says the move happens at the renewal date with no credit → Move → the plan card reads “Moves to Club on …” with “Keep Club · Association” → Keep → the note goes."
+ ]},
+ {id:"P4",title:"§244 · The team cap (optional — needs 15 active teams on Club)",steps:[
+  "On Club with 15 active teams: Rep Teams → Add team → Create → “UAT Rep Club holds 15 teams on Club” offers “Move to Club · Association” and “Archive a team”; the team you typed is still in the form behind it. As the admin, the move is named but the owner does it.",
+  "On Club · Association with more than 15 active teams: “Move to Club” is refused — “Archive N teams first, then come back” with “Go to Rep Teams”."
+ ]},
+ {id:"A",title:"§238 · Sign in and land — one door per role",steps:[
   "Owner (Morgan Ellis): open http://localhost:3000/uat-rep-club/admin — the “UAT Rep Club” hub opens; no redirect, no loop.",
   "Admin (Dana Kowalski): the same address opens the hub — NOT the Tournaments area. (The fixture grants this admin every club module. A default admin is still sent into Tournaments — defect A01, fixed in Stage 1.)",
   "Treasurer (Avery Chen): the hub opens. Note in the box which tiles it offers — Stage 1 redraws this screen.",
   "Registrar (Riley Okonkwo): the hub opens. Note which tiles it offers.",
   "Coach (Jordan Reyes, 15U AAA): open http://localhost:3000/uat-rep-club/coaches — you land on the 15U AAA team’s Overview in the Coaches Portal."
  ]},
- {id:"B",title:"Members and roles — what each role can open",steps:[
+ {id:"B",title:"§238 · Members and roles — what each role can open",steps:[
   "Owner → Org → Members: the four board members appear with their roles — Morgan Ellis (owner), Dana Kowalski (admin), Avery Chen (treasurer), Riley Okonkwo (registrar).",
   "Owner → Invite member: the role list offers Admin, Staff and Volunteer (scorekeeper / gate) only — no Treasurer, Registrar or Coach. RECORD, don’t fix (defects A02 + B01, Stage 1/2).",
   "Treasurer → Members: the page opens and shows an Invite member button. Record whether an invite is accepted or refused (the plan expects a refusal — A02).",
@@ -1953,7 +2037,7 @@ const QA_PARTS=[
   "Admin → Audit Log: “Only organization owners can view the audit log.” (Owner-only by design — the owner’s view is Part G.)",
   "Treasurer and Registrar → Families: the “This area needs the Families permission” wall (Families is off for every role until granted — by design)."
  ]},
- {id:"C",title:"Teams → coaches → the coach lands in the portal",steps:[
+ {id:"C",title:"§238 · Teams → coaches → the coach lands in the portal",steps:[
   "Owner → Rep Teams: five teams listed — 15U AAA, 15U AA, 13U AAA, 11U AA, 9U AA. 18U AA is NOT listed (archived).",
   "Group filter “Senior” → 15U AAA and 15U AA only; “Junior” → 13U AAA, 11U AA and 9U AA.",
   "Open 15U AAA → its 2026 season → Coaches: Jordan Reyes is the head coach.",
@@ -1962,7 +2046,7 @@ const QA_PARTS=[
   "As Jordan Reyes (coach), open the 15U AAA roster: 12 players, Ada Okafor among them.",
   "Record anything a club admin expected to do here and could not (invite a new coach, edit the team, start next season) — Stage 2 owns these."
  ]},
- {id:"D",title:"The treasurer opens every money screen",steps:[
+ {id:"D",title:"§238 · The treasurer opens every money screen",steps:[
   "Treasurer → Accounting overview opens: a card for the club’s General ledger and one for 15U AAA.",
   "Treasurer: NO “send now” reminder buttons on the overview (they were shown before and every press was refused — C03). Owner, same screen: the buttons ARE there.",
   "Treasurer → Org Budget: four 2026 lines — Diamond permits — city fields · Umpire fees — home games · Club insurance · Tournament entry fees.",
@@ -1973,7 +2057,7 @@ const QA_PARTS=[
   "Owner → open “Diamond permits — team share”: 15U AAA’s installment #1 is paid; 15U AA’s installment #1 is past its due date and unpaid. Record whether ANY screen calls it overdue (the plan says the list cannot — C06, Stage 3).",
   "Owner → Rep Teams → Payment Requests: three requests from 15U AAA — pending “Tournament entry — Burlington Classic”, approved “Umpire fees owed for June”, denied “New catcher’s gear”."
  ]},
- {id:"E",title:"The admin opens every module",steps:[
+ {id:"E",title:"§238 · The admin opens every module",steps:[
   "Admin → Rep Teams opens (five teams, as in C).",
   "Admin → Accounting overview, Org Budget and Budget vs. Actual all open.",
   "Admin → House League opens and shows “2026 Fall House League”, open for registration.",
@@ -1982,13 +2066,13 @@ const QA_PARTS=[
   "Admin → Families: Chidi Okafor’s family lists Ada (15U AAA) and Emeka (13U AAA); Karin Lindqvist’s lists Nils (15U AA) and Freya (11U AA).",
   "Registrar → House League opens (the registrar’s own area); Accounting shows Access Restricted (by design)."
  ]},
- {id:"F",title:"The club’s public page",steps:[
+ {id:"F",title:"§238 · The club’s public page",steps:[
   "Signed OUT (a private window), open http://localhost:3000/uat-rep-club — the club home page renders.",
   "A “Tryouts Are Open” card reads “15U AAA — 2026 Season is accepting applications”.",
   "Click it: you land on the 15U AAA 2026 Season Tryouts page — NOT the home page, NOT a tournament (it used to loop back — F01).",
   "Note what the home page leads with and what it apologises for (tournament-first is F03 — Stage 4). Record, don’t fix."
  ]},
- {id:"G",title:"The dead doors — each failed before today",steps:[
+ {id:"G",title:"§238 · The dead doors — each failed before today",steps:[
   "Payees (C01): Treasurer → General ledger → add an entry → type “Maple” in Payee / Payer: the search runs with no error, and saving a new payee works.",
   "Add item (C02): Treasurer or owner → Org Budget → add a line → type a word that is not in the list (e.g. “Scoreboard rental”) in the item picker → “+ Add “Scoreboard rental” to your list” → pick a category → Add item: the item is created and selected (it used to fail).",
   "Audit log (A04): Owner → Org → Members → Audit Log: the log loads (entries or an empty log — no “Failed to load”).",

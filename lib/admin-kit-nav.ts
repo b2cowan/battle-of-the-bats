@@ -8,14 +8,13 @@
  *
  * ⚠ WHAT IS DRAWN, AND WHAT IS NOT YET. Built to the ratified Club Stage 1 specimens 3–4 (club hub
  * v8): one rail that is always populated, programs as groups, the program you are in open, Overview
- * pinned at the top. Three things in those drawings are NOT built here, deliberately:
- *   · the PLAN-AWARE ORDER ("what the club runs", and the quiet "Also on your plan" group) — Club
- *     Stage 1 computes it and feeds it through `kitPrograms`' `order`; until then the order is the interim
- *     constant below;
- *   · the Organization group's AUDIT LOG and NOTIFICATIONS rows — both open screens Stage 1 builds
- *     (the audit log fails today, A04; the org notifications path redirects to account settings),
- *     and a door to a page that does not work is the "404 wearing a politer face" the portal forbids;
- *   · the per-program waiting counts on the rail and the bar (the morning brief's figures, Stage 1).
+ * pinned at the top. Club Stage 1's screens session added the three things the foundation held for
+ * it: the PLAN-AWARE ORDER (`clubProgramOrder`, fed through `kitPrograms`' `order`, with the quiet
+ * "Also on your plan" group), the AUDIT LOG row (its page works again, A04), and the per-program
+ * waiting counts (the morning brief's, `useClubBrief`). ONE drawn row is still held: NOTIFICATIONS —
+ * the org path redirects to account settings, whose club card lacks the club's programs (specimen 12
+ * is not built yet), and a door to a page that does not do its job is the "404 wearing a politer
+ * face" the portal forbids.
  *
  * ⚠ EVERY GATE IS TODAY'S GATE. Each row carries exactly the condition `AdminSidebar` /
  * `AdminBottomNav` / the org hub apply today — a restyle must not widen or narrow who sees a door.
@@ -28,7 +27,7 @@
  */
 import {
   Users, DollarSign, Contact, Globe, CalendarDays, Trophy, Building2, Users2, CreditCard, Settings,
-  MapPin, FileText, Link2,
+  MapPin, FileText, Link2, ScrollText,
   type LucideIcon,
 } from 'lucide-react';
 import type { Capability } from '@/lib/roles';
@@ -63,9 +62,9 @@ export type KitProgram = {
 };
 
 /**
- * ⚠ THE INTERIM ORDER — the drawn club's order, with house league and tournaments last because the
- * drawn club runs neither. Club Stage 1 replaces this with "what the club runs" (plan-aware, fed to
- * the rail and the bar together); nothing here should grow a second ordering rule in the meantime.
+ * Every program key, in the drawn club's order — the order a caller gets when it passes none (the
+ * frame always passes `clubProgramOrder`'s, below), and the list `activeKitSection` recognises.
+ * Nothing here should grow a second ordering rule: "what the club runs" is `clubProgramOrder`.
  */
 export const INTERIM_PROGRAM_ORDER: readonly AdminProgramKey[] = [
   'rep-teams',
@@ -149,6 +148,36 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
 }
 
 /**
+ * What the club RUNS — the two facts the plan alone cannot answer (Club Tier Stage 1). A plan can
+ * carry house league and tournaments without the club running either; the hub, the rail and the
+ * phone bar all put what it runs first, so they read the same two facts (`useClubBrief`).
+ */
+export type ClubShape = { runsHouseLeague: boolean; hostsTournaments: boolean };
+
+/**
+ * ⚖ THE PLAN-AWARE ORDER (Club Tier Stage 1, ratified specimens 1, 3 and 4): the programs the club
+ * runs lead, most central first, and tournaments come last — a rep club is not a tournament club.
+ * House league and tournaments stay OUT of the lead until the club has one; until then they are the
+ * quiet "Also on your plan" group (one line each on the hub, one quiet row each in the rail — never
+ * a tile, never a banner; this replaces the "first tournament setup" banner, G01).
+ *
+ * The order comes from the plan and the club's own records, never from the member's permissions
+ * (A01, ruling D8): `kitPrograms` filters each list by what the person can open afterwards.
+ */
+const LEAD_ORDER: readonly AdminProgramKey[] = [
+  'rep-teams', 'house-league', 'accounting', 'families', 'public-site', 'tournaments',
+];
+
+export function clubProgramOrder(shape: ClubShape): { lead: AdminProgramKey[]; also: AdminProgramKey[] } {
+  const isRun = (key: AdminProgramKey) =>
+    key === 'house-league' ? shape.runsHouseLeague : key === 'tournaments' ? shape.hostsTournaments : true;
+  return {
+    lead: LEAD_ORDER.filter(isRun),
+    also: LEAD_ORDER.filter(key => !isRun(key)),
+  };
+}
+
+/**
  * The programs this person can open, in order. `canUse` is the caller's role-capability + plan-
  * module check (`hasCapability && hasModuleEntitlement`) — the hub tile's predicate, unchanged.
  */
@@ -192,6 +221,9 @@ export function kitOrgLinks({
   const ownerOrAdmin = role === 'owner' || role === 'admin';
   const links: (KitLink | false)[] = [
     !isCanceled && canSeeMembers && { key: 'org/members', label: 'Members', href: `${o}/members`, icon: Users2 },
+    // H08 (Club Tier Stage 1): the audit log gets its rail row now that its page works (A04, fixed
+    // Stage 0; redrawn Stage 1 specimen 11). Owner-only, as the page and its route are.
+    !isCanceled && role === 'owner' && { key: 'org/audit', label: 'Audit log', href: `${o}/members/audit`, icon: ScrollText },
     role === 'owner' && { key: 'org/billing', label: 'Plan & billing', href: `${o}/billing`, icon: CreditCard },
     !isCanceled && role === 'owner' && { key: 'org/settings', label: 'Settings', href: `${o}/settings`, exact: true, icon: Settings },
     !isCanceled && hasVenueLibrary && { key: 'org/venues', label: 'Venue library', href: `${o}/venues`, icon: MapPin },
@@ -201,6 +233,23 @@ export function kitOrgLinks({
     },
   ];
   return links.filter((l): l is KitLink => Boolean(l));
+}
+
+/**
+ * The owner's areas a non-owner still SEES, as locked rows (ratified specimens 2 and 3; the June
+ * audit's J10-016: "an owner-only area stays VISIBLE with a lock and says whose it is"). Not doors —
+ * a locked row has no link — so they never widen who can open anything; they replace the surprise
+ * "Access Denied" (J10-013) with a row that says whose area it is.
+ */
+export type KitLockedRow = { key: string; label: string; icon: LucideIcon };
+
+export function kitOrgLockedRows({ role, isCanceled }: { role: string | null | undefined; isCanceled: boolean }): KitLockedRow[] {
+  if (!role || role === 'owner' || isCanceled) return [];
+  return [
+    { key: 'org/audit', label: 'Audit log', icon: ScrollText },
+    { key: 'org/billing', label: 'Plan & billing', icon: CreditCard },
+    { key: 'org/settings', label: 'Settings', icon: Settings },
+  ];
 }
 
 /** Is this door the page on screen? */

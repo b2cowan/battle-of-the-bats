@@ -579,3 +579,33 @@
   /* Add Venue header button: icon-only — hide text label */
   .addVenueLabel { display: none; }
 }
+
+/* ═══ Club Tier Stage 1 (A14), with the Admin Design Continuity switch on only ════════════════════
+   The header's line re-homed as the page's lede (F3), and a refused save that SAYS so. Slice 2
+   restyles the rest of this page; these two are Stage 1's. ⚠ TOKENS ONLY (checkAdminKit). */
+:global([data-admin-kit]) .kitLede {
+  margin: 0 0 1rem;
+  max-width: 64ch;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .kitRefusal {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  border: 1px solid rgba(var(--danger-rgb), 0.35);
+  background: rgba(var(--danger-rgb), 0.07);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .kitRefusalClose {
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 650;
+  color: var(--home-olive);
+  text-decoration: underline;
+  cursor: pointer;
+}

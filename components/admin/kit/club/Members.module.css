@@ -1,0 +1,112 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   MEMBERS on the kit (Club Tier Stage 1, specimen 5) — the board table at a desk, the framed row
+   list on a phone (52px rows, facts in line two), Manage's access table and folds, the Role Guide.
+   Kit only. TOKENS ONLY.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* One set of rows, two layouts: the table standard at a desk, the row list on a phone. */
+.phone { display: none; }
+@media (max-width: 760px) {
+  .desk { display: none; }
+  .phone { display: block; }
+}
+
+.person { display: inline-flex; align-items: center; gap: 0.4rem; flex-wrap: wrap; }
+.opens { display: inline-flex; align-items: center; gap: 0.35rem; flex-wrap: wrap; }
+
+/* A collapsed section's rows sit inside its frame — no second frame. */
+.collapseRows > div { border: 0; border-radius: 0; }
+.collapseFoot { margin: 0; padding: 0.6rem 0.9rem 0.8rem; }
+
+.empty {
+  margin-top: 1.5rem;
+  padding: 1.5rem 1.25rem;
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+.emptyTitle { margin: 0 0 0.35rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); text-transform: none; letter-spacing: normal; font-family: var(--font-display); }
+.emptyBody { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* ── Manage ── */
+.readValue { margin: 0; font-size: var(--type-body); color: var(--text-primary); }
+.twoFields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 0.9rem; }
+@media (max-width: 640px) {
+  .twoFields { grid-template-columns: minmax(0, 1fr); }
+}
+.accessBlock { margin-top: 0.4rem; }
+.accessTitle {
+  margin: 0 0 0.4rem;
+  font-family: var(--font-display);
+  font-size: var(--type-body);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+.accessTable { margin-bottom: 0.6rem; }
+.accessTable th,
+.accessTable td { padding: 0.5rem 0.5rem; }
+.accessTable th:first-child,
+.accessTable td:first-child { padding-left: 0; }
+.accessSelect { min-height: 34px; padding: 0.3rem 0.45rem; width: auto; min-width: 8.5rem; }
+.sentenceRow td {
+  padding-top: 0;
+  font-size: var(--type-support);
+  color: var(--warning);
+  border-bottom: 1px solid var(--home-line);
+}
+.foldToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  font-weight: 650;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+.foldChevron { color: var(--text-tertiary); transition: transform 0.2s ease; }
+.foldChevronOpen { transform: rotate(90deg); }
+.foldRowWrap td { padding-top: 0; }
+.foldList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.5rem 0.75rem 0.75rem;
+  margin-bottom: 0.5rem;
+  border-left: 2px solid var(--home-line-strong);
+  max-height: 16rem;
+  overflow-y: auto;
+}
+.foldRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+}
+.foldSelect { width: auto; min-height: 32px; padding: 0.2rem 0.4rem; font-size: var(--type-support); }
+.checkRow { display: flex; align-items: center; gap: 0.5rem; font-size: var(--type-support); color: var(--text-secondary); cursor: pointer; }
+.dangerText { color: var(--home-live); }
+@media (max-width: 768px) {
+  .accessSelect, .foldSelect { min-height: var(--tap-min, 44px); }
+  .foldToggle, .checkRow { min-height: var(--tap-min, 44px); }
+}
+
+/* ── The Role Guide ── */
+.guide { margin-top: 2rem; }
+.guideTable th,
+.guideTable td { text-align: center; white-space: nowrap; }
+.guideTable th:first-child,
+.guideTable .guideRowHead { text-align: left; white-space: normal; }
+.guideRowHead { font-weight: 650; color: var(--text-primary); font-size: var(--type-support); min-width: 12rem; }
+.guideYes { color: var(--home-olive); font-weight: 700; }
+.guideNo { color: var(--text-tertiary); }
+.guideWords { color: var(--text-secondary); font-size: var(--type-support); white-space: normal; }
+.guideNote { margin-top: 0.6rem; }

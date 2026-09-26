@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { withObservability } from '@/lib/observability';
-import { applyMove, cancelScheduledMove, getScheduledMove, moveDirection } from '@/lib/plan-move';
+import { applyMove, cancelScheduledMove, getScheduledMove, hasLiveSubscription, moveDirection } from '@/lib/plan-move';
 import { authorizeMove, parseTargetPlan, refuseIfGated, refusalResponse } from '@/lib/plan-move-route';
 import { writeOrgBillingAudit } from '@/lib/billing-retention';
 import { PLAN_CONFIG } from '@/lib/plan-config';
@@ -9,8 +9,9 @@ import type { OrgPlan } from '@/lib/types';
 /**
  * The move between plans — one subscription, never a second checkout (Ask 4, D7; A06).
  *
- *   GET    ?orgSlug=  → { planKey, moves: [{ planKey, label, direction, teamLimit }], scheduledMove }
- *                      the moves this org's plan allows, and a down-move waiting at renewal, if any.
+ *   GET    ?orgSlug=  → { planKey, moves: [{ planKey, label, direction, teamLimit }], scheduledMove, live }
+ *                      the moves this org's plan allows, a down-move waiting at renewal, if any, and
+ *                      whether it pays on a live subscription (else a band change goes to checkout).
  *   POST   { orgSlug, planKey, prorationDate? } → up: { direction:'up', toPlan, movedAt }
  *                      down: { direction:'down', toPlan, scheduled: { toPlan, effectiveAt } }
  *   DELETE ?orgSlug=  → { cancelled: boolean } — keep the current band (cancels the waiting down-move).
@@ -31,7 +32,10 @@ export const GET = withObservability(async (req: Request) => {
     .filter((m): m is { planKey: OrgPlan; direction: 'up' | 'down' } => m.direction !== null)
     .map(m => ({ ...m, label: PLAN_CONFIG[m.planKey].label, teamLimit: PLAN_CONFIG[m.planKey].teamLimit }));
   const scheduledMove = moves.length > 0 ? await getScheduledMove(org) : null;
-  return NextResponse.json({ planKey: org.planId, moves, scheduledMove });
+  // `live` (added by Club Tier Stage 1's screens session, additively): is this org paying on a live
+  // Stripe subscription — the one fact that decides whether a band change is a MOVE (this route) or a
+  // purchase at checkout. The screen asks the server rather than restating `hasLiveSubscription`.
+  return NextResponse.json({ planKey: org.planId, moves, scheduledMove, live: hasLiveSubscription(org) });
 }, { route: '/api/billing/move' });
 
 export const POST = withObservability(async (req: Request) => {

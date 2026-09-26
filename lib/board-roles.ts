@@ -44,8 +44,12 @@ const HINT: Partial<Record<OrgRole, string>> = {
   official: 'scores and the gate',
 };
 
-/** Does this organization run a house league? (Ask 2.) One read, only for a Club. */
-async function orgRunsHouseLeague(org: AssignableRolesOrg): Promise<boolean> {
+/**
+ * Does this organization run a house league? (Ask 2.) One read, only for a Club. The hub's
+ * plan-aware order asks the same question (`/api/admin/club-brief`'s `shape`), so the dropdown and the
+ * nav can never disagree about whether a club runs one.
+ */
+export async function orgRunsHouseLeague(org: AssignableRolesOrg): Promise<boolean> {
   if (!planCarriesModule(org, 'module_house_league')) return false;
   if (org.planId === 'league' || org.freeFloor === 'league_starter') return true;
   const { count, error } = await supabaseAdmin

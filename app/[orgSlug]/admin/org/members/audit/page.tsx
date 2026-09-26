@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import { ScrollText, Users2, ArrowLeft } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { isTournamentTier } from '@/lib/billing-urls';
@@ -59,7 +61,15 @@ function formatTimestamp(iso: string): string {
   });
 }
 
+// Admin Design Continuity switch (Club Tier Stage 1): on → the kit's audit log; off → today's page,
+// untouched below. The release slice deletes this wrapper and the legacy page with it.
+const AuditLogKit = dynamic(() => import('@/components/admin/kit/club/AuditLogKit'));
+
 export default function AuditLogPage() {
+  return useAdminKit() ? <AuditLogKit /> : <AuditLogPageLegacy />;
+}
+
+function AuditLogPageLegacy() {
   const { currentOrg, userRole, loading } = useOrg();
   const [data, setData] = useState<AuditResponse | null>(null);
   const [page, setPage] = useState(1);

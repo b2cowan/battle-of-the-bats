@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import { Settings, Upload, Lock, Check, Image as ImageIcon, AlertTriangle, Library, X } from 'lucide-react';
 import { STOCK_LOGOS, STOCK_LOGO_CATEGORIES, isStockLogoUnlocked } from '@/lib/stock-logos';
 import { useOrg } from '@/lib/org-context';
@@ -24,7 +26,15 @@ interface OrgSettings {
   themeCardStyle: string;
 }
 
+// Admin Design Continuity switch (Club Tier Stage 1): on → the kit's Settings (with "Your public
+// site"); off → today's page, untouched below. The release slice deletes this wrapper and the legacy page.
+const SettingsKit = dynamic(() => import('@/components/admin/kit/club/SettingsKit'));
+
 export default function OrgSettingsPage() {
+  return useAdminKit() ? <SettingsKit /> : <OrgSettingsPageLegacy />;
+}
+
+function OrgSettingsPageLegacy() {
   const router = useRouter();
   const { currentOrg, userRole, loading, refresh } = useOrg();
   usePageTitle('Settings');

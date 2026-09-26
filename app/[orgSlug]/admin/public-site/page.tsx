@@ -6,6 +6,7 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import styles from './public-site.module.css';
 
 interface SiteForm {
@@ -34,6 +35,7 @@ const EMPTY: SiteForm = {
 
 export default function PublicSitePage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const kit = useAdminKit();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const [saved, setSaved]     = useState<SiteForm>(EMPTY);
   const [form, setForm]       = useState<SiteForm>(EMPTY);
@@ -138,7 +140,24 @@ export default function PublicSitePage() {
           </div>
         )}
         title="Public Site"
+        // Club Tier Stage 1 (specimen 9): the site's on/off state, read-only here; it is SET in
+        // Settings › Your public site. A state chip, never a switch — one door per write.
+        titleChips={kit && currentOrg ? (
+          <span className={`${styles.siteChip} ${currentOrg.isPublic ? styles.siteChipOn : styles.siteChipOff}`}>
+            {currentOrg.isPublic ? 'Online' : 'Offline'}
+          </span>
+        ) : undefined}
       />
+      {kit && currentOrg && (
+        <p className={styles.siteState}>
+          {currentOrg.isPublic
+            ? 'Your public site is online.'
+            : 'Your public site is offline — families who open it see that it isn’t available.'}{' '}
+          {userRole === 'owner'
+            ? <Link href={`/${currentOrg.slug}/admin/org/settings`} className={styles.siteStateLink}>Turn it on or off in Settings</Link>
+            : 'The owner turns it on and off in Settings.'}
+        </p>
+      )}
 
       {currentOrg && (
         <Link href={`/${currentOrg.slug}`} target="_blank" rel="noopener noreferrer" className={styles.settingsLink}>

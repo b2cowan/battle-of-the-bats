@@ -1,0 +1,61 @@
+/* The club's setup checklist on the kit (Club Tier Stage 1, specimen 10). Kit only. TOKENS ONLY. */
+
+.page { padding-top: 0.5rem; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+.steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow: hidden;
+}
+.step {
+  display: grid;
+  grid-template-columns: 2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.9rem 1rem;
+  border-top: 1px solid var(--home-line);
+}
+.step:first-child { border-top: 0; }
+@media (max-width: 640px) {
+  .step { grid-template-columns: 2rem minmax(0, 1fr); }
+  .stepButton { grid-column: 2; justify-self: start; }
+}
+.marker {
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--home-line-strong);
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  color: var(--text-secondary);
+  background: var(--home-card);
+}
+.stepDone .marker { background: var(--home-olive); border-color: var(--home-olive); color: var(--card-bg); }
+.stepQuiet .marker { color: var(--text-tertiary); }
+.stepBody { min-width: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+.stepTitle {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: var(--type-body);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+.fact { margin: 0.15rem 0 0; font-size: var(--type-support); font-weight: 650; color: var(--home-olive); }
+.step:not(.stepDone) .fact { color: var(--text-secondary); }
+.stepButton { white-space: nowrap; }
+@media (max-width: 768px) {
+  .stepButton { min-height: var(--tap-min, 44px); display: inline-flex; align-items: center; }
+}
+
+.foot { display: flex; align-items: center; gap: 0.85rem; flex-wrap: wrap; margin-top: 1.25rem; }

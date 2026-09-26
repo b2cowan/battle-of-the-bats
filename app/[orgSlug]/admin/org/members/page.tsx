@@ -1,6 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import { Users2, UserPlus, ShieldCheck, BookOpen, ChevronDown, Settings2, Mail, Trash2, ScrollText } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -188,7 +190,15 @@ function formatDate(iso: string | null): string {
   });
 }
 
+// Admin Design Continuity switch (Club Tier Stage 1): on → the kit's Members; off → today's page,
+// untouched below. The release slice deletes this wrapper and the legacy page with it.
+const MembersKit = dynamic(() => import('@/components/admin/kit/club/MembersKit'));
+
 export default function MembersPage() {
+  return useAdminKit() ? <MembersKit /> : <MembersPageLegacy />;
+}
+
+function MembersPageLegacy() {
   const { currentOrg, userRole, userCapabilities, user, loading } = useOrg();
   usePageTitle('Members');
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';

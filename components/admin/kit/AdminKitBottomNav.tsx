@@ -22,7 +22,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutGrid, MoreHorizontal, X, ChevronRight, LogOut, Bell, Globe, Download,
-  MessageSquarePlus, Home, User, UserCheck, ArrowLeft,
+  MessageSquarePlus, Home, User, UserCheck, ArrowLeft, Lock,
 } from 'lucide-react';
 import { signOut } from '@/lib/auth';
 import { isStandalonePWA } from '@/lib/device';
@@ -36,8 +36,9 @@ import { useDismissable } from '@/lib/overlay-hooks';
 import type { TourNavItem } from '@/components/admin/admin-nav-config';
 import AdminContextStrip from '@/components/admin/AdminContextStrip';
 import FeedbackWidget from '@/components/feedback/FeedbackWidget';
-import { isKitLinkActive, kitTournamentLabel, type KitLink } from '@/lib/admin-kit-nav';
+import { isKitLinkActive, kitTournamentLabel, type KitLink, type KitLockedRow } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
+import { briefProgramCount } from './club/ClubBriefProvider';
 import styles from '@/components/coaches/CoachesBottomNav.module.css';
 import kit from './AdminKitFrame.module.css';
 
@@ -50,7 +51,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
   const pathname = usePathname();
   const router = useRouter();
   const nav = useAdminKitNav();
-  const { base, programs, orgLinks, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups } = nav;
+  const { base, programs, alsoOnPlan, brief, orgLinks, orgLockedRows, tournamentOnly, onTournaments, isCanceled, coachDoor, tournamentGroups } = nav;
   const { currentOrg } = useOrg();
   const { tournaments, currentTournament, setCurrentTournament } = useTournament();
   const worklist = useAdminWorklist();
@@ -108,8 +109,10 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
     .filter(g => g.items.length > 0);
 
   // ── The club bar: Overview + the first three programs + More ─────────────────────────────────
+  // The programs arrive in the plan-aware order (what the club runs first); what the plan carries
+  // but the club does not run yet follows them in More's "More programs" (specimen 4).
   const clubTabs = programs.slice(0, 3);
-  const morePrograms = programs.slice(3);
+  const morePrograms = [...programs.slice(3), ...alsoOnPlan];
 
   const tabs: Tab[] = tournamentBar
     ? tourPrimary.map(i => {
@@ -126,6 +129,8 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
         ...(isCanceled ? [] : clubTabs.map(p => ({
           key: p.key, href: p.href, icon: p.icon, label: p.label,
           active: nav.section === p.key,
+          // The morning brief's waiting items — the number the hub's door and the rail show.
+          count: briefProgramCount(brief, p.key),
         }))),
       ];
 
@@ -156,15 +161,28 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
       </Link>
     );
   };
-  const group = (header: string, items: KitLink[], icons?: Map<string, ElementType>) => items.length > 0 && (
+  // An owner's area, as a non-owner sees it: a LOCKED row that says whose it is (J10-016; the rail
+  // shows the same rows — /review 2026-09-26: the phone sheet must not simply drop them). Not a link.
+  const lockedRow = (r: KitLockedRow) => {
+    const Icon = r.icon;
+    return (
+      <div key={r.key} className={`${styles.dropItem} ${kit.dropLocked}`} role="menuitem" aria-disabled="true" aria-label={`${r.label}, owner only`}>
+        <Icon size={17} aria-hidden />
+        <span>{r.label}</span>
+        <span className={kit.dropLockedNote}><Lock size={11} aria-hidden /> Owner only</span>
+      </div>
+    );
+  };
+  const group = (header: string, items: KitLink[], icons?: Map<string, ElementType>, locked: KitLockedRow[] = []) => (items.length > 0 || locked.length > 0) && (
     <div key={header} className={styles.dropSection}>
       <div className={styles.dropSectionLabel}>{header}</div>
-      <div className={styles.dropGrid} data-cols={items.length > 1 ? 2 : 1}>
+      <div className={styles.dropGrid} data-cols={items.length + locked.length > 1 ? 2 : 1}>
         {items.map(l => row(l, icons?.get(l.key) ?? l.icon, l.key === 'chat' ? moreChat : 0))}
+        {locked.map(lockedRow)}
       </div>
     </div>
   );
-  const programIcons = new Map<string, ElementType>(programs.map(p => [p.key, p.icon]));
+  const programIcons = new Map<string, ElementType>([...programs, ...alsoOnPlan].map(p => [p.key, p.icon]));
 
   return (
     <nav className={`${styles.bottomNav} ${kit.bar}`} aria-label="Admin mobile navigation">
@@ -273,7 +291,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
               ) : (
                 <>
                   {group('More programs', morePrograms.map(p => ({ key: p.key, label: p.label, href: p.href })), programIcons)}
-                  {group('Organization', orgLinks)}
+                  {group('Organization', orgLinks, undefined, orgLockedRows)}
                 </>
               )}
 

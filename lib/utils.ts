@@ -10,6 +10,12 @@ export function pluralize(count: number, singular: string, plural = `${singular}
   return `${count} ${count === 1 ? singular : plural}`;
 }
 
+/** "a", "a and b", "a, b and c" — a list read as a sentence. */
+export function joinWithAnd(items: readonly string[]): string {
+  if (items.length <= 1) return items.join('');
+  return `${items.slice(0, -1).join(', ')} and ${items[items.length - 1]}`;
+}
+
 export function formatPoolName(name: string): string {
   const bare = name
     .replace(/^Pool\s+/i, '')

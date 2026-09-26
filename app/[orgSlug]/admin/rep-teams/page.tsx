@@ -1,8 +1,11 @@
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { Users, UserCog, X, Archive, Link2, DollarSign, ArrowLeftRight, Pencil, Trash2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import type { TeamCapRefusal } from '@/components/admin/kit/club/TeamCapDialog';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
@@ -10,6 +13,9 @@ import UpcomingPayablesPanel from '@/components/accounting/UpcomingPayablesPanel
 import styles from './rep-teams.module.css';
 import type { RepTeam, RepTeamGroup } from '@/lib/types';
 import { OFFERED_SPORT_OPTIONS, DEFAULT_SPORT } from '@/lib/sports';
+
+// Kit only (Club Tier Stage 1b): the team-cap refusal that offers the move in place.
+const TeamCapDialog = dynamic(() => import('@/components/admin/kit/club/TeamCapDialog'));
 
 function slugify(s: string): string {
   return s.toLowerCase().trim()
@@ -77,6 +83,8 @@ export default function RepTeamsPage() {
   const [feedbackOpen, setFeedbackOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
   const [feedbackMsg, setFeedbackMsg] = useState('');
+  const kit = useAdminKit();
+  const [capRefusal, setCapRefusal] = useState<TeamCapRefusal | null>(null);
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
     setFeedbackType(type); setFeedbackMsg(msg); setFeedbackOpen(true);
@@ -145,6 +153,13 @@ export default function RepTeamsPage() {
         }),
       });
       const data = await res.json();
+      // Club Tier Stage 1b, behind the Admin Design Continuity switch: at the team cap the refusal
+      // offers the move IN PLACE (specimen 7), over the form — so what was typed is still there to
+      // add once the club has moved up a band. Switch off: today's message, unchanged.
+      if (kit && res.status === 409 && data.code === 'team_limit_reached') {
+        setCapRefusal(data as TeamCapRefusal);
+        return;
+      }
       if (!res.ok) throw new Error(data.error ?? 'Failed to create team');
       setCreateOpen(false);
       await load();
@@ -664,6 +679,18 @@ export default function RepTeamsPage() {
 
       <FeedbackModal isOpen={feedbackOpen} onClose={() => setFeedbackOpen(false)}
         title={feedbackType === 'success' ? 'Done' : 'Error'} message={feedbackMsg} type={feedbackType} />
+
+      {capRefusal && currentOrg && (
+        <TeamCapDialog
+          refusal={capRefusal}
+          org={currentOrg}
+          isOwner={userRole === 'owner'}
+          onClose={() => setCapRefusal(null)}
+          onArchive={() => { setCapRefusal(null); setCreateOpen(false); }}
+          // Moved up a band: the form is still open with what was typed — press Create again.
+          onMoved={text => { setCapRefusal(null); showFeedback('success', `${text} You can add the team now.`); }}
+        />
+      )}
     </div>
   );
 }

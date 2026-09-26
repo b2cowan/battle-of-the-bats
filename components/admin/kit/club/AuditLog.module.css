@@ -1,0 +1,39 @@
+/* The audit log on the kit (Club Tier Stage 1, specimen 11). Kit only. TOKENS ONLY. */
+
+.phone { display: none; }
+@media (max-width: 760px) {
+  .desk { display: none; }
+  .phone { display: block; }
+}
+.when { white-space: nowrap; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.none {
+  margin: 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+}
+.pager {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  font-size: var(--type-support);
+}
+.pagerButtons { display: inline-flex; gap: 0.5rem; }
+@media (max-width: 768px) {
+  .pagerButtons button { min-height: var(--tap-min, 44px); }
+}
+.empty {
+  margin-top: 1.5rem;
+  padding: 1.5rem 1.25rem;
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+.emptyTitle { margin: 0 0 0.35rem; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); text-transform: none; letter-spacing: normal; font-family: var(--font-display); }
+.emptyBody { margin: 0; font-size: var(--type-support); color: var(--text-tertiary); }

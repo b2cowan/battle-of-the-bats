@@ -3,8 +3,8 @@ import { describe, it } from 'node:test';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import {
-  kitPrograms, kitOrgLinks, isKitLinkActive, activeKitSection, kitTournamentLabel,
-  INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY,
+  kitPrograms, kitOrgLinks, kitOrgLockedRows, isKitLinkActive, activeKitSection, kitTournamentLabel,
+  clubProgramOrder, INTERIM_PROGRAM_ORDER, PROGRAM_CAPABILITY,
 } from '../../lib/admin-kit-nav.ts';
 import { TOUR_GROUPS } from '../../components/admin/admin-nav-config.ts';
 import { kitTournamentGroups } from '../../components/admin/kit/kit-tournament-groups.ts';
@@ -48,10 +48,10 @@ describe('the admin kit nav — no dead door', () => {
     assert.deepEqual(dead, []);
   });
 
-  it('holds back the drawn rows whose screens Club Stage 1 builds', () => {
+  it('the audit log has its row now that its page works; Notifications is still held', () => {
     const labels = kitOrgLinks({ base: BASE, role: 'owner', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true }).map(l => l.label);
-    assert.ok(!labels.includes('Audit log'), 'the audit log fails today (A04) — Stage 1 adds its row');
-    assert.ok(!labels.includes('Notifications'), 'the org notifications path redirects today — Stage 1 adds its row');
+    assert.ok(labels.includes('Audit log'), 'Club Stage 1 (H08): the audit log works again (A04) and gets its row');
+    assert.ok(!labels.includes('Notifications'), 'the org notifications path redirects to account settings, whose club card is not built (specimen 12)');
   });
 });
 
@@ -67,10 +67,59 @@ describe("the admin kit nav — today's gates", () => {
     const labels = (role: string, isCanceled = false) => kitOrgLinks({
       base: BASE, role, isCanceled, canSeeMembers: true, hasVenueLibrary: true,
     }).map(l => l.label);
-    assert.deepEqual(labels('owner'), ['Members', 'Plan & billing', 'Settings', 'Venue library', 'PDF settings', 'Coaches Portal links']);
+    assert.deepEqual(labels('owner'), ['Members', 'Audit log', 'Plan & billing', 'Settings', 'Venue library', 'PDF settings', 'Coaches Portal links']);
     assert.deepEqual(labels('admin'), ['Members', 'Venue library', 'PDF settings', 'Coaches Portal links']);
     assert.deepEqual(labels('treasurer'), ['Members', 'Venue library']);
     assert.deepEqual(labels('owner', true), ['Plan & billing'], 'a cancelled club keeps only the way to pay again');
+  });
+
+  it("a non-owner sees the owner's areas as LOCKED rows, never as doors (specimens 2–3)", () => {
+    const locked = kitOrgLockedRows({ role: 'admin', isCanceled: false });
+    assert.deepEqual(locked.map(r => r.label), ['Audit log', 'Plan & billing', 'Settings']);
+    for (const row of locked) assert.ok(!('href' in row), `${row.label} must not be a link — a locked row opens nothing`);
+    assert.deepEqual(kitOrgLockedRows({ role: 'owner', isCanceled: false }), [], 'the owner has the real doors');
+    assert.deepEqual(kitOrgLockedRows({ role: 'admin', isCanceled: true }), [], 'a cancelled club shows only its way to pay');
+    const doors = new Set(kitOrgLinks({ base: BASE, role: 'admin', isCanceled: false, canSeeMembers: true, hasVenueLibrary: true }).map(l => l.label));
+    for (const row of locked) assert.ok(!doors.has(row.label), `${row.label} is both locked and a door for an admin`);
+  });
+});
+
+describe('the admin kit nav — the plan-aware order (Club Tier Stage 1)', () => {
+  it('what the club RUNS leads; house league and tournaments wait in "Also on your plan" until it has one', () => {
+    const repClub = clubProgramOrder({ runsHouseLeague: false, hostsTournaments: false });
+    assert.deepEqual(repClub.lead, ['rep-teams', 'accounting', 'families', 'public-site']);
+    assert.deepEqual(repClub.also, ['house-league', 'tournaments']);
+
+    const everything = clubProgramOrder({ runsHouseLeague: true, hostsTournaments: true });
+    assert.deepEqual(everything.lead, ['rep-teams', 'house-league', 'accounting', 'families', 'public-site', 'tournaments']);
+    assert.deepEqual(everything.also, []);
+  });
+
+  it('tournaments are always last among what the club runs — a rep club is not a tournament club', () => {
+    const { lead } = clubProgramOrder({ runsHouseLeague: true, hostsTournaments: true });
+    assert.equal(lead[lead.length - 1], 'tournaments');
+  });
+
+  it('every program is in exactly one of the two lists, whatever the club runs', () => {
+    for (const runsHouseLeague of [true, false]) {
+      for (const hostsTournaments of [true, false]) {
+        const { lead, also } = clubProgramOrder({ runsHouseLeague, hostsTournaments });
+        assert.deepEqual([...lead, ...also].sort(), [...INTERIM_PROGRAM_ORDER].sort());
+      }
+    }
+  });
+
+  it('the order never depends on the member: the person filter is applied AFTER it', () => {
+    const { lead } = clubProgramOrder({ runsHouseLeague: false, hostsTournaments: false });
+    // A treasurer (Accounting only) sees Accounting alone, from the same order.
+    const treasurer = kitPrograms({ base: BASE, canUse: c => c === 'module_accounting', order: lead });
+    assert.deepEqual(treasurer.map(p => p.key), ['accounting']);
+  });
+
+  it('the rail, the phone bar and the hub read the one order through the one hook', () => {
+    const hook = readCode('components/admin/kit/useAdminKitNav.ts');
+    assert.match(hook, /clubProgramOrder\(club\.shape\)/, 'the hook orders by the morning brief\'s shape');
+    assert.match(readCode('components/admin/kit/club/ClubHubKit.tsx'), /useAdminKitNav\(\)/, 'the hub lists the hook\'s programs');
   });
 });
 

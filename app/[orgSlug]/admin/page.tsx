@@ -1,5 +1,5 @@
-import AdminHubClient from './AdminHubClient';
+import AdminHub from './AdminHub';
 
-export default function AdminHub() {
-  return <AdminHubClient />;
+export default function AdminHubPage() {
+  return <AdminHub />;
 }

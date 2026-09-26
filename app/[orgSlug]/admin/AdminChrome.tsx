@@ -27,6 +27,9 @@ import styles from './admin.module.css';
 const AdminKitRail = dynamic(() => import('@/components/admin/kit/AdminKitRail'));
 const AdminKitBottomNav = dynamic(() => import('@/components/admin/kit/AdminKitBottomNav'));
 const AdminKitProgramRow = dynamic(() => import('@/components/admin/kit/AdminKitProgramRow'));
+// Club Tier Stage 1 — the morning brief, read once for the hub, the rail and the phone bar (and the
+// plan-aware program order they share). Kit only, so it rides no switch-off page either.
+const ClubBriefProvider = dynamic(() => import('@/components/admin/kit/club/ClubBriefProvider').then(m => m.ClubBriefProvider));
 
 export default function AdminChrome({
   children,
@@ -78,9 +81,8 @@ export default function AdminChrome({
     ? styles.adminPreviewMain
     : `${styles.adminMain} ${isFocusedAdmin ? styles.adminMainFocused : ''}${kitGround ? ` ${styles.adminMainKit}` : ''}`;
 
-  return (
-    <AdminDensityProvider>
-      <AdminWorklistProvider>
+  const frame = (
+    <>
       <CancellationGuard />
       <AdminTitleManager />
       <FeedbackRequestIdProvider />
@@ -128,6 +130,13 @@ export default function AdminChrome({
       {!isFocused && (kit
         ? <AdminKitBottomNav notifUnread={notif.count} />
         : <AdminBottomNav notifUnread={notif.count} />)}
+    </>
+  );
+
+  return (
+    <AdminDensityProvider>
+      <AdminWorklistProvider>
+        {kit ? <ClubBriefProvider>{frame}</ClubBriefProvider> : frame}
       </AdminWorklistProvider>
     </AdminDensityProvider>
   );
