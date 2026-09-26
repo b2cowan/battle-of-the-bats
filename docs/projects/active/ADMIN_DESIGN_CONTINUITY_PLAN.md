@@ -1,7 +1,7 @@
 # Admin Design Continuity — Implementation Plan
 
 > **Status:** RULED 2026-09-25 (owner: *"I agree with your recommendations, go ahead"*). **Slice 0 (the
-> baseline) BUILT 2026-09-25** — measuring tools only, no product code; results in §3a. Next: slice 1.
+> baseline) COMMITTED `459b3bbd` 2026-09-25** — measuring tools only, no product code; results in §3a. Next: slice 1.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -156,7 +156,7 @@ foundation's release day.
 
 | Slice | Scope | Status |
 |---|---|---|
-| 0 | Baseline: every admin + guest screen in the invariant sweep (today's dark), the switch-off identity check, contrast grounds. Needs the dev server alone. | **BUILT 2026-09-25** (commit on the owner's word) — results below |
+| 0 | Baseline: every admin + guest screen in the invariant sweep (today's dark), the switch-off identity check, contrast grounds. Needs the dev server alone. | **COMMITTED `459b3bbd` 2026-09-25** — results below |
 | 1 | The switch · theme gaps · R1/F1 · the frame (top strip, rail, phone bar + More, page header, event header) · Families · Public site editor | not started |
 | 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | not started |
 | 3 | Rep Teams · Accounting (F4 dense tables) | not started |
