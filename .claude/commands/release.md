@@ -96,6 +96,19 @@ npx tsc --noEmit --skipLibCheck 2>&1 | Select-Object -First 40
 ```
 Stop if there are errors. Do not push with TypeScript failures.
 
+### 1c-1 — Database load (every target), a monitor and NOT a gate
+```powershell
+npm run check:db-load
+```
+It counts yesterday's statements over 10 s on dev and prod, and names the worst queries. It reads
+Supabase's log service, not the databases, and takes about 10 s. **It does not block the push:** a
+runaway is almost always agent tooling, not the release. Put the result in the Release Summary. On
+✖, tell the owner in plain words which query and how many times, and recommend a separate session
+to trace it. Do NOT change hooks, settings or database checks to fix it (AGENCY_RULES, shared-
+automation rule). Why it exists: an agent hook ran the schema snapshot query up to ~580 times a day
+against both databases from 06-01 to 09-25, and nobody looked until dev's CPU hit 99%. This check
+flags that kind of runaway the next morning.
+
 ### 1d — Migration drift (master / promote targets only)
 
 Migrations are plain `.sql` files applied to each Supabase project **by hand** — neither the Amplify build (`amplify.yml` = `pnpm run build`) nor this agent runs them. So promoting code that reads a table/column which exists in **dev** but was never applied to **prod** ships a guaranteed 500 (this is the migration-040 / register-500 incident). Before any **master** or **promote** release, verify prod isn't behind dev:
@@ -222,6 +235,7 @@ Target:   [dev (staging) / master (PRODUCTION)]
 Push:     current branch → [TARGET]
 Commits:  [N commits ahead of target, not counting the pending commit if dirty]
 TS check: ✅ clean
+DB load (yesterday): [✅ dev N · prod N slow statements / ✖ dev N · prod N — the top query, owner told; a monitor, never blocks]
 Migrations: [master/promote only: ✅ prod in sync / ✖ prod BEHIND dev — see check:migrations | dev: n/a]
 Manual prod steps: [master/promote only: ✅ none outstanding / ✖ N outstanding — name them, see check-manual-prod-migrations | dev: n/a]
 Deploy-only: [master/promote only: ✅ verified on deployed dev / n/a — no native/build-config changes | dev: n/a]

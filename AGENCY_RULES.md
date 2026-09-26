@@ -23,6 +23,28 @@ These rules apply to all AI coding assistants working in this repository.
     doesn't remove them, so an ex-coach still reads everything."*
   - **Do not manufacture disagreement.** When the direction is right, say so plainly and name where
     the risk actually sits. Inventing objections to appear rigorous is the opposite of this rule.
+- **Shared agent automation and the database checks change only when the owner asked for that
+  change (owner rulings 2026-09-26, binding).** From 06-01 to 09-25 an agent-added hook refreshed
+  the schema snapshots up to ~580 times a day against BOTH databases: about 90% of all production
+  query time, and dev's CPU at 99%. One agent added it inside a giant feature commit; another
+  widened it from dev-only to dev + production inside a cleanup commit that called the change a
+  "hook script rename". Nobody saw either change (see
+  `docs/projects/active/DB_SNAPSHOT_REFRESH_LOAD_PLAN.md` §9).
+  - **What counts:** hooks and permission rules in `.claude/settings*.json`; any script a hook
+    runs; anything that runs by itself or against production; the database checks and gates. The
+    watched list is `WATCHED_PATHS` in `scripts/check-agent-automation.mjs`.
+  - **The rule:** change one only when the owner asked for that change in the current
+    conversation; an earlier yes does not carry over. It goes in its OWN commit, and the message
+    says what behavior changes (never "rename" for a behavior change).
+  - **Safety nets, not approval ceremonies.** The owner ruled out permission prompts and approval
+    steps: they "mean nothing to me" and slow development. The control is visibility:
+    `npm run check:automation` lists every recent commit that touched a watched path, so nothing
+    hides inside an unrelated commit again.
+  - **A check is report-only.** "Check / verify / is X still working" means report and recommend.
+    A defect found during a check is a finding, not a mandate to change shared automation.
+  - **Watch the load:** `npm run check:db-load` counts statements over 10 s per day on dev and
+    prod and names the worst queries. It reads Supabase's log service, not the databases, and runs
+    in every `/release` (step 1c-1).
 - **Planning First**: For every request, the agent must provide an **Implementation Plan** and/or **Task List** of items being reviewed and actioned before proceeding with significant changes.
 - **Product Manager UX Plan (required)**: Before implementing any feature, the agent MUST present a plain-language UX summary in the conversation — written for a product manager, not an engineer. This summary must describe what the user sees and does differently after the change, the benefits, and any role-based access differences. This is a blocking step: no code changes may begin until this summary has been presented.
 - **PM Briefs for Plans (required)**: Whenever an agent creates or updates a dedicated implementation plan for a significant feature, phase, or project, it MUST also create or update a short product-manager brief. The PM brief should be plain-language, outcome-focused, and cover proposed functionality, why it matters, expected customer impact, priority, and success criteria.

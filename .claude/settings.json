@@ -340,7 +340,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/after-migration-refresh-hook.mjs",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/after-migration-refresh-hook.mjs\"",
             "if": "Bash(*apply-migration-api*)",
             "timeout": 180,
             "statusMessage": "Refreshing DB snapshots if a migration was applied..."
@@ -352,7 +352,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node scripts/after-migration-refresh-hook.mjs",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/after-migration-refresh-hook.mjs\"",
             "if": "PowerShell(*apply-migration-api*)",
             "timeout": 180,
             "statusMessage": "Refreshing DB snapshots if a migration was applied..."
