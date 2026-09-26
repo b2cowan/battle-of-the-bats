@@ -505,6 +505,11 @@
   color: var(--white-40);
   margin: 0 0 0.5rem;
 }
+/* R2 (Admin Design Continuity, switch on): `.themePreview` is a public-preview island, so inside it
+   the ramp is the PUBLIC dark one — but this caption is the ADMIN's words, sitting on the admin's
+   card. The island leaves the portal's `--home-*` set alone, so its dim ink still follows the
+   account theme here. */
+:global([data-admin-kit]) .themePreviewLabel { color: var(--home-dim); }
 
 .modeToggleRow {
   display: flex;

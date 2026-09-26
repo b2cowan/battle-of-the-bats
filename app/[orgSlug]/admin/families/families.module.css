@@ -71,3 +71,132 @@
 .backLink { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.78rem; color: var(--white-50); text-decoration: none; margin-bottom: 0.9rem; }
 .backLink:hover { color: var(--white-80); }
 .notice { font-size: 0.8rem; color: var(--white-50); margin: 0.75rem 0 0; }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 1 — only with the switch on) ═══════════════════════
+   Families is the pilot the build prompt names for proving the frame end to end: the same screens,
+   words, columns and actions, on the coaches portal's kit, in both themes. Every rule below is scoped
+   under `[data-admin-kit]`, which only the admin shell carries and only while the dev switch is on,
+   so the legacy rules above render untouched until the release slice deletes them.
+   The recipes are the portal's own, by value: the search is the portal's field, the lenses are its
+   filter chip (`.clubChip`), the state pills are the kit's chips (`CoachKit` `.chip` + tones), the
+   panels its card, the table the table standard's ground (quiet heads, hairline rows).
+   ⚠ TOKENS ONLY — `tests/unit/admin-kit-guard.test.ts` fails on a literal colour in a kit rule. */
+
+/* The duplicates list's framing line (F3's re-home — the header lost its subtitle). */
+.lede { margin: 0 0 1rem; max-width: 64ch; font-size: var(--type-support); line-height: 1.45; color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .search {
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+  font-size: var(--type-body);
+}
+:global([data-admin-kit]) .search::placeholder { color: var(--text-tertiary); }
+:global([data-admin-kit]) .search:focus { outline: none; border-color: var(--home-olive); }
+
+/* The lenses — the portal's filter chip: sans, tinted when chosen, never solid. */
+:global([data-admin-kit]) .chip {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--home-line);
+  background: var(--home-card);
+  color: var(--text-secondary);
+  border-radius: 999px;
+  padding: 0.3rem 0.75rem;
+  font-size: var(--type-support);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  min-height: 32px;
+  font-variant-numeric: tabular-nums;
+}
+:global([data-admin-kit]) .chip:hover { border-color: var(--text-tertiary); }
+:global([data-admin-kit]) .chipOn,
+:global([data-admin-kit]) .chipOn:hover {
+  background: rgba(var(--logic-lime-rgb), 0.16);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+@media (max-width: 768px) {
+  :global([data-admin-kit]) .chip { min-height: 44px; padding-block: calc((44px - 1.25em) / 2); }
+}
+
+/* The table — the standard's ground. */
+:global([data-admin-kit]) .table th {
+  font-family: var(--font-sans);
+  font-size: var(--type-support);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+  border-bottom: 1px solid var(--home-line-strong);
+}
+:global([data-admin-kit]) .table td { color: var(--text-secondary); border-bottom: 1px solid var(--home-line); }
+:global([data-admin-kit]) .who,
+:global([data-admin-kit]) .whoLink { color: var(--text-primary); }
+:global([data-admin-kit]) .whoLink:hover { color: var(--home-olive); }
+:global([data-admin-kit]) .kids { color: var(--text-tertiary); }
+
+/* State pills → the kit's chips (a state is recognised, not read). */
+:global([data-admin-kit]) .pill {
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: none;
+  border-radius: 999px;
+  padding: 0.14rem 0.5rem;
+  border: 1px solid transparent;
+}
+:global([data-admin-kit]) .pillGood { color: var(--home-olive); background: rgba(var(--success-rgb), 0.07); border-color: rgba(var(--success-rgb), 0.25); }
+:global([data-admin-kit]) .pillWarn { color: var(--warning); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
+:global([data-admin-kit]) .pillBad { color: var(--home-live); background: rgba(var(--danger-rgb), 0.08); border-color: rgba(var(--danger-rgb), 0.3); }
+:global([data-admin-kit]) .pillInfo { color: var(--info-light); background: rgba(var(--home-blue-rgb), 0.08); border-color: rgba(var(--home-blue-rgb), 0.3); }
+:global([data-admin-kit]) .pillMute { color: var(--text-secondary); background: var(--home-olive-soft); border-color: var(--home-line-strong); }
+
+/* Panels → the kit's card; their heads → the kit's eyebrow. */
+:global([data-admin-kit]) .panel,
+:global([data-admin-kit]) .pairCard,
+:global([data-admin-kit]) .mergeSide,
+:global([data-admin-kit]) .msgForm {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .mergeKeep { border-color: var(--home-olive); background: var(--home-olive-soft); }
+:global([data-admin-kit]) .panelHead {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+  /* The Children card's head now carries the count the page header lost (F3); at 361 the two do
+     not fit one line, so the count wraps under the eyebrow rather than pushing past the card. */
+  flex-wrap: wrap;
+}
+:global([data-admin-kit]) .panelScope { font-family: var(--font-sans); font-size: var(--type-support); color: var(--text-tertiary); }
+:global([data-admin-kit]) .line { color: var(--text-secondary); border-top-color: var(--home-line); }
+:global([data-admin-kit]) .lineSub,
+:global([data-admin-kit]) .lineV { color: var(--text-tertiary); }
+:global([data-admin-kit]) .lineTotal { color: var(--text-primary); }
+:global([data-admin-kit]) .panelFoot { color: var(--text-tertiary); border-top-color: var(--home-line); }
+:global([data-admin-kit]) .actionbar { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .mergeName { color: var(--text-primary); }
+:global([data-admin-kit]) .mergeRow { color: var(--text-secondary); }
+:global([data-admin-kit]) .pairReasons,
+:global([data-admin-kit]) .notice { color: var(--text-tertiary); }
+:global([data-admin-kit]) .msgInput {
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+}
+
+/* The empty and refusal states — the portal's empty-state card. */
+:global([data-admin-kit]) .empty { border: 1px dashed var(--home-line-strong); border-radius: 8px; background: var(--card-bg); }
+:global([data-admin-kit]) .emptyTitle { color: var(--text-primary); }
+:global([data-admin-kit]) .emptyBody { color: var(--text-tertiary); }
+
+/* The failed-load branch keeps its own way back (no header to hold one): quiet chrome. */
+:global([data-admin-kit]) .backLink { color: var(--text-secondary); }
+:global([data-admin-kit]) .backLink:hover { color: var(--text-primary); }

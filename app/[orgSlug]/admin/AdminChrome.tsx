@@ -1,11 +1,13 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { useOrg } from '@/lib/org-context';
 import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminBottomNav from '@/components/admin/AdminBottomNav';
 import AdminEventHeader from '@/components/admin/AdminEventHeader';
 import AdminTopStrip from '@/components/admin/AdminTopStrip';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { CancellationGuard } from '@/components/admin/CancellationGuard';
 import { getBillingHref } from '@/lib/billing-urls';
@@ -17,6 +19,15 @@ import AdminTitleManager from './AdminTitleManager';
 import FeedbackRequestIdProvider from '@/components/feedback/FeedbackRequestIdProvider';
 import styles from './admin.module.css';
 
+// Admin Design Continuity — the kit frame, split into its own chunk (`/simplify`, slice 1). Statically
+// imported, its ~100KB of source rode every admin page for every user, production included, where the
+// switch can never turn it on. Loaded only when rendered (switch on); still server-rendered, so the
+// first paint is the kit frame with no flash. The release slice makes these the only frame and can
+// import them statically again.
+const AdminKitRail = dynamic(() => import('@/components/admin/kit/AdminKitRail'));
+const AdminKitBottomNav = dynamic(() => import('@/components/admin/kit/AdminKitBottomNav'));
+const AdminKitProgramRow = dynamic(() => import('@/components/admin/kit/AdminKitProgramRow'));
+
 export default function AdminChrome({
   children,
 }: {
@@ -25,6 +36,10 @@ export default function AdminChrome({
   // All hooks must be called unconditionally — before any early return.
   const pathname = usePathname();
   const { currentOrg } = useOrg();
+  // Admin Design Continuity — the switch (`lib/admin-kit-preview.ts`). Off: every line below renders
+  // exactly what it always has. On: the kit frame (rail, phone bar, the phone's program row, the
+  // coach shell's ground). The release slice deletes the legacy branch of each.
+  const kit = useAdminKit();
   // Focused shells (onboarding / help / tournament-preview) render no sidebar or bottom nav, so no
   // bell or badge consumes the notification count there. Compute this up front to gate the hook below.
   const isOnboarding = pathname.endsWith('/admin/onboarding');
@@ -52,12 +67,16 @@ export default function AdminChrome({
   if (isCanceled && billingPath && !pathname.startsWith(billingPath)) {
     return <CancellationGuard />;
   }
+  // The kit's ground (the coach shell's page tone and grid). Not on the help guide yet: it is pinned
+  // dark by ruling until slice 5 moves it onto the theme (R4), and a cream margin round a dark
+  // reading surface would be a third look, not either of the two.
+  const kitGround = kit && !isHelp;
   const shellClassName = isTournamentPreview
     ? styles.adminPreviewShell
-    : `${styles.adminShell} ${isFocusedAdmin ? styles.adminShellFocused : ''}`;
+    : `${styles.adminShell} ${isFocusedAdmin ? styles.adminShellFocused : ''}${kitGround ? ` ${styles.adminShellKit}` : ''}`;
   const mainClassName = isTournamentPreview
     ? styles.adminPreviewMain
-    : `${styles.adminMain} ${isFocusedAdmin ? styles.adminMainFocused : ''}`;
+    : `${styles.adminMain} ${isFocusedAdmin ? styles.adminMainFocused : ''}${kitGround ? ` ${styles.adminMainKit}` : ''}`;
 
   return (
     <AdminDensityProvider>
@@ -80,10 +99,14 @@ export default function AdminChrome({
             onNotifCountChange={notif.setCount}
           />
         )}
-        {!isFocused && <AdminSidebar />}
+        {!isFocused && (kit ? <AdminKitRail /> : <AdminSidebar />)}
         <main className={mainClassName}>
           {isFocused ? (
-            children
+            // R2 — a public page previewed inside the kit admin is the public page: the island puts
+            // back the org's colours and the public dark palette (globals.css, `data-public-preview`).
+            kit && isTournamentPreview
+              ? <div className={styles.previewIsland} data-public-preview>{children}</div>
+              : children
           ) : (
             <>
               {/* The Flip: one persistent shell header (event/org identity + status + pill), desktop
@@ -92,6 +115,7 @@ export default function AdminChrome({
               <AdminEventHeader />
               <div className={styles.mainPad}>
                 <EnablePushBanner />
+                {kit && <AdminKitProgramRow key={pathname} />}
                 {children}
               </div>
             </>
@@ -101,7 +125,9 @@ export default function AdminChrome({
             properties don't reach siblings); position:fixed keeps it out of the flex flow. */}
         {!isFocused && <LiveLogicRail />}
       </div>
-      {!isFocused && <AdminBottomNav notifUnread={notif.count} />}
+      {!isFocused && (kit
+        ? <AdminKitBottomNav notifUnread={notif.count} />
+        : <AdminBottomNav notifUnread={notif.count} />)}
       </AdminWorklistProvider>
     </AdminDensityProvider>
   );

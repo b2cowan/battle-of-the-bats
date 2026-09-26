@@ -68,3 +68,25 @@
 
 .dismiss:hover { color: var(--fl-text); }
 .dismiss:active { opacity: 0.6; }
+
+/* ── On the kit (Admin Design Continuity slice 1 — only with the switch on) ──
+   ADC specimen 4: "the strip above [the bar] keeps its content and becomes a white kit row" — the
+   card tone between two hairlines, the one waiting thing in the body type and the secondary ink, its
+   icon in amber, the way in in olive. Same height, same content, same dismiss. */
+:global([data-admin-kit]) .strip {
+  background-color: var(--card-bg);
+  background-image: none;
+  border-top: 1px solid var(--home-line);
+  border-bottom: 1px solid var(--home-line);
+}
+:global([data-admin-kit]) .action { color: var(--text-secondary); font-family: var(--font-sans); }
+:global([data-admin-kit]) .label {
+  font-size: var(--type-body);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+}
+:global([data-admin-kit]) .icon { color: var(--home-amber); }
+:global([data-admin-kit]) .arrow { color: var(--home-olive); opacity: 1; }
+:global([data-admin-kit]) .dismiss { color: var(--text-tertiary); }
+:global([data-admin-kit]) .dismiss:hover { color: var(--text-primary); }

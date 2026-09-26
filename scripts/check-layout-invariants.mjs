@@ -33,6 +33,15 @@
  *   node scripts/check-layout-invariants.mjs --only=a,b      just these screen ids
  *   node scripts/check-layout-invariants.mjs --width=361     just this width
  *   node scripts/check-layout-invariants.mjs --list          print the screen list and exit
+ *   … --theme=dark | warm      run in that account theme (default: the session's own — warm)
+ *   … --dump=<file.json>       also write every finding this run saw, for a before/after diff
+ *   … --admin-kit              with the Admin Design Continuity switch ON (`lib/admin-kit-preview.ts`)
+ *
+ * ⚠ THE BASELINE HAS NO THEME. It was recorded in the default (warm — no UAT session stores a
+ * theme), so a `--theme=dark` run reads dark findings against warm entries: use it with `--dump`
+ * to compare two runs of your own, never to `--init` or `--prune` (both refuse it). Added for the
+ * Admin Design Continuity slices, which change the shared warm palette and must show that no coach
+ * screen moved in EITHER theme.
  *
  * Needs the dev server running, and the UAT sessions present. Repair commands are printed on
  * failure rather than assumed.
@@ -162,6 +171,20 @@ const val = (f) => argv.find((a) => a.startsWith(`${f}=`))?.split('=')[1];
 const mode = has('--init') ? 'init' : has('--report') ? 'report' : has('--prune') ? 'prune' : 'check';
 let onlyIds = val('--only')?.split(',').map((s) => s.trim()).filter(Boolean);
 const onlyWidth = val('--width');
+const theme = val('--theme');
+const dumpFile = val('--dump');
+// The admin kit switch — the cookie the dev-only door writes (ADMIN_KIT_COOKIE in
+// lib/admin-kit-preview.ts; `tests/unit/admin-kit-switch-guard.test.ts` pins the name). The baseline
+// was recorded switch-OFF, so a kit run is a --dump comparison, never an --init (refused below).
+const adminKit = has('--admin-kit');
+if (theme && theme !== 'dark' && theme !== 'warm') {
+  console.error(`✗ --theme must be dark or warm (got "${theme}")`);
+  process.exit(1);
+}
+if ((theme || adminKit) && (mode === 'init' || mode === 'prune')) {
+  console.error('✗ --theme / --admin-kit cannot write the baseline: it was recorded in the default theme, switch off.');
+  process.exit(1);
+}
 
 /**
  * `--changed` — pick the screens the working tree actually touches.
@@ -1169,6 +1192,17 @@ for (const { session, clock, list } of groups) {
       localStorage.setItem('fl_nav_groups', JSON.stringify(['operations', 'setup', 'admin']));
     } catch { /* private-mode browsers throw; the sweep then measures the defaults */ }
   });
+  // `--theme`: the product's own device fast-path (`fl_user_theme`, read pre-paint by the root
+  // no-flash script). Only the consumer shell reconciles against the account, and no sweep screen
+  // is a consumer screen, so this is the whole of the theme choice for every screen measured here.
+  if (theme) {
+    await context.addInitScript((t) => {
+      try { localStorage.setItem('fl_user_theme', t); } catch { /* private mode: the default stands */ }
+    }, theme);
+  }
+  if (adminKit) {
+    await context.addCookies([{ name: 'flhq_admin_kit', value: '1', url: ctx.baseUrl }]);
+  }
 
   for (const w of widths) {
     if (aborted) break;
@@ -1323,6 +1357,23 @@ if (aborted) {
   process.exit(1);
 }
 memory.summarise();
+
+// `--dump`: every finding this run saw, keyed exactly as the baseline keys them, plus what could
+// not be measured — so two runs (a slice's before and after) diff as sets. Written before the
+// modes below, which may exit non-zero on a finding the dump exists to record.
+if (dumpFile) {
+  const out = path.resolve(ROOT, dumpFile);
+  mkdirSync(path.dirname(out), { recursive: true });
+  writeFileSync(out, JSON.stringify({
+    generated: new Date().toISOString(),
+    theme: theme ?? 'default',
+    adminKit,
+    pairs: pairCount,
+    findings: Object.fromEntries(findings.map((f) => [keyOf(f), f.detail])),
+    unmeasured: [...navFailures.map((f) => f.label), ...landingFailures.map((f) => f.label)],
+  }, null, 2) + '\n');
+  console.log(`\nDump: ${path.relative(ROOT, out)} (${findings.length} findings)`);
+}
 
 // ── hard failures first: a screen we could not measure is not a pass ──────────
 if (navFailures.length || landingFailures.length) {

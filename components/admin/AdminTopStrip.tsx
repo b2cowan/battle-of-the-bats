@@ -35,7 +35,9 @@ import { useRoleSummary } from '@/lib/use-role-summary';
 import { useOrg } from '@/lib/org-context';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { getNotificationSettingsHref } from '@/lib/billing-urls';
-import styles from './AdminTopStrip.module.css';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import legacyStyles from './AdminTopStrip.module.css';
+import kitStyles from '@/components/coaches/CoachTopStrip.module.css';
 
 export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
   /** Hoisted unread count from the admin shell — see the header comment. */
@@ -50,6 +52,14 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
    *  binding sandbox rule is hide the entry point, never let it dead-end. The wordmark beside it
    *  goes inert for the same reason (BrandLockup). False for every real org. */
   const inSandbox = useIsSandbox();
+  // Admin Design Continuity — with the switch on, the strip wears the COACHES PORTAL'S strip,
+  // stylesheet and all (one stylesheet is the only way two strips cannot drift), its doors take
+  // their warm skins, and the account menu offers the Appearance choice: the admin follows the
+  // account theme now, so the "a toggle that visibly does nothing reads as broken" reason for
+  // hiding it (below) no longer holds. Off: every prop and class below is exactly today's.
+  const kit = useAdminKit();
+  const styles = kit ? kitStyles : legacyStyles;
+  const warm = kit ? { warm: true } : {};
 
   return (
     <header className={styles.strip}>
@@ -67,6 +77,7 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
             count={notifCount}
             onCountChange={onNotifCountChange}
             panelPlacement="topStrip"
+            {...warm}
           />
         )}
         {/* The account door opens IN PLACE (2026-09-01, shared with the coach strip — plan
@@ -80,9 +91,10 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
             settingsHref={
               currentOrg?.slug ? getNotificationSettingsHref(currentOrg.slug) : '/account/notifications'
             }
+            {...(kit ? { warm: true, showTheme: true } : {})}
           />
         )}
-        <WorkspacesPill workspaces={roleSummary?.workspaces ?? []} className={styles.pill} />
+        <WorkspacesPill workspaces={roleSummary?.workspaces ?? []} className={styles.pill} {...warm} />
       </div>
     </header>
   );

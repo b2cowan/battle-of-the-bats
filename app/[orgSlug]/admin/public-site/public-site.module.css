@@ -202,3 +202,57 @@
   text-decoration: none;
 }
 .previewLink:hover { color: var(--white-70, rgba(255,255,255,0.7)); }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 1 — only with the switch on) ═══════════════════════
+   The build prompt's second pilot area. Same fields, words and order; the portal's card, eyebrow,
+   field and "on" switch, in both themes. Every rule is scoped under `[data-admin-kit]` (the admin
+   shell, switch on), so the legacy rules above render untouched until the release slice deletes them.
+   ⚠ `.card` read `--border`, which IS the organization's brand colour at 25% — one of R1's ~196
+   reads; on the kit it is the neutral hairline, as every coach card is.
+   ⚠ TOKENS ONLY — `tests/unit/admin-kit-guard.test.ts` fails on a literal colour in a kit rule. */
+:global([data-admin-kit]) .card {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .sectionTitle {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .settingsLink {
+  color: var(--home-olive);
+  font-size: var(--type-support);
+  font-weight: 650;
+}
+:global([data-admin-kit]) .label { color: var(--text-secondary); font-size: var(--type-support); }
+:global([data-admin-kit]) .input {
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+  font-size: var(--type-body);
+}
+:global([data-admin-kit]) .input::placeholder { color: var(--text-tertiary); }
+:global([data-admin-kit]) .input:focus { border-color: var(--home-olive); }
+:global([data-admin-kit]) .hint,
+:global([data-admin-kit]) .charCount,
+:global([data-admin-kit]) .unsavedLabel,
+:global([data-admin-kit]) .muted,
+:global([data-admin-kit]) .previewLink,
+:global([data-admin-kit]) .accessDenied { color: var(--text-tertiary); }
+:global([data-admin-kit]) .previewLink:hover { color: var(--text-primary); }
+:global([data-admin-kit]) .charCountWarn { color: var(--home-live); }
+:global([data-admin-kit]) .accessDenied h2 { color: var(--text-primary); }
+/* The "on" switch — the portal's ink-on-lime "on" (the one lime FILL that survives on paper), a pill,
+   the knob in the ink that reads on each track. The settings-switch ROW is a kit gap Club Stage 1
+   builds; this is the switch itself, restyled in place. */
+:global([data-admin-kit]) .toggle {
+  border-radius: 999px;
+  background: var(--home-line-strong);
+  border-color: transparent;
+}
+:global([data-admin-kit]) .toggle:checked { background: var(--home-lime); border-color: var(--home-lime); }
+:global([data-admin-kit]) .toggle::after { background: var(--text-secondary); }
+:global([data-admin-kit]) .toggle:checked::after { background: var(--home-lime-ink); }

@@ -5,6 +5,7 @@ import { Globe, ExternalLink } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from './public-site.module.css';
 
 interface SiteForm {
@@ -123,13 +124,21 @@ export default function PublicSitePage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.headerIcon}><Globe size={20} /></div>
-        <div>
-          <h1 className={styles.pageTitle}>Public Site</h1>
-          <p className={styles.pageSub}>Edit your org&apos;s public-facing home page</p>
-        </div>
-      </div>
+      {/* F3 — the subtitle ("Edit your org's public-facing home page") is a description of the page,
+          not a fact on it, and the page's first card already says what it edits and where the rest
+          lives; on the kit it is not re-homed (listed in the slice 1 handoff). */}
+      <AdminPageHeader
+        legacy={(
+          <div className={styles.pageHeader}>
+            <div className={styles.headerIcon}><Globe size={20} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Public Site</h1>
+              <p className={styles.pageSub}>Edit your org&apos;s public-facing home page</p>
+            </div>
+          </div>
+        )}
+        title="Public Site"
+      />
 
       {currentOrg && (
         <Link href={`/${currentOrg.slug}`} target="_blank" rel="noopener noreferrer" className={styles.settingsLink}>

@@ -115,6 +115,14 @@ const GROUNDS: Record<string, RGB> = {
   // a ground defect — but the ground was still unheld, and the fix moves that text onto --home-dim,
   // which must now clear it. Lighter than paper, so it cannot fail alone; held so it stays measured.
   'unread row tint': parseHex('#F4F5F1'), // the "See all" feed + bell panel, unread rows
+  // ⚠ ADDED 2026-09-25 — THE ADMIN JOINS THIS PALETTE (Admin Design Continuity slice 1). The kit
+  // frame paints the portal's own grounds (paper, the white card, the bar, the olive-tinted active
+  // row — all held above), plus ONE the coaches portal never does: a CHOSEN filter chip (the
+  // portal's `.clubChipOn`, olive at 16%) sitting on the PAPER page rather than on a white card —
+  // the admin's lens rows live on the page. Computed (olive over #F8F4ED); the switch-on sweep of
+  // Families measured no failure on it. The olive clears it at 4.66:1, the thinnest margin the
+  // accent has anywhere, so it is held here before anything nudges either colour.
+  'chosen chip on paper': [222, 221, 204] as RGB, // admin Families lenses, switch on
 };
 
 /**
@@ -142,7 +150,7 @@ const ACCENTS = ['olive', 'live', 'amber', 'blue', 'win'] as const;
  * to avoid. Each entry below is a ground the sweep OBSERVED that accent rendering as text on.
  */
 const ACCENT_GROUNDS: Record<(typeof ACCENTS)[number], readonly string[]> = {
-  olive: ['white card', 'cream paper'],
+  olive: ['white card', 'cream paper', 'chosen chip on paper'],
   live:  ['white card', 'cream paper'],
   amber: ['white card', 'cream paper', 'warm chip'],
   blue:  ['white card', 'cream paper', 'help link row'],

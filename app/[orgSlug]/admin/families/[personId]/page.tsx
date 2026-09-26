@@ -25,6 +25,8 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { formatStoredDate } from '@/lib/timezone';
 import { useParams } from 'next/navigation';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import styles from '../families.module.css';
 
 interface Payload {
@@ -52,6 +54,7 @@ const shortDate = (iso: string) => formatStoredDate(iso);
 
 export default function FamilyPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const kit = useAdminKit();
   const params = useParams<{ personId: string }>();
   const personId = params?.personId;
   const base = `/${currentOrg?.slug ?? ''}/admin`;
@@ -141,21 +144,40 @@ export default function FamilyPage() {
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/families`} className={styles.backLink}><ArrowLeft size={13} /> Families</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.headerIcon}><Contact size={20} /></div>
-        <div>
-          <h1 className={styles.pageTitle}>{person.name}</h1>
-          <p className={styles.pageSub}>
-            Guardian · {currentChildren.length} current registration{currentChildren.length === 1 ? '' : 's'}
-            {formerChildren.length > 0 && ` · ${formerChildren.length} past`}
-          </p>
-        </div>
-      </div>
+      {/* On the kit the way back is the header's leading corner (backTo, below) — one back
+          treatment, as in the coaches portal. */}
+      {!kit && <Link href={`${base}/families`} className={styles.backLink}><ArrowLeft size={13} /> Families</Link>}
+      <AdminPageHeader
+        legacy={(
+          <div className={styles.pageHeader}>
+            <div className={styles.headerIcon}><Contact size={20} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>{person.name}</h1>
+              <p className={styles.pageSub}>
+                Guardian · {currentChildren.length} current registration{currentChildren.length === 1 ? '' : 's'}
+                {formerChildren.length > 0 && ` · ${formerChildren.length} past`}
+              </p>
+            </div>
+          </div>
+        )}
+        backTo={{ href: `${base}/families`, label: 'Families' }}
+        title={person.name}
+        // F3 — "Guardian" is who this person IS: an identity chip beside the name. The counts move to
+        // the Children card below, which is the list they count.
+        titleChips={<span className={`${styles.pill} ${styles.pillMute}`}>Guardian</span>}
+      />
 
       <div className={styles.grid}>
         <div className={styles.panel}>
-          <h2 className={styles.panelHead}>Children</h2>
+          <h2 className={styles.panelHead}>
+            Children
+            {kit && (
+              <span className={styles.panelScope}>
+                {currentChildren.length} current registration{currentChildren.length === 1 ? '' : 's'}
+                {formerChildren.length > 0 && ` · ${formerChildren.length} past`}
+              </span>
+            )}
+          </h2>
           {children.length === 0 && <p className={styles.panelFoot} style={{ border: 0, margin: 0, padding: 0 }}>No registrations attach to this person — their record came from a tryout.</p>}
           {children.map(c => (
             <div key={c.sourceRowId} className={`${styles.line} ${!c.current ? styles.lineSub : ''}`}>

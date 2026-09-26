@@ -27,6 +27,11 @@
      (design_decisions TH-3a resolved 2026-07-21: operator chrome pinned, not org-following.) */
   --platform-primary-rgb: 30, 58, 138;
   --platform-primary:     #1E3A8A;
+  /* The rest of the platform theme (lib/themes.ts `platform`: primaryLight, and the ink onPrimary
+     picks for the navy). Read by the admin kit's R1 block below, which puts these back where an
+     org's brand override had replaced them (Admin Design Continuity, 2026-09-25). */
+  --platform-primary-light: #D9F99D;
+  --platform-on-primary:    #FFFFFF;
 
   /* Primary color — default is the platform blue; overridden per-org via inline style on
      the [orgSlug] wrapper (public surfaces only — operator chrome reads --blueprint-blue). */
@@ -392,7 +397,7 @@
    select options already flip via tokens (--bg-2 → white, --white → ink); it just
    needs color-scheme:light so the OS popup chrome matches. */
 [data-color-mode="light"] select,
-html[data-user-theme="warm"] [data-coach-warm-enabled] select { color-scheme: light; }
+html[data-user-theme="warm"] [data-coach-warm-enabled] select:where(:not([data-public-preview] *)) { color-scheme: light; }
 
 [data-color-mode="light"] select option {
   background: #FFFFFF;
@@ -929,12 +934,31 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   --white-40: var(--home-dim);
   --white-35: var(--home-dim);
   --white-30: var(--home-line-strong);
+  /* ⚠ THREE STEPS THE LADDER SKIPPED, filled 2026-09-25 (Admin Design Continuity slice 1, the Phase 0
+     inventory's "theme gaps"). Each rendered its DARK white on cream wherever it was read: the
+     masthead's separator dots were the known case (`.teamHeaderMeta` stopped naming a token over it),
+     and the setup popover's "skipped" dot and the tryout-history stat strip's separator were the two
+     still doing it. --white-15 and --white-4 are declared nowhere at :root (every reader carries its
+     own fallback, so dark is unchanged); they are named here for the admin, whose readers fall back
+     to white literals. Each takes its neighbours' value — the ladder's own rule. */
+  --white-25: var(--home-line-strong);
   --white-20: var(--home-line-strong);
+  --white-15: var(--home-line);
   --white-10: var(--home-line);
   --white-8:  var(--home-card);
   --white-5:  var(--home-paper);
+  --white-4:  var(--home-paper);
   --white-05: var(--home-paper);
   --white-03: var(--home-paper);
+
+  /* ── The black-alpha ramp → the warm ink's own washes (filled 2026-09-25, same inventory) ──
+     Read ONLY by admin screens (wells, inset inputs, hover rows, the slot grid's scrims) — no coach
+     or public sheet uses it — so this changes nothing a customer sees until the admin carries the
+     marker. A 20% black on cream is a grey smudge; the warm ramp's fill → hairline → strong line is
+     the same three steps of "a shade darker than what it sits on". */
+  --black-20: var(--home-fill);
+  --black-30: var(--home-line);
+  --black-40: var(--home-line-strong);
 
   /* ── Re-anchor INHERITED text colour to the warm-scoped ink (the white-on-cream floor) ──
      `body { color: var(--white) }` resolves OUTSIDE this marker, so it computes to the DARK
@@ -1133,16 +1157,251 @@ html[data-user-theme="dark"] [data-coach-warm-enabled],
   --home-shadow:      0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.45);
 }
 
+/* ═══ THE ADMIN ON THE KIT (Admin Design Continuity, Phase 1) ═════════════════════════════════════
+   Everything in this section keys off `[data-admin-kit]`, which ONLY the admin shell carries and
+   ONLY while the dev switch is on (`lib/admin-kit-preview.ts`: false in every production build, off
+   by default on the dev server). With it off, not one rule here matches — the identity check
+   (`npm run identity:admin`) holds that every admin screen is pixel-identical. The shell carries
+   `[data-coach-warm-enabled]` beside it, so the warm block above (and the dark gate) apply to the
+   admin exactly as they do to the coaches portal. The release slice keeps these rules and deletes
+   the switch.
+
+   ── R1: THE ORGANIZATION'S COLOUR LEAVES THE ADMIN CHROME (owner ruling, 2026-09-25) ──
+   `app/[orgSlug]/layout.tsx` writes the org's brand onto `:root` for the whole org tree, admin
+   included, and the admin reads it in ~77 places (~196 counting --border). The coaches portal wears
+   no team colour; the admin is platform chrome too. So the shell puts the PLATFORM theme back —
+   the same values `:root` holds for an org with no brand override. The warm block above still wins
+   where it speaks (--border → the warm hairline, --primary-light → olive): it sits on this same
+   element at higher specificity, which is the order wanted — theme first, platform beneath. The
+   org's colours stay on its public pages (R2), including the admin's previews of them (below). */
+[data-admin-kit] {
+  --primary:       var(--platform-primary);
+  --primary-rgb:   var(--platform-primary-rgb);
+  --primary-light: var(--platform-primary-light);
+  --primary-glow:  rgba(var(--platform-primary-rgb), 0.35);
+  --primary-faint: rgba(var(--platform-primary-rgb), 0.08);
+  --border:        rgba(var(--platform-primary-rgb), 0.25);
+  --glow:          0 0 32px rgba(var(--platform-primary-rgb), 0.4);
+  --glow-sm:       0 0 16px rgba(var(--platform-primary-rgb), 0.25);
+  --on-primary:    var(--platform-on-primary);
+}
+
+/* ── R2: A PREVIEW OF A PUBLIC PAGE INSIDE THE ADMIN IS THE PUBLIC PAGE ──
+   The admin's previews (the tournament preview shell, the Public Site theme preview, the new-
+   tournament wizard's live preview) show what families will see: the org's colours, the public
+   dark palette, never the account theme. Inside the kit they would inherit the warm remap AND R1's
+   platform colours, so they mark themselves `data-public-preview` and this puts back every token
+   either of those changes — by REFERENCE to a `:root` snapshot (the help surface's technique, and
+   its reason: a hand-copied value drifts, and this portal has shipped that bug), never by value.
+   The org's colours come back because the snapshot resolves at `:root`, where the org layout (and
+   the tournament preview layout) wrote them; a preview that sets its own colours inline still wins.
+   ⚠ THE LIST MUST BE THE WARM BLOCK'S LIST plus R1's. `tests/unit/admin-kit-guard.test.ts` reads
+   both blocks and fails when a token is remapped above and not restored here. */
+:root {
+  --pv-pitch-black: var(--pitch-black);
+  --pv-bg: var(--bg);
+  --pv-bg-2: var(--bg-2);
+  --pv-bg-3: var(--bg-3);
+  --pv-hud-surface: var(--hud-surface);
+  --pv-surface: var(--surface);
+  --pv-surface-2: var(--surface-2);
+  --pv-bg-surface: var(--bg-surface);
+  --pv-bracket-card: var(--bracket-card);
+  --pv-structural-slate: var(--structural-slate);
+  --pv-card-bg: var(--card-bg);
+  --pv-bg-card: var(--bg-card);
+  --pv-bg-inset: var(--bg-inset);
+  --pv-fl-text: var(--fl-text);
+  --pv-data-gray: var(--data-gray);
+  --pv-white: var(--white);
+  --pv-white-90: var(--white-90);
+  --pv-white-85: var(--white-85);
+  --pv-white-80: var(--white-80);
+  --pv-white-75: var(--white-75);
+  --pv-white-70: var(--white-70);
+  --pv-white-65: var(--white-65);
+  --pv-white-60: var(--white-60);
+  --pv-white-55: var(--white-55);
+  --pv-white-50: var(--white-50);
+  --pv-white-45: var(--white-45);
+  --pv-white-40: var(--white-40);
+  --pv-white-35: var(--white-35);
+  --pv-white-30: var(--white-30);
+  --pv-white-25: var(--white-25);
+  --pv-white-20: var(--white-20);
+  --pv-white-15: var(--white-15);
+  --pv-white-10: var(--white-10);
+  --pv-white-8: var(--white-8);
+  --pv-white-5: var(--white-5);
+  --pv-white-4: var(--white-4);
+  --pv-white-05: var(--white-05);
+  --pv-white-03: var(--white-03);
+  --pv-black-20: var(--black-20);
+  --pv-black-30: var(--black-30);
+  --pv-black-40: var(--black-40);
+  --pv-text-primary: var(--text-primary);
+  --pv-text-secondary: var(--text-secondary);
+  --pv-text-tertiary: var(--text-tertiary);
+  --pv-border: var(--border);
+  --pv-border-2: var(--border-2);
+  --pv-border-subtle: var(--border-subtle);
+  --pv-logic-lime: var(--logic-lime);
+  --pv-logic-lime-rgb: var(--logic-lime-rgb);
+  --pv-lime-strong: var(--lime-strong);
+  --pv-lime-strong-rgb: var(--lime-strong-rgb);
+  --pv-blueprint-blue: var(--blueprint-blue);
+  --pv-blueprint-blue-rgb: var(--blueprint-blue-rgb);
+  --pv-blueprint-light: var(--blueprint-light);
+  --pv-primary-light: var(--primary-light);
+  --pv-danger: var(--danger);
+  --pv-danger-rgb: var(--danger-rgb);
+  --pv-danger-light: var(--danger-light);
+  --pv-warning: var(--warning);
+  --pv-warning-rgb: var(--warning-rgb);
+  --pv-warning-light: var(--warning-light);
+  --pv-success: var(--success);
+  --pv-success-rgb: var(--success-rgb);
+  --pv-success-light: var(--success-light);
+  --pv-info: var(--info);
+  --pv-info-rgb: var(--info-rgb);
+  --pv-info-light: var(--info-light);
+  --pv-success-strong: var(--success-strong);
+  --pv-warning-strong: var(--warning-strong);
+  --pv-danger-strong: var(--danger-strong);
+  --pv-badge-danger-ink: var(--badge-danger-ink);
+  --pv-badge-warning-ink: var(--badge-warning-ink);
+  --pv-badge-success-ink: var(--badge-success-ink);
+  --pv-gold-strong: var(--gold-strong);
+  --pv-gold: var(--gold);
+  --pv-gold-rgb: var(--gold-rgb);
+  --pv-evt-external-tournament: var(--evt-external-tournament);
+  --pv-evt-tournament-game: var(--evt-tournament-game);
+  --pv-evt-league-game: var(--evt-league-game);
+  --pv-evt-practice: var(--evt-practice);
+  --pv-evt-team-event: var(--evt-team-event);
+  --pv-glow-blue: var(--glow-blue);
+  --pv-glow-lime: var(--glow-lime);
+  --pv-primary: var(--primary);
+  --pv-primary-rgb: var(--primary-rgb);
+  --pv-primary-glow: var(--primary-glow);
+  --pv-primary-faint: var(--primary-faint);
+  --pv-glow: var(--glow);
+  --pv-glow-sm: var(--glow-sm);
+  --pv-on-primary: var(--on-primary);
+}
+[data-admin-kit] [data-public-preview] {
+  --pitch-black: var(--pv-pitch-black);
+  --bg: var(--pv-bg);
+  --bg-2: var(--pv-bg-2);
+  --bg-3: var(--pv-bg-3);
+  --hud-surface: var(--pv-hud-surface);
+  --surface: var(--pv-surface);
+  --surface-2: var(--pv-surface-2);
+  --bg-surface: var(--pv-bg-surface);
+  --bracket-card: var(--pv-bracket-card);
+  --structural-slate: var(--pv-structural-slate);
+  --card-bg: var(--pv-card-bg);
+  --bg-card: var(--pv-bg-card);
+  --bg-inset: var(--pv-bg-inset);
+  --fl-text: var(--pv-fl-text);
+  --data-gray: var(--pv-data-gray);
+  --white: var(--pv-white);
+  --white-90: var(--pv-white-90);
+  --white-85: var(--pv-white-85);
+  --white-80: var(--pv-white-80);
+  --white-75: var(--pv-white-75);
+  --white-70: var(--pv-white-70);
+  --white-65: var(--pv-white-65);
+  --white-60: var(--pv-white-60);
+  --white-55: var(--pv-white-55);
+  --white-50: var(--pv-white-50);
+  --white-45: var(--pv-white-45);
+  --white-40: var(--pv-white-40);
+  --white-35: var(--pv-white-35);
+  --white-30: var(--pv-white-30);
+  --white-25: var(--pv-white-25);
+  --white-20: var(--pv-white-20);
+  --white-15: var(--pv-white-15);
+  --white-10: var(--pv-white-10);
+  --white-8: var(--pv-white-8);
+  --white-5: var(--pv-white-5);
+  --white-4: var(--pv-white-4);
+  --white-05: var(--pv-white-05);
+  --white-03: var(--pv-white-03);
+  --black-20: var(--pv-black-20);
+  --black-30: var(--pv-black-30);
+  --black-40: var(--pv-black-40);
+  --text-primary: var(--pv-text-primary);
+  --text-secondary: var(--pv-text-secondary);
+  --text-tertiary: var(--pv-text-tertiary);
+  --border: var(--pv-border);
+  --border-2: var(--pv-border-2);
+  --border-subtle: var(--pv-border-subtle);
+  --logic-lime: var(--pv-logic-lime);
+  --logic-lime-rgb: var(--pv-logic-lime-rgb);
+  --lime-strong: var(--pv-lime-strong);
+  --lime-strong-rgb: var(--pv-lime-strong-rgb);
+  --blueprint-blue: var(--pv-blueprint-blue);
+  --blueprint-blue-rgb: var(--pv-blueprint-blue-rgb);
+  --blueprint-light: var(--pv-blueprint-light);
+  --primary-light: var(--pv-primary-light);
+  --danger: var(--pv-danger);
+  --danger-rgb: var(--pv-danger-rgb);
+  --danger-light: var(--pv-danger-light);
+  --warning: var(--pv-warning);
+  --warning-rgb: var(--pv-warning-rgb);
+  --warning-light: var(--pv-warning-light);
+  --success: var(--pv-success);
+  --success-rgb: var(--pv-success-rgb);
+  --success-light: var(--pv-success-light);
+  --info: var(--pv-info);
+  --info-rgb: var(--pv-info-rgb);
+  --info-light: var(--pv-info-light);
+  --success-strong: var(--pv-success-strong);
+  --warning-strong: var(--pv-warning-strong);
+  --danger-strong: var(--pv-danger-strong);
+  --badge-danger-ink: var(--pv-badge-danger-ink);
+  --badge-warning-ink: var(--pv-badge-warning-ink);
+  --badge-success-ink: var(--pv-badge-success-ink);
+  --gold-strong: var(--pv-gold-strong);
+  --gold: var(--pv-gold);
+  --gold-rgb: var(--pv-gold-rgb);
+  --evt-external-tournament: var(--pv-evt-external-tournament);
+  --evt-tournament-game: var(--pv-evt-tournament-game);
+  --evt-league-game: var(--pv-evt-league-game);
+  --evt-practice: var(--pv-evt-practice);
+  --evt-team-event: var(--pv-evt-team-event);
+  --glow-blue: var(--pv-glow-blue);
+  --glow-lime: var(--pv-glow-lime);
+  --primary: var(--pv-primary);
+  --primary-rgb: var(--pv-primary-rgb);
+  --primary-glow: var(--pv-primary-glow);
+  --primary-faint: var(--pv-primary-faint);
+  --glow: var(--pv-glow);
+  --glow-sm: var(--pv-glow-sm);
+  --on-primary: var(--pv-on-primary);
+  /* The warm block also re-anchors inherited TEXT to its ink; the public page's is white. */
+  color: var(--white);
+  color-scheme: dark;
+}
+
+/* ⚠ THE ISLAND ALSO NEEDS THE WARM CLASS RULES TO STOP AT IT. The block above puts back TOKENS; the
+   warm skin also restyles a few CLASSES directly (the buttons, the card hover, the native select and
+   date controls just below and further down), and those reach any descendant of the marker — which
+   turned the tournament preview's navy "Register" lime (found by the slice 1 on/off pixel probe).
+   Each of those rules therefore carries `:where(:not([data-public-preview] *))`: zero specificity, so
+   every rule weighs exactly what it did; and outside the admin kit there is no island, so the
+   coaches portal matches exactly as before. A new warm CLASS rule here needs the same clause. */
 
 /* Warm CTA — the lime primary button (.btn-lime) is the ratified ink-on-lime call to action:
    on paper it must stay TRUE lime with dark ink, not the drab olive the accent remap would give
    it (olive is for lime-as-text, never lime-as-FILL). Restores the bright CTA on the warm ground. */
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime {
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:where(:not([data-public-preview] *)) {
   background: var(--home-lime);
   border-color: var(--home-lime);
   color: var(--home-lime-ink);
 }
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:hover {
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:where(:not([data-public-preview] *)):hover {
   background: rgba(var(--home-lime-rgb), 0.82);
   border-color: rgba(var(--home-lime-rgb), 0.82);
 }
@@ -1152,12 +1411,12 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:hover {
    Warm it to the ratified ink-on-lime primary (same as .btn-lime / the coaches .btnPrimary CTA) — the
    ONE appealing warm primary language across the portal; olive stays a text/border accent, never a
    button FILL. Cold blue glow drops on paper. Used portal-wide (e.g. tryouts "Open day-of check-in"). */
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary {
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([data-public-preview] *)) {
   background: var(--home-lime);
   color: var(--home-lime-ink);
   box-shadow: none;
 }
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:hover {
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([data-public-preview] *)):hover {
   background: rgba(var(--home-lime-rgb), 0.82);
   box-shadow: none;
   filter: none;
@@ -1166,10 +1425,10 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:hover {
 /* Warm outline button (.btn-outline) — its text already warms (--primary-light→olive) but its border
    stays platform navy (--primary is not remapped) and its hover fill is navy-faint. Pair the border to
    the olive text and use an olive-soft hover wash so it reads as a coherent olive outline on cream. */
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline {
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)) {
   border-color: var(--home-olive);
 }
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:hover {
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)):hover {
   background: var(--home-olive-soft);
   box-shadow: none;
 }
@@ -1180,16 +1439,16 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:hover {
    ⚠ Deliberately NOT fixed by remapping --white-10 itself — that step is used as a BORDER in 53
    places against 42 as a background, so remapping it would silently lighten every one of those
    hairlines. The fill moves; the line does not. Owner-approved 2026-08-03, mockup 501936c4. */
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost {
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost:where(:not([data-public-preview] *)) {
   background: var(--home-fill);
 }
-html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost:hover {
+html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost:where(:not([data-public-preview] *)):hover {
   background: var(--home-line);
 }
 
 /* Warm card hover — the global .card hover borders in platform navy; soften to a warm hairline + drop
    the cold blue glow so hovering a card on cream doesn't flash a navy edge. */
-html[data-user-theme="warm"] [data-coach-warm-enabled] .card:hover {
+html[data-user-theme="warm"] [data-coach-warm-enabled] .card:where(:not([data-public-preview] *)):hover {
   border-color: var(--home-line-strong);
   box-shadow: var(--highlight-top);
 }
@@ -1410,25 +1669,32 @@ h1, h2, h3, h4, h5, h6 {
   border-radius: var(--radius);
 }
 
-/* ─── Card style variants (set via data-card-style on org layout wrapper) ───── */
-[data-card-style="glass"] .card {
+/* ─── Card style variants (set via data-card-style on org layout wrapper) ─────
+   ⚠ F1 (Admin Design Continuity, 2026-09-25): the org's card style is a PUBLIC-page setting, but the
+   org layout stamps it on its whole tree, so a club that picked "glass" got glass on every one of its
+   admin's ~227 cards. Under the admin kit (`[data-admin-kit]`, switch on) the variants stop at the
+   admin shell. `:where()` carries ZERO specificity, so each rule weighs exactly what it always did
+   and nothing it used to beat (or lose to) changes; with the switch off `:not()` matches every card,
+   which is today's behaviour. A public preview inside the admin keeps the org's style: it is
+   `[data-public-preview]`, and a card inside it is excluded from the exclusion. */
+[data-card-style="glass"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card) {
   background: rgba(26, 21, 48, 0.4);
   backdrop-filter: blur(16px);
 }
-[data-card-style="outlined"] .card {
+[data-card-style="outlined"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card) {
   background: transparent;
   border-width: 2px;
 }
-[data-card-style="flat"] .card {
+[data-card-style="flat"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card) {
   background: var(--surface);
   border: none;
   box-shadow: none;
 }
-[data-card-style="flat"] .card:hover {
+[data-card-style="flat"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card):hover {
   box-shadow: none;
   transform: none;
 }
-[data-card-style="flat"] .card:active {
+[data-card-style="flat"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card):active {
   transform: none;
 }
 
@@ -1691,8 +1957,8 @@ input[type="datetime-local"] {
 
 /* …but light on light surfaces (warm coaches portal), so the native picker + text
    render legibly on cream. Same treatment could extend to [data-color-mode="light"]. */
-html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"],
-html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"] {
+html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"]:where(:not([data-public-preview] *)),
+html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"]:where(:not([data-public-preview] *)) {
   color-scheme: light;
 }
 
@@ -1722,13 +1988,13 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
    the accounting DateField, which gave up and drew its own icon) because Chrome renders the glyph
    as a masked background-COLOUR — and `filter` would take the hover highlight with it. Removing a
    filter is the one safe direction. */
-html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"]::-webkit-calendar-picker-indicator,
-html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator,
+html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator {
   filter: none;
   opacity: 0.65;
 }
-html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"]::-webkit-calendar-picker-indicator:hover,
-html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator:hover,
+html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator:hover {
   opacity: 1;
   background: rgba(0, 0, 0, 0.06);
 }

@@ -156,7 +156,9 @@ export default function TournamentCreationPreview({
         </div>
       )}
 
-      <div className={styles.phone} aria-hidden="true">
+      {/* `data-public-preview` (R2, Admin Design Continuity): this mock IS the public page, so under
+          the admin kit it keeps the public dark palette rather than the account theme (globals.css). */}
+      <div className={styles.phone} aria-hidden="true" data-public-preview>
         <div className={styles.notch} />
         <div className={styles.screen} style={themeVars}>
           <span className={styles.badge}>

@@ -34,11 +34,16 @@ records the history): dark stayed byte-identical in production until the one rel
    that decides whether the admin kit is on, and a single attribute set on each shell's outermost element
    when it is. That element carries BOTH `data-coach-warm-enabled` (so the existing warm palette block in
    `app/globals.css` applies) and `data-admin-kit` (for admin-only kit rules). Nothing else decides it.
-2. **Off in production by construction**, not by configuration: a production build can never turn it on
-   until the release slice deletes the switch. **Off by default on the dev server too.** Other sessions walk
-   admin screens on the same server, and they must not meet a half-restyled admin. It turns on per browser
-   through a dev-only door (for example, a query parameter that sets a cookie). The server reads it in the
-   admin layout and in the guest shells' layouts, so there is no flash.
+2. **Never on the production branch, fail-closed** (amended by the owner 2026-09-25, slice 1): the
+   `master` build can never turn it on until the release slice deletes the switch, and neither can any
+   production build that cannot prove it is staging. It MAY be turned on on the local dev server and on
+   the **staging deploy** (the `dev` branch's build — a deploy with no customers, and the place to test
+   with real test accounts on a phone). The first version keyed this to "any production build", which
+   locked staging out too. **Off by default everywhere it may be on.** Other sessions walk admin screens
+   on the same server and the same staging site, and they must not meet a half-restyled admin. It turns
+   on per browser through the door `/api/dev/admin-kit?on=1&next=/<org>/admin` (`on=0` turns it off).
+   The server reads it in the admin layout (and, from slice 5, the guest shells' layouts), so there is no
+   flash.
 3. **Everything visible hangs off it.** Kit CSS is scoped under `[data-admin-kit]`. The new frame and the
    new page header render only when it is on, and the legacy ones render when it is off; both live until
    the release. **A colour converted to a token must resolve to exactly today's value when the switch is

@@ -402,11 +402,11 @@ dialog.truesize::backdrop{background:#16201899}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · next: slice 1</small></div>
+  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) built 2026-09-25 · next: slice 2</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25">Build</li>
+    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -955,7 +955,7 @@ dialog.truesize::backdrop{background:#16201899}
     <li><strong>R5</strong> The foundation lands before the Club Stage 1 build.</li>
   </ol>
   <h2>How Phase 1 is built (owner, 2026-09-25)</h2>
-  <p>Behind a switch that is off in production by construction and off by default on the shared dev server, the way the coaches portal's warm look was built. Every session promotes the same branch, so nothing may show before the release day. Each slice proves that, with the switch off, every admin screen still matches the baseline pixel for pixel. One slice per session, from ADMIN_DESIGN_CONTINUITY_PHASE1_BUILD_PROMPT.md:</p>
+  <p>Behind a switch that the production site can never turn on, and that is off by default on the shared dev server and the staging site, the way the coaches portal's warm look was built. (Widened on 2026-09-25 so staging can turn it on, for testing with real test accounts.) Every session promotes the same branch, so nothing may show before the release day. Each slice proves that, with the switch off, every admin screen still matches the baseline pixel for pixel. One slice per session, from ADMIN_DESIGN_CONTINUITY_PHASE1_BUILD_PROMPT.md:</p>
   <ol start="0">
     <li><strong>Baseline</strong>: every admin and guest screen in the layout sweep, plus the switch-off identity check. Needs the dev server alone.</li>
     <li><strong>Switch, theme, frame</strong>: the theme's missing values, the organization's colour and card style out, the top strip, rail, phone bar, page header and event header; Families and the Public site editor.</li>
@@ -1005,12 +1005,55 @@ dialog.truesize::backdrop{background:#16201899}
     <li>The platform's navy is used as a text colour in 26 places. On the dark background it is almost invisible (1.4 to 1, where the floor is 4.5). The faintest greys and the red and blue as text also fall short.</li>
     <li>The layout sweep never recognised the product's own "page not found" screen, so a screen that failed to load counted as a pass. Fixed for every screen, the coaches portal's included.</li>
   </ul>
+  <h2>Slice 1 — the switch and the frame (2026-09-25)</h2>
+  <p>Nothing customers see changed. The new admin exists only in a browser that has turned the switch on, on the dev server or the staging site. The production site cannot turn it on.</p>
+  <p><strong>To see it:</strong> sign in with any test account as you normally would, then open <code>/api/dev/admin-kit?on=1&amp;next=/uat-rep-club/admin</code> on the same site: <code>localhost:3000</code> on your computer, or the staging address once this is pushed. Put your own organization's address where it says <code>uat-rep-club</code>. To go back: the same address with <code>on=0</code>. It changes only your browser; everyone else keeps today's admin. Your account's Warm or Dark setting decides the palette. Change it from the account menu, which now offers Appearance in the admin too.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Part</th><th>What you see with the switch on</th></tr></thead>
+    <tbody>
+      <tr><td>Theme</td><td>Every admin screen follows your Warm or Dark setting. Screens the later slices restyle already take the palette; their own parts still look like today's admin until their slice.</td></tr>
+      <tr><td>Organization colour</td><td>Gone from the admin: buttons, borders and glows use the platform's colours. The organization's colours and card style stay on its public pages.</td></tr>
+      <tr><td>Previews of public pages</td><td>The tournament preview, the tournament's theme preview and the new-tournament preview look exactly like the public page, whatever your setting. Proven pixel for pixel on the preview's schedule page.</td></tr>
+      <tr><td>Desktop sidebar</td><td>One sidebar that is always filled in: Overview at the top, then the club's programs, then Organization. The program you are in opens onto its pages. Inside a tournament, today's tournament sidebar, restyled, with Overview still above it.</td></tr>
+      <tr><td>Phone bar and More</td><td>For a club: Overview, the club's first three programs, More. For a tournament: today's tabs, order, counts and "what's waiting" strip. More is the coaches portal's own menu, sitting on top of the bar, and reaches every program and Organization.</td></tr>
+      <tr><td>Headers</td><td>The event header as drawn: the organization and dates above the name, one status chip, the flip button kept. Page headers carry no subtitle line.</td></tr>
+      <tr><td>Families and Public site editor</td><td>Fully restyled on the coaches portal's parts, both themes. Same words, columns and actions.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Facts that moved out of a subtitle line</strong> (none dropped silently):</p>
+  <ul>
+    <li>Families: the "59 families · 93 children attached" line now opens the list.</li>
+    <li>A family page: "Guardian" is a chip beside the name; "2 current registrations · 2 past" heads the Children card.</li>
+    <li>Possible duplicates: "Nothing here merges on its own" now opens the list it describes, word for word.</li>
+    <li>Public site editor: "Edit your org's public-facing home page" is dropped. It describes the page rather than stating a fact, and the first card already says what the page edits.</li>
+  </ul>
+  <p><strong>Where the build differs from the drawings, and why:</strong></p>
+  <ul>
+    <li>More opens as the coaches portal's real full-width menu, not the narrower one drawn. The drawing's own note says "as the coach sheet does".</li>
+    <li>The Families filter chips use the coaches portal's real filter chip (the body face), not the drawn monospace chip.</li>
+    <li>Club screens keep the band with the organization's name and the flip button. The club drawings show no band, but removing it would remove the flip.</li>
+    <li>The phone bar's labels are in mixed case, as drawn. The coaches portal's bar uses capitals, and in capitals "Accounting" is cut off on a phone.</li>
+    <li>Held for Club Stage 1, whose screens they open: the Audit log and Notifications rows, the "what the club runs" program order, and the waiting counts.</li>
+  </ul>
+  <p><strong>Found on the way, written down rather than fixed here:</strong></p>
+  <ul>
+    <li>Today's house league sidebar links "Past Seasons" to a page that does not exist.</li>
+    <li>The coaches portal's Dark phone bar has labels below the reading floor (inactive tabs, and More's section headings). The admin shares that bar, so one fix repairs both.</li>
+    <li>In the coaches portal's Dark theme, about 30 borders take the organization's colour: the same leak this program removes from the admin.</li>
+    <li>An organization's chosen font reaches both the admin and the coaches portal.</li>
+  </ul>
+  <p><strong>Open questions for you:</strong></p>
+  <ul>
+    <li>The coaches portal's cards carry a dark shadow on cream. The admin matches it for continuity. Should both portals soften it?</li>
+    <li>The phone bar: mixed case (the admin, as drawn) or capitals (the coaches portal today)? One of the two should move.</li>
+    <li>The Dark phone bar's faint labels: fix them in both portals now, or with slice 6?</li>
+  </ul>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
     <tbody>
       <tr><td>0</td><td>The baseline: sweep, identity check, contrast</td><td>Done 2026-09-25</td></tr>
-      <tr><td>1</td><td>The switch, the theme's gaps, the organization's colour and card style out, the frame, Families, Public site editor</td><td>Next</td></tr>
+      <tr><td>1</td><td>The switch, the theme's gaps, the organization's colour and card style out, the frame, Families, Public site editor</td><td>Built 2026-09-25 (commit on your word)</td></tr>
       <tr><td>2</td><td>Buttons, chips, type; the rest of Hub and Organization; House league</td><td>Not started</td></tr>
       <tr><td>3</td><td>Rep Teams, Accounting (money tables restyled in place)</td><td>Not started</td></tr>
       <tr><td>4</td><td>Tournaments</td><td>Not started</td></tr>

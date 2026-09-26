@@ -473,10 +473,63 @@ function checkScope(name) {
   return true;
 }
 
+// ── the admin kit: STRICT, no ratchet (Admin Design Continuity, Phase 1) ─────────────────────────
+// Phase 1 moves the admin onto the coaches portal's kit behind a dev switch, one area per slice. The
+// rules above count only hex and BRAND rgb; white/black alphas and one-off tints pass them, and
+// those are exactly the literals a theme cannot move (the Phase 0 inventory: 769 of the admin's 812).
+// So the KIT LAYER is held to more: every rule in a kit stylesheet, and every rule an admin sheet
+// scopes under `[data-admin-kit]`, may hold NO literal colour at all — no hex, no rgb()/hsl() without
+// a var() inside, no named colour. Zero, not a baseline: the layer is new, so it starts clean and a
+// restyled area cannot regress. It WIDENS as the areas come clean — when an area's legacy rules are
+// deleted (the release slice), its whole stylesheet joins KIT_FILES.
+const KIT_DIRS = ['components/admin/kit/'];
+const KIT_FILES = new Set(['components/admin/AdminPageHeader.module.css']);
+const KIT_LITERAL = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\((?![^()]*var\()[^()]*\)|(?:^|\s)(?:white|black)(?:\s|$)/;
+
+function checkAdminKit() {
+  const files = scopeFiles(SCOPES.operator).filter(f => f.endsWith('.css'));
+  const offenders = [];
+  let kitRules = 0;
+  for (const f of files) {
+    const wholeFile = KIT_FILES.has(f) || KIT_DIRS.some(d => f.startsWith(d));
+    const raw = readFileSync(join(ROOT, f), 'utf8');
+    if (!wholeFile && !raw.includes('[data-admin-kit]')) continue;
+    const rawLines = raw.split(/\r?\n/);
+    const txt = blankComments(raw);
+    for (const m of txt.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const selector = m[1].trim();
+      if (!wholeFile && !selector.includes('[data-admin-kit]')) continue;
+      kitRules++;
+      const bodyStart = m.index + m[0].indexOf('{') + 1;
+      let offset = 0;
+      for (const decl of m[2].split(';')) {
+        const colon = decl.indexOf(':');
+        const value = colon > -1 ? decl.slice(colon + 1).trim() : '';
+        if (value && KIT_LITERAL.test(value)) {
+          const line = txt.slice(0, bodyStart + offset + decl.indexOf(value)).split('\n').length;
+          if (!EXEMPT.test(rawLines[line - 1] || '') && !EXEMPT.test(rawLines[line - 2] || '')) {
+            offenders.push({ f, line, selector: selector.split('\n').pop().trim(), value });
+          }
+        }
+        offset += decl.length + 1;
+      }
+    }
+  }
+  if (offenders.length) {
+    console.error(`✖ Admin kit (strict): ${offenders.length} literal colour(s) in the kit layer — tokens only.`);
+    for (const o of offenders) console.error(`    ${o.f}:${o.line}  ${o.selector}  →  ${o.value}`);
+    console.error('  Use a var(--token) the warm block and the dark gate both define (app/globals.css).');
+    return false;
+  }
+  console.log(`✓ Admin kit (strict): ${kitRules} kit rule(s), no literal colour.`);
+  return true;
+}
+
 if (mode === 'check') {
   const names = SCOPE === 'all' ? Object.keys(SCOPES) : [SCOPE];
   let ok = true;
   for (const n of names) ok = checkScope(n) && ok;
+  if (SCOPE === 'all' || SCOPE === 'operator') ok = checkAdminKit() && ok;
   if (SCOPE === 'all') ok = coverage() && ok;
   process.exit(ok ? 0 : 1);
 }

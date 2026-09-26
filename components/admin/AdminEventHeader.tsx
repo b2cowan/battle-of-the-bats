@@ -18,7 +18,10 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useAdminFlip } from '@/lib/use-admin-flip';
 import { resolvePhase, isWithinEventDates, PHASE_LABEL } from '@/lib/tournament-phase';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import { kit as coachKit } from '@/components/coaches/kit';
 import styles from './AdminEventHeader.module.css';
+import kitStyles from './kit/AdminKitEventHeader.module.css';
 
 /** Nearest scrollable ancestor (the app-shell scroll container on mobile), or null. */
 function getScrollParent(el: HTMLElement): HTMLElement | null {
@@ -52,6 +55,7 @@ export default function AdminEventHeader() {
   const { currentOrg } = useOrg();
   const { currentTournament } = useTournament();
   const flip = useAdminFlip();
+  const kit = useAdminKit();
   const ref = useRef<HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -130,6 +134,36 @@ export default function AdminEventHeader() {
     titleHref
       ? <Link href={titleHref} className={cls} title={`${title} — open dashboard`}>{title}</Link>
       : <span className={cls}>{title}</span>;
+
+  // ── The kit form (Admin Design Continuity slice 1, switch on) — ADC specimen 2: "today's event
+  // header, drawn as the kit's page header: an eyebrow, a title and one status chip. The same phase
+  // rule and the same dates; only the skin changes." The org and the dates share the eyebrow; the
+  // phase chip sits beside the name in the kit's chip (red for a live event, as drawn in specimen 4;
+  // olive while open; quiet otherwise). Same element, same ref, same collapse — the effects above
+  // serve both forms, so the sticky offset and the published height cannot drift between them.
+  if (kit) {
+    const tone = phase === 'gameday' ? coachKit.chipDanger : phase === 'open' ? coachKit.chipGood : kitStyles.chipNeutral;
+    const eyebrowLine = [eyebrow, sub].filter(Boolean).join(' · ');
+    return (
+      <header ref={ref} role="banner" className={`${kitStyles.header} ${collapsed ? kitStyles.collapsed : ''}`}>
+        <div className={kitStyles.row}>
+          <div className={kitStyles.identity}>
+            {eyebrowLine && <div className={kitStyles.eyebrow}>{eyebrowLine}</div>}
+            <div className={kitStyles.titleRow}>
+              {nameEl(kitStyles.name)}
+              {phaseLabel && (
+                <span className={`${coachKit.chip} ${kitStyles.chip} ${tone}`} data-phase={phase ?? undefined}>
+                  {phase === 'gameday' && <span className={kitStyles.dot} aria-hidden />}
+                  {phaseLabel}
+                </span>
+              )}
+            </div>
+          </div>
+          <FlipPill resolution={flip} variant="inline" compact={collapsed} className={kitStyles.pill} />
+        </div>
+      </header>
+    );
+  }
 
   // ONE structure (no DOM swap on scroll — that caused the jitter). The eyebrow + meta rows fade via
   // CSS on collapse, the name shrinks 2→1 line, and the pill drops to its ⇄ glyph — all transitioned.

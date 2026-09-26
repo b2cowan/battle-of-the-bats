@@ -706,8 +706,12 @@ export default function TournamentBrandingPage() {
               <div className={styles.lowContrastWarning}>Low contrast — text may be hard to read.</div>
             )}
 
+            {/* `data-public-preview` (R2, Admin Design Continuity): a picture of the PUBLIC page, so
+                under the admin kit it keeps the public palette, not the account theme (globals.css);
+                the colours set inline here still win inside it. */}
             <div
               className={styles.themePreview}
+              data-public-preview
               style={{
                 '--primary': previewTheme.primary,
                 '--primary-light': previewTheme.primaryLight,

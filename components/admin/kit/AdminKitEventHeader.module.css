@@ -1,0 +1,90 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   The admin's event header ON THE KIT (Admin Design Continuity slice 1) — `AdminEventHeader`'s kit
+   branch, rendered only with the switch on. Drawn as ADC specimen 2: "today's event header, drawn as
+   the kit's page header: an eyebrow, a title and one status chip. The same phase rule and the same
+   dates; only the skin changes." The ground and hairline are the coach masthead's (`.teamHeader`:
+   the card tone over the page tone, so scrolled content never ghosts through the pinned bar).
+   Behaviour is the legacy header's, unchanged: sticky below the strip, and on a phone it condenses
+   on scroll (the eyebrow folds away, the name drops to one line, the pill to its glyph).
+   ⚠ TOKENS ONLY (`tests/unit/admin-kit-guard.test.ts`).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.header {
+  position: sticky;
+  top: var(--admin-topstrip-h, 0px);
+  z-index: 40;
+  padding: calc(0.7rem + env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) 0.7rem max(1rem, env(safe-area-inset-left));
+  background-color: var(--pitch-black);
+  background-image: linear-gradient(var(--card-bg), var(--card-bg));
+  border-bottom: 1px solid var(--home-line);
+  transition: padding 0.2s ease;
+}
+.collapsed {
+  padding-top: calc(0.5rem + env(safe-area-inset-top));
+  padding-bottom: 0.5rem;
+}
+
+.row { display: flex; align-items: flex-start; gap: 0.75rem; }
+.collapsed .row { align-items: center; }
+.identity { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+
+/* The kit eyebrow (`CoachKit` `.eye`): mono, tracked, the label step. Folds away on a phone scroll. */
+.eyebrow {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-height: 1.4rem;
+  transition: max-height 0.2s ease, opacity 0.16s ease;
+}
+.collapsed .eyebrow { max-height: 0; opacity: 0; }
+
+.titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; min-width: 0; }
+/* The coach masthead's name voice (`.teamHeaderName`): the UI sans at 700 — a name is data. */
+.header .name {
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  font-family: var(--font-sans);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+  text-decoration: none;
+}
+.collapsed .name { -webkit-line-clamp: 1; }
+a.name:hover { color: var(--home-olive); }
+
+/* The phase chip's neutral tone (draft / completed / archived); the kit chip carries the others. */
+.chipNeutral {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line-strong);
+}
+.chip { text-transform: uppercase; }
+.dot {
+  width: 6px;
+  height: 6px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: currentColor;
+  animation: kitHdrPulse 2s infinite;
+}
+@keyframes kitHdrPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.45; } }
+@media (prefers-reduced-motion: reduce) { .dot { animation: none; } }
+
+.pill { flex-shrink: 0; }
+
+@media (min-width: 901px) {
+  .header { top: calc(var(--admin-topstrip-h, 0px) + var(--sandbox-chrome-h, 0px)); padding-left: 2rem; padding-right: 2rem; }
+  .header .name { font-size: var(--type-title); }
+}

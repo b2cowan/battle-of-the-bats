@@ -13,6 +13,11 @@ frontend:
         - echo "RESEND_FROM=$RESEND_FROM" >> .env.production
         - echo "PLATFORM_ADMIN_EMAILS=$PLATFORM_ADMIN_EMAILS" >> .env.production
         - echo "OBSERVABILITY_ENV=$OBSERVABILITY_ENV" >> .env.production
+        # The branch this build was made from, for the server at runtime. Amplify sets AWS_BRANCH on
+        # every build; copying it here (rather than a console variable) means a build can only ever
+        # name ITS OWN branch. Read by lib/admin-kit-preview.ts: the Admin Design Continuity dev
+        # switch may be turned on in the `dev` (staging) build and never in `master` (production).
+        - echo "APP_BUILD_BRANCH=$AWS_BRANCH" >> .env.production
         - echo "NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL" >> .env.production
         - echo "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" >> .env.production
         - echo "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" >> .env.production

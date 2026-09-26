@@ -18,6 +18,8 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import styles from '../families.module.css';
 
 interface Side { personId: string; name: string; email: string; phone: string | null; childNames: string[]; addressCount: number; optedOut: boolean }
@@ -25,6 +27,7 @@ interface Pair { a: Side; b: Side; reasons: string[]; keep: 'a' | 'b' }
 
 export default function DuplicatesPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  const kit = useAdminKit();
   usePageTitle('Possible duplicates');
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
@@ -106,14 +109,27 @@ export default function DuplicatesPage() {
 
   return (
     <div className={styles.page}>
-      <Link href={`${base}/families`} className={styles.backLink}><ArrowLeft size={13} /> Families</Link>
-      <div className={styles.pageHeader}>
-        <div className={styles.headerIcon}><Users2 size={20} /></div>
-        <div>
-          <h1 className={styles.pageTitle}>Possible duplicates</h1>
-          <p className={styles.pageSub}>Pairs the system suspects are one person, waiting for a human decision. Nothing here merges on its own.</p>
-        </div>
-      </div>
+      {!kit && <Link href={`${base}/families`} className={styles.backLink}><ArrowLeft size={13} /> Families</Link>}
+      <AdminPageHeader
+        legacy={(
+          <div className={styles.pageHeader}>
+            <div className={styles.headerIcon}><Users2 size={20} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Possible duplicates</h1>
+              <p className={styles.pageSub}>Pairs the system suspects are one person, waiting for a human decision. Nothing here merges on its own.</p>
+            </div>
+          </div>
+        )}
+        backTo={{ href: `${base}/families`, label: 'Families' }}
+        title="Possible duplicates"
+      />
+      {/* F3 — the header's framing line is a promise about the list ("nothing here merges on its
+          own"), so it moves to the top of the list it frames, word for word. */}
+      {kit && (
+        <p className={styles.lede}>
+          Pairs the system suspects are one person, waiting for a human decision. Nothing here merges on its own.
+        </p>
+      )}
 
       {error && <p className={styles.notice} style={{ color: 'var(--warning)' }}>{error}</p>}
 

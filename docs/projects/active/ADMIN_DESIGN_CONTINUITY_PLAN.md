@@ -1,7 +1,9 @@
 # Admin Design Continuity — Implementation Plan
 
 > **Status:** RULED 2026-09-25 (owner: *"I agree with your recommendations, go ahead"*). **Slice 0 (the
-> baseline) COMMITTED `459b3bbd` 2026-09-25** — measuring tools only, no product code; results in §3a. Next: slice 1.
+> baseline) COMMITTED `459b3bbd` 2026-09-25** — measuring tools only, no product code; results in §3a.
+> **Slice 1 (the switch, the theme, the frame, Families + Public site) BUILT 2026-09-25** — results in
+> §3a; commit on the owner's word. Club Stage 1's screens session may now start. Next: slice 2.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -157,7 +159,7 @@ foundation's release day.
 | Slice | Scope | Status |
 |---|---|---|
 | 0 | Baseline: every admin + guest screen in the invariant sweep (today's dark), the switch-off identity check, contrast grounds. Needs the dev server alone. | **COMMITTED `459b3bbd` 2026-09-25** — results below |
-| 1 | The switch · theme gaps · R1/F1 · the frame (top strip, rail, phone bar + More, page header, event header) · Families · Public site editor | not started |
+| 1 | The switch · theme gaps · R1/F1 · the frame (top strip, rail, phone bar + More, page header, event header) · Families · Public site editor | **BUILT 2026-09-25** — results below; commit on the owner's word |
 | 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | not started |
 | 3 | Rep Teams · Accounting (F4 dense tables) | not started |
 | 4 | Tournaments (split by job if needed — record the split here first) | not started |
@@ -227,6 +229,137 @@ with every UAT session refreshed. No product code changed.
   adds the admin's warm grounds to the warm block.
 - **Also noticed:** a `check:layout --changed` process from 2026-09-21 is still alive and idle on this
   machine (not this program's; left alone).
+
+**Slice 1 — results (2026-09-25).** Quiet windows on the owner's word for both captures; the "before"
+set (182 pictures) and the coach "before" sweeps were taken on the untouched tree.
+- **The switch** (`lib/admin-kit-preview.ts`): never on the production branch, fail-closed — it may
+  be on only on the local dev server and on the **staging** build (a production build whose
+  `APP_BUILD_BRANCH`, copied by `amplify.yml` from Amplify's own `AWS_BRANCH`, is `dev`; the `master`
+  build names `master`, and a build naming nothing is treated as production). **Owner, 2026-09-25:**
+  the first version keyed it to "any production build", which locked staging out too; widened so the
+  owner can test with real test accounts on the staging site. Off by default everywhere; on per
+  browser through the door `/api/dev/admin-kit?on=1&next=/<org>/admin` (`?on=0` to turn off; 404 on
+  the production branch before it reads anything). The admin layout reads the cookie on the
+  server and, only when on, wraps the whole shell (providers, modals, install prompt) in a box-less
+  marker carrying `data-coach-warm-enabled` + `data-admin-kit`, plus the portal's theme-colour meta.
+  `AdminKitProvider` / `useAdminKit()` hands the answer to client components. **Guest shells are NOT
+  wired** (a deliberate change from the prompt's point 2): R3's scorekeeper is fixed-warm, not the
+  account marker, so slice 5 wires them with their palette; wiring now would add a cookie read to
+  volunteer pages and change nothing.
+- **Theme gaps:** the warm block gained `--white-25/-15/-4` (ladder neighbours) and `--black-20/-30/-40`
+  (the warm fill → hairline → strong line; read only by admin sheets). **Declined, argued:** the
+  `.card` recipe's `--highlight-top` / `--shadow` / `--shadow-sm` — the coach kit's door cards paint
+  those same dark values on cream today, so remapping the shared block would restyle live coach
+  screens (not a fix) and remapping admin-only would break continuity. "A dark shadow on cream" is a
+  portal-wide design question for the owner. **Coach reach, measured:** exactly two elements —
+  the setup popover's "skipped" dot and the tryout-history stat separator, both previously the dark
+  white on cream (invisible); the scoped coach sweep before/after is recorded below.
+- **R1:** `[data-admin-kit]` puts the platform theme back over the org's `:root` brand
+  (`--primary*`, `--border`, `--glow*`, `--on-primary`; two platform constants added at `:root`). The
+  warm block still wins where it speaks (same element, higher specificity).
+- **R2:** `[data-admin-kit] [data-public-preview]` restores every token the warm block and R1 change,
+  by reference to `--pv-*` `:root` snapshots; the 16 warm CLASS rules in `globals.css` (buttons, card
+  hover, native select and date controls) gained a zero-specificity
+  `:where(:not([data-public-preview] *))` — the tournament preview's navy "Register" had turned lime
+  without it. On: the tournament preview shell, the tournament branding theme preview, the
+  new-tournament wizard's live preview. **Proof:** the preview's schedule page is pixel-identical
+  with the switch on and off, account theme Warm, 1440 and 390.
+- **F1:** the org card-style variants gained `:where(:not([data-admin-kit] .card), [data-public-preview] .card)`
+  — zero specificity, a no-op with the switch off.
+- **The frame:** the strip wears the coach strip's own stylesheet, with warm doors and the account
+  menu's Appearance choice; the event header's kit form (eyebrow = org · dates, the name, the kit
+  phase chip — red Live / olive Open / quiet otherwise — and the flip pill kept); `AdminKitRail`
+  (one populated rail: Overview pinned, Programs, Organization, the program you are in open, the
+  tournament rail restyled inside a tournament with Overview above it); `AdminKitBottomNav` (the club
+  bar Overview + first three programs + More, the tournament bar unchanged in tabs, order, counts and
+  strip, More as the coach sheet over the bar; imports `CoachesBottomNav.module.css`);
+  `AdminKitProgramRow` (the phone "In <program>" row on a program's first screen); the coach shell's
+  ground. One nav model for all three: `lib/admin-kit-nav.ts` + `useAdminKitNav`.
+- **The page header (F3):** `AdminPageHeader` — the page's own header as `legacy` while off; on the
+  kit an optional eyebrow, the h1, identity chips, actions and the `backTo` corner. No subtitle slot,
+  no icon tile (as drawn).
+- **Restyled end to end:** Families (worklist, family page, possible duplicates) and the Public site
+  editor — kit layers scoped under `[data-admin-kit]`, legacy rules untouched.
+- **F3 re-homings:** Families' count line → the list's lede (same words); the family page's
+  "Guardian" → an identity chip, its "N current registrations · M past" → the Children card's head;
+  Possible duplicates' framing sentence → the top of the list it frames, word for word; the Public
+  site editor's "Edit your org's public-facing home page" → **not re-homed** (a description of the
+  page, not a fact on it; its first card already says what it edits).
+- **Word changes, each from a standing rule or the ratified drawing:** "Sign out" (not "Logout" —
+  the 2026-09-01 one-name ruling), "Plan & billing" (not "Subscription" — the page's own name,
+  drawn), sentence case on the tournament rail ("Event settings"), mixed-case phone tab labels.
+- **Deliberately not as drawn (flagged to the owner):** More is the coaches portal's real full-width
+  sheet, not the narrower popover drawn (the drawing's note says "as the coach sheet does"); the
+  phone tab's active mark is the coach bar's pill and dot, not the drawn top line; the Families lens
+  chips are the portal's real filter chip (body face), not the drawn mono chip; club screens keep the
+  org band with its flip pill (the club drawings show no band — dropping it would drop the flip
+  door, an action); rail rows are the coach rail's full-bleed rows, not the drawn inset rounded rows;
+  a program row is a link that opens its group because you are in it (no separate toggle). **Held
+  for Club Stage 1:** the Audit log and Notifications rows (their screens are Stage 1's), the
+  plan-aware order and "Also on your plan", the per-program counts. **Omitted:** the house-league
+  "Past seasons" row — today's rail links `/house-league/past`, which 404s.
+- **Gates:** `scripts/check-public-tokens.mjs` gained `checkAdminKit` — strict, zero literal colour in
+  any kit stylesheet or `[data-admin-kit]` rule (143 rules at slice 1; proven to fail on a planted
+  literal). Unit guards: `admin-kit-switch-guard` (off in production, one place turns it on, public
+  layouts never carry it), `admin-kit-guard` (island parity with the warm block + R1, every warm
+  class rule stops at the island, F1), `admin-kit-nav` (no dead door, today's gates, one model for
+  both navs). Contrast: the warm block holds a new ground, the chosen filter chip on paper (olive
+  4.66:1 — its thinnest margin anywhere). Runner: `--theme=dark|warm`, `--dump=<file>`,
+  `--admin-kit`.
+- **Switch-on sweep of the slice's screens** (Families ×3, Public site, both frame menus, the
+  tournament dashboard, Rep Teams; both themes): on the slice's own surfaces the kit adds **no**
+  tap-floor finding (72 against the baseline's 99) and clears the 4 type-ladder findings; the
+  remaining contrast findings sit in pages later slices restyle, plus two inherited below.
+- **Found, written down, not fixed here:** (1) the legacy house-league rail's "Past Seasons" is a
+  dead link (404) today; (2) the coaches portal's DARK phone bar misses AA on its inactive tab labels
+  (white 40%) and More section labels (white 25%) — the admin kit inherits both by sharing the
+  stylesheet, so one fix repairs both portals; (3) an org's chosen font reaches both portals (not in
+  R1's list); (4) the coaches portal's DARK theme draws ~30 borders in the org's colour (`--border`
+  is never re-declared by the dark gate) — the R1 leak inside the model; (5) the family page's cards
+  spill at 361 today (a 300px card minimum), unchanged by the restyle; (6) with the switch on, the
+  club hub's tile titles are unreadable in Warm — the hub is Club Stage 1's to rebuild.
+- **`/simplify` (4 lenses, 2026-09-25):** fixed — the door uses `lib/safe-redirect.ts` (a
+  `startsWith('/')` guard is bypassable by a smuggled TAB/CR); the Coaches Portal door and the tournament
+  groups are built ONCE for both navs (`kit-tournament-groups.ts` — the rail role-filtered every
+  group, the phone sheet only Setup); the kit frame is `next/dynamic` in `AdminChrome`, so its ~100KB
+  source downloads only with the switch on (it rode every admin page, production included); a dead
+  `.divider` rule. **Skipped, argued:** `AdminPageHeader` mirrors `CoachPageHeader` rather than
+  reusing it — reusing it pulls the 16,700-line `coaches.module.css` into the admin, and the deeper fix
+  (move the header rules into a shared module both portals render) re-orders the coach portal's CSS,
+  so it is **a post-release unification item** (one header, one stylesheet, both portals); the
+  `--pv-*` island stays in `globals.css` beside the warm block it mirrors (≈1KB compressed site-wide;
+  the guard reads one file); the tests' repeated `walk()` (13 older copies) and two one-line helpers.
+  **For slice 2:** it retires the shell's `.adminShell h1/h2` console overrides under the switch —
+  then `AdminPageHeader`'s two-class-deep title rules can relax.
+- **`/review` (high-risk tier, 4 lenses + main loop, 2026-09-25):** 9 raised → 3 fixed, 2 accepted, 4
+  refuted. **Fixed:** (1) the nav hook imported `canOpenModule` from Club Stage 1's `lib/member-access.ts`,
+  which is not committed — this commit would not have built alone; the hook now calls the committed
+  pair the legacy rail calls (`hasCapability` + `hasModuleEntitlement`), and moves onto `canOpenModule`
+  when Stage 1 lands. **Proven by typechecking HEAD + this slice's files alone** (a clean copy, no
+  other session's work): tsc clean, the slice's 30 tests pass, the token gate green. (2) the house-
+  league season list could be overwritten by a late answer for the org just left (the legacy rail's
+  fetch has the same gap; the kit's copy is guarded). (3) the door's cookie is `secure` over HTTPS.
+  **Accepted:** the door is a plain GET, so another page can flip a browser's preview (presentation
+  only, dev/staging only — noted in the route); the branding preview's caption follows the account
+  theme (it is the admin's words, not the public page's). **Refuted:** the five rail rows today's
+  sidebar lacks (Budget, Budget vs. Actual, Payment requests, Assistant coaches, Shared library) are
+  ratified B12 rows whose pages check the same capability as their program — same people, sooner
+  (`lib/admin-kit-nav.ts` header now says so); the phone grid is the coach shell's (it has no phone
+  variant); the warm block's new `--white-15/-4` reach no coach screen (every coach reader uses them
+  only as a fallback behind an always-defined `--home-*`); the tournament groups' uniform role filter
+  is today's rail's rule (the phone sheet's narrower filter was the drift). ⚠ **Handoff to Club Stage 1:**
+  its D8 moves the legacy rail's "tournament-only" test onto the PLAN; the kit's copy in
+  `useAdminKitNav` must move in the same commit (the hook says so).
+  Gate: `verify:changed` 4,963/4,963 · typecheck clean (whole tree and the isolated copy) · lint 0
+  errors · `check:layout --changed` **not run** — `globals.css` widens it to every screen on a shared
+  dev server; the switch-off identity check (182/182) and both-theme coach sweeps stand in, and every
+  change since them is kit-only (renders only with the switch on).
+- **Identity check (switch off): 182 of 182 pixel-identical** — "before" 2026-09-26T01:21Z on the
+  untouched tree, "after" 02:07Z after a dev-server restart and a sign-in refresh, both @ `eec5e115`
+  with this slice's working tree between them. **Coach screens, scoped sweep (14 screens × 4 widths,
+  the frame + kit + both theme-gap readers' neighbourhoods), before vs after:** Warm 97 → 97 findings,
+  Dark 646 → 646, none gone, none new, every pair measured. (The Warm "before" already held 28
+  findings beyond the coach baseline — other sessions' work, not this slice's; recorded, not touched.)
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as
