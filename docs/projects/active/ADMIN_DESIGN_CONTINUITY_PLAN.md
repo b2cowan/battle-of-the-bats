@@ -3,7 +3,9 @@
 > **Status:** RULED 2026-09-25 (owner: *"I agree with your recommendations, go ahead"*). **Slice 0 (the
 > baseline) COMMITTED `459b3bbd` 2026-09-25** — measuring tools only, no product code; results in §3a.
 > **Slice 1 (the switch, the theme, the frame, Families + Public site) BUILT 2026-09-25** — results in
-> §3a; commit on the owner's word. Club Stage 1's screens session may now start. Next: slice 2.
+> §3a; /simplify + /review done; **COMMITTED `1b3cd541` 2026-09-25** (not pushed — staging shows it
+> once `dev` is pushed). Owner QA walk: at slice 6 (owner, 2026-09-25). Club Stage 1's screens session
+> may now start. Next: slice 2.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -159,7 +161,7 @@ foundation's release day.
 | Slice | Scope | Status |
 |---|---|---|
 | 0 | Baseline: every admin + guest screen in the invariant sweep (today's dark), the switch-off identity check, contrast grounds. Needs the dev server alone. | **COMMITTED `459b3bbd` 2026-09-25** — results below |
-| 1 | The switch · theme gaps · R1/F1 · the frame (top strip, rail, phone bar + More, page header, event header) · Families · Public site editor | **BUILT 2026-09-25** — results below; commit on the owner's word |
+| 1 | The switch · theme gaps · R1/F1 · the frame (top strip, rail, phone bar + More, page header, event header) · Families · Public site editor | **COMMITTED `1b3cd541` 2026-09-25** — results below; walked at slice 6 |
 | 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | not started |
 | 3 | Rep Teams · Accounting (F4 dense tables) | not started |
 | 4 | Tournaments (split by job if needed — record the split here first) | not started |
