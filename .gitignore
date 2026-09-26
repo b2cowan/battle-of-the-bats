@@ -76,3 +76,8 @@ next-env.d.ts
 # baseline for "with the Admin Design Continuity switch off, nothing changed", kept for the life of
 # Phase 1 and never committed (it is per-machine and per-fixture; a full set is ~22 MB).
 .admin-identity/
+
+# The morning stack health check's history (scripts/stack-health.mjs) — LOCAL ONLY by design: the
+# owner reviews it here (latest.md, reports/, history.jsonl), and a daily file in git would be noise
+# in every session's `git status` on a shared working copy.
+.health/

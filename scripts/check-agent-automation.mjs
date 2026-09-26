@@ -45,6 +45,9 @@ export const WATCHED_PATHS = [
   'scripts/check-db-load.mjs',
   'scripts/check-agent-automation.mjs',
   'scripts/stack-health.mjs',
+  'scripts/lib/supabase-ops.mjs',
+  'scripts/stack-health-task.cmd',
+  'scripts/stack-health-schedule.ps1',
 ];
 
 const git = (args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
@@ -53,11 +56,12 @@ const git = (args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', s
  * Commits in the window that touched a watched path, and watched paths edited but uncommitted now.
  * @returns {{ commits: { hash: string, date: string, subject: string, files: string[] }[], uncommitted: string[] }}
  */
-export function automationChanges({ hours = 24 } = {}) {
+export function automationChanges({ hours = 24, since, until } = {}) {
   const commits = [];
   let log = '';
+  const window = since ? [`--since=${since}`, ...(until ? [`--until=${until}`] : [])] : [`--since=${hours} hours ago`];
   try {
-    log = git(['log', `--since=${hours} hours ago`, '--name-only', '--format=%x01%h%x02%ad%x02%s', '--date=format:%Y-%m-%d %H:%M', '--', ...WATCHED_PATHS]);
+    log = git(['log', ...window, '--name-only', '--format=%x01%h%x02%ad%x02%s', '--date=format:%Y-%m-%d %H:%M', '--', ...WATCHED_PATHS]);
   } catch { /* not a git checkout — report nothing rather than fail the health check */ }
   for (const block of log.split('\x01').filter((b) => b.trim())) {
     const [head, ...files] = block.split('\n').map((s) => s.trim()).filter(Boolean);

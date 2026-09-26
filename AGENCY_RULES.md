@@ -42,9 +42,14 @@ These rules apply to all AI coding assistants working in this repository.
     hides inside an unrelated commit again.
   - **A check is report-only.** "Check / verify / is X still working" means report and recommend.
     A defect found during a check is a finding, not a mandate to change shared automation.
-  - **Watch the load:** `npm run check:db-load` counts statements over 10 s per day on dev and
-    prod and names the worst queries. It reads Supabase's log service, not the databases, and runs
-    in every `/release` (step 1c-1).
+  - **Watch the stack:** `npm run health` (`scripts/stack-health.mjs`) runs every morning at 7:30
+    a.m. on the owner's PC (Windows task "FieldLogicHQ stack health") and in every `/release`
+    (step 1c-1). It covers database load and vitals, Supabase's advisors (new findings only),
+    traffic and errors, deployment builds, and agent tooling, including every commit that touched a
+    watched path. It keeps its history in `.health/` (gitignored). On red it alerts with a desktop
+    notification plus an email once `HEALTH_RESEND_API_KEY` is set, and sends a Monday digest
+    (the heartbeat). `npm run check:db-load` is its slow-query part on its own. A red from it is a
+    finding to report, not a mandate to change shared automation.
 - **Planning First**: For every request, the agent must provide an **Implementation Plan** and/or **Task List** of items being reviewed and actioned before proceeding with significant changes.
 - **Product Manager UX Plan (required)**: Before implementing any feature, the agent MUST present a plain-language UX summary in the conversation — written for a product manager, not an engineer. This summary must describe what the user sees and does differently after the change, the benefits, and any role-based access differences. This is a blocking step: no code changes may begin until this summary has been presented.
 - **PM Briefs for Plans (required)**: Whenever an agent creates or updates a dedicated implementation plan for a significant feature, phase, or project, it MUST also create or update a short product-manager brief. The PM brief should be plain-language, outcome-focused, and cover proposed functionality, why it matters, expected customer impact, priority, and success criteria.
