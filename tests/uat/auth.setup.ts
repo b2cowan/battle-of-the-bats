@@ -93,6 +93,17 @@ setup('authenticate: coach', async ({ page }) => {
   console.log(`  ✓ coach session saved → ${savePath}`);
 });
 
+// ── The tournament VOLUNTEER (an `official` on uat-plus-org) — the scorekeeper and gate screens as a
+// volunteer meets them (Admin Design Continuity slice 0: the layout sweep and the identity check).
+// Skipped when its env pair is absent, like the Club fixture below.
+setup('authenticate: plus-official', async ({ page }) => {
+  const official = env().plusScorekeeper;
+  setup.skip(!official, 'UAT_PLUS_SCOREKEEPER_* not set in .env.local — the volunteer session is optional');
+  const savePath = path.join(__dirname, '.auth/plus-official.json');
+  await loginOrgUser(page, official!.email, official!.password, savePath);
+  console.log(`  ✓ plus-official session saved → ${savePath}`);
+});
+
 // ── The Club Tier Readiness fixture (uat-rep-club) — skipped when its env block is absent ──
 // Build it first: node --env-file=.env.local scripts/seed-club-fixture.mjs
 for (const [role, file] of [

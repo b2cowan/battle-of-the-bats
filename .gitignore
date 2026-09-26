@@ -71,3 +71,8 @@ next-env.d.ts
 # repo (not the OS temp dir) because a probe has to resolve node_modules, and NOT in test-results/
 # because a plain `npm test` wipes that directory mid-session.
 .probe/
+
+# The admin identity check's pictures (scripts/admin-identity.mjs) — LOCAL ONLY by design: a pixel
+# baseline for "with the Admin Design Continuity switch off, nothing changed", kept for the life of
+# Phase 1 and never committed (it is per-machine and per-fixture; a full set is ~22 MB).
+.admin-identity/

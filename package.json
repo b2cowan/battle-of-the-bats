@@ -32,6 +32,7 @@
     "check:layout:init": "node scripts/check-layout-invariants.mjs --init",
     "check:layout:report": "node scripts/check-layout-invariants.mjs --report",
     "check:layout:prune": "node scripts/check-layout-invariants.mjs --prune",
+    "identity:admin": "node scripts/admin-identity.mjs",
     "check:pdf": "node --import ./scripts/lib/pdf-node-loader.mjs scripts/check-pdf-documents.mjs",
     "check:pdf:list": "node --import ./scripts/lib/pdf-node-loader.mjs scripts/check-pdf-documents.mjs --list",
     "check:pdf:mutate": "node --import ./scripts/lib/pdf-node-loader.mjs scripts/check-pdf-documents.mjs --mutate",

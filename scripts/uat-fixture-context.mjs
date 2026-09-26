@@ -440,3 +440,112 @@ export async function resolveUatContext() {
     baseUrl: process.env.UAT_BASE_URL ?? 'http://localhost:3000',
   };
 }
+
+/**
+ * THE ADMIN SIDE'S FIXTURE (Admin Design Continuity, slice 0, 2026-09-25) — a SECOND world, resolved
+ * only when an admin or volunteer screen is selected, so a coach-only sweep never depends on it.
+ *
+ * Two orgs, because the admin draws two different frames:
+ *   · the CLUB — `uat-rep-club` (`scripts/seed-club-fixture.mjs`): every club module, the house
+ *     league, rep teams, accounting, families, and the club's own tournament inside the club frame;
+ *   · a TOURNAMENT org — `uat-plus-org`: the tournament-only frame, on its Championship, the one
+ *     tournament in the dev world with divisions, teams AND games (3 · 22 · 11). The club's own
+ *     Invitational has no games, so its schedule and results screens would be swept EMPTY — the
+ *     "green sweep over an empty screen" trap the coach entries keep documenting.
+ *
+ * ⚠ EVERY ROW IS RESOLVED BY NAME, never by position or id: the club seeder deletes and rewrites its
+ * whole world on each run (the rows it writes share one created_at, so "the oldest" is a coin toss),
+ * and a pinned id rots into a 404 the sweep reports as a layout failure.
+ */
+export async function resolveAdminContext() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const clubSlug = process.env.UAT_REP_CLUB_ORG_SLUG;
+  const tournOrgSlug = process.env.UAT_PLUS_ORG_SLUG;
+  // The onboarding wizard only opens for an org that has NOT finished onboarding, and the rep club
+  // has (the wizard redirects it to the hub). The plain Club-plan UAT org never has.
+  const onboardingOrgSlug = process.env.UAT_CLUB_ORG_SLUG;
+  const CLUB_REPAIR = 'node --env-file=.env.local scripts/seed-club-fixture.mjs';
+
+  if (!url || !key || !clubSlug || !tournOrgSlug || !onboardingOrgSlug) {
+    throw new FixtureError(
+      'Missing env: the admin screens need UAT_REP_CLUB_ORG_SLUG, UAT_PLUS_ORG_SLUG and UAT_CLUB_ORG_SLUG in .env.local.',
+      'populate .env.local from docs/agents/ops/ setup notes',
+    );
+  }
+  if (url.includes(PROD_REF)) {
+    throw new FixtureError('Refusing to run: NEXT_PUBLIC_SUPABASE_URL points at PRODUCTION.', 'point .env.local at dev');
+  }
+  const db = createClient(url, key);
+  /** One named row or a loud failure — a soft `?? null` builds a URL with `undefined` in it. */
+  const need = async (what, q, repair = CLUB_REPAIR) => {
+    const r = await q;
+    if (r.error) throw new FixtureError(`${what} lookup failed: ${r.error.message}`, repair);
+    if (!r.data) throw new FixtureError(`No ${what} in the admin fixture.`, repair);
+    return r.data;
+  };
+
+  const club = await need(`organization "${clubSlug}"`, db.from('organizations').select('id').eq('slug', clubSlug).maybeSingle());
+  // 15U AAA carries a finished 2025 season AND a live 2026 one — the only team with both, so the
+  // history drill-in and the working season are one team's two faces.
+  const team = await need('rep team "15U AAA"', db.from('rep_teams').select('id').eq('org_id', club.id).eq('name', '15U AAA').maybeSingle());
+  const year = await need('live 15U AAA season', db.from('rep_program_years').select('id')
+    .eq('team_id', team.id).eq('status', 'active').order('year', { ascending: false }).limit(1).maybeSingle());
+  const pastYear = await need('finished 15U AAA season', db.from('rep_program_years').select('id')
+    .eq('team_id', team.id).eq('status', 'completed').order('year', { ascending: false }).limit(1).maybeSingle());
+  const season = await need('house league season', db.from('league_seasons').select('id')
+    .eq('org_id', club.id).eq('name', '2026 Fall House League').maybeSingle());
+  // The Okafor household has a child on two teams — the family page's fullest shape.
+  const person = await need('family "Chidi Okafor"', db.from('org_people').select('id')
+    .eq('org_id', club.id).eq('last_name', 'Okafor').eq('first_name', 'Chidi').maybeSingle());
+  const ledger = await need('the club\'s General ledger', db.from('accounting_ledgers').select('id')
+    .eq('org_id', club.id).eq('entity_type', 'org').eq('is_archived', false).limit(1).maybeSingle());
+  const line = await need('budget line "Diamond permits — city fields"', db.from('org_budget_lines').select('id')
+    .eq('org_id', club.id).eq('description', 'Diamond permits — city fields').maybeSingle());
+  const allocation = await need('allocation "Diamond permits — team share"', db.from('rep_cost_allocations').select('id')
+    .eq('org_id', club.id).eq('description', 'Diamond permits — team share').maybeSingle());
+  // By the seeder's own slug ("uat-rep-club-invitational-<year>"), newest year first — not "the
+  // most recent tournament", which would silently re-aim if the club ever gains a second one.
+  const clubTournament = await need('the club\'s Invitational', db.from('tournaments').select('id')
+    .eq('org_id', club.id).like('slug', 'uat-rep-club-invitational-%')
+    .order('year', { ascending: false }).limit(1).maybeSingle());
+
+  const onboarding = await need(`organization "${onboardingOrgSlug}"`, db.from('organizations').select('onboarding_completed_at').eq('slug', onboardingOrgSlug).maybeSingle());
+  if (onboarding.onboarding_completed_at) {
+    throw new FixtureError(`"${onboardingOrgSlug}" has finished onboarding, so the wizard redirects to the hub and cannot be swept.`, 'clear its onboarding_completed_at on DEV');
+  }
+
+  const tOrg = await need(`organization "${tournOrgSlug}"`, db.from('organizations').select('id').eq('slug', tournOrgSlug).maybeSingle(),
+    'the Phase 2C plus-org fixture (tests/uat/create-uat-accounts.sql)');
+  const tournament = await need('the Plus Championship', db.from('tournaments').select('id, slug')
+    .eq('org_id', tOrg.id).eq('name', 'UAT Phase 2C Plus Championship 2026').maybeSingle(),
+    'the Phase 2C plus-org fixture (tests/uat/create-uat-accounts.sql)');
+  // The volunteer screens show ONE DAY's games, and the Championship's games are in June 2026 — so
+  // the scorekeeper's clock is pinned to its busiest day (see the guest entries' `clock`). Asserted,
+  // not assumed: a day with no games is the scorekeeper's empty state measured as coverage.
+  const games = await db.from('games').select('game_date').eq('tournament_id', tournament.id);
+  if (games.error) throw new FixtureError(`games lookup failed: ${games.error.message}`);
+  const perDay = {};
+  for (const g of games.data ?? []) perDay[g.game_date] = (perDay[g.game_date] ?? 0) + 1;
+  const busiest = Object.entries(perDay).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))[0];
+  if (!busiest) throw new FixtureError('The Plus Championship has no games, so the scorekeeper can only be swept empty.');
+
+  return {
+    clubSlug,
+    clubTeamId: team.id,
+    clubYearId: year.id,
+    clubPastYearId: pastYear.id,
+    clubSeasonId: season.id,
+    clubPersonId: person.id,
+    clubLedgerId: ledger.id,
+    clubBudgetLineId: line.id,
+    clubAllocationId: allocation.id,
+    clubTournamentId: clubTournament.id,
+    onboardingOrgSlug,
+    tournOrgSlug,
+    tournamentId: tournament.id,
+    tournamentSlug: tournament.slug,
+    /** The Championship's busiest game day (YYYY-MM-DD) — the volunteer screens' pinned date. */
+    tournamentGameDay: busiest[0],
+  };
+}

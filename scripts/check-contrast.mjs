@@ -18,6 +18,12 @@
  * of usage, and `npm run check:layout` covers the rendered half — but only for the 28 coach
  * screens it lists. Three checks, three scopes; know which one you are relying on.
  *
+ * ⚠ TWO PALETTES since 2026-09-25 (Admin Design Continuity slice 0): the warm palette on the
+ * portal's grounds, and the DARK palette on the ADMIN's grounds — the admin had never been held to
+ * any contrast check. The dark block starts with recorded debt (nine inks under AA, unargued) and
+ * ratchets: new, worse, or newly-passing-but-still-listed all fail. Slice 1 adds the admin's warm
+ * grounds to the warm block, when the admin can first wear warm.
+ *
  *   npm run check:contrast
  */
 import { spawnSync } from 'node:child_process';
@@ -54,4 +60,4 @@ if (res.status !== 0) {
 }
 
 const passed = /ℹ pass (\d+)/.exec(out)?.[1] ?? '?';
-console.log(`✓ Palette contrast: ${passed} assertion(s) — every text token clears AA on its grounds.`);
+console.log(`✓ Palette contrast: ${passed} assertion(s) — every text token clears AA on its grounds, or is recorded admin debt that has not got worse.`);

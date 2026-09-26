@@ -41,8 +41,8 @@ import { chromium } from 'playwright';
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { resolveUatContext } from './uat-fixture-context.mjs';
-import { SCREENS, WIDTHS } from './layout-screens.mjs';
+import { resolveUatContext, resolveAdminContext } from './uat-fixture-context.mjs';
+import { SCREENS, WIDTHS, waitForNoLoading } from './layout-screens.mjs';
 import { preflight, createWatchdog } from './memory-guard.mjs';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -55,6 +55,16 @@ const SESSION_FILES = {
   orgOwner: path.join(AUTH, 'org-owner.json'),
   orgAdmin: path.join(AUTH, 'org-admin.json'),
   platformAdmin: path.join(AUTH, 'platform-admin.json'),
+  // The admin side (Admin Design Continuity slice 0, 2026-09-25): the Club fixture's five roles —
+  // the admin's frame differs by role, so a club screen is only measured for the role that opens it
+  // (`tests/uat/auth.setup.ts` writes them; `node --env-file=.env.local scripts/seed-club-fixture.mjs`
+  // builds the world) — and the tournament's volunteer, an `official` on the Plus org.
+  repClubOwner: path.join(AUTH, 'rep-club-owner.json'),
+  repClubAdmin: path.join(AUTH, 'rep-club-admin.json'),
+  repClubTreasurer: path.join(AUTH, 'rep-club-treasurer.json'),
+  repClubRegistrar: path.join(AUTH, 'rep-club-registrar.json'),
+  repClubCoach: path.join(AUTH, 'rep-club-coach.json'),
+  plusOfficial: path.join(AUTH, 'plus-official.json'),
   anon: null,
 };
 
@@ -124,6 +134,26 @@ const LANDING_FAILURES = [
   'You do not have access',
 ];
 
+/**
+ * The product's OWN 404 page (`app/not-found.tsx`) — "Page not found" above is Next's default
+ * wording, which this app replaced, so a screen that 404ed was measured as a pass (found
+ * 2026-09-25). ⚠ Matched against VISIBLE text only: the 404 page is a server component, so its
+ * markup rides inside the inline data of EVERY page, and a `textContent` match fails them all
+ * (the first admin sweep did exactly that, screen after screen, until it was stopped).
+ *
+ * "You do not have permission" is here too, for the same reason: it is live copy (the admin's
+ * documents refusal, the coach capability default), so it is held to what a person can SEE on
+ * every screen rather than to text that may only ride in a page's data.
+ */
+const VISIBLE_LANDING_FAILURES = ['ROUTE_NOT_FOUND', 'You do not have permission'];
+
+/**
+ * The admin's own refusal wording (admin slice 0, 2026-09-25) — held against ADMIN entries only.
+ * ⚠ Not in the list above because coach panels print "don't have access" as a legitimate state
+ * (the awards certificate, the depth chart), and a global entry would fail screens that are right.
+ */
+const ADMIN_LANDING_FAILURES = ['Access Restricted', 'don\'t have access', 'don’t have access'];
+
 // ── args ──────────────────────────────────────────────────────────────────────
 const argv = process.argv.slice(2);
 const has = (f) => argv.includes(f);
@@ -159,14 +189,39 @@ if (has('--changed') && !onlyIds) {
     process.exit(1);
   }
 
-  // Files whose reach is the whole portal rather than one route.
-  const SHARED = /^(app\/globals\.css|app\/\[orgSlug\]\/coaches\/coaches\.module\.css|app\/\[orgSlug\]\/coaches\/layout\.tsx|app\/layout\.tsx|components\/coaches\/|components\/consumer\/warmTheme\.module\.css)/;
-  const shared = files.filter((f) => SHARED.test(f));
+  /**
+   * Files whose reach is more than one route — and WHICH side of the product they reach.
+   *
+   * ⚠ Split by side when the admin joined the sweep (Admin Design Continuity slice 0, 2026-09-25).
+   * One list used to mean "every screen", which was right while every screen was a coach or a
+   * marketing page. With ~90 admin screens listed too, a file that reaches only the coach portal
+   * (its stylesheet, its layout) should not sweep the admin, and an admin-only file should not
+   * sweep the coach portal. WHEN UNSURE IT STILL WIDENS: a file on no list falls through to the
+   * per-route match below, exactly as before.
+   *
+   * ⚠⚠ THE SHARED COMPONENT FOLDERS REACH BOTH SIDES, so they sweep everything. The review of this
+   * split found each side importing the other's parts: the coach portal's own shell and its
+   * attendance report draw the admin's skeleton block, the admin's shared library uses the coach
+   * award-icon picker, and every coach page header carries the help guide's "?" button — and from
+   * Admin Design Continuity slice 1 the admin is built on the coach KIT. Filing any of these to one
+   * side would sweep that side and report the other, which the same file changed, as covered.
+   * The cost is real (a kit change sweeps ~215 screens) and it is the price of the admin standing
+   * on the kit; a precise per-file map would be cheaper and would rot the day someone adds an import.
+   */
+  const WIDEN = [
+    { side: 'every', pick: () => true,
+      re: /^(app\/globals\.css$|app\/layout\.tsx$|app\/\[orgSlug\]\/layout\.tsx$|components\/coaches\/|components\/admin\/|components\/help\/)/ },
+    { side: 'coach + marketing', pick: (s) => !s.area,
+      re: /^(app\/\[orgSlug\]\/coaches\/coaches\.module\.css|app\/\[orgSlug\]\/coaches\/layout\.tsx|components\/consumer\/warmTheme\.module\.css)/ },
+    { side: 'admin', pick: (s) => !!s.area,
+      re: /^(app\/\[orgSlug\]\/admin\/(layout\.tsx|AdminChrome\.tsx|admin\.module\.css|admin-common\.module\.css)|components\/volunteer\/|lib\/tournament-context\.tsx)/ },
+  ];
+  const widened = WIDEN.filter((w) => files.some((f) => w.re.test(f)));
 
-  if (shared.length) {
-    onlyIds = SCREENS.map((s) => s.id);
-    console.log(`--changed: ${shared.length} shared file(s) touched (e.g. ${shared[0]}) — sweeping ALL screens.\n`);
-  } else {
+  // ⚠ The widened set and the per-route hits are UNIONED. Before the split one shared file selected
+  // every screen, so nothing else in the diff mattered; now a coach-shared file selects only its
+  // side, and a diff that ALSO touches an admin page must still sweep that page.
+  {
     // Turn each screen's URL back into the route folder that renders it, then match prefixes.
     // Both event-shaped screens live under a `[eventId]` folder, so one sentinel serves both.
     // `fundraiserId` lands in a QUERY param, not a path segment, so it never reaches the folder
@@ -179,8 +234,16 @@ if (has('--changed') && !onlyIds) {
     // them `--changed` builds `.../roster/undefined` and the screen silently never matches its own
     // route folder — a screen listed in the sweep but unreachable by the changed-file filter, which
     // is the same "looks covered, is not" shape the entries themselves were added to close.
-    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', recordPracticeEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__', receiptPlayerId: '__PLAYER__', planTemplateId: '__TEMPLATE__', lineupTemplateId: '__TEMPLATE__', evalSessionId: '__SESSION__', opponentKey: '__OPPONENT__', commitmentId: '__ID__', measurableTypeId: '__ID__' };
-    const dirOf = (s) =>
+    // ⚠ The admin sentinels (slice 0, 2026-09-25) are the admin's route folders, for the same reason
+    // as the four above: a missing one builds `…/families/undefined` and the screen never matches.
+    // ⚠ `__ID__` is replaced by NOTHING below — it is only safe for a field used in a QUERY string
+    // (stripped) or a `clock`. A field that ever becomes a PATH segment needs its own sentinel and
+    // `.replace`, or its screen silently stops matching its own route folder.
+    const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', recordPracticeEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__', receiptPlayerId: '__PLAYER__', planTemplateId: '__TEMPLATE__', lineupTemplateId: '__TEMPLATE__', evalSessionId: '__SESSION__', opponentKey: '__OPPONENT__', commitmentId: '__ID__', measurableTypeId: '__ID__',
+      clubSlug: '__ORG__', tournOrgSlug: '__ORG__', onboardingOrgSlug: '__ORG__', clubTeamId: '__TEAM__', clubYearId: '__YEAR__', clubPastYearId: '__YEAR__', clubSeasonId: '__SEASON__', clubPersonId: '__PERSON__', clubLedgerId: '__LEDGER__', clubBudgetLineId: '__LINE__', clubAllocationId: '__ALLOC__', tournamentSlug: '__TSLUG__', tournamentId: '__ID__', clubTournamentId: '__ID__', tournamentGameDay: '__ID__' };
+    // `route` on an entry names its folder outright, for the one shape a path cannot be turned back
+    // into: a dynamic segment the entry fills with a literal word (the preview's `[section]`).
+    const dirOf = (s) => s.route ??
       'app' + s.path(SENTINEL)
         .replace('/__ORG__/', '/[orgSlug]/')
         .replace('__TEAM__', '[teamId]')
@@ -189,23 +252,40 @@ if (has('--changed') && !onlyIds) {
         .replace('__TEMPLATE__', '[templateId]')
         .replace('__SESSION__', '[sessionId]')
         .replace('__OPPONENT__', '[opponentKey]')
+        .replace('__YEAR__', '[yearId]')
+        .replace('__SEASON__', '[seasonId]')
+        .replace('__PERSON__', '[personId]')
+        .replace('__LEDGER__', '[ledgerId]')
+        .replace('__LINE__', '[lineId]')
+        .replace('__ALLOC__', '[allocationId]')
+        .replace('__TSLUG__', '[tournamentSlug]')
         // A tab screen addresses its page with `?section=…`; the folder is what a changed file can
         // match, so the query is dropped (found 2026-09-16: `coach-history-scouting` computed to
         // `…/history?section=scouting`, matched no file, and the Scouting Book's own diff swept
         // the Dashboard tab instead — "looks covered, is not").
         .replace(/\?.*$/, '');
     const hit = SCREENS.filter((s) => files.some((f) => f.startsWith(dirOf(s) + '/') || f.startsWith(dirOf(s) + '.')));
-    onlyIds = hit.map((s) => s.id);
+    const picked = new Set([
+      ...SCREENS.filter((s) => widened.some((w) => w.pick(s))).map((s) => s.id),
+      ...hit.map((s) => s.id),
+    ]);
+    onlyIds = SCREENS.map((s) => s.id).filter((id) => picked.has(id));
     if (!onlyIds.length) {
       console.log('--changed: no listed screen is affected by this diff. Nothing to sweep.');
       process.exit(0);
     }
-    console.log(`--changed: ${onlyIds.length} screen(s) affected — ${onlyIds.join(', ')}\n`);
+    if (widened.length) {
+      const e = files.find((f) => widened.some((w) => w.re.test(f)));
+      console.log(`--changed: shared file(s) touched (e.g. ${e}) — sweeping ${widened.map((w) => w.side).join(' + ')} screens` +
+        `${hit.length ? ' plus the routes the diff touches' : ''} (${onlyIds.length}).\n`);
+    } else {
+      console.log(`--changed: ${onlyIds.length} screen(s) affected — ${onlyIds.join(', ')}\n`);
+    }
   }
 }
 
 if (has('--list')) {
-  for (const s of SCREENS) console.log(`${s.id.padEnd(30)} ${s.session}`);
+  for (const s of SCREENS) console.log(`${s.id.padEnd(34)} ${s.session.padEnd(16)} ${s.area ?? ''}`);
   const universal = WIDTHS.filter((w) => !w.optIn).map((w) => w.name);
   const optIn = WIDTHS.filter((w) => w.optIn).map((w) => w.name);
   console.log(`\n${SCREENS.length} screens × ${universal.length} widths (${universal.join(', ')})` +
@@ -1002,6 +1082,9 @@ async function reachable(url) {
 let ctx;
 try {
   ctx = await resolveUatContext();
+  // The admin world is a second fixture, resolved only when an admin or volunteer screen is in the
+  // run — a coach-only sweep must never fail on the Club fixture it does not open.
+  if (screens.some((s) => s.area)) Object.assign(ctx, await resolveAdminContext());
 } catch (e) {
   console.error(`✗ UAT fixture unavailable.\n  ${e.message}`);
   process.exit(1);
@@ -1036,10 +1119,24 @@ let aborted = null;
 const browser = await chromium.launch();
 console.log(`Layout sweep · ${screens.length} screen(s) · ${pairCount} screen-width pair(s) · ${ctx.baseUrl}\n`);
 
+/**
+ * One browser context per SESSION — and per pinned CLOCK within it (admin slice 0, 2026-09-25).
+ * A `clock` entry pins the page's Date to the day its content lives on (the volunteer screens show
+ * one day's games). The pin belongs to the whole context, so a pinned entry gets a context of its
+ * own rather than leaking its date into every screen after it.
+ */
+const groups = [];
 for (const session of neededSessions) {
+  for (const s of screens.filter((x) => x.session === session)) {
+    const clock = s.clock ? s.clock(ctx) : null;
+    let g = groups.find((x) => x.session === session && x.clock === clock);
+    if (!g) groups.push(g = { session, clock, list: [] });
+    g.list.push(s);
+  }
+}
+
+for (const { session, clock, list } of groups) {
   if (aborted) break;
-  const list = screens.filter((s) => s.session === session);
-  if (!list.length) continue;
   const file = SESSION_FILES[session];
   // ⚠ reducedMotion is not a nicety. `app/globals.css` sets `html { scroll-behavior: smooth }`, so
   // a programmatic scroll ANIMATES — and the covered-by-chrome rule, which measures after scrolling
@@ -1050,6 +1147,7 @@ for (const session of neededSessions) {
     ...(file ? { storageState: file } : {}),
     reducedMotion: 'reduce',
   });
+  if (clock) await context.clock.setFixedTime(new Date(clock));
 
   // ⚠⚠ A CLOSED NAV GROUP IS AN UNMEASURED NAV GROUP. The coach rail's groups collapse and "Team"
   // starts CLOSED (Phase 5b, 2026-08-18), which would quietly take Roster, Tryouts, Staff,
@@ -1058,12 +1156,17 @@ for (const session of neededSessions) {
   // with all five groups open uses the product's own preference path rather than a test-only hook,
   // so what the sweep measures is a real state a coach can be in. Pinned from the other end by
   // tests/unit/coach-nav-groups.test.ts, because this failure is invisible.
+  //
+  // The admin rail has the same trap (admin slice 0, 2026-09-25): a tournament's Setup group opens
+  // only for a draft and Admin never by default, so an active tournament's sweep would measure the
+  // Operations rows alone. Its own key (`fl_nav_groups`, `AdminSidebar`) opens all three.
   await context.addInitScript(() => {
     try {
       localStorage.setItem(
         'flhq-coach-nav-groups',
         JSON.stringify(['Season', 'Progress', 'Money', 'Communication', 'Team']),
       );
+      localStorage.setItem('fl_nav_groups', JSON.stringify(['operations', 'setup', 'admin']));
     } catch { /* private-mode browsers throw; the sweep then measures the defaults */ }
   });
 
@@ -1094,6 +1197,7 @@ for (const session of neededSessions) {
         await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 150_000 });
         await page.waitForSelector(screen.ready, { timeout: 150_000, state: 'attached' });
         await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
+        if (screen.area) await waitForNoLoading(page);
         // ⚠ A VIEW THE URL NEVER SHOWS IS A VIEW THE SWEEP NEVER MEASURED. The money report keeps
         // its view (Statement / By activity / Months) in device memory, not the URL, so every
         // sweep of `coach-budget-vs-actual` measured the Statement and nothing else — which is how
@@ -1107,6 +1211,7 @@ for (const session of neededSessions) {
           await page.reload({ waitUntil: 'domcontentloaded', timeout: 150_000 });
           await page.waitForSelector(screen.ready, { timeout: 150_000, state: 'attached' });
           await page.waitForLoadState('networkidle', { timeout: 30_000 }).catch(() => {});
+          if (screen.area) await waitForNoLoading(page);
           await page.waitForTimeout(600);
         }
         // A state neither the URL nor device memory can reach — a block opened in place on the
@@ -1124,6 +1229,29 @@ for (const session of neededSessions) {
       // ⚠ Did we actually LAND? A screen that renders "Not assigned to any teams" measures
       // perfectly and means nothing. This is the trap the existing coach specs document.
       const body = (await page.textContent('body').catch(() => '')) || '';
+      // What a person can SEE — no inline scripts, no hidden nodes. The newer checks read this.
+      const visible = (await page.innerText('body').catch(() => '')) || '';
+      // ⚠ THE ADMIN GATES BY REDIRECT, not by a message (admin slice 0, 2026-09-25): a wrong org
+      // lands on the user's own org, an `official` on the scorekeeper, a lapsed session on the login
+      // page — each a real screen that measures cleanly and says nothing about the one asked for. So
+      // an admin entry must END where it was sent. (Coach entries are not held to this: several are
+      // deliberate redirect targets and their text checks above already serve them.)
+      const wantPath = new URL(url).pathname;
+      const gotPath = new URL(page.url()).pathname;
+      if (screen.area && gotPath !== wantPath) {
+        landingFailures.push({ label, url, saw: `a redirect to ${gotPath}` });
+        console.log(`  ✗ ${label} — redirected to ${gotPath}`);
+        await unseed();
+        continue;
+      }
+      const deniedHere = VISIBLE_LANDING_FAILURES.find((t) => visible.includes(t))
+        ?? (screen.area && ADMIN_LANDING_FAILURES.find((t) => visible.includes(t)));
+      if (deniedHere) {
+        landingFailures.push({ label, url, saw: deniedHere });
+        console.log(`  ✗ ${label} — landed on "${deniedHere}"`);
+        await unseed();
+        continue;
+      }
       const landed = LANDING_FAILURES.find((t) => body.includes(t));
       if (landed) {
         landingFailures.push({ label, url, saw: landed });

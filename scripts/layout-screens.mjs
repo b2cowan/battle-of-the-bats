@@ -27,6 +27,16 @@
  *            thing it is meant to measure is blind inside it: the plan page's open-block fields
  *            sat unmeasured through a whole stage because every row was shut on arrival.
  *   note     why anything unusual above is true
+ *   area     ADMIN SIDE ONLY (admin + volunteer entries): the Phase 0 inventory's area. Selects the
+ *            admin fixture, holds the entry to END where it was sent, and is what the identity
+ *            check's `--only=` filters on. A coach or marketing entry never carries one.
+ *   clock    optional (ctx) => ISO date-time — pins the page's Date for a screen whose content is
+ *            ONE DAY's (the scorekeeper). The entry gets its own browser context so the pin never
+ *            leaks into the screens after it.
+ *   identityMask  ADMIN SIDE ONLY: selectors the identity check paints over on this screen — a
+ *            live figure or a known product defect that moves an unchanged screen; each with its reason
+ *   route    optional literal route folder, for `--changed`, when the path fills a dynamic
+ *            segment with a word the sentinels cannot turn back into its `[segment]`
  *
  * ⚠ SESSION MATTERS. The coach portal resolves org context before coaching assignments, so opening
  * a coach screen with the org-owner session lands on "Not assigned to any teams" — a page that
@@ -70,6 +80,46 @@ async function openMoreSheet(page) {
   if (await more.count() === 0 || !(await more.isVisible())) return;
   await more.click();
   await page.locator('nav[aria-label="Coaches mobile navigation"] [role="menu"]').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
+/**
+ * Wait until no visible line reads "Loading…" or "Loading members…" (admin slice 0, 2026-09-25). The admin draws its
+ * loading state as a plain text line — often UNDER the page heading (tournament Registrations draws
+ * its h1, then "Loading…" where the list goes) — so a `ready` selector can release a half-drawn
+ * screen, and `networkidle` can fire in the gap before the list's request starts. Tolerant: a line
+ * that never goes is measured as it stands, and the sweep's findings will show it.
+ */
+export async function waitForNoLoading(page) {
+  // Also a WORDLESS loading state (review finding, 2026-09-25): the scorekeeper's is three dots in
+  // a section named "Loading games", with no text at all, so a text-only wait passed it at once.
+  await page.waitForFunction(() => {
+    const shown = (el) => el.getClientRects().length > 0;
+    const textLine = [...document.querySelectorAll('body *')].some((el) =>
+      el.childElementCount === 0 && /^\s*Loading\b[^.!?\n]{0,40}(…|\.\.\.)?\s*$/i.test(el.textContent || '') && shown(el));
+    const marked = [...document.querySelectorAll('[aria-busy="true"], [aria-label^="Loading" i]')].some(shown);
+    return !textLine && !marked;
+  }, null, { timeout: 30_000, polling: 250 }).catch(() => {});
+}
+
+/** The ADMIN phone bar's More menu (admin slice 0, 2026-09-25) — the coach gesture's twin on the
+ *  admin's own bar. A no-op above 900, where the bar is not drawn. */
+async function openAdminMoreSheet(page) {
+  const bar = page.locator('nav[aria-label="Admin mobile navigation"]');
+  const more = bar.getByRole('button', { name: /^More\b/ }).first();
+  if (await more.count() === 0 || !(await more.isVisible())) return;
+  await more.click();
+  await bar.locator('[role="menu"]').waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForTimeout(300);
+}
+
+/** The scorekeeper's score SHEET, raised from the first game a volunteer can still score. Opening
+ *  it writes nothing — only its Save does. Tolerant of a day with nothing left to score. */
+async function openScoreSheet(page) {
+  const card = page.locator('section[aria-label="Games"] button:not([disabled])').first();
+  if (await card.count() === 0) return;
+  await card.click();
+  await page.locator('form[role="dialog"]').waitFor({ state: 'attached', timeout: 15_000 });
   await page.waitForTimeout(300);
 }
 
@@ -1087,6 +1137,166 @@ export const SCREENS = [
   // NAME, so the context reads one off a played game rather than hard-coding it.
   { id: 'coach-opponent',             session: 'coach', ready: 'h1',
     path: (c) => `${team(c)}/history/opponents/${encodeURIComponent(c.opponentKey)}` },
+
+  /**
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   * THE ADMIN SIDE — added 2026-09-25, Admin Design Continuity slice 0.
+   *
+   * ⚠ UNTIL THIS BLOCK NO ADMIN SCREEN HAD EVER BEEN RENDERED BY A CHECK — not the club, not the
+   * tournament admin that paying organizers use every weekend, not the volunteer screens. Phase 1
+   * of that program moves the whole admin onto the coaches portal's kit and the one Warm / Dark
+   * setting, and "renders correctly in both themes" means nothing without a known start. These
+   * entries are that start: every `page.tsx` under `app/[orgSlug]/admin/**`, the frame's phone
+   * More menu open, and the volunteer screens — baselined in TODAY'S DARK.
+   *
+   * Each entry carries an `area` (the admin's own grouping, from the Phase 0 inventory). It does
+   * three jobs: it selects the admin fixture (`resolveAdminContext`), it makes an admin entry END
+   * where it was sent (the admin gates by redirect — see the runner's landing check), and it is
+   * what the identity check (`scripts/admin-identity.mjs`) filters on with `--only=`.
+   *
+   * Two orgs, because the admin draws two frames: the CLUB (`uat-rep-club`, owner session unless
+   * a role is the point) and a TOURNAMENT org (`uat-plus-org`'s Championship, the one tournament in
+   * the dev world with games — addressed by `?tournamentId=`, the product's own deep-link door, so
+   * a remembered switcher choice can never re-aim an entry).
+   *
+   * ⚠ NOT LISTED, deliberately: `/official` and `/official/score` are server REDIRECTS to
+   * `/scorekeeper` — an entry for either measures the scorekeeper twice and reports it as coverage.
+   * ══════════════════════════════════════════════════════════════════════════════════════════
+   */
+  // ── The frame, open (the phone More menu) — slice 1 rebuilds it; a screen at rest never shows it.
+  // Scoped to the open menu; above 900 the bar is not drawn and the entry measures the page.
+  { id: 'admin-club-more', area: 'frame', session: 'repClubOwner', ready: 'h1',
+    path: (c) => `/${c.clubSlug}/admin`, interact: openAdminMoreSheet,
+    scope: 'nav[aria-label="Admin mobile navigation"] [role="menu"]' },
+  { id: 'admin-tourn-more', area: 'frame', session: 'orgOwner', ready: 'h1',
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/dashboard?tournamentId=${c.tournamentId}`, interact: openAdminMoreSheet,
+    scope: 'nav[aria-label="Admin mobile navigation"] [role="menu"]' },
+
+  // ── Hub + onboarding (the hub is Club Stage 1's to redesign; listed so switch-off stays proven) ──
+  { id: 'admin-hub',           area: 'hub', session: 'repClubOwner',  ready: 'h1', path: (c) => `/${c.clubSlug}/admin` },
+  // The same hub for the other two admin roles — the frame and the hub's doors differ by role, and
+  // Club Stage 1 (D8) changes what each role is shown.
+  { id: 'admin-hub-admin',     area: 'hub', session: 'repClubAdmin',  ready: 'h1', path: (c) => `/${c.clubSlug}/admin` },
+  // The wizard exists only for an org that has NOT finished onboarding — the rep club has, so it is
+  // redirected to the hub; the plain Club-plan org has not (its owner is the org-owner login). It
+  // opens on the house-league step by itself, reading only.
+  { id: 'admin-onboarding',    area: 'hub', session: 'orgOwner',      ready: '[role="dialog"]', path: (c) => `/${c.onboardingOrgSlug}/admin/onboarding` },
+  { id: 'admin-notifications', area: 'hub', session: 'repClubOwner',  ready: 'h1', path: (c) => `/${c.clubSlug}/admin/notifications` },
+
+  // ── Organization ──
+  { id: 'admin-org',                   area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org` },
+  // ⚠ The member list has NO defined order — the members API selects without an ORDER BY, so rows
+  // come back in storage order and move whenever a member row is touched (two loads of the same
+  // unchanged screen, minutes apart, drew the eight rows in two orders). A product defect, handed to
+  // Club Stage 1 (it redesigns Members); until it is fixed the identity check masks the list, and
+  // the frame and header around it stay checked. The mask comes off with the fix.
+  { id: 'admin-org-members',           area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members`,
+    identityMask: ['[class*="tableWrap"]'] },
+  { id: 'admin-org-members-audit',     area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members/audit` },
+  { id: 'admin-org-billing',           area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/billing` },
+  { id: 'admin-org-settings',          area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings` },
+  { id: 'admin-org-settings-pdf',      area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings/pdf` },
+  { id: 'admin-org-venues',            area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues` },
+  { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/coaches-portal-links` },
+  { id: 'admin-org-tournaments',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/tournaments` },
+
+  // ── Rep Teams (15U AAA: a live 2026 season and a finished 2025 one) ──
+  { id: 'admin-rep-teams',             area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams` },
+  { id: 'admin-rep-allocations',       area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/allocations` },
+  { id: 'admin-rep-allocation',        area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/allocations/${c.clubAllocationId}` },
+  { id: 'admin-rep-allocation-new',    area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/allocations/new` },
+  { id: 'admin-rep-assistant-coaches', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/assistant-coaches` },
+  { id: 'admin-rep-documents',         area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/documents` },
+  { id: 'admin-rep-past',              area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/past` },
+  { id: 'admin-rep-payment-requests',  area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/payment-requests` },
+  { id: 'admin-rep-rename-slugs',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/rename-slugs` },
+  { id: 'admin-rep-shared-library',    area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/shared-library` },
+  { id: 'admin-rep-team',              area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}` },
+  { id: 'admin-rep-team-history',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/history` },
+  { id: 'admin-rep-team-history-year', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/history/${c.clubPastYearId}` },
+  { id: 'admin-rep-team-year',         area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/program-years/${c.clubYearId}` },
+  { id: 'admin-rep-team-year-coaches', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/program-years/${c.clubYearId}/coaches` },
+  { id: 'admin-rep-team-year-schedule', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/program-years/${c.clubYearId}/schedule` },
+  { id: 'admin-rep-team-year-tryouts', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/program-years/${c.clubYearId}/tryouts` },
+
+  // ── Accounting (the heaviest hand-set colour debt — slice 3) ──
+  { id: 'admin-accounting',            area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting` },
+  // The treasurer's own view — the role this area is for, and a frame the owner's does not draw.
+  { id: 'admin-accounting-treasurer',  area: 'accounting', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting` },
+  { id: 'admin-accounting-budget',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget` },
+  { id: 'admin-accounting-bva',        area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget-vs-actual` },
+  { id: 'admin-accounting-allocate',   area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/budget/allocate/${c.clubBudgetLineId}` },
+  { id: 'admin-accounting-ledger',     area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting/ledger/${c.clubLedgerId}` },
+
+  // ── Families (the Okafor household: a child on two teams) ──
+  { id: 'admin-families',              area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families` },
+  { id: 'admin-family',                area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/${c.clubPersonId}` },
+  { id: 'admin-families-duplicates',   area: 'families', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/families/duplicates` },
+
+  // ── Public site editor (its PREVIEW of the public pages keeps the org's colours — R2) ──
+  { id: 'admin-public-site',           area: 'public-site', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/public-site` },
+
+  // ── House league (the 2026 Fall season, registration open) ──
+  { id: 'admin-house-league',          area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league` },
+  { id: 'admin-hl-season',             area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}` },
+  { id: 'admin-hl-ledger',             area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/ledger` },
+  { id: 'admin-hl-notifications',      area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/notifications` },
+  { id: 'admin-hl-registrations',      area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
+  { id: 'admin-hl-registrations-registrar', area: 'house-league', session: 'repClubRegistrar', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/registrations` },
+  { id: 'admin-hl-schedule',           area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/schedule` },
+  { id: 'admin-hl-standings',          area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/standings` },
+  { id: 'admin-hl-teams',              area: 'house-league', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/house-league/seasons/${c.clubSeasonId}/teams` },
+
+  // ── Tournaments — the tournament-only frame (uat-plus-org), the Championship pinned by address ──
+  ...[
+['/dashboard', 'admin-t-dashboard'], ['/archives', 'admin-t-archives'],
+    ['/branding', 'admin-t-branding'], ['/check-in', 'admin-t-check-in'],
+    ['/communication', 'admin-t-communication'], ['/data-tools', 'admin-t-data-tools'],
+    ['/divisions', 'admin-t-divisions'], ['/manage', 'admin-t-manage'],
+    ['/registrations', 'admin-t-registrations'], ['/results', 'admin-t-results'], ['/rules', 'admin-t-rules'],
+    ['/schedule', 'admin-t-schedule'], ['/settings', 'admin-t-settings'], ['/settings/event', 'admin-t-settings-event'],
+    ['/settings/members/audit', 'admin-t-settings-audit'],
+    ['/settings/notifications', 'admin-t-settings-notifications'], ['/settings/pdf', 'admin-t-settings-pdf'],
+    ['/settings/registration-fields', 'admin-t-settings-fields'], ['/settings/subscription', 'admin-t-settings-subscription'],
+    ['/staff-kit', 'admin-t-staff-kit'], ['/summary', 'admin-t-summary'], ['/venues', 'admin-t-venues'],
+  ].map(([sub, id]) => ({ id, area: 'tournaments', session: 'orgOwner', ready: 'h1',
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments${sub}?tournamentId=${c.tournamentId}` })),
+  // Chat draws no heading — its room column is the screen. Ready on the room's own control.
+  { id: 'admin-t-chat', area: 'tournaments', session: 'orgOwner', ready: '[aria-label="Manage room"]',
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/chat?tournamentId=${c.tournamentId}` },
+  // The SAME members page as the club's (it re-exports it), so the same unordered list — see
+  // `admin-org-members`.
+  { id: 'admin-t-settings-members', area: 'tournaments', session: 'orgOwner', ready: 'h1',
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/settings/members?tournamentId=${c.tournamentId}`,
+    identityMask: ['[class*="tableWrap"]'] },
+  // The admin's PREVIEW of the public pages — org-branded by ruling (R2), so slice 1 must leave it
+  // looking exactly like this with the switch ON as well as off.
+  { id: 'admin-t-preview', area: 'tournaments', session: 'orgOwner', ready: 'h1',
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/preview/${c.tournamentSlug}` },
+  { id: 'admin-t-preview-schedule', area: 'tournaments', session: 'orgOwner', ready: 'h1',
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/preview/${c.tournamentSlug}/schedule`,
+    route: 'app/[orgSlug]/admin/tournaments/preview/[tournamentSlug]/[section]' },
+  // A club's own tournament, inside the CLUB frame — the tournament screens under the other rail.
+  { id: 'admin-club-t-dashboard', area: 'tournaments', session: 'repClubOwner', ready: 'h1',
+    path: (c) => `/${c.clubSlug}/admin/tournaments/dashboard?tournamentId=${c.clubTournamentId}` },
+
+  // ── The admin's help guide (fixed dark today by ruling; R4 moves it onto the theme) ──
+  ...['', '/accounting', '/coaches', '/exports', '/families', '/house-league', '/org', '/registrations', '/rep-teams', '/tournaments']
+    .map((sub) => ({ id: `admin-help${sub.replace('/', '-')}`, area: 'help', session: 'repClubOwner', ready: 'h1',
+      path: (c) => `/${c.clubSlug}/admin/help${sub}` })),
+
+  // ── The volunteer screens — an `official` on the Plus org, the clock pinned to the Championship's
+  // busiest game day (the scorekeeper shows ONE day; on any other it measures its empty state). ──
+  { id: 'guest-scorekeeper', area: 'volunteer', session: 'plusOfficial', ready: 'h1',
+    clock: (c) => `${c.tournamentGameDay}T12:00:00-04:00`,
+    path: (c) => `/${c.tournOrgSlug}/scorekeeper` },
+  // The score SHEET, open — a form over the list (ADC specimen 7). Opening it writes nothing.
+  { id: 'guest-scorekeeper-sheet', area: 'volunteer', session: 'plusOfficial', ready: 'h1',
+    clock: (c) => `${c.tournamentGameDay}T12:00:00-04:00`,
+    path: (c) => `/${c.tournOrgSlug}/scorekeeper`, interact: openScoreSheet, scope: 'form[role="dialog"]' },
+  { id: 'guest-check-in', area: 'volunteer', session: 'plusOfficial', ready: 'h1',
+    clock: (c) => `${c.tournamentGameDay}T12:00:00-04:00`,
+    path: (c) => `/${c.tournOrgSlug}/check-in` },
 
   /**
    * ══════════════════════════════════════════════════════════════════════════════════════════

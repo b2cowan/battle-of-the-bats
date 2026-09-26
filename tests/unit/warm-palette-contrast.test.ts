@@ -246,3 +246,157 @@ describe('warm palette — legible by construction', () => {
     );
   });
 });
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+// THE ADMIN'S DARK PALETTE (Admin Design Continuity, slice 0, 2026-09-25)
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// ⚠ WHY A SECOND PALETTE LIVES IN A FILE CALLED "WARM". This file is the one `npm run
+// check:contrast` runs on every `verify:changed`, and a test nothing runs is the failure it exists
+// to prevent. The admin has never been held to ANY contrast check: it is dark-only today, and the
+// block above holds the warm palette alone. Phase 1 moves the admin onto the warm palette too
+// (slice 1 adds its grounds to the block above); THIS block holds the dark one it keeps, which is
+// the palette every admin screen wears until the release day — and the one an account set to Dark
+// keeps after it.
+//
+// ⚠ THE INKS ARE READ, NOT RESTATED — from every top-level `:root {}` block of the stylesheet, in
+// source order, the LAST definition winning (the cascade's own rule; later `:root` blocks alias
+// tokens), `var()` followed to its end. A translucent ink (`--white-40`) is not a colour until it is
+// painted on something, so each is composited over each ground before it is judged.
+//
+// ⚠ THE GROUNDS ARE MEASURED, for the reason the warm block gives: what is painted behind a line of
+// text only exists once a browser has resolved it. Each value below is the composited colour behind
+// real admin text, read from every admin screen at 1440 and 390 by the slice-0 probe.
+
+type Ink = { rgb: RGB; alpha: number };
+
+function readRootTokens(file: string): Record<string, string> {
+  const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+  const decls: Record<string, string> = {};
+  let depth = 0;
+  let sel = '';
+  let start = 0;
+  for (let i = 0; i < css.length; i++) {
+    const ch = css[i];
+    if (ch === '{') {
+      if (depth === 0) { sel = css.slice(start, i).trim(); start = i + 1; }
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      if (depth === 0) {
+        // A selector LIST counts when any of its members is `:root` — `:root, html { … }` would
+        // otherwise be skipped in silence and a later override read as the stale value (review
+        // finding, 2026-09-25: a wrong-but-plausible number is the worst thing this can return).
+        if (sel.split(',').some((part) => part.trim() === ':root')) {
+          for (const m of css.slice(start, i).matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi)) decls[m[1]] = m[2].trim();
+        }
+        start = i + 1;
+      }
+    } else if (ch === ';' && depth === 0) {
+      start = i + 1;
+    }
+  }
+  return decls;
+}
+
+function resolveInk(decls: Record<string, string>, name: string, seen = new Set<string>()): Ink | null {
+  if (seen.has(name)) return null;
+  seen.add(name);
+  const v = decls[name];
+  if (!v) return null;
+  if (/^#[0-9a-f]{6}$/i.test(v)) return { rgb: parseHex(v), alpha: 1 };
+  const rgba = v.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*(?:,\s*([\d.]+))?\s*\)$/i);
+  if (rgba) return { rgb: [+rgba[1], +rgba[2], +rgba[3]], alpha: rgba[4] === undefined ? 1 : +rgba[4] };
+  const ref = v.match(/^var\(\s*(--[a-z0-9-]+)\s*(?:,[^)]*)?\)$/i);
+  return ref ? resolveInk(decls, ref[1], seen) : null;
+}
+
+/** An ink as it is actually seen: painted over its ground. */
+function over({ rgb, alpha }: Ink, ground: RGB): RGB {
+  return [0, 1, 2].map((i) => Math.round(rgb[i] * alpha + ground[i] * (1 - alpha))) as unknown as RGB;
+}
+
+/** Every dark token the admin paints TEXT with: `color:` in admin CSS with 5+ uses, plus `--white-25`,
+ *  which the sweep found as the More menu's group labels (2026-09-25). */
+const ADMIN_INKS = [
+  '--fl-text', '--white', '--white-90', '--white-85', '--white-80', '--white-75', '--white-70', '--white-60',
+  '--white-55', '--white-50', '--white-45', '--white-40', '--white-35', '--white-30', '--white-25', '--white-20', '--data-gray',
+  '--logic-lime', '--warning', '--warning-light', '--danger', '--danger-light', '--success', '--success-light',
+  '--info', '--blueprint-blue', '--primary-light',
+] as const;
+
+/**
+ * Measured 2026-09-25 by the slice-0 probe (every text run on 91 admin screens at 1440 and 390, the
+ * layers behind it composited to the first opaque one) — ~99% of admin text sits on one of these.
+ *
+ * ⚠ Not here, deliberately: the ACCENT fills — the lime button (dark text on it), the platform-navy
+ * button and active row (white on it), the amber / lime / teal status tints (their own accent on
+ * them). Holding every muted ink against a navy button fails it on speculation, which is the noise
+ * the warm block's per-accent lists exist to avoid; what really sits on those fills is a USAGE
+ * question, and the layout sweep answers it on the rendered page.
+ */
+const ADMIN_DARK_GROUNDS: Record<string, RGB> = {
+  'admin page': parseHex('#0A0A0A'),        // --bg: the body and the rail
+  'navy panel': parseHex('#0F172A'),        // --bg-2 panels (assistant coaches, shared library)
+  'admin main': parseHex('#111827'),        // --surface: the content column (under its 9% blueprint grid) and every .card
+  'event header top': parseHex('#1B232D'),  // the tournament header's lime-5% wash at its top edge — COMPUTED from its gradient, the probe cannot composite one
+  'faint panel': parseHex('#1D2432'),       // --white-5 over the main: the public-site editor's panels
+  'faint fill': parseHex('#242A38'),        // --white-8 over the main: member and team list rows — the LIGHTEST, so every ink's worst
+};
+
+/**
+ * ⚠ RECORDED DEBT, NOT ACCEPTANCE — and deliberately NOT the `ACCEPTED` list above, whose every
+ * entry is an argued decision. These are the dark admin inks that fall under AA on their WORST
+ * ground today, recorded at slice 0 so the admin enters the check without being failed on day one
+ * for a palette nobody has argued yet (owner, 2026-09-25: "debt, reasons only if argued"). The
+ * number is the ratio measured then. It is a RATCHET: an ink that gets worse fails, an ink that
+ * starts passing fails until its line is deleted, and an ink not listed here fails outright.
+ */
+const ADMIN_DARK_DEBT: Record<string, number> = {
+  // The faint whites the admin uses as secondary text — 227+ `color:` uses at 30–45% alone. The
+  // layout sweep measures the same thing on rendered screens (40% white at 3.81:1 on a card).
+  '--white-45': 4.16,
+  '--white-40': 3.59,
+  '--white-35': 3.11,
+  '--white-30': 2.61,
+  '--white-25': 2.13,        // the phone More menu's group labels
+  '--white-20': 1.77,
+  '--danger': 3.81,          // the red as TEXT; --danger-light (5.19) is the dark theme's legible red
+  '--info': 3.90,
+  // ⚠ The platform navy used as a TEXT colour (26 `color:` uses in admin CSS): navy on near-black.
+  // Found by this block on its first run — no check had ever held it.
+  '--blueprint-blue': 1.39,
+};
+
+describe('admin dark palette — held from its first day in the check', () => {
+  const decls = readRootTokens(COACH_PALETTE);
+
+  it('the stylesheet yielded every admin ink and the grounds are stated', () => {
+    for (const name of ADMIN_INKS) {
+      assert.ok(resolveInk(decls, name), `${name} did not resolve from the :root blocks of app/globals.css — has it moved?`);
+    }
+    assert.ok(Object.keys(ADMIN_DARK_GROUNDS).length > 0, 'no admin grounds — every assertion below would be vacuous');
+  });
+
+  it('no admin ink falls under AA on any admin ground, beyond its recorded debt', () => {
+    const problems: string[] = [];
+    for (const name of ADMIN_INKS) {
+      const ink = resolveInk(decls, name)!;
+      let worst = Infinity;
+      let worstGround = '';
+      for (const [g, rgb] of Object.entries(ADMIN_DARK_GROUNDS)) {
+        const r = contrast(over(ink, rgb), rgb);
+        if (r < worst) { worst = r; worstGround = g; }
+      }
+      const debt = ADMIN_DARK_DEBT[name];
+      if (worst < AA_NORMAL && debt === undefined) {
+        problems.push(`${name} on ${worstGround}: ${worst.toFixed(2)}:1 (needs ${AA_NORMAL}:1) — NEW`);
+      } else if (debt !== undefined && worst >= AA_NORMAL) {
+        problems.push(`${name} now clears AA (${worst.toFixed(2)}:1) — delete its ADMIN_DARK_DEBT line; the ratchet tightens`);
+      } else if (debt !== undefined && worst < debt - 0.01) {
+        problems.push(`${name} on ${worstGround}: ${worst.toFixed(2)}:1, WORSE than its recorded ${debt.toFixed(2)}:1`);
+      }
+    }
+    assert.deepEqual(problems, [], `Admin dark inks:\n  ${problems.join('\n  ')}`);
+  });
+});

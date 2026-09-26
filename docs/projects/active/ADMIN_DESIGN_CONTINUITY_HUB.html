@@ -1,0 +1,1131 @@
+<!--
+ADMIN DESIGN CONTINUITY — project hub (one artifact for the program's whole life).
+Built 2026-09-25 from docs/agents/design/PROJECT_HUB_TEMPLATE.html; the product specimens reuse the
+Club Tier hub's specimen styles (.dk = today's dark admin, .wm = the coaches portal's kit, .wm.theme-dark
+= the kit's dark theme). Republish this SAME path every phase. Plan: ADMIN_DESIGN_CONTINUITY_PLAN.md.
+-->
+<title>Admin Design Continuity</title>
+<style>
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;--ok:#2f6b3a;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}button:disabled{opacity:.6;cursor:default}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:22px 0 10px}h3{font-size:15px;margin:16px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:18px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);text-decoration:none;border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+
+.frame{width:min(1180px,calc(100% - 48px));margin:24px auto 20px;border:1px solid #c6cebc;border-radius:14px;overflow:hidden;background:var(--paper);box-shadow:0 12px 36px #2732210a;container-type:inline-size}
+.frame.phone{max-width:390px;width:calc(100% - 20px)}
+.brandbar{background:white;border-bottom:1px solid var(--line);padding:14px 28px;display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.brand{font-weight:800;font-size:18px;letter-spacing:-.5px}.brand span{color:var(--olive)}.team{margin-left:auto;font-size:13px;color:var(--muted)}
+main.hubsection{padding:28px 36px 36px;min-height:400px}
+.head{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:20px}.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.intent{padding:16px 28px;background:#fafbf7;font-size:12px;color:var(--muted);border-top:1px solid var(--line)}.intent strong{color:var(--ink)}
+
+/* capability map */
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);margin:0 0 16px}
+.legend span{display:inline-flex;align-items:center;gap:6px}.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.dot.b{background:var(--error)}.dot.h{background:var(--warn)}.dot.m{background:#8b8f3a}.dot.ok{background:var(--ok)}
+.map{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.tile{background:white;border:1px solid var(--line);border-radius:10px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;border-top:4px solid var(--line)}
+.tile.b{border-top-color:var(--error)}.tile.h{border-top-color:var(--warn)}.tile.m{border-top-color:#8b8f3a}.tile.ok{border-top-color:var(--ok)}
+.tile .t{display:flex;justify-content:space-between;align-items:start;gap:10px}.tile h3{margin:0;font-size:16px;line-height:1.25}
+.tile .stg{font-size:11px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);white-space:nowrap;padding-top:3px}
+.tile .verdict{font-size:13px;margin:0}.tile .flags{display:flex;flex-wrap:wrap;gap:4px;margin-top:auto;padding-top:6px}
+.tile .flags .fl{margin:0}
+.status{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:700;padding:3px 9px;border-radius:20px;background:var(--soft);border:1px solid var(--line);cursor:pointer}
+.status.b{background:#f3dede;border-color:#e0a9a9;color:#6d1f1f}.status.h{background:#f4ecd9;border-color:#e0c98a;color:#5d3d0a}.status.m{background:#eef0d8;border-color:#cfd39a;color:#4d5020}.status.ok{background:#e3f3d4;border-color:#b9d88c;color:#24502c}
+table{border-collapse:collapse;width:100%;font-size:13px;background:white}th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}th{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);background:#fafbf7}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:8px;margin:10px 0 18px}
+@container(max-width:900px){.map{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@container(max-width:600px){.map{grid-template-columns:1fr}main.hubsection{padding:20px 16px 28px}.brandbar{padding:12px 16px;gap:8px 15px}.head{flex-wrap:wrap;gap:12px}h1{font-size:23px}}
+
+.docpage{max-width:760px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage ol,.docpage ul{padding-left:22px}.docpage li{margin:0 0 6px}
+.stagecard{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.stagecard h3{margin:0 0 6px;font-size:16px}.stagecard .meta{margin-bottom:8px}
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.accepted{background:#e3f3d4;border-color:#b9d88c}.tag.deferred{background:#f4ecd9;border-color:#e0c98a}.tag.rejected{background:#f3dede;border-color:#e0a9a9}.tag.open{background:#edf5f8;border-color:#b6cfdb}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:inherit;font-size:10px;font-weight:800;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;line-height:1.4}.fl:hover{filter:brightness(1.1)}
+.fl.h{background:var(--warn)}.fl.m{background:#8b8f3a}.fl.fix{background:var(--olive);letter-spacing:.3px;text-transform:none;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:13px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:18px 25px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0}.dialogbody{padding:25px}
+
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin-bottom:20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+@media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600;700&family=Barlow+Condensed:wght@700;800&display=swap">
+<style id="s1-mockup-styles">
+/* ══ STAGE 1 MOCKUPS — the club shell (added 2026-09-25 by the Stage 1 mockup session).
+   Everything below is scoped to the Mockup tab: .walk, .s1 (a specimen screen), .dk (a "before"
+   frame in today's dark HUD), .wm (an "after" frame in the warm kit). Product palettes are fixed
+   on purpose — a specimen depicts a product surface, it does not follow the reader's theme. ══ */
+.walk{display:flex;gap:4px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 11px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+.walk{position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+.s1,#screen-map{scroll-margin-top:70px}
+@media(max-width:700px){.walk{flex-wrap:nowrap;overflow-x:auto;white-space:nowrap}.walk a{flex:none}}
+.themetog{margin-left:auto;display:flex;align-items:center;gap:4px;font-size:12.5px;color:var(--muted);flex:none}
+.themetog button{min-height:40px;border:1px solid var(--line);background:#fff;border-radius:6px;padding:4px 11px;font-size:12.5px;font-weight:650}
+.themetog button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+#screen-map{padding:24px 28px 30px}
+.s1{padding:24px 28px 34px}
+.s1 .shead h1{margin:2px 0 6px}
+.s1 .shead .sub{max-width:760px}
+.flagrow{display:flex;flex-wrap:wrap;gap:6px 2px;align-items:center;margin:10px 0 4px;font-size:12px;color:var(--muted)}
+.flagrow .fl{margin-left:4px}
+.spec{margin:26px 0 8px}
+.spectop{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin:0 0 10px}
+.spectop h2{margin:0;font-size:16px}
+.lbl{font-size:10.5px;font-weight:800;letter-spacing:1.2px;text-transform:uppercase;padding:3px 8px;border-radius:4px;white-space:nowrap}
+.lbl.before{background:#1b2130;color:#e2e8f0}.lbl.after{background:#dff0c2;color:#2b3f12}.lbl.place{background:#e3edf2;color:#1d4a5e}
+.spectop .aside{font-size:12.5px;color:var(--muted)}
+.fixrow{display:flex;flex-wrap:wrap;gap:4px;align-items:center}
+.fixrow .fl{margin-left:0}
+.scroller{overflow-x:auto;border:1px solid #c6cebc;border-radius:10px;background:#dfe3d6;-webkit-overflow-scrolling:touch}
+.scroller.bare{border:0;background:transparent;border-radius:0}
+.desk{width:1040px}
+.speccap{font-size:13px;color:var(--muted);margin:8px 2px 0;max-width:820px}
+.speccap strong{color:var(--ink)}
+.row2{display:flex;flex-wrap:wrap;gap:18px;align-items:flex-start}
+.phonecol{display:flex;flex-direction:column;gap:8px;max-width:100%}
+.phonebox{display:flex;gap:10px;align-items:flex-end;max-width:100%}
+.ref44{flex:none;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:10.5px;color:var(--muted);font-weight:700}
+.ref44 i{display:block;width:44px;height:44px;border:2px solid #b04a2a;background:repeating-linear-gradient(45deg,#f6d9cf 0 5px,#fff 5px 10px);border-radius:3px}
+.tsbtn{align-self:flex-start;border:1px solid var(--line);background:#fff;border-radius:7px;min-height:40px;padding:6px 12px;font-size:13px;font-weight:650;color:var(--ink)}
+.asks{border:1px solid var(--line);border-radius:10px;background:#fff;padding:12px 16px;margin:18px 0 0;font-size:13.5px}
+.asks b{color:var(--olive)}
+.askchip{display:inline-flex;align-items:center;gap:4px;font:800 10px/1.3 system-ui,sans-serif;letter-spacing:.4px;text-transform:uppercase;background:#edf5f8;border:1px solid #b6cfdb;color:#1d4a5e;border-radius:4px;padding:2px 6px;vertical-align:middle;margin-left:6px;cursor:default}
+/* clickable NEW / RESTYLED / UNCHANGED tags (template rule 8) */
+.mk{display:inline-block;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer;white-space:nowrap}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #9fc46a}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #9fbccb}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #c9cfc2}
+.mk[data-k=copy]{background:#fbeed9;color:#6b4508;border:1px solid #e0c98a}
+.mk:hover{filter:brightness(.94)}.mk[role=button]:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+.fl{white-space:nowrap}
+dialog.truesize{max-width:none;max-height:none;width:100%;height:100%;margin:0;border:0;border-radius:0;padding:0;background:#2a2f27}
+dialog.truesize::backdrop{background:#16201899}
+.tsbar{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px 12px;color:#e7f0da;font-size:13px}
+.tsbar button{min-height:44px;border:1px solid #748267;background:#3a4932;color:#fff;border-radius:6px;padding:6px 14px;font-weight:650}
+.tsbody{display:flex;justify-content:center}
+.tsbody .phone{width:100%;max-width:390px;height:calc(100dvh - 60px);border-radius:0}
+@media(max-width:700px){#hub-mockup .frame{width:calc(100% - 12px);margin-top:12px}.s1,#screen-map{padding:18px 8px 26px}.walk{padding:8px 10px}}
+
+/* icons */
+.i{width:18px;height:18px;flex:none;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;vertical-align:middle}
+.i.s{width:15px;height:15px}.i.l{width:26px;height:26px}.i.xl{width:30px;height:30px}
+
+/* ── BEFORE: today's dark HUD admin (admin.module.css / AdminSidebar / AdminBottomNav) ── */
+.dk{--d-bg:#0A0A0A;--d-sl:#0F172A;--d-sf:#111827;--d-bll:rgba(30,58,138,.6);--d-li:#D9F99D;--d-gr:#94A3B8;--d-tx:#F1F5F9;--d-w10:rgba(255,255,255,.08);--d-w30:rgba(255,255,255,.3);--d-w50:rgba(255,255,255,.5);background:var(--d-bg);color:var(--d-tx);font:13px/1.45 Inter,system-ui,sans-serif;text-align:left}
+.dk *{box-sizing:border-box}
+.dk .mono,.dk .dnav,.dk .dsec,.dk .dlabel,.dk .dbtn,.dk .dbadge,.dk th{font-family:'IBM Plex Mono',ui-monospace,monospace}
+.dstrip{height:46px;display:flex;align-items:center;gap:14px;padding:0 16px;border-bottom:1px solid var(--d-bll);background:#050505;color:var(--d-gr)}
+.wmark{font:800 17px/1 'Barlow Condensed',Inter,sans-serif;letter-spacing:.4px;text-transform:uppercase;color:#fff}.dk .wmark b{color:var(--d-li);font-weight:800}
+.sp{flex:1}
+.dshell{display:flex;min-height:600px}
+.dside{width:200px;flex:none;border-right:1px solid rgba(30,58,138,.35);display:flex;flex-direction:column;padding:8px 0;background:#070707}
+.dsec{font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:rgba(148,163,184,.55);padding:12px 16px 4px}
+.dnav{display:flex;align-items:center;gap:10px;padding:8px 16px;border-left:2px solid transparent;color:var(--d-gr);font-size:10.5px;font-weight:500;text-transform:uppercase;letter-spacing:.04em}
+.dnav.on{color:var(--d-li);border-left-color:var(--d-li);background:rgba(217,249,157,.05)}
+.dnav.back{color:var(--d-w50)}
+.dfoot{margin-top:auto;border-top:1px solid var(--d-w10);padding:6px 0}
+.dfoot .dnav{text-transform:none;letter-spacing:0;font-size:11.5px;padding:6px 16px}
+.dmain{flex:1;min-width:0;padding:26px 30px}
+.dlabel{font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--d-gr)}
+.dh1{font:700 21px/1.2 'IBM Plex Mono',ui-monospace,monospace;text-transform:uppercase;color:var(--d-li);letter-spacing:-.3px;margin:4px 0 0}
+.dhdr{border-bottom:1px solid var(--d-bll);padding-bottom:14px;margin-bottom:22px}
+.dpagehead{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}
+.dpagehead .ttl{display:flex;gap:12px;align-items:center}
+.dicon{width:38px;height:38px;border:1px solid var(--d-bll);display:flex;align-items:center;justify-content:center;color:#4f73d9;background:rgba(30,58,138,.12)}
+.dpt{font:700 17px/1.2 Inter,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+.dps{font-size:12px;color:var(--d-gr)}
+.dcard{background:var(--d-sf);border:1px solid var(--d-bll);border-radius:2px;padding:16px 18px}
+.dtiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.dtile{display:flex;gap:14px;align-items:flex-start}
+.dtile .i{color:#4f73d9;width:26px;height:26px}
+.dtt{font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12.5px}
+.dtd{color:var(--d-gr);font-size:11.5px;margin-top:3px}
+.dbtn{display:inline-flex;align-items:center;gap:6px;min-height:32px;padding:6px 11px;border:1px solid rgba(148,163,184,.35);border-radius:2px;color:#cbd5e1;font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.dbtn.lime{background:var(--d-li);color:#0A0A0A;border-color:var(--d-li)}
+.dbtn.danger{border-color:rgba(239,68,68,.5);color:#fca5a5}
+.dbadge{display:inline-block;font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;padding:3px 6px;border-radius:2px;border:1px solid}
+.b-ok{color:#86efac;border-color:rgba(134,239,172,.35);background:rgba(134,239,172,.07)}.b-pri{color:#93c5fd;border-color:rgba(147,197,253,.35);background:rgba(147,197,253,.07)}.b-neu{color:#cbd5e1;border-color:rgba(203,213,225,.3);background:rgba(203,213,225,.05)}.b-warn{color:#fcd34d;border-color:rgba(252,211,77,.35);background:rgba(252,211,77,.07)}.b-info{color:#7dd3fc;border-color:rgba(125,211,252,.35);background:rgba(125,211,252,.07)}
+.dk table{background:transparent;font-size:12.5px;width:100%;border-collapse:collapse}
+.dk th{background:rgba(255,255,255,.02);color:var(--d-gr);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;border-bottom:1px solid var(--d-w10);padding:9px 10px;font-weight:700}
+.dk td{border-bottom:1px solid var(--d-w10);padding:10px;vertical-align:middle;color:var(--d-tx)}
+.dk td.dim{color:var(--d-gr)}
+.dtablewrap{border:1px solid var(--d-bll);background:var(--d-sf)}
+.dinp{background:var(--d-sl);border:1px solid rgba(148,163,184,.3);border-radius:2px;padding:8px 10px;color:var(--d-tx);font-size:12.5px;display:flex;justify-content:space-between;align-items:center}
+.dwarn{background:rgba(245,158,11,.07);border:1px solid rgba(245,158,11,.25);padding:12px 16px}
+.dwarn .dlabel{color:rgba(245,158,11,.85)}
+.dblue{background:rgba(30,58,138,.08);border:1px solid rgba(30,58,138,.28);padding:14px 18px;display:flex;gap:12px;align-items:center}
+.dlime{border:1px solid rgba(217,249,157,.35);background:rgba(217,249,157,.05);padding:14px 16px}
+.derr{color:#f87171;font-size:12.5px}
+.dmuted{color:var(--d-gr)}
+.dstack{display:flex;flex-direction:column;gap:12px}
+.ddialog{background:#0d1320;border:1px solid var(--d-bll);box-shadow:0 20px 60px rgba(0,0,0,.6);padding:18px 20px;width:460px}
+.ddialog h4{margin:0 0 12px;font:700 13px/1.2 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em;display:flex;gap:8px;align-items:center}
+.dscrim{background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:26px}
+.dfield{margin-bottom:12px}.dfield .dlabel{display:block;margin-bottom:5px}
+.dopts{border:1px solid rgba(148,163,184,.35);background:#0b1220;margin-top:2px}
+.dopts div{padding:7px 10px;font-size:12.5px}.dopts div.hl{background:#1e3a8a;color:#fff}
+.dtoggle{width:34px;height:18px;border-radius:9px;background:var(--d-li);position:relative;flex:none}.dtoggle::after{content:"";position:absolute;right:2px;top:2px;width:14px;height:14px;border-radius:50%;background:#0A0A0A}
+.dbar{height:8px;background:rgba(255,255,255,.08);margin-top:8px}.dbar i{display:block;height:100%;background:var(--d-li)}
+.dcheck{display:flex;gap:12px;align-items:flex-start;padding:13px 16px;border:1px solid var(--d-w10);background:var(--d-sf)}
+.dcheck.done{border-color:rgba(134,239,172,.3)}
+.dcheck .i{color:var(--d-gr)}.dcheck.done .i{color:#86efac}
+.dcheck .t{font-weight:700;font-size:13px}.dcheck .d{font-size:12px;color:var(--d-gr);margin-top:2px}
+.dcheck .cta{margin-left:auto}
+
+/* ── AFTER: the warm kit (globals.css html[data-user-theme=warm] [data-coach-warm-enabled] + components/coaches/kit) ── */
+.wm{--w-paper:#F8F4ED;--w-card:#fff;--w-ink:#241E15;--w-soft:#4A4235;--w-dim:#615A54;--w-line:rgba(70,55,30,.12);--w-strong:rgba(70,55,30,.22);--w-fill:rgba(70,55,30,.06);--w-olive:#57651E;--w-olsoft:rgba(87,101,30,.10);--w-live:#B03A22;--w-amber:#835006;--w-blue:#134FD3;--w-win:#34662A;--w-lime:#D9F99D;--w-shadow:0 1px 2px rgba(70,55,30,.05),0 6px 18px rgba(70,55,30,.07);--w-raised:#fdfbf7;--w-faint:rgba(97,90,84,.6);--w-fill2:#efe7db;--w-bar:rgba(246,242,234,.97);--w-scrim:rgba(36,30,21,.36);--w-toast-bg:#241E15;--w-toast-ink:#fff;--w-on-accent:#fff;--w-ph:#9a9189;--w-lime-line:#b3d47e;background:var(--w-paper);color:var(--w-ink);font:14px/1.45 Inter,system-ui,sans-serif;text-align:left}
+.wm *{box-sizing:border-box}
+/* DARK: the coaches portal's dark theme (globals.css :root dark tokens + the kit's dark fallbacks) — same parts, same layout, other palette. The account theme picks one; warm is the default. */
+.wm.theme-dark{--w-paper:#0A0A0A;--w-card:#111827;--w-raised:#0F172A;--w-ink:#F1F5F9;--w-soft:rgba(255,255,255,.76);--w-dim:#94A3B8;--w-faint:rgba(148,163,184,.62);--w-line:rgba(255,255,255,.08);--w-strong:rgba(255,255,255,.17);--w-fill:rgba(255,255,255,.05);--w-fill2:rgba(255,255,255,.09);--w-olive:#D9F99D;--w-olsoft:rgba(217,249,157,.09);--w-live:#F87171;--w-amber:#FBBF24;--w-blue:#7DB4FF;--w-win:#4ADE80;--w-lime:#D9F99D;--w-lime-line:#D9F99D;--w-shadow:0 1px 2px rgba(0,0,0,.35);--w-bar:rgba(10,10,10,.97);--w-scrim:rgba(0,0,0,.62);--w-toast-bg:#F1F5F9;--w-toast-ink:#0A0A0A;--w-on-accent:#0A0A0A;--w-ph:#64748B;color-scheme:dark}
+.wstrip{height:52px;display:flex;align-items:center;gap:14px;padding:0 18px;background:var(--w-card);border-bottom:1px solid var(--w-line);color:var(--w-soft)}
+.wm .wmark{color:var(--w-ink)}.wm .wmark b{color:var(--w-olive);font-weight:800}
+.avatar{width:30px;height:30px;border-radius:50%;background:var(--w-fill2);border:1px solid var(--w-line);display:inline-flex;align-items:center;justify-content:center;font:700 11px/1 Inter,sans-serif;color:var(--w-soft)}
+.belldot{position:relative;display:inline-flex}.belldot::after{content:"";position:absolute;top:-1px;right:-1px;width:7px;height:7px;border-radius:50%;background:var(--w-live);border:1.5px solid var(--w-card)}
+.wshell{display:flex;min-height:600px}
+.wside{width:226px;flex:none;background:var(--w-card);border-right:1px solid var(--w-line);padding:12px 10px;display:flex;flex-direction:column;gap:1px}
+.wgrp{font:700 11px/1.2 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim);padding:14px 10px 6px}
+.wnav{display:flex;align-items:center;gap:10px;min-height:38px;padding:7px 10px;border-radius:9px;color:var(--w-soft);font-size:14px;font-weight:550;position:relative}
+.wnav .i{color:var(--w-dim)}
+.wnav.on{background:var(--w-olsoft);color:var(--w-olive);font-weight:700}.wnav.on .i{color:var(--w-olive)}
+.wnav.sub{padding-left:38px;min-height:34px;font-size:13.5px}
+.wnav.quiet{color:var(--w-dim);font-weight:500}
+.wnav.ghost{color:var(--w-faint);font-style:italic;font-weight:500}
+.wnav .ch{margin-left:auto;width:14px;height:14px;opacity:.55}
+.wnav .cnt{margin-left:auto;min-width:20px;height:20px;border-radius:999px;background:color-mix(in srgb,var(--w-amber) 11%,transparent);color:var(--w-amber);border:1px solid color-mix(in srgb,var(--w-amber) 32%,transparent);font:700 11px/18px Inter,sans-serif;text-align:center;padding:0 5px}
+.wnav .cnt+.ch{margin-left:4px}
+.wnav .lock{margin-left:auto;width:14px;height:14px;opacity:.6}
+.wfoot{margin-top:auto;border-top:1px solid var(--w-line);padding-top:8px;display:flex;flex-direction:column}
+.wfoot .wnav{min-height:34px;font-size:13px;color:var(--w-dim);font-weight:500}
+.wmain{flex:1;min-width:0;padding:26px 30px 34px}
+.weye{font:700 11px/1.2 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim)}
+.wtitle{font:750 20px/1.25 Inter,sans-serif;letter-spacing:-.2px;margin:3px 0 0;color:var(--w-ink)}
+.wsubt{font-size:13px;color:var(--w-dim);margin-top:3px}
+.wpagehead{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:20px}
+.wactions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.wsec{margin-top:24px}
+.wsec>.weye{margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.wcard{background:var(--w-card);border:1px solid var(--w-line);border-radius:12px;padding:14px 16px;box-shadow:var(--w-shadow)}
+.wcard.flat{box-shadow:none}
+.wgrid4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.wgrid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.wgrid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.eyerow{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.eyerow .weye{font-size:11px}
+.arrow{color:var(--w-olive);width:15px;height:15px}
+.fig{font:750 24px/1.15 Inter,sans-serif;font-variant-numeric:tabular-nums;margin-top:6px;color:var(--w-ink)}
+.fig small{font-size:12px;font-weight:600;color:var(--w-dim);margin-left:4px}
+.wsm{font-size:12px;color:var(--w-dim);margin-top:2px}
+.wsm b{color:var(--w-ink);font-weight:650}
+.door{display:flex;gap:12px;align-items:flex-start}
+.door .i{color:var(--w-olive);width:22px;height:22px;margin-top:1px}
+.door .dt{font:700 15px/1.3 Inter,sans-serif;display:flex;align-items:center;gap:8px}
+.door .dd{font-size:13px;color:var(--w-dim);margin-top:2px}
+.door .go{margin-left:auto;align-self:center;color:var(--w-olive)}
+.quietrow{display:flex;flex-wrap:wrap;gap:8px 22px;font-size:13.5px;color:var(--w-soft);padding:12px 2px 0;border-top:1px solid var(--w-line);margin-top:14px}
+.quietrow span{display:inline-flex;align-items:center;gap:7px}
+.quietrow a,.wlink{color:var(--w-olive);font-weight:650;text-decoration:underline;text-underline-offset:3px}
+.chip{display:inline-flex;align-items:center;gap:4px;font:700 10px/1 'IBM Plex Mono',ui-monospace,monospace;letter-spacing:.06em;text-transform:uppercase;padding:4px 7px;border-radius:999px;white-space:nowrap}
+.chip.warn{color:var(--w-amber);background:color-mix(in srgb,var(--w-amber) 9%,transparent);border:1px solid color-mix(in srgb,var(--w-amber) 34%,transparent)}
+.chip.bad{color:var(--w-live);background:color-mix(in srgb,var(--w-live) 9%,transparent);border:1px solid color-mix(in srgb,var(--w-live) 34%,transparent)}
+.chip.good{color:var(--w-olive);background:color-mix(in srgb,var(--w-olive) 9%,transparent);border:1px solid color-mix(in srgb,var(--w-olive) 32%,transparent)}
+.chip.neu{color:var(--w-soft);background:var(--w-fill);border:1px solid var(--w-strong)}
+.chip.blue{color:var(--w-blue);background:color-mix(in srgb,var(--w-blue) 8%,transparent);border:1px solid color-mix(in srgb,var(--w-blue) 32%,transparent)}
+.wbtn{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:40px;padding:8px 14px;border:1px solid var(--w-strong);border-radius:9px;background:var(--w-card);color:var(--w-ink);font-weight:650;font-size:14px;white-space:nowrap}
+.wbtn.lime{background:var(--w-lime);border-color:var(--w-lime-line);color:#241E15}
+.wbtn.ghost{border-color:transparent;background:transparent;color:var(--w-olive);padding-left:6px;padding-right:6px}
+.wbtn.danger{color:var(--w-live);border-color:rgba(176,58,34,.35)}
+.wbtn.icon{width:44px;min-height:44px;padding:0}
+.wbtn.dis{opacity:.45}
+.wbtn.big{min-height:44px}
+.wsel{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:44px;padding:9px 12px;border:1px solid var(--w-strong);border-radius:9px;background:var(--w-card);color:var(--w-ink);font-size:14px}
+.wsel .i{color:var(--w-dim);width:16px;height:16px}
+.winp{display:flex;align-items:center;min-height:44px;padding:9px 12px;border:1px solid var(--w-strong);border-radius:9px;background:var(--w-card);color:var(--w-ink);font-size:14px}
+.winp.ph{color:var(--w-ph)}
+.wfield{margin-bottom:14px}
+.wfield label,.wfl{display:block;font:650 13px/1.3 Inter,sans-serif;margin-bottom:6px;color:var(--w-ink)}
+.wfield .hint{font-size:12.5px;color:var(--w-dim);margin-top:6px;line-height:1.45}
+.req{color:var(--w-ink);margin-left:2px}
+.wopts{border:1px solid var(--w-strong);border-radius:10px;background:var(--w-card);box-shadow:0 12px 30px rgba(36,30,21,.14);margin-top:4px;padding:6px 0;overflow:hidden}
+.wopts .og{font:700 10.5px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim);padding:10px 12px 4px}
+.wopts .o{display:flex;align-items:center;gap:8px;min-height:40px;padding:8px 12px;font-size:14px}
+.wopts .o.hl{background:var(--w-olsoft);color:var(--w-olive);font-weight:650}
+.wopts .o.off{color:var(--w-faint)}
+.wopts .o small{margin-left:auto;font-size:12px;color:var(--w-dim)}
+.wm table{background:transparent;font-size:14px;width:100%;border-collapse:collapse}
+.wm th{background:transparent;color:var(--w-dim);font:650 12px/1.3 Inter,sans-serif;letter-spacing:0;text-transform:none;border-bottom:1px solid var(--w-strong);padding:9px 12px;text-align:left}
+.wm td{border-bottom:1px solid var(--w-line);padding:11px 12px;vertical-align:middle;color:var(--w-ink)}
+.wm tr:last-child td{border-bottom:0}
+.wm td.dim{color:var(--w-dim);font-size:13px}
+.wm td .nm{font-weight:650}.wm td .em{font-size:12.5px;color:var(--w-dim)}
+.wtable{background:var(--w-card);border:1px solid var(--w-line);border-radius:12px;overflow:hidden}
+.wscrim{background:var(--w-scrim);display:flex;align-items:center;justify-content:center;padding:28px}
+.wdialog{background:var(--w-card);border:1px solid var(--w-line);border-radius:14px;box-shadow:0 22px 60px rgba(36,30,21,.28);width:480px;max-width:100%}
+.wdialog.wide{width:600px}
+.wdh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:18px 20px 12px;border-bottom:1px solid var(--w-line)}
+.wdh .wtitle{font-size:18px;margin:0}
+.wdb{padding:16px 20px}
+.wdf{display:flex;gap:8px;justify-content:flex-end;align-items:center;padding:12px 20px 16px;border-top:1px solid var(--w-line)}
+.wdf .left{margin-right:auto}
+.xbtn{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;border-radius:9px;color:var(--w-soft);flex:none}
+.facts{border:1px solid var(--w-line);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;font-size:13.5px;background:var(--w-raised)}
+.facts div{display:flex;justify-content:space-between;gap:12px}.facts b{font-variant-numeric:tabular-nums}
+.bar{height:8px;border-radius:6px;background:var(--w-line);overflow:hidden;margin-top:8px}.bar i{display:block;height:100%;background:var(--w-olive);border-radius:6px 0 0 6px}
+.switch{width:44px;height:26px;border-radius:13px;background:var(--w-olive);position:relative;flex:none}.switch::after{content:"";position:absolute;right:3px;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.2)}
+.switch.off{background:var(--w-strong)}.switch.off::after{right:auto;left:3px}
+.switch.dis{opacity:.45}
+.setrow{display:flex;gap:16px;align-items:flex-start;padding:14px 0;border-top:1px solid var(--w-line)}
+.setrow:first-of-type{border-top:0}
+.setrow .st{font:650 14.5px/1.3 Inter,sans-serif}.setrow .sd{font-size:13px;color:var(--w-dim);margin-top:3px;max-width:560px}
+.setrow .switch{margin-left:auto;margin-top:2px}
+.wcheck{display:flex;gap:14px;align-items:flex-start;padding:14px 16px;border-top:1px solid var(--w-line)}
+.wcheck:first-child{border-top:0}
+.wcheck .n{width:28px;height:28px;border-radius:50%;border:1.5px solid var(--w-strong);display:flex;align-items:center;justify-content:center;font:700 12px/1 Inter,sans-serif;color:var(--w-dim);flex:none}
+.wcheck.done .n{background:var(--w-olive);border-color:var(--w-olive);color:var(--w-on-accent)}
+.wcheck.part .n{border-color:var(--w-amber);color:var(--w-amber)}
+.wcheck .t{font:700 15px/1.3 Inter,sans-serif}.wcheck .d{font-size:13px;color:var(--w-dim);margin-top:3px;max-width:520px}
+.wcheck .state{font-size:12.5px;margin-top:5px;color:var(--w-soft)}
+.wcheck .cta{margin-left:auto;flex:none}
+.matrix td,.matrix th{text-align:center;font-size:13px;padding:8px 10px}
+.matrix td:first-child,.matrix th:first-child{text-align:left}
+.ok{color:var(--w-olive);font-weight:800}.no{color:var(--w-faint)}
+.pref td{padding:9px 12px}.pref .tog{width:34px;height:20px;border-radius:10px;background:var(--w-olive);display:inline-block;position:relative;vertical-align:middle}
+.pref .tog::after{content:"";position:absolute;right:2px;top:2px;width:16px;height:16px;border-radius:50%;background:#fff}
+.pref .tog.off{background:var(--w-strong)}.pref .tog.off::after{right:auto;left:2px}
+.pref .tog.na{background:repeating-linear-gradient(45deg,var(--w-fill) 0 4px,var(--w-strong) 4px 8px)}.pref .tog.na::after{display:none}
+.pref .secrow td{background:var(--w-raised);font:700 11px/1.2 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim);padding:10px 12px}
+.pref .later td{color:var(--w-faint)}
+.toast{display:inline-flex;align-items:center;gap:8px;background:var(--w-toast-bg);color:var(--w-toast-ink);border-radius:10px;padding:10px 14px;font-size:13.5px;box-shadow:0 10px 26px rgba(36,30,21,.25)}
+.toast .i{color:var(--w-olive)}
+.quiet-state{max-width:460px;margin:40px auto;text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px}
+.quiet-state .qi{width:52px;height:52px;border-radius:50%;background:var(--w-fill);display:flex;align-items:center;justify-content:center;color:var(--w-dim)}
+.quiet-state h3{font:750 17px/1.3 Inter,sans-serif;margin:6px 0 0;color:var(--w-ink)}
+.quiet-state p{font-size:14px;color:var(--w-soft);margin:0}
+.quiet-state .blk{font-size:13px;color:var(--w-dim)}
+
+/* ── phone frames, both skins (true size: fixed px, never scaled) ── */
+.phone{width:390px;max-width:100%;height:780px;position:relative;overflow:hidden;border-radius:26px;border:1px solid #9aa290;flex:none;box-shadow:0 10px 30px rgba(20,25,18,.14)}
+.pstatus{height:30px;display:flex;justify-content:space-between;align-items:center;padding:0 22px;font:600 12px/1 Inter,sans-serif}
+.pscroll{position:absolute;top:30px;left:0;right:0;bottom:72px;overflow:hidden;padding:12px 16px}
+.dk .pbar{position:absolute;left:0;right:0;bottom:0;background:rgba(10,10,10,.97);border-top:1px solid rgba(30,58,138,.5)}
+.dk .pctx{display:flex;align-items:center;gap:8px;padding:7px 14px;font:600 11px/1.2 'IBM Plex Mono',monospace;color:var(--d-li);border-bottom:1px solid rgba(255,255,255,.06);background:rgba(217,249,157,.05)}
+.dk .ptabs{height:62px;display:flex;justify-content:space-around;align-items:center}
+.dk .ptab{display:flex;flex-direction:column;align-items:center;gap:4px;width:20%;font:600 9px/1 'IBM Plex Mono',monospace;letter-spacing:.06em;text-transform:uppercase;color:var(--d-gr)}
+.dk .ptab.on{color:var(--d-li)}
+.dk .pmenu{position:absolute;right:8px;bottom:118px;width:300px;max-height:620px;overflow:hidden;background:#0b1220;border:1px solid rgba(79,163,224,.25);border-radius:16px;box-shadow:0 -8px 32px rgba(0,0,0,.65);padding:6px 0}
+.dk .pmenu .ps{font:700 9px/1 'IBM Plex Mono',monospace;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.28);padding:9px 16px 3px}
+.dk .pmenu .pr{display:flex;align-items:center;gap:12px;padding:0 16px;height:40px;font-size:14px;font-weight:600;color:rgba(255,255,255,.72)}
+.dk .pmenu .pd{height:1px;background:rgba(255,255,255,.07);margin:4px 0}
+.wm .pbar{position:absolute;left:0;right:0;bottom:0;height:72px;background:var(--w-bar);border-top:1px solid var(--w-strong);display:flex;justify-content:space-around;align-items:flex-start;padding-top:9px}
+.wm .ptab{display:flex;flex-direction:column;align-items:center;gap:5px;width:20%;font:600 11px/1 Inter,sans-serif;color:var(--w-dim);position:relative;min-height:48px}
+.wm .ptab .i{width:22px;height:22px}
+.wm .ptab.on{color:var(--w-olive);font-weight:750}
+.wm .ptab.on::before{content:"";position:absolute;top:-10px;width:26px;height:3px;border-radius:0 0 3px 3px;background:var(--w-olive)}
+.wm .ptab .pc{position:absolute;top:-4px;left:calc(50% + 5px);min-width:17px;height:17px;border-radius:999px;background:var(--w-live);color:var(--w-on-accent);font:700 10px/17px Inter,sans-serif;text-align:center;padding:0 4px}
+.wm .pmenu{position:absolute;right:8px;left:52px;bottom:80px;background:var(--w-card);border:1px solid var(--w-line);border-radius:16px;box-shadow:0 -8px 30px rgba(36,30,21,.18);padding:6px 0;max-height:600px;overflow:hidden}
+.wm .pmenu .ps{font:700 10.5px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--w-dim);padding:12px 16px 4px}
+.wm .pmenu .pr{display:flex;align-items:center;gap:12px;padding:0 16px;min-height:46px;font-size:15px;font-weight:600;color:var(--w-soft)}
+.wm .pmenu .pr .i{color:var(--w-dim)}
+.wm .pmenu .pr .cnt{margin-left:auto;min-width:20px;height:20px;border-radius:999px;background:color-mix(in srgb,var(--w-amber) 11%,transparent);color:var(--w-amber);border:1px solid color-mix(in srgb,var(--w-amber) 32%,transparent);font:700 11px/18px Inter,sans-serif;text-align:center;padding:0 5px}
+.wm .pmenu .pd{height:1px;background:var(--w-line);margin:4px 0}
+.phead{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px}
+.pcards{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.pcards .wcard{padding:10px 12px}
+.pcards .fig{font-size:22px;margin-top:3px}
+.prow{display:flex;align-items:center;gap:12px;min-height:52px;padding:6px 12px;border-top:1px solid var(--w-line);background:var(--w-card)}
+.prow:first-child{border-top:0}
+.prow .i{color:var(--w-olive)}
+.prow .t{font-weight:650;font-size:15px}.prow .d{font-size:12.5px;color:var(--w-dim)}
+.plist{border:1px solid var(--w-line);border-radius:12px;overflow:hidden;background:var(--w-card)}
+
+/* ── placement-only wireframe (marketing pages keep their own styling) ── */
+.wf{background:#f2f2ee;color:#2a2a26;font:14px/1.45 Inter,system-ui,sans-serif;padding:22px}
+.wf .wfc{background:#fff;border:1.5px dashed #b9b9ad;border-radius:10px;padding:16px}
+.wf .wfp{font:800 28px/1 Inter,sans-serif}.wf .wfp small{font-size:13px;font-weight:600;color:#6b6b62}
+.wf .wfline{height:9px;border-radius:5px;background:#e3e3dc;margin:7px 0}
+.wf .wfbtn{display:inline-flex;min-height:40px;align-items:center;padding:8px 14px;border-radius:8px;background:#2a2a26;color:#fff;font-weight:700;font-size:13.5px}
+.wf .wfbadge{display:inline-block;font:800 10px/1 Inter,sans-serif;letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:4px;background:#e9e2cf;color:#6b5a2a}
+.wf .band{border-top:1px solid #e3e3dc;margin-top:12px;padding-top:10px;display:flex;justify-content:space-between;gap:12px;align-items:baseline}
+</style>
+<style id="adc-styles">
+/* Admin Design Continuity hub — the scope map (specimen 1). Hub chrome only. */
+.scope{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px;align-items:start}
+.sgroup{background:#fff;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.sgroup.follow{grid-row:span 3}
+.sghead{display:flex;gap:10px;align-items:flex-start;padding:14px 16px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.sgdot{width:14px;height:14px;border-radius:50%;margin-top:3px;flex:none;border:1px solid #9aa290}
+.follow .sgdot{background:linear-gradient(90deg,#F8F4ED 50%,#111827 50%)}
+.warmonly .sgdot{background:#F8F4ED}
+.brand .sgdot{background:#0E9AA7;border-color:#0E9AA7}
+.out .sgdot{background:#dcdfd6}
+.sgt{font-weight:750;font-size:15px}.sgs{font-size:12.5px;color:var(--muted)}
+.srow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:10px 16px;border-top:1px solid var(--line);font-size:13.5px}
+.sghead+.srow{border-top:0}
+.srow>div>b{display:block;font-weight:650}.srow>div>span{color:var(--muted);font-size:12.5px}
+.pchip{flex:none;font:800 10.5px/1 system-ui,sans-serif;letter-spacing:.5px;text-transform:uppercase;padding:5px 8px;border-radius:999px;border:1px solid;white-space:nowrap}
+.pchip.done{background:#e3f3d4;border-color:#b9d88c;color:#24502c}
+.pchip.p1{background:#d9f99d;border-color:#9fc46a;color:#2b3f12}
+.pchip.p2,.pchip.p3,.pchip.p4{background:#e3edf2;border-color:#9fbccb;color:#1d4a5e}
+.pchip.un{background:#eeeee9;border-color:#c9cfc2;color:#5c6658}
+@container(max-width:760px){.scope{grid-template-columns:1fr}.sgroup.follow{grid-row:auto}}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · next: slice 1</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
+    <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
+    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button data-hub="mockup" aria-pressed="true">Mockups</button>
+  <button data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+</nav>
+
+<section id="hub-mockup" class="hubsection">
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
+    <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+    <symbol id="i-dollar" viewBox="0 0 24 24"><path d="M12 2v20"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></symbol>
+    <symbol id="i-contact" viewBox="0 0 24 24"><path d="M17 18a2 2 0 0 0-2-2H9a2 2 0 0 0-2 2"/><rect x="3" y="4" width="18" height="18" rx="2"/><circle cx="12" cy="10" r="2"/><path d="M8 2v2"/><path d="M16 2v2"/></symbol>
+    <symbol id="i-globe" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+    <symbol id="i-cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+    <symbol id="i-building" viewBox="0 0 24 24"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M10 6h4"/><path d="M10 10h4"/><path d="M10 14h4"/><path d="M10 18h4"/></symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></symbol>
+    <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+    <symbol id="i-chevd" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></symbol>
+    <symbol id="i-mail" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M16 13H8"/><path d="M16 17H8"/><path d="M10 9H8"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M9 17H7A5 5 0 0 1 7 7h2"/><path d="M15 7h2a5 5 0 1 1 0 10h-2"/><path d="M8 12h8"/></symbol>
+    <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+    <symbol id="i-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></symbol>
+    <symbol id="i-right" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+    <symbol id="i-clip" viewBox="0 0 24 24"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4"/><path d="M12 16h.01"/></symbol>
+    <symbol id="i-rocket" viewBox="0 0 24 24"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></symbol>
+    <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><path d="M12 17h.01"/></symbol>
+    <symbol id="i-ucheck" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="m16 11 2 2 4-4"/></symbol>
+    <symbol id="i-uplus" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6"/><path d="M22 11h-6"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><rect x="2" y="3" width="20" height="5" rx="1"/><path d="M4 8v11a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8"/><path d="M10 12h4"/></symbol>
+    <symbol id="i-msg" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></symbol>
+    <symbol id="i-ban" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="m4.9 4.9 14.2 14.2"/></symbol>
+    <symbol id="i-book" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+    <symbol id="i-scroll" viewBox="0 0 24 24"><path d="M15 12h-5"/><path d="M15 8h-5"/><path d="M19 17V5a2 2 0 0 0-2-2H4"/><path d="M8 21h12a2 2 0 0 0 2-2v-1a1 1 0 0 0-1-1H11a1 1 0 0 0-1 1v1a2 2 0 1 1-4 0V5a2 2 0 1 0-4 0v2a1 1 0 0 0 1 1h3"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M10 15V9"/><path d="M14 15V9"/></symbol>
+  </svg>
+  <nav class="walk" aria-label="Mockup walkthrough" id="walkNav">
+    <a href="#adc-scope">1 · Scope map</a>
+    <a href="#adc-interim">2 · The interim screen</a>
+    <a href="#adc-measure">3 · The measurement</a>
+    <a href="#adc-tframe">4 · Tournament frame</a>
+    <a href="#adc-dense">5 · A money table</a>
+    <a href="#adc-help">6 · Help guide</a>
+    <a href="#adc-sk">7 · Scorekeeper</a>
+    <span class="themetog" id="s1ThemeTog"><span>Proposed screens:</span><button type="button" data-theme="warm" aria-pressed="true">Warm</button><button type="button" data-theme="dark" aria-pressed="false">Dark</button></span>
+  </nav>
+  <div class="frame" id="frame">
+    <main>
+      <section class="screen s1" id="adc-scope">
+        <div class="shead">
+          <div class="eyebrow">Specimen 1 · the whole product, one rule per surface</div>
+          <h1 tabindex="-1">Which screens follow the Warm / Dark setting</h1>
+          <p class="sub">One account setting decides the look of every working screen. The organization's own colours decide the look of every public page. Nothing follows both. This map lists every surface, the rule it follows, and the phase that brings it there.</p>
+          <div class="flagrow">Today:
+            <button class="fl" data-finding="T01" data-here="The admin shell carries no theme marker, so every admin screen is dark whatever the person chose.">T01</button>
+            <button class="fl h" data-finding="T02" data-here="The organization's brand colour reaches the admin's buttons, borders and glows.">T02</button>
+            <button class="fl h" data-finding="T03" data-here="The size of the restyle.">T03</button>
+            <button class="fl m" data-finding="T04" data-here="The help guide is fixed dark by an August ruling.">T04</button>
+            <button class="fl m" data-finding="T06" data-here="No admin screen is checked by the automated screenshot sweep.">T06</button>
+            <button class="fl m" data-finding="T07" data-here="An owner who coaches moves between two visual worlds.">T07</button>
+          </div>
+        </div>
+
+        <div class="scope">
+          <div class="sgroup follow">
+            <div class="sghead"><span class="sgdot"></span><div><div class="sgt">Follows the account setting</div><div class="sgs">Warm by default · Dark when the person chooses it · one setting for everything below</div></div></div>
+            <div class="srow"><div><b>Coaches portal</b><span>The model: its tokens, type sizes, cards, lists, dialogs and phone bar</span></div><span class="pchip done">Today</span></div>
+            <div class="srow"><div><b>Consumer app</b><span>Home, account, discover</span></div><span class="pchip done">Today</span></div>
+            <div class="srow"><div><b>The admin frame</b><span>Top bar, sidebar, phone bar and page header, for every organization and every plan</span></div><span class="pchip p1">Phase 1</span></div>
+            <div class="srow"><div><b>Every admin screen, restyled</b><span>Same layout, new look, correct in both themes: club, tournament, house league and organization screens</span></div><span class="pchip p1">Phase 1</span></div>
+            <div class="srow"><div><b>The help guide</b><span>Stops being a fixed dark surface (R4)</span></div><span class="pchip p1">Phase 1</span></div>
+            <div class="srow"><div><b>Club screens, redesigned</b><span>Inside each club stage, drawn in both themes (club D12, amended)</span></div><span class="pchip p2">Phase 2</span></div>
+            <div class="srow"><div><b>Tournament screens, redesigned</b><span>Their own project: setup, operations, records</span></div><span class="pchip p3">Phase 3</span></div>
+            <div class="srow"><div><b>House league screens, redesigned</b><span>With the club project's house-league stage</span></div><span class="pchip p4">Phase 4</span></div>
+          </div>
+          <div class="sgroup warmonly">
+            <div class="sghead"><span class="sgdot"></span><div><div class="sgt">Warm, with no choice</div><div class="sgs">People who arrive by link and have no account to hold a setting (R3)</div></div></div>
+            <div class="srow"><div><b>Scorekeeper and gate screens</b><span>Restyled to the kit; the redesign travels with the tournament project</span></div><span class="pchip p3">Phase 1 · 3</span></div>
+          </div>
+          <div class="sgroup brand">
+            <div class="sghead"><span class="sgdot"></span><div><div class="sgt">The organization's own branding</div><div class="sgs">Never the account setting; unchanged by this program (R2)</div></div></div>
+            <div class="srow"><div><b>Public pages</b><span>Club home, tournament pages, team pages, tryout and registration forms, league pages</span></div><span class="pchip un">Unchanged</span></div>
+            <div class="srow"><div><b>The admin's previews of public pages</b><span>Show what families will see, so they keep the organization's colours</span></div><span class="pchip un">Unchanged</span></div>
+          </div>
+          <div class="sgroup out">
+            <div class="sghead"><span class="sgdot"></span><div><div class="sgt">Out of scope</div><div class="sgs">Their own design systems, or internal</div></div></div>
+            <div class="srow"><div><b>Emails, PDFs and exports · the marketing site · the platform-admin console</b><span>Not working screens of an organization</span></div><span class="pchip un">Not here</span></div>
+          </div>
+        </div>
+        <p class="speccap"><strong>The one visible trade (R1):</strong> today a club's colour tints its admin buttons and borders. In the coaches portal no team colour does. Following the model, the colour leaves the working screens and stays on the public pages, where families see it.<span class="mk" data-k="new" data-note="Ruling R1, 2026-09-25. The July theming rule (M2) already said the organization's brand wins on ORG-BRANDED surfaces and a personal theme governs PLATFORM chrome. The admin is platform chrome, so this completes M2 rather than reversing it.">New</span></p>
+      </section>
+
+      <section class="screen s1" id="adc-interim" hidden>
+        <div class="shead">
+          <div class="eyebrow">Specimen 2 · what Phase 1 delivers on a screen nobody has redesigned yet</div>
+          <h1 tabindex="-1">The interim screen: restyled, not redesigned</h1>
+          <p class="sub">A tournament organizer's Teams screen. After the foundation it keeps its layout, columns, filters and buttons. It gains the new frame, the coaches portal's parts, and both themes. The redesign of this screen belongs to the tournament project (Phase 3). This is the state most admin screens will be in between the two. <em>The layout is illustrative; the Phase 1 mockup session draws the real screens.</em></p>
+          <div class="flagrow">On this screen:
+            <button class="fl" data-finding="T01" data-here="Dark whatever the organizer chose in their account.">T01</button>
+            <button class="fl h" data-finding="T02" data-here="The organization's teal tints the active filter and the Add Team button.">T02</button>
+          </div>
+        </div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Before · today</span><h2>Teams, Lakeshore Spring Classic</h2></div>
+          <div class="scroller"><div class="desk dk">
+            <div class="dstrip"><span class="wmark">Field<b>Logic</b>HQ</span><span class="sp"></span><svg class="i"><use href="#i-bell"/></svg><svg class="i"><use href="#i-user"/></svg></div>
+            <div class="dshell">
+              <nav class="dside">
+                <div class="dsec">Editing Tournament</div>
+                <div class="dinp" style="margin:4px 14px 6px;font-size:11.5px">Lakeshore Spring Classic<svg class="i s"><use href="#i-chevd"/></svg></div>
+                <div class="dsec">Operations</div>
+                <span class="dnav"><svg class="i s"><use href="#i-grid"/></svg>Dashboard</span>
+                <span class="dnav on"><svg class="i s"><use href="#i-users"/></svg>Teams</span>
+                <span class="dnav"><svg class="i s"><use href="#i-cal"/></svg>Schedule</span>
+                <span class="dnav"><svg class="i s"><use href="#i-trophy"/></svg>Results</span>
+                <span class="dnav"><svg class="i s"><use href="#i-ucheck"/></svg>Check-in</span>
+                <span class="dnav"><svg class="i s"><use href="#i-mail"/></svg>Communications</span>
+                <div class="dsec">Setup</div>
+                <span class="dnav"><svg class="i s"><use href="#i-gear"/></svg>Event Settings</span>
+                <span class="dnav"><svg class="i s"><use href="#i-pin"/></svg>Venues &amp; Facilities</span>
+                <span class="dnav"><svg class="i s"><use href="#i-globe"/></svg>Public Site</span>
+                <div class="dfoot"><span class="dnav">Help</span><span class="dnav">Send feedback</span><span class="dnav">Logout</span></div>
+              </nav>
+              <div class="dmain">
+                <div class="dhdr"><div class="dlabel">Lakeshore Softball</div><div class="dh1" style="display:flex;align-items:center;gap:10px">Lakeshore Spring Classic <span class="dbadge b-ok" style="font-size:9px">Open</span></div><div class="dps" style="margin-top:4px">May 21–23, 2027</div></div>
+                <div class="dpagehead"><div class="ttl"><span class="dicon"><svg class="i"><use href="#i-users"/></svg></span><div><div class="dpt">Teams</div><div class="dps">24 registered</div></div></div>
+                  <div style="display:flex;gap:8px"><span class="dbtn">Export</span><span class="dbtn" style="background:#0E9AA7;border-color:#0E9AA7;color:#fff"><svg class="i s"><use href="#i-plus"/></svg>Add Team</span> <button class="fl h" data-finding="T02" data-here="The organization's brand colour (teal) paints the primary button. The coaches portal's primary action is always the same ink-on-lime.">T02</button></div></div>
+                <div style="display:flex;gap:18px;border-bottom:1px solid var(--d-w10);margin-bottom:12px;font:600 11px/1 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em">
+                  <span style="padding:9px 0;border-bottom:2px solid #0E9AA7;color:#5fd4dd">All 24</span><span style="padding:9px 0;color:var(--d-gr)">Pending 5</span><span style="padding:9px 0;color:var(--d-gr)">Approved 17</span><span style="padding:9px 0;color:var(--d-gr)">Waitlisted 2</span>
+                </div>
+                <div class="dtablewrap"><table>
+                  <thead><tr><th>Team</th><th>Division</th><th>Status</th><th>Payment</th><th>Registered</th></tr></thead>
+                  <tbody>
+                    <tr><td>Lakeshore Lightning</td><td class="dim">14U</td><td><span class="dbadge b-ok">Approved</span></td><td><span class="dbadge b-ok">Paid</span></td><td class="dim">Mar 2</td></tr>
+                    <tr><td>Orillia Otters</td><td class="dim">14U</td><td><span class="dbadge b-warn">Pending</span></td><td><span class="dbadge b-warn">Deposit due</span></td><td class="dim">Mar 9</td></tr>
+                    <tr><td>Barrie Blaze</td><td class="dim">16U</td><td><span class="dbadge b-ok">Approved</span></td><td><span class="dbadge b-info">Balance due</span></td><td class="dim">Mar 11</td></tr>
+                    <tr><td>Midland Mavericks</td><td class="dim">12U</td><td><span class="dbadge b-neu">Waitlisted</span></td><td class="dim">—</td><td class="dim">Mar 14</td></tr>
+                    <tr><td>Collingwood Storm</td><td class="dim">16U</td><td><span class="dbadge b-ok">Approved</span></td><td><span class="dbadge b-ok">Paid</span></td><td class="dim">Mar 15</td></tr>
+                  </tbody></table></div>
+              </div>
+            </div>
+          </div></div>
+        </div>
+
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After Phase 1</span><h2>The same screen, restyled</h2><span class="fixrow"><button class="fl fix" data-finding="T01">fixes T01</button><button class="fl fix" data-finding="T02">fixes T02</button></span></div>
+          <div class="scroller" id="cl-interim"><div class="desk wm">
+            <div class="wstrip"><span class="wmark">Field<b>Logic</b>HQ</span><span class="sp"></span><span class="belldot"><svg class="i"><use href="#i-bell"/></svg></span><span class="avatar">KM</span></div>
+            <div class="wshell">
+              <nav class="wside">
+                <div class="wgrp">Tournament</div>
+                <div class="wsel" style="min-height:40px;margin:0 2px 6px;font-size:13.5px">Lakeshore Spring Classic<svg class="i"><use href="#i-chevd"/></svg></div>
+                <div class="wgrp">Operations</div>
+                <span class="wnav"><svg class="i"><use href="#i-grid"/></svg>Dashboard</span>
+                <span class="wnav on"><svg class="i"><use href="#i-users"/></svg>Teams<span class="cnt">5</span></span>
+                <span class="wnav"><svg class="i"><use href="#i-cal"/></svg>Schedule</span>
+                <span class="wnav"><svg class="i"><use href="#i-trophy"/></svg>Results</span>
+                <span class="wnav"><svg class="i"><use href="#i-ucheck"/></svg>Check-in</span>
+                <span class="wnav"><svg class="i"><use href="#i-mail"/></svg>Communications</span>
+                <div class="wgrp">Setup</div>
+                <span class="wnav"><svg class="i"><use href="#i-gear"/></svg>Event settings</span>
+                <span class="wnav"><svg class="i"><use href="#i-pin"/></svg>Venues &amp; facilities</span>
+                <span class="wnav"><svg class="i"><use href="#i-globe"/></svg>Public site</span>
+                <div class="wfoot"><span class="wnav"><svg class="i s"><use href="#i-help"/></svg>Help</span><span class="wnav"><svg class="i s"><use href="#i-msg"/></svg>Send feedback</span><span class="wnav"><svg class="i s"><use href="#i-logout"/></svg>Log out</span></div>
+                <span class="mk" data-k="re" data-note="The tournament rail keeps its switcher and its Operations / Setup / Admin groups. Only the skin changes, to the coaches portal's rail. The pending count on Teams is today's worklist badge.">Restyled</span>
+              </nav>
+              <div class="wmain">
+                <div class="wpagehead"><div><div class="weye">Lakeshore Softball · May 21–23, 2027</div><div class="wtitle" style="display:flex;align-items:center;gap:10px">Lakeshore Spring Classic <span class="chip good">Open</span></div></div><span class="mk" data-k="re" data-note="Today's event header, drawn as the kit's page header: an eyebrow, a title and one status chip. The same phase rule and the same dates; only the skin changes.">Restyled</span></div>
+                <div class="eyerow" style="margin-bottom:12px"><div><div class="weye">Lakeshore Spring Classic</div><div class="wtitle" style="font-size:17px">Teams</div></div><div class="wactions"><span class="wbtn"><svg class="i s"><use href="#i-download"/></svg>Export<svg class="i s"><use href="#i-chevd"/></svg></span><span class="wbtn lime"><svg class="i s"><use href="#i-plus"/></svg>Add team</span></div></div>
+                <div style="display:flex;gap:6px;margin-bottom:12px"><span class="chip neu" style="background:var(--w-olsoft);color:var(--w-olive);border-color:transparent;font-size:11px;padding:6px 10px">All 24</span><span class="chip neu" style="font-size:11px;padding:6px 10px">Pending 5</span><span class="chip neu" style="font-size:11px;padding:6px 10px">Approved 17</span><span class="chip neu" style="font-size:11px;padding:6px 10px">Waitlisted 2</span><span class="mk" data-k="re" data-note="The same four filters, as the kit's list-toolbar pills. Filter pills on a list are the sanctioned pattern; the 'dropdowns, not pills' rule is for form fields.">Restyled</span></div>
+                <div class="wtable"><table>
+                  <thead><tr><th>Team</th><th>Division</th><th>Status</th><th>Payment</th><th>Registered</th></tr></thead>
+                  <tbody>
+                    <tr><td class="nm">Lakeshore Lightning</td><td class="dim">14U</td><td><span class="chip good">Approved</span></td><td><span class="chip good">Paid</span></td><td class="dim">Mar 2</td></tr>
+                    <tr><td class="nm">Orillia Otters</td><td class="dim">14U</td><td><span class="chip warn">Pending</span></td><td><span class="chip warn">Deposit due</span></td><td class="dim">Mar 9</td></tr>
+                    <tr><td class="nm">Barrie Blaze</td><td class="dim">16U</td><td><span class="chip good">Approved</span></td><td><span class="chip blue">Balance due</span></td><td class="dim">Mar 11</td></tr>
+                    <tr><td class="nm">Midland Mavericks</td><td class="dim">12U</td><td><span class="chip neu">Waitlisted</span></td><td class="dim">—</td><td class="dim">Mar 14</td></tr>
+                    <tr><td class="nm">Collingwood Storm</td><td class="dim">16U</td><td><span class="chip good">Approved</span></td><td><span class="chip good">Paid</span></td><td class="dim">Mar 15</td></tr>
+                  </tbody></table></div>
+                <p class="wsm" style="margin:10px 2px 0">Same columns, filters, actions and order as today. What changed is the frame, the parts and the palette.<span class="mk" data-k="un" data-note="Restyle, not redesign. Phase 1 changes NO layout, column, filter, action or wording on this screen. That keeps the foundation's blast radius to 'how it looks', which a both-theme screenshot sweep can prove. Rethinking the Teams screen itself (what an organizer needs first on registration day) is the tournament project's job, with its own mockup session.">Unchanged</span><span class="mk" data-k="new" data-note="R1: the primary action is the coaches portal's ink-on-lime in every organization, and the active filter is the kit's olive, not the organization's teal. Lakeshore's teal stays on its public tournament pages, where teams and families see it.">New</span></p>
+              </div>
+            </div>
+          </div></div>
+        </div>
+        <div class="spec darkcopy" data-src="cl-interim" data-title="The same restyled screen, dark theme"></div>
+      </section>
+
+      <!-- ═══════════ ADC · 3 — WHAT THE FOUNDATION HAS TO COVER (Phase 0 measurement) ═══════════ -->
+      <section class="screen s1" id="adc-measure" hidden>
+        <div class="shead">
+          <div class="eyebrow">Specimen 3 · the measurement (Phase 0, desk half, 2026-09-25)</div>
+          <h1 tabindex="-1">What the foundation has to cover</h1>
+          <p class="sub">Every admin screen was measured from the code: how many colours are fixed rather than following a theme, how many hand-set styles carry a colour, and where the organization's own colour reaches in. The plan's headline figures (86 screens, 812 fixed colours, 1,868 hand-set styles) held to the digit. This table reaches wider than the plan did (it adds the help guide, the scorekeeper screens and accounting's shared parts, and counts colour set by hand in screen code), so its columns add up to more than the plan's totals. The organization's colour is the clearest case: 77 reads in the admin's stylesheets, as the plan counted, and about 196 in this wider scope. The automated screenshot baseline is the second half and runs after your walk.</p>
+          <div class="flagrow">Found:
+            <button class="fl h" data-finding="T08" data-here="The organization's public 'card style' setting (glass, outlined) reaches every admin card.">T08</button>
+            <button class="fl h" data-finding="T09" data-here="Three gaps in the theme itself.">T09</button>
+            <button class="fl m" data-finding="T10" data-here="The monospace 'console' type is on titles, navigation, buttons and table headings.">T10</button>
+            <button class="fl m" data-finding="T11" data-here="The scorekeeper screens run their own colour set.">T11</button>
+            <button class="fl m" data-finding="T12" data-here="The kit's table has never been tried at money-table density.">T12</button>
+          </div>
+        </div>
+        <div class="tablewrap" style="margin-top:18px"><table>
+          <thead><tr><th>Area</th><th>Screens</th><th>Fixed colours in stylesheets</th><th>Hand-set styles naming a fixed colour</th><th>Reads of the org's colour</th><th>What it means</th></tr></thead>
+          <tbody>
+            <tr><td><b>Frame</b> (top bar, sidebar, phone bar)</td><td>—</td><td>34</td><td>0</td><td>1</td><td>Small; rebuilt on the kit anyway</td></tr>
+            <tr><td><b>Families</b></td><td>3</td><td>7</td><td>0</td><td>0</td><td>Nearly free: already theme-driven</td></tr>
+            <tr><td><b>Public site editor</b></td><td>1</td><td>17</td><td>0</td><td>1</td><td>Nearly free</td></tr>
+            <tr><td><b>Hub and setup</b></td><td>2</td><td>65</td><td>0</td><td>15</td><td>Medium; redesigned in Club Stage 1</td></tr>
+            <tr><td><b>Organization</b> (members, billing, settings…)</td><td>12</td><td>137</td><td>2</td><td>51</td><td>Medium; the heaviest org-colour reader after tournaments</td></tr>
+            <tr><td><b>House league</b></td><td>8</td><td>55</td><td>18</td><td>2</td><td>Medium; many hand-set styles</td></tr>
+            <tr><td><b>Rep Teams</b></td><td>17</td><td>76</td><td>63</td><td>5</td><td>Heavy hand-set colour debt</td></tr>
+            <tr><td><b>Accounting</b></td><td>5</td><td>274</td><td>16</td><td>2</td><td>The densest fixed colours; money gets its own mockups</td></tr>
+            <tr><td><b>Tournaments</b></td><td>27</td><td>205</td><td>23</td><td>74</td><td>The largest area on every measure</td></tr>
+            <tr><td><b>Scorekeeper and gate</b></td><td>4</td><td>16</td><td>12</td><td>0</td><td>Its own colour set: a new palette, not a remap</td></tr>
+            <tr><td><b>Help guide</b></td><td>10</td><td>150</td><td>0</td><td>44</td><td>Never shown in warm before</td></tr>
+          </tbody></table></div>
+        <div class="scope" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+          <div class="sgroup"><div class="sghead"><div><div class="sgt">Good news</div><div class="sgs">Most of the theme already reaches the admin</div></div></div>
+            <div class="srow"><div><b>111 of the 144 colour settings the admin reads already have a warm value</b><span>They would flip the moment the admin joins the theme</span></div></div>
+            <div class="srow"><div><b>Buttons are nearly free</b><span>The admin's five button styles (about 1,070 uses) already have warm versions written for the coaches portal</span></div></div>
+            <div class="srow"><div><b>A colour check already runs on every build</b><span>It is extended to catch the fixed shades too, rather than a new one being built</span></div></div>
+          </div>
+          <div class="sgroup"><div class="sghead"><div><div class="sgt">Gaps the foundation closes</div><div class="sgs">Things that would not flip on their own</div></div></div>
+            <div class="srow"><div><b>Missing steps in the shading ramp</b><span>A few light and dark overlay shades have no warm value; overlays would stay black on cream (T09)</span></div></div>
+            <div class="srow"><div><b>The card's own shadows</b><span>The standard card (227 uses) keeps dark shadows and highlights (T09)</span></div></div>
+            <div class="srow"><div><b>The organization's card style</b><span>A club that chose "glass" cards for its public site gets glass cards in its admin too (T08, R1)</span></div></div>
+          </div>
+          <div class="sgroup"><div class="sghead"><div><div class="sgt">Order of work inside the foundation</div><div class="sgs">Cheapest and safest first</div></div></div>
+            <div class="srow"><div><b>1 · Frame, Families, Public site editor</b><span>Proves the theme end to end on the smallest areas</span></div></div>
+            <div class="srow"><div><b>2 · Buttons and status chips everywhere</b><span>One slice, already mostly written</span></div></div>
+            <div class="srow"><div><b>3 · Hub, Organization, House league</b></div></div>
+            <div class="srow"><div><b>4 · Rep Teams, Accounting</b><span>The heaviest hand-set debt</span></div></div>
+            <div class="srow"><div><b>5 · Tournaments</b><span>Its own slice if it proves too big for one pass</span></div></div>
+            <div class="srow"><div><b>6 · Scorekeeper and gate · 7 · Help guide</b><span>A new warm palette; the guide's first warm look</span></div></div>
+          </div>
+        </div>
+        <p class="speccap"><strong>Two things this measurement changed in the drawings:</strong> the ratified Stage 1 page headers lose their subtitle line, because the coaches portal's header has none by design (T13). Eyebrows and chips are redrawn in the portal's monospace label font, which the kit really uses. Both hubs now show it.</p>
+      </section>
+
+      <!-- ═══════════ ADC · 4 — THE TOURNAMENT FRAME ON A PHONE ═══════════ -->
+      <section class="screen s1" id="adc-tframe" hidden>
+        <div class="shead">
+          <div class="eyebrow">Specimen 4 · true size · open this on your phone</div>
+          <h1 tabindex="-1">The tournament frame on a phone</h1>
+          <p class="sub">The club frame (sidebar, phone bar and More menu) is already ratified in Club Stage 1. The tournament frame keeps its own job-shaped bar: Setup · Teams · Schedule · Site before the tournament goes live, then Results · Check-in · Schedule · Chat on game day. The foundation restyles it; the tabs, their order and the live strip above them don't change. The desktop version is specimen 2.</p>
+          <div class="flagrow">Today: <button class="fl" data-finding="T01" data-here="Dark whatever the organizer chose.">T01</button><button class="fl h" data-finding="T02" data-here="The live strip and active tab take the organization's accent.">T02</button></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Before · today</span><h2>Game day, Lakeshore Spring Classic</h2></div>
+          <div class="row2">
+            <div class="phonecol"><div class="phonebox">
+              <div class="phone dk" id="adc-ph-before">
+                <div class="pstatus" style="color:#cbd5e1"><span>2:15</span><span>●●● ▮</span></div>
+                <div class="pscroll" style="bottom:118px">
+                  <div class="dlabel">Lakeshore Softball</div><div class="dh1" style="font-size:17px">Lakeshore Spring Classic</div>
+                  <div class="dstack" style="margin-top:12px">
+                    <div class="dcard" style="padding:12px"><div class="dlabel">Diamond 2 · 2:00 p.m.</div><div style="margin-top:6px;font-weight:700">Barrie Blaze <span class="dmuted">vs</span> Orillia Otters</div><div class="dmuted" style="font-size:12px;margin-top:4px">In progress · 3rd inning</div></div>
+                    <div class="dcard" style="padding:12px"><div class="dlabel">Diamond 1 · 1:30 p.m.</div><div style="margin-top:6px;font-weight:700">Lakeshore Lightning 7 <span class="dmuted">–</span> 4 Midland Mavericks</div><div style="font-size:12px;margin-top:4px;color:#fcd34d">Score submitted · finalize</div></div>
+                  </div>
+                </div>
+                <div class="pbar">
+                  <div class="pctx"><svg class="i s"><use href="#i-trophy"/></svg>3 games to finalize →</div>
+                  <div class="ptabs">
+                    <span class="ptab on"><svg class="i"><use href="#i-trophy"/></svg>Results</span>
+                    <span class="ptab"><svg class="i"><use href="#i-ucheck"/></svg>Check-in</span>
+                    <span class="ptab"><svg class="i"><use href="#i-cal"/></svg>Schedule</span>
+                    <span class="ptab"><svg class="i"><use href="#i-msg"/></svg>Chat</span>
+                    <span class="ptab"><svg class="i"><use href="#i-more"/></svg>More</span>
+                  </div>
+                </div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div><button class="tsbtn" type="button" data-truesize="adc-ph-before">Open at true size</button></div>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After Phase 1</span><h2>The same bar, restyled</h2><span class="fixrow"><button class="fl fix" data-finding="T01">fixes T01</button><button class="fl fix" data-finding="T02">fixes T02</button></span></div>
+          <div class="row2" id="cl-tframe">
+            <div class="phonecol"><div class="phonebox">
+              <div class="phone wm" id="adc-ph-after">
+                <div class="pstatus" style="color:var(--w-soft)"><span>2:15</span><span>●●● ▮</span></div>
+                <div class="pscroll" style="bottom:110px">
+                  <div class="weye">Lakeshore Softball</div><div class="wtitle" style="font-size:19px;display:flex;gap:8px;align-items:center">Lakeshore Spring Classic <span class="chip bad">Live</span></div>
+                  <div class="plist" style="margin-top:12px">
+                    <div class="prow" style="align-items:flex-start;padding:10px 12px"><div><div class="weye" style="font-size:10.5px">Diamond 2 · 2:00 p.m.</div><div class="t" style="margin-top:3px">Barrie Blaze <span style="color:var(--w-dim);font-weight:500">vs</span> Orillia Otters</div><div class="d">In progress · 3rd inning</div></div></div>
+                    <div class="prow" style="align-items:flex-start;padding:10px 12px"><div><div class="weye" style="font-size:10.5px">Diamond 1 · 1:30 p.m.</div><div class="t" style="margin-top:3px">Lakeshore Lightning 7 – 4 Midland Mavericks</div><div class="d" style="color:var(--w-amber)">Score submitted · finalize</div></div></div>
+                  </div>
+                </div>
+                <div style="position:absolute;left:0;right:0;bottom:72px;display:flex;align-items:center;gap:8px;padding:9px 16px;background:var(--w-card);border-top:1px solid var(--w-line);font:650 13px/1.2 Inter,sans-serif;color:var(--w-soft)"><svg class="i s" style="color:var(--w-amber)"><use href="#i-trophy"/></svg>3 games to finalize<svg class="i s" style="margin-left:auto;color:var(--w-olive)"><use href="#i-chev"/></svg></div>
+                <div class="pbar">
+                  <span class="ptab on"><svg class="i"><use href="#i-trophy"/></svg>Results</span>
+                  <span class="ptab"><svg class="i"><use href="#i-ucheck"/></svg>Check-in</span>
+                  <span class="ptab"><svg class="i"><use href="#i-cal"/></svg>Schedule</span>
+                  <span class="ptab"><svg class="i"><use href="#i-msg"/></svg>Chat<span class="pc">2</span></span>
+                  <span class="ptab"><svg class="i"><use href="#i-more"/></svg>More</span>
+                </div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div><button class="tsbtn" type="button" data-truesize="adc-ph-after">Open at true size</button>
+            <p class="meta" style="max-width:390px">Same tabs, same order, same live strip; the kit's bar and palette.<span class="mk" data-k="re" data-note="The tournament bar keeps its game-day job: Results, Check-in, Schedule and Chat once live, and Setup, Teams, Schedule and Site before launch (Schedule holds the third slot in both). Restyled to the coaches portal's 72 px bar with labels. The strip above it (the one thing waiting, as a tap target) keeps its content and becomes a white kit row. The 'Live' chip uses the portal's red for a live event.">Restyled</span></p></div>
+            <div class="phonecol"><div class="phonebox">
+              <div class="phone wm" id="adc-ph-more">
+                <div class="pstatus" style="color:var(--w-soft)"><span>2:15</span><span>●●● ▮</span></div>
+                <div class="pscroll" style="opacity:.3"><div class="wtitle" style="font-size:19px">Lakeshore Spring Classic</div></div>
+                <div class="pmenu">
+                  <div class="pr"><svg class="i"><use href="#i-bell"/></svg>Notifications<span class="cnt">4</span></div>
+                  <div class="pd"></div><div class="ps">Tournament</div>
+                  <div class="pr" style="font-size:14px"><div class="wsel" style="flex:1;min-height:40px;padding:6px 10px">Lakeshore Spring Classic<svg class="i"><use href="#i-chevd"/></svg></div></div>
+                  <div class="pd"></div><div class="ps">Operations</div>
+                  <div class="pr"><svg class="i"><use href="#i-grid"/></svg>Dashboard</div>
+                  <div class="pr"><svg class="i"><use href="#i-users"/></svg>Teams</div>
+                  <div class="pr"><svg class="i"><use href="#i-mail"/></svg>Communications</div>
+                  <div class="pd"></div><div class="ps">Setup · Admin</div>
+                  <div class="pr"><svg class="i"><use href="#i-gear"/></svg>Event settings</div>
+                  <div class="pr"><svg class="i"><use href="#i-archive"/></svg>Past tournaments</div>
+                </div>
+                <div class="pbar">
+                  <span class="ptab"><svg class="i"><use href="#i-trophy"/></svg>Results</span>
+                  <span class="ptab"><svg class="i"><use href="#i-ucheck"/></svg>Check-in</span>
+                  <span class="ptab"><svg class="i"><use href="#i-cal"/></svg>Schedule</span>
+                  <span class="ptab"><svg class="i"><use href="#i-msg"/></svg>Chat</span>
+                  <span class="ptab on"><svg class="i"><use href="#i-x"/></svg>More</span>
+                </div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div><button class="tsbtn" type="button" data-truesize="adc-ph-more">Open at true size</button>
+            <p class="meta" style="max-width:390px">More keeps today's groups (tournament switcher, Operations, Setup, Admin, You) as a kit menu on top of the bar.<span class="mk" data-k="re" data-note="Same contents as today's More sheet, restyled, with 46 px rows. A club that runs tournaments also gets 'Back to club' at the top (from the ratified club phone shell). It is a MENU, so it sits on top of the bar rather than covering it (drawer-layers ruling).">Restyled</span></p></div>
+          </div>
+        </div>
+        <div class="spec darkcopy" data-src="cl-tframe" data-title="The same bar, dark theme"></div>
+      </section>
+
+      <!-- ═══════════ ADC · 5 — A DENSE MONEY TABLE, RESTYLED IN PLACE ═══════════ -->
+      <section class="screen s1" id="adc-dense" hidden>
+        <div class="shead">
+          <div class="eyebrow">Specimen 5 · the densest screens</div>
+          <h1 tabindex="-1">A money table, restyled in place</h1>
+          <p class="sub">Accounting holds the most fixed colours of any area, and its tables are the widest in the admin. The foundation restyles them without changing a column. The redesign of every money screen stays with Club Stage 3, which draws its own mockups.</p>
+          <div class="flagrow">Today: <button class="fl" data-finding="T01" data-here="Dark only.">T01</button><button class="fl m" data-finding="T12" data-here="Six columns plus actions; the kit's table standard was drawn for narrower record lists.">T12</button></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Before · today</span><h2>Accounting › General ledger</h2></div>
+          <div class="scroller"><div class="dk" style="min-width:1040px;padding:24px 28px">
+            <div class="dpagehead"><div class="ttl"><span class="dicon"><svg class="i"><use href="#i-dollar"/></svg></span><div><div class="dpt">General Ledger</div><div class="dps">Northfield Minor Ball · organization ledger</div></div></div><div style="display:flex;gap:8px"><span class="dbtn">Export</span><span class="dbtn">Transfer</span><span class="dbtn lime"><svg class="i s"><use href="#i-plus"/></svg>Add Entry</span></div></div>
+            <div class="dtablewrap"><table>
+              <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th>Amount</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="dim">Sep 22</td><td>Diamond permits — fall block</td><td class="dim">Facilities</td><td><span class="dbadge b-warn">Expense</span></td><td class="mono">$1,840.00</td><td><span class="dbadge b-ok">Posted</span></td><td class="dim">Edit · Void</td></tr>
+                <tr><td class="dim">Sep 19</td><td>Team share — 15U AAA, installment 1</td><td class="dim">Allocations</td><td><span class="dbadge b-info">Transfer In</span></td><td class="mono">$600.00</td><td><span class="dbadge b-ok">Posted</span></td><td class="dim">Edit · Void</td></tr>
+                <tr><td class="dim">Sep 15</td><td>Umpire association — September</td><td class="dim">Officials</td><td><span class="dbadge b-warn">Expense</span></td><td class="mono">$925.00</td><td><span class="dbadge b-ok">Posted</span></td><td class="dim">Edit · Void</td></tr>
+                <tr><td class="dim">Sep 9</td><td>Sponsor — Maple Hardware</td><td class="dim">Sponsorship</td><td><span class="dbadge b-ok">Income</span></td><td class="mono">$1,500.00</td><td><span class="dbadge b-neu">Void</span></td><td class="dim">—</td></tr>
+              </tbody></table></div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After Phase 1</span><h2>Same columns, the kit's table</h2><span class="fixrow"><button class="fl fix" data-finding="T01">fixes T01</button></span></div>
+          <div class="scroller" id="cl-dense"><div class="wm" style="min-width:1040px;padding:24px 28px">
+            <div class="eyerow" style="margin-bottom:16px;align-items:flex-end"><div><div class="weye">Accounting · Northfield Minor Ball</div><div class="wtitle">General ledger</div></div><div class="wactions"><span class="wbtn"><svg class="i s"><use href="#i-download"/></svg>Export<svg class="i s"><use href="#i-chevd"/></svg></span><span class="wbtn">Transfer</span><span class="wbtn lime"><svg class="i s"><use href="#i-plus"/></svg>Add entry</span></div></div>
+            <div class="wtable"><table>
+              <thead><tr><th>Date</th><th>Description</th><th>Category</th><th>Type</th><th style="text-align:right">Amount</th><th>Status</th><th></th></tr></thead>
+              <tbody>
+                <tr><td class="dim">Sep 22</td><td class="nm">Diamond permits — fall block</td><td class="dim">Facilities</td><td><span class="chip warn">Expense</span></td><td style="text-align:right;font-variant-numeric:tabular-nums">$1,840.00</td><td><span class="chip good">Posted</span></td><td class="dim">Edit · Void</td></tr>
+                <tr><td class="dim">Sep 19</td><td class="nm">Team share — 15U AAA, installment 1</td><td class="dim">Allocations</td><td><span class="chip blue">Transfer in</span></td><td style="text-align:right;font-variant-numeric:tabular-nums">$600.00</td><td><span class="chip good">Posted</span></td><td class="dim">Edit · Void</td></tr>
+                <tr><td class="dim">Sep 15</td><td class="nm">Umpire association — September</td><td class="dim">Officials</td><td><span class="chip warn">Expense</span></td><td style="text-align:right;font-variant-numeric:tabular-nums">$925.00</td><td><span class="chip good">Posted</span></td><td class="dim">Edit · Void</td></tr>
+                <tr><td class="dim">Sep 9</td><td class="nm" style="color:var(--w-dim);text-decoration:line-through">Sponsor — Maple Hardware</td><td class="dim">Sponsorship</td><td><span class="chip good">Income</span></td><td style="text-align:right;color:var(--w-dim);text-decoration:line-through">$1,500.00</td><td><span class="chip neu">Void</span></td><td class="dim">—</td></tr>
+              </tbody></table></div>
+            <p class="wsm" style="margin:10px 2px 0">Numbers set right-aligned in the body face with even-width digits, the way the coaches portal's money tables set them.<span class="mk" data-k="re" data-note="Restyle only: the same six columns, the same actions and the same order. What changes is the kit's table (hairlines, header weight, row height), status chips instead of HUD badges, and amounts right-aligned in the body font with even-width digits (the portal's money convention) instead of the monospace console face. A void row reads as struck through as well as tagged, so the state is not carried by colour alone.">Restyled</span><span class="mk" data-k="un" data-note="Deliberately NOT here: the Stage 3 redesign (team ledgers read-only and labelled, both-sided voids, managed payees, true overdue). A restyle that changed what a money screen shows would need the money mockup session the plan requires.">Unchanged</span></p>
+          </div></div>
+        </div>
+        <div class="spec darkcopy" data-src="cl-dense" data-title="The same ledger, dark theme"></div>
+      </section>
+
+      <!-- ═══════════ ADC · 6 — THE HELP GUIDE FOLLOWS THE THEME ═══════════ -->
+      <section class="screen s1" id="adc-help" hidden>
+        <div class="shead">
+          <div class="eyebrow">Specimen 6 · ruling R4</div>
+          <h1 tabindex="-1">The help guide follows the theme</h1>
+          <p class="sub">Today the guide is a dark reading surface whatever the account theme, by an August ruling made when the admin was dark too. After the foundation it follows the same setting as everything else. It has never been shown in warm, so it gets a full look in the foundation's walk. <em>The guide's layout is drawn approximately; only its skin changes.</em></p>
+          <div class="flagrow">Today: <button class="fl m" data-finding="T04" data-here="Fixed dark, even inside the warm coaches portal.">T04</button></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Before · today</span><h2>Help › Rep Teams › Add a team</h2></div>
+          <div class="scroller"><div class="dk" style="min-width:1040px;padding:26px 34px;display:grid;grid-template-columns:220px 1fr;gap:30px">
+            <div><div class="dlabel" style="margin-bottom:10px">Rep Teams guide</div><div style="display:flex;flex-direction:column;gap:8px;font-size:12.5px;color:var(--d-gr)"><span>Getting started</span><span style="color:var(--d-li)">Add a team</span><span>Program years</span><span>Tryouts</span><span>Assign coaches</span><span>Cost allocation</span></div></div>
+            <div style="max-width:620px"><div class="dlabel">Rep Teams</div><div style="font:800 24px/1.2 Inter,sans-serif;margin:6px 0 12px">Add a team</div><p style="color:rgba(255,255,255,.75);font-size:14px;line-height:1.6;margin:0 0 14px">Each rep team has a page of its own, a season for each year it plays, and a head coach who runs it in the Coaches Portal.</p>
+              <div style="border-left:3px solid var(--d-li);background:rgba(217,249,157,.06);padding:10px 14px;font-size:13px;color:rgba(255,255,255,.8);margin-bottom:14px"><b style="color:var(--d-li)">Tip</b> · Put teams in groups (Senior, Junior) so the list stays short.</div>
+              <ol style="margin:0;padding-left:20px;color:rgba(255,255,255,.8);font-size:14px;line-height:1.8"><li>Open Rep Teams and choose Add team.</li><li>Give it a name and a division.</li><li>Open its first season.</li></ol></div>
+          </div></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After Phase 1</span><h2>The same page, in the reader's theme</h2><span class="fixrow"><button class="fl fix" data-finding="T04">fixes T04</button></span></div>
+          <div class="scroller" id="cl-help"><div class="wm" style="min-width:1040px;padding:26px 34px;display:grid;grid-template-columns:220px 1fr;gap:30px">
+            <div><div class="weye" style="margin-bottom:10px">Rep Teams guide</div><div style="display:flex;flex-direction:column;gap:2px;font-size:13.5px;color:var(--w-soft)"><span class="wnav" style="min-height:34px">Getting started</span><span class="wnav on" style="min-height:34px">Add a team</span><span class="wnav" style="min-height:34px">Program years</span><span class="wnav" style="min-height:34px">Tryouts</span><span class="wnav" style="min-height:34px">Assign coaches</span><span class="wnav" style="min-height:34px">Cost allocation</span></div></div>
+            <div style="max-width:620px"><div class="weye">Rep Teams</div><div class="wtitle" style="font-size:24px;margin:6px 0 12px">Add a team</div><p style="color:var(--w-soft);font-size:14.5px;line-height:1.65;margin:0 0 14px">Each rep team has a page of its own, a season for each year it plays, and a head coach who runs it in the Coaches Portal.</p>
+              <div class="wcard flat" style="padding:10px 14px;font-size:13.5px;color:var(--w-soft);margin-bottom:14px"><b style="color:var(--w-olive)">Tip</b> · Put teams in groups (Senior, Junior) so the list stays short.</div>
+              <ol style="margin:0;padding-left:20px;color:var(--w-soft);font-size:14.5px;line-height:1.8"><li>Open Rep Teams and choose Add team.</li><li>Give it a name and a division.</li><li>Open its first season.</li></ol>
+              <span class="mk" data-k="re" data-note="R4: the guide takes the reader's theme, the same as the coaches portal and the admin. Its layout, contents and search are untouched. The tip block becomes a plain kit card, not a tinted panel, in line with the portal's retirement of tinted panels. The '?' drawer that opens the guide in place follows the theme too.">Restyled</span></div>
+          </div></div>
+        </div>
+        <div class="spec darkcopy" data-src="cl-help" data-title="The same page for a reader who chose Dark"></div>
+      </section>
+
+      <!-- ═══════════ ADC · 7 — SCOREKEEPER AND GATE IN WARM ═══════════ -->
+      <section class="screen s1" id="adc-sk" hidden>
+        <div class="shead">
+          <div class="eyebrow">Specimen 7 · ruling R3 · true size · open this on your phone</div>
+          <h1 tabindex="-1">Scorekeeper and gate screens in warm</h1>
+          <p class="sub">Volunteers arrive by link with no account, so there is no setting to follow: these screens are warm for everyone. Today they run a colour set of their own, so this is a new palette taken from the kit, not a remap. Same screen, same filters, same score sheet. A warm light surface also reads better than a dark one in bright sun at a diamond.</p>
+          <div class="flagrow">Today: <button class="fl m" data-finding="T11" data-here="Its own dark palette, with nothing shared with the rest of the product.">T11</button></div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl before">Before · today</span><h2>Field scores</h2></div>
+          <div class="row2">
+            <div class="phonecol"><div class="phonebox">
+              <div class="phone dk" id="adc-sk-before" style="background:#0b1120">
+                <div class="pstatus" style="color:#cbd5e1"><span>1:52</span><span>●●● ▮</span></div>
+                <div class="pscroll" style="bottom:0;padding-bottom:70px">
+                  <div class="dlabel">Scorekeeper</div><div class="dh1" style="font-size:18px;color:#f8fafc">Field scores</div>
+                  <div class="dstack" style="margin-top:12px">
+                    <div class="dcard" style="padding:12px;background:#172036;border-color:#d9f99d"><div style="display:flex;justify-content:space-between"><span class="dlabel"><svg class="i s"><use href="#i-pin"/></svg> Diamond 2 · 2:00 p.m.</span><span class="dbadge b-ok">Up next</span></div><div style="margin-top:8px;font-weight:700;color:#f8fafc">Barrie Blaze <span class="dmuted">vs</span> Orillia Otters</div><div style="font-size:12px;margin-top:6px;color:#cbd5e1">Enter final score</div></div>
+                    <div class="dcard" style="padding:12px;background:#172036"><div style="display:flex;justify-content:space-between"><span class="dlabel"><svg class="i s"><use href="#i-pin"/></svg> Diamond 1 · 1:30 p.m.</span><span class="dbadge b-warn">Pending review</span></div><div style="margin-top:8px;font-weight:700;color:#f8fafc">Lakeshore Lightning 7 – 4 Midland Mavericks</div><div style="font-size:12px;margin-top:6px;color:#cbd5e1">Correct before finalization</div></div>
+                  </div>
+                </div>
+                <div style="position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;padding:10px 12px 14px;background:#020617;border-top:1px solid rgba(255,255,255,.08);font:700 10px/1 'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:.06em"><span style="flex:1;text-align:center;padding:12px 0;background:#d9f99d;color:#0a0a0a">To score 6</span><span style="flex:1;text-align:center;padding:12px 0;color:#cbd5e1;border:1px solid rgba(255,255,255,.15)">Review 2</span><span style="flex:1;text-align:center;padding:12px 0;color:#cbd5e1;border:1px solid rgba(255,255,255,.15)">Final 11</span><span style="flex:1;text-align:center;padding:12px 0;color:#cbd5e1;border:1px solid rgba(255,255,255,.15)">All 19</span></div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div><button class="tsbtn" type="button" data-truesize="adc-sk-before">Open at true size</button></div>
+          </div>
+        </div>
+        <div class="spec">
+          <div class="spectop"><span class="lbl after">After Phase 1 · warm for everyone</span><h2>The same screen and score sheet</h2><span class="fixrow"><button class="fl fix" data-finding="T11">fixes T11</button></span></div>
+          <div class="row2">
+            <div class="phonecol"><div class="phonebox">
+              <div class="phone wm fixed-theme" id="adc-sk-after">
+                <div class="pstatus" style="color:var(--w-soft)"><span>1:52</span><span>●●● ▮</span></div>
+                <div class="pscroll" style="bottom:0;padding-bottom:78px">
+                  <div class="weye">Scorekeeper · Lakeshore Spring Classic</div><div class="wtitle" style="font-size:19px">Field scores</div>
+                  <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px">
+                    <div class="wcard" style="padding:12px 14px;border-left:3px solid var(--w-olive)"><div class="eyerow"><span class="weye" style="font-size:10.5px">Diamond 2 · 2:00 p.m.</span><span class="chip good">Up next</span></div><div style="font:700 16px/1.3 Inter,sans-serif;margin-top:6px">Barrie Blaze <span style="color:var(--w-dim);font-weight:500">vs</span> Orillia Otters</div><div class="wsm" style="margin-top:4px;color:var(--w-olive);font-weight:650">Enter final score ›</div></div>
+                    <div class="wcard" style="padding:12px 14px"><div class="eyerow"><span class="weye" style="font-size:10.5px">Diamond 1 · 1:30 p.m.</span><span class="chip warn">Pending review</span></div><div style="font:700 16px/1.3 Inter,sans-serif;margin-top:6px">Lakeshore Lightning 7 – 4 Midland Mavericks</div><div class="wsm" style="margin-top:4px">Correct before finalization ›</div></div>
+                  </div>
+                </div>
+                <div style="position:absolute;left:0;right:0;bottom:0;display:flex;gap:6px;padding:10px 12px 14px;background:var(--w-bar);border-top:1px solid var(--w-strong)"><span class="wbtn lime" style="flex:1;min-height:46px;padding:0">To score 6</span><span class="wbtn" style="flex:1;min-height:46px;padding:0">Review 2</span><span class="wbtn" style="flex:1;min-height:46px;padding:0">Final 11</span><span class="wbtn" style="flex:1;min-height:46px;padding:0">All 19</span></div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div><button class="tsbtn" type="button" data-truesize="adc-sk-after">Open at true size</button>
+            <p class="meta" style="max-width:390px">Same filters, same cards, same order. The four filters stay at the thumb, 46 px tall.<span class="mk" data-k="re" data-note="R3: the scorekeeper's own dark palette is replaced by the kit's warm one. The warm set is fixed for these screens, because a guest has no account to hold a choice, so this frame does not follow the Warm/Dark switch at the top. Same structure: game cards with the field and time, the Up next and review chips, and the four status filters pinned at the bottom (46 px, above the 44 px floor).">Restyled</span></p></div>
+            <div class="phonecol"><div class="phonebox">
+              <div class="phone wm fixed-theme" id="adc-sk-sheet">
+                <div class="pstatus" style="color:var(--w-soft)"><span>1:53</span><span>●●● ▮</span></div>
+                <div class="pscroll" style="opacity:.3;bottom:0"><div class="wtitle" style="font-size:19px">Field scores</div></div>
+                <div style="position:absolute;inset:0;background:var(--w-scrim)"></div>
+                <div style="position:absolute;left:0;right:0;bottom:0;background:var(--w-card);border-radius:18px 18px 0 0;padding:16px 18px 20px;box-shadow:0 -10px 30px rgba(36,30,21,.2)">
+                  <div class="eyerow"><div><div class="weye" style="font-size:10.5px">Diamond 2 · 2:00 p.m.</div><div class="wtitle" style="font-size:17px">Enter the final score</div></div><span class="xbtn"><svg class="i"><use href="#i-x"/></svg></span></div>
+                  <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:end;margin-top:14px">
+                    <div><label class="wfl">Barrie Blaze</label><div class="winp" style="font:750 28px/1 Inter,sans-serif;justify-content:center;min-height:64px">6</div></div>
+                    <span style="padding-bottom:18px;color:var(--w-dim);font-weight:700">–</span>
+                    <div><label class="wfl">Orillia Otters</label><div class="winp" style="font:750 28px/1 Inter,sans-serif;justify-content:center;min-height:64px">4</div></div>
+                  </div>
+                  <span class="wbtn lime" style="width:100%;min-height:50px;margin-top:16px">Finalize score</span>
+                </div>
+              </div>
+              <span class="ref44"><i></i>44 px</span>
+            </div><button class="tsbtn" type="button" data-truesize="adc-sk-sheet">Open at true size</button>
+            <p class="meta" style="max-width:390px">The score sheet is a form, so it covers the screen and has a way out.<span class="mk" data-k="re" data-note="Same sheet and same two fields, restyled; the finalize button stays pinned above the phone keyboard, as today. It is a FORM, so it covers the page with a scrim and carries an explicit close button (drawer-layers ruling). The gate check-in board follows the same palette.">Restyled</span></p></div>
+          </div>
+        </div>
+      </section>
+    </main>
+    <footer class="intent" id="intent"></footer>
+  </div>
+</section>
+
+<section id="hub-brief" class="hubsection docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Admin Design Continuity</h1>
+  <h2>What it is</h2>
+  <p>One design system and one theme choice across every working screen in FieldLogicHQ. The club admin, the tournament admin, house league, and the scorekeeper and gate screens adopt the coaches portal's look and patterns, and follow the same Warm / Dark setting the coaches portal already has.</p>
+  <h2>What people see differently</h2>
+  <ul>
+    <li><strong>Club owners, admins and treasurers:</strong> the admin looks and behaves like the coaches portal they already know: warm by default, dark if they choose it, with the same cards, lists, dialogs and phone bar.</li>
+    <li><strong>Tournament organizers:</strong> first a restyle (same layout, new look, both themes), then a screen-by-screen redesign in its own project. Their organization's colours stay on their public tournament pages; the working screens stop taking the club colour.</li>
+    <li><strong>Scorekeepers and gate volunteers:</strong> the same look, in warm (they arrive by link and have no account setting).</li>
+    <li><strong>Everyone:</strong> the help guide follows the theme instead of staying dark.</li>
+    <li><strong>Families and visitors:</strong> nothing changes. Public pages stay in each organization's own branding.</li>
+  </ul>
+  <h2>Why it matters</h2>
+  <p>Today an owner who also coaches moves between two visual worlds: a warm, modern coaches portal and a dark, older admin. Redesigning club screens one at a time would have left warm pages beside dark pages in the same frame for months. Doing the shared frame and the theme first makes every screen consistent from day one, and makes each later redesign local.</p>
+  <h2>Customer impact</h2>
+  <p>Every tournament organizer who has never picked a theme will see their admin turn warm on the day the foundation ships. That is intended, and it gets a release note saying where the Dark choice lives. The organization colour leaving the admin chrome is also visible; the note says their colours stay on their public pages.</p>
+  <h2>Priority and order</h2>
+  <ol>
+    <li><strong>Measure</strong> (now): size every admin area and put every admin screen under the automated screenshot check.</li>
+    <li><strong>Foundation</strong>: the frame and theme for all admin; every screen restyled to render correctly in both themes; the help guide follows the theme. Built out of sight behind a switch over several sessions, then released to everyone on one day outside a tournament weekend. Customers see nothing in between.</li>
+    <li><strong>Club Stage 1</strong> in two halves: the behind-the-screens work (roles, members, invites, buying Club) runs after the baseline, beside the frame work; the club screens are redesigned behind the same switch and ship on the foundation's release day.</li>
+    <li><strong>Club screens:</strong> redesigned inside each club stage, drawn in both themes.</li>
+    <li><strong>Tournament screens:</strong> their own project, alongside; not holding up the Club release.</li>
+    <li><strong>House league screens:</strong> with the club project's house-league stage.</li>
+  </ol>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>Every admin screen passes the automated check in warm and in dark.</li>
+    <li>No hard-coded colour can be added to admin code without the build refusing it.</li>
+    <li>Moving between the coaches portal and the admin feels like one product.</li>
+    <li>Public pages are unchanged.</li>
+  </ul>
+</section>
+
+<section id="hub-plan" class="hubsection docpage" hidden>
+  <div class="eyebrow">Full plan — condensed</div>
+  <h1>One design system, one theme setting</h1>
+  <div class="note"><strong>The full plan lives beside this file</strong><p>ADMIN_DESIGN_CONTINUITY_PLAN.md carries the code anchors, the scale figures, the gates and the risks. This tab is the reading version.</p></div>
+  <h2>Rulings (owner, 2026-09-25)</h2>
+  <ol start="0">
+    <li><strong>R0</strong> The admin side joins the one account theme, and the coaches portal is the model. This reopens July's "admin deferred" and amends club ruling D12.</li>
+    <li><strong>R1</strong> The organization's colour leaves the admin chrome and stays on the public pages.</li>
+    <li><strong>R2</strong> Public pages stay in the organization's branding and never follow the account theme.</li>
+    <li><strong>R3</strong> Scorekeeper and gate screens are restyled to the kit, in the warm default.</li>
+    <li><strong>R4</strong> The help guide follows the theme.</li>
+    <li><strong>R5</strong> The foundation lands before the Club Stage 1 build.</li>
+  </ol>
+  <h2>How Phase 1 is built (owner, 2026-09-25)</h2>
+  <p>Behind a switch that is off in production by construction and off by default on the shared dev server, the way the coaches portal's warm look was built. Every session promotes the same branch, so nothing may show before the release day. Each slice proves that, with the switch off, every admin screen still matches the baseline pixel for pixel. One slice per session, from ADMIN_DESIGN_CONTINUITY_PHASE1_BUILD_PROMPT.md:</p>
+  <ol start="0">
+    <li><strong>Baseline</strong>: every admin and guest screen in the layout sweep, plus the switch-off identity check. Needs the dev server alone.</li>
+    <li><strong>Switch, theme, frame</strong>: the theme's missing values, the organization's colour and card style out, the top strip, rail, phone bar, page header and event header; Families and the Public site editor.</li>
+    <li><strong>Buttons, chips, type</strong>, and the lighter areas: the rest of Hub and Organization, and House league.</li>
+    <li><strong>Rep Teams and Accounting</strong>, including the money tables restyled in place.</li>
+    <li><strong>Tournaments</strong>, split by job if it needs two sessions.</li>
+    <li><strong>Scorekeeper, official and gate</strong> (fixed warm), and <strong>the help guide</strong>.</li>
+    <li><strong>Prove, walk, release</strong>: both-theme sweep, the owner's walk, then the switch is deleted on one day with a What's New note.</li>
+  </ol>
+  <p>Club Stage 1 is split. Its server half runs after slice 0, beside slice 1. Slice 0 runs alone; after that, any session asks before a sweep or a server restart. Its six screens (hub, Members and audit log, Plan &amp; billing, Settings, the setup checklist) are redesigned behind the same switch after slice 1, so the foundation does not restyle them first.</p>
+  <h2>Phases</h2>
+  <div class="stagecard"><h3>Phase 0 — Measure</h3><p class="meta">Read-only · desk half done 2026-09-25 · the baseline done 2026-09-25 (slice 0)</p><p>Size every admin area (screens, hard-coded colours, hand-set styles, uses of the organization's colour), map each admin pattern to a coaches-portal part, finish the list of parts the admin needs that the portal lacks, and put every admin screen under the automated screenshot check with today's dark look as the baseline.</p></div>
+  <div class="stagecard"><h3>Phase 1 — Foundation</h3><p class="meta">Before the Club Stage 1 build · owner mockup session first · § walk</p><p>The admin follows the account theme everywhere, tournament screens included. The frame (top bar, sidebar, phone bar, page header) is rebuilt on the kit, and the organization's colour leaves it. Every screen is restyled so it renders correctly in both themes, with no layout changes. The help guide follows the theme. A build check refuses new hard-coded colours. Verified by the screenshot sweep in both themes and an owner walk.</p></div>
+  <div class="stagecard"><h3>Phase 2 — Club screens</h3><p class="meta">Inside each Club Tier stage</p><p>Each club stage's mockups are drawn in both themes, and its build adopts the kit.</p></div>
+  <div class="stagecard"><h3>Phase 3 — Tournament screens</h3><p class="meta">Its own project · alongside the club stages · does not gate the Club release</p><p>Setup, operations, records, and scorekeeper and gate, each with its own mockup session, build and walk, and a release note per group.</p></div>
+  <div class="stagecard"><h3>Phase 4 — House league screens</h3><p class="meta">With Club Stage 9</p></div>
+  <h2>Findings</h2>
+  <h3>T01 — The admin ignores the account theme</h3><p>The theme setting exists and the coaches portal and consumer app honour it; the admin shell carries no marker, so every admin screen is dark. Phase 1.</p>
+  <h3>T02 — The organization's colour tints the working screens</h3><p>The organization's brand colours are set on every page under it, and the admin reads them in about 76 places (buttons, borders, glows). The coaches portal uses no team colours. Phase 1, ruling R1.</p>
+  <h3>T03 — The restyle is large</h3><p>86 admin screens (27 tournament), about 812 hard-coded colours in admin stylesheets and about 1,868 hand-set styles in admin components. The coaches portal's own warm rollout found its breakage in exactly these places. Phases 0 and 1.</p>
+  <h3>T04 — The help guide is fixed dark</h3><p>By an August ruling, whatever the account theme. Phase 1, ruling R4.</p>
+  <h3>T05 — Scorekeeper and gate screens were left out</h3><p>July's theming ruling excluded them because volunteers have no account. Excluded from the setting, not from the design system. Phases 1 and 3, ruling R3.</p>
+  <h3>T06 — No admin screen is in the screenshot sweep</h3><p>The layout sweep covered coach and marketing screens only. Closed by slice 0 (2026-09-25): every admin screen, the phone More menus and the volunteer screens are swept and pictured.</p>
+  <h3>T07 — Two visual worlds</h3><p>An owner who also coaches moves between a warm coaches portal and a dark admin, with different parts, type and navigation. The whole program.</p>
+  <h3>T08 — The organization's card style reaches the admin</h3><p>A club's public card style (glass, outlined) is stamped on every page under the organization, admin included. Phase 1, asked as F1.</p>
+  <h3>T09 — Three gaps in the theme itself</h3><p>33 of the 144 colour settings the admin reads have no warm value: some overlay shades, the standard card's shadow and highlight (227 cards), the organization's colours. Filled first in Phase 1.</p>
+  <h3>T10 — The console type is everywhere</h3><p>The monospace face is on titles, navigation, buttons and table headings: 561 uses in 47 files. The portal keeps it for eyebrows, chips and readouts. Asked as F2.</p>
+  <h3>T11 — The scorekeeper runs its own colours</h3><p>A private dark palette with nothing shared, so a new warm palette rather than a remap. Ruling R3; specimen 7.</p>
+  <h3>T12 — The kit has never met a money table</h3><p>The portal's table standard was drawn for record lists; the ledgers run six or seven columns with actions. Restyled in place and swept; asked as F4.</p>
+  <h3>T13 — Page headers carry no subtitle line</h3><p>The portal's header has no subtitle slot by an August 2026 ruling. The ratified Club Stage 1 drawings are corrected; asked as F3.</p>
+  <h2>Phase 0 — what the measurement found (desk half, 2026-09-25)</h2>
+  <p>The plan's figures held to the digit. Most of the theme already reaches the admin (111 of 144 colour settings), and the buttons already have warm versions. The work concentrates in hand-set styles: Rep Teams, House league, Tournaments and Accounting. Order inside the foundation, cheapest and safest first: the frame with Families and the Public site editor; then buttons and chips; then Hub, Organization and House league; then Rep Teams and Accounting; then Tournaments; then Scorekeeper and the Help guide. The build check extends the colour check that already runs on every build, rather than a new one being written. The screenshot baseline, the other half of Phase 0, runs after the owner's Club Stage 0 walk, so it does not compete with the walk for the dev server. Full inventory: ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md.</p>
+  <h2>Slice 0 — the baseline (2026-09-25)</h2>
+  <p>Run alone on a freshly restarted dev server. Nothing customers see changed. Every later slice now proves, by machine, that with the switch off it changed nothing.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Check</th><th>What it covers</th><th>Today's count</th></tr></thead>
+    <tbody>
+      <tr><td>Layout sweep</td><td>91 admin screens at four widths: 82 of the 86 admin pages, the club hub as its admin, Accounting as its treasurer, house-league registrations as its registrar, the phone More menu open on both frames, the club's own tournament, and the scorekeeper, score sheet and gate as a real volunteer. The other four pages only redirect, or exist only in a dev mock.</td><td>6,946 findings, recorded as debt with no reason written (your ruling). Faint text accounts for 4,065, small tap targets for 2,332. The coaches portal's 931 are untouched.</td></tr>
+      <tr><td>Identity check</td><td>A picture of every one of those screens at phone and desktop width, kept on this computer only, and a compare that lists what changed and what changed in the code between the two pictures.</td><td>182 pictures. Two captures of the unchanged screens matched pixel for pixel, 182 of 182</td></tr>
+      <tr><td>Contrast</td><td>The dark palette on the admin's six real backgrounds, measured on the rendered screens.</td><td>9 text colours under the reading floor, recorded so they cannot get worse</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>Found on the way, written down rather than fixed here:</strong></p>
+  <ul>
+    <li>On a phone, the tournament Teams screen has a button beyond the right edge that cannot be reached. Event settings' "Free" is just past it. 20 screens scroll sideways inside a box.</li>
+    <li>The Members list has no set order, so its rows shuffle between visits. It goes to Club Stage 1, which redesigns Members. Until then the picture check covers that list up.</li>
+    <li>The platform's navy is used as a text colour in 26 places. On the dark background it is almost invisible (1.4 to 1, where the floor is 4.5). The faintest greys and the red and blue as text also fall short.</li>
+    <li>The layout sweep never recognised the product's own "page not found" screen, so a screen that failed to load counted as a pass. Fixed for every screen, the coaches portal's included.</li>
+  </ul>
+  <h3>Slice ledger</h3>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
+    <tbody>
+      <tr><td>0</td><td>The baseline: sweep, identity check, contrast</td><td>Done 2026-09-25</td></tr>
+      <tr><td>1</td><td>The switch, the theme's gaps, the organization's colour and card style out, the frame, Families, Public site editor</td><td>Next</td></tr>
+      <tr><td>2</td><td>Buttons, chips, type; the rest of Hub and Organization; House league</td><td>Not started</td></tr>
+      <tr><td>3</td><td>Rep Teams, Accounting (money tables restyled in place)</td><td>Not started</td></tr>
+      <tr><td>4</td><td>Tournaments</td><td>Not started</td></tr>
+      <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Not started</td></tr>
+      <tr><td>6</td><td>Prove, walk, release</td><td>Not started</td></tr>
+    </tbody>
+  </table></div>
+</section>
+
+<section id="hub-decisions" class="hubsection docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">One row per ruling, added as it happens.</p>
+  <div id="decisionRows"></div>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<section id="hub-qa" class="hubsection" hidden>
+  <div class="eyebrow">Owner QA walk</div>
+  <h1 style="padding:0 24px">Admin Design Continuity — QA walk</h1>
+  <div style="padding:0 24px 24px">
+    <div class="qaprogress" id="qaCount"></div>
+    <div id="qaParts"></div>
+    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
+    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+  </div>
+</section>
+<dialog id="s1True" class="truesize" aria-label="Phone frame at true size"><div class="tsbar"><span>True size: on a phone this is exactly what the screen shows</span><button type="button" id="s1TrueClose">Close</button></div><div class="tsbody"></div></dialog>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
+(function(){const h=location.hash.slice(1);if(HUBS.includes(h))showHub(h)})();
+$('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').onclick=()=>$('dialog').close();
+
+/* dark copies + the Warm/Dark switch — built before any binding, so copies carry no duplicate ids */
+document.querySelectorAll('.darkcopy').forEach(ph=>{const src=document.getElementById(ph.dataset.src);if(!src)return;const c=src.cloneNode(true);c.removeAttribute('id');c.querySelectorAll('.mk,.fl,.askchip,p.meta,.speccap').forEach(n=>n.remove());const skins=[...c.querySelectorAll('.wm')];if(c.classList.contains('wm'))skins.push(c);skins.forEach(n=>n.classList.add('theme-dark','fixed-theme'));c.querySelectorAll('[id]').forEach(n=>n.id=n.id+'-dark');c.querySelectorAll('[data-truesize]').forEach(b=>b.dataset.truesize+='-dark');ph.innerHTML='<div class="spectop"><span class="lbl after">After Phase 1 · dark theme</span><h2>'+esc(ph.dataset.title)+'</h2><span class="aside">What an organizer whose account theme is Dark sees. Same layout and parts; only the palette changes.</span></div>';ph.appendChild(c)});
+const tog=$('s1ThemeTog');
+function setTheme(dark){document.querySelectorAll('#hub-mockup .wm:not(.fixed-theme)').forEach(n=>n.classList.toggle('theme-dark',dark));tog.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String((b.dataset.theme==='dark')===dark)));try{localStorage.setItem('adc-theme',dark?'dark':'warm')}catch(e){}}
+tog.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>setTheme(b.dataset.theme==='dark')));
+let savedTheme='warm';try{savedTheme=localStorage.getItem('adc-theme')||'warm'}catch(e){}
+setTheme(savedTheme==='dark');
+
+const FINDINGS={
+  T01:{t:'The admin ignores the account theme',now:'The Warm / Dark setting exists, and the coaches portal and the consumer app follow it. The admin shell carries no theme marker, so every admin screen is dark whatever the person chose.',fix:'Phase 1: the admin frame carries the marker, and every admin screen, tournament screens included, follows the one setting.'},
+  T02:{t:'The organization\'s colour tints the working screens',now:'The organization\'s brand colours are set on every page under it, and admin stylesheets read them about 76 times: primary buttons, borders, glows. The coaches portal uses no team colours on its working screens.',fix:'Ruling R1: the colour leaves the admin chrome and stays on the public pages, where families see it.'},
+  T03:{t:'The restyle is large',now:'86 admin screens (27 of them tournament screens), about 812 hard-coded colours across 54 admin stylesheets, and about 1,868 hand-set styles in admin components. When the coaches portal went warm, hand-set styles were where 52 screens broke after release.',fix:'Phase 0 sizes it per area; Phase 1 converts the colours to theme tokens, adds a build check against new hard-coded colours, and proves every screen in both themes with the screenshot sweep.'},
+  T04:{t:'The help guide is fixed dark',now:'An August ruling made the help guide one fixed dark reading surface whatever the account theme.',fix:'Ruling R4: the guide follows the theme once the admin does.'},
+  T05:{t:'Scorekeeper and gate screens were left out',now:'July\'s theming ruling excluded them, because volunteers arrive by link with no account to hold a setting.',fix:'Ruling R3: still excluded from the setting, but restyled to the kit in the warm default. Their redesign travels with the tournament project.'},
+  T06:{t:'No admin screen is in the screenshot sweep',now:'The automated layout sweep covers coach and marketing screens only. Nothing checks an admin screen in any theme.',fix:'Phase 0 adds every admin screen with today\'s dark baseline; Phase 1 sweeps them in both themes.'},
+  T07:{t:'Two visual worlds',now:'An owner who also coaches moves between a warm coaches portal and a dark admin, with different parts, type sizes and navigation.',fix:'The whole program: one design system and one setting.'},
+  T08:{t:'The organization\'s card style reaches the admin',now:'A club picks a card style (glass, outlined, standard) for its public site, and the setting is stamped on every page under the organization, admin included. Every admin card silently takes the public look.',fix:'Ruling R1, extended (asked as F1): the admin frame ignores the card style. It stays on the public pages it was built for.'},
+  T09:{t:'Three gaps in the theme itself',now:'111 of the 144 colour settings the admin reads already have a warm value. The 33 that do not include a few light and dark overlay shades, the standard card\'s own shadow and highlight (227 cards), and the organization\'s colours. Left alone, overlays would stay black on cream and cards would carry dark shadows.',fix:'Phase 1 fills the missing warm values first, before any screen is touched, so the restyle has a complete palette to draw from.'},
+  T10:{t:'The console type is everywhere',now:'The admin sets titles, navigation, buttons and table headings in the monospace "console" face: 561 uses across 47 files. The coaches portal keeps that face for small labels only: eyebrows, chips and readouts.',fix:'Asked as F2: type follows the kit. The monospace face stays on eyebrows, chips and readouts, and everything else is set in the body face.'},
+  T11:{t:'The scorekeeper runs its own colours',now:'The scorekeeper and gate screens use a private dark palette that shares nothing with the rest of the product, so they cannot be remapped. They need a palette.',fix:'Ruling R3: a warm palette taken from the kit, fixed for these screens because a guest has no account to hold a choice. Drawn as specimen 7.'},
+  T12:{t:'The kit has never met a money table',now:'The coaches portal\'s table standard was drawn for record lists: roster, schedule, payments. The admin\'s ledgers run six or seven columns with actions at desktop width. Nobody has checked that the kit\'s row height and hairlines hold at that density.',fix:'Asked as F4: dense money tables are restyled in place in Phase 1 (specimen 5) and checked in the both-theme screenshot sweep. Their redesign stays with Club Stage 3\'s own mockups.'},
+  T13:{t:'Page headers carry no subtitle line',now:'The ratified Club Stage 1 drawings (and specimen 2 here) put a small grey line under some page titles: "Club plan · 9 of 15 teams", "24 registered". The coaches portal\'s page header has no subtitle slot, by an August 2026 ruling: context goes in the eyebrow above the title, or on the page.',fix:'Asked as F3: the admin follows the model. Both hubs are corrected; the Club Stage 1 build prompt carries the note.'}
+};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the plan does</h3><p>${esc(f.fix)}</p><div class="actions"><button class="button" type="button" data-plan="${id}">Read the full finding in the plan →</button></div></div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2, #hub-plan h3')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC={new:'Not in the product today.',re:'Exists today and changes in shape, wording or place.',un:'Exists today and is drawn unchanged, so a build cannot drop it by accident.'};
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag','<div class="explain"><p>'+esc(el.dataset.note||GENERIC[k]||'')+'</p>'+(el.dataset.note?'<p class="sub">'+esc(GENERIC[k]||'')+'</p>':'')+'</div>')}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';if(!el.closest('button,a')){el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})}});
+document.addEventListener('click',e=>{const t=e.target.closest('.mk');if(t){e.preventDefault();e.stopPropagation();explainTag(t)}},true);
+document.addEventListener('click',e=>{const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+
+const INTENTS={
+  'adc-measure':'<strong>Design intent:</strong> size the work before drawing it. The foundation is cheap where the admin already reads the theme, and expensive where colours are hand-set; the order of work follows that, smallest and safest first.',
+  'adc-tframe':'<strong>Design intent:</strong> the tournament frame keeps its job, a bar shaped by the event\'s phase, and takes the portal\'s look. Nothing moves; the restyle is what the sweep can prove.',
+  'adc-dense':'<strong>Design intent:</strong> the densest screen proves the kit\'s table holds. A restyle that changed what a money screen shows would need the money mockup session, so this one changes nothing but the skin.',
+  'adc-help':'<strong>Design intent:</strong> one setting, everywhere a signed-in person reads. The guide was a dark island because the admin was dark; once the admin follows the theme, the island goes.',
+  'adc-sk':'<strong>Design intent:</strong> the volunteer at the diamond gets the product\'s own look, not a private one: warm, legible in sun, same thumbs-first layout.',
+  'adc-scope':'<strong>Design intent:</strong> one rule per surface, so nothing can follow two. Working screens follow the person\'s Warm / Dark setting; public pages follow the organization\'s colours; volunteers on a link get warm.',
+  'adc-interim':'<strong>Design intent:</strong> the foundation changes how every admin screen LOOKS and nothing about how it WORKS. That keeps its blast radius to what a both-theme screenshot sweep can prove, and leaves each redesign to its own mockup session.'
+};
+const SCREENS=[...document.querySelectorAll('#hub-mockup .screen')].map(s=>s.id);
+function showScreen(id){if(!SCREENS.includes(id))id=SCREENS[0];document.querySelectorAll('#hub-mockup .screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('#walkNav a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));$('intent').innerHTML=INTENTS[id]||''}
+function route(first){const h=location.hash.slice(1);if(SCREENS.includes(h)){showHub('mockup');showScreen(h);if(!first)document.getElementById(h).scrollIntoView({block:'start'})}else showScreen(SCREENS[0])}
+window.addEventListener('hashchange',()=>route(false));route(true);
+$('s1TrueClose').onclick=()=>$('s1True').close();
+document.querySelectorAll('[data-truesize]').forEach(b=>b.addEventListener('click',()=>{const src=document.getElementById(b.dataset.truesize);if(!src)return;const d=$('s1True');const body=d.querySelector('.tsbody');body.innerHTML='';const c=src.cloneNode(true);c.removeAttribute('id');body.appendChild(c);d.showModal()}));
+
+const DECISIONS=[
+  {date:'2026-09-25 · slice 0 (the baseline)',ask:'B1 · How do the admin\'s existing layout findings enter the baseline?',ruling:'accepted',label:'Accepted: recorded as debt',why:'Owner, 2026-09-25: "Debt, reasons only if argued." All 6,946 are recorded with no reason written, because a reason marks a finding as a deliberate decision and quiets it. A reason is written only where someone can argue one. The count stays visible, and any new finding still fails the check. The contrast check\'s nine dark inks under the floor are recorded the same way.'},
+  {date:'2026-09-25 · Phase 1 mockups (hub v2)',ask:'F1 · Does the admin ignore the organization\'s public card style (glass, outlined)?',ruling:'accepted',label:'Accepted as recommended',why:'Owner, 2026-09-25: "I agree with your recommendations on F1-F4". The ruling: yes. It is the same reasoning as R1: the organization\'s look belongs on its public pages, and the working screens follow the person\'s setting. Today the card style is stamped on every admin card (T08).'},
+  {date:'2026-09-25 · Phase 1 mockups (hub v2)',ask:'F2 · Does the admin\'s type follow the kit, with the monospace face on eyebrows, chips and readouts only?',ruling:'accepted',label:'Accepted as recommended',why:'Owner, 2026-09-25: "I agree with your recommendations on F1-F4". The ruling: yes. Titles, navigation, buttons and table headings move to the body face, as in the coaches portal. 561 uses across 47 files, so this is part of the restyle and not a separate pass (T10).'},
+  {date:'2026-09-25 · Phase 1 mockups (hub v2)',ask:'F3 · Do admin page headers carry a subtitle line?',ruling:'accepted',label:'Accepted as recommended',why:'Owner, 2026-09-25: "I agree with your recommendations on F1-F4". The ruling: no subtitle line, following the coaches portal\'s header, which has no subtitle slot by an August 2026 ruling. The ratified Club Stage 1 drawings had five; they are corrected on the club hub, with a row there saying so (T13).'},
+  {date:'2026-09-25 · Phase 1 mockups (hub v2)',ask:'F4 · Are dense money tables restyled in place in Phase 1, and redesigned only in Club Stage 3?',ruling:'accepted',label:'Accepted as recommended',why:'Owner, 2026-09-25: "I agree with your recommendations on F1-F4". The ruling: yes. Same columns and actions, the kit\'s table and chips, and amounts right-aligned in the body face (specimen 5). A redesign changes what a money screen shows, and needs the money mockup session the club plan already requires (T12).'},
+  {date:'2026-09-25 · the program',ask:'R0 · Does the admin side join the one Warm / Dark setting, with the coaches portal as the model?',ruling:'accepted',label:'Accepted',why:'Owner: "I would like to have continuity there (including in the tournament modules) where we have light/dark theme in all and they follow the same design patterns. I want to use the coaches portal as the model." Reopens July\'s "admin deferred" and amends club ruling D12: club screens are still redesigned inside each club stage, now in both themes, on a foundation this program lands first.'},
+  {date:'2026-09-25 · Phase 1',ask:'R1 · Does the organization\'s colour stay on the admin\'s working screens?',ruling:'accepted',label:'Accepted: it leaves',why:'Following the coaches portal, which uses no team colours on working screens. The colour stays on the public pages, where families see it. A release note tells organizers so.'},
+  {date:'2026-09-25 · scope',ask:'R2 · Do public pages follow the account theme?',ruling:'accepted',label:'Accepted: no',why:'Public pages stay in the organization\'s own branding (the July M2 rule). "Light/dark in all" means the working screens.'},
+  {date:'2026-09-25 · Phase 1 / 3',ask:'R3 · Scorekeeper and gate screens?',ruling:'accepted',label:'Accepted',why:'Restyled to the kit in the warm default. Volunteers arrive by link and have no account, so there is no setting to follow.'},
+  {date:'2026-09-25 · Phase 1',ask:'R4 · Does the help guide stay fixed dark?',ruling:'accepted',label:'Accepted: it follows the theme',why:'A dark island inside a warm app is the discontinuity this program removes. Supersedes the 2026-08-14 fixed-dark ruling once the admin follows the theme.'},
+  {date:'2026-09-25 · sequencing',ask:'R5 · Does the foundation come before the Club Stage 1 build?',ruling:'accepted',label:'Accepted',why:'Yes. It delays the Stage 1 build start, accepted under "we are not rushing to production". Otherwise the club screens would be redesigned into a frame that is still dark and still takes the organization\'s colour.'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
+
+const QA_PARTS=[];
+let qa={};try{qa=JSON.parse(localStorage.getItem('adc-qa')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('adc-qa',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" id="qa-${esc(p.id)}-${i}" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea id="qa-notes-${esc(p.id)}" data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>
