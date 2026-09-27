@@ -7,6 +7,9 @@ import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { Tournament, TournamentArchive } from '@/lib/types';
 import FeedbackModal from '@/components/FeedbackModal';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from './archives-admin.module.css';
 
 async function getAdminArchives(orgSlug?: string): Promise<TournamentArchive[]> {
@@ -23,6 +26,13 @@ function getErrorMessage(error: unknown, fallback = 'Something went wrong.') {
 
 export default function AdminArchivesPage() {
   const { currentOrg } = useOrg();
+  const kit = useAdminKit();
+  const kx = useKitStyle();
+  // The sealed-records rows' cell inks — row-invariant, so built once per render, not once per row.
+  const mutedCellStyle = kx({ color: 'var(--white-40)' }, KIT_INK.tertiary);
+  const championCellStyle = kx({ color: 'var(--logic-lime)', fontWeight: 700 }, KIT_INK.accent);
+  const countCellStyle = kx({ textAlign: 'right', color: 'var(--white-40)' }, KIT_INK.tertiary);
+  const dashStyle = kx({ color: 'var(--white-20)' }, KIT_INK.tertiary);
   const canSealArchives = currentOrg ? hasPlanFeature(currentOrg.planId, 'sealed_archives') : false;
   const [archives, setArchives] = useState<TournamentArchive[]>([]);
   const [archivedUnsealed, setArchivedUnsealed] = useState<Tournament[]>([]);
@@ -96,29 +106,49 @@ export default function AdminArchivesPage() {
 
   const orgSlug = currentOrg?.slug ?? '';
 
+  // Same element, lifted so both the legacy header and the kit header's `actions` render it.
+  const publicLedgerLink = (
+    <Link
+      href={`/${orgSlug}/archives`}
+      className="btn btn-ghost btn-sm"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <ExternalLink size={14} /> Public Ledger
+    </Link>
+  );
+
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerIcon}><Archive size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Archives</h1>
-            <p className={styles.pageSub}>
-              {canSealArchives
-                ? 'Sealed records and archived tournaments pending a snapshot'
-                : 'Archived tournaments are available on free; permanent sealed records require Tournament Plus or higher'}
-            </p>
+      <AdminPageHeader
+        crumbs={[{ label: currentOrg?.name ?? '' }]}
+        title="Archives"
+        actions={publicLedgerLink}
+        legacy={
+          <div className={styles.pageHeader}>
+            <div className={styles.headerLeft}>
+              <div className={styles.headerIcon}><Archive size={20} /></div>
+              <div>
+                <h1 className={styles.pageTitle}>Archives</h1>
+                <p className={styles.pageSub}>
+                  {canSealArchives
+                    ? 'Sealed records and archived tournaments pending a snapshot'
+                    : 'Archived tournaments are available on free; permanent sealed records require Tournament Plus or higher'}
+                </p>
+              </div>
+            </div>
+            {publicLedgerLink}
           </div>
-        </div>
-        <Link
-          href={`/${orgSlug}/archives`}
-          className="btn btn-ghost btn-sm"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <ExternalLink size={14} /> Public Ledger
-        </Link>
-      </div>
+        }
+      />
+
+      {/* The free-plan subtitle is a PLAN FACT (not a description of this page), so it is re-homed
+          here rather than dropped — kit-only, word for word. */}
+      {kit && !canSealArchives && (
+        <p className={styles.kitLede}>
+          Archived tournaments are available on free; permanent sealed records require Tournament Plus or higher
+        </p>
+      )}
 
       {/* Sealed Records */}
       <div className={styles.sectionBlock}>
@@ -162,14 +192,14 @@ export default function AdminArchivesPage() {
                       <span className="badge badge-primary">{a.season}</span>
                     </td>
                     <td data-label="Tournament"><strong>{a.tournamentName}</strong></td>
-                    <td data-label="Division" style={{ color: 'var(--white-40)' }}>{a.division ?? '—'}</td>
-                    <td data-label="Champion" style={{ color: 'var(--logic-lime)', fontWeight: 700 }}>{a.winnerTeamName ?? '—'}</td>
-                    <td data-label="Teams" style={{ textAlign: 'right', color: 'var(--white-40)' }}>{a.totalTeams ?? '—'}</td>
-                    <td data-label="Games" style={{ textAlign: 'right', color: 'var(--white-40)' }}>{a.totalGames ?? '—'}</td>
+                    <td data-label="Division" style={mutedCellStyle}>{a.division ?? '—'}</td>
+                    <td data-label="Champion" style={championCellStyle}>{a.winnerTeamName ?? '—'}</td>
+                    <td data-label="Teams" style={countCellStyle}>{a.totalTeams ?? '—'}</td>
+                    <td data-label="Games" style={countCellStyle}>{a.totalGames ?? '—'}</td>
                     <td data-label="Integrity" style={{ textAlign: 'center' }}>
                       {a.integrityHash
                         ? <span className="badge badge-success">VERIFIED</span>
-                        : <span style={{ color: 'var(--white-20)' }}>—</span>
+                        : <span style={dashStyle}>—</span>
                       }
                     </td>
                     <td data-label="Actions">

@@ -509,7 +509,9 @@
    the ramp is the PUBLIC dark one — but this caption is the ADMIN's words, sitting on the admin's
    card. The island leaves the portal's `--home-*` set alone, so its dim ink still follows the
    account theme here. */
-:global([data-admin-kit]) .themePreviewLabel { color: var(--home-dim); }
+:global([data-admin-kit]) .themePreviewLabel { color: var(--home-ink-soft); }
+/* ↑ Slice 4a sweep: `--home-dim` measured 4.45:1 on the island's Dark ground; the soft ink clears it in
+   both themes (it is resolved at the shell's marker, so the island's public remap never reaches it). */
 
 .modeToggleRow {
   display: flex;
@@ -1140,4 +1142,209 @@
     min-height: 44px;
     width: 100%;
   }
+}
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   Event settings, Registration questions and Public Site's chrome (the body only — R2 keeps the
+   theme preview, the colour swatches, the custom-colour wheel, the app-icon tile/background chips,
+   the font samples' own face, and the logo/banner images exactly as the organization set them) on
+   the coaches portal's kit. Every rule is scoped under `[data-admin-kit]` (only the admin shell
+   carries it, and only while the dev switch is on), so the legacy rules above render untouched until
+   the release slice deletes them. `.pageHeader`/`.headerIcon`/`.pageTitle`/`.pageSub`/`.backBtn`/
+   `.settingsTitleRow` carry no kit rule here — Event settings and Registration questions moved their
+   own header markup into `AdminPageHeader`'s `legacy` slot, so none of it renders once the switch is
+   on. `.themePreviewLabel` already has its kit rule above (slice 1) — kept.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+
+/* ── Cards ── */
+:global([data-admin-kit]) .card,
+:global([data-admin-kit]) .questionCard {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+
+/* The accordion / question-list card's own title — a real heading, not a shouted mono label. */
+:global([data-admin-kit]) .sectionTitle {
+  font-family: var(--font-display);
+  font-size: var(--type-body);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+/* A label over a value, or a group header within a card, → the kit eyebrow. */
+:global([data-admin-kit]) .subSectionLabel,
+:global([data-admin-kit]) .advancedEyebrow,
+:global([data-admin-kit]) .modeToggleLabel,
+:global([data-admin-kit]) .fontBtnLabel,
+:global([data-admin-kit]) .cardStyleLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* Plan / locked chips name a state, not a verdict — the kit's quiet chip. */
+:global([data-admin-kit]) .planBadge,
+:global([data-admin-kit]) .lockedBadge {
+  font-family: var(--font-data);
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
+}
+
+:global([data-admin-kit]) .advancedHeader,
+:global([data-admin-kit]) .cardDivider,
+:global([data-admin-kit]) .formFooter {
+  border-top-color: var(--home-line);
+}
+
+/* ── Segmented controls / mode toggle → the chosen-option idiom ── */
+:global([data-admin-kit]) .segmentedControl,
+:global([data-admin-kit]) .modeToggle {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
+  border-radius: var(--radius-sm);
+}
+:global([data-admin-kit]) .segmentButton,
+:global([data-admin-kit]) .modeToggleBtn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+  border-radius: var(--radius-sm);
+}
+:global([data-admin-kit]) .modeToggleBtn:hover { color: var(--text-primary); }
+:global([data-admin-kit]) .segmentButtonActive,
+:global([data-admin-kit]) .modeToggleBtnActive {
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+  border-color: var(--home-olive);
+  box-shadow: none;
+}
+
+/* ── Body copy: descriptions, hints and notes leave the console's dim mono ramp ── */
+:global([data-admin-kit]) .descriptionText,
+:global([data-admin-kit]) .inheritNote,
+:global([data-admin-kit]) .saveStatusLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .descriptionText,
+:global([data-admin-kit]) .bannerDesc,
+:global([data-admin-kit]) .compactNote,
+:global([data-admin-kit]) .lockedHint,
+:global([data-admin-kit]) .logoHint,
+:global([data-admin-kit]) .bannerHint,
+:global([data-admin-kit]) .iconTilePlaceholder,
+:global([data-admin-kit]) .inheritNote,
+:global([data-admin-kit]) .unsavedLabel,
+:global([data-admin-kit]) .saveStatusLabel,
+:global([data-admin-kit]) .iconSizeScale,
+:global([data-admin-kit]) .chevron,
+:global([data-admin-kit]) .urlPreview {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .inlineUpsell p,
+:global([data-admin-kit]) .warningBanner p,
+:global([data-admin-kit]) .iconAppName,
+:global([data-admin-kit]) .fontBtnSample {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .urlSlug { color: var(--text-primary); }
+:global([data-admin-kit]) .lowContrastWarning { color: var(--warning-light); }
+
+:global([data-admin-kit]) .inlineUpsell {
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line-strong);
+}
+
+/* ── Logo ── */
+:global([data-admin-kit]) .logoPreview {
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line-strong);
+}
+:global([data-admin-kit]) .logoPlaceholder {
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line-strong);
+}
+
+/* ── Swatches (R2 — only the chosen ring's ink moves; the fills stay the organization's colours) ── */
+:global([data-admin-kit]) .swatchActive { border-color: var(--home-olive); }
+/* The chosen swatch's tick sits ON the organization's colour, so it keeps today's white in both themes
+   (`--white` turns to the warm INK in Warm — 1.59:1 on the navy preset, the slice 4a sweep). */
+:global([data-admin-kit]) .swatchCheck { color: var(--white-fixed); }
+
+/* ── Form field labels (the custom-colour wheel itself, `.colorInput`, is R2 content — untouched) ── */
+:global([data-admin-kit]) .label {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* ── App icon: the tile and its background chips stay the icon's real look (R2) — only the chrome
+   around them (the background-choice buttons, the size slider) moves. ── */
+:global([data-admin-kit]) .iconBgOption {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .iconBgOption:hover,
+:global([data-admin-kit]) .iconBgOptionActive {
+  border-color: var(--home-olive);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .iconBgOptionActive { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .iconSizeSlider { accent-color: var(--home-olive); }
+
+/* ── Font grid / card-style grid: unchosen tile → chosen tile ── */
+:global([data-admin-kit]) .fontBtn,
+:global([data-admin-kit]) .cardStyleBtn,
+:global([data-admin-kit]) .pageSelector {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .fontBtn:hover,
+:global([data-admin-kit]) .cardStyleBtn:hover,
+:global([data-admin-kit]) .pageSelector:hover {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .fontBtnActive,
+:global([data-admin-kit]) .cardStyleBtnActive {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .fontBtn:disabled:hover,
+:global([data-admin-kit]) .cardStyleBtn:disabled:hover {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .pageSelector strong { color: var(--text-primary); }
+
+/* The card-style thumbnails are drawn for a dark ground (white alphas) and vanish on Warm cream —
+   redrawn as small icons of each style in theme tokens, kept distinguishable: default = card ground
+   + a hairline; glass = a soft olive wash + a stronger hairline; outlined = transparent + an olive
+   edge; flat = the soft olive wash, no edge. */
+:global([data-admin-kit]) .cardThumb_default  { background: var(--card-bg); border: 1px solid var(--home-line); }
+:global([data-admin-kit]) .cardThumb_glass    { background: var(--home-olive-soft); border: 1px solid var(--home-line-strong); }
+:global([data-admin-kit]) .cardThumb_outlined { background: transparent; border: 1px solid var(--home-olive); }
+:global([data-admin-kit]) .cardThumb_flat     { background: var(--home-olive-soft); border: none; }
+:global([data-admin-kit]) .cardThumbLine { background: var(--home-line-strong); }
+
+/* ── Kit-only pieces the pages render with the switch on ── */
+/* A fact F3 moved out of a header, at the top of the card it now frames. */
+:global([data-admin-kit]) .kitLede {
+  margin: 0 0 0.85rem;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  line-height: 1.5;
 }

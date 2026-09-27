@@ -875,3 +875,198 @@
     text-align: left;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   The new-tournament wizard on the coaches portal's kit: the same steps, words and actions, in both
+   themes. The recipes here are the portal's own, by value, and mirror the sibling setup flow already
+   on the kit (`app/[orgSlug]/admin/onboarding/onboarding.module.css`, slice 2 — same class vocabulary,
+   same tokens) so the two wizards read as one system. The window is the portal's card ground over its
+   scrim; the progress bar and buttons are olive/lime, never the platform blue; titles leave the console
+   face (F2) and monospace stays on the eyebrow-style counters. `TournamentCreationPreview`'s
+   `[data-public-preview]` island keeps the organization's own colours — nothing below reaches inside
+   it (module-scoped selectors can't; see the report for the shared classes that can).
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+
+/* ── The window over its scrim ── */
+:global([data-admin-kit]) .modalOverlay { background: var(--home-scrim); }
+:global([data-admin-kit]) .workflowModal {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+
+/* ── Step counter + progress bar → the kit eyebrow and the olive bar ── */
+:global([data-admin-kit]) .wizardChrome {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .wizardProgressBar { background: var(--home-line); border-radius: 6px; }
+:global([data-admin-kit]) .wizardProgressBar span { background: var(--home-olive); }
+
+/* ── Header, close button ── */
+:global([data-admin-kit]) .modalTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .modalSub { color: var(--text-secondary); }
+:global([data-admin-kit]) .modalClose,
+:global([data-admin-kit]) .iconOnlyButton {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .modalClose:hover,
+:global([data-admin-kit]) .iconOnlyButton:hover {
+  color: var(--text-primary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .workflowModalFooter { border-top-color: var(--home-line); }
+
+/* ── "Reuse a previous tournament setup" intro ── */
+:global([data-admin-kit]) .reuseTitleRow { color: var(--text-primary); }
+:global([data-admin-kit]) .reuseTitleRow svg { color: var(--home-olive); }
+:global([data-admin-kit]) .reuseIntro p { color: var(--text-tertiary); }
+:global([data-admin-kit]) .plusBadge {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+  border-radius: 999px;
+}
+
+/* ── The clone-source list → kit option rows ── */
+:global([data-admin-kit]) .sourceButton {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .sourceButton:hover { border-color: var(--home-olive); background: var(--home-olive-soft); }
+:global([data-admin-kit]) .sourceButton span span { color: var(--text-primary); }
+:global([data-admin-kit]) .sourceButton small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .sourceButton svg { color: var(--home-olive); }
+:global([data-admin-kit]) .choiceDivider span { background: var(--home-line); }
+:global([data-admin-kit]) .choiceDivider strong { color: var(--text-tertiary); }
+
+/* ── Fields → the portal's label ── */
+:global([data-admin-kit]) .fieldLabel,
+:global([data-admin-kit]) .poolMiniField,
+:global([data-admin-kit]) .poolNameField {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .fieldHint { color: var(--text-tertiary); }
+
+/* ── Setup blocks, venue cards, review panel, division rows → kit cards ── */
+:global([data-admin-kit]) .setupBlock,
+:global([data-admin-kit]) .venueCard,
+:global([data-admin-kit]) .reviewPanel,
+:global([data-admin-kit]) .divisionInlineShell {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .setupBlockHeader span,
+:global([data-admin-kit]) .venueCardHeader strong { color: var(--text-primary); }
+:global([data-admin-kit]) .setupBlockHeader small { color: var(--text-tertiary); }
+
+/* ── Division preset toggle → the chosen segment is the olive selection ── */
+:global([data-admin-kit]) .presetButtonCompact {
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .presetButtonCompactActive,
+:global([data-admin-kit]) .presetButtonCompact:hover {
+  color: var(--text-primary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .divisionHeaderRow { color: var(--text-tertiary); }
+:global([data-admin-kit]) .compactCheckbox,
+:global([data-admin-kit]) .checkboxLine { color: var(--text-secondary); }
+:global([data-admin-kit]) .poolSetupPanel,
+:global([data-admin-kit]) .venueComposer {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+
+/* ── Existing-venue picker → kit option rows, the chosen one olive ── */
+:global([data-admin-kit]) .existingVenueButton {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .existingVenueButton:hover { border-color: var(--home-olive); background: var(--card-bg); }
+:global([data-admin-kit]) .existingVenueSelected { border-color: var(--home-olive); background: var(--home-olive-soft); color: var(--text-primary); }
+:global([data-admin-kit]) .existingVenueButton strong { color: var(--text-primary); }
+:global([data-admin-kit]) .existingVenueButton span,
+:global([data-admin-kit]) .existingVenueButton small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .emptyModalState {
+  color: var(--text-tertiary);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+
+/* ── Review step ── */
+:global([data-admin-kit]) .reviewItem { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .reviewItem span { color: var(--text-tertiary); }
+:global([data-admin-kit]) .reviewItem strong { color: var(--text-primary); }
+:global([data-admin-kit]) .planError {
+  color: var(--text-primary);
+  background: rgba(var(--danger-rgb), 0.07);
+  border-color: rgba(var(--danger-rgb), 0.35);
+  border-radius: 8px;
+}
+
+/* ── Reuse-setup screen: the areas to copy, and what never comes along ── */
+:global([data-admin-kit]) .reuseCopyPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .reuseCopyPanel h3 { font-family: var(--font-display); color: var(--text-primary); }
+:global([data-admin-kit]) .copyOptionsHeader span { color: var(--text-secondary); }
+:global([data-admin-kit]) .copyOptionCard {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .copyOptionCard:hover { border-color: var(--home-olive); background: var(--card-bg); }
+:global([data-admin-kit]) .copyOptionCardOn { border-color: var(--home-olive); background: var(--home-olive-soft); }
+:global([data-admin-kit]) .copyOptionCard strong { color: var(--text-primary); }
+:global([data-admin-kit]) .copyOptionCardOn strong { color: var(--home-olive); }
+:global([data-admin-kit]) .copyOptionCard em { color: var(--text-secondary); }
+:global([data-admin-kit]) .copyOptionCard small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .reuseCopyList li { color: var(--text-secondary); }
+:global([data-admin-kit]) .checkDot { background: var(--home-olive); }
+:global([data-admin-kit]) .neverDot { border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .draftPrivacyNote { color: var(--text-tertiary); }
+
+/* The warning box already carries `--warning-rgb` tokens (no literal to convert) — only its
+   radius joins the kit's boxes, and its header ink follows the badge-ink rule for text on a tint. */
+:global([data-admin-kit]) .reuseWarningPanel { border-radius: 8px; }
+:global([data-admin-kit]) .reuseWarningHeader { color: var(--badge-warning-ink); }
+:global([data-admin-kit]) .reuseWarningPanel li strong { color: var(--text-primary); }
+:global([data-admin-kit]) .reuseWarningPanel li span { color: var(--text-tertiary); }
+
+/* ── First-run orientation blurb / next-steps callout ── */
+:global([data-admin-kit]) .orientationBlurb,
+:global([data-admin-kit]) .nextStepsCallout {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .orientationBlurb p { color: var(--text-secondary); }
+:global([data-admin-kit]) .orientationBlurb li { color: var(--text-secondary); }
+:global([data-admin-kit]) .nextStepsCallout strong { color: var(--text-primary); }
+:global([data-admin-kit]) .nextStepsCallout p { color: var(--text-secondary); }

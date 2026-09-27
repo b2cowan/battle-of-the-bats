@@ -30,6 +30,8 @@ import { fieldNounFor } from '@/lib/sports';
 import TournamentTeamsImportDialog from '@/components/admin/import/TournamentTeamsImportDialog';
 import TournamentScheduleImportDialog from '@/components/admin/import/TournamentScheduleImportDialog';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import {
   ToolbarGroup,
   ToolbarMenu,
@@ -175,6 +177,9 @@ export default function TournamentDataToolsPage() {
   const [importHistory, setImportHistory] = useState<ImportHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [historyError, setHistoryError] = useState<string | null>(null);
+  const kx = useKitStyle();
+  // Hoisted: the same legacy style and kit patch back both "Current"/"Empty" <strong> tags below.
+  const templateWordStyle = kx({ color: 'var(--white-70)' }, KIT_INK.secondary);
 
   usePageTitle('Data Tools');
 
@@ -317,6 +322,7 @@ export default function TournamentDataToolsPage() {
         icon={<Database size={22} aria-hidden />}
         eyebrow="Tournament Admin"
         title="Data Tools"
+        kitTitle="Data tools"
         subtitle="Templates, spreadsheet imports, and bulk exports for the selected tournament."
         locked={isLocked}
       />
@@ -476,7 +482,7 @@ export default function TournamentDataToolsPage() {
                 <button type="button" className="btn btn-outline btn-data" disabled={scheduleTemplateDisabled} title={scheduleTemplateUnavailableReason ?? undefined} onClick={() => downloadFile(buildScheduleTemplateUrl(tournamentId, 'empty', templateFormat, orgSlug), scheduleTemplateDisabled)}>Empty</button>
               </div>
               <p className={styles.subtleNote} style={{ marginTop: '0.55rem' }}>
-                <strong style={{ color: 'var(--white-70)' }}>Current</strong> includes existing IDs for safe updates · <strong style={{ color: 'var(--white-70)' }}>Empty</strong> is a blank template for new rows.
+                <strong style={templateWordStyle}>Current</strong> includes existing IDs for safe updates · <strong style={templateWordStyle}>Empty</strong> is a blank template for new rows.
               </p>
             </div>
             <p className={styles.cardHint}>Schedule &amp; results spreadsheet exports live in their own workspaces.</p>

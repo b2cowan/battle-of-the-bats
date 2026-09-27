@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type CSSProperties } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowDown, ArrowLeft, ArrowUp, ClipboardList, Lock, Plus, Save, Trash2 } from 'lucide-react';
@@ -9,7 +9,19 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { TournamentRegistrationField, TournamentRegistrationFieldType } from '@/lib/types';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useTournamentCrumb } from '@/components/admin/tournament';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../branding/branding.module.css';
+
+// Repeated legacy inline styles, hoisted once (Admin Design Continuity slice 4a — same values).
+const MUTED_STYLE: CSSProperties = { color: 'var(--white-40)' };
+const LOCK_ICON_STYLE: CSSProperties = { color: 'var(--white-40)', flexShrink: 0 };
+const LOCK_BODY_STYLE: CSSProperties = { color: 'var(--white-60)', lineHeight: 1.6 };
+const LOCK_LINK_STYLE: CSSProperties = { color: 'var(--white-60)', textDecoration: 'underline' };
+const MESSAGE_STYLE: CSSProperties = { marginBottom: '1rem', color: 'var(--white-70)' };
+const REQUIRED_LABEL_STYLE: CSSProperties = { display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--white-70)' };
 
 const FIELD_TYPES: Array<{ value: TournamentRegistrationFieldType; label: string }> = [
   { value: 'short_text', label: 'Short text' },
@@ -50,6 +62,10 @@ export default function RegistrationFieldsSettingsPage() {
   const { currentOrg } = useOrg();
   usePageTitle('Registration Questions');
   const { currentTournament } = useTournament();
+  const tournamentCrumb = useTournamentCrumb();
+  const kit = useAdminKit();
+  const kx = useKitStyle();
+  const requiredLabelStyle = kx(REQUIRED_LABEL_STYLE, KIT_INK.secondary); // one per question row
   const searchParams = useSearchParams();
   const fromRegistrations = searchParams.get('from') === 'registrations';
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings`;
@@ -184,7 +200,7 @@ export default function RegistrationFieldsSettingsPage() {
   if (!tournamentId) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Select a tournament from the sidebar to manage registration questions.</p>
+        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>Select a tournament from the sidebar to manage registration questions.</p>
       </div>
     );
   }
@@ -192,27 +208,38 @@ export default function RegistrationFieldsSettingsPage() {
   if (!hasPlus) {
     return (
       <div className={styles.page}>
-        <div className={styles.pageHeader}>
-          <Link href={backHref} className={styles.backBtn}><ArrowLeft size={13} /> {backLabel}</Link>
-        </div>
-        <div className={styles.settingsTitleRow}>
-          <div className={styles.headerIcon}><ClipboardList size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Registration Questions</h1>
-            <p className={styles.pageSub}>Every registration already collects team name, coach, email, and division.</p>
-          </div>
-        </div>
+        <AdminPageHeader
+          backTo={{ href: backHref, label: backLabel }}
+          crumbs={[tournamentCrumb]}
+          title="Registration questions"
+          legacy={<>
+            <div className={styles.pageHeader}>
+              <Link href={backHref} className={styles.backBtn}><ArrowLeft size={13} /> {backLabel}</Link>
+            </div>
+            <div className={styles.settingsTitleRow}>
+              <div className={styles.headerIcon}><ClipboardList size={20} /></div>
+              <div>
+                <h1 className={styles.pageTitle}>Registration Questions</h1>
+                <p className={styles.pageSub}>Every registration already collects team name, coach, email, and division.</p>
+              </div>
+            </div>
+          </>}
+        />
         <div className={styles.card}>
+          {/* F3: the sentence the old subtitle carried is a FACT about the form, re-homed word for
+              word at the top of the card it frames — kit-only, since the legacy header still carries
+              it above while the switch is off. */}
+          {kit && <p className={styles.kitLede}>Every registration already collects team name, coach, email, and division.</p>}
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.6rem' }}>
-            <Lock size={14} style={{ color: 'var(--white-40)', flexShrink: 0 }} />
+            <Lock size={14} style={kx(LOCK_ICON_STYLE, KIT_INK.tertiary)} />
             <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Custom questions</h2>
           </div>
-          <p style={{ color: 'var(--white-60)', lineHeight: 1.6 }}>
+          <p style={kx(LOCK_BODY_STYLE, KIT_INK.secondary)}>
             Add short text fields, dropdowns, file uploads, and more to gather tournament-specific details at registration.
             Available with{' '}
             <Link
               href={`/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`}
-              style={{ color: 'var(--white-60)', textDecoration: 'underline' }}
+              style={kx(LOCK_LINK_STYLE, KIT_INK.secondary)}
             >
               Tournament Plus
             </Link>.
@@ -224,20 +251,26 @@ export default function RegistrationFieldsSettingsPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <Link href={backHref} className={styles.backBtn}><ArrowLeft size={13} /> {backLabel}</Link>
-      </div>
-
-      <div className={styles.settingsTitleRow}>
-        <div className={styles.headerIcon}><ClipboardList size={20} /></div>
-        <div>
-          <h1 className={styles.pageTitle}>Registration Questions</h1>
-          <p className={styles.pageSub}>{currentTournament?.name} - collect tournament-specific team details</p>
-        </div>
-      </div>
+      <AdminPageHeader
+        backTo={{ href: backHref, label: backLabel }}
+        crumbs={[tournamentCrumb]}
+        title="Registration questions"
+        legacy={<>
+          <div className={styles.pageHeader}>
+            <Link href={backHref} className={styles.backBtn}><ArrowLeft size={13} /> {backLabel}</Link>
+          </div>
+          <div className={styles.settingsTitleRow}>
+            <div className={styles.headerIcon}><ClipboardList size={20} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>Registration Questions</h1>
+              <p className={styles.pageSub}>{currentTournament?.name} - collect tournament-specific team details</p>
+            </div>
+          </div>
+        </>}
+      />
 
       {message && (
-        <div className="alert" style={{ marginBottom: '1rem', color: 'var(--white-70)' }}>
+        <div className="alert" style={kx(MESSAGE_STYLE, KIT_INK.secondary)}>
           {message}
         </div>
       )}
@@ -248,9 +281,9 @@ export default function RegistrationFieldsSettingsPage() {
           <a href="#add-question-form" className="btn btn-outline btn-data"><Plus size={14} /> Add Question</a>
         </div>
         {loading ? (
-          <p style={{ color: 'var(--white-40)' }}>Loading...</p>
+          <p style={kx(MUTED_STYLE, KIT_INK.tertiary)}>Loading...</p>
         ) : fields.length === 0 ? (
-          <p style={{ color: 'var(--white-40)' }}>No custom registration questions yet.</p>
+          <p style={kx(MUTED_STYLE, KIT_INK.tertiary)}>No custom registration questions yet.</p>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
             {fields.map((field, index) => {
@@ -276,7 +309,7 @@ export default function RegistrationFieldsSettingsPage() {
                     </div>
                   )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: 'var(--white-70)' }}>
+                    <label style={requiredLabelStyle}>
                       <input type="checkbox" checked={edit.required} onChange={e => setEditing(prev => ({ ...prev, [field.id]: { ...edit, required: e.target.checked } }))} />{' '}
                       Required
                     </label>
@@ -314,7 +347,7 @@ export default function RegistrationFieldsSettingsPage() {
             <textarea className="form-textarea" rows={3} value={draft.optionsText} onChange={e => setDraft(d => ({ ...d, optionsText: e.target.value }))} placeholder="One option per line" required />
           </div>
         )}
-        <label style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1rem', color: 'var(--white-70)' }}>
+        <label style={kx({ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '1rem', color: 'var(--white-70)' }, KIT_INK.secondary)}>
           <input type="checkbox" checked={draft.required} onChange={e => setDraft(d => ({ ...d, required: e.target.checked }))} />{' '}
           Required on public registration
         </label>

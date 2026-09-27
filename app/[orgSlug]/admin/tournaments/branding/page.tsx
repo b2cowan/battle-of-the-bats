@@ -1,6 +1,6 @@
 'use client';
 /* eslint-disable @next/next/no-img-element */
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { ChevronDown, Image as ImageIcon, Palette, Upload } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
@@ -12,7 +12,12 @@ import { PRESETS, FONT_OPTIONS, CARD_STYLE_OPTIONS, resolveTheme } from '@/lib/t
 import { PUBLIC_PAGE_OPTIONS, normalizeHiddenPublicPages, type PublicPageKey } from '@/lib/public-pages';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { hasCapability } from '@/lib/roles';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from './branding.module.css';
+
+// Both access-denied states below share this exact legacy style (Admin Design Continuity slice 4a).
+const ACCESS_MESSAGE_STYLE: CSSProperties = { color: 'var(--white-40)', fontSize: '0.9rem' };
 
 // Mirror of lib/pwa-icon ICON_DARK (that module is server-only — it can't be imported
 // into this client component). The shared truth lives there; this is the UI default
@@ -53,6 +58,7 @@ type SectionKey = 'publicPages' | 'logo' | 'appIcon' | 'theme' | 'heroBanner' | 
 export default function TournamentBrandingPage() {
   const { currentTournament } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
+  const kx = useKitStyle();
   usePageTitle('Public Site');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
 
@@ -342,7 +348,7 @@ export default function TournamentBrandingPage() {
   if (!hasCapability(userRole ?? 'official', userCapabilities, 'manage_branding')) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>You don&apos;t have access to manage tournament branding.</p>
+        <p style={kx(ACCESS_MESSAGE_STYLE, KIT_INK.tertiary)}>You don&apos;t have access to manage tournament branding.</p>
       </div>
     );
   }
@@ -350,7 +356,7 @@ export default function TournamentBrandingPage() {
   if (!tournamentId) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Select a tournament from the sidebar to manage its branding.</p>
+        <p style={kx(ACCESS_MESSAGE_STYLE, KIT_INK.tertiary)}>Select a tournament from the sidebar to manage its branding.</p>
       </div>
     );
   }
@@ -360,6 +366,7 @@ export default function TournamentBrandingPage() {
       <TournamentAdminHeader
         icon={<Palette size={16} />}
         title="Public Site"
+        kitTitle="Public site"
         subtitle={`${currentTournament?.name} — logo, colors, pages, and advanced styling`}
       />
 

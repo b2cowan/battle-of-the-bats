@@ -479,6 +479,7 @@ export default function AdminResultsPage() {
       <TournamentAdminHeader
         icon={<Trophy size={20} />}
         title="Results & Scoring"
+        kitTitle="Results & scoring"
         subtitle={currentTournament ? `${currentTournament.name} (${currentTournament.year})` : 'Enter scores and finalize tournament outcomes'}
         mobileActionsInline
         help={{

@@ -10,6 +10,9 @@ import { useTournament } from '@/lib/tournament-context';
 import type { Tournament, CloneCopiedCounts } from '@/lib/types';
 import { copiedSummary } from '@/lib/utils';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useTournamentCrumb } from '@/components/admin/tournament';
 import styles from './summary.module.css';
 
 type SummaryData = {
@@ -180,6 +183,8 @@ export default function TournamentSummaryPage() {
   const { currentOrg } = useOrg();
   usePageTitle('Post-Event Summary');
   const { currentTournament, setCurrentTournament, refresh } = useTournament();
+  const kit = useAdminKit();
+  const tournamentCrumbs = [useTournamentCrumb()];
   const [summary, setSummary] = useState<SummaryData | null>(null);
   const [state, setState] = useState<LoadState>('idle');
   const [message, setMessage] = useState('');
@@ -362,13 +367,19 @@ export default function TournamentSummaryPage() {
   if (!hasSummary) {
     return (
       <div className={styles.page}>
-        <div className={styles.pageHeader}>
-          <div className={styles.headerIcon}><FileText size={21} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Post-Event Summary</h1>
-            <p className={styles.pageSub}>{currentTournament.name} recap</p>
-          </div>
-        </div>
+        <AdminPageHeader
+          crumbs={tournamentCrumbs}
+          title="Post-event summary"
+          legacy={
+            <div className={styles.pageHeader}>
+              <div className={styles.headerIcon}><FileText size={21} /></div>
+              <div>
+                <h1 className={styles.pageTitle}>Post-Event Summary</h1>
+                <p className={styles.pageSub}>{currentTournament.name} recap</p>
+              </div>
+            </div>
+          }
+        />
 
         <div className={styles.lockedCard}>
           <h2>Upgrade to keep the post-event record working for you</h2>
@@ -382,15 +393,27 @@ export default function TournamentSummaryPage() {
   if (activeRepeatSetupSuccess) {
     return (
       <div className={styles.page}>
-        <div className={styles.pageHeader}>
-          <div className={styles.headerIcon}><CheckCircle2 size={21} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Next tournament draft created</h1>
-            <p className={styles.pageSub}>{activeRepeatSetupSuccess.tournament.name} now starts from {activeRepeatSetupSuccess.sourceName}</p>
-          </div>
-        </div>
+        <AdminPageHeader
+          crumbs={tournamentCrumbs}
+          title="Next tournament draft created"
+          legacy={
+            <div className={styles.pageHeader}>
+              <div className={styles.headerIcon}><CheckCircle2 size={21} /></div>
+              <div>
+                <h1 className={styles.pageTitle}>Next tournament draft created</h1>
+                <p className={styles.pageSub}>{activeRepeatSetupSuccess.tournament.name} now starts from {activeRepeatSetupSuccess.sourceName}</p>
+              </div>
+            </div>
+          }
+        />
 
         <section className={styles.successHero}>
+          {/* The sub's fact, re-homed word for word — kit-only, as the first line of this section. */}
+          {kit && (
+            <p className={styles.kitLede}>
+              {activeRepeatSetupSuccess.tournament.name} now starts from {activeRepeatSetupSuccess.sourceName}
+            </p>
+          )}
           <div className={styles.successHeader}>
             <span className={styles.successBadge}>Tournament Plus</span>
             <h2>Reuse the setup, then review before launch.</h2>
@@ -432,14 +455,24 @@ export default function TournamentSummaryPage() {
     <div className={styles.page}>
       {/* data-sandbox-tour: inert hook for the demo tour's closing beat ("Skip to the morning
           after"). On the header, not a sub-panel — the header renders in every state of this
-          page, and a tour step's proof may never be a panel the product is free to remove. */}
-      <div className={styles.pageHeader} data-sandbox-tour="post-event-summary">
-        <div className={styles.headerIcon}><FileText size={21} /></div>
-        <div>
-          <h1 className={styles.pageTitle}>Post-Event Summary</h1>
-          <p className={styles.pageSub}>{currentTournament.name} · {dateRange(summary)}</p>
+          page, and a tour step's proof may never be a panel the product is free to remove.
+          The legacy header carries the anchor exactly as it always has; on the kit (switch on only)
+          a wrapper around the kit header carries it — ONE element either way, and no extra wrapper
+          while the switch is off. The date range is NOT re-homed: the admin event header above
+          states the same tournament start/end dates. */}
+      {kit ? (
+        <div data-sandbox-tour="post-event-summary">
+          <AdminPageHeader crumbs={tournamentCrumbs} title="Post-event summary" legacy={null} />
         </div>
-      </div>
+      ) : (
+        <div className={styles.pageHeader} data-sandbox-tour="post-event-summary">
+          <div className={styles.headerIcon}><FileText size={21} /></div>
+          <div>
+            <h1 className={styles.pageTitle}>Post-Event Summary</h1>
+            <p className={styles.pageSub}>{currentTournament.name} · {dateRange(summary)}</p>
+          </div>
+        </div>
+      )}
 
       {state === 'loading' && (
         <div className="empty-state"><RefreshCw className="spin" /><p>Loading summary...</p></div>

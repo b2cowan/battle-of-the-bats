@@ -5,7 +5,10 @@ import { Check, ChevronDown, HelpCircle, Lock, MoreHorizontal, Search, X } from 
 import clsx from 'clsx';
 import HelpButton from '@/components/help/HelpButton';
 import type { HelpRequest } from '@/components/help/help-drawer-context';
+import AdminPageHeader, { type AdminCrumb } from '@/components/admin/AdminPageHeader';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import { useAnchoredMenu, useDismissable } from '@/lib/overlay-hooks';
+import { useTournament } from '@/lib/tournament-context';
 import styles from './TournamentAdminUI.module.css';
 
 type Option<T extends string> = {
@@ -16,10 +19,41 @@ type Option<T extends string> = {
   icon?: React.ReactNode;
 };
 
+/**
+ * The kit eyebrow of a tournament page: the tournament's name, as plain words (ADC specimen 2). ONE home
+ * for it — every tournament page's kit header takes it, whether through `TournamentAdminHeader` or its
+ * own `AdminPageHeader` (Admin Design Continuity slice 4a). `null` until the tournament has loaded;
+ * `crumbs` skips it.
+ *
+ * ⚠ NOT a link, deliberately. It first shipped as a way back to the dashboard (slice 3's crumb rule),
+ * and the switch-on sweep measured it at 14px tall — under the 44px tap floor on every tournament screen
+ * at phone and tablet widths. The drawing shows plain text, and the dashboard is the first row of the
+ * rail and of the phone bar, so the link bought nothing a phone could reliably tap.
+ */
+export function useTournamentCrumb(): AdminCrumb | null {
+  const { currentTournament } = useTournament();
+  return currentTournament ? { label: currentTournament.name } : null;
+}
+
+/**
+ * The page header ten tournament screens share.
+ *
+ * ⚠ ON THE KIT (Admin Design Continuity slice 4a, switch on only) it is `AdminPageHeader` as ADC
+ * specimen 2 draws a tournament page: the tournament's NAME as the eyebrow (a way back to its
+ * dashboard — the organization is already in the event header directly above), the page's name as
+ * the title in sentence case (`kitTitle`), the page's own actions and "?" at the end. No icon tile and
+ * no subtitle (F3): every subtitle these pages pass is either the tournament's name (now the eyebrow),
+ * the tournament's year (the event header's dates carry it), or a description of the page (the rail
+ * row and the body say it). `meta` — the one live fact, the Schedule's "Published" — becomes a state
+ * chip beside the title. The eyebrow the legacy header passes ("Game Day", "Tournament Admin") names a
+ * rail group, not a fact, and gives way to the tournament's name as drawn. The read-only banner stays
+ * under the header. With the switch off the legacy header renders byte for byte.
+ */
 export function TournamentAdminHeader({
   icon,
   eyebrow,
   title,
+  kitTitle,
   subtitle,
   meta,
   actions,
@@ -31,6 +65,8 @@ export function TournamentAdminHeader({
   icon?: React.ReactNode;
   eyebrow?: React.ReactNode;
   title: React.ReactNode;
+  /** The title in the kit's sentence case ("Public site"), when `title` is in today's title case. */
+  kitTitle?: React.ReactNode;
   subtitle?: React.ReactNode;
   meta?: React.ReactNode;
   actions?: React.ReactNode;
@@ -42,6 +78,31 @@ export function TournamentAdminHeader({
   mobileActionsInline?: boolean;
   className?: string;
 }) {
+  const kit = useAdminKit();
+  const crumb = useTournamentCrumb();
+  // The "?" is named after the title on screen — the kit's sentence case when the switch is on.
+  const shownTitle = kit ? (kitTitle ?? title) : title;
+  const helpButton = help && <HelpButton help={help} label={typeof shownTitle === 'string' ? shownTitle : undefined} />;
+  const lockedCopy = (
+    <>
+      <Lock size={13} aria-hidden />
+      <span>This tournament is completed — all data is read-only. Change the status to <strong>Active</strong> in Event Settings to make edits.</span>
+    </>
+  );
+  if (kit) {
+    return (
+      <>
+        <AdminPageHeader
+          legacy={null}
+          crumbs={[crumb]}
+          title={shownTitle}
+          titleChips={meta}
+          actions={(actions || help) ? <>{actions}{helpButton}</> : undefined}
+        />
+        {locked && <div className={styles.kitLockedBanner} role="status">{lockedCopy}</div>}
+      </>
+    );
+  }
   return (
     <header className={clsx(styles.header, className)} data-mobile-actions={mobileActionsInline ? 'inline' : undefined}>
       <div className={styles.headerMain}>
@@ -56,13 +117,12 @@ export function TournamentAdminHeader({
       {(actions || help) && (
         <div className={styles.headerActions}>
           {actions}
-          {help && <HelpButton help={help} label={typeof title === 'string' ? title : undefined} />}
+          {helpButton}
         </div>
       )}
       {locked && (
         <div className={styles.lockedBanner} role="status">
-          <Lock size={13} aria-hidden />
-          <span>This tournament is completed — all data is read-only. Change the status to <strong>Active</strong> in Event Settings to make edits.</span>
+          {lockedCopy}
         </div>
       )}
     </header>

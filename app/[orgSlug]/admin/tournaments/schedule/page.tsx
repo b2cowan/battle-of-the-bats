@@ -1342,6 +1342,12 @@ export default function AdminSchedulePage() {
             <span className={styles.mobileTitle}>Schedule</span>
           </>
         )}
+        kitTitle={(
+          <>
+            <span className={styles.desktopTitle}>Schedule management</span>
+            <span className={styles.mobileTitle}>Schedule</span>
+          </>
+        )}
         subtitle={currentTournament ? (
           <>
             <span className={styles.desktopSubtitle}>{currentTournament.name} ({currentTournament.year})</span>

@@ -41,3 +41,20 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   The tournament-style cards: a kit option card, the chosen one the olive selection. Rendered by both
+   the new-tournament wizard and the org setup wizard (app/[orgSlug]/admin/onboarding/page.tsx, already
+   on the kit) — one recipe, so the choice reads the same in both places. ⚠ TOKENS ONLY. */
+:global([data-admin-kit]) .card {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .cardSelected {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .title { color: var(--text-primary); }
+:global([data-admin-kit]) .cardSelected .title { color: var(--home-olive); }
+:global([data-admin-kit]) .desc { color: var(--text-tertiary); }

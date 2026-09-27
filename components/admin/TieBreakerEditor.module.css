@@ -162,3 +162,76 @@
   color: var(--white-30);
   line-height: 1.45;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   The tie-breaker editor Event settings and Divisions both render, on the coaches portal's kit.
+   Every rule is scoped under `[data-admin-kit]` (only the admin shell carries it, and only while the
+   dev switch is on), so the legacy rules above render untouched until the release slice deletes
+   them. No inline colour styles exist on this component (only `transform`/`opacity`/`transition`
+   during a drag), so `TieBreakerEditor.tsx` itself is unchanged — this stylesheet is the whole job.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+
+:global([data-admin-kit]) .row {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+
+:global([data-admin-kit]) .handle,
+:global([data-admin-kit]) .remove,
+:global([data-admin-kit]) .note,
+:global([data-admin-kit]) .addLabel,
+:global([data-admin-kit]) .capHelp {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .remove:hover {
+  color: var(--danger-light);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .warn { color: var(--warning-light); }
+
+/* A rank number is an accent glyph, not a heading — the kit's olive, even-width digits. */
+:global([data-admin-kit]) .rank {
+  color: var(--home-olive);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The breaker's own name leaves the console mono for the kit's body face; "Add" is a plain field-
+   style label, sans by the same rule. */
+:global([data-admin-kit]) .label,
+:global([data-admin-kit]) .addLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+/* "final" names Coin Toss's fixed position, not a verdict — the kit's quiet chip. */
+:global([data-admin-kit]) .finalTag {
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 999px;
+  padding: 0.14rem 0.5rem;
+}
+
+:global([data-admin-kit]) .addChip {
+  font-family: var(--font-data);
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .addChip:hover {
+  color: var(--home-olive);
+  border-color: var(--home-olive);
+}
+
+:global([data-admin-kit]) .capGroup { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .capLabel { color: var(--text-secondary); }
+:global([data-admin-kit]) .capInput {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .capInput:focus { border-color: var(--home-olive); }

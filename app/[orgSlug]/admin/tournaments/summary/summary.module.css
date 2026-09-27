@@ -633,3 +633,210 @@
     max-width: none;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   Post-event summary on the coaches portal's kit — the recap, the share panel, the what's-next card
+   (its own chrome; `CollapsibleCard`'s kit layer is the lead's) and the repeat-setup success section.
+   All three header variants (`.pageHeader`/`.headerIcon`/`.pageTitle`/`.pageSub`) now render only
+   inside `AdminPageHeader`'s `legacy` prop, so none of them mount while the switch is on — no kit rule
+   is needed for that markup. `--modal-error-text` above stays a legacy-only hex (already token-exempt,
+   untouched); the kit's error line takes `--danger-light` directly on `.modalError`. ⚠ TOKENS ONLY. */
+:global([data-admin-kit]) .muted { color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .lockedCard,
+:global([data-admin-kit]) .divisionCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .lockedCard h2,
+:global([data-admin-kit]) .sectionHeader h2 {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .lockedCard p,
+:global([data-admin-kit]) .sectionHeader p { color: var(--text-secondary); }
+
+/* ── Zone 1 · Champions band — an accent banner, its "Champions" label the kit eyebrow ── */
+:global([data-admin-kit]) .championBand {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .championBandLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+/* A champion is a solid highlight (R1's ink-on-lime), not a tinted verdict chip — the band's chip and
+   the division recap's badge alike. */
+:global([data-admin-kit]) .championChip,
+:global([data-admin-kit]) .championBadge {
+  border-radius: 999px;
+  color: var(--home-lime-ink);
+  background: var(--home-lime);
+}
+:global([data-admin-kit]) .championChipDiv { opacity: 1; color: var(--home-lime-ink); }
+
+:global([data-admin-kit]) .metricCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .metricCard svg { color: var(--text-tertiary); }
+:global([data-admin-kit]) .metricCard span {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .metricCard small {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .metricCard strong {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Zone 2 · Share the results ── */
+:global([data-admin-kit]) .zoneTitle {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .sharePanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .valueReflection { color: var(--text-tertiary); }
+
+/* ── Zone 3 · What's next (this card's own copy; `CollapsibleCard`'s chrome is the lead's) ── */
+:global([data-admin-kit]) .whatsNextPrimary strong {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .whatsNextPrimary p { color: var(--text-secondary); }
+:global([data-admin-kit]) .whatsNextNote { color: var(--text-secondary); }
+:global([data-admin-kit]) .discoveryLine {
+  border-top-color: var(--home-line);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .discoveryLink { color: var(--home-olive); }
+
+/* ── Repeat-setup success section ── */
+/* A fact F3 moved out of the header, at the top of the section it describes. */
+:global([data-admin-kit]) .kitLede {
+  margin: -0.25rem 0 1.25rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+/* Names the plan tier — a quiet chip, not a verdict. */
+:global([data-admin-kit]) .successBadge {
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .successHeader h2 {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .successHeader p { color: var(--text-secondary); }
+:global([data-admin-kit]) .successPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .successPanel h3 {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .copySummaryList li,
+:global([data-admin-kit]) .copyList li { color: var(--text-secondary); }
+:global([data-admin-kit]) .copySummaryList svg { color: var(--home-olive); }
+
+:global([data-admin-kit]) .nextStepList { gap: 0.6rem; }
+:global([data-admin-kit]) .nextStepLink {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+:global([data-admin-kit]) .nextStepLink:hover {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .nextStepLink strong { color: var(--text-primary); }
+:global([data-admin-kit]) .nextStepLink small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .nextStepLink svg { color: var(--home-olive); }
+
+/* ── Repeat-setup dialog's own copy (the surrounding `.modal`/`.form-input` chrome is global,
+   not yet on the kit — see the report to the lead) ── */
+:global([data-admin-kit]) .repeatModalIntro { color: var(--text-secondary); }
+:global([data-admin-kit]) .fieldLabel {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+:global([data-admin-kit]) .fieldLabel span { color: var(--text-tertiary); }
+:global([data-admin-kit]) .copyPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .copyPanel h4 {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .checkDot { background: var(--home-olive); }
+:global([data-admin-kit]) .neverDot { border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .modalNote { color: var(--text-tertiary); }
+:global([data-admin-kit]) .modalError { color: var(--danger-light); }
+
+/* ── Division recap ── */
+:global([data-admin-kit]) .divisionHeader h3 { color: var(--text-primary); }
+:global([data-admin-kit]) .divisionHeader p { color: var(--text-secondary); }
+:global([data-admin-kit]) .divisionStats span { color: var(--text-tertiary); }
+:global([data-admin-kit]) .leaderBadge {
+  border-radius: 999px;
+  color: var(--info-light);
+  background: rgba(var(--info-rgb), 0.08);
+  border-color: rgba(var(--info-rgb), 0.3);
+}
+:global([data-admin-kit]) .neutralBadge {
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}

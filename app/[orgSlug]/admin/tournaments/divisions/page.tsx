@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type CSSProperties } from 'react';
 import { Tag, Plus, Pencil, Trash2, X, Check, ChevronUp, ChevronDown, Trophy } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
@@ -9,6 +9,8 @@ import { TournamentAdminHeader } from '@/components/admin/tournament';
 import TieBreakerEditor from '@/components/admin/TieBreakerEditor';
 import FieldHint from '@/components/help/FieldHint';
 import { normalizeTieBreakers, clampRunDiffCap, DEFAULT_TIE_BREAKERS, BREAKER_LABELS, type TieBreaker } from '@/lib/tie-breakers';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_LINE } from '@/components/admin/kit/kit-inline';
 
 interface OrgMemberOption {
   id: string;
@@ -18,6 +20,10 @@ interface OrgMemberOption {
   role: string;
 }
 import styles from './admin-page.module.css';
+
+/** The scope hints in the division window (fees, timing, tie-breakers) — today's legacy style, written
+ *  once (Admin Design Continuity slice 4a: seven identical copies). */
+const SCOPE_HINT_STYLE: CSSProperties = { fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 };
 
 type ModalMode = 'add' | 'edit' | null;
 type DivisionFormPayload = {
@@ -76,6 +82,9 @@ export default function DivisionsPage() {
   const { currentTournament, isLocked } = useTournament();
   const { currentOrg } = useOrg();
   usePageTitle('Divisions');
+  const kx = useKitStyle();
+  // The fee / timing / tie-breaker scope hints in the division window — one style, seven places.
+  const scopeHintStyle = kx(SCOPE_HINT_STYLE, KIT_INK.tertiary);
   const [groups, setGroups] = useState<Division[]>([]);
   const [orgMembers, setOrgMembers] = useState<OrgMemberOption[]>([]);
   const [loading, setLoading] = useState(true);
@@ -399,13 +408,13 @@ export default function DivisionsPage() {
                 <label className="form-label" style={{ display: 'block', marginBottom: '0.5rem' }}>Age Range</label>
                 <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.65rem', color: 'var(--white-40)' }}>Min</label>
+                    <label className="form-label" style={kx({ fontSize: '0.65rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>Min</label>
                     <input className="form-input" type="number" value={form.minAge}
                       onChange={e => setForm(f => ({ ...f, minAge: e.target.value }))} placeholder="Any" style={{ width: '80px' }} />
                   </div>
-                  <span style={{ color: 'var(--white-30)', fontFamily: 'var(--font-data)', paddingBottom: '8px', flexShrink: 0 }}>–</span>
+                  <span style={kx({ color: 'var(--white-30)', fontFamily: 'var(--font-data)', paddingBottom: '8px', flexShrink: 0 }, KIT_INK.tertiary)}>–</span>
                   <div className="form-group" style={{ marginBottom: 0 }}>
-                    <label className="form-label" style={{ fontSize: '0.65rem', color: 'var(--white-40)' }}>Max</label>
+                    <label className="form-label" style={kx({ fontSize: '0.65rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>Max</label>
                     <input className="form-input" type="number" value={form.maxAge}
                       onChange={e => setForm(f => ({ ...f, maxAge: e.target.value }))} placeholder="Any" style={{ width: '80px' }} />
                   </div>
@@ -417,13 +426,13 @@ export default function DivisionsPage() {
                 <label className="form-label">Capacity</label>
                 <input className="form-input" type="number" placeholder="e.g. 8" value={form.capacity}
                   onChange={e => setForm(f => ({ ...f, capacity: e.target.value }))} style={{ maxWidth: '110px' }} />
-                <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }}>
+                <p style={kx({ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.3rem', lineHeight: 1.4 }, KIT_INK.tertiary)}>
                   No limit if blank. Registration status is managed from the Registrations page.
                 </p>
               </div>
 
               {/* ── Pools ── */}
-              <div className="form-group" style={{ marginBottom: '1.25rem', background: 'var(--white-5)', padding: '0.75rem', borderRadius: '2px', border: '1px solid var(--border-2)' }}>
+              <div className="form-group" style={kx({ marginBottom: '1.25rem', background: 'var(--white-5)', padding: '0.75rem', borderRadius: '2px', border: '1px solid var(--border-2)' }, { background: 'var(--home-olive-soft)', border: '1px solid var(--home-line)', borderRadius: '8px' })}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: form.usePools ? '1rem' : 0 }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer' }}>
                     <input type="checkbox" checked={form.usePools} onChange={e => setForm(f => ({ ...f, usePools: e.target.checked, poolCount: e.target.checked ? (Number(f.poolCount) < 2 ? '2' : f.poolCount) : '0' }))} />
@@ -431,7 +440,7 @@ export default function DivisionsPage() {
                   </label>
                   {form.usePools && (
                     <div className="subCheck">
-                      <label htmlFor="div-pool-selfselect" style={{ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }}>Self-select pool:</label>
+                      <label htmlFor="div-pool-selfselect" style={kx({ fontSize: '0.7rem', color: 'var(--white-30)', textTransform: 'uppercase', fontWeight: 800 }, KIT_INK.tertiary)}>Self-select pool:</label>
                       <input id="div-pool-selfselect" type="checkbox" aria-describedby="div-pool-selfselect-hint" checked={form.requiresPoolSelection} onChange={e => setForm(f => ({ ...f, requiresPoolSelection: e.target.checked }))} />
                     </div>
                   )}
@@ -486,7 +495,7 @@ export default function DivisionsPage() {
               <div className="form-group" style={{ marginBottom: '1.5rem' }}>
                 <label className="form-label">
                   Division Contact{' '}
-                  <span style={{ marginLeft: '0.4rem', fontWeight: 400, color: 'var(--white-40)', fontSize: '0.72rem', textTransform: 'none', letterSpacing: 0 }}>Optional</span>
+                  <span style={kx({ marginLeft: '0.4rem', fontWeight: 400, color: 'var(--white-40)', fontSize: '0.72rem', textTransform: 'none', letterSpacing: 0 }, KIT_INK.tertiary)}>Optional</span>
                 </label>
                 <select className="form-select" value={form.contactMemberId} onChange={e => setForm(f => ({ ...f, contactMemberId: e.target.value }))}>
                   <option value="">Default (tournament contact)</option>
@@ -499,12 +508,12 @@ export default function DivisionsPage() {
                 {form.contactMemberId ? (() => {
                   const picked = orgMembers.find(m => m.id === form.contactMemberId);
                   return picked ? (
-                    <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-40)', marginTop: '0.25rem' }}>
+                    <p className="form-help" style={kx({ fontSize: '0.72rem', color: 'var(--white-40)', marginTop: '0.25rem' }, KIT_INK.tertiary)}>
                       Notifications for this division will go to <strong>{picked.email}</strong>
                     </p>
                   ) : null;
                 })() : (
-                  <p className="form-help" style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
+                  <p className="form-help" style={kx({ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.25rem' }, KIT_INK.tertiary)}>
                     Leave blank to use the tournament&apos;s default contact.
                   </p>
                 )}
@@ -537,18 +546,21 @@ export default function DivisionsPage() {
                     <button
                       type="button"
                       onClick={() => setAdvancedOpen(o => !o)}
-                      style={{
+                      style={kx({
                         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                         width: '100%', padding: '0.65rem 0.9rem',
                         background: 'var(--white-03)', border: '1px solid var(--border-2)',
                         borderRadius: advancedOpen ? '2px 2px 0 0' : '2px',
                         cursor: 'pointer', color: 'inherit', marginBottom: advancedOpen ? 0 : '1.5rem',
-                      }}
+                      }, {
+                        background: 'var(--home-olive-soft)', border: '1px solid var(--home-line)',
+                        borderRadius: advancedOpen ? '8px 8px 0 0' : '8px',
+                      })}
                     >
-                      <span style={{ fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--white-60)' }}>
+                      <span style={kx({ fontWeight: 700, fontSize: '0.8rem', letterSpacing: '0.04em', textTransform: 'uppercase', color: 'var(--white-60)' }, KIT_INK.eyebrow)}>
                         Division Overrides
                         {!advancedOpen && overrideCount > 0 && (
-                          <span style={{ marginLeft: '0.5rem', fontWeight: 600, fontSize: '0.75rem', color: 'var(--logic-lime)', textTransform: 'none', letterSpacing: 0 }}>
+                          <span style={kx({ marginLeft: '0.5rem', fontWeight: 600, fontSize: '0.75rem', color: 'var(--logic-lime)', textTransform: 'none', letterSpacing: 0 }, KIT_INK.accent)}>
                             ({overrideCount} active)
                           </span>
                         )}
@@ -557,7 +569,7 @@ export default function DivisionsPage() {
                     </button>
 
                     {advancedOpen && (
-                      <div style={{ border: '1px solid var(--border-2)', borderTop: 0, padding: '1.25rem 1rem', marginBottom: '1.5rem', borderRadius: '0 0 2px 2px', background: 'var(--white-03)' }}>
+                      <div style={kx({ border: '1px solid var(--border-2)', borderTop: 0, padding: '1.25rem 1rem', marginBottom: '1.5rem', borderRadius: '0 0 2px 2px', background: 'var(--white-03)' }, { border: '1px solid var(--home-line)', borderTop: 0, background: 'var(--home-olive-soft)', borderRadius: '0 0 8px 8px' })}>
 
                         {/* Fee Schedule — conditional on fee_scope */}
                         {feeScope !== 'tournament' && feeScope !== 'free' && (
@@ -565,20 +577,20 @@ export default function DivisionsPage() {
                             <label className="form-label" style={{ marginBottom: '0.35rem', display: 'block' }}>
                               Fee Schedule
                               {feeScope === 'per_division' && <span style={{ marginLeft: '0.35rem', color: 'var(--danger-light)', fontSize: '0.75rem' }}>Required</span>}
-                              {feeScope === 'allow_override' && <span style={{ marginLeft: '0.35rem', color: 'var(--white-40)', fontSize: '0.75rem' }}>Optional override</span>}
+                              {feeScope === 'allow_override' && <span style={kx({ marginLeft: '0.35rem', color: 'var(--white-40)', fontSize: '0.75rem' }, KIT_INK.tertiary)}>Optional override</span>}
                             </label>
                             {feeScope === 'allow_override' && (
-                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                              <p style={scopeHintStyle}>
                                 Leave blank to inherit from tournament defaults.
                               </p>
                             )}
                             {feeScope === 'per_division' && (
-                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                              <p style={scopeHintStyle}>
                                 Fees must be set individually for each division in this tournament.
                               </p>
                             )}
                             {!feeScope && (
-                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                              <p style={scopeHintStyle}>
                                 Configure fee scope in Event Settings to control how fees apply across divisions.
                               </p>
                             )}
@@ -609,13 +621,13 @@ export default function DivisionsPage() {
 
                         {/* Game Timing — conditional on game_timing_scope */}
                         {gameTimingScope !== 'tournament' && (
-                          <div className="form-group" style={{ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem' }}>
+                          <div className="form-group" style={kx({ marginBottom: '1.5rem', borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem' }, { borderTop: KIT_LINE })}>
                             {gameTimingScope === 'per_division' ? (
                               <>
                                 <label className="form-label" style={{ marginBottom: '0.35rem', display: 'block' }}>
                                   Game Timing <span style={{ color: 'var(--danger-light)', fontSize: '0.75rem' }}>Required</span>
                                 </label>
-                                <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                                <p style={scopeHintStyle}>
                                   Game timing must be set for each division in this tournament.
                                 </p>
                                 <div className="form-row form-row-2">
@@ -639,7 +651,7 @@ export default function DivisionsPage() {
                                   <input type="checkbox" checked={form.overrideGameTiming}
                                     onChange={e => setForm(f => ({ ...f, overrideGameTiming: e.target.checked, gameDurationMinutes: e.target.checked ? f.gameDurationMinutes : '', bufferMinutes: e.target.checked ? f.bufferMinutes : '' }))} />
                                   <span style={{ fontWeight: 600 }}>Override Game Timing for this Division</span>
-                                  {gameTimingScope === 'allow_override' && <span style={{ fontSize: '0.72rem', color: 'var(--white-40)' }}>Optional</span>}
+                                  {gameTimingScope === 'allow_override' && <span style={kx({ fontSize: '0.72rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>Optional</span>}
                                 </label>
                                 {form.overrideGameTiming ? (
                                   <div className="form-row form-row-2" style={{ marginTop: '0.75rem' }}>
@@ -657,7 +669,7 @@ export default function DivisionsPage() {
                                     </div>
                                   </div>
                                 ) : (
-                                  <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.35rem', lineHeight: 1.5 }}>
+                                  <p style={kx({ fontSize: '0.72rem', color: 'var(--white-30)', marginTop: '0.35rem', lineHeight: 1.5 }, KIT_INK.tertiary)}>
                                     Inheriting tournament default: {tGameDuration} min games, {tBufferMinutes} min buffer.
                                     {gameTimingScope === 'allow_override' && ' Check above to override for this division.'}
                                   </p>
@@ -669,23 +681,23 @@ export default function DivisionsPage() {
 
                         {/* Tie-Breakers — conditional on tie_breaker_scope */}
                         {tieBreakerScope !== 'tournament' && (
-                          <div className="form-group" style={{ borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem' }}>
+                          <div className="form-group" style={kx({ borderTop: '1px solid var(--border-2)', paddingTop: '1.25rem' }, { borderTop: KIT_LINE })}>
                             <label className="form-label" style={{ marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                               <Trophy size={14} /> Standing Tie-Breaker Hierarchy
                               {tieBreakerScope === 'per_division' && <span style={{ color: 'var(--danger-light)', fontSize: '0.75rem' }}>Required</span>}
                             </label>
                             {tieBreakerScope === 'allow_override' && (
-                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                              <p style={scopeHintStyle}>
                                 Tournament default: {tTieBreakers.map(b => BREAKER_LABELS[b]).join(' → ')}. Reorder below to override for this division.
                               </p>
                             )}
                             {tieBreakerScope === 'per_division' && (
-                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                              <p style={scopeHintStyle}>
                                 Set the tie-breaker order for this division&apos;s standings and playoff seeding.
                               </p>
                             )}
                             {!tieBreakerScope && (
-                              <p style={{ fontSize: '0.72rem', color: 'var(--white-30)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+                              <p style={scopeHintStyle}>
                                 Configure tie-breaker scope in Event Settings to control how standings are broken.
                               </p>
                             )}
@@ -734,11 +746,11 @@ export default function DivisionsPage() {
               <button className="btn btn-ghost btn-data" onClick={closeDelete}><X size={16} /></button>
             </div>
             {deleteBlock ? (
-              <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
+              <p style={kx({ color: 'var(--white-60)', marginBottom: '0.5rem' }, KIT_INK.secondary)}>
                 {deleteBlock.message}
               </p>
             ) : (
-              <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>
+              <p style={kx({ color: 'var(--white-60)', marginBottom: '0.5rem' }, KIT_INK.secondary)}>
                 This will permanently delete this division, along with every game and registered team in it.
                 Recorded scores go with them. This cannot be undone.
               </p>

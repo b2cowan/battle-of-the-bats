@@ -96,3 +96,31 @@
     padding-right: 1rem;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   The admin's collapsible section card (Event settings, Data tools, the Post-event summary) as the
+   kit card: 8px, the kit hairline, the title in the display face at the body step (F2 — a card's name
+   is a heading, not a console label), its summary line quiet. The platform-admin screen that also
+   renders it never carries the marker.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+:global([data-admin-kit]) .card {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .title {
+  font-family: var(--font-display);
+  font-size: var(--type-body);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .summary:hover .title { color: var(--home-olive); }
+:global([data-admin-kit]) .icon { color: var(--home-olive); }
+:global([data-admin-kit]) .meta {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .chevron { color: var(--text-tertiary); }

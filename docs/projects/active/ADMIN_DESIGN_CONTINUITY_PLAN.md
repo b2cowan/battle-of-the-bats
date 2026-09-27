@@ -9,6 +9,9 @@
 > BUILT 2026-09-26** — results in §3a; /simplify + /review done; **COMMITTED `ee175263` 2026-09-26**.
 > **Slice 3 (Rep Teams + Accounting, the money tables restyled in place — F4) BUILT 2026-09-27** —
 > results in §3a; identity + switch-on sweep done; /simplify + /review done; **COMMITTED `35705e32` 2026-09-27**.
+> **Slice 4 split in three by job (2026-09-27, §3a).** **Slice 4a (tournament setup + records, and the
+> tournament screens' shared parts) BUILT 2026-09-27** — results in §3a; /simplify + /review done; identity
+> 58/58 + both-theme sweep done. 4b (operations on game day) and 4c (the schedule) not started.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -167,9 +170,39 @@ foundation's release day.
 | 1 | The switch · theme gaps · R1/F1 · the frame (top strip, rail, phone bar + More, page header, event header) · Families · Public site editor | **COMMITTED `1b3cd541` 2026-09-25** — results below; walked at slice 6 |
 | 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | **COMMITTED `ee175263` 2026-09-26** — results below; /simplify + /review done; walked at slice 6 |
 | 3 | Rep Teams · Accounting (F4 dense tables) | **BUILT 2026-09-27** — results below; /simplify + /review done; COMMITTED `35705e32` 2026-09-27; walked at slice 6 |
-| 4 | Tournaments (split by job if needed — record the split here first) | not started |
+| 4a | Tournaments — **setup and records, plus the area's shared parts** (split recorded below) | **BUILT 2026-09-27** — results below; /simplify + /review done; identity 58/58 + both-theme sweep done; walked at slice 6 |
+| 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat | not started |
+| 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, game list, the schedule windows | not started |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | not started |
 | 6 | Prove (both-theme sweep, contrast, identity) · owner § walk · release (switch deleted, legacy removed, coaches help pin removed, What's New, `/docs`, `/release`) | not started |
+
+**Slice 4 — the split (2026-09-27, written before starting, as the build prompt requires).** The
+tournament area measured at the start of slice 4 (same scope as the inventory's footnote 2): **54,112
+lines, 1,117 colour literals, 857 inline style blocks, 191 org-colour reads** — about 3.8× slice 3 by
+lines, 2.9× by literals and 2.2× by inline blocks. Slice 3 filled one session. The prompt's three jobs
+(setup / operations / records) are not three equal sessions: records is small (~3.2k lines, 97 literals)
+and operations is 2.5× slice 3 on its own, over half of it the schedule. So the split is still **by
+job**, re-cut so each part is about slice 3's size:
+- **4a — setup and records, plus the shared parts** (~340 literals, ~270 inline blocks): the Settings &
+  access index, Event settings, Divisions, Venues, Rules & resources (the styled-jsx outlier), Public
+  site (branding; its preview keeps the organization's colours, R2), Registration questions,
+  Notification preferences, the new-tournament wizard (and its style cards, and the tie-breaker editor
+  both setup screens use); Archives, Post-event summary, Data tools. **Shared parts, because they reach
+  every later part:** `TournamentAdminHeader` (the page header ten tournament screens share, operations
+  included — its F3 re-homings are all decided here) and `TournamentAdminUI`'s toolbar, menus and
+  legend. (The prompt's `--border-1` fix is already done: the undefined token lives in the
+  Organization Tournaments sheet, and slice 2 drew that divider on the kit. The legacy rule stays as
+  it is until the release deletes it — fixing it now would draw a line with the switch off.)
+- **4b — operations on game day** (~414 literals, ~155 inline): the dashboard in both frames (and its
+  guidance rail and persona panel), Teams (and its import windows and health panel), Results (and its
+  context strip and coin toss), Check-in (the admin's board; the volunteer gate is slice 5), Staff kit,
+  Communication, Chat.
+- **4c — the schedule** (~349 literals, ~431 inline): the schedule page, Generator, Playoff wizard, the
+  bracket builder / editor / columns / connectors / zoom, the timeline, the game list, the shift-day /
+  resolve-locations / field-picker windows, the health panel, the zero-venue prompt.
+- **Not in slice 4 at all:** the four tournament pages that re-export another screen — Members and its
+  audit log and Plan & subscription (Club Stage 1's), PDF settings (slice 2's); "manage" re-exports the
+  Organization Tournaments list (slice 2's); the two public previews (R2, proven in slice 1).
 
 **Slice 0 — results (2026-09-25).** Ran alone on the owner's word, on a freshly restarted dev server
 with every UAT session refreshed. No product code changed.
@@ -636,6 +669,125 @@ included), both themes, 92 screen-widths each.
     - **The one switch-off change:** House league's two required-field asterisks write their colour as
       `var(--danger-light)`, byte-equal to the `#f87171` they replaced.
     - **The kit's crumbs** are the same link in the same place, now styled by the shared header.
+
+**Slice 4a — results (2026-09-27).** Two quiet windows on the owner's word. The split above was written
+first; the owner answered the start message with "the window is quiet". Four page agents built the page
+bodies in parallel against one brief; every diff was reviewed in the main loop.
+- **Found at the start:** the dev server's page worker had crashed again ("Jest worker encountered 2 child
+  process exceptions", plus a stream of `write EPIPE` — its terminal pipe was gone), so the first "before"
+  capture hung on its first screen. A full restart inside the window cleared it; the "before" set was
+  retaken whole (58 pictures, none failed). ⚠ The dev server now runs from the slice's own session.
+- **The shared parts** (they reach 4b/4c's screens too, so they were decided once, here):
+  - `TournamentAdminHeader` on the kit is `AdminPageHeader` as ADC specimen 2 draws a tournament page: the
+    **eyebrow is the tournament's name, plain text** (`useTournamentCrumb()`, one home), the page's name in
+    sentence case (`kitTitle`), the page's own actions and "?" (named after the title on screen), the
+    read-only banner as a kit amber notice under it, no icon tile, no subtitle. The Schedule's `meta`
+    ("Published") becomes a state chip beside the title.
+  - `TournamentAdminUI.module.css` (toolbar, fields, segmented control, menus, selection bar, upsell,
+    legend), `admin-common.module.css` (the tournament list: controls bar, filter chips, table standard,
+    division and pool headings, the opened row, the row menu), `ExportMenu.module.css` (the portal's
+    popover — reaches the export menu on Rep Teams, Accounting, House league and Members too, which the
+    earlier slices had left in the console look), `CollapsibleCard.module.css` (the kit card).
+  - `app/globals.css`: the admin's **plain window** (`.modal*`) and **form fields** (`.form-input` /
+    `.form-select` / `.form-textarea`) on the kit, written at the marker's ZERO weight
+    (`:where([data-admin-kit]) …`) so they beat only the legacy rules and never a page's own skin —
+    `FeedbackModal`'s portal dialog carries both `modal` and its own `.dialog` skin and keeps the skin.
+    The fields: card ground, strong hairline, 7px, olive focus in place of the platform blue glow,
+    tertiary placeholder (`--white-30` is a hairline in Warm).
+- **Restyled end to end** (kit layers in each sheet, inline colours through `kx`): Settings & access (the
+  portal's door cards), Event settings, Divisions (the fill board keeps filling / almost / full), Venues
+  (the Organization venue library's kit layer already covered every coloured class), Rules & resources
+  (its styled-jsx global block untouched; the whole kit layer is a new `rules-kit.module.css` hung off a
+  local `.rulesKit` class that joins the root ONLY while the switch is on), Public site (chrome only — the
+  colour swatches, the app-icon tile and its background chips, the font samples and the light/dark preview
+  island are the organization's and untouched; the card-style thumbnails, drawn in white alphas for a dark
+  ground, are redrawn as token icons of each style), Registration questions, Notification preferences
+  (the kit switch — olive when on, Club Stage 1's drawn switch), Archives, Post-event summary, Data tools,
+  the new-tournament wizard and its style cards (the same recipes as the setup wizard's slice 2 layer —
+  the two share a class vocabulary), and the tie-breaker editor.
+- **F3 re-homings.** Every tournament subtitle that was the tournament's name → the eyebrow. Not re-homed,
+  as descriptions of the page: Public site's "logo, colors, pages, and advanced styling", Data tools',
+  Divisions', Teams', Venues' and Rules' description lines, Event settings' "identity, dates & status",
+  Registration questions' "collect tournament-specific team details", Settings & access's two lines,
+  Notifications' "Mute notifications for…", Archives' "Sealed records and archived tournaments pending a
+  snapshot", the summary's "recap". Not re-homed because the event header directly above states it: the
+  year after the name (Results, Schedule) and the summary's date range (the same tournament start/end
+  columns). **Re-homed, word for word, kit-only:** Registration questions (upsell variant) "Every
+  registration already collects team name, coach, email, and division." → the first line of the card it
+  frames; Notifications "Personal to your account." → the opening words of "Want push on, or a channel
+  changed?…"; Archives (a plan that cannot seal) "Archived tournaments are available on free; permanent
+  sealed records require Tournament Plus or higher" → the top of the body; the summary's success header
+  "{new} now starts from {source}" → the first line of the success section; the Schedule's "Published" →
+  a chip beside the title. The "Game Day" / "Tournament Admin" eyebrows (rail-group names, not facts) give
+  way to the tournament's name, as drawn.
+- **Deliberately not as drawn / decided at build time (flag to the owner):** (1) the tournament eyebrow
+  is plain text — it first shipped as a link to the dashboard (slice 3's crumb rule), and the sweep
+  measured it at 14px tall, under the tap floor on every tournament screen at 361/390/768; the drawing
+  shows plain text and the dashboard is the rail's and the phone bar's first row; (2) Archives lists every
+  archived tournament of the organization, so its eyebrow is the organization's name; (3) a chosen filter
+  chip is the portal's own chosen filter chip (`rgba(--logic-lime-rgb, .16)` + olive, as Families and the
+  portal's lineup / tag chips), and each status keeps its colour in the dot — a filter is a choice, not a
+  verdict; (4) the champion chip and badge are a solid ink-on-lime highlight, not a tinted verdict chip;
+  (5) Registration questions' back link becomes the kit header's `backTo` (same door, same words).
+- **Identity (switch off):** "before" 2026-09-27T15:51Z (tournaments + the organization's Tournaments list
+  + setup, 58 pictures) on the untouched tree after the restart; "after" 16:50Z after a second restart —
+  **58 of 58 pixel-identical**. Branding, Settings and Divisions retaken after the sweep fixes: 6 of 6.
+  The shared field / window / export-menu rules reach other areas only with the switch on — the widened
+  gate proves every global kit rule carries `[data-admin-kit]` (slice 3's precedent: picture your areas).
+- **Switch-on sweep** (21 screens × 361/390/768/1440: the 11 restyled, the 5 operations screens whose
+  header changed, and 5 earlier screens the shared field / window rules reach), against the switch-off
+  dark baseline — contrast 773 → **Warm 91 / Dark 393**; tap floor 754 → 735 / 690; overflow 28 → 23;
+  type ladder 4 → 4; control width 201 → 202. **This slice's own screens: Warm 0 contrast; Dark only the
+  shared phone bar's inactive labels** (slice 1's open question). The rest: the Teams and Schedule bodies
+  (4b/4c — 142 + 30 in Dark) and Coaches portal links' help-callout link (slice 5). **Fixed from the
+  sweep:** the eyebrow link (above); the chosen swatch's tick (`--white` is the warm INK — 1.59:1 on the
+  navy preset → `--white-fixed`, today's white in both themes); the island's "Preview" caption (4.45:1 in
+  Dark → `--home-ink-soft`). Re-swept: Warm 0 contrast, Dark phone bar only, tap floor back to baseline.
+  **Worse groups, attributed:** Organization → Tournaments control width +1 = the archived Invitational's
+  Delete button (present switch-off too, proven by a switch-off sweep — the slice 3 cancellation);
+  Coaches portal links' Dark contrast = the phone bar, identical to slice 2's own sweep.
+- **Gates:** `checkAdminKit` now also reads `app/globals.css` — the kit's shared parts (R1, the island,
+  buttons, chips, windows, fields) had never been checked for literals (in no scope's dirs); 1,308 → 1,354
+  kit rules, a planted literal proven caught. The restyled ratchet gained the slice's 9 directories and 9
+  shared files (627 legacy literals held; the baseline change is additive — no existing entry moved). The
+  guard (`admin-kit-guard`) now sees the zero-weight `:where([data-admin-kit])` form and indented rules,
+  and requires the public-preview exclusion on the rule's SUBJECT (the element it styles), not anywhere in
+  the selector — three rules only excluded their ancestor (slice 2's `.empty-state … h3` and this slice's
+  window `h3` / `p`), all fixed. `kit-inline.ts` gained `KIT_INK.danger/.success/.warning` (the light
+  tier) and `KIT_SURFACE.menu`. Unit 5,042/5,042 · typecheck clean · lint 0 errors · `verify:changed` green.
+- **`/simplify` (4 lenses):** fixed — one `useTournamentCrumb()` for six hand-built crumbs; the new
+  `KIT_INK` states and `KIT_SURFACE.menu` used where patches were hand-typed; the Rules error box on
+  `KIT_SURFACE.alert`; Divisions on `KIT_LINE` and one hint style for seven copies; the wizard's patch
+  constants hold only the patch; row-invariant `kx(...)` hoisted out of `.map()` (Archives, the wizard's
+  venue search, Registration questions); the shared header builds its legacy markup only when it renders
+  it; the two champion rules merged. Declined: the filter-chip colour (it is the portal's); the heavier
+  `[data-admin-kit] .modal` weight (it would TIE with the portal dialog's skin and leave the winner to CSS
+  load order); one shared wizard stylesheet (the two modules' class names are hashed per file — sharing
+  needs markup or `composes`, a switch-off change → the release slice); a shared `.kitLede` class and a
+  two-line duplicate const.
+- **`/review` (standard tier, 3 lenses — switch-off identity + logic, blast radius + R2, gate contract):**
+  7 findings, 0 refuted. **Fixed:** (Medium) Rules' `.rulesKit` anchor rendered in both states — no pixel,
+  but not today's markup → now switch-gated; (Medium, latent) the three subject-less exclusions above +
+  the guard's blind spot; (Low) the "?" was named after the title-case title while the kit showed sentence
+  case; (Advisory) the guard's column-0 anchor. **Accepted:** the Schedule's "Published" chip wears its
+  legacy styling in the kit header until 4c; `transparent` is not refused by the kit literal check (not a
+  colour that drifts). `check:layout --changed` not run (globals.css widens it to every screen) — the
+  identity check and the both-theme sweep stand in.
+- **Found, written down, not fixed:** (1) the slice 3 crumb links (Rep Teams, Accounting, House league's
+  way up) are the same sub-floor link on a phone — unify at the release slice; (2) the wizard's upgrade
+  notice uses `alert alert-warning`, classes that exist nowhere (an unstyled div today, switch on or off);
+  (3) dead CSS left alone: Data tools (the old tool-card layout), Settings & access (`.actionCard`,
+  `.comingSoonCard`, `.cardAction`), Notifications (the removed channel block); (4) `{ color:
+  'var(--danger-light)' }` is hand-typed ~50 times in earlier slices — adopt `KIT_INK.danger` as those
+  files are touched; (5) the kit's `.kitLede` (a re-homed fact at the top of a body) is written three
+  times — a shared recipe at the release slice.
+- **For 4b and 4c:** the header, the toolbar / menus / legend, the tournament list sheet (filter chips,
+  table, group headings), the export menu, the plain window and the form fields are ALREADY on the kit —
+  4b/4c restyle only the page bodies and their own sheets (`dashboard.module.css`,
+  `teams-admin.module.css`, `results-admin.module.css`, `check-in` + `CheckInBoard`, `staff-kit`,
+  `communication`, `chat-admin`; 4c `schedule-admin.module.css`, `ScheduleTimeline`, `BracketBuilder` and
+  the schedule windows) and add their directories to `RESTYLED_DIRS`. The dashboard's own header
+  (`AdminEventHeader` + page) and the Schedule's "Published" chip are theirs.
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as

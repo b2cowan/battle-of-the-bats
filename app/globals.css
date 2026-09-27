@@ -1984,7 +1984,7 @@ h1, h2, h3, h4, h5, h6 {
    warm block makes a HAIRLINE — a line colour as text (the slice 2 sweep: 1.4:1 on cream). The kit's
    empty state: the heading in the primary ink, the rest tertiary. ── */
 [data-admin-kit] .empty-state:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
-[data-admin-kit] .empty-state:where(:not([data-public-preview] *)) h3 { color: var(--text-primary); }
+[data-admin-kit] .empty-state:where(:not([data-public-preview] *)) h3:where(:not([data-public-preview] *)) { color: var(--text-primary); }
 
 /* ── The card → the kit's card: 8px corner, no lift, no glow. Colours stay on the tokens (a card
    that names its own border — an error card — keeps it). ── */
@@ -2048,6 +2048,32 @@ h1, h2, h3, h4, h5, h6 {
 
 .form-input::placeholder,
 .form-textarea::placeholder { color: var(--white-30); }
+
+/* ── The admin's form fields on the kit (Admin Design Continuity slice 4a — switch on only) ──
+   The global `.form-input` / `.form-select` / `.form-textarea` as the coaches portal's field (the
+   recipe slice 3 gave its own fields by value): the card ground, the strong hairline, a 7px corner,
+   the olive focus edge in place of the platform blue glow, and a placeholder in the tertiary ink —
+   `--white-30` is a HAIRLINE in Warm (~1.4:1). The colours already followed the theme through their
+   tokens; this finishes the recipe. Written at the kit marker's ZERO weight (`:where(…)`), after the
+   legacy rules, so it beats only them and never a page's own field style. Stops at a public preview.
+   Reaches every admin form with the switch on (Families, House league, Rep Teams, Accounting and the
+   tournament screens alike). ⚠ TOKENS ONLY. */
+:where([data-admin-kit]) .form-input:where(:not([data-public-preview] *)),
+:where([data-admin-kit]) .form-select:where(:not([data-public-preview] *)),
+:where([data-admin-kit]) .form-textarea:where(:not([data-public-preview] *)) {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+}
+:where([data-admin-kit]) .form-input:where(:not([data-public-preview] *)):focus,
+:where([data-admin-kit]) .form-select:where(:not([data-public-preview] *)):focus,
+:where([data-admin-kit]) .form-textarea:where(:not([data-public-preview] *)):focus {
+  border-color: var(--home-olive);
+  box-shadow: none;
+}
+:where([data-admin-kit]) .form-input:where(:not([data-public-preview] *))::placeholder,
+:where([data-admin-kit]) .form-textarea:where(:not([data-public-preview] *))::placeholder { color: var(--text-tertiary); }
 
 /* Select wrapper — positions a custom chevron icon over the native select arrow.
    Hides the native arrow via appearance:none so only the custom icon shows.     */
@@ -2437,6 +2463,35 @@ tbody tr:last-child td { border-bottom: none; }
   margin-top: 1.25rem;
   padding-top: 1rem;
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
+}
+
+/* ── The admin's plain window on the kit (Admin Design Continuity slice 4a — switch on only) ──
+   The global `.modal` (the tournament screens' "Leave setup?" and other one-question windows) as the
+   coaches portal's window: its scrim, the card ground, a hairline, a 12px corner, the display face on
+   the title and the body face in the text. Written at the kit marker's ZERO weight (`:where(…)`), so
+   it beats only the legacy rules above (same weight, later) and never a window that already wears its
+   own skin — `FeedbackModal`'s portal dialog (`[data-coach-warm-enabled] .dialog`) keeps its own.
+   Stops at a public preview like every kit class rule. ⚠ TOKENS ONLY. */
+:where([data-admin-kit]) .modal-overlay:where(:not([data-public-preview] *)) { background: var(--home-scrim); }
+:where([data-admin-kit]) .modal:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+:where([data-admin-kit]) .modal-header:where(:not([data-public-preview] *)),
+:where([data-admin-kit]) .modal-footer:where(:not([data-public-preview] *)) { border-color: var(--home-line); }
+:where([data-admin-kit]) .modal-header:where(:not([data-public-preview] *)) h3:where(:not([data-public-preview] *)) {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+:where([data-admin-kit]) .modal:where(:not([data-public-preview] *)) p:where(:not([data-public-preview] *)) {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  color: var(--text-secondary);
 }
 
 /* ─── Keyframes ─────────────────────────────────────────────────────────────── */

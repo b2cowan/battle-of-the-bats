@@ -124,10 +124,25 @@ describe('Slice 2 — the kit\'s class rules stop at a public preview', () => {
     // Token blocks (`[data-admin-kit] {`, the island itself) are not class rules; everything else that
     // restyles a class under the kit must stop at a preview of a public page, or the preview's
     // buttons and tags wear the admin's look (slice 1's navy "Register" → lime).
-    const selectors = [...css.matchAll(/\n\[data-admin-kit\] (\.[^{\n]+?)\s*[{,]/g)].map(m => m[1]);
+    // Both weights: `[data-admin-kit] .x` and the zero-weight `:where([data-admin-kit]) .x` (slice 4a's
+    // plain window and fields, written light so a page's own skin keeps winning) — and indented, so a
+    // kit rule nested in an `@media` block is held too (slice 4a /review: the anchor was column 0).
+    const selectors = [...css.matchAll(/\n[ \t]*(?::where\()?\[data-admin-kit\]\)? (\.[^{\n]+?)\s*[{,]/g)].map(m => m[1]);
     assert.ok(selectors.length >= 20, `found ${selectors.length} kit class rules`);
-    const open = selectors.filter(sel => !sel.includes(':where(:not([data-public-preview] *))'));
-    assert.deepEqual(open, [], 'a kit class rule without the exclusion restyles a preview of a public page');
+    // The exclusion must sit on the SUBJECT — the element the rule styles, the last compound selector.
+    // `.modal:where(:not([data-public-preview] *)) p` held only the window, so a `p` inside a preview
+    // inside a window would still be restyled (slice 4a /review; slice 2's `.empty-state … h3` had it too).
+    const subject = (sel: string) => {
+      let depth = 0; let last = '';
+      for (const ch of sel) {
+        if (ch === '(') depth++;
+        if (ch === ')') depth--;
+        last = /\s/.test(ch) && depth === 0 ? '' : last + ch;
+      }
+      return last;
+    };
+    const open = selectors.filter(sel => !subject(sel).includes(':where(:not([data-public-preview] *))'));
+    assert.deepEqual(open, [], 'a kit class rule whose styled element lacks the exclusion restyles a preview of a public page');
   });
 });
 

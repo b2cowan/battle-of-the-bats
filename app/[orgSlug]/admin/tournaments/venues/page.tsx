@@ -21,6 +21,8 @@ import type { Venue, VenueFacility, OrgVenue, FacilityType } from '@/lib/types';
 import { FACILITY_TYPE_LABELS, FACILITY_TYPES } from '@/lib/types';
 import { hasOrgVenueLibrary } from '@/lib/plan-features';
 import styles from '../../org/venues/venues-admin.module.css';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 
 // ---------------------------------------------------------------------------
 // Export columns
@@ -271,6 +273,7 @@ function FacilityModal({
   const [name, setName]                 = useState(facility?.name ?? '');
   const [facilityType, setFacilityType] = useState<FacilityType>(facility?.facilityType ?? 'other');
   const [saving, setSaving]             = useState(false);
+  const kx = useKitStyle();
 
   const isDuplicate = name.trim().length > 0 &&
     (mode === 'add' || name.trim().toLowerCase() !== facility?.name.toLowerCase()) &&
@@ -325,7 +328,7 @@ function FacilityModal({
             autoFocus
           />
           {isDuplicate && (
-            <p style={{ color: 'var(--danger)', fontFamily: 'var(--font-data)', fontSize: '0.75rem', marginTop: '0.25rem' }}>
+            <p style={kx({ color: 'var(--danger)', fontFamily: 'var(--font-data)', fontSize: '0.75rem', marginTop: '0.25rem' }, KIT_INK.danger)}>
               A facility with this name already exists in this venue.
             </p>
           )}
@@ -498,6 +501,7 @@ function TournamentVenueCard({
   const [facilityDeleteError, setFacilityDeleteError] = useState<string | null>(null);
   const [deletingFacility, setDeletingFacility]       = useState(false);
   const isMobile                              = useMobile();
+  const kx = useKitStyle();
   const facilities: VenueFacility[] = venue.facilities ?? [];
 
   async function deleteFacility(facilityId: string) {
@@ -572,7 +576,7 @@ function TournamentVenueCard({
             </button>
             <button
               className="btn btn-ghost btn-data"
-              style={{ color: 'rgba(var(--danger-rgb), 0.65)', borderColor: 'transparent' }}
+              style={kx({ color: 'rgba(var(--danger-rgb), 0.65)', borderColor: 'transparent' }, KIT_INK.danger)}
               onClick={() => onDelete(venue.id)}
             >
               <Trash2 size={12} /> Delete
@@ -678,19 +682,19 @@ function TournamentVenueCard({
                 <button className="btn btn-ghost btn-data" onClick={dismiss}><X size={16} /></button>
               </div>
               {blocked ? (
-                <p style={{ color: 'var(--white-60)' }}>
+                <p style={kx({ color: 'var(--white-60)' }, KIT_INK.secondary)}>
                   <strong>{f.name}</strong> is used by {played} played game{played === 1 ? '' : 's'} and can’t be removed.
                   Rename it instead if it changed.
                 </p>
               ) : (
-                <p style={{ color: 'var(--white-60)' }}>
+                <p style={kx({ color: 'var(--white-60)' }, KIT_INK.secondary)}>
                   {upcoming > 0
                     ? <>Remove <strong>{f.name}</strong>? {upcoming} upcoming game{upcoming === 1 ? '' : 's'} will stay on this venue but lose this specific facility.</>
                     : <>Remove <strong>{f.name}</strong>? No games are linked to it.</>}
                 </p>
               )}
               {facilityDeleteError && (
-                <p style={{ color: 'var(--danger)', fontFamily: 'var(--font-data)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                <p style={kx({ color: 'var(--danger)', fontFamily: 'var(--font-data)', fontSize: '0.75rem', marginTop: '0.5rem' }, KIT_INK.danger)}>
                   {facilityDeleteError}
                 </p>
               )}
@@ -731,6 +735,7 @@ export default function TournamentVenuesPage() {
   const [deleteError, setDeleteError]   = useState<string | null>(null);
   const [deleting, setDeleting]         = useState(false);
   const [importOpen, setImportOpen]     = useState(false);
+  const kx = useKitStyle();
 
   // Org venue library is only available on League and Club plans.
   // Tournament / Tournament Plus subscribers have no org library — their entire
@@ -797,6 +802,7 @@ export default function TournamentVenuesPage() {
       <TournamentAdminHeader
         icon={<MapPin size={16} />}
         title="Venues & Facilities"
+        kitTitle="Venues & facilities"
         subtitle="Playing venues and facilities for this tournament"
         mobileActionsInline
         actions={
@@ -918,19 +924,19 @@ export default function TournamentVenuesPage() {
                 <button className="btn btn-ghost btn-data" onClick={dismiss}><X size={16} /></button>
               </div>
               {blocked ? (
-                <p style={{ color: 'var(--white-60)' }}>
+                <p style={kx({ color: 'var(--white-60)' }, KIT_INK.secondary)}>
                   <strong>{v?.name}</strong> is used by {played} played game{played === 1 ? '' : 's'} and can’t be deleted.
                   Rename it instead if the location changed.
                 </p>
               ) : (
-                <p style={{ color: 'var(--white-60)' }}>
+                <p style={kx({ color: 'var(--white-60)' }, KIT_INK.secondary)}>
                   {upcoming > 0
                     ? <>This venue is used by {upcoming} upcoming game{upcoming === 1 ? '' : 's'} — deleting it clears the venue from {upcoming === 1 ? 'that game' : 'them'}, so {upcoming === 1 ? 'it shows' : 'they show'} as TBD until you assign a new one.</>
                     : <>No games are linked to this venue.</>}
                 </p>
               )}
               {deleteError && (
-                <p style={{ color: 'var(--danger)', fontFamily: 'var(--font-data)', fontSize: '0.75rem', marginTop: '0.5rem' }}>
+                <p style={kx({ color: 'var(--danger)', fontFamily: 'var(--font-data)', fontSize: '0.75rem', marginTop: '0.5rem' }, KIT_INK.danger)}>
                   {deleteError}
                 </p>
               )}

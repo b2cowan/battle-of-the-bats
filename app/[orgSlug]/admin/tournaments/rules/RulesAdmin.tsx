@@ -37,6 +37,9 @@ import { SampleSection, SampleResource } from './rules-samples';
 import { TournamentAdminHeader } from '@/components/admin/tournament';
 import styles from '../../admin-common.module.css';
 import { useDismissable } from '@/lib/overlay-hooks';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
+import kitStyles from './rules-kit.module.css';
 
 interface Props {
   tournament: Tournament;
@@ -270,6 +273,10 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
   const [loading, setLoading]     = useState(true);
   const [saving, setSaving]       = useState(false);
   const [error, setError]         = useState<string | null>(null);
+  const kx = useKitStyle();
+  // The kit layer's anchor (rules-kit.module.css) joins the root only while the switch is on, so the
+  // switch-off markup keeps today's one class.
+  const rootClass = useAdminKit() ? `${styles.page} ${kitStyles.rulesKit}` : styles.page;
 
   // Unified dirty tracking — IDs of sections / items with unsaved local edits
   const [dirtySections, setDirtySections] = useState<Set<string>>(new Set());
@@ -661,7 +668,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
   // ── Loading state ─────────────────────────────────────────────────────────
   if (loading) {
     return (
-      <div className={styles.page}>
+      <div className={rootClass}>
         <div className="flex-center" style={{ height: '400px' }}>
           <div className="flex flex-col items-center gap-4">
             <RefreshCw className="spin text-primary-light" size={48} />
@@ -674,10 +681,11 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className={styles.page}>
+    <div className={rootClass}>
       <TournamentAdminHeader
         icon={<BookOpen size={20} />}
         title="Rules & Resources"
+        kitTitle="Rules & resources"
         subtitle={`Manage rules and downloads for ${tournament.name}.`}
         actions={isDirty ? (
           <span className="header-unsaved-badge">
@@ -687,7 +695,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
       />
 
       {error && (
-        <div className="card" style={{ background: 'rgba(var(--danger-rgb),0.1)', marginBottom: '2rem' }}>
+        <div className="card" style={kx({ background: 'rgba(var(--danger-rgb),0.1)', marginBottom: '2rem' }, KIT_SURFACE.alert)}>
           <div className="flex gap-3 items-center text-danger">
             <AlertCircle size={20} />
             <p style={{ fontWeight: 600 }}>{error}</p>
@@ -793,7 +801,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
                     </div>
                   </div>
                   <div className="rule-items-list">
-                    <p style={{ color: 'var(--white-20)', fontSize: '0.8rem' }}>Confirm the section title to start adding rule points.</p>
+                    <p style={kx({ color: 'var(--white-20)', fontSize: '0.8rem' }, KIT_INK.tertiary)}>Confirm the section title to start adding rule points.</p>
                   </div>
                 </div>
               )}
@@ -871,7 +879,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
               <h3>Delete Section?</h3>
               <button className="btn btn-ghost btn-data" onClick={() => setDeleteConfirmSectionId(null)}><X size={16} /></button>
             </div>
-            <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
+            <p style={kx({ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }, KIT_INK.secondary)}>
               This will permanently remove this section and all its rule points.
             </p>
             <div className="modal-footer">
@@ -892,7 +900,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
               <h3>Delete Resource?</h3>
               <button className="btn btn-ghost btn-data" onClick={() => setDeleteConfirmResourceId(null)}><X size={16} /></button>
             </div>
-            <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
+            <p style={kx({ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }, KIT_INK.secondary)}>
               This will remove this link or file from the public Rules page.
             </p>
             <div className="modal-footer">
@@ -913,7 +921,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
               <h3>Unsaved Changes</h3>
               <button className="btn btn-ghost btn-data" onClick={() => setSwitchGuardTargetId(null)}><X size={16} /></button>
             </div>
-            <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
+            <p style={kx({ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }, KIT_INK.secondary)}>
               You have unsaved changes in this section. Save or discard before editing a different section.
             </p>
             <div className="modal-footer">
@@ -935,7 +943,7 @@ export default function RulesAdmin({ tournament, orgSlug }: Props) {
               <h3>Unsaved Changes</h3>
               <button className="btn btn-ghost btn-data" onClick={handleNavStay}><X size={16} /></button>
             </div>
-            <p style={{ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }}>
+            <p style={kx({ color: 'var(--white-60)', padding: '0.25rem 0 1.25rem' }, KIT_INK.secondary)}>
               You have unsaved rule edits. If you leave now those changes will be lost.
             </p>
             <div className="modal-footer">

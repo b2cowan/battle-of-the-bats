@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, type CSSProperties } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Settings2, AlertTriangle, Check, Loader2 } from 'lucide-react';
@@ -8,6 +8,10 @@ import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
 import FeedbackModal from '@/components/FeedbackModal';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useTournamentCrumb } from '@/components/admin/tournament';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { DEFAULT_ROSTER_WAIVER_TEXT, ROSTER_WAIVER_TEXT_MAX_LENGTH } from '@/lib/roster-requirements';
 import type { GameTimingScope, TieBreakerScope, FeeScope, TournamentStatus, TournamentFormat } from '@/lib/types';
@@ -18,6 +22,17 @@ import { CANADIAN_PROVINCES } from '@/lib/canadian-provinces';
 import styles from '../../branding/branding.module.css';
 
 type SlugStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+
+// ── Repeated legacy inline styles, hoisted once (Admin Design Continuity slice 4a — same values) ──
+const ACCESS_MESSAGE_STYLE: CSSProperties = { color: 'var(--white-40)', fontSize: '0.9rem' };
+const DANGER_NOTE_STYLE: CSSProperties = { fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--danger)', margin: '0.25rem 0 0' };
+const WARNING_ICON_STYLE: CSSProperties = { color: 'var(--warning)', flexShrink: 0, marginTop: '0.1rem' };
+const SAMPLE_EYEBROW_STYLE: CSSProperties = { margin: 0, fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--white-40)', fontFamily: 'var(--font-data)' };
+
+// Kit patches reused across more than one inline style above (translation table, slice 4a brief).
+const DANGER_NOTE_KIT: CSSProperties = { fontFamily: 'var(--font-sans, system-ui, sans-serif)', ...KIT_INK.danger };
+const WARNING_ICON_KIT: CSSProperties = { color: 'var(--badge-warning-ink)' }; // text on the warningBanner's tint
+const BODY_NOTE_KIT: CSSProperties = { fontFamily: 'var(--font-sans, system-ui, sans-serif)', color: 'var(--text-secondary)' };
 
 interface OrgMemberOption {
   id: string;
@@ -44,7 +59,9 @@ function feeScopeToScheduleMode(scope: FeeScope | null): 'tournament' | 'divisio
 export default function TournamentEventSettingsPage() {
   const { currentTournament, refresh: refreshTournaments } = useTournament();
   const { currentOrg, userRole } = useOrg();
+  const tournamentCrumb = useTournamentCrumb();
   const router = useRouter();
+  const kx = useKitStyle();
   usePageTitle('Event Settings');
 
   // Tournament identity
@@ -770,7 +787,7 @@ export default function TournamentEventSettingsPage() {
   if (userRole !== 'owner' && userRole !== 'admin') {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Event settings can be managed by admins and owners.</p>
+        <p style={kx(ACCESS_MESSAGE_STYLE, KIT_INK.tertiary)}>Event settings can be managed by admins and owners.</p>
       </div>
     );
   }
@@ -778,7 +795,7 @@ export default function TournamentEventSettingsPage() {
   if (!tournamentId) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Select a tournament from the sidebar to manage event settings.</p>
+        <p style={kx(ACCESS_MESSAGE_STYLE, KIT_INK.tertiary)}>Select a tournament from the sidebar to manage event settings.</p>
       </div>
     );
   }
@@ -856,13 +873,22 @@ export default function TournamentEventSettingsPage() {
   return (
     <div className={styles.page}>
       <div className={styles.settingsContent}>
-        <div className={styles.settingsTitleRow}>
-          <div className={styles.headerIcon}><Settings2 size={18} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Event Settings</h1>
-            <p className={styles.pageSub}>{currentTournament?.name} — identity, dates & status</p>
-          </div>
-        </div>
+        {/* F3: the tournament's name moves to the eyebrow (a link to its dashboard, as every
+            tournament page's does); "identity, dates & status" describes the page and is not
+            re-homed — the kit header has no subtitle slot. */}
+        <AdminPageHeader
+          crumbs={[tournamentCrumb]}
+          title="Event settings"
+          legacy={
+            <div className={styles.settingsTitleRow}>
+              <div className={styles.headerIcon}><Settings2 size={18} /></div>
+              <div>
+                <h1 className={styles.pageTitle}>Event Settings</h1>
+                <p className={styles.pageSub}>{currentTournament?.name} — identity, dates & status</p>
+              </div>
+            </div>
+          }
+        />
 
         <div className={styles.cardStack}>
 
@@ -1014,17 +1040,17 @@ export default function TournamentEventSettingsPage() {
                   <p className={styles.inheritNote} style={{ marginTop: '0.35rem' }}>Checking availability…</p>
                 )}
                 {slugStatus === 'available' && (
-                  <p style={{ marginTop: '0.35rem', fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--success)', margin: '0.25rem 0 0' }}>✓ Available</p>
+                  <p style={kx({ marginTop: '0.35rem', fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--success)', margin: '0.25rem 0 0' }, { fontFamily: 'var(--font-sans, system-ui, sans-serif)', color: 'var(--success-light)' })}>✓ Available</p>
                 )}
                 {slugStatus === 'taken' && (
-                  <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--danger)', margin: '0.25rem 0 0' }}>✗ That URL is already taken</p>
+                  <p style={kx(DANGER_NOTE_STYLE, DANGER_NOTE_KIT)}>✗ That URL is already taken</p>
                 )}
                 {slugStatus === 'invalid' && (
-                  <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--danger)', margin: '0.25rem 0 0' }}>Lowercase letters, numbers, and hyphens only</p>
+                  <p style={kx(DANGER_NOTE_STYLE, DANGER_NOTE_KIT)}>Lowercase letters, numbers, and hyphens only</p>
                 )}
                 {slugHasChanged && (
                   <div className={styles.warningBanner} style={{ marginTop: '0.5rem' }}>
-                    <AlertTriangle size={14} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '0.1rem' }} />
+                    <AlertTriangle size={14} style={kx(WARNING_ICON_STYLE, WARNING_ICON_KIT)} />
                     <p>Changing the Public URL breaks all existing registration links, coach emails, and bookmarked pages.</p>
                   </div>
                 )}
@@ -1064,14 +1090,14 @@ export default function TournamentEventSettingsPage() {
                   Your account-wide address — the start of every tournament link. Shared across all your tournaments.
                 </p>
                 {orgSlugInput.length > 0 && !/^[a-z0-9-]+$/.test(orgSlugInput) && (
-                  <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--danger)', margin: '0.25rem 0 0' }}>Lowercase letters, numbers, and hyphens only</p>
+                  <p style={kx(DANGER_NOTE_STYLE, DANGER_NOTE_KIT)}>Lowercase letters, numbers, and hyphens only</p>
                 )}
                 {orgSlugError && (
-                  <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--danger)', margin: '0.25rem 0 0' }}>{orgSlugError}</p>
+                  <p style={kx(DANGER_NOTE_STYLE, DANGER_NOTE_KIT)}>{orgSlugError}</p>
                 )}
                 {orgSlugInput !== (currentOrg?.slug ?? '') && (
                   <div className={styles.warningBanner} style={{ marginTop: '0.5rem' }}>
-                    <AlertTriangle size={14} style={{ color: 'var(--warning)', flexShrink: 0, marginTop: '0.1rem' }} />
+                    <AlertTriangle size={14} style={kx(WARNING_ICON_STYLE, WARNING_ICON_KIT)} />
                     <p>Changing your organization address breaks every existing link across all your tournaments — registration pages, coach emails, and bookmarks.</p>
                   </div>
                 )}
@@ -1156,7 +1182,7 @@ export default function TournamentEventSettingsPage() {
                       Every roster submission includes each player&apos;s full name, taken from the coach&apos;s saved team roster.
                     </p>
                   </div>
-                  <span style={{ fontSize: '0.7rem', fontWeight: 700, fontFamily: 'var(--font-data)', color: 'var(--logic-lime)', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', padding: '0.35rem 0' }}>
+                  <span style={kx({ fontSize: '0.7rem', fontWeight: 700, fontFamily: 'var(--font-data)', color: 'var(--logic-lime)', letterSpacing: '0.08em', textTransform: 'uppercase', whiteSpace: 'nowrap', padding: '0.35rem 0' }, KIT_INK.eyebrow)}>
                     Always
                   </span>
                 </div>
@@ -1245,7 +1271,7 @@ export default function TournamentEventSettingsPage() {
                 </div>
               </div>
               {rosterMinPlayers !== '' && rosterMaxPlayers !== '' && Number(rosterMinPlayers) > Number(rosterMaxPlayers) && (
-                <p className={styles.inheritNote} style={{ marginTop: '0.35rem', color: 'var(--warning, var(--white-70))' }}>
+                <p className={styles.inheritNote} style={kx({ marginTop: '0.35rem', color: 'var(--warning, var(--white-70))' }, KIT_INK.warning)}>
                   Minimum is greater than maximum — no roster could satisfy both. Adjust one of the two.
                 </p>
               )}
@@ -1259,26 +1285,26 @@ export default function TournamentEventSettingsPage() {
                 Coaches pick players from their saved team roster and fill in only what&apos;s required.
               </p>
               <div className={styles.questionCard}>
-                <p style={{ margin: 0, fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--white-40)', fontFamily: 'var(--font-data)' }}>
+                <p style={kx(SAMPLE_EYEBROW_STYLE, KIT_INK.eyebrow)}>
                   For each player
                 </p>
-                <ul style={{ margin: '0.4rem 0 0', paddingLeft: '1.1rem', color: 'var(--white-70)', fontSize: '0.82rem', lineHeight: 1.7, fontFamily: 'var(--font-data)' }}>
-                  <li>Full name <span style={{ color: 'var(--white-35)' }}>(always included)</span></li>
+                <ul style={kx({ margin: '0.4rem 0 0', paddingLeft: '1.1rem', color: 'var(--white-70)', fontSize: '0.82rem', lineHeight: 1.7, fontFamily: 'var(--font-data)' }, BODY_NOTE_KIT)}>
+                  <li>Full name <span style={kx({ color: 'var(--white-35)' }, KIT_INK.tertiary)}>(always included)</span></li>
                   {rosterRequireDob && <li>Date of birth</li>}
                   {rosterRequireJersey && <li>Jersey number</li>}
                 </ul>
                 {(rosterRequireWaiver || rosterSizeSummary) && (
                   <div style={{ marginTop: '0.85rem' }}>
-                    <p style={{ margin: 0, fontSize: '0.68rem', fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--white-40)', fontFamily: 'var(--font-data)' }}>
+                    <p style={kx(SAMPLE_EYEBROW_STYLE, KIT_INK.eyebrow)}>
                       To submit
                     </p>
                     {rosterSizeSummary && (
-                      <p style={{ margin: '0.4rem 0 0', color: 'var(--white-70)', fontSize: '0.82rem', lineHeight: 1.55, fontFamily: 'var(--font-data)' }}>
+                      <p style={kx({ margin: '0.4rem 0 0', color: 'var(--white-70)', fontSize: '0.82rem', lineHeight: 1.55, fontFamily: 'var(--font-data)' }, BODY_NOTE_KIT)}>
                         The roster must list {rosterSizeSummary}.
                       </p>
                     )}
                     {rosterRequireWaiver && (
-                      <p style={{ display: 'flex', gap: '0.5rem', margin: '0.4rem 0 0', color: 'var(--white-70)', fontSize: '0.82rem', lineHeight: 1.55 }}>
+                      <p style={kx({ display: 'flex', gap: '0.5rem', margin: '0.4rem 0 0', color: 'var(--white-70)', fontSize: '0.82rem', lineHeight: 1.55 }, KIT_INK.secondary)}>
                         <span aria-hidden="true" style={{ flexShrink: 0 }}>☐</span>
                         <em>{effectiveWaiverText}</em>
                       </p>
@@ -1452,7 +1478,7 @@ export default function TournamentEventSettingsPage() {
                 const selected = orgMembers.find(m => m.id === defaultContactMemberId);
                 return selected ? (
                   <p className={styles.inheritNote}>
-                    Selected contact: <strong style={{ color: 'var(--white-70)' }}>{selected.email}</strong>
+                    Selected contact: <strong style={kx({ color: 'var(--white-70)' }, KIT_INK.secondary)}>{selected.email}</strong>
                   </p>
                 ) : null;
               })()}
@@ -1485,7 +1511,7 @@ export default function TournamentEventSettingsPage() {
               ))}
 
               {!contactShowToCoaches && !contactShowOnPublic && (
-                <p className={styles.inheritNote} style={{ color: 'var(--warning, var(--white-70))' }}>
+                <p className={styles.inheritNote} style={kx({ color: 'var(--warning, var(--white-70))' }, KIT_INK.warning)}>
                   This contact email is hidden everywhere. Coaches won&apos;t see a reply-to address and no contact appears publicly.
                 </p>
               )}
@@ -1559,7 +1585,7 @@ export default function TournamentEventSettingsPage() {
             </div>
           </div>
           {coachEmailPauseAll && (
-            <p className={styles.inheritNote} style={{ color: 'var(--warning, var(--white-70))', marginBottom: '0.85rem' }}>
+            <p className={styles.inheritNote} style={kx({ color: 'var(--warning, var(--white-70))', marginBottom: '0.85rem' }, KIT_INK.warning)}>
               Automatic coach emails are off. The individual settings below are ignored until you turn this on.
             </p>
           )}
@@ -1631,7 +1657,7 @@ export default function TournamentEventSettingsPage() {
                 When enabled, accepted team contacts receive one email with public standings, schedule, and team links the first time this tournament is marked completed.
               </p>
               {resultsNotifiedAt && (
-                <p style={{ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--logic-lime)', lineHeight: 1.5, margin: 0 }}>
+                <p style={kx({ fontSize: '0.72rem', fontFamily: 'var(--font-data)', color: 'var(--logic-lime)', lineHeight: 1.5, margin: 0 }, { fontFamily: 'var(--font-sans, system-ui, sans-serif)', color: 'var(--home-olive)' })}>
                   Results notification sent to {resultsNotificationSentCount} team contact{resultsNotificationSentCount === 1 ? '' : 's'} on {resultsNotifiedAt.slice(0, 10)}.
                 </p>
               )}
@@ -1860,7 +1886,7 @@ export default function TournamentEventSettingsPage() {
             </span>
           )}
           {saveStatus === 'saved' && (
-            <span className={styles.saveStatusLabel} style={{ color: 'var(--success)' }}>
+            <span className={styles.saveStatusLabel} style={kx({ color: 'var(--success)' }, KIT_INK.success)}>
               <Check size={12} />
               Saved
             </span>

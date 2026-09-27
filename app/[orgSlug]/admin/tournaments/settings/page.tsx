@@ -3,8 +3,10 @@
 import Link from 'next/link';
 import { ArrowRight, Bell, CreditCard, Lock, ShieldCheck, Users2, type LucideIcon } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
+import { useTournamentCrumb } from '@/components/admin/tournament';
 import { usePageTitle } from '@/lib/usePageTitle';
 import { hasCapability } from '@/lib/roles';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from './settings-access.module.css';
 
 type SettingsCard = {
@@ -18,6 +20,7 @@ type SettingsCard = {
 
 export default function TournamentSettingsAccessPage() {
   const { currentOrg, userRole, userCapabilities } = useOrg();
+  const tournamentCrumb = useTournamentCrumb();
   usePageTitle('Settings');
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `${base}/settings/subscription`;
@@ -88,19 +91,25 @@ export default function TournamentSettingsAccessPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerIcon}><ShieldCheck size={21} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Settings & Access</h1>
-            <p className={styles.pageSub}>
-              {isLeagueOrClub
-                ? 'Manage tournament staff, roles, and notification preferences.'
-                : 'Manage the account-level tools a tournament organizer needs without leaving tournament admin.'}
-            </p>
+      <AdminPageHeader
+        crumbs={[tournamentCrumb]}
+        title="Settings & access"
+        legacy={
+          <div className={styles.pageHeader}>
+            <div className={styles.headerLeft}>
+              <div className={styles.headerIcon}><ShieldCheck size={21} /></div>
+              <div>
+                <h1 className={styles.pageTitle}>Settings & Access</h1>
+                <p className={styles.pageSub}>
+                  {isLeagueOrClub
+                    ? 'Manage tournament staff, roles, and notification preferences.'
+                    : 'Manage the account-level tools a tournament organizer needs without leaving tournament admin.'}
+                </p>
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div className={styles.grid}>
         {cards.map(renderCard)}

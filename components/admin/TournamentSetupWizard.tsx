@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import { AlertCircle, ArrowRight, Copy, Plus, Trash2, X } from 'lucide-react';
 import type { TournamentFormat } from '@/lib/types';
 import TournamentStyleCards from './TournamentStyleCards';
@@ -13,6 +13,28 @@ import TournamentCreationPreview, {
 } from './TournamentCreationPreview';
 import { PRESETS, isThemePresetKey } from '@/lib/themes';
 import { hasPlanFeature } from '@/lib/plan-features';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
+
+// Today's hand-set inline styles, hoisted once (same values). Each wears its kit patch through
+// `kx(legacy, patch)` while the switch is on (Admin Design Continuity slice 4a).
+const CONFIRM_LEAVE_TEXT: CSSProperties = { color: 'var(--white-60)', marginBottom: '0.5rem' };
+const VENUE_SEARCH_MENU: CSSProperties = {
+  position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+  background: 'var(--surface-2)',
+  border: '1px solid var(--border, var(--white-10))',
+  borderRadius: '2px', zIndex: 50,
+  maxHeight: '200px', overflowY: 'auto',
+  boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
+};
+const VENUE_SEARCH_ITEM: CSSProperties = {
+  display: 'block', width: '100%', textAlign: 'left',
+  padding: '0.5rem 0.75rem', background: 'none', border: 'none',
+  cursor: 'pointer', borderBottom: '1px solid var(--border, var(--white-8))',
+  color: 'inherit',
+};
+const VENUE_SEARCH_ITEM_KIT: CSSProperties = { borderBottom: KIT_LINE };
+const VENUE_ADDRESS_CAPTION: CSSProperties = { display: 'block', fontSize: '0.75rem', color: 'var(--white-40, var(--white-40))' };
 
 const WIZARD_ORDER = ['tournament', 'divisions', 'welcome', 'venues', 'review'] as const;
 const CANADIAN_PROVINCES = ['AB', 'BC', 'MB', 'NB', 'NL', 'NS', 'NT', 'NU', 'ON', 'PE', 'QC', 'SK', 'YT'];
@@ -521,6 +543,12 @@ export default function TournamentSetupWizard({
   onClose,
   onCreated,
 }: TournamentSetupWizardProps) {
+  const kx = useKitStyle();
+  // Row-invariant, so built once per render rather than once per row.
+  const leaveTextStyle = kx(CONFIRM_LEAVE_TEXT, KIT_INK.secondary);
+  const venueItemStyle = kx(VENUE_SEARCH_ITEM, VENUE_SEARCH_ITEM_KIT);
+  const venueAddressStyle = kx(VENUE_ADDRESS_CAPTION, KIT_INK.tertiary);
+
   // ── Pre-step state (choose / clone-name) ─────────────────────────────────
   const hasPastTournaments = Boolean(existingTournaments && existingTournaments.length > 0);
   const [preStep, setPreStep] = useState<PreStepMode | null>(hasPastTournaments ? 'choose' : null);
@@ -1068,7 +1096,7 @@ export default function TournamentSetupWizard({
               <div className="modal-header">
                 <h3>Leave setup?</h3>
               </div>
-              <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>Your progress will not be saved.</p>
+              <p style={leaveTextStyle}>Your progress will not be saved.</p>
               <div className="modal-footer">
                 <button className="btn btn-ghost btn-data" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
                 <button className="btn btn-danger btn-data" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
@@ -1148,7 +1176,7 @@ export default function TournamentSetupWizard({
           <div className={styles.modalOverlay} style={{ zIndex: 10 }}>
             <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
               <div className="modal-header"><h3>Leave setup?</h3></div>
-              <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>Your progress will not be saved.</p>
+              <p style={leaveTextStyle}>Your progress will not be saved.</p>
               <div className="modal-footer">
                 <button className="btn btn-ghost btn-data" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
                 <button className="btn btn-danger btn-data" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
@@ -1315,7 +1343,7 @@ export default function TournamentSetupWizard({
           <div className={styles.modalOverlay} style={{ zIndex: 10 }}>
             <div className="modal" style={{ maxWidth: 400 }} onClick={e => e.stopPropagation()}>
               <div className="modal-header"><h3>Leave setup?</h3></div>
-              <p style={{ color: 'var(--white-60)', marginBottom: '0.5rem' }}>Your progress will not be saved.</p>
+              <p style={leaveTextStyle}>Your progress will not be saved.</p>
               <div className="modal-footer">
                 <button className="btn btn-ghost btn-data" onClick={() => setCloseConfirmOpen(false)}>Keep working</button>
                 <button className="btn btn-danger btn-data" onClick={() => { setCloseConfirmOpen(false); onClose(); }}>Leave</button>
@@ -1706,14 +1734,7 @@ export default function TournamentSetupWizard({
                   autoComplete="off"
                 />
                 {venueSearchOpen && filteredVenues.length > 0 && (
-                  <div style={{
-                    position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
-                    background: 'var(--surface-2)',
-                    border: '1px solid var(--border, var(--white-10))',
-                    borderRadius: '2px', zIndex: 50,
-                    maxHeight: '200px', overflowY: 'auto',
-                    boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-                  }}>
+                  <div style={kx(VENUE_SEARCH_MENU, KIT_SURFACE.menu)}>
                     {filteredVenues.map(v => (
                       <button
                         key={v.id}
@@ -1725,15 +1746,10 @@ export default function TournamentSetupWizard({
                           setVenueSearchOpen(false);
                           setStepError('');
                         }}
-                        style={{
-                          display: 'block', width: '100%', textAlign: 'left',
-                          padding: '0.5rem 0.75rem', background: 'none', border: 'none',
-                          cursor: 'pointer', borderBottom: '1px solid var(--border, var(--white-8))',
-                          color: 'inherit',
-                        }}
+                        style={venueItemStyle}
                       >
                         <span style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem' }}>{v.name}</span>
-                        {v.address && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--white-40, var(--white-40))' }}>{v.address}</span>}
+                        {v.address && <span style={venueAddressStyle}>{v.address}</span>}
                       </button>
                     ))}
                   </div>
@@ -1782,7 +1798,7 @@ export default function TournamentSetupWizard({
                 <div key={item.key} className={styles.venueCard} style={{ padding: '0.5rem 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem' }}>
                   <div>
                     <span style={{ display: 'block', fontWeight: 600, fontSize: '0.85rem' }}>{item.name}</span>
-                    {item.address && <span style={{ display: 'block', fontSize: '0.75rem', color: 'var(--white-40, var(--white-40))' }}>{item.address}</span>}
+                    {item.address && <span style={venueAddressStyle}>{item.address}</span>}
                   </div>
                   <button type="button" className={styles.iconOnlyButton} onClick={() => setVenueQueue(prev => prev.filter(q => q.key !== item.key))} aria-label={`Remove ${item.name}`} style={{ flexShrink: 0 }}>
                     <Trash2 size={14} />

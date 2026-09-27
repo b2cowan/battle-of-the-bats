@@ -772,3 +772,152 @@
     min-width: 0;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   Data tools' BODY on the coaches portal's kit (its `TournamentAdminHeader` call is already converted
+   by the lead — untouched here — and it also imports the shared `admin-common.module.css` as `s`,
+   also the lead's, so `.page`'s own base frame is out of this file's scope).
+   ⚠ Several classes below (`.toolGrid`, `.toolCard`, `.cardHeader`, `.cardIcon`, `.cardBody`,
+   `.actionGroup`, `.actionLabel`, `.buttonGrid`, `.actionButton`, `.actionPrimary`, `.actionGhost`,
+   `.lockedNote`, `.referenceGrid`, `.referenceItem`, `.section`, `.sectionHeader`) are pre-existing
+   DEAD CSS — no element in this page's JSX renders them (the `ToolbarMenu`/template-matrix UI
+   replaced whatever used to render them). Left alone rather than styled or deleted; flagged to the
+   lead below. ⚠ TOKENS ONLY (checkAdminKit). */
+:global([data-admin-kit]) .notice {
+  border-radius: 8px;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .noticeSuccess {
+  border-color: rgba(var(--success-rgb), 0.35);
+  background: rgba(var(--success-rgb), 0.08);
+}
+:global([data-admin-kit]) .noticeSuccess svg { color: var(--success); }
+:global([data-admin-kit]) .noticeWarning {
+  border-color: rgba(var(--warning-rgb), 0.4);
+  background: rgba(var(--warning-rgb), 0.08);
+}
+:global([data-admin-kit]) .noticeWarning svg { color: var(--warning); }
+
+:global([data-admin-kit]) .guidanceStrip {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .guidanceIcon {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .guidanceHeader h2 {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .guidanceHeader p { color: var(--text-secondary); }
+:global([data-admin-kit]) .guidanceLink {
+  border-radius: 6px;
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .guidanceLink:hover:not(:disabled) {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .guidanceLink:disabled { color: var(--text-tertiary); }
+:global([data-admin-kit]) .guidancePoints span {
+  border-radius: 6px;
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+
+:global([data-admin-kit]) .planGateBody h2 { color: var(--text-primary); }
+:global([data-admin-kit]) .planGateBody p { color: var(--text-secondary); }
+:global([data-admin-kit]) .planGateLink { color: var(--text-primary); }
+
+:global([data-admin-kit]) .cardLede { color: var(--text-secondary); }
+:global([data-admin-kit]) .cardHint { color: var(--text-tertiary); }
+
+/* ── Templates matrix ── */
+:global([data-admin-kit]) .templatesBlock { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .templatesLabel {
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .formatToggle {
+  border-radius: 6px;
+  border-color: var(--home-line-strong);
+  background: var(--home-card);
+}
+:global([data-admin-kit]) .formatToggle button {
+  border-radius: 6px;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .formatToggle button[data-active] {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .templateRowLabel {
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .templateRowLabel svg { color: var(--text-tertiary); }
+
+/* ── Import history ── */
+:global([data-admin-kit]) .emptyState {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .emptyState h2 { color: var(--text-primary); }
+:global([data-admin-kit]) .emptyState p,
+:global([data-admin-kit]) .subtleNote { color: var(--text-tertiary); }
+:global([data-admin-kit]) .emptyState svg { color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .historyState {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .historyState svg { color: var(--text-tertiary); }
+:global([data-admin-kit]) .historyStateWarning { color: var(--text-primary); }
+
+:global([data-admin-kit]) .historyList {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .historyRow + .historyRow { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .historyTitleRow > svg { color: var(--text-tertiary); }
+:global([data-admin-kit]) .historyTitleRow strong { color: var(--text-primary); }
+
+:global([data-admin-kit]) .historyStatus { border-color: transparent; }
+:global([data-admin-kit]) .historyStatusSuccess {
+  color: var(--badge-success-ink);
+  background: rgba(var(--success-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.28);
+}
+:global([data-admin-kit]) .historyStatusWarning {
+  color: var(--badge-warning-ink);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+:global([data-admin-kit]) .historyStatusDanger {
+  color: var(--badge-danger-ink);
+  background: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.3);
+}
+:global([data-admin-kit]) .historyStatusMuted {
+  color: var(--text-tertiary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+
+:global([data-admin-kit]) .historyMeta { color: var(--text-tertiary); }
+:global([data-admin-kit]) .historyFile { color: var(--text-secondary); }
+:global([data-admin-kit]) .historyCount {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .historyCount strong { color: var(--text-primary); }
+:global([data-admin-kit]) .historyCount span { color: var(--text-tertiary); }

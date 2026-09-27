@@ -402,11 +402,11 @@ dialog.truesize::backdrop{background:#16201899}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) committed 2026-09-25 · slice 2 (buttons, chips, type, House league, Organization) committed ee175263 2026-09-26 · slice 3 (Rep Teams, Accounting) built 2026-09-27</small></div>
+  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) committed 2026-09-25 · slice 2 (buttons, chips, type, House league, Organization) committed ee175263 2026-09-26 · slice 3 (Rep Teams, Accounting) committed 35705e32 2026-09-27 · slice 4a (tournament setup and records) built 2026-09-27</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, built 2026-09-27">Build</li>
+    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, built 2026-09-27">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -1125,6 +1125,42 @@ dialog.truesize::backdrop{background:#16201899}
     <li>Two intended side effects, now named for the slice 6 walk. In Dark, the lighter red on delete buttons and the lighter blue on blue tags also reach House league's registrations, schedule and teams, Organization → Members and the tournament dashboard.</li>
   </ul>
   <p>The pictures weren't retaken after the cleanup, because that needs a quiet window. The only change with the switch off is the star's colour, written a different way but the same colour.</p>
+
+  <h2>Slice 4a — tournament setup and records (2026-09-27)</h2>
+  <p>Still nothing customers see. The tournament screens turned out to be about four times the size of slice 3, so slice 4 is split in three by job: <strong>4a</strong> setup and records plus the parts every tournament screen shares, <strong>4b</strong> operations on game day, <strong>4c</strong> the schedule. 4a is built: twelve screens and the new-tournament wizard now wear the kit in Warm and Dark.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Part</th><th>What you see with the switch on</th></tr></thead>
+    <tbody>
+      <tr><td>Every tournament screen's header</td><td>The tournament's name above the title (as drawn in specimen 2), the page's name in sentence case, the page's own buttons and "?" at the end. No icon tile, no subtitle line. The "tournament is completed, read-only" banner stays under it. The Schedule's "Published" becomes a tag beside its title.</td></tr>
+      <tr><td>Shared parts</td><td>Toolbars, menus, the status legend, the lists with their filter chips (a chosen filter is the portal's own chosen chip; each status keeps its coloured dot), the export menu, the collapsible sections, plain one-question windows and form fields. The export menu change also finishes Rep Teams, Accounting, House league and Members, which still had the old menu.</td></tr>
+      <tr><td>Setup screens</td><td>Settings &amp; access (the portal's door cards), Event settings, Divisions (the fill bars keep filling / almost full / full), Venues, Rules &amp; resources, Public site, Registration questions, Notification preferences (the portal's on/off switch).</td></tr>
+      <tr><td>Records</td><td>Archives, Post-event summary, Data tools.</td></tr>
+      <tr><td>New-tournament wizard</td><td>The portal's window, steps, fields and option cards, matching the setup wizard from slice 2. Its live preview of the public page keeps your organization's colours.</td></tr>
+      <tr><td>Public site</td><td>Only the admin parts moved. Your colour swatches, app icon, font samples and the light/dark preview are yours and untouched; the small card-style pictures are redrawn so they show on cream too.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The proof.</strong> With the switch off, all 58 pictures (every tournament screen, the organization's tournaments list and setup) are pixel-identical. With the switch on, contrast problems across the 21 screens swept fell from 773 to 91 in Warm and 393 in Dark. On this slice's own screens that is <strong>0 in Warm</strong>, and in Dark only the shared phone bar's faint labels (the open question from slice 1). The rest sit in the Teams and Schedule screens, which 4b and 4c restyle.</p>
+  <p><strong>Fixed because of the sweep:</strong> the tournament's name above each title first shipped as a link to the dashboard, but on a phone it was a 14-pixel target, so it's now plain text as drawn (the dashboard is the first item in the sidebar and phone bar); the tick on the chosen colour swatch stays white; the small "Preview" caption on Public site now clears the reading floor in Dark.</p>
+  <p><strong>Facts that moved out of a subtitle line</strong> (none dropped silently):</p>
+  <ul>
+    <li>The tournament's name, on every screen that carried it, is now the small line above the title.</li>
+    <li>Registration questions: "Every registration already collects team name, coach, email, and division." opens the upgrade card it explains.</li>
+    <li>Notification preferences: "Personal to your account." now opens the "Want push on…?" line.</li>
+    <li>Archives, on a plan that can't seal records: the plan note opens the page.</li>
+    <li>Post-event summary, after reusing a setup: "{new tournament} now starts from {last one}" opens the success panel.</li>
+    <li>Not moved, because the event header directly above already says it: the tournament's year and the summary's dates. Lines that only describe the page are dropped.</li>
+  </ul>
+  <p><strong>Decided at build time, flagged for you:</strong> the "Game Day" and "Tournament Admin" labels over three titles give way to the tournament's name, as drawn; Archives covers every tournament, so its small line is your organization's name; a champion is a solid lime tag rather than a tinted one.</p>
+  <p><strong>Cleanup and review.</strong> The cleanup made one shared way to name the tournament above a title and a few shared colours for notes, and removed repeated styles. The review found four real issues, all fixed, and one accepted as intended:</p>
+  <ul>
+    <li>Fixed, and a matter of principle more than of looks: the Rules page carried a new marker even with the switch off. It now appears only with the switch on.</li>
+    <li>Fixed: three rules that dress windows and empty states on the new look could, in theory, have reached a preview of a public page. They now stop at every preview, and the build check now looks for exactly that.</li>
+    <li>Fixed: a screen reader heard the old title-case title on the "?" button while the new look showed sentence case.</li>
+    <li>Fixed: the build check could only see rules written at the left margin; it now sees indented ones too.</li>
+    <li>Accepted as intended: the Schedule's "Published" tag keeps its old look until 4c restyles the Schedule.</li>
+  </ul>
+  <p>The build check that refuses hard-coded colours now also reads the shared site stylesheet, where the kit's buttons, tags, windows and fields live. Until today nothing checked those.</p>
+  <p><strong>Found on the way, written down rather than fixed here:</strong> slice 3's links above a title are the same small target on a phone (to unify at release); the new-tournament wizard's upgrade notice uses styling that doesn't exist (it shows unstyled today, switch on or off); a few pages carry leftover unused styling.</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1133,7 +1169,9 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>1</td><td>The switch, the theme's gaps, the organization's colour and card style out, the frame, Families, Public site editor</td><td>Committed 2026-09-25 (<code>1b3cd541</code>); walked at slice 6</td></tr>
       <tr><td>2</td><td>Buttons, chips, type; the rest of Hub and Organization; House league</td><td>Committed 2026-09-26 (<code>ee175263</code>); walked at slice 6</td></tr>
       <tr><td>3</td><td>Rep Teams, Accounting (money tables restyled in place)</td><td>Committed 35705e32, 2026-09-27; walked at slice 6</td></tr>
-      <tr><td>4</td><td>Tournaments</td><td>Not started</td></tr>
+      <tr><td>4a</td><td>Tournaments: setup and records, and the parts every tournament screen shares</td><td>Built 2026-09-27; walked at slice 6</td></tr>
+      <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat)</td><td>Not started</td></tr>
+      <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Not started</td></tr>
       <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Not started</td></tr>
       <tr><td>6</td><td>Prove, walk, release</td><td>Not started</td></tr>
     </tbody>
@@ -1222,6 +1260,7 @@ $('s1TrueClose').onclick=()=>$('s1True').close();
 document.querySelectorAll('[data-truesize]').forEach(b=>b.addEventListener('click',()=>{const src=document.getElementById(b.dataset.truesize);if(!src)return;const d=$('s1True');const body=d.querySelector('.tsbody');body.innerHTML='';const c=src.cloneNode(true);c.removeAttribute('id');body.appendChild(c);d.showModal()}));
 
 const DECISIONS=[
+  {date:'2026-09-27 · slice 4',ask:'S4 · How is the tournament slice split?',ruling:'accepted',label:'Went ahead: three parts by job',why:'Proposed at the start of slice 4, and the owner went ahead ("the window is quiet"). The tournament screens measured about four times slice 3. The prompt\'s three jobs were not three equal sessions: records was small and operations was two and a half times a full session, over half of it the schedule. So: 4a setup and records plus the parts every tournament screen shares, 4b operations on game day, 4c the schedule.'},
   {date:'2026-09-26 · slice 2',ask:'S2a · Does the type change (F2) reach all 47 admin stylesheets in slice 2?',ruling:'accepted',label:'Accepted: in two layers',why:'Owner, 2026-09-26: "Yes, as proposed." The shared parts that reach every admin screen (buttons, chips, form labels, headings, the console overrides) change in slice 2. Each area's own stylesheets change with that area's slice: Rep Teams and Accounting in 3, Tournaments in 4, Help in 5. Doing them now would edit those sheets twice and collide with other sessions' tournament work.'},
   {date:'2026-09-26 · slice 2',ask:'S2b · What is left of the Hub for slice 2?',ruling:'accepted',label:'Accepted: setup and Notifications only',why:'Owner, 2026-09-26: "Yes, as proposed." Club Stage 1 replaced the hub for every organization that has one, and a tournament-only organization is sent to its tournaments. Slice 2 restyles setup for every plan except a Club owner (who has Stage 1's checklist) and the Notifications page.'},
   {date:'2026-09-25 · slice 0 (the baseline)',ask:'B1 · How do the admin\'s existing layout findings enter the baseline?',ruling:'accepted',label:'Accepted: recorded as debt',why:'Owner, 2026-09-25: "Debt, reasons only if argued." All 6,946 are recorded with no reason written, because a reason marks a finding as a deliberate decision and quiets it. A reason is written only where someone can argue one. The count stays visible, and any new finding still fails the check. The contrast check\'s nine dark inks under the floor are recorded the same way.'},

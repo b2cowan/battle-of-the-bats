@@ -151,3 +151,39 @@
     min-width: min(220px, calc(100vw - 1.5rem));
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   The export menu on the coaches portal's kit: the portal's popover (card ground, hairline, 8px, the
+   kit shadow) and its menu rows in the body face. The two buttons are the global `.btn-outline
+   .btn-data`, which the kit layer in app/globals.css already dresses. Reaches every admin screen with
+   an export (the tournament screens, and Rep Teams, Accounting, House league and Members, whose
+   earlier slices left this menu in the console look). Platform-admin screens never carry the marker.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+:global([data-admin-kit]) .menu {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  box-shadow: var(--home-shadow);
+  padding: 0.3rem;
+}
+:global([data-admin-kit]) .menuItem { border-radius: 6px; color: var(--text-primary); }
+:global([data-admin-kit]) .menuItem:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .menuItemGated:hover,
+:global([data-admin-kit]) .menuItemDisabled:hover { background: transparent; }
+:global([data-admin-kit]) .menuIcon { color: var(--home-olive); }
+:global([data-admin-kit]) .menuItemGated .menuIcon { color: var(--text-tertiary); }
+:global([data-admin-kit]) .lockIcon { color: var(--warning-light); }
+:global([data-admin-kit]) .menuItemLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
+  letter-spacing: normal;
+}
+:global([data-admin-kit]) .menuItemHint {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+/* A plan-gated row says which plan unlocks it — in the chip's amber ink, readable on the card. */
+:global([data-admin-kit]) .menuItemGated .menuItemHint { color: var(--badge-warning-ink); opacity: 1; }
+:global([data-admin-kit]) .divider { background: var(--home-line); }

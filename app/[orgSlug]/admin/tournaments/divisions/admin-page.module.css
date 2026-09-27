@@ -225,3 +225,58 @@
 @media (max-width: 640px) {
   .divisionBoard { grid-template-columns: 1fr; }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   Divisions on the coaches portal's kit: the same fill board, the same three-state gauge. The fill
+   board keeps its meaning — filling / almost / full stay three distinct states — with the kit's
+   olive/warning/danger fills and edges, and the AA-checked chip inks when the same state is read as
+   text (the gauge label). The division's name is the card's title (F2 — display face, not data).
+   ⚠ TOKENS ONLY (checkAdminKit). */
+
+:global([data-admin-kit]) .loadingDot { background: var(--text-tertiary); }
+
+:global([data-admin-kit]) .divisionName {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+
+:global([data-admin-kit]) .poolChip {
+  font-size: var(--type-token);
+  letter-spacing: 0.06em;
+  border-radius: 999px;
+  padding: 0.14rem 0.5rem;
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+
+:global([data-admin-kit]) .mutedCell,
+:global([data-admin-kit]) .divisionMeta { color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .divisionCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-left-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .divisionCard:hover { border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .divisionCardAge { color: var(--text-tertiary); }
+:global([data-admin-kit]) .divisionCardFoot { border-top-color: var(--home-line); }
+
+:global([data-admin-kit]) .divisionCard[data-fill="filling"] { border-left-color: var(--home-olive); }
+:global([data-admin-kit]) .divisionCard[data-fill="almost"]  { border-left-color: var(--warning); }
+:global([data-admin-kit]) .divisionCard[data-fill="full"]    { border-left-color: var(--danger); }
+
+:global([data-admin-kit]) .gaugeTrack { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .gaugeFill { background: var(--home-line-strong); }
+:global([data-admin-kit]) .gaugeFill[data-fill="filling"] { background: var(--home-olive); }
+:global([data-admin-kit]) .gaugeFill[data-fill="almost"]  { background: var(--warning); }
+:global([data-admin-kit]) .gaugeFill[data-fill="full"]    { background: var(--danger); }
+:global([data-admin-kit]) .gaugeValue { color: var(--text-primary); }
+
+:global([data-admin-kit]) .gaugeLabel { color: var(--text-tertiary); }
+:global([data-admin-kit]) .gaugeLabel[data-fill="filling"] { color: var(--home-olive); }
+:global([data-admin-kit]) .gaugeLabel[data-fill="almost"]  { color: var(--badge-warning-ink); }
+:global([data-admin-kit]) .gaugeLabel[data-fill="full"]    { color: var(--badge-danger-ink); }

@@ -208,3 +208,44 @@
     min-height: 40px;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   Archives on the coaches portal's kit. The header (`.pageHeader`/`.headerLeft`/`.headerIcon`/
+   `.pageTitle`/`.pageSub`) now renders only inside `AdminPageHeader`'s `legacy` prop, so it never
+   mounts while the switch is on — no kit rule needed for it. The tables use the GLOBAL `table-wrap`
+   and the global `.badge-primary`/`.badge-success` chips, which already carry their own kit layer
+   in `app/globals.css` (out of this file's scope). ⚠ TOKENS ONLY (checkAdminKit). */
+:global([data-admin-kit]) .sectionHeading {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .sectionCount {
+  background: var(--home-olive-soft);
+  color: var(--text-tertiary);
+}
+
+:global([data-admin-kit]) .emptyState {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .emptyIcon {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .emptyTitle { color: var(--text-primary); font-weight: 700; }
+:global([data-admin-kit]) .emptyCopy { color: var(--text-secondary); }
+
+/* A fact F3 moved out of the header, at the top of the body it describes. */
+:global([data-admin-kit]) .kitLede {
+  margin: -0.25rem 0 1.25rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}

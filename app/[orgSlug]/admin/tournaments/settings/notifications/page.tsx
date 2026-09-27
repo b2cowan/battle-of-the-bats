@@ -8,6 +8,9 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { TOURNAMENT_EVENT_TYPES, NOTIFICATION_EVENT_LABELS, NOTIFICATION_EVENT_DESCRIPTIONS } from '@/lib/notification-labels';
 import { hasPlanFeature } from '@/lib/plan-features';
 import type { NotificationEventType } from '@/lib/types';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useTournamentCrumb } from '@/components/admin/tournament';
 import styles from './notifications.module.css';
 
 const CHAT_EVENT: NotificationEventType = 'chat_message';
@@ -56,6 +59,8 @@ function Toggle({
 export default function TournamentNotificationPreferencesPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
+  const tournamentCrumb = useTournamentCrumb();
+  const kit = useAdminKit();
   usePageTitle('Notifications');
   const tournamentId = currentTournament?.id;
   const orgSlug      = currentOrg?.slug;
@@ -161,19 +166,25 @@ export default function TournamentNotificationPreferencesPage() {
   return (
     <div className={styles.page}>
       {/* Header */}
-      <div className={styles.pageHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerIcon}>
-            {isMuted ? <BellOff size={21} /> : <Bell size={21} />}
+      <AdminPageHeader
+        crumbs={[tournamentCrumb]}
+        title="Tournament notifications"
+        legacy={
+          <div className={styles.pageHeader}>
+            <div className={styles.headerLeft}>
+              <div className={styles.headerIcon}>
+                {isMuted ? <BellOff size={21} /> : <Bell size={21} />}
+              </div>
+              <div>
+                <h1 className={styles.pageTitle}>Tournament Notifications</h1>
+                <p className={styles.pageSub}>
+                  Mute notifications for <strong>{currentTournament?.name}</strong>. Personal to your account.
+                </p>
+              </div>
+            </div>
           </div>
-          <div>
-            <h1 className={styles.pageTitle}>Tournament Notifications</h1>
-            <p className={styles.pageSub}>
-              Mute notifications for <strong>{currentTournament?.name}</strong>. Personal to your account.
-            </p>
-          </div>
-        </div>
-      </div>
+        }
+      />
 
       {error && (
         <div className={styles.errorBanner}>
@@ -191,8 +202,11 @@ export default function TournamentNotificationPreferencesPage() {
         </span>
       </div>
 
-      {/* Door to the real controls (channels, push devices) — the universal page. */}
+      {/* Door to the real controls (channels, push devices) — the universal page. "Personal to your
+          account." is the header sub's fact (the eyebrow now carries the tournament's name), so it
+          opens this line kit-only rather than being dropped. */}
       <p className={styles.manageRow}>
+        {kit && 'Personal to your account. '}
         Want push on, or a channel changed?{' '}
         <Link href={`/account/notifications?focus=org-${orgSlug ?? ''}`} className={styles.manageLink}>
           Manage what you receive →

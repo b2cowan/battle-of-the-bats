@@ -1,0 +1,215 @@
+/* ═══ Rules & Resources on the coaches portal's kit (Admin Design Continuity slice 4a) ═════════════
+   RulesAdmin styles itself with a `<style jsx global>` block of global class names (`.rule-card`,
+   `.section-title`, `.samples-drawer`, …) that this stylesheet cannot touch without breaking the
+   switch-off identity. Instead this file holds the WHOLE kit layer for that component, every
+   selector scoped under `.rulesKit` (the one local class RulesAdmin's root — and the samples
+   drawer's root, which renders as its child, not a portal — carries beside its existing className).
+   `.rulesKit` joins the root only while the switch is on (RulesAdmin's `rootClass`), and every rule
+   here also needs `[data-admin-kit]` above it — so with the switch off the markup AND the paint are
+   today's. (The class holds no rule of its own — never give it one.)
+
+   Recipes are the portal's own, by value (rep-teams.module.css slice 3, `app/globals.css`'s admin
+   kit section): the kit card, its eyebrow, the olive selection, drag handles as faint icon ink,
+   "dirty"/unsaved lime → the kit's olive accent, popovers as card-bg + home-line + home-shadow.
+   Titles already wear the display face and eyebrows already wear the data face (F2) — most of this
+   layer only corrects the INK, not the font. ⚠ TOKENS ONLY — checkAdminKit fails on a literal here. */
+
+/* ── Section headers: title face is already display — fix the ink only ── */
+:global([data-admin-kit]) .rulesKit :global(.section-header) { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .rulesKit :global(.section-title) { color: var(--text-primary); }
+/* The layout-toggle label is already the eyebrow's shape (data face, tracked, uppercase) — ink only. */
+:global([data-admin-kit]) .rulesKit :global(.layout-toggle-label) { color: var(--text-secondary); }
+:global([data-admin-kit]) .rulesKit :global(.layout-toggle) {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+}
+/* The public-layout segmented control is a chosen-option toggle: quiet at rest, olive when chosen. */
+:global([data-admin-kit]) .rulesKit :global(.layout-toggle-btn) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.layout-toggle-btn):hover {
+  color: var(--text-primary);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .rulesKit :global(.layout-toggle-btn.active) {
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+
+/* ⚠ The ≤900px rule below drops section titles to the mono data face — REPLACED, this stays in
+   the kit's display/body face (F2), not undone, just not carried onto the kit. */
+@media (max-width: 900px) {
+  :global([data-admin-kit]) .rulesKit :global(.section-header) h2,
+  :global([data-admin-kit]) .rulesKit :global(.section-title) {
+    font-family: var(--font-display);
+    font-size: var(--type-heading);
+    font-weight: 700;
+    text-transform: none;
+    letter-spacing: normal;
+    color: var(--text-primary);
+  }
+}
+
+/* ── Rule cards → the kit card. "Dirty" accents (an unsaved section's edge, its dot, the save bar's
+   top rule, the header's badge) are all the SAME lime-as-warning idiom → the kit's olive accent. ── */
+:global([data-admin-kit]) .rulesKit :global(.rule-card) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .rulesKit :global(.rule-card-dirty) { border-color: var(--home-olive); }
+:global([data-admin-kit]) .rulesKit :global(.new-section-card) { border-color: var(--home-olive); }
+:global([data-admin-kit]) .rulesKit :global(.dirty-dot) { background: var(--home-olive); }
+:global([data-admin-kit]) .rulesKit :global(.rule-card.dragging) {
+  border-color: var(--home-olive);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .rulesKit :global(.rule-card-header) {
+  background: var(--home-olive-soft);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .rulesKit :global(.card-title-text) { color: var(--text-primary); }
+:global([data-admin-kit]) .rulesKit :global(.inline-title-input) {
+  background: var(--home-card);
+  border-color: var(--home-olive);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .rulesKit :global(.header-unsaved-badge) { color: var(--home-olive); }
+:global([data-admin-kit]) .rulesKit :global(.section-save-bar) {
+  background: var(--home-olive-soft);
+  border-top-color: var(--home-olive);
+}
+
+/* Drag handles and icon-only buttons at rest are faint icon ink — text-tertiary, not near-invisible
+   whites; a card-hover reveal steps up to text-secondary, an ACTIVE drag or a delete hover to accent. */
+:global([data-admin-kit]) .rulesKit :global(.rule-card-drag-handle) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.rule-card-drag-handle):active { color: var(--home-olive); }
+:global([data-admin-kit]) .rulesKit :global(.rule-card):hover :global(.rule-card-drag-handle) { color: var(--text-secondary); }
+:global([data-admin-kit]) .rulesKit :global(.edit-pencil-btn) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.edit-pencil-btn):hover { color: var(--home-olive); }
+:global([data-admin-kit]) .rulesKit :global(.delete-btn-mini) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.delete-btn-mini):hover { color: var(--danger-light); }
+
+/* The icon picker: a small tile and its popover menu (card-bg + home-line + home-shadow). */
+:global([data-admin-kit]) .rulesKit :global(.icon-picker-btn) {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .rulesKit :global(.icon-picker-btn):hover {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .rulesKit :global(.icon-picker-panel) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .rulesKit :global(.icon-picker-option) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.icon-picker-option):hover {
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .rulesKit :global(.icon-picker-option.active) {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .rulesKit :global(.icon-preview-box) {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+  color: var(--home-olive);
+}
+
+/* ── "Applies to" division filter row: an eyebrow label + checkbox text ── */
+:global([data-admin-kit]) .rulesKit :global(.applies-to-row) {
+  background: var(--home-olive-soft);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .rulesKit :global(.applies-to-label) { color: var(--text-secondary); }
+:global([data-admin-kit]) .rulesKit :global(.applies-to-check) { color: var(--text-secondary); }
+
+/* ── Rule points: typed content, its drag handle and delete affordance, the add-point ghost ── */
+:global([data-admin-kit]) .rulesKit :global(.rule-item-row):hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .rulesKit :global(.drag-handle) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.item-textarea) { color: var(--text-primary); }
+:global([data-admin-kit]) .rulesKit :global(.item-delete-btn) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.rule-item-row):hover :global(.item-delete-btn) { color: var(--danger-light); }
+:global([data-admin-kit]) .rulesKit :global(.add-item-btn) { border-color: var(--home-line-strong); }
+
+/* ── Resources: the edit card, its icon tile, drag handle and confirm/cancel icon buttons ── */
+:global([data-admin-kit]) .rulesKit :global(.resource-edit-card) {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .rulesKit :global(.resource-edit-card.dragging) {
+  background: var(--card-bg);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .rulesKit :global(.resource-icon-box) {
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .rulesKit :global(.resource-display-label) { color: var(--text-primary); }
+:global([data-admin-kit]) .rulesKit :global(.resource-display-url) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.tiny-label) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.form-input.sm) { background: var(--home-card); }
+:global([data-admin-kit]) .rulesKit :global(.drag-handle-right) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.drag-handle-right):active { color: var(--home-olive); }
+:global([data-admin-kit]) .rulesKit :global(.resource-edit-card):hover :global(.drag-handle-right) { color: var(--text-secondary); }
+:global([data-admin-kit]) .rulesKit :global(.icon-btn-ghost) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.icon-btn-ghost):hover {
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .rulesKit :global(.icon-btn-danger) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.icon-btn-danger):hover {
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+}
+
+:global([data-admin-kit]) .rulesKit :global(.divider-lg) { background: var(--home-line); }
+:global([data-admin-kit]) .rulesKit :global(.empty-state-card) {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+
+/* ── Samples drawer (renders as a child of the same root, not a portal, so it is reached here too):
+   the scrim, the window (card-bg + home-line, a right-attached edge keeps its square corner) and its
+   tab bar → the portal's tab bar, olive when chosen. ── */
+:global([data-admin-kit]) .rulesKit :global(.drawer-backdrop) { background: var(--home-scrim); }
+:global([data-admin-kit]) .rulesKit :global(.samples-drawer) {
+  background: var(--card-bg);
+  border-left-color: var(--home-line);
+  box-shadow: var(--shadow-lg);
+}
+:global([data-admin-kit]) .rulesKit :global(.drawer-header) { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .rulesKit :global(.drawer-title) { color: var(--text-primary); }
+:global([data-admin-kit]) .rulesKit :global(.drawer-sub) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.drawer-tabs) { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .rulesKit :global(.drawer-tab) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.drawer-tab.active) {
+  color: var(--home-olive);
+  border-bottom-color: var(--home-olive);
+}
+:global([data-admin-kit]) .rulesKit :global(.sample-card) {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .rulesKit :global(.sample-title) { color: var(--text-primary); }
+:global([data-admin-kit]) .rulesKit :global(.sample-preview-item) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.sample-preview-item)::before { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.sample-preview-more) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.drawer-resources-note) {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+}
+
+/* ── Two Tailwind-style utility classNames used only on this page (not yet in the admin's shared
+   kit utility list in app/globals.css — that list grows per restyled area, and this area is not on
+   it yet); scoped here so they don't leak the console's raw dark ramp onto the kit. ── */
+:global([data-admin-kit]) .rulesKit :global(.text-white-10) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.text-white-40) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rulesKit :global(.text-danger) { color: var(--danger-light); }

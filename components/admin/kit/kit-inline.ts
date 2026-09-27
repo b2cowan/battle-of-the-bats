@@ -41,6 +41,8 @@ export const KIT_SURFACE = {
   alert: { background: 'rgba(var(--danger-rgb), 0.05)', border: '1px solid rgba(var(--danger-rgb), 0.35)', borderRadius: '8px' },
   /** A door to another screen, set as a tile (Rep Teams' quick links, Accounting's planning tools). */
   door: { background: 'var(--card-bg)', border: '1px solid var(--home-line)', borderRadius: '8px', color: 'var(--text-primary)' },
+  /** A menu or popover set by hand (the wizard's venue search) — the portal's popover. */
+  menu: { background: 'var(--card-bg)', border: '1px solid var(--home-line)', borderRadius: '8px', boxShadow: 'var(--home-shadow)' },
 } satisfies Record<string, CSSProperties>;
 
 /** A numbered step (Allocate to teams, New cost allocation): the one you are on or have passed wears the
@@ -58,6 +60,12 @@ export const KIT_INK = {
   secondary: { color: 'var(--text-secondary)' },
   tertiary: { color: 'var(--text-tertiary)' },
   accent: { color: 'var(--home-olive)' },
+  /** A state said in words (an error note, a saved note, a caution) — the LIGHT tier, which clears AA
+   *  on the kit's Dark ground where the base hue does not (`--danger` 3.81:1, slice 0), and is the
+   *  same warm ink in Warm. */
+  danger: { color: 'var(--danger-light)' },
+  success: { color: 'var(--success-light)' },
+  warning: { color: 'var(--warning-light)' },
   /** A table's column heading — the standard's quiet head. */
   head: { fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--type-support)', fontWeight: 650, letterSpacing: 'normal', textTransform: 'none', color: 'var(--text-tertiary)' },
   /** A required field's asterisk: the label's own ink (portal ruling 2026-08-25 — red means something went wrong). */

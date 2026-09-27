@@ -427,3 +427,101 @@
     display: none;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   Tournament notifications on the coaches portal's kit. The header (`.pageHeader`/`.headerIcon`/
+   `.pageTitle`/`.pageSub`) now renders only inside `AdminPageHeader`'s `legacy` prop, so it never
+   mounts while the switch is on — no kit rule needed for it. The scope note (rule R3) keeps its exact
+   words; only its box moves onto the kit's info tint. The switch (`.toggle`/`.toggleOn`) is the kit's
+   settings switch (Club Stage 1's drawn switch, `components/admin/kit/club/ClubKit.module.css`
+   `.switch`), restated by value: off = a `--home-line-strong` track with a `--home-card` knob, on =
+   `--home-olive`. Table heading/cell type and ink already come from the platform's own bare `table`/
+   `th`/`td` rule in `app/globals.css` (unscoped — the "baseline" this file's own comment names), so
+   only this file's OWN chrome (the wrap, the rows, the event name/description) needs converting.
+   ⚠ TOKENS ONLY (checkAdminKit). */
+:global([data-admin-kit]) .muted,
+:global([data-admin-kit]) .emptyState { color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .errorBanner {
+  border-radius: 8px;
+  color: var(--danger-light);
+}
+
+:global([data-admin-kit]) .scopeNote {
+  border-radius: 8px;
+  background: rgba(var(--info-rgb), 0.08);
+  border-color: rgba(var(--info-rgb), 0.3);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .scopeNote svg { color: var(--info-light); }
+:global([data-admin-kit]) .scopeNote strong { color: var(--text-primary); }
+
+:global([data-admin-kit]) .manageRow { color: var(--text-tertiary); }
+:global([data-admin-kit]) .manageLink { color: var(--home-olive); }
+
+:global([data-admin-kit]) .channelNote { color: var(--text-tertiary); }
+
+/* ── Master mute card → the kit card; its active (danger) tint keeps the danger tokens ── */
+:global([data-admin-kit]) .muteCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .muteCardActive {
+  background: rgba(var(--danger-rgb), 0.05);
+  border-color: rgba(var(--danger-rgb), 0.35);
+}
+:global([data-admin-kit]) .muteIcon { color: var(--text-tertiary); }
+:global([data-admin-kit]) .muteCardActive .muteIcon { color: var(--danger-light); }
+:global([data-admin-kit]) .muteTitle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .muteSub {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+
+/* ── Section labels ("Per-event settings", "Messaging") → the kit eyebrow ── */
+:global([data-admin-kit]) .sectionLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── Table wrap → the table standard's ground; th/td ink already the platform baseline ── */
+:global([data-admin-kit]) .tableWrap {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .row { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .row:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .eventLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .eventDesc {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+
+/* ── The switch → the kit's settings switch ── */
+:global([data-admin-kit]) .toggle {
+  background: var(--home-line-strong);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .toggle::after { background: var(--home-card); }
+:global([data-admin-kit]) .toggleOn {
+  background: var(--home-olive);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .toggleOn::after { background: var(--home-card); }
+:global([data-admin-kit]) .toggle:focus-visible { outline-color: var(--home-olive); }
+
+/* ── Skeleton rows: the kit's quiet fill in place of a flat white wash ── */
+:global([data-admin-kit]) .skeletonLabel,
+:global([data-admin-kit]) .skeletonToggle { background: var(--home-olive-soft); }

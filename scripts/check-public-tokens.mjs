@@ -492,7 +492,9 @@ const KIT_LITERAL = new RegExp(`${COLOR_LITERAL}|(?:^|\\s)(?:white|black)(?:\\s|
 const isKitSelector = (selector) => selector.replace(/:not\([^()]*\)/g, '').includes('[data-admin-kit]');
 
 function checkAdminKit() {
-  const files = scopeFiles(SCOPES.operator).filter(f => f.endsWith('.css'));
+  // app/globals.css too: the kit's SHARED parts live there (R1, the island, buttons, chips, windows,
+  // fields — slices 1, 2 and 4a), and until slice 4a no check read them (it is in no scope's dirs).
+  const files = [...scopeFiles(SCOPES.operator).filter(f => f.endsWith('.css')), 'app/globals.css'];
   const offenders = [];
   let kitRules = 0;
   for (const f of files) {
@@ -556,11 +558,31 @@ const RESTYLED_DIRS = [
   // portal's `--home-*` tokens, and was not restyled here)
   'app/[orgSlug]/admin/rep-teams',
   'app/[orgSlug]/admin/accounting',
+  // slice 4a — the tournament screens' setup and records (4b/4c add operations and the schedule)
+  'app/[orgSlug]/admin/tournaments/settings',
+  'app/[orgSlug]/admin/tournaments/divisions',
+  'app/[orgSlug]/admin/tournaments/venues',
+  'app/[orgSlug]/admin/tournaments/rules',
+  'app/[orgSlug]/admin/tournaments/branding',
+  'app/[orgSlug]/admin/tournaments/archives',
+  'app/[orgSlug]/admin/tournaments/summary',
+  'app/[orgSlug]/admin/tournaments/data-tools',
+  'components/admin/tournament',
 ];
 const RESTYLED_FILES = [
   'app/[orgSlug]/admin/org/page.tsx',
   'components/notifications/NotificationsPageContent.tsx',
   'components/admin/kit/kit-inline.ts',
+  // slice 4a — the tournament screens' shared parts and the new-tournament wizard
+  'app/[orgSlug]/admin/admin-common.module.css',
+  'components/admin/ExportMenu.module.css',
+  'components/admin/CollapsibleCard.module.css',
+  'components/admin/TieBreakerEditor.tsx',
+  'components/admin/TieBreakerEditor.module.css',
+  'components/admin/TournamentSetupWizard.tsx',
+  'components/admin/TournamentSetupWizard.module.css',
+  'components/admin/TournamentStyleCards.tsx',
+  'components/admin/TournamentStyleCards.module.css',
 ];
 const ANY_LITERAL = new RegExp(COLOR_LITERAL, 'g');
 

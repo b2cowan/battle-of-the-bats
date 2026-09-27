@@ -212,3 +212,49 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4a — only with the switch on) ═══════════════════════
+   The header (`.pageHeader`/`.headerLeft`/`.headerIcon`/`.pageTitle`/`.pageSub`) is now rendered only
+   inside `AdminPageHeader`'s `legacy` prop, so it never mounts while the switch is on — no kit rule
+   is needed for it. The three door cards on the coaches portal's door: the kit card
+   (`components/coaches/kit/CoachKit.module.css` `.card` + `.cardDoor`, restated by value here), the
+   title in the body face, the description tertiary, the meta line in the kit's olive. A locked card
+   keeps its lower opacity for free — `.lockedCard { opacity: 0.68; }` above is untouched and still
+   dims everything below it, including the kit's olive meta line. ⚠ TOKENS ONLY (checkAdminKit). */
+:global([data-admin-kit]) .card {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  box-shadow: var(--shadow-sm), var(--highlight-top);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.12s ease, background 0.15s ease;
+}
+:global([data-admin-kit]) .card:hover {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  box-shadow: var(--glow-sm), var(--shadow-sm), var(--highlight-top);
+  transform: translateY(-1px);
+}
+:global([data-admin-kit]) .cardIcon {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+  border-radius: 8px;
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .cardBody h2 {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .cardBody p {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .cardMeta {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--home-olive);
+}

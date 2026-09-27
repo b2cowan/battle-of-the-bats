@@ -80,6 +80,7 @@ export default function StaffKitPage() {
       <TournamentAdminHeader
         eyebrow="Game Day"
         title="Staff Kit"
+        kitTitle="Staff kit"
         subtitle={currentTournament ? currentTournament.name : 'Select a tournament'}
         mobileActionsInline
         actions={
