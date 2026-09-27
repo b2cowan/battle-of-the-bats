@@ -322,6 +322,8 @@ function scopeFiles(cfg) {
 // the raw lines are kept so a `token-exempt: reason` marker — which lives in a comment — is
 // still visible. A marker on the literal's own line or the line directly above exempts it.
 const EXEMPT = /token-exempt:\s*\S/;
+/** Is 0-based line `idx` exempt — a `token-exempt: reason` on it or on the line above? */
+const exemptAt = (rawLines, idx) => EXEMPT.test(rawLines[idx] || '') || EXEMPT.test(rawLines[idx - 1] || '');
 
 // Block comments only — valid for CSS and TSX alike. JS line comments are deliberately left
 // alone: a `//` inside a URL string ("https://…") would swallow the rest of the line and hide
@@ -333,10 +335,8 @@ function scan(file) {
   const rawLines = raw.split(/\r?\n/);
   const lines = blankComments(raw).split(/\r?\n/);
   const hex = [], rgba = [];
-  const exempted = (idx) => EXEMPT.test(rawLines[idx] || '') || EXEMPT.test(rawLines[idx - 1] || '');
-
   lines.forEach((line, idx) => {
-    if (exempted(idx)) return;
+    if (exemptAt(rawLines, idx)) return;
     for (const m of line.matchAll(/#[0-9a-fA-F]{3,8}\b/g)) {
       hex.push({ line: idx + 1, value: m[0], tokens: hexMap[norm(m[0])] });
     }
@@ -484,7 +484,12 @@ function checkScope(name) {
 // deleted (the release slice), its whole stylesheet joins KIT_FILES.
 const KIT_DIRS = ['components/admin/kit/'];
 const KIT_FILES = new Set(['components/admin/AdminPageHeader.module.css']);
-const KIT_LITERAL = /#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\((?![^()]*var\()[^()]*\)|(?:^|\s)(?:white|black)(?:\s|$)/;
+// A colour literal: hex, or rgb/rgba/hsl/hsla with no var() inside. The kit check also refuses the keywords.
+const COLOR_LITERAL = String.raw`#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\((?![^()]*var\()[^()]*\)`;
+const KIT_LITERAL = new RegExp(`${COLOR_LITERAL}|(?:^|\\s)(?:white|black)(?:\\s|$)`);
+// A kit rule scopes itself under `[data-admin-kit]`. The legacy exclusion `:where(:not([data-admin-kit] *))`
+// (slice 2) names it too, to say the opposite — so read the selector with its :not() clauses removed.
+const isKitSelector = (selector) => selector.replace(/:not\([^()]*\)/g, '').includes('[data-admin-kit]');
 
 function checkAdminKit() {
   const files = scopeFiles(SCOPES.operator).filter(f => f.endsWith('.css'));
@@ -498,7 +503,7 @@ function checkAdminKit() {
     const txt = blankComments(raw);
     for (const m of txt.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
       const selector = m[1].trim();
-      if (!wholeFile && !selector.includes('[data-admin-kit]')) continue;
+      if (!wholeFile && !isKitSelector(selector)) continue;
       kitRules++;
       const bodyStart = m.index + m[0].indexOf('{') + 1;
       let offset = 0;
@@ -507,7 +512,7 @@ function checkAdminKit() {
         const value = colon > -1 ? decl.slice(colon + 1).trim() : '';
         if (value && KIT_LITERAL.test(value)) {
           const line = txt.slice(0, bodyStart + offset + decl.indexOf(value)).split('\n').length;
-          if (!EXEMPT.test(rawLines[line - 1] || '') && !EXEMPT.test(rawLines[line - 2] || '')) {
+          if (!exemptAt(rawLines, line - 1)) {
             offenders.push({ f, line, selector: selector.split('\n').pop().trim(), value });
           }
         }
@@ -525,11 +530,98 @@ function checkAdminKit() {
   return true;
 }
 
+// ── restyled admin areas: EVERY literal colour ratchets (Admin Design Continuity, Phase 1) ─────
+// The ratchets above ignore white/black alphas and one-off tints; checkAdminKit holds only the kit
+// layer. An area the foundation has restyled keeps its LEGACY rules until the release slice deletes
+// them — those literals are the switch-off look and must stay — but nothing NEW may add one: a new
+// rule belongs in the kit layer (tokens), and a new inline colour on a token. So every colour literal
+// in a restyled area's files (hex, rgb/rgba/hsl/hsla without var(), white/black alphas included) is
+// held per file BY VALUE: a count alone would let one literal be swapped for a different new one.
+// Areas join this list as their slice lands (the build prompt: "widen what it counts as each area
+// comes clean"). Re-baseline after a deliberate drop: `node scripts/check-public-tokens.mjs --init-restyled`.
+const RESTYLED_BASELINE = 'scripts/.admin-restyled-baseline.json';
+const RESTYLED_DIRS = [
+  // slice 1
+  'app/[orgSlug]/admin/families',
+  'app/[orgSlug]/admin/public-site',
+  // slice 2
+  'app/[orgSlug]/admin/house-league',
+  'app/[orgSlug]/admin/onboarding',
+  'app/[orgSlug]/admin/org/venues',
+  'app/[orgSlug]/admin/org/tournaments',
+  'app/[orgSlug]/admin/org/coaches-portal-links',
+  'app/[orgSlug]/admin/org/settings/pdf',
+  'app/[orgSlug]/admin/org/billing/mock-portal',
+];
+const RESTYLED_FILES = [
+  'app/[orgSlug]/admin/org/page.tsx',
+  'components/notifications/NotificationsPageContent.tsx',
+  'components/admin/kit/kit-inline.ts',
+];
+const ANY_LITERAL = new RegExp(COLOR_LITERAL, 'g');
+
+function restyledFiles() {
+  const cfg = { dirs: RESTYLED_DIRS, files: RESTYLED_FILES, excludeSegments: new Set() };
+  return [...new Set(['.module.css', '.tsx', '.ts'].flatMap(ext => scopeFiles({ ...cfg, ext })))].sort();
+}
+
+/** One spelling per colour: lower case, no spaces, short hex written long (`#fff` = `#ffffff`). */
+const literalKey = (lit) => lit.toLowerCase().replace(/\s+/g, '')
+  .replace(/^#([0-9a-f]{3,4})$/, (_, h) => '#' + [...h].map(c => c + c).join(''));
+
+/** Every colour literal in a file, as { value → how many }, keyed by `literalKey`. */
+function literalCounts(file) {
+  const raw = readFileSync(join(ROOT, file), 'utf8');
+  const rawLines = raw.split(/\r?\n/);
+  const counts = {};
+  blankComments(raw).split(/\r?\n/).forEach((line, idx) => {
+    if (exemptAt(rawLines, idx)) return;
+    for (const m of line.matchAll(ANY_LITERAL)) {
+      const v = literalKey(m[0]);
+      counts[v] = (counts[v] ?? 0) + 1;
+    }
+  });
+  return counts;
+}
+
+function checkRestyledAreas() {
+  const p = join(ROOT, RESTYLED_BASELINE);
+  const baseline = existsSync(p) ? JSON.parse(readFileSync(p, 'utf8')) : {};
+  const offenders = [];
+  let total = 0;
+  const files = restyledFiles();
+  for (const f of files) {
+    const counts = literalCounts(f);
+    const held = baseline[f] ?? {};
+    const fresh = Object.entries(counts).filter(([v, n]) => n > (held[v] ?? 0)).map(([v, n]) => `${v} ×${n - (held[v] ?? 0)}`);
+    total += Object.values(counts).reduce((x, y) => x + y, 0);
+    if (fresh.length) offenders.push({ f, fresh });
+  }
+  if (offenders.length) {
+    console.error('✖ Restyled admin areas: a NEW colour literal in an area already on the kit.');
+    for (const o of offenders) console.error(`    ${o.f}: ${o.fresh.join(', ')}`);
+    console.error('  A new rule belongs in the kit layer on tokens; a new inline colour on a var(--token).');
+    return false;
+  }
+  console.log(`✓ Restyled admin areas: ${files.length} file(s), ${total} legacy literal(s) held (none new).`);
+  return true;
+}
+
+if (process.argv.includes('--init-restyled')) {
+  const out = {};
+  for (const f of restyledFiles()) { const c = literalCounts(f); if (Object.keys(c).length) out[f] = c; }
+  writeFileSync(join(ROOT, RESTYLED_BASELINE), JSON.stringify(out, null, 2) + '\n');
+  const total = Object.values(out).reduce((s, c) => s + Object.values(c).reduce((x, y) => x + y, 0), 0);
+  console.log(`Baseline written: ${RESTYLED_BASELINE} — ${Object.keys(out).length} file(s), ${total} literal(s)`);
+  process.exit(0);
+}
+
 if (mode === 'check') {
   const names = SCOPE === 'all' ? Object.keys(SCOPES) : [SCOPE];
   let ok = true;
   for (const n of names) ok = checkScope(n) && ok;
   if (SCOPE === 'all' || SCOPE === 'operator') ok = checkAdminKit() && ok;
+  if (SCOPE === 'all' || SCOPE === 'operator') ok = checkRestyledAreas() && ok;
   if (SCOPE === 'all') ok = coverage() && ok;
   process.exit(ok ? 0 : 1);
 }

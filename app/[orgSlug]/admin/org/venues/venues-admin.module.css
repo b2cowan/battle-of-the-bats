@@ -609,3 +609,59 @@
   text-decoration: underline;
   cursor: pointer;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
+   The rest of the Venue library (Stage 1 gave it its header, lede and refusal line above): each
+   venue a kit card that opens to its fields, the fields as hairline rows with the kit's quiet chip
+   for their type, the inline add/edit row on the portal's field. Titles and data leave the console
+   face (F2); the facility type stays in the chip's data face. ⚠ TOKENS ONLY (checkAdminKit). */
+
+:global([data-admin-kit]) .venueCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .venueCard.expanded { border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .venueHeader:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .expandIcon,
+:global([data-admin-kit]) .expandChevron { color: var(--text-tertiary); }
+:global([data-admin-kit]) .venueName { color: var(--text-primary); }
+:global([data-admin-kit]) .venueName svg,
+:global([data-admin-kit]) .venueNameIcon { color: var(--home-olive); }
+:global([data-admin-kit]) .venueAddress { color: var(--text-tertiary); }
+:global([data-admin-kit]) .facilityCount { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .facilitySection { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .facilityItem,
+:global([data-admin-kit]) .facilityItemEdit { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .facilityName { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-primary); }
+:global([data-admin-kit]) .facilityTypeBadge {
+  font-size: var(--type-token);
+  letter-spacing: 0.06em;
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+  border-radius: 999px;
+}
+:global([data-admin-kit]) .facilityNotes,
+:global([data-admin-kit]) .facilityEmptyNote { color: var(--text-tertiary); font-family: var(--font-sans, system-ui, sans-serif); }
+:global([data-admin-kit]) .addFacilityError { font-family: var(--font-sans, system-ui, sans-serif); color: var(--home-live); }
+:global([data-admin-kit]) .addFacilityName,
+:global([data-admin-kit]) .addFacilityType,
+:global([data-admin-kit]) .facilityEditName,
+:global([data-admin-kit]) .facilityEditType { font-family: var(--font-sans, system-ui, sans-serif); }
+:global([data-admin-kit]) .venueActionsBar { border-bottom-color: var(--home-line); }
+
+/* The import-from-library window (tournament venues) — option cards, the olive selection. */
+:global([data-admin-kit]) .libraryNote,
+:global([data-admin-kit]) .libraryEmpty,
+:global([data-admin-kit]) .libraryVenueFacilities { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-tertiary); }
+:global([data-admin-kit]) .libraryNote { color: var(--text-secondary); }
+:global([data-admin-kit]) .libraryVenueItem {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .libraryVenueItemSelected { background: var(--home-olive-soft); border-color: var(--home-olive); }
+:global([data-admin-kit]) .libraryVenueName { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-primary); }
+:global([data-admin-kit]) .libraryVenueAddress { color: var(--text-tertiary); }

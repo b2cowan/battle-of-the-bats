@@ -104,3 +104,47 @@
   padding-top: 0.5rem;
   border-top: 1px solid var(--border, rgba(255,255,255,0.08));
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
+   The billing mock portal (a dev-only stand-in for Stripe's) on the kit: the warning banner, the
+   kit card, the portal's chips for the plan and status choices. ⚠ TOKENS ONLY (checkAdminKit). */
+:global([data-admin-kit]) .banner {
+  border-radius: 8px;
+  color: var(--badge-warning-ink);
+  background: rgba(var(--warning-rgb), 0.07);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+:global([data-admin-kit]) .card {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 12px;
+}
+:global([data-admin-kit]) .title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .sub,
+:global([data-admin-kit]) .hint { color: var(--text-tertiary); }
+:global([data-admin-kit]) .label {
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+/* The choices → the portal's filter chip: tinted when chosen, never solid. */
+:global([data-admin-kit]) .pill {
+  border-radius: 999px;
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .pill:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
+:global([data-admin-kit]) .pillActive,
+:global([data-admin-kit]) .pillActive:hover {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .pillActive svg { color: var(--home-olive); }
+:global([data-admin-kit]) .actions { border-top-color: var(--home-line); }

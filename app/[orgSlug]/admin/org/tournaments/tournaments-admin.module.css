@@ -712,3 +712,134 @@
   }
 }
 
+/* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
+   The organization's Tournaments list and its create/reuse windows on the coaches portal's kit: the
+   same list, columns and actions; the kit card, the olive selection, the standard's quiet labels.
+   Scoped under `[data-admin-kit]`; the legacy rules above are untouched while the switch is off.
+   ⚠ TOKENS ONLY (checkAdminKit). */
+
+:global([data-admin-kit]) .slotCount { color: var(--text-tertiary); }
+:global([data-admin-kit]) .slotCountLimit { color: var(--badge-warning-ink); }
+:global([data-admin-kit]) .lifecycleToggle { color: var(--text-secondary); }
+:global([data-admin-kit]) .lifecycleToggle:hover { color: var(--text-primary); }
+
+/* "How statuses work" — each status a kit card with its colour at the edge. The colours are set per
+   card by the page (`--lifecycle-color`, tokens on the kit). */
+:global([data-admin-kit]) .lifecycleCard {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--lifecycle-color);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .lifecycleCard strong {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .lifecycleCard span { color: var(--text-secondary); }
+
+:global([data-admin-kit]) .infoCard,
+:global([data-admin-kit]) .lifecycleStrip,
+:global([data-admin-kit]) .emptyPrompt,
+:global([data-admin-kit]) .scheduleParamsPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .infoCard p { color: var(--text-secondary); }
+:global([data-admin-kit]) .infoCard strong,
+:global([data-admin-kit]) .emptyPrompt strong,
+:global([data-admin-kit]) .lifecycleItem strong,
+:global([data-admin-kit]) .lifecycleCountValue { color: var(--text-primary); }
+:global([data-admin-kit]) .lifecycleItem span,
+:global([data-admin-kit]) .emptyPrompt span { color: var(--text-secondary); }
+:global([data-admin-kit]) .lifecycleCount { border-left-color: var(--home-line); }
+:global([data-admin-kit]) .lifecycleCountLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+
+/* ── The create / reuse windows ── */
+:global([data-admin-kit]) .activeToggle {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .activeToggle label,
+:global([data-admin-kit]) .checkboxLabel { color: var(--text-secondary); }
+:global([data-admin-kit]) .migrationSection { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .migrationHeader { color: var(--home-olive); }
+:global([data-admin-kit]) .migrationHeader h4 { color: var(--text-primary); }
+:global([data-admin-kit]) .migrationOptions,
+:global([data-admin-kit]) .setupGroup {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .setupHint { color: var(--text-tertiary); }
+:global([data-admin-kit]) .presetButton {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .presetButton:hover,
+:global([data-admin-kit]) .presetButtonActive {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .presetButton strong { color: var(--text-primary); }
+:global([data-admin-kit]) .presetButton span { color: var(--text-tertiary); }
+:global([data-admin-kit]) .emptyDivisions {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .contactPicker { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .contactList,
+:global([data-admin-kit]) .divisionRow {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .removeDivisionButton { color: var(--text-tertiary); border-radius: var(--radius-sm); }
+:global([data-admin-kit]) .removeDivisionButton:hover { color: var(--text-primary); background: var(--home-olive-soft); border-color: var(--home-line); }
+:global([data-admin-kit]) .subInput label,
+:global([data-admin-kit]) .subCheck label,
+:global([data-admin-kit]) .poolNameItem label {
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+/* `--border-1` is an undefined token (the Phase 0 inventory), so today this rule draws no line. It is
+   fixed on the kit only — fixing the legacy rule would change a switch-off pixel. */
+:global([data-admin-kit]) .poolNamesList { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .nextStepLink {
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .nextStepLink:hover { border-color: var(--home-olive); color: var(--text-primary); }
+
+@media (max-width: 640px) {
+  :global([data-admin-kit]) .responsiveTable :global(tr) {
+    background: var(--card-bg);
+    border-color: var(--home-line);
+    border-radius: 8px;
+  }
+  :global([data-admin-kit]) .responsiveTable :global(td) { border-bottom-color: var(--home-line); }
+  :global([data-admin-kit]) .responsiveTable :global(td[data-label]::before) {
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: var(--type-support);
+    font-weight: 650;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--text-tertiary);
+  }
+}

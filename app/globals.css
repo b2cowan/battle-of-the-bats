@@ -1068,6 +1068,12 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
   /* ── Glows soften on paper (a blue/lime glow reads cold on cream) ── */
   --glow-blue: 0 0 12px rgba(var(--home-olive-rgb), 0.20);
   --glow-lime: 0 0 16px rgba(var(--home-olive-rgb), 0.22);
+
+  /* The scrim behind a window or sheet, in the warm ink (Admin Design Continuity slice 2 — the Phase 0
+     "themed scrim" gap) behind a WINDOW: Club Stage 1's KitDialog values, which that dialog now reads from
+     here. Read only by the admin kit today, so no coach screen changes. (The coach bar's sheet scrim is
+     deliberately lighter — a sheet, not a window — and keeps its own value.) */
+  --home-scrim: rgba(36, 30, 21, 0.34);
 }
 
 /* ─── Coaches Portal under an explicit DARK preference (Nav Unification Stage G) ────────────
@@ -1155,6 +1161,8 @@ html[data-user-theme="dark"] [data-coach-warm-enabled],
   /* Popover card shadow (StartMenu + WorkspacesPill paint on --home-card). Mirrors the value the
      consumer shell's dark gate already uses. */
   --home-shadow:      0 1px 2px rgba(0, 0, 0, 0.3), 0 6px 18px rgba(0, 0, 0, 0.45);
+  /* The dark scrim behind a window (see the warm block's --home-scrim). */
+  --home-scrim:       rgba(13, 17, 26, 0.55);
 }
 
 /* ═══ THE ADMIN ON THE KIT (Admin Design Continuity, Phase 1) ═════════════════════════════════════
@@ -1881,6 +1889,127 @@ h1, h2, h3, h4, h5, h6 {
   background: var(--danger);
   box-shadow: 0 0 6px rgba(var(--danger-rgb), 0.7);
 }
+
+/* ═══ THE ADMIN'S SHARED PARTS ON THE KIT (Admin Design Continuity slice 2 — switch on only) ═══════
+   The admin shell's console overrides (`admin.module.css`: square flat buttons, 2px tags, mono lime
+   headings, the mono `.font-sans` shim, the `.btn-sm` shim) stop at the kit — each carries
+   `:where(:not([data-admin-kit] *))`, so they weigh and match exactly as before with the switch off.
+   With it on, the global recipes above and the warm skin show through, as they do in the coaches
+   portal, and these rules finish the job: type follows the kit (F2 — the body face on buttons and
+   labels, monospace only on eyebrows and chips) and the tags become the kit's chips.
+   Every rule keys off `[data-admin-kit]`: inert with the switch off (the identity check holds it).
+   ⚠ TOKENS ONLY. */
+
+/* ── Buttons: the portal's own button (body face, 14px, sentence case as written, 6px corner) ──
+   The portal's buttons (`coaches.module.css` `.btnPrimary`/`.btnSecondary`, 232 uses) wear the body
+   face at the body step; the ratified drawings draw the same. No glow and no lift: the kit is calm. */
+[data-admin-kit] .btn:where(:not([data-public-preview] *)) {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
+  letter-spacing: normal;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+[data-admin-kit] .btn:where(:not([data-public-preview] *)):hover,
+[data-admin-kit] .btn:where(:not([data-public-preview] *)):active { transform: none; box-shadow: none; }
+[data-admin-kit] .btn-xs:where(:not([data-public-preview] *)) { font-size: var(--type-support); }
+[data-admin-kit] .btn-lg:where(:not([data-public-preview] *)) { font-size: var(--type-heading); }
+/* The admin's compact button (`.btn-data`, its standard size for page and row actions) leaves the
+   console face: the body face at the support step, as written (no forced capitals). */
+[data-admin-kit] .btn-data:where(:not([data-public-preview] *)) {
+  font-size: var(--type-support);
+  letter-spacing: normal;
+  text-transform: none;
+  border-radius: var(--radius-sm);
+}
+/* The primary action is the portal's ink-on-lime in BOTH themes (the drawings; R1 — never the
+   organization's colour). Warm already paints `.btn-primary` this way; dark joins it here. */
+[data-admin-kit] .btn-primary:where(:not([data-public-preview] *)) {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+[data-admin-kit] .btn-primary:where(:not([data-public-preview] *)):hover {
+  background: rgba(var(--home-lime-rgb), 0.82);
+  filter: none;
+}
+/* `.btn-secondary` has never had a rule (33 admin uses render as bare text). On the kit it is the
+   portal's secondary button — the card, a strong hairline, the secondary ink. */
+[data-admin-kit] .btn-secondary:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  border: 1px solid var(--home-line-strong);
+}
+[data-admin-kit] .btn-secondary:where(:not([data-public-preview] *)):hover { background: var(--home-olive-soft); color: var(--text-primary); }
+
+/* ── Tags → the kit's chips: the data face at the token step, a pill, a tint of its own hue ──
+   Badge ink is the portal's AA-corrected chip ink (`--badge-*-ink`). A tag that NAMES something
+   (a year, a season, a role, "trial") is not a verdict, so `.badge-primary` is the quiet chip —
+   the org-tinted wash with olive text the inventory flagged (§3) cannot arise. */
+[data-admin-kit] .badge:where(:not([data-public-preview] *)) {
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid transparent;
+}
+[data-admin-kit] .badge-success:where(:not([data-public-preview] *)) { color: var(--badge-success-ink); background: rgba(var(--success-rgb), 0.08); border-color: rgba(var(--success-rgb), 0.28); }
+[data-admin-kit] .badge-warning:where(:not([data-public-preview] *)) { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
+[data-admin-kit] .badge-danger:where(:not([data-public-preview] *))  { color: var(--badge-danger-ink);  background: rgba(var(--danger-rgb), 0.08);  border-color: rgba(var(--danger-rgb), 0.3); }
+[data-admin-kit] .badge-info:where(:not([data-public-preview] *))    { color: var(--info); background: rgba(var(--info-rgb), 0.08); border-color: rgba(var(--info-rgb), 0.3); }
+[data-admin-kit] .badge-neutral:where(:not([data-public-preview] *)),
+[data-admin-kit] .badge-primary:where(:not([data-public-preview] *)),
+[data-admin-kit] .badge-purple:where(:not([data-public-preview] *))  { color: var(--text-secondary); background: var(--home-olive-soft); border-color: var(--home-line-strong); }
+
+/* ── Labels ── the portal's field label (`coaches.module.css` `.label`): body face, support step,
+   tertiary ink, small capitals kept. The HUD eyebrow → the kit's eyebrow (`CoachKit` `.eye`). */
+[data-admin-kit] .form-label:where(:not([data-public-preview] *)) {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+[data-admin-kit] .hud-label:where(:not([data-public-preview] *)) {
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+
+/* ── The empty state (`.empty-state`, 22 admin uses): its heading inherits `--white-30`, which the
+   warm block makes a HAIRLINE — a line colour as text (the slice 2 sweep: 1.4:1 on cream). The kit's
+   empty state: the heading in the primary ink, the rest tertiary. ── */
+[data-admin-kit] .empty-state:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+[data-admin-kit] .empty-state:where(:not([data-public-preview] *)) h3 { color: var(--text-primary); }
+
+/* ── The card → the kit's card: 8px corner, no lift, no glow. Colours stay on the tokens (a card
+   that names its own border — an error card — keeps it). ── */
+[data-admin-kit] .card:where(:not([data-public-preview] *)) { border-radius: 8px; box-shadow: none; }
+[data-admin-kit] .card:where(:not([data-public-preview] *)):hover,
+[data-admin-kit] .card:where(:not([data-public-preview] *)):active { transform: none; box-shadow: none; }
+
+/* ── The palette's FIXED utility colours → the theme (Tailwind's `colors` are hex, not tokens) ──
+   Only the ones admin code uses today (Organization overview, Coaches portal links, the hub's
+   legacy tournament-only door, two tournament screens). A new one belongs on a token instead. */
+[data-admin-kit] .text-fl-text:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+[data-admin-kit] .text-data-gray:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+[data-admin-kit] .text-blueprint-blue:where(:not([data-public-preview] *)),
+[data-admin-kit] .text-logic-lime:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+[data-admin-kit] .border-blueprint-blue\/60:where(:not([data-public-preview] *)) { border-color: var(--home-line); }
+[data-admin-kit] .hover\:border-blueprint-blue:where(:not([data-public-preview] *)):hover { border-color: var(--home-olive); }
+[data-admin-kit] .text-green-300:where(:not([data-public-preview] *)) { color: var(--badge-success-ink); }
+[data-admin-kit] .text-yellow-300:where(:not([data-public-preview] *)) { color: var(--badge-warning-ink); }
+[data-admin-kit] .text-red-300:where(:not([data-public-preview] *)) { color: var(--badge-danger-ink); }
+[data-admin-kit] .border-green-500\/35:where(:not([data-public-preview] *)),
+[data-admin-kit] .border-green-500\/40:where(:not([data-public-preview] *)) { border-color: rgba(var(--success-rgb), 0.35); }
+[data-admin-kit] .border-yellow-400\/35:where(:not([data-public-preview] *)) { border-color: rgba(var(--warning-rgb), 0.35); }
+[data-admin-kit] .border-red-500\/40:where(:not([data-public-preview] *)) { border-color: rgba(var(--danger-rgb), 0.4); }
+[data-admin-kit] .bg-green-500\/10:where(:not([data-public-preview] *)) { background: rgba(var(--success-rgb), 0.08); }
+[data-admin-kit] .bg-yellow-400\/10:where(:not([data-public-preview] *)) { background: rgba(var(--warning-rgb), 0.08); }
+[data-admin-kit] .border-white\/10:where(:not([data-public-preview] *)) { border-color: var(--home-line-strong); }
+[data-admin-kit] .bg-white\/5:where(:not([data-public-preview] *)) { background: var(--home-olive-soft); }
 
 /* ─── Forms ─────────────────────────────────────────────────────────────────── */
 .form-group { display: flex; flex-direction: column; gap: 0.4rem; }

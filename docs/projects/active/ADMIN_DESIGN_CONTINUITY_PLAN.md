@@ -5,7 +5,8 @@
 > **Slice 1 (the switch, the theme, the frame, Families + Public site) BUILT 2026-09-25** — results in
 > §3a; /simplify + /review done; **COMMITTED `1b3cd541` 2026-09-25** (not pushed — staging shows it
 > once `dev` is pushed). Owner QA walk: at slice 6 (owner, 2026-09-25). Club Stage 1's screens session
-> may now start. Next: slice 2.
+> may now start. **Slice 2 (buttons, chips, type; House league; Organization, setup, Notifications)
+> BUILT 2026-09-26** — results in §3a; /simplify + /review done 2026-09-26. Next: slice 3.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -162,7 +163,7 @@ foundation's release day.
 |---|---|---|
 | 0 | Baseline: every admin + guest screen in the invariant sweep (today's dark), the switch-off identity check, contrast grounds. Needs the dev server alone. | **COMMITTED `459b3bbd` 2026-09-25** — results below |
 | 1 | The switch · theme gaps · R1/F1 · the frame (top strip, rail, phone bar + More, page header, event header) · Families · Public site editor | **COMMITTED `1b3cd541` 2026-09-25** — results below; walked at slice 6 |
-| 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | not started |
+| 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | **BUILT 2026-09-26** — results below; /simplify + /review done; walked at slice 6 |
 | 3 | Rep Teams · Accounting (F4 dense tables) | not started |
 | 4 | Tournaments (split by job if needed — record the split here first) | not started |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | not started |
@@ -362,6 +363,125 @@ set (182 pictures) and the coach "before" sweeps were taken on the untouched tre
   the frame + kit + both theme-gap readers' neighbourhoods), before vs after:** Warm 97 → 97 findings,
   Dark 646 → 646, none gone, none new, every pair measured. (The Warm "before" already held 28
   findings beyond the coach baseline — other sessions' work, not this slice's; recorded, not touched.)
+
+
+**Slice 2 — results (2026-09-26).** Two quiet windows on the owner's word (the "before" set and the
+"after" set + switch-on sweeps). Scope agreed at the start (owner, 2026-09-26): **F2 in two layers** —
+the shared parts now, each area's own stylesheets with its own slice (Rep Teams/Accounting 3,
+Tournaments 4, Help 5); **the Hub is Club Stage 1's** except setup (every plan but a Club owner's) and
+Notifications.
+- **The console look stops at the kit.** All 26 of the admin shell's console overrides
+  (`admin.module.css`: square flat buttons, 2px tags, mono lime h1/h2, the mono `.font-sans` and
+  `.btn-sm` shims, square form fields and cards, lime `.text-primary`) carry
+  `:where(:not([data-admin-kit] *))` — zero added specificity, so with the switch off each matches and
+  weighs exactly as before; with it on the global recipes and the warm skin show through, as in the
+  coaches portal. Guarded (`admin-kit-guard`: every override selector carries it, ≥24 exist).
+  `AdminPageHeader`'s title is one class again (slice 1's two-deep workaround existed only to beat the
+  h1 override).
+- **The shared parts on the kit** (`app/globals.css`, after the badge family; every rule stops at a
+  public preview — `:where(:not([data-public-preview] *))`, guarded): **buttons** are the portal's own
+  button (body face, 14px, 650, 6px corner, no glow or lift — the portal's `.btnPrimary`/`.btnSecondary`
+  recipe, 232 uses, not its 43 global-`.btn` uses in the display face); `.btn-data` (the admin's
+  compact button) leaves the console face for the body face at 12px, as written; **the primary action is
+  ink-on-lime in both themes** (dark joins warm, as drawn); `.btn-secondary` — never defined, 33 uses
+  rendered as bare text — becomes the portal's secondary button on the kit only. **Tags** become the
+  kit's chips (data face, token step, pill, a tint of their own hue, the portal's AA badge inks).
+  **`.badge-primary` settled as the quiet chip**: every use names something (a year, a season, a role,
+  "trial") — not a verdict — so it shares `.badge-neutral`'s chip and the org-tinted-wash-with-olive-text
+  pairing (inventory §3) cannot arise. **Labels**: `.form-label` → the portal's field label (body face,
+  12px, tertiary, small capitals kept); `.hud-label` → the kit eyebrow. **Cards**: 8px, no lift, no glow.
+  **Tailwind's fixed palette** (`text-fl-text`, `text-data-gray`, `text-blueprint-blue`,
+  `text-logic-lime`, the green/yellow/red chips, …) is hex, not tokens — the ones admin code uses are
+  mapped to tokens under the kit (Organization overview, Coaches portal links, the hub's legacy door).
+- **A themed scrim token** (`--home-scrim`, the Phase 0 gap): the coach bar's own two values, in the
+  warm block and the dark gate; read only by the admin kit (no coach screen changes).
+- **Hand-set inline colours:** `useKitStyle()` (`AdminKitProvider`) returns `kx(legacy, kit)` — the
+  EXACT legacy object while the switch is off, the legacy style with a token patch while it is on; the
+  patches live in `components/admin/kit/kit-inline.ts` (buttons, card, empty box, good box, chosen /
+  option, chip tones, inks). Where a dark token equals a literal exactly, the literal became the token
+  (`#60a5fa`→`--info-light`, `#4ade80`→`--success-light`, `#fbbf24`→`--warning-light`,
+  `#f87171`→`--danger-light`) — pixel-identical off, theme-true on.
+- **Restyled end to end:** House league (all 8 screens: seasons, a season, ledger, notifications,
+  registrations incl. the registrar's view, schedule, standings, teams & draft — cards, chips, fields,
+  switches, windows, the draft board, the schedule, the tables), setup (for every plan but a Club owner;
+  the plan chooser's inside is the marketing pricing component and is not the admin's to restyle),
+  Notifications (the admin frame; the feed body is the portal's own and already themed), Organization
+  overview, the Venue library's cards and fields (Stage 1 had its header), Coaches portal links, the
+  organization's Tournaments list and its windows, PDF settings, the billing mock portal.
+- **F3 re-homings:** House league — the subtitle's organization name → the eyebrow ("all seasons" is
+  the list itself). A season's Ledger / Standings — the breadcrumb → the eyebrow (still a link to House
+  league) + the way up to the season (its name). Registrations / Schedule / Teams & draft — the season's
+  name (the subtitle) → the way up, in the leading corner. Send notification — the "← Registrations" link
+  → the header's way up (same door); "Email registrants for this season" → not re-homed (a description;
+  the Recipients choice says it). Preview email — "To: {audience}" → the preview's first row (TO), where
+  a reader looks for who an email is addressed to. Organization overview — no subtitle. Coaches portal
+  links, Tournaments, PDF settings, Notifications — their description lines are **not re-homed**: each
+  describes the page, not a fact on it, and the sections below say the same in their own words. The
+  Tournaments slot count ("2 / 3 slots") stays with the action it limits. The setup page's welcome line
+  is **kept** — a greeting in a centred welcome, not a page header (flagged to the owner).
+- **Word casing only, from the kit:** kit headers are in sentence case ("House league", "Teams & draft",
+  "Send notification", "PDF settings", "Coaches portal links"); body text and button labels untouched.
+  The required-field asterisk is in the label's own ink on the kit (the portal-wide 2026-08-25 ruling —
+  red means something went wrong).
+- **Found and fixed on the kit only** (a legacy fix would change a switch-off pixel): the org
+  Tournaments pool-names divider reads `--border-1`, an undefined token, so it has never drawn — the kit
+  draws it. Registrations' row hover painted `--white-03`, which is the page's own paper on warm.
+- **Found, written down, not fixed:** (1) the Rep Teams **program-year pages answer "not found"** for the
+  rep club's current and past program years (they rendered at slice 1) — five identity screens could not
+  be captured either side; a fixture or data change since slice 1, not this slice (Club Stage 1's
+  sessions or a reseed); (2) the coaches portal's own notifications feed paints its filter-chip and
+  segment grounds with fixed whites (invisible on cream) — the admin copy is fine because the feed body
+  is shared and its INK is already semantic; the portal's grounds are the portal's to fix; (3)
+  `--plan-badge-ok` in setup's stylesheet is defined and never read.
+- **Deliberately not as drawn (flagged):** button radius is the portal's real 6px and height its real
+  padding, not the drawing's 9px/40px (slice 1's rule: the real portal over the drawing); field labels
+  are the portal's real small-capitals label, not the drawing's sentence-case label; House league's
+  "Completed" season is the quiet chip (a finished season is not a verdict; its purple had no token);
+  practices wear the portal's own practice colour.
+- **Gates:** `scripts/check-public-tokens.mjs` gained `checkRestyledAreas` — every colour literal
+  (white/black alphas and one-off tints included, which the older ratchets skip) in a restyled area's
+  files may only go down: slice 1's Families + Public site and slice 2's areas, 16 files, 187 legacy
+  literals held (`scripts/.admin-restyled-baseline.json`; proven to fail on a planted literal). The
+  strict kit check now holds 659 kit rules. Unit: `admin-kit-guard` rules 4 and 5.
+- **Verification:** **Identity (switch off): 166 of 172 pictures pixel-identical**; the 6 that differ are
+  live data from another session's walk during the window (a new tryout application → the hub's "Needs
+  attention" panel ×3 desktop screens and a "Pending 1" stat on Rep Teams; the Families counts ×2) —
+  styling identical in each (diff images read); 10 not compared = the five Rep Teams program-year screens,
+  which 404 today. The screens touched after the full capture were retaken: 24 of 24 identical. The
+  "before" set was built in five passes and the "after" in four, each on a freshly restarted dev server —
+  a single 86-screen capture trips the 1.5 GB memory floor after ~35–40 screens on this machine. **Switch-on
+  sweep** (16 slice screens + three global-reach samples, 361/390/768/1440): **Warm** — contrast 916 → 106,
+  tap floor 418 → 379, control width 81 → 69, overflow 21 → 21, type ladder 12 → 12 against the switch-off
+  dark baseline, and **no screen-width-rule group worse**; the last two warm findings in this slice's
+  screens (the Venue library empty-state heading — the global `.empty-state` inherits `--white-30`, a
+  hairline on cream — and the help callout's link) → the first fixed in the kit layer, the second is the
+  help guide's palette (slice 5). **Dark** — contrast 916 → 572 overall; on this slice's own screens,
+  after moving the faint dark-ramp greys used as text (`--white-30…45`, ~3.8:1 on the kit's pitch-black
+  ground) to the tertiary ink, **182 contrast findings remain and 174 are the phone bar's inactive labels**
+  (the shared coach bar, slice 1's open question) + 8 the help tooltip button (slice 5). The dark groups
+  that are worse than the baseline are all outside this slice's restyle: the phone bar, and Rep Teams /
+  Accounting legacy greys now on the kit's darker ground (slice 3). Gate: typecheck clean, lint 0 errors,
+  `verify:changed` green, unit 5,042/5,042, token gate green (659 kit rules, 187 restyled legacy literals held).
+- **`/simplify` (4 lenses, 2026-09-26):** fixed — one `useKitButtons` hook for the pages' three hand-set
+  buttons (House league schedule + teams had each built it inline); status tags swap onto the global
+  `.badge-*` classes instead of an inline chip patch (`KIT_CHIP` removed); `KIT_INK.asterisk`; org
+  Tournaments on `kx` like every other page; per-row inline styles hoisted out of render (registrations,
+  standings); Club Stage 1's `KitDialog` scrim onto the new `--home-scrim` token instead of its own
+  warm override; the gate's two exemption checks into one `exemptAt`, one `COLOR_LITERAL` pattern, and the
+  restyled-area ratchet held **by value** (a count alone let one literal be swapped for a new one —
+  proven to catch it). Declined: one shared kit stylesheet across the area modules (the release slice's
+  unification — moving rules between sheets now risks bundle-order changes switch-off), remapping the faint
+  dark-ramp tokens at token level (reaches every legacy screen), and a Tailwind config change (same reach).
+- **`/review` (standard tier, 3 lenses, 2026-09-26):** switch-off identity + page logic — none; the global
+  layer's reach (coaches portal, public previews, switch-off) — none; the build check + guard test — **2
+  fixed**: the strict kit check read a selector as kit by *substring*, so the legacy exclusion
+  `:where(:not([data-admin-kit] *))` swept the 19 console-look rules it fences off into the zero-literal
+  kit check (passing only because none held a literal yet — kit rules 678 → 659 once read correctly), and
+  the restyled ratchet counted `#fff` and `#ffffff` as different colours (short hex now written long).
+  Advisory, not fixed: the ratchet does not count the bare keywords `white`/`black` (the strict kit check
+  does; the ratchet's scope is literals with a value), and `.test.ts`/`.d.ts` would be walked if one ever
+  lands in a restyled directory (none does). check:layout `--changed` not run — globals.css widens it to
+  every screen; the identity capture and the switch-on sweep above stand in.
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as

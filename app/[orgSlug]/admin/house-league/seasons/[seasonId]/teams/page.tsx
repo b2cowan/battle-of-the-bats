@@ -24,6 +24,9 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueTeam, LeagueRegistration, LeagueDraftState } from '@/lib/types';
 
@@ -101,6 +104,8 @@ const BTN_DANGER: React.CSSProperties = {
   cursor: 'pointer',
   fontFamily: 'inherit',
 };
+// The kit's buttons wear these while the Admin Design Continuity switch is on (useKitButtons).
+const LEGACY_BUTTONS = { primary: BTN_PRIMARY, secondary: BTN_SECONDARY, danger: BTN_DANGER };
 
 // ── DnD sub-components ────────────────────────────────────────────────────────
 
@@ -220,6 +225,8 @@ function CreateTeamsModal({
   /** Attribution for the upgrade_intent_clicked event from the at-cap CTA. */
   orgId?: string | null;
 }) {
+  const B = useKitButtons(LEGACY_BUTTONS);
+  const kx = useKitStyle();
   const unlimited = !Number.isFinite(remaining);
   const maxCreatable = unlimited ? 20 : Math.max(0, Math.min(20, remaining));
   const atCap = maxCreatable === 0;
@@ -280,7 +287,7 @@ function CreateTeamsModal({
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginBottom: '1rem' }}>
               {names.map((name, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', width: 20, textAlign: 'right', flexShrink: 0 }}>
+                  <span style={kx({ fontSize: '0.75rem', color: 'var(--white-35)', width: 20, textAlign: 'right', flexShrink: 0 }, KIT_INK.tertiary)}>
                     {i + 1}.
                   </span>
                   <input
@@ -296,11 +303,11 @@ function CreateTeamsModal({
         )}
 
         <div className={styles.modalFooter}>
-          <button style={BTN_SECONDARY} onClick={onClose}>{atCap ? 'Close' : 'Cancel'}</button>
+          <button style={B.secondary} onClick={onClose}>{atCap ? 'Close' : 'Cancel'}</button>
           {atCap ? (
             <LeagueUpgradeCta className="btn btn-lime" orgId={orgId} capHit="league_team" />
           ) : (
-            <button style={BTN_PRIMARY} onClick={handleSubmit} disabled={saving}>
+            <button style={B.primary} onClick={handleSubmit} disabled={saving}>
               {saving ? 'Creating…' : `Create ${count} Team${count !== 1 ? 's' : ''}`}
             </button>
           )}
@@ -321,6 +328,8 @@ function EditTeamModal({
   onClose: () => void;
   onSave: (patch: { name?: string; color?: string | null; coachName?: string | null }) => Promise<void>;
 }) {
+  const B = useKitButtons(LEGACY_BUTTONS);
+  const kx = useKitStyle();
   const [form, setForm] = useState<EditTeamForm>({
     name: team.name,
     color: team.color ?? '#60a5fa',
@@ -362,7 +371,7 @@ function EditTeamModal({
               type="color"
               value={form.color}
               onChange={e => set('color', e.target.value)}
-              style={{ width: '100%', height: 38, background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '2px', cursor: 'pointer', padding: 2 }}
+              style={kx({ width: '100%', height: 38, background: 'none', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '2px', cursor: 'pointer', padding: 2 }, { border: '1px solid var(--home-line-strong)', borderRadius: '7px' })}
             />
           </div>
           <div className={styles.field}>
@@ -372,8 +381,8 @@ function EditTeamModal({
         </div>
 
         <div className={styles.modalFooter}>
-          <button style={BTN_SECONDARY} onClick={onClose}>Cancel</button>
-          <button style={BTN_PRIMARY} onClick={handleSubmit} disabled={saving}>
+          <button style={B.secondary} onClick={onClose}>Cancel</button>
+          <button style={B.primary} onClick={handleSubmit} disabled={saving}>
             {saving ? 'Saving…' : 'Save'}
           </button>
         </div>
@@ -403,6 +412,7 @@ function DraftOverlay({
   onFinalize: () => Promise<void>;
   onClose: () => void;
 }) {
+  const B = useKitButtons(LEGACY_BUTTONS);
   const teamMap = useMemo(() => new Map(teams.map(t => [t.id, t])), [teams]);
   const currentTeam = teamMap.get(draft.currentTeamId);
   const allPicked = remainingPlayers.length === 0;
@@ -418,7 +428,7 @@ function DraftOverlay({
             </span>
           )}
         </div>
-        <button style={BTN_SECONDARY} onClick={onClose}>Exit Draft</button>
+        <button style={B.secondary} onClick={onClose}>Exit Draft</button>
       </div>
 
       <div className={styles.draftPickOrder}>
@@ -448,7 +458,7 @@ function DraftOverlay({
                 {playerMeta(r) && <div className={styles.playerMeta}>{playerMeta(r)}</div>}
               </div>
               <button
-                style={BTN_PRIMARY}
+                style={B.primary}
                 onClick={() => onPick(r.id)}
                 disabled={saving}
               >
@@ -462,7 +472,7 @@ function DraftOverlay({
       <div className={styles.draftFooter}>
         <div style={{ display: 'flex', gap: '0.6rem' }}>
           <button
-            style={BTN_SECONDARY}
+            style={B.secondary}
             onClick={onUndo}
             disabled={saving || draft.picks.length === 0}
           >
@@ -470,7 +480,7 @@ function DraftOverlay({
           </button>
         </div>
         <button
-          style={allPicked ? BTN_PRIMARY : { ...BTN_SECONDARY, opacity: 0.5, cursor: 'not-allowed' }}
+          style={allPicked ? B.primary : { ...B.secondary, opacity: 0.5, cursor: 'not-allowed' }}
           onClick={allPicked ? onFinalize : undefined}
           disabled={saving || !allPicked}
           title={!allPicked ? 'All players must be picked before finalizing' : undefined}
@@ -487,6 +497,8 @@ function DraftOverlay({
 export default function TeamsPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg, userRole, userCapabilities } = useOrg();
+  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
+  const B = useKitButtons(LEGACY_BUTTONS);
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
@@ -816,7 +828,13 @@ export default function TeamsPage() {
 
   return (
     <div className={`${styles.page} ${styles.teamsPage}`}>
-      {/* Header */}
+      {/* Header — today's as `legacy` while the switch is off. On the kit (F3) the season's name (the
+          subtitle) is the way up, in the leading corner. */}
+      <AdminPageHeader
+        eyebrow="House league"
+        title="Teams & draft"
+        backTo={{ href: backHref, label: season?.name ?? 'Season' }}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <Link href={backHref} style={{ color: 'var(--white-40)', display: 'flex', alignItems: 'center' }}>
@@ -829,6 +847,8 @@ export default function TeamsPage() {
           </div>
         </div>
       </div>
+        }
+      />
 
       {divisions.length === 0 && (
         <div className={styles.emptyState}>
@@ -856,28 +876,28 @@ export default function TeamsPage() {
             )}
 
             {canManage && (
-              <button style={BTN_SECONDARY} onClick={() => setShowCreateModal(true)}>
+              <button style={B.secondary} onClick={() => setShowCreateModal(true)}>
                 <Plus size={14} style={{ marginRight: 4 }} />
                 {divTeams.length === 0 ? 'Create Teams' : 'Add Teams'}
               </button>
             )}
 
             {canManage && divTeams.length > 0 && pool.length > 0 && (
-              <button style={BTN_SECONDARY} onClick={() => setShowRandomizeConfirm(true)} disabled={saving}>
+              <button style={B.secondary} onClick={() => setShowRandomizeConfirm(true)} disabled={saving}>
                 <Shuffle size={14} style={{ marginRight: 4 }} />
                 Randomize
               </button>
             )}
 
             {canManage && divTeams.length > 0 && !draft && (
-              <button style={BTN_SECONDARY} onClick={handleStartDraft} disabled={saving}>
+              <button style={B.secondary} onClick={handleStartDraft} disabled={saving}>
                 <Swords size={14} style={{ marginRight: 4 }} />
                 Start Draft
               </button>
             )}
 
             {draft && (
-              <button style={BTN_PRIMARY} onClick={() => setDraftOpen(true)}>
+              <button style={B.primary} onClick={() => setDraftOpen(true)}>
                 <Swords size={14} style={{ marginRight: 4 }} />
                 Resume Draft
               </button>
@@ -893,7 +913,7 @@ export default function TeamsPage() {
             {canManage && assignedCount > 0 && (
               <>
                 <div style={{ marginLeft: 'auto' }} />
-                <button style={BTN_DANGER} onClick={() => setShowClearConfirm(true)} disabled={saving}>
+                <button style={B.danger} onClick={() => setShowClearConfirm(true)} disabled={saving}>
                   Clear All Assignments
                 </button>
               </>
@@ -991,8 +1011,8 @@ export default function TeamsPage() {
               This can only be done if no players are assigned to this team.
             </p>
             <div className={styles.modalFooter}>
-              <button style={BTN_SECONDARY} onClick={() => setDeleteTeam(null)}>Cancel</button>
-              <button style={BTN_DANGER} onClick={() => handleDeleteTeam(deleteTeam)} disabled={saving}>
+              <button style={B.secondary} onClick={() => setDeleteTeam(null)}>Cancel</button>
+              <button style={B.danger} onClick={() => handleDeleteTeam(deleteTeam)} disabled={saving}>
                 {saving ? 'Deleting…' : 'Delete Team'}
               </button>
             </div>
@@ -1013,8 +1033,8 @@ export default function TeamsPage() {
               Already-assigned players are not affected.
             </p>
             <div className={styles.modalFooter}>
-              <button style={BTN_SECONDARY} onClick={() => setShowRandomizeConfirm(false)}>Cancel</button>
-              <button style={BTN_PRIMARY} onClick={handleRandomize}>Randomize</button>
+              <button style={B.secondary} onClick={() => setShowRandomizeConfirm(false)}>Cancel</button>
+              <button style={B.primary} onClick={handleRandomize}>Randomize</button>
             </div>
           </div>
         </div>
@@ -1032,8 +1052,8 @@ export default function TeamsPage() {
               {selectedDiv?.name}. Any in-progress draft will also be cleared. This cannot be undone.
             </p>
             <div className={styles.modalFooter}>
-              <button style={BTN_SECONDARY} onClick={() => setShowClearConfirm(false)}>Cancel</button>
-              <button style={BTN_DANGER} onClick={handleClearAll}>Clear All</button>
+              <button style={B.secondary} onClick={() => setShowClearConfirm(false)}>Cancel</button>
+              <button style={B.danger} onClick={handleClearAll}>Clear All</button>
             </div>
           </div>
         </div>

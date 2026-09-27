@@ -17,6 +17,10 @@
 > customers see has changed. On the way it found real defects, written down for their own fixes: a
 > button off the edge of the tournament Teams screen on a phone, a Members list whose order shuffles
 > between visits, and some grey and navy text too faint to read comfortably on the dark screens.
+> **Slices 1–2 built (2026-09-25/26), still behind the switch:** the new frame and both themes (slice 1);
+> then the coaches portal's buttons, status chips and type on every admin screen, and House league, the
+> Organization screens, setup and Notifications restyled end to end (slice 2). Customers still see
+> nothing; the owner walks it all at slice 6.
 
 ## What it is
 One design system and one theme choice across every working screen in FieldLogicHQ. The club admin,

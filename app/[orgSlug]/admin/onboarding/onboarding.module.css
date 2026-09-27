@@ -1004,3 +1004,210 @@
   color: var(--data-gray);
   line-height: 1.4;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
+   Setup ("Welcome to FieldLogicHQ", the plan chooser, the setup windows) on the coaches portal's
+   kit, for every plan except a Club owner (who gets Club Stage 1's checklist). Same steps, words and
+   actions; the kit card, the portal's window and field, the olive selection; titles leave the
+   console face (F2). Scoped under `[data-admin-kit]` — the legacy rules above render untouched
+   while the switch is off. ⚠ TOKENS ONLY (checkAdminKit). */
+
+:global([data-admin-kit]) .headerIcon {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .title,
+:global([data-admin-kit]) .modalTitle {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .sub,
+:global([data-admin-kit]) .modalSub { color: var(--text-secondary); }
+
+/* ── The steps → kit cards; a done step says so in olive, not a green wash ── */
+:global([data-admin-kit]) .step {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .stepDone { border-color: rgba(var(--success-rgb), 0.35); background: var(--card-bg); }
+:global([data-admin-kit]) .stepIcon { color: var(--text-tertiary); }
+:global([data-admin-kit]) .stepDone .stepIcon { color: var(--home-olive); }
+:global([data-admin-kit]) .stepTitle { color: var(--text-primary); }
+:global([data-admin-kit]) .stepDesc { color: var(--text-secondary); }
+/* A step's action → the portal's secondary button; the quieter one → a text action. */
+:global([data-admin-kit]) .stepCta {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-primary);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: var(--radius-sm);
+}
+:global([data-admin-kit]) .stepCta:hover { background: var(--home-olive-soft); border-color: var(--home-olive); }
+:global([data-admin-kit]) .stepCtaSecondary { color: var(--home-olive); background: transparent; border-color: transparent; }
+:global([data-admin-kit]) .stepCtaSecondary:hover { background: var(--home-olive-soft); border-color: transparent; }
+:global([data-admin-kit]) .stepCta:disabled,
+:global([data-admin-kit]) .stepCta[aria-disabled="true"],
+:global([data-admin-kit]) .stepCta:disabled:hover,
+:global([data-admin-kit]) .stepCta[aria-disabled="true"]:hover {
+  color: var(--text-tertiary);
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+
+/* ── Founding Season → a kit card with the olive edge; its eyebrow is the kit's ── */
+:global([data-admin-kit]) .foundingSeasonBanner,
+:global([data-admin-kit]) .foundingSeasonWelcome {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--home-olive);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .foundingSeasonBannerEyebrow,
+:global([data-admin-kit]) .foundingSeasonWelcomeEyebrow {
+  font-size: var(--type-label);
+  letter-spacing: 0.09em;
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .foundingSeasonBannerTitle,
+:global([data-admin-kit]) .foundingSeasonWelcomeTitle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-heading);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .foundingSeasonBannerCopy,
+:global([data-admin-kit]) .foundingSeasonWelcomeCopy {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  color: var(--text-secondary);
+}
+
+/* ── The windows (plan chooser, setup steps) → the portal's window over its scrim ── */
+:global([data-admin-kit]) .modalOverlay { background: var(--home-scrim); backdrop-filter: none; }
+:global([data-admin-kit]) .planModal,
+:global([data-admin-kit]) .workflowModal {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+/* The required plan choice is part of the page, not a window. */
+:global([data-admin-kit]) .planStage {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 12px;
+  box-shadow: none;
+}
+:global([data-admin-kit]) .modalClose {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .modalClose:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
+:global([data-admin-kit]) .workflowModalFooter { border-top-color: var(--home-line); }
+
+/* The wizard's progress: the kit's eyebrow and the olive bar. */
+:global([data-admin-kit]) .wizardChrome {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .wizardProgressBar { background: var(--home-line); border-radius: 6px; }
+:global([data-admin-kit]) .wizardProgressBar span { background: var(--home-olive); }
+
+/* ── Fields ── the portal's label; hints and legends in the tertiary ink ── */
+:global([data-admin-kit]) .fieldLabel {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .fieldHint,
+:global([data-admin-kit]) .requiredLegend,
+:global([data-admin-kit]) .venueSurfaceExplain { color: var(--text-tertiary); }
+/* The required mark is a plain asterisk in the label's own ink (portal-wide ruling 2026-08-25). */
+:global([data-admin-kit]) .requiredLegend span { color: inherit; }
+
+/* ── Setup blocks, presets, lists → kit cards; the chosen one is the olive selection ── */
+:global([data-admin-kit]) .setupBlock,
+:global([data-admin-kit]) .venueSurfaceBlock,
+:global([data-admin-kit]) .reviewPanel,
+:global([data-admin-kit]) .venueSummaryRow,
+:global([data-admin-kit]) .divisionInlineShell {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .setupBlockHeader span { color: var(--text-primary); }
+:global([data-admin-kit]) .setupBlockHeader small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .presetButtonCompact,
+:global([data-admin-kit]) .presetCard {
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .presetCard strong { color: var(--text-primary); }
+:global([data-admin-kit]) .presetButtonCompactActive,
+:global([data-admin-kit]) .presetButtonCompact:hover,
+:global([data-admin-kit]) .presetCardActive,
+:global([data-admin-kit]) .presetCard:hover {
+  color: var(--text-primary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .divisionHeaderRow,
+:global([data-admin-kit]) .poolMiniField,
+:global([data-admin-kit]) .poolNameField { color: var(--text-tertiary); }
+:global([data-admin-kit]) .venueComposer,
+:global([data-admin-kit]) .poolSetupPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .venueSummaryRowEditing { background: var(--home-olive-soft); border-color: var(--home-olive); }
+:global([data-admin-kit]) .venueSummaryName { color: var(--text-primary); }
+:global([data-admin-kit]) .venueSummaryMeta { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-tertiary); }
+:global([data-admin-kit]) .venueSummaryEditingTag { color: var(--home-olive); }
+:global([data-admin-kit]) .compactCheckbox,
+:global([data-admin-kit]) .checkboxLine { color: var(--text-secondary); }
+:global([data-admin-kit]) .iconOnlyButton { color: var(--text-tertiary); border-radius: var(--radius-sm); }
+:global([data-admin-kit]) .iconOnlyButton:hover { color: var(--text-primary); background: var(--home-olive-soft); border-color: var(--home-line); }
+:global([data-admin-kit]) .emptyModalState {
+  color: var(--text-tertiary);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .reviewItem { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .reviewItem span { color: var(--text-tertiary); }
+:global([data-admin-kit]) .reviewItem strong { color: var(--text-primary); }
+:global([data-admin-kit]) .planError {
+  color: var(--text-primary);
+  background: rgba(var(--danger-rgb), 0.07);
+  border-color: rgba(var(--danger-rgb), 0.35);
+  border-radius: 8px;
+}
+
+/* ── The qualifying step's choices → kit option cards ── */
+:global([data-admin-kit]) .qualifyingOption {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .qualifyingOption:hover { border-color: var(--home-olive); background: var(--card-bg); }
+:global([data-admin-kit]) .qualifyingOptionActive { border-color: var(--home-olive); background: var(--home-olive-soft); }
+:global([data-admin-kit]) .qualifyingOptionLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .qualifyingOptionActive .qualifyingOptionLabel { color: var(--home-olive); }
+:global([data-admin-kit]) .qualifyingOptionSub {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}

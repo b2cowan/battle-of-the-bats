@@ -5,6 +5,9 @@ import { DollarSign } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { AccountingEntry, AccountingLedger, LedgerSummary } from '@/lib/types';
 
@@ -41,6 +44,9 @@ export default function LedgerPage() {
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
   const canView = hasCapability(userRole ?? 'staff', userCapabilities ?? null, 'module_house_league');
+  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
+  const kit = useAdminKit();
 
   const [season,  setSeason]  = useState<SeasonInfo | null>(null);
   const [data,    setData]    = useState<LedgerData | null>(null);
@@ -69,14 +75,14 @@ export default function LedgerPage() {
   if (!canView) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>You don&apos;t have access to this page.</p>
+        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>You don&apos;t have access to this page.</p>
       </div>
     );
   }
   if (loading) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Loading…</p>
+        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>Loading…</p>
       </div>
     );
   }
@@ -88,7 +94,13 @@ export default function LedgerPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+      {/* Header — today's as `legacy` while the switch is off. On the kit the breadcrumb becomes the
+          eyebrow (still a link to House league) and the way up to the season (F3). */}
+      <AdminPageHeader
+        eyebrow={<Link href={`/${orgSlug}/admin/house-league`} className={styles.kitCrumb}>House league</Link>}
+        title="Ledger"
+        backTo={season ? { href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season.name } : undefined}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}>
@@ -115,17 +127,19 @@ export default function LedgerPage() {
           </div>
         </div>
       </div>
+        }
+      />
 
       {/* Summary tiles */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '0.85rem', marginBottom: '2rem' }}>
-        <SummaryTile label="Expected" value={fmt(expected)} sub={`${data?.activeCount ?? 0} active × ${fmt(data?.feePerReg ?? 0)}`} color="#60a5fa" />
-        <SummaryTile label="Collected" value={fmt(collected)} sub="Posted entries" color="#4ade80" />
-        <SummaryTile label="Outstanding" value={fmt(outstanding)} sub="Pending entries" color="#fbbf24" />
+        <SummaryTile label="Expected" value={fmt(expected)} sub={`${data?.activeCount ?? 0} active × ${fmt(data?.feePerReg ?? 0)}`} color="var(--info-light)" />
+        <SummaryTile label="Collected" value={fmt(collected)} sub="Posted entries" color="var(--success-light)" />
+        <SummaryTile label="Outstanding" value={fmt(outstanding)} sub="Pending entries" color="var(--warning-light)" />
       </div>
 
       {/* No fee configured */}
       {(data?.feePerReg ?? 0) === 0 && (
-        <div style={{
+        <div style={kx({
           padding: '1rem 1.25rem',
           borderRadius: '2px',
           background: 'var(--white-03)',
@@ -133,21 +147,21 @@ export default function LedgerPage() {
           fontSize: '0.875rem',
           color: 'var(--white-40)',
           marginBottom: '1.5rem',
-        }}>
+        }, { ...KIT_SURFACE.card, ...KIT_INK.secondary })}>
           No registration fee is configured for this season. Set a fee amount in the season settings to track payments here.
         </div>
       )}
 
       {/* Entries table */}
       {entries.length === 0 ? (
-        <div style={{
+        <div style={kx({
           padding: '2.5rem 1.5rem',
           textAlign: 'center',
           border: '1px dashed var(--white-10)',
           borderRadius: '2px',
           color: 'var(--white-35)',
           fontSize: '0.9rem',
-        }}>
+        }, KIT_SURFACE.empty)}>
           No fee entries yet. Entries are created automatically when registrations are approved (if auto-generate fees is enabled).
         </div>
       ) : (
@@ -174,11 +188,11 @@ export default function LedgerPage() {
                     key={e.id}
                     style={{ opacity: isVoid ? 0.4 : 1 }}
                   >
-                    <td style={{ fontWeight: 600, color: '#f0f0f0' }}>
+                    <td style={kx({ fontWeight: 600, color: '#f0f0f0' }, KIT_INK.primary)}>
                       {e.registrationId ? (
                         <Link
                           href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/registrations`}
-                          style={{ color: '#f0f0f0', textDecoration: 'none' }}
+                          style={kx({ color: '#f0f0f0', textDecoration: 'none' }, KIT_INK.primary)}
                         >
                           {playerName}
                         </Link>
@@ -189,9 +203,10 @@ export default function LedgerPage() {
                     </td>
                     <td>
                       <span
-                        className={styles.statusBadge}
+                        className={kit ? `badge ${isPaid ? 'badge-success' : isVoid ? 'badge-neutral' : 'badge-warning'}` : styles.statusBadge}
                         style={
-                          isPaid
+                          kit ? undefined
+                          : isPaid
                             ? { background: 'rgba(74,222,128,0.1)', color: '#4ade80', border: '1px solid rgba(74,222,128,0.25)' }
                             : isVoid
                               ? { background: 'var(--white-5)', color: 'var(--white-30)' }
@@ -204,7 +219,7 @@ export default function LedgerPage() {
                     <td style={{ color: 'var(--white-50)', whiteSpace: 'nowrap' }}>
                       {fmtDate(e.updatedAt)}
                     </td>
-                    <td style={{ color: 'var(--white-40)', fontSize: '0.8rem' }}>
+                    <td style={kx({ color: 'var(--white-40)', fontSize: '0.8rem' }, KIT_INK.tertiary)}>
                       {e.description}
                     </td>
                   </tr>
@@ -215,7 +230,7 @@ export default function LedgerPage() {
         </div>
       )}
 
-      <p style={{ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--white-30)' }}>
+      <p style={kx({ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>
         Fee status is managed from the{' '}
         <Link
           href={`/${orgSlug}/admin/house-league/seasons/${seasonId}/registrations`}
@@ -230,20 +245,21 @@ export default function LedgerPage() {
 }
 
 function SummaryTile({ label, value, sub, color }: { label: string; value: string; sub: string; color: string }) {
+  const kx = useKitStyle();
   return (
-    <div style={{
+    <div style={kx({
       padding: '1rem 1.25rem',
       borderRadius: '2px',
       background: 'var(--white-03)',
       border: '1px solid var(--white-8)',
-    }}>
-      <div style={{ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-35)', marginBottom: '0.4rem' }}>
+    }, KIT_SURFACE.card)}>
+      <div style={kx({ fontSize: '0.65rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-35)', marginBottom: '0.4rem' }, KIT_INK.eyebrow)}>
         {label}
       </div>
       <div style={{ fontSize: '1.5rem', fontWeight: 800, color, fontVariantNumeric: 'tabular-nums', lineHeight: 1.1, marginBottom: '0.25rem' }}>
         {value}
       </div>
-      <div style={{ fontSize: '0.72rem', color: 'var(--white-30)' }}>
+      <div style={kx({ fontSize: '0.72rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>
         {sub}
       </div>
     </div>

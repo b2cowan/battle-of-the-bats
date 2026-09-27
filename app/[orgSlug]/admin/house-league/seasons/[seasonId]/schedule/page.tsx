@@ -15,6 +15,9 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitButtons, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueTeam, LeagueGame, LeagueGameStatus, LeaguePractice, OrgVenue } from '@/lib/types';
 
@@ -274,6 +277,8 @@ const BTN_DANGER: React.CSSProperties = {
   padding: '0.4rem 0.85rem', fontSize: '0.82rem', fontWeight: 600,
   cursor: 'pointer', fontFamily: 'inherit',
 };
+// The kit's buttons wear these while the Admin Design Continuity switch is on (useKitButtons).
+const LEGACY_BUTTONS = { primary: BTN_PRIMARY, secondary: BTN_SECONDARY, danger: BTN_DANGER };
 
 // ── Game Modal (create + edit) ────────────────────────────────────────────────
 
@@ -300,6 +305,7 @@ function GameModal({
   onCancel: () => Promise<void>;
   onClose: () => void;
 }) {
+  const B = useKitButtons(LEGACY_BUTTONS);
   const [form, setForm] = useState<GameForm>(() => {
     if (game) {
       return {
@@ -410,14 +416,14 @@ function GameModal({
 
         <div className={styles.modalFooter}>
           {!isCreate && canManage && (
-            <button style={BTN_DANGER} onClick={onCancelGame} disabled={saving}>
+            <button style={B.danger} onClick={onCancelGame} disabled={saving}>
               Cancel Game
             </button>
           )}
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '0.6rem' }}>
-            <button style={BTN_SECONDARY} onClick={onClose} disabled={saving}>Close</button>
+            <button style={B.secondary} onClick={onClose} disabled={saving}>Close</button>
             {canManage && (
-              <button style={BTN_PRIMARY} onClick={() => onSave(form)} disabled={saving}>
+              <button style={B.primary} onClick={() => onSave(form)} disabled={saving}>
                 {saving ? 'Saving…' : isCreate ? 'Create Game' : 'Save'}
               </button>
             )}
@@ -451,6 +457,8 @@ function GenerateModal({
   onSave: (cfg: GenerateConfig) => Promise<void>;
   onClose: () => void;
 }) {
+  const B = useKitButtons(LEGACY_BUTTONS);
+  const kx = useKitStyle();
   const today = tournamentToday();
   const [config, setConfig] = useState<GenerateConfig>({
     startDate: today, gamesPerWeek: 1, gameTime: '18:00', venueKey: '', location: '',
@@ -478,7 +486,7 @@ function GenerateModal({
           <button className={styles.modalCloseBtn} onClick={onClose} disabled={saving}><X size={18} /></button>
         </div>
 
-        <p style={{ fontSize: '0.82rem', color: 'var(--white-45)', marginBottom: '1rem' }}>
+        <p style={kx({ fontSize: '0.82rem', color: 'var(--white-45)', marginBottom: '1rem' }, KIT_INK.tertiary)}>
           Round-robin: {teams.length} teams · {teams.length % 2 === 0 ? teams.length - 1 : teams.length} rounds · every team plays every other team once.
         </p>
 
@@ -511,7 +519,7 @@ function GenerateModal({
 
         {!preview && (
           <div style={{ textAlign: 'center', padding: '0.5rem 0 1rem' }}>
-            <button style={BTN_SECONDARY} onClick={handlePreview} disabled={previewing || !config.startDate}>
+            <button style={B.secondary} onClick={handlePreview} disabled={previewing || !config.startDate}>
               {previewing ? 'Generating…' : 'Preview Schedule'}
             </button>
           </div>
@@ -520,14 +528,14 @@ function GenerateModal({
         {preview && (
           <>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-              <h3 style={{ margin: 0, fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-40)' }}>
+              <h3 style={kx({ margin: 0, fontSize: '0.78rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-40)' }, KIT_INK.tertiary)}>
                 Preview — {preview.length} games
               </h3>
-              <button style={{ ...BTN_SECONDARY, padding: '0.2rem 0.5rem', fontSize: '0.72rem' }} onClick={() => setPreview(null)}>
+              <button style={{ ...B.secondary, padding: '0.2rem 0.5rem', fontSize: '0.72rem' }} onClick={() => setPreview(null)}>
                 Re-configure
               </button>
             </div>
-            <div style={{ maxHeight: 320, overflowY: 'auto', border: '1px solid var(--white-8)', borderRadius: '2px' }}>
+            <div style={kx({ maxHeight: 320, overflowY: 'auto', border: '1px solid var(--white-8)', borderRadius: '2px' }, { border: KIT_LINE, borderRadius: '8px' })}>
               <table className={styles.previewTable}>
                 <thead>
                   <tr>
@@ -556,9 +564,9 @@ function GenerateModal({
         )}
 
         <div className={styles.modalFooter}>
-          <button style={BTN_SECONDARY} onClick={onClose} disabled={saving}>Cancel</button>
+          <button style={B.secondary} onClick={onClose} disabled={saving}>Cancel</button>
           {preview && (
-            <button style={BTN_PRIMARY} onClick={() => onSave(config)} disabled={saving}>
+            <button style={B.primary} onClick={() => onSave(config)} disabled={saving}>
               {saving ? 'Saving…' : `Save ${preview.length} Games`}
             </button>
           )}
@@ -587,6 +595,7 @@ function PracticeModal({
   onSave: (form: PracticeForm) => Promise<void>;
   onClose: () => void;
 }) {
+  const B = useKitButtons(LEGACY_BUTTONS);
   const today = tournamentToday();
   const [form, setForm] = useState<PracticeForm>({
     recurring: false,
@@ -615,13 +624,13 @@ function PracticeModal({
 
         <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
           <button
-            style={{ ...(!form.recurring ? BTN_PRIMARY : BTN_SECONDARY), flex: 1 }}
+            style={{ ...(!form.recurring ? B.primary : B.secondary), flex: 1 }}
             onClick={() => set('recurring', false)}
           >
             Single
           </button>
           <button
-            style={{ ...(form.recurring ? BTN_PRIMARY : BTN_SECONDARY), flex: 1 }}
+            style={{ ...(form.recurring ? B.primary : B.secondary), flex: 1 }}
             onClick={() => set('recurring', true)}
           >
             Recurring Series
@@ -679,8 +688,8 @@ function PracticeModal({
         </div>
 
         <div className={styles.modalFooter}>
-          <button style={BTN_SECONDARY} onClick={onClose} disabled={saving}>Cancel</button>
-          <button style={BTN_PRIMARY} onClick={() => onSave(form)} disabled={saving}>
+          <button style={B.secondary} onClick={onClose} disabled={saving}>Cancel</button>
+          <button style={B.primary} onClick={() => onSave(form)} disabled={saving}>
             {saving ? 'Saving…' : form.recurring ? 'Create Series' : 'Create Practice'}
           </button>
         </div>
@@ -704,6 +713,8 @@ function CancelPracticeModal({
   onConfirm: (scope: 'one' | 'remaining' | 'all') => Promise<void>;
   onClose: () => void;
 }) {
+  const B = useKitButtons(LEGACY_BUTTONS);
+  const kx = useKitStyle();
   const isRecurring = !!practice.recurrenceGroupId;
   const [scope, setScope] = useState<'one' | 'remaining' | 'all'>('one');
   const dt = practice.scheduledAt ? formatDateTime(practice.scheduledAt) : null;
@@ -725,14 +736,16 @@ function CancelPracticeModal({
             {(['one', 'remaining', 'all'] as const).map(s => (
               <label
                 key={s}
-                style={{
+                style={kx({
                   display: 'flex', alignItems: 'center', gap: '0.6rem',
                   cursor: 'pointer', padding: '0.5rem 0.75rem', borderRadius: '2px',
                   border: `1px solid ${scope === s ? 'rgba(var(--danger-rgb),0.35)' : 'var(--white-8)'}`,
                   background: scope === s ? 'rgba(var(--danger-rgb),0.07)' : 'var(--white-03)',
-                }}
+                }, scope === s
+                  ? { borderRadius: '8px', border: '1px solid rgba(var(--danger-rgb),0.35)', background: 'rgba(var(--danger-rgb),0.07)' }
+                  : KIT_SURFACE.option)}
               >
-                <input type="radio" value={s} checked={scope === s} onChange={() => setScope(s)} style={{ accentColor: '#f87171' }} />
+                <input type="radio" value={s} checked={scope === s} onChange={() => setScope(s)} style={{ accentColor: 'var(--danger-light)' }} />
                 <span style={{ fontSize: '0.85rem', color: 'var(--white-80)' }}>
                   {s === 'one' && 'Cancel this practice only'}
                   {s === 'remaining' && 'Cancel this and all remaining in the series'}
@@ -744,8 +757,8 @@ function CancelPracticeModal({
         )}
 
         <div className={styles.modalFooter}>
-          <button style={BTN_SECONDARY} onClick={onClose} disabled={saving}>Back</button>
-          <button style={BTN_DANGER} onClick={() => onConfirm(scope)} disabled={saving}>
+          <button style={B.secondary} onClick={onClose} disabled={saving}>Back</button>
+          <button style={B.danger} onClick={() => onConfirm(scope)} disabled={saving}>
             {saving ? 'Cancelling…' : 'Cancel Practice'}
           </button>
         </div>
@@ -759,6 +772,10 @@ function CancelPracticeModal({
 export default function SchedulePage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg, userRole, userCapabilities } = useOrg();
+  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
+  const B = useKitButtons(LEGACY_BUTTONS);
+  const kit = useAdminKit();
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
@@ -1178,7 +1195,13 @@ export default function SchedulePage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+      {/* Header — today's as `legacy` while the switch is off. On the kit (F3) the season's name (the
+          subtitle) is the way up, in the leading corner. */}
+      <AdminPageHeader
+        eyebrow="House league"
+        title="Schedule"
+        backTo={{ href: backHref, label: season?.name ?? 'Season' }}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <Link href={backHref} style={{ color: 'var(--white-40)', display: 'flex', alignItems: 'center' }}>
@@ -1191,6 +1214,8 @@ export default function SchedulePage() {
           </div>
         </div>
       </div>
+        }
+      />
 
       {/* Toolbar */}
       <div className={styles.scheduleToolbar}>
@@ -1232,12 +1257,12 @@ export default function SchedulePage() {
           <>
             <div className={styles.toolbarSep} />
             {teams.length >= 2 && (
-              <button style={BTN_SECONDARY} onClick={() => setShowGenerate(true)}>
+              <button style={B.secondary} onClick={() => setShowGenerate(true)}>
                 <Wand2 size={14} style={{ marginRight: 4 }} />
                 Generate Schedule
               </button>
             )}
-            <button style={BTN_SECONDARY} onClick={openCreate}>
+            <button style={B.secondary} onClick={openCreate}>
               <Plus size={14} style={{ marginRight: 4 }} />
               Add Game
             </button>
@@ -1253,7 +1278,8 @@ export default function SchedulePage() {
             {currentOrg && isFreeFloorLeague(currentOrg) ? (
               <span
                 title="Exports are part of League. Upgrade to export your schedule, standings, and registrations."
-                style={{ fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.04em', color: 'var(--data-gray)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap' }}
+                className={kit ? 'badge badge-neutral' : undefined}
+                style={kit ? undefined : { fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.04em', color: 'var(--data-gray)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap' }}
               >
                 Exports · League
               </span>
@@ -1286,7 +1312,7 @@ export default function SchedulePage() {
             {canManage && selectedTeamId && (
               <>
                 <div className={styles.toolbarSep} />
-                <button style={BTN_SECONDARY} onClick={() => setShowPracticeModal(true)}>
+                <button style={B.secondary} onClick={() => setShowPracticeModal(true)}>
                   <Plus size={14} style={{ marginRight: 4 }} />
                   Add Practice
                 </button>
@@ -1298,11 +1324,11 @@ export default function SchedulePage() {
 
       {/* Schedule health — clashes + what could not be checked (games AND practices) */}
       {health && health.conflicts.length > 0 && (
-        <div style={{
+        <div style={kx({
           border: '1px solid rgba(var(--warning-rgb),0.35)', background: 'rgba(var(--warning-rgb),0.07)',
           borderRadius: '2px', padding: '0.7rem 0.9rem', marginBottom: '0.9rem',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--warning)', fontWeight: 700, fontSize: '0.82rem' }}>
+        }, { borderRadius: '8px' })}>
+          <div style={kx({ display: 'flex', alignItems: 'center', gap: '0.45rem', color: 'var(--warning)', fontWeight: 700, fontSize: '0.82rem' }, { color: 'var(--badge-warning-ink)' })}>
             <AlertTriangle size={15} />
             {health.conflicts.length === 1
               ? `1 booking shares a ${noun.toLowerCase()} with another at the same time`
@@ -1326,7 +1352,7 @@ export default function SchedulePage() {
         </div>
       )}
       {health && health.uncheckedCount > 0 && (
-        <p style={{ fontSize: '0.78rem', color: 'var(--white-45)', margin: '0 0 0.9rem' }}>
+        <p style={kx({ fontSize: '0.78rem', color: 'var(--white-45)', margin: '0 0 0.9rem' }, KIT_INK.tertiary)}>
           {health.uncheckedCount} scheduled {health.uncheckedCount === 1 ? 'booking has' : 'bookings have'} no {noun.toLowerCase()} set
           — {health.uncheckedCount === 1 ? 'it is' : 'they are'} not being checked for double-bookings.
         </p>
@@ -1526,7 +1552,7 @@ export default function SchedulePage() {
                         </div>
                       )}
                       {p.notes && (
-                        <div style={{ fontSize: '0.72rem', color: 'var(--white-35)', marginTop: '0.3rem', fontStyle: 'italic' }}>
+                        <div style={kx({ fontSize: '0.72rem', color: 'var(--white-35)', marginTop: '0.3rem', fontStyle: 'italic' }, KIT_INK.tertiary)}>
                           {p.notes}
                         </div>
                       )}
@@ -1540,7 +1566,7 @@ export default function SchedulePage() {
                           </span>
                         )}
                         {clickable && (
-                          <span style={{ fontSize: '0.68rem', color: 'var(--white-30)' }}>click to cancel</span>
+                          <span style={kx({ fontSize: '0.68rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>click to cancel</span>
                         )}
                       </div>
                     </div>

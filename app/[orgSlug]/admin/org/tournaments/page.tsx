@@ -53,6 +53,9 @@ import FeedbackModal from '@/components/FeedbackModal';
 import HelpCallout from '@/components/help/HelpCallout';
 import TournamentSetupWizard from '@/components/admin/TournamentSetupWizard';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from './tournaments-admin.module.css';
 import { tournamentToday } from '@/lib/timezone';
 
@@ -197,6 +200,9 @@ export default function AdminTournamentsPage({
   const [createdTournament, setCreatedTournament] = useState<CreatedTournamentNotice | null>(null);
   const { refresh: refreshCtx, tournaments: ctxTournaments, setCurrentTournament } = useTournament();
   const { currentOrg, userRole, userCapabilities } = useOrg();
+  // Admin Design Continuity slice 2: the kit's version while the switch is on; today's while it is off.
+  const kit = useAdminKit();
+  const kx = useKitStyle();
 
   const [divisionPreset, setDivisionPreset] = useState<DivisionPreset>('youth');
   const [customDivisionName, setCustomDivisionName] = useState('');
@@ -658,8 +664,34 @@ export default function AdminTournamentsPage({
       ];
   const copiedSetupItems = createdFromReuse ? copiedSummary(createdTournament?.copied) : [];
 
+  // The header's actions, rendered by both headers (Admin Design Continuity slice 2).
+  const headerActions = (
+    <>
+      {tournamentLimit < 9999 && (
+        <span className={`${styles.slotCount} ${tournamentLimitReached ? styles.slotCountLimit : ''}`}>
+          {occupiedTournamentSlotCount} / {tournamentLimitLabel} slots
+        </span>
+      )}
+      <button
+        className="btn btn-primary btn-sm"
+        onClick={openAdd}
+        disabled={loadingData}
+        id="tournament-add-btn"
+      >
+        <Plus size={16} /> New Tournament
+      </button>
+    </>
+  );
+
   return (
     <div className={styles.page}>
+      {/* Today's header as `legacy` while the switch is off. On the kit (F3) the slot count stays with
+          the action it limits; the description line is not re-homed (the list says what it is). */}
+      <AdminPageHeader
+        eyebrow="Organization"
+        title="Tournaments"
+        actions={headerActions}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.headerLeft}>
           <div className={styles.headerIcon}><RefreshCw size={20} /></div>
@@ -669,21 +701,11 @@ export default function AdminTournamentsPage({
           </div>
         </div>
         <div className={styles.headerActions}>
-          {tournamentLimit < 9999 && (
-            <span className={`${styles.slotCount} ${tournamentLimitReached ? styles.slotCountLimit : ''}`}>
-              {occupiedTournamentSlotCount} / {tournamentLimitLabel} slots
-            </span>
-          )}
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={openAdd}
-            disabled={loadingData}
-            id="tournament-add-btn"
-          >
-            <Plus size={16} /> New Tournament
-          </button>
+          {headerActions}
         </div>
       </div>
+        }
+      />
 
       <div className={styles.lifecycleToggleRow}>
         <button
@@ -700,10 +722,10 @@ export default function AdminTournamentsPage({
       {showLifecycle && (
         <div className={styles.lifecycleGrid}>
           {[
-            { label: 'Draft',     desc: 'Private — admins only',              color: 'rgba(148,163,184,0.55)' },
-            { label: 'Active',    desc: 'Registration open to public',        color: 'var(--logic-lime)'       },
-            { label: 'Completed', desc: 'Event over — archive to free a slot', color: '#f6c453'               },
-            { label: 'Archived',  desc: 'Hidden — slot freed',                color: 'rgba(148,163,184,0.3)'  },
+            { label: 'Draft',     desc: 'Private — admins only',              color: kit ? 'var(--text-tertiary)' : 'rgba(148,163,184,0.55)' },
+            { label: 'Active',    desc: 'Registration open to public',        color: kit ? 'var(--home-olive)' : 'var(--logic-lime)'       },
+            { label: 'Completed', desc: 'Event over — archive to free a slot', color: kit ? 'var(--warning)' : '#f6c453'               },
+            { label: 'Archived',  desc: 'Hidden — slot freed',                color: kit ? 'var(--home-line-strong)' : 'rgba(148,163,184,0.3)'  },
           ].map(({ label, desc, color }) => (
             <div key={label} className={styles.lifecycleCard} style={{ '--lifecycle-color': color } as CSSProperties}>
               <strong>{label}</strong>
@@ -782,13 +804,13 @@ export default function AdminTournamentsPage({
           <tbody>
             {loadingData ? (
               <tr>
-                <td colSpan={4} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>
+                <td colSpan={4} style={kx({ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }, KIT_INK.tertiary)}>
                   Loading…
                 </td>
               </tr>
             ) : tournaments.length === 0 ? (
               <tr>
-                <td colSpan={4} style={{ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }}>
+                <td colSpan={4} style={kx({ textAlign: 'center', color: 'var(--white-30)', padding: '2rem' }, KIT_INK.tertiary)}>
                   No tournaments yet — use the button above to create your first one.
                 </td>
               </tr>
@@ -942,7 +964,7 @@ export default function AdminTournamentsPage({
                   required
                   id="tournament-slug-input"
                 />
-                <p style={{ fontSize: '0.7rem', color: 'var(--white-30)', marginTop: '0.25rem' }}>
+                <p style={kx({ fontSize: '0.7rem', color: 'var(--white-30)', marginTop: '0.25rem' }, KIT_INK.tertiary)}>
                   Used in the public URL — /{'{orgSlug}'}/{form.slug || '…'}/schedule
                   {slugMessage && (
                     <span style={{ color: slugHintColor, marginLeft: '0.5rem' }}>

@@ -4,6 +4,8 @@ import { FormEvent, use, useCallback, useEffect, useState } from 'react';
 import { Clock, Link2, RefreshCw, Send, ShieldCheck } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit } from '@/components/admin/AdminKitProvider';
 
 type LinkSummary = {
   id: string;
@@ -50,6 +52,13 @@ function badgeClass(status: string) {
   return 'border-yellow-400/35 text-yellow-300 bg-yellow-400/10';
 }
 
+/** The same three tones as the kit's chips (Admin Design Continuity slice 2 — switch on only). */
+function kitBadgeClass(status: string) {
+  if (status === 'linked' || status === 'org_owned') return 'badge badge-success';
+  if (status === 'declined' || status === 'revoked') return 'badge badge-neutral';
+  return 'badge badge-warning';
+}
+
 function billingModeLabel(mode: string | null | undefined) {
   if (mode === 'team_direct') return 'Coach pays direct';
   if (mode === 'org_team_addon') return 'Org-billed Premium';
@@ -60,6 +69,12 @@ function billingModeLabel(mode: string | null | undefined) {
 export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug: string }> }) {
   const { orgSlug } = use(params);
   const { userRole, loading: orgLoading } = useOrg();
+  // Admin Design Continuity slice 2: the kit's version while the switch is on; today's while it is off.
+  const kit = useAdminKit();
+  // A status tag: the legacy square tag, or the kit's chip. Section headings leave the console
+  // capitals on the kit (F2); their words are unchanged.
+  const statusTag = (status: string) => (kit ? kitBadgeClass(status) : `inline-flex px-2 py-1 text-xs uppercase font-bold border ${badgeClass(status)}`);
+  const h2Class = kit ? 'font-bold' : 'font-bold uppercase tracking-wide';
   const [links, setLinks] = useState<LinkSummary[]>([]);
   const [inviteTarget, setInviteTarget] = useState('');
   const [loading, setLoading] = useState(true);
@@ -187,6 +202,17 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
 
   return (
     <div className="p-8 max-w-5xl">
+      {/* Today's header as `legacy` while the switch is off. On the kit (F3) its description line is
+          not re-homed: each section below already says what it is for, in the same words. */}
+      <AdminPageHeader
+        eyebrow="Organization"
+        title="Coaches portal links"
+        actions={
+          <button type="button" className="btn btn-ghost btn-sm" onClick={loadLinks}>
+            <RefreshCw size={14} /> Refresh
+          </button>
+        }
+        legacy={
       <header className="border-b border-blueprint-blue/60 pb-4 mb-6 flex items-start justify-between gap-4">
         <div>
           <div className="hud-label mb-1">Organization Admin</div>
@@ -201,6 +227,8 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
           <RefreshCw size={14} /> Refresh
         </button>
       </header>
+        }
+      />
 
       <HelpCallout
         variant="info"
@@ -215,7 +243,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <Send size={18} className="text-blueprint-blue" />
-          <h2 className="font-bold uppercase tracking-wide">Invite a Coaches Portal</h2>
+          <h2 className={h2Class}>Invite a Coaches Portal</h2>
         </div>
         <div className="card p-5">
           <form className="flex items-end gap-3 flex-wrap" onSubmit={sendInvite}>
@@ -242,7 +270,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <ShieldCheck size={18} className="text-logic-lime" />
-          <h2 className="font-bold uppercase tracking-wide">Needs review</h2>
+          <h2 className={h2Class}>Needs review</h2>
           <span className="hud-label">{pendingLinks.length}</span>
         </div>
         {pendingLinks.length === 0 ? (
@@ -260,7 +288,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                       {link.workspaceOrg?.name ?? 'Coaches Portal'} wants a Basic visibility link.
                     </div>
                   </div>
-                  <span className={`inline-flex px-2 py-1 text-xs uppercase font-bold border ${badgeClass(link.status)}`}>
+                  <span className={statusTag(link.status)}>
                     {STATUS_LABEL[link.status] ?? link.status}
                   </span>
                 </div>
@@ -309,7 +337,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <Clock size={18} className="text-yellow-300" />
-          <h2 className="font-bold uppercase tracking-wide">Awaiting coach response</h2>
+          <h2 className={h2Class}>Awaiting coach response</h2>
           <span className="hud-label">{invitedLinks.length}</span>
         </div>
         {invitedLinks.length === 0 ? (
@@ -327,7 +355,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                       Waiting for the coach to accept or decline the Basic visibility invitation.
                     </div>
                   </div>
-                  <span className={`inline-flex px-2 py-1 text-xs uppercase font-bold border ${badgeClass(link.status)}`}>
+                  <span className={statusTag(link.status)}>
                     {STATUS_LABEL[link.status] ?? link.status}
                   </span>
                 </div>
@@ -358,7 +386,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       <section className="mb-8">
         <div className="flex items-center gap-2 mb-3">
           <ShieldCheck size={18} className="text-logic-lime" />
-          <h2 className="font-bold uppercase tracking-wide">Ownership transfer</h2>
+          <h2 className={h2Class}>Ownership transfer</h2>
           <span className="hud-label">{linkedLinks.length + ownershipLinks.length}</span>
         </div>
         {linkedLinks.length === 0 && ownershipLinks.length === 0 ? (
@@ -389,7 +417,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                               : 'Basic link is active. Ownership transfer is a separate, irreversible data move.'}
                       </div>
                     </div>
-                    <span className={`inline-flex px-2 py-1 text-xs uppercase font-bold border ${readyForPlatformTransfer ? 'border-green-500/35 text-green-300 bg-green-500/10' : 'border-yellow-400/35 text-yellow-300 bg-yellow-400/10'}`}>
+                    <span className={kit ? `badge ${readyForPlatformTransfer ? 'badge-success' : 'badge-warning'}` : `inline-flex px-2 py-1 text-xs uppercase font-bold border ${readyForPlatformTransfer ? 'border-green-500/35 text-green-300 bg-green-500/10' : 'border-yellow-400/35 text-yellow-300 bg-yellow-400/10'}`}>
                       {readyForPlatformTransfer ? 'Ready' : pendingOwnership ? 'Pending' : 'Available'}
                     </span>
                   </div>
@@ -458,7 +486,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
       <section>
         <div className="flex items-center gap-2 mb-3">
           <Link2 size={18} className="text-blueprint-blue" />
-          <h2 className="font-bold uppercase tracking-wide">Link history</h2>
+          <h2 className={h2Class}>Link history</h2>
           <span className="hud-label">{historyLinks.length}</span>
         </div>
         {historyLinks.length === 0 ? (
@@ -476,7 +504,7 @@ export default function OrgTeamLinksPage({ params }: { params: Promise<{ orgSlug
                       {link.workspaceOrg?.slug ? `/${link.workspaceOrg.slug}` : 'Portal slug unavailable'}
                     </div>
                   </div>
-                  <span className={`inline-flex px-2 py-1 text-xs uppercase font-bold border ${badgeClass(link.status)}`}>
+                  <span className={statusTag(link.status)}>
                     {STATUS_LABEL[link.status] ?? link.status}
                   </span>
                 </div>

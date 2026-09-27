@@ -1,9 +1,9 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
    KitDialog — the admin kit's window: a QUESTION (centred, small) or a FORM (larger; fills a phone
    and covers the bar). Club Tier Stage 1, screens session. Kit only.
-   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder. The scrim is
-   the one annotated literal: the kit has no scrim token yet (ADC Phase 0's "themed scrim" gap); these
-   are the coach bar's own two values (`CoachesBottomNav.module.css` `.sheetScrim`).
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder. The scrim is the
+   kit's themed scrim token (`--home-scrim`, Admin Design Continuity slice 2 — the Phase 0 gap), which
+   holds the two values this file used to hand-set.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .overlay {
@@ -15,10 +15,7 @@
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  background: rgba(13, 17, 26, 0.55); /* token-exempt: scrim over the page, dark skin (the coach bar's) */
-}
-:global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .overlay {
-  background: rgba(36, 30, 21, 0.34); /* token-exempt: scrim over the warm page (the coach bar's) */
+  background: var(--home-scrim);
 }
 /* A question opened from inside a form stacks one layer higher. */
 .overlayQuestion { z-index: 410; }

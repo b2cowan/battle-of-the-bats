@@ -13,6 +13,9 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_BUTTON, KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueRegistration, LeagueRegistrationStatus, LeagueDivision, LeagueTeam } from '@/lib/types';
 
@@ -128,9 +131,22 @@ const REG_STATUS_STYLE: Record<LeagueRegistrationStatus, React.CSSProperties> = 
   withdrawn:      { background: 'var(--white-5)', color: 'var(--white-30)', border: '1px solid var(--white-8)' },
 };
 
+// The same five on the kit (Admin Design Continuity slice 2): the admin's own chips (`.badge-*`, the
+// kit layer in globals.css). Waitlisted is the quiet chip, as the ratified drawing draws it (ADC
+// specimen 2); the hand-set orange had no token.
+const KIT_REG_STATUS_BADGE: Record<LeagueRegistrationStatus, string> = {
+  pending_review: 'badge-warning',
+  active:         'badge-success',
+  waitlisted:     'badge-neutral',
+  declined:       'badge-danger',
+  withdrawn:      'badge-neutral',
+};
+
 // ── Sub-components ─────────────────────────────────────────────────────────────
 
 function StatusBadge({ status }: { status: LeagueRegistrationStatus }) {
+  const kit = useAdminKit();
+  if (kit) return <span className={`badge ${KIT_REG_STATUS_BADGE[status]}`}>{REG_STATUS_LABEL[status]}</span>;
   return (
     <span
       style={{
@@ -155,6 +171,9 @@ function StatusBadge({ status }: { status: LeagueRegistrationStatus }) {
 export default function RegistrationsPage() {
   const { currentOrg, userRole } = useOrg();
   const { seasonId } = useParams<{ seasonId: string }>();
+  // Admin Design Continuity slice 2: the kit's version while the switch is on; today's while it is off.
+  const kit = useAdminKit();
+  const kx = useKitStyle();
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
@@ -540,7 +559,7 @@ export default function RegistrationsPage() {
         <div style={{ display: 'flex', gap: '0.35rem' }}>
           <button
             className={styles.iconBtn}
-            style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem', color: '#22C55E', borderColor: 'rgba(34,197,94,0.3)' }}
+            style={kx({ fontSize: '0.78rem', padding: '0.3rem 0.6rem', color: '#22C55E', borderColor: 'rgba(34,197,94,0.3)' }, { color: 'var(--badge-success-ink)', borderColor: 'rgba(var(--success-rgb),0.35)' })}
             disabled={busy}
             onClick={() => patchStatus(reg.id, 'active')}
           >
@@ -548,7 +567,7 @@ export default function RegistrationsPage() {
           </button>
           <button
             className={styles.iconBtn}
-            style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem', color: 'var(--warning)', borderColor: 'rgba(var(--warning-rgb),0.3)' }}
+            style={kx({ fontSize: '0.78rem', padding: '0.3rem 0.6rem', color: 'var(--warning)', borderColor: 'rgba(var(--warning-rgb),0.3)' }, { color: 'var(--badge-warning-ink)' })}
             disabled={busy}
             onClick={() => patchStatus(reg.id, 'waitlisted')}
           >
@@ -583,7 +602,7 @@ export default function RegistrationsPage() {
       return (
         <button
           className={styles.iconBtn}
-          style={{ fontSize: '0.78rem', padding: '0.3rem 0.6rem', color: '#22C55E', borderColor: 'rgba(34,197,94,0.3)' }}
+          style={kx({ fontSize: '0.78rem', padding: '0.3rem 0.6rem', color: '#22C55E', borderColor: 'rgba(34,197,94,0.3)' }, { color: 'var(--badge-success-ink)', borderColor: 'rgba(var(--success-rgb),0.35)' })}
           disabled={busy}
           onClick={() => patchStatus(reg.id, 'active')}
         >
@@ -602,9 +621,75 @@ export default function RegistrationsPage() {
   }
 
 
+  // The table's cell styles, built once per render rather than once per row (slice 2 /simplify).
+  const headCellStyle = kx({ padding: '0.5rem 0.75rem', textAlign: 'left', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-40)', whiteSpace: 'nowrap' }, KIT_INK.head);
+  const rowStyle = kx({ borderBottom: '1px solid var(--white-5)', transition: 'background 0.1s' }, { borderBottom: KIT_LINE });
+  const playerNameStyle = kx({ fontWeight: 700, color: 'var(--white-90)' }, { fontWeight: 650, ...KIT_INK.primary });
+  const guardianPhoneStyle = kx({ color: 'var(--white-35)', fontSize: '0.78rem' }, KIT_INK.tertiary);
+  const registeredCellStyle = kx({ padding: '0.65rem 0.75rem', color: 'var(--white-40)', fontSize: '0.8rem', whiteSpace: 'nowrap' }, KIT_INK.tertiary);
+
+  // The header's actions, rendered by both headers (Admin Design Continuity slice 2).
+  const headerActions = (
+    <>
+        {/* Exports are a paid-League capability. The free League Starter floor hides the menu.
+            NOTE: exports are 100% client-side today (no server route). If a server export route
+            is ever added for house-league it MUST guard isFreeFloorLeague(org) → 403. */}
+        {currentOrg && isFreeFloorLeague(currentOrg) ? (
+          <span
+            title="Exports are part of League. Upgrade to export your registrations."
+            className={kit ? 'badge badge-neutral' : undefined}
+            style={kit ? undefined : { fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.04em', color: 'var(--data-gray)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap' }}
+          >
+            Exports · League
+          </span>
+        ) : (
+        <ExportMenu
+          formats={['xlsx', 'csv', 'pdf']}
+          onExportXLSX={handleExportXLSX}
+          onExportCSV={handleExportCSV}
+          onExportPDF={handleExportPDF}
+          /* ⚠ THE SURFACE'S OWN GATE, NOT THE GENERIC ONE. Left to its default this would ask
+             for `pdf_exports` (Tournament Plus), which is a LOWER bar than the exports on this
+             page already sit behind — and a module granted by a platform-admin add-on can put
+             an org above that bar without ever reaching League. Every legitimate plan for this
+             page clears both keys, so naming the catalog's own gate only ever tightens it. */
+          pdfFeatureKey="league_exports"
+          hasSensitiveOption={true}
+          sensitiveOptionLabel="Excel with contact details"
+          onExportXLSXWithSensitive={handleExportXLSXWithSensitive}
+          planId={currentOrg?.planId}
+          disabled={tabRegs.length === 0}
+        />
+        )}
+        <button
+          className={styles.iconBtn}
+          style={kx({ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }, KIT_BUTTON.secondary)}
+          onClick={() => setComposeOpen(true)}
+        >
+          <Mail size={14} />
+          Message Registrants
+        </button>
+        <button
+          className={styles.iconBtn}
+          style={kx({ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem', color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.3)' }, KIT_BUTTON.primary)}
+          onClick={() => { setAddForm(BLANK_FORM); setAddOpen(true); }}
+        >
+          <Plus size={14} />
+          Add Registration
+        </button>
+    </>
+  );
+
   return (
     <div className={styles.page}>
-      {/* ── Back + page header ────────────────────────────────────────────── */}
+      {/* ── Back + page header — today's as `legacy` while the switch is off. On the kit (F3) the
+          season's name (the subtitle) is the way up, in the leading corner; the actions stay. ── */}
+      <AdminPageHeader
+        eyebrow="House league"
+        title="Registrations"
+        backTo={{ href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season?.name ?? 'Season' }}
+        actions={kit && isAdminOrOwner ? headerActions : undefined}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <Link
@@ -620,54 +705,12 @@ export default function RegistrationsPage() {
         </div>
         {isAdminOrOwner && (
           <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-            {/* Exports are a paid-League capability. The free League Starter floor hides the menu.
-                NOTE: exports are 100% client-side today (no server route). If a server export route
-                is ever added for house-league it MUST guard isFreeFloorLeague(org) → 403. */}
-            {currentOrg && isFreeFloorLeague(currentOrg) ? (
-              <span
-                title="Exports are part of League. Upgrade to export your registrations."
-                style={{ fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.04em', color: 'var(--data-gray)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '6px', padding: '0.35rem 0.6rem', whiteSpace: 'nowrap' }}
-              >
-                Exports · League
-              </span>
-            ) : (
-            <ExportMenu
-              formats={['xlsx', 'csv', 'pdf']}
-              onExportXLSX={handleExportXLSX}
-              onExportCSV={handleExportCSV}
-              onExportPDF={handleExportPDF}
-              /* ⚠ THE SURFACE'S OWN GATE, NOT THE GENERIC ONE. Left to its default this would ask
-                 for `pdf_exports` (Tournament Plus), which is a LOWER bar than the exports on this
-                 page already sit behind — and a module granted by a platform-admin add-on can put
-                 an org above that bar without ever reaching League. Every legitimate plan for this
-                 page clears both keys, so naming the catalog's own gate only ever tightens it. */
-              pdfFeatureKey="league_exports"
-              hasSensitiveOption={true}
-              sensitiveOptionLabel="Excel with contact details"
-              onExportXLSXWithSensitive={handleExportXLSXWithSensitive}
-              planId={currentOrg?.planId}
-              disabled={tabRegs.length === 0}
-            />
-            )}
-            <button
-              className={styles.iconBtn}
-              style={{ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem' }}
-              onClick={() => setComposeOpen(true)}
-            >
-              <Mail size={14} />
-              Message Registrants
-            </button>
-            <button
-              className={styles.iconBtn}
-              style={{ gap: '0.35rem', padding: '0.45rem 0.85rem', fontSize: '0.85rem', color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.3)' }}
-              onClick={() => { setAddForm(BLANK_FORM); setAddOpen(true); }}
-            >
-              <Plus size={14} />
-              Add Registration
-            </button>
+            {headerActions}
           </div>
         )}
       </div>
+        }
+      />
 
       {/* ── Empty state help cue ──────────────────────────────────────────── */}
       {regs.length === 0 && !search && (
@@ -692,12 +735,12 @@ export default function RegistrationsPage() {
       </div>
 
       {/* ── Tabs ──────────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.25rem', flexWrap: 'wrap', borderBottom: '1px solid var(--white-8)', paddingBottom: '0' }}>
+      <div style={kx({ display: 'flex', gap: '0.25rem', marginBottom: '1.25rem', flexWrap: 'wrap', borderBottom: '1px solid var(--white-8)', paddingBottom: '0' }, { borderBottom: KIT_LINE })}>
         {TABS.map(tab => (
           <button
             key={tab.key}
             onClick={() => setActiveTab(tab.key)}
-            style={{
+            style={kx({
               background: 'none',
               border: 'none',
               borderBottom: activeTab === tab.key ? '2px solid var(--logic-lime)' : '2px solid transparent',
@@ -709,11 +752,13 @@ export default function RegistrationsPage() {
               marginBottom: '-1px',
               transition: 'color 0.15s',
               whiteSpace: 'nowrap',
-            }}
+            }, activeTab === tab.key
+              ? { borderBottom: '2px solid var(--home-olive)', color: 'var(--text-primary)', fontWeight: 650 }
+              : { color: 'var(--text-secondary)', fontWeight: 500 })}
           >
             {tab.label}
             {counts[tab.key] > 0 && (
-              <span style={{
+              <span style={kx({
                 marginLeft: '0.4rem',
                 background: activeTab === tab.key ? 'rgba(var(--logic-lime-rgb),0.15)' : 'var(--white-8)',
                 color: activeTab === tab.key ? 'var(--logic-lime)' : 'var(--white-40)',
@@ -721,7 +766,7 @@ export default function RegistrationsPage() {
                 fontSize: '0.7rem',
                 fontWeight: 700,
                 padding: '0.1rem 0.4rem',
-              }}>
+              }, { borderRadius: '999px', background: activeTab === tab.key ? 'var(--home-olive-soft)' : 'var(--home-fill, var(--white-8))', color: activeTab === tab.key ? 'var(--home-olive)' : 'var(--text-secondary)', fontVariantNumeric: 'tabular-nums' })}>
                 {counts[tab.key]}
               </span>
             )}
@@ -738,14 +783,14 @@ export default function RegistrationsPage() {
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
             <thead>
-              <tr style={{ borderBottom: '1px solid var(--white-8)' }}>
+              <tr style={kx({ borderBottom: '1px solid var(--white-8)' }, { borderBottom: '1px solid var(--home-line-strong)' })}>
                 {[
                   'Player', 'Division', 'Guardian', 'Registered',
                   'Status',
                   'Fee Paid',
                   ...(activeTab !== 'declined_withdrawn' && canManageRegs ? ['Actions'] : []),
                 ].map(h => (
-                  <th key={h} style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--white-40)', whiteSpace: 'nowrap' }}>
+                  <th key={h} style={headCellStyle}>
                     {h}
                   </th>
                 ))}
@@ -755,17 +800,19 @@ export default function RegistrationsPage() {
               {tabRegs.map(reg => (
                 <tr
                   key={reg.id}
-                  style={{ borderBottom: '1px solid var(--white-5)', transition: 'background 0.1s' }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'var(--white-03)')}
+                  style={rowStyle}
+                  onMouseEnter={e => (e.currentTarget.style.background = kit ? 'var(--home-olive-soft)' : 'var(--white-03)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                 >
                   {/* Player */}
                   <td style={{ padding: '0.65rem 0.75rem', whiteSpace: 'nowrap' }}>
-                    <span style={{ fontWeight: 700, color: 'var(--white-90)' }}>
+                    <span style={playerNameStyle}>
                       {reg.playerFirstName} {reg.playerLastName}
                     </span>
                     {activeTab === 'waitlisted' && reg.waitlistPosition !== null && (
-                      <span style={{
+                      <span
+                        className={kit ? 'badge badge-neutral' : undefined}
+                        style={kit ? { marginLeft: '0.5rem' } : {
                         marginLeft: '0.5rem',
                         background: 'rgba(249,115,22,0.15)',
                         color: '#F97316',
@@ -788,12 +835,12 @@ export default function RegistrationsPage() {
                   <td style={{ padding: '0.65rem 0.75rem' }}>
                     <div style={{ color: 'var(--white-70)', fontSize: '0.82rem' }}>{reg.guardianEmail}</div>
                     {reg.guardianPhone && (
-                      <div style={{ color: 'var(--white-35)', fontSize: '0.78rem' }}>{reg.guardianPhone}</div>
+                      <div style={guardianPhoneStyle}>{reg.guardianPhone}</div>
                     )}
                   </td>
 
                   {/* Registered at */}
-                  <td style={{ padding: '0.65rem 0.75rem', color: 'var(--white-40)', fontSize: '0.8rem', whiteSpace: 'nowrap' }}>
+                  <td style={registeredCellStyle}>
                     {formatDate(reg.registeredAt)}
                   </td>
 
@@ -851,7 +898,7 @@ export default function RegistrationsPage() {
               </button>
               <button
                 className={`${styles.iconBtn} ${styles.iconBtnDanger}`}
-                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', color: '#f87171', borderColor: 'rgba(248,113,113,0.4)' }}
+                style={kx({ fontSize: '0.875rem', padding: '0.5rem 1rem', color: '#f87171', borderColor: 'rgba(248,113,113,0.4)' }, KIT_BUTTON.danger)}
                 disabled={acting === confirmDeclineId}
                 onClick={async () => {
                   const id = confirmDeclineId;
@@ -956,7 +1003,7 @@ export default function RegistrationsPage() {
               </button>
               <button
                 className={styles.iconBtn}
-                style={{ fontSize: '0.875rem', padding: '0.5rem 1rem', color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.3)' }}
+                style={kx({ fontSize: '0.875rem', padding: '0.5rem 1rem', color: 'var(--logic-lime)', borderColor: 'rgba(var(--logic-lime-rgb),0.3)' }, KIT_BUTTON.primary)}
                 disabled={adding}
                 onClick={handleManualAdd}
               >
@@ -1025,7 +1072,7 @@ export default function RegistrationsPage() {
             )}
 
             <div
-              style={{
+              style={kx({
                 padding: '0.5rem 0.75rem',
                 borderRadius: '2px',
                 background: recipientCount > 0 ? 'rgba(var(--logic-lime-rgb),0.07)' : 'var(--white-5)',
@@ -1033,7 +1080,9 @@ export default function RegistrationsPage() {
                 fontSize: '0.8rem',
                 color: recipientCount > 0 ? 'var(--logic-lime)' : 'var(--white-35)',
                 marginBottom: '1.25rem',
-              }}
+              }, recipientCount > 0
+                ? { ...KIT_SURFACE.chosen, color: 'var(--home-olive)' }
+                : { ...KIT_SURFACE.option, ...KIT_INK.tertiary })}
             >
               {recipientCount > 0
                 ? `Sending to ${recipientCount} guardian${recipientCount !== 1 ? 's' : ''}`
@@ -1072,12 +1121,12 @@ export default function RegistrationsPage() {
               </button>
               <button
                 className={styles.iconBtn}
-                style={{
+                style={kx({
                   fontSize: '0.875rem', padding: '0.5rem 1.25rem',
                   color: 'var(--logic-lime)',
                   borderColor: 'rgba(var(--logic-lime-rgb),0.3)',
                   opacity: recipientCount === 0 ? 0.5 : 1,
-                }}
+                }, KIT_BUTTON.primary)}
                 disabled={composeSending || recipientCount === 0}
                 onClick={handleSendMessage}
               >

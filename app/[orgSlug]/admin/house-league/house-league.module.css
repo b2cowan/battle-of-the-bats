@@ -1174,3 +1174,326 @@
   padding: 0.1rem 0.4rem;
   white-space: nowrap;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════════════════════
+   House league on the coaches portal's kit: the same screens, words, columns and actions, in both
+   themes. Every rule is scoped under `[data-admin-kit]` (only the admin shell carries it, and only
+   while the dev switch is on), so the legacy rules above render untouched until the release slice
+   deletes them. The recipes are the portal's own, by value: the kit card (`CoachKit` `.card`), its
+   eyebrow (`.eye`) and chips (`.chip` + tones), the table standard's ground, the portal's field and
+   dialog. Titles leave the console face (F2): monospace stays on eyebrows and chips only.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+
+/* ── Page frame ── */
+:global([data-admin-kit]) .muted,
+:global([data-admin-kit]) .accessDenied,
+:global([data-admin-kit]) .emptyState { color: var(--text-tertiary); }
+:global([data-admin-kit]) .accessDenied h2 { color: var(--text-secondary); }
+
+/* ── Cards: seasons, divisions, the season's own panel → the kit card ── */
+:global([data-admin-kit]) .seasonCard,
+:global([data-admin-kit]) .divisionCard,
+:global([data-admin-kit]) .seasonHeader {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .seasonCard:hover { border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .seasonName,
+:global([data-admin-kit]) .divisionName { color: var(--text-primary); }
+:global([data-admin-kit]) .seasonHeaderName {
+  font-family: var(--font-display);
+  font-size: var(--type-title);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .seasonCardActions,
+:global([data-admin-kit]) .seasonDates { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .divisionLinks { border-top-color: var(--home-line); }
+
+/* Labels over a figure → the kit eyebrow; the figure → the body face, tabular. */
+:global([data-admin-kit]) .statLabel,
+:global([data-admin-kit]) .dateLabel,
+:global([data-admin-kit]) .capacityLabel,
+:global([data-admin-kit]) .sectionTitle,
+:global([data-admin-kit]) .lifecycleLabel,
+:global([data-admin-kit]) .automationSectionTitle,
+:global([data-admin-kit]) .weekLabel,
+:global([data-admin-kit]) .poolCount {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .statValue { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+:global([data-admin-kit]) .dateValue { color: var(--text-secondary); }
+:global([data-admin-kit]) .capacityText { color: var(--text-secondary); }
+:global([data-admin-kit]) .lifecycleHint { color: var(--text-tertiary); }
+
+/* ── Chips: status, division, game state, round, practice → the kit's chips ── */
+:global([data-admin-kit]) .statusBadge,
+:global([data-admin-kit]) .divisionBadge,
+:global([data-admin-kit]) .roundBadge,
+:global([data-admin-kit]) .recurrenceBadge {
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 999px;
+  padding: 0.14rem 0.5rem;
+  border: 1px solid transparent;
+}
+:global([data-admin-kit]) .statusDraft,
+:global([data-admin-kit]) .statusArchived,
+:global([data-admin-kit]) .gameStatusCancelled,
+:global([data-admin-kit]) .roundBadge {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .statusRegistrationOpen,
+:global([data-admin-kit]) .gameStatusCompleted {
+  color: var(--badge-success-ink);
+  background: rgba(var(--success-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.28);
+}
+:global([data-admin-kit]) .statusRegistrationClosed,
+:global([data-admin-kit]) .gameStatusPostponed {
+  color: var(--badge-warning-ink);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+:global([data-admin-kit]) .statusActive,
+:global([data-admin-kit]) .gameStatusScheduled,
+:global([data-admin-kit]) .divisionBadge {
+  color: var(--info);
+  background: rgba(var(--info-rgb), 0.08);
+  border-color: rgba(var(--info-rgb), 0.3);
+}
+/* "Completed" was a hand-set purple with no token: a finished season is not a verdict, so on the
+   kit it is the quiet chip. Practices were the same purple; on the kit they wear the portal's own
+   practice colour (`--evt-practice`: purple in dark, plum in warm — the coach schedule's). */
+:global([data-admin-kit]) .statusCompleted {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .practiceBadge,
+:global([data-admin-kit]) .recurrenceBadge {
+  color: var(--text-secondary);
+  background: color-mix(in srgb, var(--evt-practice) 12%, transparent);
+  border-color: color-mix(in srgb, var(--evt-practice) 45%, transparent);
+}
+
+/* ── Capacity bar ── */
+:global([data-admin-kit]) .capacityBar { background: var(--home-line); border-radius: 6px; }
+:global([data-admin-kit]) .capacityFill { background: var(--home-olive); border-radius: 6px 0 0 6px; }
+:global([data-admin-kit]) .capacityFillFull { background: var(--home-live); }
+
+/* ── Division sub-links → the portal's quiet link pill ── */
+:global([data-admin-kit]) .divisionLink {
+  color: var(--text-secondary);
+  border-color: var(--home-line-strong);
+  border-radius: 999px;
+}
+:global([data-admin-kit]) .divisionLink:hover { color: var(--home-olive); border-color: var(--home-olive); }
+
+/* ── Lifecycle bar and the toolbars → a quiet card strip ── */
+:global([data-admin-kit]) .lifecycleBar,
+:global([data-admin-kit]) .teamsToolbar,
+:global([data-admin-kit]) .scheduleToolbar {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .toolbarSep { background: var(--home-line); }
+
+/* ── Fields → the portal's field (sans, the portal's label) ── */
+:global([data-admin-kit]) .label {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+:global([data-admin-kit]) .input,
+:global([data-admin-kit]) .select,
+:global([data-admin-kit]) .textarea,
+:global([data-admin-kit]) .divSelect {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .input::placeholder,
+:global([data-admin-kit]) .textarea::placeholder { color: var(--text-tertiary); }
+:global([data-admin-kit]) .input:focus,
+:global([data-admin-kit]) .select:focus,
+:global([data-admin-kit]) .textarea:focus,
+:global([data-admin-kit]) .divSelect:focus { border-color: var(--home-olive); }
+:global([data-admin-kit]) .select option,
+:global([data-admin-kit]) .divSelect option { background: var(--home-card); color: var(--text-primary); }
+:global([data-admin-kit]) .hint,
+:global([data-admin-kit]) .toggleDesc { color: var(--text-tertiary); }
+:global([data-admin-kit]) .toggleTitle { color: var(--text-primary); }
+:global([data-admin-kit]) .toggleRow { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .automationSection { border-color: var(--home-line); border-radius: 8px; }
+
+/* The switch → the portal's pill switch: olive when on, a line when off, a white knob. */
+:global([data-admin-kit]) .toggleSlider {
+  background: var(--home-line-strong);
+  border-color: transparent;
+  border-radius: 999px;
+}
+:global([data-admin-kit]) .toggleSlider::before { background: var(--home-card); }
+:global([data-admin-kit]) .toggle input:checked + .toggleSlider { background: var(--home-olive); border-color: var(--home-olive); }
+:global([data-admin-kit]) .toggle input:checked + .toggleSlider::before { background: var(--home-card); }
+
+/* ── Dialogs → the portal's window: its scrim, card, 12px corner, body-face title ── */
+:global([data-admin-kit]) .modalOverlay { background: var(--home-scrim); }
+:global([data-admin-kit]) .modal {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+:global([data-admin-kit]) .modalTitle {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .modalCloseBtn { color: var(--text-tertiary); }
+:global([data-admin-kit]) .modalCloseBtn:hover { color: var(--text-primary); }
+:global([data-admin-kit]) .modalFooter { border-top-color: var(--home-line); }
+
+/* ── Icon buttons ── */
+:global([data-admin-kit]) .iconBtn {
+  color: var(--text-tertiary);
+  border-color: var(--home-line-strong);
+  border-radius: 6px;
+}
+:global([data-admin-kit]) .iconBtn:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+:global([data-admin-kit]) .iconBtnDanger:hover { color: var(--home-live); border-color: rgba(var(--danger-rgb), 0.4); }
+
+/* ── Teams & draft board ── */
+:global([data-admin-kit]) .poolDropZone { border-radius: 8px; }
+:global([data-admin-kit]) .poolDropZoneOver,
+:global([data-admin-kit]) .teamColumnOver {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .poolEmpty,
+:global([data-admin-kit]) .teamEmptySlot,
+:global([data-admin-kit]) .noTeamsPrompt { color: var(--text-tertiary); }
+:global([data-admin-kit]) .teamColumn {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .teamColumnHeader { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .teamColumnName { color: var(--text-primary); }
+:global([data-admin-kit]) .teamColumnCount { color: var(--text-tertiary); }
+:global([data-admin-kit]) .playerCard {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 6px;
+}
+:global([data-admin-kit]) .playerCard:hover { border-color: var(--home-olive); background: var(--home-olive-soft); }
+:global([data-admin-kit]) .playerCardOverlay {
+  background: var(--card-bg);
+  border-color: var(--home-olive);
+  border-radius: 6px;
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .playerName { color: var(--text-primary); }
+:global([data-admin-kit]) .playerMeta { color: var(--text-tertiary); }
+
+/* The live draft covers the page (a form surface): the page ground, not a near-black wash. */
+:global([data-admin-kit]) .draftOverlay { background: var(--pitch-black); }
+:global([data-admin-kit]) .draftHeader,
+:global([data-admin-kit]) .draftFooter { border-color: var(--home-line); }
+:global([data-admin-kit]) .draftPickOrder { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .draftTitle {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .draftPickMeta { color: var(--home-olive); }
+:global([data-admin-kit]) .draftTeamChip {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 999px;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .draftTeamChipActive {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .draftPlayerRow {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 6px;
+}
+:global([data-admin-kit]) .draftPlayerRow:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .draftCompleteTitle { color: var(--home-olive); }
+:global([data-admin-kit]) .draftCompleteMsg { color: var(--text-secondary); }
+
+/* ── Schedule: the week/list switch, game cards, the list table ── */
+:global([data-admin-kit]) .viewToggle { border-color: var(--home-line-strong); border-radius: 6px; }
+:global([data-admin-kit]) .viewToggleBtn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .viewToggleBtn + .viewToggleBtn { border-left-color: var(--home-line-strong); }
+:global([data-admin-kit]) .viewToggleBtnActive { background: var(--home-olive-soft); color: var(--home-olive); }
+:global([data-admin-kit]) .gameCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .gameCard:hover { border-color: var(--home-line-strong); background: var(--card-bg); }
+:global([data-admin-kit]) .gameTeamName { color: var(--text-primary); }
+:global([data-admin-kit]) .gameVs { color: var(--text-tertiary); }
+:global([data-admin-kit]) .gameScore,
+:global([data-admin-kit]) .scoreCell { color: var(--text-primary); }
+:global([data-admin-kit]) .gameCardMeta { color: var(--text-tertiary); }
+:global([data-admin-kit]) .gameCardFooter { border-top-color: var(--home-line); }
+
+/* The tables → the standard's ground: quiet body-face heads, hairline rows. */
+:global([data-admin-kit]) .scheduleTable th,
+:global([data-admin-kit]) .previewTable th {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+  border-bottom-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .scheduleTable td,
+:global([data-admin-kit]) .previewTable td {
+  color: var(--text-secondary);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .scheduleTable tr:hover td { background: var(--home-olive-soft); }
+
+/* Practices → a card with the portal's practice colour at its edge. */
+:global([data-admin-kit]) .practiceCard {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--evt-practice);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .practiceCard:hover { border-color: var(--home-line-strong); border-left-color: var(--evt-practice); background: var(--card-bg); }
+
+/* The eyebrow that is still a link (the breadcrumb's "House league", re-homed by F3). */
+:global([data-admin-kit]) .kitCrumb { color: inherit; text-decoration: none; }
+:global([data-admin-kit]) .kitCrumb:hover { color: var(--home-olive); text-decoration: underline; text-underline-offset: 3px; }

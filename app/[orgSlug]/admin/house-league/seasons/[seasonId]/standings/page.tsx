@@ -10,6 +10,9 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 import type { LeagueDivision, LeagueStandingsRow } from '@/lib/types';
 
@@ -33,6 +36,8 @@ interface SeasonInfo { id: string; name: string; }
 export default function StandingsPage() {
   const { orgSlug, seasonId } = useParams<{ orgSlug: string; seasonId: string }>();
   const { currentOrg, user, userRole, userCapabilities } = useOrg();
+  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
 
@@ -125,7 +130,7 @@ export default function StandingsPage() {
   if (!canView) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>
+        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>
           You don&apos;t have access to this page.
         </p>
       </div>
@@ -134,14 +139,26 @@ export default function StandingsPage() {
   if (loading) {
     return (
       <div className={styles.page}>
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Loading…</p>
+        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>Loading…</p>
       </div>
     );
   }
 
+  // The table's row styles, built once per render rather than once per row (slice 2 /simplify).
+  const leaderRowStyle = kx({ background: 'rgba(var(--logic-lime-rgb),0.04)' }, { background: 'var(--home-olive-soft)' });
+  const rankCellStyle = kx({ textAlign: 'center', color: 'var(--white-30)', fontWeight: 600 }, KIT_INK.tertiary);
+  const leaderNameStyle = kx({ fontWeight: 600, color: 'var(--logic-lime)' }, KIT_INK.accent);
+  const teamNameStyle = kx({ fontWeight: 600, color: '#f0f0f0' }, KIT_INK.primary);
+
   return (
     <div className={styles.page}>
-      {/* Header */}
+      {/* Header — today's as `legacy` while the switch is off. On the kit the breadcrumb becomes the
+          eyebrow (still a link to House league) and the way up to the season (F3). */}
+      <AdminPageHeader
+        eyebrow={<Link href={`/${orgSlug}/admin/house-league`} className={styles.kitCrumb}>House league</Link>}
+        title="Standings"
+        backTo={season ? { href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season.name } : undefined}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}>
@@ -170,6 +187,8 @@ export default function StandingsPage() {
           </div>
         </div>
       </div>
+        }
+      />
 
       {/* Toolbar */}
       <div className={styles.scheduleToolbar}>
@@ -196,16 +215,16 @@ export default function StandingsPage() {
 
       {/* Standings table */}
       {standingsLoading ? (
-        <p style={{ color: 'var(--white-40)', fontSize: '0.9rem' }}>Loading standings…</p>
+        <p style={kx({ color: 'var(--white-40)', fontSize: '0.9rem' }, KIT_INK.tertiary)}>Loading standings…</p>
       ) : standings.length === 0 ? (
-        <div style={{
+        <div style={kx({
           padding: '2.5rem 1.5rem',
           textAlign: 'center',
           border: '1px dashed var(--white-10)',
           borderRadius: '2px',
           color: 'var(--white-35)',
           fontSize: '0.9rem',
-        }}>
+        }, KIT_SURFACE.empty)}>
           No completed games yet — standings will appear once scores are entered.
         </div>
       ) : (
@@ -227,8 +246,8 @@ export default function StandingsPage() {
             </thead>
             <tbody>
               {standings.map((row, i) => (
-                <tr key={row.team.id} style={i === 0 ? { background: 'rgba(var(--logic-lime-rgb),0.04)' } : undefined}>
-                  <td style={{ textAlign: 'center', color: 'var(--white-30)', fontWeight: 600 }}>
+                <tr key={row.team.id} style={i === 0 ? leaderRowStyle : undefined}>
+                  <td style={rankCellStyle}>
                     {i + 1}
                   </td>
                   <td>
@@ -236,7 +255,7 @@ export default function StandingsPage() {
                       {row.team.color && (
                         <span className={styles.teamDot} style={{ background: row.team.color }} />
                       )}
-                      <span style={{ fontWeight: 600, color: i === 0 ? 'var(--logic-lime)' : '#f0f0f0' }}>
+                      <span style={i === 0 ? leaderNameStyle : teamNameStyle}>
                         {row.team.name}
                       </span>
                     </span>
@@ -252,9 +271,9 @@ export default function StandingsPage() {
                     textAlign: 'center',
                     fontWeight: 600,
                     color: row.runDifferential > 0
-                      ? '#4ade80'
+                      ? 'var(--success-light)'
                       : row.runDifferential < 0
-                        ? '#f87171'
+                        ? 'var(--danger-light)'
                         : 'var(--white-40)',
                   }}>
                     {row.runDifferential > 0 ? '+' : ''}{row.runDifferential}
@@ -267,7 +286,7 @@ export default function StandingsPage() {
       )}
 
       {standings.length > 0 && (
-        <p style={{ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--white-30)' }}>
+        <p style={kx({ marginTop: '1rem', fontSize: '0.72rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>
           Pts: W=2, T=1, L=0 &nbsp;·&nbsp; Tiebreaker: run differential, then runs for
         </p>
       )}

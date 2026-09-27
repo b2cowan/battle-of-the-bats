@@ -6,6 +6,9 @@ import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import HelpCallout from '@/components/help/HelpCallout';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../../house-league.module.css';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -46,6 +49,9 @@ function buildPayload(subject: string, message: string, audience: Audience) {
 
 export default function NotificationsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
+  // Admin Design Continuity slice 2: the kit's version while the switch is on; today's while it is off.
+  const kit = useAdminKit();
+  const kx = useKitStyle();
   const { seasonId } = useParams<{ seasonId: string }>();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   // J3-012: every /api/admin fetch must carry the org slug so the server resolves the URL's org.
@@ -141,12 +147,18 @@ export default function NotificationsPage() {
           <button
             type="button"
             onClick={() => setPreview(false)}
-            style={{ fontSize: '0.82rem', color: 'var(--white-40)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }}
+            style={kx({ fontSize: '0.82rem', color: 'var(--white-40)', background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.3rem', padding: 0 }, { ...KIT_INK.secondary, fontWeight: 600 })}
           >
             <ArrowLeft size={13} /> Back to compose
           </button>
         </div>
 
+        {/* On the kit the header loses its "To:" line (F3); the recipients move into the preview
+            itself, as its first row — where a reader looks for who an email is addressed to. */}
+        <AdminPageHeader
+          eyebrow="House league"
+          title="Preview email"
+          legacy={
         <div className={styles.pageHeader}>
           <div className={styles.pageHeaderLeft}>
             <div className={styles.headerIcon}><Mail size={20} /></div>
@@ -156,28 +168,36 @@ export default function NotificationsPage() {
             </div>
           </div>
         </div>
+          }
+        />
 
         {/* Email preview */}
-        <div style={{
+        <div style={kx({
           background: '#1a1a2e',
           border: '1px solid var(--white-10)',
           borderRadius: '2px',
           padding: '1.5rem',
           marginBottom: '1.5rem',
           maxWidth: '600px',
-        }}>
+        }, { ...KIT_SURFACE.card, borderRadius: '12px' })}>
+          {kit && (
+            <div style={{ borderBottom: KIT_LINE, paddingBottom: '0.75rem', marginBottom: '1rem' }}>
+              <div style={{ fontSize: '0.75rem', ...KIT_INK.tertiary, marginBottom: '0.25rem' }}>TO</div>
+              <div style={{ fontSize: '0.9rem' }}>{selectedAudience.label}</div>
+            </div>
+          )}
           <div style={{ borderBottom: '1px solid var(--white-10)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--white-35)', marginBottom: '0.25rem' }}>FROM</div>
+            <div style={kx({ fontSize: '0.75rem', color: 'var(--white-35)', marginBottom: '0.25rem' }, KIT_INK.tertiary)}>FROM</div>
             <div style={{ fontSize: '0.9rem' }}>FieldLogicHQ — {currentOrg?.name}</div>
           </div>
           <div style={{ borderBottom: '1px solid var(--white-10)', paddingBottom: '0.75rem', marginBottom: '1rem' }}>
-            <div style={{ fontSize: '0.75rem', color: 'var(--white-35)', marginBottom: '0.25rem' }}>SUBJECT</div>
+            <div style={kx({ fontSize: '0.75rem', color: 'var(--white-35)', marginBottom: '0.25rem' }, KIT_INK.tertiary)}>SUBJECT</div>
             <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{subject}</div>
           </div>
           <div style={{ fontSize: '0.9rem', lineHeight: 1.6, whiteSpace: 'pre-wrap', color: 'var(--white-80)' }}>
             {message}
           </div>
-          <div style={{ borderTop: '1px solid var(--white-10)', paddingTop: '0.75rem', marginTop: '1rem', fontSize: '0.75rem', color: 'var(--white-30)' }}>
+          <div style={kx({ borderTop: '1px solid var(--white-10)', paddingTop: '0.75rem', marginTop: '1rem', fontSize: '0.75rem', color: 'var(--white-30)' }, KIT_INK.tertiary)}>
             Sent by {currentOrg?.name} via FieldLogicHQ
           </div>
         </div>
@@ -214,6 +234,8 @@ export default function NotificationsPage() {
 
   return (
     <div className={styles.page}>
+      {/* On the kit the way back to Registrations is the header's leading corner (the same door). */}
+      {!kit && (
       <div style={{ marginBottom: '1rem' }}>
         <Link
           href={`${base}/house-league/seasons/${seasonId}/registrations`}
@@ -222,7 +244,13 @@ export default function NotificationsPage() {
           ← Registrations
         </Link>
       </div>
+      )}
 
+      <AdminPageHeader
+        eyebrow="House league"
+        title="Send notification"
+        backTo={{ href: `${base}/house-league/seasons/${seasonId}/registrations`, label: 'Registrations' }}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Mail size={20} /></div>
@@ -232,16 +260,18 @@ export default function NotificationsPage() {
           </div>
         </div>
       </div>
+        }
+      />
 
       {result && (
-        <div style={{
+        <div style={kx({
           background: 'rgba(34,197,94,0.1)',
           border: '1px solid rgba(34,197,94,0.3)',
           borderRadius: '2px',
           padding: '0.75rem 1rem',
           marginBottom: '1.5rem',
           fontSize: '0.88rem',
-        }}>
+        }, KIT_SURFACE.good)}>
           {/* Every registrant in the audience must be accounted for here. Delivered + skipped
               stopped summing to the audience the moment opted-out families were split into their
               own bucket server-side, and an admin who cannot see where the rest went assumes a
@@ -269,7 +299,7 @@ export default function NotificationsPage() {
             {AUDIENCE_OPTIONS.map(opt => (
               <label
                 key={opt.value}
-                style={{
+                style={kx({
                   display: 'flex',
                   alignItems: 'flex-start',
                   gap: '0.6rem',
@@ -278,7 +308,7 @@ export default function NotificationsPage() {
                   border: `1px solid ${audience === opt.value ? 'rgba(var(--info-rgb),0.6)' : 'var(--white-8)'}`,
                   background: audience === opt.value ? 'rgba(var(--info-rgb),0.08)' : 'transparent',
                   cursor: 'pointer',
-                }}
+                }, audience === opt.value ? KIT_SURFACE.chosen : KIT_SURFACE.option)}
               >
                 <input
                   type="radio"
@@ -286,11 +316,11 @@ export default function NotificationsPage() {
                   value={opt.value}
                   checked={audience === opt.value}
                   onChange={() => setAudience(opt.value)}
-                  style={{ marginTop: '0.1rem', accentColor: 'var(--blueprint-blue)' }}
+                  style={kx({ marginTop: '0.1rem', accentColor: 'var(--blueprint-blue)' }, { accentColor: 'var(--home-olive)' })}
                 />
                 <div>
                   <div style={{ fontSize: '0.88rem', fontWeight: 600 }}>{opt.label}</div>
-                  <div style={{ fontSize: '0.78rem', color: 'var(--white-40)' }}>{opt.desc}</div>
+                  <div style={kx({ fontSize: '0.78rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>{opt.desc}</div>
                 </div>
               </label>
             ))}
@@ -350,9 +380,9 @@ export default function NotificationsPage() {
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem' }}>
               <thead>
-                <tr style={{ borderBottom: '1px solid var(--white-10)' }}>
+                <tr style={kx({ borderBottom: '1px solid var(--white-10)' }, { borderBottom: '1px solid var(--home-line-strong)' })}>
                   {['Date', 'Subject', 'Audience', 'Sent', 'Skipped'].map(h => (
-                    <th key={h} style={{ textAlign: 'left', padding: '0.4rem 0.75rem', color: 'var(--white-40)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                    <th key={h} style={kx({ textAlign: 'left', padding: '0.4rem 0.75rem', color: 'var(--white-40)', fontWeight: 600, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.05em' }, KIT_INK.head)}>
                       {h}
                     </th>
                   ))}
@@ -360,7 +390,7 @@ export default function NotificationsPage() {
               </thead>
               <tbody>
                 {log.map(entry => (
-                  <tr key={entry.id} style={{ borderBottom: '1px solid var(--white-5)' }}>
+                  <tr key={entry.id} style={kx({ borderBottom: '1px solid var(--white-5)' }, { borderBottom: KIT_LINE })}>
                     <td style={{ padding: '0.5rem 0.75rem', color: 'var(--white-50)', whiteSpace: 'nowrap' }}>{formatDateTime(entry.sentAt)}</td>
                     <td style={{ padding: '0.5rem 0.75rem' }}>{entry.subject}</td>
                     <td style={{ padding: '0.5rem 0.75rem', color: 'var(--white-60)' }}>{entry.audience}</td>

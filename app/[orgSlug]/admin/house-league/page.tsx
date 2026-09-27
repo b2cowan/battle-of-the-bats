@@ -8,6 +8,9 @@ import FeedbackModal from '@/components/FeedbackModal';
 import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import HelpCallout from '@/components/help/HelpCallout';
 import HelpTooltip from '@/components/help/HelpTooltip';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from './house-league.module.css';
 import type { LeagueSeason, LeagueSeasonSummary, LeagueSeasonStatus } from '@/lib/types';
 import type { LeagueCapKind } from '@/lib/free-floor';
@@ -99,6 +102,8 @@ export default function HouseLeaguePage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const isAdmin = userRole === 'owner' || userRole === 'league_admin';
+  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const [summaries, setSummaries]     = useState<LeagueSeasonSummary[]>([]);
   const [fetching,  setFetching]      = useState(true);
@@ -212,6 +217,17 @@ export default function HouseLeaguePage() {
 
   return (
     <div className={styles.page}>
+      {/* Today's header as `legacy` while the switch is off. On the kit (F3) the subtitle's organization
+          name becomes the eyebrow; "all seasons" is what the list below already is. */}
+      <AdminPageHeader
+        eyebrow={currentOrg?.name}
+        title="House league"
+        actions={isAdmin ? (
+          <button type="button" className="btn btn-primary" onClick={openCreate}>
+            + Create Season
+          </button>
+        ) : undefined}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><CalendarDays size={20} /></div>
@@ -226,6 +242,8 @@ export default function HouseLeaguePage() {
           </button>
         )}
       </div>
+        }
+      />
 
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
@@ -274,7 +292,7 @@ export default function HouseLeaguePage() {
 
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="hl-name">Season Name <span style={{ color: '#f87171' }}>*</span></label>
+                <label className={styles.label} htmlFor="hl-name">Season Name <span style={kx({ color: '#f87171' }, KIT_INK.asterisk)}>*</span></label>
                 <input
                   id="hl-name"
                   className={styles.input}
@@ -288,7 +306,7 @@ export default function HouseLeaguePage() {
               </div>
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="hl-slug">Slug <span style={{ color: '#f87171' }}>*</span></label>
+                <label className={styles.label} htmlFor="hl-slug">Slug <span style={kx({ color: '#f87171' }, KIT_INK.asterisk)}>*</span></label>
                 <input
                   id="hl-slug"
                   className={styles.input}
@@ -521,6 +539,7 @@ function SeasonCard({
   const [confirmArchive, setConfirmArchive] = useState(false);
   const [transitionError, setTransitionError] = useState<string | null>(null);
   const seasonOrgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const kx = useKitStyle();
 
   const href = `${base}/house-league/seasons/${season.id}`;
   const next = NEXT_TRANSITION[season.status] ?? null;
@@ -590,7 +609,7 @@ function SeasonCard({
       </div>
 
       {(season.seasonStartDate || season.seasonEndDate) && (
-        <p style={{ fontSize: '0.78rem', color: 'var(--white-35)', margin: '0 0 0.75rem' }}>
+        <p style={kx({ fontSize: '0.78rem', color: 'var(--white-35)', margin: '0 0 0.75rem' }, KIT_INK.tertiary)}>
           {season.seasonStartDate ? formatDate(season.seasonStartDate) : '?'}
           {' — '}
           {season.seasonEndDate ? formatDate(season.seasonEndDate) : '?'}

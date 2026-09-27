@@ -13,6 +13,10 @@ import { readSource } from './_source-code.ts';
  *      day someone adds a remap. So the three lists are read from the stylesheet and compared.
  *   2. TOKENS ONLY IN THE KIT — enforced by `scripts/check-public-tokens.mjs` (`checkAdminKit`), not here.
  *   3. F1 — the org's public card style stops at the admin shell, at zero added specificity.
+ *   4. (slice 2) THE CONSOLE LOOK STOPS AT THE KIT — every legacy shell override of a global class or a
+ *      heading carries `:where(:not([data-admin-kit] *))`: unchanged with the switch off, gone with it on.
+ *   5. (slice 2) EVERY KIT CLASS RULE STOPS AT A PUBLIC PREVIEW — a `[data-admin-kit] .x` restyle would
+ *      otherwise reach the admin's previews of public pages (R2).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 
@@ -93,6 +97,37 @@ describe('F1 — the org card style stops at the admin shell', () => {
     for (const v of variants) {
       assert.match(v, /\.card:where\(:not\(\[data-admin-kit\] \.card\), \[data-public-preview\] \.card\)/, `${v.trim()} reaches admin cards`);
     }
+  });
+});
+
+describe('Slice 2 — the admin shell\'s console look stops at the kit (and only there)', () => {
+  const shell = readSource('app/[orgSlug]/admin/admin.module.css');
+  // Every rule the legacy shell writes over a GLOBAL class or a heading: `.adminShell :global(.x)` /
+  // `.adminShell h1`. With the switch on these must not match (the kit's recipes show through, as in
+  // the coaches portal); with it off they must match exactly as before — so the exclusion is a
+  // zero-specificity `:where()`, never a rewrite of the selector.
+  const shellSelectors = [...shell.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(/(^|\n)(\.adminShell\s+(?::global\(|h[1-6])[^{]*)\{/g)]
+    .flatMap(m => m[2].split(',').map(s => s.trim()).filter(Boolean));
+
+  it('the shell still carries its console overrides (switch off is unchanged)', () => {
+    assert.ok(shellSelectors.length >= 24, `found ${shellSelectors.length} shell override selectors — the parser is reading the wrong file, or they were deleted before the release slice`);
+  });
+
+  it('every one of them stops at the kit, at zero added specificity', () => {
+    const open = shellSelectors.filter(sel => !sel.includes(':where(:not([data-admin-kit] *))'));
+    assert.deepEqual(open, [], 'a console override without the exclusion restyles the kit (square buttons, mono lime headings)');
+  });
+});
+
+describe('Slice 2 — the kit\'s class rules stop at a public preview', () => {
+  it('every [data-admin-kit] CLASS rule in globals.css excludes [data-public-preview]', () => {
+    // Token blocks (`[data-admin-kit] {`, the island itself) are not class rules; everything else that
+    // restyles a class under the kit must stop at a preview of a public page, or the preview's
+    // buttons and tags wear the admin's look (slice 1's navy "Register" → lime).
+    const selectors = [...css.matchAll(/\n\[data-admin-kit\] (\.[^{\n]+?)\s*[{,]/g)].map(m => m[1]);
+    assert.ok(selectors.length >= 20, `found ${selectors.length} kit class rules`);
+    const open = selectors.filter(sel => !sel.includes(':where(:not([data-public-preview] *))'));
+    assert.deepEqual(open, [], 'a kit class rule without the exclusion restyles a preview of a public page');
   });
 });
 

@@ -538,3 +538,16 @@
      Display-only, so the zone filter state survives a rotation back to a wide viewport. */
   .chips { display: none; }
 }
+
+/* ═══ THE ADMIN FRAME ON THE KIT (Admin Design Continuity slice 2 — only with the switch on) ═══════
+   The admin page's two header actions become the portal's secondary button (the feed body below is
+   the coaches portal's own and already follows the theme). Admin-only: `[data-admin-kit]` never
+   reaches the coach page. ⚠ TOKENS ONLY (checkAdminKit). */
+:global([data-admin-kit]) .markAllBtn {
+  font-size: var(--type-body);
+  font-weight: 650;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .markAllBtn:hover { color: var(--text-primary); background: var(--home-olive-soft); border-color: var(--home-line-strong); }

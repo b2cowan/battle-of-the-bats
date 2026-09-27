@@ -10,9 +10,9 @@
    ⚠ Only mounted with the switch on: with it off the page renders its own legacy header.
    ⚠ TOKENS ONLY (`tests/unit/admin-kit-guard.test.ts`).
 
-   ⚠ TWO CLASSES DEEP ON PURPOSE. The legacy shell sets `.adminShell h1 { font-family: mono;
-   color: lime; text-transform: uppercase }` at (0,1,1). A one-class title rule loses to it; these
-   are (0,2,0) and win without !important. Slice 2 retires that shell rule under the switch.
+   The legacy shell's `.adminShell h1 { font-family: mono; color: lime; text-transform: uppercase }`
+   (0,1,1) stops at the kit since slice 2 (`:where(:not([data-admin-kit] *))`), so the title is one
+   class again; the other rules keep their `.header` prefix only as the module's grouping.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .header {
@@ -34,7 +34,7 @@
   color: var(--text-tertiary);
 }
 .header .titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
-.header .title {
+.title {
   margin: 0;
   font-family: var(--font-display);
   font-size: var(--type-title);
