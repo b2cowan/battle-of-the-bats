@@ -10,6 +10,8 @@ import NumberStepper from '@/components/admin/NumberStepper';
 import FeedbackModal from '@/components/FeedbackModal';
 import BracketBuilder from './BracketBuilder';
 import BracketHealthPanel from './BracketHealthPanel';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 
 interface Props {
   division: Division;
@@ -59,6 +61,29 @@ function serializeRows(rows: PreviewRow[]): string {
  * DIFF via the service-role `save-bracket` action (preserves played-game scores).
  */
 export default function BracketEditor({ division, tournamentId, tournament = null, orgSlug, existingGames, canAutoGenerate, onUseAutoGenerator, focusGameId, minRestMinutes = 60, onDone, onClear }: Props) {
+  const kx = useKitStyle();
+  // Row-invariant kit patches — computed once per render, not once per row/map() call.
+  const panelStyle = kx({ border: '1px solid var(--border)', borderRadius: '2px', background: 'var(--surface)', margin: '0 0 1rem' }, KIT_SURFACE.card);
+  const actionBarStyle = kx(
+    { position: 'sticky', top: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' },
+    { borderBottom: '1px solid var(--home-line)', background: 'var(--card-bg)' },
+  );
+  const trophyIconStyle = kx({ color: 'var(--logic-lime)', flexShrink: 0 }, KIT_INK.accent);
+  // The two lime console labels ("Editing bracket", the tier setup's heading) — one accent eyebrow.
+  const accentLabelStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.eyebrowAccent);
+  const orderIssuesStyle = kx({ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#f87171', fontSize: '0.75rem', fontWeight: 700 }, KIT_INK.danger);
+  const tierSetupPanelStyle = kx(
+    { marginBottom: '1rem', padding: '1rem 1.1rem', borderRadius: '2px', background: 'var(--surface-2)', border: '1px solid var(--border)' },
+    KIT_SURFACE.card,
+  );
+  const layersIconStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.accent);
+  const tierValidationErrorStyle = kx({ margin: '0 0 0.7rem', color: '#f87171', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }, KIT_INK.danger);
+  const violationsBannerStyle = kx(
+    { marginBottom: '1rem', padding: '0.7rem 0.9rem', borderRadius: '2px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.4)' },
+    KIT_SURFACE.alert,
+  );
+  const violationsHeaderStyle = kx({ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#f87171', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }, KIT_INK.danger);
+  const violationsListStyle = kx({ margin: 0, paddingLeft: '1.1rem', fontSize: '0.78rem', color: 'var(--white-60)', lineHeight: 1.5 }, KIT_INK.tertiary);
   // Freeze the division + mode on mount so a mid-edit shift in the page's derived
   // `playoffBuilderDivision` can't retarget the save or flip build/edit mode.
   const [editDivision] = useState(() => division);
@@ -388,14 +413,14 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
   }
 
   return (
-    <div style={{ border: '1px solid var(--border)', borderRadius: '2px', background: 'var(--surface)', margin: '0 0 1rem' }}>
+    <div style={panelStyle}>
       {/* Sticky action bar */}
-      <div style={{ position: 'sticky', top: 0, zIndex: 20, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', padding: '0.85rem 1.25rem', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+      <div style={actionBarStyle}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', minWidth: 0 }}>
-          <Trophy size={16} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />
-          <span className="text-label" style={{ color: 'var(--logic-lime)' }}>Editing bracket · {editDivision.name}</span>
+          <Trophy size={16} style={trophyIconStyle} />
+          <span className="text-label" style={accentLabelStyle}>Editing bracket · {editDivision.name}</span>
           {violations.length > 0 && (
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: '#f87171', fontSize: '0.75rem', fontWeight: 700 }}>
+            <span style={orderIssuesStyle}>
               <AlertTriangle size={12} /> {violations.length} order issue{violations.length === 1 ? '' : 's'}
             </span>
           )}
@@ -451,10 +476,10 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
 
             {/* Manual tier setup — split overall seeds into N contiguous tiered brackets */}
             {showTierSetup && (
-              <div style={{ marginBottom: '1rem', padding: '1rem 1.1rem', borderRadius: '2px', background: 'var(--surface-2)', border: '1px solid var(--border)' }}>
+              <div style={tierSetupPanelStyle}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                  <Layers size={14} style={{ color: 'var(--logic-lime)' }} />
-                  <span className="text-label" style={{ color: 'var(--logic-lime)' }}>Tiers — split the {tierEligibleCount} seeds into separate brackets</span>
+                  <Layers size={14} style={layersIconStyle} />
+                  <span className="text-label" style={accentLabelStyle}>Tiers — split the {tierEligibleCount} seeds into separate brackets</span>
                 </div>
                 <p className="text-sm text-muted" style={{ margin: '0 0 0.85rem', maxWidth: '46rem', lineHeight: 1.5 }}>
                   Each tier is its own bracket, seeded from the division&apos;s overall standings (top seeds in the first tier).
@@ -491,7 +516,7 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
                   ))}
                 </div>
                 {!tierValidation.ok && (
-                  <p style={{ margin: '0 0 0.7rem', color: '#f87171', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                  <p style={tierValidationErrorStyle}>
                     <AlertTriangle size={12} /> {tierValidation.error}
                   </p>
                 )}
@@ -516,11 +541,11 @@ export default function BracketEditor({ division, tournamentId, tournament = nul
         )}
 
         {violations.length > 0 && (
-          <div style={{ marginBottom: '1rem', padding: '0.7rem 0.9rem', borderRadius: '2px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.4)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#f87171', fontWeight: 700, fontSize: '0.82rem', marginBottom: '0.35rem' }}>
+          <div style={violationsBannerStyle}>
+            <div style={violationsHeaderStyle}>
               <AlertTriangle size={14} /> A game is scheduled before the game that feeds it
             </div>
-            <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.78rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
+            <ul style={violationsListStyle}>
               {violations.map((v, i) => <li key={i}>{violationText(v)}</li>)}
             </ul>
           </div>

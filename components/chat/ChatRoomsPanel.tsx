@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
 import { X, Plus, Lock, Hash, Megaphone } from 'lucide-react';
 import { roomDisplayName } from '@/lib/chat-display';
 import styles from './ChatRoomsPanel.module.css';
@@ -87,7 +88,9 @@ export default function ChatRoomsPanel({
 
   if (!open || typeof document === 'undefined') return null;
 
+  // The admin kit's marker travels with the portal (slice 4c): it renders beside the admin shell.
   return createPortal(
+    <PortalKitRoot>
     <>
       <div className={styles.backdrop} onClick={onClose} role="presentation" />
       <aside
@@ -146,7 +149,8 @@ export default function ChatRoomsPanel({
           </div>
         </div>
       </aside>
-    </>,
+    </>
+    </PortalKitRoot>,
     document.body,
   );
 }

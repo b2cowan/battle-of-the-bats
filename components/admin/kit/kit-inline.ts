@@ -73,6 +73,9 @@ export const KIT_INK = {
   asterisk: { color: 'inherit' },
   /** A label over a figure — the kit's eyebrow. */
   eyebrow: { fontFamily: 'var(--font-data)', fontSize: 'var(--type-label)', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--text-secondary)' },
+  /** The eyebrow in the accent — a label that names what a panel is FOR (the bracket being edited, a
+   *  playoff group's heading), where the lime console label stood (slice 4c). */
+  eyebrowAccent: { fontFamily: 'var(--font-data)', fontSize: 'var(--type-label)', fontWeight: 700, letterSpacing: '0.09em', textTransform: 'uppercase', color: 'var(--home-olive)' },
 } satisfies Record<string, CSSProperties>;
 
 /** A hairline in the kit's warm ink (a row rule, a section rule). */

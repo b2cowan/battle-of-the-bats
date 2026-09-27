@@ -1,6 +1,8 @@
 'use client';
 import React from 'react';
 import { Venue } from '@/lib/types';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 
 /**
  * The one way a tournament game's field is chosen (Phase 2 of the game-location project):
@@ -55,6 +57,7 @@ export default function TournamentFieldPicker({
   disabled?: boolean;
   showTypedHint?: boolean;
 }) {
+  const kx = useKitStyle();
   const nounLower = noun.toLowerCase();
   const selectValue = value.textMode
     ? '__text__'
@@ -127,7 +130,7 @@ export default function TournamentFieldPicker({
             onChange={e => onChange({ ...value, location: e.target.value })}
           />
           {showTypedHint && (
-            <small style={{ display: 'block', marginTop: '0.3rem', color: 'var(--white-40)', fontSize: '0.7rem' }}>
+            <small style={kx({ display: 'block', marginTop: '0.3rem', color: 'var(--white-40)', fontSize: '0.7rem' }, KIT_INK.tertiary)}>
               Typed locations aren’t checked for double-bookings.
             </small>
           )}

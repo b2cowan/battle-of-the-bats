@@ -55,6 +55,8 @@ import {
   ToolbarSegmentedControl,
   ToolbarSelect,
 } from '@/components/admin/tournament/TournamentAdminUI';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 
 type ModalMode = 'add' | 'edit' | null;
 // The filter's words and the printed schedule's words are ONE list — see
@@ -98,6 +100,9 @@ export default function AdminSchedulePage() {
   const { currentTournament, isLocked, loading: tournamentLoading, setCurrentTournament } = useTournament();
   const { currentOrg } = useOrg();
   usePageTitle('Schedule');
+  // Admin Design Continuity slice 4c — the kit switch. `kx` patches every hand-set inline
+  // colour below while the switch is off (no className swap needed at this level).
+  const kx = useKitStyle();
   const tournamentId = currentTournament?.id;
   const orgSlug = currentOrg?.slug;
   const [games, setGames]       = useState<Game[]>([]);
@@ -1320,6 +1325,14 @@ export default function AdminSchedulePage() {
   const playoffBuilderDivisionId = playoffDefaultDivisionId;
   const playoffBuilderDivision = divisions.find(d => d.id === playoffBuilderDivisionId) ?? null;
 
+  // Row-invariant kit patches — the two plain-window titles below share one recipe (the global
+  // kit's `.modal-header h3` is written at zero weight so a page's own skin wins; these inline
+  // titles need the same patch restated here to reach the kit's display face + text-primary).
+  const modalTitleStyle = kx(
+    { fontFamily: 'var(--font-data)', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--logic-lime)', margin: 0 } as React.CSSProperties,
+    { fontFamily: 'var(--font-display)', fontSize: 'var(--type-heading)', fontWeight: 700, textTransform: 'none', letterSpacing: 'normal', color: 'var(--text-primary)', margin: 0 },
+  );
+
   return (
     <div className={s.page}>
       {/* Same-tab flips (The Flip) can now navigate away from unsaved Schedule Health rule edits that
@@ -1485,7 +1498,7 @@ export default function AdminSchedulePage() {
           />
           )}
           {editingBracket && (
-            <span className="text-label" style={{ color: 'var(--logic-lime)', alignSelf: 'center', padding: '0 0.5rem' }}>Editing bracket</span>
+            <span className="text-label" style={kx({ color: 'var(--logic-lime)', alignSelf: 'center', padding: '0 0.5rem' }, KIT_INK.accent)}>Editing bracket</span>
           )}
         </ToolbarGroup>
 
@@ -2019,7 +2032,7 @@ export default function AdminSchedulePage() {
         <div className="modal-overlay" onClick={() => setResolveFacilitiesOpen(false)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ fontFamily: 'var(--font-data)', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--logic-lime)', margin: 0 }}>
+              <h3 style={modalTitleStyle}>
                 Resolve Temporary Facilities
               </h3>
               <button className="btn btn-ghost btn-data" onClick={() => setResolveFacilitiesOpen(false)}><X size={16} /></button>
@@ -2090,7 +2103,7 @@ export default function AdminSchedulePage() {
         <div className="modal-overlay" onClick={() => setModal(null)}>
           <div className="modal modal-lg" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
-              <h3 style={{ fontFamily: 'var(--font-data)', fontSize: '0.95rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--logic-lime)', margin: 0 }}>
+              <h3 style={modalTitleStyle}>
                 {modal === 'add' ? 'Add Game' : 'Edit Game'}
               </h3>
               <button className="btn btn-ghost btn-data" onClick={() => setModal(null)}><X size={16} /></button>
@@ -2127,12 +2140,12 @@ export default function AdminSchedulePage() {
                     value={form.durationMinutes === '' ? '' : form.durationMinutes}
                     onChange={e => { const v = e.target.value; setForm(f => ({ ...f, durationMinutes: v === '' ? '' : (parseInt(v, 10) || '') })); }}
                   />
-                  <small style={{ color: 'var(--white-40)', fontSize: '0.75rem' }}>Leave blank to use the division/event default. Set a value for a longer game (e.g. a final).</small>
+                  <small style={kx({ color: 'var(--white-40)', fontSize: '0.75rem' }, KIT_INK.tertiary)}>Leave blank to use the division/event default. Set a value for a longer game (e.g. a final).</small>
                 </div>
               </div>
               {(() => {
                 if (modalSlotsLoading) {
-                  return <div style={{ marginBottom: '1rem', padding: '0.7rem 0.875rem', fontSize: '0.85rem', color: 'var(--white-40)' }}>Loading slots…</div>;
+                  return <div style={kx({ marginBottom: '1rem', padding: '0.7rem 0.875rem', fontSize: '0.85rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>Loading slots…</div>;
                 }
 
                 // Playoffs: wire participants by Seed / Winner-of / Loser-of
@@ -2221,7 +2234,10 @@ export default function AdminSchedulePage() {
                   };
                   return (
                     <>
-                      <div style={{ marginBottom: '0.75rem', padding: '0.6rem 0.8rem', background: 'var(--white-5)', borderRadius: '2px', fontSize: '0.78rem', color: 'var(--white-40)', lineHeight: 1.5 }}>
+                      <div style={kx(
+                        { marginBottom: '0.75rem', padding: '0.6rem 0.8rem', background: 'var(--white-5)', borderRadius: '2px', fontSize: '0.78rem', color: 'var(--white-40)', lineHeight: 1.5 },
+                        { background: 'var(--home-paper)', border: '1px solid var(--home-line)', color: 'var(--text-tertiary)' },
+                      )}>
                         Pick a <strong>Seed #</strong> or the <strong>Winner / Loser</strong> of an earlier game. Later rounds can then point at this game&rsquo;s winner automatically.
                       </div>
                       <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
@@ -2265,7 +2281,10 @@ export default function AdminSchedulePage() {
 
                 return (
                   <>
-                    <div style={{ marginBottom: '0.75rem', padding: '0.7rem 0.875rem', background: 'var(--white-5)', borderRadius: '2px', fontSize: '0.8rem', color: 'var(--white-40)' }}>
+                    <div style={kx(
+                      { marginBottom: '0.75rem', padding: '0.7rem 0.875rem', background: 'var(--white-5)', borderRadius: '2px', fontSize: '0.8rem', color: 'var(--white-40)' },
+                      { background: 'var(--home-paper)', border: '1px solid var(--home-line)', color: 'var(--text-tertiary)' },
+                    )}>
                       No slots configured for this division. Configure pools in Division Settings to use slot-based scheduling.
                     </div>
                     <div className="form-row form-row-2" style={{ marginBottom: '1rem' }}>
@@ -2328,9 +2347,10 @@ export default function AdminSchedulePage() {
                   onChange={e => setForm(f => ({ ...f, notes: e.target.value }))} />
               </div>
 
-              {/* Venue conflict banner */}
+              {/* Venue conflict banner — same danger/warning recipe as the inline row banner
+                  (GameList.tsx's inlineConflict block, ADC 4b precedent). */}
               {modalConflict && (
-                <div style={{
+                <div style={kx({
                   marginTop: '0.75rem',
                   padding: '0.7rem 0.875rem',
                   borderRadius: '2px',
@@ -2340,18 +2360,23 @@ export default function AdminSchedulePage() {
                   border: `1px solid ${modalConflict.kind === 'overlap'
                     ? 'rgba(239, 68, 68, 0.4)'
                     : 'rgba(251, 191, 36, 0.35)'}`,
-                }}>
+                }, {
+                  background: modalConflict.kind === 'overlap' ? 'rgba(var(--danger-rgb), 0.08)' : 'rgba(var(--warning-rgb), 0.08)',
+                  border: `1px solid ${modalConflict.kind === 'overlap' ? 'rgba(var(--danger-rgb), 0.3)' : 'rgba(var(--warning-rgb), 0.3)'}`,
+                })}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{
+                      <p style={kx({
                         fontWeight: 700, fontSize: '0.82rem', margin: 0,
                         color: modalConflict.kind === 'overlap' ? '#f87171' : '#fbbf24',
                         display: 'flex', alignItems: 'center', gap: '0.35rem',
-                      }}>
+                      }, {
+                        color: modalConflict.kind === 'overlap' ? 'var(--danger-light)' : 'var(--warning-light)',
+                      })}>
                         <AlertTriangle size={13} />
                         {modalConflict.kind === 'overlap' ? 'Venue conflict — game windows overlap' : 'Buffer zone warning'}
                       </p>
-                      <p style={{ fontSize: '0.78rem', color: 'var(--white-60)', margin: '0.3rem 0 0', lineHeight: 1.45 }}>
+                      <p style={kx({ fontSize: '0.78rem', color: 'var(--white-60)', margin: '0.3rem 0 0', lineHeight: 1.45 }, KIT_INK.secondary)}>
                         {modalConflict.conflictingDivisionName} already has a game at this venue that{' '}
                         {modalConflict.kind === 'overlap'
                           ? 'physically overlaps this time. Change the time to save.'
@@ -2388,21 +2413,27 @@ export default function AdminSchedulePage() {
                 const who = named.length === 2 ? `${named[0]} and ${named[1]}` : named[0] ?? 'the teams in this game';
 
                 return (
-                  <div style={{
+                  <div style={kx({
                     display: 'flex', gap: '0.55rem', alignItems: 'flex-start',
                     margin: '0 0 1rem', padding: '0.7rem 0.875rem', borderRadius: '2px',
                     fontSize: '0.8rem', lineHeight: 1.45, color: 'var(--white-60)',
                     background: canAlertFollowers ? 'rgba(var(--warning-rgb), 0.10)' : 'var(--white-5)',
                     borderLeft: `2px solid ${canAlertFollowers ? 'var(--warning)' : 'var(--white-20)'}`,
-                  }}>
-                    <span aria-hidden style={{
+                  }, {
+                    color: 'var(--text-secondary)',
+                    background: canAlertFollowers ? 'rgba(var(--warning-rgb), 0.08)' : 'var(--home-paper)',
+                    borderLeft: `2px solid ${canAlertFollowers ? 'var(--warning)' : 'var(--home-line-strong)'}`,
+                  })}>
+                    <span aria-hidden style={kx({
                       width: '6px', height: '6px', borderRadius: '50%', marginTop: '0.45rem', flex: 'none',
                       background: canAlertFollowers ? 'var(--warning)' : 'var(--white-30)',
-                    }} />
+                    }, {
+                      background: canAlertFollowers ? 'var(--warning)' : 'var(--text-tertiary)',
+                    })} />
                     {canAlertFollowers ? (
-                      <span>This schedule is published. Saving alerts <strong style={{ color: 'var(--white-85)' }}>{who}</strong> followers.</span>
+                      <span>This schedule is published. Saving alerts <strong style={kx({ color: 'var(--white-85)' }, KIT_INK.primary)}>{who}</strong> followers.</span>
                     ) : (
-                      <span>Teams see this change in the app. <strong style={{ color: 'var(--white-85)' }}>Phone alerts are a Tournament Plus feature</strong> — on this plan, nobody gets a notification.</span>
+                      <span>Teams see this change in the app. <strong style={kx({ color: 'var(--white-85)' }, KIT_INK.primary)}>Phone alerts are a Tournament Plus feature</strong> — on this plan, nobody gets a notification.</span>
                     )}
                   </div>
                 );
@@ -2412,7 +2443,9 @@ export default function AdminSchedulePage() {
                 <button type="button" className="btn btn-ghost btn-data" onClick={() => setModal(null)}>Cancel</button>
                 {modalConflict?.kind === 'buffer' ? (
                   <>
-                    <button type="submit" className="btn btn-outline btn-data" id="schedule-save-btn" style={{ borderColor: 'rgba(251,191,36,0.5)', color: '#fbbf24' }}>
+                    {/* #fbbf24 is byte-equal to --warning-light in the admin's plain :root (ADC rule 4)
+                        — a straight token swap, not kit-gated (matches GameList.tsx's saveAnywayBtnStyle). */}
+                    <button type="submit" className="btn btn-outline btn-data" id="schedule-save-btn" style={kx({ borderColor: 'rgba(251,191,36,0.5)', color: 'var(--warning-light)' }, { borderColor: 'rgba(var(--warning-rgb), 0.5)' })}>
                       <Check size={14} /> Save Anyway
                     </button>
                   </>
@@ -2618,6 +2651,18 @@ function PublishScheduleModal({
   onPublished: (updates: { id: string; scheduleVisibility: 'published' }[]) => void;
   onDivisionClosed: (id: string) => void;
 }) {
+  const kx = useKitStyle();
+  // Kit patches used inside lists or in both of the window's states — built once per render.
+  const errorBannerStyle = kx(
+    { marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(var(--danger-rgb),0.1)', border: '1px solid rgba(var(--danger-rgb),0.3)', borderRadius: '2px', fontSize: '0.82rem', color: '#f87171' },
+    { background: 'rgba(var(--danger-rgb), 0.08)', border: '1px solid rgba(var(--danger-rgb), 0.3)', borderRadius: '8px', color: 'var(--danger-light)' },
+  );
+  const openTargetNameStyle = kx({ fontSize: '0.83rem', color: 'var(--white-70)', padding: '0.2rem 0' }, KIT_INK.secondary);
+  const divisionNameStyle = kx({ flex: 1, fontWeight: 600, fontSize: '0.85rem', color: 'var(--fl-text)' }, KIT_INK.primary);
+  const liveTagStyle = kx(
+    { fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--success)', background: 'rgba(var(--success-rgb),0.1)', border: '1px solid rgba(var(--success-rgb),0.25)', padding: '1px 6px', borderRadius: '2px' },
+    { color: 'var(--success-light)', background: 'rgba(var(--success-rgb), 0.08)', border: '1px solid rgba(var(--success-rgb), 0.3)' },
+  );
   const publishable = divisions.filter(g => !g.scheduleVisibility || g.scheduleVisibility === 'unpublished');
 
   const [selectedIds, setSelectedIds] = React.useState<string[]>([defaultDivisionId]);
@@ -2692,7 +2737,7 @@ function PublishScheduleModal({
       <div className="modal" style={{ maxWidth: '480px' }} onClick={e => e.stopPropagation()}>
         <div className="modal-header">
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <Globe size={16} style={{ color: 'var(--logic-lime)' }} /> {titleText}
+            <Globe size={16} style={kx({ color: 'var(--logic-lime)' }, KIT_INK.accent)} /> {titleText}
           </h3>
           <button className="btn btn-ghost btn-data" onClick={onClose}><X size={16} /></button>
         </div>
@@ -2700,17 +2745,21 @@ function PublishScheduleModal({
         <div>
           {result ? (
             <div style={{ textAlign: 'center', padding: '0.5rem 0 0.25rem' }}>
-              <div style={{
+              <div style={kx({
                 width: '44px', height: '44px', margin: '0 auto 0.75rem',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 borderRadius: '50%', fontSize: '1.5rem', fontWeight: 700,
                 color: 'var(--success)',
                 background: 'rgba(var(--success-rgb),0.12)',
                 border: '1px solid rgba(var(--success-rgb),0.35)',
-              }}>✓</div>
-              <p style={{ fontWeight: 700, color: 'var(--logic-lime)', marginBottom: result.notified > 0 ? '0.35rem' : 0 }}>Schedule Published!</p>
+              }, {
+                color: 'var(--success-light)',
+                background: 'rgba(var(--success-rgb), 0.08)',
+                border: '1px solid rgba(var(--success-rgb), 0.3)',
+              })}>✓</div>
+              <p style={kx({ fontWeight: 700, color: 'var(--logic-lime)', marginBottom: result.notified > 0 ? '0.35rem' : 0 }, KIT_INK.success)}>Schedule Published!</p>
               {result.notified > 0 && (
-                <p style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>
+                <p style={kx({ fontSize: '0.85rem', color: 'var(--white-60)' }, KIT_INK.secondary)}>
                   Notified {result.notified} team{result.notified !== 1 ? 's' : ''} by email.
                 </p>
               )}
@@ -2719,23 +2768,26 @@ function PublishScheduleModal({
           ) : showRegCloseWarning ? (
             /* ── Registration close confirmation screen ── */
             <div>
-              <p style={{ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.65rem', color: 'var(--fl-text)' }}>
+              <p style={kx({ fontWeight: 700, fontSize: '0.95rem', marginBottom: '0.65rem', color: 'var(--fl-text)' }, KIT_INK.primary)}>
                 Close registration and publish?
               </p>
-              <p style={{ fontSize: '0.85rem', color: 'var(--white-60)', lineHeight: 1.55, marginBottom: openTargets.length > 1 ? '0.75rem' : '1.25rem' }}>
+              <p style={kx({ fontSize: '0.85rem', color: 'var(--white-60)', lineHeight: 1.55, marginBottom: openTargets.length > 1 ? '0.75rem' : '1.25rem' }, KIT_INK.secondary)}>
                 {openTargets.length === 1
                   ? `Registration for ${openTargets[0].name} is still open. Publishing will close it — stopping new submissions from the public page.`
                   : `Registration is still open for ${openTargets.length} divisions. Publishing will close them — stopping new submissions from the public page.`}
               </p>
               {openTargets.length > 1 && (
-                <div style={{ marginBottom: '1.25rem', background: 'var(--white-5)', border: '1px solid var(--white-8)', borderRadius: '2px', padding: '0.5rem 0.75rem' }}>
+                <div style={kx(
+                  { marginBottom: '1.25rem', background: 'var(--white-5)', border: '1px solid var(--white-8)', borderRadius: '2px', padding: '0.5rem 0.75rem' },
+                  { background: 'var(--home-paper)', border: '1px solid var(--home-line)' },
+                )}>
                   {openTargets.map(g => (
-                    <div key={g.id} style={{ fontSize: '0.83rem', color: 'var(--white-70)', padding: '0.2rem 0' }}>{g.name}</div>
+                    <div key={g.id} style={openTargetNameStyle}>{g.name}</div>
                   ))}
                 </div>
               )}
               {error && (
-                <div style={{ marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(var(--danger-rgb),0.1)', border: '1px solid rgba(var(--danger-rgb),0.3)', borderRadius: '2px', fontSize: '0.82rem', color: '#f87171' }}>
+                <div style={errorBannerStyle}>
                   {error}
                 </div>
               )}
@@ -2752,7 +2804,7 @@ function PublishScheduleModal({
               {publishable.length > 1 && (
                 <div style={{ marginBottom: '1.25rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                    <p style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--white-50)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+                    <p style={kx({ fontSize: '0.8rem', fontWeight: 700, color: 'var(--white-50)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }, KIT_INK.eyebrow)}>
                       Divisions
                     </p>
                     {!allUnpublishedSelected && (
@@ -2766,20 +2818,25 @@ function PublishScheduleModal({
                       </button>
                     )}
                   </div>
-                  <div style={{ background: 'var(--white-5)', border: '1px solid var(--white-10)', borderRadius: '2px' }}>
+                  <div style={kx(
+                    { background: 'var(--white-5)', border: '1px solid var(--white-10)', borderRadius: '2px' },
+                    { background: 'var(--home-paper)', border: '1px solid var(--home-line)' },
+                  )}>
                     {divisions.map(g => {
                       const isLive = g.scheduleVisibility && g.scheduleVisibility !== 'unpublished';
                       const isChecked = selectedIds.includes(g.id);
                       return (
                         <label
                           key={g.id}
-                          style={{
+                          style={kx({
                             display: 'flex', alignItems: 'center', gap: '0.65rem',
                             padding: '0.5rem 0.75rem',
                             borderBottom: '1px solid var(--white-5)',
                             cursor: isLive ? 'default' : 'pointer',
                             opacity: isLive ? 0.5 : 1,
-                          }}
+                          }, {
+                            borderBottom: '1px solid var(--home-line)',
+                          })}
                         >
                           <input
                             type="checkbox"
@@ -2788,11 +2845,14 @@ function PublishScheduleModal({
                             onChange={() => !isLive && toggleDivision(g.id)}
                             style={{ flexShrink: 0 }}
                           />
-                          <span style={{ flex: 1, fontWeight: 600, fontSize: '0.85rem', color: 'var(--fl-text)' }}>{g.name}</span>
+                          <span style={divisionNameStyle}>{g.name}</span>
                           {isLive ? (
-                            <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em', color: 'var(--success)', background: 'rgba(var(--success-rgb),0.1)', border: '1px solid rgba(var(--success-rgb),0.25)', padding: '1px 6px', borderRadius: '2px' }}>LIVE</span>
+                            <span style={liveTagStyle}>LIVE</span>
                           ) : (
-                            <span style={{ fontSize: '0.73rem', color: g.isClosed ? 'var(--logic-lime)' : 'var(--white-30)' }}>
+                            <span style={kx(
+                              { fontSize: '0.73rem', color: g.isClosed ? 'var(--logic-lime)' : 'var(--white-30)' },
+                              { color: g.isClosed ? 'var(--home-olive)' : 'var(--text-tertiary)' },
+                            )}>
                               {g.isClosed ? 'Reg. closed' : 'Reg. open'}
                             </span>
                           )}
@@ -2803,7 +2863,7 @@ function PublishScheduleModal({
                 </div>
               )}
 
-              <p style={{ color: 'var(--white-70)', fontSize: '0.88rem', marginBottom: willCloseOnPublish ? '0.85rem' : '1.25rem', lineHeight: 1.55 }}>
+              <p style={kx({ color: 'var(--white-70)', fontSize: '0.88rem', marginBottom: willCloseOnPublish ? '0.85rem' : '1.25rem', lineHeight: 1.55 }, KIT_INK.secondary)}>
                 {targets.length === 0
                   ? 'Select at least one division to publish.'
                   : targets.length === 1
@@ -2812,14 +2872,17 @@ function PublishScheduleModal({
               </p>
 
               {willCloseOnPublish && (
-                <div style={{
+                <div style={kx({
                   display: 'flex', alignItems: 'flex-start', gap: '0.55rem',
                   marginBottom: '1.25rem', padding: '0.6rem 0.75rem',
                   background: 'rgba(var(--logic-lime-rgb),0.06)',
                   border: '1px solid rgba(var(--logic-lime-rgb),0.25)', borderRadius: '2px',
-                }}>
-                  <AlertCircle size={14} style={{ color: 'var(--logic-lime)', marginTop: '2px', flexShrink: 0 }} />
-                  <div style={{ fontSize: '0.8rem', color: 'var(--white-70)', lineHeight: 1.45 }}>
+                }, {
+                  background: 'var(--home-olive-soft)',
+                  border: '1px solid var(--home-olive)',
+                })}>
+                  <AlertCircle size={14} style={kx({ color: 'var(--logic-lime)', marginTop: '2px', flexShrink: 0 }, KIT_INK.accent)} />
+                  <div style={kx({ fontSize: '0.8rem', color: 'var(--white-70)', lineHeight: 1.45 }, KIT_INK.secondary)}>
                     {openTargets.length === 1
                       ? `Registration for ${openTargets[0].name} is still open and will be closed when you publish.`
                       : `Registration is still open for ${openTargets.length} of the selected divisions and will be closed when you publish.`}
@@ -2827,9 +2890,10 @@ function PublishScheduleModal({
                 </div>
               )}
 
-              <div style={{
-                borderTop: '1px solid var(--white-8)', paddingTop: '1rem', marginBottom: '1rem',
-              }}>
+              <div style={kx(
+                { borderTop: '1px solid var(--white-8)', paddingTop: '1rem', marginBottom: '1rem' },
+                { borderTop: '1px solid var(--home-line)' },
+              )}>
                 <label style={{
                   display: 'flex', alignItems: 'flex-start', gap: '0.65rem',
                   cursor: canNotify ? 'pointer' : 'default',
@@ -2843,18 +2907,20 @@ function PublishScheduleModal({
                     style={{ marginTop: '3px', flexShrink: 0 }}
                   />
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <div style={kx({ fontWeight: 600, fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }, KIT_INK.primary)}>
                       <Send size={12} /> Notify registered teams by email
                       {!canNotify && (
-                        <span style={{
+                        <span style={kx({
                           fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.06em',
                           color: 'var(--blueprint-blue)', background: 'rgba(var(--blueprint-blue-rgb),0.12)',
                           border: '1px solid rgba(var(--blueprint-blue-rgb),0.25)',
                           padding: '1px 6px', borderRadius: '2px',
-                        }}>Tournament Plus</span>
+                        }, {
+                          color: 'var(--info-light)', background: 'rgba(var(--info-rgb), 0.08)', border: '1px solid rgba(var(--info-rgb), 0.3)',
+                        })}>Tournament Plus</span>
                       )}
                     </div>
-                    <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', marginTop: '0.2rem', lineHeight: 1.45 }}>
+                    <div style={kx({ fontSize: '0.78rem', color: 'var(--white-50)', marginTop: '0.2rem', lineHeight: 1.45 }, KIT_INK.tertiary)}>
                       {canNotify
                         ? 'Send a "schedule is live" email to all accepted team contacts.'
                         : 'Upgrade to Tournament Plus to send schedule notifications.'}
@@ -2864,21 +2930,23 @@ function PublishScheduleModal({
               </div>
 
               {targets.length > 0 && (
-                <div style={{
+                <div style={kx({
                   display: 'flex', alignItems: 'flex-start', gap: '0.55rem',
                   marginBottom: '1rem', padding: '0.6rem 0.75rem',
                   background: 'var(--white-03)',
                   border: '1px solid var(--white-10)', borderRadius: '2px',
-                }}>
-                  <AlertCircle size={14} style={{ color: 'var(--white-40)', marginTop: '2px', flexShrink: 0 }} />
-                  <div style={{ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }}>
+                }, {
+                  background: 'var(--home-paper)', border: '1px solid var(--home-line)',
+                })}>
+                  <AlertCircle size={14} style={kx({ color: 'var(--white-40)', marginTop: '2px', flexShrink: 0 }, KIT_INK.tertiary)} />
+                  <div style={kx({ fontSize: '0.78rem', color: 'var(--white-50)', lineHeight: 1.45 }, KIT_INK.tertiary)}>
                     Publishing also schedules a game-day reminder email to each accepted team for the evening before their first game — this is sent even if the box above is left unchecked.
                   </div>
                 </div>
               )}
 
               {error && (
-                <div style={{ marginBottom: '1rem', padding: '0.6rem 0.75rem', background: 'rgba(var(--danger-rgb),0.1)', border: '1px solid rgba(var(--danger-rgb),0.3)', borderRadius: '2px', fontSize: '0.82rem', color: '#f87171' }}>
+                <div style={errorBannerStyle}>
                   {error}
                 </div>
               )}
@@ -2898,6 +2966,42 @@ function PublishScheduleModal({
 }
 
 // ── Schedule Tools dropdown ────────────────────────────────────────────────────
+/**
+ * The hand-set styles the schedule's three dropdowns share — Unpublish, the phone Tools menu and the
+ * desktop Tools menu (Admin Design Continuity slice 4c): one kit patch each, on 4a's menu recipe
+ * (`TournamentAdminUI.module.css`, "Menus"). With the switch off every value is exactly today's. The
+ * hover handlers write a colour to the DOM, which no stylesheet can reach, so they carry a kit branch.
+ */
+function useScheduleMenuStyles() {
+  const kit = useAdminKit();
+  const kx = useKitStyle();
+  return React.useMemo(() => ({
+    menuItem: kx({
+      display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%',
+      padding: '0.55rem 0.85rem', background: 'none', border: 'none',
+      cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-data)',
+      color: 'var(--fl-text)',
+    }, {
+      fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontWeight: 650, color: 'var(--text-primary)',
+    }),
+    sectionLabel: kx({
+      padding: '0.5rem 0.85rem 0.2rem', fontSize: '0.6rem', fontWeight: 700,
+      letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--data-gray)',
+      fontFamily: 'var(--font-data)',
+    }, KIT_INK.secondary),
+    divider: kx({ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0.35rem 0.75rem' }, { background: 'var(--home-line)' }),
+    hint: kx({ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }, KIT_INK.tertiary),
+    lockIcon: kx({ flexShrink: 0, color: 'var(--blueprint-blue)' }, KIT_INK.warning),
+    /** A row's icon: the accent when the tool is on the plan, quiet when it is locked. */
+    toolIcon: (can: boolean) => kx(
+      { color: can ? 'var(--logic-lime)' : 'var(--data-gray)' },
+      can ? KIT_INK.accent : KIT_INK.tertiary,
+    ),
+    hoverOn: (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.background = kit ? 'var(--home-olive-soft)' : 'rgba(var(--blueprint-blue-rgb),0.08)'; },
+    hoverOff: (e: React.MouseEvent<HTMLButtonElement>) => { e.currentTarget.style.background = 'none'; },
+  }), [kit, kx]);
+}
+
 function UnpublishControl({
   publishedCount,
   currentLabel,
@@ -2911,6 +3015,8 @@ function UnpublishControl({
   onUnpublishAll: () => void;
   className?: string;
 }) {
+  const kx = useKitStyle();
+  const { menuItem, hint, hoverOn, hoverOff } = useScheduleMenuStyles();
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
 
@@ -2932,12 +3038,7 @@ function UnpublishControl({
     );
   }
 
-  const menuItem: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%',
-    padding: '0.55rem 0.85rem', background: 'none', border: 'none',
-    cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-data)',
-    color: 'var(--fl-text)',
-  };
+  const optionIcon = kx({ flexShrink: 0, color: 'var(--data-gray)' }, KIT_INK.accent);
 
   return (
     <div ref={rootRef} style={{ position: 'relative', flexShrink: 0 }}>
@@ -2956,37 +3057,37 @@ function UnpublishControl({
       {open && (
         <div
           role="menu"
-          style={{
+          style={kx({
             position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 100,
             background: 'var(--surface)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)',
             borderRadius: '2px', minWidth: '230px', boxShadow: 'var(--shadow)',
-          }}
+          }, KIT_SURFACE.menu)}
         >
           <button
             role="menuitem"
             style={menuItem}
             onClick={() => { setOpen(false); onUnpublishOne(); }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            onMouseEnter={hoverOn}
+            onMouseLeave={hoverOff}
           >
-            <EyeOff size={13} style={{ flexShrink: 0, color: 'var(--data-gray)' }} />
+            <EyeOff size={13} style={optionIcon} />
             <span style={{ flex: 1 }}>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>This division</div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>{currentLabel}</div>
+              <div style={hint}>{currentLabel}</div>
             </span>
           </button>
-          <div style={{ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0 0.75rem' }} />
+          <div style={kx({ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0 0.75rem' }, { background: 'var(--home-line)' })} />
           <button
             role="menuitem"
             style={menuItem}
             onClick={() => { setOpen(false); onUnpublishAll(); }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            onMouseEnter={hoverOn}
+            onMouseLeave={hoverOff}
           >
-            <EyeOff size={13} style={{ flexShrink: 0, color: 'var(--data-gray)' }} />
+            <EyeOff size={13} style={optionIcon} />
             <span style={{ flex: 1 }}>
               <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>All published ({publishedCount})</div>
-              <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>Remove every division from the public page</div>
+              <div style={hint}>Remove every division from the public page</div>
             </span>
           </button>
         </div>
@@ -3020,25 +3121,14 @@ function MobileToolsMenu({
   onRainDelay: () => void;
   rainDelayAvailable: boolean;
 }) {
+  const kx = useKitStyle();
+  const { menuItem, sectionLabel, divider: dividerStyle, hint: hintStyle, lockIcon: lockIconStyle, toolIcon, hoverOn, hoverOff } = useScheduleMenuStyles();
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
 
   useDismissable(open, rootRef, () => setOpen(false));
 
-  const menuItem: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%',
-    padding: '0.55rem 0.85rem', background: 'none', border: 'none',
-    cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-data)',
-    color: 'var(--fl-text)',
-  };
-  const sectionLabel: React.CSSProperties = {
-    padding: '0.5rem 0.85rem 0.2rem', fontSize: '0.6rem', fontWeight: 700,
-    letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--data-gray)',
-    fontFamily: 'var(--font-data)',
-  };
-  const divider = <div style={{ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0.35rem 0.75rem' }} />;
-  const hoverOn = (e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)');
-  const hoverOff = (e: React.MouseEvent<HTMLButtonElement>) => (e.currentTarget.style.background = 'none');
+  const divider = <div style={dividerStyle} />;
 
   function act(fn: () => void | Promise<void>) {
     setOpen(false);
@@ -3068,9 +3158,9 @@ function MobileToolsMenu({
         <span style={{ flexShrink: 0, display: 'inline-flex' }}>{icon}</span>
         <span style={{ flex: 1 }}>
           <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>{label}</div>
-          {sub && <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>{sub}</div>}
+          {sub && <div style={hintStyle}>{sub}</div>}
         </span>
-        {locked && <Lock size={11} style={{ flexShrink: 0, color: 'var(--blueprint-blue)' }} />}
+        {locked && <Lock size={11} style={lockIconStyle} />}
       </button>
     );
   }
@@ -3094,20 +3184,20 @@ function MobileToolsMenu({
       {open && (
         <div
           role="menu"
-          style={{
+          style={kx({
             position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 100,
             background: 'var(--surface)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)',
             borderRadius: '2px', minWidth: '240px', maxWidth: 'calc(100vw - 1.5rem)',
             boxShadow: 'var(--shadow)',
             paddingBottom: '0.35rem', maxHeight: '70vh', overflowY: 'auto',
-          }}
+          }, KIT_SURFACE.menu)}
         >
           {/* Publish/Unpublish is a sibling button beside this menu (not inside) —
               see .scheduleMobilePublish in the toolbar. */}
 
           <div style={sectionLabel}>Generate</div>
           {showAutoGenerate && row({
-            icon: <Sparkles size={13} style={{ color: canAutoGenerate ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+            icon: <Sparkles size={13} style={toolIcon(canAutoGenerate)} />,
             label: 'Round-Robin Generator',
             sub: 'Auto-build games from your teams',
             locked: !canAutoGenerate,
@@ -3115,7 +3205,7 @@ function MobileToolsMenu({
             onClick: () => act(onAutoGenerate),
           })}
           {showAutoBracket && row({
-            icon: <Trophy size={13} style={{ color: canAutoBracket ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+            icon: <Trophy size={13} style={toolIcon(canAutoBracket)} />,
             label: 'Auto-Generate Bracket',
             sub: 'Build a full bracket from a format',
             locked: !canAutoBracket,
@@ -3128,7 +3218,7 @@ function MobileToolsMenu({
               {divider}
               <div style={sectionLabel}>Adjust</div>
               {row({
-                icon: <CloudRain size={13} style={{ color: canRainDelay ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+                icon: <CloudRain size={13} style={toolIcon(canRainDelay)} />,
                 label: 'Rain delay',
                 sub: "Move or cancel a day's games at once",
                 locked: !canRainDelay,
@@ -3170,23 +3260,14 @@ function ScheduleToolsMenu({
   rainDelayAvailable: boolean;
   className?: string;
 }) {
+  const kx = useKitStyle();
+  const { menuItem, sectionLabel, divider: dividerStyle, hint: hintStyle, lockIcon: lockIconStyle, toolIcon, hoverOn, hoverOff } = useScheduleMenuStyles();
   const [open, setOpen] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
 
   useDismissable(open, rootRef, () => setOpen(false));
 
-  const menuItem: React.CSSProperties = {
-    display: 'flex', alignItems: 'center', gap: '0.6rem', width: '100%',
-    padding: '0.55rem 0.85rem', background: 'none', border: 'none',
-    cursor: 'pointer', textAlign: 'left', fontFamily: 'var(--font-data)',
-    color: 'var(--fl-text)',
-  };
-  const sectionLabel: React.CSSProperties = {
-    padding: '0.5rem 0.85rem 0.2rem', fontSize: '0.6rem', fontWeight: 700,
-    letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--data-gray)',
-    fontFamily: 'var(--font-data)',
-  };
-  const divider = <div style={{ height: '1px', background: 'rgba(var(--blueprint-blue-rgb),0.15)', margin: '0.35rem 0.75rem' }} />;
+  const divider = <div style={dividerStyle} />;
 
   function row(opts: {
     icon: React.ReactNode; label: string; sub: string;
@@ -3199,15 +3280,15 @@ function ScheduleToolsMenu({
         style={menuItem}
         title={locked ? lockTitle : undefined}
         onClick={() => { setOpen(false); onClick(); }}
-        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(var(--blueprint-blue-rgb),0.08)')}
-        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+        onMouseEnter={hoverOn}
+        onMouseLeave={hoverOff}
       >
         <span style={{ flexShrink: 0, display: 'inline-flex' }}>{icon}</span>
         <span style={{ flex: 1 }}>
           <div style={{ fontSize: '0.72rem', fontWeight: 700, letterSpacing: '0.04em' }}>{label}</div>
-          <div style={{ fontSize: '0.65rem', color: 'var(--data-gray)', marginTop: '1px' }}>{sub}</div>
+          <div style={hintStyle}>{sub}</div>
         </span>
-        {locked && <Lock size={11} style={{ flexShrink: 0, color: 'var(--blueprint-blue)' }} />}
+        {locked && <Lock size={11} style={lockIconStyle} />}
       </button>
     );
   }
@@ -3230,15 +3311,15 @@ function ScheduleToolsMenu({
       {open && (
         <div
           role="menu"
-          style={{
+          style={kx({
             position: 'absolute', top: 'calc(100% + 4px)', right: 0, zIndex: 100,
             background: 'var(--surface)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)',
             borderRadius: '2px', minWidth: '270px', boxShadow: 'var(--shadow)', paddingBottom: '0.35rem',
-          }}
+          }, KIT_SURFACE.menu)}
         >
           <div style={sectionLabel}>Build</div>
           {showAutoGenerate && row({
-            icon: <Sparkles size={13} style={{ color: canAutoGenerate ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+            icon: <Sparkles size={13} style={toolIcon(canAutoGenerate)} />,
             label: 'Round-Robin Generator',
             sub: 'Auto-build games from your teams',
             locked: !canAutoGenerate,
@@ -3246,7 +3327,7 @@ function ScheduleToolsMenu({
             onClick: onAutoGenerate,
           })}
           {showAutoBracket && row({
-            icon: <Trophy size={13} style={{ color: canAutoBracket ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+            icon: <Trophy size={13} style={toolIcon(canAutoBracket)} />,
             label: 'Auto-Generate Bracket',
             sub: 'Build a full bracket from a format',
             locked: !canAutoBracket,
@@ -3258,7 +3339,7 @@ function ScheduleToolsMenu({
               {divider}
               <div style={sectionLabel}>Adjust</div>
               {row({
-                icon: <CloudRain size={13} style={{ color: canRainDelay ? 'var(--logic-lime)' : 'var(--data-gray)' }} />,
+                icon: <CloudRain size={13} style={toolIcon(canRainDelay)} />,
                 label: 'Rain delay',
                 sub: "Move or cancel a day's games at once",
                 locked: !canRainDelay,
@@ -3324,6 +3405,17 @@ function hasSplitPoolGames(games: any[], pools: any[]): boolean {
 }
 
 function PlayoffBracketView({ games, teams, division, venues, canBuildManualBracket, onBuildBracket, onStartFromStandings, onEdit, onDelete, getGroupName, formatDate, statusBadge }: any) {
+  const kx = useKitStyle();
+  // Row-invariant kit patches — the two "one diagram per group" layouts below (split pools,
+  // tiered brackets) share one section-title recipe: an eyebrow over each bracket diagram.
+  const sectionTitleIconStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.accent);
+  const sectionTitleStyle = kx(
+    { color: 'var(--logic-lime)', fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase' as const, letterSpacing: '0.1em', margin: 0 },
+    { ...KIT_INK.eyebrowAccent, fontSize: '0.85rem' },
+  );
+  const sectionTitleRuleStyle = kx({ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--blueprint-blue), transparent)' }, { background: 'linear-gradient(to right, var(--home-line), transparent)' });
+  const otherTitleStyle = kx({ color: 'var(--white-40)', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase' as const, margin: 0 }, KIT_INK.tertiary);
+
   if (games.length === 0) {
     return (
       <div className="empty-state" style={{ padding: '4rem' }}>
@@ -3365,11 +3457,11 @@ function PlayoffBracketView({ games, teams, division, venues, canBuildManualBrac
           return (
             <div key={pool.id}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                <Trophy size={16} style={{ color: 'var(--logic-lime)' }} />
-                <h3 style={{ color: 'var(--logic-lime)', fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+                <Trophy size={16} style={sectionTitleIconStyle} />
+                <h3 style={sectionTitleStyle}>
                   {formatPoolName(pool.name)} Playoffs
                 </h3>
-                <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--blueprint-blue), transparent)' }} />
+                <div style={sectionTitleRuleStyle} />
               </div>
               <BracketColumns columns={columns} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
             </div>
@@ -3381,7 +3473,7 @@ function PlayoffBracketView({ games, teams, division, venues, canBuildManualBrac
           return (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-                <h3 style={{ color: 'var(--white-40)', fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', margin: 0 }}>Other</h3>
+                <h3 style={otherTitleStyle}>Other</h3>
               </div>
               <BracketColumns columns={buildBracketColumns(unassigned)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
             </div>
@@ -3401,11 +3493,11 @@ function PlayoffBracketView({ games, teams, division, venues, canBuildManualBrac
         {bracketGroups.map((grp, i) => (
           <div key={grp.key}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1.25rem' }}>
-              <Trophy size={16} style={{ color: 'var(--logic-lime)' }} />
-              <h3 style={{ color: 'var(--logic-lime)', fontFamily: 'var(--font-data)', fontSize: '0.85rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
+              <Trophy size={16} style={sectionTitleIconStyle} />
+              <h3 style={sectionTitleStyle}>
                 {grp.label || `Bracket ${i + 1}`}
               </h3>
-              <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, var(--blueprint-blue), transparent)' }} />
+              <div style={sectionTitleRuleStyle} />
             </div>
             <BracketColumns columns={buildBracketColumns(grp.games)} onEdit={onEdit} onDelete={onDelete} formatDate={formatDate} venues={venues} />
           </div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
+import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
 import { X, VolumeX, Volume2, Copy, Check, Mail, UserCog, Pencil, Lock, Unlock, Trash2, Flag } from 'lucide-react';
 import { teamColor, teamInitials } from '@/lib/team-color';
 import styles from './ChatManagePanel.module.css';
@@ -126,7 +127,9 @@ export default function ChatManagePanel({
 
   if (!open || typeof document === 'undefined') return null;
 
+  // The admin kit's marker travels with the portal (slice 4c): it renders beside the admin shell.
   return createPortal(
+    <PortalKitRoot>
     <>
       <div className={styles.backdrop} onClick={onClose} role="presentation" />
       <aside
@@ -305,7 +308,8 @@ export default function ChatManagePanel({
           </div>
         </div>
       </aside>
-    </>,
+    </>
+    </PortalKitRoot>,
     document.body,
   );
 }

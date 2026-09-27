@@ -90,3 +90,41 @@
   padding: 0.75rem 1.25rem 0;
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.18);
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4c — only with the switch on) ═══════════════════════
+   The shared admin bottom sheet — used by the schedule's reschedule sheet, the check-in board, AND
+   two PUBLIC components (FollowAccountNudge, UnfollowConfirmSheet). Two things make this sheet
+   different from every other kit-restyled surface in this program:
+   1. It `createPortal`s to `document.body` (BottomSheet.tsx), so it is a DOM SIBLING of the admin
+      shell, never its descendant — `[data-admin-kit]` as a plain ancestor selector cannot reach a
+      portaled node. BottomSheet.tsx now carries the marker pair onto its own portaled root when the
+      switch is on, restoring it as a real ancestor inside the portal. Every rule below relies on
+      that, not on the ordinary shell-wide marker.
+   2. Because the marker travels with the component rather than living on a fixed DOM ancestor, the
+      public-preview exclusion must travel with it too: the `:where(:not([data-public-preview] *))`
+      the rest of this program uses is a DOM-ancestry check a portaled node can never satisfy. So the
+      preview island turns the kit OFF in context for everything inside it (`AdminChrome`), and the
+      portal hook (`usePortalKitAttr`) then applies no marker at all — R2 holds by the attribute never
+      being applied. The `:where()` clauses below stay as the documented convention and a harmless
+      second guard.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
+:global([data-admin-kit]) .backdrop:where(:not([data-public-preview] *)) { background: var(--home-scrim); }
+:global([data-admin-kit]) .sheet:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .handle:where(:not([data-public-preview] *)) { background: var(--home-line-strong); }
+:global([data-admin-kit]) .header:where(:not([data-public-preview] *)) { border-bottom-color: var(--home-line); }
+/* The sheet's title is an eyebrow (uppercase, letter-spaced) — face stays mono; its accent ink
+   moves from the raw brand lime to the portal's olive. */
+:global([data-admin-kit]) .title:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .close:where(:not([data-public-preview] *)) {
+  border-color: var(--home-line);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .close:where(:not([data-public-preview] *)):hover {
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .footer:where(:not([data-public-preview] *)) { border-top-color: var(--home-line); }

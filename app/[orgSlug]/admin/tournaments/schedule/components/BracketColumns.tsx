@@ -4,6 +4,8 @@ import { Calendar, Clock, MapPin, Trophy, Pencil, Trash2 } from 'lucide-react';
 import { bracketRoundInfo, computeBracketColumns, displayBracketRefs, displayRoundTitle } from '@/lib/playoff-bracket';
 import { resolveGameVenueLabel } from '@/lib/venue-label';
 import { formatTime } from '@/lib/utils';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import BracketConnectors from './BracketConnectors';
 import BracketZoomFrame from './BracketZoomFrame';
 import styles from '../schedule-admin.module.css';
@@ -46,6 +48,41 @@ export function buildBracketColumns(games: any[]) {
  */
 export default function BracketColumns({ columns, onEdit, onDelete, formatDate, readOnly = false, venues }: any) {
   const canvasRef = useRef<HTMLDivElement>(null);
+  const kx = useKitStyle();
+  // Row-invariant kit patches — computed once per render, not once per row/map() call.
+  const roundLabelStyle = kx(
+    { textAlign: 'center', color: 'var(--logic-lime)', fontFamily: 'var(--font-data)', fontSize: '0.8rem', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '1.5rem', opacity: 0.7, padding: '2px 4px' },
+    { color: 'var(--home-olive)', opacity: 1 },
+  );
+  const cardRegularStyle = kx(
+    { padding: '0.75rem', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', background: 'var(--surface)', position: 'relative', zIndex: 1, boxShadow: 'var(--shadow-sm)', borderRadius: '2px' },
+    { border: '1px solid var(--home-line)', background: 'var(--card-bg)', boxShadow: 'none', borderRadius: '8px' },
+  );
+  const cardFinalStyle = kx(
+    { padding: '0.75rem', border: '1px solid rgba(var(--logic-lime-rgb), 0.55)', background: 'var(--surface)', position: 'relative', zIndex: 1, boxShadow: '0 0 0 1px rgba(var(--logic-lime-rgb), 0.28), 0 6px 20px rgba(var(--logic-lime-rgb), 0.14)', borderRadius: '2px' },
+    { border: '1px solid var(--home-olive)', background: 'var(--card-bg)', boxShadow: '0 0 0 1px var(--home-olive)', borderRadius: '8px' },
+  );
+  const codeChipStyle = kx(
+    { fontSize: '0.6rem', fontWeight: 900, color: 'var(--logic-lime)', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '2px 8px', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em' },
+    { fontFamily: 'var(--font-data)', color: 'var(--home-olive)', background: 'var(--home-olive-soft)', border: '1px solid var(--home-olive)' },
+  );
+  const sideTagStyle = kx(
+    { width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--data-gray)', textAlign: 'center', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '1px 0', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em' },
+    { fontFamily: 'var(--font-data)', color: 'var(--text-tertiary)', background: 'transparent', border: '1px solid var(--home-line-strong)' },
+  );
+  const teamNameStyle = kx(
+    { fontWeight: '700', fontSize: '0.85rem', color: 'var(--white)', flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+    KIT_INK.primary,
+  );
+  const dividerStyle = kx({ height: '1px', background: 'var(--white-03)' }, { background: 'var(--home-line)' });
+  const footerMetaStyle = kx(
+    { display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '0.4rem', paddingTop: '0.6rem', borderTop: '1px solid var(--white-5)', fontSize: '0.7rem', color: 'var(--white-40)' },
+    { borderTop: '1px solid var(--home-line)', color: 'var(--text-tertiary)' },
+  );
+  const iconBtnStyle = kx(
+    { height: '24px', width: '24px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--white-03)' },
+    { background: 'transparent' },
+  );
   const connectorMatchups = columns.flatMap((c: any) => c.games).map((g: any) => ({
     id: g.id,
     code: g.bracketCode || '',
@@ -75,18 +112,7 @@ export default function BracketColumns({ columns, onEdit, onDelete, formatDate, 
 
   const renderColumn = ({ col, idx }: any) => (
         <div key={idx} className={styles.readBracketColumn}>
-          <div style={{
-            textAlign: 'center',
-            color: 'var(--logic-lime)',
-            fontFamily: 'var(--font-data)',
-            fontSize: '0.8rem',
-            fontWeight: 900,
-            textTransform: 'uppercase',
-            letterSpacing: '0.12em',
-            marginBottom: '1.5rem',
-            opacity: 0.7,
-            padding: '2px 4px',
-          }}>
+          <div style={roundLabelStyle}>
             {displayRoundTitle(col.title)}
           </div>
 
@@ -101,75 +127,34 @@ export default function BracketColumns({ columns, onEdit, onDelete, formatDate, 
               const isFinalGame = finalGameIds.has(g.id);
               return (
               <div key={g.id} style={{ position: 'relative' }}>
-                <div className="card" data-matchup-id={g.id} style={{
-                  padding: '0.75rem',
-                  border: isFinalGame
-                    ? '1px solid rgba(var(--logic-lime-rgb), 0.55)'
-                    : '1px solid rgba(var(--blueprint-blue-rgb), 0.2)',
-                  background: 'var(--surface)',
-                  position: 'relative', zIndex: 1,
-                  boxShadow: isFinalGame
-                    ? '0 0 0 1px rgba(var(--logic-lime-rgb), 0.28), 0 6px 20px rgba(var(--logic-lime-rgb), 0.14)'
-                    : 'var(--shadow-sm)',
-                  borderRadius: '2px'
-                }}>
+                <div className="card" data-matchup-id={g.id} style={isFinalGame ? cardFinalStyle : cardRegularStyle}>
                   <div className="flex-between" style={{ marginBottom: '7px' }}>
-                    <div style={{
-                      fontSize: '0.6rem', fontWeight: 900, color: 'var(--logic-lime)',
-                      background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '2px 8px',
-                      borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
-                    }}>{displayBracketRefs(g.bracketCode)}</div>
+                    <div style={codeChipStyle}>{displayBracketRefs(g.bracketCode)}</div>
                     {!readOnly && (
                       <div className="flex gap-1.5">
-                        <button className="btn btn-ghost btn-sm" onClick={() => onEdit(g)} title="Edit" style={{
-                          height: '24px', width: '24px', padding: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: 'var(--white-03)'
-                        }}><Pencil size={11} /></button>
-                        <button className="btn btn-ghost btn-sm text-danger" onClick={() => onDelete(g.id)} title="Delete" style={{
-                          height: '24px', width: '24px', padding: 0,
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          background: 'var(--white-03)'
-                        }}><Trash2 size={11} /></button>
+                        <button className="btn btn-ghost btn-sm" onClick={() => onEdit(g)} title="Edit" style={iconBtnStyle}><Pencil size={11} /></button>
+                        <button className="btn btn-ghost btn-sm text-danger" onClick={() => onDelete(g.id)} title="Delete" style={iconBtnStyle}><Trash2 size={11} /></button>
                       </div>
                     )}
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '0.75rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--data-gray)',
-                        textAlign: 'center', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '1px 0',
-                        borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
-                      }}>VIS</div>
-                      <div style={{
-                        fontWeight: '700', fontSize: '0.85rem', color: 'var(--white)',
-                        flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                      }}>
+                      <div style={sideTagStyle}>VIS</div>
+                      <div style={teamNameStyle}>
                         {displayBracketRefs(g.awayPlaceholder) || 'TBD'}
                       </div>
                     </div>
-                    <div style={{ height: '1px', background: 'var(--white-03)' }} />
+                    <div style={dividerStyle} />
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <div style={{
-                        width: '28px', fontSize: '0.55rem', fontWeight: 900, color: 'var(--data-gray)',
-                        textAlign: 'center', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', padding: '1px 0',
-                        borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.2)', letterSpacing: '0.02em'
-                      }}>HOM</div>
-                      <div style={{
-                        fontWeight: '700', fontSize: '0.85rem', color: 'var(--white)',
-                        flex: 1, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis'
-                      }}>
+                      <div style={sideTagStyle}>HOM</div>
+                      <div style={teamNameStyle}>
                         {displayBracketRefs(g.homePlaceholder) || 'TBD'}
                       </div>
                     </div>
                   </div>
 
-                  <div style={{
-                    display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '0.4rem',
-                    paddingTop: '0.6rem', borderTop: '1px solid var(--white-5)',
-                    fontSize: '0.7rem', color: 'var(--white-40)'
-                  }}>
+                  <div style={footerMetaStyle}>
                     <div className="flex items-center" style={{ gap: '5px' }}><Calendar size={10} className="text-primary-light opacity-50" /> {g.date ? formatDate(g.date) : 'TBD'}</div>
                     <div className="flex items-center" style={{ gap: '5px', justifyContent: 'flex-end' }}><Clock size={10} className="text-primary-light opacity-50" /> {g.time ? formatTime(g.time) : 'TBD'}</div>
                     <div className="flex items-center" style={{ gap: '5px', gridColumn: 'span 2' }}><MapPin size={10} className="text-primary-light opacity-50" /> {(venues ? resolveGameVenueLabel(g, venues) : g.location) || 'TBD'}</div>

@@ -579,6 +579,9 @@ const RESTYLED_DIRS = [
   'app/[orgSlug]/admin/tournaments/communication',
   'app/[orgSlug]/admin/tournaments/chat',
   'components/admin/import',
+  // slice 4c — the schedule: the page, timeline, brackets, generator, playoff wizard and its windows
+  // (the game list and the sheet were already held by file, 4b)
+  'app/[orgSlug]/admin/tournaments/schedule',
 ];
 const RESTYLED_FILES = [
   'app/[orgSlug]/admin/org/page.tsx',
@@ -606,6 +609,12 @@ const RESTYLED_FILES = [
   'components/chat/ChatRoomsPanel.module.css',
   'components/chat/ChatManagePanel.module.css',
   'components/chat/NewRoomDialog.module.css',
+  // slice 4c — the number stepper (only the schedule's windows use it) and the admin bottom sheet
+  // (the timeline's and the check-in board's; also two public components, which its kit layer excludes)
+  'components/admin/NumberStepper.tsx',
+  'components/admin/NumberStepper.module.css',
+  'components/admin/BottomSheet.tsx',
+  'components/admin/BottomSheet.module.css',
 ];
 const ANY_LITERAL = new RegExp(COLOR_LITERAL, 'g');
 

@@ -4228,3 +4228,1009 @@
   border-top-color: rgba(var(--danger-rgb), 0.3);
 }
 :global([data-admin-kit]) .cancelledActionText { color: var(--text-secondary); }
+
+/* ═══ ON THE KIT — the schedule itself (Admin Design Continuity slice 4c, only with the switch on) ═══
+   Everything in this sheet the game list block above does not dress: the Schedule page (header tag,
+   toolbar, phone stage toggle, settings sheet and venue list, summary strip, the location and
+   temporary-facility banners), the health panels (Schedule and bracket, also inside the generator,
+   the playoff wizard and the bracket editor), the typed-locations window, the Round-Robin Generator
+   and the widgets it shares with the playoff wizard, and the bracket read view. The timeline, the
+   bracket builder and the bottom sheet carry their own kit sections in their own sheets.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here.
+   ⚠ Base rule first, then every state/modifier of that class (an equal-weight kit base rule placed
+   later would otherwise wipe a legacy state colour — slice 4b). */
+
+/* ── The Schedule page: header status text, toolbar (division / stage / view groups, publish button,
+   status chips), the phone settings sheet and its nested venue list, the summary strip, the
+   temporary-facility and typed-location banners, the "All divisions" list headers, the venue filter
+   menu, and the shared error banner (the generator and the locations window read it too). ── */
+
+/* ── Header meta: "Published" status (4a's state-chip slot) — the kit's good state ── */
+:global([data-admin-kit]) .publishStatusText { color: var(--success-light); }
+:global([data-admin-kit]) .publishStatusDot { background: var(--success); }
+
+/* ── Publish action button — disabled (not-yet-loaded) and the LIVE/published disabled variant.
+   ⚠ FINDING: `.publishButton[data-live]:disabled` is dead CSS — the button never renders a
+   `data-live` attribute (only game rows do, in GameList.tsx). Restated only the reachable rule. */
+:global([data-admin-kit]) .publishButton:disabled {
+  border-color: var(--home-line-strong) !important;
+  background: var(--home-paper) !important;
+  color: var(--text-tertiary) !important;
+}
+
+/* ── Mobile-visible Stage toggle (Round Robin / Playoffs) — a hand-rolled segmented control;
+   mirrors the shared ToolbarSegmentedControl's kit recipe (TournamentAdminUI.module.css) for
+   house consistency. Legacy sets these colours inside the same breakpoint, so the kit restates
+   inside it too. */
+@media (max-width: 900px) {
+  :global([data-admin-kit]) .mobileStageToggle {
+    border-color: var(--home-line-strong);
+    background: var(--home-card);
+  }
+  :global([data-admin-kit]) .mobileStageBtn {
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-weight: 650;
+    letter-spacing: normal;
+    text-transform: none;
+    color: var(--text-tertiary);
+  }
+  :global([data-admin-kit]) .mobileStageBtn + .mobileStageBtn {
+    border-left-color: var(--home-line-strong);
+  }
+  :global([data-admin-kit]) .mobileStageActive {
+    background: var(--home-olive-soft);
+    color: var(--home-olive);
+  }
+}
+
+/* ── Status filter chips: `.filterChip`/`.chipActive` are already on the kit (admin-common.module.css)
+   and paint every chosen filter olive regardless of status — at (0,3,0) that already outranks this
+   page's own `.scheduleStatusActive.scheduleStatusScheduled` (0,2,0), so the legacy blueprint-blue
+   "Scheduled" accent is naturally superseded. Restated explicitly (matching the shared rule's own
+   values) so the result doesn't depend on an accidental cross-file specificity tie — see the ADC
+   shadow-audit note on same-weight rules resolving by bundle order.
+   DECIDED AT BUILD TIME: the "Scheduled" chip's distinct blue no longer survives on the kit — every
+   status chip's active state is the one house olive, exactly like every other admin list's filters. */
+:global([data-admin-kit]) .scheduleStatusActive.scheduleStatusScheduled {
+  background: rgba(var(--home-olive-rgb), 0.16);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .scheduleStatusActive.scheduleStatusScheduled::before {
+  background: var(--text-tertiary);
+}
+
+/* ── Mobile settings bottom sheet ── */
+:global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .sheet {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 18px 18px 0 0; /* matches the portal's own bottom sheet (coaches.module.css) */
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .sheetHandle { background: var(--home-line-strong); }
+:global([data-admin-kit]) .sheetSectionLabel {
+  font-family: var(--font-data);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .sheetSection { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .sheetSeg {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  background: var(--home-card);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .sheetSeg:hover { border-color: var(--home-olive); color: var(--text-primary); }
+:global([data-admin-kit]) .sheetSegActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+/* The sheet's Venue row — opens the nested venue list; olive once a venue is chosen (the same
+   choice recipe as a segment). Added in review: the page builder's layer had no rule for it. */
+:global([data-admin-kit]) .venueSheetBtn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  background: var(--home-card);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .venueSheetBtn:hover { border-color: var(--home-olive); color: var(--text-primary); }
+:global([data-admin-kit]) .venueSheetBtnActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+/* "Done" dismisses the sheet — a quiet secondary action, not the view's one primary (the sheet has
+   no competing primary, but a loud lime "Done" reads as a commit button, which this isn't).
+   DECIDED AT BUILD TIME: moved off the lime CTA the legacy button wore. */
+:global([data-admin-kit]) .sheetDone {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .sheetDone:hover { background: var(--home-olive-soft); border-color: var(--home-olive); color: var(--home-olive); }
+
+/* ── Venue nested modal (same sheet recipe as above) ── */
+:global([data-admin-kit]) .venueModalBackdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .venueModal {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 18px 18px 0 0;
+}
+:global([data-admin-kit]) .venueModalHandle { background: var(--home-line-strong); }
+:global([data-admin-kit]) .venueModalHeader { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .venueModalBack {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .venueModalBack:hover { color: var(--home-olive); }
+:global([data-admin-kit]) .venueModalTitle {
+  font-family: var(--font-data);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .venueModalClear {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .venueModalClear:hover { color: var(--danger-light); }
+:global([data-admin-kit]) .venueModalOption {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .venueModalOption:hover {
+  border-color: var(--home-line);
+  background: var(--home-paper);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .venueModalOptionActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .venueModalSublabel { color: var(--text-tertiary); }
+:global([data-admin-kit]) .venueModalCount {
+  font-family: var(--font-data);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .venueModalFooter { border-top-color: var(--home-line); }
+
+/* ── Active-settings summary strip (mobile) ── */
+:global([data-admin-kit]) .activeSettingsSummary { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .activeSettingsSummaryText {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .activeSettingsSummaryIcon { color: var(--text-tertiary); }
+:global([data-admin-kit]) .activeSettingsSummary:hover .activeSettingsSummaryIcon { color: var(--home-olive); }
+
+/* Status tally dots keep their state colour, moved to the light tier for AA on the kit; the dot
+   itself is a solid mark (base hue) — the LIGHT tier is for the text, per the ink rule. */
+:global([data-admin-kit]) .tallyScheduled { color: var(--info-light); }
+:global([data-admin-kit]) .tallyScheduled .tallyDot { background: var(--info); }
+:global([data-admin-kit]) .tallyCancelled { color: var(--danger-light); }
+:global([data-admin-kit]) .tallyCancelled .tallyDot { background: var(--danger); }
+:global([data-admin-kit]) .tallyCompleted { color: var(--success-light); }
+:global([data-admin-kit]) .tallyCompleted .tallyDot { background: var(--success); }
+
+/* ── Add Game button icon-collapse (mobile) — layout only, no colour in the legacy rule; nothing
+   to restate here (its colour comes from the already-kit `.btn-lime`). ── */
+
+/* ── Temporary-facility / typed-location banners (also read by the generator + locations window) ──
+   Warning tone, normalized to the house 0.08/0.3 tint (legacy used 0.07/0.28, close but not the spec). */
+:global([data-admin-kit]) .facilityResolveBanner {
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .facilityResolveCopy { color: var(--warning-light); }
+:global([data-admin-kit]) .facilityResolveCopy strong {
+  font-family: var(--font-data);
+  color: var(--warning-light);
+}
+:global([data-admin-kit]) .facilityResolveCopy span {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .locationResolveDismiss { color: var(--text-tertiary); }
+:global([data-admin-kit]) .locationResolveDismiss:hover { color: var(--text-primary); }
+
+/* ── "Resolve temporary facilities" rows ── */
+:global([data-admin-kit]) .resolveFacilityRow {
+  border-color: var(--home-line);
+  background: var(--home-paper);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .resolveFacilityRow strong { color: var(--text-primary); }
+:global([data-admin-kit]) .resolveFacilityRow span {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+
+/* ── The shared error banner (this page's Resolve-Facilities window, the generator, the locations
+   window) — normalized to the house 0.08 tint (legacy used 0.1, close but not the spec). ── */
+:global([data-admin-kit]) .errorBanner {
+  background: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.3);
+  border-radius: 8px;
+  color: var(--danger-light);
+}
+
+/* ── "All divisions" List view — per-division section headers ── */
+:global([data-admin-kit]) .allDivisionHeader { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .allDivisionName {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 700;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .allDivisionCount {
+  font-family: var(--font-data);
+  color: var(--text-tertiary);
+  background: var(--home-paper);
+}
+
+/* ── Venue filter menu (desktop) ── */
+:global([data-admin-kit]) .venueFilterButton {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  background: var(--home-card);
+  color: var(--text-secondary);
+}
+/* The 4b sweep measured "All venues" under the contrast floor in Warm at the legacy rgba(148,163,184,.6)
+   text — the kit's --text-secondary clears it. */
+:global([data-admin-kit]) .venueFilterButton:hover:not(:disabled),
+:global([data-admin-kit]) .venueFilterButtonActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .venueFilterPanel {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .venueFilterHeader {
+  font-family: var(--font-data);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .venueFilterHeader button {
+  font-family: var(--font-data);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .venueFilterHeader button:hover { color: var(--home-olive); }
+:global([data-admin-kit]) .venueFilterOption { color: var(--text-secondary); }
+:global([data-admin-kit]) .venueFilterOption:hover,
+:global([data-admin-kit]) .venueFilterOptionActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .venueFilterCheck { color: var(--home-olive); }
+:global([data-admin-kit]) .venueFilterNamePrimary {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+}
+:global([data-admin-kit]) .venueFilterSublabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 500;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .venueFilterCount {
+  font-family: var(--font-data);
+  color: var(--text-tertiary);
+}
+
+/* ── The health panels (ScheduleHealthPanel + BracketHealthPanel — one layer serves both, and their
+   reuse inside the generator, the playoff wizard and the bracket editor) and the Resolve Locations
+   window. The zero-venue prompt and the field picker are inline `kx` patches, not here. ── */
+
+/* ── Health panel shell (Schedule Health / Playoff Draft Health) — the kit card ── */
+:global([data-admin-kit]) .healthPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+
+/* Panel title — a window/card heading (F2: "titles ... move to body face"), not an eyebrow: the
+   shouty mono caps are the thing being retired, so text-transform/letter-spacing reset with it. */
+:global([data-admin-kit]) .healthHeader h4 {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .healthHeader p { color: var(--text-tertiary); }
+
+/* Score badge — the number + "/100" stay the console face (a readout); only its ink/tint move to
+   the light tier so text clears AA on both grounds (base --success/--warning/--danger do not). */
+:global([data-admin-kit]) .healthScore small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .healthScoreGood {
+  color: var(--success-light);
+  background: rgba(var(--success-rgb), 0.08);
+}
+:global([data-admin-kit]) .healthScoreWarning {
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb), 0.08);
+}
+:global([data-admin-kit]) .healthScoreDanger {
+  color: var(--danger-light);
+  background: rgba(var(--danger-rgb), 0.08);
+}
+
+/* "Show"/"Hide" toggle — a clickable disclosure, so F2's "buttons that are not global .btn" bucket
+   (body face), not an eyebrow. This is the exact control the 4b sweep measured under the contrast
+   floor in Warm (raw lime at 0.72 alpha) — text-secondary clears it. */
+:global([data-admin-kit]) .healthToggle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+
+/* Rules-editor gear — a quiet icon button; olive only once it's actually toggled on. */
+:global([data-admin-kit]) .healthGear {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .healthGear:hover {
+  color: var(--text-primary);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .healthGear[aria-pressed="true"] {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+
+/* Sandbox-only "try it" invitation — a lime tint accent callout → olive-soft/olive (same mapping as
+   GameList's .gameDateTodayBadge: a lime TINT is an accent, not a solid highlight). */
+:global([data-admin-kit]) .healthSandboxPrompt {
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+/* "Put it back" — a quiet secondary button (KIT_BUTTON.secondary shape), not the sandbox's own
+   accent, so it doesn't compete with the banner it sits inside. */
+:global([data-admin-kit]) .healthSandboxReset {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .healthSandboxReset:hover {
+  border-color: var(--home-olive);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .healthSandboxReset:focus-visible { outline-color: var(--home-olive); }
+
+/* ── Health rules editor (organizer-set thresholds) — a recessed sub-panel inside the card ── */
+:global([data-admin-kit]) .healthRules {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+/* Field label ("Max games / day") — F2 names field labels explicitly as a body-face bucket item,
+   even though visually it's shaped like an eyebrow; the KPI labels below stay mono because THEY sit
+   over a figure, not over an input. */
+:global([data-admin-kit]) .healthRule span {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 650;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .healthRule input {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .healthRule input:focus { border-color: var(--home-olive); }
+:global([data-admin-kit]) .healthRulesReset,
+:global([data-admin-kit]) .healthRulesDiscard,
+:global([data-admin-kit]) .healthRulesSave {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 650;
+}
+:global([data-admin-kit]) .healthRulesReset,
+:global([data-admin-kit]) .healthRulesDiscard {
+  background: transparent;
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .healthRulesReset:hover,
+:global([data-admin-kit]) .healthRulesDiscard:hover {
+  color: var(--text-primary);
+  border-color: var(--home-line-strong);
+}
+/* "Save rules" is this mini-form's own one primary action → the kit's lime button, replacing the
+   legacy's token-exempt hardcoded ink hex with var(--home-lime-ink). */
+:global([data-admin-kit]) .healthRulesSave {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  border-color: var(--home-lime);
+}
+:global([data-admin-kit]) .healthRulesHint { color: var(--text-tertiary); }
+
+/* ── KPI grid — label is the textbook eyebrow (a caption OVER a figure), so it keeps mono; the
+   figure itself already rendered in the ambient sans face in legacy (no font-family override here
+   needed), only its ink moves. ── */
+:global([data-admin-kit]) .healthKpi {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .healthKpi span { color: var(--text-secondary); }
+:global([data-admin-kit]) .healthKpi strong { color: var(--text-primary); }
+:global([data-admin-kit]) .healthKpi small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .healthKpi[data-tone="good"] strong { color: var(--success-light); }
+:global([data-admin-kit]) .healthKpi[data-tone="warning"] strong { color: var(--warning-light); }
+:global([data-admin-kit]) .healthKpi[data-tone="danger"] strong { color: var(--danger-light); }
+
+/* ── Issue rows — "said in words" tint recipe. .healthIssue's own base color is legacy dead code
+   (a tone class — Good/Error/Warning/Info — is always paired with it), so only its <strong> child
+   (which does NOT inherit the tone color; it has its own rule) needs a kit ink. ── */
+:global([data-admin-kit]) .healthIssue strong { color: var(--text-primary); }
+:global([data-admin-kit]) .healthIssueGood {
+  color: var(--success-light);
+  background: rgba(var(--success-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.3);
+}
+:global([data-admin-kit]) .healthIssueError {
+  color: var(--danger-light);
+  background: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.3);
+}
+:global([data-admin-kit]) .healthIssueWarning {
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+/* Legacy Info issue uses --blueprint-blue (the org's colour, forbidden here) — the actual semantic
+   token is --info. */
+:global([data-admin-kit]) .healthIssueInfo {
+  color: var(--info-light);
+  background: rgba(var(--info-rgb), 0.08);
+  border-color: rgba(var(--info-rgb), 0.2);
+}
+
+/* "Team detail" disclosure — the same clickable-toggle treatment as .healthToggle above; the 4b
+   sweep measured this one under the contrast floor in Warm too. */
+:global([data-admin-kit]) .healthDetailsSummary {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .healthDetailsSummary:hover { color: var(--text-primary); }
+:global([data-admin-kit]) .healthProjectedNote { color: var(--text-tertiary); }
+:global([data-admin-kit]) .healthProjectedNote strong { color: var(--warning-light); }
+
+/* Team table — table standard: heads inherit the global kit `th` (legacy already only zeroes its
+   border-top, nothing else local to restate), rules move to --home-line. */
+:global([data-admin-kit]) .healthTeamTableWrap { border-color: var(--home-line); }
+:global([data-admin-kit]) .healthTeamTable th,
+:global([data-admin-kit]) .healthTeamTable td {
+  border-top-color: var(--home-line);
+}
+:global([data-admin-kit]) .healthTeamTable td { color: var(--text-primary); }
+:global([data-admin-kit]) .healthSeedBasisTag {
+  color: var(--info-light);
+  background: rgba(var(--info-rgb), 0.08);
+  border-color: rgba(var(--info-rgb), 0.3);
+}
+:global([data-admin-kit]) .healthProjectedTag {
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+
+/* Jump-to-conflict chip is already a chip (mono stays, per legacy font-data) — only its tone tint
+   moves to the light tier. */
+:global([data-admin-kit]) .healthJumpChip[data-tone="danger"] {
+  color: var(--danger-light);
+  background: rgba(var(--danger-rgb), 0.12);
+  border-color: rgba(var(--danger-rgb), 0.4);
+}
+:global([data-admin-kit]) .healthJumpChip[data-tone="danger"]:hover { background: rgba(var(--danger-rgb), 0.2); }
+:global([data-admin-kit]) .healthJumpChip[data-tone="warning"] {
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb), 0.12);
+  border-color: rgba(var(--warning-rgb), 0.4);
+}
+:global([data-admin-kit]) .healthJumpChip[data-tone="warning"]:hover { background: rgba(var(--warning-rgb), 0.2); }
+
+/* ── Resolve Locations modal (Match Typed Locations) ── */
+/* Window heading → body face, per F2 ("titles, window headings ... move to body face"); the
+   window's own WORDS are untouched, only the caps/mono treatment retires with the face. */
+:global([data-admin-kit]) .resolveLocationsTitle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .resolveLocationsIntro { color: var(--text-secondary); }
+:global([data-admin-kit]) .resolveLocationsIntro strong { color: var(--text-primary); }
+
+:global([data-admin-kit]) .resolveLocationRow {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .resolveLocationRowDone {
+  background: rgba(var(--success-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.28);
+}
+:global([data-admin-kit]) .resolveLocationRowText { border-color: var(--home-line); }
+
+/* Decided at build time: .resolveLocationName (a name TYPED by hand, unverified) keeps the console
+   face on purpose — the component's own sibling class .resolveLocationLinkedName is deliberately
+   sans ("labelled by a real venue name ... reads as prose rather than as data", per its own comment
+   in ResolveLocationsModal.tsx). Flattening both to body face would erase that distinction, so only
+   the ink token moves here. */
+:global([data-admin-kit]) .resolveLocationName { color: var(--text-primary); }
+:global([data-admin-kit]) .resolveLocationLinkedName { color: var(--text-primary); }
+:global([data-admin-kit]) .resolveLocationCount { color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .resolveLocationChipOk {
+  color: var(--success-light);
+  background: rgba(var(--success-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.28);
+}
+:global([data-admin-kit]) .resolveLocationChipWarn {
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+
+:global([data-admin-kit]) .resolveLocationWrites { color: var(--text-tertiary); }
+/* The bolded value here is always a RESOLVED real venue/facility name (never raw typed text — see
+   ChoiceOutcome/"Now <b>{label}</b>"), so unlike .resolveLocationName it reads as prose: sans face. */
+:global([data-admin-kit]) .resolveLocationWrites b {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+
+/* "Already linked to a diamond" — a genuine section-label eyebrow (introduces a group, not a
+   button or a field label), so mono stays; only its ink moves. */
+:global([data-admin-kit]) .resolveLocationsSectionLabel { color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .resolveLocationsNote {
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .resolveLocationsNote b { color: var(--text-primary); }
+:global([data-admin-kit]) .resolveLocationsEmpty {
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .resolveLocationsEmptyTitle { color: var(--text-primary); }
+/* Footer "N changes selected" — a count, which F2 keeps on the console face; only its ink moves. */
+:global([data-admin-kit]) .resolveLocationsCount { color: var(--text-tertiary); }
+
+/* ── The Round-Robin Generator: its own overlay, window, form and preview classes, and the ~37 classes
+   it shares with the playoff wizard (the date, priority and facility-picker widgets) — one layer
+   serves both windows. The number stepper's kit section lives in its own sheet. ── */
+
+/* ── The generator's own overlay + window (not the shared .modal — its own bottom-sheet-on-mobile
+   window: home-scrim behind, card-bg ground, a neutral hairline edge, 12px radius,
+   home-shadow). The 12px radius is restated inside the ≤540px media query below: my own higher-
+   specificity base rule would otherwise flatten the mobile sheet's intentional square bottom. ── */
+:global([data-admin-kit]) .generatorOverlay {
+  background: var(--home-scrim);
+}
+:global([data-admin-kit]) .generatorModal {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 12px;
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .generatorHeader {
+  border-bottom-color: var(--home-line);
+}
+/* Window title — same recipe as the shared .modal-header h3 kit rule (app/globals.css): a heading,
+   not an eyebrow, so it leaves the mono/uppercase/lime treatment. */
+:global([data-admin-kit]) .generatorHeader h3 {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+/* This local rule reaches the global .form-label at (0,2,0) — it ties the zero-weight global kit
+   field-label rule in app/globals.css and wins on source order, so the HUD data-font density under
+   the generator survives the switch unless restated here. .form-group/.form-input/.form-select carry
+   no colour in this local block (only sizing), so the global kit field rule already repaints them
+   unopposed — no restatement needed for those three. */
+:global([data-admin-kit]) .generatorForm :global(.form-label) {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+
+/* ── Step section labels ("1. Schedule Setup") — an eyebrow: mono/uppercase stays, ink moves off the
+   accent (KIT_INK.eyebrow's own recipe is secondary ink, not accent) and the rule keeps a neutral edge. ── */
+:global([data-admin-kit]) .generatorStepLabel {
+  color: var(--text-secondary);
+  border-bottom-color: var(--home-line);
+}
+
+/* ── Segmented toggles (Team-based/Slot-based; Replace all/Build from current) — the divided-button
+   structure stays (border-right dividers, not per-pill borders); only chrome + tone move. Chosen =
+   the kit's olive selection. ── */
+:global([data-admin-kit]) .generatorSegmented,
+:global([data-admin-kit]) .scopeButtons {
+  border-color: var(--home-line-strong);
+  border-radius: var(--radius-sm);
+}
+:global([data-admin-kit]) .generatorSegBtn,
+:global([data-admin-kit]) .scopeButton {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-right-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .generatorSegBtn:hover:not(.generatorSegBtnActive),
+:global([data-admin-kit]) .scopeButton:hover:not(.scopeButtonActive) {
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .generatorSegBtnActive,
+:global([data-admin-kit]) .scopeButtonActive {
+  background: var(--home-olive-soft);
+  border-right-color: var(--home-olive);
+  color: var(--home-olive);
+}
+
+/* ── Schedule Scope strip — a recessed band inside the generator's own card. ── */
+:global([data-admin-kit]) .scopeStrip {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .scopeCopy span,
+:global([data-admin-kit]) .partialPreviewSummary span {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .scopeCopy small {
+  color: var(--text-tertiary);
+}
+/* A caution SENTENCE, not a label — moves to the body face (F2). */
+:global([data-admin-kit]) .scopeWarning {
+  border-top-color: rgba(var(--warning-rgb), 0.3);
+  color: var(--warning-light);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+}
+:global([data-admin-kit]) .scopeWarning strong {
+  color: inherit;
+}
+
+/* ── "Build from current" stat strip — neutral recessed band; the counts are readouts (mono stays). ── */
+:global([data-admin-kit]) .partialPreviewSummary {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .partialPreviewSummary strong {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .partialPreviewSummary small {
+  color: var(--text-tertiary);
+}
+
+/* ── Optimization summary — the best-draft score, celebrated: the kit's accent wash (decided at build
+   time — legacy used the raw brand lime as the whole strip's ink; olive is the accent, not lime). ── */
+:global([data-admin-kit]) .optimizationSummary {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .optimizationSummary small {
+  color: var(--text-tertiary);
+}
+
+/* ── Draft option cards — unchosen = a quiet option card, chosen = the kit's olive selection. ── */
+:global([data-admin-kit]) .draftOptionCard {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .draftOptionCard:hover {
+  border-color: var(--home-olive);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .draftOptionCardActive {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .draftOptionCard strong {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .draftOptionCardActive strong {
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .draftOptionCard strong small {
+  color: var(--text-tertiary);
+}
+/* The detail line ("Health 87/100 | B2B 2 | Moves 3 | Max/day 3") reads as a fact sentence, not a bare
+   figure — decided at build time like GameList's .venueInDate: moves to the body face. */
+:global([data-admin-kit]) .draftOptionCard em {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+
+/* ── Preview stats strip + table. ── */
+:global([data-admin-kit]) .previewStats {
+  background: var(--home-paper);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .previewStats strong {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .previewTableWrap {
+  border-color: var(--home-line);
+}
+/* th is unstyled here on purpose — the bare `th` element already carries the table standard's head
+   recipe globally (app/globals.css), which resolves through the warm/kit remap with no local rule. */
+:global([data-admin-kit]) .previewTableWrap td {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+  border-top-color: var(--home-line);
+}
+:global([data-admin-kit]) .previewFooter {
+  border-top-color: var(--home-line);
+}
+
+/* ── Scheduling Priorities panel (presets + advanced drawer). ── */
+:global([data-admin-kit]) .priorityPanel {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .priorityHeader span {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .priorityHeader small {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .presetButton {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-radius: var(--radius-sm);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .presetButton:hover {
+  border-color: var(--home-olive);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .presetButtonActive {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .presetHint {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .prioritySection + .prioritySection {
+  border-top-color: var(--home-line);
+}
+:global([data-admin-kit]) .prioritySectionHeader span {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .prioritySectionHeader small {
+  color: var(--text-tertiary);
+}
+
+/* Limits — Max/day, Min rest: field labels beside a NumberStepper, so they take the .form-label
+   recipe (F2: a field label is not an eyebrow), not the mono HUD treatment. */
+:global([data-admin-kit]) .limitLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .limitUnit {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .effortHint {
+  color: var(--text-tertiary);
+}
+/* Preference checkboxes ("Avoid back-to-back" …) — option names move to the body face (F2). */
+:global([data-admin-kit]) .prefCheck {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .prefCheck:hover {
+  color: var(--text-primary);
+}
+
+/* ── Advanced Settings disclosure. ── */
+:global([data-admin-kit]) .advancedDrawer {
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .advancedSummary {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  background: var(--home-paper);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .advancedSummary:hover {
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .advancedDrawer[open] > .advancedSummary {
+  color: var(--home-olive);
+  border-bottom-color: var(--home-line);
+}
+
+/* ── Field hint captions (below labels; distinct from the FieldHint help-guide component, slice 5's,
+   which this block does not touch). ── */
+:global([data-admin-kit]) .fieldHint {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+
+/* ── Slot counts (slot-based mode). ── */
+:global([data-admin-kit]) .slotCountControl {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .slotCountControl span {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .slotCountControl small {
+  color: var(--text-tertiary);
+}
+
+/* ── Facility picker. ── */
+:global([data-admin-kit]) .facilityPickerHeader {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .facilityPickerHeader span {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .facilityPicker {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .facilityVenueGroup {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .facilityVenueName strong {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .facilityVenueName small {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .facilityCheck {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .facilityEmptyText {
+  color: var(--text-tertiary);
+}
+
+/* ── "Use temporary facilities" — a caution panel (the standard 0.08/0.3 warning tint). ── */
+:global([data-admin-kit]) .temporaryFacilityPanel {
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+:global([data-admin-kit]) .temporaryFacilityPanel strong {
+  color: var(--warning-light);
+}
+:global([data-admin-kit]) .temporaryFacilityPanel span {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .temporaryFacilityPanel label span {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+
+/* ── Date slot list (Available Scheduling Dates). ── */
+:global([data-admin-kit]) .dateSlotList {
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .dateSlotRow {
+  background: var(--card-bg);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .dateSlotSelect,
+:global([data-admin-kit]) .dateSlotTime {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color-scheme: normal;
+}
+:global([data-admin-kit]) .dateSlotSelect:focus,
+:global([data-admin-kit]) .dateSlotTime:focus {
+  border-color: var(--home-olive);
+}
+/* The native time picker forces `color-scheme: dark` in legacy; on warm cream that paints the OS
+   control dark-on-light (same gap the .formInput kit rule closes for GameList's inline edit). */
+:global(html[data-user-theme="warm"] [data-admin-kit]) .dateSlotTime {
+  color-scheme: light;
+}
+:global([data-admin-kit]) .dateSlotSep {
+  color: var(--text-tertiary);
+}
+
+/* ── The generator's mobile bottom sheet — restate the radius the base rule above would otherwise
+   flatten (12px on all four corners beats the media query's own square-bottom shape by specificity). ── */
+@media (max-width: 540px) {
+  :global([data-admin-kit]) .generatorModal {
+    border-radius: 12px 12px 0 0;
+  }
+}
+
+/* ── The playoff wizard's own class: the one-liner under its crossover / format / teams-advancing
+   selects — a plain caption, not an eyebrow or a readout, so F2 moves it to the body face. ── */
+:global([data-admin-kit]) .crossoverHint {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+/* ── The read-only bracket diagram (BracketColumns.tsx): its column and canvas layout classes carry
+   no colour; the winner / loser legend and the double-elimination tier label are the ones that do. ── */
+
+/* ── Winner/loser path legend above the read-only bracket — matches the connector lines' tones
+   (BracketBuilder.module.css kit section: winner's path = home-olive, loser's path = text-tertiary
+   dashed) so the legend and the lines it explains never disagree under the switch. ── */
+:global([data-admin-kit]) .bracketLegend {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .legendWin {
+  border-top-color: var(--home-olive);
+}
+:global([data-admin-kit]) .legendLoss {
+  border-top-color: var(--text-tertiary);
+}
+
+/* ── Double-elim "Winners Bracket" / "Losers Bracket" sticky tier label — a quiet eyebrow, kept mono ── */
+:global([data-admin-kit]) .bracketTierLabel {
+  color: var(--text-tertiary);
+}

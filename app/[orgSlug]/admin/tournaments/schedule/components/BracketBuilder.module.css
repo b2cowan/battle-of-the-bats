@@ -593,3 +593,219 @@
 @media (max-width: 768px) {
   .zoomHud { display: none; }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4c — only with the switch on) ═══════════════════════
+   The manual bracket BUILDER: round columns, the compact game card + its inline editor, the measured
+   SVG connector lines, and the zoom/pan toolbar. Shared by BracketBuilder.tsx, BracketConnectors.tsx
+   and BracketZoomFrame.tsx (all three read classes from this one sheet).
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here.
+   ⚠ SPECIFICITY: `.matchupCard`/`.matchupCardDragging`/`.matchupCardFinal`/`.matchupCardEditing` are
+   PEER classes combined on one element, not modifiers of one base selector — their relative ORDER
+   below matches the legacy file (card, then dragging, then final, then editing) so an overlapping
+   property (border/box-shadow) resolves the same way under the switch as it does today. */
+
+/* ── Round column header — an editable eyebrow (mono, uppercase); accent instead of raw brand lime ── */
+:global([data-admin-kit]) .roundTitleInput {
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .roundTitleInput:hover,
+:global([data-admin-kit]) .roundTitleInput:focus {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .roundHeader {
+  border-bottom-color: var(--home-line);
+}
+
+/* ── Expanded matchup editor card ── */
+:global([data-admin-kit]) .matchupCard {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  box-shadow: none;
+}
+:global([data-admin-kit]) .matchupHeader {
+  background: var(--card-bg);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .dragHandle {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .dragHandle:hover {
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+/* .matchupCardDragging / .matchupCardFinal / .matchupCardEditing are PEER classes (not modifiers of
+   one base selector) combined on the same element as .matchupCard — each restatement below is a
+   compound (descendant or multi-class) selector at HIGHER specificity than the base rules above, so
+   it wins regardless of source order. */
+:global([data-admin-kit]) .matchupCardDragging {
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 1px var(--home-olive), var(--home-shadow);
+}
+:global([data-admin-kit]) .matchupCardDragging .dragHandle {
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .matchupCardFinal {
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 1px var(--home-olive);
+}
+:global([data-admin-kit]) .matchupCardFinal .matchupHeader {
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .matchupCardEditing {
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 1px var(--home-olive);
+}
+:global([data-admin-kit]) .codeInput {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .codeInput:focus {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .deleteBtn {
+  color: var(--danger-light);
+}
+:global([data-admin-kit]) .deleteBtn:hover {
+  background: rgba(var(--danger-rgb), 0.08);
+}
+:global([data-admin-kit]) .teamLabel {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .teamInput {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .teamInput:focus {
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .matchupFooter {
+  background: var(--card-bg);
+  border-top-color: var(--home-line);
+}
+:global([data-admin-kit]) .dateInput,
+:global([data-admin-kit]) .timeInput,
+:global([data-admin-kit]) .fieldSelect {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .doneBtn {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .doneBtn:hover {
+  background: rgba(var(--home-olive-rgb), 0.22);
+}
+
+/* ── Add-round / add-matchup quiet dashed buttons ── */
+:global([data-admin-kit]) .addBtn {
+  background: var(--card-bg);
+  border: 1px dashed var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .addBtn:hover {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .addRoundBtnSimple {
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .addRoundBtnSimple:hover {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+
+/* ── Split-pool tier section ── */
+:global([data-admin-kit]) .poolSection {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .poolHeader {
+  color: var(--home-olive);
+}
+
+/* ── Compact game card (default, click-to-edit) ── */
+:global([data-admin-kit]) .compactCard {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  box-shadow: none;
+}
+:global([data-admin-kit]) .compactCard:hover {
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 1px var(--home-olive);
+}
+:global([data-admin-kit]) .compactCard:focus-visible {
+  outline-color: var(--home-olive);
+}
+:global([data-admin-kit]) .compactHead {
+  background: var(--card-bg);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .compactCode {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .compactTeamRow {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .compactMeta {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .compactMetaEmpty {
+  color: var(--home-olive);
+}
+
+/* ── Measured SVG connectors — winner's path olive, loser's path quiet + dashed (kept from legacy) ── */
+:global([data-admin-kit]) .connectorWin {
+  stroke: var(--home-olive);
+}
+:global([data-admin-kit]) .connectorLoss {
+  stroke: var(--text-tertiary);
+}
+
+/* ── Pan/scroll + zoom HUD ── */
+:global([data-admin-kit]) .builderContainerPan::-webkit-scrollbar-track {
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .builderContainerPan::-webkit-scrollbar-thumb {
+  background: var(--home-line-strong);
+  border-color: var(--card-bg);
+}
+:global([data-admin-kit]) .builderContainerPan::-webkit-scrollbar-thumb:hover {
+  background: var(--home-olive);
+}
+:global([data-admin-kit]) .panHint {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .zoomHud {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line-strong);
+}
+:global([data-admin-kit]) .zoomBtn {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .zoomBtn:hover {
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .zoomPct {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .zoomPct:hover {
+  color: var(--home-olive);
+}
+
+/* ── Double-elim fork band tags — the semantic state token's LIGHT tier (not the raw hue, which is
+   under AA on the kit's Dark ground) ── */
+:global([data-admin-kit]) .bandTagWin {
+  color: var(--success-light);
+}
+:global([data-admin-kit]) .bandTagLoss {
+  color: var(--warning-light);
+}

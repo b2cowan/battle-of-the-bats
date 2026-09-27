@@ -9,6 +9,8 @@ import {
   type ReschedulableGame,
 } from '@/lib/schedule-shift';
 import type { Game, Team, Division } from '@/lib/types';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 
 const NIL_UUID = '00000000-0000-0000-0000-000000000000';
 
@@ -97,6 +99,36 @@ function buildAnnouncementDraft(shifted: number, cancelled: number, shiftMinutes
  * enforces bracket order + all-or-nothing). Also covers running behind or a bad forecast.
  */
 export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, divisions, getVenueKey, getVenueLabel, canPushFans, onClose, onApplied }: ShiftDayModalProps) {
+  const kx = useKitStyle();
+  // Row-invariant kit patches — computed once per render, not once per row/map() call.
+  const headerIconStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.accent);
+  const doneIconWrapStyle = kx(
+    { width: '44px', height: '44px', margin: '0 auto 0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', borderRadius: '50%', color: 'var(--success)', background: 'rgba(var(--success-rgb),0.12)', border: '1px solid rgba(var(--success-rgb),0.35)' },
+    { color: 'var(--success-light)', background: 'rgba(var(--success-rgb), 0.07)', border: '1px solid rgba(var(--success-rgb), 0.28)' },
+  );
+  const doneHeadlineStyle = kx({ fontWeight: 700, color: 'var(--logic-lime)', marginBottom: '0.35rem' }, KIT_INK.accent);
+  const successBannerStyle = kx(
+    { display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.7rem', marginBottom: '0.9rem', borderRadius: '8px', background: 'rgba(var(--success-rgb),0.1)', border: '1px solid rgba(var(--success-rgb),0.3)', fontSize: '0.83rem', color: 'var(--success)' },
+    { background: 'rgba(var(--success-rgb), 0.08)', border: '1px solid rgba(var(--success-rgb), 0.3)', color: 'var(--success-light)' },
+  );
+  const gameListWrapStyle = kx({ maxHeight: '42vh', overflowY: 'auto', border: '1px solid var(--white-10)', borderRadius: '8px' }, { border: '1px solid var(--home-line)' });
+  const rowBorderStyle = kx({ borderBottom: '1px solid var(--white-05)' }, { borderBottom: '1px solid var(--home-line)' });
+  const rowTrophyStyle = kx({ color: 'var(--logic-lime)', flexShrink: 0 }, KIT_INK.accent);
+  const rowTimeLineStyle = kx({ fontSize: '0.78rem', color: 'var(--white-55)', display: 'flex', alignItems: 'center', gap: '0.4rem' }, KIT_INK.tertiary);
+  const rowMovedToStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.accent);
+  const rowCancelledStyle = kx({ color: 'var(--danger)' }, KIT_INK.danger);
+  const rowFlaggedStyle = kx({ color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }, KIT_INK.danger);
+  const rowPlaceLineStyle = kx({ fontSize: '0.72rem', color: 'var(--white-45)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, KIT_INK.tertiary);
+  const rowDivisionStyle = kx({ color: 'var(--white-55)', fontWeight: 600 }, KIT_INK.secondary);
+  const blockedBannerStyle = kx(
+    { marginTop: '0.7rem', padding: '0.55rem 0.7rem', borderRadius: '8px', background: 'rgba(var(--danger-rgb),0.1)', border: '1px solid rgba(var(--danger-rgb),0.35)', fontSize: '0.8rem', color: 'var(--danger)', display: 'flex', gap: '0.5rem' },
+    { background: 'rgba(var(--danger-rgb), 0.08)', border: '1px solid rgba(var(--danger-rgb), 0.3)', color: 'var(--danger-light)' },
+  );
+  const cancellingPlayoffBannerStyle = kx(
+    { marginTop: '0.7rem', padding: '0.55rem 0.7rem', borderRadius: '8px', background: 'rgba(var(--warning-rgb),0.1)', border: '1px solid rgba(var(--warning-rgb),0.35)', fontSize: '0.8rem', color: 'var(--warning)', display: 'flex', gap: '0.5rem' },
+    { background: 'rgba(var(--warning-rgb), 0.08)', border: '1px solid rgba(var(--warning-rgb), 0.3)', color: 'var(--warning-light)' },
+  );
+
   const today = tournamentToday();
 
   // Not-yet-played games grouped by day, today onward — the days you can adjust (each sorted by time).
@@ -326,7 +358,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
       <div className="modal" style={{ maxWidth: '560px' }} onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <CloudRain size={16} style={{ color: 'var(--logic-lime)' }} /> Rain delay
+            <CloudRain size={16} style={headerIconStyle} /> Rain delay
           </h3>
           <button className="btn btn-ghost btn-data" onClick={onClose} aria-label="Close"><X size={16} /></button>
         </div>
@@ -334,14 +366,9 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
         {step === 'done' ? (
           /* ── Done (announcement posted) ───────────────────────────────────── */
           <div style={{ textAlign: 'center', padding: '0.5rem 0 0.25rem' }}>
-            <div style={{
-              width: '44px', height: '44px', margin: '0 auto 0.75rem',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              borderRadius: '50%', color: 'var(--success)',
-              background: 'rgba(var(--success-rgb),0.12)', border: '1px solid rgba(var(--success-rgb),0.35)',
-            }}><Check size={22} /></div>
-            <p style={{ fontWeight: 700, color: 'var(--logic-lime)', marginBottom: '0.35rem' }}>Schedule updated &amp; posted</p>
-            <p style={{ fontSize: '0.85rem', color: 'var(--white-60)' }}>
+            <div style={doneIconWrapStyle}><Check size={22} /></div>
+            <p style={doneHeadlineStyle}>Schedule updated &amp; posted</p>
+            <p style={kx({ fontSize: '0.85rem', color: 'var(--white-60)' }, KIT_INK.secondary)}>
               The new times are live and {notifyOn ? 'everyone who opted in has been notified.' : 'the update is on the public schedule.'}
             </p>
             <button className="btn btn-primary btn-data" onClick={onClose} style={{ marginTop: '1.25rem', minWidth: '160px' }}>Done</button>
@@ -349,7 +376,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
         ) : step === 'announce' && result ? (
           /* ── Announce hand-off (B3) ───────────────────────────────────────── */
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 0.7rem', marginBottom: '0.9rem', borderRadius: '8px', background: 'rgba(var(--success-rgb),0.1)', border: '1px solid rgba(var(--success-rgb),0.3)', fontSize: '0.83rem', color: 'var(--success)' }}>
+            <div style={successBannerStyle}>
               <Check size={16} style={{ flexShrink: 0 }} />
               <span>
                 {result.shifted > 0 && <>{result.shifted} game{result.shifted !== 1 ? 's' : ''} moved{result.cancelled > 0 ? ' · ' : '.'}</>}
@@ -357,7 +384,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
               </span>
             </div>
 
-            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--white-70)', display: 'block', marginBottom: '0.3rem' }}>Message title</label>
+            <label style={kx({ fontSize: '0.8rem', fontWeight: 600, color: 'var(--white-70)', display: 'block', marginBottom: '0.3rem' }, KIT_INK.secondary)}>Message title</label>
             <input
               className="form-input"
               value={annTitle}
@@ -365,7 +392,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
               style={{ width: '100%', marginBottom: '0.7rem' }}
               maxLength={120}
             />
-            <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--white-70)', display: 'block', marginBottom: '0.3rem' }}>Message</label>
+            <label style={kx({ fontSize: '0.8rem', fontWeight: 600, color: 'var(--white-70)', display: 'block', marginBottom: '0.3rem' }, KIT_INK.secondary)}>Message</label>
             <textarea
               className="form-textarea"
               value={annBody}
@@ -375,11 +402,11 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
               maxLength={600}
             />
 
-            <label style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.83rem', color: 'var(--white-70)', cursor: 'pointer' }}>
+            <label style={kx({ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', fontSize: '0.83rem', color: 'var(--white-70)', cursor: 'pointer' }, KIT_INK.secondary)}>
               <input type="checkbox" checked={notifyOn} onChange={(e) => setNotifyOn(e.target.checked)} style={{ marginTop: '0.15rem' }} />
               <span>
                 Send a notification{canPushFans ? ' to opted-in fans and your staff/coaches' : ' to your staff and coaches'}
-                <span style={{ display: 'block', color: 'var(--white-50)', fontSize: '0.76rem' }}>
+                <span style={kx({ display: 'block', color: 'var(--white-50)', fontSize: '0.76rem' }, KIT_INK.tertiary)}>
                   {canPushFans
                     ? 'Pushes to fans following the tournament and your coaches. It also pins to the public schedule.'
                     : 'Pushes to your staff and portal coaches, and pins to the public schedule. Fan push needs Tournament Plus.'}
@@ -387,7 +414,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
               </span>
             </label>
 
-            {postError && <p style={{ marginTop: '0.7rem', fontSize: '0.82rem', color: 'var(--danger)' }}>{postError}</p>}
+            {postError && <p style={kx({ marginTop: '0.7rem', fontSize: '0.82rem', color: 'var(--danger)' }, KIT_INK.danger)}>{postError}</p>}
 
             <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
               <button className="btn btn-ghost btn-data" onClick={onClose} disabled={posting}>Skip</button>
@@ -398,20 +425,20 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
           </div>
         ) : dayGames.length === 0 ? (
           /* ── Empty ────────────────────────────────────────────────────────── */
-          <div style={{ padding: '1rem 0', textAlign: 'center', color: 'var(--white-60)' }}>
+          <div style={kx({ padding: '1rem 0', textAlign: 'center', color: 'var(--white-60)' }, KIT_INK.secondary)}>
             <p style={{ marginBottom: '0.25rem', fontWeight: 600 }}>No upcoming games to adjust.</p>
             <p style={{ fontSize: '0.85rem' }}>This tool moves or cancels not-yet-played games for a chosen day. Once games are scheduled, come back here for a rain delay or a running-behind day.</p>
             <button className="btn btn-ghost btn-data" onClick={onClose} style={{ marginTop: '1rem' }}>Close</button>
           </div>
         ) : (
           <>
-            <p style={{ fontSize: '0.82rem', color: 'var(--white-60)', marginTop: 0, marginBottom: '0.85rem' }}>
+            <p style={kx({ fontSize: '0.82rem', color: 'var(--white-60)', marginTop: 0, marginBottom: '0.85rem' }, KIT_INK.secondary)}>
               Rain, heat, or running behind? Move or cancel a day&rsquo;s games at once, then let everyone know.
             </p>
 
             {/* ── Day to adjust ─────────────────────────────────────────────── */}
             <div style={{ marginBottom: '0.85rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--white-70)', display: 'block', marginBottom: '0.4rem' }}>Day to adjust</label>
+              <label style={kx({ fontSize: '0.8rem', fontWeight: 600, color: 'var(--white-70)', display: 'block', marginBottom: '0.4rem' }, KIT_INK.secondary)}>Day to adjust</label>
               {availableDays.length > 1 ? (
                 <select className="form-select" value={selectedDay} onChange={(e) => changeDay(e.target.value)} style={{ width: '100%' }}>
                   {availableDays.map((d) => {
@@ -429,7 +456,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
               <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.85rem' }}>
                 {divisionOptions.length > 1 && (
                   <div style={{ flex: '1 1 45%', minWidth: '140px' }}>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--white-55)', display: 'block', marginBottom: '0.25rem' }}>Division</label>
+                    <label style={kx({ fontSize: '0.72rem', fontWeight: 600, color: 'var(--white-55)', display: 'block', marginBottom: '0.25rem' }, KIT_INK.tertiary)}>Division</label>
                     <select className="form-select" value={divisionFilter} onChange={(e) => changeDivisionFilter(e.target.value)} style={{ width: '100%' }}>
                       <option value="all">All divisions</option>
                       {divisionOptions.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
@@ -438,7 +465,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
                 )}
                 {venueOptions.length > 1 && (
                   <div style={{ flex: '1 1 45%', minWidth: '140px' }}>
-                    <label style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--white-55)', display: 'block', marginBottom: '0.25rem' }}>Venue</label>
+                    <label style={kx({ fontSize: '0.72rem', fontWeight: 600, color: 'var(--white-55)', display: 'block', marginBottom: '0.25rem' }, KIT_INK.tertiary)}>Venue</label>
                     <select className="form-select" value={venueFilter} onChange={(e) => changeVenueFilter(e.target.value)} style={{ width: '100%' }}>
                       <option value="all">All venues</option>
                       {venueOptions.map((v) => <option key={v.key} value={v.key}>{v.label}</option>)}
@@ -450,7 +477,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
 
             {/* ── Shift amount ──────────────────────────────────────────────── */}
             <div style={{ marginBottom: '0.85rem' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--white-70)', display: 'block', marginBottom: '0.4rem' }}>
+              <label style={kx({ fontSize: '0.8rem', fontWeight: 600, color: 'var(--white-70)', display: 'block', marginBottom: '0.4rem' }, KIT_INK.secondary)}>
                 Push games later by
               </label>
               <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', alignItems: 'center' }}>
@@ -475,7 +502,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
                       className="form-input"
                       aria-label="Custom minutes"
                     />
-                    <span style={{ fontSize: '0.8rem', color: 'var(--white-60)' }}>min</span>
+                    <span style={kx({ fontSize: '0.8rem', color: 'var(--white-60)' }, KIT_INK.secondary)}>min</span>
                   </span>
                 )}
               </div>
@@ -486,15 +513,15 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
               <button className="btn btn-ghost btn-data" onClick={toggleAll} style={{ fontSize: '0.78rem' }}>
                 {allSelected ? 'Select none' : 'Select all'}
               </button>
-              <span style={{ fontSize: '0.78rem', color: 'var(--white-50)' }}>
+              <span style={kx({ fontSize: '0.78rem', color: 'var(--white-50)' }, KIT_INK.tertiary)}>
                 {visibleGames.length} game{visibleGames.length !== 1 ? 's' : ''}
                 {(divisionFilter !== 'all' || venueFilter !== 'all') && visibleGames.length !== dayGames.length ? ` of ${dayGames.length}` : ''}
               </span>
             </div>
 
-            <div style={{ maxHeight: '42vh', overflowY: 'auto', border: '1px solid var(--white-10)', borderRadius: '8px' }}>
+            <div style={gameListWrapStyle}>
               {visibleGames.length === 0 ? (
-                <div style={{ padding: '1.1rem 0.7rem', textAlign: 'center', fontSize: '0.82rem', color: 'var(--white-50)' }}>No games match these filters.</div>
+                <div style={kx({ padding: '1.1rem 0.7rem', textAlign: 'center', fontSize: '0.82rem', color: 'var(--white-50)' }, KIT_INK.tertiary)}>No games match these filters.</div>
               ) : visibleGames.map((g) => {
                 const isIncluded = included.has(g.id);
                 const isCancel = cancelling.has(g.id);
@@ -506,9 +533,9 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
                   <div
                     key={g.id}
                     style={{
+                      ...rowBorderStyle,
                       display: 'flex', alignItems: 'center', gap: '0.6rem',
                       padding: '0.55rem 0.7rem',
-                      borderBottom: '1px solid var(--white-05)',
                       opacity: isIncluded ? 1 : 0.5,
                       background: flagged ? 'rgba(var(--danger-rgb),0.08)' : undefined,
                     }}
@@ -516,23 +543,23 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
                     <input type="checkbox" checked={isIncluded} onChange={() => toggleGame(g.id)} aria-label={`Include ${gameLabel(g)}`} />
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{ fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {g.isPlayoff && <Trophy size={12} style={{ color: 'var(--logic-lime)', flexShrink: 0 }} />}
+                        {g.isPlayoff && <Trophy size={12} style={rowTrophyStyle} />}
                         {gameLabel(g)}
                       </div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--white-55)', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <div style={rowTimeLineStyle}>
                         <span style={{ textDecoration: isCancel ? 'line-through' : undefined }}>{formatTime(g.time)}</span>
                         {isIncluded && !isCancel && to && (
-                          <span style={{ color: 'var(--logic-lime)' }}>→ {formatTime(to.time)}{movedToNextDay ? ' (next day)' : ''}</span>
+                          <span style={rowMovedToStyle}>→ {formatTime(to.time)}{movedToNextDay ? ' (next day)' : ''}</span>
                         )}
-                        {isIncluded && isCancel && <span style={{ color: 'var(--danger)' }}>Cancelled</span>}
+                        {isIncluded && isCancel && <span style={rowCancelledStyle}>Cancelled</span>}
                         {flagged && (
-                          <span style={{ color: 'var(--danger)', display: 'inline-flex', alignItems: 'center', gap: '0.2rem' }}>
+                          <span style={rowFlaggedStyle}>
                             <AlertTriangle size={11} /> before its feeder
                           </span>
                         )}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--white-45)', display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {multiDivision && <><span style={{ color: 'var(--white-55)', fontWeight: 600 }}>{divisionName(g.divisionId)}</span><span aria-hidden>·</span></>}
+                      <div style={rowPlaceLineStyle}>
+                        {multiDivision && <><span style={rowDivisionStyle}>{divisionName(g.divisionId)}</span><span aria-hidden>·</span></>}
                         <MapPin size={10} style={{ flexShrink: 0 }} aria-hidden />
                         <span style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>{v.sublabel ? `${v.name} · ${v.sublabel}` : v.name}</span>
                       </div>
@@ -541,7 +568,7 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
                       className="btn btn-ghost btn-data"
                       onClick={() => toggleCancel(g.id)}
                       title={isCancel ? 'Keep this game (move instead)' : 'Cancel this game'}
-                      style={{ fontSize: '0.72rem', color: isCancel ? 'var(--logic-lime)' : 'var(--danger)', flexShrink: 0 }}
+                      style={kx({ fontSize: '0.72rem', color: isCancel ? 'var(--logic-lime)' : 'var(--danger)', flexShrink: 0 }, isCancel ? KIT_INK.accent : KIT_INK.danger)}
                     >
                       {isCancel ? <><Undo2 size={12} /> Keep</> : 'Cancel'}
                     </button>
@@ -552,24 +579,24 @@ export default function ShiftDayModal({ tournamentId, orgSlug, games, teams, div
 
             {/* ── Warnings ──────────────────────────────────────────────────── */}
             {blocked && (
-              <div style={{ marginTop: '0.7rem', padding: '0.55rem 0.7rem', borderRadius: '8px', background: 'rgba(var(--danger-rgb),0.1)', border: '1px solid rgba(var(--danger-rgb),0.35)', fontSize: '0.8rem', color: 'var(--danger)', display: 'flex', gap: '0.5rem' }}>
+              <div style={blockedBannerStyle}>
                 <AlertTriangle size={16} style={{ flexShrink: 0 }} />
                 <span>This would schedule a playoff game before the games that feed it. Adjust the times or which games you&rsquo;re moving so every playoff game stays after its feeders.</span>
               </div>
             )}
             {cancellingPlayoff && !blocked && (
-              <div style={{ marginTop: '0.7rem', padding: '0.55rem 0.7rem', borderRadius: '8px', background: 'rgba(var(--warning-rgb),0.1)', border: '1px solid rgba(var(--warning-rgb),0.35)', fontSize: '0.8rem', color: 'var(--warning)', display: 'flex', gap: '0.5rem' }}>
+              <div style={cancellingPlayoffBannerStyle}>
                 <AlertTriangle size={16} style={{ flexShrink: 0 }} />
                 <span>You&rsquo;re cancelling a playoff game. Its spot in the bracket will need to be resolved by hand afterwards.</span>
               </div>
             )}
             {error && (
-              <p style={{ marginTop: '0.7rem', fontSize: '0.82rem', color: 'var(--danger)' }}>{error}</p>
+              <p style={kx({ marginTop: '0.7rem', fontSize: '0.82rem', color: 'var(--danger)' }, KIT_INK.danger)}>{error}</p>
             )}
 
             {/* ── Footer ────────────────────────────────────────────────────── */}
             <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '0.75rem', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '0.82rem', color: 'var(--white-70)' }}>
+              <span style={kx({ fontSize: '0.82rem', color: 'var(--white-70)' }, KIT_INK.secondary)}>
                 {shiftIds.length > 0 && <>{shiftIds.length} moving +{shiftLabel(shiftMinutes)}</>}
                 {shiftIds.length > 0 && cancelIds.length > 0 && ' · '}
                 {cancelIds.length > 0 && <>{cancelIds.length} cancelled</>}

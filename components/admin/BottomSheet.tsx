@@ -13,6 +13,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
+import { PortalKitRoot } from './AdminKitProvider';
 import styles from './BottomSheet.module.css';
 
 export default function BottomSheet({
@@ -62,7 +63,14 @@ export default function BottomSheet({
 
   if (!open || typeof document === 'undefined') return null;
 
+  // Admin Design Continuity slice 4c — this sheet `createPortal`s to `document.body`, a SIBLING of the
+  // admin shell, so no `[data-admin-kit]` rule could reach it (nor the caller's content inside it: the
+  // schedule timeline's reschedule sheet, the check-in board's detail). `PortalKitRoot` carries the
+  // marker on a wrapper ABOVE the backdrop (a marker on the backdrop itself cannot satisfy the
+  // backdrop's own `[data-admin-kit] .backdrop` rule) — nothing with the switch off, and nothing inside a
+  // public preview (the island turns the kit off, R2): this sheet also serves two public components.
   return createPortal(
+    <PortalKitRoot>
     <div className={styles.backdrop} onClick={onClose}>
       <div
         ref={sheetRef}
@@ -86,7 +94,8 @@ export default function BottomSheet({
         <div className={styles.body}>{children}</div>
         {footer && <div className={styles.footer}>{footer}</div>}
       </div>
-    </div>,
+    </div>
+    </PortalKitRoot>,
     document.body,
   );
 }

@@ -764,3 +764,193 @@
   letter-spacing: 0.03em;
   pointer-events: none;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4c — only with the switch on) ═══════════════════════
+   The day-grid timeline: time axis, a field per column, game blocks by status, the reschedule sheet.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here.
+   ⚠ SPECIFICITY: every state/modifier a base class carries in the legacy rules above is restated
+   here at matching weight, base rule first — see BRIEF.md traps #1/#2 (a same-weight kit base rule
+   shadows a legacy state rule if it only appears later; a `background:` shorthand erases a
+   background-image). */
+
+/* ── Scope label + conflicts toggle ── */
+:global([data-admin-kit]) .scopeLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .scopeLabel span { color: var(--text-secondary); }
+
+:global([data-admin-kit]) .conflictToggle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .conflictToggle:hover { border-color: var(--home-olive); color: var(--home-olive); }
+:global([data-admin-kit]) .conflictToggle[data-on="true"][data-severity="overlap"] {
+  border-color: rgba(var(--danger-rgb), 0.4);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+}
+:global([data-admin-kit]) .conflictToggle[data-on="true"][data-severity="buffer"] {
+  border-color: rgba(var(--warning-rgb), 0.4);
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--warning-light);
+}
+:global([data-admin-kit]) .conflictToggle[data-on="true"][data-severity="none"] { color: var(--text-tertiary); }
+
+/* The count badge is a numeral on a solid state fill. Its ink is the PAGE GROUND, which inverts with the
+   theme as the fill does (the legacy badge used `--bg` for the same reason): dark on Dark's bright red /
+   amber (5.3:1 / 9.2:1), cream on Warm's brick red / deep amber (5.5:1 / 6.1:1). White measured 3.76:1
+   on Dark's red in the 4c sweep. */
+:global([data-admin-kit]) .conflictCount { background: var(--danger); color: var(--home-paper); }
+:global([data-admin-kit]) .conflictToggle[data-severity="buffer"] .conflictCount { background: var(--warning); color: var(--home-paper); }
+
+/* ── Conflict legend ── */
+:global([data-admin-kit]) .conflictLegend { border-color: var(--home-line); background: var(--card-bg); }
+:global([data-admin-kit]) .legendItem { color: var(--text-secondary); }
+:global([data-admin-kit]) .legendItem[data-kind="overlap"] .legendSwatch { background: color-mix(in srgb, var(--danger) 14%, var(--card-bg)); }
+:global([data-admin-kit]) .legendItem[data-kind="buffer"] .legendSwatch { background: var(--card-bg); }
+
+/* ── Day nav ── */
+:global([data-admin-kit]) .dayBtn {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .dayBtn:hover:not(:disabled) { border-color: var(--home-olive); color: var(--home-olive); }
+:global([data-admin-kit]) .dayLabel { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-primary); }
+
+/* ── Grid frame ── */
+:global([data-admin-kit]) .gridScroll { border-color: var(--home-line); background: var(--card-bg); }
+:global([data-admin-kit]) .gutter { background: var(--card-bg); border-right-color: var(--home-line); }
+:global([data-admin-kit]) .gutterHead { background: var(--card-bg); border-bottom-color: var(--home-line); }
+/* Hour labels are a clock readout — face stays mono, only the ink moves. */
+:global([data-admin-kit]) .hourLabel { color: var(--text-tertiary); }
+:global([data-admin-kit]) .col { border-right-color: var(--home-line); }
+:global([data-admin-kit]) .colHead { background: var(--card-bg); border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .colVenue { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-primary); }
+:global([data-admin-kit]) .colFacility { color: var(--text-tertiary); }
+:global([data-admin-kit]) .gridLine { background: var(--home-line); }
+
+/* ── Game blocks ── */
+/* Longhand + background-COLOR only (never the `background:` shorthand): .ghost below sets a
+   background-IMAGE on the same element for an unplaced-division block, and a shorthand here would
+   silently erase it the moment both classes are present (trap #2). */
+:global([data-admin-kit]) .block {
+  border-left-color: var(--accent, var(--home-line-strong));
+  background-color: color-mix(in srgb, var(--accent, var(--home-line-strong)) 16%, var(--card-bg));
+  box-shadow: var(--home-shadow);
+}
+/* Restated at matching weight right after the base rule (trap #1) — the base rule above also sets
+   background-color, which would otherwise win the tie against this equally-specific legacy state
+   rule by source order alone. */
+:global([data-admin-kit]) .block[data-conflict="overlap"] {
+  background-color: color-mix(in srgb, var(--danger) 14%, var(--card-bg));
+}
+:global([data-admin-kit]) .ghost {
+  border-left-color: var(--home-line-strong);
+  background-image: repeating-linear-gradient(
+    -45deg,
+    rgba(var(--home-line-rgb), 0.35),
+    rgba(var(--home-line-rgb), 0.35) 6px,
+    transparent 6px,
+    transparent 12px
+  );
+  background-color: transparent;
+}
+:global([data-admin-kit]) .blockTime { color: var(--text-primary); }
+:global([data-admin-kit]) .blockDiv { color: var(--text-tertiary); }
+:global([data-admin-kit]) .blockWarn { color: var(--text-tertiary); }
+:global([data-admin-kit]) .block[data-conflict="overlap"] .blockWarn { color: var(--danger-light); }
+:global([data-admin-kit]) .block[data-conflict="buffer"] .blockWarn { color: var(--warning-light); }
+:global([data-admin-kit]) .blockTeams { color: var(--text-secondary); }
+:global([data-admin-kit]) .vs { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .empty { color: var(--text-tertiary); border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .gridHint { color: var(--text-tertiary); border-top-color: var(--home-line); }
+
+/* ── Unscheduled tray ── */
+:global([data-admin-kit]) .tray { border-color: var(--home-line); background: var(--card-bg); }
+:global([data-admin-kit]) .trayTitle { color: var(--text-secondary); }
+:global([data-admin-kit]) .trayCard {
+  border-color: var(--home-line);
+  border-left-color: var(--home-line-strong);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .trayCard:hover { border-left-color: var(--home-olive); }
+:global([data-admin-kit]) .trayCardLabel { color: var(--text-primary); }
+:global([data-admin-kit]) .trayCardSub { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-tertiary); }
+
+/* ── Add-field menu ── */
+:global([data-admin-kit]) .addFieldBtn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .addFieldBtn:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .addFieldMenu {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .addFieldItem {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .addFieldItem:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+:global([data-admin-kit]) .addFieldEmpty { color: var(--text-tertiary); }
+/* After .addFieldItem above (both classes sit on the same button) so its accent ink wins the tie. */
+:global([data-admin-kit]) .addFieldCreate { border-top-color: var(--home-line); color: var(--home-olive); }
+
+/* ── Drag-to-move ── */
+:global([data-admin-kit]) .dragging { box-shadow: var(--home-shadow); }
+:global([data-admin-kit]) .colBodyOver {
+  background: var(--home-olive-soft);
+  outline-color: rgba(var(--home-olive-rgb), 0.45);
+}
+
+/* ── Mobile field pager ── */
+:global([data-admin-kit]) .fieldPager { border-color: var(--home-line); background: var(--card-bg); }
+:global([data-admin-kit]) .mobileHint { color: var(--text-tertiary); }
+
+/* ── Reschedule / place sheet (rendered inside the shared BottomSheet, which carries its own
+   [data-admin-kit]/[data-coach-warm-enabled] marker onto its portaled root — see BottomSheet.tsx) ── */
+:global([data-admin-kit]) .sheetLabel { color: var(--text-secondary); }
+:global([data-admin-kit]) .stepBtn { border-color: var(--home-line-strong); background: var(--card-bg); color: var(--text-primary); }
+:global([data-admin-kit]) .stepBtn:hover { border-color: var(--home-olive); color: var(--home-olive); }
+:global([data-admin-kit]) .stepBtn:active { background: var(--home-olive-soft); }
+/* The stepped value is a time readout — face stays mono, only the ink moves. */
+:global([data-admin-kit]) .stepValue { color: var(--text-primary); }
+:global([data-admin-kit]) .fieldOption { border-color: var(--home-line-strong); background: var(--card-bg); color: var(--text-secondary); }
+:global([data-admin-kit]) .fieldOption[data-on="true"] {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .fieldOption[data-on="true"] svg { color: var(--home-olive); }
+:global([data-admin-kit]) .sheetEmpty { color: var(--text-tertiary); }
+:global([data-admin-kit]) .sheetStatus[data-kind="free"] { color: var(--success-light); }
+:global([data-admin-kit]) .sheetStatus[data-kind="buffer"] { color: var(--warning-light); }
+:global([data-admin-kit]) .sheetStatus[data-kind="overlap"] { color: var(--danger-light); }
+/* Border + ink already come from currentColor/inherit (theme-safe); only the literal white hover
+   tint needs a token — mixed against the status's own current ink rather than a fixed hue. */
+:global([data-admin-kit]) .useFreeBtn:hover { background: color-mix(in srgb, currentColor 12%, transparent); }
+:global([data-admin-kit]) .sheetCancel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .sheetSave {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
+/* The stepped/dropped TIME readout keeps mono; only its ink + ground move. */
+:global([data-admin-kit]) .dropPreviewTime { color: var(--text-primary); background: var(--card-bg); }
+
+/* ── "Now" line — the portal's red, not the brand lime (per this slice's assignment notes) ── */
+:global([data-admin-kit]) .nowLine { background: var(--home-live); }
+:global([data-admin-kit]) .nowLabel { background: var(--home-live); color: var(--white-fixed); }

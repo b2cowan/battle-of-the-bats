@@ -1941,6 +1941,10 @@ h1, h2, h3, h4, h5, h6 {
   border: 1px solid var(--home-line-strong);
 }
 [data-admin-kit] .btn-secondary:where(:not([data-public-preview] *)):hover { background: var(--home-olive-soft); color: var(--text-primary); }
+/* `.btn-danger` (slice 4c): the LIGHT red as ink, as `KIT_BUTTON.danger` (slice 3) — the base red on
+   its own tint measured 4.09:1 on the kit's Dark ground (the bracket editor's Clear bracket). In Warm
+   `--danger-light` IS `--home-live`, today's colour there. The tint and edge are the legacy rule's. */
+[data-admin-kit] .btn-danger:where(:not([data-public-preview] *)) { color: var(--danger-light); }
 
 /* ── Tags → the kit's chips: the data face at the token step, a pill, a tint of its own hue ──
    Badge ink is the portal's AA-corrected chip ink (`--badge-*-ink`). A tag that NAMES something

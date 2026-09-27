@@ -1,6 +1,8 @@
 'use client';
 import React from 'react';
 import Link from 'next/link';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 
 /**
  * Shown wherever a game would get a location while the tournament has ZERO configured
@@ -26,14 +28,21 @@ export default function ZeroVenuePrompt({
   /** When present, offers the explicit "type a location anyway" escape. */
   onTypeAnyway?: () => void;
 }) {
+  const kx = useKitStyle();
   return (
-    <div style={{
+    <div style={kx({
       padding: '0.8rem 0.95rem',
       background: 'var(--primary-faint)',
       border: '1px solid var(--border)',
       borderRadius: '2px',
-    }}>
-      <p style={{ margin: 0, fontSize: '0.8rem', color: 'var(--white-80)', lineHeight: 1.5 }}>
+    }, {
+      // Sibling setup nudges on this page (facilityResolveBanner) use the warning tint —
+      // matching it here keeps every "you haven't set this up yet" banner one family.
+      background: 'rgba(var(--warning-rgb), 0.08)',
+      border: '1px solid rgba(var(--warning-rgb), 0.3)',
+      borderRadius: '8px',
+    })}>
+      <p style={kx({ margin: 0, fontSize: '0.8rem', color: 'var(--white-80)', lineHeight: 1.5 }, KIT_INK.primary)}>
         <strong>No venues set up yet.</strong> Games without a real venue can’t be checked
         for double-bookings.
       </p>
@@ -66,15 +75,15 @@ export default function ZeroVenuePrompt({
         )}
       </div>
       {onTypeAnyway && (
-        <p style={{ margin: '0.55rem 0 0', fontSize: '0.72rem', color: 'var(--white-40)' }}>
+        <p style={kx({ margin: '0.55rem 0 0', fontSize: '0.72rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>
           Or{' '}
           <button
             type="button"
             onClick={onTypeAnyway}
-            style={{
+            style={kx({
               background: 'none', border: 'none', padding: 0, cursor: 'pointer',
               color: 'var(--info)', fontSize: 'inherit', textDecoration: 'underline',
-            }}
+            }, KIT_INK.info)}
           >
             type a location anyway
           </button>

@@ -98,11 +98,15 @@ describe('the admin kit switch', () => {
   });
 
   it('only the admin layout puts the marker on the page, and only through the helper', () => {
+    const MARKER_DOORS = new Set(['app/[orgSlug]/admin/layout.tsx', 'components/admin/AdminKitProvider.tsx']);
     const offenders: string[] = [];
     for (const file of [...walk(path.join(ROOT, 'app')), ...walk(path.join(ROOT, 'components'))]) {
       const rel = path.relative(ROOT, file).split(path.sep).join('/');
       const src = stripComments(readFileSync(file, 'utf8').replace(/\r\n/g, '\n'));
-      if (/\{\s*\.\.\.adminKitAttr\s*\}/.test(src) && rel !== 'app/[orgSlug]/admin/layout.tsx') offenders.push(`${rel} spreads adminKitAttr`);
+      // Any mention, not only a bare `{...adminKitAttr}` — `{...(on ? adminKitAttr : {})}` slipped past
+      // that shape once (slice 4c's first bottom sheet). The one other door is the portal hook
+      // (`PortalKitRoot`, AdminKitProvider), which forwards the layout's decision and decides nothing.
+      if (/\badminKitAttr\b/.test(src) && !MARKER_DOORS.has(rel)) offenders.push(`${rel} uses adminKitAttr`);
       if (/data-admin-kit\s*=|['"]data-admin-kit['"]\s*:/.test(src)) offenders.push(`${rel} writes data-admin-kit by hand`);
     }
     assert.deepEqual(offenders, [], 'a second place deciding the switch is how a half-built screen leaks');
@@ -110,6 +114,15 @@ describe('the admin kit switch', () => {
     assert.match(layout, /readAdminKit\(/, 'the admin layout decides it from the cookie, on the server');
     assert.match(layout, /adminKit\s*\?[\s\S]*\{\.\.\.adminKitAttr\}[\s\S]*:\s*shell/,
       'with the switch off the layout must render the bare shell — no wrapper, no attribute');
+    // The portal door forwards the context and nothing else: no cookie, no path, no second decision.
+    const provider = stripComments(read('components/admin/AdminKitProvider.tsx'));
+    assert.match(provider, /usePortalKitAttr\(\)[^{]*\{\s*return useAdminKit\(\) \? adminKitAttr : NO_ATTR;\s*\}/,
+      'usePortalKitAttr must be exactly "the context says on → the marker, else nothing"');
+    assert.match(provider, /attr === NO_ATTR \? <>\{children\}<\/> :/,
+      'PortalKitRoot must render its children bare with the switch off — no wrapper element');
+    // …and inside a public preview the context says OFF, so a portal opened there is the public page (R2).
+    assert.match(read('app/[orgSlug]/admin/AdminChrome.tsx'), /data-public-preview>\s*<AdminKitProvider on=\{false\}>/,
+      'the tournament preview island must turn the kit off for everything inside it');
   });
 
   it('public layouts never carry the warm marker or the admin kit (R2)', () => {

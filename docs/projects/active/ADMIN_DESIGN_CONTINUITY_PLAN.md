@@ -14,7 +14,8 @@
 > 58/58 + both-theme sweep done; **COMMITTED `8e76362f` 2026-09-27**. **Slice 4b (operations on game day, with
 > the game list moved in from 4c) BUILT 2026-09-27** — results in §3a; identity 60/60 + both-theme sweep
 > done; /simplify + /review done (owner: "go ahead with simplify, review and commit"); **COMMITTED `07808a02`
-> 2026-09-27**. 4c (the schedule) not started.
+> 2026-09-27**. **Slice 4c (the schedule) BUILT 2026-09-27** — results in §3a; identity 28/28 + both-theme
+> sweep done; /simplify + /review done (owner: "Go ahead with simplify, review and commit").
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -175,7 +176,7 @@ foundation's release day.
 | 3 | Rep Teams · Accounting (F4 dense tables) | **BUILT 2026-09-27** — results below; /simplify + /review done; COMMITTED `35705e32` 2026-09-27; walked at slice 6 |
 | 4a | Tournaments — **setup and records, plus the area's shared parts** (split recorded below) | **BUILT 2026-09-27** — results below; /simplify + /review done; identity 58/58 + both-theme sweep done; COMMITTED `8e76362f` 2026-09-27; walked at slice 6 |
 | 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; COMMITTED `07808a02` 2026-09-27; walked at slice 6 |
-| 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | not started |
+| 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | **BUILT 2026-09-27** — results below; identity 28/28 + both-theme sweep done; /simplify + /review done; walked at slice 6 |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | not started |
 | 6 | Prove (both-theme sweep, contrast, identity) · owner § walk · release (switch deleted, legacy removed, coaches help pin removed, What's New, `/docs`, `/release`) | not started |
 
@@ -952,6 +953,160 @@ fresh from this session at the start (it held 3.7 GB after 4a's sweeps) and agai
   token gate 2,070 kit rules). `check:layout --changed`, the identity check and the switch-on sweep were
   **not retaken after /simplify + /review** (a quiet window) — everything changed since them is kit-only
   or legacy-byte-identical by construction, as the correctness lens confirmed.
+
+**Slice 4c — results (2026-09-27).** Started after 4b's commit (`07808a02`), in one quiet window on the
+owner's word ("Go ahead, it's all yours"). The dev server was NOT restarted: the stop was refused by the
+session's permission guard (it counts as interfering with a running workload), and the running server
+was healthy (no crashed page worker, 3 GB, 5.6 GB free), so the captures ran on it in a narrowed set.
+⚠ A context provider changed (below) — restart before the owner browser-tests.
+- **Coverage first — the proof could not see the schedule.** The identity check and the sweep pictured
+  only the Schedule's opening view, which on the Championship is "No games match your filters". Ten
+  entries were added to `scripts/layout-screens.mjs` before the "before" set: the health panel open, the
+  timeline in both stages, the bracket, the bracket editor, the Round-Robin Generator, the playoff
+  wizard, the game form, and the rain-delay window (its entry pins the clock to the Championship's
+  busiest game day, 7:00 a.m. — the tool is offered only while a scheduled game lies ahead). Each opens
+  its surface by the product's own names and writes nothing. ⚠ **The page remembers its view in
+  localStorage and the sweep keeps one browser context per session**, so the first switch-on sweep
+  measured the plain Schedule entry in the PLAYOFF BRACKET at 390/768 and the game form in Playoffs
+  (no "Add game" there) — and the first baseline seed was contaminated the same way. Every schedule
+  entry now states its stage and view first (`setScheduleView`, a no-op when already there, so the
+  identity check's fresh contexts never move — re-proven 20/20); the nine new entries were re-seeded
+  switch-off (8,976 entries, the change additive to every other screen).
+- **Built by six parallel builders** against one brief (`.probe/4c/BRIEF.md` + `ASSIGNMENTS.md`, local):
+  the page · the health panels + typed-locations window + zero-venue prompt + field picker · the
+  generator + number stepper · the playoff wizard · the brackets · the timeline + bottom sheet +
+  rain-delay window. **The 4,200-line shared sheet was written by the main loop alone**: each builder
+  wrote its kit rules for the classes it owned (a class → builder map computed from the code, zero
+  overlap, none of 4b's) to a fragment, and the fragments were appended in one pass after review. Every
+  diff reviewed; three audits kept in `.probe/4c/` (local): `kit-literals.mjs` (the gate's regex + the
+  wrong-theme token traps), `coverage.mjs` (an owned class painted by legacy with no kit rule),
+  `inline-left.mjs` (an inline colour left outside `kx`).
+- **Found and fixed — the shared bottom sheet was unreachable by any kit rule.** `BottomSheet` portals to
+  `document.body`, a SIBLING of the admin shell, so no `[data-admin-kit]` rule could match it or the
+  caller's content inside it — the timeline's reschedule sheet AND 4b's check-in detail sheet were
+  silently legacy under the switch. Now: `PortalKitRoot` (AdminKitProvider; final form after /review,
+  below) — the one door besides the admin layout that may touch `adminKitAttr`: a `display: contents`
+  wrapper above the portal's root while the switch is on, the children bare while it is off; it forwards
+  the layout's context decision and decides nothing. The tournament preview island turns the kit OFF in context for everything inside it
+  (`AdminChrome`: `<AdminKitProvider on={false}>` inside `[data-public-preview]`) — so a portal opened in
+  a public preview is the public page (R2); the builder's first version did this with a pathname test
+  and spread the attribute in a shape `admin-kit-switch-guard` could not see. **The guard now fails on
+  ANY mention of `adminKitAttr`** outside the layout and the provider, pins the hook to exactly "context
+  on → marker, else nothing", and pins the island's provider. Switch-off: no provider value changes, no
+  attribute — pixel-proven.
+- **Restyled end to end** (kit layers; inline colours through `kx`): the page (the "Published" tag as the
+  kit's good state, toolbar, phone stage toggle, settings sheet and nested venue list, summary strip and
+  tallies, venue filter menu, the temporary-facility and typed-location banners, the "All divisions"
+  headers, the two Tools menus on 4a's menu recipe with kit-branched hover handlers, the Unpublish menu,
+  the add/edit game window, the resolve-facilities window, the publish window, the bracket read view's
+  section titles); both health panels (score, KPIs, issues, rules editor, team table); the typed-locations
+  window; the zero-venue prompt and field picker; the Round-Robin Generator (its own overlay → the kit
+  window, the ≤540px sheet's square bottom kept, the local `.form-label` override restated) and every
+  widget it shares with the playoff wizard; the number stepper; the playoff wizard (seed drag list, pool
+  and tier panels, both confirm windows); the bracket builder, connectors, zoom controls, editor and read
+  columns; the timeline; the bottom sheet; the rain-delay window.
+- **Decided at build time / not as the legacy did (flag to the owner):**
+  1. **Brackets: the winners' path olive, the losers' path quiet grey and dashed** (dashed as today), on the
+     connectors and the legend alike. The final's lime glow → a plain olive ring (no tokened glow).
+  2. **The filter chip "Scheduled" loses its one-off blue** when chosen — every chosen filter is olive (4a).
+  3. **The settings sheet's "Done" is a quiet button**, not lime: it dismisses, it does not commit.
+  4. **The zero-venue prompt's box**: today it wears the organization's colour (`--primary-faint` /
+     `--border` — an R1 leak in legacy); on the kit it is the caution tint, as the temporary-facility
+     banner on the same page.
+  5. **The health panel's "Show"/"Hide" and "Team detail" leave the console face** (disclosures, not
+     labels) — the pair 4b's sweep measured under the floor; the typed-locations window keeps a TYPED
+     name in the console face and a linked (real) name in the body face, as the component already says.
+  6. **Tournament Plus lock tag** blue → info; **the Tools menus' lock glyph** → caution ink (4a's menu).
+  7. **Section eyebrows** in the generator and wizard → the kit's eyebrow ink (they were lime at 65%);
+     accents (Add date, By seed #, Randomize, Add tier) → olive.
+  8. **The timeline's "now" line** → the portal's live red (was lime); the conflict count on its solid
+     fill takes the page ground as ink (above).
+  9. The Save Anyway button's legacy amber hex → `--warning-light` (byte-equal in the dark root — 4b's
+     precedent), and the four red strings in the bracket editor (a raw `#f87171`) → the danger ink on the
+     kit only.
+- **Identity (switch off):** "before" 2026-09-27T20:18Z @ `dd3787bc` on the untouched tree, 14 screens =
+  every surface 4c's files can reach (the ten schedule entries, Results — it reads the schedule sheet —,
+  Check-in and the volunteer gate — the bottom sheet —, the public schedule preview); "after" 21:00Z —
+  **28 of 28 pixel-identical**; retaken after the entry fix — 20 of 20. The two sweep fixes below came
+  after the last pictures; both are rules under `[data-admin-kit]` only (guard-checked). The remaining tournament screens
+  were not recaptured: no file 4c changed is imported by them, and the one frame change (the island
+  provider) renders only with the switch on.
+- **Switch-on sweep** (the ten schedule entries + the public schedule preview × 361/390/768/1440, 44 pairs
+  each, against the switch-off dark baseline): **contrast 473 → Warm 28 / Dark 93** (after the two fixes
+  below; first pass 101); tap floor 586 → 532 (both); overflow 23 → 19; control width 150 → 150; type
+  ladder 24 → 24. **No schedule screen × rule group worse in either theme.** **The slice's own surfaces:
+  0 in Warm; in Dark only the shared phone bar** (72 — slice 1's open question) **and the generator's two
+  help hints** (8 — `FieldHint`, the help guide's component, slice 5). The public preview holds the rest
+  (its own 13, the same switch-off, + the Warm 15 below). **Fixed from the sweep:** the timeline's
+  conflict count (white on Dark's red, 3.76:1) → the page ground as ink, which inverts with the theme as
+  the fill does (the legacy badge used `--bg` for the same reason; 5.3 / 9.2:1 Dark, 5.5 / 6.1:1 Warm);
+  the bracket editor's Clear bracket (`.btn-danger`, base red on its tint, 4.09:1 in Dark) → **a global
+  kit rule for `.btn-danger`** with the light red as ink, as slice 3 did for `KIT_BUTTON.danger` — it
+  reaches every admin danger button with the switch on (Warm unchanged: `--danger-light` is
+  `--home-live` there). Re-swept: those two screens 0 Warm, phone bar only in Dark.
+- **Worse, attributed — NOT 4c's (a pre-existing R2 leak, handed to slice 6):** the public schedule
+  PREVIEW in **Warm with the switch on** has 15 more contrast findings than switch-off: its tab labels
+  (Overview, News, Standings, Teams, Rules — `rgba(255,255,255,.45)` on `rgb(31,29,37)`, 4.40:1) at
+  361/390/768. Switch-off Warm is unchanged (13 → 13). Proven not 4c's by removing 4c's only change that
+  reaches the preview (the island provider) and re-sweeping: still 28. Slice 1 proved R2 by an on/off
+  pixel diff in the default theme; the Warm pairing was never measured. The public tab bar's ground
+  changes under the kit + Warm — a token the island does not restore, or a fixed bar painted outside it.
+- **Gates:** the restyled ratchet gained the schedule folder (every file) plus the number stepper and the
+  bottom sheet — seeded from their COMMITTED text (`.probe/4c/seed-restyled.mjs`), so a literal a builder
+  added would still fail; additive (7 files, 35 literals), then page.tsx lowered by the one hex moved to
+  a comment. Strict kit check 2,424 rules, no literal. `admin-kit-switch-guard` widened (above). Typecheck
+  clean (after `next typegen`); lint = HEAD rule for rule on all 11 changed TSX files; `verify:changed`
+  green (unit 5,042 / 5,042); `admin-kit-guard` 9 / 9 after the global `.btn-danger` rule.
+- **Found, written down, not fixed:**
+  1. **The preview's Warm tab bar** (above) — for slice 6's prove step, or a fix on its own.
+  1a. **The generator's two help hints** (`FieldHint`, `--white-40` on the dark card, 3.81:1) — the help
+     guide's component; slice 5 (R4).
+  2. **The bracket read view shows no winner or score** — it renders placeholders only, so "the winner
+     reads bold" has nothing to attach to; only the path colours distinguish.
+  3. The generator's preview table puts the game time in the body face with its row (the time has no
+     class of its own).
+  4. The global `.text-muted` (`--white-60`) has no kit restatement — it follows the warm remap; the sweep
+     does not flag it on these screens.
+  5. **Dead CSS left alone:** `.publishButton[data-live]` (never rendered), a stale `.publishStatus`
+     comment, `.roundTitleText` / `.poolGroupHeader` / the bare `.connector` in the bracket builder, the
+     health panel's unpaired base rules; `text-primary-light` on the Preview Bracket heading is an
+     undefined class.
+  6. A hung `check:layout --changed` process from 2026-09-21 (no browser, idle) still sits on this
+     machine — not this slice's; the owner may end it.
+- **`/simplify` (4 lenses — reuse, simplification, efficiency, altitude; owner: "Go ahead with simplify,
+  review and commit"):** fixed — the three dropdowns (Unpublish, the phone and desktop Tools menus) share
+  one `useScheduleMenuStyles()` (five byte-identical style pairs, the hover handlers, the tool-icon rule;
+  their panels are `KIT_SURFACE.menu`); `KIT_INK.eyebrowAccent` for five hand-written accent eyebrows
+  (the bracket editor's two identical labels are one); `KIT_INK.accent` / `.info` where retyped; the
+  publish window's error box built once (two copies) and its list styles hoisted; the seed row's two
+  styles memoised (it re-renders on every drag frame); the rain-delay rows' six styles hoisted; the
+  sheet's fragment headers lost their build-process notes and the repeated warning; the measuring
+  helpers wait on the product (the chosen segment's `aria-pressed`, the settings strip's label, the open
+  `<details>`, "Editing bracket", the tool's window) instead of fixed pauses, and the three tool entries
+  share `openScheduleTool(page, item, ready)`. **Altitude found a sibling defect: the admin chat's rooms
+  and manage panels also portal to `document.body`** — 4b's kit rules for them were unreachable. Fixed with
+  `PortalKitRoot` (AdminKitProvider): a `display: contents` wrapper carries the marker while the switch is
+  on, the children bare while it is off. **Declined:** clearing localStorage between entries in the sweep
+  runner itself (the altitude lens's deeper fix for the view leak) — it would change how every coach screen
+  is measured against the 9,000-entry baseline; recorded for slice 6. Re-proven: identity 24 of 24 (the ten
+  schedule entries, Results, Chat — with the new waits); gates green (typecheck; lint = HEAD on every
+  touched TSX; verify:changed 5,042 / 5,042; kit check 2,425 rules; restyled ratchet 734 held — page.tsx's
+  `#f87171` lowered again).
+- **`/review` (high-risk tier, 3 lenses — switch-off identity + logic, blast radius + R2, gate + tooling
+  contract):** 1 real finding, fixed: **(High) the bottom sheet's marker sat ON the backdrop**, so the
+  backdrop's own `[data-admin-kit] .backdrop` rule (a descendant selector) could never match — the kit sheet
+  would have floated over the legacy near-black scrim. The sheet now uses `PortalKitRoot` too, and the bare
+  hook is no longer exported: the wrapper is the only portal door (the guard pins its switch-off form).
+  Refuted: the help drawer "uses the bottom sheet" (only a comment names it). Advisory, accepted: the
+  global `.btn-danger` kit rule reaches every admin danger button with the switch on (Dark only; Warm is
+  the same colour) — the `.btn-secondary` precedent, walked at slice 6; the playoff measuring entries depend
+  on the Championship keeping both stages (now said in the file); the schedule folder's ratchet coverage is
+  automatic for new files. Verified clean: every legacy `kx` argument byte-identical, hooks before every
+  early return, no kit rule wiping a legacy state, public pages / the volunteer gate / the coaches portal /
+  every R2 preview unreached, the restyled and layout baselines purely additive (the one lowered count is
+  a tightening), the switch guard fails on the disguised spread and on a wrapper rendered when off.
+  `check:layout --changed` not run (`app/globals.css` widens it to every screen) — the identity checks and
+  the both-theme sweep stand in.
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as

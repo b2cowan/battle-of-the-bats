@@ -6,6 +6,8 @@ import { formatTime } from '@/lib/utils';
 import { buildScheduleMetrics, resolveManualTravelBuffers } from '@/lib/schedule-metrics';
 import NumberStepper from '@/components/admin/NumberStepper';
 import FieldHint from '@/components/help/FieldHint';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import {
   defaultSchedulePriorities,
   generateScoredScheduleDrafts,
@@ -184,6 +186,23 @@ interface GeneratorProps {
 }
 
 export default function ScheduleGenerator({ tournament, orgSlug, divisions, defaultDivisionId, teams, venues, existingGames = [], onComplete, onCancel }: GeneratorProps) {
+  const kx = useKitStyle();
+  // Kit patches for this file's hand-set inline styles (Admin Design Continuity slice 4c) — computed
+  // once per render, not inside a loop, so no useMemo/hoisting-out-of-map concern here.
+  const modeDescriptionStyle = kx({ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--white-40)', lineHeight: 1.5 }, KIT_INK.tertiary);
+  const addDateButtonStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.accent);
+  const slotModeInfoBannerStyle = kx(
+    { display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.65rem 0.85rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.65rem 0', fontSize: '0.75rem', color: 'var(--white-60)', lineHeight: 1.5 },
+    { background: 'rgba(var(--info-rgb), 0.08)', color: 'var(--text-secondary)', borderRadius: '8px' },
+  );
+  const slotModeInfoIconStyle = kx({ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }, KIT_INK.info);
+  const confirmIconWrapStyle = kx(
+    { width: '36px', height: '36px', borderRadius: '2px', background: 'var(--white-5)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.65rem', color: 'var(--logic-lime)' },
+    { borderRadius: '8px', background: 'var(--home-olive-soft)', color: 'var(--home-olive)' },
+  );
+  const clearWarningTextStyle = kx({ color: 'var(--danger)' }, KIT_INK.danger);
+  const lockedGameWarningTextStyle = kx({ color: 'var(--warning)' }, KIT_INK.warning);
+
   const [selectedGroupId, setSelectedGroupId] = useState(defaultDivisionId || divisions[0]?.id || '');
   // Initialize from tournament settings so generator matches event-level defaults.
   const [gameLength, setGameLength] = useState(tournament.settings?.game_duration_minutes ?? 90);
@@ -1201,11 +1220,11 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
                   </button>
                 </div>
                 {generationMode === 'team' ? (
-                  <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--white-40)', lineHeight: 1.5 }}>
+                  <p style={modeDescriptionStyle}>
                     Schedules accepted teams directly. Teams must be registered and accepted before generating.
                   </p>
                 ) : (
-                  <p style={{ marginTop: '0.5rem', fontSize: '0.8rem', color: 'var(--white-40)', lineHeight: 1.5 }}>
+                  <p style={modeDescriptionStyle}>
                     {poolList.length > 0
                       ? <>Builds a draft schedule using placeholder names (e.g. &quot;Pool A Team 1&quot;) so you can lay out the bracket before teams are final. Assign real teams to the slots, then publish with real names once registration closes.</>
                       : <>Builds a division-wide draft schedule using placeholder names (e.g. &quot;{currentGroup?.name ?? 'Division'} Team 1&quot;) without requiring pools. Assign real teams, then publish with real names once registration closes.</>
@@ -1324,7 +1343,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
             <div className="form-group">
               <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 Available Scheduling Dates{' '}
-                <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={{ color: 'var(--logic-lime)' }}>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={addDateButtonStyle}>
                   <Plus size={14} /> Add Date
                 </button>
               </label>
@@ -1612,8 +1631,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
             )}
 
             {generationMode === 'slot' && (
-              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.65rem 0.85rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.65rem 0', fontSize: '0.75rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
-                <Info size={13} style={{ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }} />
+              <div style={slotModeInfoBannerStyle}>
+                <Info size={13} style={slotModeInfoIconStyle} />
                 {poolList.length > 0
                   ? 'This is a draft. Assign real teams to the slots via the Slot Assignments tab, then publish with real names once registration closes — placeholder names are never shown publicly.'
                   : 'This division-wide draft uses placeholders and does not require pools. Save it now, then assign real teams manually or regenerate team-based when teams are final.'
@@ -1693,7 +1712,7 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
         <div className="modal-overlay" style={{ zIndex: 1000 }} onClick={() => setShowConfirm(false)}>
           <div className="modal" style={{ maxWidth: 420 }} onClick={e => e.stopPropagation()}>
             <div className="modal-header" style={{ textAlign: 'center', flexDirection: 'column', alignItems: 'center' }}>
-              <div style={{ width: '36px', height: '36px', borderRadius: '2px', background: 'var(--white-5)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '0.65rem', color: 'var(--logic-lime)' }}>
+              <div style={confirmIconWrapStyle}>
                 <AlertCircle size={18} />
               </div>
               <h3>Commit Schedule?</h3>
@@ -1702,8 +1721,8 @@ export default function ScheduleGenerator({ tournament, orgSlug, divisions, defa
               {generationScope === 'build'
                 ? <>This will keep <strong>{preservedGameCount}</strong> protected games{lockedGameCount > 0 ? <> (<strong>{lockedGameCount}</strong> manually kept)</> : null}, replace <strong>{replacementGameCount}</strong> scheduled round-robin games, and save <strong>{previewGeneratedCount}</strong> newly generated games for <strong>{divisionName}</strong>.</>
                 : generationMode === 'slot'
-                  ? <>This will save a slot-based schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for <strong>{divisionName}</strong>{replaceAllClearsLockedGames ? <>, including <strong style={{ color: 'var(--warning)' }}>{lockedGameLabel}</strong></> : null}. {poolList.length > 0 ? 'This is a draft — assign real teams to the slots, then publish with real names once registration closes.' : 'Division-wide placeholders will be saved without pool assignments.'}</>
-                  : <>This will save the generated schedule and <strong style={{ color: 'var(--danger)' }}>permanently clear</strong> any existing games for the <strong>{divisionName}</strong> division{replaceAllClearsLockedGames ? <>, including <strong style={{ color: 'var(--warning)' }}>{lockedGameLabel}</strong></> : null}.</>
+                  ? <>This will save a slot-based schedule and <strong style={clearWarningTextStyle}>permanently clear</strong> any existing games for <strong>{divisionName}</strong>{replaceAllClearsLockedGames ? <>, including <strong style={lockedGameWarningTextStyle}>{lockedGameLabel}</strong></> : null}. {poolList.length > 0 ? 'This is a draft — assign real teams to the slots, then publish with real names once registration closes.' : 'Division-wide placeholders will be saved without pool assignments.'}</>
+                  : <>This will save the generated schedule and <strong style={clearWarningTextStyle}>permanently clear</strong> any existing games for the <strong>{divisionName}</strong> division{replaceAllClearsLockedGames ? <>, including <strong style={lockedGameWarningTextStyle}>{lockedGameLabel}</strong></> : null}.</>
               }
             </p>
             <div className="modal-footer" style={{ justifyContent: 'center' }}>

@@ -377,12 +377,47 @@
   "app/[orgSlug]/admin/tournaments/rules/RulesAdmin.tsx": {
     "rgba(0,0,0,0.5)": 1
   },
+  "app/[orgSlug]/admin/tournaments/schedule/PlayoffWizard.tsx": {
+    "rgba(0,0,0,0.35)": 1,
+    "rgba(0,0,0,0.8)": 2,
+    "rgba(0,0,0,0.5)": 1,
+    "rgba(234,179,8,0.1)": 1,
+    "#fbbf24": 1,
+    "rgba(0,0,0,0.6)": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/BracketBuilder.module.css": {
+    "rgba(0,0,0,0.2)": 1,
+    "rgba(0,0,0,0.45)": 1,
+    "rgba(0,0,0,0.3)": 2,
+    "rgba(0,0,0,0.18)": 1,
+    "rgba(0,0,0,0.4)": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/BracketEditor.tsx": {
+    "#f87171": 3,
+    "rgba(239,68,68,0.08)": 1,
+    "rgba(239,68,68,0.4)": 1
+  },
   "app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx": {
     "rgba(251,191,36,0.5)": 1,
     "rgba(239,68,68,0.08)": 1,
     "rgba(251,191,36,0.08)": 1,
     "rgba(239,68,68,0.4)": 1,
     "rgba(251,191,36,0.35)": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/components/ScheduleTimeline.module.css": {
+    "rgba(0,0,0,0.25)": 1,
+    "rgba(0,0,0,0.5)": 1,
+    "rgba(0,0,0,0.55)": 1,
+    "rgba(255,255,255,0.06)": 1
+  },
+  "app/[orgSlug]/admin/tournaments/schedule/page.tsx": {
+    "rgba(239,68,68,0.08)": 1,
+    "rgba(251,191,36,0.08)": 1,
+    "rgba(239,68,68,0.4)": 1,
+    "rgba(251,191,36,0.35)": 1,
+    "#f87171": 2,
+    "#fbbf24": 1,
+    "rgba(251,191,36,0.5)": 1
   },
   "app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css": {
     "rgba(0,0,0,0.85)": 1,
@@ -421,6 +456,10 @@
     "rgba(0,0,0,0.16)": 1,
     "rgba(255,255,255,0.35)": 1
   },
+  "components/admin/BottomSheet.module.css": {
+    "rgba(0,0,0,0.62)": 1,
+    "rgba(0,0,0,0.55)": 1
+  },
   "components/admin/CheckInBoard.module.css": {
     "rgba(255,255,255,0.03)": 1
   },
@@ -433,6 +472,9 @@
   },
   "components/admin/LiveEventLog.tsx": {
     "rgba(148,163,184,0.7)": 1
+  },
+  "components/admin/NumberStepper.module.css": {
+    "rgba(255,255,255,0.03)": 1
   },
   "components/admin/TournamentSetupWizard.module.css": {
     "rgba(0,0,0,0.72)": 1,

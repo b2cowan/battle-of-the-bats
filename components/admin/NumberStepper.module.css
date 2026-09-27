@@ -74,3 +74,27 @@
     padding: 0 0.3rem;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4c — only with the switch on) ═══════════════════════
+   NumberStepper dresses the −/field/+ control used by the schedule Generator, the Playoff Wizard and
+   the Bracket Editor. The value is a COUNT (games per team, slot count, max/day) — stays mono, per the
+   kit's readout rule; only the chrome and ink move.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
+:global([data-admin-kit]) .stepper {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .stepBtn {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .stepBtn:hover:not(:disabled) {
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .stepBtn:active:not(:disabled) {
+  background: rgba(var(--home-olive-rgb), 0.22);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .input {
+  color: var(--text-primary);
+}

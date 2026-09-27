@@ -33,6 +33,8 @@ import BracketHealthPanel from './components/BracketHealthPanel';
 import FeedbackModal from '@/components/FeedbackModal';
 import styles from './schedule-admin.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_BUTTON, KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 
 interface Props {
   divisions: Division[];
@@ -181,8 +183,13 @@ function orderBySeed(list: Team[]): Team[] {
 
 /** A draggable seed row (playoff-only manual seeding). */
 function SortableSeed({ id, seed, teamName, isBye }: { id: string; seed: number; teamName: string; isBye: boolean }) {
+  const kx = useKitStyle();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
-  const style: React.CSSProperties = {
+  // The grip and the seed number never change with the drag — built once per switch state, not on
+  // every drag frame (this row re-renders on each pointer move while the list is being sorted).
+  const gripStyle = useMemo(() => kx({ cursor: 'grab', color: 'var(--white-40)', display: 'flex', touchAction: 'none' }, KIT_INK.tertiary), [kx]);
+  const seedNumberStyle = useMemo(() => kx({ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '0.8rem', color: 'var(--logic-lime)', minWidth: '1.5rem', textAlign: 'center' }, KIT_INK.accent), [kx]);
+  const style: React.CSSProperties = kx({
     transform: CSS.Transform.toString(transform),
     transition,
     display: 'flex',
@@ -193,13 +200,18 @@ function SortableSeed({ id, seed, teamName, isBye }: { id: string; seed: number;
     border: '1px solid var(--border)',
     borderRadius: '2px',
     ...(isDragging ? { zIndex: 50, boxShadow: '0 8px 24px rgba(0,0,0,0.35)' } : {}),
-  };
+  }, {
+    background: 'var(--card-bg)',
+    border: isDragging ? '1px solid var(--home-olive)' : '1px solid var(--home-line)',
+    borderRadius: '8px',
+    ...(isDragging ? { boxShadow: 'var(--home-shadow)' } : {}),
+  });
   return (
     <div ref={setNodeRef} style={style}>
-      <div {...attributes} {...listeners} style={{ cursor: 'grab', color: 'var(--white-40)', display: 'flex', touchAction: 'none' }}>
+      <div {...attributes} {...listeners} style={gripStyle}>
         <GripVertical size={14} />
       </div>
-      <span style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '0.8rem', color: 'var(--logic-lime)', minWidth: '1.5rem', textAlign: 'center' }}>
+      <span style={seedNumberStyle}>
         {seed}
       </span>
       <span aria-hidden style={{ width: 10, height: 10, borderRadius: '50%', background: teamColor(teamName), flexShrink: 0 }} />
@@ -212,6 +224,9 @@ function SortableSeed({ id, seed, teamName, isBye }: { id: string; seed: number;
 }
 
 export default function PlayoffWizard({ divisions, defaultDivisionId, tournamentId, tournament = null, orgSlug, canAutoSchedule = true, initialConfig, onClose, onComplete }: Props) {
+  // Admin Design Continuity slice 4c — the kit switch. `kx` patches every hand-set inline colour
+  // below while the switch is off; nothing changes when it is on.
+  const kx = useKitStyle();
   const [selectedDivisionId, setSelectedDivisionId] = useState(() => defaultDivisionId ?? divisions[0]?.id ?? '');
   const division = useMemo(
     () => (divisions.find(d => d.id === selectedDivisionId) ?? divisions[0]) as Division,
@@ -1246,6 +1261,34 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
     }
   }
 
+  // ── Row-invariant kit patches — computed once per render, not once per row/map() call ──
+  const kitPoolRowStyle = kx(
+    { display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)' },
+    KIT_SURFACE.card,
+  );
+  const kitTierRowStyle = kx(
+    { display: 'grid', gridTemplateColumns: 'minmax(90px, 1fr) auto minmax(120px, 1.2fr) auto auto', gap: '0.625rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)', minWidth: 0 },
+    KIT_SURFACE.card,
+  );
+  // The "Per-Pool Independent Brackets" and "Tiered Brackets" panels share this exact nested-box
+  // recipe (a recessed band inside the section card).
+  const kitNestedPanelStyle = kx(
+    { marginTop: '1.5rem', background: 'var(--bg-2)', padding: '1.5rem', borderRadius: '2px', border: '1px solid var(--border)' },
+    { background: 'var(--home-paper)', border: '1px solid var(--home-line)', borderRadius: '8px' },
+  );
+  const kitPoolHeadingIconStyle = kx({ color: 'var(--logic-lime)' }, KIT_INK.accent);
+  const kitPoolHeadingStyle = kx({ margin: 0, color: 'var(--logic-lime)' }, KIT_INK.eyebrowAccent);
+  // The two "preview only" explainer banners are identical asides, not a state — quiet ink and
+  // an info-tinted icon, no border (the legacy box has none either).
+  const kitInfoBannerStyle = kx(
+    { display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.75rem 0', fontSize: '0.8rem', color: 'var(--white-60)', lineHeight: 1.5 },
+    { background: 'rgba(var(--info-rgb), 0.08)', color: 'var(--text-secondary)', borderRadius: '8px' },
+  );
+  const kitInfoIconStyle = kx({ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }, KIT_INK.info);
+  // Both confirmation windows drop an inline `rgba(0,0,0,0.8)` scrim behind their own `.card` —
+  // the kit's scrim token.
+  const kitConfirmScrimStyle = kx({ zIndex: 1000, background: 'rgba(0,0,0,0.8)' }, { background: 'var(--home-scrim)' });
+
   return (
     <div
       className="modal-overlay"
@@ -1258,15 +1301,15 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
       <div className="modal modal-lg" onClick={e => e.stopPropagation()} style={{ padding: 0, display: 'flex', flexDirection: 'column', maxHeight: '95vh', width: '100%', maxWidth: templatePreview.length > 0 ? 'min(95vw, 1360px)' : '700px' }}>
         
         {/* Header */}
-        <div style={{ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }}>
+        <div style={kx({ padding: '1.5rem 2rem', borderBottom: '1px solid var(--border)', background: 'var(--surface-2)' }, { borderBottom: '1px solid var(--home-line)', background: 'var(--card-bg)' })}>
           <div className="flex-between">
             <div className="flex gap-3">
-              <div className="flex-center" style={{ width: '40px', height: '40px', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', borderRadius: '2px', color: 'var(--logic-lime)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)' }}>
+              <div className="flex-center" style={kx({ width: '40px', height: '40px', background: 'rgba(var(--blueprint-blue-rgb), 0.1)', borderRadius: '2px', color: 'var(--logic-lime)', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.3)' }, { background: 'var(--home-olive-soft)', border: '1px solid var(--home-olive)', color: 'var(--home-olive)', borderRadius: '8px' })}>
                 <Trophy size={20} />
               </div>
               <div>
                 <h3 style={{ margin: 0 }}>Playoff Bracket Builder</h3>
-                <p className="text-label" style={{ color: 'var(--logic-lime)', marginTop: '0.25rem' }}>{division.name} Division</p>
+                <p className="text-label" style={kx({ color: 'var(--logic-lime)', marginTop: '0.25rem' }, KIT_INK.eyebrowAccent)}>{division.name} Division</p>
               </div>
             </div>
             <button className="btn btn-ghost btn-data" onClick={onClose} style={{ padding: '0.5rem' }}>
@@ -1281,7 +1324,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
             
             {/* Step 1: Configuration */}
             <section>
-              <h4 className="text-label" style={{ marginBottom: '1rem', color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>1. Bracket Configuration</h4>
+              <h4 className="text-label" style={kx({ marginBottom: '1rem', color: 'rgba(var(--logic-lime-rgb), 0.65)' }, KIT_INK.eyebrow)}>1. Bracket Configuration</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem' }}>
                 {divisions.length > 1 && (
                   <div className="form-group">
@@ -1365,14 +1408,14 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
               </div>
 
               {config.crossover === 'none' && division.pools && (
-                <div style={{ marginTop: '1.5rem', background: 'var(--bg-2)', padding: '1.5rem', borderRadius: '2px', border: '1px solid var(--border)' }}>
-                  <h5 className="font-bold text-sm mb-4" style={{ color: 'var(--logic-lime)' }}>Per-Pool Independent Brackets</h5>
+                <div style={kitNestedPanelStyle}>
+                  <h5 className="font-bold text-sm mb-4" style={kx({ color: 'var(--logic-lime)' }, KIT_INK.accent)}>Per-Pool Independent Brackets</h5>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     {division.pools.map(pool => {
                       const pConfig = config.splitConfigs?.[pool.id] || { teamsQualifying: 4, hasThirdPlace: false };
                       const poolTeamCount = teams.filter(t => t.poolId === pool.id).length;
                       return (
-                        <div key={pool.id} style={{ display: 'grid', gridTemplateColumns: '1fr 2fr 1fr', gap: '2rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)' }}>
+                        <div key={pool.id} style={kitPoolRowStyle}>
                           <span className="font-bold">{formatPoolName(pool.name)}</span>
                           <div className="flex gap-3 items-center">
                             <span className="text-xs text-muted" style={{ whiteSpace: 'nowrap' }}>Advancing:</span>
@@ -1415,13 +1458,13 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
               )}
 
               {config.crossover === 'tiers' && (
-                <div style={{ marginTop: '1.5rem', background: 'var(--bg-2)', padding: '1.5rem', borderRadius: '2px', border: '1px solid var(--border)' }}>
+                <div style={kitNestedPanelStyle}>
                   <div className="flex-between" style={{ marginBottom: '0.75rem' }}>
-                    <h5 className="font-bold text-sm" style={{ color: 'var(--logic-lime)', margin: 0 }}>
+                    <h5 className="font-bold text-sm" style={kx({ color: 'var(--logic-lime)', margin: 0 }, KIT_INK.accent)}>
                       <Layers size={14} style={{ marginRight: '0.4rem', verticalAlign: '-2px' }} />
                       Tiered Brackets
                     </h5>
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={addTier} style={{ color: 'var(--logic-lime)' }}>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={addTier} style={kx({ color: 'var(--logic-lime)' }, KIT_INK.accent)}>
                       <Plus size={13} /> Add Tier
                     </button>
                   </div>
@@ -1436,7 +1479,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                       const effFormat = tier.format ?? config.format ?? 'single';
                       const showThird = effFormat !== 'double' && effFormat !== 'placement';
                       return (
-                        <div key={idx} style={{ display: 'grid', gridTemplateColumns: 'minmax(90px, 1fr) auto minmax(120px, 1.2fr) auto auto', gap: '0.625rem', alignItems: 'center', padding: '0.75rem', background: 'var(--surface)', borderRadius: '2px', border: '1px solid var(--border)', minWidth: 0 }}>
+                        <div key={idx} style={kitTierRowStyle}>
                           <input
                             className="form-input"
                             value={tier.name}
@@ -1477,7 +1520,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                     })}
                   </div>
                   {!tierValidation.ok ? (
-                    <p className="text-xs" style={{ color: 'var(--danger)', marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <p className="text-xs" style={kx({ color: 'var(--danger)', marginTop: '0.75rem', display: 'flex', alignItems: 'center', gap: '0.4rem' }, KIT_INK.danger)}>
                       <AlertCircle size={13} /> {tierValidation.error}
                     </p>
                   ) : (
@@ -1492,7 +1535,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
             {isPlayoffOnly && (
               <section>
                 <div className="flex-between" style={{ marginBottom: '1rem' }}>
-                  <h4 className="text-label" style={{ margin: 0, color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>Seed Teams</h4>
+                  <h4 className="text-label" style={kx({ margin: 0, color: 'rgba(var(--logic-lime-rgb), 0.65)' }, KIT_INK.eyebrow)}>Seed Teams</h4>
                   <div className="flex items-center gap-3">
                     {seededTeams.length >= 3 && (
                       <label className="flex items-center gap-2" title="Keep the top N seeds fixed when randomizing the rest.">
@@ -1501,11 +1544,11 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                       </label>
                     )}
                     {seededTeams.some(t => typeof t.seed === 'number') && (
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={seedByNumber} disabled={seededTeams.length < 2} style={{ color: 'var(--logic-lime)' }} title="Order by the seed numbers set in the Teams admin (1 = top seed).">
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={seedByNumber} disabled={seededTeams.length < 2} style={kx({ color: 'var(--logic-lime)' }, KIT_INK.accent)} title="Order by the seed numbers set in the Teams admin (1 = top seed).">
                         <ListOrdered size={13} /> By Seed #
                       </button>
                     )}
-                    <button type="button" className="btn btn-ghost btn-sm" onClick={randomizeSeeds} disabled={seededTeams.length < 2} style={{ color: 'var(--logic-lime)' }}>
+                    <button type="button" className="btn btn-ghost btn-sm" onClick={randomizeSeeds} disabled={seededTeams.length < 2} style={kx({ color: 'var(--logic-lime)' }, KIT_INK.accent)}>
                       <Shuffle size={13} /> Randomize
                     </button>
                     <button
@@ -1513,7 +1556,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                       className="btn btn-ghost btn-sm"
                       onClick={() => setConfig(c => ({ ...c, crossover: c.crossover === 'tiers' ? 'reseed' : 'tiers' }))}
                       disabled={seededTeams.length < 4}
-                      style={{ color: config.crossover === 'tiers' ? 'var(--logic-lime)' : undefined }}
+                      style={kx({ color: config.crossover === 'tiers' ? 'var(--logic-lime)' : undefined }, { color: config.crossover === 'tiers' ? 'var(--home-olive)' : undefined })}
                       title="Split the seeded teams into separate tiered brackets"
                     >
                       <Layers size={13} /> {config.crossover === 'tiers' ? 'Single bracket' : 'Split into tiers'}
@@ -1548,7 +1591,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
             )}
 
             <section>
-              <h4 className="text-label" style={{ marginBottom: '1rem', color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>2. Scheduling Options</h4>
+              <h4 className="text-label" style={kx({ marginBottom: '1rem', color: 'rgba(var(--logic-lime-rgb), 0.65)' }, KIT_INK.eyebrow)}>2. Scheduling Options</h4>
               {canBuildFromCurrent && (
               <div className="form-group" style={{ marginBottom: '1rem' }}>
                 <label className="form-label">Regeneration Scope</label>
@@ -1615,7 +1658,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                   <div className="form-group">
                     <label className="form-label" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       Playoff Dates{' '}
-                      <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={{ color: 'var(--logic-lime)' }}>
+                      <button type="button" className="btn btn-ghost btn-sm" onClick={addDateSlot} style={kx({ color: 'var(--logic-lime)' }, KIT_INK.accent)}>
                         <Plus size={14} /> Add Date
                       </button>
                     </label>
@@ -1818,7 +1861,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
               )}
             </section>
 
-            <div style={{ marginTop: '1.5rem', padding: '1.25rem', background: 'rgba(var(--blueprint-blue-rgb), 0.08)', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }}>
+            <div style={kx({ marginTop: '1.5rem', padding: '1.25rem', background: 'rgba(var(--blueprint-blue-rgb), 0.08)', borderRadius: '2px', border: '1px solid rgba(var(--blueprint-blue-rgb), 0.25)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem' }, { background: 'var(--home-olive-soft)', border: '1px solid var(--home-olive)', borderRadius: '8px' })}>
               <div>
                 <h4 className="font-bold text-sm text-primary-light" style={{ marginBottom: '0.25rem' }}>Preview Bracket</h4>
                 <p className="text-muted text-xs">Generates the bracket layout based on your configuration above. Resets the custom bracket canvas if you&apos;ve made manual edits.</p>
@@ -1833,7 +1876,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
             {/* Step 3: Game Slots */}
             <section>
             <div className="flex-between" style={{ marginBottom: '1.5rem' }}>
-              <h4 className="text-label" style={{ color: 'rgba(var(--logic-lime-rgb), 0.65)' }}>3. Game Slots & Scheduling</h4>
+              <h4 className="text-label" style={kx({ color: 'rgba(var(--logic-lime-rgb), 0.65)' }, KIT_INK.eyebrow)}>3. Game Slots & Scheduling</h4>
                 <span className="badge badge-neutral">{preview.length} Games</span>
               </div>
 
@@ -1876,14 +1919,14 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                   )}
 
                   {autoSchedule && (
-                    <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.75rem 0', fontSize: '0.8rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
-                      <Info size={14} style={{ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }} />
+                    <div style={kitInfoBannerStyle}>
+                      <Info size={14} style={kitInfoIconStyle} />
                       These windows use seed and winner placeholders until standings and bracket advancement resolve the actual teams.
                     </div>
                   )}
 
-                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.5rem', padding: '0.75rem 1rem', background: 'var(--white-5)', borderRadius: '2px', margin: '0.75rem 0', fontSize: '0.8rem', color: 'var(--white-60)', lineHeight: 1.5 }}>
-                    <Info size={14} style={{ marginTop: '1px', flexShrink: 0, color: 'var(--blueprint-blue)' }} />
+                  <div style={kitInfoBannerStyle}>
+                    <Info size={14} style={kitInfoIconStyle} />
                     Preview only. Click <strong>Generate Playoff Bracket</strong> to save it, then fine-tune dates, fields and matchups on the schedule with <strong>Edit Bracket</strong>.
                   </div>
 
@@ -1897,8 +1940,8 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                           {poolNames.map(poolName => (
                             <div key={poolName}>
                               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
-                                <Trophy size={16} style={{ color: 'var(--logic-lime)' }} />
-                                <h4 className="text-label" style={{ margin: 0, color: 'var(--logic-lime)' }}>
+                                <Trophy size={16} style={kitPoolHeadingIconStyle} />
+                                <h4 className="text-label" style={kitPoolHeadingStyle}>
                                   {config.crossover === 'tiers' ? poolName : `${formatPoolName(poolName)} Playoffs`}
                                 </h4>
                               </div>
@@ -1928,7 +1971,7 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
         </div>
 
         {/* Footer */}
-        <div className="modal-footer" style={{ padding: '1.5rem 2rem', background: 'var(--surface-2)', margin: 0 }}>
+        <div className="modal-footer" style={kx({ padding: '1.5rem 2rem', background: 'var(--surface-2)', margin: 0 }, { background: 'var(--card-bg)' })}>
           <button className="btn btn-ghost btn-data" onClick={onClose} disabled={loading}>Cancel</button>
           <button className="btn btn-lime btn-data" onClick={handleCreate} disabled={loading || preview.length === 0} style={{ padding: '0.75rem 2rem' }}>
             {loading ? <><RefreshCw className="spin" size={14} /> Creating...</> : <><Check size={14} /> Generate Playoff Bracket</>}
@@ -1939,9 +1982,9 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
 
       {/* Missing Info Confirmation Modal */}
       {showConfirm && (
-        <div className="modal-overlay" style={{ zIndex: 1000, background: 'rgba(0,0,0,0.8)' }} onClick={e => e.stopPropagation()}>
-          <div className="card" style={{ maxWidth: '400px', width: '90%', padding: '2rem', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
-            <div className="flex-center mb-6" style={{ width: '60px', height: '60px', background: 'rgba(234, 179, 8, 0.1)', borderRadius: '100%', margin: '0 auto', color: '#fbbf24' }}>
+        <div className="modal-overlay" style={kitConfirmScrimStyle} onClick={e => e.stopPropagation()}>
+          <div className="card" style={kx({ maxWidth: '400px', width: '90%', padding: '2rem', textAlign: 'center', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }, { boxShadow: 'var(--home-shadow)' })}>
+            <div className="flex-center mb-6" style={kx({ width: '60px', height: '60px', background: 'rgba(234, 179, 8, 0.1)', borderRadius: '100%', margin: '0 auto', color: '#fbbf24' }, { background: 'rgba(var(--warning-rgb), 0.08)', color: 'var(--warning-light)' })}>
               <AlertCircle size={32} />
             </div>
             <h3 className="display-sm mb-2" style={{ fontSize: '1.25rem' }}>Missing Information</h3>
@@ -1956,12 +1999,12 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
 
       {/* Delete Existing Warning Modal */}
       {showWarning && (
-        <div className="modal-overlay" style={{ zIndex: 1000, background: 'rgba(0,0,0,0.8)' }} onClick={e => e.stopPropagation()}>
-          <div className="card" style={{ maxWidth: '440px', width: '90%', padding: '2.5rem', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.6)', border: '1px solid var(--danger)' }}>
-            <div className="flex-center mb-6" style={{ width: '70px', height: '70px', background: 'rgba(var(--danger-rgb),0.1)', borderRadius: '100%', margin: '0 auto', color: 'var(--danger)' }}>
+        <div className="modal-overlay" style={kitConfirmScrimStyle} onClick={e => e.stopPropagation()}>
+          <div className="card" style={kx({ maxWidth: '440px', width: '90%', padding: '2.5rem', textAlign: 'center', boxShadow: '0 25px 60px rgba(0,0,0,0.6)', border: '1px solid var(--danger)' }, { boxShadow: 'var(--home-shadow)', border: '1px solid rgba(var(--danger-rgb), 0.35)' })}>
+            <div className="flex-center mb-6" style={kx({ width: '70px', height: '70px', background: 'rgba(var(--danger-rgb),0.1)', borderRadius: '100%', margin: '0 auto', color: 'var(--danger)' }, { color: 'var(--danger-light)' })}>
               <AlertCircle size={36} />
             </div>
-            <h3 className="display-sm mb-3" style={{ fontSize: '1.4rem', color: 'var(--white)' }}>
+            <h3 className="display-sm mb-3" style={kx({ fontSize: '1.4rem', color: 'var(--white)' }, { color: 'var(--text-primary)' })}>
               {activeGenerationScope === 'build' ? 'Build From Current Bracket?' : 'Replace Existing Bracket?'}
             </h3>
             <p className="text-muted" style={{ fontSize: '0.95rem', lineHeight: '1.6', marginBottom: '2.5rem' }}>
@@ -1971,12 +2014,12 @@ export default function PlayoffWizard({ divisions, defaultDivisionId, tournament
                 </>
               ) : (
                 <>
-                  Generating a new playoff bracket will <strong style={{ color: 'var(--danger)' }}>delete all existing playoff games and scores</strong> for the {division.name} division. This action cannot be undone.
+                  Generating a new playoff bracket will <strong style={kx({ color: 'var(--danger)' }, KIT_INK.danger)}>delete all existing playoff games and scores</strong> for the {division.name} division. This action cannot be undone.
                 </>
               )}
             </p>
             <div className="flex flex-col gap-3">
-              <button className="btn btn-primary" style={{ background: 'var(--danger)', borderColor: 'var(--danger)' }} onClick={proceedAfterWarning}>
+              <button className="btn btn-primary" style={kx({ background: 'var(--danger)', borderColor: 'var(--danger)' }, KIT_BUTTON.danger)} onClick={proceedAfterWarning}>
                 {activeGenerationScope === 'build' ? 'Build From Current' : 'Yes, Delete and Replace'}
               </button>
               <button className="btn btn-ghost" onClick={() => setShowWarning(false)}>

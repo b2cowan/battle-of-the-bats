@@ -400,29 +400,188 @@ dialog.truesize::backdrop{background:#16201899}
 .pchip.un{background:#eeeee9;border-color:#c9cfc2;color:#5c6658}
 @container(max-width:760px){.scope{grid-template-columns:1fr}.sgroup.follow{grid-row:auto}}
 </style>
+<style id="progress-styles">
+/* The Progress tab (added 2026-09-27): where the program stands, at a glance. Plain HTML, no script
+   needed to show it. Status reads by FORM as well as colour: solid = committed, lime = built and
+   awaiting its commit, dashed = next, hairline = not started. */
+.prog{max-width:1000px;margin:0 auto;padding:32px 36px 56px}
+.prog .lede{font-size:16px;line-height:1.55;max-width:68ch;margin:8px 0 22px}
+.prog h2{margin:34px 0 12px}
+.prog .sechint{font-size:13.5px;color:var(--muted);margin:-6px 0 14px;max-width:70ch}
+.track{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:6px}
+.track button{width:100%;min-height:86px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;padding:10px 9px;border-radius:8px;border:1px solid var(--line);background:var(--white);color:var(--ink);text-align:left;font-size:12px;line-height:1.3}
+.track button b{font-size:17px;line-height:1.1;font-variant-numeric:tabular-nums}
+.track button span{color:inherit;opacity:.85}
+.track .s-committed{background:var(--olive);border-color:var(--olive);color:#fff}
+.track .s-built{background:var(--lime);border-color:#9fc46a;color:#1c2417}
+.track .s-next{border:2px dashed var(--olive);color:var(--ink)}
+.track .s-todo{background:#f7f8f3;color:var(--muted)}
+.track button:hover{filter:brightness(.96)}
+.legend2{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:12.5px;color:var(--muted);margin:10px 0 0}
+.legend2 span{display:inline-flex;align-items:center;gap:7px}
+.legend2 i{width:14px;height:14px;border-radius:4px;display:inline-block;border:1px solid var(--line)}
+.legend2 .l-committed{background:var(--olive);border-color:var(--olive)}.legend2 .l-built{background:var(--lime);border-color:#9fc46a}
+.legend2 .l-next{border:2px dashed var(--olive)}.legend2 .l-todo{background:#f7f8f3}
+.waiting{border:1px solid #e0c98a;background:#fbf6ea;border-radius:10px;padding:16px 20px}
+.waiting h2{margin:0 0 4px;font-size:17px}
+.waiting ol{margin:10px 0 0;padding-left:20px}.waiting li{margin:0 0 10px}.waiting li:last-child{margin-bottom:0}
+.waiting li b{display:block}.waiting li span{font-size:13.5px;color:var(--muted)}
+.slices{display:flex;flex-direction:column;gap:8px}
+.slice{display:grid;grid-template-columns:54px minmax(0,1fr) 190px;gap:16px;align-items:start;background:var(--white);border:1px solid var(--line);border-radius:10px;padding:14px 16px;scroll-margin-top:16px}
+.slice .sid{font:800 20px/1 system-ui,sans-serif;color:var(--olive);padding-top:3px;font-variant-numeric:tabular-nums}
+.slice h3{margin:0 0 3px;font-size:15.5px}
+.slice p{margin:0;font-size:13.5px}
+.slice .proof{margin-top:6px;font-size:12.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.slice .state{display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+.slice .state .meta{font-variant-numeric:tabular-nums}
+.slice.flash{box-shadow:0 0 0 3px var(--lime)}
+.st{display:inline-flex;align-items:center;font-size:12px;font-weight:750;padding:4px 10px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.st.committed{background:var(--olive);border-color:var(--olive);color:#fff}
+.st.built{background:var(--lime);border-color:#9fc46a;color:#1c2417}
+.st.next{border:2px dashed var(--olive);color:var(--ink)}
+.st.todo{background:#f7f8f3;color:var(--muted)}
+.st.stage1{background:#e3edf2;border-color:#9fbccb;color:#1d4a5e}
+.linkbtn{border:0;background:none;padding:0;color:var(--blue);font-size:13px;font-weight:650;text-decoration:underline;text-underline-offset:3px;min-height:32px}
+.prog table td:nth-child(2){font-variant-numeric:tabular-nums}
+.prog ol.release{padding-left:22px}.prog ol.release li{margin:0 0 8px}
+@media(max-width:820px){.track{grid-template-columns:repeat(3,minmax(0,1fr))}.slice{grid-template-columns:40px minmax(0,1fr)}.slice .state{grid-column:2;flex-direction:row;flex-wrap:wrap;align-items:center}}
+@media(max-width:600px){.prog{padding:22px 16px 40px}}
+</style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) committed 2026-09-25 · slice 2 (buttons, chips, type, House league, Organization) committed ee175263 2026-09-26 · slice 3 (Rep Teams, Accounting) committed 35705e32 2026-09-27 · slice 4a (tournament setup and records) committed 8e76362f 2026-09-27 · slice 4b (tournament operations on game day) committed 07808a02 2026-09-27</small></div>
+  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · where it stands: the Progress tab</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27">Build</li>
+    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, built 2026-09-27">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
-  <div class="hubactions"><button type="button" id="phone" aria-pressed="false">Phone width</button></div>
+  <div class="hubactions"><button type="button" id="phone" aria-pressed="false" hidden>Phone width</button></div>
 </div>
 
 <nav class="hubtabs" aria-label="Project documents">
-  <button data-hub="mockup" aria-pressed="true">Mockups</button>
+  <button data-hub="progress" aria-pressed="true">Progress</button>
+  <button data-hub="mockup" aria-pressed="false">Mockups</button>
   <button data-hub="brief" aria-pressed="false">PM Brief</button>
   <button data-hub="plan" aria-pressed="false">Full Plan</button>
   <button data-hub="decisions" aria-pressed="false">Decisions</button>
   <button data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
 </nav>
 
-<section id="hub-mockup" class="hubsection">
+<section id="hub-progress" class="hubsection prog">
+  <div class="eyebrow">Progress · Phase 1, the foundation</div>
+  <h1>Where the program stands</h1>
+  <p class="lede"><strong>Every admin area except the volunteer screens and the help guide is now on the coaches portal's look, in Warm and Dark.</strong> Six of the nine build slices are committed and the seventh (the tournament schedule) is built and being committed. Two remain: slice 5 (scorekeeper, gate and the help guide), then slice 6, which proves everything, walks it with you and releases it. Customers see none of it until that release day; until then it shows only in a browser that turns the switch on.</p>
+
+  <ol class="track" aria-label="The nine build slices, in order">
+    <li><button type="button" class="s-committed" data-goto="sl-0"><b>0</b><span>Baseline</span></button></li>
+    <li><button type="button" class="s-committed" data-goto="sl-1"><b>1</b><span>Switch &amp; frame</span></button></li>
+    <li><button type="button" class="s-committed" data-goto="sl-2"><b>2</b><span>Buttons, House league, Org</span></button></li>
+    <li><button type="button" class="s-committed" data-goto="sl-3"><b>3</b><span>Rep Teams &amp; Accounting</span></button></li>
+    <li><button type="button" class="s-committed" data-goto="sl-4a"><b>4a</b><span>Tournament setup</span></button></li>
+    <li><button type="button" class="s-committed" data-goto="sl-4b"><b>4b</b><span>Game day</span></button></li>
+    <li><button type="button" class="s-built" data-goto="sl-4c"><b>4c</b><span>The schedule</span></button></li>
+    <li><button type="button" class="s-next" data-goto="sl-5"><b>5</b><span>Volunteers &amp; help</span></button></li>
+    <li><button type="button" class="s-todo" data-goto="sl-6"><b>6</b><span>Prove, walk, release</span></button></li>
+  </ol>
+  <div class="legend2" aria-hidden="true"><span><i class="l-committed"></i>Committed</span><span><i class="l-built"></i>Built, being committed</span><span><i class="l-next"></i>Next</span><span><i class="l-todo"></i>Not started</span></div>
+
+  <h2>Waiting on you</h2>
+  <div class="waiting">
+    <p class="sub" style="margin:0">Three open questions from slice 1, one found issue that needs a home, and the calls each slice made at build time. None of them blocks the next slice.</p>
+    <ol>
+      <li><b>The Dark phone bar's faint labels: fix them in both portals now, or at slice 6?</b><span>This is now the only thing keeping Dark at zero reading problems on every restyled screen. The inactive tab labels are too faint on the Dark bar, and the admin shares that bar with the coaches portal, so one fix repairs both.</span></li>
+      <li><b>The phone bar's labels: mixed case (the admin, as drawn) or capitals (the coaches portal today)?</b><span>In capitals, "Accounting" is cut off on a phone. One of the two portals should move so they match.</span></li>
+      <li><b>Cards carry a dark shadow on cream in the coaches portal, and the admin matches it. Soften it in both?</b><span>A design call for both portals; the admin follows whatever the portal does.</span></li>
+      <li><b>Your public Schedule preview shows a little of the Warm look (found in slice 4c).</b><span>With the switch on and your theme set to Warm, the preview's tab bar sits on a different dark ground than families see. It predates 4c. It goes to slice 6's proof, or a small fix of its own: your choice.</span></li>
+      <li><b>Build-time calls to confirm on your walk.</b><span>Each slice's report lists the places the build chose differently from the drawing, or chose where the drawing was silent (for example, Finalize becoming the lime button in 4b). They are confirmed or reversed on the slice 6 walk.</span></li>
+    </ol>
+  </div>
+
+  <h2>Slice by slice</h2>
+  <p class="sechint">Every slice is proven two ways before it is committed. With the switch off, before-and-after pictures of every screen it can reach must match pixel for pixel, so customers see no change. With the switch on, a sweep counts the text too faint to read, against today's dark admin.</p>
+  <div class="slices">
+    <article class="slice" id="sl-0">
+      <div class="sid">0</div>
+      <div><h3>The baseline</h3><p>Every admin screen pictured and measured in today's dark look, so each later slice can prove it changed nothing with the switch off.</p><p class="proof">182 pictures, matched twice · 6,946 existing layout issues recorded as debt</p></div>
+      <div class="state"><span class="st committed">Committed</span><span class="meta">459b3bbd · 2026-09-25</span><button type="button" class="linkbtn" data-report="Slice 0">Read the report</button></div>
+    </article>
+    <article class="slice" id="sl-1">
+      <div class="sid">1</div>
+      <div><h3>The switch and the frame</h3><p>The admin follows your Warm or Dark setting; your organization's colour leaves the working screens; the sidebar, phone bar and headers; Families and the Public site editor.</p><p class="proof">Switch off: 182 of 182 pictures identical</p></div>
+      <div class="state"><span class="st committed">Committed</span><span class="meta">1b3cd541 · 2026-09-25</span><button type="button" class="linkbtn" data-report="Slice 1">Read the report</button></div>
+    </article>
+    <article class="slice" id="sl-2">
+      <div class="sid">2</div>
+      <div><h3>Buttons, tags and type · House league · Organization</h3><p>The portal's buttons and tags everywhere; all eight House league screens; the Organization screens, setup and Notifications.</p><p class="proof">Switch off: 166 of 172 identical (6 showed another session's live data) · hard-to-read text 916 → 106 Warm / 572 Dark</p></div>
+      <div class="state"><span class="st committed">Committed</span><span class="meta">ee175263 · 2026-09-26</span><button type="button" class="linkbtn" data-report="Slice 2">Read the report</button></div>
+    </article>
+    <article class="slice" id="sl-3">
+      <div class="sid">3</div>
+      <div><h3>Rep Teams and Accounting</h3><p>All 17 Rep Teams screens and all 6 Accounting screens, with the money tables restyled in place.</p><p class="proof">Switch off: 45 of 46 identical (1 was a day count crossing midnight) · hard-to-read text 1,594 → 0 Warm / 354 Dark</p></div>
+      <div class="state"><span class="st committed">Committed</span><span class="meta">35705e32 · 2026-09-27</span><button type="button" class="linkbtn" data-report="Slice 3">Read the report</button></div>
+    </article>
+    <article class="slice" id="sl-4a">
+      <div class="sid">4a</div>
+      <div><h3>Tournament setup and records</h3><p>Every tournament header, the shared toolbars, lists and windows, twelve setup and records screens, and the new-tournament wizard.</p><p class="proof">Switch off: 58 of 58 identical · hard-to-read text 773 → 91 Warm / 393 Dark (this slice's own screens: 0 in Warm)</p></div>
+      <div class="state"><span class="st committed">Committed</span><span class="meta">8e76362f · 2026-09-27</span><button type="button" class="linkbtn" data-report="Slice 4a">Read the report</button></div>
+    </article>
+    <article class="slice" id="sl-4b">
+      <div class="sid">4b</div>
+      <div><h3>Tournaments on game day</h3><p>The dashboard, Teams, Results and the game list, Check-in, Staff kit, Communication and Chat.</p><p class="proof">Switch off: 60 of 60 identical · hard-to-read text 460 → 7 Warm / 142 Dark, no screen worse</p></div>
+      <div class="state"><span class="st committed">Committed</span><span class="meta">07808a02 · 2026-09-27</span><button type="button" class="linkbtn" data-report="Slice 4b">Read the report</button></div>
+    </article>
+    <article class="slice" id="sl-4c">
+      <div class="sid">4c</div>
+      <div><h3>The tournament schedule</h3><p>The Schedule and everything it opens: health panels, the generator, the playoff builder, brackets, the timeline, rain delay and the game form. This completes the tournament screens.</p><p class="proof">Switch off: 28 of 28 identical · hard-to-read text 473 → 28 Warm / 93 Dark, no view worse</p></div>
+      <div class="state"><span class="st built">Built · being committed</span><span class="meta">2026-09-27</span><button type="button" class="linkbtn" data-report="Slice 4c">Read the report</button></div>
+    </article>
+    <article class="slice" id="sl-5">
+      <div class="sid">5</div>
+      <div><h3>Volunteers and the help guide</h3><p>The scorekeeper, official and gate screens in warm for everyone (volunteers have no account to hold a setting), and the help guide following your theme.</p></div>
+      <div class="state"><span class="st next">Next</span></div>
+    </article>
+    <article class="slice" id="sl-6">
+      <div class="sid">6</div>
+      <div><h3>Prove, walk, release</h3><p>Every admin screen swept in both themes with the switch on, your walk, then the switch comes out and everyone gets the new look on one day.</p></div>
+      <div class="state"><span class="st todo">Not started</span></div>
+    </article>
+  </div>
+
+  <h2>Coverage by area</h2>
+  <p class="sechint">Screen counts are from the Phase 0 measurement. "On the kit" means restyled for both themes, behind the switch.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Area</th><th>Screens</th><th>Slice</th><th>State</th></tr></thead>
+    <tbody>
+      <tr><td>The frame (top bar, sidebar, phone bar, headers)</td><td>—</td><td>1</td><td><span class="st committed">On the kit</span></td></tr>
+      <tr><td>Families</td><td>3</td><td>1</td><td><span class="st committed">On the kit</span></td></tr>
+      <tr><td>Public site editor</td><td>1</td><td>1</td><td><span class="st committed">On the kit</span></td></tr>
+      <tr><td>House league</td><td>8</td><td>2</td><td><span class="st committed">On the kit</span></td></tr>
+      <tr><td>Organization (overview, venues, coaches portal links, tournaments, PDF settings, notifications) and setup</td><td>—</td><td>2</td><td><span class="st committed">On the kit</span></td></tr>
+      <tr><td>Rep Teams</td><td>17</td><td>3</td><td><span class="st committed">On the kit</span></td></tr>
+      <tr><td>Accounting (the treasurer's view included)</td><td>6</td><td>3</td><td><span class="st committed">On the kit</span></td></tr>
+      <tr><td>Tournaments: setup, records, game day</td><td>—</td><td>4a · 4b</td><td><span class="st committed">On the kit</span></td></tr>
+      <tr><td>Tournaments: the schedule</td><td>—</td><td>4c</td><td><span class="st built">Built</span></td></tr>
+      <tr><td>Club hub, Members and audit log, Plan &amp; billing, Settings, setup checklist</td><td>6</td><td>Club Stage 1</td><td><span class="st stage1">Redesigned by Club Stage 1</span></td></tr>
+      <tr><td>Scorekeeper, official and gate</td><td>4</td><td>5</td><td><span class="st next">Next</span></td></tr>
+      <tr><td>Help guide</td><td>10</td><td>5</td><td><span class="st next">Next</span></td></tr>
+    </tbody>
+  </table></div>
+  <p class="sechint">Not in this program: public pages and your previews of them (they keep your organization's colours), emails, PDFs, the marketing site and the platform-admin console. The tournament area's 27 screens also count four that belong to other rows (Members, its audit log, Plan &amp; subscription, PDF settings) and two public previews.</p>
+
+  <h2>Before release day</h2>
+  <ol class="release">
+    <li><strong>Slice 5</strong>: the volunteer screens and the help guide.</li>
+    <li><strong>Prove</strong>: every admin screen swept in both themes with the switch on, the reading-contrast check on the admin's backgrounds, and the switch-off pictures one last time.</li>
+    <li><strong>Confirm Club Stage 1's six screens</strong> are ready on the same switch; they ship the same day.</li>
+    <li><strong>Your walk</strong>: a sample of every area in both themes, the frame at desktop and phone width, a dense table, a tournament on game day, the scorekeeper sheet and the help guide.</li>
+    <li><strong>Release</strong>, on your word and outside a tournament weekend: the switch comes out, the old look is deleted, and a What's New note says where the Dark choice lives and that your colours stay on your public pages.</li>
+  </ol>
+</section>
+
+<section id="hub-mockup" class="hubsection" hidden>
   <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
     <symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></symbol>
     <symbol id="i-users" viewBox="0 0 24 24"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
@@ -1223,6 +1382,44 @@ dialog.truesize::backdrop{background:#16201899}
     <li>A misleading code note.</li>
   </ul>
   <p><strong>Committed</strong> (07808a02, 2026-09-27), after the build check and the full test suite passed on this change alone. The pictures and the switch-on sweep were taken before the cleanup; everything changed since only shows with the switch on, or is the same code written a different way.</p>
+  <h2>Slice 4c — the tournament schedule (2026-09-27)</h2>
+  <p>Still nothing customers see. The Schedule and everything it opens now wear the kit in Warm and Dark. Same layout, columns, words and actions. That completes slice 4: every tournament screen is on the kit.</p>
+  <p><strong>First, the proof could not see the schedule.</strong> The pictures and the sweep only ever showed the Schedule's opening view, which on the test tournament says "No games match your filters." Ten views were added before anything changed: the health panel open, the timeline (round robin and playoffs), the bracket, the bracket editor, the Round-Robin Generator, the playoff bracket builder, the add-game form and the rain-delay window. Each is opened by its own button, and nothing is saved.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Screen</th><th>What you see with the switch on</th></tr></thead>
+    <tbody>
+      <tr><td>Schedule page</td><td>The "Published" tag as the kit's green tag, the toolbar, the phone stage toggle, the phone settings sheet and venue list, the summary strip, the venue filter, the location notices, and both Tools menus in the kit's menu style.</td></tr>
+      <tr><td>Health panels</td><td>The score, figures, issues, rules editor and team table on the kit, on the Schedule page and inside the generator, the playoff builder and the bracket editor.</td></tr>
+      <tr><td>Round-Robin Generator and playoff bracket builder</td><td>The kit's window, its choices in olive when picked, section labels in the kit's small caps, and the number steppers, date rows, drag-to-seed list and confirm windows.</td></tr>
+      <tr><td>Brackets</td><td>Game cards on the kit's card. The winners' path is olive and the losers' path is grey and dashed, as it is dashed today, on the lines and the legend alike.</td></tr>
+      <tr><td>Timeline, rain delay and the game form</td><td>The day grid and its game blocks, the live-red "now" line, the reschedule sheet, the rain-delay window, and the add/edit game, publish and location windows.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The proof.</strong> With the switch off, all 28 pictures are pixel-identical. That covers every screen this slice's files can reach: the ten Schedule views, Results (it shares the Schedule's styling), Check-in and the volunteer gate (they share a pop-up sheet), and the public Schedule preview. With the switch on, contrast problems across the Schedule's views fell from 473 to <strong>28 in Warm</strong> and 93 in Dark, and no view got worse on any check in either theme. The Schedule's own surfaces are at zero in Warm. In Dark, only the shared phone bar's faint labels remain (slice 1's open question), plus two help hints in the generator that belong to the help guide (slice 5).</p>
+  <p><strong>Found and fixed on the way:</strong></p>
+  <ul>
+    <li>A pop-up sheet the admin shares (the timeline's reschedule sheet, and Check-in's team sheet from 4b) sits outside the admin's frame, so the kit could never reach it. With the switch on it would have stayed in today's look. It now picks up the kit, and inside a public preview it still shows the public look. A build check now allows exactly one way to do this.</li>
+    <li>The new measuring views remembered the last view between runs, so the first sweep measured the plain Schedule in the bracket view. Each view now sets itself up first, and the numbers above are from the corrected run.</li>
+    <li>The conflict count on the timeline, and the red "Clear bracket" button, were hard to read in Dark. The fix to the red button reaches every admin danger button with the switch on; Warm is unchanged.</li>
+  </ul>
+  <p><strong>Decided at build time, flagged for you:</strong></p>
+  <ul>
+    <li>Brackets: the winners' path is olive and the losers' path is grey and dashed. The final game's lime glow becomes a plain olive outline.</li>
+    <li>The "Scheduled" filter loses its one-off blue when picked. Every picked filter is olive, as on the other tournament screens.</li>
+    <li>"Done" on the phone settings sheet is a quiet button, not lime. It closes the sheet; it doesn't save anything.</li>
+    <li>The "No venues set up yet" notice today wears your organization's colour, which the admin no longer uses. On the kit it's the same caution tint as the notice beside it.</li>
+    <li>The health panel's Show/Hide and "Team detail" leave the console typeface, because they are buttons. The locations window keeps a typed-by-hand name in the console typeface and a real venue name in the body typeface, as the screen already intends.</li>
+    <li>The timeline's "now" line is the live red rather than lime.</li>
+  </ul>
+  <p><strong>Found on the way, written down rather than fixed here:</strong></p>
+  <ul>
+    <li><strong>Your public Schedule preview shows a little of the admin's Warm look.</strong> With the switch on and your theme set to Warm, its tab bar (Overview, News, Standings, Teams, Rules) sits on a different dark ground than families see. This is not this slice's: with this slice's one change that reaches the preview taken out, it stayed. Slice 1 checked the preview in Dark only. This belongs to slice 6's proof, or a small fix of its own.</li>
+    <li>The bracket view never shows a winner or a score, only placeholders, so there is no winning name to make bold.</li>
+    <li>A few pages carry leftover styling for things they no longer have.</li>
+  </ul>
+  <p><strong>Cleanup and review.</strong> The cleanup made the Schedule's three dropdowns share one set of styles, named the olive label used in five places once, and stopped a few styles being rebuilt on every row or every drag of a seed. The measuring views now wait on what the page shows rather than on fixed pauses. It also found that Chat's rooms and manage panels had the same problem as the pop-up sheet: they open outside the admin's frame, so 4b's new look never reached them. They now use the same one way in.</p>
+  <p>The review read the change three ways: nothing changes with the switch off; nothing reaches public pages, the volunteer screens or the coaches portal; and the build checks. It found one real fault, now fixed. On the pop-up sheet the dimmed backdrop behind it would have stayed near-black under the new look. Two things are worth knowing for the walk: the red delete buttons read a lighter red in Dark on every admin screen with the switch on (Warm is unchanged), and the playoff measuring views depend on the test tournament keeping its playoffs.</p>
+  <p>With the switch off, 24 of 24 pictures are still pixel-identical after the cleanup, and every build check and all 5,042 tests pass.</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1233,7 +1430,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>3</td><td>Rep Teams, Accounting (money tables restyled in place)</td><td>Committed 35705e32, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4a</td><td>Tournaments: setup and records, and the parts every tournament screen shares</td><td>Committed 8e76362f, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat), and the game list, moved in from 4c</td><td>Committed 07808a02, 2026-09-27; walked at slice 6</td></tr>
-      <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Not started</td></tr>
+      <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Built 2026-09-27; commit on your word; walked at slice 6</td></tr>
       <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Not started</td></tr>
       <tr><td>6</td><td>Prove, walk, release</td><td>Not started</td></tr>
     </tbody>
@@ -1262,16 +1459,30 @@ dialog.truesize::backdrop{background:#16201899}
 <dialog id="s1True" class="truesize" aria-label="Phone frame at true size"><div class="tsbar"><span>True size: on a phone this is exactly what the screen shows</span><button type="button" id="s1TrueClose">Close</button></div><div class="tsbody"></div></dialog>
 
 <script>
+/* CORE NAVIGATION — its own script on purpose (2026-09-27). A syntax error in ANY classic script stops
+   that whole script, and for about a day one unescaped apostrophe in the decisions data below
+   disabled every tab and button on this hub. Keep this block small and free of prose; content and data
+   live in the second script, where a typo can only break its own feature. Before publishing, parse
+   both: node -e "new (require('vm').Script)(text)". */
 'use strict';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const HUBS=['mockup','brief','plan','decisions','qa'];
-function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)))}
+const HUBS=['progress','mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));$('phone').hidden=which!=='mockup'}
 document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
 (function(){const h=location.hash.slice(1);if(HUBS.includes(h))showHub(h)})();
 $('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
 function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
 $('closeDialog').onclick=()=>$('dialog').close();
+function flash(el){el.scrollIntoView({block:'start'});el.classList.add('flash');setTimeout(()=>el.classList.remove('flash'),1800)}
+/* Progress tab: a step jumps to its slice row; "Read the report" opens that slice's section in Full Plan. */
+document.querySelectorAll('[data-goto]').forEach(b=>b.onclick=()=>{const el=$(b.dataset.goto);if(el)flash(el)});
+document.querySelectorAll('[data-report]').forEach(b=>b.onclick=()=>{showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h2')].find(n=>n.textContent.trim().startsWith(b.dataset.report+' '));if(hit){hit.scrollIntoView({block:'start'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}});
+</script>
+<script>
+/* CONTENT — specimens, findings, decisions, the QA walk. Uses $, esc, showHub and modal from above.
+   ⚠ Strings here are single-quoted: escape every apostrophe (area\'s), or the whole block stops. */
+'use strict';
 
 /* dark copies + the Warm/Dark switch — built before any binding, so copies carry no duplicate ids */
 document.querySelectorAll('.darkcopy').forEach(ph=>{const src=document.getElementById(ph.dataset.src);if(!src)return;const c=src.cloneNode(true);c.removeAttribute('id');c.querySelectorAll('.mk,.fl,.askchip,p.meta,.speccap').forEach(n=>n.remove());const skins=[...c.querySelectorAll('.wm')];if(c.classList.contains('wm'))skins.push(c);skins.forEach(n=>n.classList.add('theme-dark','fixed-theme'));c.querySelectorAll('[id]').forEach(n=>n.id=n.id+'-dark');c.querySelectorAll('[data-truesize]').forEach(b=>b.dataset.truesize+='-dark');ph.innerHTML='<div class="spectop"><span class="lbl after">After Phase 1 · dark theme</span><h2>'+esc(ph.dataset.title)+'</h2><span class="aside">What an organizer whose account theme is Dark sees. Same layout and parts; only the palette changes.</span></div>';ph.appendChild(c)});
@@ -1324,8 +1535,8 @@ document.querySelectorAll('[data-truesize]').forEach(b=>b.addEventListener('clic
 const DECISIONS=[
   {date:'2026-09-27 · slice 4b',ask:'S4b · Does the schedule\'s game list move from 4c into 4b?',ruling:'accepted',label:'Accepted: it moves to 4b',why:'Owner, 2026-09-27: "Move it to 4b." The body of Results, the screen an organizer lives in on game day, is the schedule\'s game list in its score-entry form, styled from the schedule\'s own stylesheet. Left in 4c, Results would have been half restyled until then. 4c keeps the schedule page itself, the timeline, brackets, generator, playoff wizard and the schedule windows.'},
   {date:'2026-09-27 · slice 4',ask:'S4 · How is the tournament slice split?',ruling:'accepted',label:'Went ahead: three parts by job',why:'Proposed at the start of slice 4, and the owner went ahead ("the window is quiet"). The tournament screens measured about four times slice 3. The prompt\'s three jobs were not three equal sessions: records was small and operations was two and a half times a full session, over half of it the schedule. So: 4a setup and records plus the parts every tournament screen shares, 4b operations on game day, 4c the schedule.'},
-  {date:'2026-09-26 · slice 2',ask:'S2a · Does the type change (F2) reach all 47 admin stylesheets in slice 2?',ruling:'accepted',label:'Accepted: in two layers',why:'Owner, 2026-09-26: "Yes, as proposed." The shared parts that reach every admin screen (buttons, chips, form labels, headings, the console overrides) change in slice 2. Each area's own stylesheets change with that area's slice: Rep Teams and Accounting in 3, Tournaments in 4, Help in 5. Doing them now would edit those sheets twice and collide with other sessions' tournament work.'},
-  {date:'2026-09-26 · slice 2',ask:'S2b · What is left of the Hub for slice 2?',ruling:'accepted',label:'Accepted: setup and Notifications only',why:'Owner, 2026-09-26: "Yes, as proposed." Club Stage 1 replaced the hub for every organization that has one, and a tournament-only organization is sent to its tournaments. Slice 2 restyles setup for every plan except a Club owner (who has Stage 1's checklist) and the Notifications page.'},
+  {date:'2026-09-26 · slice 2',ask:'S2a · Does the type change (F2) reach all 47 admin stylesheets in slice 2?',ruling:'accepted',label:'Accepted: in two layers',why:'Owner, 2026-09-26: "Yes, as proposed." The shared parts that reach every admin screen (buttons, chips, form labels, headings, the console overrides) change in slice 2. Each area\'s own stylesheets change with that area\'s slice: Rep Teams and Accounting in 3, Tournaments in 4, Help in 5. Doing them now would edit those sheets twice and collide with other sessions\' tournament work.'},
+  {date:'2026-09-26 · slice 2',ask:'S2b · What is left of the Hub for slice 2?',ruling:'accepted',label:'Accepted: setup and Notifications only',why:'Owner, 2026-09-26: "Yes, as proposed." Club Stage 1 replaced the hub for every organization that has one, and a tournament-only organization is sent to its tournaments. Slice 2 restyles setup for every plan except a Club owner (who has Stage 1\'s checklist) and the Notifications page.'},
   {date:'2026-09-25 · slice 0 (the baseline)',ask:'B1 · How do the admin\'s existing layout findings enter the baseline?',ruling:'accepted',label:'Accepted: recorded as debt',why:'Owner, 2026-09-25: "Debt, reasons only if argued." All 6,946 are recorded with no reason written, because a reason marks a finding as a deliberate decision and quiets it. A reason is written only where someone can argue one. The count stays visible, and any new finding still fails the check. The contrast check\'s nine dark inks under the floor are recorded the same way.'},
   {date:'2026-09-25 · Phase 1 mockups (hub v2)',ask:'F1 · Does the admin ignore the organization\'s public card style (glass, outlined)?',ruling:'accepted',label:'Accepted as recommended',why:'Owner, 2026-09-25: "I agree with your recommendations on F1-F4". The ruling: yes. It is the same reasoning as R1: the organization\'s look belongs on its public pages, and the working screens follow the person\'s setting. Today the card style is stamped on every admin card (T08).'},
   {date:'2026-09-25 · Phase 1 mockups (hub v2)',ask:'F2 · Does the admin\'s type follow the kit, with the monospace face on eyebrows, chips and readouts only?',ruling:'accepted',label:'Accepted as recommended',why:'Owner, 2026-09-25: "I agree with your recommendations on F1-F4". The ruling: yes. Titles, navigation, buttons and table headings move to the body face, as in the coaches portal. 561 uses across 47 files, so this is part of the restyle and not a separate pass (T10).'},

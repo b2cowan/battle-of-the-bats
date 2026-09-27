@@ -8,6 +8,7 @@
  * legacy look, never a half-built kit.
  */
 import { createContext, useCallback, useContext, useMemo, type CSSProperties, type ReactNode } from 'react';
+import { adminKitAttr } from '@/lib/admin-kit-preview';
 import { KIT_BUTTON, KIT_INK } from './kit/kit-inline';
 
 const AdminKitContext = createContext(false);
@@ -19,6 +20,30 @@ export function AdminKitProvider({ on, children }: { on: boolean; children: Reac
 /** Is the admin kit on for this request? */
 export function useAdminKit(): boolean {
   return useContext(AdminKitContext);
+}
+
+const NO_ATTR: Readonly<Record<string, string>> = {};
+
+/** The marker the admin layout puts on the shell while the switch is on, nothing while it is off — as the
+ *  context says, so nothing inside a public preview (its island turns the kit off, R2, `AdminChrome`). */
+function usePortalKitAttr(): Readonly<Record<string, string>> {
+  return useAdminKit() ? adminKitAttr : NO_ATTR;
+}
+
+/**
+ * The admin kit for a surface PORTALED out of the admin shell (Admin Design Continuity slice 4c). A
+ * `createPortal(…, document.body)` renders BESIDE the shell, never inside it, so no `[data-admin-kit]`
+ * rule can reach it and the warm palette never applies — the shared bottom sheet and the admin chat's
+ * rooms and manage panels were silently legacy under the switch until 4c. Wrap the portal's content in
+ * this: with the switch on, one `display: contents` wrapper ABOVE the portal's root carries the marker (the
+ * admin layout's own shape — and a marker on the styled root itself would not satisfy that root's own
+ * `[data-admin-kit] .x` rule); with it off, the children exactly as they were — no element, no attribute.
+ * It decides nothing: it forwards the layout's decision through the context. ⚠ The one place besides the
+ * admin layout that may touch `adminKitAttr` (`tests/unit/admin-kit-switch-guard.test.ts`).
+ */
+export function PortalKitRoot({ children }: { children: ReactNode }) {
+  const attr = usePortalKitAttr();
+  return attr === NO_ATTR ? <>{children}</> : <div style={{ display: 'contents' }} {...attr}>{children}</div>;
 }
 
 /**

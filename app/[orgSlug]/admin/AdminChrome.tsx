@@ -7,7 +7,7 @@ import AdminSidebar from '@/components/admin/AdminSidebar';
 import AdminBottomNav from '@/components/admin/AdminBottomNav';
 import AdminEventHeader from '@/components/admin/AdminEventHeader';
 import AdminTopStrip from '@/components/admin/AdminTopStrip';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import { AdminKitProvider, useAdminKit } from '@/components/admin/AdminKitProvider';
 import { useNotificationUnread } from '@/lib/use-notification-unread';
 import { CancellationGuard } from '@/components/admin/CancellationGuard';
 import { getBillingHref } from '@/lib/billing-urls';
@@ -106,8 +106,10 @@ export default function AdminChrome({
           {isFocused ? (
             // R2 — a public page previewed inside the kit admin is the public page: the island puts
             // back the org's colours and the public dark palette (globals.css, `data-public-preview`).
+            // The kit is OFF for every component inside it, too (slice 4c): a shared part that asks
+            // the switch — a portaled bottom sheet — must answer as the public page it sits in.
             kit && isTournamentPreview
-              ? <div className={styles.previewIsland} data-public-preview>{children}</div>
+              ? <div className={styles.previewIsland} data-public-preview><AdminKitProvider on={false}>{children}</AdminKitProvider></div>
               : children
           ) : (
             <>
