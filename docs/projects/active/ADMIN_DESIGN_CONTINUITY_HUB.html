@@ -453,7 +453,7 @@ dialog.truesize::backdrop{background:#16201899}
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, built 2026-09-27">Build</li>
+    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -473,7 +473,7 @@ dialog.truesize::backdrop{background:#16201899}
 <section id="hub-progress" class="hubsection prog">
   <div class="eyebrow">Progress · Phase 1, the foundation</div>
   <h1>Where the program stands</h1>
-  <p class="lede"><strong>Every admin area except the volunteer screens and the help guide is now on the coaches portal's look, in Warm and Dark.</strong> Six of the nine build slices are committed and the seventh (the tournament schedule) is built and being committed. Two remain: slice 5 (scorekeeper, gate and the help guide), then slice 6, which proves everything, walks it with you and releases it. Customers see none of it until that release day; until then it shows only in a browser that turns the switch on.</p>
+  <p class="lede"><strong>Every admin area except the volunteer screens and the help guide is now on the coaches portal's look, in Warm and Dark.</strong> Seven of the nine build slices are committed, the tournament schedule last. Two remain: slice 5 (scorekeeper, gate and the help guide), then slice 6, which proves everything, walks it with you and releases it. Customers see none of it until that release day; until then it shows only in a browser that turns the switch on.</p>
 
   <ol class="track" aria-label="The nine build slices, in order">
     <li><button type="button" class="s-committed" data-goto="sl-0"><b>0</b><span>Baseline</span></button></li>
@@ -482,7 +482,7 @@ dialog.truesize::backdrop{background:#16201899}
     <li><button type="button" class="s-committed" data-goto="sl-3"><b>3</b><span>Rep Teams &amp; Accounting</span></button></li>
     <li><button type="button" class="s-committed" data-goto="sl-4a"><b>4a</b><span>Tournament setup</span></button></li>
     <li><button type="button" class="s-committed" data-goto="sl-4b"><b>4b</b><span>Game day</span></button></li>
-    <li><button type="button" class="s-built" data-goto="sl-4c"><b>4c</b><span>The schedule</span></button></li>
+    <li><button type="button" class="s-committed" data-goto="sl-4c"><b>4c</b><span>The schedule</span></button></li>
     <li><button type="button" class="s-next" data-goto="sl-5"><b>5</b><span>Volunteers &amp; help</span></button></li>
     <li><button type="button" class="s-todo" data-goto="sl-6"><b>6</b><span>Prove, walk, release</span></button></li>
   </ol>
@@ -536,7 +536,7 @@ dialog.truesize::backdrop{background:#16201899}
     <article class="slice" id="sl-4c">
       <div class="sid">4c</div>
       <div><h3>The tournament schedule</h3><p>The Schedule and everything it opens: health panels, the generator, the playoff builder, brackets, the timeline, rain delay and the game form. This completes the tournament screens.</p><p class="proof">Switch off: 28 of 28 identical · hard-to-read text 473 → 28 Warm / 93 Dark, no view worse</p></div>
-      <div class="state"><span class="st built">Built · being committed</span><span class="meta">2026-09-27</span><button type="button" class="linkbtn" data-report="Slice 4c">Read the report</button></div>
+      <div class="state"><span class="st committed">Committed</span><span class="meta">9d1b1670 · 2026-09-27</span><button type="button" class="linkbtn" data-report="Slice 4c">Read the report</button></div>
     </article>
     <article class="slice" id="sl-5">
       <div class="sid">5</div>
@@ -563,7 +563,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>Rep Teams</td><td>17</td><td>3</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Accounting (the treasurer's view included)</td><td>6</td><td>3</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Tournaments: setup, records, game day</td><td>—</td><td>4a · 4b</td><td><span class="st committed">On the kit</span></td></tr>
-      <tr><td>Tournaments: the schedule</td><td>—</td><td>4c</td><td><span class="st built">Built</span></td></tr>
+      <tr><td>Tournaments: the schedule</td><td>—</td><td>4c</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Club hub, Members and audit log, Plan &amp; billing, Settings, setup checklist</td><td>6</td><td>Club Stage 1</td><td><span class="st stage1">Redesigned by Club Stage 1</span></td></tr>
       <tr><td>Scorekeeper, official and gate</td><td>4</td><td>5</td><td><span class="st next">Next</span></td></tr>
       <tr><td>Help guide</td><td>10</td><td>5</td><td><span class="st next">Next</span></td></tr>
@@ -1420,6 +1420,7 @@ dialog.truesize::backdrop{background:#16201899}
   <p><strong>Cleanup and review.</strong> The cleanup made the Schedule's three dropdowns share one set of styles, named the olive label used in five places once, and stopped a few styles being rebuilt on every row or every drag of a seed. The measuring views now wait on what the page shows rather than on fixed pauses. It also found that Chat's rooms and manage panels had the same problem as the pop-up sheet: they open outside the admin's frame, so 4b's new look never reached them. They now use the same one way in.</p>
   <p>The review read the change three ways: nothing changes with the switch off; nothing reaches public pages, the volunteer screens or the coaches portal; and the build checks. It found one real fault, now fixed. On the pop-up sheet the dimmed backdrop behind it would have stayed near-black under the new look. Two things are worth knowing for the walk: the red delete buttons read a lighter red in Dark on every admin screen with the switch on (Warm is unchanged), and the playoff measuring views depend on the test tournament keeping its playoffs.</p>
   <p>With the switch off, 24 of 24 pictures are still pixel-identical after the cleanup, and every build check and all 5,042 tests pass.</p>
+  <p><strong>Committed</strong> (9d1b1670, 2026-09-27), after the type check, the switch's guard tests and the colour checks passed on this change alone. The pictures were retaken after the cleanup; the review's one fix changed only how the pop-up sheet looks with the switch on.</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1430,7 +1431,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>3</td><td>Rep Teams, Accounting (money tables restyled in place)</td><td>Committed 35705e32, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4a</td><td>Tournaments: setup and records, and the parts every tournament screen shares</td><td>Committed 8e76362f, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat), and the game list, moved in from 4c</td><td>Committed 07808a02, 2026-09-27; walked at slice 6</td></tr>
-      <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Built 2026-09-27; commit on your word; walked at slice 6</td></tr>
+      <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Committed 9d1b1670, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Not started</td></tr>
       <tr><td>6</td><td>Prove, walk, release</td><td>Not started</td></tr>
     </tbody>
