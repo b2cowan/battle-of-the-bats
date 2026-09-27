@@ -6,7 +6,8 @@
 > §3a; /simplify + /review done; **COMMITTED `1b3cd541` 2026-09-25** (not pushed — staging shows it
 > once `dev` is pushed). Owner QA walk: at slice 6 (owner, 2026-09-25). Club Stage 1's screens session
 > may now start. **Slice 2 (buttons, chips, type; House league; Organization, setup, Notifications)
-> BUILT 2026-09-26** — results in §3a; /simplify + /review done 2026-09-26. Next: slice 3.
+> BUILT 2026-09-26** — results in §3a; /simplify + /review done; **COMMITTED `ee175263` 2026-09-26**.
+> Next: slice 3.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -163,7 +164,7 @@ foundation's release day.
 |---|---|---|
 | 0 | Baseline: every admin + guest screen in the invariant sweep (today's dark), the switch-off identity check, contrast grounds. Needs the dev server alone. | **COMMITTED `459b3bbd` 2026-09-25** — results below |
 | 1 | The switch · theme gaps · R1/F1 · the frame (top strip, rail, phone bar + More, page header, event header) · Families · Public site editor | **COMMITTED `1b3cd541` 2026-09-25** — results below; walked at slice 6 |
-| 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | **BUILT 2026-09-26** — results below; /simplify + /review done; walked at slice 6 |
+| 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | **COMMITTED `ee175263` 2026-09-26** — results below; /simplify + /review done; walked at slice 6 |
 | 3 | Rep Teams · Accounting (F4 dense tables) | not started |
 | 4 | Tournaments (split by job if needed — record the split here first) | not started |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | not started |
