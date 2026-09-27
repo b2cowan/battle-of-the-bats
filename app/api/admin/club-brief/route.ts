@@ -121,12 +121,12 @@ export const GET = withObservability(async (req: Request) => {
         // with the oldest (specimen 1). Bounded by what is waiting, which is the point of the card.
         const { data, error } = await supabaseAdmin
           .from('rep_tryout_registrations')
-          .select('team_id, program_year_id, created_at, rep_program_years!inner(status)')
+          .select('team_id, program_year_id, submitted_at, rep_program_years!inner(status)')
           .eq('org_id', org.id)
           .eq('status', 'pending_review')
           .in('team_id', teamIds)
           .in('rep_program_years.status', ['draft', 'active'])
-          .order('created_at', { ascending: true });
+          .order('submitted_at', { ascending: true });
         if (error) { fail.error = error; return; }
         const rows = (data ?? []) as { team_id: string; program_year_id: string }[];
         counts.tryoutApplications = rows.length;
