@@ -402,11 +402,11 @@ dialog.truesize::backdrop{background:#16201899}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) committed 2026-09-25 · slice 2 (buttons, chips, type, House league, Organization) committed ee175263 2026-09-26 · slice 3 (Rep Teams, Accounting) committed 35705e32 2026-09-27 · slice 4a (tournament setup and records) committed 8e76362f 2026-09-27</small></div>
+  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) committed 2026-09-25 · slice 2 (buttons, chips, type, House league, Organization) committed ee175263 2026-09-26 · slice 3 (Rep Teams, Accounting) committed 35705e32 2026-09-27 · slice 4a (tournament setup and records) committed 8e76362f 2026-09-27 · slice 4b (tournament operations on game day) built 2026-09-27</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27">Build</li>
+    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, built 2026-09-27">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -1161,6 +1161,67 @@ dialog.truesize::backdrop{background:#16201899}
   </ul>
   <p><strong>Committed</strong> (8e76362f, 2026-09-27), after the pictures and the sweep were retaken on the final code. The build check that refuses hard-coded colours now also reads the shared site stylesheet, where the kit's buttons, tags, windows and fields live. Until today nothing checked those.</p>
   <p><strong>Found on the way, written down rather than fixed here:</strong> slice 3's links above a title are the same small target on a phone (to unify at release); the new-tournament wizard's upgrade notice uses styling that doesn't exist (it shows unstyled today, switch on or off); a few pages carry leftover unused styling.</p>
+
+  <h2>Slice 4b — tournament operations on game day (2026-09-27)</h2>
+  <p>Still nothing customers see. The screens an organizer lives in on game day now wear the kit in Warm and Dark: the dashboard (in a tournament organization's admin and in a club's own tournament), Teams, Results, Check-in, Staff kit, Communication and Chat. Same layout, columns, words and actions.</p>
+  <p><strong>Where the code differed from the plan, settled at the start:</strong></p>
+  <ul>
+    <li>The coin toss is not part of Results. It only appears on the public standings page and your preview of it, which keep your organization's colours.</li>
+    <li>The "3 games to finalize" strip above the phone bar was already done in slice 1.</li>
+    <li>The body of Results is the schedule's game list, so the game list moved into this slice (your call). It looks the same on the Schedule page's list view; the rest of the Schedule is 4c's.</li>
+    <li>Chat's conversation panel is the coaches portal's own and already followed the kit. This slice did the rooms list, the room's manage panel and the new-room window.</li>
+  </ul>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Screen</th><th>What you see with the switch on</th></tr></thead>
+    <tbody>
+      <tr><td>Dashboard</td><td>Its own header as the kit's header: your organization's name above the tournament's name, the status as a tag beside it (desktop, as today), Customize as its button. The stat tiles, game-day tiles, progress bars, checklist, prompts, the guidance panel, the live feed and the confirm windows all on the kit.</td></tr>
+      <tr><td>Teams</td><td>As drawn in specimen 2: rows on the kit's table, status and payment tags on the kit's chips, the team detail, capacity and health panels, the waitlist and slot board, the phone settings sheet and both import windows.</td></tr>
+      <tr><td>Results and the game list</td><td>Game rows with the date and venue as the small label line, team names in the body typeface, score steppers and fields, the live and status tags, conflict warnings and the edit form.</td></tr>
+      <tr><td>Check-in and Staff kit</td><td>The arrival board, counts, rows (the green checked-in and red no-show edge kept), the team sheet and roster editor; the volunteer links and QR codes.</td></tr>
+      <tr><td>Communication and Chat</td><td>The kit's header, the result banners, the compose window's channels and templates, the history tables and the delivery windows; Chat's admin panels.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The proof.</strong> With the switch off, all 60 pictures (every tournament screen and the three volunteer screens, the gate included because it shares the check-in board) are pixel-identical. With the switch on, contrast problems across the 10 screens this slice touches fell from 460 to <strong>7 in Warm</strong> and 142 in Dark, and no screen got worse on any check in either theme. None of what remains is this slice's own: the Schedule page's health panel and venue filter (4c), the shared phone bar's faint labels in Dark (slice 1's open question), and one faint line in the coaches portal's own chat panel, which reads the same in the portal.</p>
+  <p><strong>Caught in review and fixed before the proof:</strong></p>
+  <ul>
+    <li>Check-in rows would have lost their green checked-in and red no-show edge with the switch on.</li>
+    <li>Two Teams dropdowns (moving a team, and each team's pool picker) would have shown no arrow at all. The arrow is now drawn in the field's own colour, so it shows on either theme.</li>
+    <li>"Add roster" in the check-in sheet had become a second solid lime button beside the main arrival button. It is an accent again, as today.</li>
+    <li>The Staff kit's QR code would have sat on a dark square in Warm and been unreadable to a scanner. Its backing stays white in both themes.</li>
+  </ul>
+  <p><strong>Facts that moved out of a subtitle line</strong> (none dropped silently):</p>
+  <ul>
+    <li>Dashboard: your organization's name is the small line above the title; the status and its game-day label are a tag beside the tournament's name.</li>
+    <li>Check-in and Staff kit: the tournament's name is the small line above the title, as on every tournament screen.</li>
+    <li>Not moved, because the event header directly above already says it: the dashboard's dates. Lines that only describe the page are dropped: Communication's "Post updates to your site, email your teams, or both" and Teams' "Manage all teams and signups in one place".</li>
+  </ul>
+  <p><strong>Decided at build time, flagged for you:</strong></p>
+  <ul>
+    <li>Finalize is the lime main button, where today it is green: lime is the kit's one colour for "the thing to do next".</li>
+    <li>Revert score and Forfeit move from amber to red, because they erase a recorded result. Cancel game stays amber, because it can be reinstated.</li>
+    <li>Team names in the game list leave the console typeface for the body typeface, bold, as drawn. The stacked away/home layout stays; the drawing's one-line "A vs B" would be a redesign.</li>
+    <li>On the dashboard, the guidance panel's game-day tone is red to match the Live tag above it (it was amber); "ready to finalize" and "+N this week" are green.</li>
+    <li>Chat: the Organizer role tag is the quiet tag, since it names someone rather than judging them.</li>
+  </ul>
+  <p><strong>Found on the way, written down rather than fixed here:</strong></p>
+  <ul>
+    <li>The Teams phone problem from the baseline is now pinned down: in the Pools view, each team's slot row spills about 200 pixels past a phone's edge, taking a button with it. It's the same with the switch off, and fixing it changes the layout.</li>
+    <li>On Teams, an accepted team is green in the list, grey on the slot board and lime on the phone marker. A waitlisted team has no colour of its own, so it shows amber like a pending one. Fixing that changes which tag each status gets.</li>
+    <li>The dashboard's own header repeats the event header directly above it: the organization, name, dates and now a status tag beside the phase tag. A question for the tournament redesign.</li>
+    <li>A few pages carry leftover styling for features they no longer have.</li>
+  </ul>
+  <p><strong>Cleanup and review.</strong> The cleanup had three jobs, none of them visible:</p>
+  <ul>
+    <li>The dashboard's live feed now prepares its look once per update rather than once per line.</li>
+    <li>A few repeated styles became one, and the blue "information" colour joined the kit's shared set.</li>
+    <li>The build check that refuses hard-coded colours now reads every stylesheet in the product. Before, it needed a hand-kept list, which is how the chat windows nearly went unchecked.</li>
+  </ul>
+  <p>The review read the change three ways: nothing changes with the switch off, nothing reaches another screen, and the build check. It found three small things, all fixed:</p>
+  <ul>
+    <li>The dashboard's small line above the title went blank while your organization loads; today's screen says "Admin" there, and so does the new one.</li>
+    <li>Teams' "Done" button in the phone filter sheet had lost its hover.</li>
+    <li>A misleading code note.</li>
+  </ul>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1170,7 +1231,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>2</td><td>Buttons, chips, type; the rest of Hub and Organization; House league</td><td>Committed 2026-09-26 (<code>ee175263</code>); walked at slice 6</td></tr>
       <tr><td>3</td><td>Rep Teams, Accounting (money tables restyled in place)</td><td>Committed 35705e32, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4a</td><td>Tournaments: setup and records, and the parts every tournament screen shares</td><td>Committed 8e76362f, 2026-09-27; walked at slice 6</td></tr>
-      <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat)</td><td>Not started</td></tr>
+      <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat), and the game list, moved in from 4c</td><td>Built 2026-09-27; commit on your word; walked at slice 6</td></tr>
       <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Not started</td></tr>
       <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Not started</td></tr>
       <tr><td>6</td><td>Prove, walk, release</td><td>Not started</td></tr>
@@ -1260,6 +1321,7 @@ $('s1TrueClose').onclick=()=>$('s1True').close();
 document.querySelectorAll('[data-truesize]').forEach(b=>b.addEventListener('click',()=>{const src=document.getElementById(b.dataset.truesize);if(!src)return;const d=$('s1True');const body=d.querySelector('.tsbody');body.innerHTML='';const c=src.cloneNode(true);c.removeAttribute('id');body.appendChild(c);d.showModal()}));
 
 const DECISIONS=[
+  {date:'2026-09-27 · slice 4b',ask:'S4b · Does the schedule\'s game list move from 4c into 4b?',ruling:'accepted',label:'Accepted: it moves to 4b',why:'Owner, 2026-09-27: "Move it to 4b." The body of Results, the screen an organizer lives in on game day, is the schedule\'s game list in its score-entry form, styled from the schedule\'s own stylesheet. Left in 4c, Results would have been half restyled until then. 4c keeps the schedule page itself, the timeline, brackets, generator, playoff wizard and the schedule windows.'},
   {date:'2026-09-27 · slice 4',ask:'S4 · How is the tournament slice split?',ruling:'accepted',label:'Went ahead: three parts by job',why:'Proposed at the start of slice 4, and the owner went ahead ("the window is quiet"). The tournament screens measured about four times slice 3. The prompt\'s three jobs were not three equal sessions: records was small and operations was two and a half times a full session, over half of it the schedule. So: 4a setup and records plus the parts every tournament screen shares, 4b operations on game day, 4c the schedule.'},
   {date:'2026-09-26 · slice 2',ask:'S2a · Does the type change (F2) reach all 47 admin stylesheets in slice 2?',ruling:'accepted',label:'Accepted: in two layers',why:'Owner, 2026-09-26: "Yes, as proposed." The shared parts that reach every admin screen (buttons, chips, form labels, headings, the console overrides) change in slice 2. Each area's own stylesheets change with that area's slice: Rep Teams and Accounting in 3, Tournaments in 4, Help in 5. Doing them now would edit those sheets twice and collide with other sessions' tournament work.'},
   {date:'2026-09-26 · slice 2',ask:'S2b · What is left of the Hub for slice 2?',ruling:'accepted',label:'Accepted: setup and Notifications only',why:'Owner, 2026-09-26: "Yes, as proposed." Club Stage 1 replaced the hub for every organization that has one, and a tournament-only organization is sent to its tournaments. Slice 2 restyles setup for every plan except a Club owner (who has Stage 1's checklist) and the Notifications page.'},

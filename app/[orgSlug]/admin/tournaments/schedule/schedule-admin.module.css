@@ -4041,3 +4041,190 @@
 @media (max-width: 640px) {
   .resolveLocationRow { grid-template-columns: 1fr; }
 }
+
+/* ═══ ON THE KIT — the game list (Admin Design Continuity slice 4b, only with the switch on) ═══════
+   GameList.tsx is the body of Results in score-entry mode (mode="scoring") AND the Schedule page's
+   list view (mode="planning") — every rule below answers a class GameList actually reads from this
+   sheet, in both modes, so the two never fall out of sync when the switch flips. Everything else in
+   this 4,000-line file (the schedule page chrome, timeline, brackets, generator, playoff wizard, the
+   shift-day / resolve-locations / field-picker windows) belongs to slice 4c and is untouched here.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here.
+   ⚠ SPECIFICITY: `:global([data-admin-kit]) .x` outranks a bare legacy `.x[data-y]`/`.x.y` modifier
+   (the extra attribute selector adds a point), but ties with another KIT rule of the same shape — so
+   every modifier a base class carries in the legacy sheet above is restated here, base rule first. */
+
+/* ── Date / time text (both modes) — the bold date + secondary time are inline `kx()` patches in
+   GameList.tsx (row-invariant, hoisted above the row map); .dateLine itself carries no colour.
+   The venue sub-line is a fact line, not a label, so it moves to the body face like a secondaryCell. ── */
+:global([data-admin-kit]) .venueInDate {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+  opacity: 1; /* text-tertiary is already AA-tuned; the legacy 0.75 fade would double-dim it */
+}
+
+/* ── Date-group divider (flat pool view) — a section eyebrow, kept mono+uppercase ── */
+:global([data-admin-kit]) .gameDateDivider { color: var(--text-tertiary); }
+:global([data-admin-kit]) .gameDateDivider::after { background: var(--home-line); }
+/* A legacy lime TINT (rgba lime + lime ink) is an accent, not a primary — olive-soft fill, olive
+   border/ink, never a solid ink-on-lime highlight (this is a marker, not a second CTA). */
+:global([data-admin-kit]) .gameDateTodayBadge {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+
+/* ── Matchup team names — body face, bold (ADC specimen 4: "the matchup in the body face bold") ── */
+:global([data-admin-kit]) .planningTeamAway,
+:global([data-admin-kit]) .planningTeamHome,
+:global([data-admin-kit]) .scoringTeamName {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+
+/* ── Status tag (passive status word beside the row) — a readout, kept mono; light tier for AA ── */
+:global([data-admin-kit]) .statusTag[data-status="completed"] { color: var(--success-light); }
+:global([data-admin-kit]) .statusTag[data-status="submitted"] { color: var(--warning-light); }
+:global([data-admin-kit]) .statusTag[data-status="cancelled"] { color: var(--danger-light); }
+:global([data-admin-kit]) .statusTag[data-status="scheduled"] { color: var(--text-tertiary); }
+
+/* Mobile inline status tag — base (today's "Reviewing" default) THEN its two overrides, so the kit
+   rule can never tie-and-lose against its own modifier. */
+:global([data-admin-kit]) .mobileStatusTag { color: var(--warning-light); }
+:global([data-admin-kit]) .mobileStatusTag[data-status="cancelled"] { color: var(--danger-light); }
+:global([data-admin-kit]) .mobileStatusTag[data-status="completed"] { color: var(--success-light); }
+
+/* ── Conflict badge (desktop) / mobile tag / inline banner — light tier + the standard 0.08/0.3 tint ── */
+:global([data-admin-kit]) .conflictBadge[data-kind="overlap"] {
+  color: var(--danger-light);
+  background: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.3);
+}
+:global([data-admin-kit]) .conflictBadge[data-kind="buffer"] {
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+:global([data-admin-kit]) .mobileConflictTag[data-kind="overlap"] { color: var(--danger-light); }
+:global([data-admin-kit]) .mobileConflictTag[data-kind="buffer"] { color: var(--warning-light); }
+:global([data-admin-kit]) .conflictBanner[data-kind="overlap"] {
+  color: var(--danger-light);
+  background: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.3);
+}
+:global([data-admin-kit]) .conflictBanner[data-kind="buffer"] {
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+
+/* ── Live-game chip + row stripe — "Live = the portal's red", not the brand lime ── */
+:global([data-admin-kit]) .liveChip[data-live="live"]    { color: var(--home-live); background: var(--home-live-soft); }
+:global([data-admin-kit]) .liveChip[data-live="overdue"] { color: var(--warning-light); }
+:global([data-admin-kit]) .liveChip[data-live="next"]    { color: var(--info-light); }
+/* Longhand border-LEFT-color only — the shorthand would also have worked here (nothing else sets
+   this row's other three border sides), but longhand keeps the intent explicit: only the stripe's
+   hue moves, not its width/style. */
+:global([data-admin-kit]) .planningRow[data-live="live"],
+:global([data-admin-kit]) .scoringRow[data-live="live"] {
+  border-left-color: var(--home-live);
+  background: var(--home-live-soft);
+}
+
+/* ── Score entry — steppers, inline input, action bar (Field recipe: sans face, home-card ground) ── */
+:global([data-admin-kit]) .scoreStepBtn {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .scoreStepBtn:active {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .scoreInlineInput {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .scoreInlineInput:focus {
+  border-color: var(--home-olive);
+  box-shadow: none;
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .scoreActionBar {
+  background: var(--home-olive-soft);
+  border-top-color: var(--home-line);
+}
+:global([data-admin-kit]) .scoreActionBarAudit {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+/* "Tap the team that forfeited" — an instruction sentence, not a label: sentence case, body face. */
+:global([data-admin-kit]) .forfeitPrompt {
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+}
+/* Forfeit / clear a recorded result — the kit's danger, per the drawn screen's destructive tier. */
+:global([data-admin-kit]) .forfeitChoiceBtn { color: var(--danger-light); }
+:global([data-admin-kit]) .noShowTag {
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+}
+
+/* ── Planning inline edit panel — the expanded row's ground + fields ── */
+:global([data-admin-kit]) .expanded { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .inlineForm {
+  background: var(--home-olive-soft);
+  border-top-color: var(--home-line);
+}
+:global([data-admin-kit]) .formLabel { color: var(--text-tertiary); }
+:global([data-admin-kit]) .formInput,
+:global([data-admin-kit]) .formSelect,
+:global([data-admin-kit]) .formTextarea {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .formSelect option { background: var(--home-card); color: var(--text-primary); }
+:global([data-admin-kit]) .formInput:focus,
+:global([data-admin-kit]) .formSelect:focus,
+:global([data-admin-kit]) .formTextarea:focus {
+  border-color: var(--home-olive);
+  box-shadow: none;
+}
+/* The native date/time-picker + <select> popover chrome: legacy forces `color-scheme: dark`
+   unconditionally (fine on the kit's own Dark variant), but on Warm cream that paints the OS
+   control dark-on-light. `select`/`input[type=date|datetime-local]` already get a global
+   `color-scheme: light` fix under warm+coach-kit (app/globals.css); this closes the same gap for
+   `.formInput` on `type="time"`, which that global list doesn't cover. */
+:global(html[data-user-theme="warm"] [data-admin-kit]) .formInput,
+:global(html[data-user-theme="warm"] [data-admin-kit]) .formSelect {
+  color-scheme: light;
+}
+
+/* ── Inline form footer actions ── */
+:global([data-admin-kit]) .saveError { color: var(--danger-light); }
+/* "Keep" / "Release" (generator-lock toggle) — raw lime as TEXT; !important matches the legacy
+   declaration's own !important (a non-important kit rule cannot win against it). */
+:global([data-admin-kit]) .generatorLockAction { color: var(--home-olive) !important; }
+/* "KEPT" — a legacy lime tint (rgba fill + lime ink), so it is an accent, not a solid highlight. */
+:global([data-admin-kit]) .generatorLockBadge {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+/* "Cancel Game" — reversible via Reinstate (unlike Forfeit/Revert Score, which erase a recorded
+   result), so it stays the caution tier rather than moving to danger. !important matches legacy. */
+:global([data-admin-kit]) .inlineCancelButton { color: var(--warning-light) !important; }
+
+/* ── Cancelled-game action bar ── */
+:global([data-admin-kit]) .cancelledActionBar {
+  background: rgba(var(--danger-rgb), 0.08);
+  border-top-color: rgba(var(--danger-rgb), 0.3);
+}
+:global([data-admin-kit]) .cancelledActionText { color: var(--text-secondary); }

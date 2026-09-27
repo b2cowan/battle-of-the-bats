@@ -11,7 +11,9 @@
 > results in §3a; identity + switch-on sweep done; /simplify + /review done; **COMMITTED `35705e32` 2026-09-27**.
 > **Slice 4 split in three by job (2026-09-27, §3a).** **Slice 4a (tournament setup + records, and the
 > tournament screens' shared parts) BUILT 2026-09-27** — results in §3a; /simplify + /review done; identity
-> 58/58 + both-theme sweep done; **COMMITTED `8e76362f` 2026-09-27**. 4b (operations on game day) and 4c (the schedule) not started.
+> 58/58 + both-theme sweep done; **COMMITTED `8e76362f` 2026-09-27**. **Slice 4b (operations on game day, with
+> the game list moved in from 4c) BUILT 2026-09-27** — results in §3a; identity 60/60 + both-theme sweep
+> done; /simplify + /review done (owner: "go ahead with simplify, review and commit"). 4c (the schedule) not started.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -171,8 +173,8 @@ foundation's release day.
 | 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | **COMMITTED `ee175263` 2026-09-26** — results below; /simplify + /review done; walked at slice 6 |
 | 3 | Rep Teams · Accounting (F4 dense tables) | **BUILT 2026-09-27** — results below; /simplify + /review done; COMMITTED `35705e32` 2026-09-27; walked at slice 6 |
 | 4a | Tournaments — **setup and records, plus the area's shared parts** (split recorded below) | **BUILT 2026-09-27** — results below; /simplify + /review done; identity 58/58 + both-theme sweep done; COMMITTED `8e76362f` 2026-09-27; walked at slice 6 |
-| 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat | not started |
-| 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, game list, the schedule windows | not started |
+| 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; walked at slice 6 |
+| 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | not started |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | not started |
 | 6 | Prove (both-theme sweep, contrast, identity) · owner § walk · release (switch deleted, legacy removed, coaches help pin removed, What's New, `/docs`, `/release`) | not started |
 
@@ -198,7 +200,8 @@ job**, re-cut so each part is about slice 3's size:
   context strip and coin toss), Check-in (the admin's board; the volunteer gate is slice 5), Staff kit,
   Communication, Chat.
 - **4c — the schedule** (~349 literals, ~431 inline): the schedule page, Generator, Playoff wizard, the
-  bracket builder / editor / columns / connectors / zoom, the timeline, the game list, the shift-day /
+  bracket builder / editor / columns / connectors / zoom, the timeline, ~~the game list~~ (moved to 4b,
+  owner 2026-09-27 — it is Results' body), the shift-day /
   resolve-locations / field-picker windows, the health panel, the zero-venue prompt.
 - **Not in slice 4 at all:** the four tournament pages that re-export another screen — Members and its
   audit log and Plan & subscription (Club Stage 1's), PDF settings (slice 2's); "manage" re-exports the
@@ -788,6 +791,166 @@ bodies in parallel against one brief; every diff was reviewed in the main loop.
   `communication`, `chat-admin`; 4c `schedule-admin.module.css`, `ScheduleTimeline`, `BracketBuilder` and
   the schedule windows) and add their directories to `RESTYLED_DIRS`. The dashboard's own header
   (`AdminEventHeader` + page) and the Schedule's "Published" chip are theirs.
+
+**Slice 4b — results (2026-09-27).** One quiet window on the owner's word ("Quiet — go ahead"), covering
+the "before" set, the build, the "after" set and the switch-on sweeps. The dev server was restarted
+fresh from this session at the start (it held 3.7 GB after 4a's sweeps) and again before the "after" set.
+- **Scope, corrected from the code at the start** (the ledger line had been written from the plan, not
+  the code):
+  - **The coin toss is not Results'.** `CoinTossRecorder` renders only in the PUBLIC standings
+    (`components/public/StandingsContent`) and the admin's preview of it — R2, the organization's
+    colours. Out of slice 4.
+  - **Results' "context strip" is the phone bar's strip** (`AdminContextStrip`), already on the kit
+    since slice 1.
+  - **The game list moved from 4c into 4b** (owner, at the start: "Move it to 4b"). Results' body IS
+    `schedule/components/GameList.tsx` in `mode="scoring"`, styled from the schedule's sheet, so game day
+    is finished in one slice. 4b wrote the game list's kit block at the end of
+    `schedule-admin.module.css` (only the classes `GameList.tsx` reads, both modes, since the Schedule's
+    list view is the same component); **4c restyles the rest of that sheet** — the schedule page,
+    timeline, brackets, generator, playoff wizard, the shift-day / resolve-locations / field-picker
+    windows, the health panel, the zero-venue prompt. `TournamentFieldPicker` stays 4c's (scoring mode
+    never renders it).
+  - **Chat's conversation panel is the coaches portal's own** (`ChatPanel`, whose warm rules key on
+    `html[data-user-theme="warm"] [data-coach-warm-enabled]` — the admin marker carries that attribute,
+    so it wears the portal look already). 4b restyled only the three admin-only parts (rooms list, manage
+    panel, new-room window — imported by nothing but the admin chat page).
+  - **The check-in board is shared with the volunteer gate**; every rule is kit-scoped, and the gate is
+    in the identity set to prove it untouched. The gate's own palette is slice 5's.
+  - The Teams import windows open from Data tools (4a's screen) and were still 4b's.
+- **Built by five parallel page builders against one shared brief** (dashboard · Teams + import windows
+  · Results + game list · Communication + Chat · Check-in + Staff kit), each diff reviewed in the main
+  loop. Two mechanical audits were written during the review and run over every 4b sheet (kept in
+  `.probe/`, not the repo — candidates for the release slice's gate):
+  - **A kit base rule shadows a legacy STATE rule of equal weight.** `[data-admin-kit] .x` weighs
+    (0,2,0), the same as a legacy `.x[data-status=…]` / `.x.active` / `.x:hover`, and comes later, so
+    it silently wipes the state colour; a `border-color` shorthand also wipes a `border-left-color`
+    stripe. **Caught on the check-in board** (the checked-in / no-show row stripe vanished on the kit) —
+    fixed by restating the stripe after the base rule; the builders were told mid-flight and every sheet
+    was audited after.
+  - **A kit `background:` shorthand resets `background-image`.** **Caught on Teams**: the transfer and
+    per-row pool pickers draw their arrow as a data-URI image (`appearance: none`), and the kit's
+    `background:` wiped it — a dropdown with no arrow. Fixed with `background-color` plus the chevron
+    redrawn from two `currentColor` gradients at the legacy arrow's place (the legacy arrow is a fixed
+    white / lime / red image an SVG stroke cannot re-theme).
+  - Also fixed in review: the check-in sheet's "Add roster" was made a solid ink-on-lime button, giving
+    the sheet two primaries; legacy is a lime TINT, so on the kit it is the olive accent.
+- **Restyled end to end** (kit layers; inline colours through `kx`): the dashboard in both frames (stat
+  tiles, game-day tiles, gauges, checklist, attention panels, coin-toss and reuse prompts, Customize
+  mode, the guidance rail, the persona panel, the live feed, the four confirm windows' scrims → 
+  `--home-scrim`, the sparkline's stroke → olive through a stylesheet rule — an SVG presentation
+  attribute loses to any rule), Teams (rows, status and payment chips, the expanded detail, capacity and
+  health panels, waitlist, slot board, bulk bar, the phone settings sheet, the rep-link picker, both
+  import windows), Results (the phone settings sheet and summary strip) and the game list in both modes
+  (date line, matchup, score steppers and inputs, action bar, forfeit, status and live chips, conflict
+  badges and banner, the inline edit form), Check-in (gauges, toolbar, rows, the detail sheet, roster
+  editor), Staff kit, Communication (result banners, compose window's channels / templates / divisions,
+  the history tables and tabs, the email detail and recipients windows) and Chat's admin chrome.
+- **F3.** The dashboard's own header → `AdminPageHeader`: eyebrow = the organization (a tournament's
+  home page), title = the tournament's name (words unchanged), the status + "game day / registration"
+  label → a state chip beside the title (same words, toned like the event header's phase chip —
+  `resolvePhase`; desktop-only as today), Customize → the header's action. **Not re-homed:** the
+  dashboard's date line (the event header directly above prints the same `startDate`/`endDate` —
+  verified), Communication's "Post updates to your site, email your teams, or both — from one place."
+  and Teams' "Manage all teams and signups in one place" (descriptions of the page). Check-in's and Staff
+  kit's subtitle is the tournament's name (→ the eyebrow, 4a's shared header); its "Select a tournament"
+  fallback is restated by each page's own empty state. Chat draws no header.
+- **Decided at build time / not as drawn (flag to the owner):**
+  1. **Finalize** is the kit's primary (ink-on-lime) where it was a green `btn-success` — a
+     switch-gated class, the one primary action of a submitted-score row.
+  2. **Revert score and Forfeit move from amber to the kit's danger red** (they erase a recorded
+     result); **Cancel game stays amber** (Reinstate undoes it).
+  3. **The game list's team names** leave the console mono face for the body face, bold (specimen 4);
+     the stacked away-over-home layout is unchanged, so the drawing's one-line "A vs B" is not adopted.
+     The dashboard's game-day tiles keep their layout too — specimen 4 draws a different row shape
+     (a redesign question for Phase 3).
+  4. **Dashboard tones:** the guidance rail's "live" tone amber → red (the same `isGameDay` fact the
+     header's Live chip shows in red); its "ready to finalize" milestone and the "+N this week" velocity
+     chip lime → green (a good outcome); the "done" family (checklist ticks, done rows) olive, as 4a's
+     summary; the live feed's registration events blue, scores olive.
+  5. **Check-in:** the jersey-number field leaves mono for the body face (a field, not a readout); "Add
+     roster" is the olive accent (above).
+  6. **Staff kit:** the QR code's backing is `--white-fixed` on the kit — `--white` is the warm INK, so
+     the QR would have sat on a dark square in Warm and failed to scan. (Legacy and Dark unchanged.)
+  7. **Chat:** the "Organizer" role tag is the quiet chip (it names, it does not judge — was blue); the
+     "Muted" tag gains the amber tint fill; the reports badge's number is `--white-fixed` on its red.
+  8. **Teams:** the phone status marker for a waitlisted team is the quiet chip (as drawn); a neutral
+     health note is the info blue.
+- **Identity (switch off):** "before" 2026-09-27T17:36Z @ `81461b40` on the untouched tree after the
+  restart (tournaments + volunteer, 30 screens, 60 pictures — the volunteer gate included because it
+  shares the check-in board); "after" 18:27Z after a second restart — **60 of 60 pixel-identical**.
+- **Switch-on sweep** (the 10 screens 4b touches — dashboard ×2 frames, Teams, Results, Check-in, Staff
+  kit, Communication, Chat, the Schedule (the game list), Data tools (the import windows) — × 361/390/
+  768/1440, 40 pairs each, none unmeasured) against the switch-off dark baseline: **contrast 460 → Warm 7 /
+  Dark 142**; tap floor 445 → 353 (both); control width 99 → 96; overflow 14 → 13; type ladder 4 → 4;
+  control off-screen 2 → 2. **No screen × rule group worse in either theme.** Attributed: **Warm 7** = the
+  Schedule's own health panel ("Team detail", "Show") and venue filter ("All venues") — 4c; **Dark 142** =
+  120 the shared phone bar's inactive labels (slice 1's open question, every screen), 16 + 2 the
+  Schedule's health-panel figures and venue filter (4c), 4 the coaches portal's conversation panel's
+  empty line ("Be the first to say something." — `--home-dim` at 4.48:1, the same Dark `--home-dim`
+  finding slice 3 made on the portal's Upcoming Bills; one fix repairs both portals). **This slice's own
+  surfaces: 0 in Warm; in Dark only the phone bar.**
+- **Gates:** the strict kit check now reads **every `.module.css` under `app/` and `components/`** plus
+  `app/globals.css` — a kit rule is recognised by its selector, not by which scope owns its sheet. (The
+  build first added the three admin-only chat sheets by hand — `components/chat` is the shared scope, so
+  the operator scope never read them — and /simplify replaced the hand list with the repo-wide walk; the
+  file set is a strict superset of the old one and finds no other kit sheet; a planted literal in a chat
+  sheet proven caught.) 2,070 kit rules after /simplify's merges, no literal colour. The restyled ratchet gains the slice's 8 directories
+  and 8 files — the game list, the whole schedule sheet (held now; 4c lowers it), the check-in board, the
+  live feed, the three chat sheets (127 files, 701 legacy literals held; the baseline change is
+  additive — 16 entries added, none moved). Byte-equal swaps: `#f87171`/`#fbbf24` → `--danger-light`/
+  `--warning-light` in the game list's conflict banner and `#fbbf24` → `--warning-light` in Teams'
+  capacity strip. Typecheck clean (whole tree, after `next typegen`); lint 0 errors, and the six changed
+  pages' findings match HEAD rule for rule (no new warnings); `verify:changed` green, unit 5,042 / 5,042.
+- **Found, written down, not fixed:**
+  1. **The Teams phone defect, now located:** at 361/390 the Pools view's slot rows ("Red Team 1 ·
+     Falcons U11 Girls · Coach Falcons …") spill ~170–225px with no scroller, which carries a row button
+     152–181px off-screen. Unchanged by the kit (same findings switch-off). A layout fix — not a
+     restyle. (A builder's kit-only `flex-wrap` on the Pools action row is harmless but was not the
+     cause.)
+  2. **Teams' status tags disagree:** an accepted team is green in the flat list, the quiet chip in the
+     slot board and lime in the phone marker; and a waitlisted team has no tone of its own in the
+     `badge-*` ternaries (it falls in with pending, amber), so specimen 2's "Waitlisted quiet" is met only
+     on the phone marker. A logic change, not a restyle.
+  3. **The dashboard's header repeats the event header directly above it** (organization, name, dates —
+     and on the kit a status chip beside the event header's phase chip). Phase 3's question.
+  4. **Dead CSS left alone:** Communication (~25 classes from an earlier card layout), Chat's
+     `.manageBtnCount`, Results' venue-filter classes (a removed feature), Teams' `--teams-select-bg`
+     (now dead under the kit, live switch-off).
+  5. Communication's history tab: hovering the ACTIVE tab has always reverted it to the hover colours
+     (legacy `:hover` outranks the active class); the kit mirrors it.
+- **`/simplify` (4 lenses — reuse, simplification, efficiency, altitude):** fixed —
+  - **The live feed built four styles per event row on every render**, and it re-renders on every live
+    event: its styles are module constants patched once per render (`useMemo`), switch-off objects
+    byte-identical in keys, values and order.
+  - **`KIT_INK.info`** (the `-light` blue ink) joins `kit-inline.ts`; the dashboard and the live feed
+    stop hand-typing it, and the feed's per-type inks reference `KIT_INK` instead of repeating strings.
+  - **The dashboard gauge's two parallel ternary chains** (fill and ink, each re-deciding legacy vs kit)
+    are one tone lookup (`GAUGE_TONE` / `GAUGE_KIT_FILL` + `KIT_INK[tone]` through `kx`); a duplicate
+    legacy constant removed.
+  - **Merged in place, within one sheet:** Teams' six identical eyebrow blocks, Communication's two
+    identical banner pairs, the dashboard checklist's paired tone rules (11 rules fewer).
+  - **The gate's hand list → the repo-wide walk** (above).
+  - Declined: **sharing recipes across sheets** (the chosen chip, the bottom sheet, the empty card) —
+    `composes` adds a class name to today's markup, a switch-off change; the release slice folds the
+    kit layers (slices 2–4a declined the same); **the scattered same-recipe groups inside the Teams and
+    dashboard sheets** (moving rules hundreds of lines apart in a cascade-ordered layer needs the page
+    structure to prove harmless, and the release slice folds them anyway); the Teams chevron as a shared
+    token (two uses in one sheet); a "third select" that is a checkbox, already styled.
+- **`/review` (standard tier, 3 lenses — switch-off identity + correctness, regression / blast radius,
+  gate contract):** switch-off identity holds in every TSX hunk (every legacy style object byte-identical
+  in keys, values and order; hooks before every early return; `AdminPageHeader` renders only `legacy`
+  when off); every CSS hunk is a pure append; the check-in board cannot reach the volunteer gate, the
+  game list's kit block serves both modes and never renders in a public preview, the chat sheets are
+  admin-only, nothing reaches the coaches portal; the gate's new walk is a strict superset and the
+  baseline change additive. **Fixed (Low):** the dashboard's kit eyebrow went blank while the
+  organization loads (legacy says "Admin") — same fallback now; Teams' kit "Done" lost its hover to an
+  equal-weight kit rule — restated, as Results' own; (Advisory) the guidance rail comment claimed the
+  "ready" state turns green — only its border does. Refuted: the Results "Done" hover tint (the portal's
+  chosen-chip tint, 4a precedent); a crash on an unknown feed event type (today's code already fails
+  first on the same input). Gates re-run green (verify:changed 5,042 / 5,042; typecheck; lint = HEAD;
+  token gate 2,070 kit rules). `check:layout --changed`, the identity check and the switch-on sweep were
+  **not retaken after /simplify + /review** (a quiet window) — everything changed since them is kit-only
+  or legacy-byte-identical by construction, as the correctness lens confirmed.
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as

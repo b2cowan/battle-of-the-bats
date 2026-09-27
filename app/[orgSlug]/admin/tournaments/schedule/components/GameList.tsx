@@ -15,6 +15,8 @@ import { Pool } from '@/lib/types';
 import s from '../../../admin-common.module.css';
 import styles from '../schedule-admin.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 
 interface GameListProps {
   games: Game[];
@@ -68,6 +70,10 @@ export default function GameList({
   games, teams, divisions, venues, viewMode, groupByPool, pools: poolsProp,
   onEdit, onPlayoffEdit, onFinalize, onDelete, onCancel, onSchedule, onToggleGeneratorLock, onSave, onSaveScore, onForfeit, onCreateVenue, mode, conflictsOnly = false, tournament, focusGameId
 }: GameListProps) {
+  // Admin Design Continuity slice 4b — the kit switch. `kit` gates the one className swap
+  // (Finalize's fill); `kx` patches every hand-set inline colour below while the switch is off.
+  const kit = useAdminKit();
+  const kx = useKitStyle();
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   // Sport-pack surface noun for the field picker — never hard-coded.
   const fieldNoun = fieldNounFor(tournament?.sport);
@@ -321,6 +327,25 @@ export default function GameList({
     return result;
   }, [expanded, editState, games, divisions, tournament, mode]);
 
+  // ── Row-invariant kit patches — computed once per render, not once per row/map() call ──
+  const scoringDateBoldStyle = kx({ fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }, KIT_INK.primary);
+  const scoringDateTimeStyle = kx({ fontSize: '0.72rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }, KIT_INK.tertiary);
+  const planningDateBoldStyle = kx({ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }, KIT_INK.primary);
+  const planningDateTimeStyle = kx({ fontSize: '0.75rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }, KIT_INK.tertiary);
+  // Revert Score / Forfeit — both clear a recorded (or about-to-be-recorded) result, so both
+  // move to the kit's danger ink (brief: "destructive (forfeit/clear) the kit's danger"),
+  // not the legacy warning-amber ghost-button text.
+  const revertScoreBtnStyle = kx({ color: 'rgba(var(--warning-rgb), 0.8)', flexShrink: 0 }, KIT_INK.danger);
+  const forfeitTriggerBtnStyle = kx({ color: 'rgba(var(--warning-rgb), 0.85)', flexShrink: 0 }, KIT_INK.danger);
+  const saveAnywayBtnStyle = kx(
+    { borderColor: 'rgba(251,191,36,0.5)', color: 'var(--warning-light)' },
+    { borderColor: 'rgba(var(--warning-rgb), 0.5)' },
+  );
+  // Playoff pool-round markers — a solid accent (home-olive), not the raw brand lime as text/fill.
+  const poolDotAccentStyle = kx({ background: 'var(--logic-lime)' }, { background: 'var(--home-olive)' });
+  const poolLabelAccentStyle = kx({ color: 'var(--logic-lime)', fontSize: '0.7rem' }, KIT_INK.accent);
+  const poolDotNeutralStyle = kx({ background: 'var(--white-20)' }, { background: 'var(--text-tertiary)' });
+
   function statusBadge(status: string, source?: string | null) {
     // A passive status label — deliberately borderless (no button-like box) so it
     // never reads as the clickable Finalize control beside it.
@@ -424,10 +449,10 @@ export default function GameList({
             <div className={`${s.gameColDate} ${styles.scoringDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
               <div className={styles.dateLine}>
                 <span style={{ whiteSpace: 'nowrap' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.8rem', color: 'var(--fl-text)', letterSpacing: '0.01em' }}>
+                  <span style={scoringDateBoldStyle}>
                     {g.date ? formatShortDate(g.date) : 'TBD'}
                   </span>
-                  <span style={{ fontSize: '0.72rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
+                  <span style={scoringDateTimeStyle}>
                     {g.time ? `· ${formatTime(g.time)}` : '· —'}
                   </span>
                 </span>
@@ -470,7 +495,7 @@ export default function GameList({
                     <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'away', 1); }} aria-label="Increase away score"><Plus size={16} /></button>
                   </span>
                 ) : hasScoredResult ? (
-                  <span className={styles.scoreInlineValue} style={{ color: awayWon ? 'var(--success)' : 'var(--data-gray)' }}>
+                  <span className={styles.scoreInlineValue} style={kx({ color: awayWon ? 'var(--success)' : 'var(--data-gray)' }, { color: awayWon ? 'var(--success-light)' : 'var(--text-tertiary)' })}>
                     {g.awayScore}
                   </span>
                 ) : null}
@@ -506,7 +531,7 @@ export default function GameList({
                     <button type="button" className={styles.scoreStepBtn} onClick={e => { e.stopPropagation(); bumpScore(g.id, 'home', 1); }} aria-label="Increase home score"><Plus size={16} /></button>
                   </span>
                 ) : hasScoredResult ? (
-                  <span className={styles.scoreInlineValue} style={{ color: homeWon ? 'var(--success)' : 'var(--data-gray)' }}>
+                  <span className={styles.scoreInlineValue} style={kx({ color: homeWon ? 'var(--success)' : 'var(--data-gray)' }, { color: homeWon ? 'var(--success-light)' : 'var(--text-tertiary)' })}>
                     {g.homeScore}
                   </span>
                 ) : null}
@@ -522,7 +547,7 @@ export default function GameList({
               <div className={`${s.gameStatusSlot} ${styles.desktopStatusSlot}`}>{statusBadge(g.status, g.scoreSubmissionSource)}</div>
               {/* Finalize — quick-access, rendered only when relevant (no fixed-width wrapper) */}
               {!isExpanded && onFinalize && g.status === 'submitted' && (
-                <button className="btn btn-success btn-data" aria-label="Finalize result" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
+                <button className={`btn ${kit ? 'btn-lime' : 'btn-success'} btn-data`} aria-label="Finalize result" onClick={e => { e.stopPropagation(); onFinalize(g.id); }}>
                   <Check size={15} className={styles.finalizeIcon} aria-hidden />
                   <span className={styles.finalizeLabel}>Finalize</span>
                 </button>
@@ -559,7 +584,7 @@ export default function GameList({
             <div className={styles.scoreActionBar}>
               <div className={styles.scoreActionBarLeft}>
                 {hasExistingScore && onSchedule && (
-                  <button className="btn btn-ghost btn-data" style={{ color: 'rgba(var(--warning-rgb), 0.8)', flexShrink: 0 }} onClick={e => { e.stopPropagation(); onSchedule(g.id); }}>
+                  <button className="btn btn-ghost btn-data" style={revertScoreBtnStyle} onClick={e => { e.stopPropagation(); onSchedule(g.id); }}>
                     <X size={13} /> Revert Score
                   </button>
                 )}
@@ -567,7 +592,7 @@ export default function GameList({
                   <button
                     type="button"
                     className="btn btn-ghost btn-data"
-                    style={{ color: 'rgba(var(--warning-rgb), 0.85)', flexShrink: 0 }}
+                    style={forfeitTriggerBtnStyle}
                     disabled={isScoringBusy}
                     onClick={e => { e.stopPropagation(); setForfeitPickerId(g.id); }}
                   >
@@ -657,10 +682,10 @@ export default function GameList({
           <div className={`${s.gameColDate} ${styles.planningDateCell}`} style={{ fontFamily: 'var(--font-data)' }}>
             <div className={styles.dateLine}>
               <span style={{ whiteSpace: 'nowrap' }}>
-                <span style={{ fontSize: '0.78rem', fontWeight: 700, color: 'var(--fl-text)' }}>
+                <span style={planningDateBoldStyle}>
                   {g.date ? formatShortDate(g.date) : 'TBD'}
                 </span>
-                <span style={{ fontSize: '0.75rem', color: 'var(--data-gray)', marginLeft: '0.4rem' }}>
+                <span style={planningDateTimeStyle}>
                   {g.time ? `· ${formatTime(g.time)}` : '· —'}
                 </span>
                 {g.status !== 'scheduled' && (
@@ -975,17 +1000,22 @@ export default function GameList({
 
             {/* Inline conflict banner */}
             {inlineConflict && (
-              <div style={{
+              <div style={kx({
                 margin: '0 0 0.5rem',
                 padding: '0.55rem 0.75rem',
                 borderRadius: '2px',
                 background: inlineConflict.kind === 'overlap' ? 'rgba(239,68,68,0.08)' : 'rgba(251,191,36,0.08)',
                 border: `1px solid ${inlineConflict.kind === 'overlap' ? 'rgba(239,68,68,0.4)' : 'rgba(251,191,36,0.35)'}`,
-              }}>
+              }, {
+                background: inlineConflict.kind === 'overlap' ? 'rgba(var(--danger-rgb), 0.08)' : 'rgba(var(--warning-rgb), 0.08)',
+                border: `1px solid ${inlineConflict.kind === 'overlap' ? 'rgba(var(--danger-rgb), 0.3)' : 'rgba(var(--warning-rgb), 0.3)'}`,
+              })}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {/* #f87171 / #fbbf24 are byte-equal to --danger-light / --warning-light in the
+                      admin's plain :root (ADC rule 4) — a straight token swap, not kit-gated. */}
                   <p style={{
                     fontWeight: 700, fontSize: '0.78rem', margin: 0,
-                    color: inlineConflict.kind === 'overlap' ? '#f87171' : '#fbbf24',
+                    color: inlineConflict.kind === 'overlap' ? 'var(--danger-light)' : 'var(--warning-light)',
                     display: 'flex', alignItems: 'center', gap: '0.3rem',
                   }}>
                     <AlertTriangle size={12} />
@@ -1049,7 +1079,7 @@ export default function GameList({
                 {inlineConflict?.kind === 'buffer' ? (
                   <button
                     className="btn btn-outline btn-data"
-                    style={{ borderColor: 'rgba(251,191,36,0.5)', color: '#fbbf24' }}
+                    style={saveAnywayBtnStyle}
                     disabled={isSaving || !onSave}
                     onClick={handleSave}
                   >
@@ -1154,8 +1184,8 @@ export default function GameList({
             return poolSections.map(({ poolName, games: poolGames }) => (
               <div key={poolName}>
                 <div className={s.poolSubHeader} style={{ marginTop: '1rem' }}>
-                  <div className={s.poolDot} style={{ background: 'var(--logic-lime)' }} />
-                  <span className={s.poolSubLabel} style={{ color: 'var(--logic-lime)', fontSize: '0.7rem' }}>
+                  <div className={s.poolDot} style={poolDotAccentStyle} />
+                  <span className={s.poolSubLabel} style={poolLabelAccentStyle}>
                     {formatPoolName(poolName)} PLAYOFFS
                   </span>
                   <span className={s.poolSubCount}>({poolGames.length})</span>
@@ -1163,7 +1193,7 @@ export default function GameList({
                 {groupByRound(poolGames).map(({ key, label, games: rGames }) => (
                   <div key={key} className={s.poolSubSection}>
                     <div className={s.poolSubHeader} style={{ paddingLeft: '1.5rem' }}>
-                      <div className={s.poolDot} style={{ background: 'var(--white-20)' }} />
+                      <div className={s.poolDot} style={poolDotNeutralStyle} />
                       <span className={s.poolSubLabel}>{label}</span>
                       <span className={s.poolSubCount}>({rGames.length})</span>
                     </div>
@@ -1178,7 +1208,7 @@ export default function GameList({
           return groupByRound(sortedGames).map(({ key, label, games: rGames }) => (
             <div key={key} className={s.poolSubSection}>
               <div className={s.poolSubHeader}>
-                <div className={s.poolDot} style={{ background: 'var(--logic-lime)' }} />
+                <div className={s.poolDot} style={poolDotAccentStyle} />
                 <span className={s.poolSubLabel}>{label}</span>
                 <span className={s.poolSubCount}>({rGames.length})</span>
               </div>
@@ -1206,8 +1236,14 @@ export default function GameList({
             return (
               <div key={p.id} className={s.poolSubSection}>
                 <div className={s.poolSubHeader}>
-                  <div className={s.poolDot} style={{ background: p.id === 'unassigned' ? 'var(--danger)' : 'var(--logic-lime)' }} />
-                  <span className={s.poolSubLabel} style={{ color: p.id === 'unassigned' ? 'var(--danger)' : undefined }}>
+                  <div className={s.poolDot} style={kx(
+                    { background: p.id === 'unassigned' ? 'var(--danger)' : 'var(--logic-lime)' },
+                    { background: p.id === 'unassigned' ? 'var(--danger)' : 'var(--home-olive)' },
+                  )} />
+                  <span className={s.poolSubLabel} style={kx(
+                    { color: p.id === 'unassigned' ? 'var(--danger)' : undefined },
+                    { color: p.id === 'unassigned' ? 'var(--danger-light)' : undefined },
+                  )}>
                     {p.id === 'unassigned' ? 'UNASSIGNED' : formatPoolName(p.name).toUpperCase()}
                   </span>
                   <span className={s.poolSubCount}>({poolGames.length})</span>

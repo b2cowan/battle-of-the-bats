@@ -66,6 +66,7 @@ export const KIT_INK = {
   danger: { color: 'var(--danger-light)' },
   success: { color: 'var(--success-light)' },
   warning: { color: 'var(--warning-light)' },
+  info: { color: 'var(--info-light)' },
   /** A table's column heading — the standard's quiet head. */
   head: { fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontSize: 'var(--type-support)', fontWeight: 650, letterSpacing: 'normal', textTransform: 'none', color: 'var(--text-tertiary)' },
   /** A required field's asterisk: the label's own ink (portal ruling 2026-08-25 — red means something went wrong). */

@@ -2353,3 +2353,676 @@
     font-size: 1.5rem;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   The tournament dashboard — game day and before it. The console mono+uppercase moves to the body
+   face on titles/buttons/table heads (F2); it stays on eyebrows, chips and readouts. Bare
+   `--logic-lime`/`--blueprint-blue` split by role: a section eyebrow or a figure caption reads
+   `--text-secondary`; a big standalone figure reads `--text-primary`; an icon or a link/action reads
+   `--home-olive`; a plain decorative fill (a progress bar, never text) reads `--home-lime`. Bare
+   `--danger`/`--warning`/`--success`/`--info` move to their `-light` tier wherever they colour TEXT or
+   an icon glyph — borders/tints already resolve through `-rgb` and are untouched. Card chrome
+   (`--blueprint-blue`/`--white-N`/`--border-2`/`--hud-surface` washes) becomes the plain Card recipe;
+   the few spots that mean the INFO state specifically (Up Next, waitlist, "info" tones) keep that
+   meaning via `--info`/`--info-light`. ⚠ TOKENS ONLY. */
+
+/* ── Stat cards ──────────────────────────────────────────────────────────── */
+:global([data-admin-kit]) .statCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  box-shadow: none;
+}
+:global([data-admin-kit]) .statCard:hover {
+  border-color: var(--home-olive);
+  box-shadow: none;
+}
+:global([data-admin-kit]) .statIcon {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .statNum {
+  font-family: var(--font-data);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+:global([data-admin-kit]) .statLabel {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .statSubValue { color: var(--text-tertiary); }
+:global([data-admin-kit]) .statCardStatic:hover,
+:global([data-admin-kit]) .statCardEditing:hover {
+  border-color: var(--home-line);
+  box-shadow: none;
+}
+
+/* ── Section eyebrows (every panel's small caption title) ───────────────── */
+:global([data-admin-kit]) .sectionTitle,
+:global([data-admin-kit]) .editToolbarTitle,
+:global([data-admin-kit]) .reuseCopyPanel h4 {
+  color: var(--text-secondary);
+}
+
+/* ── Reuse-setup / completed-upsell prompt (Card recipe) ─────────────────── */
+:global([data-admin-kit]) .reuseSetupPrompt,
+:global([data-admin-kit]) .completedUpsell {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .reusePromptIcon,
+:global([data-admin-kit]) .completedUpsellIcon {
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .reusePromptTitle,
+:global([data-admin-kit]) .completedUpsellBody strong {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .reusePromptBody p,
+:global([data-admin-kit]) .completedUpsellBody p {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+
+/* ── Reuse / populate-from modal copy ─────────────────────────────────────── */
+:global([data-admin-kit]) .reuseModalTitle p,
+:global([data-admin-kit]) .modalNote {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .reuseModalBody {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .sourceButton {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .sourceButton:hover {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .sourceName {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .sourceMeta {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .reuseCopyPanel {
+  border-color: var(--home-line-strong);
+  background: var(--home-card, var(--card-bg));
+}
+:global([data-admin-kit]) .reuseCopyList li,
+:global([data-admin-kit]) .copiedSummaryList li { color: var(--text-secondary); }
+:global([data-admin-kit]) .checkDot { background: var(--home-olive); }
+:global([data-admin-kit]) .neverDot { background: var(--home-line-strong); }
+:global([data-admin-kit]) .copiedSummaryList {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+
+/* ── Publish checklist ────────────────────────────────────────────────────── */
+:global([data-admin-kit]) .publishChecklist {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .checklistReady { background: var(--card-bg); }
+:global([data-admin-kit]) .checklistSub {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .progressTrack { background: var(--home-line); }
+:global([data-admin-kit]) .progressFill { background: var(--home-lime); }
+:global([data-admin-kit]) .checklistList { border-color: var(--home-line); }
+:global([data-admin-kit]) .checklistDivider {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .checklistRow {
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .checklistRow:hover {
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .checklistRowDone:hover {
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .rowIcon { color: var(--warning-light); }
+:global([data-admin-kit]) .checklistRowDone .rowIcon { color: var(--home-olive); }
+:global([data-admin-kit]) .rowLabel,
+:global([data-admin-kit]) .rowLabelLink {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .checklistRowDone .rowLabel,
+:global([data-admin-kit]) .checklistRowDone .rowLabelLink { color: var(--home-olive); }
+:global([data-admin-kit]) .checklistRow .rowIconMuted { color: var(--text-tertiary); }
+:global([data-admin-kit]) .checklistRow .rowIcon[data-sched-tone='neutral'],
+:global([data-admin-kit]) .checklistRow .rowStatus[data-sched-tone='neutral'] { color: var(--text-tertiary); }
+:global([data-admin-kit]) .checklistRow .rowIcon[data-sched-tone='good'],
+:global([data-admin-kit]) .checklistRow .rowStatus[data-sched-tone='good']    { color: var(--success-light); }
+:global([data-admin-kit]) .checklistRow .rowIcon[data-sched-tone='warning'],
+:global([data-admin-kit]) .checklistRow .rowStatus[data-sched-tone='warning'] { color: var(--warning-light); }
+:global([data-admin-kit]) .checklistRow .rowIcon[data-sched-tone='danger'],
+:global([data-admin-kit]) .checklistRow .rowStatus[data-sched-tone='danger']  { color: var(--danger-light); }
+:global([data-admin-kit]) .rowOptTag {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .rowStatus { color: var(--home-olive); }
+:global([data-admin-kit]) .checklistRowPending .rowStatus { color: var(--home-olive); }
+:global([data-admin-kit]) .rowDesc {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+
+/* ── Analytics panels (Card recipe) ──────────────────────────────────────── */
+:global([data-admin-kit]) .analyticsPanel {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  box-shadow: none;
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .panelLink {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .panelLink:hover { color: var(--home-olive); }
+
+/* ── Now Playing / Up Next / Needs a Score strips ────────────────────────── */
+:global([data-admin-kit]) .liveRow {
+  background: var(--home-card, var(--card-bg));
+  border-left-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .liveRow:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .liveRow[data-live='live']    { border-left-color: var(--danger); }
+:global([data-admin-kit]) .liveRow[data-live='review'] { border-left-color: var(--warning); }
+:global([data-admin-kit]) .liveRow[data-live='next']    { border-left-color: var(--info); }
+:global([data-admin-kit]) .liveRow[data-live='overdue'] { border-left-color: var(--warning); }
+:global([data-admin-kit]) .liveAt,
+:global([data-admin-kit]) .liveMeta { color: var(--text-tertiary); }
+:global([data-admin-kit]) .liveMoreTile {
+  border-color: var(--home-line-strong);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .liveMoreTile:hover {
+  color: var(--home-olive);
+  border-color: var(--home-olive);
+}
+
+/* ── Gauges ───────────────────────────────────────────────────────────────── */
+:global([data-admin-kit]) .gaugeMain {
+  font-family: var(--font-data);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+:global([data-admin-kit]) .gaugeOf { color: var(--text-tertiary); }
+:global([data-admin-kit]) .gaugeLabel { color: var(--text-secondary); }
+:global([data-admin-kit]) .gaugeTrack { background: var(--home-line); }
+:global([data-admin-kit]) .subStat,
+:global([data-admin-kit]) .payRow {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+
+/* ── Registration status mini-table (Table recipe: body face, tertiary head) ── */
+:global([data-admin-kit]) .registrationStatusTable,
+:global([data-admin-kit]) .divisionTable,
+:global([data-admin-kit]) .paymentBreakdown,
+:global([data-admin-kit]) .payDivTable {
+  border-top-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .registrationStatusHeader,
+:global([data-admin-kit]) .payDivHeader {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .registrationDivisionName,
+:global([data-admin-kit]) .divisionName,
+:global([data-admin-kit]) .payDivName {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .divisionCount {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+:global([data-admin-kit]) .registrationStatusCount {
+  border-color: var(--home-line-strong);
+  background: var(--home-card, var(--card-bg));
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .registrationStatusCount:hover {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .registrationStatusCount[data-status="accepted"] { color: var(--success-light); }
+:global([data-admin-kit]) .registrationStatusCount[data-status="pending"] { color: var(--warning-light); }
+:global([data-admin-kit]) .registrationStatusCount[data-status="waitlist"] { color: var(--info-light); }
+:global([data-admin-kit]) .outstandingRow { color: var(--warning-light); }
+:global([data-admin-kit]) .registrationFollowUps {
+  border-top-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .registrationFollowUps svg { color: var(--warning-light); }
+:global([data-admin-kit]) .registrationFollowUpChip {
+  border-color: var(--home-line-strong);
+  background: var(--home-card, var(--card-bg));
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .registrationFollowUpChip strong { color: var(--home-olive); }
+:global([data-admin-kit]) .registrationFollowUpChip[data-tone="danger"] { border-color: rgba(var(--danger-rgb), 0.35); }
+:global([data-admin-kit]) .registrationFollowUpChip[data-tone="warning"] { border-color: rgba(var(--warning-rgb), 0.35); }
+:global([data-admin-kit]) .payDivCell {
+  border-color: var(--home-line-strong);
+  background: var(--home-card, var(--card-bg));
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .payDivCell:hover {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .payDivCell[data-tone="success"] { color: var(--success-light); border-color: rgba(var(--success-rgb), 0.3); }
+:global([data-admin-kit]) .payDivCell[data-tone="info"]    { color: var(--info-light);    border-color: rgba(var(--info-rgb), 0.3); }
+:global([data-admin-kit]) .payDivCell[data-tone="warning"] { color: var(--warning-light); border-color: rgba(var(--warning-rgb), 0.3); }
+:global([data-admin-kit]) .payDivCell[data-tone="danger"]  { color: var(--danger-light);  border-color: rgba(var(--danger-rgb), 0.3); }
+
+/* ── Schedule Health panel ───────────────────────────────────────────────── */
+:global([data-admin-kit]) .scheduleHealthPanel[data-tone="good"] {
+  border-color: rgba(var(--success-rgb), 0.3);
+  background: rgba(var(--success-rgb), 0.05);
+}
+:global([data-admin-kit]) .scheduleHealthPanel[data-tone="warning"] {
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.06);
+}
+:global([data-admin-kit]) .scheduleHealthPanel[data-tone="danger"] {
+  border-color: rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb), 0.06);
+}
+:global([data-admin-kit]) .scheduleHealthScore {
+  background: var(--home-card, var(--card-bg));
+}
+:global([data-admin-kit]) .scheduleHealthScore small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .scheduleHealthScore[data-tone="good"] { color: var(--success-light); background: rgba(var(--success-rgb), 0.08); }
+:global([data-admin-kit]) .scheduleHealthScore[data-tone="warning"] { color: var(--warning-light); background: rgba(var(--warning-rgb), 0.08); }
+:global([data-admin-kit]) .scheduleHealthScore[data-tone="danger"] { color: var(--danger-light); background: rgba(var(--danger-rgb), 0.08); }
+:global([data-admin-kit]) .scheduleHealthSummary strong {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .scheduleHealthSummary span {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .scheduleHealthIssuePill {
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .scheduleHealthIssuePill[data-tone="good"] { color: var(--success-light); border-color: rgba(var(--success-rgb), 0.3); }
+:global([data-admin-kit]) .scheduleHealthIssuePill[data-tone="warning"] { color: var(--warning-light); border-color: rgba(var(--warning-rgb), 0.3); }
+:global([data-admin-kit]) .scheduleHealthIssuePill[data-tone="danger"] { color: var(--danger-light); border-color: rgba(var(--danger-rgb), 0.3); }
+:global([data-admin-kit]) .scheduleHealthMiniMetric {
+  border-color: var(--home-line-strong);
+  background: var(--home-card, var(--card-bg));
+}
+:global([data-admin-kit]) .scheduleHealthMiniMetric strong { color: var(--text-primary); }
+:global([data-admin-kit]) .scheduleHealthMiniMetric small {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .scheduleHealthMiniMetric[data-tone="good"] strong { color: var(--success-light); }
+:global([data-admin-kit]) .scheduleHealthMiniMetric[data-tone="warning"] strong { color: var(--warning-light); }
+:global([data-admin-kit]) .scheduleHealthMiniMetric[data-tone="danger"] strong { color: var(--danger-light); }
+:global([data-admin-kit]) .scheduleHealthMiniMetric[data-tone="info"] strong { color: var(--info-light); }
+:global([data-admin-kit]) .scheduleHealthIssueLink {
+  border-color: var(--home-line-strong);
+  background: var(--home-card, var(--card-bg));
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .scheduleHealthIssueLink[data-tone="good"] {
+  color: var(--success-light);
+  border-color: rgba(var(--success-rgb), 0.3);
+  background: rgba(var(--success-rgb), 0.06);
+}
+:global([data-admin-kit]) .scheduleHealthIssueLink[data-tone="warning"] {
+  color: var(--warning-light);
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.06);
+}
+:global([data-admin-kit]) .scheduleHealthIssueLink[data-tone="danger"] {
+  color: var(--danger-light);
+  border-color: rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb), 0.06);
+}
+:global([data-admin-kit]) .emptyPanel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+
+/* ── Compact metric strip ────────────────────────────────────────────────── */
+:global([data-admin-kit]) .metricStrip { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .metricValue {
+  font-family: var(--font-data);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .metricLabel { color: var(--text-secondary); }
+:global([data-admin-kit]) .metricSep { color: var(--text-tertiary); }
+
+/* ── Registration velocity chip ──────────────────────────────────────────── */
+:global([data-admin-kit]) .velocityChip {
+  border-color: rgba(var(--success-rgb), 0.3);
+  background: rgba(var(--success-rgb), 0.08);
+  color: var(--success-light);
+}
+:global([data-admin-kit]) .sparkline polyline { stroke: var(--home-olive); }
+
+/* ── Customize / edit-layout mode ────────────────────────────────────────── */
+:global([data-admin-kit]) .customizeToggleBtn { color: var(--text-tertiary); border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .customizeToggleBtn:hover { color: var(--text-primary); border-color: var(--home-olive); }
+:global([data-admin-kit]) .editToolbar {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .editToolbarIcon { color: var(--home-olive); }
+:global([data-admin-kit]) .editToolbarHint {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .cardDragging {
+  outline-color: var(--home-olive);
+  box-shadow: none;
+}
+:global([data-admin-kit]) .cardGrip,
+:global([data-admin-kit]) .cardRemove {
+  background: var(--home-olive-soft);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .cardGrip:active { color: var(--home-olive); }
+:global([data-admin-kit]) .statCardEditing:hover .cardGrip { color: var(--text-primary); }
+:global([data-admin-kit]) .cardRemove:hover {
+  color: var(--danger-light);
+  border-color: rgba(var(--danger-rgb), 0.4);
+  background: rgba(var(--danger-rgb), 0.1);
+}
+:global([data-admin-kit]) .statIconEdit {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .statIconEdit:hover {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .iconEditBadge {
+  background: var(--card-bg);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .iconPopover,
+:global([data-admin-kit]) .addMenu {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .panelGrip,
+:global([data-admin-kit]) .panelRemove {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .panelGrip:active { color: var(--home-olive); }
+:global([data-admin-kit]) .panelGrip:hover {
+  color: var(--text-primary);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .panelRemove:hover {
+  color: var(--danger-light);
+  border-color: rgba(var(--danger-rgb), 0.4);
+  background: rgba(var(--danger-rgb), 0.1);
+}
+:global([data-admin-kit]) .addTileBtn {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .addTileBtn:hover {
+  color: var(--home-olive);
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .addTileLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+}
+:global([data-admin-kit]) .addMenuRow { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .addMenuRow:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .addMenuRowTop {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .addMenuIcon { color: var(--home-olive); }
+:global([data-admin-kit]) .addMenuNote,
+:global([data-admin-kit]) .addMenuEmpty {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .iconPickerGrid {
+  background: var(--home-olive-soft);
+  border-top-color: var(--home-line);
+}
+/* The icon picker sits inside the icon-edit popover too, where the legacy sheet keeps it
+   transparent (the popover itself already paints the surface) — restated here at the same
+   compound shape so it isn't wiped by the plain `.iconPickerGrid` background above. */
+:global([data-admin-kit]) .iconPopover .iconPickerGrid {
+  background: transparent;
+}
+:global([data-admin-kit]) .iconPickerBtn {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .iconPickerBtn:hover {
+  color: var(--text-primary);
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .iconPickerBtnActive {
+  color: var(--home-olive);
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+
+/* ── Communications panel ─────────────────────────────────────────────────── */
+:global([data-admin-kit]) .commsStatNum {
+  font-family: var(--font-data);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .commsStatLabel { color: var(--text-secondary); }
+:global([data-admin-kit]) .commsDot { background: var(--home-line-strong); }
+:global([data-admin-kit]) .commsLatest {
+  border-color: var(--home-line);
+  background: var(--home-card, var(--card-bg));
+}
+:global([data-admin-kit]) .commsLatestTag {
+  color: var(--text-tertiary);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .commsLatestBody { font-family: var(--font-sans, system-ui, sans-serif); }
+:global([data-admin-kit]) .commsLatestTitle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .commsLatestDate {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .commsAction {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .commsAction:hover { color: var(--home-olive); }
+
+/* ── Coach Sign-ups & Chat panel ──────────────────────────────────────────── */
+:global([data-admin-kit]) .chatFunnelOf {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .chatExplain,
+:global([data-admin-kit]) .chatRemindResult {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .chatWarn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--warning-light);
+}
+:global([data-admin-kit]) .chatWarnLink { color: var(--warning-light); }
+:global([data-admin-kit]) .chatWarnLink:hover { color: var(--home-olive); }
+:global([data-admin-kit]) .chatExplainLink { color: var(--text-tertiary); text-decoration: underline; }
+:global([data-admin-kit]) .chatExplainLink:hover { color: var(--home-olive); }
+:global([data-admin-kit]) .chatRemindBtn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--home-lime-ink);
+  background: var(--home-lime);
+  border-radius: 6px;
+}
+:global([data-admin-kit]) .chatAllIn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--success-light);
+}
+:global([data-admin-kit]) .chatRemindResultOk  { color: var(--success-light); }
+:global([data-admin-kit]) .chatRemindResultBad { color: var(--danger-light); }
+:global([data-admin-kit]) .chatRetryBtn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+  border-color: var(--home-line-strong);
+  border-radius: 6px;
+}
+:global([data-admin-kit]) .chatRetryBtn:hover {
+  color: var(--home-olive);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .chatSkelBar {
+  background: linear-gradient(90deg, var(--home-olive-soft) 0%, var(--home-line-strong) 50%, var(--home-olive-soft) 100%);
+  background-size: 200% 100%;
+}
+
+/* ── Post-event / activate / wrap-up banners ──────────────────────────────── */
+:global([data-admin-kit]) .postEventBanner {
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.06);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .activateBanner {
+  border-color: rgba(var(--success-rgb), 0.35);
+  background: rgba(var(--success-rgb), 0.06);
+}
+:global([data-admin-kit]) .activateBannerBody {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .activateBannerIcon { color: var(--success-light); }
+:global([data-admin-kit]) .activateBannerError {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--danger-light);
+}
+:global([data-admin-kit]) .optionalToggle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .optionalToggle:hover {
+  border-color: var(--home-olive);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .activateSummary {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .activateSummaryHead {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .activateSummaryList { color: var(--text-tertiary); }
+:global([data-admin-kit]) .checklistFooter { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .checklistFooter span {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .wrapUpCard {
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.06);
+}
+:global([data-admin-kit]) .wrapUpIcon {
+  border-color: rgba(var(--warning-rgb), 0.35);
+  color: var(--warning-light);
+}
+:global([data-admin-kit]) .wrapUpBody h2 {
+  font-family: var(--font-display);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .wrapUpBody p {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .wrapUpChampion {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .wrapUpChampion svg { color: var(--home-olive); }
+:global([data-admin-kit]) .wrapUpChampion strong { color: var(--text-primary); }
+:global([data-admin-kit]) .wrapUpChampionDiv {
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .recentEvents { border-color: var(--home-line); }
+
+/* ── Kit-only title chip (the dashboard's own page header) ───────────────── */
+:global([data-admin-kit]) .kitTitleChips {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+:global([data-admin-kit]) .kitStatusLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+@media (max-width: 900px) {
+  :global([data-admin-kit]) .kitTitleChips { display: none; }
+}

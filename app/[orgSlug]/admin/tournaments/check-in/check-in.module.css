@@ -19,3 +19,13 @@
 @media (max-width: 900px) {
   .gateViewLabel { display: none; }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   The admin Check-in wrapper's own empty state — the board's kit layer is CheckInBoard.module.css.
+   ⚠ TOKENS ONLY — checkAdminKit fails on a literal colour here. */
+:global([data-admin-kit]) .empty {
+  background: var(--card-bg);
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 8px;
+  color: var(--text-tertiary);
+}

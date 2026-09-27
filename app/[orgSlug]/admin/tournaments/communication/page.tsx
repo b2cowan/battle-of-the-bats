@@ -14,6 +14,10 @@ import s from '../../admin-common.module.css';
 import styles from './communication.module.css';
 import UnsavedChangesGuard from '@/components/shared/UnsavedChangesGuard';
 import { SandboxLockNote, useSandboxLock } from '@/components/sandbox/SandboxLock';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useTournamentCrumb } from '@/components/admin/tournament';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -90,6 +94,14 @@ export default function AdminCommunicationPage() {
   // "See it live" sandbox: outbound is disabled before the press, not caught after. False for
   // every real org, so nothing about a customer's compose screen changes.
   const sandboxLocked = useSandboxLock();
+  const kx = useKitStyle();
+  const crumb = useTournamentCrumb();
+  // Hand-set inline colours (kx patches them on the kit; unchanged while the switch is off).
+  // The composer's small print under a channel toggle — same object, used at two points.
+  const channelNoteStyle = kx({ margin: '0.25rem 0 0 1.7rem', fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }, KIT_INK.secondary);
+  const pushNoteStyle = kx({ margin: 0, fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }, KIT_INK.secondary);
+  const noDeletedStyle = kx({ color: 'var(--white-40)', fontSize: '0.88rem', margin: 0 }, KIT_INK.tertiary);
+  const deleteConfirmTextStyle = kx({ color: 'var(--white-60)', fontSize: '0.9rem', margin: '0 0 1.25rem' }, KIT_INK.secondary);
 
   // ── Data ────────────────────────────────────────────────────────────────────
   const [communications, setCommunications] = useState<Communication[]>([]);
@@ -339,6 +351,13 @@ export default function AdminCommunicationPage() {
 
   if (loading) return <div className="empty-state"><RefreshCw className="spin" /><p>Loading communications…</p></div>;
 
+  // Same element, lifted so both the legacy header and the kit header's `actions` render it.
+  const newMessageButton = (
+    <button className="btn btn-lime btn-data" onClick={openNewMessage} disabled={!currentTournament}>
+      <Plus size={15} /><span className={styles.headerBtnLabel}> New Message</span>
+    </button>
+  );
+
   return (
     <div className={styles.page}>
       {/* Same-tab flips (The Flip) can now leave the composer mid-message; warn before losing it. */}
@@ -348,18 +367,25 @@ export default function AdminCommunicationPage() {
       />
 
       {/* ── Header ─────────────────────────────────────────────────────────── */}
-      <div className={styles.pageHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerIcon}><Mail size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Communications</h1>
-            <p className={styles.pageSub}>Post updates to your site, email your teams, or both — from one place.</p>
+      <AdminPageHeader
+        crumbs={[crumb]}
+        title="Communications"
+        actions={newMessageButton}
+        legacy={
+          <div className={styles.pageHeader}>
+            <div className={styles.headerLeft}>
+              <div className={styles.headerIcon}><Mail size={20} /></div>
+              <div>
+                <h1 className={styles.pageTitle}>Communications</h1>
+                <p className={styles.pageSub}>Post updates to your site, email your teams, or both — from one place.</p>
+              </div>
+            </div>
+            {newMessageButton}
           </div>
-        </div>
-        <button className="btn btn-lime btn-data" onClick={openNewMessage} disabled={!currentTournament}>
-          <Plus size={15} /><span className={styles.headerBtnLabel}> New Message</span>
-        </button>
-      </div>
+        }
+      />
+      {/* The sub is a DESCRIPTION of the page ("Post updates to your site…"), not a live fact —
+          not re-homed (F3). */}
 
       {/* ── Result banner ───────────────────────────────────────────────────── */}
       {sendResult && !isComposing && (
@@ -453,7 +479,7 @@ export default function AdminCommunicationPage() {
                           <Star size={13} fill={pinned ? 'currentColor' : 'none'} />
                           Pin at top of News page
                         </label>
-                        <p style={{ margin: '0.25rem 0 0 1.7rem', fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }}>
+                        <p style={channelNoteStyle}>
                           While the tournament is live, pinned site posts also appear as a banner at the top of the public Schedule — use it for rain delays and urgent day-of updates.
                         </p>
 
@@ -523,7 +549,7 @@ export default function AdminCommunicationPage() {
 
                         {channelPush && (
                           <div className={styles.channelOptions}>
-                            <p style={{ margin: 0, fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }}>
+                            <p style={pushNoteStyle}>
                               Sends a phone notification to every fan following a team in this tournament who opted in. Great for rain delays and urgent day-of updates. Also posts to the site (so the notification opens the full message) — pin it to show it on the schedule too.
                             </p>
                           </div>
@@ -622,7 +648,7 @@ export default function AdminCommunicationPage() {
             {filteredSitePosts.length === 0 && !isComposing && (
               <div className="empty-state">
                 {siteFilter === 'deleted' ? (
-                  <p style={{ color: 'var(--white-40)', fontSize: '0.88rem', margin: 0 }}>No deleted posts.</p>
+                  <p style={noDeletedStyle}>No deleted posts.</p>
                 ) : (
                   <>
                     <Globe size={40} />
@@ -758,7 +784,7 @@ export default function AdminCommunicationPage() {
               <h3>Delete communication?</h3>
               <button className="btn btn-ghost btn-data" onClick={() => setDeleteId(null)}><X size={16} /></button>
             </div>
-            <p style={{ color: 'var(--white-60)', fontSize: '0.9rem', margin: '0 0 1.25rem' }}>
+            <p style={deleteConfirmTextStyle}>
               This removes the post from your public News page immediately. The record is kept in your communications history and can be restored at any time.
             </p>
             <div className="modal-footer">
@@ -793,6 +819,10 @@ export default function AdminCommunicationPage() {
         const hasFailures = failedSet.size > 0 || unknownFailed.length > 0;
         const deliveredCount = emailDetail.emailSuccessCount ?? 0;
         const failedCount = failedSet.size + unknownFailed.length;
+        // Row-invariant — computed once here, not per row in the maps below.
+        const deliveredStyle = kx({ color: hasFailures ? 'var(--warning)' : 'var(--success)' }, hasFailures ? KIT_INK.warning : KIT_INK.success);
+        const failedCountStyle = kx({ color: 'var(--danger)', marginLeft: '0.5rem' }, KIT_INK.danger);
+        const unknownTeamNameStyle = kx({ color: 'var(--white-40)', fontStyle: 'italic' }, KIT_INK.tertiary);
 
         return (
           <>
@@ -871,11 +901,11 @@ export default function AdminCommunicationPage() {
                   <div className={styles.recipientsModalBody}>
                     <div className={styles.recipientsModalMeta}>
                       <span>
-                        <span style={{ color: hasFailures ? 'var(--warning)' : 'var(--success)' }}>
+                        <span style={deliveredStyle}>
                           {deliveredCount} delivered
                         </span>
                         {hasFailures && (
-                          <span style={{ color: 'var(--danger)', marginLeft: '0.5rem' }}>
+                          <span style={failedCountStyle}>
                             · {failedCount} failed
                           </span>
                         )}
@@ -909,7 +939,7 @@ export default function AdminCommunicationPage() {
                       {unknownFailed.map(addr => (
                         <div key={addr} className={`${styles.emailDetailRecipientRow} ${styles.recipientFailed}`}>
                           <span className={styles.recipientIcon}><AlertCircle size={13} /></span>
-                          <span className={styles.recipientName} style={{ color: 'var(--white-40)', fontStyle: 'italic' }}>Unknown team</span>
+                          <span className={styles.recipientName} style={unknownTeamNameStyle}>Unknown team</span>
                           <span className={styles.recipientEmail}>{addr}</span>
                         </div>
                       ))}
@@ -975,7 +1005,7 @@ export default function AdminCommunicationPage() {
                         <Star size={13} fill={pinned ? 'currentColor' : 'none'} />
                         Pin at top of News page
                       </label>
-                      <p style={{ margin: '0.25rem 0 0 1.7rem', fontSize: '0.72rem', color: 'var(--white-50)', lineHeight: 1.4 }}>
+                      <p style={channelNoteStyle}>
                         While the tournament is live, pinned site posts also appear as a banner at the top of the public Schedule — use it for rain delays and urgent day-of updates.
                       </p>
                     </>

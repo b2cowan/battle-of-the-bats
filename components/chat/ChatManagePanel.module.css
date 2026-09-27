@@ -223,3 +223,80 @@
   gap: 0.3rem;
   align-items: stretch;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   "Manage room" — the RIGHT counterpart of ChatRoomsPanel, same treatment. `.reportsBlock`'s and
+   `.roomSettings`'s borders/fill already read `rgba(var(--danger-rgb), N)` — already theme-aware
+   tokens close to the kit's own alert-tint formula — left as-is; only their raw-token INKS
+   (`--danger`/`--warning` as text, which miss AA on the kit's Dark ground) and the `--white` ramp are
+   answered here. `.body`/`.block`/`.rowMain`/`.rowActions`/`.iconAction.iconAction`/`.avatar`/
+   `.avatarPending` are layout-only or already-token — untouched. No base/modifier pair here shares an
+   overridden property (`.row` has no colour of its own; `.tagOrg`/`.tagMuted` are independent chips,
+   not modifiers of a shared base), so ordering is not load-bearing in this file — still grouped by
+   component for review. TOKENS ONLY. */
+:global([data-admin-kit]) .backdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .panel {
+  border-left-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .head { border-bottom-color: var(--home-line); }
+/* The panel's own name, not a label over content beneath it — a compact heading, not an eyebrow
+   (same call as ChatRoomsPanel's twin `.headTitle`, for the two panels to read as one idiom). */
+:global([data-admin-kit]) .headTitle { font-family: var(--font-display); color: var(--text-primary); }
+:global([data-admin-kit]) .closeBtn {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .closeBtn:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .closeBtn:focus-visible { outline-color: var(--home-olive); }
+
+/* Section eyebrows ("Members", "Not yet joined", "Room settings") */
+:global([data-admin-kit]) .blockHead {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .settingsLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .count { color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+:global([data-admin-kit]) .empty { color: var(--text-tertiary); }
+:global([data-admin-kit]) .note { color: var(--text-tertiary); }
+
+/* Member / pending rows */
+:global([data-admin-kit]) .row { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .rowName { color: var(--text-primary); }
+:global([data-admin-kit]) .rowSub { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rowLastSeen { color: var(--text-tertiary); }
+/* The copied checkmark — an accent icon confirming success, never raw lime. */
+:global([data-admin-kit]) .iconActionDone.iconActionDone {
+  color: var(--home-olive);
+  border-color: var(--home-olive);
+}
+
+/* Role/status tags — Organizer NAMES a role (the quiet chip); Muted is a real state (a warning tint,
+   AA-safe ink) */
+:global([data-admin-kit]) .tagOrg {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .tagMuted {
+  color: var(--warning-light);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+
+/* Reported messages */
+:global([data-admin-kit]) .reportsHeadLabel { color: var(--danger-light); }
+:global([data-admin-kit]) .reportRow { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .reportMeta { color: var(--text-tertiary); }
+:global([data-admin-kit]) .reportBody { color: var(--text-primary); }
+:global([data-admin-kit]) .reportBody em { color: var(--text-tertiary); }

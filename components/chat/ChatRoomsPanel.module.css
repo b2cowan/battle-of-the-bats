@@ -118,3 +118,49 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   The Rooms switcher, on the admin's own chrome around the coach portal's `ChatPanel`. `.list`/
+   `.rowMain`/`.rowName`/`.rowNameText`/`.body`/`.newBtn` are layout only, or global `.btn` classes —
+   untouched. ⚠ EVERY property this layer sets on a base class (`.row`, `.rowIcon`) is ALSO restated
+   on that class's own modifier (`.rowActive`, `.rowActive .rowIcon`) directly below it — a kit rule
+   for `.row` and one for `.rowActive` carry equal specificity (both one class under the marker
+   attribute), so whichever is positioned LATER in this file wins per property; putting the modifier
+   after the base is what keeps the active room lit once the switch is on. TOKENS ONLY. */
+:global([data-admin-kit]) .backdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .panel {
+  border-right-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .head { border-bottom-color: var(--home-line); }
+/* The panel's own name, not a label over content beneath it — a compact heading, not an eyebrow. */
+:global([data-admin-kit]) .headTitle {
+  font-family: var(--font-display);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .closeBtn {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .closeBtn:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .closeBtn:focus-visible { outline-color: var(--home-olive); }
+
+/* Room rows — a quiet option surface; the chosen room is the olive selection, never a second lime. */
+:global([data-admin-kit]) .row {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .row:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .row:focus-visible { outline-color: var(--home-olive); }
+:global([data-admin-kit]) .rowActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .rowIcon { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rowActive .rowIcon { color: var(--home-olive); }
+:global([data-admin-kit]) .rowLock { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rowSub { color: var(--text-tertiary); }

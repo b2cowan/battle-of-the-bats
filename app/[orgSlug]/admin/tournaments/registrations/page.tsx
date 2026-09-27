@@ -26,6 +26,8 @@ import { Division } from '@/lib/types';
 import { buildFilename, downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
 import styles from './teams-admin.module.css';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import FeedbackModal from '@/components/FeedbackModal';
 import ExportMenu from '@/components/admin/ExportMenu';
 import RegistrationHealthPanel from './components/RegistrationHealthPanel';
@@ -257,6 +259,7 @@ export default function UnifiedTeamsPage() {
   const { currentOrg } = useOrg();
   const searchParams = useSearchParams();
   usePageTitle('Teams');
+  const kx = useKitStyle();
   const [regs, setRegs] = useState<TeamRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedStatuses, setSelectedStatuses] = useState<Status[]>(['pending', 'accepted', 'waitlist']);
@@ -1587,7 +1590,7 @@ export default function UnifiedTeamsPage() {
                 <button className="btn btn-lime btn-data" onClick={() => patch(team.id, { status: 'accepted' }, `Accept "${team.name}"? An automated email will be sent.`)} disabled={busy}>Accept</button>
               )}
               {team.status !== 'rejected' && (
-                <button className="btn btn-ghost btn-data" style={{ color: 'rgba(var(--danger-rgb), 0.65)', borderColor: 'transparent', background: 'transparent' }} onClick={() => patch(team.id, { status: 'rejected' }, `Reject "${team.name}"? An automated email will be sent.`)} disabled={busy}>Reject</button>
+                <button className="btn btn-ghost btn-data" style={kx({ color: 'rgba(var(--danger-rgb), 0.65)', borderColor: 'transparent', background: 'transparent' }, KIT_INK.danger)} onClick={() => patch(team.id, { status: 'rejected' }, `Reject "${team.name}"? An automated email will be sent.`)} disabled={busy}>Reject</button>
               )}
               {team.status === 'accepted' && !effectiveFee.totalFeeAmount ? (
                 <button className="btn btn-ghost btn-data" onClick={() => patch(team.id, { paymentStatus: team.paymentStatus === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
@@ -1609,7 +1612,7 @@ export default function UnifiedTeamsPage() {
               <button className="btn btn-ghost btn-data" onClick={() => openEditModal(team)} disabled={busy} style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Edit ${team.name}`}>
                 <Pencil size={12} />
               </button>
-              <button className="btn btn-ghost btn-data" onClick={() => handleDelete(team.id, team.name)} disabled={busy} style={{ color: 'rgba(var(--danger-rgb), 0.45)', borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }} aria-label={`Delete ${team.name}`}>
+              <button className="btn btn-ghost btn-data" onClick={() => handleDelete(team.id, team.name)} disabled={busy} style={kx({ color: 'rgba(var(--danger-rgb), 0.45)', borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem' }, KIT_INK.danger)} aria-label={`Delete ${team.name}`}>
                 <Trash2 size={12} />
               </button>
             </div>
@@ -2009,7 +2012,7 @@ export default function UnifiedTeamsPage() {
                 className="btn btn-ghost btn-data"
                 title="Configure registration questions"
                 aria-label="Configure registration questions"
-                style={{ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem', color: 'var(--logic-lime)' }}
+                style={kx({ borderColor: 'transparent', background: 'transparent', padding: '0.3rem 0.45rem', color: 'var(--logic-lime)' }, KIT_INK.accent)}
               >
                 <ClipboardList size={15} />
               </Link>
@@ -2222,32 +2225,40 @@ export default function UnifiedTeamsPage() {
         const closed = !!selectedGroup.isClosed;
         const atCap = cap != null && accepted >= cap;
         const spotsLeft = cap != null ? Math.max(0, cap - accepted) : null;
-        const warnColor = '#fbbf24';
-        const rowStyle: React.CSSProperties = {
+        // '#fbbf24' is byte-equal to --warning-light in Dark (ADC slice 4b byte-equal swap) — the
+        // switch-off pixel cannot move, and every branch below reading `warnColor` is already
+        // theme-true on the kit without a kx() patch.
+        const warnColor = 'var(--warning-light)';
+        const rowStyle: React.CSSProperties = kx({
           display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '1rem',
           padding: '0.45rem 1.25rem',
           borderBottom: '1px solid var(--border)',
           background: atCap && !closed ? 'rgba(251,191,36,0.05)' : 'var(--white-03)',
-        };
-        const btnStyle: React.CSSProperties = {
+        }, {
+          borderBottomColor: 'var(--home-line)',
+          background: atCap && !closed ? 'rgba(var(--warning-rgb), 0.05)' : 'var(--card-bg)',
+        });
+        const btnStyle: React.CSSProperties = kx({
           background: 'none', border: 'none', cursor: 'pointer', padding: '0.15rem 0',
           fontSize: '0.75rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.3rem',
           color: atCap && !closed ? warnColor : 'var(--white-40)',
           flexShrink: 0,
-        };
+        }, {
+          color: atCap && !closed ? warnColor : 'var(--text-tertiary)',
+        });
         return (
           <div style={rowStyle}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', fontSize: '0.8rem', minWidth: 0 }}>
               {cap != null ? (
-                <span style={{ fontFamily: 'var(--font-data)', fontWeight: 700, color: atCap ? warnColor : 'var(--white-70)', whiteSpace: 'nowrap' }}>
+                <span style={kx({ fontFamily: 'var(--font-data)', fontWeight: 700, color: atCap ? warnColor : 'var(--white-70)', whiteSpace: 'nowrap' }, { color: atCap ? warnColor : 'var(--text-secondary)' })}>
                   {accepted}/{cap}
                 </span>
               ) : (
-                <span style={{ fontFamily: 'var(--font-data)', fontWeight: 700, color: 'var(--white-70)', whiteSpace: 'nowrap' }}>
+                <span style={kx({ fontFamily: 'var(--font-data)', fontWeight: 700, color: 'var(--white-70)', whiteSpace: 'nowrap' }, KIT_INK.secondary)}>
                   {accepted} accepted
                 </span>
               )}
-              <span style={{ color: atCap && !closed ? warnColor : 'var(--white-40)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              <span style={kx({ color: atCap && !closed ? warnColor : 'var(--white-40)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }, { color: atCap && !closed ? warnColor : 'var(--text-tertiary)' })}>
                 {atCap && !closed
                   ? 'Full — close registration to stop new submissions'
                   : atCap && closed
@@ -2257,12 +2268,12 @@ export default function UnifiedTeamsPage() {
                       : ''}
               </span>
               {closed && (
-                <span style={{
+                <span style={kx({
                   fontSize: '0.62rem', fontWeight: 700, letterSpacing: '0.06em', textTransform: 'uppercase',
                   color: 'var(--danger)', background: 'rgba(var(--danger-rgb),0.1)',
                   border: '1px solid rgba(var(--danger-rgb),0.25)', padding: '1px 5px', borderRadius: '2px',
                   flexShrink: 0,
-                }}>Closed</span>
+                }, { color: 'var(--danger-light)' })}>Closed</span>
               )}
             </div>
             <button type="button" style={btnStyle} onClick={handleToggleRegistration} disabled={closingDivision}>
@@ -2536,7 +2547,7 @@ export default function UnifiedTeamsPage() {
               <option value="__unassigned__">Unassigned</option>
             </select>
           )}
-          <button type="button" className="btn btn-outline btn-data" aria-describedby="bulk-action-hint" style={{ color: 'var(--danger)' }} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
+          <button type="button" className="btn btn-outline btn-data" aria-describedby="bulk-action-hint" style={kx({ color: 'var(--danger)' }, KIT_INK.danger)} onClick={() => runBulkAction('reject')} disabled={working === 'bulk'}>
             Reject
           </button>
         </SelectionActionBar>
@@ -2641,7 +2652,7 @@ export default function UnifiedTeamsPage() {
                       )}
                       <div className={styles.slotRowActions} onClick={e => e.stopPropagation()}>
                         {swapMode ? (
-                          <span className={styles.swapIndicator} style={{ color: isSwapSelected ? 'var(--logic-lime)' : 'var(--white-20)' }}>
+                          <span className={styles.swapIndicator} style={kx({ color: isSwapSelected ? 'var(--logic-lime)' : 'var(--white-20)' }, { color: isSwapSelected ? 'var(--home-olive)' : 'var(--text-tertiary)' })}>
                             <ArrowLeftRight size={14} />
                           </span>
                         ) : team ? (
@@ -2855,7 +2866,7 @@ export default function UnifiedTeamsPage() {
                           sections.map(sec => (
                             <div key={sec.id} className={s.poolSubSection} style={{ marginTop: 0 }}>
                               <div className={s.poolSubHeader}>
-                                <div className={s.poolDot} style={{ background: sec.isUnassigned ? 'var(--danger-light)' : 'var(--logic-lime)' }} />
+                                <div className={s.poolDot} style={kx({ background: sec.isUnassigned ? 'var(--danger-light)' : 'var(--logic-lime)' }, { background: sec.isUnassigned ? 'var(--danger-light)' : 'var(--home-lime)' })} />
                                 <span className={s.poolSubLabel} style={{ color: sec.isUnassigned ? 'var(--danger-light)' : undefined }}>
                                   {sec.isUnassigned ? 'Unassigned' : formatPoolName(sec.name)}
                                 </span>
@@ -2979,7 +2990,7 @@ export default function UnifiedTeamsPage() {
           <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 560 }}>
             <div className="modal-header">
               <div className="flex items-center gap-2">
-                <Mail size={18} style={{ color: 'var(--logic-lime)' }} />
+                <Mail size={18} style={kx({ color: 'var(--logic-lime)' }, KIT_INK.accent)} />
                 <h3 style={{ margin: 0 }}>Send Payment Reminders</h3>
               </div>
               <button className="btn btn-ghost btn-data" onClick={() => setShowReminderModal(false)}><X size={16} /></button>
@@ -3064,7 +3075,7 @@ export default function UnifiedTeamsPage() {
                       value={editForm.seed === '' ? '' : editForm.seed}
                       onChange={e => { const v = e.target.value; setEditForm(f => ({ ...f, seed: v === '' ? '' : (parseInt(v, 10) || '') })); }}
                     />
-                    <small style={{ color: 'var(--white-40)', fontSize: '0.75rem' }}>Optional ranking (1 = top seed) used by the Playoff Bracket Builder&apos;s “By seed number” option.</small>
+                    <small style={kx({ color: 'var(--white-40)', fontSize: '0.75rem' }, KIT_INK.tertiary)}>Optional ranking (1 = top seed) used by the Playoff Bracket Builder&apos;s “By seed number” option.</small>
                   </div>
                 </div>
               </div>

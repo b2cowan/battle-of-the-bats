@@ -765,3 +765,70 @@
     display: none;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   Results' own screen furniture: the mobile settings sheet (Stage / Grouping / Game Status) and the
+   mobile active-settings summary strip. The game list itself (scoring-mode rows) is GameList.tsx's
+   own kit layer in schedule-admin.module.css — this file only covers what page.tsx renders directly.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here.
+   Found, not fixed: `.venueFilter*` / `.resultsVenue*` / `.sheetVenue*` / `.venueSheet*` /
+   `.venueModal*` / `.resultsActionGroup` below are dead — page.tsx renders no venue filter and no
+   `resultsActionGroup` wrapper (grepped; zero references). Left un-restyled — see the report. */
+
+:global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .sheet {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .sheetHandle { background: var(--home-line-strong); }
+:global([data-admin-kit]) .sheetSection { border-bottom-color: var(--home-line); }
+/* "Stage" / "Grouping" / "Game Status" — section eyebrows; raw lime as text → the accent ink. */
+:global([data-admin-kit]) .sheetSectionLabel { color: var(--text-secondary); }
+
+/* Segmented control (Round Robin/Playoffs, Flat/Pools, the status labels) — body face per the
+   Tabs/segmented-control recipe, not the console's mono caps. Base THEN :hover THEN the separate
+   .sheetSegActive class, in that order, so the active state's rule always comes last. */
+:global([data-admin-kit]) .sheetSeg {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .sheetSeg:hover {
+  border-color: var(--home-olive);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .sheetSegActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+/* "Done" — a legacy lime TINT (rgba fill + lime ink), so it stays an accent on the kit, not a
+   second solid ink-on-lime button below the sheet's Save/Finalize actions elsewhere on the page. */
+:global([data-admin-kit]) .sheetDone {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .sheetDone:hover { background: rgba(var(--logic-lime-rgb), 0.16); }
+
+/* ── Mobile active-settings summary strip ── */
+:global([data-admin-kit]) .activeSettingsSummary { border-bottom-color: var(--home-line); }
+/* The tappable current-state label ("Round Robin") — a selected-state accent, not a plain fact. */
+:global([data-admin-kit]) .activeSettingsSummaryText {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .activeSettingsSummaryIcon { color: var(--text-tertiary); }
+:global([data-admin-kit]) .activeSettingsSummary:hover .activeSettingsSummaryIcon { color: var(--home-olive); }
+/* The one "needs action" tally (submitted/reviewing count) — light tier for AA; the dot stays the
+   base hue (a solid swatch, not text, matching the admin-common chip-dot precedent). */
+:global([data-admin-kit]) .tallySubmitted { color: var(--warning-light); }

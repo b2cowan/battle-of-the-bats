@@ -128,3 +128,15 @@
   font-weight: 700;
   line-height: 1;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   This page draws no heading of its own — the conversation IS the screen. `.chatPage`/`.chatLayout`/
+   `.chatCol`/`.roomsBtn`/`.manageBtn`/labels are pure layout, no colour, untouched. `.manageBtnCount`
+   is dead CSS (no JSX reads it) — reported to the lead, left untouched. `ChatPanel` (the coach
+   portal's own conversation surface) already wears the portal look under the marker (its own
+   module — see the report to the lead); this file is only the admin's chrome around it.
+   ⚠ TOKENS ONLY. */
+:global([data-admin-kit]) .state { color: var(--text-tertiary); }
+/* `--white` remaps to the warm INK (not white) under the marker in Warm — wrong on a solid danger
+   fill. `--white-fixed` holds true white in both themes (ink-on-danger, same idiom as ink-on-lime). */
+:global([data-admin-kit]) .manageReportsBadge { color: var(--white-fixed); }

@@ -106,3 +106,45 @@
     border-bottom: 0;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   "What everyone else sees" — a collapsible orientation panel, Card recipe. Its column rule flips
+   from `border-right` to `border-bottom` under the same 760px breakpoint the legacy sheet uses, so the
+   kit's colour answer is restated inside a matching media block rather than left on the desktop-only
+   property. ⚠ TOKENS ONLY. */
+:global([data-admin-kit]) .panel {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .head {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .head:hover { color: var(--text-primary); }
+:global([data-admin-kit]) .headLeft svg { color: var(--home-olive); }
+:global([data-admin-kit]) .bodyWrap { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .col { border-right-color: var(--home-line); }
+:global([data-admin-kit]) .colTitle { color: var(--text-secondary); }
+:global([data-admin-kit]) .colDesc {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .when {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .link {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--info-light);
+}
+:global([data-admin-kit]) .foot {
+  border-top-color: var(--home-line);
+  color: var(--text-tertiary);
+}
+@media (max-width: 760px) {
+  :global([data-admin-kit]) .col { border-bottom-color: var(--home-line); }
+}

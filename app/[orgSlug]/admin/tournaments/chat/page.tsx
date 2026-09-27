@@ -4,6 +4,8 @@ import { UserCog, Loader2, ChevronRight, PanelLeft } from 'lucide-react';
 import { useTournament } from '@/lib/tournament-context';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import UpgradeGate from '@/components/billing/UpgradeGate';
 import ChatPanel from '@/components/chat/ChatPanel';
 import ChatManagePanel, { type ChatMember, type ChatPending, type ChatReport } from '@/components/chat/ChatManagePanel';
@@ -41,6 +43,9 @@ type RosterResponse = {
  * desktop they dock as side columns; on mobile each is a slide-over (Rooms is full-screen, WhatsApp-style).
  */
 function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; orgParam: string }) {
+  const kx = useKitStyle();
+  // `--danger` as TEXT misses AA on the kit's Dark ground — the -light tier clears it (unchanged legacy).
+  const loadErrorStyle = kx({ color: 'var(--danger)' }, KIT_INK.danger);
   const [list, setList] = useState<RoomListResponse | null>(null);
   const [listError, setListError] = useState<string | null>(null);
   const [selectedRoomId, setSelectedRoomId] = useState<string | null>(null);
@@ -286,7 +291,7 @@ function ChatRoomsManager({ tournamentId, orgParam }: { tournamentId: string; or
     return <div className={styles.state}><Loader2 size={16} className={styles.spin} aria-hidden /> Loading chat…</div>;
   }
   if (listError || !list) {
-    return <div className={styles.state} style={{ color: 'var(--danger)' }}>{listError ?? 'Unable to load chat.'}</div>;
+    return <div className={styles.state} style={loadErrorStyle}>{listError ?? 'Unable to load chat.'}</div>;
   }
 
   // Is the loaded roster for the currently-selected room? (Guards against a stale roster from a rapid
@@ -402,6 +407,8 @@ export default function AdminTournamentChatPage() {
   const { currentTournament } = useTournament();
   const { currentOrg } = useOrg();
   usePageTitle('Chat');
+  const kx = useKitStyle();
+  const noTournamentStyle = kx({ color: 'var(--white-40)' }, KIT_INK.tertiary);
   const orgSlug = currentOrg?.slug;
   const orgParam = orgSlug ? `orgSlug=${encodeURIComponent(orgSlug)}` : '';
   const tournamentId = currentTournament?.id;
@@ -409,7 +416,7 @@ export default function AdminTournamentChatPage() {
   if (!tournamentId) {
     return (
       <div className={s.page ?? ''} style={{ padding: '2rem' }}>
-        <p style={{ color: 'var(--white-40)' }}>Select a tournament to manage its chat.</p>
+        <p style={noTournamentStyle}>Select a tournament to manage its chat.</p>
       </div>
     );
   }

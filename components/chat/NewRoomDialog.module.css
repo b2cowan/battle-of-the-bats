@@ -143,3 +143,61 @@
 
 .spin { animation: new-room-spin 0.9s linear infinite; }
 @keyframes new-room-spin { to { transform: rotate(360deg); } }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   The "New room" composer — the third piece of the chat admin's own chrome. `.field`/`.divList`/
+   `.divName`/`.foot` are layout only (or `--bg-inset`, already theme-aware) — untouched.
+   ⚠ `.divRow`'s kit rule and `.divRowOn`'s are equal specificity under the marker — `.divRowOn` is
+   positioned AFTER `.divRow` so the chosen division keeps its olive selection instead of being wiped
+   back to the unselected ground (same rule as ChatRoomsPanel's `.row`/`.rowActive`). TOKENS ONLY. */
+:global([data-admin-kit]) .backdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .dialog {
+  border-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .head { border-bottom-color: var(--home-line); }
+/* The dialog's own name — a compact heading, not an eyebrow (same call as the two panels' titles). */
+:global([data-admin-kit]) .title { font-family: var(--font-display); color: var(--text-primary); }
+:global([data-admin-kit]) .closeBtn {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .closeBtn:hover:not(:disabled) { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .closeBtn:focus-visible { outline-color: var(--home-olive); }
+
+/* Field label — the portal's field-label idiom (body face, small capitals kept, tertiary ink; see
+   `[data-admin-kit] .form-label` in app/globals.css, the same recipe). */
+:global([data-admin-kit]) .label {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: 0.04em;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .input {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .input:focus-visible { outline-color: var(--home-olive); }
+:global([data-admin-kit]) .note { color: var(--text-tertiary); }
+
+/* Division picker — a quiet option row; the chosen division is the olive selection, never a second
+   lime (same call as ChatRoomsPanel's room rows). */
+:global([data-admin-kit]) .divRow {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .divRow:hover:not(:disabled) { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .divRow:focus-visible { outline-color: var(--home-olive); }
+:global([data-admin-kit]) .divRowOn {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .check { border-color: var(--home-line-strong); color: var(--home-olive); }
+:global([data-admin-kit]) .divRowOn .check { border-color: var(--home-olive); }
+:global([data-admin-kit]) .divCount { color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .summary { color: var(--text-secondary); }
+:global([data-admin-kit]) .error { color: var(--danger-light); }
+:global([data-admin-kit]) .foot { border-top-color: var(--home-line); }

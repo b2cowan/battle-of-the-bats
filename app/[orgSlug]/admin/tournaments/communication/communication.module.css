@@ -860,3 +860,165 @@
   .siteColTitle  { flex-wrap: wrap; white-space: normal; overflow: visible; }
   .emailColSubject { flex-wrap: wrap; white-space: normal; overflow: visible; }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   Communications on the coaches portal's kit: the result banner, the compose window's own fields
+   (the surrounding `.modal*` chrome is already on the kit), the message history tables and the
+   email/site detail modals. `.pageHeader`/`.headerLeft`/`.headerIcon`/`.pageTitle`/`.pageSub`/
+   `.headerBtnLabel` now render only inside `AdminPageHeader`'s `legacy` prop (except `.headerBtnLabel`,
+   which also rides along on the lifted "New Message" button through `actions` — it only ever toggles
+   `display: none` at 640px, so it needs no kit rule). `s.tableHeader`/`s.row`/`s.rowMain`/
+   `s.primaryCell`/`s.secondaryCell` (admin-common) are already on the kit. Several classes below
+   (`.composePanel*`, `.commCard*`, `.overflowMenu`, `.recipientsToggle*`, `.divisionFilter`,
+   `.smallCheckLabel`, `.channelBadges`/`.badgeSite`/`.badgeEmail*`/`.sentBy`) are dead CSS from an
+   earlier card-based layout the page no longer renders — reported to the lead, left untouched.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+
+/* ── Result banners — the page's own and the compose / edit windows' inline one, one recipe ── */
+:global([data-admin-kit]) .resultBanner { border-radius: 8px; }
+:global([data-admin-kit]) .resultSuccess,
+:global([data-admin-kit]) .inlineSuccess {
+  background: rgba(var(--success-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.3);
+  color: var(--success-light);
+}
+:global([data-admin-kit]) .resultError,
+:global([data-admin-kit]) .inlineError {
+  background: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.3);
+  color: var(--danger-light);
+}
+
+/* ── Quick templates → the portal's choice chip (unselected: quiet field ground; chosen: olive) ── */
+:global([data-admin-kit]) .templateLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .templateChip {
+  font-size: var(--type-token);
+  letter-spacing: 0.06em;
+  border-radius: 999px;
+  background: var(--home-card);
+  border-color: var(--home-line);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .templateChip:hover { border-color: var(--home-olive); color: var(--text-primary); }
+:global([data-admin-kit]) .templateChipActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .draftClear { color: var(--text-tertiary); }
+:global([data-admin-kit]) .draftClear:hover { color: var(--text-secondary); }
+
+/* ── Channels box → a kit card, its label a quiet band-eyebrow, the chosen channel an olive wash ── */
+:global([data-admin-kit]) .channelsSection {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .channelsSectionLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border-bottom-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .channelRow { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .channelActive { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .channelName { color: var(--text-primary); }
+:global([data-admin-kit]) .channelDesc { color: var(--text-tertiary); }
+:global([data-admin-kit]) .pinLabel { color: var(--text-secondary); }
+
+/* ── Division visibility checklist ── */
+:global([data-admin-kit]) .divisionFilterLabel { color: var(--text-tertiary); }
+:global([data-admin-kit]) .divisionCheckRow { color: var(--text-secondary); }
+:global([data-admin-kit]) .divisionCheckRow:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .divisionCheckIndent { border-left-color: var(--home-line); }
+
+/* ── Recipient line + the Tournament Plus hints ── */
+:global([data-admin-kit]) .recipientLine { color: var(--text-secondary); }
+:global([data-admin-kit]) .recipientLine strong { color: var(--text-primary); }
+:global([data-admin-kit]) .recipientCount { color: var(--text-tertiary); }
+:global([data-admin-kit]) .targetingHint { color: var(--text-tertiary); }
+:global([data-admin-kit]) .targetingHint:hover { color: var(--text-secondary); }
+
+/* ── Inline result (compose modal + edit modal — two legacy rules share this class name; this one
+   kit rule, positioned after both, answers for either) ── */
+:global([data-admin-kit]) .inlineResult,
+:global([data-admin-kit]) .inlineError { border-radius: 8px; }
+
+/* ── Empty states ── */
+:global([data-admin-kit]) .emptyTitle { color: var(--text-secondary); }
+
+/* ── History tabs → the portal's segmented control ── */
+:global([data-admin-kit]) .filterTab {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  border-color: var(--home-line);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .filterTab:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
+:global([data-admin-kit]) .filterTabActive {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .tabCount {
+  border-radius: 999px;
+  background: var(--home-olive-soft);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Email / site tables → the table standard's ground (headers/rows are admin-common's, already
+   on the kit); a pinned star is an accent, never raw lime ── */
+:global([data-admin-kit]) .emailTable {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .emailRow:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .pinnedStar { color: var(--home-olive); }
+:global([data-admin-kit]) .mobileMeta {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  letter-spacing: normal;
+  color: var(--text-tertiary);
+}
+
+/* ── Email Details modal ── */
+:global([data-admin-kit]) .emailDetailLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .emailDetailValue { color: var(--text-primary); }
+:global([data-admin-kit]) .emailDetailBy { color: var(--text-tertiary); }
+:global([data-admin-kit]) .emailDetailLabelCount { color: var(--text-tertiary); }
+:global([data-admin-kit]) .emailDetailMessage {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-secondary);
+}
+
+/* ── Recipients modal ── */
+:global([data-admin-kit]) .recipientsModalMeta { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .emailDetailRecipientList {
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .emailDetailRecipientRow { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .recipientDelivered { background: rgba(var(--success-rgb), 0.08); }
+:global([data-admin-kit]) .recipientFailed { background: rgba(var(--danger-rgb), 0.08); }
+:global([data-admin-kit]) .recipientDelivered .recipientIcon { color: var(--success-light); }
+:global([data-admin-kit]) .recipientFailed .recipientIcon { color: var(--danger-light); }
+:global([data-admin-kit]) .recipientName { color: var(--text-primary); }
+:global([data-admin-kit]) .recipientEmail { color: var(--text-tertiary); }

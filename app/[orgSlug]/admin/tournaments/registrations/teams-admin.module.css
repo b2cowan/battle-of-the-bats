@@ -2780,3 +2780,650 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
 .repLinkPopClose:hover {
   color: var(--white-90);
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   Teams' own parts on the coaches portal's kit: row cells, chips, the payments/health/attention
+   panels, the pool board, the import windows' shared parts and the rep-link picker. The shared table
+   standard, filter chips and row chrome (`admin-common.module.css`) and the page header
+   (`TournamentAdminHeader`) are not restated.
+   ⚠ CASCADE NOTE: a kit rule on a base class (`[data-admin-kit] .x`) is (0,2,0) specificity — the SAME
+   as a legacy state modifier (`.x[data-tone]`, `.x.xActive`, `.x:hover`) — and it lands LATER in the
+   file, so it would silently win and erase the state colour if left unanswered. Every base rule below
+   that touches a coloured property is followed by an explicit kit-scoped restatement of every legacy
+   modifier on that same property, in the legacy file's own relative order, even where the resulting
+   value is unchanged. ⚠ TOKENS ONLY — checkAdminKit fails on a literal colour here. */
+
+/* ── Flat table container + column header (mirrors admin-common's own table standard) ── */
+:global([data-admin-kit]) .flatList {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .colHeader {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+  background: var(--card-bg);
+  border-bottom-color: var(--home-line-strong);
+}
+
+/* ── Bulk action bar — a selection state, the kit's olive wash ── */
+:global([data-admin-kit]) .bulkBar {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .bulkInfo { color: var(--text-primary); }
+:global([data-admin-kit]) .bulkButtons .btn { border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .bulkButtons .btn:hover { background: var(--home-olive-soft); }
+
+/* ── Payments roll-up ── */
+:global([data-admin-kit]) .payPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+/* The kit eyebrow, once for every small label over a figure or a field on this screen (the payment
+   and health panels' titles and KPI labels, the progress label, the payment form's field labels). */
+:global([data-admin-kit]) .payHeader h4,
+:global([data-admin-kit]) .payProgressLabel,
+:global([data-admin-kit]) .payKpi span,
+:global([data-admin-kit]) .regHealthHeader h4,
+:global([data-admin-kit]) .regHealthKpi span,
+:global([data-admin-kit]) .paymentField span {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .payHeader p { color: var(--text-secondary); }
+/* .payGlance's own background is always masked by one of the three data-tone variants below
+   (glanceTone is never unset in page.tsx) — no base override needed, only the tone text. */
+:global([data-admin-kit]) .payGlance small { color: var(--text-secondary); }
+:global([data-admin-kit]) .payGlance[data-tone="good"] { color: var(--success-light); }
+:global([data-admin-kit]) .payGlance[data-tone="warning"] { color: var(--warning-light); }
+:global([data-admin-kit]) .payGlance[data-tone="danger"] { color: var(--danger-light); }
+/* A "Show/Hide" disclosure toggle — body face, accent ink (was mono lime). */
+:global([data-admin-kit]) .payToggle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .payProgressValue { color: var(--text-secondary); }
+:global([data-admin-kit]) .payProgressValue strong { color: var(--text-primary); }
+/* Progress track (the empty groove) — a hairline-strength neutral, not a full wash. */
+:global([data-admin-kit]) .payProgressTrack { background: var(--home-line-strong); }
+/* .payProgressFill keeps --success as a decorative meter fill — not text, AA doesn't apply. */
+:global([data-admin-kit]) .payDueItem { color: var(--text-secondary); }
+:global([data-admin-kit]) .payDueItem svg { color: var(--text-tertiary); }
+:global([data-admin-kit]) .payDueItem[data-overdue] { color: var(--danger-light); }
+:global([data-admin-kit]) .payDueItem[data-overdue] svg { color: var(--danger-light); }
+:global([data-admin-kit]) .payKpi {
+  background: var(--home-card);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .payKpi strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+:global([data-admin-kit]) .payKpi small { color: var(--text-secondary); }
+:global([data-admin-kit]) .payKpi[data-tone="good"] strong { color: var(--success-light); }
+:global([data-admin-kit]) .payKpi[data-tone="danger"] strong { color: var(--danger-light); }
+/* Payment filter pills — body face, the quiet/active pair (mirrors admin-common's filterChip). */
+:global([data-admin-kit]) .paymentFilter {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .paymentFilter:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
+:global([data-admin-kit]) .paymentFilterActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+/* ── Registration Attention Command Center ── */
+:global([data-admin-kit]) .attentionPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .attentionStripIcon { color: var(--warning-light); }
+/* An actual <h2> — the kit's heading face, not the console mono. */
+:global([data-admin-kit]) .attentionStripBody h2 {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .attentionStripBody p { color: var(--text-secondary); }
+:global([data-admin-kit]) .attentionStripChip {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .attentionStripChip:hover { border-color: var(--home-olive); color: var(--home-olive); }
+:global([data-admin-kit]) .attentionStripChip strong { color: var(--home-olive); }
+:global([data-admin-kit]) .attentionStripChip[data-tone="danger"] { border-color: rgba(var(--danger-rgb), 0.3); }
+:global([data-admin-kit]) .attentionStripChip[data-tone="warning"] { border-color: rgba(var(--warning-rgb), 0.32); }
+:global([data-admin-kit]) .attentionClearButton,
+:global([data-admin-kit]) .attentionUpgradeLink {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .attentionClearButton:hover,
+:global([data-admin-kit]) .attentionUpgradeLink:hover { border-color: var(--home-olive); color: var(--home-olive); }
+:global([data-admin-kit]) .attentionBucket {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .attentionBucket:hover,
+:global([data-admin-kit]) .attentionBucketActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .attentionBucket[data-tone="danger"] { border-color: rgba(var(--danger-rgb), 0.28); }
+:global([data-admin-kit]) .attentionBucket[data-tone="warning"] { border-color: rgba(var(--warning-rgb), 0.28); }
+:global([data-admin-kit]) .attentionBucketCount { color: var(--home-olive); }
+:global([data-admin-kit]) .attentionBucketBody strong { color: var(--text-primary); }
+:global([data-admin-kit]) .attentionBucketBody small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .attentionLockLabel { color: var(--home-olive); }
+:global([data-admin-kit]) .attentionDivisionBreakdown { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .attentionDivisionBreakdown > span { color: var(--text-tertiary); }
+:global([data-admin-kit]) .attentionDivisionButtons button,
+:global([data-admin-kit]) .attentionSheetDivisions button {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .attentionDivisionButtons button:hover,
+:global([data-admin-kit]) .attentionDivisionActive {
+  border-color: var(--home-olive) !important;
+  color: var(--home-olive) !important;
+}
+:global([data-admin-kit]) .attentionDivisionButtons strong,
+:global([data-admin-kit]) .attentionSheetDivisions strong { color: var(--home-olive); }
+:global([data-admin-kit]) .attentionEmpty,
+:global([data-admin-kit]) .attentionUpgradeCopy,
+:global([data-admin-kit]) .attentionSheetCopy { color: var(--text-tertiary); }
+
+/* ── Registration Health panel ── */
+:global([data-admin-kit]) .regHealthPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .regHealthHeader p { color: var(--text-secondary); }
+:global([data-admin-kit]) .regHealthScore { background: var(--home-card); }
+:global([data-admin-kit]) .regHealthScore small { color: var(--text-secondary); }
+:global([data-admin-kit]) .regHealthScoreGood { background: rgba(var(--success-rgb), 0.08); color: var(--success-light); }
+:global([data-admin-kit]) .regHealthScoreWarning { background: rgba(var(--warning-rgb), 0.08); color: var(--warning-light); }
+:global([data-admin-kit]) .regHealthScoreDanger { background: rgba(var(--danger-rgb), 0.08); color: var(--danger-light); }
+:global([data-admin-kit]) .regHealthScoreNeutral { color: var(--text-secondary); }
+:global([data-admin-kit]) .regHealthToggle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .regHealthKpi {
+  background: var(--home-card);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) button.regHealthKpi:hover:not(:disabled) { border-color: var(--home-olive); }
+:global([data-admin-kit]) .regHealthKpi strong { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+:global([data-admin-kit]) .regHealthKpi small { color: var(--text-secondary); }
+:global([data-admin-kit]) .regHealthKpi[data-tone="good"] strong { color: var(--success-light); }
+:global([data-admin-kit]) .regHealthKpi[data-tone="warning"] strong { color: var(--warning-light); }
+:global([data-admin-kit]) .regHealthKpi[data-tone="danger"] strong { color: var(--danger-light); }
+:global([data-admin-kit]) .regHealthKpiLock { color: var(--home-olive); }
+:global([data-admin-kit]) .regHealthIssue { color: var(--text-secondary); }
+:global([data-admin-kit]) .regHealthIssue strong { color: var(--text-primary); }
+:global([data-admin-kit]) .regHealthIssue[data-tone="danger"] { color: var(--danger-light); }
+:global([data-admin-kit]) .regHealthIssue[data-tone="warning"] { color: var(--warning-light); }
+/* "neutral" reads as an informational note (a capacity fact) — the info tier, not raw platform navy. */
+:global([data-admin-kit]) .regHealthIssue[data-tone="neutral"] {
+  color: var(--info-light);
+  background: rgba(var(--info-rgb), 0.08);
+  border-color: rgba(var(--info-rgb), 0.2);
+}
+:global([data-admin-kit]) .regHealthGood { color: var(--success-light); }
+
+/* ── Expanded row details ── */
+:global([data-admin-kit]) .infoLine span { color: var(--text-tertiary); }
+:global([data-admin-kit]) .infoLine a { color: var(--home-olive); }
+:global([data-admin-kit]) .notesArea label,
+:global([data-admin-kit]) .transferGroup label { color: var(--text-tertiary); }
+:global([data-admin-kit]) .notesArea textarea {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .notesArea textarea:focus { border-color: var(--home-olive); }
+/* .transferGroup select's own literal near-black --teams-select-bg is legacy-only (token-exempt);
+   the kit answers with the Field ground directly — as background-COLOR: the shorthand would also
+   wipe the arrow. The legacy arrow is a white data-URI image (an SVG stroke cannot read a token), so
+   on the kit the chevron is redrawn from two gradients in the field's own ink (`currentColor`), at
+   the legacy arrow's place — visible on either theme's field. */
+:global([data-admin-kit]) .transferGroup select {
+  background-color: var(--home-card);
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-size: 5px 5px, 5px 5px;
+  background-position: right calc(0.75rem + 5px) center, right 0.75rem center;
+  background-repeat: no-repeat;
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .transferGroup select:hover {
+  border-color: var(--home-line-strong);
+  background-color: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .transferGroup select:focus {
+  border-color: var(--home-olive);
+  box-shadow: none;
+}
+
+/* ── Row cells ── */
+/* .rowPoolSelect's own colour is a chosen/assigned indicator — the kit's olive selection.
+   [data-unassigned] already reads --danger-light on an rgba(--danger-rgb) tint (already theme-true);
+   restated here only so it survives the base rule's specificity tie. */
+/* background-COLOR, and the chevron redrawn in the picker's own ink (as `.transferGroup select`
+   above): the legacy arrows are fixed-colour images (lime, and red when unassigned). */
+:global([data-admin-kit]) .rowPoolSelect {
+  color: var(--home-olive);
+  background-color: var(--home-olive-soft);
+  background-image:
+    linear-gradient(45deg, transparent 50%, currentColor 50%),
+    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-size: 4px 4px, 4px 4px;
+  background-position: right calc(0.4rem + 4px) center, right 0.4rem center;
+  background-repeat: no-repeat;
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .rowPoolSelect[data-unassigned] {
+  color: var(--danger-light);
+  background-color: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.35);
+}
+:global([data-admin-kit]) .rowPoolSelect option {
+  color: var(--text-primary);
+  background: var(--home-card);
+}
+:global([data-admin-kit]) .poolSectionEmpty { color: var(--text-tertiary); }
+:global([data-admin-kit]) .poolEmptyState { color: var(--text-tertiary); }
+:global([data-admin-kit]) .poolEmptyState a { color: var(--home-olive); }
+:global([data-admin-kit]) .paymentPlaceholder { color: var(--text-tertiary); }
+:global([data-admin-kit]) .paymentSymbol { color: var(--text-tertiary); }
+:global([data-admin-kit]) .paymentSymbol[data-tone="paid"] { color: var(--success-light); }
+:global([data-admin-kit]) .paymentSymbol[data-tone="danger"] { color: var(--danger-light); }
+:global([data-admin-kit]) .paymentSymbol[data-tone="pending"] { color: var(--text-tertiary); }
+:global([data-admin-kit]) .selectionCheckbox {
+  border-color: var(--home-line-strong);
+  background: var(--home-card);
+}
+:global([data-admin-kit]) .selectionCheckbox::before { border-color: var(--home-olive); }
+:global([data-admin-kit]) .selectionCheckbox:checked {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .selectionCheckbox:focus-visible { outline-color: var(--home-olive); }
+
+/* ── Team detail shell ── */
+:global([data-admin-kit]) .teamDetailMeta { color: var(--text-tertiary); }
+:global([data-admin-kit]) .teamDetailMeta a { color: var(--text-secondary); }
+:global([data-admin-kit]) .teamDetailMeta a:hover { color: var(--text-primary); }
+:global([data-admin-kit]) .teamIdentity { color: var(--text-secondary); }
+:global([data-admin-kit]) .teamIdentityLabel { color: var(--text-tertiary); }
+:global([data-admin-kit]) .teamRegisteredOn { color: var(--text-tertiary); }
+:global([data-admin-kit]) .teamDetailSection { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .teamDetailSummary {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .paymentField input {
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .paymentField input:focus { border-color: var(--home-olive); }
+:global([data-admin-kit]) .paymentDue { color: var(--text-secondary); }
+:global([data-admin-kit]) .paymentDue strong { color: var(--text-primary); }
+:global([data-admin-kit]) .answerList { color: var(--text-secondary); }
+:global([data-admin-kit]) .answerItem strong { color: var(--text-primary); }
+:global([data-admin-kit]) .notifyToggle { color: var(--text-secondary); }
+
+/* ── Selected registration actions ── */
+:global([data-admin-kit]) .registrationSelectionBar :global(.btn-outline),
+:global([data-admin-kit]) .registrationSelectionBar :global(.btn-ghost) { background: var(--home-card); }
+
+/* ── Registration filter dropdown ── */
+:global([data-admin-kit]) .regFilterButton {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .regFilterButton:hover,
+:global([data-admin-kit]) .regFilterButtonActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .regFilterPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .regFilterHeader { color: var(--text-tertiary); }
+:global([data-admin-kit]) .regFilterHeader button {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .regFilterHeader button:hover { color: var(--home-olive); }
+:global([data-admin-kit]) .regFilterOption { color: var(--text-secondary); }
+:global([data-admin-kit]) .regFilterOption:hover,
+:global([data-admin-kit]) .regFilterOptionActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .regFilterCheck { color: var(--home-olive); }
+:global([data-admin-kit]) .regFilterCount { color: var(--text-tertiary); }
+
+/* ── Add team / own team / coach-account line ── */
+:global([data-admin-kit]) .ownTeamButton > svg { color: var(--home-olive); }
+:global([data-admin-kit]) .ownTeamChip {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .ownTeamChip:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .ownTeamHint { color: var(--text-secondary); }
+:global([data-admin-kit]) .coachAccountLine {
+  border-color: var(--home-line-strong);
+  background: var(--home-card);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .coachAccountKnown {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+/* ── Select-current / multi-select / active-filter badge ── */
+:global([data-admin-kit]) .selectCurrent {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .multiSelectToggle,
+:global([data-admin-kit]) .multiSelectDone {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  background: var(--home-card);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .multiSelectToggle[data-active="true"] {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+/* Chip, not a button — keeps the console mono face per F2's chip exception. */
+:global([data-admin-kit]) .activeFilterBadge {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+/* ── Tools sheet ── */
+:global([data-admin-kit]) .toolsSectionTitle { color: var(--text-tertiary); }
+:global([data-admin-kit]) .toolsMetrics span { color: var(--text-secondary); }
+:global([data-admin-kit]) .toolsMetrics strong { color: var(--text-primary); }
+:global([data-admin-kit]) .toolsFilterButton {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .toolsFilterButton:hover { border-color: var(--text-tertiary); color: var(--text-primary); }
+:global([data-admin-kit]) .toolsFilterButtonActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+/* ── Slot board ── */
+:global([data-admin-kit]) .slotBoardCounts {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .slotBoardCounts strong { color: var(--text-primary); }
+/* .countChip has no base colour (only its two variants do) — restated on their own selectors,
+   no base-rule conflict. The warning tint is pinned to --warning in legacy (see its own comment);
+   the kit still answers with the AA-safe -light tier since that comment only protects the switch-off
+   pixel, not the kit render. */
+:global([data-admin-kit]) .countChip[data-variant="warning"] { color: var(--warning-light); }
+:global([data-admin-kit]) .countChip[data-variant="neutral"] {
+  background: var(--home-olive-soft);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .slotPoolHeader {
+  background: var(--card-bg);
+  border-bottom-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .slotPoolDot { background: var(--home-lime); }
+:global([data-admin-kit]) .slotPoolCount { color: var(--text-tertiary); }
+:global([data-admin-kit]) .slotRow:hover:not(.slotRowEmpty) { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .slotRowSwapSelected {
+  background: var(--home-olive-soft) !important;
+  outline-color: var(--home-olive);
+}
+:global([data-admin-kit]) .slotName { color: var(--text-tertiary); }
+:global([data-admin-kit]) .slotTeamName { color: var(--text-primary); }
+:global([data-admin-kit]) .slotCoach { color: var(--text-tertiary); }
+:global([data-admin-kit]) .slotEmpty { color: var(--text-tertiary); }
+
+/* ── Waitlist ── */
+:global([data-admin-kit]) .waitlistHeader {
+  background: var(--card-bg);
+  border-bottom-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .waitlistPosition { color: var(--text-tertiary); }
+
+/* ── Mobile status marker (visible only under the file's own max-width:640px rule — a colour set
+   here has no effect while the element is display:none at wider widths) ── */
+:global([data-admin-kit]) .mobileStatusMarker {
+  border-color: var(--home-line-strong);
+  background: var(--home-card);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .mobileStatusMarker[data-status="pending"] {
+  border-color: rgba(var(--warning-rgb), 0.48);
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--warning-light);
+}
+/* "accepted" here reads brand lime, not the desktop badge's success green — a pre-existing
+   inconsistency between this marker, the slot-board badge and the flat-row badge; see the report. */
+:global([data-admin-kit]) .mobileStatusMarker[data-status="accepted"] {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+/* Waitlisted reads as the drawn spec's quiet chip here, not platform navy — see the report. */
+:global([data-admin-kit]) .mobileStatusMarker[data-status="waitlist"] {
+  border-color: var(--home-line-strong);
+  background: var(--home-olive-soft);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .mobileStatusMarker[data-status="rejected"] {
+  border-color: rgba(var(--danger-rgb), 0.48);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+}
+
+/* ── Mobile auto-card layout ── */
+:global([data-admin-kit]) .flatList .regRow {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .flatList .registrationCoachCell { color: var(--text-tertiary); }
+
+/* ── Mobile settings bottom sheet ── */
+:global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .sheet {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .sheetHandle { background: var(--home-line-strong); }
+:global([data-admin-kit]) .sheetSectionLabel { color: var(--home-olive); }
+:global([data-admin-kit]) .sheetSeg {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .sheetSeg:hover { border-color: var(--home-olive); color: var(--text-primary); }
+:global([data-admin-kit]) .sheetSegActive {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+/* A tint (rgba lime .08 + lime text), not a solid primary — the accent pair, same as every other
+   "active"/"chosen" chip in this file; the sheet does not need a second ink-on-lime button. */
+:global([data-admin-kit]) .sheetDone {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+/* The rule above ties with the legacy `.sheetDone:hover` and wins, so the hover step is restated —
+   the portal's chosen-chip tint, as Results' own "Done" does. */
+:global([data-admin-kit]) .sheetDone:hover { background: rgba(var(--logic-lime-rgb), 0.16); }
+:global([data-admin-kit]) .attentionSheetBucket { border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .attentionSheetBucketActive,
+:global([data-admin-kit]) .attentionSheetBucket:hover {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .attentionSheetBucket span { color: var(--home-olive); }
+:global([data-admin-kit]) .attentionSheetBucket strong { color: var(--text-primary); }
+:global([data-admin-kit]) .attentionSheetBucket small { color: var(--text-tertiary); }
+:global([data-admin-kit]) .attentionSheetClear {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .attentionSheetClear:hover { border-color: var(--home-olive); color: var(--home-olive); }
+
+/* ── Active settings summary (mobile) ── */
+:global([data-admin-kit]) .activeSettingsSummary { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .activeSettingsSummaryText { color: var(--home-olive); }
+:global([data-admin-kit]) .activeSettingsSummaryIcon { color: var(--text-tertiary); }
+:global([data-admin-kit]) .activeSettingsSummary:hover .activeSettingsSummaryIcon { color: var(--home-olive); }
+:global([data-admin-kit]) .attentionMobileOpen strong { color: var(--home-olive); }
+:global([data-admin-kit]) .attentionMobileOpen small { color: var(--text-secondary); }
+:global([data-admin-kit]) .attentionMobileOpen svg { color: var(--text-tertiary); }
+:global([data-admin-kit]) .attentionMobileClear {
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .attentionMobileClear:hover { border-color: var(--home-olive); color: var(--home-olive); }
+/* The mobile strip drops the card look for a plain border-bottom — restated inside the same
+   max-width:640px condition the legacy rule uses, so the desktop card rule above doesn't leak in. */
+@media (max-width: 640px) {
+  :global([data-admin-kit]) .attentionPanel {
+    background: transparent;
+    border-bottom-color: var(--home-line);
+  }
+}
+
+/* ── "Link to rep team" control + picker popover ── */
+:global([data-admin-kit]) .repLinkChip {
+  border-color: var(--home-line-strong);
+  background: var(--home-olive-soft);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .repLinkChip > svg { color: var(--text-secondary); }
+:global([data-admin-kit]) .repLinkChipName { color: var(--text-primary); }
+:global([data-admin-kit]) .repLinkChipX { color: var(--text-tertiary); }
+:global([data-admin-kit]) .repLinkChipX:hover:not(:disabled) {
+  color: var(--danger-light);
+  background: rgba(var(--danger-rgb), 0.12);
+}
+:global([data-admin-kit]) .repLinkPopover {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .repLinkPopHead { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .repLinkPopTitle { color: var(--text-primary); }
+:global([data-admin-kit]) .repLinkPopSub { color: var(--text-tertiary); }
+:global([data-admin-kit]) .repLinkSearch {
+  border-color: var(--home-line-strong);
+  background: var(--home-card);
+}
+:global([data-admin-kit]) .repLinkSearch > svg { color: var(--text-tertiary); }
+:global([data-admin-kit]) .repLinkSearch input { color: var(--text-primary); }
+:global([data-admin-kit]) .repLinkItem { color: var(--text-secondary); }
+:global([data-admin-kit]) .repLinkItem:hover:not(:disabled) { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .repLinkItemMeta { color: var(--text-tertiary); }
+:global([data-admin-kit]) .repLinkItemPick { color: var(--home-olive); }
+:global([data-admin-kit]) .repLinkItemCurrent { color: var(--text-secondary); }
+:global([data-admin-kit]) .repLinkEmpty { color: var(--text-tertiary); }
+:global([data-admin-kit]) .repLinkPopFoot {
+  border-top-color: var(--home-line);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .repLinkPopClose { color: var(--text-secondary); }
+:global([data-admin-kit]) .repLinkPopClose:hover { color: var(--text-primary); }
+
+/* ── Phone layout safety (F0's documented defect: a control 149–178px past the right edge on this
+   screen) — the pools-view action row (Select many / Swap or Randomize) is the one explicit
+   `flex-wrap: nowrap` button row in this file, and the kit's body-face buttons are wider than the
+   legacy condensed mono ones, so it would newly spill further. NOT the fix for the logged defect
+   (still not reachable at 361–390px either way) — this only stops the kit from making it worse. */
+@media (max-width: 640px) {
+  :global([data-admin-kit]) .teamsActionGroup { flex-wrap: wrap; }
+}

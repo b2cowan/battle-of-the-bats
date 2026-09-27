@@ -370,3 +370,102 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   The Teams and Schedule "Add or Update" import windows, on the coaches portal's kit. Both dialogs
+   share this one sheet. `.modal`/`.modal-header`/`.modal-footer`/`btn-primary`/`btn-ghost` are global
+   and already on the kit — not restated. ⚠ TOKENS ONLY. */
+:global([data-admin-kit]) .titleRow svg,
+:global([data-admin-kit]) .sectionHeader svg,
+:global([data-admin-kit]) .previewTitle svg { color: var(--home-olive); }
+
+:global([data-admin-kit]) .titleBlock p { color: var(--text-secondary); }
+
+:global([data-admin-kit]) .templateSection,
+:global([data-admin-kit]) .uploadSection,
+:global([data-admin-kit]) .previewPanel {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+
+/* Section eyebrow ("Templates", "Upload for Preview") — a label over content, in the body face
+   per F2 (was mono+uppercase already; kept, since an eyebrow keeps the console face). */
+:global([data-admin-kit]) .sectionHeader {
+  color: var(--text-secondary);
+}
+
+:global([data-admin-kit]) .templateRow + .templateRow { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .templateCopy strong { color: var(--text-primary); }
+:global([data-admin-kit]) .templateCopy span { color: var(--text-tertiary); }
+
+/* A quiet action link (download a template) — accent ink on the field ground, not a filled button. */
+:global([data-admin-kit]) .templateButton {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .templateButton:hover {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+
+:global([data-admin-kit]) .filePicker {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+}
+:global([data-admin-kit]) .filePicker:focus-within {
+  border-color: var(--home-olive);
+  box-shadow: none;
+}
+:global([data-admin-kit]) .filePickerButton {
+  background: var(--home-olive-soft);
+  border-right-color: var(--home-line-strong);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .fileName { color: var(--text-primary); }
+
+/* errorBox / errorNote already read --danger-light directly — already theme-true, not restated. */
+
+/* A good outcome said in a box (import applied) — the kit's success tint, not raw brand lime. */
+:global([data-admin-kit]) .successBox {
+  background: rgba(var(--success-rgb), 0.07);
+  border-color: rgba(var(--success-rgb), 0.28);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .successBox svg { color: var(--success-light); }
+
+:global([data-admin-kit]) .modeNote { color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .noticeBox {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .noticeBox svg { color: var(--home-olive); }
+
+:global([data-admin-kit]) .batchId,
+:global([data-admin-kit]) .footerNote,
+:global([data-admin-kit]) .muted { color: var(--text-tertiary); }
+
+:global([data-admin-kit]) .summaryGrid span {
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+
+:global([data-admin-kit]) .tableWrap { border-color: var(--home-line); }
+:global([data-admin-kit]) .previewTable th,
+:global([data-admin-kit]) .previewTable td { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .previewTable th {
+  background: var(--card-bg);
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+}
+/* tr[data-blocked] td already reads rgba(var(--danger-rgb), 0.08) — already theme-true. */
+
+:global([data-admin-kit]) .operation { border-color: var(--home-line-strong); }
+:global([data-admin-kit]) .changeList strong { color: var(--text-primary); }
+/* .errorNote already reads --danger-light — already theme-true. */

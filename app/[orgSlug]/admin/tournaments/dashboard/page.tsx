@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback, useRef, useSyncExternalStore, Fragment } from 'react';
+import { useState, useEffect, useCallback, useRef, useSyncExternalStore, Fragment, type CSSProperties } from 'react';
 import CountUp from '@/components/admin/CountUp';
 import { useRouter } from 'next/navigation';
 import {
@@ -33,8 +33,24 @@ import { getGuidance, getStageShortcuts, type GuidanceStage } from '@/lib/tourna
 import styles from './dashboard.module.css';
 import { copiedSummary, formatTime } from '@/lib/utils';
 import type { CloneCopiedCounts } from '@/lib/types';
-import { hasPlayoffs, isReadyToFinalize } from '@/lib/tournament-phase';
+import { hasPlayoffs, isReadyToFinalize, resolvePhase } from '@/lib/tournament-phase';
 import { tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+
+// ── Kit ink patches (Admin Design Continuity slice 4b) ──────────────────────
+// Shared single-property style objects reused across this page's many inline icon/text colours.
+// Kept at module scope per the kx() convention: legacy values never change, only the kit side does.
+const ICON_ACCENT_LEGACY: CSSProperties = { color: 'var(--logic-lime)' };
+const ICON_MUTED_LEGACY: CSSProperties = { color: 'var(--data-gray)' };
+const ICON_WARNING_LEGACY: CSSProperties = { color: 'var(--warning)' };
+const INFO_LEGACY: CSSProperties = { color: 'var(--blueprint-blue)' };
+// Two overlay shapes: the populate modal blurs behind it, the confirm dialogs don't — both scrim
+// to the kit's `--home-scrim` (the same token `.modal-overlay` uses globally).
+const MODAL_OVERLAY_BLUR_LEGACY: CSSProperties = { position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)' };
+const MODAL_OVERLAY_LEGACY: CSSProperties = { position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' };
+const MODAL_OVERLAY_KIT: CSSProperties = { background: 'var(--home-scrim)' };
 
 // ── Domain types ────────────────────────────────────────────────────────────
 
@@ -474,15 +490,24 @@ function Sparkline({ data }: { data: number[] }) {
   );
 }
 
+// A gauge's tone. Today the fill and its %-label share the base tone (plain progress in the platform
+// navy). On the kit the fill keeps its base tone — AA-safe as a fill — with plain progress moving to
+// `--info`, and the %-label, which is TEXT, takes `KIT_INK`'s `-light` tier (a bare state token
+// fails AA as ink on the Dark ground).
+type GaugeTone = 'danger' | 'success' | 'warning' | 'info';
+const GAUGE_TONE: Record<GaugeTone, string> = { danger: 'var(--danger)', success: 'var(--success)', warning: 'var(--warning)', info: 'var(--blueprint-blue)' };
+const GAUGE_KIT_FILL: Record<GaugeTone, string> = { ...GAUGE_TONE, info: 'var(--info)' };
+
 function GaugeBar({ value, max, danger }: { value: number; max: number; danger?: boolean }) {
+  const kx = useKitStyle();
   const pct = max > 0 ? Math.min(100, Math.round((value / max) * 100)) : 0;
-  const color = danger ? 'var(--danger)' : pct >= 100 ? 'var(--success)' : pct >= 75 ? 'var(--warning)' : 'var(--blueprint-blue)';
+  const tone: GaugeTone = danger ? 'danger' : pct >= 100 ? 'success' : pct >= 75 ? 'warning' : 'info';
   return (
     <div className={styles.gaugeWrap}>
       <div className={styles.gaugeTrack}>
-        <div className={styles.gaugeFill} style={{ width: `${pct}%`, background: color }} />
+        <div className={styles.gaugeFill} style={kx({ width: `${pct}%`, background: GAUGE_TONE[tone] }, { background: GAUGE_KIT_FILL[tone] })} />
       </div>
-      <span className={styles.gaugePct} style={{ color }}>{pct}%</span>
+      <span className={styles.gaugePct} style={kx({ color: GAUGE_TONE[tone] }, KIT_INK[tone])}>{pct}%</span>
     </div>
   );
 }
@@ -635,6 +660,8 @@ export default function AdminDashboard() {
   const { currentOrg, userRole, userCapabilities } = useOrg();
   usePageTitle('Dashboard');
   const router = useRouter();
+  const kit = useAdminKit();
+  const kx = useKitStyle();
   const base = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments`;
   const subscriptionHref = `/${currentOrg?.slug ?? 'admin'}/admin/tournaments/settings/subscription`;
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
@@ -1355,7 +1382,7 @@ export default function AdminDashboard() {
       return (
         <section className={styles.analyticsPanel}>
           <div className={styles.panelHeader}>
-            <MessageCircle size={16} style={{ color: 'var(--data-gray)' }} />
+            <MessageCircle size={16} style={kx(ICON_MUTED_LEGACY, KIT_INK.tertiary)} />
             <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Coach Sign-ups &amp; Chat</h2>
           </div>
           <div className={styles.chatSkeleton} aria-busy="true" aria-label="Loading coach sign-up figures">
@@ -1379,7 +1406,7 @@ export default function AdminDashboard() {
       return (
         <section className={styles.analyticsPanel}>
           <div className={styles.panelHeader}>
-            <MessageCircle size={16} style={{ color: 'var(--data-gray)' }} />
+            <MessageCircle size={16} style={kx(ICON_MUTED_LEGACY, KIT_INK.tertiary)} />
             <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Coach Sign-ups &amp; Chat</h2>
           </div>
           <div className={styles.emptyPanel}>
@@ -1402,7 +1429,7 @@ export default function AdminDashboard() {
       return (
         <section className={styles.analyticsPanel}>
           <div className={styles.panelHeader}>
-            <MessageCircle size={16} style={{ color: 'var(--data-gray)' }} />
+            <MessageCircle size={16} style={kx(ICON_MUTED_LEGACY, KIT_INK.tertiary)} />
             <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Coach Sign-ups &amp; Chat</h2>
           </div>
           <div className={styles.emptyPanel}>
@@ -1436,7 +1463,7 @@ export default function AdminDashboard() {
     return (
       <section className={styles.analyticsPanel}>
         <div className={styles.panelHeader}>
-          <MessageCircle size={16} style={{ color: 'var(--logic-lime)' }} />
+          <MessageCircle size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Coach Sign-ups &amp; Chat</h2>
           <Link href={`${base}/chat`} className={styles.panelLink}>Open Chat →</Link>
         </div>
@@ -1534,7 +1561,7 @@ export default function AdminDashboard() {
     return (
       <section className={styles.analyticsPanel}>
         <div className={styles.panelHeader}>
-          <Megaphone size={16} style={{ color: 'var(--logic-lime)' }} />
+          <Megaphone size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Communications</h2>
           <Link href={`${base}/communication`} className={styles.panelLink}>Manage →</Link>
         </div>
@@ -1609,7 +1636,7 @@ export default function AdminDashboard() {
       // "See it live" sandbox. An inert attribute — nothing reads it outside a demo org.
       <section className={`${styles.analyticsPanel} ${styles.scheduleHealthPanel}`} data-tone={health.tone} data-sandbox-tour="schedule-health">
         <div className={styles.panelHeader}>
-          <Activity size={16} style={{ color: 'var(--logic-lime)' }} />
+          <Activity size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Schedule Health</h2>
           <Link href={`${base}/schedule`} className={styles.panelLink}>Review -&gt;</Link>
         </div>
@@ -1677,7 +1704,7 @@ export default function AdminDashboard() {
     return (
       <section className={styles.analyticsPanel}>
         <div className={styles.panelHeader}>
-          <Users size={16} style={{ color: 'var(--logic-lime)' }} />
+          <Users size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Registration</h2>
           {reg.velocity > 0 && (
             <span className={styles.velocityChip}>
@@ -1744,7 +1771,7 @@ export default function AdminDashboard() {
     return (
       <section className={styles.analyticsPanel}>
         <div className={styles.panelHeader}>
-          <DollarSign size={16} style={{ color: 'var(--logic-lime)' }} />
+          <DollarSign size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Payments</h2>
           <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
         </div>
@@ -1915,7 +1942,7 @@ export default function AdminDashboard() {
       // "See it live" sandbox. An inert attribute — nothing reads it outside a demo org.
       <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`} data-sandbox-tour="now-playing">
         <div className={styles.panelHeader}>
-          <Activity size={16} style={{ color: 'var(--logic-lime)' }} />
+          <Activity size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Now Playing</h2>
           <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
         </div>
@@ -1964,7 +1991,7 @@ export default function AdminDashboard() {
     return (
       <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`}>
         <div className={styles.panelHeader}>
-          <Clock size={16} style={{ color: 'var(--blueprint-blue)' }} />
+          <Clock size={16} style={kx(INFO_LEGACY, KIT_INK.info)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Up Next</h2>
           <Link href={`${base}/schedule`} className={styles.panelLink}>View schedule →</Link>
         </div>
@@ -2008,7 +2035,7 @@ export default function AdminDashboard() {
     return (
       <section className={`${styles.analyticsPanel} ${styles.liveStripPanel}`}>
         <div className={styles.panelHeader}>
-          <AlertCircle size={16} style={{ color: 'var(--warning)' }} />
+          <AlertCircle size={16} style={kx(ICON_WARNING_LEGACY, KIT_INK.warning)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Needs a Score</h2>
           <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
         </div>
@@ -2045,7 +2072,7 @@ export default function AdminDashboard() {
     return (
       <section className={styles.analyticsPanel}>
         <div className={styles.panelHeader}>
-          <Zap size={16} style={{ color: 'var(--logic-lime)' }} />
+          <Zap size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Games Progress</h2>
           <Link href={`${base}/results`} className={styles.panelLink}>Enter scores →</Link>
         </div>
@@ -2084,7 +2111,7 @@ export default function AdminDashboard() {
     return (
       <section className={styles.analyticsPanel}>
         <div className={styles.panelHeader}>
-          <UserCheck size={16} style={{ color: 'var(--logic-lime)' }} />
+          <UserCheck size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Team Check-in</h2>
           <Link href={`${base}/check-in`} className={styles.panelLink}>Open board →</Link>
         </div>
@@ -2107,10 +2134,16 @@ export default function AdminDashboard() {
 
   function renderByDivisionPanel() {
     if (gd.byDivision.length === 0) return null;
+    // Row-invariant (every champion row wears the same treatment) — computed once above the
+    // .map(), not per row.
+    const championLabelStyle = kx(
+      { display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--logic-lime)', fontWeight: 700, fontSize: '0.82rem' },
+      { color: 'var(--home-olive)' },
+    );
     return (
       <section className={styles.analyticsPanel}>
         <div className={styles.panelHeader}>
-          <Flag size={16} style={{ color: 'var(--logic-lime)' }} />
+          <Flag size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
           <h2 className={styles.sectionTitle} style={{ margin: 0 }}>By Division</h2>
         </div>
         <div className={styles.divisionTable}>
@@ -2118,6 +2151,15 @@ export default function AdminDashboard() {
             const poolPct = d.poolTotal > 0 ? Math.round((d.poolCompleted / d.poolTotal) * 100) : 0;
             // J1-100: crown the champion the moment the final goes final — live.
             const champ = champions.find(c => c.divisionId === d.id);
+            // Row-variant (depends on this row's playoffStarted/poolPct), so computed per row —
+            // the fill is a solid tone (base tokens stay AA-safe as a fill; only the "still in
+            // pools" blue needs a kit-specific answer); the %/round text is TEXT, so its ink
+            // moves to the `-light` tier on the kit.
+            const fillColor = d.playoffStarted ? 'var(--warning)' : poolPct >= 100 ? (kit ? 'var(--success)' : 'var(--logic-lime)') : (kit ? 'var(--info)' : 'var(--blueprint-blue)');
+            const pctInkStyle = kx(
+              { color: d.playoffStarted ? 'var(--warning)' : 'var(--data-gray)' },
+              { color: d.playoffStarted ? 'var(--warning-light)' : 'var(--text-tertiary)' },
+            );
             return (
               <div key={d.id} className={styles.divisionRow}>
                 <span className={styles.divisionName}>{d.name}</span>
@@ -2126,16 +2168,16 @@ export default function AdminDashboard() {
                 </span>
                 {champ ? (
                   <div className={styles.gaugeWrap}>
-                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem', color: 'var(--logic-lime)', fontWeight: 700, fontSize: '0.82rem' }}>
+                    <span style={championLabelStyle}>
                       <Trophy size={13} aria-hidden /> {champ.championTeamName}
                     </span>
                   </div>
                 ) : (
                   <div className={styles.gaugeWrap}>
                     <div className={styles.gaugeTrack}>
-                      <div className={styles.gaugeFill} style={{ width: `${d.playoffStarted ? 100 : poolPct}%`, background: d.playoffStarted ? 'var(--warning)' : poolPct >= 100 ? 'var(--logic-lime)' : 'var(--blueprint-blue)' }} />
+                      <div className={styles.gaugeFill} style={{ width: `${d.playoffStarted ? 100 : poolPct}%`, background: fillColor }} />
                     </div>
-                    <span className={styles.gaugePct} style={{ color: d.playoffStarted ? 'var(--warning)' : 'var(--data-gray)' }}>
+                    <span className={styles.gaugePct} style={pctInkStyle}>
                       {d.playoffStarted ? (d.nextRound ? `→ ${d.nextRound}` : 'Done') : `${poolPct}%`}
                     </span>
                   </div>
@@ -2147,9 +2189,9 @@ export default function AdminDashboard() {
         {gd.playoffStarted && (
           <div className={styles.subStats} style={{ marginTop: '0.5rem' }}>
             {playoffsAllDone ? (
-              <span className={styles.subStat} style={{ color: 'var(--success)' }}><Trophy size={12} /> Playoffs complete</span>
+              <span className={styles.subStat} style={kx({ color: 'var(--success)' }, KIT_INK.success)}><Trophy size={12} /> Playoffs complete</span>
             ) : (
-              <span className={styles.subStat} style={{ color: 'var(--warning)' }}><Trophy size={12} /> Playoffs underway</span>
+              <span className={styles.subStat} style={kx({ color: 'var(--warning)' }, KIT_INK.warning)}><Trophy size={12} /> Playoffs underway</span>
             )}
           </div>
         )}
@@ -2185,7 +2227,7 @@ export default function AdminDashboard() {
             <div key={p.id} style={{ display: 'contents' }}>{node}</div>
           ))}
           {nodes.length === 0 && (
-            <div style={{ color: 'var(--data-gray)', fontSize: '0.8rem' }}>
+            <div style={kx({ color: 'var(--data-gray)', fontSize: '0.8rem' }, KIT_INK.tertiary)}>
               All panels are hidden. Click <strong>Customize</strong> to restore them.
             </div>
           )}
@@ -2241,7 +2283,7 @@ export default function AdminDashboard() {
             <div key={panel.id} style={{ display: 'contents' }}>{panelNode(panel.id)}</div>
           ))}
           {sortedPanels.length === 0 && (
-            <div style={{ color: 'var(--data-gray)', fontSize: '0.8rem' }}>
+            <div style={kx({ color: 'var(--data-gray)', fontSize: '0.8rem' }, KIT_INK.tertiary)}>
               All panels are hidden. Click <strong>Customize</strong> to restore them.
             </div>
           )}
@@ -2272,48 +2314,70 @@ export default function AdminDashboard() {
     );
   }
 
+  // Same element, same condition, lifted so both the legacy header and the kit header's
+  // `actions` render it.
+  const customizeButton = (isActive || isCompleted) && currentTournament?.id && !isCustomizing ? (
+    <button
+      type="button"
+      className={`btn btn-ghost btn-data ${styles.customizeToggleBtn}`}
+      onClick={() => { setIsCustomizing(true); setExpandedIconPicker(null); setAddMenuZone(null); }}
+    >
+      <Settings size={12} />
+      Customize
+    </button>
+  ) : null;
+  // Toned like the event header's phase chip directly above (AdminEventHeader, same rule: live/
+  // game day red, open olive/green, otherwise quiet) — the SAME status + isGameDay fact, not a
+  // second read of it.
+  const kitPhase = resolvePhase({ status, isGameDay });
+  const kitBadgeClass = kitPhase === 'gameday' ? 'badge-danger' : kitPhase === 'open' ? 'badge-success' : 'badge-neutral';
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className={styles.page}>
-      <header className="flex items-center justify-between border-b border-blueprint-blue/60 pb-4 mb-5" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
-        <div>
-          <div className="hud-label mb-1">{currentOrg?.name ?? 'Admin'}</div>
-          <h1 className="font-mono font-bold text-xl uppercase tracking-tight" style={{ color: 'var(--logic-lime)' }}>
-            {currentTournament?.name ?? currentOrg?.name ?? 'Admin'}
-          </h1>
-          {fmtDateRange(currentTournament?.startDate, currentTournament?.endDate) && (
-            <div className="hud-label mt-1" style={{ color: 'var(--white-50)', textTransform: 'none', letterSpacing: 'normal' }}>
-              {fmtDateRange(currentTournament?.startDate, currentTournament?.endDate)}
+      <AdminPageHeader
+        crumbs={[{ label: currentOrg?.name ?? 'Admin' }]}
+        title={currentTournament?.name ?? currentOrg?.name ?? 'Admin'}
+        titleChips={
+          <span className={styles.kitTitleChips}>
+            <span className={`badge ${kitBadgeClass}`}>{status.toUpperCase()}</span>
+            {isActive && <span className={styles.kitStatusLabel}>{statusLabel.toUpperCase()}</span>}
+          </span>
+        }
+        actions={customizeButton}
+        legacy={
+          <header className="flex items-center justify-between border-b border-blueprint-blue/60 pb-4 mb-5" style={{ flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div>
+              <div className="hud-label mb-1">{currentOrg?.name ?? 'Admin'}</div>
+              <h1 className="font-mono font-bold text-xl uppercase tracking-tight" style={{ color: 'var(--logic-lime)' }}>
+                {currentTournament?.name ?? currentOrg?.name ?? 'Admin'}
+              </h1>
+              {fmtDateRange(currentTournament?.startDate, currentTournament?.endDate) && (
+                <div className="hud-label mt-1" style={{ color: 'var(--white-50)', textTransform: 'none', letterSpacing: 'normal' }}>
+                  {fmtDateRange(currentTournament?.startDate, currentTournament?.endDate)}
+                </div>
+              )}
             </div>
-          )}
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
-          {(isActive || isCompleted) && currentTournament?.id && !isCustomizing && (
-            <button
-              type="button"
-              className={`btn btn-ghost btn-data ${styles.customizeToggleBtn}`}
-              onClick={() => { setIsCustomizing(true); setExpandedIconPicker(null); setAddMenuZone(null); }}
-            >
-              <Settings size={12} />
-              Customize
-            </button>
-          )}
-          <div className={styles.statusBlockDesktop} style={{ textAlign: 'right' }}>
-            <div className="font-mono text-xs font-bold" style={{ color: statusColor }}>{status.toUpperCase()}</div>
-            {isActive && <div className="font-mono" style={{ fontSize: '0.6rem', color: 'var(--white-40)', letterSpacing: '0.06em', marginTop: '0.15rem' }}>{statusLabel.toUpperCase()}</div>}
-          </div>
-        </div>
-      </header>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexShrink: 0 }}>
+              {customizeButton}
+              <div className={styles.statusBlockDesktop} style={{ textAlign: 'right' }}>
+                <div className="font-mono text-xs font-bold" style={{ color: statusColor }}>{status.toUpperCase()}</div>
+                {isActive && <div className="font-mono" style={{ fontSize: '0.6rem', color: 'var(--white-40)', letterSpacing: '0.06em', marginTop: '0.15rem' }}>{statusLabel.toUpperCase()}</div>}
+              </div>
+            </div>
+          </header>
+        }
+      />
 
       {currentTournament?.id && statsError && (
-        <div className="mb-4 text-xs" style={{ color: 'var(--data-gray)' }}>Dashboard counts are unavailable right now.</div>
+        <div className="mb-4 text-xs" style={kx(ICON_MUTED_LEGACY, KIT_INK.tertiary)}>Dashboard counts are unavailable right now.</div>
       )}
 
       {/* ── COIN TOSS NEEDED ─────────────────────────────── */}
       {currentTournament?.id && visibleStats.coinTossNeeded.length > 0 && (
-        <div className={styles.reuseSetupPrompt} style={{ borderColor: 'var(--warning)' }}>
+        <div className={styles.reuseSetupPrompt} style={kx({ borderColor: 'var(--warning)' }, { borderColor: 'rgba(var(--warning-rgb), 0.35)', background: 'rgba(var(--warning-rgb), 0.06)' })}>
           <div className={styles.reusePromptBody}>
-            <AlertCircle size={16} className={styles.reusePromptIcon} style={{ color: 'var(--warning)' }} />
+            <AlertCircle size={16} className={styles.reusePromptIcon} style={kx(ICON_WARNING_LEGACY, KIT_INK.warning)} />
             <div>
               <strong className={styles.reusePromptTitle}>Coin toss required</strong>
               <p>
@@ -2338,7 +2402,7 @@ export default function AdminDashboard() {
 
       {/* ── DRAFT DASHBOARD ─────────────────────────────── */}
       {isDraft && !currentTournament?.id && (
-        <div style={{ padding: '2rem 0', color: 'var(--data-gray)', fontSize: '0.85rem' }}>
+        <div style={kx({ padding: '2rem 0', color: 'var(--data-gray)', fontSize: '0.85rem' }, KIT_INK.tertiary)}>
           No tournament selected. Choose a tournament from the selector above to view its dashboard.
         </div>
       )}
@@ -2365,7 +2429,7 @@ export default function AdminDashboard() {
                   onClick={dismissReuseSetup}
                   aria-label="Dismiss"
                   title="Dismiss"
-                  style={{ background: 'none', border: 0, color: 'var(--white-40)', cursor: 'pointer', padding: '0.25rem', display: 'inline-flex', alignItems: 'center' }}
+                  style={kx({ background: 'none', border: 0, color: 'var(--white-40)', cursor: 'pointer', padding: '0.25rem', display: 'inline-flex', alignItems: 'center' }, KIT_INK.tertiary)}
                 >
                   <X size={14} />
                 </button>
@@ -2382,7 +2446,10 @@ export default function AdminDashboard() {
                 <h2 className={styles.sectionTitle}>Draft Launch Checklist</h2>
                 <p className={styles.checklistSub}>Complete these items before activating registration and the public tournament page.</p>
                 <div className={styles.checklistProgress}>
-                  <span className={styles.checklistProgressLabel} style={{ color: completedCount === checklistItems.length ? 'var(--logic-lime)' : 'var(--white-40)' }}>
+                  <span className={styles.checklistProgressLabel} style={kx(
+                    { color: completedCount === checklistItems.length ? 'var(--logic-lime)' : 'var(--white-40)' },
+                    { color: completedCount === checklistItems.length ? 'var(--home-olive)' : 'var(--text-tertiary)' },
+                  )}>
                     {completedCount} / {checklistItems.length} required
                   </span>
                   <div className={styles.progressTrack}>
@@ -2430,7 +2497,10 @@ export default function AdminDashboard() {
               <span style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', minWidth: 0 }}>
                 <Settings size={13} style={{ flexShrink: 0 }} />
                 <span className={styles.optionalToggleLabel}>Schedule, venues, tie-breakers &amp; more</span>
-                <span style={{ color: optionalReviewedCount === optionalTotalCount ? 'var(--logic-lime)' : 'var(--data-gray)', marginLeft: '0.15rem', flexShrink: 0 }}>
+                <span style={kx(
+                  { color: optionalReviewedCount === optionalTotalCount ? 'var(--logic-lime)' : 'var(--data-gray)', marginLeft: '0.15rem', flexShrink: 0 },
+                  { color: optionalReviewedCount === optionalTotalCount ? 'var(--home-olive)' : 'var(--text-tertiary)' },
+                )}>
                   — {optionalReviewedCount} of {optionalTotalCount} reviewed
                 </span>
               </span>
@@ -2463,7 +2533,7 @@ export default function AdminDashboard() {
             ) : (
               activateError && (
                 <div className={styles.checklistFooter}>
-                  <span style={{ color: 'var(--danger)', fontSize: '0.8rem' }}>{activateError}</span>
+                  <span style={kx({ color: 'var(--danger)', fontSize: '0.8rem' }, KIT_INK.danger)}>{activateError}</span>
                 </div>
               )
             )}
@@ -2487,7 +2557,7 @@ export default function AdminDashboard() {
               guidance rail owns the mark-complete prompt, so the two never contradict. */}
           {isPostEventActive && !readyToFinalize && (
             <div className={styles.postEventBanner}>
-              <Trophy size={15} style={{ color: 'var(--warning)', flexShrink: 0 }} />
+              <Trophy size={15} style={kx({ color: 'var(--warning)', flexShrink: 0 }, KIT_INK.warning)} />
               <span>The tournament dates have passed. Once all scores and payments are finalized, you can mark this tournament as complete.</span>
             </div>
           )}
@@ -2538,7 +2608,7 @@ export default function AdminDashboard() {
               <div className={styles.analyticsGrid}>
                 <section className={styles.analyticsPanel}>
                   <div className={styles.panelHeader}>
-                    <Users size={16} style={{ color: 'var(--logic-lime)' }} />
+                    <Users size={16} style={kx(ICON_ACCENT_LEGACY, KIT_INK.accent)} />
                     <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Final Registration</h2>
                     <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
                   </div>
@@ -2565,7 +2635,7 @@ export default function AdminDashboard() {
 
                 <section className={styles.analyticsPanel}>
                   <div className={styles.panelHeader}>
-                    <DollarSign size={16} style={{ color: 'var(--warning)' }} />
+                    <DollarSign size={16} style={kx(ICON_WARNING_LEGACY, KIT_INK.warning)} />
                     <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Final Payments</h2>
                     <Link href={`${base}/registrations`} className={styles.panelLink}>View teams →</Link>
                   </div>
@@ -2607,8 +2677,8 @@ export default function AdminDashboard() {
 
           {hasCapability(userRole ?? 'official', userCapabilities, 'create_tournaments') && (
             <div style={{ marginTop: '1.5rem', display: 'flex', justifyContent: 'flex-end' }}>
-              {archiveError && <span style={{ fontSize: '0.8rem', color: 'var(--danger)', marginRight: '0.75rem', alignSelf: 'center' }}>{archiveError}</span>}
-              <button type="button" className="btn btn-ghost btn-data" style={{ color: 'var(--white-40)', borderColor: 'var(--border-2)' }} onClick={() => { setArchiveError(''); setShowArchiveConfirm(true); }} disabled={archiving}>
+              {archiveError && <span style={kx({ fontSize: '0.8rem', color: 'var(--danger)', marginRight: '0.75rem', alignSelf: 'center' }, KIT_INK.danger)}>{archiveError}</span>}
+              <button type="button" className="btn btn-ghost btn-data" style={kx({ color: 'var(--white-40)', borderColor: 'var(--border-2)' }, { color: 'var(--text-tertiary)', borderColor: 'var(--home-line-strong)' })} onClick={() => { setArchiveError(''); setShowArchiveConfirm(true); }} disabled={archiving}>
                 {archiving ? 'Archiving…' : 'Archive Tournament'}
               </button>
             </div>
@@ -2618,15 +2688,15 @@ export default function AdminDashboard() {
 
       {/* ── ARCHIVED ────────────────────────────────────── */}
       {status === 'archived' && (
-        <div style={{ padding: '2rem 0', color: 'var(--data-gray)', fontSize: '0.85rem' }}>
+        <div style={kx({ padding: '2rem 0', color: 'var(--data-gray)', fontSize: '0.85rem' }, KIT_INK.tertiary)}>
           This tournament is archived. View historical results in{' '}
-          <Link href={`${base}/archives`} style={{ color: 'var(--blueprint-blue)' }}>Past Tournaments</Link>.
+          <Link href={`${base}/archives`} style={kx(INFO_LEGACY, KIT_INK.accent)}>Past Tournaments</Link>.
         </div>
       )}
 
       {/* ── POPULATE-FROM MODAL ──────────────────────────── */}
       {populateOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.72)', backdropFilter: 'blur(6px)' }}>
+        <div style={kx(MODAL_OVERLAY_BLUR_LEGACY, MODAL_OVERLAY_KIT)}>
           <div className="modal" style={{ maxWidth: 620, width: 'calc(100% - 2rem)', padding: '1.75rem' }} onClick={e => e.stopPropagation()}>
             {populateStep === 'pick' && (
               <>
@@ -2711,16 +2781,16 @@ export default function AdminDashboard() {
 
       {/* ── ARCHIVE CONFIRM ───────────────────────────────── */}
       {showArchiveConfirm && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' }}>
+        <div style={kx(MODAL_OVERLAY_LEGACY, MODAL_OVERLAY_KIT)}>
           <div className="modal" style={{ maxWidth: 420, width: '100%' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 style={{ margin: 0 }}>Archive this tournament?</h3>
               <button className="btn btn-ghost btn-data" onClick={() => setShowArchiveConfirm(false)}>✕</button>
             </div>
-            <p style={{ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }}>
+            <p style={kx({ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }, KIT_INK.tertiary)}>
               Archiving moves this tournament to <strong>Past Tournaments</strong> and makes it read-only — it stops appearing in your active list and frees up a tournament slot. You can restore it later from Past Tournaments (subject to your plan&rsquo;s tournament limit).
             </p>
-            {archiveError && <p style={{ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }}>{archiveError}</p>}
+            {archiveError && <p style={kx({ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }, KIT_INK.danger)}>{archiveError}</p>}
             <div className="modal-footer">
               <button className="btn btn-ghost btn-data" onClick={() => setShowArchiveConfirm(false)} disabled={archiving}>Cancel</button>
               <button className="btn btn-danger btn-data" onClick={handleArchive} disabled={archiving}>{archiving ? 'Archiving…' : 'Archive Tournament'}</button>
@@ -2731,18 +2801,18 @@ export default function AdminDashboard() {
 
       {/* ── ACTIVATE CONFIRM ──────────────────────────────── */}
       {showActivateConfirm && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' }}>
+        <div style={kx(MODAL_OVERLAY_LEGACY, MODAL_OVERLAY_KIT)}>
           <div className="modal" style={{ maxWidth: 420, width: '100%' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 style={{ margin: 0 }}>Activate tournament?</h3>
             </div>
-            <p style={{ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.5rem' }}>
+            <p style={kx({ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.5rem' }, KIT_INK.tertiary)}>
               This will make the public tournament page live and open registration to teams. You can deactivate it later from Event Settings if needed.
             </p>
             {currentTournament?.slug && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--white-40)', margin: '0 0 0.5rem', wordBreak: 'break-all' }}>
+              <p style={kx({ fontSize: '0.8rem', color: 'var(--white-40)', margin: '0 0 0.5rem', wordBreak: 'break-all' }, KIT_INK.tertiary)}>
                 Public URL:{' '}
-                <span style={{ color: 'var(--white-60)', fontFamily: 'monospace' }}>
+                <span style={kx({ color: 'var(--white-60)', fontFamily: 'monospace' }, KIT_INK.secondary)}>
                   {typeof window !== 'undefined' ? window.location.origin : ''}/{currentOrg?.slug}/{currentTournament.slug}
                 </span>
               </p>
@@ -2767,7 +2837,7 @@ export default function AdminDashboard() {
                 )}
               </div>
             )}
-            {activateError && <p style={{ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }}>{activateError}</p>}
+            {activateError && <p style={kx({ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }, KIT_INK.danger)}>{activateError}</p>}
             <div className="modal-footer">
               <button className="btn btn-ghost btn-data" onClick={() => { setShowActivateConfirm(false); setActivateError(''); }} disabled={activating}>Cancel</button>
               <button className="btn btn-lime btn-data" onClick={handleActivate} disabled={activating}>{activating ? 'Activating…' : 'Yes, activate'}</button>
@@ -2780,18 +2850,18 @@ export default function AdminDashboard() {
           Mirrors the Settings "Mark as Completed?" warning; the confirm is lime
           (positive, reopenable milestone) — Archive stays the only danger action. */}
       {showCompleteConfirm && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.7)' }}>
+        <div style={kx(MODAL_OVERLAY_LEGACY, MODAL_OVERLAY_KIT)}>
           <div className="modal" style={{ maxWidth: 420, width: '100%' }} onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <h3 style={{ margin: 0 }}>Mark this tournament complete?</h3>
               <button className="btn btn-ghost btn-data" onClick={() => { setShowCompleteConfirm(false); setCompleteError(''); }}>✕</button>
             </div>
-            <p style={{ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }}>
+            <p style={kx({ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }, KIT_INK.tertiary)}>
               This locks the tournament. Registrations close and all event data — scores, standings, schedules, divisions, and registrations — becomes read-only and final.
               {visibleStats.notifyTeamsOnComplete ? ' Team contacts will receive a results summary email.' : ''}
               {' '}You can reopen it anytime by setting the status back to Active.
             </p>
-            {completeError && <p style={{ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }}>{completeError}</p>}
+            {completeError && <p style={kx({ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }, KIT_INK.danger)}>{completeError}</p>}
             <div className="modal-footer">
               <button className="btn btn-ghost btn-data" onClick={() => { setShowCompleteConfirm(false); setCompleteError(''); }} disabled={completing}>Cancel</button>
               <button className="btn btn-lime btn-data" onClick={handleComplete} disabled={completing}>{completing ? 'Marking…' : 'Mark Complete'}</button>

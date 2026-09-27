@@ -492,9 +492,11 @@ const KIT_LITERAL = new RegExp(`${COLOR_LITERAL}|(?:^|\\s)(?:white|black)(?:\\s|
 const isKitSelector = (selector) => selector.replace(/:not\([^()]*\)/g, '').includes('[data-admin-kit]');
 
 function checkAdminKit() {
-  // app/globals.css too: the kit's SHARED parts live there (R1, the island, buttons, chips, windows,
-  // fields — slices 1, 2 and 4a), and until slice 4a no check read them (it is in no scope's dirs).
-  const files = [...scopeFiles(SCOPES.operator).filter(f => f.endsWith('.css')), 'app/globals.css'];
+  // EVERY stylesheet under app/ and components/, whatever scope owns it: a kit rule is recognised by its
+  // selector, not by where its sheet lives. The operator scope alone missed app/globals.css (the kit's
+  // shared buttons, chips, windows and fields — slices 1, 2 and 4a) and the admin-only chat parts in
+  // components/chat (slice 4b); each was a hand-added exception until the walk went repo-wide.
+  const files = [...scopeFiles({ dirs: ['app', 'components'], files: [], excludeSegments: new Set() }), 'app/globals.css'];
   const offenders = [];
   let kitRules = 0;
   for (const f of files) {
@@ -568,6 +570,15 @@ const RESTYLED_DIRS = [
   'app/[orgSlug]/admin/tournaments/summary',
   'app/[orgSlug]/admin/tournaments/data-tools',
   'components/admin/tournament',
+  // slice 4b — the tournament screens on game day (the schedule's own folder joins with 4c)
+  'app/[orgSlug]/admin/tournaments/dashboard',
+  'app/[orgSlug]/admin/tournaments/registrations',
+  'app/[orgSlug]/admin/tournaments/results',
+  'app/[orgSlug]/admin/tournaments/check-in',
+  'app/[orgSlug]/admin/tournaments/staff-kit',
+  'app/[orgSlug]/admin/tournaments/communication',
+  'app/[orgSlug]/admin/tournaments/chat',
+  'components/admin/import',
 ];
 const RESTYLED_FILES = [
   'app/[orgSlug]/admin/org/page.tsx',
@@ -583,6 +594,18 @@ const RESTYLED_FILES = [
   'components/admin/TournamentSetupWizard.module.css',
   'components/admin/TournamentStyleCards.tsx',
   'components/admin/TournamentStyleCards.module.css',
+  // slice 4b — the game list (moved from 4c by the owner: it is Results' body), the check-in board
+  // (shared with the volunteer gate; its kit layer reaches only the admin), the live feed, and the
+  // chat's three admin-only parts. The schedule's sheet is held whole: 4b wrote the game list's kit
+  // block into it, and 4c restyles the rest.
+  'app/[orgSlug]/admin/tournaments/schedule/components/GameList.tsx',
+  'app/[orgSlug]/admin/tournaments/schedule/schedule-admin.module.css',
+  'components/admin/CheckInBoard.tsx',
+  'components/admin/CheckInBoard.module.css',
+  'components/admin/LiveEventLog.tsx',
+  'components/chat/ChatRoomsPanel.module.css',
+  'components/chat/ChatManagePanel.module.css',
+  'components/chat/NewRoomDialog.module.css',
 ];
 const ANY_LITERAL = new RegExp(COLOR_LITERAL, 'g');
 

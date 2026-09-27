@@ -587,3 +587,217 @@
 @media (min-width: 640px) {
   .gauges { max-width: 460px; }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   ⚠ SHARED COMPONENT: this board also mounts on the guest gate page (app/[orgSlug]/check-in), which
+   carries no [data-admin-kit] marker — every rule below is scoped so it can never reach the gate.
+   Green = checked in, amber = pending/late, red = a problem, quiet = not yet (owner vocabulary).
+   ⚠ TOKENS ONLY — checkAdminKit fails on a literal colour here. */
+
+/* ── Empty / loading ── */
+:global([data-admin-kit]) .empty,
+:global([data-admin-kit]) .loading {
+  background: var(--card-bg);
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 8px;
+  color: var(--text-tertiary);
+}
+
+/* ── Session-lapsed banner (a problem = red) ── */
+:global([data-admin-kit]) .errorBanner {
+  border-color: rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .errorAction {
+  border-color: rgba(var(--danger-rgb), 0.35);
+  color: var(--danger-light);
+  border-radius: 6px;
+}
+:global([data-admin-kit]) .errorAction:hover { background: rgba(var(--danger-rgb), 0.14); }
+
+/* ── Gauges — counts/progress readouts: card ground, no glow, mono figure ── */
+:global([data-admin-kit]) .gauge {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  border-radius: 8px;
+  box-shadow: none;
+}
+:global([data-admin-kit]) .gauge[data-tone="danger"] { border-color: rgba(var(--danger-rgb), 0.3); }
+:global([data-admin-kit]) .gauge[data-tone="warning"] { border-color: rgba(var(--warning-rgb), 0.3); }
+:global([data-admin-kit]) .gaugeMain {
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+:global([data-admin-kit]) .gauge[data-tone="danger"] .gaugeMain { color: var(--danger-light); }
+:global([data-admin-kit]) .gauge[data-tone="warning"] .gaugeMain { color: var(--warning-light); }
+:global([data-admin-kit]) .gaugeOf { color: var(--text-tertiary); }
+:global([data-admin-kit]) .gaugeLabel { color: var(--text-secondary); }
+
+/* ── Toolbar: the portal's field + segmented control ── */
+:global([data-admin-kit]) .searchWrap {
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .search { color: var(--text-primary); }
+:global([data-admin-kit]) .select {
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .segmented {
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+}
+:global([data-admin-kit]) .segBtn {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .segBtn[data-on="true"] { background: var(--home-olive-soft); color: var(--home-olive); }
+
+/* ── Board rows and the arrival dot ── */
+:global([data-admin-kit]) .groupName { color: var(--text-secondary); }
+:global([data-admin-kit]) .groupCount { color: var(--text-tertiary); }
+:global([data-admin-kit]) .row {
+  border-color: var(--home-line);
+  border-left-color: transparent;
+  background: var(--card-bg);
+  border-radius: 8px;
+}
+/* The arrival stripe, restated: the rule above weighs the same as the legacy stripe rules and comes
+   later, so without these a checked-in or no-show row would lose its colour on the kit. */
+:global([data-admin-kit]) .row[data-status="checked_in"] { border-left-color: var(--success); }
+:global([data-admin-kit]) .row[data-status="no_show"] { border-left-color: var(--danger); }
+:global([data-admin-kit]) .dotIdle { background: var(--text-tertiary); }
+:global([data-admin-kit]) .teamName { color: var(--text-primary); }
+:global([data-admin-kit]) .rosterTag[data-state="none"] { color: var(--text-tertiary); }
+:global([data-admin-kit]) .rosterTag[data-state="submitted"] { color: var(--info-light); }
+:global([data-admin-kit]) .rosterTag[data-state="confirmed"] { color: var(--success-light); }
+:global([data-admin-kit]) .payTag[data-paid="true"] { color: var(--success-light); }
+:global([data-admin-kit]) .payTag[data-paid="false"] { color: var(--warning-light); }
+:global([data-admin-kit]) .timeTag { color: var(--text-tertiary); }
+
+/* ── Row actions: the primary "Check in" CTA, then the quiet icon buttons ── */
+:global([data-admin-kit]) .checkInBtn {
+  border-radius: 6px;
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .noShowIconBtn {
+  border-color: var(--home-line-strong);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .noShowIconBtn:hover:not(:disabled) {
+  border-color: rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+}
+:global([data-admin-kit]) .undoIconBtn { border-color: var(--home-line-strong); color: var(--text-tertiary); }
+:global([data-admin-kit]) .undoIconBtn:hover:not(:disabled) {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .statePillIn { color: var(--success-light); }
+:global([data-admin-kit]) .statePillNo { color: var(--danger-light); }
+
+/* ── Detail sheet ── */
+:global([data-admin-kit]) .sheetMeta { color: var(--text-tertiary); }
+:global([data-admin-kit]) .sheetStatus[data-status="not_arrived"] {
+  background: var(--home-olive-soft);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .sheetStatus[data-status="checked_in"] { color: var(--success-light); }
+:global([data-admin-kit]) .sheetStatus[data-status="no_show"] { color: var(--danger-light); }
+:global([data-admin-kit]) .sheetSection { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .sheetLabel { color: var(--text-secondary); }
+
+/* ── Payment ── */
+:global([data-admin-kit]) .paidRow { color: var(--success-light); }
+:global([data-admin-kit]) .unpayBtn {
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .markPaidBtn {
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--warning-light);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+/* ── Roster: list, confirm, gate-added entry ── */
+:global([data-admin-kit]) .rosterItem { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .rosterNum { color: var(--home-olive); }
+:global([data-admin-kit]) .rosterName { color: var(--text-primary); }
+:global([data-admin-kit]) .rosterDob { color: var(--text-tertiary); }
+:global([data-admin-kit]) .confirmBtn {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .rosterConfirmed { color: var(--success-light); }
+:global([data-admin-kit]) .editRosterBtn,
+:global([data-admin-kit]) .addRosterBtn {
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+/* A consequential gate action (creates a roster from scratch). Today a lime TINT, not a fill — the
+   sheet's solid primary is the arrival button in its footer — so on the kit it is the olive accent:
+   louder than the quiet "Edit", never a second primary. */
+:global([data-admin-kit]) .addRosterBtn {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+
+/* ── Roster editor ── */
+:global([data-admin-kit]) .numInput,
+:global([data-admin-kit]) .nameInput,
+:global([data-admin-kit]) .dobInput {
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  background: var(--home-card);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .numInput { font-family: var(--font-sans, system-ui, sans-serif); }
+:global([data-admin-kit]) .removeRow { color: var(--text-tertiary); }
+:global([data-admin-kit]) .removeRow:hover { color: var(--danger-light); }
+:global([data-admin-kit]) .addRowBtn {
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .cancelEdit,
+:global([data-admin-kit]) .saveRoster {
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .cancelEdit { border-color: var(--home-line-strong); color: var(--text-secondary); }
+:global([data-admin-kit]) .saveRoster { background: var(--home-lime); color: var(--home-lime-ink); }
+
+/* ── Sheet footer (arrival actions) ── */
+:global([data-admin-kit]) .bigCheckIn {
+  border-radius: 6px;
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .noShowBtn {
+  border-color: rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .undoBtn {
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}

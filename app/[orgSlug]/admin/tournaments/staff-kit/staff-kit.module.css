@@ -99,6 +99,34 @@
   color: var(--white-70);
 }
 
+/* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
+   ⚠ The QR itself must stay dark-on-light for scanners in BOTH themes: `.qrWrap`'s backing takes
+   `--white-fixed` (never remapped by any theme gate), not the kit's card ground. `.qr`/`.qrPlaceholder`
+   are untouched — the placeholder's own dark stripes already assume the same fixed light backing.
+   ⚠ TOKENS ONLY — checkAdminKit fails on a literal colour here. Print rules below are untouched. */
+:global([data-admin-kit]) .empty {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .intro { color: var(--text-secondary); }
+:global([data-admin-kit]) .card {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .cardHead { color: var(--home-olive); }
+:global([data-admin-kit]) .cardTitle {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .cardBlurb { color: var(--text-secondary); }
+/* The QR's immediate backing — pinned white regardless of theme (see note above). */
+:global([data-admin-kit]) .qrWrap { background: var(--white-fixed); }
+:global([data-admin-kit]) .url { color: var(--text-secondary); }
+:global([data-admin-kit]) .note { color: var(--text-secondary); }
+:global([data-admin-kit]) .note strong { color: var(--text-primary); }
+
 /* Printable one-pager — drop the app chrome, lay the two cards out for the gate table. */
 @media print {
   /* Intentional print-only ink literals (#333/#ccc/#000 below) — fixed values for paper output,
