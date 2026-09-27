@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { Archive, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../rep-teams.module.css';
 import type { RepTeam, RepTeamHistoryYear } from '@/lib/types';
 
@@ -21,6 +24,8 @@ export default function TeamHistoryPage({
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const [team, setTeam] = useState<RepTeam | null>(null);
   const [history, setHistory] = useState<RepTeamHistoryYear[]>([]);
@@ -59,8 +64,20 @@ export default function TeamHistoryPage({
 
   if (!team) return <p className={styles.muted}>Team not found.</p>;
 
+  // A season's facts line, faint — on the kit the tertiary ink (the dark ramp's 35% misses AA there).
+  const metaInk = kx({ fontSize: '0.78rem', color: 'var(--white-35)' }, KIT_INK.tertiary);
+
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the team
+          is the way up (the title's "{team} —" half, and the breadcrumb's middle) and "Rep Teams" the
+          eyebrow; "Completed and archived program years" describes the list and is not re-homed — each
+          season's chip says which it is (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title="History"
+        backTo={{ href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }}
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
         <span><ChevronRight size={12} /></span>
@@ -80,8 +97,10 @@ export default function TeamHistoryPage({
           </div>
         </div>
       </div>
+        </>}
+      />
 
-      {error && <p style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--danger-light)', marginBottom: '1rem' }}>{error}</p>}
 
       {history.length === 0 ? (
         <div className={styles.emptyState}>
@@ -105,17 +124,17 @@ export default function TeamHistoryPage({
                     >
                       {y.status === 'archived' ? 'Archived' : 'Completed'}
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
+                    <span style={metaInk}>
                       {y.year}
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
+                    <span style={metaInk}>
                       {y.rosterCount} player{y.rosterCount !== 1 ? 's' : ''}
                     </span>
-                    <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
+                    <span style={metaInk}>
                       {record}
                     </span>
                     {y.tryoutTotal > 0 && (
-                      <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
+                      <span style={metaInk}>
                         Tryout acceptance: {acceptanceRate(y.tryoutTotal, y.tryoutAccepted)}
                       </span>
                     )}

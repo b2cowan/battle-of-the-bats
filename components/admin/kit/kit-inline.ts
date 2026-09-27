@@ -19,7 +19,9 @@ const body: CSSProperties = { fontFamily: 'var(--font-sans, system-ui, sans-seri
 export const KIT_BUTTON = {
   primary: { ...body, background: 'var(--home-lime)', color: 'var(--home-lime-ink)', border: 'none' },
   secondary: { ...body, background: 'var(--card-bg)', color: 'var(--text-secondary)', border: '1px solid var(--home-line-strong)' },
-  danger: { ...body, background: 'rgba(var(--danger-rgb), 0.08)', color: 'var(--home-live)', border: '1px solid rgba(var(--danger-rgb), 0.3)' },
+  // The LIGHT red as ink: `--home-live` (Dark: `--danger`) on this tint measured 4.41:1 (slice 3 sweep);
+  // `--danger-light` clears it in Dark and is the same `--home-live` in Warm.
+  danger: { ...body, background: 'rgba(var(--danger-rgb), 0.08)', color: 'var(--danger-light)', border: '1px solid rgba(var(--danger-rgb), 0.3)' },
 } satisfies Record<string, CSSProperties>;
 
 /** The kit's card and its quieter cousins. (A status TAG is not inline: the kit swaps it onto the admin's
@@ -35,6 +37,19 @@ export const KIT_SURFACE = {
   chosen: { background: 'var(--home-olive-soft)', border: '1px solid var(--home-olive)', borderRadius: '8px' },
   /** An option not chosen. */
   option: { background: 'var(--card-bg)', border: '1px solid var(--home-line-strong)', borderRadius: '8px' },
+  /** Something that needs acting on, said in a box (an overdue count). */
+  alert: { background: 'rgba(var(--danger-rgb), 0.05)', border: '1px solid rgba(var(--danger-rgb), 0.35)', borderRadius: '8px' },
+  /** A door to another screen, set as a tile (Rep Teams' quick links, Accounting's planning tools). */
+  door: { background: 'var(--card-bg)', border: '1px solid var(--home-line)', borderRadius: '8px', color: 'var(--text-primary)' },
+} satisfies Record<string, CSSProperties>;
+
+/** A numbered step (Allocate to teams, New cost allocation): the one you are on or have passed wears the
+ *  portal's primary (ink on lime); one still ahead is quiet. Its label: ink when current, tertiary when not. */
+export const KIT_STEP = {
+  reached: { background: 'var(--home-lime)', color: 'var(--home-lime-ink)' },
+  ahead: { background: 'var(--home-olive-soft)', color: 'var(--text-tertiary)' },
+  current: { color: 'var(--text-primary)' },
+  other: { color: 'var(--text-tertiary)' },
 } satisfies Record<string, CSSProperties>;
 
 /** Ink. */

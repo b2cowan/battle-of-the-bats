@@ -13,6 +13,9 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../../../rep-teams.module.css';
 import type { RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
 
@@ -94,6 +97,9 @@ export default function TryoutsPage({
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
+  const asterisk = useKitAsterisk();
 
   const [info, setInfo] = useState<TeamYearInfo | null>(null);
   const [registrations, setRegistrations] = useState<RepTryoutRegistration[]>([]);
@@ -435,36 +441,11 @@ export default function TryoutsPage({
     );
   }
 
-  return (
-    <div className={styles.page}>
-      {/* Breadcrumb */}
-      <div className={styles.breadcrumb}>
-        <Link href={`${base}/rep-teams`}>Rep Teams</Link>
-        <span><ChevronRight size={12} /></span>
-        {info?.team && (
-          <Link href={`${base}/rep-teams/teams/${params.teamId}`}>{info.team.name}</Link>
-        )}
-        <span><ChevronRight size={12} /></span>
-        {info?.programYear && (
-          <Link href={`${base}/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`}>
-            {info.programYear.name}
-          </Link>
-        )}
-        <span><ChevronRight size={12} /></span>
-        <span>Tryouts</span>
-      </div>
+  // A required field's asterisk — the label's own ink on the kit (red means something went wrong).
 
-      {/* Header */}
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}><ClipboardList size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>Tryouts</h1>
-            <p className={styles.pageSub}>{info?.team?.name} — {info?.programYear?.name}</p>
-          </div>
-        </div>
-        {canWrite && (
-          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+  // The header's actions — one fragment both headers render, so the kit header never forks them.
+  const headerActions = canWrite ? (
+    <>
             <ExportMenu
               formats={['xlsx', 'csv', 'pdf']}
               onExportXLSX={handleExportXLSX}
@@ -494,9 +475,58 @@ export default function TryoutsPage({
             >
               <Plus size={14} /> Add Applicant
             </button>
+    </>
+  ) : null;
+
+  // Row-invariant styles, computed once per render rather than once per row.
+  const noneInk = kx({ color: 'var(--white-30)' }, KIT_INK.tertiary);
+  const metaInk = kx({ fontSize: '0.82rem', color: 'var(--white-40)' }, KIT_INK.tertiary);
+  const noConsentInk = kx({ color: 'var(--white-40)' }, KIT_INK.tertiary);
+
+  return (
+    <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
+          subtitle's two facts are the path: the season is the way up, the team is the eyebrow (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, info?.team && { href: `${base}/rep-teams/teams/${params.teamId}`, label: info.team.name }]}
+        title="Tryouts"
+        backTo={info?.programYear ? { href: `${base}/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`, label: info.programYear.name } : undefined}
+        actions={headerActions}
+        legacy={<>
+      {/* Breadcrumb */}
+      <div className={styles.breadcrumb}>
+        <Link href={`${base}/rep-teams`}>Rep Teams</Link>
+        <span><ChevronRight size={12} /></span>
+        {info?.team && (
+          <Link href={`${base}/rep-teams/teams/${params.teamId}`}>{info.team.name}</Link>
+        )}
+        <span><ChevronRight size={12} /></span>
+        {info?.programYear && (
+          <Link href={`${base}/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`}>
+            {info.programYear.name}
+          </Link>
+        )}
+        <span><ChevronRight size={12} /></span>
+        <span>Tryouts</span>
+      </div>
+
+      {/* Header */}
+      <div className={styles.pageHeader}>
+        <div className={styles.pageHeaderLeft}>
+          <div className={styles.headerIcon}><ClipboardList size={20} /></div>
+          <div>
+            <h1 className={styles.pageTitle}>Tryouts</h1>
+            <p className={styles.pageSub}>{info?.team?.name} — {info?.programYear?.name}</p>
+          </div>
+        </div>
+        {canWrite && (
+          <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+            {headerActions}
           </div>
         )}
       </div>
+        </>}
+      />
 
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
@@ -609,13 +639,13 @@ export default function TryoutsPage({
                       <td className={styles.tryoutTd} style={{ fontSize: '0.85rem' }}>
                         {reg.playerDateOfBirth
                           ? new Date(reg.playerDateOfBirth + 'T00:00:00').toLocaleDateString('en-CA')
-                          : <span style={{ color: 'var(--white-30)' }}>—</span>}
+                          : <span style={noneInk}>—</span>}
                       </td>
                       <td className={styles.tryoutTd} style={{ fontSize: '0.85rem' }}>
                         {reg.guardianEmail}
                       </td>
                       <td className={styles.tryoutTd}>
-                        <span style={{ fontSize: '0.82rem', color: 'var(--white-40)' }}>
+                        <span style={metaInk}>
                           {new Date(reg.submittedAt).toLocaleDateString('en-CA')}
                         </span>
                       </td>
@@ -633,7 +663,7 @@ export default function TryoutsPage({
                             ✓ {new Date(reg.consentAt).toLocaleDateString('en-CA')}
                           </span>
                         ) : (
-                          <span style={{ color: 'var(--white-40)' }}>No consent on record</span>
+                          <span style={noConsentInk}>No consent on record</span>
                         )}
                       </td>
                       {canWrite && (
@@ -664,7 +694,7 @@ export default function TryoutsPage({
                                 <button
                                   type="button"
                                   className="btn btn-ghost"
-                                  style={{ fontSize: '0.78rem', padding: '0.3rem 0.5rem', color: '#f87171' }}
+                                  style={{ fontSize: '0.78rem', padding: '0.3rem 0.5rem', color: 'var(--danger-light)' }}
                                   disabled={actionLoading === reg.id}
                                   onClick={() => handleAction(reg.id, 'declined')}
                                 >
@@ -686,7 +716,7 @@ export default function TryoutsPage({
                                 <button
                                   type="button"
                                   className="btn btn-ghost"
-                                  style={{ fontSize: '0.78rem', padding: '0.3rem 0.5rem', color: '#f87171' }}
+                                  style={{ fontSize: '0.78rem', padding: '0.3rem 0.5rem', color: 'var(--danger-light)' }}
                                   disabled={actionLoading === reg.id}
                                   onClick={() => handleAction(reg.id, 'declined')}
                                 >
@@ -713,14 +743,14 @@ export default function TryoutsPage({
             <div className={styles.slideOverHeader}>
               <div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
-                  <span style={{ fontWeight: 700, fontSize: '1rem', color: '#f0f0f0' }}>
+                  <span style={kx({ fontWeight: 700, fontSize: '1rem', color: '#f0f0f0' }, KIT_INK.primary)}>
                     {selected.playerFirstName} {selected.playerLastName}
                   </span>
                   <span className={`${styles.badge} ${STATUS_CSS[selected.status] ?? ''}`}>
                     {STATUS_LABEL[selected.status] ?? selected.status}
                   </span>
                 </div>
-                <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
+                <span style={kx({ fontSize: '0.78rem', color: 'var(--white-35)' }, KIT_INK.tertiary)}>
                   Submitted {new Date(selected.submittedAt).toLocaleDateString('en-CA')}
                 </span>
               </div>
@@ -760,7 +790,7 @@ export default function TryoutsPage({
                 </div>
                 <div className={styles.slideOverField}>
                   <span className={styles.slideOverFieldLabel}>Email</span>
-                  <a href={`mailto:${selected.guardianEmail}`} style={{ color: 'var(--blueprint-blue)' }}>
+                  <a href={`mailto:${selected.guardianEmail}`} style={kx({ color: 'var(--blueprint-blue)' }, KIT_INK.accent)}>
                     {selected.guardianEmail}
                   </a>
                 </div>
@@ -812,7 +842,7 @@ export default function TryoutsPage({
                         <button
                           type="button"
                           className="btn btn-ghost"
-                          style={{ color: '#f87171' }}
+                          style={{ color: 'var(--danger-light)' }}
                           disabled={actionLoading === selected.id}
                           onClick={() => handleAction(selected.id, 'declined')}
                         >
@@ -833,7 +863,7 @@ export default function TryoutsPage({
                         <button
                           type="button"
                           className="btn btn-ghost"
-                          style={{ color: '#f87171' }}
+                          style={{ color: 'var(--danger-light)' }}
                           disabled={actionLoading === selected.id}
                           onClick={() => handleAction(selected.id, 'declined')}
                         >
@@ -854,7 +884,7 @@ export default function TryoutsPage({
                         <button
                           type="button"
                           className="btn btn-ghost"
-                          style={{ color: '#f87171' }}
+                          style={{ color: 'var(--danger-light)' }}
                           disabled={actionLoading === selected.id}
                           onClick={() => handleAction(selected.id, 'declined')}
                         >
@@ -893,7 +923,7 @@ export default function TryoutsPage({
             <div className={styles.formGrid}>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-pfn">
-                  Player First Name <span style={{ color: '#f87171' }}>*</span>
+                  Player First Name <span style={asterisk}>*</span>
                 </label>
                 <input
                   id="add-pfn" className={styles.input} type="text" autoFocus
@@ -904,7 +934,7 @@ export default function TryoutsPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-pln">
-                  Player Last Name <span style={{ color: '#f87171' }}>*</span>
+                  Player Last Name <span style={asterisk}>*</span>
                 </label>
                 <input
                   id="add-pln" className={styles.input} type="text"
@@ -933,7 +963,7 @@ export default function TryoutsPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gfn">
-                  Guardian First Name <span style={{ color: '#f87171' }}>*</span>
+                  Guardian First Name <span style={asterisk}>*</span>
                 </label>
                 <input
                   id="add-gfn" className={styles.input} type="text"
@@ -944,7 +974,7 @@ export default function TryoutsPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gln">
-                  Guardian Last Name <span style={{ color: '#f87171' }}>*</span>
+                  Guardian Last Name <span style={asterisk}>*</span>
                 </label>
                 <input
                   id="add-gln" className={styles.input} type="text"
@@ -955,7 +985,7 @@ export default function TryoutsPage({
               </div>
               <div className={styles.field}>
                 <label className={styles.label} htmlFor="add-gem">
-                  Guardian Email <span style={{ color: '#f87171' }}>*</span>
+                  Guardian Email <span style={asterisk}>*</span>
                 </label>
                 <input
                   id="add-gem" className={styles.input} type="email"

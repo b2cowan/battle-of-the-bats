@@ -5,6 +5,9 @@ import { Users, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../../../rep-teams.module.css';
 
 interface EnrichedCoach {
@@ -33,6 +36,8 @@ export default function CoachManagementPage({
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const [coaches, setCoaches] = useState<EnrichedCoach[]>([]);
   const [members, setMembers] = useState<OrgMember[]>([]);
@@ -157,6 +162,13 @@ export default function CoachManagementPage({
   return (
     <div className={styles.page}>
       {/* Breadcrumb */}
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
+          subtitle's two facts are the path: the season is the way up, the team is the eyebrow (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { href: `${base}/rep-teams/teams/${params.teamId}`, label: teamName || 'Team' }]}
+        title="Coaches"
+        backTo={{ href: `${base}/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`, label: yearName || 'Program Year' }}
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
         <span><ChevronRight size={12} /></span>
@@ -175,13 +187,15 @@ export default function CoachManagementPage({
           </div>
         </div>
       </div>
+        </>}
+      />
 
       <div className={styles.coachColumns}>
         {/* Left: current coaches */}
         <div className={styles.coachPanel}>
           <p className={styles.coachPanelTitle}>Current Coaches ({coaches.length})</p>
           {coaches.length === 0 ? (
-            <p style={{ fontSize: '0.85rem', color: 'var(--white-30)', margin: 0 }}>
+            <p style={kx({ fontSize: '0.85rem', color: 'var(--white-30)', margin: 0 }, KIT_INK.tertiary)}>
               No coaches assigned yet.
             </p>
           ) : (
@@ -201,7 +215,7 @@ export default function CoachManagementPage({
                     <button
                       type="button"
                       className="btn btn-ghost"
-                      style={{ fontSize: '0.78rem', color: '#f87171', opacity: removingId === c.id ? 0.5 : 1 }}
+                      style={{ fontSize: '0.78rem', color: 'var(--danger-light)', opacity: removingId === c.id ? 0.5 : 1 }}
                       onClick={() => handleRemove(c.id, name)}
                       disabled={removingId === c.id}
                     >
@@ -219,7 +233,7 @@ export default function CoachManagementPage({
           <div className={styles.coachPanel}>
             <p className={styles.coachPanelTitle}>Assign Coach</p>
             {availableMembers.length === 0 ? (
-              <p style={{ fontSize: '0.85rem', color: 'var(--white-30)', margin: 0 }}>
+              <p style={kx({ fontSize: '0.85rem', color: 'var(--white-30)', margin: 0 }, KIT_INK.tertiary)}>
                 All org members are already assigned, or there are no other members to assign.
               </p>
             ) : (

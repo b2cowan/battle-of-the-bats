@@ -402,11 +402,11 @@ dialog.truesize::backdrop{background:#16201899}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) committed 2026-09-25 · slice 2 (buttons, chips, type, House league, Organization) committed ee175263 2026-09-26 · next: slice 3</small></div>
+  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) committed 2026-09-25 · slice 2 (buttons, chips, type, House league, Organization) committed ee175263 2026-09-26 · slice 3 (Rep Teams, Accounting) built 2026-09-27</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26">Build</li>
+    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, built 2026-09-27">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -1082,14 +1082,57 @@ dialog.truesize::backdrop{background:#16201899}
     <li>Rep Teams' program-year pages answer "not found" for the test club's current and past years. They worked at slice 1, so something in the data or another session's work changed. Five screens could not be pictured.</li>
     <li>The coaches portal's own notifications page paints its filter chips on a fixed white that disappears on cream. The words stay readable; the fix belongs to the portal.</li>
   </ul>
+  <h2>Slice 3 — Rep Teams and Accounting (2026-09-27)</h2>
+  <p>Still nothing customers see. All 17 Rep Teams screens and all 6 Accounting screens (the treasurer's view included) now wear the kit in Warm and Dark, with the money tables restyled in place as specimen 5 draws them.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Part</th><th>What you see with the switch on</th></tr></thead>
+    <tbody>
+      <tr><td>The money tables</td><td>Same columns, actions and order. Amounts sit right-aligned with even-width digits and keep their + / − and their green and red. Ledger chips as drawn: income and posted green, expense and pending amber, a transfer blue, void quiet. A voided entry is struck through as well as tagged.</td></tr>
+      <tr><td>Rep Teams</td><td>Team, season and summary cards on the kit card; the portal's chips (a group, a draft or finished season, an assistant: quiet; a division, a head coach, an offer: blue; live: green; waiting: amber); the portal's tab bar, fields, windows and buttons; the schedule in the portal's own event colours.</td></tr>
+      <tr><td>Payment requests</td><td>Status tags on the kit's chips (waiting amber, approved green, denied red); "Pay Org" amber like an expense, "Request from Org" green. Approve and Deny are the portal's own buttons.</td></tr>
+      <tr><td>Headers</td><td>The kit's page header on every screen: the program and the organization above the title (the program is a link back), and the way back to the team or season in the corner on pages inside one.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The proof.</strong> With the switch off, 45 of 46 pictures are pixel-identical. The 46th differs only in the Rep Teams hub's "days overdue" counts, because midnight passed between the two pictures; that live count is now masked. With the switch on, contrast problems on these screens fell from 1,594 (today's dark admin) to 0 in Warm and 354 in Dark. None of the 354 belongs to these screens: the shared phone bar's faint labels (270), the coaches portal's Upcoming Bills panel (60) and help "?" buttons (24). Three things the sweep caught were fixed: the reminder buttons on the Accounting overview no longer spill sideways on a phone, and blue chips and the red Deny button now clear the reading floor in Dark.</p>
+  <p><strong>Found at the start:</strong> slice 2's "Rep Teams season pages answer not found" was the shared dev server, not the data. Its page builder had crashed; a restart fixed it and all five season screens were checked.</p>
+  <p><strong>Facts that moved out of a subtitle line</strong> (none dropped silently):</p>
+  <ul>
+    <li>Rep Teams: "9 of 15 teams" now sits beside the Teams heading; the connected-families line sits under it, word for word; the organization's name is the small line above the title.</li>
+    <li>A team: its sport and division are chips beside its name; its description opens the page.</li>
+    <li>A season, and its Coaches, Schedule and Tryouts pages: the season or team is the way back in the corner, and the team is named above the title.</li>
+    <li>A finished season: its status is a chip beside the title, and the year is a chip unless the season's name already says it.</li>
+    <li>An allocation: "Created" and its date open the page.</li>
+    <li>Assistant coaches: the page's framing sentence ("Oversight across your teams…") opens the page, word for word.</li>
+    <li>Not moved, because the page already says it directly below: an allocation's line and total (the Budget Line card), Budget vs. Actual's season (the season picker). Lines that only describe the page are dropped.</li>
+  </ul>
+  <p><strong>Where the build differs from the drawing, as flagged at the start:</strong> the ledger's Export, Add Entry and Add Transfer stay above the table where they are today (the drawing's "before" had put them in the header), and amounts keep their signs and colours.</p>
+  <p><strong>Found on the way, written down rather than fixed here:</strong></p>
+  <ul>
+    <li>During the check, the test club's plan was cancelled through Plan &amp; billing by hand. Once it was re-subscribed, the club still carried its "suspended" date and its tournament stayed archived. That's for the billing work to look at.</li>
+    <li>The coaches portal's Upcoming Bills panel (also shown on the Rep Teams hub) has faint text and a navy day tab and link that miss the reading floor in Dark, in the portal too. One fix repairs both.</li>
+    <li>The test club gained new staff, shared tags, tryout applicants and requests since the baseline. That shows up a few small buttons and one card that spills on a phone, with the switch off too. It's the existing style meeting new data.</li>
+  </ul>
+  <p><strong>Cleanup and review (2026-09-27).</strong> The cleanup had four jobs:</p>
+  <ul>
+    <li>The small line above each title, with its link back, is now built one way for every page, House league's included.</li>
+    <li>The required-field star is one shared piece.</li>
+    <li>The schedule reads its event colours from the coaches portal instead of keeping a copy.</li>
+    <li>Leftover styling that no screen used is gone.</li>
+  </ul>
+  <p>The review read the change two ways, what it does and what else it reaches, and found:</p>
+  <ul>
+    <li>One small fault, fixed: on Document templates, the link back could point nowhere in the moment before the club loads.</li>
+    <li>Two intended side effects, now named for the slice 6 walk. In Dark, the lighter red on delete buttons and the lighter blue on blue tags also reach House league's registrations, schedule and teams, Organization → Members and the tournament dashboard.</li>
+  </ul>
+  <p>The pictures weren't retaken after the cleanup, because that needs a quiet window. The only change with the switch off is the star's colour, written a different way but the same colour.</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
     <tbody>
       <tr><td>0</td><td>The baseline: sweep, identity check, contrast</td><td>Done 2026-09-25</td></tr>
       <tr><td>1</td><td>The switch, the theme's gaps, the organization's colour and card style out, the frame, Families, Public site editor</td><td>Committed 2026-09-25 (<code>1b3cd541</code>); walked at slice 6</td></tr>
-      <tr><td>2</td><td>Buttons, chips, type; the rest of Hub and Organization; House league</td><td>Built 2026-09-26; walked at slice 6</td></tr>
-      <tr><td>3</td><td>Rep Teams, Accounting (money tables restyled in place)</td><td>Not started</td></tr>
+      <tr><td>2</td><td>Buttons, chips, type; the rest of Hub and Organization; House league</td><td>Committed 2026-09-26 (<code>ee175263</code>); walked at slice 6</td></tr>
+      <tr><td>3</td><td>Rep Teams, Accounting (money tables restyled in place)</td><td>Built 2026-09-27; cleanup and review done; walked at slice 6</td></tr>
       <tr><td>4</td><td>Tournaments</td><td>Not started</td></tr>
       <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Not started</td></tr>
       <tr><td>6</td><td>Prove, walk, release</td><td>Not started</td></tr>

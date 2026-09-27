@@ -7,7 +7,8 @@
 > once `dev` is pushed). Owner QA walk: at slice 6 (owner, 2026-09-25). Club Stage 1's screens session
 > may now start. **Slice 2 (buttons, chips, type; House league; Organization, setup, Notifications)
 > BUILT 2026-09-26** — results in §3a; /simplify + /review done; **COMMITTED `ee175263` 2026-09-26**.
-> Next: slice 3.
+> **Slice 3 (Rep Teams + Accounting, the money tables restyled in place — F4) BUILT 2026-09-27** —
+> results in §3a; identity + switch-on sweep done; /simplify + /review done.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -165,7 +166,7 @@ foundation's release day.
 | 0 | Baseline: every admin + guest screen in the invariant sweep (today's dark), the switch-off identity check, contrast grounds. Needs the dev server alone. | **COMMITTED `459b3bbd` 2026-09-25** — results below |
 | 1 | The switch · theme gaps · R1/F1 · the frame (top strip, rail, phone bar + More, page header, event header) · Families · Public site editor | **COMMITTED `1b3cd541` 2026-09-25** — results below; walked at slice 6 |
 | 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | **COMMITTED `ee175263` 2026-09-26** — results below; /simplify + /review done; walked at slice 6 |
-| 3 | Rep Teams · Accounting (F4 dense tables) | not started |
+| 3 | Rep Teams · Accounting (F4 dense tables) | **BUILT 2026-09-27** — results below; /simplify + /review done; walked at slice 6 |
 | 4 | Tournaments (split by job if needed — record the split here first) | not started |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | not started |
 | 6 | Prove (both-theme sweep, contrast, identity) · owner § walk · release (switch deleted, legacy removed, coaches help pin removed, What's New, `/docs`, `/release`) | not started |
@@ -483,6 +484,158 @@ Notifications.
   does; the ratchet's scope is literals with a value), and `.test.ts`/`.d.ts` would be walked if one ever
   lands in a restyled directory (none does). check:layout `--changed` not run — globals.css widens it to
   every screen; the identity capture and the switch-on sweep above stand in.
+
+**Slice 3 — results (2026-09-27).** Two quiet windows on the owner's word (the "before" set; the "after"
+set + switch-on sweeps). All 23 Rep Teams + Accounting entries (17 + 6, the treasurer's Accounting
+included), both themes, 92 screen-widths each.
+- **Found at the start — slice 2's "Rep Teams program-year pages answer not found" was the DEV SERVER, not
+  data.** Its page-building worker had crashed ("Jest worker encountered 2 child process exceptions"), so
+  every admin route with an id in its path returned 500 while flat routes loaded. The 15U AAA seasons and
+  their API were intact. A full restart cleared it; all five season screens were pictured and swept.
+- **The kit layers:** the four area stylesheets (`accounting.module.css`, `budget/budget.module.css`,
+  `budget-vs-actual/bva.module.css`, `rep-teams/rep-teams.module.css` — which also dresses Accounting's
+  "Allocate to teams") gain their `[data-admin-kit]` layer, the slice 2 recipes by value: kit card,
+  eyebrow, chips, the table standard's ground, the portal's field, tab bar (`CoachTabBar`), window and
+  buttons. The navy the legacy rules use as TEXT (1.39:1 on the Dark ground) is olive on the kit.
+  Strict kit check: 659 → 878 kit rules, no literal colour. The shared `components/accounting` parts were
+  NOT restyled: they are the coaches portal's too, already on its `--home-*` tokens, so they render in the
+  admin kit exactly as in the portal (continuity by construction).
+- **F4, the money tables, as ADC specimen 5:** same columns, actions and order. Amounts right-aligned in
+  even-width digits through a kit-only `.num` class (no legacy rule, so switch-off unchanged): the ledger's
+  Amount, the allocations list's Total / Collected / Outstanding, an allocation's installment Amount,
+  payment-request history (Budget and Budget vs. Actual were already right-aligned). Chips as drawn:
+  Income and Posted green, Expense and Pending amber, a transfer blue, Void quiet; the old violet accent
+  retired. **A void row is struck through as well as tagged** — the legacy rule meant to do it never
+  matched (the cell names `className="entryDesc"` as a plain string, which a module rule cannot reach);
+  reached on the kit only through `:global(.entryDesc)`, since fixing the legacy class changes a
+  switch-off pixel.
+- **Chips, Rep Teams:** a group, a draft / finished / archived season and an assistant are the quiet chip
+  (a finished season is not a verdict — House league's the same); a division, a head coach, an offer and
+  a document type the blue identity chip; live green; pending review amber. The allocation page borrows
+  "completed" for an OVERDUE installment — on the kit it gets its own `.badgeOverdue` (amber, the legacy
+  hue). Payment requests' hand-set tags move onto the admin's `.badge-*`: pending amber, approved green,
+  denied red (a verdict); "Pay Org" amber (money going out — the ledger's expense chip), "Request from
+  Org" green. Approve / Deny become the portal's primary and danger buttons.
+- **Hand-set inline colours:** 115 → 30 colour literals in the areas' TSX. Byte-equal literals became
+  the token (`#4ade80` → `--success-light`, `#f87171` → `--danger-light`, `#fbbf24` → `--warning-light`,
+  `#22c55e` / `#ef4444` / `#f59e0b` → `--success` / `--danger` / `--warning`) — pixel-identical off,
+  theme-true on (the warm inks clear ~6:1 on white). The schedule's event hues wear the portal's `--evt-*`
+  on the kit (`EVENT_TOKENS`; the hex map stays for the legacy pill, which appends an alpha). The dark
+  ramp's faint inks as TEXT (`--white-30…45`, ~3.8:1 on the kit's Dark ground, a hairline in Warm) take
+  `KIT_INK.tertiary` through `kx`. New patches in `kit-inline.ts`: `KIT_SURFACE.alert` / `.door`,
+  `KIT_STEP` (the two allocation steppers). The 275 legacy stylesheet literals stay until the release
+  slice deletes the legacy rules.
+- **F3 re-homings (every subtitle in both areas):** Rep Teams hub — "N of M teams" → beside the Teams
+  heading; the connected-families line → word for word under it; the organization → the eyebrow ("all
+  teams", said only to an uncapped club, describes the list and is not re-homed). A team — sport and
+  division → chips beside its name (the colour swatch too); its description → the top of the body. A
+  season — its team → the way up; a season's Coaches / Schedule / Tryouts — the season → the way up, the
+  team → the eyebrow. A finished season — team → the eyebrow, status → a chip, the year → a chip only
+  where the season's name does not already carry it; "Read-only archive" stays at the header's end. A
+  team's History — the team → the way up. An allocation — "Created {date}" → the top of the body.
+  Assistant coaches — the framing sentence ("Oversight across your teams…") → the top of the body, word
+  for word. Allocate to teams — the line and total are NOT re-homed: the Budget Line card directly below
+  states both. Budget vs. Actual — "{year} season" is not re-homed: the season picker directly below says
+  it. Not re-homed as descriptions: "all ledgers", "season planning", "shared expenses split across
+  teams", "completed and archived program years", "inbound team payment requests", "Split a shared
+  expense across teams", "Tags, award types & drills every team can use".
+- **The eyebrow and the way up, one rule for both areas:** a program's home page — the eyebrow is the
+  organization. Every other page — "{Program} · {organization}", the program a link back (ADC specimen 5
+  draws the ledger's that way). A page inside a team or a season — the way up is the page above it and
+  the eyebrow names the team, so the eyebrow plus the way up always spell the path. A legacy "← Rep
+  Teams" back link becomes the eyebrow's link (the same door) rather than a second one. ⚠ Slice 2's House
+  league sub-pages carry the program alone — unify at the release slice.
+- **Words, casing only:** kit titles in sentence case ("Accounting overview", "Org budget", "Allocate to
+  teams", "Cost allocations", "New cost allocation", "Document templates", "Payment requests", "Past
+  seasons", "Rename team URLs"); "Rep Teams" and "Budget vs. Actual" keep the rail's and the PDF's one
+  spelling. Button labels untouched (slice 2's rule).
+- **Deliberately not as drawn (flagged to the owner at the start):** the ledger's Export / Add Entry /
+  Add Transfer stay above the table where they are today — specimen 5's header actions followed a
+  "before" that drew them there; amounts keep their + / − signs and their green / red (the drawing's
+  plain amounts would change what the screen says).
+- **Identity (switch off):** "before" 2026-09-27T01:22Z on the untouched tree after a full dev restart;
+  "after" 12:2xZ after a second restart — **45 of 46 pixel-identical**; the 46th (Rep Teams hub, desktop)
+  differs only in the Upcoming Bills panel's day counts ("56d overdue" → "57d"): the SERVER counts days on
+  its real clock, which the pinned page clock cannot reach, and midnight passed between the captures.
+  **Mask added** (`identityMask` on `admin-rep-teams`: the panel's rows, lane counts and overdue pill;
+  its frame stays checked) and proven quiet by a back-to-back before/after (2/2). After the reminder-row
+  fix, the Accounting overview (owner + treasurer) was retaken: phone identical; desktop 120px shorter —
+  the "Tournaments without a ledger" row for the club's Invitational is gone because the cancellation
+  below archived that tournament; every other pixel identical.
+- **Switch-on sweep vs the switch-off dark baseline (23 screens, 92 pairs each, none unmeasured).**
+  Baseline: contrast 1,594 · tap floor 538 · control width 43 · overflow 21 · type ladder 24. **Warm:
+  contrast 0**, tap floor 490, control width 49, overflow 23, type ladder 8. **Dark: contrast 354**, tap
+  floor 490, control width 49, overflow 23, type ladder 8. The Dark remainder is none of this slice's:
+  270 the shared phone bar's inactive labels (slice 1's open question), 60 the coaches portal's Upcoming
+  Bills panel (below), 24 the help "?" buttons (slice 5). Every "worse" screen × rule group was re-swept
+  with the switch OFF and shows the same findings there — the fixture gained staff, shared tags, tryout
+  applicants, team budget items and a payment request since slice 0 — so none is the kit's.
+  **Fixed from the sweep:** (1) the Accounting overview's reminder rows spilled 16px at 361 on the kit
+  only (the body-face buttons are ~35px wider than the condensed console face; the row had 2px spare) —
+  the row wraps on the kit, the buttons drop below the description on a phone; (2) blue identity chips
+  measured 4.40:1 in Dark — the ink is `--info-light` (Warm: the same `--home-blue`), also on the global
+  kit `.badge-info` (slice 2's, which can sit on a card); (3) the danger button's red measured 4.41:1 in
+  Dark — `KIT_BUTTON.danger` ink is `--danger-light` (Warm: the same `--home-live`). (2) and (3) lift Dark
+  on slice 2's screens too; Warm is byte-identical. Warm re-swept on the 8 touched screens: contrast 0,
+  overflow 11 → 8, nothing else moved.
+- **An interruption in window 2, attributed:** at 12:25:26Z the test club's plan was CANCELLED through
+  Plan & billing by the club-owner test account — a hand-driven Organization → Plan & billing → cancel
+  preview → Confirm cancellation on this dev server, interleaved with the sweep (the sweep only loads
+  pages). The owner restored it (now `club_large` on a Stripe test subscription). ⚠ **Found, for the
+  billing work, not fixed here:** after the re-subscription `billing_suspended_at` is still set (pages load
+  regardless) and the club's Invitational stays archived (the retained-tournament restore did not run on
+  this path).
+- **Found, written down, not fixed:** (1) the coaches portal's Upcoming Bills panel (shared, rendered on
+  the Rep Teams hub) misses AA in Dark — `--home-dim` (45% white) at 4.48:1 on its card, and its active
+  day tab and "Review queue →" in the platform navy at 1.61 / 1.71:1 — the same in the portal's own Dark
+  theme; one fix repairs both; (2) the data growth above leaves real phone findings in both themes and
+  switch-off (27px "Remove" / "Publish to all teams", 24×30px library Rename / Delete, a payment-request
+  card spilling 16px at 361, the tryout table's off-ladder cell sizes) — pre-existing styling on new data;
+  (3) pre-existing lint in these pages (unused `orgParam`, a component defined during render in Document
+  templates, unescaped quotes) left alone.
+- **Gates:** the restyled-area ratchet now holds Rep Teams + Accounting (`RESTYLED_DIRS`; 59 files, 490
+  legacy literals held by value — the baseline change is additive only); strict kit check 878 rules;
+  typecheck clean; lint 0 errors on the 26 slice files; `verify:changed` green; unit 5,042 / 5,042.
+- **`/simplify` (4 lenses, 2026-09-27):** fixed —
+  - **The eyebrow's "way up" is one `crumbs` prop on `AdminPageHeader`:** `{ href?, label }` items joined
+    by " · "; a falsy item drops out. Every page had built the same link-plus-org fragment by hand, with
+    its own `.kitCrumb` rule; those rules are gone from all five area sheets, House league's included.
+  - **One `useKitAsterisk()`** replaces the inline asterisk patch on nine pages, House league's two
+    among them. Its legacy ink is `var(--danger-light)`, byte-equal to the `#f87171` it replaces, so
+    the ratchet dropped two held literals (487).
+  - **The schedule imports the portal's `EVENT_COLORS`** instead of keeping its own copy.
+  - **Row-invariant `kx(...)` calls are hoisted out of `.map()` loops** on 11 pages.
+  - **Assistant coaches' `panelStyle()` builder is two constants.**
+  - **Dead code removed:** Budget's dead kit selectors, and imports the change left unused.
+  - **The blue-ink reason is written once,** on the global `.badge-info` rule.
+
+  Declined:
+  - **A `composes: from global` chip:** it would put the legacy `.badge` rules on the switch-off pixels.
+  - **A shared hook for the two allocation wizards' `dimInk` / `reviewHead`:** they are page-local
+    duplicates that predate the slice.
+  - **Splitting `.categoryGroupLabel`:** cosmetic only.
+  - **Per-sheet `.num`:** it follows the per-sheet convention.
+
+  Gates re-run green: typecheck, lint (0 errors, no new warnings), the token gate, CSS selectors, CSS
+  purity, spelling, and unit 5,042 / 5,042.
+- **`/review` (Standard tier, 2 lenses — correctness, regression / blast radius, 2026-09-27):** 3
+  findings, 1 fixed, 0 refuted; none reached Stage 4 (none High, none uncertain).
+  - **Fixed (Low):** Document templates' kit crumb could point at `/undefined/admin/rep-teams` in the
+    moment before the club loads (the page has no loading guard). The crumb is plain text until then.
+    The legacy "← Rep Teams" link has the same flaw from before this slice and is left alone, because
+    fixing it changes the switch-off markup.
+  - **Confirmed as intended, now named screen by screen for the slice 6 walk (Medium, kit-on only):**
+    - **The danger button's lighter red** reaches House league's registrations, schedule and teams.
+    - **The blue chip's lighter ink** reaches Organization → Members (the role chips) and the tournament
+      dashboard (the deposit-paid count).
+    - Both are the Dark contrast fixes above, and Warm is byte-identical. No kit-on picture gate exists
+      yet; the slice 6 walk is where they are seen.
+  - **Dropped (Advisory):** the crumbs' index keys (static lists of one to three items).
+  - **Not re-run after `/simplify`:** the switch-off identity and the switch-on sweep, because they need
+    a quiet window. Two things change in what the screens send:
+    - **The one switch-off change:** House league's two required-field asterisks write their colour as
+      `var(--danger-light)`, byte-equal to the `#f87171` they replaced.
+    - **The kit's crumbs** are the same link in the same place, now styled by the shared header.
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as

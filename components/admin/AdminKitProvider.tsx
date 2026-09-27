@@ -8,7 +8,7 @@
  * legacy look, never a half-built kit.
  */
 import { createContext, useCallback, useContext, useMemo, type CSSProperties, type ReactNode } from 'react';
-import { KIT_BUTTON } from './kit/kit-inline';
+import { KIT_BUTTON, KIT_INK } from './kit/kit-inline';
 
 const AdminKitContext = createContext(false);
 
@@ -41,4 +41,12 @@ export function useKitButtons(legacy: { primary: CSSProperties; secondary: CSSPr
     secondary: kx(legacy.secondary, KIT_BUTTON.secondary),
     danger: kx(legacy.danger, KIT_BUTTON.danger),
   }), [kx, legacy]);
+}
+
+/** A required field's asterisk: today's red while the switch is off, the label's own ink on the kit (the
+ *  portal-wide 2026-08-25 ruling — red means something went wrong). One constant per switch state. */
+const ASTERISK_LEGACY: CSSProperties = { color: 'var(--danger-light)' };
+const ASTERISK_KIT: CSSProperties = { ...ASTERISK_LEGACY, ...KIT_INK.asterisk };
+export function useKitAsterisk(): CSSProperties {
+  return useAdminKit() ? ASTERISK_KIT : ASTERISK_LEGACY;
 }

@@ -1059,3 +1059,328 @@
   font-size: 0.85rem; cursor: pointer; padding: 0.3rem 0.5rem;
 }
 .btnGhost:hover { color: rgba(255,255,255,0.8); }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 3 — only with the switch on) ═══════════════════════
+   Rep Teams on the coaches portal's kit: the same screens, words, columns and actions, in both themes.
+   Also serves Accounting's "Allocate to teams" (it borrows this sheet). Every rule is scoped under
+   `[data-admin-kit]` (only the admin shell carries it, and only while the dev switch is on), so the
+   legacy rules above render untouched until the release slice deletes them. The recipes are the
+   portal's own, by value — the ones slice 2 set House league on: the kit card, its eyebrow and chips,
+   the table standard's ground, the portal's field, tab bar, window and buttons. Titles and figures
+   leave the console face (F2); monospace stays on eyebrows and chips. The platform navy that the
+   legacy rules use as TEXT (1.39:1 on the dark ground) leaves with them: on the kit it is olive.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+
+/* ── Page frame ── */
+:global([data-admin-kit]) .muted,
+:global([data-admin-kit]) .accessDenied,
+:global([data-admin-kit]) .emptyState,
+:global([data-admin-kit]) .hint,
+:global([data-admin-kit]) .detailPlaceholder,
+:global([data-admin-kit]) .changeCount { color: var(--text-tertiary); }
+:global([data-admin-kit]) .accessDenied h2 { color: var(--text-secondary); }
+:global([data-admin-kit]) .introNote { color: var(--text-secondary); }
+:global([data-admin-kit]) .errorText,
+:global([data-admin-kit]) .renameInputError { color: var(--danger-light); }
+
+/* Labels over a figure, section and panel heads → the kit eyebrow. */
+:global([data-admin-kit]) .sectionTitle,
+:global([data-admin-kit]) .statLabel,
+:global([data-admin-kit]) .summaryCardLabel,
+:global([data-admin-kit]) .lifecycleLabel,
+:global([data-admin-kit]) .coachPanelTitle,
+:global([data-admin-kit]) .detailSectionTitle,
+:global([data-admin-kit]) .slideOverSectionTitle,
+:global([data-admin-kit]) .renameSectionLabel,
+:global([data-admin-kit]) .calMonthLabel,
+:global([data-admin-kit]) .wltLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .renameSectionLabel::after { background: var(--home-line); }
+:global([data-admin-kit]) .calMonthLabel { border-bottom-color: var(--home-line); }
+
+/* Figures → the kit's ink, even-width digits; the big one in the display face. */
+:global([data-admin-kit]) .statValue { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+:global([data-admin-kit]) .summaryCardValue {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+:global([data-admin-kit]) .summaryCardLink { color: var(--home-olive); }
+
+/* ── Cards: teams, seasons, summaries, panels, sections, rows → the kit card ── */
+:global([data-admin-kit]) .teamCard,
+:global([data-admin-kit]) .yearCard,
+:global([data-admin-kit]) .summaryCard,
+:global([data-admin-kit]) .coachPanel,
+:global([data-admin-kit]) .detailSection,
+:global([data-admin-kit]) .renameRow,
+:global([data-admin-kit]) .lifecycleRow,
+:global([data-admin-kit]) .tryoutToggleRow,
+:global([data-admin-kit]) .wltWidget {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .teamName,
+:global([data-admin-kit]) .yearCardName,
+:global([data-admin-kit]) .coachName,
+:global([data-admin-kit]) .renameTeamName,
+:global([data-admin-kit]) .tryoutPlayerName { color: var(--text-primary); }
+:global([data-admin-kit]) .coachEmail,
+:global([data-admin-kit]) .renameCurrentSlug,
+:global([data-admin-kit]) .renamePreview { color: var(--text-tertiary); }
+:global([data-admin-kit]) .tryoutToggleLabel { color: var(--text-secondary); }
+:global([data-admin-kit]) .coachRow { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .colorSwatch { border-color: var(--home-line-strong); border-radius: 4px; }
+/* A rename in progress: the kit's olive selection; one that will not save: the danger edge. */
+:global([data-admin-kit]) .renameRowChanged { background: var(--home-olive-soft); border-color: var(--home-olive); }
+:global([data-admin-kit]) .renameRowError { background: rgba(var(--danger-rgb), 0.05); border-color: rgba(var(--danger-rgb), 0.45); }
+:global([data-admin-kit]) .renamePreviewChanged { color: var(--home-olive); }
+:global([data-admin-kit]) .saveBar { border-top-color: var(--home-line); }
+
+/* ── Chips → the kit's chips. A group, an assistant, a draft or finished season NAME something, so
+   they are the quiet chip (a finished season is not a verdict — slice 2 set House league's the same);
+   a division and a head coach are the blue identity chip; live is green; waiting is amber. The one
+   chip that IS a verdict — an installment overdue — has its own kit class (`.badgeOverdue`), because
+   the legacy page borrows "completed" for it. ── */
+:global([data-admin-kit]) .badge,
+:global([data-admin-kit]) .eventTypePill {
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 999px;
+  padding: 0.14rem 0.5rem;
+  border: 1px solid transparent;
+}
+:global([data-admin-kit]) .badgeGroup,
+:global([data-admin-kit]) .badgeDraft,
+:global([data-admin-kit]) .badgeCompleted,
+:global([data-admin-kit]) .badgeArchived,
+:global([data-admin-kit]) .badgeAssistant {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .badgeDivision,
+:global([data-admin-kit]) .badgeHeadCoach,
+:global([data-admin-kit]) .badgeInfo,
+:global([data-admin-kit]) .badgeOffered {
+  /* The light blue as ink — the reason sits on `.badge-info`'s kit rule in app/globals.css. */
+  color: var(--info-light);
+  background: rgba(var(--info-rgb), 0.08);
+  border-color: rgba(var(--info-rgb), 0.3);
+}
+:global([data-admin-kit]) .badgeActive {
+  color: var(--badge-success-ink);
+  background: rgba(var(--success-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.28);
+}
+:global([data-admin-kit]) .badgePendingReview,
+:global([data-admin-kit]) .badgeOverdue {
+  color: var(--badge-warning-ink);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+
+/* ── Tabs → the portal's tab bar (`CoachTabBar`): sentence-weight sans, olive when chosen ── */
+:global([data-admin-kit]) .tabs,
+:global([data-admin-kit]) .tryoutTabs { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .tab,
+:global([data-admin-kit]) .tryoutTab {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .tab:hover,
+:global([data-admin-kit]) .tryoutTab:hover { color: var(--text-secondary); }
+:global([data-admin-kit]) .tabActive,
+:global([data-admin-kit]) .tabActive:hover,
+:global([data-admin-kit]) .tryoutTabActive,
+:global([data-admin-kit]) .tryoutTabActive:hover { color: var(--home-olive); border-bottom-color: var(--home-olive); }
+:global([data-admin-kit]) .tryoutTabCount {
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-radius: 999px;
+}
+:global([data-admin-kit]) .tryoutTabActive .tryoutTabCount { color: var(--home-olive); background: var(--home-olive-soft); }
+
+/* ── Tables → the table standard's ground: quiet body-face heads, hairline rows ── */
+:global([data-admin-kit]) .tableWrap,
+:global([data-admin-kit]) .tryoutTableWrap {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .th,
+:global([data-admin-kit]) .tryoutTh {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+  background: var(--card-bg);
+  border-bottom-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .td,
+:global([data-admin-kit]) .tryoutTd {
+  color: var(--text-secondary);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .tr:hover .td,
+:global([data-admin-kit]) .tryoutTr:hover .tryoutTd { background: var(--home-olive-soft); }
+/* F4: an amount sits right, in even-width digits — its heading with it. */
+:global([data-admin-kit]) .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+/* ── Fields → the portal's field ── */
+:global([data-admin-kit]) .label,
+:global([data-admin-kit]) .slideOverFieldLabel {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+:global([data-admin-kit]) .input,
+:global([data-admin-kit]) .select,
+:global([data-admin-kit]) .textarea,
+:global([data-admin-kit]) .tryoutUrlInput {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .tryoutUrlInput { font-family: var(--font-data); color: var(--text-secondary); }
+:global([data-admin-kit]) .input::placeholder,
+:global([data-admin-kit]) .textarea::placeholder { color: var(--text-tertiary); }
+:global([data-admin-kit]) .input:focus,
+:global([data-admin-kit]) .select:focus,
+:global([data-admin-kit]) .textarea:focus { border-color: var(--home-olive); }
+:global([data-admin-kit]) .inputError,
+:global([data-admin-kit]) .inputError:focus { border-color: rgba(var(--danger-rgb), 0.6); }
+:global([data-admin-kit]) .select option { background: var(--home-card); color: var(--text-primary); }
+
+/* ── Dialogs, the confirm box and the slide-overs → the portal's window ── */
+:global([data-admin-kit]) .modalOverlay,
+:global([data-admin-kit]) .confirmOverlay,
+:global([data-admin-kit]) .slideOverBackdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .modal,
+:global([data-admin-kit]) .confirmBox,
+:global([data-admin-kit]) .slideOver {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+/* A confirm that archives or removes keeps its danger edge — the box says what kind of question it is. */
+:global([data-admin-kit]) .confirmBox { border-color: rgba(var(--danger-rgb), 0.35); }
+:global([data-admin-kit]) .slideOverPanel { background: var(--card-bg); border-left-color: var(--home-line); }
+:global([data-admin-kit]) .modalTitle,
+:global([data-admin-kit]) .slideOverTitle {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .confirmTitle { font-family: var(--font-display); color: var(--home-live); }
+:global([data-admin-kit]) .confirmMsg { color: var(--text-secondary); }
+:global([data-admin-kit]) .modalCloseBtn { color: var(--text-tertiary); }
+:global([data-admin-kit]) .modalCloseBtn:hover { color: var(--text-primary); }
+:global([data-admin-kit]) .modalFooter,
+:global([data-admin-kit]) .slideOverHeader,
+:global([data-admin-kit]) .slideOverSection { border-color: var(--home-line); }
+:global([data-admin-kit]) .slideOverField,
+:global([data-admin-kit]) .slideOverDetails dd { color: var(--text-primary); }
+:global([data-admin-kit]) .slideOverDetails dt { color: var(--text-tertiary); }
+
+/* ── Buttons the calendar pages set by hand → the portal's own buttons ── */
+:global([data-admin-kit]) .btnPrimary,
+:global([data-admin-kit]) .btnSecondary {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  border-radius: 6px;
+}
+:global([data-admin-kit]) .btnPrimary { background: var(--home-lime); color: var(--home-lime-ink); }
+:global([data-admin-kit]) .btnPrimary:hover { opacity: 0.9; }
+:global([data-admin-kit]) .btnSecondary {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .btnSecondary:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+:global([data-admin-kit]) .btnGhost { color: var(--text-tertiary); }
+:global([data-admin-kit]) .btnGhost:hover { color: var(--text-primary); }
+
+/* ── The schedule: the view switch, the record, the calendar grids and event chips ── */
+:global([data-admin-kit]) .viewToggle { border-color: var(--home-line-strong); border-radius: 6px; }
+:global([data-admin-kit]) .viewToggleBtn { font-family: var(--font-sans, system-ui, sans-serif); color: var(--text-secondary); }
+:global([data-admin-kit]) .viewToggleBtn:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+:global([data-admin-kit]) .viewToggleBtnActive,
+:global([data-admin-kit]) .viewToggleBtnActive:hover { background: var(--home-olive-soft); color: var(--home-olive); }
+/* The record's letters stay in their own hue — the portal's win / loss / tie inks. */
+:global([data-admin-kit]) .wltW { color: var(--home-win); font-family: var(--font-display); }
+:global([data-admin-kit]) .wltL { color: var(--home-live); font-family: var(--font-display); }
+:global([data-admin-kit]) .wltT { color: var(--home-amber); font-family: var(--font-display); }
+:global([data-admin-kit]) .wltSep { color: var(--home-line-strong); }
+:global([data-admin-kit]) .calNavBtn {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 6px;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .calNavBtn:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .calNavLabel { color: var(--text-primary); }
+:global([data-admin-kit]) .eventChip { background: var(--card-bg); border-radius: 6px; }
+:global([data-admin-kit]) .eventChip:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .eventChipTime { color: var(--text-tertiary); }
+:global([data-admin-kit]) .eventChipName { color: var(--text-primary); }
+:global([data-admin-kit]) .calWeekDay {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .calWeekDayLabel { color: var(--text-secondary); border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .calWeekEmpty,
+:global([data-admin-kit]) .calMonthMoreDots { color: var(--text-tertiary); }
+/* The month grid draws its hairlines as the 1px gap over this ground (the portal's table trick). */
+:global([data-admin-kit]) .calMonthGrid { background: var(--home-line); border-color: var(--home-line); border-radius: 8px; }
+:global([data-admin-kit]) .calMonthHeader { background: var(--card-bg); color: var(--text-tertiary); }
+:global([data-admin-kit]) .calMonthCell { background: var(--card-bg); }
+:global([data-admin-kit]) .calMonthCellToday { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .calMonthDayNum { color: var(--text-secondary); }
+/* A month-grid event is a filled chip of its type's colour: white text on the portal's event hues
+   (`--on-team-color` is the platform's fixed white-on-a-colour ink; each `--evt-*` warm value was
+   chosen dark enough for it). */
+:global([data-admin-kit]) .calMonthEventDot { color: var(--on-team-color); border-radius: 4px; }
+
+/* ── Breadcrumbs (the calendar pages' own; the kit header replaces the rest) ── */
+:global([data-admin-kit]) .breadcrumb { color: var(--text-tertiary); }
+:global([data-admin-kit]) .breadcrumb a { color: var(--text-secondary); }
+:global([data-admin-kit]) .breadcrumb a:hover { color: var(--home-olive); }
+:global([data-admin-kit]) .breadcrumb span { color: var(--text-tertiary); }
+
+/* ── Kit-only pieces the pages render with the switch on ── */
+/* A fact F3 moved out of a header, at the top of the body it describes. */
+:global([data-admin-kit]) .kitLede {
+  margin: -0.25rem 0 1.25rem;
+  font-size: var(--type-support);
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+/* The team count beside the list it counts (was the hub's subtitle). */
+:global([data-admin-kit]) .kitCount {
+  font-size: var(--type-support);
+  color: var(--text-tertiary);
+  font-variant-numeric: tabular-nums;
+}

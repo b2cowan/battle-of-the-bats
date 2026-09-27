@@ -14,6 +14,9 @@ import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
 import PayeeCombobox from '@/components/accounting/PayeeCombobox';
 import type { PayeeSelection } from '@/components/accounting/PayeeCombobox';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../accounting.module.css';
 import type { AccountingLedger, AccountingEntry, LedgerSummary, AccountingEntryType, AccountingEntryStatus } from '@/lib/types';
 
@@ -101,6 +104,8 @@ export default function LedgerDetailPage() {
   const base      = `/${currentOrg?.slug ?? ''}/admin`;
   const isOwner   = userRole === 'owner';
   const canEdit   = isOwner || userRole === 'treasurer';
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const [ledger,      setLedger]      = useState<AccountingLedger | null>(null);
   const [summary,     setSummary]     = useState<LedgerSummary | null>(null);
@@ -359,9 +364,19 @@ export default function LedgerDetailPage() {
     );
   }
 
+  // Row-invariant styles, computed once per render rather than once per row.
+  const categoryCell = kx({ color: 'var(--white-40)', fontSize: '0.8rem' }, KIT_INK.tertiary);
+
   return (
     <div className={styles.page}>
-      {/* Header */}
+      {/* Header — today's as `legacy` while the switch is off. On the kit the breadcrumb becomes the
+          eyebrow as ADC specimen 5 draws it (Accounting, still a link, · the organization); its second
+          half was the ledger's own name, which is the title (F3). The action bar stays above the table,
+          where it is today — the drawing's header actions followed a "before" that put them there. */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/accounting`, label: 'Accounting' }, { label: currentOrg?.name ?? '' }]}
+        title={ledger?.name ?? 'Ledger'}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.headerIcon}><DollarSign size={20} /></div>
         <div>
@@ -375,6 +390,8 @@ export default function LedgerDetailPage() {
           </p>
         </div>
       </div>
+        }
+      />
 
       {fetching && !ledger ? (
         <p className={styles.muted}>Loading…</p>
@@ -405,7 +422,7 @@ export default function LedgerDetailPage() {
               {(summary.pendingIncome > 0 || summary.pendingExpenses > 0) && (
                 <div className={styles.balanceStat}>
                   <span className={styles.balanceStatLabel}>Pending</span>
-                  <span className={styles.balanceStatValue} style={{ color: '#fbbf24' }}>
+                  <span className={styles.balanceStatValue} style={{ color: 'var(--warning-light)' }}>
                     {summary.pendingIncome > 0  && `+${formatCurrency(summary.pendingIncome)}`}
                     {summary.pendingIncome > 0 && summary.pendingExpenses > 0 && ' / '}
                     {summary.pendingExpenses > 0 && `−${formatCurrency(summary.pendingExpenses)}`}
@@ -469,7 +486,7 @@ export default function LedgerDetailPage() {
                     <th>Description</th>
                     <th>Category</th>
                     <th>Type</th>
-                    <th>Amount</th>
+                    <th className={styles.num}>Amount</th>
                     <th>Status</th>
                     {canEdit && <th></th>}
                   </tr>
@@ -485,13 +502,13 @@ export default function LedgerDetailPage() {
                           <span className="entryDesc">{entry.description}</span>
                           {isTransfer && <span className={styles.linkedIndicator}>↔</span>}
                         </td>
-                        <td style={{ color: 'var(--white-40)', fontSize: '0.8rem' }}>{entry.category ?? '—'}</td>
+                        <td style={categoryCell}>{entry.category ?? '—'}</td>
                         <td>
                           <span className={`${styles.typeChip} ${typeChipClass(entry.entryType, styles)}`}>
                             {entryTypeLabel(entry.entryType)}
                           </span>
                         </td>
-                        <td>
+                        <td className={styles.num}>
                           <span className={isPos ? styles.amountPos : styles.amountNeg}>
                             {isPos ? '+' : '−'}{formatCurrency(entry.amount)}
                           </span>
@@ -535,7 +552,7 @@ export default function LedgerDetailPage() {
 
           {/* Load more / count */}
           <div className={styles.tableFooter}>
-            <span style={{ fontSize: '0.78rem', color: 'var(--white-40)' }}>
+            <span style={kx({ fontSize: '0.78rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>
               {entries.length} {entries.length === 1 ? 'entry' : 'entries'} shown
             </span>
             {hasMore && (
@@ -637,7 +654,11 @@ export default function LedgerDetailPage() {
 
             <div className={styles.field}>
               <label className={styles.label}>From</label>
-              <div style={{ padding: '0.55rem 0.75rem', background: 'var(--white-03)', border: '1px solid var(--white-8)', borderRadius: '2px', fontSize: '0.9rem', color: 'var(--white-60)' }}>
+              <div style={kx(
+                { padding: '0.55rem 0.75rem', background: 'var(--white-03)', border: '1px solid var(--white-8)', borderRadius: '2px', fontSize: '0.9rem', color: 'var(--white-60)' },
+                // A field you cannot change: the portal's field, quiet.
+                { background: 'var(--home-olive-soft)', border: '1px solid var(--home-line)', borderRadius: '7px', color: 'var(--text-secondary)' },
+              )}>
                 {ledger?.name ?? 'This ledger'}
               </div>
             </div>

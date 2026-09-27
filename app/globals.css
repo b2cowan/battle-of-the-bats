@@ -1958,7 +1958,9 @@ h1, h2, h3, h4, h5, h6 {
 [data-admin-kit] .badge-success:where(:not([data-public-preview] *)) { color: var(--badge-success-ink); background: rgba(var(--success-rgb), 0.08); border-color: rgba(var(--success-rgb), 0.28); }
 [data-admin-kit] .badge-warning:where(:not([data-public-preview] *)) { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
 [data-admin-kit] .badge-danger:where(:not([data-public-preview] *))  { color: var(--badge-danger-ink);  background: rgba(var(--danger-rgb), 0.08);  border-color: rgba(var(--danger-rgb), 0.3); }
-[data-admin-kit] .badge-info:where(:not([data-public-preview] *))    { color: var(--info); background: rgba(var(--info-rgb), 0.08); border-color: rgba(var(--info-rgb), 0.3); }
+/* The info chip's ink is the LIGHT blue: `--info` on its tint over a Dark card is 4.40:1 (the slice 3
+   sweep); in Warm both resolve to `--home-blue`. */
+[data-admin-kit] .badge-info:where(:not([data-public-preview] *))    { color: var(--info-light); background: rgba(var(--info-rgb), 0.08); border-color: rgba(var(--info-rgb), 0.3); }
 [data-admin-kit] .badge-neutral:where(:not([data-public-preview] *)),
 [data-admin-kit] .badge-primary:where(:not([data-public-preview] *)),
 [data-admin-kit] .badge-purple:where(:not([data-public-preview] *))  { color: var(--text-secondary); background: var(--home-olive-soft); border-color: var(--home-line-strong); }

@@ -3,9 +3,15 @@ import { useState, useEffect, useCallback, use } from 'react';
 import { Calendar, ChevronLeft, ChevronRight, X, Trophy, Shield, Dumbbell, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useOrg } from '@/lib/org-context';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../../../rep-teams.module.css';
 import type { RepTeamEvent, RepEventType } from '@/lib/types';
-import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
+// On the kit each type wears the coach schedule's own event hue (`--evt-*`: these same colours in Dark,
+// the warm tones in Warm) — Admin Design Continuity slice 3. The page's hex map below stays for the
+// legacy look (the detail pill appends an alpha to it) until the release slice folds this in.
+import { SCRIMMAGE_LABEL, EVENT_COLORS as EVENT_TOKENS } from '@/lib/coach-schedule-vocab';
 import { tournamentToday } from '@/lib/timezone';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
@@ -67,7 +73,8 @@ function weekKey(iso: string) {
 // ── Event chip ────────────────────────────────────────────────────────────────
 
 function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => void }) {
-  const color = EVENT_COLORS[event.eventType];
+  const kit = useAdminKit();
+  const color = (kit ? EVENT_TOKENS : EVENT_COLORS)[event.eventType];
   const Icon = EVENT_ICONS[event.eventType];
   const cancelled = event.status === 'cancelled';
   return (
@@ -80,11 +87,11 @@ function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => voi
       <span className={styles.eventChipTime}>{fmtTime(event.startsAt)}</span>
       <span className={styles.eventChipName} style={cancelled ? { textDecoration: 'line-through' } : undefined}>{event.name}</span>
       {cancelled ? (
-        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#f59e0b' }}>CANCELLED</span>
+        <span style={{ fontSize: '0.7rem', fontWeight: 700, color: 'var(--warning)' }}>CANCELLED</span>
       ) : event.result && (
         <span style={{
           fontSize: '0.7rem', fontWeight: 700,
-          color: event.result === 'win' ? '#22c55e' : event.result === 'loss' ? '#ef4444' : '#f59e0b',
+          color: event.result === 'win' ? 'var(--success)' : event.result === 'loss' ? 'var(--danger)' : 'var(--warning)',
         }}>
           {event.result.toUpperCase()}
         </span>
@@ -138,6 +145,10 @@ export default function AdminSchedulePage({
   const [cursorDate, setCursorDate] = useState(() => tournamentToday());
 
   const [selectedEvent, setSelectedEvent] = useState<RepTeamEvent | null>(null);
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kit = useAdminKit();
+  const kx = useKitStyle();
+  const eventColors = kit ? EVENT_TOKENS : EVENT_COLORS;
 
   const base = `/${orgSlug}/admin/rep-teams`;
   const apiBase = `/api/admin/rep-teams/teams/${teamId}/program-years/${yearId}/events`;
@@ -238,7 +249,7 @@ export default function AdminSchedulePage({
               <span className={styles.calMonthDayNum}>{day.getDate()}</span>
               <div className={styles.calMonthDayEvents}>
                 {dayEvents.slice(0, 3).map(e => (
-                  <button key={e.id} className={styles.calMonthEventDot} style={{ background: EVENT_COLORS[e.eventType] }} title={e.name} onClick={() => setSelectedEvent(e)}>
+                  <button key={e.id} className={styles.calMonthEventDot} style={{ background: eventColors[e.eventType] }} title={e.name} onClick={() => setSelectedEvent(e)}>
                     {e.name.slice(0, 14)}
                   </button>
                 ))}
@@ -253,9 +264,32 @@ export default function AdminSchedulePage({
 
   if (orgLoading) return <div className={styles.emptyState}>Loading…</div>;
 
+  // The header's controls — one fragment both headers render, so the kit header never forks them.
+  const headerActions = (
+    <>
+          <div className={styles.viewToggle}>
+            {(['list', 'week', 'month'] as ViewMode[]).map(v => (
+              <button key={v} className={`${styles.viewToggleBtn} ${view === v ? styles.viewToggleBtnActive : ''}`} onClick={() => setView(v)}>
+                {v.charAt(0).toUpperCase() + v.slice(1)}
+              </button>
+            ))}
+          </div>
+          <span style={kx({ fontSize: '0.75rem', color: 'var(--white-35)', alignSelf: 'center' }, KIT_INK.tertiary)}>
+            Read-only
+          </span>
+    </>
+  );
+
   return (
     <div className={styles.page}>
-      {/* Header */}
+      {/* Header — today's as `legacy` while the switch is off. On the kit its breadcrumb is the path:
+          the season is the way up, the team the eyebrow (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: base, label: 'Rep Teams' }, { href: `${base}/teams/${teamId}`, label: teamName || 'Team' }]}
+        title="Schedule"
+        backTo={{ href: `${base}/teams/${teamId}/program-years/${yearId}`, label: yearName || 'Program Year' }}
+        actions={headerActions}
+        legacy={
       <div className={styles.pageHeader}>
         <div>
           <nav className={styles.breadcrumb}>
@@ -275,18 +309,11 @@ export default function AdminSchedulePage({
           </h1>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-          <div className={styles.viewToggle}>
-            {(['list', 'week', 'month'] as ViewMode[]).map(v => (
-              <button key={v} className={`${styles.viewToggleBtn} ${view === v ? styles.viewToggleBtnActive : ''}`} onClick={() => setView(v)}>
-                {v.charAt(0).toUpperCase() + v.slice(1)}
-              </button>
-            ))}
-          </div>
-          <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', alignSelf: 'center' }}>
-            Read-only
-          </span>
+          {headerActions}
         </div>
       </div>
+        }
+      />
 
       <WLTWidget events={events} />
 
@@ -309,7 +336,7 @@ export default function AdminSchedulePage({
       )}
 
       {loading ? <div className={styles.emptyState}>Loading events…</div>
-        : error ? <div className={styles.emptyState} style={{ color: '#ef4444' }}>{error}</div>
+        : error ? <div className={styles.emptyState} style={{ color: 'var(--danger)' }}>{error}</div>
         : view === 'list' ? renderListView()
         : view === 'week' ? renderWeekView()
         : renderMonthView()
@@ -321,8 +348,16 @@ export default function AdminSchedulePage({
           <div className={styles.slideOver} onClick={e => e.stopPropagation()}>
             <div className={styles.modalHeader}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                {(() => { const Icon = EVENT_ICONS[selectedEvent.eventType]; return <Icon size={16} style={{ color: EVENT_COLORS[selectedEvent.eventType] }} />; })()}
-                <span className={styles.eventTypePill} style={{ background: EVENT_COLORS[selectedEvent.eventType] + '22', color: EVENT_COLORS[selectedEvent.eventType] }}>
+                {(() => { const Icon = EVENT_ICONS[selectedEvent.eventType]; return <Icon size={16} style={{ color: eventColors[selectedEvent.eventType] }} />; })()}
+                <span className={styles.eventTypePill} style={kx(
+                  { background: EVENT_COLORS[selectedEvent.eventType] + '22', color: EVENT_COLORS[selectedEvent.eventType] },
+                  // The kit's chip in the type's own hue: a wash of it, its border, and the ink.
+                  {
+                    background: `color-mix(in srgb, ${EVENT_TOKENS[selectedEvent.eventType]} 12%, transparent)`,
+                    borderColor: `color-mix(in srgb, ${EVENT_TOKENS[selectedEvent.eventType]} 45%, transparent)`,
+                    color: 'var(--text-primary)',
+                  },
+                )}>
                   {selectedEvent.isScrimmage ? SCRIMMAGE_LABEL : EVENT_LABELS[selectedEvent.eventType]}
                 </span>
               </div>
@@ -335,7 +370,7 @@ export default function AdminSchedulePage({
               {selectedEvent.location && <><dt>Location</dt><dd>{selectedEvent.location}</dd></>}
               {selectedEvent.opponent && <><dt>Opponent</dt><dd>{selectedEvent.opponent}</dd></>}
               {selectedEvent.homeAway && <><dt>Home/Away</dt><dd style={{ textTransform: 'capitalize' }}>{selectedEvent.homeAway}</dd></>}
-              {selectedEvent.teamScore != null && <><dt>Score</dt><dd>{selectedEvent.teamScore}–{selectedEvent.opponentScore} <strong style={{ color: selectedEvent.result === 'win' ? '#22c55e' : selectedEvent.result === 'loss' ? '#ef4444' : '#f59e0b' }}>{selectedEvent.result?.toUpperCase()}</strong></dd></>}
+              {selectedEvent.teamScore != null && <><dt>Score</dt><dd>{selectedEvent.teamScore}–{selectedEvent.opponentScore} <strong style={{ color: selectedEvent.result === 'win' ? 'var(--success)' : selectedEvent.result === 'loss' ? 'var(--danger)' : 'var(--warning)' }}>{selectedEvent.result?.toUpperCase()}</strong></dd></>}
               {selectedEvent.description && <><dt>Notes</dt><dd>{selectedEvent.description}</dd></>}
             </dl>
           </div>

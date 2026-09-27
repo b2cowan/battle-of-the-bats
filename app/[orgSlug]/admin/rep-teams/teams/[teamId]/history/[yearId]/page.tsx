@@ -6,6 +6,9 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { countsTowardRecord } from '@/lib/season-wrapped';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepRosterPlayer, RepTeamEvent } from '@/lib/types';
 
@@ -37,7 +40,7 @@ function eventTypeLabel(e: { eventType: string; isScrimmage: boolean }): string 
 }
 
 const RESULT_COLOR: Record<string, string> = {
-  win: '#4ade80', loss: '#f87171', tie: 'var(--white-50)',
+  win: 'var(--success-light)', loss: 'var(--danger-light)', tie: 'var(--white-50)',
 };
 
 function fmtDate(s: string) {
@@ -56,6 +59,8 @@ export default function PastYearDetailPage({
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const [tab, setTab] = useState<Tab>('roster');
   const [team, setTeam] = useState<RepTeam | null>(null);
@@ -133,8 +138,39 @@ export default function PastYearDetailPage({
   const losses = gameEvents.filter(e => e.result === 'loss').length;
   const ties = gameEvents.filter(e => e.result === 'tie').length;
 
+  // The faint inks this page repeats — on the kit the tertiary ink (the dark ramp's 40% misses AA there).
+  const statLabel = kx({ fontSize: '0.75rem', color: 'var(--white-40)' }, KIT_INK.tertiary);
+  const faintCell = kx({ color: 'var(--white-40)', fontSize: '0.78rem' }, KIT_INK.tertiary);
+  const readOnlyNote = (
+        <span style={kx({ fontSize: '0.8rem', color: 'var(--white-35)', alignSelf: 'center' }, KIT_INK.tertiary)}>
+          Read-only archive
+        </span>
+  );
+
+  // Row-invariant styles, computed once per render rather than once per row.
+  const numberCell = kx({ color: 'var(--white-40)', width: '2.5rem' }, KIT_INK.tertiary);
+
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the way
+          up is the team's History; the eyebrow names the team (the subtitle's first fact, and the
+          breadcrumb's middle), the status is a chip beside the title, and the year is a chip only
+          where the season's name does not already carry it (F3). "Read-only archive" stays at the
+          header's end. */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { href: `${base}/rep-teams/teams/${params.teamId}`, label: team.name }]}
+        title={programYear.name}
+        titleChips={<>
+          <span className={`${styles.badge} ${STATUS_CSS[programYear.status] ?? ''}`}>
+            {STATUS_LABEL[programYear.status] ?? programYear.status}
+          </span>
+          {!programYear.name.includes(String(programYear.year)) && (
+            <span className={`${styles.badge} ${styles.badgeDraft}`}>{programYear.year}</span>
+          )}
+        </>}
+        backTo={{ href: `${base}/rep-teams/teams/${params.teamId}/history`, label: 'History' }}
+        actions={readOnlyNote}
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
         <span><ChevronRight size={12} /></span>
@@ -163,29 +199,29 @@ export default function PastYearDetailPage({
             </p>
           </div>
         </div>
-        <span style={{ fontSize: '0.8rem', color: 'var(--white-35)', alignSelf: 'center' }}>
-          Read-only archive
-        </span>
+        {readOnlyNote}
       </div>
+        </>}
+      />
 
-      {error && <p style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--danger-light)', marginBottom: '1rem' }}>{error}</p>}
 
       {/* Quick stats */}
       <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         <div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{roster.length}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>Players</div>
+          <div style={statLabel}>Players</div>
         </div>
         <div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{coaches.length}</div>
-          <div style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>Coaches</div>
+          <div style={statLabel}>Coaches</div>
         </div>
         {gameEvents.length > 0 && (
           <div>
             <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>
               {wins}W – {losses}L – {ties}T
             </div>
-            <div style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>Record</div>
+            <div style={statLabel}>Record</div>
           </div>
         )}
       </div>
@@ -221,7 +257,7 @@ export default function PastYearDetailPage({
               <tbody>
                 {roster.map(p => (
                   <tr key={p.id} className={styles.tr}>
-                    <td className={styles.td} style={{ color: 'var(--white-40)', width: '2.5rem' }}>
+                    <td className={styles.td} style={numberCell}>
                       {p.playerNumber ?? '—'}
                     </td>
                     <td className={styles.td}>
@@ -270,7 +306,7 @@ export default function PastYearDetailPage({
                       <td className={styles.td} style={{ color: 'var(--white-50)', whiteSpace: 'nowrap' }}>
                         {fmtDate(e.startsAt)}
                       </td>
-                      <td className={styles.td} style={{ color: 'var(--white-40)', fontSize: '0.78rem' }}>
+                      <td className={styles.td} style={faintCell}>
                         {eventTypeLabel(e)}
                       </td>
                       <td className={styles.td}>{e.name}</td>
@@ -314,7 +350,7 @@ export default function PastYearDetailPage({
                     <td className={styles.td} style={{ color: 'var(--white-50)', fontSize: '0.78rem' }}>
                       {c.coachRole === 'head_coach' ? 'Head Coach' : 'Assistant Coach'}
                     </td>
-                    <td className={styles.td} style={{ color: 'var(--white-40)', fontSize: '0.78rem' }}>
+                    <td className={styles.td} style={faintCell}>
                       {c.email}
                     </td>
                   </tr>
@@ -334,7 +370,7 @@ export default function PastYearDetailPage({
           <p>
             <Link
               href={`${base}/rep-teams/documents`}
-              style={{ color: '#a78bfa', fontSize: '0.85rem' }}
+              style={kx({ color: '#a78bfa', fontSize: '0.85rem' }, KIT_INK.accent)}
             >
               View document templates →
             </Link>

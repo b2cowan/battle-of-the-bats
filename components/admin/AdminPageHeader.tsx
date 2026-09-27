@@ -19,15 +19,19 @@
  * that. The release slice deletes the prop and every page's legacy markup with it. Pages convert
  * as their area is restyled, not all at once (build prompt, slice 1).
  */
-import type { ReactNode } from 'react';
+import { Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
 import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import styles from './AdminPageHeader.module.css';
 
+/** One step of the eyebrow's path: a way back when it has an `href`, plain words when it does not. */
+export type AdminCrumb = { href?: string; label: string };
+
 export default function AdminPageHeader({
   legacy,
   eyebrow,
+  crumbs,
   title,
   titleChips,
   actions,
@@ -37,6 +41,11 @@ export default function AdminPageHeader({
   legacy: ReactNode;
   /** The program or tournament the page sits in. Never a count — that is a subtitle wearing a hat. */
   eyebrow?: ReactNode;
+  /** The eyebrow as a PATH — "Rep Teams · Northfield Minor Ball", each step with an `href` a link back —
+   *  joined by " · ". A falsy step, or one with no words (`{ label: currentOrg?.name ?? '' }` before the
+   *  organization has loaded), is skipped. Takes
+   *  the place of `eyebrow` when given (Admin Design Continuity slice 3: one path idiom, one crumb style). */
+  crumbs?: ReadonlyArray<AdminCrumb | false | null | undefined>;
   /** The page's name, or the record's name on a drill-in. */
   title: ReactNode;
   /** Identity/state chips beside the title. Never quantities. */
@@ -48,6 +57,15 @@ export default function AdminPageHeader({
 }) {
   const kit = useAdminKit();
   if (!kit) return <>{legacy}</>;
+  const path = crumbs?.filter((c): c is AdminCrumb => !!c && !!c.label);
+  const eyebrowContent = path?.length
+    ? path.map((c, i) => (
+        <Fragment key={i}>
+          {i > 0 && ' · '}
+          {c.href ? <Link href={c.href} className={styles.crumb}>{c.label}</Link> : c.label}
+        </Fragment>
+      ))
+    : eyebrow;
   return (
     <div className={styles.header}>
       <div className={styles.left}>
@@ -61,7 +79,7 @@ export default function AdminPageHeader({
           </>
         )}
         <div className={styles.titleBlock}>
-          {eyebrow && <div className={styles.eyebrow}>{eyebrow}</div>}
+          {eyebrowContent && <div className={styles.eyebrow}>{eyebrowContent}</div>}
           <div className={styles.titleRow}>
             <h1 className={styles.title}>{title}</h1>
             {titleChips}

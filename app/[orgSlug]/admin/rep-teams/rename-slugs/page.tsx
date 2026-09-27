@@ -6,6 +6,8 @@ import { ArrowLeft, Link2 } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import styles from '../rep-teams.module.css';
 import type { RepTeam } from '@/lib/types';
 
@@ -149,7 +151,13 @@ export default function RenameSlugPage() {
 
   return (
     <div className={styles.page}>
-      {/* Header */}
+      {/* Header — today's back link and header as `legacy` while the switch is off. On the kit the back
+          link is the eyebrow's "Rep Teams" (the same door) and the subtitle — the organization's name —
+          sits beside it (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title="Rename team URLs"
+        legacy={<>
       <div className={styles.breadcrumb} style={{ marginBottom: '0.75rem' }}>
         <Link href={`${base}/rep-teams`}><ArrowLeft size={12} style={{ marginRight: '0.2rem' }} />Rep Teams</Link>
       </div>
@@ -163,6 +171,8 @@ export default function RenameSlugPage() {
           </div>
         </div>
       </div>
+        </>}
+      />
 
       <p className={styles.introNote}>
         Update public URL slugs for all teams at once. All changes are applied together — no team&apos;s
@@ -266,6 +276,8 @@ function TeamSlugRow({
   readOnly: boolean;
 }) {
   const changed = value !== team.slug;
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
   const rowClass = [
     styles.renameRow,
     error ? styles.renameRowError : changed ? styles.renameRowChanged : '',
@@ -278,11 +290,11 @@ function TeamSlugRow({
         <div className={styles.renameTeamName}>
           {team.color && (
             <span
-              style={{
+              style={kx({
                 width: 10, height: 10, borderRadius: 2,
                 background: team.color, flexShrink: 0,
                 border: '1px solid rgba(255,255,255,0.15)',
-              }}
+              }, { border: '1px solid var(--home-line-strong)' })}
             />
           )}
           {team.name}

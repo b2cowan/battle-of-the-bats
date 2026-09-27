@@ -33,6 +33,9 @@
   text-transform: uppercase;
   color: var(--text-tertiary);
 }
+/* A step of the eyebrow's path that is a way back (`crumbs`): the eyebrow's own ink until hovered. */
+.header .crumb { color: inherit; text-decoration: none; }
+.header .crumb:hover { color: var(--home-olive); text-decoration: underline; text-underline-offset: 3px; }
 .header .titleRow { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
 .title {
   margin: 0;

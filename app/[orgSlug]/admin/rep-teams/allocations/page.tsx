@@ -5,6 +5,7 @@ import { DollarSign, AlertTriangle } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import styles from '../rep-teams.module.css';
 
 interface AllocationSummary {
@@ -62,8 +63,23 @@ export default function AllocationsPage() {
     );
   }
 
+  // The header's action — one element both headers render, so the kit header never forks it.
+  const headerActions = canWrite ? (
+          <Link href={`${base}/rep-teams/allocations/new`} className="btn btn-primary">
+            + New Allocation
+          </Link>
+  ) : null;
+
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
+          breadcrumb's "Rep Teams" is the eyebrow (still a link) beside the organization's name; "shared
+          expenses split across teams" describes the page and is not re-homed (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title="Cost allocations"
+        actions={headerActions}
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
         <span>/</span>
@@ -78,14 +94,12 @@ export default function AllocationsPage() {
             <p className={styles.pageSub}>{currentOrg?.name} — shared expenses split across teams</p>
           </div>
         </div>
-        {canWrite && (
-          <Link href={`${base}/rep-teams/allocations/new`} className="btn btn-primary">
-            + New Allocation
-          </Link>
-        )}
+        {headerActions}
       </div>
+        </>}
+      />
 
-      {error && <p style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--danger-light)', marginBottom: '1rem' }}>{error}</p>}
 
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
@@ -105,9 +119,9 @@ export default function AllocationsPage() {
               <tr>
                 <th className={styles.th}>Description</th>
                 <th className={styles.th}>Teams</th>
-                <th className={styles.th}>Total</th>
-                <th className={styles.th}>Collected</th>
-                <th className={styles.th}>Outstanding</th>
+                <th className={`${styles.th} ${styles.num}`}>Total</th>
+                <th className={`${styles.th} ${styles.num}`}>Collected</th>
+                <th className={`${styles.th} ${styles.num}`}>Outstanding</th>
                 <th className={styles.th}></th>
               </tr>
             </thead>
@@ -118,20 +132,20 @@ export default function AllocationsPage() {
                     <div style={{ fontWeight: 600 }}>{a.description}</div>
                     {a.overdueCount > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', marginTop: '0.25rem' }}>
-                        <AlertTriangle size={12} style={{ color: '#f87171' }} />
-                        <span style={{ fontSize: '0.75rem', color: '#f87171' }}>
+                        <AlertTriangle size={12} style={{ color: 'var(--danger-light)' }} />
+                        <span style={{ fontSize: '0.75rem', color: 'var(--danger-light)' }}>
                           {a.overdueCount} overdue installment{a.overdueCount !== 1 ? 's' : ''}
                         </span>
                       </div>
                     )}
                   </td>
                   <td className={styles.td} style={{ color: 'var(--white-60)' }}>{a.teamCount}</td>
-                  <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(a.totalAmount)}</td>
-                  <td className={styles.td} style={{ color: '#4ade80', fontVariantNumeric: 'tabular-nums' }}>
+                  <td className={`${styles.td} ${styles.num}`} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(a.totalAmount)}</td>
+                  <td className={`${styles.td} ${styles.num}`} style={{ color: 'var(--success-light)', fontVariantNumeric: 'tabular-nums' }}>
                     {fmt(a.collected)}
                   </td>
-                  <td className={styles.td} style={{
-                    color: a.outstanding > 0 ? (a.overdueCount > 0 ? '#f87171' : 'var(--white-80)') : '#4ade80',
+                  <td className={`${styles.td} ${styles.num}`} style={{
+                    color: a.outstanding > 0 ? (a.overdueCount > 0 ? 'var(--danger-light)' : 'var(--white-80)') : 'var(--success-light)',
                     fontVariantNumeric: 'tabular-nums',
                   }}>
                     {fmt(a.outstanding)}

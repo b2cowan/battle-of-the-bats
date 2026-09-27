@@ -21,6 +21,10 @@
 > then the coaches portal's buttons, status chips and type on every admin screen, and House league, the
 > Organization screens, setup and Notifications restyled end to end (slice 2). Customers still see
 > nothing; the owner walks it all at slice 6.
+> **Slice 3 built (2026-09-27), behind the switch:** all of Rep Teams and Accounting on the kit in both
+> themes, the money tables restyled in place (same columns; amounts right-aligned; a voided entry struck
+> through). With the switch off nothing moved; with it on, faint-text problems on these screens fell from
+> 1,594 to none in Warm and to 354 in Dark, none of them on these screens' own parts.
 
 ## What it is
 One design system and one theme choice across every working screen in FieldLogicHQ. The club admin,

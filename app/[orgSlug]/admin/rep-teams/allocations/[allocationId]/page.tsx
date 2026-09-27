@@ -6,6 +6,9 @@ import { DollarSign, ChevronDown, ChevronUp, AlertTriangle, CheckCircle2 } from 
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../../rep-teams.module.css';
 import { tournamentToday, formatStoredDate } from '@/lib/timezone';
 import { isInstallmentOverdue } from '@/lib/dues-status';
@@ -64,6 +67,9 @@ export default function AllocationDetailPage() {
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canMarkPaid = userRole === 'owner' || userRole === 'treasurer';
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kit = useAdminKit();
+  const kx = useKitStyle();
 
   const [allocation, setAllocation] = useState<Allocation | null>(null);
   const [splits, setSplits] = useState<Split[]>([]);
@@ -147,7 +153,7 @@ export default function AllocationDetailPage() {
   if (fetchError) {
     return (
       <div className={styles.page}>
-        <p style={{ color: '#f87171' }}>{fetchError}</p>
+        <p style={{ color: 'var(--danger-light)' }}>{fetchError}</p>
         <Link href={`${base}/rep-teams/allocations`} className="btn btn-secondary" style={{ marginTop: '1rem', display: 'inline-block' }}>
           ← Back to Allocations
         </Link>
@@ -165,8 +171,23 @@ export default function AllocationDetailPage() {
   const today = tournamentToday();
   const overdueCount = allInstallments.filter(i => !i.paidAt && i.dueDate < today).length;
 
+  // Row-invariant styles, computed once per render rather than once per row.
+  const splitMeta = kx({ fontSize: '0.78rem', color: 'var(--white-40)' }, KIT_INK.tertiary);
+  const chevron = kx({ color: 'var(--white-30)', flexShrink: 0 }, KIT_INK.tertiary);
+  const splitBody = kx({ borderTop: '1px solid var(--white-8)', padding: '1rem 1.25rem' }, { borderTop: KIT_LINE });
+  const splitNotes = kx({ fontSize: '0.82rem', color: 'var(--white-40)', marginBottom: '1rem' }, KIT_INK.tertiary);
+  const numberCell = kx({ color: 'var(--white-40)' }, KIT_INK.tertiary);
+
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the way
+          up is Cost allocations and "Rep Teams" is the eyebrow (still a link); the subtitle's creation
+          date moves to the top of the body it describes (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title={allocation.description}
+        backTo={{ href: `${base}/rep-teams/allocations`, label: 'Cost allocations' }}
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
         <span>/</span>
@@ -184,6 +205,9 @@ export default function AllocationDetailPage() {
           </div>
         </div>
       </div>
+        </>}
+      />
+      {kit && <p className={styles.kitLede}>Created {fmtDate(allocation.createdAt)}</p>}
 
       {/* Summary stats */}
       <div className={styles.summaryGrid} style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))', marginBottom: '2rem' }}>
@@ -197,18 +221,18 @@ export default function AllocationDetailPage() {
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryCardLabel}>Collected</span>
-          <span className={styles.summaryCardValue} style={{ fontSize: '1.3rem', color: '#4ade80' }}>{fmt(collected)}</span>
+          <span className={styles.summaryCardValue} style={{ fontSize: '1.3rem', color: 'var(--success-light)' }}>{fmt(collected)}</span>
         </div>
         <div className={styles.summaryCard}>
           <span className={styles.summaryCardLabel}>Outstanding</span>
-          <span className={styles.summaryCardValue} style={{ fontSize: '1.3rem', color: outstanding > 0 ? 'var(--white-80)' : '#4ade80' }}>
+          <span className={styles.summaryCardValue} style={{ fontSize: '1.3rem', color: outstanding > 0 ? 'var(--white-80)' : 'var(--success-light)' }}>
             {fmt(outstanding)}
           </span>
         </div>
         {overdueCount > 0 && (
-          <div className={styles.summaryCard} style={{ borderColor: 'rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.05)' }}>
-            <span className={styles.summaryCardLabel} style={{ color: '#f87171' }}>Overdue</span>
-            <span className={styles.summaryCardValue} style={{ fontSize: '1.3rem', color: '#f87171' }}>{overdueCount}</span>
+          <div className={styles.summaryCard} style={kx({ borderColor: 'rgba(248,113,113,0.3)', background: 'rgba(248,113,113,0.05)' }, KIT_SURFACE.alert)}>
+            <span className={styles.summaryCardLabel} style={{ color: 'var(--danger-light)' }}>Overdue</span>
+            <span className={styles.summaryCardValue} style={{ fontSize: '1.3rem', color: 'var(--danger-light)' }}>{overdueCount}</span>
           </div>
         )}
       </div>
@@ -238,10 +262,10 @@ export default function AllocationDetailPage() {
                 <span style={{ fontWeight: 700, color: 'var(--white-90)', fontSize: '0.95rem' }}>
                   {teamName}
                 </span>
-                <span style={{ fontSize: '0.78rem', color: 'var(--white-40)' }}>
+                <span style={splitMeta}>
                   {fmt(split.amount)} total
                   {splitOverdue > 0 && (
-                    <span style={{ color: '#f87171', marginLeft: '0.5rem' }}>
+                    <span style={{ color: 'var(--danger-light)', marginLeft: '0.5rem' }}>
                       <AlertTriangle size={11} style={{ display: 'inline', verticalAlign: 'middle', marginRight: 2 }} />
                       {splitOverdue} overdue
                     </span>
@@ -249,18 +273,18 @@ export default function AllocationDetailPage() {
                 </span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <span style={{ fontSize: '0.82rem', color: '#4ade80' }}>{fmt(splitCollected)} paid</span>
+                <span style={{ fontSize: '0.82rem', color: 'var(--success-light)' }}>{fmt(splitCollected)} paid</span>
                 {splitOutstanding > 0 && (
                   <span style={{ fontSize: '0.82rem', color: 'var(--white-50)' }}>{fmt(splitOutstanding)} due</span>
                 )}
-                {isOpen ? <ChevronUp size={16} style={{ color: 'var(--white-30)', flexShrink: 0 }} /> : <ChevronDown size={16} style={{ color: 'var(--white-30)', flexShrink: 0 }} />}
+                {isOpen ? <ChevronUp size={16} style={chevron} /> : <ChevronDown size={16} style={chevron} />}
               </div>
             </button>
 
             {isOpen && (
-              <div style={{ borderTop: '1px solid var(--white-8)', padding: '1rem 1.25rem' }}>
+              <div style={splitBody}>
                 {split.notes && (
-                  <p style={{ fontSize: '0.82rem', color: 'var(--white-40)', marginBottom: '1rem' }}>
+                  <p style={splitNotes}>
                     {split.notes}
                   </p>
                 )}
@@ -270,7 +294,7 @@ export default function AllocationDetailPage() {
                     <thead>
                       <tr>
                         <th className={styles.th}>#</th>
-                        <th className={styles.th}>Amount</th>
+                        <th className={`${styles.th} ${styles.num}`}>Amount</th>
                         <th className={styles.th}>Due Date</th>
                         <th className={styles.th}>Status</th>
                         {canMarkPaid && <th className={styles.th}></th>}
@@ -281,21 +305,22 @@ export default function AllocationDetailPage() {
                         const overdue = isInstallmentOverdue(inst.dueDate, inst.paidAt);
                         return (
                           <tr key={inst.id} className={styles.tr}>
-                            <td className={styles.td} style={{ color: 'var(--white-40)' }}>{inst.installmentNumber}</td>
-                            <td className={styles.td} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</td>
-                            <td className={styles.td} style={{ color: overdue ? '#f87171' : 'var(--white-70)' }}>
+                            <td className={styles.td} style={numberCell}>{inst.installmentNumber}</td>
+                            <td className={`${styles.td} ${styles.num}`} style={{ fontVariantNumeric: 'tabular-nums' }}>{fmt(inst.amount)}</td>
+                            <td className={styles.td} style={{ color: overdue ? 'var(--danger-light)' : 'var(--white-70)' }}>
                               {fmtDate(inst.dueDate)}
                               {overdue && (
-                                <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: '#f87171' }} />
+                                <AlertTriangle size={12} style={{ marginLeft: 4, verticalAlign: 'middle', color: 'var(--danger-light)' }} />
                               )}
                             </td>
                             <td className={styles.td}>
                               {inst.paidAt ? (
-                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: '#4ade80' }}>
+                                <span style={{ display: 'flex', alignItems: 'center', gap: '0.3rem', fontSize: '0.82rem', color: 'var(--success-light)' }}>
                                   <CheckCircle2 size={13} /> Paid {fmtDate(inst.paidAt)}
                                 </span>
                               ) : (
-                                <span className={`${styles.badge} ${overdue ? styles.badgeCompleted : styles.badgeDraft}`}>
+                                // The legacy page borrows "completed" for Overdue; the kit gives a verdict its own chip.
+                                <span className={`${styles.badge} ${overdue ? (kit ? styles.badgeOverdue : styles.badgeCompleted) : styles.badgeDraft}`}>
                                   {overdue ? 'Overdue' : 'Unpaid'}
                                 </span>
                               )}

@@ -12,6 +12,9 @@ import {
   downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear, RepProgramYearStatus, RepRosterPlayer, RepRosterStatus } from '@/lib/types';
 
@@ -68,6 +71,8 @@ export default function ProgramYearOverviewPage({
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const [team, setTeam] = useState<RepTeam | null>(null);
   const [programYear, setProgramYear] = useState<RepProgramYear | null>(null);
@@ -294,8 +299,36 @@ export default function ProgramYearOverviewPage({
   const yearBase = `${base}/rep-teams/teams/${team.id}/program-years/${programYear.id}`;
   const nextStatus = NEXT_STATUS[programYear.status];
 
+  // What sits beside the season's name — one fragment both headers render.
+  const titleChips = (
+    <>
+              <HelpTooltip
+                title="What is a program year?"
+                body="A program year represents one competitive season for a team. Roster, schedule, finances, and tryouts are all scoped to a program year. Create a new one at the start of each season."
+              />
+              <span className={`${styles.badge} ${STATUS_CSS[programYear.status] ?? styles.badgeDraft}`}>
+                {STATUS_LABEL[programYear.status] ?? programYear.status}
+              </span>
+              {programYear.tryoutOpen && (
+                <span className={`${styles.badge} ${styles.badgeActive}`}>Tryouts Open</span>
+              )}
+    </>
+  );
+
+  // Row-invariant styles, computed once per render rather than once per row.
+  const numberCell = kx({ color: 'var(--white-45)', width: '3rem' }, KIT_INK.tertiary);
+
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the way
+          up is the team (the subtitle, and the breadcrumb's middle) and "Rep Teams" is the eyebrow; the
+          help, status and tryouts chips stay beside the season's name (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title={programYear.name}
+        titleChips={titleChips}
+        backTo={{ href: `${base}/rep-teams/teams/${team.id}`, label: team.name }}
+        legacy={<>
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
@@ -311,21 +344,14 @@ export default function ProgramYearOverviewPage({
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
               <h1 className={styles.pageTitle}>{programYear.name}</h1>
-              <HelpTooltip
-                title="What is a program year?"
-                body="A program year represents one competitive season for a team. Roster, schedule, finances, and tryouts are all scoped to a program year. Create a new one at the start of each season."
-              />
-              <span className={`${styles.badge} ${STATUS_CSS[programYear.status] ?? styles.badgeDraft}`}>
-                {STATUS_LABEL[programYear.status] ?? programYear.status}
-              </span>
-              {programYear.tryoutOpen && (
-                <span className={`${styles.badge} ${styles.badgeActive}`}>Tryouts Open</span>
-              )}
+              {titleChips}
             </div>
             <p className={styles.pageSub}>{team.name}</p>
           </div>
         </div>
       </div>
+        </>}
+      />
 
       {/* Lifecycle transition */}
       {canWrite && nextStatus && (
@@ -401,7 +427,7 @@ export default function ProgramYearOverviewPage({
       {/* ── Roster section ─────────────────────────────────────────────────── */}
       <div id="roster" style={{ marginTop: '2rem' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.75rem' }}>
-          <h2 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#f0f0f0' }}>
+          <h2 style={kx({ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#f0f0f0' }, KIT_INK.primary)}>
             Roster
           </h2>
           <ExportMenu
@@ -441,7 +467,7 @@ export default function ProgramYearOverviewPage({
               <tbody>
                 {players.map(p => (
                   <tr key={p.id}>
-                    <td className={styles.td} style={{ color: 'var(--white-45)', width: '3rem' }}>
+                    <td className={styles.td} style={numberCell}>
                       {p.playerNumber ?? '—'}
                     </td>
                     <td className={styles.td}>{p.playerFirstName}</td>

@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { ArrowUpRight, ArrowDownLeft, Check, X } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
+import { KIT_BUTTON, KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../rep-teams.module.css';
 
 interface PaymentRequest {
@@ -33,7 +36,14 @@ function fmtDate(d: string) {
   return new Date(d).toLocaleDateString('en-CA', { month: 'short', day: 'numeric', year: 'numeric' });
 }
 
+/** On the kit a status is the kit's chip (the admin's `.badge-*`): waiting is amber, approved green, and
+ *  a denial — a verdict — red (Admin Design Continuity slice 3). */
+const KIT_STATUS_BADGE: Record<string, string> = {
+  pending: 'badge-warning', approved: 'badge-success', denied: 'badge-danger',
+};
+
 function StatusBadge({ status }: { status: string }) {
+  const kit = useAdminKit();
   const colors: Record<string, string> = {
     pending:  'rgba(250,204,21,0.15)',
     approved: 'rgba(74,222,128,0.15)',
@@ -41,9 +51,12 @@ function StatusBadge({ status }: { status: string }) {
   };
   const text: Record<string, string> = {
     pending:  '#facc15',
-    approved: '#4ade80',
-    denied:   '#f87171',
+    approved: 'var(--success-light)',
+    denied:   'var(--danger-light)',
   };
+  if (kit) {
+    return <span className={`badge ${KIT_STATUS_BADGE[status] ?? 'badge-neutral'}`} style={{ textTransform: 'capitalize' }}>{status}</span>;
+  }
   return (
     <span style={{
       background:    colors[status] ?? 'transparent',
@@ -62,13 +75,25 @@ function StatusBadge({ status }: { status: string }) {
 
 function TypeBadge({ type }: { type: string }) {
   const isPay = type === 'payment_to_org';
+  const kit = useAdminKit();
+  // On the kit the direction is the kit's chip: money the team pays out is amber (the ledger's expense
+  // chip, ADC specimen 5 — red is kept for something gone wrong), money it asks for is green.
+  if (kit) {
+    return (
+      <span className={`badge ${isPay ? 'badge-warning' : 'badge-success'}`} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}>
+        {isPay
+          ? <><ArrowUpRight size={12} /> Pay Org</>
+          : <><ArrowDownLeft size={12} /> Request from Org</>}
+      </span>
+    );
+  }
   return (
     <span style={{
       display:    'inline-flex',
       alignItems: 'center',
       gap:        '0.3rem',
       background: isPay ? 'rgba(248,113,113,0.1)' : 'rgba(74,222,128,0.1)',
-      color:      isPay ? '#f87171' : '#4ade80',
+      color:      isPay ? 'var(--danger-light)' : 'var(--success-light)',
       borderRadius: '2px',
       padding:    '0.2rem 0.55rem',
       fontSize:   '0.75rem',
@@ -88,6 +113,9 @@ export default function AdminPaymentRequestsPage() {
   const base = `/${currentOrg?.slug ?? ''}/admin`;
 
   const canReview = userRole === 'owner' || userRole === 'treasurer' || userRole === 'admin';
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
+  const asterisk = useKitAsterisk();
 
   const [tab, setTab] = useState<'pending' | 'history'>('pending');
   const [pendingRequests, setPendingRequests]  = useState<PaymentRequest[]>([]);
@@ -187,7 +215,7 @@ export default function AdminPaymentRequestsPage() {
     );
   }
 
-  const tabStyle = (active: boolean) => ({
+  const tabStyle = (active: boolean) => kx({
     padding:       '0.5rem 1.1rem',
     borderRadius: '2px',
     border:        'none',
@@ -197,10 +225,23 @@ export default function AdminPaymentRequestsPage() {
     fontSize:      '0.88rem',
     cursor:        'pointer',
     position:      'relative' as const,
-  });
+  }, active
+    // The kit's chosen option: olive on its soft wash (the portal's segmented choice).
+    ? { background: 'var(--home-olive-soft)', color: 'var(--home-olive)', borderRadius: '6px' }
+    : { color: 'var(--text-tertiary)', borderRadius: '6px' });
+
+  // Row-invariant styles, computed once per render rather than once per row.
+  const reviewedCell = kx({ whiteSpace: 'nowrap', color: 'var(--white-45)', fontSize: '0.82rem' }, KIT_INK.tertiary);
 
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
+          breadcrumb's "Rep Teams" is the eyebrow (still a link) beside the organization's name;
+          "inbound team payment requests" describes the page and is not re-homed (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title="Payment requests"
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
         <span>/</span>
@@ -216,15 +257,17 @@ export default function AdminPaymentRequestsPage() {
           </div>
         </div>
       </div>
+        </>}
+      />
 
       {error && <p className={styles.errorText} style={{ marginBottom: '1rem' }}>{error}</p>}
 
       {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--white-8)', paddingBottom: '0' }}>
+      <div style={kx({ display: 'flex', gap: '0.25rem', marginBottom: '1.5rem', borderBottom: '1px solid var(--white-8)', paddingBottom: '0' }, { borderBottom: KIT_LINE })}>
         <button type="button" style={tabStyle(tab === 'pending')} onClick={() => setTab('pending')}>
           Pending
           {pendingRequests.length > 0 && (
-            <span style={{
+            <span style={kx({
               marginLeft: '0.4rem',
               background: '#facc15',
               color: '#000',
@@ -232,7 +275,7 @@ export default function AdminPaymentRequestsPage() {
               fontSize: '0.7rem',
               fontWeight: 700,
               padding: '0.05rem 0.45rem',
-            }}>
+            }, { background: 'rgba(var(--warning-rgb), 0.12)', color: 'var(--badge-warning-ink)', borderRadius: '999px', fontFamily: 'var(--font-data)' })}>
               {pendingRequests.length}
             </span>
           )}
@@ -255,12 +298,12 @@ export default function AdminPaymentRequestsPage() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             {pendingRequests.map(r => (
-              <div key={r.id} style={{
+              <div key={r.id} style={kx({
                 background:   'var(--white-03)',
                 border:       '1px solid var(--white-8)',
                 borderRadius: '2px',
                 padding:      '1rem 1.25rem',
-              }}>
+              }, KIT_SURFACE.card)}>
                 <div style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginBottom: '0.3rem' }}>
@@ -290,7 +333,7 @@ export default function AdminPaymentRequestsPage() {
                         type="button"
                         onClick={() => handleApprove(r)}
                         disabled={reviewing === r.id}
-                        style={{
+                        style={kx({
                           display:    'inline-flex',
                           alignItems: 'center',
                           gap:        '0.35rem',
@@ -298,11 +341,11 @@ export default function AdminPaymentRequestsPage() {
                           borderRadius: '2px',
                           border:     'none',
                           background: reviewing === r.id ? 'rgba(74,222,128,0.1)' : 'rgba(74,222,128,0.15)',
-                          color:      '#4ade80',
+                          color:      'var(--success-light)',
                           fontWeight: 600,
                           fontSize:   '0.82rem',
                           cursor:     reviewing === r.id ? 'default' : 'pointer',
-                        }}
+                        }, KIT_BUTTON.primary)}
                       >
                         <Check size={14} />
                         {reviewing === r.id ? '…' : 'Approve'}
@@ -311,7 +354,7 @@ export default function AdminPaymentRequestsPage() {
                         type="button"
                         onClick={() => openDeny(r)}
                         disabled={reviewing === r.id}
-                        style={{
+                        style={kx({
                           display:    'inline-flex',
                           alignItems: 'center',
                           gap:        '0.35rem',
@@ -319,11 +362,11 @@ export default function AdminPaymentRequestsPage() {
                           borderRadius: '2px',
                           border:     '1px solid rgba(248,113,113,0.25)',
                           background: 'transparent',
-                          color:      '#f87171',
+                          color:      'var(--danger-light)',
                           fontWeight: 600,
                           fontSize:   '0.82rem',
                           cursor:     reviewing === r.id ? 'default' : 'pointer',
-                        }}
+                        }, KIT_BUTTON.danger)}
                       >
                         <X size={14} />
                         Deny
@@ -349,7 +392,7 @@ export default function AdminPaymentRequestsPage() {
                   <th className={styles.th}>Team</th>
                   <th className={styles.th}>Type</th>
                   <th className={styles.th}>Description</th>
-                  <th className={styles.th} style={{ textAlign: 'right' }}>Amount</th>
+                  <th className={`${styles.th} ${styles.num}`} style={{ textAlign: 'right' }}>Amount</th>
                   <th className={styles.th}>Status</th>
                   <th className={styles.th}>Reviewed</th>
                 </tr>
@@ -364,16 +407,16 @@ export default function AdminPaymentRequestsPage() {
                     <td className={styles.td}>
                       <span style={{ color: 'var(--white-80)', fontSize: '0.85rem' }}>{r.description}</span>
                       {r.denialReason && (
-                        <p style={{ margin: '0.2rem 0 0', fontSize: '0.77rem', color: '#f87171', fontStyle: 'italic' }}>
+                        <p style={{ margin: '0.2rem 0 0', fontSize: '0.77rem', color: 'var(--danger-light)', fontStyle: 'italic' }}>
                           Denied: {r.denialReason}
                         </p>
                       )}
                     </td>
-                    <td className={styles.td} style={{ textAlign: 'right', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                    <td className={`${styles.td} ${styles.num}`} style={{ textAlign: 'right', fontWeight: 700, whiteSpace: 'nowrap' }}>
                       {fmt(r.amount)}
                     </td>
                     <td className={styles.td}><StatusBadge status={r.status} /></td>
-                    <td className={styles.td} style={{ whiteSpace: 'nowrap', color: 'var(--white-45)', fontSize: '0.82rem' }}>
+                    <td className={styles.td} style={reviewedCell}>
                       {r.reviewedAt ? fmtDate(r.reviewedAt) : '—'}
                     </td>
                   </tr>
@@ -395,7 +438,7 @@ export default function AdminPaymentRequestsPage() {
             </p>
             <div className={styles.field} style={{ marginTop: '0.75rem' }}>
               <label className={styles.label} htmlFor="deny-reason">
-                Reason <span style={{ color: '#f87171' }}>*</span>
+                Reason <span style={asterisk}>*</span>
               </label>
               <textarea
                 id="deny-reason"

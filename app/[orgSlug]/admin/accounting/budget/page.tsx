@@ -11,6 +11,8 @@ import {
   buildFilename, serializeRows, serializeHeaders, type ExportColumnDef,
 } from '@/lib/export';
 import ExportMenu from '@/components/admin/ExportMenu';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
 import type { BudgetCategoryWithItems } from '@/lib/types';
 import styles from './budget.module.css';
 
@@ -66,6 +68,9 @@ export default function OrgBudgetPage() {
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'treasurer';
   const canOpenRepTeams = canOpen('module_rep_teams');
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
+  const asterisk = useKitAsterisk();
 
   const [year, setYear]     = useState(new Date().getFullYear());
   const [plan, setPlan]     = useState<PlanData | null>(null);
@@ -605,8 +610,33 @@ export default function OrgBudgetPage() {
 
   const noLines = !fetching && plan && allLines.length === 0;
 
+  // The header's actions — one fragment both headers render, so the kit header never forks them.
+  const headerActions = (
+    <>
+          <ExportMenu
+            formats={['xlsx', 'csv']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            disabled={!plan || allLines.length === 0}
+          />
+          {canWrite && !addOpen && (
+            <button type="button" className="btn btn-primary" onClick={() => setAddOpen(true)}>
+              <Plus size={15} /> Add Line
+            </button>
+          )}
+    </>
+  );
+
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
+          breadcrumb's "Accounting" is the eyebrow (still a link) beside the organization's name, which
+          was the subtitle; "season planning" describes the page and is not re-homed (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/accounting`, label: 'Accounting' }, { label: currentOrg?.name ?? '' }]}
+        title="Org budget"
+        actions={headerActions}
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/accounting`}>Accounting</Link>
         <span>/</span>
@@ -623,19 +653,11 @@ export default function OrgBudgetPage() {
         </div>
 
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <ExportMenu
-            formats={['xlsx', 'csv']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            disabled={!plan || allLines.length === 0}
-          />
-          {canWrite && !addOpen && (
-            <button type="button" className="btn btn-primary" onClick={() => setAddOpen(true)}>
-              <Plus size={15} /> Add Line
-            </button>
-          )}
+          {headerActions}
         </div>
       </div>
+        </>}
+      />
 
       {/* Year selector */}
       <div className={styles.yearRow}>
@@ -784,7 +806,7 @@ export default function OrgBudgetPage() {
                 <div className={styles.formGrid}>
                   <div className={`${styles.field} ${styles.formGridFull}`}>
                     <label className={styles.label} htmlFor="add-desc">
-                      Description <span style={{ color: '#f87171' }}>*</span>
+                      Description <span style={asterisk}>*</span>
                     </label>
                     <input
                       id="add-desc"
@@ -800,7 +822,7 @@ export default function OrgBudgetPage() {
 
                   <div className={styles.field}>
                     <label className={styles.label} htmlFor="add-amount">
-                      Total Amount ($) <span style={{ color: '#f87171' }}>*</span>
+                      Total Amount ($) <span style={asterisk}>*</span>
                     </label>
                     <input
                       id="add-amount"
@@ -845,7 +867,7 @@ export default function OrgBudgetPage() {
                 </div>
 
                 {showPeriodsForm && (
-                  <div style={{ marginTop: '0.75rem', paddingLeft: '0.5rem', borderLeft: '2px solid var(--white-8)' }}>
+                  <div style={kx({ marginTop: '0.75rem', paddingLeft: '0.5rem', borderLeft: '2px solid var(--white-8)' }, { borderLeft: '2px solid var(--home-line)' })}>
                     <p className={styles.hint} style={{ marginBottom: '0.6rem' }}>
                       Break this budget line into monthly or phase-based amounts. Totals must equal the line total.
                     </p>

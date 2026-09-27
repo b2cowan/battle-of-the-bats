@@ -9,6 +9,9 @@ import { useTournament } from '@/lib/tournament-context';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import FeedbackModal from '@/components/FeedbackModal';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from './accounting.module.css';
 import type { LedgerSummary } from '@/lib/types';
 
@@ -28,6 +31,8 @@ export default function AccountingOverviewPage() {
   const { tournaments } = useTournament();
   const base    = `/${currentOrg?.slug ?? ''}/admin`;
   const isOwner = userRole === 'owner';
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const defaults = defaultDateRange();
   const [dateFrom, setDateFrom] = useState(defaults.from);
@@ -188,6 +193,17 @@ export default function AccountingOverviewPage() {
   const pendingIn     = ledgers.reduce((s, l) => s + l.pendingIncome,  0);
   const pendingOut    = ledgers.reduce((s, l) => s + l.pendingExpenses, 0);
 
+  // A reminder row. On the kit it may wrap: the portal's body-face buttons are wider than the console
+  // face's, and on a phone the pair no longer fits beside the words (the slice 3 sweep measured a 16px
+  // sideways spill at 361px) — the buttons drop below the description instead.
+  const reminderRow = kx({
+    display: 'flex', alignItems: 'center', gap: '1rem',
+    padding: '0.9rem 1.1rem',
+    background: 'var(--white-5)',
+    border: '1px solid var(--white-8)',
+    borderRadius: '2px',
+  }, { ...KIT_SURFACE.card, flexWrap: 'wrap' });
+
   // F2: tournaments that don't yet have a ledger
   const ledgerEntityIds = new Set(ledgers.map(l => l.ledger.entityId).filter(Boolean));
   const tournamentsWithoutLedger = tournaments.filter(
@@ -196,6 +212,12 @@ export default function AccountingOverviewPage() {
 
   return (
     <div className={styles.page}>
+      {/* Header — today's as `legacy` while the switch is off. On the kit the organization's name is the
+          eyebrow; "all ledgers" describes the page and is not re-homed (the grid below is the ledgers). */}
+      <AdminPageHeader
+        eyebrow={currentOrg?.name}
+        title="Accounting overview"
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.headerIcon}><DollarSign size={20} /></div>
         <div>
@@ -203,6 +225,8 @@ export default function AccountingOverviewPage() {
           <p className={styles.pageSub}>{currentOrg?.name} — all ledgers</p>
         </div>
       </div>
+        }
+      />
 
       {/* G2: date range filter */}
       <div className={styles.dateFilterRow}>
@@ -261,7 +285,7 @@ export default function AccountingOverviewPage() {
               {(pendingIn > 0 || pendingOut > 0) && (
                 <div className={styles.totalItem}>
                   <span className={styles.totalLabel}>Pending</span>
-                  <div className={styles.totalValue} style={{ color: '#fbbf24' }}>
+                  <div className={styles.totalValue} style={{ color: 'var(--warning-light)' }}>
                     {pendingIn  > 0 && `+${formatCurrency(pendingIn)}`}
                     {pendingIn  > 0 && pendingOut > 0 && ' / '}
                     {pendingOut > 0 && `−${formatCurrency(pendingOut)}`}
@@ -315,7 +339,7 @@ export default function AccountingOverviewPage() {
                     {(pendingIncome > 0 || pendingExpenses > 0) && (
                       <div className={styles.pendingRow}>
                         <span>Pending</span>
-                        <span style={{ color: '#fbbf24' }}>
+                        <span style={{ color: 'var(--warning-light)' }}>
                           {pendingIncome  > 0 && `+${formatCurrency(pendingIncome)}`}
                           {pendingIncome  > 0 && pendingExpenses > 0 && ' / '}
                           {pendingExpenses > 0 && `−${formatCurrency(pendingExpenses)}`}
@@ -355,17 +379,17 @@ export default function AccountingOverviewPage() {
 
           {/* Accounting tools section */}
           <div style={{ marginTop: '2rem' }}>
-            <div style={{
+            <div style={kx({
               fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
               letterSpacing: '0.06em', color: 'var(--white-30)',
               marginBottom: '0.75rem',
-            }}>
+            }, KIT_INK.eyebrow)}>
               Planning Tools
             </div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem' }}>
               <Link
                 href={`${base}/accounting/budget`}
-                style={{
+                style={kx({
                   display: 'flex', alignItems: 'center', gap: '0.65rem',
                   padding: '0.75rem 1rem',
                   background: 'var(--white-5)',
@@ -375,17 +399,17 @@ export default function AccountingOverviewPage() {
                   textDecoration: 'none',
                   fontSize: '0.88rem', fontWeight: 600,
                   transition: 'background 0.15s, border-color 0.15s',
-                }}
+                }, KIT_SURFACE.door)}
               >
                 <DollarSign size={16} style={{ color: 'var(--logic-lime)' }} />
                 Org Budget
-                <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', fontWeight: 400 }}>
+                <span style={kx({ fontSize: '0.75rem', color: 'var(--white-35)', fontWeight: 400 }, KIT_INK.tertiary)}>
                   Season planning &amp; team allocations
                 </span>
               </Link>
               <Link
                 href={`${base}/accounting/budget-vs-actual`}
-                style={{
+                style={kx({
                   display: 'flex', alignItems: 'center', gap: '0.65rem',
                   padding: '0.75rem 1rem',
                   background: 'var(--white-5)',
@@ -395,11 +419,11 @@ export default function AccountingOverviewPage() {
                   textDecoration: 'none',
                   fontSize: '0.88rem', fontWeight: 600,
                   transition: 'background 0.15s, border-color 0.15s',
-                }}
+                }, KIT_SURFACE.door)}
               >
                 <DollarSign size={16} style={{ color: 'var(--logic-lime)' }} />
                 Budget vs. Actual
-                <span style={{ fontSize: '0.75rem', color: 'var(--white-35)', fontWeight: 400 }}>
+                <span style={kx({ fontSize: '0.75rem', color: 'var(--white-35)', fontWeight: 400 }, KIT_INK.tertiary)}>
                   Allocation &amp; team collection status
                 </span>
               </Link>
@@ -414,25 +438,19 @@ export default function AccountingOverviewPage() {
             && hasCapability(userRole ?? '', userCapabilities, 'module_rep_teams')
             && !!currentOrg && hasModuleEntitlement(currentOrg, 'module_rep_teams') && (
             <div style={{ marginTop: '2rem' }}>
-              <div style={{
+              <div style={kx({
                 fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase',
                 letterSpacing: '0.06em', color: 'var(--white-30)',
                 marginBottom: '0.75rem',
-              }}>
+              }, KIT_INK.eyebrow)}>
                 Automated Reminders
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '1rem',
-                  padding: '0.9rem 1.1rem',
-                  background: 'var(--white-5)',
-                  border: '1px solid var(--white-8)',
-                  borderRadius: '2px',
-                }}>
-                  <Bell size={16} style={{ color: 'var(--white-40)', flexShrink: 0 }} />
+                <div style={reminderRow}>
+                  <Bell size={16} style={kx({ color: 'var(--white-40)', flexShrink: 0 }, KIT_INK.tertiary)} />
                   <div style={{ flex: 1 }}>
                     <p style={{ margin: 0, fontWeight: 600, color: 'var(--white-80)', fontSize: '0.88rem' }}>Dues Reminders</p>
-                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--white-40)' }}>
+                    <p style={kx({ margin: 0, fontSize: '0.78rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>
                       Send 30-day or 7-day reminder emails to guardians for upcoming installments. Respects per-team coach toggle.
                     </p>
                   </div>
@@ -458,17 +476,11 @@ export default function AccountingOverviewPage() {
                   </div>
                 </div>
 
-                <div style={{
-                  display: 'flex', alignItems: 'center', gap: '1rem',
-                  padding: '0.9rem 1.1rem',
-                  background: 'var(--white-5)',
-                  border: '1px solid var(--white-8)',
-                  borderRadius: '2px',
-                }}>
-                  <Bell size={16} style={{ color: 'var(--white-40)', flexShrink: 0 }} />
+                <div style={reminderRow}>
+                  <Bell size={16} style={kx({ color: 'var(--white-40)', flexShrink: 0 }, KIT_INK.tertiary)} />
                   <div style={{ flex: 1 }}>
                     <p style={{ margin: 0, fontWeight: 600, color: 'var(--white-80)', fontSize: '0.88rem' }}>Allocation Reminders</p>
-                    <p style={{ margin: 0, fontSize: '0.78rem', color: 'var(--white-40)' }}>
+                    <p style={kx({ margin: 0, fontSize: '0.78rem', color: 'var(--white-40)' }, KIT_INK.tertiary)}>
                       Send a reminder email to you listing all team allocation installments due within the next 30 days.
                     </p>
                   </div>

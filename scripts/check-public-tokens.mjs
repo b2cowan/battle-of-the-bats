@@ -552,6 +552,10 @@ const RESTYLED_DIRS = [
   'app/[orgSlug]/admin/org/coaches-portal-links',
   'app/[orgSlug]/admin/org/settings/pdf',
   'app/[orgSlug]/admin/org/billing/mock-portal',
+  // slice 3 (`components/accounting` is not listed: it is the coaches portal's too, already on the
+  // portal's `--home-*` tokens, and was not restyled here)
+  'app/[orgSlug]/admin/rep-teams',
+  'app/[orgSlug]/admin/accounting',
 ];
 const RESTYLED_FILES = [
   'app/[orgSlug]/admin/org/page.tsx',

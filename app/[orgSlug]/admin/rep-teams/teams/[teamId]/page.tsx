@@ -5,6 +5,9 @@ import { Users, X, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useAdminKit, useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../rep-teams.module.css';
 import type { RepTeam, RepProgramYear } from '@/lib/types';
 
@@ -35,6 +38,10 @@ export default function TeamOverviewPage({ params: paramsPromise }: { params: Pr
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kit = useAdminKit();
+  const kx = useKitStyle();
+  const asterisk = useKitAsterisk();
 
   const [team, setTeam] = useState<RepTeam | null>(null);
   const [programYears, setProgramYears] = useState<ProgramYearWithCounts[]>([]);
@@ -111,8 +118,32 @@ export default function TeamOverviewPage({ params: paramsPromise }: { params: Pr
     return <p className={styles.muted}>Team not found.</p>;
   }
 
+  // The header's action — one element both headers render, so the kit header never forks it.
+  const headerActions = canWrite ? (
+          <button type="button" className="btn btn-primary" onClick={() => { setYearForm(BLANK_YEAR); setAddYearOpen(true); }}>
+            + Add Program Year
+          </button>
+  ) : null;
+
+  // Row-invariant styles, computed once per render rather than once per row.
+  const yearMeta = kx({ fontSize: '0.78rem', color: 'var(--white-30)' }, KIT_INK.tertiary);
+
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
+          breadcrumb's "Rep Teams" is the eyebrow (still a link); the subtitle's identity — the team's
+          colour, sport and division — becomes the chips beside its name, and its description moves to
+          the top of the body (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title={team.name}
+        titleChips={<>
+          {team.color && <span className={styles.colorSwatch} style={{ background: team.color }} aria-hidden />}
+          {team.sport && <span className={`${styles.badge} ${styles.badgeGroup}`}>{team.sport}</span>}
+          {team.division && <span className={`${styles.badge} ${styles.badgeDivision}`}>{team.division}</span>}
+        </>}
+        actions={headerActions}
+        legacy={<>
       {/* Breadcrumb */}
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
@@ -132,19 +163,18 @@ export default function TeamOverviewPage({ params: paramsPromise }: { params: Pr
             </p>
           </div>
         </div>
-        {canWrite && (
-          <button type="button" className="btn btn-primary" onClick={() => { setYearForm(BLANK_YEAR); setAddYearOpen(true); }}>
-            + Add Program Year
-          </button>
-        )}
+        {headerActions}
       </div>
+        </>}
+      />
+      {kit && team.description && <p className={styles.kitLede}>{team.description}</p>}
 
       {/* Program Years */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
         <p className={styles.sectionTitle} style={{ margin: 0 }}>Program Years</p>
         <Link
           href={`${base}/rep-teams/teams/${team.id}/history`}
-          style={{ fontSize: '0.78rem', color: 'var(--white-40)', textDecoration: 'none' }}
+          style={kx({ fontSize: '0.78rem', color: 'var(--white-40)', textDecoration: 'none' }, KIT_INK.accent)}
         >
           View history →
         </Link>
@@ -175,7 +205,7 @@ export default function TeamOverviewPage({ params: paramsPromise }: { params: Pr
                     {py.tryoutOpen && (
                       <span className={`${styles.badge} ${styles.badgeActive}`}>Tryouts Open</span>
                     )}
-                    <span style={{ fontSize: '0.78rem', color: 'var(--white-30)' }}>
+                    <span style={yearMeta}>
                       {py.rosterCount} players · {py.coachCount} coaches
                     </span>
                   </div>
@@ -207,14 +237,14 @@ export default function TeamOverviewPage({ params: paramsPromise }: { params: Pr
 
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="py-name">Label <span style={{ color: '#f87171' }}>*</span></label>
+                <label className={styles.label} htmlFor="py-name">Label <span style={asterisk}>*</span></label>
                 <input id="py-name" className={styles.input} type="text" value={yearForm.name} autoFocus
                   onChange={e => setYearForm(f => ({ ...f, name: e.target.value }))}
                   placeholder="e.g. 2025 Season" maxLength={100} />
               </div>
 
               <div className={styles.field}>
-                <label className={styles.label} htmlFor="py-year">Calendar Year <span style={{ color: '#f87171' }}>*</span></label>
+                <label className={styles.label} htmlFor="py-year">Calendar Year <span style={asterisk}>*</span></label>
                 <input id="py-year" className={styles.input} type="number" value={yearForm.year} min={2000} max={2100}
                   onChange={e => setYearForm(f => ({ ...f, year: e.target.value }))} />
               </div>

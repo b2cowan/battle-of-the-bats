@@ -4,7 +4,9 @@ import Link from 'next/link';
 import dynamic from 'next/dynamic';
 import { Users, UserCog, X, Archive, Link2, DollarSign, ArrowLeftRight, Pencil, Trash2, ChevronDown, ChevronUp, Tag } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import { useAdminKit, useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { KIT_INK, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import type { TeamCapRefusal } from '@/components/admin/kit/club/TeamCapDialog';
 import { hasCapability } from '@/lib/roles';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -84,6 +86,9 @@ export default function RepTeamsPage() {
   const [feedbackType, setFeedbackType] = useState<'success' | 'danger'>('success');
   const [feedbackMsg, setFeedbackMsg] = useState('');
   const kit = useAdminKit();
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
+  const asterisk = useKitAsterisk();
   const [capRefusal, setCapRefusal] = useState<TeamCapRefusal | null>(null);
 
   function showFeedback(type: 'success' | 'danger', msg: string) {
@@ -290,8 +295,46 @@ export default function RepTeamsPage() {
     { connected: 0, awaiting: 0, teams: 0 },
   );
 
+  // The header's actions — one fragment both headers render, so the kit header never forks them.
+  const headerActions = canWrite ? (
+    <>
+            <Link
+              href={`${base}/rep-teams/rename-slugs`}
+              className="btn btn-secondary"
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
+            >
+              <Link2 size={14} /> Rename Team URLs
+            </Link>
+            <button type="button" className="btn btn-primary" onClick={openCreate}>
+              + Add Team
+            </button>
+    </>
+  ) : null;
+  // The team count the subtitle carried (F3) — beside the list it counts, on the kit only. A club
+  // with no team cap was told "all teams", which describes the list rather than stating a fact.
+  const teamCount = currentOrg && currentOrg.teamLimit < 9999
+    ? `${summaries.filter(s => !s.team.isArchived).length} of ${currentOrg.teamLimit} teams`
+    : null;
+  // The five doors below the header are one style, each wearing the kit's door tile when on.
+  const quickLink = kx({
+    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+    background: 'var(--white-5)',
+    border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
+    borderRadius: '2px', padding: '0.6rem 1rem',
+    color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
+    textDecoration: 'none',
+  }, KIT_SURFACE.door);
+
   return (
     <div className={styles.page}>
+      {/* Header — today's as `legacy` while the switch is off. On the kit the organization's name is the
+          eyebrow; the subtitle's two live facts move to the body (F3): the team count beside the Teams
+          heading, and the connected-families line under it. */}
+      <AdminPageHeader
+        eyebrow={currentOrg?.name}
+        title="Rep Teams"
+        actions={headerActions}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}><Users size={20} /></div>
@@ -314,87 +357,45 @@ export default function RepTeamsPage() {
         </div>
         {canWrite && (
           <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-            <Link
-              href={`${base}/rep-teams/rename-slugs`}
-              className="btn btn-secondary"
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}
-            >
-              <Link2 size={14} /> Rename Team URLs
-            </Link>
-            <button type="button" className="btn btn-primary" onClick={openCreate}>
-              + Add Team
-            </button>
+            {headerActions}
           </div>
         )}
       </div>
+        }
+      />
 
       {/* Quick-access nav */}
       <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap', marginBottom: '2rem' }}>
         <Link
           href={`${base}/rep-teams/allocations`}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'var(--white-5)',
-            border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
-            borderRadius: '2px', padding: '0.6rem 1rem',
-            color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
-            textDecoration: 'none',
-          }}
+          style={quickLink}
         >
           <DollarSign size={15} style={{ color: 'var(--logic-lime,var(--logic-lime))' }} />
           Cost Allocations
         </Link>
         <Link
           href={`${base}/rep-teams/documents`}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'var(--white-5)',
-            border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
-            borderRadius: '2px', padding: '0.6rem 1rem',
-            color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
-            textDecoration: 'none',
-          }}
+          style={quickLink}
         >
           Document Templates
         </Link>
         <Link
           href={`${base}/rep-teams/payment-requests`}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'var(--white-5)',
-            border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
-            borderRadius: '2px', padding: '0.6rem 1rem',
-            color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
-            textDecoration: 'none',
-          }}
+          style={quickLink}
         >
-          <ArrowLeftRight size={15} style={{ color: '#facc15' }} />
+          <ArrowLeftRight size={15} style={kx({ color: '#facc15' }, { color: 'var(--warning-light)' })} />
           Payment Requests
         </Link>
         <Link
           href={`${base}/rep-teams/assistant-coaches`}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'var(--white-5)',
-            border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
-            borderRadius: '2px', padding: '0.6rem 1rem',
-            color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
-            textDecoration: 'none',
-          }}
+          style={quickLink}
         >
           <UserCog size={15} style={{ color: 'var(--logic-lime)' }} />
           Assistant Coaches
         </Link>
         <Link
           href={`${base}/rep-teams/shared-library`}
-          style={{
-            display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-            background: 'var(--white-5)',
-            border: '1px solid rgba(var(--blueprint-blue-rgb),0.2)',
-            borderRadius: '2px', padding: '0.6rem 1rem',
-            color: 'var(--white-70)', fontSize: '0.88rem', fontWeight: 600,
-            textDecoration: 'none',
-          }}
+          style={quickLink}
         >
           <Tag size={15} style={{ color: 'var(--logic-lime)' }} />
           Shared Library
@@ -403,13 +404,13 @@ export default function RepTeamsPage() {
 
       {/* Groups management (owners/admins only) */}
       {canWrite && (
-        <div style={{
+        <div style={kx({
           background: 'var(--white-03)',
           border: '1px solid var(--white-8)',
           borderRadius: '2px',
           marginBottom: '1.5rem',
           overflow: 'hidden',
-        }}>
+        }, KIT_SURFACE.card)}>
           <button
             type="button"
             onClick={() => setGroupsExpanded(e => !e)}
@@ -419,14 +420,14 @@ export default function RepTeamsPage() {
               color: 'var(--white-70)', fontSize: '0.85rem', fontWeight: 600,
             }}
           >
-            <span>Team Groups {groups.length > 0 && <span style={{ color: 'var(--white-35)', fontWeight: 400 }}>({groups.length})</span>}</span>
+            <span>Team Groups {groups.length > 0 && <span style={kx({ color: 'var(--white-35)', fontWeight: 400 }, KIT_INK.tertiary)}>({groups.length})</span>}</span>
             {groupsExpanded ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
           </button>
 
           {groupsExpanded && (
             <div style={{ padding: '0 1rem 1rem' }}>
               {groups.length === 0 && (
-                <p style={{ fontSize: '0.82rem', color: 'var(--white-35)', margin: '0 0 0.75rem' }}>
+                <p style={kx({ fontSize: '0.82rem', color: 'var(--white-35)', margin: '0 0 0.75rem' }, KIT_INK.tertiary)}>
                   No groups yet. Create groups like "AA", "A", or "Select" to classify and filter your teams.
                 </p>
               )}
@@ -473,7 +474,7 @@ export default function RepTeamsPage() {
                         </button>
                         <button
                           className="btn btn-ghost"
-                          style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', opacity: 0.5, color: '#f87171' }}
+                          style={{ fontSize: '0.75rem', padding: '0.25rem 0.5rem', opacity: 0.5, color: 'var(--danger-light)' }}
                           disabled={deletingGroupId === g.id}
                           onClick={() => handleDeleteGroup(g.id, g.name)}
                           title="Delete group"
@@ -512,6 +513,7 @@ export default function RepTeamsPage() {
       {/* Teams header + group filter */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem', flexWrap: 'wrap' }}>
         <p className={styles.sectionTitle} style={{ margin: 0 }}>Teams</p>
+        {kit && teamCount && <span className={styles.kitCount}>{teamCount}</span>}
         {groups.length > 0 && (
           <select
             className={styles.select}
@@ -527,6 +529,14 @@ export default function RepTeamsPage() {
           </select>
         )}
       </div>
+      {/* The connected-families line the subtitle carried (F3), word for word, under the list it sums. */}
+      {kit && familyTotals.connected > 0 && (
+        <p className={styles.kitLede}>
+          {familyTotals.connected} connected famil{familyTotals.connected === 1 ? 'y' : 'ies'} across{' '}
+          {familyTotals.teams} team{familyTotals.teams === 1 ? '' : 's'}
+          {familyTotals.awaiting > 0 && ` · ${familyTotals.awaiting} waiting on a coach`}
+        </p>
+      )}
 
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
@@ -582,13 +592,13 @@ export default function RepTeamsPage() {
 
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="rt-name">Team Name <span style={{ color: '#f87171' }}>*</span></label>
+                <label className={styles.label} htmlFor="rt-name">Team Name <span style={asterisk}>*</span></label>
                 <input id="rt-name" className={styles.input} type="text" value={form.name}
                   onChange={e => handleNameChange(e.target.value)} placeholder="e.g. U13A" maxLength={100} autoFocus />
               </div>
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="rt-slug">Slug <span style={{ color: '#f87171' }}>*</span></label>
+                <label className={styles.label} htmlFor="rt-slug">Slug <span style={asterisk}>*</span></label>
                 <input id="rt-slug" className={styles.input} type="text" value={form.slug}
                   onChange={e => handleSlugChange(e.target.value)} placeholder="e.g. u13a" />
                 <p className={styles.hint}>Used in public URLs. Lowercase letters, numbers, and hyphens only.</p>
@@ -662,7 +672,7 @@ export default function RepTeamsPage() {
             <p className={styles.confirmMsg} style={{ marginTop: '-0.5rem' }}>
               <strong style={{ color: 'var(--white-70)' }}>Tip:</strong> If you want to reuse
               this team&apos;s URL slug for an incoming cohort, use{' '}
-              <Link href={`${base}/rep-teams/rename-slugs`} style={{ color: 'var(--blueprint-blue)' }}>
+              <Link href={`${base}/rep-teams/rename-slugs`} style={kx({ color: 'var(--blueprint-blue)' }, KIT_INK.accent)}>
                 Rename Team URLs
               </Link>{' '}
               first to give this team a permanent cohort-based slug (e.g. <code style={{ fontSize: '0.8em', opacity: 0.7 }}>2025-u19-grads</code>).

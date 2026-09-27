@@ -13,6 +13,9 @@ import {
 import { formatStoredDate, tournamentToday } from '@/lib/timezone';
 import ExportMenu from '@/components/admin/ExportMenu';
 import FeedbackModal from '@/components/FeedbackModal';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from './bva.module.css';
 
 // ── Export definition ─────────────────────────────────────────────────────────
@@ -73,6 +76,8 @@ export default function OrgBudgetVsActualPage() {
   // A team card opens Rep Teams — only for someone who can open it. A treasurer (Ask 1: no Rep
   // Teams door) sees the same card as a plain panel instead of a link they'd be bounced from.
   const canOpenRepTeams = canOpen('module_rep_teams');
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const [year, setYear]     = useState(new Date().getFullYear());
   const [data, setData]     = useState<BVAData | null>(null);
@@ -298,7 +303,7 @@ export default function OrgBudgetVsActualPage() {
 
           <td className={`${styles.td} ${styles.tdRight}`} style={{ width: '13%' }}>
             {line.collected > 0 ? (
-              <span style={{ color: '#4ade80' }}>{fmt(line.collected)}</span>
+              <span style={{ color: 'var(--success-light)' }}>{fmt(line.collected)}</span>
             ) : (
               <span className={styles.varNeutral}>—</span>
             )}
@@ -388,8 +393,35 @@ export default function OrgBudgetVsActualPage() {
   const s = data?.summary;
   const noData = !fetching && data && data.categories.length === 0 && data.uncategorized.length === 0;
 
+  // The header's actions — one fragment both headers render, so the kit header never forks them.
+  const headerActions = (
+    <>
+          <ExportMenu
+            formats={['xlsx', 'csv', 'pdf']}
+            onExportXLSX={handleExportXLSX}
+            onExportCSV={handleExportCSV}
+            onExportPDF={handleExportPDF}
+            planId={currentOrg?.planId}
+            pdfFeatureKey="pdf_exports"
+            disabled={!data || (data.categories.length === 0 && data.uncategorized.length === 0)}
+          />
+          <Link href={`${base}/accounting/budget`} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
+            Edit Budget →
+          </Link>
+    </>
+  );
+
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
+          breadcrumb's "Accounting" is the eyebrow (still a link) beside the organization's name; the
+          subtitle's "{year} season" is not re-homed because the season picker directly below says it
+          (F3). The title keeps the report's one name, "Budget vs. Actual" — the rail's and the PDF's. */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/accounting`, label: 'Accounting' }, { label: currentOrg?.name ?? '' }]}
+        title="Budget vs. Actual"
+        actions={headerActions}
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/accounting`}>Accounting</Link>
         <span>/</span>
@@ -405,20 +437,11 @@ export default function OrgBudgetVsActualPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-          <ExportMenu
-            formats={['xlsx', 'csv', 'pdf']}
-            onExportXLSX={handleExportXLSX}
-            onExportCSV={handleExportCSV}
-            onExportPDF={handleExportPDF}
-            planId={currentOrg?.planId}
-            pdfFeatureKey="pdf_exports"
-            disabled={!data || (data.categories.length === 0 && data.uncategorized.length === 0)}
-          />
-          <Link href={`${base}/accounting/budget`} className="btn btn-secondary" style={{ fontSize: '0.82rem' }}>
-            Edit Budget →
-          </Link>
+          {headerActions}
         </div>
       </div>
+        </>}
+      />
 
 
       {/* Year selector */}
@@ -485,7 +508,7 @@ export default function OrgBudgetVsActualPage() {
 
           {noData ? (
             <div className={styles.emptySection}>
-              No budget lines for {year}. <Link href={`${base}/accounting/budget`} style={{ color: 'var(--white-60)' }}>Add lines in the Budget Planner →</Link>
+              No budget lines for {year}. <Link href={`${base}/accounting/budget`} style={kx({ color: 'var(--white-60)' }, KIT_INK.accent)}>Add lines in the Budget Planner →</Link>
             </div>
           ) : (
             <>
@@ -534,7 +557,7 @@ export default function OrgBudgetVsActualPage() {
                 Posted expense entries across all org ledgers for {year}. Per-line mapping to budget items arrives in a future update.
               </p>
               {data.orgActuals.entries.length === 0 ? (
-                <p style={{ padding: '0.75rem 1rem', fontSize: '0.82rem', color: 'var(--white-35)' }}>
+                <p style={kx({ padding: '0.75rem 1rem', fontSize: '0.82rem', color: 'var(--white-35)' }, KIT_INK.tertiary)}>
                   No posted expense entries for {year}.
                 </p>
               ) : (
@@ -559,7 +582,7 @@ export default function OrgBudgetVsActualPage() {
                             <td className={`${styles.actualsTd} ${styles.actualsDate}`} style={{ width: '20%' }}>
                               {e.entryDate}
                             </td>
-                            <td className={`${styles.actualsTd} ${styles.actualsTdRight}`} style={{ width: '20%', color: '#f87171' }}>
+                            <td className={`${styles.actualsTd} ${styles.actualsTdRight}`} style={{ width: '20%', color: 'var(--danger-light)' }}>
                               {fmt(e.amount)}
                             </td>
                           </tr>
@@ -624,7 +647,7 @@ export default function OrgBudgetVsActualPage() {
                         </div>
                         <div>
                           <div className={styles.teamStatLabel}>Overdue</div>
-                          <div className={styles.teamStatValue} style={{ color: t.overdueCount > 0 ? '#f87171' : 'var(--white-80)' }}>
+                          <div className={styles.teamStatValue} style={{ color: t.overdueCount > 0 ? 'var(--danger-light)' : 'var(--white-80)' }}>
                             {t.overdueCount > 0 ? (
                               <span style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
                                 <AlertTriangle size={13} /> {t.overdueCount}

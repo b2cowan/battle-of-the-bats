@@ -1246,7 +1246,17 @@ export const SCREENS = [
   { id: 'admin-org-tournaments',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/tournaments` },
 
   // ── Rep Teams (15U AAA: a live 2026 season and a finished 2025 one) ──
-  { id: 'admin-rep-teams',             area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams` },
+  // The hub's Upcoming Bills panel counts days to each due date on the SERVER's real clock, which the
+  // identity check's pinned page clock cannot reach — found by the slice 3 capture (2026-09-27): a
+  // "before" at 01:22 UTC and an "after" past local midnight read "56d overdue" then "57d", styling
+  // identical. The rows, lane counts and overdue pill are masked; the panel's frame stays checked.
+  { id: 'admin-rep-teams',             area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams`,
+    identityMask: [
+      '[class*="UpcomingPayablesPanel-module"][class*="__laneBody"]',
+      '[class*="UpcomingPayablesPanel-module"][class*="__laneCount"]',
+      '[class*="UpcomingPayablesPanel-module"][class*="__overduePill"]',
+      '[class*="UpcomingPayablesPanel-module"][class*="__tabOverdueDot"]',
+    ] },
   { id: 'admin-rep-allocations',       area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/allocations` },
   { id: 'admin-rep-allocation',        area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/allocations/${c.clubAllocationId}` },
   { id: 'admin-rep-allocation-new',    area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/allocations/new` },

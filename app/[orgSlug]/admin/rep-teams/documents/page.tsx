@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { FileText, Upload, Download, Trash2, Eye, EyeOff, X } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_SURFACE } from '@/components/admin/kit/kit-inline';
 import styles from '../rep-teams.module.css';
 import type { RepDocumentType } from '@/lib/types';
 
@@ -31,6 +34,8 @@ export default function AdminDocumentsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const canWrite = userRole === 'owner' || userRole === 'admin';
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -223,7 +228,7 @@ export default function AdminDocumentsPage() {
                       <button
                         type="button"
                         className="btn btn-ghost"
-                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', color: '#f87171', opacity: deletingId === t.id ? 0.5 : 1 }}
+                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', color: 'var(--danger-light)', opacity: deletingId === t.id ? 0.5 : 1 }}
                         disabled={deletingId === t.id}
                         onClick={() => setConfirmDelete(t)}
                         title="Delete"
@@ -241,9 +246,27 @@ export default function AdminDocumentsPage() {
     );
   }
 
+  // The header's action — one element both headers render, so the kit header never forks it.
+  const headerActions = canWrite ? (
+          <button
+            type="button"
+            className="btn btn-primary"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem' }}
+            onClick={() => { setUploadOpen(true); setUploadError(''); }}
+          >
+            <Upload size={14} /> Upload Template
+          </button>
+  ) : null;
+
   return (
     <div className={styles.page}>
-      {/* Header */}
+      {/* Header — today's as `legacy` while the switch is off. On the kit the subtitle's breadcrumb is the
+          eyebrow ("Rep Teams", still a link), and its "Documents" was the page's own name (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: currentOrg ? `/${currentOrg.slug}/admin/rep-teams` : undefined, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title="Document templates"
+        actions={headerActions}
+        legacy={
       <div className={styles.pageHeader}>
         <div className={styles.pageHeaderLeft}>
           <div className={styles.headerIcon}>
@@ -259,29 +282,22 @@ export default function AdminDocumentsPage() {
             </p>
           </div>
         </div>
-        {canWrite && (
-          <button
-            type="button"
-            className="btn btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem' }}
-            onClick={() => { setUploadOpen(true); setUploadError(''); }}
-          >
-            <Upload size={14} /> Upload Template
-          </button>
-        )}
+        {headerActions}
       </div>
+        }
+      />
 
       {/* Feedback banner */}
       {feedbackMsg && (
-        <div style={{
+        <div style={kx({
           padding: '0.75rem 1rem',
           borderRadius: '2px',
           marginBottom: '1rem',
           background: feedbackType === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)',
           border: `1px solid ${feedbackType === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`,
-          color: feedbackType === 'success' ? '#4ade80' : '#f87171',
+          color: feedbackType === 'success' ? 'var(--success-light)' : 'var(--danger-light)',
           fontSize: '0.88rem',
-        }}>
+        }, feedbackType === 'success' ? KIT_SURFACE.good : { ...KIT_SURFACE.alert, color: 'var(--home-live)' })}>
           {feedbackMsg}
         </div>
       )}
@@ -369,7 +385,7 @@ export default function AdminDocumentsPage() {
               </div>
 
               {uploadError && (
-                <p style={{ color: '#f87171', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
+                <p style={{ color: 'var(--danger-light)', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
               )}
             </div>
 

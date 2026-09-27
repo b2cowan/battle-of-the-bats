@@ -1493,7 +1493,3 @@
   border-radius: 8px;
 }
 :global([data-admin-kit]) .practiceCard:hover { border-color: var(--home-line-strong); border-left-color: var(--evt-practice); background: var(--card-bg); }
-
-/* The eyebrow that is still a link (the breadcrumb's "House league", re-homed by F3). */
-:global([data-admin-kit]) .kitCrumb { color: inherit; text-decoration: none; }
-:global([data-admin-kit]) .kitCrumb:hover { color: var(--home-olive); text-decoration: underline; text-underline-offset: 3px; }

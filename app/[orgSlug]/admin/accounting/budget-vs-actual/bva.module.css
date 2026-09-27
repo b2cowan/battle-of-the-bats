@@ -239,3 +239,142 @@
 }
 
 .errorText { color: var(--danger-light); font-size: 0.82rem; margin: 0 0 1rem; }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 3 — only with the switch on) ═══════════════════════
+   Budget vs. Actual on the coaches portal's kit, restyled in place (F4 — the same columns, panels and
+   actions; the redesign stays with Club Stage 3). Scoped under `[data-admin-kit]`, so the legacy
+   rules above render untouched until the release slice deletes them. Recipes by value: the kit card,
+   eyebrow and chips, the table standard's ground, the portal's field.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+
+:global([data-admin-kit]) .muted,
+:global([data-admin-kit]) .accessDenied,
+:global([data-admin-kit]) .headroomNote,
+:global([data-admin-kit]) .actualsPanelNote,
+:global([data-admin-kit]) .actualsDate,
+:global([data-admin-kit]) .actualsLedger { color: var(--text-tertiary); }
+:global([data-admin-kit]) .accessDenied h2 { color: var(--text-secondary); }
+:global([data-admin-kit]) .varNeutral { color: var(--text-tertiary); }
+
+/* ── The season picker ── */
+:global([data-admin-kit]) .yearRow { color: var(--text-secondary); }
+:global([data-admin-kit]) .yearSelect {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .yearSelect:focus { outline: none; border-color: var(--home-olive); }
+:global([data-admin-kit]) .yearSelect option { background: var(--home-card); color: var(--text-primary); }
+
+/* ── Cards: the headroom headline, the summary, the org actuals, each team → the kit card ── */
+:global([data-admin-kit]) .headroom,
+:global([data-admin-kit]) .summaryCard,
+:global([data-admin-kit]) .actualsPanel,
+:global([data-admin-kit]) .teamCard {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .teamCard:hover { background: var(--card-bg); border-color: var(--home-line-strong); }
+/* A team behind or overdue keeps its edge in its own hue — the card says it, not only the chip. */
+:global([data-admin-kit]) .teamCardOverdue { border-color: rgba(var(--danger-rgb), 0.35); background: rgba(var(--danger-rgb), 0.04); }
+:global([data-admin-kit]) .teamCardBehind { border-color: rgba(var(--warning-rgb), 0.35); background: rgba(var(--warning-rgb), 0.04); }
+
+/* Labels over a figure, and category heads → the kit eyebrow; figures in even-width digits. */
+:global([data-admin-kit]) .headroomLabel,
+:global([data-admin-kit]) .summaryLabel,
+:global([data-admin-kit]) .categoryName,
+:global([data-admin-kit]) .teamStatLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .summaryValue,
+:global([data-admin-kit]) .teamStatValue { color: var(--text-primary); }
+:global([data-admin-kit]) .summaryMuted { color: var(--text-secondary); }
+:global([data-admin-kit]) .headroomValue { font-family: var(--font-display); }
+:global([data-admin-kit]) .sectionTitle {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .categoryHeader { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .categoryMeta { color: var(--text-secondary); }
+:global([data-admin-kit]) .categoryMetaItem span:first-child { color: var(--text-tertiary); }
+:global([data-admin-kit]) .teamCardName,
+:global([data-admin-kit]) .lineDesc { color: var(--text-primary); }
+
+/* ── Tables → the table standard's ground ── */
+:global([data-admin-kit]) .th,
+:global([data-admin-kit]) .periodTh {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+  border-bottom-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .td { color: var(--text-secondary); }
+:global([data-admin-kit]) .tr,
+:global([data-admin-kit]) .actualsTableTr { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .tr:hover,
+:global([data-admin-kit]) .actualsTableTr:hover { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .periodsRow { background: var(--home-olive-soft); }
+:global([data-admin-kit]) .periodTd,
+:global([data-admin-kit]) .actualsTd { color: var(--text-secondary); }
+:global([data-admin-kit]) .actualsPanelHeader { background: var(--card-bg); border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .actualsPanelTitle { color: var(--text-primary); }
+:global([data-admin-kit]) .periodToggleBtn,
+:global([data-admin-kit]) .actualsToggleBtn { color: var(--text-tertiary); }
+:global([data-admin-kit]) .periodToggleBtn:hover,
+:global([data-admin-kit]) .actualsToggleBtn:hover { color: var(--text-primary); }
+
+/* ── Chips → the kit's chips ── */
+:global([data-admin-kit]) .badgeAllocated,
+:global([data-admin-kit]) .badgeUnallocated,
+:global([data-admin-kit]) .statusBadge {
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 999px;
+  padding: 0.14rem 0.5rem;
+  border: 1px solid transparent;
+}
+:global([data-admin-kit]) .badgeAllocated,
+:global([data-admin-kit]) .statusOnTrack {
+  color: var(--badge-success-ink);
+  background: rgba(var(--success-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.28);
+}
+:global([data-admin-kit]) .badgeUnallocated,
+:global([data-admin-kit]) .statusBehind {
+  color: var(--badge-warning-ink);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+:global([data-admin-kit]) .statusOverdue {
+  color: var(--badge-danger-ink);
+  background: rgba(var(--danger-rgb), 0.08);
+  border-color: rgba(var(--danger-rgb), 0.3);
+}
+
+/* ── The collection bar ── */
+:global([data-admin-kit]) .progressBar { background: var(--home-line); border-radius: 6px; }
+:global([data-admin-kit]) .progressFill { border-radius: 6px; }
+
+/* ── Empty sections → the kit's dashed empty card ── */
+:global([data-admin-kit]) .emptySection {
+  background: var(--card-bg);
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 8px;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .emptySection a { color: var(--home-olive); }

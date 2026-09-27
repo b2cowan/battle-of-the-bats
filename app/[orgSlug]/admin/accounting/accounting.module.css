@@ -515,3 +515,202 @@
   flex-wrap: wrap;
 }
 .addEntryBtns { display: flex; gap: 0.5rem; }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 3 — only with the switch on) ═══════════════════════
+   Accounting on the coaches portal's kit: the same screens, words, columns and actions, in both
+   themes (F4: the ledgers are RESTYLED in place as ADC specimen 5 draws them — the redesign stays
+   with Club Stage 3's own mockups). Every rule is scoped under `[data-admin-kit]` (only the admin
+   shell carries it, and only while the dev switch is on), so the legacy rules above render untouched
+   until the release slice deletes them. The recipes are the portal's own, by value — the same ones
+   slice 2 set House league on: the kit card, its eyebrow and chips, the table standard's ground, the
+   portal's field, tab bar and window. Figures leave the console face (F2); monospace stays on
+   eyebrows and chips.
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) fails on a literal colour here. */
+
+/* ── Page frame ── */
+:global([data-admin-kit]) .muted,
+:global([data-admin-kit]) .accessDenied,
+:global([data-admin-kit]) .emptyState,
+:global([data-admin-kit]) .hint { color: var(--text-tertiary); }
+:global([data-admin-kit]) .accessDenied h2 { color: var(--text-secondary); }
+
+/* Labels over a figure, and section heads → the kit eyebrow. */
+:global([data-admin-kit]) .sectionTitle,
+:global([data-admin-kit]) .totalLabel,
+:global([data-admin-kit]) .balanceLabel,
+:global([data-admin-kit]) .balanceStatLabel,
+:global([data-admin-kit]) .dateFilterLabel {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+
+/* ── Figures: even-width digits (the portal's money convention). The signed inks (`.totalValuePos`,
+   `.balancePos`, …) read `--success-light` / `--danger-light`, which both themes already tune — only
+   the unsigned figure needs the kit's ink. ── */
+:global([data-admin-kit]) .totalValue,
+:global([data-admin-kit]) .balanceAmount,
+:global([data-admin-kit]) .balanceStatValue { font-variant-numeric: tabular-nums; }
+:global([data-admin-kit]) .totalValue:not(.totalValuePos):not(.totalValueNeg) { color: var(--text-primary); }
+:global([data-admin-kit]) .balanceNeutral { color: var(--text-secondary); }
+
+/* ── Cards: the totals strip, each ledger, the balance summary, the period filter → the kit card ── */
+:global([data-admin-kit]) .totalsCard,
+:global([data-admin-kit]) .ledgerCard,
+:global([data-admin-kit]) .balanceSummary,
+:global([data-admin-kit]) .dateFilterRow,
+:global([data-admin-kit]) .pendingLedgerRow {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .ledgerName,
+:global([data-admin-kit]) .pendingLedgerName { color: var(--text-primary); }
+:global([data-admin-kit]) .pendingLedgerRow { color: var(--text-secondary); }
+:global([data-admin-kit]) .pendingRow { color: var(--text-tertiary); border-top-color: var(--home-line); }
+/* The ledger a tournament's sidebar linked to: the kit's olive selection, not a navy glow. */
+:global([data-admin-kit]) .ledgerCardHighlight {
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 2px var(--home-olive-soft);
+}
+:global([data-admin-kit]) .viewLink { color: var(--home-olive); }
+
+/* ── Fields → the portal's field ── */
+:global([data-admin-kit]) .label {
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+:global([data-admin-kit]) .input,
+:global([data-admin-kit]) .select,
+:global([data-admin-kit]) .dateInput {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--home-card);
+  border: 1px solid var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .input::placeholder { color: var(--text-tertiary); }
+:global([data-admin-kit]) .input:focus,
+:global([data-admin-kit]) .select:focus,
+:global([data-admin-kit]) .dateInput:focus { border-color: var(--home-olive); }
+:global([data-admin-kit]) .select option { background: var(--home-card); color: var(--text-primary); }
+
+/* ── Chips: ledger kind, entry type, entry status → the kit's chips. As ADC specimen 5 draws them: an
+   expense is the amber chip, a transfer the blue one, posted the green one, void the quiet one — the
+   old violet accent has no job left. ── */
+:global([data-admin-kit]) .typeBadge,
+:global([data-admin-kit]) .typeChip,
+:global([data-admin-kit]) .statusBadge {
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  border-radius: 999px;
+  padding: 0.14rem 0.5rem;
+  border: 1px solid transparent;
+}
+:global([data-admin-kit]) .typeIncome,
+:global([data-admin-kit]) .statusPosted {
+  color: var(--badge-success-ink);
+  background: rgba(var(--success-rgb), 0.08);
+  border-color: rgba(var(--success-rgb), 0.28);
+}
+:global([data-admin-kit]) .typeExpense,
+:global([data-admin-kit]) .statusPending {
+  color: var(--badge-warning-ink);
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: rgba(var(--warning-rgb), 0.3);
+}
+:global([data-admin-kit]) .typeTransfer,
+:global([data-admin-kit]) .typeBadgeOrg,
+:global([data-admin-kit]) .typeBadgeTournament {
+  /* The light blue as ink — the reason sits on `.badge-info`'s kit rule in app/globals.css. */
+  color: var(--info-light);
+  background: rgba(var(--info-rgb), 0.08);
+  border-color: rgba(var(--info-rgb), 0.3);
+}
+:global([data-admin-kit]) .statusVoid {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .linkedIndicator { color: var(--info-light); opacity: 1; }
+
+/* ── Tabs → the portal's tab bar (`CoachTabBar`): sentence-weight sans, olive when chosen ── */
+:global([data-admin-kit]) .tabRow { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .tab {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .tab:hover { color: var(--text-secondary); }
+:global([data-admin-kit]) .tabActive,
+:global([data-admin-kit]) .tabActive:hover { color: var(--home-olive); border-bottom-color: var(--home-olive); }
+
+/* ── The entry table → the table standard's ground: quiet body-face heads, hairline rows ── */
+:global([data-admin-kit]) .entryTable th {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+  border-bottom-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .entryTable td {
+  color: var(--text-secondary);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .entryTable tr:hover td { background: var(--home-olive-soft); }
+/* F4: an amount sits right, in even-width digits — its heading with it. */
+:global([data-admin-kit]) .num { text-align: right; font-variant-numeric: tabular-nums; }
+/* A void row reads as struck through as well as tagged (specimen 5), so its state is not carried by a
+   fade alone. The legacy rule meant to strike the description never matched — the cell names the
+   class as a plain string (`className="entryDesc"`), which a module rule cannot reach. It is reached
+   here, on the kit only: fixing the legacy class would change a switch-off pixel. */
+:global([data-admin-kit]) .voidRow td { opacity: 1; color: var(--text-tertiary); }
+:global([data-admin-kit]) .voidRow :global(.entryDesc),
+:global([data-admin-kit]) .voidRow .amountPos,
+:global([data-admin-kit]) .voidRow .amountNeg { color: var(--text-tertiary); text-decoration: line-through; }
+
+/* ── Row actions and the table's foot ── */
+:global([data-admin-kit]) .actionBtn {
+  color: var(--text-tertiary);
+  border-color: var(--home-line-strong);
+  border-radius: 6px;
+}
+:global([data-admin-kit]) .actionBtn:hover { color: var(--text-primary); border-color: var(--text-tertiary); }
+:global([data-admin-kit]) .actionBtnDanger:hover { color: var(--home-live); border-color: rgba(var(--danger-rgb), 0.4); }
+:global([data-admin-kit]) .loadMoreBtn {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  border-radius: 6px;
+}
+:global([data-admin-kit]) .loadMoreBtn:hover { color: var(--text-primary); background: var(--home-olive-soft); border-color: var(--home-line-strong); }
+
+/* ── Dialogs → the portal's window: its scrim, card, 12px corner, display-face title ── */
+:global([data-admin-kit]) .modalOverlay { background: var(--home-scrim); }
+:global([data-admin-kit]) .modal {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-lg);
+}
+:global([data-admin-kit]) .modalTitle {
+  font-family: var(--font-display);
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .modalCloseBtn { color: var(--text-tertiary); }
+:global([data-admin-kit]) .modalCloseBtn:hover { color: var(--text-primary); }
+:global([data-admin-kit]) .modalFooter { border-top-color: var(--home-line); }

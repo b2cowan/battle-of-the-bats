@@ -11,8 +11,7 @@ import { isFreeFloorLeague } from '@/lib/free-floor';
 import { fireLeagueEvent } from '@/lib/league-events-client';
 import HelpCallout from '@/components/help/HelpCallout';
 import HelpTooltip from '@/components/help/HelpTooltip';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_INK } from '@/components/admin/kit/kit-inline';
+import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
 import styles from '../../house-league.module.css';
 import type { LeagueSeason, LeagueSeasonStatus } from '@/lib/types';
 import type { LeagueCapKind } from '@/lib/free-floor';
@@ -125,6 +124,7 @@ export default function SeasonDetailPage() {
   const isAdmin = userRole === 'owner' || userRole === 'league_admin';
   // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
   const kx = useKitStyle();
+  const asterisk = useKitAsterisk();
 
   const [detail,    setDetail]    = useState<SeasonDetail | null>(null);
   const [fetching,  setFetching]  = useState(true);
@@ -724,7 +724,7 @@ export default function SeasonDetailPage() {
             </div>
 
             <div className={styles.field}>
-              <label className={styles.label} htmlFor="div-name">Division Name <span style={kx({ color: '#f87171' }, KIT_INK.asterisk)}>*</span></label>
+              <label className={styles.label} htmlFor="div-name">Division Name <span style={asterisk}>*</span></label>
               <input
                 id="div-name"
                 className={styles.input}

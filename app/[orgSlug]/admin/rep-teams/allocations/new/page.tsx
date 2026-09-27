@@ -6,6 +6,9 @@ import { DollarSign, Plus, Trash2, ChevronRight, ChevronLeft } from 'lucide-reac
 import HelpTooltip from '@/components/help/HelpTooltip';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
+import { KIT_INK, KIT_STEP } from '@/components/admin/kit/kit-inline';
 import styles from '../../rep-teams.module.css';
 
 interface ProgramYearOption { id: string; name: string; year: number; status: string; }
@@ -60,6 +63,9 @@ export default function NewAllocationPage() {
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const orgParam = currentOrg?.slug ? `&orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
+  const asterisk = useKitAsterisk();
 
   const [step, setStep] = useState(1);
   const [teams, setTeams] = useState<TeamOption[]>([]);
@@ -301,8 +307,23 @@ export default function NewAllocationPage() {
     }
   }
 
+  // The hand-set inks this page repeats, each wearing the kit's patch while the switch is on.
+  const dimInk = kx({ color: 'var(--white-40)' }, KIT_INK.tertiary);
+  const reviewHead = kx({ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }, KIT_INK.tertiary);
+
+  // Row-invariant styles, computed once per render rather than once per row.
+  const reviewNumber = kx({ color: 'var(--white-40)', padding: '0.2rem 0' }, KIT_INK.tertiary);
+
   return (
     <div className={styles.page} style={{ maxWidth: 720 }}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the way
+          up is Cost allocations and "Rep Teams" is the eyebrow (still a link); "Split a shared expense
+          across teams" describes the page and is not re-homed — the steps below are that job (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title="New cost allocation"
+        backTo={{ href: `${base}/rep-teams/allocations`, label: 'Cost allocations' }}
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
         <span>/</span>
@@ -320,21 +341,23 @@ export default function NewAllocationPage() {
           </div>
         </div>
       </div>
+        </>}
+      />
 
       {/* Step indicator */}
       <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '2rem', alignItems: 'center' }}>
         {[1, 2, 3].map(s => (
           <div key={s} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <div style={{
+            <div style={kx({
               width: 28, height: 28, borderRadius: '50%',
               background: step >= s ? 'var(--blueprint-blue)' : 'var(--white-8)',
               color: step >= s ? '#fff' : 'var(--white-30)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '0.8rem', fontWeight: 700, flexShrink: 0,
-            }}>
+            }, step >= s ? KIT_STEP.reached : KIT_STEP.ahead)}>
               {s}
             </div>
-            <span style={{ fontSize: '0.82rem', color: step === s ? 'var(--white-80)' : 'var(--white-30)' }}>
+            <span style={kx({ fontSize: '0.82rem', color: step === s ? 'var(--white-80)' : 'var(--white-30)' }, step === s ? KIT_STEP.current : KIT_STEP.other)}>
               {s === 1 ? 'Details' : s === 2 ? 'Team Splits' : 'Review'}
             </span>
             {s < 3 && <ChevronRight size={14} style={{ color: 'var(--white-20)' }} />}
@@ -348,7 +371,7 @@ export default function NewAllocationPage() {
           <div className={styles.formGrid} style={{ gridTemplateColumns: '1fr' }}>
             <div className={styles.field}>
               <label className={styles.label} htmlFor="alloc-desc">
-                Description <span style={{ color: '#f87171' }}>*</span>
+                Description <span style={asterisk}>*</span>
               </label>
               <input
                 id="alloc-desc"
@@ -364,7 +387,7 @@ export default function NewAllocationPage() {
 
             <div className={styles.field}>
               <label className={styles.label} htmlFor="alloc-total">
-                Total Amount ($) <span style={{ color: '#f87171' }}>*</span>
+                Total Amount ($) <span style={asterisk}>*</span>
               </label>
               <input
                 id="alloc-total"
@@ -417,9 +440,9 @@ export default function NewAllocationPage() {
         <div>
           <p className={styles.hint} style={{ marginBottom: '1.5rem', fontSize: '0.88rem' }}>
             Total: <strong style={{ color: 'var(--white-80)' }}>{fmt(total)}</strong>
-            {' '}— Allocated so far: <strong style={{ color: splitSum > total + 0.001 ? '#f87171' : '#4ade80' }}>{fmt(splitSum)}</strong>
+            {' '}— Allocated so far: <strong style={{ color: splitSum > total + 0.001 ? 'var(--danger-light)' : 'var(--success-light)' }}>{fmt(splitSum)}</strong>
             {total > splitSum + 0.001 && (
-              <span style={{ color: 'var(--white-40)' }}> (unallocated: {fmt(total - splitSum)})</span>
+              <span style={dimInk}> (unallocated: {fmt(total - splitSum)})</span>
             )}
           </p>
 
@@ -443,7 +466,7 @@ export default function NewAllocationPage() {
 
                 <div className={styles.formGrid}>
                   <div className={styles.field}>
-                    <label className={styles.label}>Team <span style={{ color: '#f87171' }}>*</span></label>
+                    <label className={styles.label}>Team <span style={asterisk}>*</span></label>
                     <select
                       className={styles.select}
                       value={split.teamId}
@@ -455,7 +478,7 @@ export default function NewAllocationPage() {
                   </div>
 
                   <div className={styles.field}>
-                    <label className={styles.label}>Program Year <span style={{ color: '#f87171' }}>*</span></label>
+                    <label className={styles.label}>Program Year <span style={asterisk}>*</span></label>
                     <select
                       className={styles.select}
                       value={split.programYearId}
@@ -501,7 +524,7 @@ export default function NewAllocationPage() {
 
                   <div className={styles.field}>
                     <label className={styles.label}>
-                      Split Amount ($) <span style={{ color: '#f87171' }}>*</span>
+                      Split Amount ($) <span style={asterisk}>*</span>
                       <HelpTooltip
                         title="Allocation amount"
                         body="This is the total cost the org is assigning to this team for the program year. The coach's accounting page will show this as their budget baseline."
@@ -533,7 +556,7 @@ export default function NewAllocationPage() {
 
                   {split.paymentSchedule === 'standard' && (
                     <div className={`${styles.field} ${styles.formGridFull}`}>
-                      <label className={styles.label}>Due Date <span style={{ color: '#f87171' }}>*</span></label>
+                      <label className={styles.label}>Due Date <span style={asterisk}>*</span></label>
                       <input
                         className={styles.input}
                         type="date"
@@ -634,15 +657,15 @@ export default function NewAllocationPage() {
           <div className={styles.detailSection} style={{ marginBottom: '1.5rem' }}>
             <p className={styles.detailSectionTitle}>Allocation Details</p>
             <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '0.4rem 1rem', fontSize: '0.9rem' }}>
-              <span style={{ color: 'var(--white-40)' }}>Description</span>
+              <span style={dimInk}>Description</span>
               <span style={{ color: 'var(--white-90)', fontWeight: 600 }}>{description}</span>
-              <span style={{ color: 'var(--white-40)' }}>Total amount</span>
+              <span style={dimInk}>Total amount</span>
               <span style={{ color: 'var(--white-90)' }}>{fmt(total)}</span>
-              <span style={{ color: 'var(--white-40)' }}>Allocated</span>
-              <span style={{ color: splitSum > total + 0.001 ? '#f87171' : '#4ade80' }}>{fmt(splitSum)}</span>
+              <span style={dimInk}>Allocated</span>
+              <span style={{ color: splitSum > total + 0.001 ? 'var(--danger-light)' : 'var(--success-light)' }}>{fmt(splitSum)}</span>
               {total > splitSum + 0.001 && (
                 <>
-                  <span style={{ color: 'var(--white-40)' }}>Org retains</span>
+                  <span style={dimInk}>Org retains</span>
                   <span style={{ color: 'var(--white-50)' }}>{fmt(total - splitSum)}</span>
                 </>
               )}
@@ -669,21 +692,21 @@ export default function NewAllocationPage() {
                   {' · '}
                   {split.paymentSchedule === 'standard' ? 'Lump sum' : `${split.installments.length} installments`}
                   {Math.abs(instSum - (parseFloat(split.amount) || 0)) > 0.01 && (
-                    <span style={{ color: '#f87171' }}> ⚠ installment total {fmt(instSum)} ≠ split amount</span>
+                    <span style={{ color: 'var(--danger-light)' }}> ⚠ installment total {fmt(instSum)} ≠ split amount</span>
                   )}
                 </div>
                 <table style={{ width: '100%', fontSize: '0.82rem', borderCollapse: 'collapse' }}>
                   <thead>
                     <tr>
-                      <th style={{ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }}>#</th>
-                      <th style={{ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }}>Amount</th>
-                      <th style={{ textAlign: 'left', color: 'var(--white-30)', paddingBottom: '0.3rem', fontWeight: 600 }}>Due Date</th>
+                      <th style={reviewHead}>#</th>
+                      <th style={reviewHead}>Amount</th>
+                      <th style={reviewHead}>Due Date</th>
                     </tr>
                   </thead>
                   <tbody>
                     {split.installments.map((inst, ii) => (
                       <tr key={ii}>
-                        <td style={{ color: 'var(--white-40)', padding: '0.2rem 0' }}>{inst.installmentNumber}</td>
+                        <td style={reviewNumber}>{inst.installmentNumber}</td>
                         <td style={{ color: 'var(--white-80)', padding: '0.2rem 0' }}>{fmt(parseFloat(inst.amount) || 0)}</td>
                         <td style={{ color: 'var(--white-60)', padding: '0.2rem 0' }}>{inst.dueDate || '—'}</td>
                       </tr>

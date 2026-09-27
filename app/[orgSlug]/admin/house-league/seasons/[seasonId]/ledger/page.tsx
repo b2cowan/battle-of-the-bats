@@ -97,7 +97,7 @@ export default function LedgerPage() {
       {/* Header — today's as `legacy` while the switch is off. On the kit the breadcrumb becomes the
           eyebrow (still a link to House league) and the way up to the season (F3). */}
       <AdminPageHeader
-        eyebrow={<Link href={`/${orgSlug}/admin/house-league`} className={styles.kitCrumb}>House league</Link>}
+        crumbs={[{ href: `/${orgSlug}/admin/house-league`, label: 'House league' }]}
         title="Ledger"
         backTo={season ? { href: `/${orgSlug}/admin/house-league/seasons/${seasonId}`, label: season.name } : undefined}
         legacy={

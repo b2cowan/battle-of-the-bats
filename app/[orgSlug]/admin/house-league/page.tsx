@@ -9,7 +9,7 @@ import { LeagueCapUpgradeModal } from '@/components/admin/LeagueCapUpgrade';
 import HelpCallout from '@/components/help/HelpCallout';
 import HelpTooltip from '@/components/help/HelpTooltip';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from './house-league.module.css';
 import type { LeagueSeason, LeagueSeasonSummary, LeagueSeasonStatus } from '@/lib/types';
@@ -102,8 +102,8 @@ export default function HouseLeaguePage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
   const isAdmin = userRole === 'owner' || userRole === 'league_admin';
-  // Admin Design Continuity slice 2: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
+  // Admin Design Continuity: the required-field asterisk wears the kit's ink while the switch is on.
+  const asterisk = useKitAsterisk();
 
   const [summaries, setSummaries]     = useState<LeagueSeasonSummary[]>([]);
   const [fetching,  setFetching]      = useState(true);
@@ -292,7 +292,7 @@ export default function HouseLeaguePage() {
 
             <div className={styles.formGrid}>
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="hl-name">Season Name <span style={kx({ color: '#f87171' }, KIT_INK.asterisk)}>*</span></label>
+                <label className={styles.label} htmlFor="hl-name">Season Name <span style={asterisk}>*</span></label>
                 <input
                   id="hl-name"
                   className={styles.input}
@@ -306,7 +306,7 @@ export default function HouseLeaguePage() {
               </div>
 
               <div className={`${styles.field} ${styles.formGridFull}`}>
-                <label className={styles.label} htmlFor="hl-slug">Slug <span style={kx({ color: '#f87171' }, KIT_INK.asterisk)}>*</span></label>
+                <label className={styles.label} htmlFor="hl-slug">Slug <span style={asterisk}>*</span></label>
                 <input
                   id="hl-slug"
                   className={styles.input}

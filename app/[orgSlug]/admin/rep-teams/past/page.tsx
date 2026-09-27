@@ -4,6 +4,9 @@ import Link from 'next/link';
 import { Archive, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../rep-teams.module.css';
 import type { RepPastProgramYear } from '@/lib/types';
 
@@ -21,6 +24,8 @@ export default function PastProgramYearsPage() {
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
   const base = `/${currentOrg?.slug ?? ''}/admin`;
+  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
+  const kx = useKitStyle();
 
   const [years, setYears] = useState<RepPastProgramYear[]>([]);
   const [fetching, setFetching] = useState(true);
@@ -57,8 +62,21 @@ export default function PastProgramYearsPage() {
 
   const grouped = groupByTeam(years);
 
+  // Row-invariant styles, computed once per render rather than once per row.
+  const divisionInk = kx({ fontSize: '0.75rem', color: 'var(--white-40)' }, KIT_INK.tertiary);
+  const historyLink = kx({ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--white-50)', textDecoration: 'none' }, KIT_INK.accent);
+  const seasonMeta = kx({ fontSize: '0.78rem', color: 'var(--white-35)' }, KIT_INK.tertiary);
+
   return (
     <div className={styles.page}>
+      {/* Header — today's breadcrumb and header as `legacy` while the switch is off. On the kit the
+          breadcrumb's "Rep Teams" is the eyebrow (still a link) beside the organization's name;
+          "completed and archived program years" describes the page and is not re-homed — each season's
+          chip says which it is (F3). */}
+      <AdminPageHeader
+        crumbs={[{ href: `${base}/rep-teams`, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+        title="Past seasons"
+        legacy={<>
       <div className={styles.breadcrumb}>
         <Link href={`${base}/rep-teams`}>Rep Teams</Link>
         <span><ChevronRight size={12} /></span>
@@ -74,8 +92,10 @@ export default function PastProgramYearsPage() {
           </div>
         </div>
       </div>
+        </>}
+      />
 
-      {error && <p style={{ color: '#f87171', marginBottom: '1rem' }}>{error}</p>}
+      {error && <p style={{ color: 'var(--danger-light)', marginBottom: '1rem' }}>{error}</p>}
 
       {fetching ? (
         <p className={styles.muted}>Loading…</p>
@@ -96,11 +116,11 @@ export default function PastProgramYearsPage() {
                   )}
                   <h2 style={{ fontSize: '1rem', fontWeight: 700, margin: 0 }}>{first.teamName}</h2>
                   {first.teamDivision && (
-                    <span style={{ fontSize: '0.75rem', color: 'var(--white-40)' }}>{first.teamDivision}</span>
+                    <span style={divisionInk}>{first.teamDivision}</span>
                   )}
                   <Link
                     href={`${base}/rep-teams/teams/${teamId}/history`}
-                    style={{ marginLeft: 'auto', fontSize: '0.78rem', color: 'var(--white-50)', textDecoration: 'none' }}
+                    style={historyLink}
                   >
                     Full history →
                   </Link>
@@ -114,7 +134,7 @@ export default function PastProgramYearsPage() {
                           <span className={`${styles.badge} ${y.status === 'archived' ? styles.badgeArchived : styles.badgeCompleted}`}>
                             {y.status === 'archived' ? 'Archived' : 'Completed'}
                           </span>
-                          <span style={{ fontSize: '0.78rem', color: 'var(--white-35)' }}>
+                          <span style={seasonMeta}>
                             {y.year} · {y.rosterCount} player{y.rosterCount !== 1 ? 's' : ''}
                           </span>
                         </div>
