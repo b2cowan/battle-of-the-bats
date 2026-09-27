@@ -13,7 +13,8 @@
 > tournament screens' shared parts) BUILT 2026-09-27** — results in §3a; /simplify + /review done; identity
 > 58/58 + both-theme sweep done; **COMMITTED `8e76362f` 2026-09-27**. **Slice 4b (operations on game day, with
 > the game list moved in from 4c) BUILT 2026-09-27** — results in §3a; identity 60/60 + both-theme sweep
-> done; /simplify + /review done (owner: "go ahead with simplify, review and commit"). 4c (the schedule) not started.
+> done; /simplify + /review done (owner: "go ahead with simplify, review and commit"); **COMMITTED `07808a02`
+> 2026-09-27**. 4c (the schedule) not started.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -173,7 +174,7 @@ foundation's release day.
 | 2 | Buttons, chips, F2 type · the rest of Hub/onboarding + Organization (not Stage 1's screens) · House league | **COMMITTED `ee175263` 2026-09-26** — results below; /simplify + /review done; walked at slice 6 |
 | 3 | Rep Teams · Accounting (F4 dense tables) | **BUILT 2026-09-27** — results below; /simplify + /review done; COMMITTED `35705e32` 2026-09-27; walked at slice 6 |
 | 4a | Tournaments — **setup and records, plus the area's shared parts** (split recorded below) | **BUILT 2026-09-27** — results below; /simplify + /review done; identity 58/58 + both-theme sweep done; COMMITTED `8e76362f` 2026-09-27; walked at slice 6 |
-| 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; walked at slice 6 |
+| 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; COMMITTED `07808a02` 2026-09-27; walked at slice 6 |
 | 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | not started |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | not started |
 | 6 | Prove (both-theme sweep, contrast, identity) · owner § walk · release (switch deleted, legacy removed, coaches help pin removed, What's New, `/docs`, `/release`) | not started |

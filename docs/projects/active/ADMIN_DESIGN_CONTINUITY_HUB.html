@@ -402,11 +402,11 @@ dialog.truesize::backdrop{background:#16201899}
 </style>
 
 <div class="hubbar">
-  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) committed 2026-09-25 · slice 2 (buttons, chips, type, House league, Organization) committed ee175263 2026-09-26 · slice 3 (Rep Teams, Accounting) committed 35705e32 2026-09-27 · slice 4a (tournament setup and records) committed 8e76362f 2026-09-27 · slice 4b (tournament operations on game day) built 2026-09-27</small></div>
+  <div class="hubtitle"><strong>Admin Design Continuity — project hub</strong><br><small>Ruled 2026-09-25 · the admin side joins the coaches portal's design system and the one Warm / Dark setting · slice 0 (the baseline) done 2026-09-25 · slice 1 (the switch and the frame) committed 2026-09-25 · slice 2 (buttons, chips, type, House league, Organization) committed ee175263 2026-09-26 · slice 3 (Rep Teams, Accounting) committed 35705e32 2026-09-27 · slice 4a (tournament setup and records) committed 8e76362f 2026-09-27 · slice 4b (tournament operations on game day) committed 07808a02 2026-09-27</small></div>
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, built 2026-09-27">Build</li>
+    <li class="stage" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -1222,6 +1222,7 @@ dialog.truesize::backdrop{background:#16201899}
     <li>Teams' "Done" button in the phone filter sheet had lost its hover.</li>
     <li>A misleading code note.</li>
   </ul>
+  <p><strong>Committed</strong> (07808a02, 2026-09-27), after the build check and the full test suite passed on this change alone. The pictures and the switch-on sweep were taken before the cleanup; everything changed since only shows with the switch on, or is the same code written a different way.</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1231,7 +1232,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>2</td><td>Buttons, chips, type; the rest of Hub and Organization; House league</td><td>Committed 2026-09-26 (<code>ee175263</code>); walked at slice 6</td></tr>
       <tr><td>3</td><td>Rep Teams, Accounting (money tables restyled in place)</td><td>Committed 35705e32, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4a</td><td>Tournaments: setup and records, and the parts every tournament screen shares</td><td>Committed 8e76362f, 2026-09-27; walked at slice 6</td></tr>
-      <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat), and the game list, moved in from 4c</td><td>Built 2026-09-27; commit on your word; walked at slice 6</td></tr>
+      <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat), and the game list, moved in from 4c</td><td>Committed 07808a02, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Not started</td></tr>
       <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Not started</td></tr>
       <tr><td>6</td><td>Prove, walk, release</td><td>Not started</td></tr>
