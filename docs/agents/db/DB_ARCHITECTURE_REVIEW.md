@@ -13,7 +13,7 @@
 | Severity | Open | Addressed | Accepted Risk |
 |---|---|---|---|
 | Critical | 0 | 0 | 0 |
-| High | 2 | 8 | 1 |
+| High | 2 | 9 | 1 |
 | Medium | 2 | 5 | 2 |
 | Low | 2 | 4 | 3 |
 | Advisory | 9 | 1 | 0 |
@@ -71,6 +71,15 @@
   - **The class is closed:** dev is a faithful security replica of prod again. Follow-ups are listed in the plan §4 (the proxy's refused early-bounce read, and bucket-wide resource delete by any signed-in account).
 
 **Status (both stages):** **Addressed 2026-09-28** — 310 (`69e13025`) and 311, applied to dev + prod.
+
+---
+
+### [2026-09-24] — Finding #43: Supabase stops auto-granting Data API access to new `public` tables on 2026-10-30 — every new table must grant service_role itself
+**Severity:** High (prod-only failure mode, invisible to every existing gate)
+**Finding:** From 2026-10-30 Supabase runs, once, on every existing project: `alter default privileges for role postgres in schema public revoke select, insert, update, delete on tables from anon, authenticated, service_role` (+ sequences). Existing tables keep their grants; a table created after the date has none, and the Data API answers `permission denied` however correct its RLS is. We are fully in scope: every client (`supabaseAdmin`, server session, browser) goes through the Data API, and every migration runs as `postgres` via the Management API (all 184 public tables are owned by `postgres`). Read live on dev 2026-09-24: `postgres`'s table default ACL already withholds DML from anon/authenticated (mig 309's `rep_team_call_up_appearances` has no SELECT for either), and service_role still receives it **only because migration 025 re-granted it through the same default-privileges entry the revoke names — so 025 does not survive the date.** Not affected: functions (not in the revoke; our migrations already grant EXECUTE explicitly), sequences (no serial/identity columns), views (none). **The failure is prod-only:** a table migration applied to dev before 10-30 and prod after works in every test and fails for the server's own admin client on prod; the drift gate compares tables/columns, not grants, so it stays green. Upside: new prod tables stop inheriting prod's broad anon/authenticated SELECT (the posture behind the mig 212 and mig 223 near-misses), so dev and prod finally agree for new tables — existing prod tables keep the broad grant.
+**Tables affected:** every `public` table created from migration 310 onward; none existing.
+**Recommendation:** Every migration that creates a `public` table carries `grant select, insert, update, delete on public.<t> to service_role;` in the same file; anon/authenticated only when the browser genuinely reads the table (unchanged posture). Do NOT restore the auto-grant for anon/authenticated. Build-enforced by `tests/unit/migration-table-grants-guard.test.ts` (watermark 309; history is not edited; an exemption needs a `no-service-role-grant: <table> — <reason>` comment). Prod's live default ACL was NOT read on 2026-09-24 (the read was not authorized) — confirm it with a read-only `pg_default_acl` query when convenient; the rule holds either way.
+**Status:** Addressed (guard built 2026-09-24).
 
 ---
 

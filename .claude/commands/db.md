@@ -39,6 +39,11 @@ After reading, briefly confirm: _"DB context loaded — [N] tables in schema."_
 - Migrations live in `supabase/migrations/` — numbered sequentially (e.g. `050_description.sql`)
 - Never use `DROP COLUMN` or `DROP TABLE` without a deprecation plan
 - Always add `IF NOT EXISTS` to `CREATE TABLE` / `ADD COLUMN` statements
+- **Every new `public` table grants the server its own access in the same migration:**
+  `grant select, insert, update, delete on public.<table> to service_role;` — from 2026-10-30
+  Supabase no longer auto-grants on new tables (and its revoke cancels migration 025's default).
+  Grant `anon`/`authenticated` only when the browser genuinely reads the table. Build-enforced by
+  `tests/unit/migration-table-grants-guard.test.ts`; see `DB_ARCHITECTURE_REVIEW.md` Finding #43.
 - Foreign keys: always name constraints explicitly (e.g. `CONSTRAINT fk_org_id FOREIGN KEY ...`)
 - Indexes: add for every `org_id` column and every FK used in WHERE clauses
 - Default values: always specify for new non-null columns (or make them nullable)

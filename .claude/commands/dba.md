@@ -65,6 +65,7 @@ When the user is about to add a new table or significant migration, review for:
 - `NOT NULL` columns without defaults (will fail on existing rows)
 - `DROP COLUMN` / `DROP TABLE` without a deprecation comment
 - Missing RLS policies alongside new table definitions
+- A new `public` table without `grant select, insert, update, delete … to service_role` in the same migration (unreachable by the server after 2026-10-30 — Finding #43; the build gate catches it, the review should not need to)
 - Missing indexes for FKs and `org_id`
 - Constraint naming (always explicit, never auto-named)
 
