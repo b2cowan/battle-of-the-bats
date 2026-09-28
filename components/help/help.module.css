@@ -2001,3 +2001,429 @@
   /* The zoom affordance is the whole frame on touch; the label would crowd the caption. */
   .helpShotZoom { display: none; }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 5 — only with the switch on) ═══════════════════════
+   The help guide as the ADMIN shows it follows the reader's Warm / Dark setting (ruling R4): the ten
+   Help pages, the "?" side panel, and the callouts, "?" hints and field hints on work pages. The
+   coaches portal's help is untouched — it carries no [data-admin-kit] marker (its focused help keeps
+   the dark pin until the release slice).
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
+
+/* The help accent's one home (guide + drawer): remapping the custom property covers every future
+   `var(--help-accent)` consumer, plus the two current ones (.helpSteps li::before, .helpShotZoom)
+   below that also restate it directly so the decision reads in one place per surface. */
+:global([data-admin-kit]) .helpPage:where(:not([data-public-preview] *)),
+:global([data-admin-kit]) .helpDrawer:where(:not([data-public-preview] *)) {
+  --help-accent: var(--home-olive);
+}
+
+/* ── HelpCallout ─────────────────────────────────────────────────────────────
+   Tint fill → the card ground for all three tones (a work-page banner, not a guide-page panel — the
+   portal's "tinted panel" retirement applies the same way: fill goes flat, the tone survives only as
+   the 3px stripe and the CTA/icon ink). Tip becomes the kit's one accent (olive) rather than green —
+   info moves off the legacy help-accent blue onto the semantic --info token; warning is unchanged. */
+:global([data-admin-kit]) .calloutInfo:where(:not([data-public-preview] *)),
+:global([data-admin-kit]) .calloutTip:where(:not([data-public-preview] *)),
+:global([data-admin-kit]) .calloutWarning:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+/* Restated after the shorthand above (Trap 2: `border-color` resets `border-left-color`). */
+:global([data-admin-kit]) .calloutTip:where(:not([data-public-preview] *)) { border-left-color: var(--home-olive); }
+:global([data-admin-kit]) .calloutInfo:where(:not([data-public-preview] *)) { border-left-color: var(--info); }
+:global([data-admin-kit]) .calloutWarning:where(:not([data-public-preview] *)) { border-left-color: var(--warning); }
+
+:global([data-admin-kit]) .calloutTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .calloutText:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+
+/* Per-variant, not a base `.calloutIcon`/`.calloutCta` rule — a base rule at this weight would beat
+   the legacy `.calloutXxx .calloutIcon` / `.calloutXxx .calloutCta` descendant rules outright. */
+:global([data-admin-kit]) .calloutTip .calloutIcon:where(:not([data-public-preview] *)),
+:global([data-admin-kit]) .calloutTip .calloutCta:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .calloutInfo .calloutIcon:where(:not([data-public-preview] *)),
+:global([data-admin-kit]) .calloutInfo .calloutCta:where(:not([data-public-preview] *)) { color: var(--info-light); }
+:global([data-admin-kit]) .calloutWarning .calloutIcon:where(:not([data-public-preview] *)),
+:global([data-admin-kit]) .calloutWarning .calloutCta:where(:not([data-public-preview] *)) { color: var(--warning-light); }
+
+:global([data-admin-kit]) .calloutDismiss:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .calloutDismiss:where(:not([data-public-preview] *)):hover { color: var(--text-secondary); }
+
+/* ── HelpTooltip ─────────────────────────────────────────────────────────────
+   The "?" trigger: quiet ink + a hairline edge at rest, olive on hover/focus. The popover leaves its
+   hard dark-navy literal (correct only because that surface never followed the theme) for the kit's
+   own popover — ground, hairline, shadow — so its ink must follow too (title/body → primary/secondary;
+   the two carets repaint in the same ground/hairline pair as the box they point from). */
+:global([data-admin-kit]) .tooltipTrigger:where(:not([data-public-preview] *)) {
+  /* The legacy resting fill is white at 8% — a wash on the dark console, nothing at all on cream. */
+  background: var(--card-bg);
+  color: var(--text-tertiary);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .tooltipTrigger:where(:not([data-public-preview] *)):hover {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .tooltipTrigger:where(:not([data-public-preview] *)):focus-visible {
+  outline-color: var(--home-olive);
+}
+:global([data-admin-kit]) .tooltipPopover:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .tooltipPopover:where(:not([data-public-preview] *))::after { border-top-color: var(--card-bg); }
+:global([data-admin-kit]) .tooltipPopover:where(:not([data-public-preview] *))::before { border-top-color: var(--home-line); }
+/* The flipped caret restates its transparent TOP edge too: the kit's plain caret rule above weighs the same as
+   the legacy `.tooltipBottom` reset and comes later, so without this a below-the-trigger caret paints both
+   edges (a bow-tie) — found by /review. */
+:global([data-admin-kit]) .tooltipBottom .tooltipPopover:where(:not([data-public-preview] *))::after { border-top-color: transparent; border-bottom-color: var(--card-bg); }
+:global([data-admin-kit]) .tooltipBottom .tooltipPopover:where(:not([data-public-preview] *))::before { border-top-color: transparent; border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .tooltipTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .tooltipBody:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+
+/* ── FieldHint ────────────────────────────────────────────────────────────── */
+:global([data-admin-kit]) .fieldHint:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+
+/* ── The work-page "?" button (.helpButtonIconOnly is NOT ours — another session owns it) ───────── */
+:global([data-admin-kit]) .helpButton:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpButton:where(:not([data-public-preview] *)):hover { color: var(--home-olive); }
+:global([data-admin-kit]) .helpButton:where(:not([data-public-preview] *)):focus-visible,
+:global([data-admin-kit]) .helpDrawerClose:where(:not([data-public-preview] *)):focus-visible {
+  outline-color: var(--home-olive);
+}
+/* `.btn-data` (globals.css) still sets `font-family: var(--font-data)` under the kit — it only drops
+   the caps/tracking — so the inherited mono face is restated back to body face here on the label. */
+:global([data-admin-kit]) .helpButtonLabel:where(:not([data-public-preview] *)) {
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+
+/* ── HelpDrawer ───────────────────────────────────────────────────────────── */
+:global([data-admin-kit]) .helpDrawerBackdrop:where(:not([data-public-preview] *)) { background: var(--home-scrim); }
+:global([data-admin-kit]) .helpDrawer:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-left-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .helpDrawerHead:where(:not([data-public-preview] *)) { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .helpDrawerEyebrow:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+/* The drawer's own title — unified with the guide's two page-level H1s (below) onto plain ink rather
+   than keeping this one alone on the console-lime accent. */
+:global([data-admin-kit]) .helpDrawerTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpDrawerClose:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .helpDrawerClose:where(:not([data-public-preview] *)):hover { color: var(--text-primary); }
+:global([data-admin-kit]) .helpDrawerSection + .helpDrawerSection:where(:not([data-public-preview] *)) {
+  border-top-color: var(--home-line);
+}
+:global([data-admin-kit]) .helpDrawerEmpty:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpDrawerFoot:where(:not([data-public-preview] *)) { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .helpDrawerFullLink:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpDrawerShortcuts:where(:not([data-public-preview] *)) { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .helpDrawerShortcutsTitle:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpDrawerShortcut:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpDrawerShortcut:where(:not([data-public-preview] *)):hover {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .helpDrawerShortcutArrow:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpDrawerShortcutPlus:where(:not([data-public-preview] *)) {
+  color: var(--home-olive);
+  border-color: var(--home-line);
+}
+/* "In this topic" expander list caption (HelpSectionBlock — shared by the drawer and, via the same
+   component, the guide's own sub-topic groups). */
+:global([data-admin-kit]) .helpSubtopicLabel:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+
+/* ── Guide pages: search + contents rail (HelpPageLayout) ─────────────────────
+   The rail's search box and the hub's share `.helpSearchBox`/`.helpSearchInput`; the hub's own
+   `.helpHubSearchPanel …` overrides are restated after so the transparent-inner-input-over-styled-box
+   design (and the hub's "no focus ring" choice) survive the general rule at equal specificity. */
+:global([data-admin-kit]) .helpSearchIcon:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpSearchInput:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .helpSearchInput:where(:not([data-public-preview] *)):focus {
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 2px var(--home-olive-soft);
+}
+:global([data-admin-kit]) .helpSearchInput:where(:not([data-public-preview] *))::placeholder { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpSearchMeta:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpSearchClear:where(:not([data-public-preview] *)) {
+  background: transparent;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .helpSearchClear:where(:not([data-public-preview] *)):hover {
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .helpHubSearchPanel .helpSearchBox:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .helpHubSearchPanel .helpSearchInput:where(:not([data-public-preview] *)) { background: transparent; }
+:global([data-admin-kit]) .helpHubSearchPanel .helpSearchInput:where(:not([data-public-preview] *)):focus { box-shadow: none; }
+
+/* Contents tree: the row you are on is olive-soft fill + olive ink (ruling R4's drawing); a plain
+   hover is the sidebar's own olive-soft wash (coaches.module.css `.sidebarItem:hover`); "open" (a
+   topic whose answers are revealed, which is not always the same row as "active") stays plain ink,
+   its caret alone picking up the accent. */
+:global([data-admin-kit]) .helpTocGroupHead:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpTocSubLabel:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpTocLink:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpTocLink:where(:not([data-public-preview] *)):hover {
+  color: var(--text-primary);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .helpTocLinkActive:where(:not([data-public-preview] *)) {
+  color: var(--home-olive) !important;
+  background: var(--home-olive-soft);
+  border-left-color: var(--home-olive);
+}
+:global([data-admin-kit]) .helpTocHome:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpTocHome:where(:not([data-public-preview] *)):hover {
+  color: var(--text-primary);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .helpTocHomeActive:where(:not([data-public-preview] *)) {
+  color: var(--home-olive);
+  border-left-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .helpTocGroupCount:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpTocCaret:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpTocLinkOpen:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpTocLinkOpen .helpTocCaret:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpTocAnswers:where(:not([data-public-preview] *)) { border-left-color: var(--home-line); }
+:global([data-admin-kit]) .helpTocAnswer:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpTocAnswer:where(:not([data-public-preview] *)):hover {
+  color: var(--text-primary);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .helpTocAnswerActive:where(:not([data-public-preview] *)) {
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+
+/* ── Guide pages: page header / breadcrumb / role line ────────────────────── */
+:global([data-admin-kit]) .helpBreadcrumbCurrent:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpBreadcrumb a:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpBreadcrumbSep:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+/* The landing page's H1 leaves the console-lime accent for plain ink — unifying it with the article's
+   H1 below, which was ALREADY plain ink in the legacy file (a pre-existing inconsistency this closes,
+   not one the kit introduces). */
+:global([data-admin-kit]) .helpPageTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpRoleLine:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpIntro:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+
+/* ── Guide pages: one article — title, meta, answer index, pager, mobile back ───────────────────── */
+:global([data-admin-kit]) .helpArticleTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpArticleMeta:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpArticleMeta a:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpArticleMeta a:where(:not([data-public-preview] *)):hover { color: var(--home-olive); }
+:global([data-admin-kit]) .helpAnswerIndexHead:where(:not([data-public-preview] *)) {
+  color: var(--home-olive);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .helpAnswerIndexHead span + span:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+/* Answer card / pager link / landing card / result button / hub card all take the same "door" recipe
+   (card ground, hairline, a stronger hairline + no tint on hover) rather than each keeping its own
+   legacy hover hue (some lime, some the help-accent blue) — one recipe for every bordered link-row. */
+:global([data-admin-kit]) .helpAnswerCard:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .helpAnswerCard:where(:not([data-public-preview] *)):hover {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .helpAnswerCard svg:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpPager:where(:not([data-public-preview] *)) { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .helpPagerLink:where(:not([data-public-preview] *)) { border-color: var(--home-line); }
+:global([data-admin-kit]) .helpPagerLink:where(:not([data-public-preview] *)):hover {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .helpPagerLink small:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpPagerLink strong:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpMobileBack:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-bottom-color: var(--home-line);
+  color: var(--home-olive);
+}
+
+/* ── Guide pages: the landing page ─────────────────────────────────────────── */
+:global([data-admin-kit]) .helpLandingCard:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .helpLandingCard:where(:not([data-public-preview] *)):hover {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .helpLandingCard strong:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpLandingCard em:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpLandingCount:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+/* "Uppercase lime separator" → the kit's accent eyebrow, olive (ruling F2's own example). */
+:global([data-admin-kit]) .helpGroupHeading:where(:not([data-public-preview] *)) {
+  color: var(--home-olive);
+  border-bottom-color: var(--home-line);
+}
+/* The sub-group heading (a second, quieter literal-lime literal, `#cbe79a`) drops to plain ink rather
+   than a lighter olive the token table has no step for — group headings alone carry the accent. */
+:global([data-admin-kit]) .helpSubGroupHeading:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpTopicHeading:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpTopicSummary:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+/* Quick-link chips: today's ink is --info but the fill/border are already the literal help-accent
+   blue — the kit makes it one colour, olive, matching "Links, quick-link chips … olive" (ruling R4). */
+:global([data-admin-kit]) .helpSectionLink:where(:not([data-public-preview] *)) {
+  background: var(--home-olive-soft);
+  /* The kit chip's quiet edge (CoachKit `.chipGood`), full olive on hover below. */
+  border-color: rgba(var(--home-olive-rgb), 0.32);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .helpSectionLink:where(:not([data-public-preview] *)):hover {
+  background: rgba(var(--home-olive-rgb), 0.16);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .helpSectionContent:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpSectionContent strong:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+
+/* ── Guide pages: FAQ accordion ───────────────────────────────────────────── */
+:global([data-admin-kit]) .helpFaqItem:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .helpFaqItem:where(:not([data-public-preview] *))[open] {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .helpFaqItem summary:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpFaqItem summary:where(:not([data-public-preview] *))::before { color: var(--home-olive); }
+:global([data-admin-kit]) .helpFaqAnswer:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpFaqAnswer strong:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+
+/* ── Guide pages: search results panel + empty states ─────────────────────── */
+:global([data-admin-kit]) .helpSearchResults:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .helpResultHeader:where(:not([data-public-preview] *)) { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .helpResultHeader h1:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpResultHeader span:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpResultGroup h3:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpResultButton:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .helpResultButton:where(:not([data-public-preview] *)):hover {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .helpResultButton span:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpResultButton strong:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpResultButton em:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpEmptyResults:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .emptyStateTitle:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .emptyStateSub:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+
+/* ── Loading state ────────────────────────────────────────────────────────── */
+:global([data-admin-kit]) .loadingState:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .loadingState:where(:not([data-public-preview] *))::before { background: var(--home-olive); }
+
+/* ── Help Hub (HelpHubClient) ─────────────────────────────────────────────── */
+:global([data-admin-kit]) .helpHubTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpHubSubtitle:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpHubSectionLabel span:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpHubSectionRule:where(:not([data-public-preview] *)) { background: var(--home-line); }
+/* The hub's guide card → the kit's door card (CoachKit.module.css `.card`/`.cardDoor`): ground,
+   hairline, a stronger hairline on hover — see the note above the answer/pager/landing/result cards. */
+:global([data-admin-kit]) .helpHubCard:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .helpHubCard:where(:not([data-public-preview] *)):hover {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .helpHubCardTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpHubCardDesc:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpHubCardCount:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpHubCardRead:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpHubGateNote:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpHubEmpty:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpHubNewHere:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .helpHubNewHereSummary:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpHubNewHereCaret:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+:global([data-admin-kit]) .helpHubNewHereHint:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+:global([data-admin-kit]) .helpHubRolePathTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+:global([data-admin-kit]) .helpHubRolePathList:where(:not([data-public-preview] *)) { color: var(--text-secondary); }
+:global([data-admin-kit]) .helpHubRolePathList a:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+
+/* ── Scannable-format primitives (HelpBlocks.tsx) ─────────────────────────── */
+:global([data-admin-kit]) .helpSteps li:where(:not([data-public-preview] *))::before {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .helpDefs:where(:not([data-public-preview] *)) { border-top-color: var(--home-line); }
+:global([data-admin-kit]) .helpDefRow:where(:not([data-public-preview] *)) { border-bottom-color: var(--home-line); }
+:global([data-admin-kit]) .helpDefRow dt:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+/* Same tri-tone recipe as HelpCallout above (a parallel primitive: the one inline tip/caution/info
+   note of a sub-topic), restated here rather than relying on the --help-accent remap alone, since the
+   warning tone's border-left-color must also survive the base rule's `border-color` shorthand. */
+:global([data-admin-kit]) .helpNoteTip:where(:not([data-public-preview] *)),
+:global([data-admin-kit]) .helpNoteInfo:where(:not([data-public-preview] *)),
+:global([data-admin-kit]) .helpNoteWarning:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .helpNoteTip:where(:not([data-public-preview] *)) { border-left-color: var(--home-olive); }
+:global([data-admin-kit]) .helpNoteInfo:where(:not([data-public-preview] *)) { border-left-color: var(--info); }
+:global([data-admin-kit]) .helpNoteWarning:where(:not([data-public-preview] *)) { border-left-color: var(--warning); }
+:global([data-admin-kit]) .helpNoteTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }
+
+/* ── Help screenshots (HelpScreenshot.tsx) ─────────────────────────────────
+   The enlarged view is a LIGHTBOX — a dark stage behind a picture, in both themes — so its backdrop and
+   its white-edged Close stay exactly as they are (the coaches guide carries screenshots, and the admin
+   shows that guide). Only the in-page frame, its ring, caption and zoom label follow the theme. */
+:global([data-admin-kit]) .helpShotFrame:where(:not([data-public-preview] *)) {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .helpShotFrame:where(:not([data-public-preview] *)):focus-visible { outline-color: var(--home-olive); }
+/* The ring over a control → olive (ruling R4), not the warning amber it draws today. */
+:global([data-admin-kit]) .helpShotRing:where(:not([data-public-preview] *)) { border-color: var(--home-olive); }
+:global([data-admin-kit]) .helpShotCaption:where(:not([data-public-preview] *)) {
+  border-color: var(--home-line);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .helpShotZoom:where(:not([data-public-preview] *)) { color: var(--home-olive); }
+
+/* ── The export table (ExportAvailabilityTable.tsx) ────────────────────────
+   A bare <table>/<th>/<td> with no class of its own, always nested in `.helpSectionContent`. `td`'s
+   ink and `th`'s `--text-secondary`/`--home-line` (app/globals.css's table standard) already follow
+   the kit automatically — they are the SAME custom properties, redefined per-theme — so only the
+   head's face/weight/case/ink need the kit's quieter KIT_INK.head restated locally. */
+:global([data-admin-kit]) .helpSectionContent th:where(:not([data-public-preview] *)) {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+}

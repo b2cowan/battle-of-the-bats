@@ -333,3 +333,121 @@
   opacity: 0.65;
   cursor: default;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 5 — only with the switch on) ═══════════════════════
+   The day-of shells' furniture in the kit's FIXED warm palette (ruling R3 — see the scorekeeper sheet's
+   kit section for why it is fixed): the four status buckets at the thumb, the tab bar (the coaches
+   portal's bar: the quiet tier for a tab you are not on, mixed case, olive for where you are), and the
+   Account sheet. Only the volunteer shells render these — the admin's check-in board mounts the filter
+   bar for the gate alone.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
+
+/* ── The filter buckets ── */
+:global([data-admin-kit]) .barBtn {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+}
+/* The bucket you are in — the kit's chosen state (every chosen filter in the admin is olive, 4a/4c;
+   lime is the one primary per view, which here is the score sheet's Finalize). */
+:global([data-admin-kit]) .barBtn[aria-pressed='true'] {
+  border-color: var(--home-olive);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .barBtn:focus-visible { outline-color: var(--home-olive); }
+/* The count is a readout — it keeps the console face the button no longer has. */
+:global([data-admin-kit]) .barCount,
+:global([data-admin-kit]) .barBtnInline { font-family: var(--font-data); }
+
+@media (max-width: 640px) {
+  /* 46px buckets, as specimen 7 draws them — today's 40px is under the 44px tap floor. The budget every
+     bottom clearance composes from grows with the bar: 46 + its padding (0.35rem × 2) + its top edge. */
+  :global([data-admin-kit]) .shell { --dayof-filterbar-h: 58px; }
+  :global([data-admin-kit]) .filterBar {
+    background: rgba(var(--home-paper-rgb), 0.97);
+    border-top-color: var(--home-line-strong);
+  }
+  :global([data-admin-kit]) .barBtn {
+    min-height: 46px;
+    font-size: var(--type-support);
+    letter-spacing: normal;
+  }
+  :global([data-admin-kit]) .tabBar {
+    /* The coaches portal's bar ground (CoachesBottomNav's warm rule). */
+    background: rgba(var(--home-paper-rgb), 0.92);
+    border-top-color: var(--home-line);
+  }
+}
+
+/* ── The tab bar ── */
+:global([data-admin-kit]) .tab {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  text-transform: none;
+}
+:global([data-admin-kit]) .tab[aria-current='page'],
+:global([data-admin-kit]) .tab[aria-expanded='true'] {
+  color: var(--home-olive);
+  border-top-color: var(--home-olive);
+  background: var(--home-olive-soft);
+}
+:global([data-admin-kit]) .tab:focus-visible { outline-color: var(--home-olive); }
+
+/* ── The Account sheet ── */
+:global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .sheet {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .sheetTitle {
+  color: var(--text-secondary);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+:global([data-admin-kit]) .sheetClose {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+/* Who is signed in — a card inside the white sheet keeps its hairline, no fill of its own. */
+:global([data-admin-kit]) .whoCard {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+}
+:global([data-admin-kit]) .whoName {
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 700;
+}
+:global([data-admin-kit]) .whoLine {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  letter-spacing: normal;
+}
+:global([data-admin-kit]) .sheetRow {
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-body);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+}
+:global([data-admin-kit]) .sheetRow:focus-visible { outline-color: var(--home-olive); }
+:global([data-admin-kit]) .sheetRow .chev { color: var(--text-tertiary); }
+/* Sign out — a lime tint today, so the olive accent on the kit (slice 4b's rule); after the base row. */
+:global([data-admin-kit]) .sheetRowOut {
+  border-color: rgba(var(--home-olive-rgb), 0.5);
+  color: var(--home-olive);
+}

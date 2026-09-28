@@ -61,3 +61,40 @@
   font-size: 0.82rem;
   line-height: 1.4;
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 5 — only with the switch on) ═══════════════════════
+   The gate page's own frame in the kit's FIXED warm palette (ruling R3): the title, the tournament
+   picker, the loading / error lines and the read-only banner. The board below it is the admin's
+   check-in board, already on the kit (slice 4b) — the gate's marker carries [data-admin-kit], so its
+   rules reach the gate too, in warm.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
+
+/* The page title — the kit's title (the display face, no capitals), at today's size. */
+:global([data-admin-kit]) .title {
+  color: var(--text-primary);
+  font-family: var(--font-display, sans-serif);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+}
+:global([data-admin-kit]) .picker {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .single {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .msg { color: var(--text-tertiary); }
+:global([data-admin-kit]) .err {
+  border-color: rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+}
+:global([data-admin-kit]) .banner {
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--warning-light);
+}

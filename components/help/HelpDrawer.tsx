@@ -9,6 +9,7 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { hasPlayoffs, isWithinEventDates } from '@/lib/tournament-phase';
 import { daysUntilStart, getStageShortcuts, resolveGuidanceStage, type TaskShortcut } from '@/lib/tournament-guidance';
+import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
 import type { HelpRequest } from './help-drawer-context';
 import HelpSectionBlock from './HelpSectionBlock';
 import styles from './help.module.css';
@@ -127,7 +128,13 @@ export default function HelpDrawer({
   const sections = getHelpSections(request.module, request.sectionIds);
   const headerTitle = request.label ?? 'Help';
 
+  // Admin Design Continuity slice 5 (ruling R4): the drawer portals to <body>, a SIBLING of the admin
+  // shell, so the admin kit's marker never reached it and the "?" stayed dark with the switch on (the
+  // bottom sheet's and the chat panels' trap, slice 4c). `PortalKitRoot` puts the marker on a box-less
+  // wrapper above the backdrop while the switch is on, and renders nothing extra while it is off — or in
+  // the coaches portal, which mounts no admin kit (its help keeps its own look until the release slice).
   return createPortal(
+    <PortalKitRoot>
     <div className={styles.helpDrawerBackdrop} onClick={() => onCloseRef.current()}>
       <aside
         ref={panelRef}
@@ -207,7 +214,8 @@ export default function HelpDrawer({
           </div>
         )}
       </aside>
-    </div>,
+    </div>
+    </PortalKitRoot>,
     document.body,
   );
 }

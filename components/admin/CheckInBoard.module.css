@@ -589,8 +589,10 @@
 }
 
 /* ═══ ON THE KIT (Admin Design Continuity slice 4b — only with the switch on) ═══════════════════════
-   ⚠ SHARED COMPONENT: this board also mounts on the guest gate page (app/[orgSlug]/check-in), which
-   carries no [data-admin-kit] marker — every rule below is scoped so it can never reach the gate.
+   ⚠ SHARED COMPONENT: this board also mounts on the guest gate page (app/[orgSlug]/check-in). Since
+   slice 5 the gate carries [data-admin-kit] too (the guest marker, warm FIXED — R3), so every rule below
+   reaches the gate as well, on purpose: it wears game day's look there, in warm. A rule that must stay
+   admin-only would need `:not([data-guest-kit] *)`.
    Green = checked in, amber = pending/late, red = a problem, quiet = not yet (owner vocabulary).
    ⚠ TOKENS ONLY — checkAdminKit fails on a literal colour here. */
 

@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { UserCheck } from 'lucide-react';
@@ -11,6 +12,10 @@ import { suspendedOrgWall } from '@/components/billing/SubscriptionEndedWall';
 import InstallAppPrompt from '@/components/InstallAppPrompt';
 import DayOfTabBar from '@/components/volunteer/DayOfBottomBars';
 import { getUserDisplayName } from '@/lib/user-display';
+import { GuestKitRoot } from '@/components/admin/AdminKitProvider';
+import { kitStyler } from '@/components/admin/kit/kit-inline';
+import { ADMIN_KIT_COOKIE, readAdminKit } from '@/lib/admin-kit-preview';
+import { DAYOF_KIT } from '@/components/volunteer/day-of-kit';
 import shell from '@/components/volunteer/DayOfShell.module.css';
 
 export async function generateMetadata({
@@ -43,6 +48,14 @@ export default async function ScorekeeperLayout({
 }) {
   const { orgSlug } = await params;
 
+  // Admin Design Continuity — THE SWITCH (`lib/admin-kit-preview.ts`), slice 5 / ruling R3. Decided HERE,
+  // on the server, so the first paint is already the right look; always false on the production branch.
+  // On: the kit's rules and its warm palette FIXED — the guest marker, not the admin's (see
+  // `guestKitAttr`), through `GuestKitRoot`. Off: it hands back exactly what it was given — no wrapper, no
+  // attribute.
+  const guestKit = readAdminKit((await cookies()).get(ADMIN_KIT_COOKIE)?.value);
+  const kx = kitStyler(guestKit);
+
   // `allowSuspendedOrg` so a cancelled org reaches the wall below rather than a 500. The score
   // API is closed by the same rail regardless — this decides only what the volunteer SEES.
   const authCtx = await getAuthContextWithRole({ orgSlug, allowSuspendedOrg: true });
@@ -60,31 +73,33 @@ export default async function ScorekeeperLayout({
   // before-the-capability-wall ordering so a cancelled org gets the accurate reason, not
   // "Access Denied".
   const suspendedWall = suspendedOrgWall(authCtx.org, 'scorekeeper');
-  if (suspendedWall) return suspendedWall;
+  if (suspendedWall) return <GuestKitRoot on={guestKit}>{suspendedWall}</GuestKitRoot>;
 
   if (!hasCapability(authCtx.role, authCtx.capabilities, 'submit_scores')) {
     return (
-      <div style={{
+    <GuestKitRoot on={guestKit}>
+      <div style={kx({
         minHeight: '100vh',
         background: 'var(--hud-surface)',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         padding: '2rem',
-      }}>
-        <div style={{
+      }, DAYOF_KIT.refusalPage)}>
+        <div style={kx({
           border: '1px solid rgba(var(--blueprint-blue-rgb), 0.4)',
           background: 'var(--hud-surface)',
           padding: '2rem',
           maxWidth: '420px',
           width: '100%',
-        }}>
-          <div className="hud-label" style={{ marginBottom: '0.75rem' }}>Access Denied</div>
-          <p className="data-mono" style={{ color: '#94A3B8', fontSize: '0.875rem', lineHeight: 1.6 }}>
+        }, DAYOF_KIT.refusalCard)}>
+          <div className="hud-label" style={kx({ marginBottom: '0.75rem' }, DAYOF_KIT.refusalLabel)}>Access Denied</div>
+          <p className="data-mono" style={kx({ color: '#94A3B8', fontSize: '0.875rem', lineHeight: 1.6 }, DAYOF_KIT.refusalText)}>
             This account does not have scorekeeper access. Contact your organization admin if you need to submit scores.
           </p>
         </div>
       </div>
+    </GuestKitRoot>
     );
   }
 
@@ -95,8 +110,9 @@ export default async function ScorekeeperLayout({
   const duties = [canGate ? 'Gate' : null, 'Scorekeeper'].filter(Boolean) as string[];
 
   return (
-    // "The Flip" P3: the provider bridges the page's score fetch (which knows the day's
-    // tournaments) to the header pill — see components/volunteer/ScorekeeperFlip.tsx.
+    <GuestKitRoot on={guestKit}>
+    {/* "The Flip" P3: the provider bridges the page's score fetch (which knows the day's
+        tournaments) to the header pill — see components/volunteer/ScorekeeperFlip.tsx. */}
     <ScorekeeperFlipProvider>
     {/* Day-of volunteer shell — a RULED EXCEPTION to the nav grammar (top-nav audit §3):
         the wordmark here is deliberately INERT text, not a door. A gloved volunteer mid-game
@@ -107,8 +123,8 @@ export default async function ScorekeeperLayout({
         jobs watched the whole screen change colour crossing between them (§D9).
         `shell` declares the bottom-furniture budget every consumer below composes from — see
         DayOfShell.module.css before adding anything that reaches the bottom of this screen. */}
-    <div className={shell.shell} style={{ minHeight: '100vh', background: 'var(--hud-surface)' }}>
-      <header style={{
+    <div className={shell.shell} style={kx({ minHeight: '100vh', background: 'var(--hud-surface)' }, DAYOF_KIT.shell)}>
+      <header style={kx({
         borderBottom: '1px solid rgba(var(--blueprint-blue-rgb), 0.4)',
         background: 'var(--hud-surface)',
         padding: '0 1.25rem',
@@ -120,16 +136,16 @@ export default async function ScorekeeperLayout({
         position: 'sticky',
         top: 0,
         zIndex: 40,
-      }}>
+      }, DAYOF_KIT.header)}>
         {/* `identity` clips: the wordmark below is `nowrap` and the actions beside it cannot
             shrink, so without a clip here the mark painted across them on every phone. */}
         <div className={shell.identity} style={{ flex: '1 1 auto', minWidth: 0 }}>
           <div style={{ fontFamily: 'var(--font-data)', fontWeight: 700, fontSize: '1rem', whiteSpace: 'nowrap' }}>
-            <span style={{ color: '#F1F5F9' }}>FIELD</span>
-            <span style={{ color: '#D9F99D' }}>LOGIC</span>
-            <span style={{ color: 'rgba(148,163,184,0.5)' }}>HQ</span>
+            <span style={kx({ color: '#F1F5F9' }, DAYOF_KIT.markField)}>FIELD</span>
+            <span style={kx({ color: '#D9F99D' }, DAYOF_KIT.markLogic)}>LOGIC</span>
+            <span style={kx({ color: 'rgba(148,163,184,0.5)' }, DAYOF_KIT.markHq)}>HQ</span>
           </div>
-          <div style={{
+          <div style={kx({
             color: '#94A3B8',
             fontFamily: 'var(--font-data)',
             fontSize: '0.68rem',
@@ -138,7 +154,7 @@ export default async function ScorekeeperLayout({
             overflow: 'hidden',
             textOverflow: 'ellipsis',
             whiteSpace: 'nowrap',
-          }}>
+          }, DAYOF_KIT.orgName)}>
             {authCtx.org.name}
           </div>
         </div>
@@ -153,13 +169,15 @@ export default async function ScorekeeperLayout({
           {canGate && (
             <Link
               href={`/${orgSlug}/check-in`}
-              aria-label="Check-In"
+              aria-label="Check-in"
               className={`${shell.hop} ${shell.deskOnly}`}
-              style={{ color: '#D9F99D', fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.06em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }}
+              style={kx({ color: '#D9F99D', fontFamily: 'var(--font-data)', fontSize: '0.7rem', letterSpacing: '0.06em', textTransform: 'uppercase', textDecoration: 'none', whiteSpace: 'nowrap' }, DAYOF_KIT.hop)}
             >
               {/* The admin nav's own Check-in icon, matching the Gate tab below. */}
               <UserCheck size={15} aria-hidden />
-              <span>Check-In →</span>
+              {/* "Check-in", the product's one spelling (the gate's own title). Drawn in capitals with the
+                  switch off, so the kit's mixed case is the first place the old "Check-In" would have shown. */}
+              <span>Check-in →</span>
             </Link>
           )}
           {/* No "Send feedback" here (owner call 2026-08-07). Everywhere else in the product it is
@@ -196,5 +214,6 @@ export default async function ScorekeeperLayout({
       />
     </div>
     </ScorekeeperFlipProvider>
+    </GuestKitRoot>
   );
 }

@@ -735,3 +735,258 @@
     margin-bottom: 1.15rem;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 5 — only with the switch on) ═══════════════════════
+   The scorekeeper in the kit's warm palette, FIXED (ruling R3): the volunteer shell carries
+   [data-admin-kit] + [data-guest-kit], and app/globals.css pins the warm block on the second whatever
+   the phone's own Warm/Dark setting — a gate phone is shared, and the setting is the device's, so the
+   last person's choice must not decide the next volunteer's screen. ADC specimen 7: the same cards,
+   the same four filters at the thumb, the same score sheet (a form: it covers, it dims, Cancel is the
+   way out). A restyle — the words, the order and the layout are today's.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
+
+/* R3's "a warm palette from the kit replaces the --sk-* set": every rule that reads an --sk-* token is
+   restated below with the kit's own token (the program's one convention — each colour on its own rule), so
+   the set itself is never consulted on the kit and needs no remap. */
+
+/* ── The header: the kit's eyebrow over the page title ── */
+:global([data-admin-kit]) .kicker {
+  color: var(--text-secondary);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+}
+:global([data-admin-kit]) .title { color: var(--text-primary); }
+
+/* ── The quiet buttons (refresh, Today, Filters, Cancel, Clear filters) and the one primary ──
+   F2: the console face leaves the buttons; the portal's buttons are the body face, 650, as written. */
+:global([data-admin-kit]) .iconButton,
+:global([data-admin-kit]) .todayButton,
+:global([data-admin-kit]) .secondaryButton,
+:global([data-admin-kit]) .primaryButton,
+:global([data-admin-kit]) .filtersToggle {
+  border-color: var(--home-line-strong);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+}
+:global([data-admin-kit]) .iconButton {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .todayButton,
+:global([data-admin-kit]) .secondaryButton {
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+/* Finalize / Submit for Review / Save Correction — the sheet's one primary: ink on lime. */
+:global([data-admin-kit]) .primaryButton {
+  border-color: var(--home-lime);
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+:global([data-admin-kit]) .filterCount {
+  background: var(--home-olive);
+  /* The page ground as ink: it inverts with the theme exactly as the olive fill does (slice 4c). */
+  color: var(--home-paper);
+  font-family: var(--font-data);
+}
+@media (max-width: 640px) {
+  :global([data-admin-kit]) .filtersToggle {
+    background: var(--card-bg);
+    color: var(--text-secondary);
+  }
+  :global([data-admin-kit]) .filtersToggle[aria-expanded='true'] {
+    border-color: var(--home-olive);
+    color: var(--text-primary);
+  }
+}
+
+/* ── The fields: the day, the team search, the two pickers ── */
+:global([data-admin-kit]) .dateControl,
+:global([data-admin-kit]) .searchControl {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .dateControl input,
+:global([data-admin-kit]) .searchControl input,
+:global([data-admin-kit]) .select {
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+:global([data-admin-kit]) .select {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+}
+
+/* ── Notices: a card with its tone on the edge, as today (no tint fill) ── */
+:global([data-admin-kit]) .notice {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .notice strong { color: var(--text-primary); }
+/* The tones, restated: the base above weighs the same as the legacy tone rules and comes later. */
+:global([data-admin-kit]) .notice_success { border-color: rgba(var(--success-rgb), 0.35); }
+:global([data-admin-kit]) .notice_warning { border-color: rgba(var(--warning-rgb), 0.4); }
+:global([data-admin-kit]) .notice_danger { border-color: rgba(var(--danger-rgb), 0.35); }
+:global([data-admin-kit]) .notice_info { border-color: rgba(var(--info-rgb), 0.35); }
+/* "Sign in" when the session lapses — the recovery, and the one thing to do: the kit's primary. */
+:global([data-admin-kit]) .noticeAction {
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
+}
+
+/* ── Loading and empty ── */
+:global([data-admin-kit]) .loadingState span {
+  /* `background-image`, not the shorthand — the legacy `background-size` drives the shimmer. */
+  background-image: linear-gradient(90deg, var(--card-bg) 0%, var(--home-paper) 50%, var(--card-bg) 100%);
+  box-shadow: inset 0 0 0 1px var(--home-line);
+}
+:global([data-admin-kit]) .emptyState {
+  border: 1px dashed var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .emptyState h2 { color: var(--text-primary); }
+
+/* ── The game cards: the kit's door card (the whole card is the tap) ── */
+:global([data-admin-kit]) .gameCard {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  box-shadow: var(--home-shadow);
+}
+/* A pending or finalized card is a plain card on the kit, as drawn: its chip carries the state, not a
+   wash over the whole card (the portal's tinted-panel retirement, 2026-09-21). Cancelled keeps its fade. */
+:global([data-admin-kit]) .gameCard_scheduled:hover,
+:global([data-admin-kit]) .gameCard_submitted:hover { border-color: var(--home-olive); }
+/* The game to score next: the olive stripe on its leading edge (the legacy 4px width), no glow. */
+:global([data-admin-kit]) .gameCardNow {
+  border-left-color: var(--home-olive);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .gameMeta {
+  color: var(--text-secondary);
+  font-weight: 700;
+}
+/* The status tag → the kit's chip (the words as written). */
+:global([data-admin-kit]) .statusBadge {
+  border-color: var(--home-line-strong);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: none;
+}
+:global([data-admin-kit]) .status_submitted {
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--warning-light);
+}
+:global([data-admin-kit]) .status_completed {
+  border-color: rgba(var(--success-rgb), 0.28);
+  background: rgba(var(--success-rgb), 0.07);
+  color: var(--success-light);
+}
+:global([data-admin-kit]) .status_cancelled { color: var(--text-tertiary); }
+/* "Up next" — the accent chip (specimen 7's olive), its edge drawn inset so the chip keeps today's size. */
+:global([data-admin-kit]) .nowBadge {
+  border-radius: 999px;
+  background: var(--home-olive-soft);
+  box-shadow: inset 0 0 0 1px rgba(var(--home-olive-rgb), 0.32);
+  color: var(--home-olive);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: none;
+}
+/* The matchup: team names in the body face (a name, not a readout); the scores stay the console face. */
+:global([data-admin-kit]) .teamBlock span {
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 700;
+}
+:global([data-admin-kit]) .teamBlock strong { color: var(--text-primary); }
+:global([data-admin-kit]) .versus {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 500;
+  letter-spacing: normal;
+  text-transform: none;
+}
+/* What a tap does — a line of words in the body face, at the portal's support size (the console's
+   capitals read larger than their size; mixed case at the same number would shrink it). */
+:global([data-admin-kit]) .cardAction {
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 600;
+  letter-spacing: normal;
+  text-transform: none;
+}
+:global([data-admin-kit]) .gameCardNow .cardAction {
+  color: var(--home-olive);
+  font-weight: 650;
+}
+
+/* ── The score sheet: a window over a scrim ── */
+:global([data-admin-kit]) .sheetBackdrop { background: var(--home-scrim); }
+:global([data-admin-kit]) .scoreSheet {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  box-shadow: var(--home-shadow);
+}
+:global([data-admin-kit]) .sheetMeta { color: var(--text-secondary); }
+/* The two team names over the fields — the field's label, in the body face. */
+:global([data-admin-kit]) .scoreGrid label span {
+  color: var(--text-secondary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: normal;
+  text-transform: none;
+}
+/* The two big fields: the kit's field, the numeral in the body face as drawn. */
+:global([data-admin-kit]) .scoreInput {
+  border-color: var(--home-line-strong);
+  background: var(--card-bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+  font-weight: 800;
+}
+:global([data-admin-kit]) .scoreInput:focus-visible {
+  border-color: var(--home-olive);
+  box-shadow: 0 0 0 2px rgba(var(--home-olive-rgb), 0.3);
+}
+:global([data-admin-kit]) .scoreInput.inputError { border-color: var(--danger); }
+:global([data-admin-kit]) .scoreDivider {
+  color: var(--text-tertiary);
+  font-family: var(--font-sans, system-ui, sans-serif);
+}
+/* The consequence note and the error: status said in a box — the kit's tint and its light ink. */
+:global([data-admin-kit]) .policyNote,
+:global([data-admin-kit]) .formError {
+  border-color: var(--home-line);
+  background: var(--card-bg);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .policyNote[data-tone='review'] {
+  border-color: rgba(var(--warning-rgb), 0.3);
+  background: rgba(var(--warning-rgb), 0.08);
+  color: var(--warning-light);
+}
+/* "Becomes final immediately" — a lime tint today, so the kit's olive accent (slice 4b's rule). */
+:global([data-admin-kit]) .policyNote[data-tone='final'] {
+  border-color: rgba(var(--home-olive-rgb), 0.3);
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .formError {
+  border-color: rgba(var(--danger-rgb), 0.3);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+}

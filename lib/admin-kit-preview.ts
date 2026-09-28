@@ -59,3 +59,20 @@ export const adminKitAttr: Readonly<Record<string, string>> = {
   'data-coach-warm-enabled': '',
   'data-admin-kit': '',
 };
+
+/**
+ * Spread onto the VOLUNTEER shells' outermost element (the scorekeeper, the gate) when the kit is on —
+ * and ONLY then (slice 5, ruling R3). The same switch, the same door, a different pair:
+ *   • `data-admin-kit` — the kit's own rules (the gate's board is the admin's check-in board, already on
+ *     the kit; the windows, fields and chips);
+ *   • `data-guest-kit` — the WARM palette, FIXED: `app/globals.css` keys the warm block on it too, with no
+ *     account attribute in the selector, so a phone set to Dark still shows these screens warm.
+ * ⚠ Deliberately NOT `data-coach-warm-enabled`: that half of the admin's pair is what lets the device's
+ * Warm/Dark setting choose — the dark gate keys on it and would answer a Dark phone with the dark palette.
+ * Why fixed: the setting lives on the DEVICE, and a gate phone is shared, so the last person to hold it
+ * would decide what the next volunteer sees; a light screen also reads better in the sun at a field.
+ */
+export const guestKitAttr: Readonly<Record<string, string>> = {
+  'data-admin-kit': '',
+  'data-guest-kit': '',
+};

@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { describe, it, afterEach } from 'node:test';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import path from 'node:path';
-import { readAdminKit, isAdminKitAvailable, adminKitAttr, ADMIN_KIT_COOKIE } from '../../lib/admin-kit-preview.ts';
+import { readAdminKit, isAdminKitAvailable, adminKitAttr, guestKitAttr, ADMIN_KIT_COOKIE } from '../../lib/admin-kit-preview.ts';
 import { readCode, stripComments } from './_source-code.ts';
 
 /**
@@ -84,6 +84,12 @@ describe('the admin kit switch', () => {
     assert.deepEqual(Object.keys(adminKitAttr).sort(), ['data-admin-kit', 'data-coach-warm-enabled']);
   });
 
+  it('the volunteer shells\' marker pins the warm palette and never lets the device theme choose (R3)', () => {
+    assert.deepEqual(Object.keys(guestKitAttr).sort(), ['data-admin-kit', 'data-guest-kit']);
+    // `data-coach-warm-enabled` is the half the dark gate keys on — a Dark phone would get the dark palette.
+    assert.ok(!('data-coach-warm-enabled' in guestKitAttr), 'the guest marker must not carry the account-theme half');
+  });
+
   it('the door refuses in production before it touches the cookie', () => {
     const src = read('app/api/dev/admin-kit/route.ts');
     const refuse = src.indexOf('isAdminKitAvailable()');
@@ -99,6 +105,9 @@ describe('the admin kit switch', () => {
 
   it('only the admin layout puts the marker on the page, and only through the helper', () => {
     const MARKER_DOORS = new Set(['app/[orgSlug]/admin/layout.tsx', 'components/admin/AdminKitProvider.tsx']);
+    // Slice 5 (R3): the volunteer shells read the SAME switch; their pair is spread in ONE place (the
+    // provider's `GuestKitRoot`, which the two layouts hand their decision to), so the twins cannot drift.
+    const GUEST_DOORS = new Set(['components/admin/AdminKitProvider.tsx']);
     const offenders: string[] = [];
     for (const file of [...walk(path.join(ROOT, 'app')), ...walk(path.join(ROOT, 'components'))]) {
       const rel = path.relative(ROOT, file).split(path.sep).join('/');
@@ -107,17 +116,35 @@ describe('the admin kit switch', () => {
       // that shape once (slice 4c's first bottom sheet). The one other door is the portal hook
       // (`PortalKitRoot`, AdminKitProvider), which forwards the layout's decision and decides nothing.
       if (/\badminKitAttr\b/.test(src) && !MARKER_DOORS.has(rel)) offenders.push(`${rel} uses adminKitAttr`);
+      if (/\bguestKitAttr\b/.test(src) && !GUEST_DOORS.has(rel)) offenders.push(`${rel} uses guestKitAttr`);
       if (/data-admin-kit\s*=|['"]data-admin-kit['"]\s*:/.test(src)) offenders.push(`${rel} writes data-admin-kit by hand`);
+      if (/data-guest-kit\s*=|['"]data-guest-kit['"]\s*:/.test(src)) offenders.push(`${rel} writes data-guest-kit by hand`);
     }
     assert.deepEqual(offenders, [], 'a second place deciding the switch is how a half-built screen leaks');
     const layout = read('app/[orgSlug]/admin/layout.tsx');
     assert.match(layout, /readAdminKit\(/, 'the admin layout decides it from the cookie, on the server');
     assert.match(layout, /adminKit\s*\?[\s\S]*\{\.\.\.adminKitAttr\}[\s\S]*:\s*shell/,
       'with the switch off the layout must render the bare shell — no wrapper, no attribute');
+    // The volunteer shells: each layout reads the cookie itself, on the server, and hands the answer to the one
+    // shared root — every return (the subscription wall and the refusal included) goes through it.
+    for (const p of ['app/[orgSlug]/scorekeeper/layout.tsx', 'app/[orgSlug]/check-in/layout.tsx']) {
+      const src = read(p);
+      assert.match(src, /const guestKit = readAdminKit\(/, `${p} decides the switch from the cookie, on the server`);
+      const roots = src.match(/<GuestKitRoot on=\{guestKit\}>/g) ?? [];
+      assert.equal(roots.length, 3, `${p}: the wall, the refusal and the shell must each render through GuestKitRoot`);
+    }
     // The portal door forwards the context and nothing else: no cookie, no path, no second decision.
     const provider = stripComments(read('components/admin/AdminKitProvider.tsx'));
-    assert.match(provider, /usePortalKitAttr\(\)[^{]*\{\s*return useAdminKit\(\) \? adminKitAttr : NO_ATTR;\s*\}/,
-      'usePortalKitAttr must be exactly "the context says on → the marker, else nothing"');
+    // …and the guest root renders its children bare with the switch off (no provider, no element, no
+    // attribute), and with it on puts the guest pair — never the admin's — on a box-less wrapper.
+    assert.match(provider, /GuestKitRoot\([^)]*\)[^{]*\{\s*if \(!on\) return <>\{children\}<\/>;/,
+      'GuestKitRoot must hand back its children bare with the switch off');
+    assert.match(provider, /<AdminKitProvider on guest>\s*<div style=\{\{ display: 'contents' \}\} \{\.\.\.guestKitAttr\}>/,
+      'GuestKitRoot must name the guest context and the guest pair');
+    assert.match(provider, /usePortalKitAttr\(\)[^{]*\{\s*const marker = useContext\(KitMarkerContext\);\s*return useAdminKit\(\) \? marker : NO_ATTR;\s*\}/,
+      'usePortalKitAttr must be exactly "the context says on → the marker the layout named, else nothing"');
+    assert.match(provider, /createContext<Readonly<Record<string, string>>>\(adminKitAttr\)/, 'the default marker is the admin\'s');
+    assert.match(provider, /guest \? <KitMarkerContext\.Provider value=\{guestKitAttr\}>/, 'only `guest` names the guest pair');
     assert.match(provider, /attr === NO_ATTR \? <>\{children\}<\/> :/,
       'PortalKitRoot must render its children bare with the switch off — no wrapper element');
     // …and inside a public preview the context says OFF, so a portal opened there is the public page (R2).
@@ -132,7 +159,7 @@ describe('the admin kit switch', () => {
     ];
     for (const p of publicLayouts) {
       const src = read(p);
-      assert.doesNotMatch(src, /coachWarmAttr|adminKitAttr|data-coach-warm-enabled|data-admin-kit/, `${p} must stay org-branded`);
+      assert.doesNotMatch(src, /coachWarmAttr|adminKitAttr|guestKitAttr|data-coach-warm-enabled|data-admin-kit|data-guest-kit/, `${p} must stay org-branded`);
     }
   });
 });

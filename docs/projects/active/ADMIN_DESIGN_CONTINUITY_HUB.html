@@ -453,7 +453,7 @@ dialog.truesize::backdrop{background:#16201899}
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27. Slice 1's open questions ruled 2026-09-27; the phone bar and Warm shadow fixes committed dca4ac25 for both portals">Build</li>
+    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27. Slice 1's open questions ruled 2026-09-27; the phone bar and Warm shadow fixes committed dca4ac25 for both portals. Slice 5, the volunteer screens and the help guide, built 2026-09-27">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -473,7 +473,7 @@ dialog.truesize::backdrop{background:#16201899}
 <section id="hub-progress" class="hubsection prog">
   <div class="eyebrow">Progress · Phase 1, the foundation</div>
   <h1>Where the program stands</h1>
-  <p class="lede"><strong>Every admin area except the volunteer screens and the help guide is now on the coaches portal's look, in Warm and Dark.</strong> Seven of the nine build slices are committed, the tournament schedule last. Two remain: slice 5 (scorekeeper, gate and the help guide), then slice 6, which proves everything, walks it with you and releases it. Customers see none of it until that release day; until then it shows only in a browser that turns the switch on. <strong>One exception, on your word:</strong> your answers to slice 1's open questions (the phone bar and the Warm shadows) are built for both portals, so coaches see them with the next release.</p>
+  <p class="lede"><strong>Every admin area, the volunteer screens and the help guide are now on the coaches portal's look.</strong> The admin in Warm and Dark, the scorekeeper and gate in warm on every phone. Seven of the nine build slices are committed; slice 5 (the volunteer screens and the help guide) is built and proven, and waits on your word to commit. Then slice 6 proves everything, walks it with you and releases it. Customers see none of it until that release day; until then it shows only in a browser that turns the switch on. <strong>One exception, on your word:</strong> your answers to slice 1's open questions (the phone bar and the Warm shadows) are built for both portals, so coaches see them with the next release.</p>
 
   <ol class="track" aria-label="The nine build slices, in order">
     <li><button type="button" class="s-committed" data-goto="sl-0"><b>0</b><span>Baseline</span></button></li>
@@ -483,8 +483,8 @@ dialog.truesize::backdrop{background:#16201899}
     <li><button type="button" class="s-committed" data-goto="sl-4a"><b>4a</b><span>Tournament setup</span></button></li>
     <li><button type="button" class="s-committed" data-goto="sl-4b"><b>4b</b><span>Game day</span></button></li>
     <li><button type="button" class="s-committed" data-goto="sl-4c"><b>4c</b><span>The schedule</span></button></li>
-    <li><button type="button" class="s-next" data-goto="sl-5"><b>5</b><span>Volunteers &amp; help</span></button></li>
-    <li><button type="button" class="s-todo" data-goto="sl-6"><b>6</b><span>Prove, walk, release</span></button></li>
+    <li><button type="button" class="s-built" data-goto="sl-5"><b>5</b><span>Volunteers &amp; help</span></button></li>
+    <li><button type="button" class="s-next" data-goto="sl-6"><b>6</b><span>Prove, walk, release</span></button></li>
   </ol>
   <div class="legend2" aria-hidden="true"><span><i class="l-committed"></i>Committed</span><span><i class="l-built"></i>Built, being committed</span><span><i class="l-next"></i>Next</span><span><i class="l-todo"></i>Not started</span></div>
 
@@ -542,13 +542,13 @@ dialog.truesize::backdrop{background:#16201899}
     </article>
     <article class="slice" id="sl-5">
       <div class="sid">5</div>
-      <div><h3>Volunteers and the help guide</h3><p>The scorekeeper, official and gate screens in warm for everyone (volunteers have no account to hold a setting), and the help guide following your theme.</p></div>
-      <div class="state"><span class="st next">Next</span></div>
+      <div><h3>Volunteers and the help guide</h3><p>The scorekeeper, its score sheet, the Account sheet and the gate in warm on every phone, whatever the phone is set to (the setting lives on the phone, and a gate phone is shared). The admin's help guide, its "?" panel and the hints on work pages follow your Warm or Dark setting.</p><p class="proof">Switch off: 206 of 206 identical · a Dark phone and a Warm phone show the volunteer screens pixel-identical (15 of 15) · hard-to-read text: volunteers 14 → 0, help guide 205 → 0 in both themes</p></div>
+      <div class="state"><span class="st built">Built</span><span class="meta">2026-09-27 · commit on your word</span><button type="button" class="linkbtn" data-report="Slice 5">Read the report</button></div>
     </article>
     <article class="slice" id="sl-6">
       <div class="sid">6</div>
-      <div><h3>Prove, walk, release</h3><p>Every admin screen swept in both themes with the switch on, the public Schedule preview's Warm tab bar fixed, your walk, then the switch comes out and everyone gets the new look on one day.</p></div>
-      <div class="state"><span class="st todo">Not started</span></div>
+      <div><h3>Prove, walk, release</h3><p>Every admin screen swept in both themes with the switch on, the public Schedule preview's Warm tab bar fixed, your walk, then the switch comes out and everyone gets the new look on one day. On release day the coaches portal's "?" panel also needs its own fix to follow the theme (found in slice 5).</p></div>
+      <div class="state"><span class="st next">Next</span></div>
     </article>
   </div>
 
@@ -567,15 +567,15 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>Tournaments: setup, records, game day</td><td>—</td><td>4a · 4b</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Tournaments: the schedule</td><td>—</td><td>4c</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Club hub, Members and audit log, Plan &amp; billing, Settings, setup checklist</td><td>6</td><td>Club Stage 1</td><td><span class="st stage1">Redesigned by Club Stage 1</span></td></tr>
-      <tr><td>Scorekeeper, official and gate</td><td>4</td><td>5</td><td><span class="st next">Next</span></td></tr>
-      <tr><td>Help guide</td><td>10</td><td>5</td><td><span class="st next">Next</span></td></tr>
+      <tr><td>Scorekeeper, official and gate (fixed warm)</td><td>4</td><td>5</td><td><span class="st built">On the kit · built</span></td></tr>
+      <tr><td>Help guide, the "?" panel, hints on work pages</td><td>10</td><td>5</td><td><span class="st built">On the kit · built</span></td></tr>
     </tbody>
   </table></div>
   <p class="sechint">Not in this program: public pages and your previews of them (they keep your organization's colours), emails, PDFs, the marketing site and the platform-admin console. The tournament area's 27 screens also count four that belong to other rows (Members, its audit log, Plan &amp; subscription, PDF settings) and two public previews.</p>
 
   <h2>Before release day</h2>
   <ol class="release">
-    <li><strong>Slice 5</strong>: the volunteer screens and the help guide.</li>
+    <li><strong>Slice 5</strong>: the volunteer screens and the help guide. Built and proven; committed on your word.</li>
     <li><strong>Prove</strong>: every admin screen swept in both themes with the switch on, the reading-contrast check on the admin's backgrounds, and the switch-off pictures one last time. The public Schedule preview's Warm tab bar is fixed here (your ruling).</li>
     <li><strong>Confirm Club Stage 1's six screens</strong> are ready on the same switch; they ship the same day.</li>
     <li><strong>Your walk</strong>: a sample of every area in both themes, the frame at desktop and phone width, a dense table, a tournament on game day, the scorekeeper sheet and the help guide.</li>
@@ -1438,6 +1438,52 @@ dialog.truesize::backdrop{background:#16201899}
   <p><strong>Not measured:</strong> a sweep of every coaches portal screen. The bar is on every screen, so the scoped before-and-after stands in, and slice 6's full sweep covers the rest. How soft the new shadow looks is your eye's call, not the sweep's: check a few cards on cream in Warm.</p>
   <p><strong>Review.</strong> No fault found. Four more coaches portal screens were measured in both themes (the team page, the team switch menu, Notifications and Help): no faint bar label anywhere. The review raised one question for you. In Dark, the tab you're on is now as light as the others, and is marked by its pill and dot. Warm has worked that way since August, although the drawings show the active tab in olive (it's first on the Progress tab's waiting list). Along the way it noticed the chat panels ask for a shadow that doesn't exist, so they have none in either theme. That predates this work.</p>
   <p><strong>Committed</strong> (dca4ac25, 2026-09-27).</p>
+  <h2>Slice 5 — the volunteer screens and the help guide (2026-09-27)</h2>
+  <p>Still nothing customers see. With the switch on, the scorekeeper and gate wear the coaches portal's warm look on every phone, and the admin's help guide follows your Warm or Dark setting. Same screens, same words, same order.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>Screen</th><th>What you see with the switch on</th></tr></thead>
+    <tbody>
+      <tr><td>Scorekeeper</td><td>As drawn in specimen 7: cream paper, white game cards, an olive stripe on the game to score next, the kit's tags ("Up next" in olive, "Pending Review" in caution, "Finalized" in green), and the header as the coaches portal's white strip.</td></tr>
+      <tr><td>The score sheet</td><td>A white window over a warm dim, the two big score fields, the note about what happens on save, and Cancel beside the lime Finalize, exactly where they are today.</td></tr>
+      <tr><td>Filters and the tab bar (phone)</td><td>The four status buttons at the thumb, now 46 px tall as drawn (today's 40 px is under the tap floor); the one you're in is olive. The Score / Gate / Account bar is the coaches portal's bar.</td></tr>
+      <tr><td>The Account sheet</td><td>Who is signed in, Install this app, Sign out, on the kit.</td></tr>
+      <tr><td>Gate check-in</td><td>The gate's list is the admin's check-in board, already restyled on game day (slice 4b), so it takes that look in warm, team sheet included.</td></tr>
+      <tr><td>The help guide</td><td>As drawn in specimen 6: the contents list in the portal's nav style (the page you're on in olive), olive section labels, white cards, prose in the soft ink, tips as plain cards with a coloured edge rather than tinted boxes.</td></tr>
+      <tr><td>The "?" side panel</td><td>Follows your theme. It opens outside the admin's frame, so until now it stayed in today's dark look even with the switch on.</td></tr>
+      <tr><td>Hints on work pages</td><td>The "?" pop-up hints, the tip and warning boxes and the small hints under form fields, readable in both themes.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The proof.</strong> With the switch off, all 206 pictures (every admin screen, the volunteer screens and three new views) are pixel-identical. With the switch on, a phone set to Dark and a phone set to Warm show every volunteer screen pixel-identical, at three widths, 15 of 15. The sweep agrees: the same 130 findings in both. Hard-to-read text on the volunteer screens went from 14 to 0, and on the help guide from 205 to 0 in both themes. On the 22 work screens that carry help hints, no hint has a finding in either theme; everything the sweep called new was test data added since the baseline, or a button whose name changed with a page title in slice 4a, each checked with the switch off.</p>
+  <p><strong>Three views were added first</strong>, because nothing could measure them: the volunteer Account sheet, the gate's team sheet and the "?" panel open.</p>
+  <p><strong>Two corrections to the plan, and one thing for release day:</strong></p>
+  <ul>
+    <li><strong>Volunteers do have accounts.</strong> Both screens make you sign in. The ruling stands for a better reason: the Warm/Dark choice is remembered by the phone, not the person, so on a shared gate phone the last person's choice would decide what the next volunteer sees. One thing to know: an organizer who picked Dark goes from a Dark admin to a warm scorekeeper.</li>
+    <li><strong>The admin's help guide was never locked to dark.</strong> Only the coaches portal's is. The admin's guide was dark because the admin was, so with the switch on it had been showing in Warm, undesigned, since slice 1.</li>
+    <li><strong>For release day:</strong> removing the coaches portal's dark lock won't be enough on its own. Its "?" panel opens outside its frame too and needs the same fix the admin's got here.</li>
+  </ul>
+  <p><strong>Decided at build time, flagged for you:</strong></p>
+  <ul>
+    <li>The score sheet keeps today's Cancel and Finalize and has no close ×. The specimen draws a × and one wide Finalize, but you ruled on 8 August that a tap outside never closes the sheet, and Cancel is its way out.</li>
+    <li>The heading stays "Scorekeeper". The specimen adds the tournament's name, but a day can hold several tournaments, and the cards name the tournament when it does.</li>
+    <li>The status filter you're in is olive, not the lime drawn. Lime is kept for the one main action on a screen, here the score sheet's Finalize, and every chosen filter in the admin is olive.</li>
+    <li>The status words stay as written ("To Score", "Pending Review"). "Pending Review" is the product's name for that status in house league, tryouts and the help articles; writing it "Pending review" here would give one status two spellings.</li>
+    <li>Two labels that already disagreed with the product's spelling now match it: the desktop "Sign Out" becomes "Sign out" (as in the Account sheet) and "Check-In →" becomes "Check-in →". They're in capitals with the switch off, so nothing changes there.</li>
+    <li>A game waiting for review, or already final, is a plain card with its tag, rather than a whole card washed amber or blue, as drawn.</li>
+    <li>The empty space every phone page keeps at the bottom for the public tournament bar is removed on the volunteer screens, which have their own bars. On cream it showed as a dark band at tablet width.</li>
+    <li>In the help guide, the guide's blue accent becomes the portal's olive, a tip is olive rather than green, and the landing page's title is plain ink like an article's. An enlarged screenshot keeps its dark stage in both themes.</li>
+  </ul>
+  <p><strong>Found on the way, written down rather than fixed here:</strong></p>
+  <ul>
+    <li>On a phone, the "Install this app" banner covers the status filters on the volunteer screens. It positions itself above the public bar instead of the volunteer bars. It does this today too.</li>
+    <li>The desktop Sign out and the Check-in / Scorekeeper links are small tap targets, as today.</li>
+  </ul>
+  <p><strong>Cleanup and review.</strong> The cleanup made the scorekeeper and the gate share one way onto the new look, so the two can no longer drift apart, and had the volunteer header use the kit's existing recipes instead of copies. It also removed a layer of the scorekeeper's styling that could never show. The review read the change four ways: nothing changes with the switch off; what else it reaches; sign-in and the switch itself; and how the new look renders. It found four things, all fixed:</p>
+  <ul>
+    <li>A "?" hint that opens below its button, near the top of a screen, would have drawn its little pointer on both edges.</li>
+    <li>The desktop "Check-in" link still carried the old "Check-In" spelling for screen readers.</li>
+    <li>Two notes in the code had become untrue with this slice: that the gate could never take the check-in board's new look, and that only the admin carries the switch's marker.</li>
+  </ul>
+  <p>It also confirmed that every sign-in, organization and permission check on the volunteer screens runs exactly as before, that the switch still cannot turn on in production, and that the coaches portal and public pages are untouched. With the switch off the volunteer screens' pictures are still identical after the cleanup, and a Dark phone and a Warm phone still show them pixel-identical.</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1449,7 +1495,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>4a</td><td>Tournaments: setup and records, and the parts every tournament screen shares</td><td>Committed 8e76362f, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat), and the game list, moved in from 4c</td><td>Committed 07808a02, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Committed 9d1b1670, 2026-09-27; walked at slice 6</td></tr>
-      <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Not started</td></tr>
+      <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Built 2026-09-27; commit on your word; walked at slice 6</td></tr>
       <tr><td>6</td><td>Prove, walk, release</td><td>Not started</td></tr>
     </tbody>
   </table></div>

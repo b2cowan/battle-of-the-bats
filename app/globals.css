@@ -397,6 +397,7 @@
    select options already flip via tokens (--bg-2 → white, --white → ink); it just
    needs color-scheme:light so the OS popup chrome matches. */
 [data-color-mode="light"] select,
+:root [data-guest-kit] select:where(:not([data-public-preview] *)),
 html[data-user-theme="warm"] [data-coach-warm-enabled] select:where(:not([data-public-preview] *)) { color-scheme: light; }
 
 [data-color-mode="light"] select option {
@@ -811,6 +812,14 @@ body:has([data-chat-fullbleed]) {
   color-scheme: dark;
 }
 
+/* `:root [data-guest-kit]` — the VOLUNTEER shells on the admin kit (Admin Design Continuity slice 5,
+   ruling R3): the scorekeeper and the gate take this palette FIXED, whatever the device's Warm/Dark
+   setting — the setting lives on the phone, a gate phone is shared, and a light screen reads better in
+   the sun. No account attribute in the selector, and the guest marker carries no
+   [data-coach-warm-enabled], so the dark gate below never answers it. `:root` gives it (0,2,0), above
+   R1's `[data-admin-kit]` block (0,1,0) on the same element — theme first, platform beneath, as for the
+   admin. Inert with the switch off: only `guestKitAttr` (lib/admin-kit-preview.ts) writes the attribute. */
+:root [data-guest-kit],
 html[data-user-theme="warm"] [data-coach-warm-enabled] {
   /* Warm palette — mirrors warmTheme.module.css .warmVars (Round-1 ratified values). */
   --home-paper:       #F8F4ED;
@@ -1173,9 +1182,11 @@ html[data-user-theme="dark"] [data-coach-warm-enabled],
 }
 
 /* ═══ THE ADMIN ON THE KIT (Admin Design Continuity, Phase 1) ═════════════════════════════════════
-   Everything in this section keys off `[data-admin-kit]`, which ONLY the admin shell carries and
-   ONLY while the dev switch is on (`lib/admin-kit-preview.ts`: false in every production build, off
-   by default on the dev server). With it off, not one rule here matches — the identity check
+   Everything in this section keys off `[data-admin-kit]`, which ONLY the admin shell and (since slice 5)
+   the two volunteer shells carry, and ONLY while the dev switch is on (`lib/admin-kit-preview.ts`: false
+   in every production build, off by default on the dev server). The volunteer shells are platform
+   chrome too, so R1 below reaches them as intended; their palette is the warm block's, fixed
+   (`[data-guest-kit]`). With it off, not one rule here matches — the identity check
    (`npm run identity:admin`) holds that every admin screen is pixel-identical. The shell carries
    `[data-coach-warm-enabled]` beside it, so the warm block above (and the dark gate) apply to the
    admin exactly as they do to the coaches portal. The release slice keeps these rules and deletes
@@ -1199,6 +1210,19 @@ html[data-user-theme="dark"] [data-coach-warm-enabled],
   --glow:          0 0 32px rgba(var(--platform-primary-rgb), 0.4);
   --glow-sm:       0 0 16px rgba(var(--platform-primary-rgb), 0.25);
   --on-primary:    var(--platform-on-primary);
+}
+
+/* ── R3: THE VOLUNTEER SHELLS' FOOT (slice 5) ──
+   At ≤900px the root <main> keeps 72px at its foot for the PUBLIC tournament bar (`--bottom-nav-height`,
+   the Responsive block). The scorekeeper and the gate carry their own bars and compose their own bottom
+   clearance (`--dayof-bottom-h`, DayOfShell.module.css), so under them that reservation is empty page:
+   the body's near-black ground below the paper at tablet width, and a darker strip behind the phone's
+   translucent bars. It is there in today's dark too, where it barely shows; with the switch on it goes.
+   Nothing but `guestKitAttr` writes the attribute, so the switch-off page keeps its 72px.
+   ⚠ RELEASE SLICE: when the switch and its marker are deleted, re-anchor this on the shell itself
+   (`body > main:has(…DayOfShell .shell)`), or the band comes back on the day the kit ships. */
+@media (max-width: 900px) {
+  body > main:has([data-guest-kit]) { padding-bottom: 0; }
 }
 
 /* ── R2: A PREVIEW OF A PUBLIC PAGE INSIDE THE ADMIN IS THE PUBLIC PAGE ──
@@ -1417,11 +1441,13 @@ html[data-user-theme="dark"] [data-coach-warm-enabled],
 /* Warm CTA — the lime primary button (.btn-lime) is the ratified ink-on-lime call to action:
    on paper it must stay TRUE lime with dark ink, not the drab olive the accent remap would give
    it (olive is for lime-as-text, never lime-as-FILL). Restores the bright CTA on the warm ground. */
+:root [data-guest-kit] .btn-lime:where(:not([data-public-preview] *)),
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:where(:not([data-public-preview] *)) {
   background: var(--home-lime);
   border-color: var(--home-lime);
   color: var(--home-lime-ink);
 }
+:root [data-guest-kit] .btn-lime:where(:not([data-public-preview] *)):hover,
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:where(:not([data-public-preview] *)):hover {
   background: rgba(var(--home-lime-rgb), 0.82);
   border-color: rgba(var(--home-lime-rgb), 0.82);
@@ -1432,11 +1458,13 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-lime:where(:not([dat
    Warm it to the ratified ink-on-lime primary (same as .btn-lime / the coaches .btnPrimary CTA) — the
    ONE appealing warm primary language across the portal; olive stays a text/border accent, never a
    button FILL. Cold blue glow drops on paper. Used portal-wide (e.g. tryouts "Open day-of check-in"). */
+:root [data-guest-kit] .btn-primary:where(:not([data-public-preview] *)),
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([data-public-preview] *)) {
   background: var(--home-lime);
   color: var(--home-lime-ink);
   box-shadow: none;
 }
+:root [data-guest-kit] .btn-primary:where(:not([data-public-preview] *)):hover,
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([data-public-preview] *)):hover {
   background: rgba(var(--home-lime-rgb), 0.82);
   box-shadow: none;
@@ -1446,9 +1474,11 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-primary:where(:not([
 /* Warm outline button (.btn-outline) — its text already warms (--primary-light→olive) but its border
    stays platform navy (--primary is not remapped) and its hover fill is navy-faint. Pair the border to
    the olive text and use an olive-soft hover wash so it reads as a coherent olive outline on cream. */
+:root [data-guest-kit] .btn-outline:where(:not([data-public-preview] *)),
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)) {
   border-color: var(--home-olive);
 }
+:root [data-guest-kit] .btn-outline:where(:not([data-public-preview] *)):hover,
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:where(:not([data-public-preview] *)):hover {
   background: var(--home-olive-soft);
   box-shadow: none;
@@ -1460,15 +1490,18 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-outline:where(:not([
    ⚠ Deliberately NOT fixed by remapping --white-10 itself — that step is used as a BORDER in 53
    places against 42 as a background, so remapping it would silently lighten every one of those
    hairlines. The fill moves; the line does not. Owner-approved 2026-08-03, mockup 501936c4. */
+:root [data-guest-kit] .btn-ghost:where(:not([data-public-preview] *)),
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost:where(:not([data-public-preview] *)) {
   background: var(--home-fill);
 }
+:root [data-guest-kit] .btn-ghost:where(:not([data-public-preview] *)):hover,
 html[data-user-theme="warm"] [data-coach-warm-enabled] .btn-ghost:where(:not([data-public-preview] *)):hover {
   background: var(--home-line);
 }
 
 /* Warm card hover — the global .card hover borders in platform navy; soften to a warm hairline + drop
    the cold blue glow so hovering a card on cream doesn't flash a navy edge. */
+:root [data-guest-kit] .card:where(:not([data-public-preview] *)):hover,
 html[data-user-theme="warm"] [data-coach-warm-enabled] .card:where(:not([data-public-preview] *)):hover {
   border-color: var(--home-line-strong);
   box-shadow: var(--highlight-top);
@@ -2131,6 +2164,8 @@ input[type="datetime-local"] {
 
 /* …but light on light surfaces (warm coaches portal), so the native picker + text
    render legibly on cream. Same treatment could extend to [data-color-mode="light"]. */
+:root [data-guest-kit] input[type="date"]:where(:not([data-public-preview] *)),
+:root [data-guest-kit] input[type="datetime-local"]:where(:not([data-public-preview] *)),
 html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"]:where(:not([data-public-preview] *)),
 html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"]:where(:not([data-public-preview] *)) {
   color-scheme: light;
@@ -2162,11 +2197,15 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
    the accounting DateField, which gave up and drew its own icon) because Chrome renders the glyph
    as a masked background-COLOUR — and `filter` would take the hover highlight with it. Removing a
    filter is the one safe direction. */
+:root [data-guest-kit] input[type="date"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator,
+:root [data-guest-kit] input[type="datetime-local"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator,
 html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator,
 html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator {
   filter: none;
   opacity: 0.65;
 }
+:root [data-guest-kit] input[type="date"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator:hover,
+:root [data-guest-kit] input[type="datetime-local"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator:hover,
 html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="date"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator:hover,
 html[data-user-theme="warm"] [data-coach-warm-enabled] input[type="datetime-local"]:where(:not([data-public-preview] *))::-webkit-calendar-picker-indicator:hover {
   opacity: 1;

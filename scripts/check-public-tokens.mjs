@@ -582,6 +582,13 @@ const RESTYLED_DIRS = [
   // slice 4c — the schedule: the page, timeline, brackets, generator, playoff wizard and its windows
   // (the game list and the sheet were already held by file, 4b)
   'app/[orgSlug]/admin/tournaments/schedule',
+  // slice 5 — the volunteer shells (the scorekeeper, the gate, their shared furniture; ruling R3, fixed
+  // warm) and the help guide (R4 — `components/help` is also the coaches portal's and the platform admin's;
+  // its kit layer reaches only the admin, and every one of its legacy literals is held here all the same)
+  'app/[orgSlug]/scorekeeper',
+  'app/[orgSlug]/check-in',
+  'components/volunteer',
+  'components/help',
 ];
 const RESTYLED_FILES = [
   'app/[orgSlug]/admin/org/page.tsx',

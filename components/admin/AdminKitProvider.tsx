@@ -7,14 +7,20 @@
  * ⚠ Defaults to OFF: a component rendered outside the admin layout (a test, a stray mount) gets the
  * legacy look, never a half-built kit.
  */
-import { createContext, useCallback, useContext, useMemo, type CSSProperties, type ReactNode } from 'react';
-import { adminKitAttr } from '@/lib/admin-kit-preview';
-import { KIT_BUTTON, KIT_INK } from './kit/kit-inline';
+import { createContext, useContext, useMemo, type CSSProperties, type ReactNode } from 'react';
+import { adminKitAttr, guestKitAttr } from '@/lib/admin-kit-preview';
+import CoachThemeColor from '@/components/coaches/CoachThemeColor';
+import { KIT_BUTTON, KIT_INK, kitStyler } from './kit/kit-inline';
 
 const AdminKitContext = createContext(false);
+/** WHICH marker a portal carries: the admin's pair, or — inside a volunteer shell — the guest pair that
+ *  pins the warm palette (slice 5, R3). The layout that read the switch says which; nothing else. */
+const KitMarkerContext = createContext<Readonly<Record<string, string>>>(adminKitAttr);
 
-export function AdminKitProvider({ on, children }: { on: boolean; children: ReactNode }) {
-  return <AdminKitContext.Provider value={on}>{children}</AdminKitContext.Provider>;
+/** `guest`: the volunteer shells (the scorekeeper, the gate) — the same switch, the fixed-warm marker. */
+export function AdminKitProvider({ on, guest = false, children }: { on: boolean; guest?: boolean; children: ReactNode }) {
+  const kit = <AdminKitContext.Provider value={on}>{children}</AdminKitContext.Provider>;
+  return guest ? <KitMarkerContext.Provider value={guestKitAttr}>{kit}</KitMarkerContext.Provider> : kit;
 }
 
 /** Is the admin kit on for this request? */
@@ -24,10 +30,11 @@ export function useAdminKit(): boolean {
 
 const NO_ATTR: Readonly<Record<string, string>> = {};
 
-/** The marker the admin layout puts on the shell while the switch is on, nothing while it is off — as the
+/** The marker the layout puts on the shell while the switch is on, nothing while it is off — as the
  *  context says, so nothing inside a public preview (its island turns the kit off, R2, `AdminChrome`). */
 function usePortalKitAttr(): Readonly<Record<string, string>> {
-  return useAdminKit() ? adminKitAttr : NO_ATTR;
+  const marker = useContext(KitMarkerContext);
+  return useAdminKit() ? marker : NO_ATTR;
 }
 
 /**
@@ -47,6 +54,25 @@ export function PortalKitRoot({ children }: { children: ReactNode }) {
 }
 
 /**
+ * The volunteer shells' way onto the kit (slice 5, ruling R3) — one piece, so the scorekeeper and the gate
+ * cannot drift. Their layouts read the switch on the server and pass it here. On: the kit's context in its
+ * GUEST form (a portal opened inside carries the guest pair), the marker on a box-less wrapper ABOVE the
+ * shell (the admin layout's placement, for its reason), and the status bar tinted warm to match. Off: the
+ * page exactly as it was — no provider, no element, no attribute.
+ */
+export function GuestKitRoot({ on, children }: { on: boolean; children: ReactNode }) {
+  if (!on) return <>{children}</>;
+  return (
+    <AdminKitProvider on guest>
+      <div style={{ display: 'contents' }} {...guestKitAttr}>
+        <CoachThemeColor fixed="warm" />
+        {children}
+      </div>
+    </AdminKitProvider>
+  );
+}
+
+/**
  * `kx(legacy, kit)` — an inline style that wears the kit's patch while the switch is on, and is
  * EXACTLY `legacy` (the same object) while it is off (Admin Design Continuity slice 2). For the
  * admin's hand-set inline colours, which no stylesheet can reach. Patches hold tokens only
@@ -54,7 +80,7 @@ export function PortalKitRoot({ children }: { children: ReactNode }) {
  */
 export function useKitStyle(): (legacy: CSSProperties, kit: CSSProperties) => CSSProperties {
   const on = useAdminKit();
-  return useCallback((legacy, kit) => (on ? { ...legacy, ...kit } : legacy), [on]);
+  return useMemo(() => kitStyler(on), [on]);
 }
 
 /** A page's three hand-set button styles, each wearing the kit's button while the switch is on. Pass a

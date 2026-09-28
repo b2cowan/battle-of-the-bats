@@ -80,3 +80,12 @@ export const KIT_INK = {
 
 /** A hairline in the kit's warm ink (a row rule, a section rule). */
 export const KIT_LINE = '1px solid var(--home-line)';
+
+/**
+ * `kx(legacy, kit)` for a switch state already known — `useKitStyle()` (AdminKitProvider) is this behind the
+ * context, and a SERVER component that read the switch itself (the volunteer shells' layouts, slice 5)
+ * calls it directly. Off: `legacy`, the same object. On: the patch laid over it.
+ */
+export function kitStyler(on: boolean): (legacy: CSSProperties, kit: CSSProperties) => CSSProperties {
+  return on ? (legacy, kit) => ({ ...legacy, ...kit }) : (legacy) => legacy;
+}

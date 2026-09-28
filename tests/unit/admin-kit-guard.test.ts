@@ -90,6 +90,28 @@ describe('R2 — the public-preview island restores what the kit changes', () =>
   });
 });
 
+describe('R3 — the volunteer shells wear the warm palette FIXED (slice 5)', () => {
+  // The guest marker (`guestKitAttr`: data-admin-kit + data-guest-kit) must get the warm palette whatever
+  // the device's Warm/Dark setting — the setting lives on the phone, and a gate phone is shared.
+  it('the warm block answers the guest marker, with no account attribute and above R1\'s weight', () => {
+    assert.match(css, /\n:root \[data-guest-kit\],\nhtml\[data-user-theme="warm"\] \[data-coach-warm-enabled\] \{/,
+      'the warm block\'s selector list must open with `:root [data-guest-kit]` — (0,2,0), above `[data-admin-kit]` (0,1,0)');
+  });
+
+  it('the dark gate never answers the guest marker', () => {
+    const gate = /\nhtml\[data-user-theme="dark"\] \[data-coach-warm-enabled\],\n\[data-help-surface\] \{/;
+    assert.match(css, gate, 'the dark gate moved — re-read this guard');
+    assert.doesNotMatch(css, /data-guest-kit[^{]*\{[^}]*--home-paper:\s*var\(--bg\)/, 'a Dark palette keyed on the guest marker');
+  });
+
+  it('every warm CLASS rule has its guest twin (a volunteer screen cannot come out half warm)', () => {
+    const warm = [...css.matchAll(/\nhtml\[data-user-theme="warm"\] \[data-coach-warm-enabled\] ([^{\n]+?)\s*[{,]/g)].map(m => m[1].trim());
+    const guest = new Set([...css.matchAll(/\n:root \[data-guest-kit\] ([^{\n]+?)\s*[{,]/g)].map(m => m[1].trim()));
+    const missing = warm.filter(sel => !guest.has(sel));
+    assert.deepEqual(missing, [], 'a warm class rule the volunteer shells do not get');
+  });
+});
+
 describe('F1 — the org card style stops at the admin shell', () => {
   it('every card-style variant excludes admin cards at zero specificity (and keeps public previews)', () => {
     const variants = [...css.matchAll(/\n\[data-card-style="(glass|outlined|flat)"\] \.card[^{]*\{/g)].map(m => m[0]);

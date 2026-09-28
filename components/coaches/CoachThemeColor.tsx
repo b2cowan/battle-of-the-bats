@@ -13,17 +13,22 @@
  */
 
 import { useEffect } from 'react';
-import { getEffectiveTheme, THEME_CHANGE_EVENT, THEME_COLORS } from '@/lib/user-theme';
+import { getEffectiveTheme, THEME_CHANGE_EVENT, THEME_COLORS, type UserTheme } from '@/lib/user-theme';
 
 // The root-layout default (dark); restored when leaving the coaches portal.
 const DEFAULT_THEME_COLOR = '#0a0a0f';
 
-export default function CoachThemeColor() {
+/**
+ * `fixed` — a surface whose palette does NOT follow the setting (the volunteer shells on the admin kit,
+ * Admin Design Continuity slice 5 / ruling R3: always warm) tints the bar to that theme and ignores the
+ * setting's changes. Omitted, the bar follows the setting as it always has.
+ */
+export default function CoachThemeColor({ fixed }: { fixed?: UserTheme } = {}) {
   useEffect(() => {
     const meta = document.querySelector('meta[name="theme-color"]');
     if (!meta) return;
     const apply = () => {
-      const active = getEffectiveTheme() ?? 'warm'; // warm is the default
+      const active = fixed ?? getEffectiveTheme() ?? 'warm'; // warm is the default
       meta.setAttribute('content', THEME_COLORS[active]);
     };
     apply();
@@ -32,7 +37,7 @@ export default function CoachThemeColor() {
       window.removeEventListener(THEME_CHANGE_EVENT, apply);
       meta.setAttribute('content', DEFAULT_THEME_COLOR);
     };
-  }, []);
+  }, [fixed]);
 
   return null;
 }

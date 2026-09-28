@@ -149,6 +149,44 @@ async function openScoreSheet(page) {
 }
 
 /**
+ * THREE SURFACES ADMIN DESIGN CONTINUITY SLICE 5 RESTYLES THAT NO ENTRY COULD SEE (2026-09-27) — the
+ * lesson of 4c, where the proof pictured only a screen's opening view. Each opens by the product's own
+ * names, writes nothing, and waits on the surface itself rather than a guessed delay.
+ *
+ * The volunteer shells' ACCOUNT sheet, behind the phone tab bar's third tab. The bar is drawn only at
+ * ≤640, so above that this is a no-op and the entry measures the page. Sign out is never pressed.
+ */
+async function openVolunteerAccount(page) {
+  const tab = page.locator('nav[aria-label="Volunteer sections"] button[aria-haspopup="dialog"]').first();
+  if (await tab.count() === 0 || !(await tab.isVisible())) return;
+  await tab.click();
+  await page.locator('[role="dialog"][aria-label="Account"]').waitFor({ state: 'attached', timeout: 15_000 });
+}
+
+/** The gate board's team SHEET (a bottom sheet portaled to <body>), opened from the first team's row.
+ *  Only the sheet's arrival, payment and roster buttons write, and none is pressed. */
+async function openGateTeamSheet(page) {
+  const row = page.locator('button[class*="rowMain"]:visible').first();
+  if (await row.count() === 0) return;
+  await row.click();
+  await page.locator('[role="dialog"][aria-modal="true"]').first().waitFor({ state: 'attached', timeout: 15_000 });
+}
+
+/** The "?" side panel — the help drawer a work page's header opens (lazy-loaded, portaled to <body>,
+ *  sliding in from the right). Waits until the slide has finished, so nothing is measured mid-motion. */
+async function openHelpDrawer(page) {
+  const btn = page.locator('button[aria-haspopup="dialog"][aria-label^="Help"]:visible').first();
+  if (await btn.count() === 0) return;
+  await btn.click();
+  const drawer = page.locator('aside[role="dialog"][aria-modal="true"]');
+  await drawer.waitFor({ state: 'attached', timeout: 15_000 });
+  await page.waitForFunction(() => {
+    const el = document.querySelector('aside[role="dialog"][aria-modal="true"]');
+    return !!el && el.getAnimations({ subtree: true }).every((a) => a.playState !== 'running');
+  }, null, { timeout: 5_000, polling: 100 }).catch(() => {});
+}
+
+/**
  * THE TOURNAMENT SCHEDULE'S OTHER SURFACES (Admin Design Continuity slice 4c, 2026-09-27). The page
  * opens on the round robin's filtered list — on the Championship, "No games match your filters" — so
  * `admin-t-schedule` alone pictures almost none of the schedule. The timeline, the bracket, the
@@ -1446,6 +1484,11 @@ export const SCREENS = [
   ...['', '/accounting', '/coaches', '/exports', '/families', '/house-league', '/org', '/registrations', '/rep-teams', '/tournaments']
     .map((sub) => ({ id: `admin-help${sub.replace('/', '-')}`, area: 'help', session: 'repClubOwner', ready: 'h1',
       path: (c) => `/${c.clubSlug}/admin/help${sub}` })),
+  // The "?" side panel, open (slice 5 — see `openHelpDrawer`): the drawer a work page's header opens,
+  // here from Results, one of the four tournament screens whose header carries a "?".
+  { id: 'admin-help-drawer', area: 'help', session: 'orgOwner', ready: 'h1', interact: openHelpDrawer,
+    scope: 'aside[role="dialog"][aria-modal="true"]',
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/results?tournamentId=${c.tournamentId}` },
 
   // ── The volunteer screens — an `official` on the Plus org, the clock pinned to the Championship's
   // busiest game day (the scorekeeper shows ONE day; on any other it measures its empty state). ──
@@ -1459,6 +1502,14 @@ export const SCREENS = [
   { id: 'guest-check-in', area: 'volunteer', session: 'plusOfficial', ready: 'h1',
     clock: (c) => `${c.tournamentGameDay}T12:00:00-04:00`,
     path: (c) => `/${c.tournOrgSlug}/check-in` },
+  // Slice 5's three unseen surfaces (see `openVolunteerAccount`): the Account sheet (phone widths —
+  // above 640 there is no tab bar and the entry measures the page) and the gate's team sheet.
+  { id: 'guest-scorekeeper-account', area: 'volunteer', session: 'plusOfficial', ready: 'h1',
+    clock: (c) => `${c.tournamentGameDay}T12:00:00-04:00`,
+    path: (c) => `/${c.tournOrgSlug}/scorekeeper`, interact: openVolunteerAccount, scope: '[role="dialog"][aria-label="Account"]' },
+  { id: 'guest-check-in-sheet', area: 'volunteer', session: 'plusOfficial', ready: 'h1',
+    clock: (c) => `${c.tournamentGameDay}T12:00:00-04:00`,
+    path: (c) => `/${c.tournOrgSlug}/check-in`, interact: openGateTeamSheet, scope: '[role="dialog"][aria-modal="true"]' },
 
   /**
    * ══════════════════════════════════════════════════════════════════════════════════════════

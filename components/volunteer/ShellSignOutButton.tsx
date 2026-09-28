@@ -2,6 +2,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from '@/lib/auth';
+import { useKitStyle } from '@/components/admin/AdminKitProvider';
+import { DAYOF_KIT } from './day-of-kit';
 
 /**
  * Sign-out control for the volunteer shells (scorekeeper + gate check-in) — J8-001.
@@ -17,6 +19,9 @@ import { signOut } from '@/lib/auth';
 export default function ShellSignOutButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  // Admin Design Continuity slice 5: the kit's patch while the switch is on (the shell's layout says so),
+  // today's style object untouched while it is off.
+  const kx = useKitStyle();
 
   async function handleSignOut() {
     if (loading) return;
@@ -31,7 +36,7 @@ export default function ShellSignOutButton() {
       type="button"
       onClick={handleSignOut}
       disabled={loading}
-      style={{
+      style={kx({
         fontFamily: 'var(--font-data)',
         fontSize: '0.7rem',
         textTransform: 'uppercase',
@@ -42,9 +47,11 @@ export default function ShellSignOutButton() {
         padding: 0,
         cursor: loading ? 'default' : 'pointer',
         flexShrink: 0,
-      }}
+      }, DAYOF_KIT.signOut)}
     >
-      {loading ? 'Signing out…' : 'Sign Out'}
+      {/* "Sign out" — the Account sheet's spelling. Drawn in capitals with the switch off, so the two
+          only disagreed once the kit showed them in mixed case. */}
+      {loading ? 'Signing out…' : 'Sign out'}
     </button>
   );
 }

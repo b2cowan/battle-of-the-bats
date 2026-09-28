@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-27T21:10:44.458Z",
+  "generated": "2026-09-28T01:14:18.708Z",
   "entries": {
     "admin-t-schedule-health|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
@@ -31997,13 +31997,9 @@
       "reason": null,
       "detail": "30px tall (floor 44)"
     },
-    "guest-scorekeeper|768|tap-floor|a·Check-In": {
+    "guest-scorekeeper|768|tap-floor|a·Check-in": {
       "reason": null,
       "detail": "18px tall (floor 44)"
-    },
-    "guest-scorekeeper|768|tap-floor|button·Sign Out": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
     },
     "guest-scorekeeper|768|tap-floor|button·Refresh games": {
       "reason": null,
@@ -32056,10 +32052,6 @@
     "guest-check-in|768|tap-floor|a·Scorekeeper": {
       "reason": null,
       "detail": "18px tall (floor 44)"
-    },
-    "guest-check-in|768|tap-floor|button·Sign Out": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
     },
     "guest-check-in|768|tap-floor|input·Search teams…": {
       "reason": null,
@@ -32177,9 +32169,17 @@
       "reason": null,
       "detail": "2.68:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(17, 24, 39) at 16px"
     },
+    "guest-scorekeeper|768|tap-floor|button·Sign out": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
     "guest-check-in|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on17,24,39": {
       "reason": null,
       "detail": "2.68:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(17, 24, 39) at 16px"
+    },
+    "guest-check-in|768|tap-floor|button·Sign out": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
     },
     "coach-development-session-observation|361|content-overflow|form·What did you see?With support — coach gu": {
       "reason": "The portal's `.modalFooter` bleeds sideways so its background reaches the panel's edge (-1.5rem on a desktop, -0.9rem at ≤640), and in this dialog the footer sits INSIDE the <form> — so the form's own scrollWidth exceeds its clientWidth by exactly that bleed. Deliberate, portal-wide, and contained: the panel clips it and the document's own sideways-scroll rule is clean at every width. It surfaces HERE and nowhere else only because phone stage 4 (2026-09-22) added the first sweep entry that opens a dialog at all — the same blind spot §10.2 records. Closing it properly means changing `.modalFooter`'s bleed for every sheet in the portal, which is its own piece of work.",
@@ -35909,6 +35909,374 @@
     "coach-history|768|tap-floor|a·#5 Emerson Test has sat the bench most —": {
       "reason": "The SAME pre-existing debt as the \"#1 Avery Test has sat the bench most\" entry beside it (surfaced 2026-09-16; .insightsCo rows carry a 40px min-height): the fixture's data now names a different player, so the finding's text — and this key — changed. Nothing about the callouts changed (the 2026-09-25 scoreboard work touched only the band above them). The fix stays with the touch-target project (stage 6 ask T, the owner's open call).",
       "detail": "40px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|361|tap-floor|button·Close account": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|361|control-width|button·Close account": {
+      "reason": null,
+      "detail": "38px wide (floor 44) — icon-only control"
+    },
+    "guest-scorekeeper-account|390|tap-floor|button·Close account": {
+      "reason": null,
+      "detail": "38px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|390|control-width|button·Close account": {
+      "reason": null,
+      "detail": "38px wide (floor 44) — icon-only control"
+    },
+    "guest-scorekeeper-account|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|a·Check-in": {
+      "reason": null,
+      "detail": "18px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|button·Sign out": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|button·Refresh games": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|control-width|button·Refresh games": {
+      "reason": null,
+      "detail": "42px wide (floor 44) — icon-only control"
+    },
+    "guest-scorekeeper-account|768|tap-floor|input·Day to score": {
+      "reason": null,
+      "detail": "26px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|button·Today": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|input·Search team": {
+      "reason": null,
+      "detail": "17px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|button·4To Score 4": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|button·0Review 0": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|button·1Final 1": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|tap-floor|button·6All 6": {
+      "reason": null,
+      "detail": "42px tall (floor 44)"
+    },
+    "guest-scorekeeper-account|768|contrast|span·HQ·rgba(148, 163, 184, 0.5)on17,24,39": {
+      "reason": null,
+      "detail": "2.68:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(17, 24, 39) at 16px"
+    },
+    "guest-scorekeeper-account|1440|contrast|span·HQ·rgba(148, 163, 184, 0.5)on17,24,39": {
+      "reason": null,
+      "detail": "2.68:1 (needs 4.5:1) — rgba(148, 163, 184, 0.5) on rgb(17, 24, 39) at 16px"
+    },
+    "admin-help-drawer|361|tap-floor|button·Close help": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|361|control-width|button·Close help": {
+      "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-help-drawer|361|tap-floor|a·Confirm all scores are final→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|361|tap-floor|a·Mark the tournament complete→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|361|tap-floor|a·Export results & schedule→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|361|tap-floor|a·Share the public results link→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|361|tap-floor|a·Staff Kit": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|361|tap-floor|a·Scorekeeper View": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|361|tap-floor|a·Check-in": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|361|tap-floor|a·Results & Scoring": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|361|tap-floor|a·Open the full guide": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "admin-help-drawer|361|contrast|p·Help · on this page·rgba(255, 255, 255, 0.4)on17,24,39": {
+      "reason": null,
+      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 10px"
+    },
+    "admin-help-drawer|361|contrast|span·→·rgba(255, 255, 255, 0.4)on17,24,39": {
+      "reason": null,
+      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 13px"
+    },
+    "admin-help-drawer|361|contrast|span·→·rgba(255, 255, 255, 0.4)on24,30,45": {
+      "reason": null,
+      "detail": "3.76:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(24, 30, 45) at 13px"
+    },
+    "admin-help-drawer|361|contrast|a·Staff Kit·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|361|contrast|a·Scorekeeper View·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|361|contrast|a·Check-in·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|361|contrast|a·Results & Scoring·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|390|tap-floor|button·Close help": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|390|control-width|button·Close help": {
+      "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-help-drawer|390|tap-floor|a·Confirm all scores are final→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|390|tap-floor|a·Mark the tournament complete→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|390|tap-floor|a·Export results & schedule→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|390|tap-floor|a·Share the public results link→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|390|tap-floor|a·Staff Kit": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|390|tap-floor|a·Scorekeeper View": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|390|tap-floor|a·Check-in": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|390|tap-floor|a·Results & Scoring": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|390|tap-floor|a·Open the full guide": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "admin-help-drawer|390|contrast|p·Help · on this page·rgba(255, 255, 255, 0.4)on17,24,39": {
+      "reason": null,
+      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 10px"
+    },
+    "admin-help-drawer|390|contrast|span·→·rgba(255, 255, 255, 0.4)on17,24,39": {
+      "reason": null,
+      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 13px"
+    },
+    "admin-help-drawer|390|contrast|span·→·rgba(255, 255, 255, 0.4)on24,30,45": {
+      "reason": null,
+      "detail": "3.76:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(24, 30, 45) at 13px"
+    },
+    "admin-help-drawer|390|contrast|a·Staff Kit·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|390|contrast|a·Scorekeeper View·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|390|contrast|a·Check-in·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|390|contrast|a·Results & Scoring·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|768|tap-floor|button·Close help": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|768|control-width|button·Close help": {
+      "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-help-drawer|768|tap-floor|a·Confirm all scores are final→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|768|tap-floor|a·Mark the tournament complete→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|768|tap-floor|a·Export results & schedule→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|768|tap-floor|a·Share the public results link→": {
+      "reason": null,
+      "detail": "36px tall (floor 44)"
+    },
+    "admin-help-drawer|768|tap-floor|a·Staff Kit": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|768|tap-floor|a·Scorekeeper View": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|768|tap-floor|a·Check-in": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|768|tap-floor|a·Results & Scoring": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-help-drawer|768|tap-floor|a·Open the full guide": {
+      "reason": null,
+      "detail": "22px tall (floor 44)"
+    },
+    "admin-help-drawer|768|contrast|p·Help · on this page·rgba(255, 255, 255, 0.4)on17,24,39": {
+      "reason": null,
+      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 10px"
+    },
+    "admin-help-drawer|768|contrast|span·→·rgba(255, 255, 255, 0.4)on24,30,45": {
+      "reason": null,
+      "detail": "3.76:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(24, 30, 45) at 13px"
+    },
+    "admin-help-drawer|768|contrast|span·→·rgba(255, 255, 255, 0.4)on17,24,39": {
+      "reason": null,
+      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 13px"
+    },
+    "admin-help-drawer|768|contrast|a·Staff Kit·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|768|contrast|a·Scorekeeper View·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|768|contrast|a·Check-in·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|768|contrast|a·Results & Scoring·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|1440|contrast|p·Help · on this page·rgba(255, 255, 255, 0.4)on17,24,39": {
+      "reason": null,
+      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 10px"
+    },
+    "admin-help-drawer|1440|contrast|span·→·rgba(255, 255, 255, 0.4)on17,24,39": {
+      "reason": null,
+      "detail": "3.81:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(17, 24, 39) at 13px"
+    },
+    "admin-help-drawer|1440|contrast|span·→·rgba(255, 255, 255, 0.4)on24,30,45": {
+      "reason": null,
+      "detail": "3.76:1 (needs 4.5:1) — rgba(255, 255, 255, 0.4) on rgb(24, 30, 45) at 13px"
+    },
+    "admin-help-drawer|1440|contrast|a·Staff Kit·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|1440|contrast|a·Scorekeeper View·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|1440|contrast|a·Check-in·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "admin-help-drawer|1440|contrast|a·Results & Scoring·rgb(59, 130, 246)on20,32,50": {
+      "reason": null,
+      "detail": "4.43:1 (needs 4.5:1) — rgb(59, 130, 246) on rgb(20, 32, 50) at 12px"
+    },
+    "guest-check-in-sheet|361|tap-floor|button·Close": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "guest-check-in-sheet|361|control-width|button·Close": {
+      "reason": null,
+      "detail": "32px wide (floor 44) — icon-only control"
+    },
+    "guest-check-in-sheet|361|tap-floor|button·Mark paid · $475": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "guest-check-in-sheet|361|contrast|button·No-show·rgb(239, 68, 68)on34,27,41": {
+      "reason": null,
+      "detail": "4.41:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(34, 27, 41) at 13px"
+    },
+    "guest-check-in-sheet|390|tap-floor|button·Close": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "guest-check-in-sheet|390|control-width|button·Close": {
+      "reason": null,
+      "detail": "32px wide (floor 44) — icon-only control"
+    },
+    "guest-check-in-sheet|390|tap-floor|button·Mark paid · $475": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "guest-check-in-sheet|390|contrast|button·No-show·rgb(239, 68, 68)on34,27,41": {
+      "reason": null,
+      "detail": "4.41:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(34, 27, 41) at 13px"
+    },
+    "guest-check-in-sheet|768|tap-floor|button·Close": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "guest-check-in-sheet|768|control-width|button·Close": {
+      "reason": null,
+      "detail": "32px wide (floor 44) — icon-only control"
+    },
+    "guest-check-in-sheet|768|tap-floor|button·Mark paid · $475": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "guest-check-in-sheet|768|contrast|button·No-show·rgb(239, 68, 68)on34,27,41": {
+      "reason": null,
+      "detail": "4.41:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(34, 27, 41) at 13px"
+    },
+    "guest-check-in-sheet|1440|contrast|button·No-show·rgb(239, 68, 68)on34,27,41": {
+      "reason": null,
+      "detail": "4.41:1 (needs 4.5:1) — rgb(239, 68, 68) on rgb(34, 27, 41) at 13px"
     }
   }
 }

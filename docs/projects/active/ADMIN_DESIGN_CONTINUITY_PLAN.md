@@ -18,8 +18,9 @@
 > sweep done; /simplify + /review done (owner: "Go ahead with simplify, review and commit"); **COMMITTED
 > `9d1b1670` 2026-09-27**. **Slice 1's open questions RULED 2026-09-27** (the shared phone bar's Dark
 > labels and its case, Warm's card shadows — fixed in BOTH portals, live coaches included; the preview's
-> Warm tab bar → slice 6) — results in §3a after 4c's; /review done; **COMMITTED `dca4ac25` 2026-09-27**. Slice 5 (scorekeeper, official, gate; the help
-> guide) is next.
+> Warm tab bar → slice 6) — results in §3a after 4c's; /review done; **COMMITTED `dca4ac25` 2026-09-27**.
+> **Slice 5 (the volunteer screens in fixed warm — R3; the admin's help guide following the theme — R4)
+> BUILT 2026-09-27** — results in §3a after slice 1's open questions. Slice 6 (prove, walk, release) is next.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -181,8 +182,8 @@ foundation's release day.
 | 4a | Tournaments — **setup and records, plus the area's shared parts** (split recorded below) | **BUILT 2026-09-27** — results below; /simplify + /review done; identity 58/58 + both-theme sweep done; COMMITTED `8e76362f` 2026-09-27; walked at slice 6 |
 | 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; COMMITTED `07808a02` 2026-09-27; walked at slice 6 |
 | 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | **BUILT 2026-09-27** — results below; identity 28/28 + both-theme sweep done; /simplify + /review done; COMMITTED `9d1b1670` 2026-09-27; walked at slice 6 |
-| 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | not started |
-| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed, What's New, `/docs`, `/release`) | not started |
+| 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | **BUILT 2026-09-27** — results below; walked at slice 6 |
+| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | not started |
 
 **Slice 4 — the split (2026-09-27, written before starting, as the build prompt requires).** The
 tournament area measured at the start of slice 4 (same scope as the inventory's footnote 2): **54,112
@@ -1158,6 +1159,159 @@ stylesheet and the warm block, so they reach live coaches with the next promote.
   (team hub, team switch sheet, notifications, help; both themes): no faint bar label anywhere; Dark's "new"
   items are pre-existing card and badge debt. Aside, not this diff: `--shadow-md` (ChatPanel ×5) is defined
   nowhere, so those panels have no shadow in either theme. **COMMITTED `dca4ac25` 2026-09-27.**
+
+**Slice 5 — results (2026-09-27).** One quiet window on the owner's word ("Go — it's quiet"), covering the
+coverage entries, the "before" set, the build, the "after" set and the switch-on sweeps. The dev server was not
+restarted (healthy throughout: no crashed page worker, 2.8 → ~5 GB, ≥5.5 GB free).
+- **Pushed back at the start, and recorded:**
+  1. **R3's stated reason is wrong in the code — volunteers DO have accounts** (both shells send an unsigned
+     visitor to the login page; `official` is a role on an account). The ruling holds for a better reason: the
+     Warm/Dark choice lives on the DEVICE (`fl_user_theme`, read pre-paint), a gate phone is shared, so the last
+     person to hold it would decide what the next volunteer sees; and a light screen reads better in the sun. The
+     consequence to know: an organizer who chose Dark goes from a Dark admin to a warm scorekeeper — "fixed"
+     working as ruled.
+  2. **The admin's help guide was never pinned dark** — the only `[data-help-surface]` is the coaches portal's
+     focused help (`CoachesChrome`). The admin's ten Help pages were dark only because the admin was, so since
+     slice 1 they had been rendering in Warm with the switch on, undesigned. R4 in the admin was a styling pass
+     plus the "?" drawer, which portals to `<body>` — outside the admin marker — and stayed legacy dark with the
+     switch on (4c's bottom-sheet trap). **For the release slice:** deleting the coaches pin alone will NOT make
+     the coaches portal's "?" drawer follow the theme — it portals outside the coach marker too (the org coaches
+     layout's marker sits above the providers, but a portal to `<body>` escapes every ancestor); it needs the
+     coach shell's own portal root. Recorded on slice 6's row.
+  3. **Specimen 7 differences not copied** (restyle, not redesign): the drawn × and single full-width Finalize —
+     today's sheet has Cancel beside Finalize and no ×, and the backdrop never closes it (owner, 2026-08-08: a
+     stray tap must not throw away a half-typed score); it already covers the nav, dims, and has an explicit way
+     out (Cancel, Escape). The drawn eyebrow "Scorekeeper · <tournament>" — a day can span several tournaments,
+     and the cards name the tournament then; the eyebrow stays "Scorekeeper".
+- **Coverage first.** Three surfaces the proof could not see were added to `scripts/layout-screens.mjs` before the
+  "before" set (4c's lesson): the volunteer **Account sheet** (`guest-scorekeeper-account`, phone widths — no tab
+  bar above 640), the **gate's team sheet** (`guest-check-in-sheet`, the bottom sheet), and the **"?" side panel
+  open** (`admin-help-drawer`, from Results' header; it waits until the slide has finished). Each opens by the
+  product's own names and writes nothing. Their switch-off baseline was seeded (additive: 9,068 entries).
+- **THE GUEST MARKER (R3 — the switch reaches the volunteer shells).** `guestKitAttr` = `data-admin-kit` +
+  `data-guest-kit` — deliberately NOT `data-coach-warm-enabled`, the half the dark gate keys on. Both volunteer
+  layouts read the same cookie on the server; `withKit()` wraps the shell AND the two early screens (the
+  subscription-ended wall, the "Access Denied" refusal); with the switch off it adds no element and no attribute
+  (only the context provider). `app/globals.css`: the warm block's selector list opens with `:root
+  [data-guest-kit]` — (0,2,0), above R1's `[data-admin-kit]` (0,1,0) on the same element, theme first as for the
+  admin — and every warm CLASS rule (buttons, card hover, native select and date controls) gained its guest twin
+  (14 rules name the marker). `AdminKitProvider` gained `guest` → a marker context, so `PortalKitRoot` carries the
+  guest pair in a volunteer shell (the gate's team sheet). `kitStyler(on)` (`kit-inline.ts`) is `useKitStyle()`'s
+  server twin (the hook now uses it); the header patches live once in `components/volunteer/day-of-kit.ts` so the
+  twins cannot drift. The status-bar tint is fixed warm (`CoachThemeColor fixed="warm"`).
+  **Guarded** (`admin-kit-switch-guard`: only the two volunteer layouts + the provider may name `guestKitAttr`,
+  nobody writes `data-guest-kit` by hand, each layout decides from the cookie and renders bare when off, the
+  guest pair never carries the account-theme half, public layouts never carry it; `admin-kit-guard`'s new R3
+  block: the warm block answers the guest marker, the dark gate never does, every warm class rule has its guest
+  twin) — **mutation-proven**: removing the pin, dropping one button twin, or giving the pair the account half
+  each fails the guards.
+- **Restyled end to end — the volunteer screens** (ADC specimen 7, fixed warm): the header strip (the coach
+  strip: a white bar with a hairline; FIELD ink / LOGIC olive / HQ quiet), the scorekeeper's eyebrow and title,
+  the refresh / Today / Filters buttons and the fields, the notices, the loading and empty states, the game cards
+  (the kit's door card; the game to score next wears an olive stripe), the status chips, the matchup, the score
+  sheet (a white window over the warm scrim; the kit's fields; the consequence note), the four filter buckets,
+  the tab bar (the portal's bar), the Account sheet; the gate page's title, picker, messages and banner. **The
+  gate's board is the admin's check-in board** — 4b's kit rules key on `[data-admin-kit]`, which the guest
+  marker carries, so the gate got game day's restyle as it stands, in warm.
+- **Restyled end to end — the help guide as the admin shows it** (ADC specimen 6; one Sonnet builder against
+  `.probe/5/HELP_BRIEF.md`, its whole diff reviewed): callouts, the "?" hints and their popover (the hard navy
+  literal → the kit's popover), field hints, the header "?" button, the drawer (now inside `PortalKitRoot`), the
+  guide pages (contents rail, search, header and trail, article, pager, landing page, FAQ, search results, empty
+  and loading states), the Help hub, the scannable blocks, screenshots, the export table's head. Every rule is
+  `:global([data-admin-kit]) .x:where(:not([data-public-preview] *))` — two PUBLIC pages (a team's tryout page,
+  the league registration form) render help parts. Appended after another session's uncommitted
+  `.helpButtonIconOnly` hunk (the coaches portal's bare "?"), which is left untouched and unstyled.
+- **Decided at build time / not as drawn (flag to the owner):**
+  1. The chosen filter bucket is the kit's **olive** chosen state, not the lime drawn — lime is the one primary
+     per view (the sheet's Finalize), and 4a/4c made every chosen filter olive.
+  2. **Status words kept as written** — "To Score", "Pending Review", "Finalize Score". "Pending Review" is the
+     product's name for that status across house league, tryouts and a dozen help articles; the specimen's
+     sentence case would be a second spelling of a product term (the one-spelling ruling).
+  3. **Two captions that already disagreed with the product's one spelling**, fixed because the kit is the first
+     place they show in mixed case (drawn in capitals switch-off, so no pixel moves): the desktop header's
+     "Sign Out" → "Sign out" (the Account sheet's), "Check-In →" → "Check-in →" (the gate's own title). The
+     sweep baseline keys a finding by an element's words, so the Sign out's three tap-floor entries were re-keyed
+     switch-off (3 removed, 3 added, the same finding).
+  4. A pending or finalized game card is a **plain card**; its chip carries the state (legacy washes the card
+     amber / blue) — the portal's tinted-panel retirement, as drawn. The next game's stripe keeps its 4px width.
+  5. **"Up next"** = the olive accent chip (drawn), its edge inset so the chip keeps its size; "Finalized" green;
+     "Pending Review" caution.
+  6. **The score numerals** in the body face, as drawn; scores on the cards stay the console face (readouts).
+  7. **The filter buckets 40 → 46px on a phone** (drawn; under the 44 floor today); the bottom budget grows with
+     them (46 → 58px — the legacy budget already under-counted the bar by 6px).
+  8. "Becomes final immediately": the lime tint → the olive accent (4b's lime-tint rule); "needs review" keeps
+     the caution tint.
+  9. **The public bar's 72px reservation comes off the volunteer shells** (`body > main:has([data-guest-kit])`,
+     ≤900px): under their own bars it was empty page — a near-black band below the paper at tablet width, a darker
+     strip behind the phone's translucent bars. There in today's dark too, where it barely shows.
+  10. Help: every guide-accent blue (the `#4fa3e0` literal and the `--info` used as the guide's accent) → olive;
+     only a callout's own "info" tone keeps the info blue. A tip is olive, not green. The landing H1 and the
+     drawer title move from lime to ink (the article H1 already was). One "door" hover for every bordered
+     link-row. The screenshot lightbox stays a dark stage in both themes (review fix: the builder had lightened
+     its backdrop while its Close stayed white).
+- **Identity (switch off):** "before" 2026-09-28T00:1xZ–00:57Z, 206 pictures (every admin screen + the volunteer
+  screens + the three new entries), three passes on the untouched tree. ⚠ HEAD moved mid-capture (`161aa50a` →
+  `5f3ee206`): another session COMMITTED work already in the tree (`dca4ac25` + its truth-up) — no byte changed.
+  "after" 2026-09-28T01:00–01:32Z, three passes after the build — **206 of 206 pixel-identical** (88 + 46 + 72), no mask added.
+- **Fixed warm, proven:** every volunteer surface × 390 / 768 / 1440, switch on, a phone set to **Warm vs a phone
+  set to Dark: 15 of 15 pixel-identical** (`.probe/5/shots.mjs --compare`).
+- **Switch-on sweep, the volunteer screens** (5 screens × 4 widths, against the switch-off dark baseline): Warm
+  and Dark **identical — 130 findings each, same keys, same values**; contrast **14 → 0**, tap floor 128 → 116
+  (the 46px buckets), control width 14 → 14; no screen × rule group worse.
+- **Switch-on sweep, the help guide and the screens that carry help parts:** the ten Help pages and the "?" panel open (11 × 4 widths): **contrast 205 → 0 in Warm AND in Dark**, tap floor 195 → 195, control width 3 → 3, no group worse, no new finding. The 22 screens that carry help parts (callouts, "?" hints, field hints, the header "?" — Accounting, House league, Organization, Rep Teams, the tournament screens and the generator): contrast **1,279 → 0 Warm / 60 Dark** — all 60 on Rep Teams, the coaches portal's Upcoming Bills panel (`components/accounting`, slice 3's recorded Dark debt, not a help part); tap floor 729 → 645, control width 140 → 132, overflow 32 → 30, type ladder 20 → 16. Two groups "worse" and 24 / 84 "new" keys, **every one re-swept switch-off and attributed**: fixture data added since the baseline was recorded (a tryout applicant — "Pending Review1", "Extend Offer", the table's type-ladder rows; a deletable tournament — "Delete this tournament"; Rep Teams' allocation count and the bills' dates), and the Results header "?" whose NAME follows 4a's sentence-case title ("Help: Results & scoring" — the same 32px button is in the baseline as "Results & Scoring"). **No help part carries a finding in either theme.**
+- **Gates:** strict kit check 2,661 rules, no literal; the restyled ratchet gained the four folders
+  (`app/[orgSlug]/scorekeeper`, `app/[orgSlug]/check-in`, `components/volunteer`, `components/help`), seeded from
+  their COMMITTED text (7 files, 164 literals, additive; 898 held); guards 19 / 19; typecheck clean (after `next
+  typegen`); lint clean on every touched file; `verify:changed` green (unit 5,046 / 5,046; its one lint warning is another session's `lib/email.ts`).
+- **`/simplify` (4 lenses — reuse, simplification, efficiency, altitude; owner: "go ahead with simplify,
+  review, and commit"):** fixed —
+  - **The volunteer layouts' entry onto the kit is one piece**, `GuestKitRoot` (AdminKitProvider): the two
+    twins had the same wrapper copied (3 reviewers). It renders its children bare with the switch off (no
+    provider, no element, no attribute) and is the ONLY file that may name `guestKitAttr`; the guard pins its
+    switch-off shape and that each layout renders all three returns through it.
+  - **The day-of header patches reuse the kit's own recipes** (`KIT_SURFACE.card`, `KIT_INK.eyebrow` /
+    `.primary` / `.secondary` / `.tertiary` / `.accent`) instead of restating them.
+  - **The scorekeeper's `--sk-*` remap is gone**: every rule that reads an `--sk-*` token is restated with the
+    kit's token (the program's one convention), so the remap could never be seen. (The altitude lens argued
+    the reverse — keep the remap, drop the per-rule colours; declined for consistency with slices 1–4c and
+    because the release slice folds per-rule layers directly.)
+  - A release-slice note on the volunteer foot rule: re-anchor it on the shell when the marker goes.
+  - Declined: splitting the kit module out of the lazily-loaded help drawer's chunk (tiny; the bottom sheet
+    already carries it since 4c; only the admin and the coaches portal open the drawer); collapsing the
+    warm class rules' guest twins into one `:is()` selector (it would rewrite rules the live coaches portal
+    uses — the release slice's call); moving the cookie read after the availability check (negligible).
+  - Re-proven after /simplify: identity 10 / 10 (the volunteer area), fixed warm 10 / 10, guards 19 / 19,
+    typecheck clean, token gate green.
+- **`/review` (high-risk tier — a shared library module, the site stylesheet, two auth-bearing server
+  layouts; 4 lenses: switch-off identity + correctness, blast radius, security + switch gating, switch-on
+  CSS correctness):** 4 findings, 4 confirmed and fixed, 1 advisory refuted:
+  - **(High → fixed) The "?" hint's caret when the hint opens BELOW its trigger** (`HelpTooltip` near the top of
+    the screen): the kit's plain caret rule weighed the same as the legacy `.tooltipBottom` reset and came
+    later, so both edges painted — a bow-tie. The kit's flipped rule now restates the transparent top edge.
+  - **(Low → fixed) "Check-in →" kept a "Check-In" accessible name** — the label now matches (the sweep keys
+    that element by its label, so its two baseline entries were re-keyed in place; switch-off check: no new
+    finding).
+  - **(Medium, doc → fixed) Two comments made untrue by this slice**: the check-in board's kit layer "can never
+    reach the gate" (it now does, on purpose) and the R1 block's "only the admin shell carries the marker"
+    (the volunteer shells do too; R1's platform colours reaching them is the ruling working — they are
+    platform chrome).
+  - Refuted (advisory): "a portal opened inside a volunteer shell would carry the guest marker" — that is the
+    intent (fixed warm).
+  - Verified clean: every auth / org / suspension / capability check in both volunteer layouts runs in the same
+    order under the same conditions; the switch is fail-closed and single-sourced; the guards catch a
+    hand-written or unconditional guest marker; the new sweep entries write nothing; the baselines only add
+    (plus the documented re-keys — the layout baseline was restored to its committed entry ORDER so the diff
+    is 378 / 10 lines, not 15,000); every help kit rule excludes public previews on its subject; the coaches
+    portal's drawer, the bottom sheet's two public users and the chat panels are unchanged.
+  - Gates after the fixes: guards 19 / 19, token gate green (2,660 kit rules), lint clean. `check:layout
+    --changed` not run (the site stylesheet widens it to every screen) — the identity checks and the
+    both-theme sweeps stand in.
+- **Found, written down, not fixed:**
+  1. **The install banner covers the phone's filter row** on the volunteer shells — it sits above the PUBLIC
+     bar's height, not `--dayof-bottom-h`; switch off and on alike.
+  2. The desktop Sign out and the hop link are ~15px tall (tap floor) — pre-existing.
+  3. The coaches portal's "?" drawer needs its own portal root at release (above).
+  4. The install banner itself is the shared one (tokens only) — legible on the kit, not restyled.
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as
