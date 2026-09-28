@@ -33,8 +33,16 @@
 > restyled Plan & billing for every plan (the page every tournament organizer bills through), gave the club
 > windows the coaches portal's keyboard and Back behaviour, and fixed two Dark reading problems and the phone
 > bar's current tab in both portals (coaches get those with the next release). Committed `c72afdeb` 2026-09-28
-> after its cleanup and review; the owner's walk (§245, eight short walks) is next; the release is its own
-> session after it.
+> after its cleanup and review. **The owner's walk (§245, eight short walks) PASSED 2026-09-28**, all eight, nothing
+> flagged.
+> **RELEASED (2026-09-28, job 273):** the new look is live for every organization. The admin, the
+> scorekeeper and gate, and the admin's help wear the coaches portal's look; Warm is the default and Dark is
+> one choice away in Account → Appearance; the organization's colours stay on its public pages. The coaches
+> portal's help now follows Warm / Dark too. Club Stage 1's screens went live the same day, for clubs the
+> platform provisions only (Club is not on sale), with their help published. What's New tells customers all of
+> it. **Rollback, while it stands:** undo one change and release again, because the old look is still in the
+> code. **Next, after at least one tournament weekend with no rollback call:** the invisible cleanup (Part B),
+> one area at a time, proven to change no pixel customers see.
 
 ## What it is
 One design system and one theme choice across every working screen in FieldLogicHQ. The club admin,

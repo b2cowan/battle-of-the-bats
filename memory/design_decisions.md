@@ -70,7 +70,8 @@ warm, one screen at a time.
 **The ruling (R0–R5, all accepted as recommended).**
 - **R0** Every working screen an organization's people use follows the ONE account theme (warm default,
   dark opt-in — the 2026-07-21 TH-1 rider's single preference) and the coaches portal's kit. This reopens
-  TH-1's **"admin deferred"** clause.
+  TH-1's **"admin deferred"** clause. **CLOSED — RELEASED to production 2026-09-28** (`74f45113`, promoted to production 2026-09-28 (Amplify job 273)): the admin, the
+  scorekeeper and gate (fixed Warm) and the help guide follow the one account theme.
 - **R1** The organization's colour leaves the admin chrome (today ~76 reads of the org's `--primary*` /
   `--border` / `--glow*` in admin CSS); it stays on public pages. This completes M2 rather than reversing it:
   the admin is platform chrome.

@@ -26,7 +26,11 @@
 > plan, the club windows onto the portal's dialog floor, Q5 "colour it", then the two shared Dark fixes "fix both,
 > both portals"; switch-on contrast in the working screens 0 Warm / 0 Dark; identity 206/206; **walk §245 published
 > on the hub's QA tab**; /simplify + /review 2026-09-28 (one Back defect on Settings found and fixed); owner
-> "commit" → **COMMITTED `c72afdeb` 2026-09-28**, ahead of the walk. The release is its own session, after the walk.
+> "commit" → **COMMITTED `c72afdeb` 2026-09-28**, ahead of the walk. **Walk §245 PASSED 2026-09-28.**
+> **RELEASED — Part A, the flip: `74f45113`, promoted to production 2026-09-28 (Amplify job 273).** The admin, the scorekeeper and gate and the admin's help wear
+> the kit in every build; coaches help follows the theme; Club Stage 1's screens live (Club not on sale). The
+> legacy code stays as dead code until **Part B (the cleanup)**, which starts only after the owner confirms a
+> settling tournament weekend; until then the rollback is one revert (runbook in §3a "Release — Part A").
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -189,7 +193,7 @@ foundation's release day.
 | 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; COMMITTED `07808a02` 2026-09-27; walked at slice 6 |
 | 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | **BUILT 2026-09-27** — results below; identity 28/28 + both-theme sweep done; /simplify + /review done; COMMITTED `9d1b1670` 2026-09-27; walked at slice 6 |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | **BUILT 2026-09-27** — results below; /simplify + /review done; COMMITTED `530d87e9` 2026-09-27; walked at slice 6 |
-| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | **PROVE + WALK COMMITTED `c72afdeb` 2026-09-28** (after /simplify + /review; owner "commit", ahead of the walk) — results below ("Slice 6 — prove and walk"); walk **§245** published, the owner's walk owed; **the RELEASE is its own session after the walk** (its list is in the results) |
+| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | **PROVE + WALK COMMITTED `c72afdeb` 2026-09-28** (after /simplify + /review; owner "commit", ahead of the walk) — results below ("Slice 6 — prove and walk"); walk **§245** PASSED 2026-09-28; **RELEASED (Part A) — `74f45113`, promoted to production 2026-09-28 (Amplify job 273)**; **Part B (the cleanup) next**, after a settling weekend |
 
 **Slice 4 — the split (2026-09-27, written before starting, as the build prompt requires).** The
 tournament area measured at the start of slice 4 (same scope as the inventory's footnote 2): **54,112
@@ -1547,7 +1551,84 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   colours; live coaches' bar readable in both themes, mixed case, current tab olive (Warm) / white (Dark), and Warm's
   soft card shadow (Q3).
   **§245 ✅ PASSED 2026-09-28 — all eight walks, 96 ticks, zero flags, every build-time call kept.** Next: the release
-  session. Separate and still owed: the W4 finding's re-check (ledger §245; its fix is on dev, uncommitted).
+  session. The W4 finding's re-check: PASSED 28/28 in the release session (below).
+- **RELEASE — Part A, the flip (2026-09-28, this session; prompt `ADMIN_DESIGN_CONTINUITY_RELEASE_PROMPT.md`).**
+  Owner at kickoff: **split A/B as recommended**; **date on data** — a read-only production count
+  (`.probe/release/prod-games-next7.mjs`) found 14 games in the next 7 days, all on the public demo club, none
+  a customer's → released the same day; **quiet window granted** ("it's yours"); **straight to master** (no
+  staging look). Preconditions: the §245 truth-up committed `3aca7b63`; the W4 fix + the closed-plan wording
+  were already committed by another session (`6978f978`, `f94fa395`) — **the W4 re-check PASSED 28/28**
+  (`.probe/release/w4-recheck.mjs`: the Coaches Portal card's door is a link to the coach sign-up and reads
+  "Start your Coaches Portal", no "Coming soon" on it, League Plus "Not open yet", Club "Coming soon", no
+  "early access" anywhere — today's look and the kit, 390 + 1440); walk 8's Club · Association sandbox
+  subscription cancelled by this session on the owner's word ("you do it"; test key, `livemode: false`),
+  the test club rebuilt (`seed-club-fixture --reset`: plan `club`, platform colours, suspension cleared);
+  the post-walk admin changes (the push banner's kit band, the bare "?" glyph, the Club trial line, the
+  closed-plan notes on the admin home + the club Overview) are covered by the full both-theme sweep below.
+  **The tournament demo on the kit** (`.probe/release/demo-check.mjs`, both themes × 390 + 1440, six stops:
+  the tour's four + the dock's registrations and summary): every stop renders where sent, the banner /
+  moments strip / tour rail sit above the kit's strip and event header and overlap nothing fixed, the
+  public stops carry no kit (R2), no sideways scroll — **152 / 160**, the 8 misses attributed: (a) the
+  public pages' `h1` at top 0 on a phone is a visually-hidden title, not the kit's (public pages carry no
+  kit); (b) **tour step 3's anchor `[data-sandbox-tour="now-playing"]` did not render at ~2 p.m.** — the
+  dashboard's Now playing strip appears only while a demo game is in progress; on production at ~4:30 p.m. the
+  same day it was there (a live game, on the kit — `.probe/release/prod-kit-check.mjs`). So step 3 has nothing
+  to point at earlier in the demo's day, switch on or off. **Pre-existing, not the release's; for `/demos`.** Screenshots `.probe/release/demo/`.
+  **Built (the flip):** `lib/admin-kit-preview.ts` keeps only the two marker pairs (cookie, staging check and
+  reader gone); `app/api/dev/admin-kit` deleted; the admin layout always renders `<AdminKitProvider on>` +
+  the marker; both volunteer layouts `const guestKit = true` (Part B folds `GuestKitRoot`/`kx`'s off
+  branches); `admin-kit-switch-guard.test.ts` rewritten — the marker on all three shells in every build, no
+  cookie/door/reader anywhere in app/components/lib/scripts, one place spreads each marker, R2. `amplify.yml`'s
+  `APP_BUILD_BRANCH` left alone (nothing reads it now — Part B removes it). **Coaches help follows the
+  theme:** the `[data-help-surface]` pin and its `--dk-*` snapshots deleted from `globals.css`; the coaches
+  "?" drawer carries the coach marker on its own portal root (`HelpDrawerProvider warm`, from both coach
+  layouts); two drawer labels failed in Dark (white-40 / white-35, 3.8 / 3.2:1 on the card — the same two the
+  admin's kit rules fix) → a `[data-coach-warm-enabled]`-keyed twin with the kit's value (admin unchanged);
+  new sweep entry `coach-help-drawer`; coach help contrast **0 Warm / 0 Dark**. **Appearance** names the
+  admin ("Applies to your FieldLogicHQ app, your coaches workspace and your organization's admin. Public pages
+  always show each organization's own colours."). **Help (`/docs`, one unit):** the "Plan & billing" rename
+  (org Roles, the Tournament Plus link, Settings & access, the tournament Settings card title, keywords keeping
+  "subscription"); Club Stage 1's seven drafts published (NEW `recipe-set-up-your-club`, NEW
+  `club-plan-and-billing`, rewritten `roles` with the "What each role can open" table, `recipe-invite-member`,
+  `recipe-fix-member-access`, the audit-log part of `notifications-audit`, `subscription-ends`, `settings`),
+  indexed on both help hubs (the club rows only for a Club plan); the appearance FAQ names the admin.
+  **What's New** (/marketing drafted, owner approved, one correction — scorekeeper/gate stay Warm): four lines
+  merged into today's entry + its title names the new look (a second same-day promote). **Tooling:** the
+  sweep's `--admin-kit` now fails loudly (retired, not inert); `kitOnly` entries ordinary; the identity tool
+  has `--theme=warm|dark` and one picture set per theme (`.admin-identity/<set>-<theme>/`), re-pointed at
+  Part B. **`ADMIN_DARK_DEBT`** re-measured on `KIT_DARK_GROUNDS` (the console's six grounds retired) and
+  ratcheted: white-45 4.16→4.35, white-40 3.59→3.73, white-35 3.11→3.15, danger 3.81→4.39, info 3.90→4.49,
+  blueprint-blue 1.39→1.59 (white-30/25/20 unchanged).
+  **/review (standard tier, three lenses — the flip's reach · help words vs the built screens · gates and
+  tooling):** flip + tooling **no findings**; help **5 confirmed, fixed** — three leftover "Billing" place
+  names → "Plan & billing", "both ask you to confirm" (only Suspend asks; Reinstate is immediate), the audit
+  log "resent" (not logged) — plus three of the same kind found verifying them (resend "via the mail icon" →
+  Manage → Resend invite; "Pending" → "Invited" twice). Gate: verify:changed all green, unit 5,093/5,093,
+  typecheck, lint; check:layout skipped in /review on purpose (the full sweep below).
+  **The sweep, re-baselined in the new look** (`.probe/release/sweep-seq.sh`, one runner, a fresh sign-in
+  per pass): `--init` in the default theme (Warm) over every admin + guest entry and `coach-help` +
+  `coach-help-drawer`, in three area groups — **448 screen-widths, none unmeasured**; the baseline goes **9,068 →
+  4,146 entries** (5,072 of today's dark-console findings gone, 150 new-look ones recorded — mostly Club Stage 1's
+  sub-floor tap targets, slice 6's attribution; only admin / guest / coach-help screens touched), committed key
+  order restored (`.probe/release/baseline-reorder.cjs`). Contrast: **Warm 34, Dark 34 — every one inside the
+  tournament public previews** (`admin-t-preview*`, the public pages' own, R2); **0 / 0 on the working
+  screens.** A Dark `--dump` of the same set (the baseline has no theme) tripped the memory floor twice after
+  ~45 min of sweeping → a full restart, passes 2–3 re-run clean. Marketing entries against the committed
+  baseline: **no new finding** (5 `mkt-home` entries no longer reproduce — `f94fa395`'s homepage words, not the
+  release; left for that owner). Found mid-way and fixed: `seed-club-fixture --reset` deletes the UAT coach
+  fixture that lives in the rep club → `seed-uat-coach-fixture.mjs` re-run before the sweep.
+  **Part B's reference, captured** (`.probe/release/id-pass.sh`, a full dev restart before each of six passes):
+  `.admin-identity/before-warm/` **220** and `before-dark/` **220** (110 screens × phone + desktop), none
+  failed, none unsettled; memory low-water 2.0–3.0 GB. Another session committed `d3b0c119` (a coaches money
+  form's grid, `align-content: start`) at 15:17, before every picture; each set's manifest names its HEAD.
+  **⚠ Part B must run on this machine** (the pictures are local).
+  **ROLLBACK RUNBOOK (valid until Part B starts):** revert `74f45113` — the flip commit, **never** `6978f978`
+  (the W4 billing fix) — commit, push `dev`, and `/release promote`. The legacy code is still in the tree, so
+  the revert restores today's admin exactly; note it also reverts the help and What's New lines that describe the
+  new look (they ride the same commit on purpose), and it brings the dev switch back, so Club Stage 1's screens
+  return behind it (off on production). The old layout baseline comes back with it.
+  **RELEASED: `74f45113`, promoted to production 2026-09-28 (Amplify job 273).**
+
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as
