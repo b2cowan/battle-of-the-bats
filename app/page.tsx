@@ -6,7 +6,7 @@ import AnimateIn from '@/components/AnimateIn';
 import PricingSection from '@/components/PricingSection';
 import { getPlanGatingMap, type PlanGatingMap } from '@/lib/plan-gating-server';
 import type { OrgPlan } from '@/lib/types';
-import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL, gatedPlanTag, closedProgramPlansSentence } from '@/lib/plan-config';
 import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import { createClient } from '@/lib/supabase-server';
 import { getAuthDestination } from '@/lib/auth-destination';
@@ -194,8 +194,9 @@ type Persona = {
   href: string;
 };
 
-/** The one line every not-yet-purchasable card shows. */
-const GATED_BADGE = 'Coming soon · express interest';
+/** The one line every not-yet-purchasable card shows — its plan's own tag (League Plus is parked, so
+ *  "Not open yet"; everything else "Coming soon": BUSINESS_DECISIONS.md 2026-09-28). */
+const gatedBadge = (planKey: OrgPlan) => `${gatedPlanTag(planKey)} · express interest`;
 
 /**
  * Badge copy is /marketing's (2026-08-07) and deliberately carries NO price and NO promo date — the
@@ -253,7 +254,7 @@ const PERSONAS: Persona[] = [
 function resolvePersonas(gating: PlanGatingMap) {
   return PERSONAS.map(p => {
     const isLive = !gating[p.planKey] && p.liveBadge !== null;
-    return { ...p, isLive, badge: isLive ? p.liveBadge : GATED_BADGE };
+    return { ...p, isLive, badge: isLive ? p.liveBadge : gatedBadge(p.planKey) };
   });
 }
 
@@ -532,9 +533,12 @@ export default async function HomePage({
               <p className={styles.eyebrow}>Pricing</p>
               <h2 className={styles.sectionTitle}>Plans built for how you operate.</h2>
               <p className={styles.sectionSub}>
-                {teamOpen
-                  ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are available now. League Plus and Club are open for early-access interest while those workflows are refined.'
-                  : 'Tournament and Tournament Plus are available now. League Plus and Club are open for early-access interest while those workflows are refined.'}
+                {[
+                  teamOpen
+                    ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are available now.'
+                    : 'Tournament and Tournament Plus are available now.',
+                  closedProgramPlansSentence(gatingMap),
+                ].filter(Boolean).join(' ')}
               </p>
             </div>
           </AnimateIn>

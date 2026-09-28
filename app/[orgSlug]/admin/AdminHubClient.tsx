@@ -6,6 +6,8 @@ import { Trophy, Building2, Globe, DollarSign, CalendarDays, Users, UserCheck, A
 import { useOrg } from '@/lib/org-context';
 import { hasModuleEntitlement, isTournamentOnlyWorkspace } from '@/lib/module-entitlements';
 import { hasCapability, type Capability } from '@/lib/roles';
+import { usePlanGating } from '@/lib/use-plan-gating';
+import { closedProgramPlansSentence } from '@/lib/plan-config';
 
 interface AttentionSummary {
   pendingTournamentCount: number;
@@ -27,6 +29,9 @@ export default function AdminHubClient() {
   const router = useRouter();
   const { currentOrg, userRole, userCapabilities, loading } = useOrg();
   const base = `/${currentOrg?.slug ?? ''}/admin`;
+  // The locked-programs note says which plans are closed from the LIVE gate (BUSINESS_DECISIONS 2026-09-28).
+  const gating = usePlanGating();
+  const closedPlansLine = gating ? closedProgramPlansSentence(gating) : null;
 
   const canUseModule = (capability: Capability) => !loading && currentOrg && userRole
     ? hasCapability(userRole, userCapabilities, capability) && hasModuleEntitlement(currentOrg, capability)
@@ -294,7 +299,7 @@ export default function AdminHubClient() {
             color: 'var(--white-30)',
             marginBottom: '0.75rem',
           }}>
-            Coming soon — League Plus &amp; Club plans
+            In League Plus and Club
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             {([
@@ -326,7 +331,7 @@ export default function AdminHubClient() {
             ))}
           </div>
           <p style={{ marginTop: '0.85rem', fontSize: '0.8rem', color: 'var(--white-30)' }}>
-            League Plus and Club plans are in early access.{' '}
+            {closedPlansLine && <>{closedPlansLine}{' '}</>}
             <Link href={`${base}/org/billing`} style={{ color: 'var(--white-50)', textDecoration: 'underline' }}>
               View billing and upgrade options →
             </Link>

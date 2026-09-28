@@ -5,7 +5,7 @@ import { getPlanGatingMap } from '@/lib/plan-gating-server';
 import {
   PLAN_CONFIG, formatPriceAmount, isFoundingSeasonPromoActive,
   FOUNDING_SEASON_AFTER_LINE, FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_SIGNUP_CLOSE_LABEL,
-  FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
+  FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL, closedProgramPlansSentence,
 } from '@/lib/plan-config';
 import FoundingSeasonPanel from '@/components/marketing/FoundingSeasonPanel';
 import styles from './page.module.css';
@@ -88,7 +88,7 @@ const UPGRADE_BRIDGES = [
   },
   {
     headline: 'Running a full house league season?',
-    body: 'League Plus is the complete house league platform — player registration, draft, season scheduling, standings, and automated parent notifications in one dashboard. No tournament plan required — League Plus is its own entry point for house league organizations. Available soon — express interest to be notified when it opens.',
+    body: 'League Plus is the complete house league platform — player registration, draft, season scheduling, standings, and automated parent notifications in one dashboard. No tournament plan required — League Plus is its own entry point for house league organizations. It\'s built, but not open for sign-up — express interest to be notified when it opens.',
     from: null,
     to: null,
     label: 'House league administrators',
@@ -99,7 +99,7 @@ const UPGRADE_BRIDGES = [
   },
   {
     headline: 'Running a club with rep teams, house league, and tournaments?',
-    body: 'Club is the complete platform — tournaments, house league, rep teams, and accounting in one place. The Premium Coaches Portal is included for your whole coaching staff — every team, no per-team fee — priced by club size (up to 15 teams, or up to 30 on Club · Association). Start directly on Club — you don\'t need to have been on League Plus first. Available soon — express interest to be notified when it opens.',
+    body: 'Club is the complete platform — tournaments, house league, rep teams, and accounting in one place. The Premium Coaches Portal is included for your whole coaching staff — every team, no per-team fee — priced by club size (up to 15 teams, or up to 30 on Club · Association). Start directly on Club — you don\'t need to have been on League Plus first. Coming soon — express interest to be notified when it opens.',
     from: null,
     to: null,
     label: 'Club executives',
@@ -126,7 +126,7 @@ const FAQS = [
   },
   {
     q: 'Can I buy League Plus, Club, or the Coaches Portal today?',
-    a: 'Not through self-serve checkout yet. Tournament and Tournament Plus are available now. League Plus, Club, and the Coaches Portal are shown as coming-soon previews so organizations and coaches can plan ahead and express interest while those workflows are finished.',
+    a: 'Not through self-serve checkout yet. Tournament and Tournament Plus are available now. League Plus, Club, and the Coaches Portal are shown here so organizations and coaches can plan ahead and express interest.',
   },
   {
     q: 'How does billing work?',
@@ -165,6 +165,8 @@ const FAQS = [
 export default async function PricingPage() {
   const gatingMap = await getPlanGatingMap();
   const teamCheckoutOpen = !gatingMap.team;
+  // Read from the live gate — the typed coming-soon line for both plans outlived the League park (2026-09-28).
+  const closedPlansLine = closedProgramPlansSentence(gatingMap);
   const teamPromoActive = isFoundingSeasonPromoActive('team');
   const tpPromoActive = isFoundingSeasonPromoActive('tournament_plus');
 
@@ -199,7 +201,7 @@ export default async function PricingPage() {
         if (faq.q === 'Can I buy League Plus, Club, or the Coaches Portal today?') {
           return {
             ...faq,
-            a: `The Premium Coaches Portal is available now through self-serve checkout${teamPromoActive ? ` — free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}, normally $29/month` : ' at $29/month'}. League Plus and Club aren't self-serve yet — they're shown as coming-soon previews so organizations can plan ahead and express interest while those workflows are finished.`,
+            a: `The Premium Coaches Portal is available now through self-serve checkout${teamPromoActive ? ` — free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL}, normally $29/month` : ' at $29/month'}. ${closedPlansLine ? `${closedPlansLine} They're shown here so organizations can plan ahead and express interest.` : ''}`,
           };
         }
         return faq;
@@ -370,9 +372,9 @@ export default async function PricingPage() {
         <div className="container">
           <div className={styles.clubInner}>
             <div>
-              <p className="font-mono text-xs uppercase tracking-widest text-logic-lime mb-3">Coming Soon</p>
-              <h2 className={styles.clubTitle}>League Plus and Club — what&apos;s coming next</h2>
-              <p className={styles.clubSub}>We&apos;re finishing the workflows before opening self-serve checkout. Here&apos;s what they cover.</p>
+              <p className="font-mono text-xs uppercase tracking-widest text-logic-lime mb-3">Not open yet</p>
+              <h2 className={styles.clubTitle}>League Plus and Club — what they cover</h2>
+              {closedPlansLine && <p className={styles.clubSub}>{closedPlansLine}</p>}
               <p className={styles.clubBody}>
                 {teamCheckoutOpen
                   ? 'Tournament, Tournament Plus, and the Premium Coaches Portal are the live plans available today. '
@@ -407,12 +409,12 @@ export default async function PricingPage() {
                     : 'Tournament is free — no credit card, no time limit. Tournament Plus adds registration control, schedule automation, brackets, archives, branding, and reporting.',
                 },
                 {
-                  label: 'Coming next',
+                  label: 'Not open yet',
                   // Symmetric with "Available now": if the coach checkout gate ever re-closes,
-                  // the product moves back to this list instead of vanishing from both.
-                  body: teamCheckoutOpen
-                    ? 'League Plus and Club workflows are being finished before self-serve checkout opens.'
-                    : 'League Plus, Club, and the Coaches Portal workflows are being finished before self-serve checkout opens.',
+                  // the product moves back to this list instead of vanishing from both. Read from the
+                  // live gate: "being finished before checkout opens" promised a parked plan (2026-09-28).
+                  body: [teamCheckoutOpen ? null : 'The Coaches Portal is coming soon.', closedPlansLine]
+                    .filter(Boolean).join(' '),
                 },
                 {
                   label: 'Express interest',
@@ -462,9 +464,9 @@ export default async function PricingPage() {
           <p className={styles.ctaSub}>
             {teamCheckoutOpen
               ? <>Start free with Tournament.{tpPromoActive && teamPromoActive ? ` Tournament Plus and the Premium Coaches Portal are free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card.` : ''}
-                {' '}League Plus and Club are coming soon — express interest to be notified.</>
+                {closedPlansLine && <>{' '}{closedPlansLine} Express interest to be notified.</>}</>
               : <>Start free with Tournament.{tpPromoActive ? ` Tournament Plus is free through ${FOUNDING_SEASON_END_LABEL} when you sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — no credit card.` : ''}
-                {' '}League Plus, Club, and the Coaches Portal are coming soon — express interest to be notified.</>}
+                {' '}The Coaches Portal is coming soon.{closedPlansLine && <> {closedPlansLine}</>} Express interest to be notified.</>}
           </p>
           <div className={styles.ctaActions}>
             <Link

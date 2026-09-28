@@ -2,7 +2,7 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import EarlyAccessModalTrigger from '@/components/EarlyAccessModalTrigger';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, formatPriceAmount } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, gatedPlanTag, gatedPlanSentence } from '@/lib/plan-config';
 // ⚠ 2026-08-20: this was the ONE persona page not reading the live gate, and it is the one whose
 // availability copy drifted furthest ('in final refinement', 'opening soon' — for a parked plan).
 // The other three ask the gate; now so does this one, so the sentence cannot go stale on its own.
@@ -73,8 +73,8 @@ export default async function ForLeaguesPage() {
             </Link>
           </div>
           <p className={styles.heroNote}>
-            <span className={styles.heroNoteAccent}>Coming soon</span>
-            {' '}— League Plus is not open for sign-up today.{' '}
+            <span className={styles.heroNoteAccent}>{gatedPlanTag('league')}</span>
+            {' '}— {gatedPlanSentence('league')}{' '}
             {teamCheckoutOpen
               ? 'Tournament, Tournament Plus and the Premium Coaches Portal are live now.'
               : 'Tournament and Tournament Plus are live now.'}
@@ -147,7 +147,7 @@ export default async function ForLeaguesPage() {
                 </div>
                 <p className={styles.planNote}>{formatPriceAmount(PLAN_CONFIG.league.annualPrice)}/year — save two months</p>
               </div>
-              <span className={styles.comingSoonBadge}>Coming soon</span>
+              <span className={styles.comingSoonBadge}>{gatedPlanTag('league')}</span>
               <p className={styles.planTagline}>
                 The complete house league platform — registration, draft, scheduling,
                 standings, and parent communications in one place.

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
-import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, clubTrialLine } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, clubTrialLine, gatedPlanTag, GATED_PLAN_INTEREST_LINE } from '@/lib/plan-config';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PricingSection.module.css';
@@ -109,7 +109,7 @@ const PLANS: Plan[] = [
   {
     key: 'league',
     name: 'League Plus',
-    tagline: 'A preview of house league, registration, and public-site tools currently being refined.',
+    tagline: 'House league seasons, registration, and a public site for your league.',
     monthlyPrice: formatPriceAmount(PLAN_CONFIG.league.monthlyPrice),
     annualPrice: formatPriceAmount(PLAN_CONFIG.league.annualPrice),
     annualTotal: `${formatPriceAmount(PLAN_CONFIG.league.annualPrice)} CAD / year`,
@@ -355,7 +355,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
           const isIncluded = !!onChoosePlan && (disabledPlans?.includes(plan.key) ?? false);
           const isFeatured = !isGated && featuredPlan === plan.key;
           const isAnnual = !isGated && billing === 'annual' && plan.annualPrice;
-          const displayPrice = isGated ? 'Coming soon' : (isAnnual ? plan.annualPrice! : plan.monthlyPrice);
+          const displayPrice = isGated ? gatedPlanTag(plan.key) : (isAnnual ? plan.annualPrice! : plan.monthlyPrice);
           // Promo wording only while the promo is actually running — afterwards the card falls
           // back to its permanent note and a truthful "Start now" CTA on its own, with no runbook.
           // For the viewer's OWN current plan the offer state is a per-account fact (is this
@@ -365,7 +365,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
             isCurrent && currentPlanComped !== undefined ? currentPlanComped : isFoundingSeasonPromoActive(plan.key)
           );
           const displayNote = isGated
-            ? 'Join early access for launch updates'
+            ? GATED_PLAN_INTEREST_LINE
             : promoActive
               ? plan.promoNote!
               : (isAnnual ? (plan.annualSavings ?? plan.trialNote) : plan.freeNote);
@@ -378,7 +378,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
                 <div className={styles.planHeaderTop}>
                   <p className={styles.planName}>{plan.name}</p>
                   {isGated && (
-                    <span className={styles.statusBadge}>Coming soon</span>
+                    <span className={styles.statusBadge}>{gatedPlanTag(plan.key)}</span>
                   )}
                   {/* The Founding Season chip (owner-approved 2026-09-07): the offer moved INTO the
                       price block below, so the header keeps only the program's name — same chip
@@ -492,7 +492,7 @@ export default function PricingSection({ gatingMap, onChoosePlan, currentPlan, c
           capturing interest, but never peers of what's actually on sale. */}
       {marketingLayout && stripPlans.length > 0 && (
         <div className={styles.comingSoonStrip}>
-          <span className={styles.comingSoonStripLabel}>Coming soon</span>
+          <span className={styles.comingSoonStripLabel}>Not open yet</span>
           <span className={styles.comingSoonStripBody}>
             {stripPlans.map((p, i) => (
               <span key={p.key}>

@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { X, CheckCircle } from 'lucide-react';
 import { COACHES_START_PATH } from '@/lib/coaches-portal-routes';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
-import { PLAN_CONFIG, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { PLAN_CONFIG, isFoundingSeasonPromoActive, gatedPlanSentence, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
 import styles from './PlanArticlePanel.module.css';
 
 type PlanKey = 'tournament_plus' | 'league' | 'club' | 'team';
@@ -142,7 +142,7 @@ export default function PlanArticlePanel({
         <div className={styles.panelFooter}>
           {isComingSoon ? (
             <p className={styles.comingSoonNote}>
-              {config.label} is opening soon — self-serve checkout is not yet available.
+              {gatedPlanSentence(planKey)}
             </p>
           ) : planKey === 'team' ? (
             // Its own workspace, not a change to this org's plan — the coach sign-up is the door.

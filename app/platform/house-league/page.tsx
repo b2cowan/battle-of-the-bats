@@ -56,7 +56,7 @@ export default function HouseLeaguePage() {
             — everything your house league needs in one dashboard. No spreadsheets, no reply-all emails.
           </p>
           <p className="font-mono text-xs text-logic-lime leading-relaxed max-w-2xl mb-8 border border-logic-lime/30 px-4 py-3">
-            Coming soon: House League is in final refinement. Tournament and Tournament Plus are available now.
+            Not open yet: League Plus is built, but not open for sign-up. Tournament and Tournament Plus are available now.
           </p>
           <div className="flex flex-wrap gap-4">
             <EarlyAccessModalTrigger

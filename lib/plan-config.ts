@@ -160,6 +160,46 @@ export function clubTrialLine(trialDays: number = PLAN_CONFIG.club.trialDays): s
 }
 
 /**
+ * What a customer reads about a plan that is NOT open for sign-up — one tag and one sentence per plan,
+ * on every surface (BUSINESS_DECISIONS.md 2026-09-28; canon in PRICING_PAGE_COPY.md). League Plus is
+ * parked, so it carries no imminence: "Not open yet". Any other closed plan (Club is the one with a
+ * release under way) keeps a date-free "Coming soon". Never "early access" — that programme was
+ * withdrawn 2026-07-28. Show these only when the LIVE gate says the plan is closed
+ * (`getPlanGatingMap()` on the server, `usePlanGating()` on the client) — never on a typed assumption.
+ */
+export function gatedPlanTag(planKey: OrgPlan): string {
+  return planKey === 'league' ? 'Not open yet' : 'Coming soon';
+}
+
+/** The full sentence (a panel's closing line, a page's note). */
+export function gatedPlanSentence(planKey: OrgPlan): string {
+  return planKey === 'league'
+    ? 'League Plus is built, but not open for sign-up.'
+    : `${PLAN_CONFIG[planKey].label} is coming soon — it isn't open for sign-up yet.`;
+}
+
+/** The short line under a closed plan card's button. */
+export function gatedPlanNote(planKey: OrgPlan): string {
+  return planKey === 'league' ? 'Built, but not open for sign-up.' : 'Not open for sign-up yet.';
+}
+
+/** The line that replaces "Join early access for launch updates" beside an interest door. */
+export const GATED_PLAN_INTEREST_LINE = "Tell us you're interested and we'll let you know when it opens.";
+
+/**
+ * The one sentence naming the closed programme plans together, read from the live gate: "Club is coming
+ * soon, and League Plus is built but not open for sign-up." — or whichever half is still true, or `null`
+ * when both are open (the sentence then disappears rather than going stale).
+ */
+export function closedProgramPlansSentence(gating: Partial<Record<OrgPlan, boolean>>): string | null {
+  const parts = [
+    gating.club && 'Club is coming soon',
+    gating.league && 'League Plus is built but not open for sign-up',
+  ].filter(Boolean) as string[];
+  return parts.length ? `${parts.join(', and ')}.` : null;
+}
+
+/**
  * Returns true when a plan's checkout should be blocked and an early-access CTA
  * shown instead. Respects NEXT_PUBLIC_PLAN_GATES:
  *   'live'     — all plans treated as live (use in .env.local to test checkout)

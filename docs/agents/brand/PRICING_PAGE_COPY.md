@@ -24,6 +24,37 @@ sections below that names December 31, 2026 or January 2027 is **superseded on t
 canon; the mechanics they describe are unchanged. The **post-window state** (from January 1, 2027) is
 also written in the canon (§9) and in code — nothing to write on the day.
 
+### 🆕 Closed-plan availability words — WRITTEN 2026-09-28 (`/marketing`, per `BUSINESS_DECISIONS.md` 2026-09-28 "The in-app billing shelf stops promising League Plus…"; owner: *"this is fine, proceed"*)
+
+**One tag and one sentence per closed plan, on every surface.** Single-sourced in `lib/plan-config.ts`
+(`gatedPlanTag()`, `gatedPlanSentence()`, `gatedPlanNote()`, `GATED_PLAN_INTEREST_LINE`,
+`closedProgramPlansSentence()`) and pinned by `tests/unit/gated-plan-availability-copy.test.ts` — call
+them; never retype a status. Shown only when the **live** gate says the plan is closed.
+
+| | Tag | Sentence | Line under a button |
+|---|---|---|---|
+| **League Plus** (parked — no imminence) | **Not open yet** | League Plus is built, but not open for sign-up. | Built, but not open for sign-up. |
+| **Club** (a release is under way) | **Coming soon** | Club is coming soon — it isn't open for sign-up yet. | Not open for sign-up yet. |
+| Both closed, one sentence (read from the gate; each half drops out when its plan opens) | — | Club is coming soon, and League Plus is built but not open for sign-up. | — |
+| Beside an interest door (replaces "Join early access for launch updates") | — | Tell us you're interested and we'll let you know when it opens. | — |
+
+- **Never "early access"** where a customer reads it — the programme was withdrawn 2026-07-28. (The
+  platform admin's own lead pipeline keeps the name; it is internal.)
+- **Never "soon", "final refinement", "being refined" or "being finished" for League Plus** — the
+  2026-08-20 `/for-leagues` ruling, extended to every surface. Club may say "Coming soon", never with a date.
+- **Where it applies (applied 2026-09-28):** the org billing page's shelf and its "See what's included"
+  panel (also tournament Settings → Plan & subscription); `/pricing` (plan cards, the footnote strip
+  heading **"Not open yet"**, the League Plus and Club sections, the upgrade cards, the FAQ, the
+  closing line); the homepage (pricing intro, persona badges `<tag> · express interest`); `/for-leagues`;
+  `/start/league`; `/platform/house-league`; the admin home's locked-programs note (heading **"In
+  League Plus and Club"**).
+- **League Plus description on `/pricing`:** "House league seasons, registration, and a public site for
+  your league." — the tag carries the status, so the description only describes.
+- ⚠ **Not changed, noted:** the homepage module cards' "In development" and roadmap strip "On the
+  roadmap" (order words, not a promise of timing); the billing page's Club trial line ("Early-access
+  trial details collected in Stripe"), which shows only once Club is open and is replaced by the Club
+  trial sentence at Club Stage 1b.
+
 ### 🆕 The Club trial sentence — WRITTEN 2026-09-25 (`/marketing`, per `BUSINESS_DECISIONS.md` 2026-09-25 "The 90-day Club trial collects a card at checkout")
 
 **The sentence — one, verbatim, on every surface that offers the Club trial:**

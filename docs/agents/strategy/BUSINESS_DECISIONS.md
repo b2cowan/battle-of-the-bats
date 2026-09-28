@@ -8,6 +8,54 @@
 
 ---
 
+### 2026-09-28 — The in-app billing shelf stops promising League Plus "Coming soon · Early access only" — extend the 2026-08-20 de-imminence ruling to the upsell the product itself shows
+**Status:** Decided (owner, 2026-09-28 — *"yes"* to the recommendation below, both questions as recommended: the 2026-08-20 ruling extends to the in-app shelf and panel; Club keeps a date-free "Coming soon". Raised by the owner on the Admin Design Continuity walk §245 the same day, logged Proposed first at their request.)
+
+**The situation.** The org billing page's "Managing more than tournaments?" shelf is seen by every Tournament and Tournament Plus organizer, on production, on their Plan & billing page and on each tournament's Settings → Plan & subscription (the same page). It shows League Plus as *"Coming soon · from $89 CAD / month · Early access only. Self-serve checkout is not open yet."*, and its "See what League Plus includes" panel ends *"League Plus is opening soon — self-serve checkout is not yet available."* The Club card reads the same.
+
+**This is not a new question — it is a handoff that never landed on this surface.** 2026-07-28 (drift catch #1) named the org billing page's "coming soon" and routed it to `/marketing` to rule how long it may stand. 2026-08-20 answered that question for `/for-leagues` — *what is removed is the imminence, not the page*; "built but not currently open for sign-up"; availability read from the gate — but that sweep covered the four persona pages only. The in-app shelf was never touched.
+
+**Two claims on the card are false today, not merely stale:**
+1. **"Early access only"** — there is no early-access programme. The cohort was **withdrawn** 2026-07-28. That is false for League Plus **and** for Club.
+2. **"Coming soon" / "opening soon" for League Plus** — no launch is scheduled. The Club readiness programme (started 2026-09-25) evaluates house league **last**, as its own release after Club's (its Stage 9; ruling D11 there — League Plus un-parked, no new SKU — is logged here when that stage opens). **Club is different:** a release programme exists and is under way, so a forward-looking word is defensible for Club — but the programme's posture is *"we are not rushing to production"*, so no date.
+
+**Decision:**
+- **League Plus:** extend 2026-08-20 to the shelf and its panel — built but not open for sign-up, with no imminence; interest capture stays where the card offers it.
+- **Club (and Club · Association wherever it appears):** keep a date-free "Coming soon" — the release is real and in progress (the alternative, the League Plus wording for both, was offered and not taken).
+- **Both:** no "early access" wording anywhere a customer reads it.
+- **Price:** no change. $89 is the Facts doc's public League Plus price, and `/pricing` shows it too; hiding it on one surface would make a second truth.
+
+**Affects:** in-app upsell copy only (the org billing shelf and its plan panel). **No price, plan name, capacity band, SKU, feature key or gate value moves; `lib/plan-config.ts` is untouched.** Reconciled against `PLAN_PRICING_FACTS.md`: zero drift. Its "early-access" is the gate's internal status name, not a customer programme.
+
+**Adjacent defect, fixed the same day (not a pricing change, recorded for the drift history):** the same shelf told organizers the **Premium Coaches Portal** was *"Coming soon · Early access only"* although it has been self-serve since 2026-07-24. The page read the code's fixed plan setting and never the live switch — the same class as 2026-07-28 drift catch #2 (`/pricing`'s CTA), and the 2026-08-20 lesson that *an availability claim that is computed cannot go stale*. It was fixed on dev 2026-09-28: the page reads the live switch, and the open card's button starts a Coaches Portal (the coach sign-up, same login). It ships with the next release.
+
+**Handoff:**
+```
+HANDOFF → owner — DONE 2026-09-28 (both as recommended).
+HANDOFF → /marketing — DONE 2026-09-28, on dev (owner: "this is fine, proceed"). Canon: PRICING_PAGE_COPY.md
+  "Closed-plan availability words"; single-sourced in lib/plan-config.ts and pinned by a unit test.
+  Wider than listed below, on the same ruling: the homepage, /start/league, /platform/house-league
+  ("in final refinement"), the admin home's note ("in early access"), and /pricing's FAQ, upgrade
+  cards and its "what's coming next" section.
+- Org billing shelf, League Plus + Club cards: the chip, the line under the button ("Early access
+  only…"), and the plan panel's closing line ("…is opening soon…"). Brand voice; no imminence for
+  League Plus; no "early access" for either. Availability stays READ from the live gate (the page
+  now does) — never typed.
+- /pricing League Plus tagline: "currently being refined" is the same imminence 2026-08-20 removed
+  from /for-leagues ("in final refinement") — bring it into line in the same pass.
+HANDOFF → /billing
+- None. No gate flips: League Plus / Club / Club · Association stay early_access.
+HANDOFF → /strategy (self, next reconcile)
+- Add the IN-APP upsell surfaces to the drift check: the org billing shelf + plan panel, the
+  onboarding plan cards, and the owner-only home teaser (Club readiness plan A16). The 2026-08-20
+  handoff added the persona pages; the in-app shelf was the next blind spot and carried two false
+  claims for two months.
+```
+
+**Supersedes:** nothing. **Relates to:** 2026-07-28 League & Club park (drift catch #1 routed this surface); 2026-08-20 `/for-leagues` de-imminence (the ruling proposed for extension); 2026-08-07 homepage (the Coaches Portal card stops saying "coming soon"); 2026-09-25 Club readiness rulings (the Club release posture).
+
+---
+
 ### 2026-09-25 — Moves between PAID plans: up happens now on the one subscription with a proration preview; down waits for renewal, earns no credit, and is refused over the smaller band's cap; no second trial
 **Status:** Decided (owner, 2026-09-25 — accepted with the Club Stage 1 mockups: *"I agree with your mockups"*; the drawings carried this as Ask 4's recommendation, hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 Decisions tab, specimen 7). Build = Club readiness plan Stage 1b (`CLUB_TIER_STAGE1_SERVER_PROMPT.md` Part 3 for the subscription change, `CLUB_TIER_STAGE1_SCREENS_PROMPT.md` Part 3 for the screen; the prompt was split 2026-09-25); nothing built yet.
 **Decision:** Every move between two PAID plans changes the **one existing subscription** — never a second checkout. **Moving up** (Club → Club · Association, and Tournament Plus → Club or Club · Association) takes effect **immediately**; the customer sees Stripe's **proration preview** (the charge for the rest of the current period, then the new price from renewal) **before** confirming. **Moving down** (Club · Association → Club) takes effect **at the next renewal**, with **no credit** for the unused higher-band period, and is **refused while the club has more active teams than the smaller band holds** (15 for Club) — the customer is told how many teams to archive first. **No second free trial** on any paid→paid move. A move from a FREE plan is an ordinary checkout with that plan's trial. No price, name, capacity band, SKU or gate value moves; gates stay `early_access` until the Stage 8 flip.

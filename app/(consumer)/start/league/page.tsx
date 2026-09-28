@@ -63,13 +63,13 @@ export default async function StartLeaguePage() {
             <CalendarDays size={21} strokeWidth={1.8} aria-hidden />
           </div>
           <h1 className={styles.title}>Start a league season</h1>
-          <p className={styles.sub}>League — coming soon</p>
+          <p className={styles.sub}>League — not open yet</p>
         </header>
 
         <p className={styles.lead}>
           League runs your full house-league season — registration, draft, scheduling, standings,
-          and parent communications in one dashboard. Self-serve checkout is opening soon. Express
-          interest and we&apos;ll notify you the moment it&apos;s available for your organization.
+          and parent communications in one dashboard. It&apos;s built, but not open for sign-up. Tell us
+          you&apos;re interested and we&apos;ll let you know when it opens.
         </p>
 
         <div className={styles.actions}>

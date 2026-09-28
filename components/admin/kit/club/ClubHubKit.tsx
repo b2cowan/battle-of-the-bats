@@ -29,6 +29,8 @@ import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
 import { isClubPlan } from '@/lib/module-entitlements';
 import { usePageTitle } from '@/lib/usePageTitle';
+import { usePlanGating } from '@/lib/use-plan-gating';
+import { closedProgramPlansSentence } from '@/lib/plan-config';
 import { joinWithAnd, pluralize } from '@/lib/utils';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, CoachChip, kit } from '@/components/coaches/kit';
@@ -115,6 +117,9 @@ export default function ClubHubKit() {
   usePageTitle('Overview');
   const { base, programs, alsoOnPlan } = useAdminKitNav();
   const { status, brief, reload } = useClubBrief();
+  // The locked-programs note says which plans are closed from the LIVE gate (BUSINESS_DECISIONS 2026-09-28).
+  const gating = usePlanGating();
+  const closedPlansLine = gating ? closedProgramPlansSentence(gating) : null;
   const slug = currentOrg?.slug ?? '';
   const isOwner = userRole === 'owner';
   const club = isClubPlan(currentOrg?.planId);
@@ -358,7 +363,7 @@ export default function ClubHubKit() {
             (League Plus, a League Starter). It never shows on a Club (specimen 1's note). ────── */}
       {isOwner && !club && !canOpen('module_accounting') && !canOpen('module_rep_teams') && (
         <section className={ck.section} aria-labelledby="hub-soon">
-          <div className={ck.sectionHead}><span id="hub-soon" className={kit.eye}>Coming soon — League Plus &amp; Club</span></div>
+          <div className={ck.sectionHead}><span id="hub-soon" className={kit.eye}>In League Plus and Club</span></div>
           <p className={ck.lede}>
             {[
               !canOpen('module_public_site') && 'Public site',
@@ -366,7 +371,7 @@ export default function ClubHubKit() {
               'Accounting',
               'Rep Teams',
             ].filter(Boolean).join(' · ')}{' '}
-            — League Plus and Club plans are in early access.{' '}
+            —{closedPlansLine && <> {closedPlansLine}</>}{' '}
             <Link href={`${base}/org/billing`} className={ck.link}>View billing and upgrade options</Link>
           </p>
         </section>

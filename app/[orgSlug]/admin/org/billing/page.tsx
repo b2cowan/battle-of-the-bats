@@ -13,7 +13,7 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { useTournament } from '@/lib/tournament-context';
 import { getBillingHref } from '@/lib/billing-urls';
 import {
-  PLAN_CONFIG, isEffectivelyGated, isFoundingSeasonActive, isFoundingSeasonPromoActive, isFoundingSeasonCardWindowOpen,
+  PLAN_CONFIG, isEffectivelyGated, gatedPlanTag, gatedPlanNote, isFoundingSeasonActive, isFoundingSeasonPromoActive, isFoundingSeasonCardWindowOpen,
   formatPriceAmount, formatAnnualSavings,
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
 } from '@/lib/plan-config';
@@ -134,7 +134,7 @@ const PLAN_FEATURES: Record<OrgPlan, string[]> = {
 const PLAN_META_COPY: Record<OrgPlan, string> = {
   tournament:      "You're on the free starter plan. Upgrade when you need custom registration, exports, payment reminders, waitlist promotion, branding, or repeat-event tools.",
   team:            "You're on Premium Coaches Portal. Your team tools and one free-tier tournament slot are active.",
-  tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active; League Plus and Club are coming soon while those broader workflows are refined.",
+  tournament_plus: "You're on Tournament Plus. Your tournament operations tools are active.",
   league:          "You're on League Plus. Need accounting or rep team tools? Club is the complete platform.",
   club:            "You're on the complete Club platform. Your whole coaching staff is included, up to 15 teams.",
   club_large:      "You're on Club · Association — the complete platform, sized for a larger association of up to 30 teams.",
@@ -610,7 +610,7 @@ function BillingPageLegacy() {
     ? `Premium tools will become inactive and premium team data is retained for ${cancelPreflight?.retentionDays ?? 365} days. Basic tournament records stay available in Coaches Portal.`
     : `Cancellation suspends the full account. Public pages and modules shut down, and data is retained for ${cancelPreflight?.retentionDays ?? 90} days.`;
   function getPrice(planKey: OrgPlan): string {
-    if (isGated(planKey)) return 'Coming soon';
+    if (isGated(planKey)) return gatedPlanTag(planKey);
     if (isFoundingSeasonPromoActive(planKey)) return `Free through ${FOUNDING_SEASON_END_LABEL}`;
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
@@ -633,7 +633,7 @@ function BillingPageLegacy() {
   }
 
   function getTrialNote(planKey: OrgPlan): string {
-    if (isGated(planKey)) return 'Early access only. Self-serve checkout is not open yet.';
+    if (isGated(planKey)) return gatedPlanNote(planKey);
     if (isFoundingSeasonPromoActive(planKey)) return `No credit card — nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}`;
     const days = PLAN_CONFIG[planKey].trialDays;
     if (days === 90) return 'Early-access trial details collected in Stripe';
@@ -1070,7 +1070,7 @@ function BillingPageLegacy() {
                     <div key={planKey} className={`${styles.planCard} ${styles.featuredPlanCard} ${isComingSoon ? styles.planCardComingSoon : ''}`}>
                       <div className={styles.planCardHeader}>
                         <div className={styles.planCardName}>{plan.label}</div>
-                        {isComingSoon && <span className={styles.comingSoonBadge}>Coming soon</span>}
+                        {isComingSoon && <span className={styles.comingSoonBadge}>{gatedPlanTag(planKey)}</span>}
                       </div>
                       <div className={styles.planCardPrice}>
                         <span className={styles.priceAmount}>{getPrice(planKey)}</span>
@@ -1095,7 +1095,7 @@ function BillingPageLegacy() {
                         disabled={isComingSoon || loading === planKey}
                         id={`billing-upgrade-${planKey}`}
                       >
-                        {isComingSoon ? 'Early access only' : loading === planKey ? getUpgradeLoadingLabel(planKey) : `Upgrade to ${plan.label}`}
+                        {isComingSoon ? gatedPlanTag(planKey) : loading === planKey ? getUpgradeLoadingLabel(planKey) : `Upgrade to ${plan.label}`}
                         {!isComingSoon && loading !== planKey && <ArrowRight size={14} />}
                       </button>
                       <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
@@ -1139,7 +1139,7 @@ function BillingPageLegacy() {
                               <div className={styles.planCardName}>{plan.label}</div>
                             </div>
                           </div>
-                          <span className={styles.comingSoonBadge}>Coming soon</span>
+                          <span className={styles.comingSoonBadge}>{gatedPlanTag(planKey)}</span>
                         </div>
                         <div className={styles.planCardPrice}>
                           <span className={styles.priceAmount}>{getShelfPrice(planKey)}</span>
