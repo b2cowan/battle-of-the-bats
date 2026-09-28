@@ -59,7 +59,11 @@
     background: none;
     border: none;
     font-family: inherit;
-    color: rgba(255, 255, 255, 0.4);
+    /* The quiet tier, not a 40% white: that measured 3.8:1 on the bar's ground in Dark, under the
+       reading floor, on every screen of both portals (the admin's kit bar is this stylesheet).
+       Owner, 2026-09-27: "fix it". `--text-tertiary` is the data grey in Dark (7.4:1) and the warm
+       quiet ink in Warm — the warm override below says the same. */
+    color: var(--text-tertiary);
     transition: color 0.18s ease;
     cursor: pointer;
     min-width: 0;
@@ -118,11 +122,16 @@
     line-height: 1;
   }
 
+  /* MIXED CASE (owner, 2026-09-27): the portal's type ladder already set primary navigation in
+     sentence case (2026-08-19 — nav was tying the uppercase column headings it navigates to), and
+     this bar was the one nav surface still in capitals; the admin's kit bar, which shares it, cut
+     "ACCOUNTING" to "ACCOUNTI…" at 390 in capitals. The labels are written as words already
+     ("Schedule", "Roster"), so dropping the transform publishes nothing odd. */
   .label {
     font-size: var(--type-token);
     font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    text-transform: none;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -195,7 +204,8 @@
     font-weight: 700;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: rgba(255, 255, 255, 0.25);
+    /* The quiet tier (was a 25% white, far under the floor in Dark) — same fix as the tabs above. */
+    color: var(--text-tertiary);
     padding: 0.5rem 1rem 0.125rem;
     font-family: var(--font-data);
   }

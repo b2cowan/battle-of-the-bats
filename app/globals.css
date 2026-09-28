@@ -889,6 +889,13 @@ html[data-user-theme="warm"] [data-coach-warm-enabled] {
      The same warm shadow the consumer shell's warmTheme.module.css ratified; the dark gate below
      declares its own, so a sheet reads as paper on paper here and as a dark card there. */
   --home-shadow:      0 1px 2px rgba(70, 55, 30, 0.05), 0 6px 18px rgba(70, 55, 30, 0.07);
+  /* The dark ramp's card and popover shadows (`:root` — black at 40 / 50 / 60%) drew a heavy smudge
+     under every card on cream, in the coaches portal and the admin's kit alike. Owner, 2026-09-27:
+     "soften it". Warm takes the kit's own warm-tinted shadow at the same three depths; Dark keeps
+     its values. (The admin's public-preview island puts the dark ones back — R2, below.) */
+  --shadow-sm:        0 1px 2px rgba(var(--home-line-rgb), 0.06);
+  --shadow:           var(--home-shadow);
+  --shadow-lg:        0 2px 6px rgba(var(--home-line-rgb), 0.06), 0 14px 36px rgba(var(--home-line-rgb), 0.14);
   /* True lime kept for the few LIME FILLS that survive on paper (CTAs / "on" toggles) with
      dark ink on top — the ratified ink-on-lime CTA. Sourced from --logic-lime-fixed, NOT
      var(--logic-lime), which this very block remaps to olive. */
@@ -1289,6 +1296,9 @@ html[data-user-theme="dark"] [data-coach-warm-enabled],
   --pv-evt-team-event: var(--evt-team-event);
   --pv-glow-blue: var(--glow-blue);
   --pv-glow-lime: var(--glow-lime);
+  --pv-shadow-sm: var(--shadow-sm);
+  --pv-shadow: var(--shadow);
+  --pv-shadow-lg: var(--shadow-lg);
   --pv-primary: var(--primary);
   --pv-primary-rgb: var(--primary-rgb);
   --pv-primary-glow: var(--primary-glow);
@@ -1381,6 +1391,9 @@ html[data-user-theme="dark"] [data-coach-warm-enabled],
   --evt-team-event: var(--pv-evt-team-event);
   --glow-blue: var(--pv-glow-blue);
   --glow-lime: var(--pv-glow-lime);
+  --shadow-sm: var(--pv-shadow-sm);
+  --shadow: var(--pv-shadow);
+  --shadow-lg: var(--pv-shadow-lg);
   --primary: var(--pv-primary);
   --primary-rgb: var(--pv-primary-rgb);
   --primary-glow: var(--pv-primary-glow);

@@ -16,7 +16,10 @@
 > done; /simplify + /review done (owner: "go ahead with simplify, review and commit"); **COMMITTED `07808a02`
 > 2026-09-27**. **Slice 4c (the schedule) BUILT 2026-09-27** — results in §3a; identity 28/28 + both-theme
 > sweep done; /simplify + /review done (owner: "Go ahead with simplify, review and commit"); **COMMITTED
-> `9d1b1670` 2026-09-27**. Slice 5 (scorekeeper, official, gate; the help guide) is next.
+> `9d1b1670` 2026-09-27**. **Slice 1's open questions RULED 2026-09-27** (the shared phone bar's Dark
+> labels and its case, Warm's card shadows — fixed in BOTH portals, live coaches included; the preview's
+> Warm tab bar → slice 6) — results in §3a after 4c's. Slice 5 (scorekeeper, official, gate; the help
+> guide) is next.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -179,7 +182,7 @@ foundation's release day.
 | 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; COMMITTED `07808a02` 2026-09-27; walked at slice 6 |
 | 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | **BUILT 2026-09-27** — results below; identity 28/28 + both-theme sweep done; /simplify + /review done; COMMITTED `9d1b1670` 2026-09-27; walked at slice 6 |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | not started |
-| 6 | Prove (both-theme sweep, contrast, identity) · owner § walk · release (switch deleted, legacy removed, coaches help pin removed, What's New, `/docs`, `/release`) | not started |
+| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed, What's New, `/docs`, `/release`) | not started |
 
 **Slice 4 — the split (2026-09-27, written before starting, as the build prompt requires).** The
 tournament area measured at the start of slice 4 (same scope as the inventory's footnote 2): **54,112
@@ -295,7 +298,8 @@ set (182 pictures) and the coach "before" sweeps were taken on the untouched tre
   `.card` recipe's `--highlight-top` / `--shadow` / `--shadow-sm` — the coach kit's door cards paint
   those same dark values on cream today, so remapping the shared block would restyle live coach
   screens (not a fix) and remapping admin-only would break continuity. "A dark shadow on cream" is a
-  portal-wide design question for the owner. **Coach reach, measured:** exactly two elements —
+  portal-wide design question for the owner. *(Ruled 2026-09-27 — "soften it", both portals: see
+  "Slice 1's open questions — ruled" after the 4c results.)* **Coach reach, measured:** exactly two elements —
   the setup popover's "skipped" dot and the tryout-history stat separator, both previously the dark
   white on cream (invisible); the scoped coach sweep before/after is recorded below.
 - **R1:** `[data-admin-kit]` puts the platform theme back over the org's `:root` brand
@@ -357,7 +361,8 @@ set (182 pictures) and the coach "before" sweeps were taken on the untouched tre
 - **Found, written down, not fixed here:** (1) the legacy house-league rail's "Past Seasons" is a
   dead link (404) today; (2) the coaches portal's DARK phone bar misses AA on its inactive tab labels
   (white 40%) and More section labels (white 25%) — the admin kit inherits both by sharing the
-  stylesheet, so one fix repairs both portals; (3) an org's chosen font reaches both portals (not in
+  stylesheet, so one fix repairs both portals *(fixed 2026-09-27, owner "fix it" — see "Slice 1's open
+  questions — ruled")*; (3) an org's chosen font reaches both portals (not in
   R1's list); (4) the coaches portal's DARK theme draws ~30 borders in the org's colour (`--border`
   is never re-declared by the dark gate) — the R1 leak inside the model; (5) the family page's cards
   spill at 361 today (a 300px card minimum), unchanged by the restyle; (6) with the switch on, the
@@ -1108,6 +1113,37 @@ was healthy (no crashed page worker, 3 GB, 5.6 GB free), so the captures ran on 
   a tightening), the switch guard fails on the disguised spread and on a wrapper rendered when off.
   `check:layout --changed` not run (`app/globals.css` widens it to every screen) — the identity checks and
   the both-theme sweep stand in.
+
+**Slice 1's open questions — ruled (owner, 2026-09-27), and built for BOTH portals.** Asked on the hub's
+Progress tab after 4c; answered *"1. fix it 2. go with your recommendation 3. soften it 4. fix in slice
+6"*, then *"go"* after being told that 1–3 are **not behind the switch**: the coaches portal shares the bar's
+stylesheet and the warm block, so they reach live coaches with the next promote. Design log entry:
+`memory/design_decisions.md` 2026-09-27.
+- **1 · The Dark phone bar reads.** The inactive tab names (white 40%, 3.8:1) and the More sheet's section
+  headings (white 25%) take the quiet tier, `--text-tertiary` — the data grey in Dark (7.4:1), the warm
+  quiet ink in Warm (unchanged there). One stylesheet, so the coach bar, the coach More sheet, the team and
+  player switch sheets' headings and the admin's kit bar all move together. The admin's LEGACY bar has its
+  own stylesheet and is untouched.
+- **2 · Mixed case in both portals** (the recommendation): the coach bar's labels drop the tracked
+  capitals. Argued from the portal's own type ladder (2026-08-19: primary navigation in sentence case — this
+  bar was the one nav surface left in capitals), the admin's "ACCOUNTI…" truncation at 390, and both hubs'
+  drawings. The labels are already written as words. The admin's override that did this for its own bar is
+  deleted — the shared rule now does it.
+- **3 · Warm shadows are warm.** The warm block maps `--shadow-sm` / `--shadow` / `--shadow-lg` to the kit's
+  warm-tinted shadow at three depths (built from `--home-line-rgb`; `--shadow` is `--home-shadow`); Dark keeps
+  the black ones. R2: the three joined the `--pv-*` snapshot and the public-preview island, so previews keep
+  the org's look (`admin-kit-guard`'s parity test holds it).
+- **4 · The public preview's Warm tab bar** (the R2 leak found in 4c) → slice 6's row in the ledger.
+- **Proof.** Coach sweep, 4 screens (Overview, the More sheet, Schedule, the player switch sheet) × 4 widths,
+  before and after: **Dark 148 → 104** — all 45 bar-label and section-heading contrast findings gone, none
+  new (the one "new" key is the Overview's red loss badge at 361, already flagged at the other three widths
+  before the change and missed on the cold first load); **Warm 28 → 28, the same 28** (no contrast finding
+  before or after; tap floor and control width unchanged, so the case change moved no control). Admin
+  schedule, switch on, Dark: 82 → 70 against 4c's sweep — the bar's 12 gone, none new. Admin switch-off:
+  unreachable by construction — the legacy bar has its own stylesheet and the warm block needs the marker
+  the admin carries only with the switch on (the notification panel's warm prop is kit-only too). Guards
+  23 / 23, `verify:changed` green, lint clean. A whole-portal coach sweep was not run (a shared-stylesheet
+  change widens it to every coach screen; the scoped before/after stands in) — slice 6's prove step runs it.
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as

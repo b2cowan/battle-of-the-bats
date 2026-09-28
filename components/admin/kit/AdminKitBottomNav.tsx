@@ -203,7 +203,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
             {(t.count ?? 0) > 0 && <span aria-hidden className={styles.tabCount}>{badge(t.count!)}</span>}
             {t.chat && chatUnread > 0 && <span aria-hidden className={styles.tabCount}>{badge(chatUnread)}</span>}
           </span>
-          <span className={`${styles.label} ${kit.barLabel}`}>{t.label}</span>
+          <span className={styles.label}>{t.label}</span>
         </Link>
       ))}
 
@@ -222,7 +222,7 @@ export default function AdminKitBottomNav({ notifUnread = 0 }: { notifUnread?: n
             {moreActive && !moreOpen && <span className={styles.activeDot} />}
             {!moreOpen && moreBadge > 0 && <span aria-hidden className={styles.tabCount}>{badge(moreBadge)}</span>}
           </span>
-          <span className={`${styles.label} ${kit.barLabel}`}>More</span>
+          <span className={styles.label}>More</span>
         </button>
 
         {moreOpen && (

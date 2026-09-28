@@ -453,7 +453,7 @@ dialog.truesize::backdrop{background:#16201899}
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27">Build</li>
+    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27. Slice 1's open questions ruled 2026-09-27; the phone bar and Warm shadow fixes built for both portals">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -473,7 +473,7 @@ dialog.truesize::backdrop{background:#16201899}
 <section id="hub-progress" class="hubsection prog">
   <div class="eyebrow">Progress · Phase 1, the foundation</div>
   <h1>Where the program stands</h1>
-  <p class="lede"><strong>Every admin area except the volunteer screens and the help guide is now on the coaches portal's look, in Warm and Dark.</strong> Seven of the nine build slices are committed, the tournament schedule last. Two remain: slice 5 (scorekeeper, gate and the help guide), then slice 6, which proves everything, walks it with you and releases it. Customers see none of it until that release day; until then it shows only in a browser that turns the switch on.</p>
+  <p class="lede"><strong>Every admin area except the volunteer screens and the help guide is now on the coaches portal's look, in Warm and Dark.</strong> Seven of the nine build slices are committed, the tournament schedule last. Two remain: slice 5 (scorekeeper, gate and the help guide), then slice 6, which proves everything, walks it with you and releases it. Customers see none of it until that release day; until then it shows only in a browser that turns the switch on. <strong>One exception, on your word:</strong> your answers to slice 1's open questions (the phone bar and the Warm shadows) are built for both portals, so coaches see them with the next release.</p>
 
   <ol class="track" aria-label="The nine build slices, in order">
     <li><button type="button" class="s-committed" data-goto="sl-0"><b>0</b><span>Baseline</span></button></li>
@@ -490,12 +490,9 @@ dialog.truesize::backdrop{background:#16201899}
 
   <h2>Waiting on you</h2>
   <div class="waiting">
-    <p class="sub" style="margin:0">Three open questions from slice 1, one found issue that needs a home, and the calls each slice made at build time. None of them blocks the next slice.</p>
+    <p class="sub" style="margin:0">You answered slice 1's three open questions and placed the preview issue on 2026-09-27 (see Decisions). What is left is a commit and the calls to confirm on your walk. Neither blocks the next slice.</p>
     <ol>
-      <li><b>The Dark phone bar's faint labels: fix them in both portals now, or at slice 6?</b><span>This is now the only thing keeping Dark at zero reading problems on every restyled screen. The inactive tab labels are too faint on the Dark bar, and the admin shares that bar with the coaches portal, so one fix repairs both.</span></li>
-      <li><b>The phone bar's labels: mixed case (the admin, as drawn) or capitals (the coaches portal today)?</b><span>In capitals, "Accounting" is cut off on a phone. One of the two portals should move so they match.</span></li>
-      <li><b>Cards carry a dark shadow on cream in the coaches portal, and the admin matches it. Soften it in both?</b><span>A design call for both portals; the admin follows whatever the portal does.</span></li>
-      <li><b>Your public Schedule preview shows a little of the Warm look (found in slice 4c).</b><span>With the switch on and your theme set to Warm, the preview's tab bar sits on a different dark ground than families see. It predates 4c. It goes to slice 6's proof, or a small fix of its own: your choice.</span></li>
+      <li><b>Your word to commit the phone bar and Warm shadow fixes.</b><span>Built and measured (the row below the schedule). Unlike the rest of this program they are not behind the switch: the coaches portal shares the bar and the Warm look, so coaches get them with the next release. You said "go" to that.</span></li>
       <li><b>Build-time calls to confirm on your walk.</b><span>Each slice's report lists the places the build chose differently from the drawing, or chose where the drawing was silent (for example, Finalize becoming the lime button in 4b). They are confirmed or reversed on the slice 6 walk.</span></li>
     </ol>
   </div>
@@ -538,6 +535,11 @@ dialog.truesize::backdrop{background:#16201899}
       <div><h3>The tournament schedule</h3><p>The Schedule and everything it opens: health panels, the generator, the playoff builder, brackets, the timeline, rain delay and the game form. This completes the tournament screens.</p><p class="proof">Switch off: 28 of 28 identical · hard-to-read text 473 → 28 Warm / 93 Dark, no view worse</p></div>
       <div class="state"><span class="st committed">Committed</span><span class="meta">9d1b1670 · 2026-09-27</span><button type="button" class="linkbtn" data-report="Slice 4c">Read the report</button></div>
     </article>
+    <article class="slice" id="sl-bar">
+      <div class="sid">+</div>
+      <div><h3>Both portals: the phone bar and Warm shadows</h3><p>Your answers to slice 1's questions. The phone bar's labels read clearly in Dark and are in ordinary capitalization, in both portals; cards on cream lose their heavy dark shadow in Warm. Not behind the switch: coaches see it with the next release.</p><p class="proof">Coaches portal, Dark: 45 hard-to-read labels → 0, nothing new · Warm: the same 28 findings before and after</p></div>
+      <div class="state"><span class="st built">Built</span><span class="meta">2026-09-27 · waiting for your word</span><button type="button" class="linkbtn" data-report="Both portals">Read the report</button></div>
+    </article>
     <article class="slice" id="sl-5">
       <div class="sid">5</div>
       <div><h3>Volunteers and the help guide</h3><p>The scorekeeper, official and gate screens in warm for everyone (volunteers have no account to hold a setting), and the help guide following your theme.</p></div>
@@ -545,7 +547,7 @@ dialog.truesize::backdrop{background:#16201899}
     </article>
     <article class="slice" id="sl-6">
       <div class="sid">6</div>
-      <div><h3>Prove, walk, release</h3><p>Every admin screen swept in both themes with the switch on, your walk, then the switch comes out and everyone gets the new look on one day.</p></div>
+      <div><h3>Prove, walk, release</h3><p>Every admin screen swept in both themes with the switch on, the public Schedule preview's Warm tab bar fixed, your walk, then the switch comes out and everyone gets the new look on one day.</p></div>
       <div class="state"><span class="st todo">Not started</span></div>
     </article>
   </div>
@@ -574,7 +576,7 @@ dialog.truesize::backdrop{background:#16201899}
   <h2>Before release day</h2>
   <ol class="release">
     <li><strong>Slice 5</strong>: the volunteer screens and the help guide.</li>
-    <li><strong>Prove</strong>: every admin screen swept in both themes with the switch on, the reading-contrast check on the admin's backgrounds, and the switch-off pictures one last time.</li>
+    <li><strong>Prove</strong>: every admin screen swept in both themes with the switch on, the reading-contrast check on the admin's backgrounds, and the switch-off pictures one last time. The public Schedule preview's Warm tab bar is fixed here (your ruling).</li>
     <li><strong>Confirm Club Stage 1's six screens</strong> are ready on the same switch; they ship the same day.</li>
     <li><strong>Your walk</strong>: a sample of every area in both themes, the frame at desktop and phone width, a dense table, a tournament on game day, the scorekeeper sheet and the help guide.</li>
     <li><strong>Release</strong>, on your word and outside a tournament weekend: the switch comes out, the old look is deleted, and a What's New note says where the Dark choice lives and that your colours stay on your public pages.</li>
@@ -1191,21 +1193,21 @@ dialog.truesize::backdrop{background:#16201899}
     <li>More opens as the coaches portal's real full-width menu, not the narrower one drawn. The drawing's own note says "as the coach sheet does".</li>
     <li>The Families filter chips use the coaches portal's real filter chip (the body face), not the drawn monospace chip.</li>
     <li>Club screens keep the band with the organization's name and the flip button. The club drawings show no band, but removing it would remove the flip.</li>
-    <li>The phone bar's labels are in mixed case, as drawn. The coaches portal's bar uses capitals, and in capitals "Accounting" is cut off on a phone.</li>
+    <li>The phone bar's labels are in mixed case, as drawn. The coaches portal's bar uses capitals, and in capitals "Accounting" is cut off on a phone. <em>(Ruled 2026-09-27: both portals use mixed case.)</em></li>
     <li>Held for Club Stage 1, whose screens they open: the Audit log and Notifications rows, the "what the club runs" program order, and the waiting counts.</li>
   </ul>
   <p><strong>Found on the way, written down rather than fixed here:</strong></p>
   <ul>
     <li>Today's house league sidebar links "Past Seasons" to a page that does not exist.</li>
-    <li>The coaches portal's Dark phone bar has labels below the reading floor (inactive tabs, and More's section headings). The admin shares that bar, so one fix repairs both.</li>
+    <li>The coaches portal's Dark phone bar has labels below the reading floor (inactive tabs, and More's section headings). The admin shares that bar, so one fix repairs both. <em>(Fixed 2026-09-27 in both portals.)</em></li>
     <li>In the coaches portal's Dark theme, about 30 borders take the organization's colour: the same leak this program removes from the admin.</li>
     <li>An organization's chosen font reaches both the admin and the coaches portal.</li>
   </ul>
-  <p><strong>Open questions for you:</strong></p>
+  <p><strong>Open questions for you</strong> <em>(all three answered on 2026-09-27; see "Both portals" below the schedule's report, and Decisions):</em></p>
   <ul>
-    <li>The coaches portal's cards carry a dark shadow on cream. The admin matches it for continuity. Should both portals soften it?</li>
-    <li>The phone bar: mixed case (the admin, as drawn) or capitals (the coaches portal today)? One of the two should move.</li>
-    <li>The Dark phone bar's faint labels: fix them in both portals now, or with slice 6?</li>
+    <li>The coaches portal's cards carry a dark shadow on cream. The admin matches it for continuity. Should both portals soften it? <em>Softened in both.</em></li>
+    <li>The phone bar: mixed case (the admin, as drawn) or capitals (the coaches portal today)? One of the two should move. <em>Mixed case in both.</em></li>
+    <li>The Dark phone bar's faint labels: fix them in both portals now, or with slice 6? <em>Fixed now, in both.</em></li>
   </ul>
   <h2>Slice 2 — buttons, chips, type, House league and Organization (2026-09-26)</h2>
   <p>Still nothing customers see: every change shows only in a browser that has turned the switch on, exactly as slice 1. Scope agreed at the start: the shared parts now, each area's own type with its own slice; the Hub belongs to Club Stage 1 apart from setup and Notifications.</p>
@@ -1421,6 +1423,19 @@ dialog.truesize::backdrop{background:#16201899}
   <p>The review read the change three ways: nothing changes with the switch off; nothing reaches public pages, the volunteer screens or the coaches portal; and the build checks. It found one real fault, now fixed. On the pop-up sheet the dimmed backdrop behind it would have stayed near-black under the new look. Two things are worth knowing for the walk: the red delete buttons read a lighter red in Dark on every admin screen with the switch on (Warm is unchanged), and the playoff measuring views depend on the test tournament keeping its playoffs.</p>
   <p>With the switch off, 24 of 24 pictures are still pixel-identical after the cleanup, and every build check and all 5,042 tests pass.</p>
   <p><strong>Committed</strong> (9d1b1670, 2026-09-27), after the type check, the switch's guard tests and the colour checks passed on this change alone. The pictures were retaken after the cleanup; the review's one fix changed only how the pop-up sheet looks with the switch on.</p>
+  <h2>Both portals — the phone bar and Warm shadows (slice 1's questions, 2026-09-27)</h2>
+  <p>You answered: "1. fix it 2. go with your recommendation 3. soften it 4. fix in slice 6", then "go" once you knew the first three change the live coaches portal too. The coaches portal and the admin share the phone bar and the Warm look, so there is no way to change one without the other, and no switch in the coaches portal to hide it behind.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>What changes</th><th>What a coach or organizer sees</th></tr></thead>
+    <tbody>
+      <tr><td>The phone bar in Dark</td><td>The names under the tabs you are not on, and the small headings in the More menu, were too faint to read. They now use the same quiet grey as other secondary text, well above the reading floor. The team and player switch menus' headings change with them. Warm looks the same as before.</td></tr>
+      <tr><td>The phone bar's lettering</td><td>"Schedule", "Roster", "More" in ordinary capitalization instead of spaced capitals, in both portals. The portal's own rule already sets navigation this way; this bar was the one place left in capitals. It also stops "Accounting" being cut off in the admin.</td></tr>
+      <tr><td>Card shadows in Warm</td><td>Cards and pop-up menus on cream carried a heavy black shadow meant for the Dark look. In Warm they now have the soft warm-brown shadow the portal already uses for its paper cards. Dark is unchanged. Your public page previews keep your organization's own look.</td></tr>
+      <tr><td>The public Schedule preview in Warm</td><td>Not changed here. Fixed in slice 6, as you ruled.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The proof.</strong> Four coaches portal screens (Overview, the More menu, Schedule, the player switch menu) at four widths, measured before and after. In Dark, all 45 hard-to-read labels are gone and nothing new appeared. In Warm, the same 28 findings before and after, none of them about reading, and no button changed size, so the new lettering pushed nothing out of place. With the switch on, the admin's Schedule in Dark lost its 12 faint bar labels and gained nothing. With the switch off, the admin cannot see any of it: its own phone bar has its own styling, and it only takes the Warm look when the switch is on. The admin's switch tests, the build checks and the code checks all pass.</p>
+  <p><strong>Not measured:</strong> a sweep of every coaches portal screen. The bar is on every screen, so the scoped before-and-after stands in, and slice 6's full sweep covers the rest. How soft the new shadow looks is your eye's call, not the sweep's: check a few cards on cream in Warm.</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1534,6 +1549,10 @@ $('s1TrueClose').onclick=()=>$('s1True').close();
 document.querySelectorAll('[data-truesize]').forEach(b=>b.addEventListener('click',()=>{const src=document.getElementById(b.dataset.truesize);if(!src)return;const d=$('s1True');const body=d.querySelector('.tsbody');body.innerHTML='';const c=src.cloneNode(true);c.removeAttribute('id');body.appendChild(c);d.showModal()}));
 
 const DECISIONS=[
+  {date:'2026-09-27 · after slice 4c',ask:'Q1 · The Dark phone bar\'s faint labels: fix them in both portals now, or at slice 6?',ruling:'accepted',label:'Accepted: fixed now, both portals',why:'Owner, 2026-09-27: "fix it", then "go" once told it reaches the live coaches portal with the next release. The tab names and the More menu\'s headings take the quiet grey used for other secondary text in Dark. One shared bar, so one fix repairs both portals.'},
+  {date:'2026-09-27 · after slice 4c',ask:'Q2 · The phone bar\'s labels: mixed case (the admin, as drawn) or capitals (the coaches portal)?',ruling:'accepted',label:'Accepted: mixed case, both portals',why:'Owner, 2026-09-27: "go with your recommendation". The recommendation was mixed case: the portal\'s own type rule of August 2026 already sets navigation that way, and this bar was the one place still in capitals; in capitals "Accounting" is cut off in the admin; both hubs draw mixed case.'},
+  {date:'2026-09-27 · after slice 4c',ask:'Q3 · Cards carry a dark shadow on cream. Soften it in both portals?',ruling:'accepted',label:'Accepted: softened in Warm',why:'Owner, 2026-09-27: "soften it". In Warm, cards and pop-up menus take the soft warm-brown shadow the portal already uses for its paper cards; Dark keeps its shadows. Public page previews keep the organization\'s own look.'},
+  {date:'2026-09-27 · after slice 4c',ask:'Q4 · The public Schedule preview\'s Warm tab bar: slice 6, or a small fix of its own?',ruling:'deferred',label:'Deferred to slice 6',why:'Owner, 2026-09-27: "fix in slice 6". Found in 4c and not caused by it: with the switch on and the theme set to Warm, the preview\'s tab bar sits on a different dark ground than families see. It is on slice 6\'s list.'},
   {date:'2026-09-27 · slice 4b',ask:'S4b · Does the schedule\'s game list move from 4c into 4b?',ruling:'accepted',label:'Accepted: it moves to 4b',why:'Owner, 2026-09-27: "Move it to 4b." The body of Results, the screen an organizer lives in on game day, is the schedule\'s game list in its score-entry form, styled from the schedule\'s own stylesheet. Left in 4c, Results would have been half restyled until then. 4c keeps the schedule page itself, the timeline, brackets, generator, playoff wizard and the schedule windows.'},
   {date:'2026-09-27 · slice 4',ask:'S4 · How is the tournament slice split?',ruling:'accepted',label:'Went ahead: three parts by job',why:'Proposed at the start of slice 4, and the owner went ahead ("the window is quiet"). The tournament screens measured about four times slice 3. The prompt\'s three jobs were not three equal sessions: records was small and operations was two and a half times a full session, over half of it the schedule. So: 4a setup and records plus the parts every tournament screen shares, 4b operations on game day, 4c the schedule.'},
   {date:'2026-09-26 · slice 2',ask:'S2a · Does the type change (F2) reach all 47 admin stylesheets in slice 2?',ruling:'accepted',label:'Accepted: in two layers',why:'Owner, 2026-09-26: "Yes, as proposed." The shared parts that reach every admin screen (buttons, chips, form labels, headings, the console overrides) change in slice 2. Each area\'s own stylesheets change with that area\'s slice: Rep Teams and Accounting in 3, Tournaments in 4, Help in 5. Doing them now would edit those sheets twice and collide with other sessions\' tournament work.'},

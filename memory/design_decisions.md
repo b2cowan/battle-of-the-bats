@@ -7,6 +7,31 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-27 — THE SHARED PHONE BAR READS IN DARK AND IN MIXED CASE; WARM SHADOWS ARE WARM — three open questions from Admin Design Continuity slice 1, settled for BOTH portals (owner; ships to coaches with the next release, not on the admin's release day)
+
+**The questions** (hub Progress tab, "Waiting on you"): the Dark phone bar's faint labels; mixed case (the
+admin's kit bar, as drawn) or capitals (the coaches bar); the dark card shadow on cream. Owner: *"1. fix
+it 2. go with your recommendation 3. soften it 4. fix in slice 6"* — then *"go"* after being told 1–3 reach
+live coaches immediately (the coaches portal has no switch).
+
+**The rulings.**
+1. **The bar's inactive tab names and the More menu's section headings take the quiet tier**
+   (`--text-tertiary`), not a 40% / 25% white — 3.8:1 → 7.4:1 on the bar's Dark ground. Both portals share
+   the stylesheet (`CoachesBottomNav.module.css`), so one change fixes both.
+2. **Mixed case in both portals.** The recommendation, argued from three facts: the portal's own type
+   ladder (2026-08-19) already set primary navigation in sentence case, and this bar was the one nav
+   surface left in capitals; the admin's kit bar cut "ACCOUNTING" to "ACCOUNTI…" at 390 in capitals; both
+   hubs draw mixed case. The labels are already written as words, so dropping the transform publishes
+   nothing odd (the 08-19 warning about removing an uppercase transform — checked). The admin's own
+   override that did this is deleted.
+3. **Warm softens `--shadow-sm` / `--shadow` / `--shadow-lg`** to the kit's warm-tinted shadow at three
+   depths (from `--home-line-rgb`); Dark keeps its values; the admin's public-preview island restores the
+   dark ones (R2).
+4. **The public preview's Warm tab bar** (found in slice 4c, not 4c's) is fixed in slice 6.
+
+**Why it ships now, not with the admin:** 1 is a reading defect coaches in Dark have today; 2 and 3 make
+the portal consistent with its own rules. Owner chose it knowingly.
+
 ### 2026-09-23 — A FORM COVERS THE NAV; A MENU SITS ON TOP OF IT: the coaches portal has TWO drawer layers and the test is the surface's CONTRACT WITH THE COACH, not what opened it or how big it looks (owner ruling, binding, portal-wide)
 
 **The question.** Owner, reading the observation dialog on a phone: *"what is our rule about opening

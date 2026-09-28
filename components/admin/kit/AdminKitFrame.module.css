@@ -240,13 +240,8 @@
   color: var(--text-tertiary);
 }
 
-/* ── The phone bar's labels (the bar itself is the coach bar's stylesheet) ───────────────────────
-   ⚠ MIXED CASE, AS DRAWN (club Stage 1 specimen 4) — and not the coach bar's capitals, for a reason
-   the coach bar never meets: its four labels are short and fixed, while the admin's are PROGRAM
-   names. "ACCOUNTING" in the bar's tracked capitals is cut to "ACCOUNTI…" at 390 (measured,
-   slice 1) and "HOUSE LEAGUE" would be worse; in mixed case both fit. Two classes deep so it wins
-   over the coach module's one-class `.label` whichever stylesheet the bundle loads last. */
-.bar .barLabel { text-transform: none; letter-spacing: 0.01em; }
+/* The phone bar's labels are the coach bar's own `.label`: mixed case in both portals since
+   2026-09-27 (owner) — the admin's override that did this here is gone. */
 
 /* ── The phone's "In <program>" row (club Stage 1 specimen 4, third phone) ─────────────────────
    Inside a program the phone bar does not change; the program's own pages are one tap away at the
