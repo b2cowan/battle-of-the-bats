@@ -20,7 +20,8 @@
 > labels and its case, Warm's card shadows — fixed in BOTH portals, live coaches included; the preview's
 > Warm tab bar → slice 6) — results in §3a after 4c's; /review done; **COMMITTED `dca4ac25` 2026-09-27**.
 > **Slice 5 (the volunteer screens in fixed warm — R3; the admin's help guide following the theme — R4)
-> BUILT 2026-09-27** — results in §3a after slice 1's open questions. Slice 6 (prove, walk, release) is next.
+> BUILT 2026-09-27** — results in §3a after slice 1's open questions; /simplify + /review done (owner: "go ahead with
+> simplify, review, and commit"); **COMMITTED `530d87e9` 2026-09-27**. Slice 6 (prove, walk, release) is next.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -182,7 +183,7 @@ foundation's release day.
 | 4a | Tournaments — **setup and records, plus the area's shared parts** (split recorded below) | **BUILT 2026-09-27** — results below; /simplify + /review done; identity 58/58 + both-theme sweep done; COMMITTED `8e76362f` 2026-09-27; walked at slice 6 |
 | 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; COMMITTED `07808a02` 2026-09-27; walked at slice 6 |
 | 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | **BUILT 2026-09-27** — results below; identity 28/28 + both-theme sweep done; /simplify + /review done; COMMITTED `9d1b1670` 2026-09-27; walked at slice 6 |
-| 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | **BUILT 2026-09-27** — results below; walked at slice 6 |
+| 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | **BUILT 2026-09-27** — results below; /simplify + /review done; COMMITTED `530d87e9` 2026-09-27; walked at slice 6 |
 | 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | not started |
 
 **Slice 4 — the split (2026-09-27, written before starting, as the build prompt requires).** The
@@ -1312,6 +1313,10 @@ restarted (healthy throughout: no crashed page worker, 2.8 → ~5 GB, ≥5.5 GB 
   2. The desktop Sign out and the hop link are ~15px tall (tap floor) — pre-existing.
   3. The coaches portal's "?" drawer needs its own portal root at release (above).
   4. The install banner itself is the shared one (tokens only) — legible on the kit, not restyled.
+- **COMMITTED `530d87e9` 2026-09-27** from a private index: `components/help/help.module.css` as HEAD + this slice's appended
+  section (another session's uncommitted `.helpButtonIconOnly` hunk and `HelpButton.tsx` left out), `TODO.md` with
+  this slice's clause only; the staged tree typechecked alone (a `git archive` copy, `next typegen`, node_modules
+  junctioned), guards 19 / 19, token gate green.
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as
