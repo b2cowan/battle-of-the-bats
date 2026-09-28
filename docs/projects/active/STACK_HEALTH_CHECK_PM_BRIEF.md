@@ -23,8 +23,9 @@ worse, not a wall of standing warnings.
   do, once you've created a mail key for it (one-time setup, see the plan).
 - **Every Monday:** a short weekly digest, even when everything is fine. If a Monday email doesn't
   arrive, the check has stopped running.
-- **Any time:** the latest report and the history sit in a private folder in the project. Any
-  session can also turn the history into a trend dashboard.
+- **Any time:** open the dashboard in your browser (one command, or open the file in the private
+  health folder). It shows today's verdict and what to do, every past day at a click, and 30-day
+  trend charts. It rebuilds itself after every morning run.
 
 ## Why it matters
 

@@ -55,7 +55,7 @@ traffic are the proxies, and each would have flagged the 09-21 spike.
 - `state.json` — the advisor baseline, the last pg_stat_statements snapshot, the last digest date.
 - `last-run.log` — the scheduled task's output, for when something fails.
 
-A trend dashboard can be published from `history.jsonl` as a Claude artifact on request.
+`dashboard.html` is the browser view of all of it (§9): `npm run health:open`.
 
 ## 4. Alerts
 
@@ -123,7 +123,47 @@ runs continuously.
 - **History seeded:** the 09-17 → 09-25 replays sit in `.health/history.jsonl` and `reports/`, so
   the medians work from day one and the incident is on record.
 
-## 9. Success criteria
+## 9. The local dashboard (owner ask 2026-09-26, built the same day)
+
+"A simple local front end that is git ignored where I can open a browser and see a dashboard for
+the issues, history, etc."
+
+- **The page is `.health/dashboard.html`: gitignored, local only, never deployed.** It is one
+  self-contained file (no server, no libraries, no network) that opens from file://. The two
+  pieces that BUILD it are committed, so it survives a clean checkout and works on the second
+  machine: `scripts/stack-health-dashboard.mjs` and the template
+  `scripts/lib/stack-health-dashboard.html`. That split was said to the owner up front.
+- **Rebuilt** after every recorded run, i.e. the 7:30 a.m. task. On demand: `npm run health:dashboard`,
+  or `npm run health:open` (rebuild + open in the default browser). The red desktop notification
+  points at `npm run health:open`.
+- **What it shows.** Always on top: the verdict pill, when the report ran and the task's next run,
+  and banners when the run is more than 48 h old, when the task is missing or failed, or when email
+  is off. Then **three tabs** (owner ask, 09-26):
+  - **Latest run:** summary tiles (problems, to review, fine, could not check, red days of the last
+    7) and the issues as cards with "what to do".
+  - **History:** a strip of up to 60 days. Click a day to see every check, with filter chips by
+    status, search, and the full report text.
+  - **Trends:** 9 metrics as small multiples, dev and prod each on its own axis (one axis per
+    chart), 30 days, a dashed 7-day-median reference line, crosshair + tooltip, and a table view
+    per chart.
+
+  The tab lives in the address (`#latest` / `#history` / `#trends`), so a refresh or bookmark
+  lands on it. Tabs follow the ARIA tablist pattern (arrow keys, Home/End); counts show in the tab
+  labels, and are hidden under 520 px so the row fits a phone. Charts draw only while Trends is
+  showing, because a hidden panel measures 0 px wide. The tab marker uses `location.replace`,
+  because `history.replaceState` can throw on file:// pages. Light/dark follows the OS, with a toggle.
+- **Data:** metrics from `history.jsonl`; checks parsed from `reports/<day>.md` (the report is the
+  source of truth for the detail and "what to do" text); task state from Get-ScheduledTask; email
+  configured as a yes/no only (the key never enters the page). The JSON is embedded with `<`
+  escaped, so no string in the data can close the script tag.
+- **Verified in a headless browser** (Playwright, `.probe/health-dash/`): no script errors in light,
+  dark or phone; the hover tooltip reads "Sep 23 · dev · 119,341 requests · day: Problem"; a day
+  click gives 16 rows for 09-21 and the red filter 2; no horizontal overflow at 1280 or 390 px.
+  Round 1 found the axis text unreadable (the SVG scaled down) and the day table 22 px too wide on
+  a phone. Charts now draw at their measured pixel width and redraw on resize; the day table
+  scrolls in its own box and drops the Area column under 720 px.
+
+## 10. Success criteria
 
 - The 09-21 and 09-25 replays come out red, naming the snapshot query and the traffic spike; 09-26
   comes out green.

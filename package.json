@@ -15,6 +15,8 @@
     "check:automation": "node scripts/check-agent-automation.mjs",
     "check:db-load": "node scripts/check-db-load.mjs",
     "health": "node scripts/stack-health.mjs",
+    "health:dashboard": "node scripts/stack-health-dashboard.mjs",
+    "health:open": "node scripts/stack-health-dashboard.mjs --open",
     "check:contrast": "node scripts/check-contrast.mjs",
     "check:text-contrast": "node scripts/check-text-contrast.mjs",
     "check:org-context": "node scripts/check-admin-org-context.mjs",

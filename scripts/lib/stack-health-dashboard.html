@@ -1,0 +1,382 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stack health</title>
+<!--
+  The stack health dashboard TEMPLATE. scripts/stack-health-dashboard.mjs fills DATA and writes the
+  page to .health/dashboard.html (gitignored). Self-contained: no network, no libraries, opens from
+  file://. Plan: docs/projects/active/STACK_HEALTH_CHECK_PLAN.md §9.
+-->
+<style>
+  :root {
+    color-scheme: light;
+    --page: #f3f3f1; --surface: #fcfcfb; --line: #e2e1dc; --grid: #ecebe7;
+    --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #6f6e69;
+    --series: #2a78d6; --ref: #8a8984;
+    --good: #0ca30c; --warn: #b87d00; --warn-fill: #fab219; --crit: #d03b3b; --unk: #7a7973;
+    --good-bg: #e7f5e7; --warn-bg: #fdf3dc; --crit-bg: #fbe9e9; --unk-bg: #efefec;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:where(:not([data-theme="light"])) {
+      color-scheme: dark;
+      --page: #121211; --surface: #1a1a19; --line: #2e2e2b; --grid: #262624;
+      --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9f9e95;
+      --series: #3987e5; --ref: #8d8c84;
+      --good: #34c234; --warn: #fab219; --warn-fill: #fab219; --crit: #ea6a6a; --unk: #a3a29a;
+      --good-bg: #16301a; --warn-bg: #3a2f12; --crit-bg: #3d1c1c; --unk-bg: #262624;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --page: #121211; --surface: #1a1a19; --line: #2e2e2b; --grid: #262624;
+    --ink: #ffffff; --ink-2: #c3c2b7; --ink-3: #9f9e95;
+    --series: #3987e5; --ref: #8d8c84;
+    --good: #34c234; --warn: #fab219; --warn-fill: #fab219; --crit: #ea6a6a; --unk: #a3a29a;
+    --good-bg: #16301a; --warn-bg: #3a2f12; --crit-bg: #3d1c1c; --unk-bg: #262624;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--ink); font: 14px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .app { max-width: 1180px; margin: 0 auto; padding: 24px 16px 48px; }
+  header { display: flex; flex-wrap: wrap; align-items: baseline; gap: 8px 16px; margin-bottom: 8px; }
+  h1 { font-size: 22px; margin: 0; }
+  h2 { font-size: 16px; margin: 28px 0 10px; }
+  .muted { color: var(--ink-2); }
+  .small { font-size: 12px; color: var(--ink-3); }
+  .card { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; padding: 2px 10px; border-radius: 999px; font-weight: 600; font-size: 13px; }
+  .pill.red { background: var(--crit-bg); color: var(--crit); }
+  .pill.amber { background: var(--warn-bg); color: var(--warn); }
+  .pill.green { background: var(--good-bg); color: var(--good); }
+  .pill.unknown { background: var(--unk-bg); color: var(--unk); }
+  .banner { margin: 12px 0 0; padding: 10px 14px; border-radius: 10px; background: var(--warn-bg); color: var(--ink); border: 1px solid var(--line); }
+  .banner b { color: var(--warn); }
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 14px; }
+  .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .stat .n { font-size: 26px; font-weight: 700; line-height: 1.1; }
+  .stat .l { color: var(--ink-2); font-size: 13px; }
+  .issues { display: grid; gap: 10px; }
+  .issue { background: var(--surface); border: 1px solid var(--line); border-left-width: 4px; border-radius: 10px; padding: 12px 14px; }
+  .issue.red { border-left-color: var(--crit); }
+  .issue.amber { border-left-color: var(--warn-fill); }
+  .issue.unknown { border-left-color: var(--unk); }
+  .issue .t { font-weight: 600; }
+  .issue .d { margin-top: 2px; word-break: break-word; }
+  .issue .todo { margin-top: 6px; color: var(--ink-2); }
+  .issue .todo::before { content: "What to do: "; font-weight: 600; color: var(--ink); }
+  .strip { display: flex; flex-wrap: wrap; gap: 4px; }
+  .dayc { width: 34px; height: 44px; border-radius: 6px; border: 1px solid var(--line); background: var(--surface); display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; font-size: 11px; color: var(--ink-2); padding: 0; }
+  .dayc .i { font-size: 14px; line-height: 1.2; }
+  .dayc.red { background: var(--crit-bg); } .dayc.amber { background: var(--warn-bg); } .dayc.green { background: var(--good-bg); } .dayc.unknown { background: var(--unk-bg); }
+  .dayc.empty { cursor: default; opacity: .45; }
+  .dayc[aria-pressed="true"] { outline: 2px solid var(--series); outline-offset: 1px; color: var(--ink); }
+  .dayc:focus-visible { outline: 2px solid var(--series); outline-offset: 2px; }
+  .filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 8px; }
+  .chip { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 3px 12px; cursor: pointer; font: inherit; font-size: 13px; }
+  .chip[aria-pressed="true"] { background: var(--ink); color: var(--surface); border-color: var(--ink); }
+  input[type="search"] { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 8px; padding: 5px 10px; font: inherit; flex: 1 1 180px; min-width: 0; max-width: 320px; }
+  .tablewrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; }
+  th, td { text-align: left; padding: 7px 8px; border-bottom: 1px solid var(--grid); vertical-align: top; }
+  th { font-size: 12px; color: var(--ink-3); font-weight: 600; }
+  td.st { white-space: nowrap; }
+  td.detail { word-break: break-word; }
+  td.detail .todo { color: var(--ink-2); margin-top: 3px; }
+  .charts { display: grid; grid-template-columns: repeat(auto-fill, minmax(480px, 1fr)); gap: 12px; }
+  .chart h3 { font-size: 14px; margin: 0 0 2px; }
+  .chart .sub { font-size: 12px; color: var(--ink-3); margin-bottom: 6px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .env { font-size: 12px; color: var(--ink-2); display: flex; justify-content: space-between; }
+  .env b { color: var(--ink); font-weight: 600; }
+  .plot { width: 100%; min-width: 0; }
+  svg.spark { display: block; max-width: 100%; overflow: visible; }
+  svg.spark .grid { stroke: var(--grid); stroke-width: 1; }
+  svg.spark .axis { fill: var(--ink-3); font-size: 11px; }
+  svg.spark .ln { fill: none; stroke: var(--series); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+  svg.spark .pt { fill: var(--series); stroke: var(--surface); stroke-width: 2; }
+  svg.spark .ref { stroke: var(--ref); stroke-width: 1.5; stroke-dasharray: 4 3; }
+  svg.spark .hot { fill: transparent; cursor: crosshair; }
+  svg.spark .cross { stroke: var(--ink-3); stroke-width: 1; }
+  .nodata { font-size: 12px; color: var(--ink-3); padding: 18px 0; text-align: center; }
+  details { margin-top: 6px; } summary { cursor: pointer; font-size: 12px; color: var(--ink-3); }
+  details table td, details table th { padding: 2px 6px; font-size: 12px; }
+  #tip { position: fixed; pointer-events: none; z-index: 10; background: var(--ink); color: var(--surface); padding: 6px 9px; border-radius: 6px; font-size: 12px; max-width: 280px; }
+  .report { white-space: pre-wrap; font: 12px/1.5 ui-monospace, Consolas, monospace; background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 12px; overflow-x: auto; }
+  footer { margin-top: 32px; font-size: 12px; color: var(--ink-3); }
+  code { font: 12px ui-monospace, Consolas, monospace; background: var(--grid); padding: 1px 5px; border-radius: 4px; }
+  .theme { margin-left: auto; }
+  .tabs { display: flex; gap: 2px; margin: 18px 0 0; border-bottom: 1px solid var(--line); overflow-x: auto; }
+  .tab { border: 0; background: none; color: var(--ink-2); font: inherit; font-size: 15px; font-weight: 600; padding: 10px 14px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; white-space: nowrap; }
+  .tab:hover { color: var(--ink); }
+  .tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--series); }
+  .tab:focus-visible { outline: 2px solid var(--series); outline-offset: -2px; border-radius: 6px 6px 0 0; }
+  .tab .count { font-weight: 500; color: var(--ink-3); margin-left: 4px; }
+  @media (max-width: 520px) { .tab { padding: 10px 10px; } .tab .count { display: none; } }
+  .panel { padding-top: 16px; }
+  .panel > .summary:first-child { margin-top: 0; }
+  .panel h2:first-of-type { margin-top: 22px; }
+  @media (max-width: 720px) { .pair { grid-template-columns: 1fr; } .charts { grid-template-columns: 1fr; } .daytable th:nth-child(2), .daytable td:nth-child(2) { display: none; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <h1>Stack health</h1>
+    <span id="headline"></span>
+    <button class="chip theme" id="theme" type="button">Theme: auto</button>
+  </header>
+  <div id="meta" class="muted"></div>
+  <div id="banner"></div>
+
+  <div class="tabs" role="tablist" aria-label="Dashboard sections">
+    <button type="button" role="tab" class="tab" id="tab-latest" data-tab="latest" aria-controls="panel-latest">Latest run</button>
+    <button type="button" role="tab" class="tab" id="tab-history" data-tab="history" aria-controls="panel-history">History</button>
+    <button type="button" role="tab" class="tab" id="tab-trends" data-tab="trends" aria-controls="panel-trends">Trends</button>
+  </div>
+
+  <section id="panel-latest" class="panel" role="tabpanel" aria-labelledby="tab-latest">
+    <div id="summary" class="summary"></div>
+    <h2>What needs attention</h2>
+    <div id="issues" class="issues"></div>
+  </section>
+
+  <section id="panel-history" class="panel" role="tabpanel" aria-labelledby="tab-history" hidden>
+    <div class="small" style="margin-bottom:6px">Each square is a day (UTC). Click one to see every check that day.</div>
+    <div id="strip" class="strip" role="group" aria-label="Days"></div>
+    <div id="day" class="card" style="margin-top:12px"></div>
+  </section>
+
+  <section id="panel-trends" class="panel" role="tabpanel" aria-labelledby="tab-trends" hidden>
+    <div class="small" style="margin-bottom:8px">Last 30 recorded days, dev and prod on separate scales. The dashed line is the 7-day median the check compares against. Hover a chart for values; each has a table view.</div>
+    <div id="charts" class="charts"></div>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+<div id="tip" role="tooltip" hidden></div>
+
+<script>const DATA = /*__DATA__*/null;</script>
+<script>
+(function () {
+  'use strict';
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const ICON = { red: '🔴', amber: '🟡', green: '✅', unknown: '❔' };
+  const LABEL = { red: 'Problem', amber: 'To review', green: 'Fine', unknown: 'Could not check' };
+  const fmt = (n) => (n == null ? '–' : Number(n).toLocaleString('en-CA'));
+  const compact = (n) => {
+    const a = Math.abs(n);
+    if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e7 ? 0 : 1).replace(/\.0$/, '') + 'M';
+    if (a >= 1e3) return (n / 1e3).toFixed(a >= 1e4 ? 0 : 1).replace(/\.0$/, '') + 'k';
+    return String(Math.round(n * 10) / 10);
+  };
+  const shortDay = (d) => { const [, m, dd] = d.split('-'); return ['', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][+m] + ' ' + (+dd); };
+
+  // theme toggle: auto → light → dark (remembered per browser)
+  const themeBtn = $('theme');
+  const setTheme = (t) => {
+    if (t === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t);
+    themeBtn.textContent = 'Theme: ' + t;
+    try { localStorage.setItem('stack-health-theme', t); } catch (e) { /* private mode */ }
+  };
+  let theme = 'auto';
+  try { theme = localStorage.getItem('stack-health-theme') || 'auto'; } catch (e) { /* ignore */ }
+  setTheme(theme);
+  themeBtn.addEventListener('click', () => { theme = theme === 'auto' ? 'light' : theme === 'light' ? 'dark' : 'auto'; setTheme(theme); });
+
+  if (!DATA || !DATA.days || !DATA.days.length) {
+    $('meta').textContent = 'No history yet. Run: npm run health -- --record, or wait for the 7:30 a.m. run.';
+    return;
+  }
+
+  const days = DATA.days;
+  const latest = days[days.length - 1];
+  const count = (checks, s) => checks.filter((c) => c.status === s).length;
+
+  // ── headline + meta + staleness ────────────────────────────────────────────
+  $('headline').innerHTML = '<span class="pill ' + latest.overall + '">' + ICON[latest.overall] + ' ' + LABEL[latest.overall] + (latest.overall === 'red' ? 's' : '') + '</span>';
+  const ran = latest.runAt ? new Date(latest.runAt) : null;
+  const meta = [];
+  meta.push('Latest report covers <b>' + esc(shortDay(latest.day)) + '</b>' + (latest.replay ? ' (replayed)' : ''));
+  if (ran) meta.push('ran ' + esc(ran.toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })));
+  if (DATA.task && DATA.task.nextRun) meta.push('next run ' + esc(DATA.task.nextRun));
+  meta.push('page built ' + esc(new Date(DATA.generatedAt).toLocaleString('en-CA', { dateStyle: 'medium', timeStyle: 'short' })));
+  $('meta').innerHTML = meta.join(' · ');
+  const ageH = ran ? (Date.now() - ran.getTime()) / 3.6e6 : Infinity;
+  const banners = [];
+  if (ageH > 48) banners.push('<b>The daily check has not run for ' + Math.floor(ageH / 24) + ' days.</b> The 7:30 a.m. task may have stopped. Reinstall it: <code>powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\stack-health-schedule.ps1</code>');
+  if (DATA.task && DATA.task.state === 'missing') banners.push('<b>The scheduled task is not installed on this PC.</b> Install it: <code>powershell -NoProfile -ExecutionPolicy Bypass -File scripts\\stack-health-schedule.ps1</code>');
+  if (DATA.task && DATA.task.lastResult && DATA.task.lastResult !== '0') banners.push('<b>The last scheduled run failed</b> (result ' + esc(DATA.task.lastResult) + '). See <code>.health/last-run.log</code>.');
+  if (DATA.emailConfigured === false) banners.push('<b>Email alerts are off</b> until <code>HEALTH_RESEND_API_KEY</code> is in <code>.env.local</code>. Desktop notifications still fire on red.');
+  $('banner').innerHTML = banners.map((b) => '<div class="banner">' + b + '</div>').join('');
+
+  // ── summary tiles ──────────────────────────────────────────────────────────
+  const redDays = days.slice(-7).filter((d) => d.overall === 'red').length;
+  $('summary').innerHTML = [
+    ['red', count(latest.checks, 'red'), 'problems'],
+    ['amber', count(latest.checks, 'amber'), 'to review'],
+    ['green', count(latest.checks, 'green'), 'fine'],
+    ['unknown', count(latest.checks, 'unknown'), 'could not check'],
+  ].map(([s, n, l]) => '<div class="stat"><div class="n">' + ICON[s] + ' ' + n + '</div><div class="l">' + l + '</div></div>').join('') +
+    '<div class="stat"><div class="n">' + redDays + ' / ' + Math.min(7, days.length) + '</div><div class="l">red days, last 7</div></div>';
+
+  // ── latest issues ──────────────────────────────────────────────────────────
+  const issues = latest.checks.filter((c) => c.status !== 'green');
+  $('issues').innerHTML = issues.length ? issues.map((c) =>
+    '<div class="issue ' + c.status + '"><div class="t">' + ICON[c.status] + ' ' + LABEL[c.status] + ' · ' + esc(c.area) + ' · ' + esc(c.env) + ' · ' + esc(c.name) + '</div>' +
+    '<div class="d">' + esc(c.detail) + '</div>' + (c.todo ? '<div class="todo">' + esc(c.todo) + '</div>' : '') + '</div>').join('')
+    : '<div class="card">✅ Nothing needs attention.</div>';
+
+  // ── history strip ──────────────────────────────────────────────────────────
+  const byDay = Object.fromEntries(days.map((d) => [d.day, d]));
+  const first = new Date(days[Math.max(0, days.length - 60)].day + 'T00:00:00Z');
+  const last = new Date(latest.day + 'T00:00:00Z');
+  const cells = [];
+  for (let t = first.getTime(); t <= last.getTime(); t += 864e5) {
+    const k = new Date(t).toISOString().slice(0, 10);
+    const d = byDay[k];
+    cells.push(d
+      ? '<button type="button" class="dayc ' + d.overall + '" data-day="' + k + '" aria-pressed="false" title="' + esc(shortDay(k) + ': ' + LABEL[d.overall]) + '"><span class="i">' + ICON[d.overall] + '</span>' + (+k.slice(8)) + '</button>'
+      : '<span class="dayc empty" title="' + esc(shortDay(k)) + ': no run">' + (+k.slice(8)) + '</span>');
+  }
+  $('strip').innerHTML = cells.join('');
+  let filter = 'all', query = '', selected = latest.day;
+  function renderDay() {
+    const d = byDay[selected];
+    document.querySelectorAll('.dayc[data-day]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.day === selected)));
+    const rows = d.checks.filter((c) => (filter === 'all' || c.status === filter) &&
+      (!query || (c.area + ' ' + c.env + ' ' + c.name + ' ' + c.detail).toLowerCase().includes(query)));
+    const chips = ['all', 'red', 'amber', 'unknown', 'green'].map((s) =>
+      '<button type="button" class="chip" data-f="' + s + '" aria-pressed="' + (filter === s) + '">' + (s === 'all' ? 'All (' + d.checks.length + ')' : ICON[s] + ' ' + LABEL[s] + ' (' + count(d.checks, s) + ')') + '</button>').join('');
+    $('day').innerHTML =
+      '<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:baseline"><b>' + esc(shortDay(d.day)) + '</b><span class="pill ' + d.overall + '">' + ICON[d.overall] + ' ' + LABEL[d.overall] + '</span>' +
+      (d.replay ? '<span class="small">replayed: live checks (vitals, advisors, builds) were not run for this day</span>' : '') + '</div>' +
+      '<div class="filters">' + chips + '<input type="search" id="q" placeholder="Search checks" value="' + esc(query) + '" aria-label="Search checks"></div>' +
+      (rows.length ? '<div class="tablewrap"><table class="daytable"><thead><tr><th>Status</th><th>Area</th><th>Where</th><th>Check</th><th>Detail</th></tr></thead><tbody>' +
+        rows.map((c) => '<tr><td class="st">' + ICON[c.status] + ' ' + LABEL[c.status] + '</td><td>' + esc(c.area) + '</td><td>' + esc(c.env) + '</td><td>' + esc(c.name) + '</td><td class="detail">' + esc(c.detail) +
+          (c.todo ? '<div class="todo">→ ' + esc(c.todo) + '</div>' : '') + '</td></tr>').join('') + '</tbody></table></div>'
+        : '<div class="small">No checks match.</div>') +
+      (d.report ? '<details><summary>Full report text</summary><div class="report">' + esc(d.report) + '</div></details>' : '');
+    $('day').querySelectorAll('[data-f]').forEach((b) => b.addEventListener('click', () => { filter = b.dataset.f; renderDay(); }));
+    const q = $('q');
+    q.addEventListener('input', () => { query = q.value.trim().toLowerCase(); const pos = q.selectionStart; renderDay(); const q2 = $('q'); q2.focus(); q2.setSelectionRange(pos, pos); });
+  }
+  $('strip').addEventListener('click', (e) => { const b = e.target.closest('.dayc[data-day]'); if (b) { selected = b.dataset.day; renderDay(); } });
+  renderDay();
+
+  // ── trends (small multiples; one series per chart, one axis each) ──────────
+  const METRICS = [
+    { key: 'slow', title: 'Slow queries', sub: 'statements over 10 s per day', unit: 'statements' },
+    { key: 'requests', title: 'Requests', sub: 'API requests per day', unit: 'requests' },
+    { key: 'http5xx', title: 'Server errors', sub: '5xx responses per day', unit: 'errors' },
+    { key: 'pgErrors', title: 'Database errors', sub: 'errors logged by Postgres per day', unit: 'errors' },
+    { key: 'realtimeErrors', title: 'Live-update errors', sub: 'failed subscriptions per day', unit: 'errors' },
+    { key: 'p95', title: 'Response time', sub: 'p95 in milliseconds', unit: 'ms' },
+    { key: 'dbTimePerDay', title: 'Query time', sub: 'database seconds per day (from the morning run)', unit: 's' },
+    { key: 'connections', title: 'Connections', sub: 'in use at the morning run (limit 60)', unit: 'connections' },
+    { key: 'dbBytes', title: 'Database size', sub: 'MB at the morning run', unit: 'MB', map: (v) => v / 1048576 },
+  ];
+  const recent = days.slice(-30);
+  const tip = $('tip');
+  // Each chart is drawn at its REAL pixel width (viewBox = measured width), so axis text stays at its
+  // true 11px instead of shrinking with the SVG; charts redraw on resize.
+  const H = 120, PL = 38, PR = 8, PT = 10, PB = 20;
+  function niceMax(v) { if (v <= 0) return 1; const p = Math.pow(10, Math.floor(Math.log10(v))); const n = v / p; return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * p; }
+  function median(vals) { const s = vals.filter((v) => v != null).sort((a, b) => a - b); if (s.length < 3) return null; return s.length % 2 ? s[(s.length - 1) / 2] : (s[s.length / 2 - 1] + s[s.length / 2]) / 2; }
+  function series(metric, env) {
+    return recent.map((d) => { const raw = d.metrics && d.metrics[env] ? d.metrics[env][metric.key] : undefined; return { day: d.day, overall: d.overall, v: typeof raw === 'number' ? (metric.map ? metric.map(raw) : raw) : null }; });
+  }
+  function chart(metric, env) {
+    const pts = series(metric, env);
+    const vals = pts.filter((p) => p.v != null);
+    const lastV = vals.length ? vals[vals.length - 1].v : null;
+    const head = '<div class="env"><span>' + env + '</span><b>' + (lastV == null ? '–' : fmt(Math.round(lastV * 10) / 10)) + '</b></div>';
+    if (vals.length < 2) return head + '<div class="nodata">not enough data yet</div>';
+    const table = '<details><summary>Table</summary><table><thead><tr><th>Day</th><th>' + esc(metric.unit) + '</th></tr></thead><tbody>' +
+      pts.slice().reverse().map((p) => '<tr><td>' + esc(shortDay(p.day)) + '</td><td>' + (p.v == null ? '–' : fmt(Math.round(p.v * 10) / 10)) + '</td></tr>').join('') + '</tbody></table></details>';
+    return head + '<div class="plot" data-metric="' + metric.key + '" data-env="' + env + '"></div>' + table;
+  }
+  function drawPlot(plot) {
+    const metric = METRICS.find((m) => m.key === plot.dataset.metric), env = plot.dataset.env;
+    const pts = series(metric, env);
+    const vals = pts.filter((p) => p.v != null);
+    const W = Math.max(180, Math.round(plot.clientWidth));
+    const max = niceMax(Math.max(...vals.map((p) => p.v)));
+    const x = (i) => PL + (pts.length === 1 ? 0 : (i * (W - PL - PR)) / (pts.length - 1));
+    const y = (v) => PT + (H - PT - PB) * (1 - v / max);
+    let path = '', pen = false;
+    pts.forEach((p, i) => { if (p.v == null) { pen = false; return; } path += (pen ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1); pen = true; });
+    const med = median(vals.slice(-7).map((p) => p.v));
+    const lastV = vals[vals.length - 1].v;
+    const label = metric.title + ', ' + env + ': latest ' + fmt(Math.round(lastV)) + ' ' + metric.unit + ', maximum ' + fmt(Math.round(Math.max(...vals.map((p) => p.v))));
+    plot.innerHTML = '<svg class="spark" width="' + W + '" height="' + H + '" viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="' + esc(label) + '">' +
+      [0, 0.5, 1].map((f) => '<line class="grid" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + y(max * f) + '" y2="' + y(max * f) + '"/><text class="axis" x="' + (PL - 5) + '" y="' + (y(max * f) + 4) + '" text-anchor="end">' + compact(max * f) + '</text>').join('') +
+      (med != null ? '<line class="ref" x1="' + PL + '" x2="' + (W - PR) + '" y1="' + y(med) + '" y2="' + y(med) + '"/>' : '') +
+      '<path class="ln" d="' + path + '"/>' +
+      pts.map((p, i) => (p.v == null ? '' : '<circle class="pt" r="4" cx="' + x(i) + '" cy="' + y(p.v) + '"/>')).join('') +
+      '<text class="axis" x="' + PL + '" y="' + (H - 4) + '">' + esc(shortDay(pts[0].day)) + '</text><text class="axis" x="' + (W - PR) + '" y="' + (H - 4) + '" text-anchor="end">' + esc(shortDay(pts[pts.length - 1].day)) + '</text>' +
+      '<line class="cross" x1="0" x2="0" y1="' + PT + '" y2="' + (H - PB) + '" visibility="hidden"/>' +
+      '<rect class="hot" x="' + PL + '" y="0" width="' + (W - PL - PR) + '" height="' + H + '"/>' +
+      '</svg>';
+    const svg = plot.querySelector('svg'), cross = svg.querySelector('.cross'), hot = svg.querySelector('.hot');
+    hot.addEventListener('mousemove', (ev) => {
+      const r = svg.getBoundingClientRect();
+      const px = ((ev.clientX - r.left) / r.width) * W;
+      const i = Math.max(0, Math.min(pts.length - 1, Math.round(((px - PL) / (W - PL - PR)) * (pts.length - 1))));
+      const p = pts[i];
+      cross.setAttribute('x1', x(i)); cross.setAttribute('x2', x(i)); cross.setAttribute('visibility', 'visible');
+      tip.innerHTML = '<b>' + esc(shortDay(p.day)) + '</b> · ' + env + '<br>' + (p.v == null ? 'no data' : fmt(Math.round(p.v * 10) / 10) + ' ' + esc(metric.unit)) + '<br>' + ICON[p.overall] + ' day: ' + LABEL[p.overall];
+      tip.hidden = false;
+      tip.style.left = Math.min(window.innerWidth - 290, ev.clientX + 14) + 'px';
+      tip.style.top = (ev.clientY + 14) + 'px';
+    });
+    hot.addEventListener('mouseleave', () => { tip.hidden = true; cross.setAttribute('visibility', 'hidden'); });
+  }
+  $('charts').innerHTML = METRICS.map((m) =>
+    '<div class="card chart"><h3>' + esc(m.title) + '</h3><div class="sub">' + esc(m.sub) + '</div><div class="pair"><div>' + chart(m, 'dev') + '</div><div>' + chart(m, 'prod') + '</div></div></div>').join('');
+  // Charts measure their width, so they draw only while the Trends tab is showing (a hidden panel
+  // measures 0): on first open, and again on resize.
+  const trendsPanel = $('panel-trends');
+  const drawAll = () => { if (!trendsPanel.hidden) document.querySelectorAll('.plot').forEach((p) => { if (p.clientWidth > 0) drawPlot(p); }); };
+  let resizeTimer = null;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(drawAll, 150); });
+
+  // ── tabs: Latest run · History · Trends (remembered in the address, e.g. #trends) ──────────
+  const TABS = ['latest', 'history', 'trends'];
+  const attention = latest.checks.filter((c) => c.status === 'red' || c.status === 'amber').length;
+  $('tab-latest').innerHTML = 'Latest run<span class="count">' + (attention ? attention + ' to look at' : 'all fine') + '</span>';
+  $('tab-history').innerHTML = 'History<span class="count">' + days.length + ' day' + (days.length === 1 ? '' : 's') + '</span>';
+  function showTab(name, focus) {
+    if (!TABS.includes(name)) name = 'latest';
+    for (const t of TABS) {
+      const tab = $('tab-' + t), panel = $('panel-' + t), on = t === name;
+      tab.setAttribute('aria-selected', String(on));
+      tab.tabIndex = on ? 0 : -1;
+      panel.hidden = !on;
+      if (on && focus) tab.focus();
+    }
+    // location.replace on a fragment: no new history entry, and allowed on file:// pages, where
+    // history.replaceState can throw a SecurityError (the origin is opaque).
+    if (location.hash !== '#' + name) location.replace('#' + name);
+    if (name === 'trends') drawAll();
+  }
+  document.querySelector('.tabs').addEventListener('click', (e) => { const t = e.target.closest('.tab'); if (t) showTab(t.dataset.tab); });
+  document.querySelector('.tabs').addEventListener('keydown', (e) => {
+    const i = TABS.indexOf(document.activeElement && document.activeElement.dataset ? document.activeElement.dataset.tab : '');
+    if (i < 0) return;
+    const next = e.key === 'ArrowRight' ? (i + 1) % TABS.length : e.key === 'ArrowLeft' ? (i + TABS.length - 1) % TABS.length : e.key === 'Home' ? 0 : e.key === 'End' ? TABS.length - 1 : -1;
+    if (next >= 0) { e.preventDefault(); showTab(TABS[next], true); }
+  });
+  window.addEventListener('hashchange', () => showTab(location.hash.slice(1)));
+  showTab(location.hash.slice(1));
+
+  // ── footer ─────────────────────────────────────────────────────────────────
+  $('foot').innerHTML =
+    'Refresh this page: <code>npm run health:open</code> rebuilds it from the history and opens it. A fresh check: <code>npm run health</code> (read-only) · ' +
+    'History: <code>.health/</code> in the project (latest.md, reports/, history.jsonl) · Runs daily at 7:30 a.m. (Windows task "FieldLogicHQ stack health") · ' +
+    'Plan: docs/projects/active/STACK_HEALTH_CHECK_PLAN.md';
+})();
+</script>
+</body>
+</html>

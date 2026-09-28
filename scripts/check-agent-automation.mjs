@@ -48,6 +48,8 @@ export const WATCHED_PATHS = [
   'scripts/lib/supabase-ops.mjs',
   'scripts/stack-health-task.cmd',
   'scripts/stack-health-schedule.ps1',
+  'scripts/stack-health-dashboard.mjs',
+  'scripts/lib/stack-health-dashboard.html',
 ];
 
 const git = (args) => execFileSync('git', args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });

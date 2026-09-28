@@ -35,6 +35,7 @@ import { execFileSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { sql, logs, advisors } from './lib/supabase-ops.mjs';
 import { automationChanges } from './check-agent-automation.mjs';
+import { buildDashboard } from './stack-health-dashboard.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const ENVS = ['dev', 'prod'];
@@ -459,6 +460,9 @@ if (RECORD) {
   const kept = history.filter((h) => h.day !== DAY);
   fs.writeFileSync(P.history, [...kept, entry].sort((a, b) => a.day.localeCompare(b.day)).map((h) => JSON.stringify(h)).join('\n') + '\n', 'utf8');
   if (!REPLAY) fs.writeFileSync(P.state, JSON.stringify({ ...nextState, lastRun: runAt.toISOString() }, null, 2), 'utf8');
+  try {
+    console.error(`Dashboard rebuilt: ${buildDashboard({ healthDir: HEALTH_DIR })}`);
+  } catch (e) { console.error(`Dashboard rebuild FAILED: ${e.message}`); }
 }
 
 // Desktop notification (Windows toast): the alert that needs no setup. It shows at run time and
@@ -520,7 +524,7 @@ if (EMAIL || NOTIFY) {
   if (SCHEDULED && reds.length) {
     const keyset = reds.map((c) => `${c.area}|${c.env}|${c.name}`).sort().join(',');
     if (!(state.lastAlert?.day === DAY && state.lastAlert?.keys === keyset)) {
-      const shown = notifyDesktop(`🔴 Stack health: ${reds.length} problem${reds.length === 1 ? '' : 's'}`, `${redSummary}. Open .health/latest.md in the project for what to do.`);
+      const shown = notifyDesktop(`🔴 Stack health: ${reds.length} problem${reds.length === 1 ? '' : 's'}`, `${redSummary}. Open the dashboard: npm run health:open`);
       console.error(shown ? 'Desktop notification shown.' : 'Desktop notification FAILED.');
       const ok = EMAIL ? await sendEmail(`🔴 Stack health: ${reds.length} problem${reds.length === 1 ? '' : 's'} — ${redSummary}`, report) : false;
       if (RECORD) { const s = readJson(P.state, {}); s.lastAlert = { day: DAY, keys: keyset, emailed: ok }; fs.writeFileSync(P.state, JSON.stringify(s, null, 2), 'utf8'); }
