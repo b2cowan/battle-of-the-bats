@@ -4950,7 +4950,16 @@ a.oneChip:hover { border-color: currentColor; }
    INSIDE the scroll box, so a control flush with either edge keeps its focus ring — the room's
    `.body` learned the same lesson with 4px (§135). ⚠ The pair is load-bearing: delete the margin
    and the body shifts 1.5rem inward; delete the padding and the fields touch the bar. */
-.modalScrollBody > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; margin-inline: -1.5rem; padding-inline: 1.5rem; }
+/* ⚠⚠ `align-content: start` — THE ROWS STACK AT THE TOP, THEY DO NOT SHARE OUT THE SCREEN (owner
+   report from prod, 2026-09-28). On a phone the panel is 100dvh and this body flexes to fill it,
+   which gives the grid a definite height — and a grid's default `normal` hands every spare pixel
+   to its auto rows. A short form's rows each grew to a share of the screen: Record money's cold
+   open (the question + its one note) split the body in two, the note floated mid-screen, and the
+   "What happened?" list — anchored to its field's wrapper, a grid item — opened halfway down over
+   Cancel/Save. Desktop never showed it: the panel there is only as tall as its content, so the
+   grid has no spare height to hand out. Items still stretch within a row (`align-items`), so two
+   fields sharing a row keep matching heights. The `<form>` shape below carries the same line. */
+.modalScrollBody > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; margin-inline: -1.5rem; padding-inline: 1.5rem; align-content: start; }
 /* ⚠⚠ A READING BODY IS A BODY TOO — the third time this primitive has been extended for a shape
    that is not `.formGrid`, and the first where the casualty was a RECORD rather than a field.
    The bill drawer's body is `.payDrawer`, so it matched none of the rules above: the modal kept
@@ -5014,7 +5023,7 @@ a.oneChip:hover { border-color: currentColor; }
    scroll belongs to `.formGrid` below, never to this wrapper; `min-height: 0` is what lets it
    shrink so that scroll actually engages. */
 .modalScrollBody > form { display: flex; flex-direction: column; min-height: 0; flex: 1 1 auto; }
-.modalScrollBody > form > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; margin-inline: -1.5rem; padding-inline: 1.5rem; }
+.modalScrollBody > form > .formGrid { overflow-y: auto; flex: 1 1 auto; min-height: 0; padding-bottom: 0.75rem; margin-inline: -1.5rem; padding-inline: 1.5rem; align-content: start; }
 
 /* ⚠ NO FADE CUE HERE, AND THAT WAS A DELIBERATE REVERSAL. A mask fading the scroller's last few
    pixels was added to make a clipped field read as "more below" rather than as damage — then

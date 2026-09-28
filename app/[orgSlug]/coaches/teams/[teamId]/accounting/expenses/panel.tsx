@@ -4681,11 +4681,16 @@ function MoneyRecordsPanel({
           className={`${styles.convWhatField} ${convBranch === null && !isPayableForm ? styles.convWhatFieldEmpty : ''}`}
           aria-haspopup="listbox"
           aria-expanded={whatOpen}
-          onClick={() => {
+          onClick={e => {
             if (!whatOpen) {
-              // Anchor the fixed list to the field as it stands at this moment.
-              const r = whatWrapRef.current?.getBoundingClientRect();
-              setWhatRect(r ? { top: r.bottom + 4, left: r.left, width: r.width } : null);
+              /* Anchor the fixed list to the field as it stands at this moment — the BUTTON, not
+                 the wrapper (owner report from prod, 2026-09-28). The wrapper is a grid item, and
+                 on a phone the full-height form body stretched it to half the screen on the cold
+                 open, so the list hung mid-screen over Cancel/Save. The body no longer stretches
+                 (`.modalScrollBody > .formGrid`), but the list belongs under the box the coach
+                 pressed whatever the box around it does. */
+              const r = e.currentTarget.getBoundingClientRect();
+              setWhatRect({ top: r.bottom + 4, left: r.left, width: r.width });
             }
             setWhatOpen(o => !o);
           }}
