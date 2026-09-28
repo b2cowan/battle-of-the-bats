@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { Trophy } from 'lucide-react';
@@ -13,7 +12,6 @@ import DayOfTabBar from '@/components/volunteer/DayOfBottomBars';
 import { getUserDisplayName } from '@/lib/user-display';
 import { GuestKitRoot } from '@/components/admin/AdminKitProvider';
 import { kitStyler } from '@/components/admin/kit/kit-inline';
-import { ADMIN_KIT_COOKIE, readAdminKit } from '@/lib/admin-kit-preview';
 import { DAYOF_KIT } from '@/components/volunteer/day-of-kit';
 import shell from '@/components/volunteer/DayOfShell.module.css';
 
@@ -45,10 +43,9 @@ export default async function CheckInVolunteerLayout({
 }) {
   const { orgSlug } = await params;
 
-  // Admin Design Continuity — THE SWITCH, slice 5 / ruling R3 — read here exactly as the scorekeeper twin
-  // reads it (see there): on, the kit with its warm palette FIXED; off, `GuestKitRoot` hands back what it was
-  // given.
-  const guestKit = readAdminKit((await cookies()).get(ADMIN_KIT_COOKIE)?.value);
+  // Admin Design Continuity, slice 5 / ruling R3 — released 2026-09-28, exactly as the scorekeeper twin (see
+  // there): the kit with its warm palette FIXED, in every build.
+  const guestKit = true;
   const kx = kitStyler(guestKit);
 
   // `allowSuspendedOrg` so a cancelled org reaches the wall below rather than a 500. The check-in

@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { UserCheck } from 'lucide-react';
@@ -14,7 +13,6 @@ import DayOfTabBar from '@/components/volunteer/DayOfBottomBars';
 import { getUserDisplayName } from '@/lib/user-display';
 import { GuestKitRoot } from '@/components/admin/AdminKitProvider';
 import { kitStyler } from '@/components/admin/kit/kit-inline';
-import { ADMIN_KIT_COOKIE, readAdminKit } from '@/lib/admin-kit-preview';
 import { DAYOF_KIT } from '@/components/volunteer/day-of-kit';
 import shell from '@/components/volunteer/DayOfShell.module.css';
 
@@ -48,12 +46,11 @@ export default async function ScorekeeperLayout({
 }) {
   const { orgSlug } = await params;
 
-  // Admin Design Continuity — THE SWITCH (`lib/admin-kit-preview.ts`), slice 5 / ruling R3. Decided HERE,
-  // on the server, so the first paint is already the right look; always false on the production branch.
-  // On: the kit's rules and its warm palette FIXED — the guest marker, not the admin's (see
-  // `guestKitAttr`), through `GuestKitRoot`. Off: it hands back exactly what it was given — no wrapper, no
-  // attribute.
-  const guestKit = readAdminKit((await cookies()).get(ADMIN_KIT_COOKIE)?.value);
+  // Admin Design Continuity, slice 5 / ruling R3 — released 2026-09-28: the kit's rules and its warm
+  // palette FIXED, in every build — the guest marker, not the admin's (see `guestKitAttr`), through
+  // `GuestKitRoot`. Always true now; the dev-only switch that decided it is gone, and Part B (the cleanup)
+  // folds `GuestKitRoot`'s and `kx`'s off branches away.
+  const guestKit = true;
   const kx = kitStyler(guestKit);
 
   // `allowSuspendedOrg` so a cancelled org reaches the wall below rather than a 500. The score

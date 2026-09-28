@@ -161,7 +161,7 @@ const tournamentsHelp: HelpPageContent = {
       links: [
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
         { label: 'Dashboard', href: '../tournaments/dashboard' },
-        { label: 'Subscription', href: '../tournaments/settings/subscription' },
+        { label: 'Plan & billing', href: '../tournaments/settings/subscription' },
       ],
       content: (
         <>
@@ -339,8 +339,8 @@ const tournamentsHelp: HelpPageContent = {
       subgroup: 'Define the structure',
       heading: 'Branding, scoring, and event settings',
       summary: 'Review tournament-specific controls that affect public appearance, scoring rules, billing visibility, and who can help administer the event.',
-      keywords: ['settings', 'branding', 'scoring', 'subscription', 'members', 'access', 'scorekeepers', 'tie-breaker', 'game timing', 'app icon', 'public directory', 'discover tournaments', 'notifications', 'notification settings', 'mute tournament', 'my notifications'],
-      searchText: 'built on fieldlogichq credit footer credit powered by badge platform name on my public page remove branding white label turn off the credit paid plan credit quiet line at the bottom settings access members branding logo hero banner scoring finalization subscription plan tournament settings scorekeeper score finalization role members permissions public appearance tie-breaker tiebreaker ranking standings head to head run differential coin toss game timing game length duration buffer turnaround app icon home screen icon icon background colour color border app name custom short name initials add to home screen pwa icon logo size logo zoom resize logo make logo bigger smaller new installs public directory discover discovery list tournament publicly tournament directory find tournaments browse tournaments province region opt in listing my notification settings personal notifications manage notifications notification settings link in the bell mute one tournament mute all per tournament notifications mute only manage what you receive turn off notifications push email bell channels',
+      keywords: ['settings', 'branding', 'scoring', 'plan & billing', 'billing', 'subscription', 'members', 'access', 'scorekeepers', 'tie-breaker', 'game timing', 'app icon', 'public directory', 'discover tournaments', 'notifications', 'notification settings', 'mute tournament', 'my notifications'],
+      searchText: 'built on fieldlogichq credit footer credit powered by badge platform name on my public page remove branding white label turn off the credit paid plan credit quiet line at the bottom settings access members branding logo hero banner scoring finalization plan and billing subscription plan tournament settings scorekeeper score finalization role members permissions public appearance tie-breaker tiebreaker ranking standings head to head run differential coin toss game timing game length duration buffer turnaround app icon home screen icon icon background colour color border app name custom short name initials add to home screen pwa icon logo size logo zoom resize logo make logo bigger smaller new installs public directory discover discovery list tournament publicly tournament directory find tournaments browse tournaments province region opt in listing my notification settings personal notifications manage notifications notification settings link in the bell mute one tournament mute all per tournament notifications mute only manage what you receive turn off notifications push email bell channels',
       links: [
         { label: 'Event Settings', href: '../tournaments/settings/event' },
         { label: 'Branding', href: '../tournaments/branding' },
@@ -352,7 +352,7 @@ const tournamentsHelp: HelpPageContent = {
           <p><strong>Branding</strong> controls the tournament public appearance. Free tournaments use the default FieldLogicHQ look; Tournament Plus and above can give a tournament its own identity — a custom logo, colours, hero banner, fonts, and a custom <strong>App Icon</strong> (your event&rsquo;s branded icon and name inside the one FieldLogicHQ app fans use).</p>
           <p><strong>Event Settings</strong> controls dates, fee scope, score finalization, tie-breaker rules, game timing, whether the tournament is listed in the public tournament directory, and the Plus-only post-event results notification. When enabled, accepted team contacts receive the public results links once when the tournament is marked completed.</p>
           <p><strong>Members</strong> helps you review who can administer tournament work. Keep access limited to people who need to manage setup, registrations, schedule, results, or communications.</p>
-          <p><strong>Subscription</strong> stays inside tournament admin for Tournament and Tournament Plus users, so upgrade prompts do not send tournament-only organizers into organization admin billing pages.</p>
+          <p><strong>Plan &amp; billing</strong> stays inside tournament admin for Tournament and Tournament Plus users, so upgrade prompts do not send tournament-only organizers into organization admin billing pages.</p>
         </>
       ),
       faqs: [
@@ -1680,12 +1680,12 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-app-appearance',
           question: "Can people change how the app looks, and does it affect my tournament's colours?",
-          answerText: "Anyone can pick a Warm (light) or Dark look for FieldLogicHQ under Account then Appearance. Warm is the default; Dark is optional. It's ONE account-wide setting per person — not one per area — that follows a signed-in person across their devices (signed out, it's remembered on that one device). The choice applies everywhere they work: the app's own screens (Home, Scores, Chat, Account) and, for coaches, their whole coaches workspace. It never changes your tournament pages: those always show your organization's branding and colours to everyone, so someone choosing Dark can't change how your event looks.",
-          keywords: ['dark mode', 'light mode', 'dark theme', 'warm', 'warm default', 'default theme', 'app appearance', 'appearance', 'theme', 'app colours', 'app colors', 'does dark mode change my tournament', 'account appearance', 'app looks different', 'change app colour', 'coaches workspace theme', 'coach portal colours', 'change coaches portal colour', 'one setting or per area'],
+          answerText: "Anyone can pick a Warm (light) or Dark look for FieldLogicHQ under Account then Appearance. Warm is the default; Dark is optional. It's ONE account-wide setting per person — not one per area — that follows a signed-in person across their devices (signed out, it's remembered on that one device). The choice applies everywhere they work: the app's own screens (Home, Scores, Chat, Account), an organizer's admin panel, and, for coaches, their whole coaches workspace. It never changes your tournament pages: those always show your organization's branding and colours to everyone, so someone choosing Dark can't change how your event looks.",
+          keywords: ['dark mode', 'light mode', 'dark theme', 'warm', 'warm default', 'default theme', 'app appearance', 'appearance', 'theme', 'app colours', 'app colors', 'does dark mode change my tournament', 'account appearance', 'app looks different', 'change app colour', 'coaches workspace theme', 'coach portal colours', 'change coaches portal colour', 'one setting or per area', 'admin panel dark', 'does dark mode change my admin'],
           answer: (
             <>
               <p>Yes — under <strong>Account &rarr; Appearance</strong>, anyone can switch FieldLogicHQ between a <strong>Warm</strong> (light) look and a <strong>Dark</strong> look. <strong>Warm is the default</strong>; Dark is there for anyone who prefers it.</p>
-              <p>It&rsquo;s <strong>one setting per person</strong> — not one per area. It follows a signed-in person across their devices and applies everywhere they work: the app&rsquo;s own screens (<strong>Home, Scores, Chat, Account</strong>) and, for coaches, their whole <strong>coaches workspace</strong>. (Signed out, it&rsquo;s remembered on that one device.)</p>
+              <p>It&rsquo;s <strong>one setting per person</strong> — not one per area. It follows a signed-in person across their devices and applies everywhere they work: the app&rsquo;s own screens (<strong>Home, Scores, Chat, Account</strong>), an organizer&rsquo;s <strong>admin panel</strong>, and, for coaches, their whole <strong>coaches workspace</strong>. (Signed out, it&rsquo;s remembered on that one device.)</p>
               <p>It <strong>never</strong> changes your tournament pages. Those always show <strong>your organization&rsquo;s branding and colours</strong> to everyone, so someone choosing Dark can&rsquo;t affect how your event looks.</p>
             </>
           ),

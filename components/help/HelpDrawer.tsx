@@ -10,6 +10,7 @@ import { useTournament } from '@/lib/tournament-context';
 import { hasPlayoffs, isWithinEventDates } from '@/lib/tournament-phase';
 import { daysUntilStart, getStageShortcuts, resolveGuidanceStage, type TaskShortcut } from '@/lib/tournament-guidance';
 import { PortalKitRoot } from '@/components/admin/AdminKitProvider';
+import { coachWarmAttr } from '@/lib/coach-warm-preview';
 import type { HelpRequest } from './help-drawer-context';
 import HelpSectionBlock from './HelpSectionBlock';
 import styles from './help.module.css';
@@ -27,9 +28,12 @@ const FOCUSABLE = 'a[href], button:not([disabled]), summary, input, [tabindex]:n
 export default function HelpDrawer({
   request,
   onClose,
+  warm = false,
 }: {
   request: HelpRequest | null;
   onClose: () => void;
+  /** Inside the coaches portal: carry the coach marker on the portal root (see HelpDrawerProvider). */
+  warm?: boolean;
 }) {
   const panelRef = useRef<HTMLDivElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
@@ -128,12 +132,13 @@ export default function HelpDrawer({
   const sections = getHelpSections(request.module, request.sectionIds);
   const headerTitle = request.label ?? 'Help';
 
-  // Admin Design Continuity slice 5 (ruling R4): the drawer portals to <body>, a SIBLING of the admin
-  // shell, so the admin kit's marker never reached it and the "?" stayed dark with the switch on (the
-  // bottom sheet's and the chat panels' trap, slice 4c). `PortalKitRoot` puts the marker on a box-less
-  // wrapper above the backdrop while the switch is on, and renders nothing extra while it is off — or in
-  // the coaches portal, which mounts no admin kit (its help keeps its own look until the release slice).
-  return createPortal(
+  // Admin Design Continuity (ruling R4): the drawer portals to <body>, a SIBLING of the shell, so no
+  // shell's marker reaches it by the DOM. In the admin, `PortalKitRoot` puts the admin marker on a box-less
+  // wrapper above the backdrop (slice 5); in the coaches portal, which mounts no admin kit, `warm` puts the
+  // coach marker there instead (the release, 2026-09-28) — so the "?" follows the reader's Warm / Dark
+  // setting in both, where the coaches' used to stay dark whatever the setting.
+  const root = warm ? { style: { display: 'contents' as const }, ...coachWarmAttr } : null;
+  const drawer = (
     <PortalKitRoot>
     <div className={styles.helpDrawerBackdrop} onClick={() => onCloseRef.current()}>
       <aside
@@ -215,7 +220,7 @@ export default function HelpDrawer({
         )}
       </aside>
     </div>
-    </PortalKitRoot>,
-    document.body,
+    </PortalKitRoot>
   );
+  return createPortal(root ? <div {...root}>{drawer}</div> : drawer, document.body);
 }

@@ -548,8 +548,8 @@
    navigated into, so it wears none of them — just a slim bar carrying the one thing
    a bare surface genuinely needs, a way back.
 
-   The dark pinning is NOT here — it rides `[data-help-surface]` in globals.css, so
-   help declares the same palette the "?" drawer has always rendered in. */
+   It follows the account's Warm / Dark setting like the rest of the portal (released
+   2026-09-28; it was pinned dark through `[data-help-surface]` in globals.css until then). */
 .coachesShellFocused {
   /* Zeroing the var collapses the shell's strip padding (the shell reads the var). */
   --coach-topstrip-h: 0px;

@@ -650,6 +650,17 @@ export const SCREENS = [
     path: (c) => `/${c.orgSlug}/coaches/help`,
     ready: 'h1',
   },
+  // The coaches' "?" side panel, open — from the team's Schedule. It follows the Warm / Dark setting since
+  // the Admin Design Continuity release (2026-09-28; it portals outside the shell and was always dark
+  // before), so it is measured in its own right, scoped to the panel.
+  {
+    id: 'coach-help-drawer',
+    session: 'coach',
+    path: (c) => `${team(c)}/schedule`,
+    ready: 'h1',
+    interact: openHelpDrawer,
+    scope: 'aside[role="dialog"][aria-modal="true"]',
+  },
 
   // ── The week ────────────────────────────────────────────────────────────────
   { id: 'coach-schedule',    session: 'coach', path: (c) => `${team(c)}/schedule`,    ready: 'h1' },
@@ -1348,21 +1359,18 @@ export const SCREENS = [
   { id: 'admin-org-billing',           area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/billing` },
   { id: 'admin-org-settings',          area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings` },
 
-  // ── Club Tier Stage 1's screens, SWITCH ON ONLY (`kitOnly`) — screens and windows that exist only
-  // in the kit version (the club setup checklist for a club that finished setup, the open kit
-  // windows) or that today's version is not measured for (the treasurer's hub and board). The runner
-  // skips them without `--admin-kit`, and the switch-off identity check never sees them; with it, a
-  // kit run is a `--dump` comparison, never a baseline (the baseline is today's, switch off).
-  // The six screens above are the SAME entries switch on: `--admin-kit --only=admin-hub,…` measures
-  // their kit versions. The release slice drops `kitOnly` when the legacy versions go.
-  { id: 'admin-hub-treasurer',         area: 'hub', session: 'repClubTreasurer', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin` },
-  { id: 'admin-club-setup',            area: 'hub', session: 'repClubOwner', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/onboarding?plan=club` },
-  { id: 'admin-org-members-treasurer', area: 'org', session: 'repClubTreasurer', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/org/members` },
-  { id: 'admin-org-members-invite',    area: 'org', session: 'repClubOwner', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/org/members`,
+  // ── Club Tier Stage 1's screens and windows that exist only in the kit version (the club setup
+  // checklist for a club that finished setup, the open kit windows, the treasurer's hub and board).
+  // Switch-on only (`kitOnly`) until the Admin Design Continuity release made the kit the only admin
+  // (2026-09-28); ordinary entries since.
+  { id: 'admin-hub-treasurer',         area: 'hub', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin` },
+  { id: 'admin-club-setup',            area: 'hub', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/onboarding?plan=club` },
+  { id: 'admin-org-members-treasurer', area: 'org', session: 'repClubTreasurer', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members` },
+  { id: 'admin-org-members-invite',    area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members`,
     interact: openKitInvite, scope: '[data-kit-dialog]' },
-  { id: 'admin-org-members-manage',    area: 'org', session: 'repClubOwner', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/org/members`,
+  { id: 'admin-org-members-manage',    area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/members`,
     interact: openKitManage, scope: '[data-kit-dialog]' },
-  { id: 'admin-org-settings-offline',  area: 'org', session: 'repClubOwner', ready: 'h1', kitOnly: true, path: (c) => `/${c.clubSlug}/admin/org/settings`,
+  { id: 'admin-org-settings-offline',  area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings`,
     interact: openKitTakeOffline, scope: '[data-kit-dialog]' },
   { id: 'admin-org-settings-pdf',      area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings/pdf` },
   { id: 'admin-org-venues',            area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues` },
@@ -1443,9 +1451,8 @@ export const SCREENS = [
     ...(id === 'admin-t-schedule' ? { interact: (p) => setScheduleView(p, 'Round Robin', 'List') } : {}),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments${sub}?tournamentId=${c.tournamentId}` })),
   // Plan & subscription's "See what … includes" panel (Admin Design Continuity slice 6 restyled it with
-  // the page — every plan but Club still renders the legacy billing page). Switch-on only: the panel is
-  // unchanged with the switch off (its kit layer is scoped), so it carries no switch-off baseline.
-  { id: 'admin-t-settings-subscription-panel', area: 'tournaments', session: 'orgOwner', ready: 'h1', kitOnly: true,
+  // the page — every plan but Club renders the legacy billing page, on the kit).
+  { id: 'admin-t-settings-subscription-panel', area: 'tournaments', session: 'orgOwner', ready: 'h1',
     interact: async (p) => {
       await p.getByRole('button', { name: /^See what .+ includes$/ }).first().click();
       await p.getByRole('dialog', { name: /plan details$/ }).waitFor({ state: 'visible', timeout: 15_000 });

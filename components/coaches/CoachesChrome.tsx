@@ -24,13 +24,12 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  * with no way out and needs one — that is the condition to re-check, not the tab.
  *
  * ── AND THE THEME ─────────────────────────────────────────────────────────────
- * Focused help also pins the DARK palette (`data-help-surface`, see globals.css)
- * regardless of the account's warm/dark preference. That is not a new opinion: the
- * "?" drawer is portalled to <body>, so it has always escaped the warm marker and
- * always rendered dark — including inside a warm portal. Help therefore already
- * had one fixed look in the panel and a theme-following look in the guide, which
- * is the mismatch this removes. Owner ruling 2026-08-14: help is one dark reading
- * surface everywhere.
+ * Focused help follows the account's Warm / Dark setting like every other screen
+ * (Admin Design Continuity ruling R4, released 2026-09-28). It used to pin the dark
+ * palette (`data-help-surface`, owner ruling 2026-08-14) to agree with the "?"
+ * drawer, which portalled outside the warm marker and so always rendered dark; the
+ * drawer now carries the marker on its own portal root (`HelpDrawerProvider warm`),
+ * so both halves of help agree on the reader's theme instead.
  */
 export default function CoachesChrome({
   orgSlug,
@@ -49,7 +48,7 @@ export default function CoachesChrome({
     // tab the reader came from and a way back is furniture for a journey nobody took.
     // Owner ruling 2026-08-14, after seeing the bar in place.
     return (
-      <div className={styles.coachesShellFocused} data-help-surface>
+      <div className={styles.coachesShellFocused}>
         <main className={styles.coachesMainFocused}>{children}</main>
       </div>
     );

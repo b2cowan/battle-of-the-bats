@@ -79,12 +79,13 @@ export default function AppearanceCard({ signedIn }: { signedIn: boolean }) {
           );
         })}
       </div>
-      {/* Copy per design_decisions TH-5 §4: the warm coaches portal has shipped as one public
-          release, so the picker now names the coaches workspace (Warm is the default). Tournament
-          pages still ignore the personal theme — org brand always wins there (M2). */}
+      {/* Copy per design_decisions TH-5 §4 (the coaches workspace) and the Admin Design Continuity
+          release, 2026-09-28 (ruling R0: the organization admin follows this one setting too — Warm is
+          the default). Public pages still ignore the personal theme — the organization's own colours
+          always win there (R2 / M2). */}
       <p className={styles.note}>
-        Applies to your FieldLogicHQ app and coaches workspace. Tournament pages always show the
-        organizer&rsquo;s colors.
+        Applies to your FieldLogicHQ app, your coaches workspace and your organization&rsquo;s admin.
+        Public pages always show each organization&rsquo;s own colours.
       </p>
     </section>
   );

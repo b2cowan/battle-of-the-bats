@@ -339,46 +339,32 @@ const ADMIN_INKS = [
 ] as const;
 
 /**
- * Measured 2026-09-25 by the slice-0 probe (every text run on 91 admin screens at 1440 and 390, the
- * layers behind it composited to the first opaque one) — ~99% of admin text sits on one of these.
- *
- * ⚠ Not here, deliberately: the ACCENT fills — the lime button (dark text on it), the platform-navy
- * button and active row (white on it), the amber / lime / teal status tints (their own accent on
- * them). Holding every muted ink against a navy button fails it on speculation, which is the noise
- * the warm block's per-accent lists exist to avoid; what really sits on those fills is a USAGE
- * question, and the layout sweep answers it on the rendered page.
- */
-const ADMIN_DARK_GROUNDS: Record<string, RGB> = {
-  'admin page': parseHex('#0A0A0A'),        // --bg: the body and the rail
-  'navy panel': parseHex('#0F172A'),        // --bg-2 panels (assistant coaches, shared library)
-  'admin main': parseHex('#111827'),        // --surface: the content column (under its 9% blueprint grid) and every .card
-  'event header top': parseHex('#1B232D'),  // the tournament header's lime-5% wash at its top edge — COMPUTED from its gradient, the probe cannot composite one
-  'faint panel': parseHex('#1D2432'),       // --white-5 over the main: the public-site editor's panels
-  'faint fill': parseHex('#242A38'),        // --white-8 over the main: member and team list rows — the LIGHTEST, so every ink's worst
-};
-
-/**
  * ⚠ RECORDED DEBT, NOT ACCEPTANCE — and deliberately NOT the `ACCEPTED` list above, whose every
  * entry is an argued decision. These are the dark admin inks that fall under AA on their WORST
- * ground today, recorded at slice 0 so the admin enters the check without being failed on day one
- * for a palette nobody has argued yet (owner, 2026-09-25: "debt, reasons only if argued"). The
- * number is the ratio measured then. It is a RATCHET: an ink that gets worse fails, an ink that
- * starts passing fails until its line is deleted, and an ink not listed here fails outright.
+ * ground, recorded at slice 0 so the admin entered the check without being failed on day one for a
+ * palette nobody had argued yet (owner, 2026-09-25: "debt, reasons only if argued"). It is a RATCHET:
+ * an ink that gets worse fails, an ink that starts passing fails until its line is deleted, and an
+ * ink not listed here fails outright.
+ * ⚠ RE-MEASURED AT THE RELEASE (2026-09-28): the admin now paints on the KIT's Dark grounds
+ * (`KIT_DARK_GROUNDS` below — the old console's six grounds retired with the switch), so each number
+ * is the worst ratio on those, ratcheted down from slice 0's (in brackets where it moved). These inks
+ * are the legacy stylesheet's raw `color:` values; the switch-on sweep found no Dark contrast failure
+ * on a rendered admin screen (the kit's rules cover every visible use), and Part B's folds retire them.
  */
 const ADMIN_DARK_DEBT: Record<string, number> = {
   // The faint whites the admin uses as secondary text — 227+ `color:` uses at 30–45% alone. The
   // layout sweep measures the same thing on rendered screens (40% white at 3.81:1 on a card).
-  '--white-45': 4.16,
-  '--white-40': 3.59,
-  '--white-35': 3.11,
+  '--white-45': 4.35,        // (4.16)
+  '--white-40': 3.73,        // (3.59)
+  '--white-35': 3.15,        // (3.11)
   '--white-30': 2.61,
   '--white-25': 2.13,        // the phone More menu's group labels
   '--white-20': 1.77,
-  '--danger': 3.81,          // the red as TEXT; --danger-light (5.19) is the dark theme's legible red
-  '--info': 3.90,
+  '--danger': 4.39,          // (3.81) the red as TEXT; --danger-light is the dark theme's legible red
+  '--info': 4.49,            // (3.90)
   // ⚠ The platform navy used as a TEXT colour (26 `color:` uses in admin CSS): navy on near-black.
   // Found by this block on its first run — no check had ever held it.
-  '--blueprint-blue': 1.39,
+  '--blueprint-blue': 1.59,  // (1.39)
 };
 
 describe('admin dark palette — held from its first day in the check', () => {
@@ -388,7 +374,7 @@ describe('admin dark palette — held from its first day in the check', () => {
     for (const name of ADMIN_INKS) {
       assert.ok(resolveInk(decls, name), `${name} did not resolve from the :root blocks of app/globals.css — has it moved?`);
     }
-    assert.ok(Object.keys(ADMIN_DARK_GROUNDS).length > 0, 'no admin grounds — every assertion below would be vacuous');
+    assert.ok(Object.keys(KIT_DARK_GROUNDS).length > 0, 'no admin grounds — every assertion below would be vacuous');
   });
 
   it('no admin ink falls under AA on any admin ground, beyond its recorded debt', () => {
@@ -397,7 +383,7 @@ describe('admin dark palette — held from its first day in the check', () => {
       const ink = resolveInk(decls, name)!;
       let worst = Infinity;
       let worstGround = '';
-      for (const [g, rgb] of Object.entries(ADMIN_DARK_GROUNDS)) {
+      for (const [g, rgb] of Object.entries(KIT_DARK_GROUNDS)) {
         const r = contrast(over(ink, rgb), rgb);
         if (r < worst) { worst = r; worstGround = g; }
       }
@@ -417,8 +403,8 @@ describe('admin dark palette — held from its first day in the check', () => {
 // ══════════════════════════════════════════════════════════════════════════════════════════════
 //
 // ⚠ THE ADMIN ON THE KIT, IN DARK — the look an organizer who chose Dark gets on release day (Admin
-// Design Continuity slice 6, 2026-09-28). The block above holds today's dark admin, whose grounds retire
-// with the switch; the warm block holds the kit in Warm. This holds the kit's DARK inks — the portal's
+// Design Continuity slice 6, 2026-09-28). The block above holds the legacy stylesheet's raw inks (as debt,
+// measured on these grounds since the release); the warm block holds the kit in Warm. This holds the kit's DARK inks — the portal's
 // text tiers and the dark gate's `--home-dim` — on the grounds the kit actually paints in Dark, MEASURED
 // switch-on by `.probe/6/grounds.mjs` (20 admin + volunteer screens × 1440 + 390; ~99% of text sits on
 // these). NO DEBT: the switch-on sweep of every admin screen found no Dark contrast failure outside the

@@ -99,8 +99,10 @@ describe('R3 — the volunteer shells wear the warm palette FIXED (slice 5)', ()
   });
 
   it('the dark gate never answers the guest marker', () => {
-    const gate = /\nhtml\[data-user-theme="dark"\] \[data-coach-warm-enabled\],\n\[data-help-surface\] \{/;
+    const gate = /\nhtml\[data-user-theme="dark"\] \[data-coach-warm-enabled\] \{/;
     assert.match(css, gate, 'the dark gate moved — re-read this guard');
+    // The help guide's fixed-dark pin is gone (released 2026-09-28, ruling R4): help follows the theme.
+    assert.doesNotMatch(css.replace(/\/\*[\s\S]*?\*\//g, ''), /\[data-help-surface\]/, 'the help guide must follow the reader\'s theme, not pin dark');
     assert.doesNotMatch(css, /data-guest-kit[^{]*\{[^}]*--home-paper:\s*var\(--bg\)/, 'a Dark palette keyed on the guest marker');
   });
 

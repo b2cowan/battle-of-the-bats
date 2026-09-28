@@ -2117,6 +2117,13 @@
 }
 :global([data-admin-kit]) .helpDrawerHead:where(:not([data-public-preview] *)) { border-bottom-color: var(--home-line); }
 :global([data-admin-kit]) .helpDrawerEyebrow:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
+/* The COACHES portal's "?" drawer carries the coach marker alone (no [data-admin-kit] — `HelpDrawerProvider
+   warm`) and follows the theme since the release (2026-09-28). In Dark, these two small labels' legacy
+   white-40 / white-35 ink measured 3.8 / 3.2:1 on the drawer's card — the same two the kit rules here and
+   below fix for the admin. Keyed on the marker BOTH portals carry, with the kit's value, so nothing in the
+   admin moves. Tokens only. */
+:global([data-coach-warm-enabled]) .helpDrawerEyebrow:where(:not([data-public-preview] *)),
+:global([data-coach-warm-enabled]) .helpSubtopicLabel:where(:not([data-public-preview] *)) { color: var(--text-tertiary); }
 /* The drawer's own title — unified with the guide's two page-level H1s (below) onto plain ink rather
    than keeping this one alone on the console-lime accent. */
 :global([data-admin-kit]) .helpDrawerTitle:where(:not([data-public-preview] *)) { color: var(--text-primary); }

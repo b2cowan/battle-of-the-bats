@@ -15,34 +15,98 @@ const orgHelp: HelpPageContent = {
             <li><strong>Invite your co-organizers.</strong> Go to <strong>Members</strong> and send invites to anyone who will help manage tournaments or run the league. Assign the Admin role for full co-organizer access.</li>
             <li><strong>Create your first tournament.</strong> Head to <strong>Tournaments</strong>, click <strong>New Tournament</strong>, and fill in the name, year, and URL slug.</li>
             <li><strong>Set up your org branding.</strong> In <strong>Settings</strong>, upload your logo, pick a colour theme, and confirm your URL slug before you share any links publicly.</li>
-            <li><strong>Check your modules.</strong> If your plan includes House League, Rep Teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Billing</strong>.</li>
+            <li><strong>Check your modules.</strong> If your plan includes House League, Rep Teams, or Accounting, each appears automatically in the admin panel — there is no separate activation step. If you expect a module and don't see it, check your plan on <strong>Plan &amp; billing</strong>.</li>
             <li><strong>Invite scorekeepers.</strong> Scorekeepers don't use the main admin area. Add them via <strong>Members → Invite Member</strong> using the Scorekeeper role, then assign the tournaments they should score.</li>
           </ol>
         </>
       ),
     },
     {
-      id: 'roles',
-      heading: 'Roles explained — who can do what',
-      summary: 'Owner, Admin, Staff, Treasurer, League Admin, League Registrar, Coach, and Scorekeeper — and what each can do.',
-      keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'coach', 'scorekeeper'],
-      searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar coach scorekeeper capabilities grant revoke org settings billing owner only',
+      id: 'recipe-set-up-your-club',
+      group: 'How-to recipes',
+      heading: 'How to set up your club',
+      summary: 'Five steps to get a new club ready for its first season, tracked on one checklist.',
+      keywords: ['set up club', 'club setup', 'setup checklist', 'get ready for the season', 'staff your board', 'add your teams', 'head coach', 'public site', 'budget', 'families', 'club checklist', 'new club', 'club onboarding'],
+      searchText: 'set up your club setup checklist get club ready for the season five steps staff your board invite admin treasurer add your teams season head coach every team premium coaches portal put your club online tagline contact email public page plan the club budget what the season costs come back from overview families not a step household appears automatically house league tournaments one line shortcuts no founding season offer club already includes',
       content: (
         <>
-          <p>Every member of your org is assigned one of these roles. Roles control what pages and actions they can access.</p>
-          <ul>
-            <li><strong>Owner</strong> — Full access. Owns the org, manages the subscription, and can do everything admins can. Assigned at org creation; ownership cannot be transferred through the admin panel.</li>
-            <li><strong>Admin</strong> — Runs operations: tournaments, house league, rep teams, members, and branding. Cannot open org <strong>Settings</strong> or the <strong>Subscription</strong> — those are owner-only.</li>
-            <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot create tournaments, manage registrations, or send communications.</li>
-            <li><strong>Treasurer</strong> — Access to accounting and ledgers only. Cannot access tournament management or other admin areas.</li>
-            <li><strong>League Admin</strong> — Manages house league seasons, registrations, teams, and schedules. Scoped to the House League module.</li>
-            <li><strong>League Registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons or schedules.</li>
-            <li><strong>Coach</strong> — Accesses the Coaches Portal for their assigned rep team. Cannot access the main admin panel.</li>
-            <li><strong>Scorekeeper</strong> — Submits scores for assigned tournaments via Scorekeeper View at <code>/{'{orgSlug}'}/scorekeeper</code>. Does not access the admin panel at all.</li>
-          </ul>
-          <p>Owners can grant or revoke individual capabilities on any member via <strong>Members → Manage</strong>. This lets you fine-tune access without changing someone's base role.</p>
+          <p>When you sign in as a Club owner for the first time, you land on a five-step checklist instead of the admin panel — <strong>Set up your club</strong>. Each step opens the screen that does the job, and a step is marked done only once it genuinely is.</p>
+          <ol>
+            <li><strong>Staff your board.</strong> Invite an admin and a treasurer so the work isn&rsquo;t all yours.</li>
+            <li><strong>Add your teams.</strong> Each team, and the season it&rsquo;s playing.</li>
+            <li><strong>Name a head coach for every team.</strong> Each coach gets the Premium Coaches Portal, included in your plan.</li>
+            <li><strong>Put your club online.</strong> Add a tagline and a contact email to your public page.</li>
+            <li><strong>Plan the club&rsquo;s budget.</strong> What the season costs, and what each team contributes.</li>
+          </ol>
+          <p><strong>Families</strong> is shown too, but it isn&rsquo;t a step you complete — as rosters fill, every household appears there on its own. If your club also runs a house league or hosts a tournament, those are one-line shortcuts on the checklist rather than steps, since not every club runs either.</p>
+          <p>You can leave and come back — <strong>Overview</strong> keeps a link back to this checklist until every step is done. There&rsquo;s no Founding Season offer here: that offer is for standalone teams and Tournament Plus organizers, and Club already includes everything a rep team needs.</p>
         </>
       ),
+    },
+    {
+      id: 'roles',
+      heading: 'Roles explained — who can do what',
+      summary: 'What each role can open, at a glance, then Owner, Admin, Treasurer, Staff, League Admin, League Registrar, Coach, and Scorekeeper one by one.',
+      keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'coach', 'scorekeeper', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families'],
+      searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner only what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows',
+      content: (
+        <p>Every member of your organization holds one of these roles, and the role decides what they can open. Owners can grant or remove individual programs for any member from <strong>Members → Manage</strong>.</p>
+      ),
+      subtopics: [
+        {
+          id: 'roles-t-table',
+          title: 'What each role can open',
+          content: (
+            <>
+              <table>
+                <thead>
+                  <tr>
+                    <th scope="col">Program</th>
+                    <th scope="col">Owner</th>
+                    <th scope="col">Admin</th>
+                    <th scope="col">Treasurer</th>
+                    <th scope="col">Staff</th>
+                    <th scope="col">League admin</th>
+                    <th scope="col">League registrar</th>
+                    <th scope="col">Scorekeeper</th>
+                    <th scope="col">Coach</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><th scope="row">Rep Teams</th><td>✓</td><td>✓</td><td>team names only</td><td>—</td><td>—</td><td>—</td><td>—</td><td>their team, in the portal</td></tr>
+                  <tr><th scope="row">Accounting</th><td>✓</td><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>their team&rsquo;s money</td></tr>
+                  <tr><th scope="row">Public site</th><td>✓</td><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                  <tr><th scope="row">House league · Tournaments</th><td>✓</td><td>✓</td><td>—</td><td>game day</td><td>the house league</td><td>registrations</td><td>scores &amp; gate</td><td>—</td></tr>
+                  <tr><th scope="row">Families</th><td>✓</td><td>if you turn it on</td><td>if you turn it on</td><td>—</td><td>if you turn it on</td><td>if you turn it on</td><td>—</td><td>—</td></tr>
+                  <tr><th scope="row">Members</th><td>✓</td><td>✓</td><td>view</td><td>—</td><td>view</td><td>—</td><td>—</td><td>—</td></tr>
+                  <tr><th scope="row">Plan &amp; billing · Settings · Audit log</th><td>✓</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td><td>—</td></tr>
+                </tbody>
+              </table>
+              <p><strong>✓</strong> is full access; a shorter answer is the exact slice that role gets — &ldquo;view&rdquo; opens a program read-only, and &ldquo;if you turn it on&rdquo; means the owner has to grant it by hand (Families is never on by default for anyone but the owner). A row only appears on your own organization once your plan includes that program.</p>
+              <p><strong>Admin</strong> opens every program the plan carries — the moment it&rsquo;s included, with no separate setup step. It never opens <strong>Families</strong> on its own, and <strong>Plan &amp; billing</strong>, <strong>Settings</strong> and the <strong>audit log</strong> stay owner-only; an admin sees those as locked rows rather than a surprise &ldquo;access denied.&rdquo;</p>
+            </>
+          ),
+        },
+        {
+          id: 'roles-t-roles',
+          title: 'The roles, one by one',
+          content: (
+            <>
+              <ul>
+                <li><strong>Owner</strong> — Full access, plus the two things nobody else can hold: <strong>Plan &amp; billing</strong> and <strong>Settings</strong>. Assigned at org creation; ownership can&rsquo;t be transferred through the admin panel.</li>
+                <li><strong>Admin</strong> — Runs operations: every program the plan carries, members, and branding. Cannot open <strong>Settings</strong>, <strong>Plan &amp; billing</strong>, or the <strong>audit log</strong> — those stay owner-only — and doesn&rsquo;t see <strong>Families</strong> unless the owner turns it on for them.</li>
+                <li><strong>Treasurer</strong> — Runs the books: ledgers, the budget, and allocations to teams. Can see the team names money is allocated to, without a Rep Teams door of their own.</li>
+                <li><strong>Staff</strong> — Day-of operator. Updates game times and venue assignments, submits scores, and posts announcements. Cannot create tournaments, manage registrations, or send communications.</li>
+                <li><strong>League Admin</strong> — Runs the house league: seasons, registrations, teams, and schedules. Can view the member list.</li>
+                <li><strong>League Registrar</strong> — Reviews and processes house league registrations only. Cannot manage seasons, schedules, or the member list.</li>
+                <li><strong>Coach</strong> — Accesses the Coaches Portal for their assigned rep team. Cannot access the main admin panel.</li>
+                <li><strong>Scorekeeper</strong> — Submits scores for assigned tournaments via Scorekeeper View at <code>/{'{orgSlug}'}/scorekeeper</code>. Doesn&rsquo;t access the admin panel at all.</li>
+              </ul>
+              <p>Owners can grant or revoke individual programs on any member from <strong>Members → Manage</strong> — a chip on their row marks anything different from their role&rsquo;s defaults.</p>
+            </>
+          ),
+        },
+      ],
       faqs: [
         {
           id: 'faq-switch-admin-coach-view',
@@ -118,28 +182,27 @@ const orgHelp: HelpPageContent = {
       id: 'recipe-invite-member',
       group: 'How-to recipes',
       heading: 'How to invite a member and choose the right role',
-      summary: 'Add a new admin, staff member, treasurer, registrar, coach, or scorekeeper without over-granting access.',
-      keywords: ['invite member', 'role', 'permissions', 'staff', 'admin', 'treasurer', 'registrar', 'coach', 'scorekeeper', 'accept invitation', 'email link'],
-      searchText: 'invite member choose role permissions owner admin staff treasurer league admin league registrar coach scorekeeper resend pending invite seats invited person signed up created their own organization by mistake wrong organization sign-up recognizes email me my invitation link accept invitation setup link',
+      summary: 'Add a new admin, treasurer, staff member, registrar, or scorekeeper without over-granting access.',
+      keywords: ['invite member', 'role', 'permissions', 'staff', 'admin', 'treasurer', 'registrar', 'coach', 'scorekeeper', 'accept invitation', 'email link', 'runs the club', 'house league group', 'volunteers group', 'another organization', 'coach staff page'],
+      searchText: 'invite member choose role permissions owner admin staff treasurer league admin league registrar coach scorekeeper resend pending invite seats invited person signed up created their own organization by mistake wrong organization sign-up recognizes email me my invitation link accept invitation setup link grouped role list runs the club house league volunteers sentence under the field already a member at another club verified network one home organization coaches added on the team staff page invitation names who sent it lands where role starts',
       links: [
         { label: 'Members', href: '../org/members' },
       ],
       content: (
         <>
-          <p>Use this when someone needs access to help run the organization, a tournament, house league, rep teams, accounting, or score entry.</p>
+          <p>Use this when someone needs to help run the club or organization, a tournament, house league, rep teams, accounting, or score entry.</p>
           <ol>
-            <li>Go to <strong>Org Admin &gt; Members</strong>.</li>
-            <li>Click <strong>Invite Member</strong>.</li>
-            <li>Enter the person's email address.</li>
-            <li>Choose the lowest role that matches their job. Use <strong>Admin</strong> only for trusted co-organizers who need broad access.</li>
-            <li>If the person only needs a narrow workflow, use a scoped role such as <strong>Treasurer</strong>, <strong>League Registrar</strong>, <strong>Coach</strong>, or <strong>Scorekeeper</strong>.</li>
-            <li>For scorekeepers, assign the tournaments they should score so their Scorekeeper View stays focused on the right event.</li>
-            <li>When inviting a scorekeeper or gate volunteer, pick what they're <strong>helping with</strong> (Scorekeeping or Gate / check-in) so their invite link opens straight to the right screen.</li>
-            <li>Send the invite, then confirm the person appears as <strong>Pending</strong> until they accept.</li>
+            <li>Go to <strong>Members</strong>.</li>
+            <li>Click <strong>Invite</strong>.</li>
+            <li>Enter the person&rsquo;s email address.</li>
+            <li>Choose their role from the one dropdown, grouped as <strong>Runs the club</strong> (or organization), <strong>House league</strong> (shown once your club runs one), and <strong>Volunteers</strong>. A sentence under the field says exactly what that role opens before you send the invite.</li>
+            <li>For a scorekeeper, pick what they&rsquo;re <strong>helping with</strong> (Scorekeeping or Gate / check-in) so their invite link opens straight to the right screen.</li>
+            <li>Send the invite, then confirm the person appears as <strong>Invited</strong> until they accept.</li>
           </ol>
-          <p><strong>Invited members don't get a password</strong> — the invite email contains a setup link they must click to finish creating their account. If they try to "log in" before clicking it, they'll see an incorrect-email-or-password error. If they didn't receive the email, ask them to check spam, then use the resend option on their pending invite row.</p>
-          <p>If an invited person creates an account on their own instead of using the email link, the sign-up screen now recognizes their email and offers to <strong>email them their invitation link</strong> — so they end up in your organization instead of accidentally starting a new one. Tell them to click that button (or the link in the original email); they never need to "create an organization" to accept.</p>
-          <p><strong>Access rule of thumb:</strong> owners manage billing and organization settings, admins run operations, staff handle day-of tasks, and scorekeepers use <code>/{'{orgSlug}'}/scorekeeper</code> rather than the main admin panel.</p>
+          <p><strong>Coaches aren&rsquo;t invited from here.</strong> A team&rsquo;s head coach adds and removes their own coaching staff on that team&rsquo;s own staff page — coaching rows never appear in this dropdown.</p>
+          <p><strong>Someone already active at another club or organization can accept your invite too</strong> — the same person can hold roles at more than one, and accepting yours doesn&rsquo;t remove them from anywhere else. The one exception is a scorekeeper, who keeps a single home organization.</p>
+          <p><strong>Invited members don&rsquo;t get a password</strong> — the email has a setup link they must click to finish creating their account; clicking &ldquo;log in&rdquo; first shows an incorrect-email-or-password error, so ask them to check spam and use the resend option on their pending row if it&rsquo;s missing. If they sign up on their own instead, FieldLogicHQ recognizes their email and offers to email them the invitation link, so they land in your organization rather than starting a new one.</p>
+          <p><strong>Access rule of thumb:</strong> owners hold Plan &amp; billing and Settings, admins run every program the plan carries, staff and scorekeepers handle day-of work, and each accepted invite names who sent it and opens straight to where that role&rsquo;s work starts — a treasurer in Accounting, a league role in the house league, everyone else at the admin overview.</p>
         </>
       ),
       faqs: [
@@ -169,25 +232,26 @@ const orgHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to fix member access problems',
       summary: 'Troubleshoot missing pages, locked buttons, pending invites, suspended users, and module access.',
-      keywords: ['member cannot access', 'missing page', 'permission', 'suspended', 'pending invite', 'module access'],
-      searchText: 'member cannot access missing page locked button permission role capability suspended pending invite resend module not enabled subscription seat limit',
+      keywords: ['member cannot access', 'missing page', 'permission', 'suspended', 'pending invite', 'module access', 'what they can open', 'chip', 'role default', 'turn on', 'turn off', 'one save', 'coach staff page'],
+      searchText: 'member cannot access missing page locked button permission role capability suspended pending invite resend module not enabled plan and billing subscription seat limit what they can open chip role default turn on turn off consequence sentence one save emailed what changed suspend confirm remove confirm coaching staff staff page',
       links: [
         { label: 'Members', href: '../org/members' },
-        { label: 'Billing', href: '../org/billing' },
+        { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
         <>
-          <p>When someone says they cannot see a page or action, check these items in order:</p>
+          <p>When someone says they can&rsquo;t see a page or action, start with the Members list itself:</p>
           <ol>
-            <li><strong>Confirm they accepted the invite.</strong> Pending members cannot use the admin panel yet. Resend the invite if needed.</li>
-            <li><strong>Check whether their account is suspended.</strong> Suspended members stay listed but cannot access protected workflows.</li>
-            <li><strong>Review their role.</strong> A registrar will not see accounting, a treasurer will not see tournament setup, and a scorekeeper normally will not see the admin panel.</li>
-            <li><strong>For scorekeepers, review tournament assignment.</strong> If they cannot find games, confirm they are assigned to the tournament and that games exist for the selected date.</li>
-            <li><strong>Review individual capabilities.</strong> Owners can grant or remove specific capabilities from a member's manage screen.</li>
-            <li><strong>Check whether the module is enabled.</strong> A member cannot access House League, Rep Teams, Accounting, or public-site features if the org does not have that module active.</li>
-            <li><strong>Check seat limits.</strong> If you are at the plan's seat limit, new non-official users may require an upgrade before they can be added.</li>
+            <li><strong>Read &ldquo;What they can open&rdquo; on their row first.</strong> It&rsquo;s computed from their role plus any per-program change, with a chip for anything different from their role&rsquo;s default (for example &ldquo;+ Families&rdquo; or &ldquo;– Accounting&rdquo;) — the answer is usually right there.</li>
+            <li><strong>Confirm they accepted the invite.</strong> Invited members can&rsquo;t use the admin panel until they accept. Resend from inside <strong>Manage</strong>.</li>
+            <li><strong>Check whether they&rsquo;re suspended.</strong> A suspended row stays listed but can&rsquo;t sign in until you reinstate them. <strong>Suspend</strong> asks you to confirm first; <strong>Reinstate</strong> takes effect straight away.</li>
+            <li><strong>Open Manage and look at &ldquo;What [name] can open.&rdquo;</strong> Each program shows the role&rsquo;s default, and you can set <strong>Role default</strong>, <strong>Turn on</strong>, or <strong>Turn off</strong> per row — a sentence appears under a row the moment your change would open or close it for them.</li>
+            <li><strong>Check the plan carries the module at all.</strong> A member can&rsquo;t open Rep Teams, Accounting, Public site, or House league if the plan doesn&rsquo;t include it — see <strong>Plan &amp; billing</strong>.</li>
+            <li><strong>Check seat limits.</strong> At the plan&rsquo;s seat limit, a new admin or staff member may need an upgrade before they can be added; scorekeepers and coaching staff never count toward it.</li>
           </ol>
-          <p>If all of those look correct and access is still wrong, capture the user's email, role, expected page, and exact error message before contacting support.</p>
+          <p><strong>Coaching staff aren&rsquo;t managed here.</strong> A team&rsquo;s head coach adds and removes their own coaching staff on that team&rsquo;s own staff page, never in Members — if the problem is a coach&rsquo;s access to their team, that&rsquo;s where to look.</p>
+          <p>Manage saves every change — role, title, name and program access — in <strong>one Save</strong>, and emails the person what changed the moment their role or an override actually moves something they can open.</p>
+          <p>If all of that looks correct and access is still wrong, capture the person&rsquo;s email, role, expected page, and exact error message before contacting support.</p>
         </>
       ),
       faqs: [
@@ -198,7 +262,7 @@ const orgHelp: HelpPageContent = {
           keywords: ['missing module', 'module access', 'house league', 'rep teams', 'accounting'],
           popular: true,
           answer: (
-            <p>They need both the right member access and the right organization module. Check their role/capabilities on <strong>Members</strong>, then confirm the module is enabled from billing or subscription settings.</p>
+            <p>They need both the right member access and the right organization module. Check their row&rsquo;s &ldquo;What they can open&rdquo; on <strong>Members</strong>, then confirm the module is included on <strong>Plan &amp; billing</strong>.</p>
           ),
         },
       ],
@@ -211,13 +275,13 @@ const orgHelp: HelpPageContent = {
       keywords: ['module', 'house league', 'rep teams', 'accounting', 'public organization page', 'included in plan'],
       searchText: 'module included in plan house league rep teams accounting public organization page subscription billing upgrade module missing automatic no activation',
       links: [
-        { label: 'Billing', href: '../org/billing' },
+        { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
         <>
           <p>Modules appear in the admin navigation automatically once your plan includes them — there is no separate activation step.</p>
           <ol>
-            <li>Go to <strong>Org Admin &gt; Billing</strong>.</li>
+            <li>Go to <strong>Organization &gt; Plan &amp; billing</strong> (the owner&rsquo;s page).</li>
             <li>Review your current plan and its included modules.</li>
             <li>Look in the left navigation — included modules show up there for members with matching access.</li>
             <li>If a module is missing, it is not part of your current plan. Review upgrade options, or contact support if you believe it should already be included.</li>
@@ -225,6 +289,57 @@ const orgHelp: HelpPageContent = {
           <p>Having a module gives the organization the feature. Members still need the correct role or capability before they can use it.</p>
         </>
       ),
+    },
+    {
+      id: 'club-plan-and-billing',
+      heading: 'Club plan & billing',
+      summary: 'Teams on your plan, Club’s two sizes, moving between them, adding a team at the cap, and what cancelling takes offline.',
+      keywords: ['club plan', 'club billing', 'plan and billing', 'teams on your plan', 'club association', 'move to club association', 'team cap', 'add team at the cap', 'cancel club', 'reactivate club', 'capacity'],
+      searchText: 'club plan and billing teams on your plan capacity readout club two sizes club association move up prorated today move down at renewal no credit keep current band add team at the cap archive a team contact us custom plan what club includes families rep teams accounting public site house league tournaments unlimited board and staff cancel and suspend goes offline ninety days retention reactivate everything comes back public site online coach portals reopen archived tournaments return',
+      links: [
+        { label: 'Plan & billing', href: '../org/billing' },
+      ],
+      content: (
+        <p>Plan &amp; billing for a Club shows how many teams you&rsquo;re using, both Club sizes with their prices, and what happens if you move up, move down, or cancel.</p>
+      ),
+      subtopics: [
+        {
+          id: 'club-plan-and-billing-t-teams',
+          title: 'Teams on your plan',
+          content: (
+            <p>The plan card shows how many active teams you&rsquo;re using against your size&rsquo;s limit — archived teams don&rsquo;t count. The bar turns amber as you approach the limit, and once you&rsquo;re at it, the card names the size to move to.</p>
+          ),
+        },
+        {
+          id: 'club-plan-and-billing-t-sizes',
+          title: 'Club’s two sizes, and moving between them',
+          content: (
+            <>
+              <p>Club and Club · Association differ only in how many teams they hold and what they cost — every feature is identical between them. Each size lists both a monthly and a yearly price, and the size you&rsquo;re on is marked &ldquo;Your plan.&rdquo;</p>
+              <p><strong>Moving up</strong> to Club · Association happens today, on your existing subscription — never a second checkout. Before you confirm, Stripe shows the exact amount due for the rest of this billing period and what you&rsquo;ll pay from your next renewal.</p>
+              <p><strong>Moving down</strong> to Club takes effect at your next renewal, with no credit for the current period, and is refused while you&rsquo;re running more teams than Club holds — archive a team first, or stay where you are. A move waiting for renewal can be undone with &ldquo;Keep&rdquo; your current size, any time before then.</p>
+              <p>More teams than the larger size holds? Contact us for a custom plan.</p>
+            </>
+          ),
+        },
+        {
+          id: 'club-plan-and-billing-t-cap',
+          title: 'Adding a team at the cap',
+          content: (
+            <p>Adding a team once you&rsquo;re at your size&rsquo;s limit offers two ways out, in place, without losing what you typed: move up a size (the same window as the plan page, with Stripe&rsquo;s prorated figure), or archive a team you no longer run. Only the owner can make the move; anyone else is told to ask them. Above the largest size, the way out is to contact us.</p>
+          ),
+        },
+        {
+          id: 'club-plan-and-billing-t-cancel',
+          title: 'Cancelling, and reactivating',
+          content: (
+            <>
+              <p>Cancelling suspends the club: Rep Teams and every team&rsquo;s coach portal, Accounting, Families, the public site, house league and tournaments all go offline at once, and families who open your pages see that they aren&rsquo;t available. Everything is kept for <strong>90 days</strong>, and cancelling always asks you to confirm — and say why — before it happens.</p>
+              <p>Reactivating brings everything back on day one: the public site goes back online, every team&rsquo;s coach portal reopens, archived tournaments return, and the retention reminders stop. If Club isn&rsquo;t yet open for self-serve purchase, the reactivate button reads &ldquo;Contact us to reactivate&rdquo; instead.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'subscription-ends',
@@ -241,18 +356,19 @@ const orgHelp: HelpPageContent = {
         'past due', 'payment failed', 'card declined', 'card expired', 'failed payment',
         '90 days', 'retention', 'coaches portal not working', 'scorekeeper stopped',
       ],
-      searchText: 'if your subscription ends cancel cancelled canceled subscription ended stop paying lost access locked out cannot log in nothing works did we lose our data is our data deleted nothing is deleted data kept 90 days retention resubscribe reactivate renew restore access billing page past due payment failed card declined card expired failed payment keeps working grace retry coaches portal stops scorekeeper stops check-in stops family portal stops public tournament pages go offline tryout registration closes dues reminder emails stop free coaches portal unaffected personal teams basic coach keeps their own work everything comes back intact',
+      searchText: 'if your subscription ends cancel cancelled canceled subscription ended stop paying lost access locked out cannot log in nothing works did we lose our data is our data deleted nothing is deleted data kept 90 days retention resubscribe reactivate renew restore access plan and billing billing page past due payment failed card declined card expired failed payment keeps working grace retry coaches portal stops scorekeeper stops check-in stops family portal stops public tournament pages go offline tryout registration closes dues reminder emails stop free coaches portal unaffected personal teams basic coach keeps their own work everything comes back intact club plan and billing',
       links: [
-        { label: 'Billing', href: '../org/billing' },
+        { label: 'Plan & billing', href: '../org/billing' },
       ],
       content: (
         <>
           <p><strong>Nothing is deleted.</strong> That is the part worth knowing first. If your subscription ends, your seasons, rosters, schedules, records and history are all kept, and they come back exactly as you left them when you subscribe again.</p>
           <p><strong>What stops.</strong> Access ends straight away, across everything: the Coaches Portal, tournament setup, scheduling and score entry, the scorekeeper and check-in apps, your public tournament pages, and the family-facing team pages and calendar feeds. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted — not an error, and not a page that half works.</p>
           <p>Two related things stop as well, so nobody is left wondering: <strong>tryout registration closes</strong> (a form that is no longer being watched should not keep collecting families&rsquo; details), and <strong>automated dues reminder emails stop going out</strong>.</p>
-          <p><strong>Your billing page keeps working — on purpose.</strong> It is the one place that stays open, because that is how you come back. An admin who opens the admin area lands there.</p>
+          <p><strong>Your Plan &amp; billing page keeps working — on purpose.</strong> It is the one place that stays open, because that is how you come back. An admin who opens the admin area lands there.</p>
           <p><strong>A missed payment is not the same as cancelling.</strong> If a card fails, your account is marked past due and <em>everything keeps working</em> while the payment is retried and you are told about it. Access only stops if the subscription is actually cancelled at the end of that.</p>
           <p><strong>A free Coaches Portal is not affected.</strong> Teams a coach set up on their own free portal belong to that person rather than to your organization, so there is no subscription involved and their own work stays exactly as it was.</p>
+          <p>Running a Club? <strong>Club plan &amp; billing</strong> covers your two sizes, moving between them, and exactly what reactivating restores.</p>
         </>
       ),
       faqs: [
@@ -272,13 +388,13 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-subscription-ended-access',
           question: 'Our coaches say the portal stopped working — why?',
-          answerText: 'If your organization\'s subscription was cancelled, access stops immediately for everyone: the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted. Check your Billing page — an admin who opens the admin area is taken straight there. Subscribing again restores access for everyone at once. If instead a payment simply failed, the account is marked past due and everything keeps working while the payment is retried, so a portal that has genuinely stopped means a cancellation, not a declined card.',
+          answerText: 'If your organization\'s subscription was cancelled, access stops immediately for everyone: the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. Coaches and volunteers see a short note saying the subscription has ended and that nothing has been deleted. Check your Plan & billing page — an admin who opens the admin area is taken straight there. Subscribing again restores access for everyone at once. If instead a payment simply failed, the account is marked past due and everything keeps working while the payment is retried, so a portal that has genuinely stopped means a cancellation, not a declined card.',
           keywords: ['portal stopped working', 'coaches locked out', 'coaches cannot log in', 'scorekeeper stopped', 'check-in stopped', 'no access', 'nothing works', 'subscription has ended message', 'why did access stop'],
           popular: true,
           answer: (
             <>
               <p>If your organization&apos;s subscription was cancelled, <strong>access stops immediately for everyone</strong> — the Coaches Portal, tournament tools, the scorekeeper and check-in apps, the family team pages, and your public tournament pages. They see a short note saying the subscription has ended and that nothing has been deleted.</p>
-              <p>Open <strong>Org Admin &gt; Billing</strong> — an admin who opens the admin area is taken straight there. Subscribing again restores access for everyone at once.</p>
+              <p>Open <strong>Plan &amp; billing</strong> — an admin who opens the admin area is taken straight there. Subscribing again restores access for everyone at once.</p>
               <p>If a payment simply <em>failed</em>, that is different: the account is marked past due and everything keeps working while the payment is retried. So a portal that has genuinely stopped means a cancellation, not a declined card.</p>
             </>
           ),
@@ -286,11 +402,11 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-subscription-restore',
           question: 'How do we get everything back?',
-          answerText: 'Subscribe again from Org Admin > Billing. That page keeps working even while access is stopped, precisely so you can come back. Everything is restored as you left it, and access returns for every coach, volunteer and family at once. Your records are kept for 90 days after cancellation.',
+          answerText: 'Subscribe again from Plan & billing. That page keeps working even while access is stopped, precisely so you can come back. Everything is restored as you left it, and access returns for every coach, volunteer and family at once. Your records are kept for 90 days after cancellation.',
           keywords: ['get everything back', 'restore access', 'resubscribe', 're-subscribe', 'reactivate', 'renew', 'start again', 'come back', 'subscribe again'],
           answer: (
             <>
-              <p>Subscribe again from <strong>Org Admin &gt; Billing</strong>. That page keeps working even while access is stopped, precisely so you can come back.</p>
+              <p>Subscribe again from <strong>Plan &amp; billing</strong>. That page keeps working even while access is stopped, precisely so you can come back.</p>
               <p>Everything is restored as you left it, and access returns for every coach, volunteer and family at once. Your records are kept for <strong>90 days</strong> after cancellation.</p>
             </>
           ),
@@ -323,7 +439,7 @@ const orgHelp: HelpPageContent = {
             <li>Grant or revoke individual capabilities beyond their role defaults</li>
             <li>Suspend or reinstate their access</li>
           </ul>
-          <p>To resend an invitation to someone who hasn't accepted yet, click the mail icon on their row. Pending invites appear with a "Pending" status badge.</p>
+          <p>To resend an invitation to someone who hasn't accepted yet, open <strong>Manage</strong> on their row and choose <strong>Resend invite</strong>. Someone who hasn&rsquo;t accepted yet shows as <strong>Invited</strong> on their row.</p>
           <p><strong>Scorekeeper links:</strong> Scorekeepers use <code>/{'{orgSlug}'}/scorekeeper</code>. Admins can also open Scorekeeper View from Results &amp; Scoring when they need to test the field workflow.</p>
           <p><strong>Seat limits:</strong> Your plan's seat limit counts admins and staff only — <strong>scorekeepers and officials are free on every plan and never count toward it</strong>, so bring as many day-of volunteers as your event needs. The free Tournament plan includes 3 staff seats; if you're near the limit, a banner appears on the Members page with an upgrade link. Paid plans have unlimited staff seats.</p>
           <p>You can <strong>export</strong> your member list (Excel or CSV) from the Members page for your own records.</p>
@@ -334,19 +450,35 @@ const orgHelp: HelpPageContent = {
       id: 'notifications-audit',
       heading: 'Notifications and the member audit log',
       summary: 'Set your own notification preferences, and (as owner) review the history of member changes.',
-      keywords: ['notifications', 'notification settings', 'manage notifications', 'turn off notifications', 'email alerts', 'push', 'bell', 'needs attention', 'activity feed', 'earlier this week', 'clear', 'clear a notification', 'still showing after i read it', 'unread', 'see all', 'bundled', 'chat tab', 'audit log', 'member history'],
-      searchText: 'notifications notification preferences notification settings one page for everything you are part of card per organization team you coach manage notifications turn off notifications change how i am notified account notifications your devices in-app bell email push per event type needs attention activity feed grouped today yesterday earlier this week earlier pinned stays until you clear it clear button opening it is not dealing with it still in needs attention after i read it mark all read leaves it alone unread all toggle inbox you empty see all full notifications page filter chips bundled repeated 6 new registrations one tap chat tab unread badge chat not in bell member audit log history who changed role owner only export members',
+      keywords: ['notifications', 'notification settings', 'manage notifications', 'turn off notifications', 'email alerts', 'push', 'bell', 'needs attention', 'activity feed', 'earlier this week', 'clear', 'clear a notification', 'still showing after i read it', 'unread', 'see all', 'bundled', 'chat tab', 'audit log', 'member history', 'when who what to whom', 'time zone', 'export audit log', 'rep teams group change'],
+      searchText: 'notifications notification preferences notification settings one page for everything you are part of card per organization team you coach manage notifications turn off notifications change how i am notified account notifications your devices in-app bell email push per event type needs attention activity feed grouped today yesterday earlier this week earlier pinned stays until you clear it clear button opening it is not dealing with it still in needs attention after i read it mark all read leaves it alone unread all toggle inbox you empty see all full notifications page filter chips bundled repeated 6 new registrations one tap chat tab unread badge chat not in bell member audit log history who changed role owner only export members when who what happened to whom columns house time zone role changes program access turned on turned off invitations sent resent suspensions reinstatements removals rep teams group change no member changes yet did not load try again export excel csv',
       content: (
-        <>
-          <p>Two record-keeping areas sit under Org Admin:</p>
-          <ul>
-            <li><strong>Notifications</strong> — your personal notification settings. The <strong>Notification settings</strong> link in the bell opens <strong>one page for everything you&rsquo;re part of</strong> — a card per organization (and any team you coach), each with switches for the <strong>bell</strong>, <strong>email</strong>, and <strong>push</strong> per kind of event, plus your phones in one place. Settings are per person, not org-wide.</li>
-            <li><strong>Member audit log</strong> — an owner-only history of member changes (roles granted, suspensions, and similar), reachable from the Members area, so you can see who changed what and when.</li>
-          </ul>
-          <p>Inside the <strong>bell</strong> itself, anything that needs a decision from you — a failed payment, a team marked no-show, an assistant-coach approval to review — is pinned at the top under <strong>Needs attention</strong>. Those rows <strong>stay until you tap Clear</strong> on them: opening one isn&apos;t the same as dealing with it, so the count keeps telling you what&apos;s genuinely outstanding. (<strong>Mark all read</strong> leaves them alone for the same reason.) Everything else sits below as an <strong>Activity</strong> feed, grouped by <strong>Today</strong>, <strong>Yesterday</strong>, <strong>Earlier this week</strong>, and <strong>Earlier</strong>, with repeats <strong>bundled</strong> into one line (&ldquo;6 new registrations&rdquo;) you can open in a tap.</p>
-          <p>The bell opens on <strong>Unread</strong>, so reading something clears it from view — an inbox you empty; flip to <strong>All</strong> to see everything with read items dimmed, and use the <strong>See all</strong> link at the bottom for the full, filterable history. Chat messages live on the <strong>Chat</strong> tab with its own unread badge, not in the bell.</p>
-        </>
+        <p>Two record-keeping areas sit under Org Admin: your own notification preferences, and — for the owner — the club or organization&rsquo;s audit log of member changes.</p>
       ),
+      subtopics: [
+        {
+          id: 'notifications-audit-t-notifications',
+          title: 'Notifications',
+          content: (
+            <>
+              <p><strong>Notifications</strong> are your own personal settings. The <strong>Notification settings</strong> link in the bell opens <strong>one page for everything you&rsquo;re part of</strong> — a card per organization (and any team you coach), each with switches for the <strong>bell</strong>, <strong>email</strong>, and <strong>push</strong> per kind of event, plus your phones in one place. Settings are per person, not org-wide.</p>
+              <p>Inside the <strong>bell</strong> itself, anything that needs a decision from you — a failed payment, a team marked no-show, an assistant-coach approval to review — is pinned at the top under <strong>Needs attention</strong>. Those rows <strong>stay until you tap Clear</strong> on them: opening one isn&apos;t the same as dealing with it, so the count keeps telling you what&apos;s genuinely outstanding. (<strong>Mark all read</strong> leaves them alone for the same reason.) Everything else sits below as an <strong>Activity</strong> feed, grouped by <strong>Today</strong>, <strong>Yesterday</strong>, <strong>Earlier this week</strong>, and <strong>Earlier</strong>, with repeats <strong>bundled</strong> into one line (&ldquo;6 new registrations&rdquo;) you can open in a tap.</p>
+              <p>The bell opens on <strong>Unread</strong>, so reading something clears it from view — an inbox you empty; flip to <strong>All</strong> to see everything with read items dimmed, and use the <strong>See all</strong> link at the bottom for the full, filterable history. Chat messages live on the <strong>Chat</strong> tab with its own unread badge, not in the bell.</p>
+            </>
+          ),
+        },
+        {
+          id: 'notifications-audit-t-audit-log',
+          title: 'The member audit log',
+          content: (
+            <>
+              <p>Owner-only, and reachable from <strong>Members → Audit log</strong>. Four columns read as a sentence: <strong>when</strong>, <strong>who</strong>, <strong>what happened</strong>, and <strong>to whom</strong> — for example, &ldquo;Today, 9:14 a.m. · Sam Lee · changed the role to Treasurer · Priya Shah.&rdquo; Times show in your organization&rsquo;s own time zone, not the reader&rsquo;s.</p>
+              <p>It records every kind of member change: role changes, program access turned on or off, invitations sent, suspensions and reinstatements, removals, and a change to a Rep Teams group&rsquo;s scope. &ldquo;No member changes yet&rdquo; appears only once the log has actually loaded and found nothing — a failed load says so instead, with a way to try again.</p>
+              <p>Export the same history as Excel or CSV from the <strong>Export</strong> button at the top of the page.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'modules',
@@ -363,31 +495,70 @@ const orgHelp: HelpPageContent = {
             <li><strong>Accounting</strong> — Org ledger, team invoicing, payment reconciliation, and expense tracking. Included on Club.</li>
             <li><strong>Rep Teams</strong> — Tryouts, rosters, player documents, and the Coaches Portal. Included on Club.</li>
           </ul>
-          <p>Modules appear automatically once your plan includes them — there is no separate activation step. If you expect a module and don't see it, confirm your plan on <strong>Billing</strong>, or contact support.</p>
+          <p>Modules appear automatically once your plan includes them — there is no separate activation step. If you expect a module and don't see it, confirm your plan on <strong>Plan &amp; billing</strong>, or contact support.</p>
         </>
       ),
     },
     {
       id: 'settings',
       heading: 'Settings and your org slug',
-      summary: 'The owner-only Settings page: org name, URL slug, branding, hero banner, fonts, and account deletion.',
-      keywords: ['settings', 'org slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo'],
-      searchText: 'org settings owner only name url slug change redirect branding logo stock logos hero banner theme font card style colour theme delete organization account deletion danger zone discover listed public directory',
+      summary: 'The owner-only Settings page: your public site switches, URL slug, branding, hero banner, fonts, venue library, and account deletion.',
+      keywords: ['settings', 'org slug', 'branding', 'logo', 'hero banner', 'font', 'card style', 'delete organization', 'stock logo', 'public site switch', 'listed in the directory', 'online offline', 'venue library', 'public site editor'],
+      searchText: 'org settings owner only name url slug change redirect branding logo stock logos hero banner theme font card style colour theme delete organization account deletion danger zone your public site public site switch online offline listed in the directory discover directory public site editor online offline chip venue library fields diamonds rinks refused save says why',
       content: (
-        <>
-          <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It controls your org name, URL slug, and the look of your public pages.</p>
-          <p><strong>URL slug</strong> — the identifier used in all your public URLs: <code>fieldlogichq.ca/your-slug/</code>. It appears in your registration forms, schedule pages, tournament links, and any URLs you've shared publicly or included in past emails.</p>
-          <p>Changing your slug takes effect immediately. Every existing link will stop working — there is no redirect. Before saving a new slug:</p>
-          <ul>
-            <li>Update any links you've posted on social media or your website</li>
-            <li>Note that registration form links sent to coaches in past emails will break</li>
-            <li>Consider the timing — avoid changing mid-tournament</li>
-          </ul>
-          <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image for your public pages. This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization address keeps FieldLogicHQ&rsquo;s default styling. There is also a toggle to list your organization on the public <strong>/discover</strong> directory.</p>
-          <p><strong>Danger zone</strong> — the bottom of Settings has a <strong>Request Account Deletion</strong> flow for closing the organization.</p>
-          <p>Requiring an admin to review scores before results go public is a per-tournament setting in each event's settings, not an org-wide Settings option.</p>
-        </>
+        <p>The <strong>Settings</strong> page is <strong>owner-only</strong>. It controls your organization&rsquo;s name, URL slug, whether your public site is switched on, and the look of your public pages.</p>
       ),
+      subtopics: [
+        {
+          id: 'settings-t-public-site',
+          title: 'Your public site',
+          content: (
+            <>
+              <p><strong>Your public site</strong> is two separate switches, and each saves the moment you set it — there&rsquo;s nothing to save separately below.</p>
+              <ul>
+                <li><strong>Public site</strong> — takes your whole home page and league pages online or offline. Turning it off asks first, and names exactly what goes offline today: the home page and the league pages (team pages and tryout forms aren&rsquo;t affected yet). Turned off, families who open your pages see that they aren&rsquo;t available.</li>
+                <li><strong>Listed in the directory</strong> — controls whether families searching FieldLogicHQ&rsquo;s public directory can find you. Your site stays online either way; this switch is off, and greyed out, whenever the public site itself is off.</li>
+              </ul>
+              <p>The <strong>Public Site</strong> editor is where you fill in that home page&rsquo;s content — a tagline, sections and more. It shows an <strong>Online</strong>/<strong>Offline</strong> chip reading the switch above; the switch itself is only ever set here, in Settings.</p>
+            </>
+          ),
+        },
+        {
+          id: 'settings-t-slug',
+          title: 'Your URL slug',
+          content: (
+            <>
+              <p><strong>URL slug</strong> — the identifier used in all your public URLs: <code>fieldlogichq.ca/your-slug/</code>. It appears in your registration forms, schedule pages, tournament links, and any URLs you&rsquo;ve shared publicly or included in past emails.</p>
+              <p>Changing your slug takes effect immediately. Every existing link will stop working — there is no redirect. Before saving a new slug:</p>
+              <ul>
+                <li>Update any links you&rsquo;ve posted on social media or your website</li>
+                <li>Note that registration form links sent to coaches in past emails will break</li>
+                <li>Consider the timing — avoid changing mid-tournament</li>
+              </ul>
+            </>
+          ),
+        },
+        {
+          id: 'settings-t-branding',
+          title: 'Branding and appearance',
+          content: (
+            <>
+              <p><strong>Branding and appearance</strong> — upload your own logo or pick one from the <strong>stock logo</strong> library, choose a colour theme, set a <strong>theme font</strong> and <strong>card style</strong>, and add a <strong>hero banner</strong> image across the top of your organization&rsquo;s home page. This is <strong>organization-level</strong> branding and it comes with <strong>League and Club</strong> plans. Tournament and Tournament Plus brand each <strong>event</strong> individually instead — from that tournament&rsquo;s own settings, with full control per event — and their organization address keeps FieldLogicHQ&rsquo;s default styling.</p>
+              <p>If your plan includes a <strong>venue library</strong>, its own page lets you define your fields, diamonds and rinks once and reuse them — house league schedules use them, and tournaments import them. A save that&rsquo;s refused now says why (for example, the plan doesn&rsquo;t include it, or you don&rsquo;t hold the permission).</p>
+            </>
+          ),
+        },
+        {
+          id: 'settings-t-delete',
+          title: 'Deleting your organization',
+          content: (
+            <>
+              <p><strong>Danger zone</strong> — the bottom of Settings has a <strong>Request Account Deletion</strong> flow for closing the organization.</p>
+              <p>Requiring an admin to review scores before results go public is a per-tournament setting in each event&rsquo;s settings, not an org-wide Settings option.</p>
+            </>
+          ),
+        },
+      ],
     },
     {
       id: 'public-org-page',

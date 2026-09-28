@@ -45,7 +45,7 @@ export default function TournamentSettingsAccessPage() {
     ...(!isLeagueOrClub ? [{
       href: subscriptionHref,
       icon: CreditCard,
-      title: 'Plan & subscription',
+      title: 'Plan & billing',
       description: 'Review the Tournament plan, upgrade to Tournament Plus, and confirm tournament-slot usage.',
       meta: isOwner ? 'Open billing' : 'Owner only',
       enabled: isOwner,

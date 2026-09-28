@@ -307,7 +307,7 @@ export default async function CoachesLayout({
             overrides in globals.css cascade through display:contents to every subtree. */}
         <div style={{ display: 'contents' }} {...coachWarmAttr}>
           <CoachThemeColor />
-          <HelpDrawerProvider>
+          <HelpDrawerProvider warm>
             <ConfirmProvider>
               {/* Shared "any modal/sheet open" signal (Coach Portal Batch 1, D3): wraps BOTH the
                   sidebar and the bottom nav so useOverlayOpen()/useAnyOverlayOpen() reach every

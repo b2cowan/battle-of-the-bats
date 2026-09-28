@@ -19,8 +19,13 @@ const HelpDrawer = dynamic(() => import('./HelpDrawer'), { ssr: false });
  *
  * This is the ONLY module that imports the drawer (and therefore the content
  * registry), so the per-page HelpButton stays light — see help-drawer-context.
+ *
+ * `warm`: the coaches portal's layouts pass it — the drawer portals to <body>, outside the
+ * coach shell's marker, so it carries that marker on its own portal root and follows the
+ * reader's Warm / Dark setting (released 2026-09-28). The admin needs no prop: its marker
+ * reaches the portal through `PortalKitRoot`.
  */
-export default function HelpDrawerProvider({ children }: { children: ReactNode }) {
+export default function HelpDrawerProvider({ children, warm = false }: { children: ReactNode; warm?: boolean }) {
   const [request, setRequest] = useState<HelpRequest | null>(null);
 
   const openHelp = useCallback((req: HelpRequest) => setRequest(req), []);
@@ -46,7 +51,7 @@ export default function HelpDrawerProvider({ children }: { children: ReactNode }
     <HelpDrawerContext.Provider value={value}>
       {children}
       {/* Only mounted once help is opened, so the drawer chunk loads on demand. */}
-      {request && <HelpDrawer request={request} onClose={closeHelp} />}
+      {request && <HelpDrawer request={request} onClose={closeHelp} warm={warm} />}
     </HelpDrawerContext.Provider>
   );
 }

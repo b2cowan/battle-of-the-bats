@@ -35,7 +35,6 @@
  *   node scripts/check-layout-invariants.mjs --list          print the screen list and exit
  *   … --theme=dark | warm      run in that account theme (default: the session's own — warm)
  *   … --dump=<file.json>       also write every finding this run saw, for a before/after diff
- *   … --admin-kit              with the Admin Design Continuity switch ON (`lib/admin-kit-preview.ts`)
  *
  * ⚠ THE BASELINE HAS NO THEME. It was recorded in the default (warm — no UAT session stores a
  * theme), so a `--theme=dark` run reads dark findings against warm entries: use it with `--dump`
@@ -173,19 +172,18 @@ let onlyIds = val('--only')?.split(',').map((s) => s.trim()).filter(Boolean);
 const onlyWidth = val('--width');
 const theme = val('--theme');
 const dumpFile = val('--dump');
-// The admin kit switch — the cookie the dev-only door writes (ADMIN_KIT_COOKIE in
-// lib/admin-kit-preview.ts; `tests/unit/admin-kit-switch-guard.test.ts` pins the name). The baseline
-// was recorded switch-OFF, so a kit run is a --dump comparison, never an --init (refused below).
-const adminKit = has('--admin-kit');
-// A `kitOnly` entry (Club Tier Stage 1) exists only with the admin kit switch on — measured by an
-// `--admin-kit` run, never in the switch-off baseline.
-const sweepable = (s) => !s.kitOnly || adminKit;
+// `--admin-kit` is gone with the Admin Design Continuity switch (released 2026-09-28): the admin and
+// volunteer screens wear the kit in every build, so every run measures them as customers see them.
+if (has('--admin-kit')) {
+  console.error('✗ --admin-kit is retired: the admin kit is released and always on. Drop the flag.');
+  process.exit(1);
+}
 if (theme && theme !== 'dark' && theme !== 'warm') {
   console.error(`✗ --theme must be dark or warm (got "${theme}")`);
   process.exit(1);
 }
-if ((theme || adminKit) && (mode === 'init' || mode === 'prune')) {
-  console.error('✗ --theme / --admin-kit cannot write the baseline: it was recorded in the default theme, switch off.');
+if (theme && (mode === 'init' || mode === 'prune')) {
+  console.error('✗ --theme cannot write the baseline: it is recorded in the default theme.');
   process.exit(1);
 }
 
@@ -295,13 +293,7 @@ if (has('--changed') && !onlyIds) {
       ...SCREENS.filter((s) => widened.some((w) => w.pick(s))).map((s) => s.id),
       ...hit.map((s) => s.id),
     ]);
-    // A `kitOnly` screen (Club Tier Stage 1) is swept only with `--admin-kit` — drop it here, not
-    // later, so the count below says what is actually swept and a kit-only diff says so plainly.
-    const kitOnlySkipped = SCREENS.filter((s) => picked.has(s.id) && !sweepable(s)).map((s) => s.id);
-    onlyIds = SCREENS.filter((s) => picked.has(s.id) && sweepable(s)).map((s) => s.id);
-    if (kitOnlySkipped.length) {
-      console.log(`--changed: ${kitOnlySkipped.length} switch-on-only screen(s) touched, swept only with --admin-kit — ${kitOnlySkipped.join(', ')}`);
-    }
+    onlyIds = SCREENS.filter((s) => picked.has(s.id)).map((s) => s.id);
     if (!onlyIds.length) {
       console.log('--changed: no listed screen is affected by this diff. Nothing to sweep.');
       process.exit(0);
@@ -325,7 +317,7 @@ if (has('--list')) {
   process.exit(0);
 }
 
-const screens = (onlyIds ? SCREENS.filter((s) => onlyIds.includes(s.id)) : SCREENS).filter(sweepable);
+const screens = onlyIds ? SCREENS.filter((s) => onlyIds.includes(s.id)) : SCREENS;
 
 /**
  * `--changed` defaults to a representative PAIR of widths — the narrow phone and the desktop —
@@ -1209,9 +1201,6 @@ for (const { session, clock, list } of groups) {
       try { localStorage.setItem('fl_user_theme', t); } catch { /* private mode: the default stands */ }
     }, theme);
   }
-  if (adminKit) {
-    await context.addCookies([{ name: 'flhq_admin_kit', value: '1', url: ctx.baseUrl }]);
-  }
 
   for (const w of widths) {
     if (aborted) break;
@@ -1376,7 +1365,6 @@ if (dumpFile) {
   writeFileSync(out, JSON.stringify({
     generated: new Date().toISOString(),
     theme: theme ?? 'default',
-    adminKit,
     pairs: pairCount,
     findings: Object.fromEntries(findings.map((f) => [keyOf(f), f.detail])),
     unmeasured: [...navFailures.map((f) => f.label), ...landingFailures.map((f) => f.label)],

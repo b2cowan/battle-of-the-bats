@@ -45,8 +45,24 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
     date: '2026-09-28',
-    title: 'Pairs and groups for any drill, practice plans on your phone, and awards at any event',
+    title: 'One look for your whole admin, Warm or Dark, plus pairs and groups for any drill, practice plans on your phone, and awards at any event',
     highlights: [
+      {
+        category: 'improved',
+        text: "Your organization's admin now wears the same look as the coaches portal, across tournament, club and house-league screens and the admin's help. It opens in the Warm look unless you've already chosen Dark; switch any time from Account → Appearance or the theme toggle in the account menu. The scorekeeper and gate screens get the new look too, always in Warm, so a shared phone at the field reads the same for everyone.",
+      },
+      {
+        category: 'improved',
+        text: "Your organization's own colours stay right where they matter: your public tournament and club pages (and the admin's previews of them) keep showing them, while the admin's working screens follow your Warm or Dark choice.",
+      },
+      {
+        category: 'improved',
+        text: 'The coaches portal help guide and the "?" help panel now follow your Warm or Dark choice too, instead of always showing dark.',
+      },
+      {
+        category: 'fixed',
+        text: 'On tournament plans, the Premium Coaches Portal card on Plan & billing now correctly shows as open, with a "Start your Coaches Portal" button. It had been stuck on a "coming soon" message since the portal opened.',
+      },
       {
         category: 'new',
         text: "Split a practice into pairs or groups anywhere you list players: warm-up partners, pitcher-and-catcher batteries at their own station, or the groups a circuit rotates. The practice keeps one list of tonight's groups, so moving a late arrival into a pair updates every drill that uses it. You can reuse groups from another practice, and the pairs show on the run screen and the printed sheet.",

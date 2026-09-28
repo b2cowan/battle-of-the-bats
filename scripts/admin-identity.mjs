@@ -1,14 +1,20 @@
 /**
- * THE IDENTITY CHECK — "with the switch OFF, does every admin screen look exactly as it did?"
+ * THE IDENTITY CHECK — "does every admin screen look exactly as it did?"
  *
- * ⚠ WHY THIS EXISTS (Admin Design Continuity, slice 0, 2026-09-25). Phase 1 moves the whole admin
- * onto the coaches portal's kit behind a dev-only switch, over several sessions, on the one `dev`
- * branch that anyone may promote. Nothing it changes may be visible before its release day, and the
- * layout sweep cannot prove that: it measures RULES (tap floors, overflow, contrast), not pixels, so
- * a border that changed colour with the switch off passes it untouched. This compares PIXELS.
+ * ⚠ WHY THIS EXISTS (Admin Design Continuity, slice 0, 2026-09-25). Phase 1 moved the whole admin onto
+ * the coaches portal's kit behind a dev-only switch, and this proved, slice after slice, that the
+ * switch-OFF admin never moved. The layout sweep cannot prove that: it measures RULES (tap floors,
+ * overflow, contrast), not pixels, so a border that changed colour passes it untouched. This compares
+ * PIXELS.
+ *
+ * ⚠ SINCE THE RELEASE (2026-09-28) it proves PART B, the cleanup: deleting the legacy branches and
+ * folding each kit layer into its base rules must change ZERO pixels of the new look. The release
+ * captured the reference ("before", in each theme) on the flipped tree; each Part B area runs
+ * `after --only=<area>` in BOTH themes against it. It retires at Part B's end, not before.
  *
  * It is a machine diff, not an eyeball: the layout sweep's "never eyeball a screenshot" rule stands.
- * The pictures are LOCAL ONLY (`.admin-identity/`, git-ignored) and live for the life of Phase 1.
+ * The pictures are LOCAL ONLY (`.admin-identity/<set>-<theme>/`, git-ignored), so Part B runs on the
+ * machine that took the reference.
  *
  * ── USAGE ─────────────────────────────────────────────────────────────────────
  *   node scripts/admin-identity.mjs before              capture the "before" set (a slice's start)
@@ -16,6 +22,8 @@
  *   node scripts/admin-identity.mjs compare             compare the two sets already on disk
  *   … --only=tournaments,admin-hub                      just these AREAS and/or screen ids
  *   … --width=phone | desktop                           just one width
+ *   … --theme=warm | dark                               the account theme (default warm); each theme
+ *                                                       keeps its own sets, and compare pairs them
  *   … --list                                            the screens and their areas
  *
  * A difference is NOT automatically a leak. Other sessions change admin screens too (Club Stage 1's
@@ -98,9 +106,9 @@ const val = (f) => argv.find((a) => a.startsWith(`${f}=`))?.split('=')[1];
 const only = val('--only')?.split(',').map((s) => s.trim()).filter(Boolean);
 const widthArg = val('--width');
 
-// The identity check is SWITCH OFF by definition — a `kitOnly` screen (Club Tier Stage 1) has no
-// switch-off version to compare.
-const ADMIN = SCREENS.filter((s) => s.area && !s.kitOnly);
+const theme = val('--theme') ?? 'warm';
+if (theme !== 'warm' && theme !== 'dark') { console.error(`✗ --theme must be warm or dark (got "${theme}")`); process.exit(1); }
+const ADMIN = SCREENS.filter((s) => s.area);
 const screens = only ? ADMIN.filter((s) => only.includes(s.area) || only.includes(s.id)) : ADMIN;
 const widths = widthArg ? WIDTHS.filter((w) => w.name === widthArg) : WIDTHS;
 
@@ -110,19 +118,21 @@ if (argv.includes('--list')) {
   process.exit(0);
 }
 if (!['before', 'after', 'compare'].includes(mode)) {
-  console.error('Usage: node scripts/admin-identity.mjs before | after | compare [--only=area,id] [--width=phone|desktop]');
+  console.error('Usage: node scripts/admin-identity.mjs before | after | compare [--only=area,id] [--width=phone|desktop] [--theme=warm|dark]');
   process.exit(1);
 }
 if (!screens.length) { console.error(`✗ No admin screen matched --only=${only?.join(',')}`); process.exit(1); }
 if (!widths.length) { console.error(`✗ No width named "${widthArg}" (phone | desktop)`); process.exit(1); }
 
-const fileOf = (set, s, w) => path.join(STORE, set, `${s.id}@${w.name}.png`);
+/** A set's folder: one per theme, so a Warm "after" can only ever be compared with a Warm "before". */
+const setDir = (set) => path.join(STORE, `${set}-${theme}`);
+const fileOf = (set, s, w) => path.join(setDir(set), `${s.id}@${w.name}.png`);
 const git = (cmd) => { try { return execSync(`git ${cmd}`, { cwd: ROOT, encoding: 'utf8' }).trim(); } catch { return ''; } };
 
 // ── capture ───────────────────────────────────────────────────────────────────
 async function capture(set) {
   const ctx = await resolveAdminContext();
-  const dir = path.join(STORE, set);
+  const dir = setDir(set);
   mkdirSync(dir, { recursive: true });
   // A --only run replaces just its own pictures; a full run starts the set clean, so a screen that
   // left the list cannot linger as a stale "match".
@@ -145,7 +155,7 @@ async function capture(set) {
   const unsettled = [];
   let shot = 0;
   let aborted = null;
-  console.log(`Identity capture "${set}" · ${screens.length} screen(s) × ${widths.length} width(s) · ${BASE}\n`);
+  console.log(`Identity capture "${set}" (${theme}) · ${screens.length} screen(s) × ${widths.length} width(s) · ${BASE}\n`);
 
   for (const s of screens) {
     if (aborted) break;
@@ -162,9 +172,11 @@ async function capture(set) {
       });
       await context.clock.setFixedTime(new Date(s.clock ? s.clock(ctx) : FIXED_NOW));
       // The rail's groups all open — the frame is the thing slice 1 rebuilds, so draw all of it.
-      await context.addInitScript(() => {
+      await context.addInitScript((t) => {
         try { localStorage.setItem('fl_nav_groups', JSON.stringify(['operations', 'setup', 'admin'])); } catch { /* measured closed */ }
-      });
+        // The account theme, through the product's own device fast-path (read pre-paint) — as the sweep sets it.
+        try { localStorage.setItem('fl_user_theme', t); } catch { /* private mode: the default (warm) stands */ }
+      }, theme);
       const page = await context.newPage();
       const url = BASE + s.path(ctx);
       try {
@@ -252,11 +264,11 @@ async function raw(file) {
 }
 
 async function compare() {
-  const beforeDir = path.join(STORE, 'before');
-  const afterDir = path.join(STORE, 'after');
-  const diffDir = path.join(STORE, 'diff');
+  const beforeDir = setDir('before');
+  const afterDir = setDir('after');
+  const diffDir = setDir('diff');
   if (!existsSync(beforeDir) || !existsSync(afterDir)) {
-    console.error('✗ Need both a "before" and an "after" capture. Run: node scripts/admin-identity.mjs before');
+    console.error(`✗ Need both a "before" and an "after" capture in ${theme}. Run: node scripts/admin-identity.mjs before --theme=${theme}`);
     process.exit(1);
   }
   rmSync(diffDir, { recursive: true, force: true });
@@ -310,7 +322,7 @@ async function compare() {
   const mB = bRuns[0] ?? null;
   const mA = aRuns[aRuns.length - 1] ?? null;
 
-  console.log(`Identity compare · ${same} unchanged · ${differ.length} changed · ${missing.length} missing\n`);
+  console.log(`Identity compare (${theme}) · ${same} unchanged · ${differ.length} changed · ${missing.length} missing\n`);
   if (differ.length) {
     const byArea = {};
     for (const d of differ) (byArea[d.s.area] ??= []).push(d);
@@ -337,10 +349,10 @@ async function compare() {
   }
   if (differ.length || missing.length) {
     console.error(`\n✗ ${differ.length} screen(s) changed${missing.length ? `, ${missing.length} not compared` : ''}. ` +
-      'With the switch OFF nothing may change: attribute each one (above) before calling it a leak.');
+      'A cleanup changes nothing a customer sees: attribute each one (above) before calling it a leak.');
     process.exit(1);
   }
-  console.log('\n✓ Every admin screen is pixel-identical.');
+  console.log(`\n✓ Every admin screen is pixel-identical (${theme}).`);
 }
 
 if (mode === 'compare') await compare();

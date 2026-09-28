@@ -1,5 +1,4 @@
 import type { Metadata } from 'next';
-import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { getAuthContextWithRole } from '@/lib/api-auth';
 import { getAuthUserCached } from '@/lib/supabase-server';
@@ -12,7 +11,7 @@ import InstallAppPrompt from '@/components/InstallAppPrompt';
 import HelpDrawerProvider from '@/components/help/HelpDrawerProvider';
 import { AdminKitProvider } from '@/components/admin/AdminKitProvider';
 import CoachThemeColor from '@/components/coaches/CoachThemeColor';
-import { ADMIN_KIT_COOKIE, adminKitAttr, readAdminKit } from '@/lib/admin-kit-preview';
+import { adminKitAttr } from '@/lib/admin-kit-preview';
 import AdminChrome from './AdminChrome';
 
 const MEMBER_INSTALL = {
@@ -89,11 +88,6 @@ export default async function AdminLayout({
     redirect(`/${orgSlug}/scorekeeper`);
   }
 
-  // Admin Design Continuity — THE SWITCH (`lib/admin-kit-preview.ts`). Decided HERE, on the server,
-  // so the first paint is already the right frame; always false in a production build. With it off
-  // this layout renders exactly what it always has: no wrapper, no attribute.
-  const adminKit = readAdminKit((await cookies()).get(ADMIN_KIT_COOKIE)?.value);
-
   const shell = (
     <OrgProvider
       initialOrg={authCtx.org}
@@ -113,17 +107,17 @@ export default async function AdminLayout({
     </OrgProvider>
   );
 
+  // Admin Design Continuity — the admin wears the coaches portal's kit in every build (released
+  // 2026-09-28; the dev-only switch that decided it is gone — `lib/admin-kit-preview.ts`). The marker
+  // sits on a box-less wrapper ABOVE the providers — the coaches layout's placement, for its reason: the
+  // shell's modals, drawers and install prompt render as SIBLINGS of the shell, and custom properties
+  // reach them only through a common ancestor.
   return (
-    <AdminKitProvider on={adminKit}>
-      {adminKit ? (
-        // The marker on a box-less wrapper ABOVE the providers — the coaches layout's placement, for
-        // its reason: the shell's modals, drawers and install prompt render as SIBLINGS of the shell,
-        // and custom properties reach them only through a common ancestor.
-        <div style={{ display: 'contents' }} {...adminKitAttr}>
-          <CoachThemeColor />
-          {shell}
-        </div>
-      ) : shell}
+    <AdminKitProvider on>
+      <div style={{ display: 'contents' }} {...adminKitAttr}>
+        <CoachThemeColor />
+        {shell}
+      </div>
     </AdminKitProvider>
   );
 }

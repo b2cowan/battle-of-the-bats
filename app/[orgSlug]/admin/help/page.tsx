@@ -1,6 +1,6 @@
 'use client';
 import { useOrg } from '@/lib/org-context';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { hasModuleEntitlement, isClubPlan } from '@/lib/module-entitlements';
 import HelpHubClient, { type HelpHubCard, type HelpHubRolePath } from '@/components/help/HelpHubClient';
 import styles from '@/components/help/help.module.css';
 
@@ -23,6 +23,7 @@ export default function AdminHelpHubPage() {
   const canAccounting   = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_accounting');
   const canFamilies     = !!currentOrg && hasModuleEntitlement(currentOrg, 'module_families');
   const canOrgAdmin     = userRole === 'owner' || userRole === 'admin';
+  const isClub          = !!currentOrg && isClubPlan(currentOrg.planId);
 
   const cards: HelpHubCard[] = [
     {
@@ -80,10 +81,10 @@ export default function AdminHelpHubPage() {
     }] : []),
     ...(canOrgAdmin ? [{
       title: 'Org Admin & Setup',
-      desc:  'Configure your organization settings, manage members, subscription, and venues.',
+      desc:  'Configure your organization settings, manage members, plan & billing, and venues.',
       href:  `${helpBase}/org`,
-      topicCount: 6,
-      keywords: ['members', 'roles', 'invite', 'subscription', 'billing', 'settings', 'venues'],
+      topicCount: 8,
+      keywords: ['members', 'roles', 'invite', 'plan & billing', 'subscription', 'billing', 'settings', 'venues', 'set up your club'],
     }] : []),
     {
       title: 'Exports & Downloads',
@@ -98,9 +99,11 @@ export default function AdminHelpHubPage() {
     ...(canOrgAdmin ? [{
       title: 'Owner / Org Admin',
       steps: [
+        ...(isClub ? [{ label: 'Set up your club', href: `${helpBase}/org#recipe-set-up-your-club` }] : []),
         { label: 'Invite members and choose roles', href: `${helpBase}/org#recipe-invite-member` },
         { label: 'Fix a member access issue', href: `${helpBase}/org#recipe-fix-member-access` },
         { label: 'Turn on included modules', href: `${helpBase}/org#recipe-enable-modules` },
+        ...(isClub ? [{ label: 'Club plan & billing', href: `${helpBase}/org#club-plan-and-billing` }] : []),
         { label: 'If your subscription ends', href: `${helpBase}/org#subscription-ends` },
       ],
     }] : []),

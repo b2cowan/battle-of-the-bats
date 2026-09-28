@@ -53,10 +53,10 @@ export default function PlatformAdminHelpPage() {
     },
     {
       title: 'Org Admin & Setup',
-      desc: 'Customer-facing guide for members, roles, subscription management, settings, modules, and org setup.',
+      desc: 'Customer-facing guide for members, roles, plan & billing, settings, modules, and org setup — including Club plan & billing and the Club setup checklist.',
       href: '/platform-admin/help/org',
-      topicCount: 6,
-      keywords: ['customer', 'members', 'roles', 'subscription', 'settings', 'billing'],
+      topicCount: 8,
+      keywords: ['customer', 'members', 'roles', 'plan & billing', 'subscription', 'settings', 'billing', 'set up your club'],
     },
     {
       title: 'Exports & Downloads',
@@ -117,9 +117,11 @@ export default function PlatformAdminHelpPage() {
     {
       title: 'Customer Owner or Admin',
       steps: [
+        { label: 'Get a club through setup', href: '/platform-admin/help/org#recipe-set-up-your-club' },
         { label: 'Invite members and choose roles', href: '/platform-admin/help/org#recipe-invite-member' },
         { label: 'Fix member access problems', href: '/platform-admin/help/org#recipe-fix-member-access' },
         { label: 'Turn on modules included in a plan', href: '/platform-admin/help/org#recipe-enable-modules' },
+        { label: 'Explain Club plan & billing', href: '/platform-admin/help/org#club-plan-and-billing' },
         { label: 'Explain exports and downloads', href: '/platform-admin/help/exports' },
       ],
     },

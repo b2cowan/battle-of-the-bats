@@ -41,7 +41,7 @@ export default async function CoachesPortalLayout({ children }: { children: Reac
   const startMenu = await startMenuPromise;
 
   return (
-    <HelpDrawerProvider>
+    <HelpDrawerProvider warm>
       <CoachPortalShell signedIn={!!user?.email} isCoach={isCoach} adminHref={adminHref} workspaces={workspaces} startMenu={startMenu}>
         {children}
       </CoachPortalShell>
