@@ -20,6 +20,17 @@ export function teamWorkspaceDisplayName(orgName: string | null | undefined): st
   return stripped || name;
 }
 
+/** The "Reactivate Premium without starting over" door for a canceled standalone workspace —
+ *  the signup page in reactivation mode, which brings the SAME workspace back. A bare
+ *  COACHES_START_PATH is the new-portal signup and would sell the coach a second, empty one. */
+export function teamWorkspaceReactivatePath(org: { slug: string; name: string | null | undefined }): string {
+  const params = new URLSearchParams({
+    reactivateOrgSlug: org.slug,
+    teamName: teamWorkspaceDisplayName(org.name),
+  });
+  return `${COACHES_START_PATH}?${params.toString()}`;
+}
+
 /** Build the path to a single org-less Basic coach team home. */
 export function coachTeamPath(basicCoachTeamId: string): string {
   return `${COACHES_TEAM_PATH}/${basicCoachTeamId}`;

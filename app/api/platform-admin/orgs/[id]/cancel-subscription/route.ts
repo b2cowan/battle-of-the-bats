@@ -4,10 +4,15 @@ import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { writePlatformAuditLog } from '@/lib/platform-audit';
 import {
   buildCancellationPreflight,
+  COACHES_PORTAL_RETENTION_REASON,
+  retentionDateLabel,
+  retentionDaysFor,
   retentionDeadline,
 } from '@/lib/billing-retention';
+import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import { stripe } from '@/lib/stripe';
-import { cancellationConfirmationHtml, SITE_URL } from '@/lib/email';
+import { cancellationConfirmationHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { PLAN_CONFIG, getEffectiveTeamLimit } from '@/lib/plan-config';
 import type { OrgPlan, Organization } from '@/lib/types';
@@ -114,7 +119,23 @@ export const POST = withObservability(async (req: NextRequest,
 
   const org = mapOrgRow(orgRow);
   const preflight = await buildCancellationPreflight(org);
-  const retentionUntil = retentionDeadline();
+  const retentionUntil = retentionDeadline(new Date(), retentionDaysFor(org));
+
+  // A Coaches Portal's records carry the Coaches Portal reason + its workspace id — reactivation
+  // restores only those, so untagged ones would outlive it and later warn an active customer.
+  const isCoachesPortal = isTeamWorkspaceOrg(org);
+  let teamWorkspaceId: string | null = null;
+  if (isCoachesPortal) {
+    const { data: workspace } = await supabaseAdmin
+      .from('team_workspaces')
+      .select('id')
+      .eq('workspace_org_id', id)
+      .maybeSingle<{ id: string }>();
+    teamWorkspaceId = workspace?.id ?? null;
+  }
+  // Tag by account KIND, not by whether the workspace row resolved: the reason also sets the
+  // 30-day warning lead, which a Coaches Portal is owed either way.
+  const retentionReason = isCoachesPortal ? COACHES_PORTAL_RETENTION_REASON : 'account_cancellation';
 
   const { data: intent, error: intentError } = await supabaseAdmin
     .from('billing_retention_intents')
@@ -170,7 +191,7 @@ export const POST = withObservability(async (req: NextRequest,
           year: t.year,
           startDate: t.startDate,
           endDate: t.endDate,
-          retentionReason: 'account_cancellation',
+          retentionReason,
           fromPlan: orgRow.plan_id,
           initiatedBy: 'platform_admin',
           adminEmail: auth.user.email,
@@ -189,7 +210,8 @@ export const POST = withObservability(async (req: NextRequest,
       retained_state: 'retained_inactive',
       retention_until: retentionUntil,
       metadata: {
-        retentionReason: 'account_cancellation',
+        retentionReason,
+        ...(teamWorkspaceId ? { teamWorkspaceId } : {}),
         fromPlan: orgRow.plan_id,
         moduleShutdown: preflight.shutsDown,
         initiatedBy: 'platform_admin',
@@ -248,11 +270,22 @@ export const POST = withObservability(async (req: NextRequest,
 
   if (notifyOwner) {
     const ownerEmail = await getOrgOwnerEmail(id);
-    if (ownerEmail) {
-      const planLabel = PLAN_CONFIG[orgRow.plan_id as OrgPlan]?.label ?? orgRow.plan_id;
-      const retentionDate = new Date(retentionUntil).toLocaleDateString('en-CA', {
-        year: 'numeric', month: 'long', day: 'numeric',
+    if (ownerEmail && isCoachesPortal) {
+      // A Coaches Portal owner gets the Coaches Portal email — the same one the in-app and Stripe
+      // doors send: team name once, the kept-until date, Resubscribe = reactivate THIS workspace.
+      const workspaceName = teamWorkspaceDisplayName(orgRow.name);
+      const resubscribeUrl = `${SITE_URL}${teamWorkspaceReactivatePath(orgRow)}`;
+      const retentionDate = retentionDateLabel(retentionUntil);
+      await sendTransactionalEmail({
+        key: 'team_workspace_cancelled',
+        to: ownerEmail,
+        vars: { workspaceName, resubscribeUrl, retentionUntil: retentionDate },
+        defaultSubject: `Your ${workspaceName} Coaches Portal has been cancelled`,
+        defaultHtml: teamWorkspaceCancelledHtml({ workspaceName, resubscribeUrl, retentionUntil: retentionDate }),
       });
+    } else if (ownerEmail) {
+      const planLabel = PLAN_CONFIG[orgRow.plan_id as OrgPlan]?.label ?? orgRow.plan_id;
+      const retentionDate = retentionDateLabel(retentionUntil);
       await sendTransactionalEmail({
         key: 'cancellation_confirmation',
         to: ownerEmail,

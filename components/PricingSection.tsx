@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { Check } from 'lucide-react';
 import EarlyAccessModalTrigger from './EarlyAccessModalTrigger';
-import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL } from '@/lib/plan-config';
+import { PLAN_CONFIG, formatPriceAmount, formatAnnualSavings, isFoundingSeasonPromoActive, FOUNDING_SEASON_END_LABEL, clubTrialLine } from '@/lib/plan-config';
 import { SEE_IT_LIVE_PATH, SEE_IT_LIVE_COACHES_PATH, sandboxDoorsVisible } from '@/lib/sandbox-door';
 import type { OrgPlan } from '@/lib/types';
 import styles from './PricingSection.module.css';
@@ -147,8 +147,10 @@ const PLANS: Plan[] = [
     annualSavings: `${formatAnnualSavings('club')}`,
     currency: 'CAD',
     period: '/mo',
-    freeNote: 'No credit card required',
-    trialNote: 'No credit card required',
+    // The Club trial takes a card (BUSINESS_DECISIONS.md 2026-09-25) — the one sentence billing and
+    // checkout also use. It read "No credit card required" until then, which checkout contradicted.
+    freeNote: clubTrialLine(),
+    trialNote: clubTrialLine(),
     features: [
       'Everything in League Plus',
       'Accounting — org ledger, invoicing, expense tracking, and payment reconciliation',
@@ -162,7 +164,7 @@ const PLANS: Plan[] = [
       'Rep Teams — tryouts, rosters & documents',
       'Whole coaching staff included — no per-team fee',
     ],
-    cta: 'Start free — no credit card required',
+    cta: 'Start your Club trial',
     ctaHref: '/auth/signup',
     initialPlanInterest: ['club'],
     initialFeaturesInterested: ['accounting', 'rep_teams', 'coach_portal'],

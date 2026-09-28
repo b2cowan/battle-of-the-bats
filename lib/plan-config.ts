@@ -145,6 +145,21 @@ export const PLAN_CONFIG: Record<OrgPlan, PlanConfig> = {
 };
 
 /**
+ * The Club trial sentence — ONE sentence, verbatim, on the Club pricing card, the billing page and
+ * checkout (BUSINESS_DECISIONS.md 2026-09-25, "The 90-day Club trial collects a card at checkout";
+ * canon in PRICING_PAGE_COPY.md). Never reword it per surface: the defect it replaced was a pricing
+ * card promising "No credit card required" while checkout asked for one.
+ *
+ * Pass the trial length checkout will actually use where you have it (`getPlanConfigOverride()`
+ * — a platform admin can override `trial_days`); the default is the code value the public pricing
+ * card reads. Show it only where a trial applies: a paying org moving to Club gets no second trial.
+ * No "free" in it — Club carries no "free until" framing (2026-09-25, Club has no Founding offer).
+ */
+export function clubTrialLine(trialDays: number = PLAN_CONFIG.club.trialDays): string {
+  return `${trialDays}-day trial — you add a card at checkout, and you're first charged when the trial ends.`;
+}
+
+/**
  * Returns true when a plan's checkout should be blocked and an early-access CTA
  * shown instead. Respects NEXT_PUBLIC_PLAN_GATES:
  *   'live'     — all plans treated as live (use in .env.local to test checkout)

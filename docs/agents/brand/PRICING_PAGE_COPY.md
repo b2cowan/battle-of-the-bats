@@ -24,6 +24,33 @@ sections below that names December 31, 2026 or January 2027 is **superseded on t
 canon; the mechanics they describe are unchanged. The **post-window state** (from January 1, 2027) is
 also written in the canon (§9) and in code — nothing to write on the day.
 
+### 🆕 The Club trial sentence — WRITTEN 2026-09-25 (`/marketing`, per `BUSINESS_DECISIONS.md` 2026-09-25 "The 90-day Club trial collects a card at checkout")
+
+**The sentence — one, verbatim, on every surface that offers the Club trial:**
+> **90-day trial — you add a card at checkout, and you're first charged when the trial ends.**
+
+- **Where:** the Club pricing card's note (`/pricing`, homepage, onboarding chooser), the billing
+  page's Club trial line, and checkout (Stripe's message beside the button), and the `/for-clubs`
+  Club card when it goes live. Single-sourced in code as `clubTrialLine()` in `lib/plan-config.ts`
+  — call it; never retype it. The number is derived, not typed: pass the trial length checkout
+  will use (the platform-admin override when set), so the words cannot disagree with Stripe.
+- **Only where a trial applies.** A paying org moving to Club gets no second trial (2026-09-25,
+  paid→paid moves), so the billing page shows this line to a free org buying Club and never on the
+  move-up window. Same sentence for Club · Association (both bands run 90 days).
+- **Why these words:** the card and the charge are both stated as facts, so the line cannot be
+  read as "free". "Nothing is charged until the trial ends" was **rejected** — it is "free until"
+  framing by another name, which Club may not carry (2026-09-25, no Founding offer for Club), and a
+  skimmer stops at "nothing is charged". "At checkout" rather than "up front", which reads as
+  "pay up front". No "free", no "no commitment". Cancelling is not in the sentence: the page's
+  trust line ("No contracts — cancel anytime") already says it, and one sentence carries one fact.
+- **Club card button:** **`Start your Club trial`** (was `Start free — no credit card required`,
+  false on both counts). The terms live in the note, not the button — the 2026-08-07 precedent.
+- **Replaced:** "No credit card required" on the Club card (price note + button); the billing
+  page's "Early-access trial details collected in Stripe" (Stage 1b applies it there).
+- ⚠ **Placement owed at Stage 1b (not copy):** on the pricing card's annual view the "save two
+  months" line replaces the note, so the trial sentence disappears there. The Stage 1b card redraw
+  must show it in both views.
+
 ### 🆕 Homepage persona cards + entry-point copy — APPROVED 2026-08-07 (built on `dev`, owner QA pending)
 
 Ruling behind it: `BUSINESS_DECISIONS.md` 2026-08-07 — **the homepage states availability and the
@@ -75,6 +102,8 @@ The sections below document all copy changes applied to the live pages after the
 > 2. **Free-floor model** — each operator type starts on a **free-forever scoped floor** (Free Tournament / Free League Starter / Free Basic Coaches Portal), not a time-limited trial. Conversion is driven by scope/scale walls, not a trial expiry. See `docs/projects/archive/FREE_TIER_COACHES_UNIFIED_PLAN.md`.
 >
 > Do **not** reintroduce trial-length language (14/30/90-day) anywhere in live copy. The body trial sections are retained below only as historical record.
+>
+> **⚠ One exception, 2026-09-25: Club.** Club has no free floor and no Founding offer, and its 90-day trial takes a card, so it is named on purpose — in the one sentence at the top of this document ("The Club trial sentence"), and nowhere else in any other wording. The rule above still holds for every other plan.
 
 > ### 🔁 RENAME — "League Starter"/"League" → "League"/"League Plus" (applied 2026-06-13)
 > The $89 paid tier is now **"League Plus"** on the live pages (was "League"). A new **free "League"** house-league floor (1 season / 1 division / 8 teams; internal `free_floor='league_starter'`, capped beta) sits below it, mirroring Tournament (free) / Tournament Plus (paid). **Read every "League" in the body sections below as "League Plus"** unless it clearly means the free floor or the **"House League"** module. Internal keys are unchanged (`plan_id='league'`, Stripe). The free "League" **public pricing card** is held for the Free-Tier Phase-9 launch — until then the live pricing page shows "League Plus" as the $89 tier and does not advertise the free "League". Never write "League Starter"/"Starter" in customer copy. Full inventory + rules: `docs/projects/archive/LEAGUE_REBRAND_PLAN.md`.

@@ -1022,13 +1022,15 @@ export function planDowngradedHtml(p: {
 export function teamWorkspaceCancelledHtml(p: {
   workspaceName: string;
   resubscribeUrl: string;
+  /** Display date the team is kept until — "September 24, 2027". */
+  retentionUntil: string;
 }) {
   return wrap(`
     <h2 style="color:#F1F5F9;font-size:1.3rem;font-weight:700;margin:0 0 1rem;">Coaches Portal cancelled</h2>
-    <p style="margin:0 0 1rem;">Your <strong>${p.workspaceName}</strong> Coaches Portal subscription has been cancelled. Premium tools are now inactive.</p>
+    <p style="margin:0 0 1rem;">Your <strong>${escapeHtml(p.workspaceName)}</strong> Coaches Portal subscription has been cancelled. Premium tools are now inactive.</p>
     <div style="background:#0F172A;border:1px solid rgba(245,158,11,0.3);border-left:3px solid rgba(245,158,11,0.5);padding:1.25rem;margin:1.5rem 0;">
       <p style="margin:0 0 0.5rem;font-weight:700;font-size:0.72rem;letter-spacing:0.08em;text-transform:uppercase;color:#F59E0B;">Your data</p>
-      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your premium team data is archived for the restore window and can be restored by resubscribing. Basic tournament records remain available in Coaches Portal.</p>
+      <p style="margin:0;line-height:1.75;color:rgba(241,245,249,0.8);">Your team is kept until <strong>${p.retentionUntil}</strong>. Resubscribe before then and everything comes back as you left it. Basic tournament records remain available in Coaches Portal.</p>
     </div>
     <a href="${p.resubscribeUrl}" style="display:inline-block;background:#1E3A8A;color:#fff;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:700;font-size:0.82rem;letter-spacing:0.06em;">Resubscribe</a>
   `);

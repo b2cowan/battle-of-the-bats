@@ -1,6 +1,8 @@
 import { getAuthContextWithRole, forbidden, unauthorized } from '@/lib/api-auth';
 import {
   buildCancellationPreflight,
+  retentionDateLabel,
+  retentionDaysFor,
   retentionDeadline,
   writeOrgBillingAudit,
 } from '@/lib/billing-retention';
@@ -11,6 +13,7 @@ import { cancellationConfirmationHtml, teamWorkspaceCancelledHtml, SITE_URL } fr
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { PLAN_CONFIG } from '@/lib/plan-config';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import type { OrgPlan } from '@/lib/types';
 import { captureError, captureAndJson, withObservability } from '@/lib/observability';
 
@@ -28,7 +31,8 @@ export const POST = withObservability(async (req: Request) => {
     : null;
 
   const preflight = await buildCancellationPreflight(ctx.org);
-  const retentionUntil = retentionDeadline();
+  // A Coaches Portal is kept for a season cycle; every other account for the org window.
+  const retentionUntil = retentionDeadline(new Date(), retentionDaysFor(ctx.org));
   const actorEmail = ctx.user.email ?? null;
   const isTeamWorkspaceCancellation = isTeamWorkspaceOrg(ctx.org);
 
@@ -199,14 +203,19 @@ export const POST = withObservability(async (req: Request) => {
     }
 
     if (actorEmail) {
+      // The org is named "{team} Coaches Portal" and the copy says "Coaches Portal" itself — pass
+      // the team name alone. Resubscribe is the reactivation door, never the new-portal signup.
+      const workspaceName = teamWorkspaceDisplayName(ctx.org.name);
+      const resubscribeUrl = `${SITE_URL}${teamWorkspaceReactivatePath(ctx.org)}`;
       await sendTransactionalEmail({
         key: 'team_workspace_cancelled',
         to: actorEmail,
-        vars: { workspaceName: ctx.org.name, resubscribeUrl: `${SITE_URL}/coaches/start` },
-        defaultSubject: `Your ${ctx.org.name} Coaches Portal has been cancelled`,
+        vars: { workspaceName, resubscribeUrl, retentionUntil: retentionDateLabel(retentionUntil) },
+        defaultSubject: `Your ${workspaceName} Coaches Portal has been cancelled`,
         defaultHtml: teamWorkspaceCancelledHtml({
-          workspaceName: ctx.org.name,
-          resubscribeUrl: `${SITE_URL}/coaches/start`,
+          workspaceName,
+          resubscribeUrl,
+          retentionUntil: retentionDateLabel(retentionUntil),
         }),
       });
     }

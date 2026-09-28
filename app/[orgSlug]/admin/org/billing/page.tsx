@@ -18,6 +18,7 @@ import {
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
 } from '@/lib/plan-config';
 import { formatCardOnFile } from '@/lib/billing-format';
+import { teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import { nextSeasonPlanOptions } from '@/lib/next-season-choice';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
 import FeedbackModal from '@/components/FeedbackModal';
@@ -600,7 +601,7 @@ function BillingPageLegacy() {
   };
   const cancelReviewTitle = isTeamWorkspaceBilling ? 'Cancel Premium Coaches Portal' : 'Cancel account';
   const cancelWarningCopy = isTeamWorkspaceBilling
-    ? `Premium tools will become inactive and premium team data is retained for ${cancelPreflight?.retentionDays ?? 90} days. Basic tournament records stay available in Coaches Portal.`
+    ? `Premium tools will become inactive and premium team data is retained for ${cancelPreflight?.retentionDays ?? 365} days. Basic tournament records stay available in Coaches Portal.`
     : `Cancellation suspends the full account. Public pages and modules shut down, and data is retained for ${cancelPreflight?.retentionDays ?? 90} days.`;
   function getPrice(planKey: OrgPlan): string {
     if (isEffectivelyGated(planKey)) return 'Coming soon';
@@ -751,7 +752,7 @@ function BillingPageLegacy() {
             </p>
             <Link
               className="btn btn-lime btn-data"
-              href={`/coaches/start?reactivateOrgSlug=${encodeURIComponent(currentOrg.slug)}&teamName=${encodeURIComponent(currentOrg.name.replace(/\s+Coaches Portal$/i, ''))}`}
+              href={teamWorkspaceReactivatePath(currentOrg)}
             >
               Reactivate Premium
               <ArrowRight size={14} />

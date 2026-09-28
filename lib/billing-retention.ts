@@ -11,6 +11,24 @@ import type { Organization, OrgPlan } from './types';
 import type { Capability } from './roles';
 
 export const BILLING_RETENTION_DAYS = 90;
+export const BILLING_RETENTION_WARNING_DAYS = 14;
+
+/** A cancelled standalone Coaches Portal is kept for a full season cycle, not the org 90 days
+ *  (owner ruling 2026-09-24, BUSINESS_DECISIONS.md). Coaches cancel when the season ends and come
+ *  back for next year's tryouts 6–8 months later — a 90-day window flags the team for purge in the
+ *  off-season, before they ever return. The warning leads by 30 days because an off-season coach
+ *  reads email less often. */
+export const COACHES_PORTAL_RETENTION_DAYS = 365;
+export const COACHES_PORTAL_RETENTION_WARNING_DAYS = 30;
+
+/** The retentionReason every Coaches Portal cancellation record carries, whichever door ended it.
+ *  Reactivation restores ONLY records tagged with it — an untagged record outlives the reactivation
+ *  and later sends an active customer a "retention expired" email. */
+export const COACHES_PORTAL_RETENTION_REASON = 'coaches_portal_cancellation';
+
+export function retentionDaysFor(org: Pick<Organization, 'accountKind' | 'planId'>): number {
+  return isTeamWorkspaceOrg(org) ? COACHES_PORTAL_RETENTION_DAYS : BILLING_RETENTION_DAYS;
+}
 
 const PLAN_ORDER: OrgPlan[] = ['tournament', 'team', 'tournament_plus', 'league', 'club', 'club_large'];
 
@@ -54,6 +72,7 @@ type RetainedRecordProcessRow = {
   retention_until: string;
   warning_sent_at: string | null;
   purge_notice_sent_at: string | null;
+  metadata?: { retentionReason?: string } | null;
   organizations: { name: string; slug: string } | { name: string; slug: string }[] | null;
 };
 
@@ -101,9 +120,9 @@ export function isOrganizationDowngradeTarget(targetPlan: OrgPlan): boolean {
   return targetPlan !== 'team';
 }
 
-export function retentionDeadline(from = new Date()): string {
+export function retentionDeadline(from = new Date(), days = BILLING_RETENTION_DAYS): string {
   const d = new Date(from);
-  d.setDate(d.getDate() + BILLING_RETENTION_DAYS);
+  d.setDate(d.getDate() + days);
   return d.toISOString();
 }
 
@@ -276,7 +295,7 @@ export async function buildCancellationPreflight(org: Organization): Promise<Can
       currentPlan: org.planId,
       activeTournamentCount: tournaments.length,
       tournaments,
-      retentionDays: BILLING_RETENTION_DAYS,
+      retentionDays: COACHES_PORTAL_RETENTION_DAYS,
       shutsDown: [
         'Premium roster, schedule, attendance, lineup, documents, dues, and budget tools',
         'Coach-managed payment reminders and premium team documents',
@@ -419,7 +438,8 @@ function orgFromJoinedRow(row: RetainedRecordProcessRow) {
   return Array.isArray(row.organizations) ? row.organizations[0] : row.organizations;
 }
 
-function dateOnly(iso: string) {
+/** "September 24, 2027" — the one spelling of a retention deadline in customer copy. */
+export function retentionDateLabel(iso: string) {
   return new Date(iso).toLocaleDateString('en-CA', {
     year: 'numeric',
     month: 'long',
@@ -459,7 +479,7 @@ async function sendRetentionEmail(
       records: records.map(r => ({
         displayName: r.display_name,
         recordType: r.record_type,
-        retentionUntil: dateOnly(r.retention_until),
+        retentionUntil: retentionDateLabel(r.retention_until),
       })),
       retentionUrl: `${SITE_URL}/${orgSlug}/admin/org/billing`,
       daysUntilExpiry: daysUntil(first.retention_until),
@@ -481,19 +501,28 @@ function groupByOrg(rows: RetainedRecordProcessRow[]) {
 
 export async function processBillingRetentionExpiry(actorEmail: string) {
   const now = new Date();
+  // Fetch at the LONGEST lead, then keep each record only once it is inside its own lead —
+  // a Coaches Portal is warned 30 days out, everything else 14.
   const warningCutoff = new Date(now);
-  warningCutoff.setDate(warningCutoff.getDate() + 14);
+  warningCutoff.setDate(warningCutoff.getDate() + Math.max(BILLING_RETENTION_WARNING_DAYS, COACHES_PORTAL_RETENTION_WARNING_DAYS));
 
   const { data: expiringRaw, error: expiringError } = await supabaseAdmin
     .from('billing_retained_records')
-    .select('id, org_id, record_type, display_name, retained_state, retention_until, warning_sent_at, purge_notice_sent_at, organizations(name, slug)')
+    .select('id, org_id, record_type, display_name, retained_state, retention_until, warning_sent_at, purge_notice_sent_at, metadata, organizations(name, slug)')
     .eq('retained_state', 'retained_inactive')
     .is('warning_sent_at', null)
     .gt('retention_until', now.toISOString())
     .lte('retention_until', warningCutoff.toISOString());
   if (expiringError) throw expiringError;
 
-  const expiring = ((expiringRaw ?? []) as unknown) as RetainedRecordProcessRow[];
+  const expiring = (((expiringRaw ?? []) as unknown) as RetainedRecordProcessRow[]).filter(row => {
+    const leadDays = row.metadata?.retentionReason === COACHES_PORTAL_RETENTION_REASON
+      ? COACHES_PORTAL_RETENTION_WARNING_DAYS
+      : BILLING_RETENTION_WARNING_DAYS;
+    const rowCutoff = new Date(now);
+    rowCutoff.setDate(rowCutoff.getDate() + leadDays);
+    return new Date(row.retention_until) <= rowCutoff;
+  });
   let warningEmailsSent = 0;
   let warningRecordsTagged = 0;
 
@@ -562,4 +591,146 @@ export async function processBillingRetentionExpiry(actorEmail: string) {
     pendingPurgeEmailsSent,
     pendingPurgeRecords,
   };
+}
+
+/**
+ * Stripe ended a standalone Coaches Portal's subscription (a card that failed for good, a cancel
+ * made in Stripe's dashboard, test-mode expiry) — give it the SAME retention the in-app cancel
+ * gives: a Coaches Portal deadline, archived tournaments, restore-tagged records, a suspended org.
+ * Before this, that door recorded nothing, so the team had no deadline and no warning.
+ *
+ * Returns `applied: false` when this workspace is ALREADY retained — the in-app and platform-admin
+ * cancels call Stripe themselves, so their own `subscription.deleted` arrives here seconds later,
+ * and Stripe retries (or an operator re-sends) an event long after. That door wrote the records and
+ * sent its own email, so the caller must not send a second one. "Already retained" = an unrestored
+ * account record carrying the Coaches Portal reason, at any age: reactivation flips exactly those
+ * to `restored`, so an active one means the workspace has not come back since it was retained.
+ * No age window — a window is what a late re-send slips past, quoting the coach a second, later date.
+ *
+ * ⚠ Check-then-act, not a lock: two deliveries of the same event landing within the same instant can
+ * both pass. The org-cancellation branch in the webhook has the same shape; closing it for both
+ * needs a database constraint (account rows are exempt from the active-retention unique index).
+ */
+export async function applyCoachesPortalStripeRetention(params: {
+  workspaceOrgId: string;
+  teamWorkspaceId: string;
+}): Promise<{ applied: boolean; retentionUntil: string | null }> {
+  const { workspaceOrgId, teamWorkspaceId } = params;
+
+  const { data: existing, error: existingError } = await supabaseAdmin
+    .from('billing_retained_records')
+    .select('id, retention_until')
+    .eq('org_id', workspaceOrgId)
+    .eq('record_type', 'account')
+    .in('retained_state', ['retained_inactive', 'pending_purge'])
+    .eq('metadata->>retentionReason', COACHES_PORTAL_RETENTION_REASON)
+    .order('retained_at', { ascending: false })
+    .limit(1)
+    .maybeSingle<{ id: string; retention_until: string }>();
+  if (existingError) throw existingError;
+  if (existing) return { applied: false, retentionUntil: existing.retention_until };
+
+  const { data: org, error: orgError } = await supabaseAdmin
+    .from('organizations')
+    .select('id, name, plan_id')
+    .eq('id', workspaceOrgId)
+    .maybeSingle<{ id: string; name: string; plan_id: string | null }>();
+  if (orgError) throw orgError;
+  if (!org) return { applied: false, retentionUntil: null };
+
+  const reason = 'Stripe subscription deleted';
+  const retentionUntil = retentionDeadline(new Date(), COACHES_PORTAL_RETENTION_DAYS);
+
+  const { data: intent, error: intentError } = await supabaseAdmin
+    .from('billing_retention_intents')
+    .insert({
+      org_id: org.id,
+      intent_type: 'cancellation',
+      status: 'applied',
+      from_plan: org.plan_id,
+      target_plan: null,
+      keep_tournament_ids: [],
+      retention_until: retentionUntil,
+      reason,
+      created_by: null,
+      created_by_email: 'stripe-webhook',
+      applied_at: new Date().toISOString(),
+    })
+    .select('id')
+    .single();
+  if (intentError) throw intentError;
+
+  // Same order as the in-app cancel: the restore tickets exist before anything is archived away.
+  const tournaments = await getNonArchivedTournaments(org.id);
+  if (tournaments.length > 0) {
+    const retainedIds = tournaments.map(t => t.id);
+    await supabaseAdmin
+      .from('billing_retained_records')
+      .update({ retained_state: 'purged' })
+      .eq('org_id', org.id)
+      .in('record_id', retainedIds)
+      .in('retained_state', ['retained_inactive', 'pending_purge']);
+
+    const { error: tournamentRecordError } = await supabaseAdmin
+      .from('billing_retained_records')
+      .insert(tournaments.map(t => ({
+        intent_id: intent.id,
+        org_id: org.id,
+        record_type: 'tournament',
+        record_id: t.id,
+        display_name: t.name,
+        retained_state: 'retained_inactive',
+        retention_until: retentionUntil,
+        metadata: {
+          previousStatus: t.status,
+          slug: t.slug,
+          year: t.year,
+          startDate: t.startDate,
+          endDate: t.endDate,
+          retentionReason: COACHES_PORTAL_RETENTION_REASON,
+          fromPlan: org.plan_id,
+          initiatedBy: 'stripe',
+        },
+      })));
+    if (tournamentRecordError) throw tournamentRecordError;
+
+    const { error: archiveError } = await supabaseAdmin
+      .from('tournaments')
+      .update({ status: 'archived', is_active: false })
+      .eq('org_id', org.id)
+      .in('id', retainedIds);
+    if (archiveError) throw archiveError;
+  }
+
+  const { error: accountRecordError } = await supabaseAdmin
+    .from('billing_retained_records')
+    .insert({
+      intent_id: intent.id,
+      org_id: org.id,
+      record_type: 'account',
+      record_id: null,
+      display_name: `${org.name} Premium workspace`,
+      retained_state: 'retained_inactive',
+      retention_until: retentionUntil,
+      metadata: {
+        retentionReason: COACHES_PORTAL_RETENTION_REASON,
+        fromPlan: org.plan_id,
+        teamWorkspaceId,
+        initiatedBy: 'stripe',
+        basicTournamentRecordsRemainAvailable: true,
+      },
+    });
+  if (accountRecordError) throw accountRecordError;
+
+  const { error: suspendError } = await supabaseAdmin
+    .from('organizations')
+    .update({
+      subscription_status: 'canceled',
+      billing_suspended_at: new Date().toISOString(),
+      billing_suspension_reason: reason,
+    })
+    .eq('id', org.id);
+  if (suspendError) throw suspendError;
+
+  return { applied: true, retentionUntil };
 }

@@ -1,7 +1,12 @@
 import { stripe } from '@/lib/stripe';
 import { PLAN_CONFIG, type BillingCycle } from '@/lib/plan-config';
 import { getPlanFromPriceId } from '@/lib/stripe-prices';
-import { restoreRetainedDowngradeTournaments, retentionDeadline } from '@/lib/billing-retention';
+import {
+  applyCoachesPortalStripeRetention,
+  restoreRetainedDowngradeTournaments,
+  retentionDateLabel,
+  retentionDeadline,
+} from '@/lib/billing-retention';
 import { supabaseAdmin, getOrgOwnerEmail } from '@/lib/supabase-admin';
 import { isPastDueTransition, isRecoveryTransition, writePlatformEvent } from '@/lib/platform-events';
 import {
@@ -19,6 +24,7 @@ import { applyPlanChangeSideEffects } from '@/lib/plan-move';
 import { restoreAfterReactivation } from '@/lib/billing-reactivation';
 import { trialEndingHtml, welcomeBackHtml, teamWorkspaceCancelledHtml, SITE_URL } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
+import { teamWorkspaceDisplayName, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import { cancelScheduledEmail } from '@/lib/email-sender';
 import { notify } from '@/lib/notify';
 import type { OrgPlan } from '@/lib/types';
@@ -512,13 +518,22 @@ export const POST = withObservability(async (req: Request) => {
           metadata: { stripeCustomerId: customerId, stripeSubscriptionId: sub.id, scope: 'team_workspace' },
         });
 
-        // Coaches Portal cancellation email
         const { data: cancelledWs } = await supabaseAdmin
           .from('team_workspaces')
-          .select('workspace_org_id')
+          .select('id, workspace_org_id')
           .eq('stripe_subscription_id', sub.id)
           .maybeSingle();
         if (cancelledWs?.workspace_org_id) {
+          // Retention first — the email states its deadline. When the in-app or platform-admin
+          // cancel already retained this workspace, that door sent its own email: do not send a
+          // second one.
+          const retention = await applyCoachesPortalStripeRetention({
+            workspaceOrgId: cancelledWs.workspace_org_id,
+            teamWorkspaceId: cancelledWs.id,
+          });
+          if (!retention.applied || !retention.retentionUntil) break;
+          const retentionUntil = retentionDateLabel(retention.retentionUntil);
+
           const [wsOwnerEmail, wsOrg] = await Promise.all([
             getOrgOwnerEmail(cancelledWs.workspace_org_id),
             supabaseAdmin
@@ -529,15 +544,16 @@ export const POST = withObservability(async (req: Request) => {
               .then(r => r.data),
           ]);
           if (wsOwnerEmail && wsOrg) {
+            // Team name alone (the copy supplies "Coaches Portal"); Resubscribe reactivates THIS
+            // workspace rather than opening the new-portal signup.
+            const workspaceName = teamWorkspaceDisplayName(wsOrg.name);
+            const resubscribeUrl = `${SITE_URL}${teamWorkspaceReactivatePath(wsOrg)}`;
             await sendTransactionalEmail({
               key: 'team_workspace_cancelled',
               to: wsOwnerEmail,
-              vars: { workspaceName: wsOrg.name, resubscribeUrl: `${SITE_URL}/coaches/start` },
-              defaultSubject: `Your ${wsOrg.name} Coaches Portal has been cancelled`,
-              defaultHtml: teamWorkspaceCancelledHtml({
-                workspaceName: wsOrg.name,
-                resubscribeUrl: `${SITE_URL}/coaches/start`,
-              }),
+              vars: { workspaceName, resubscribeUrl, retentionUntil },
+              defaultSubject: `Your ${workspaceName} Coaches Portal has been cancelled`,
+              defaultHtml: teamWorkspaceCancelledHtml({ workspaceName, resubscribeUrl, retentionUntil }),
             });
           }
         }
