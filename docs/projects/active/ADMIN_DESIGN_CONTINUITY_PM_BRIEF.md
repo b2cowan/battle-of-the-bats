@@ -32,8 +32,9 @@
 > with the switch off, every screen still pixel-identical to what customers see. On the owner's word it also
 > restyled Plan & billing for every plan (the page every tournament organizer bills through), gave the club
 > windows the coaches portal's keyboard and Back behaviour, and fixed two Dark reading problems and the phone
-> bar's current tab in both portals (coaches get those with the next release). The owner's walk (§245, eight
-> short walks) is next; the release is its own session after it.
+> bar's current tab in both portals (coaches get those with the next release). Committed `c72afdeb` 2026-09-28
+> after its cleanup and review; the owner's walk (§245, eight short walks) is next; the release is its own
+> session after it.
 
 ## What it is
 One design system and one theme choice across every working screen in FieldLogicHQ. The club admin,

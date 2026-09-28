@@ -25,7 +25,8 @@
 > 2026-09-28** — results in §3a after slice 5's; owner rulings at the start: Plan & billing restyled for every
 > plan, the club windows onto the portal's dialog floor, Q5 "colour it", then the two shared Dark fixes "fix both,
 > both portals"; switch-on contrast in the working screens 0 Warm / 0 Dark; identity 206/206; **walk §245 published
-> on the hub's QA tab**. The release is its own session, after the walk.
+> on the hub's QA tab**; /simplify + /review 2026-09-28 (one Back defect on Settings found and fixed); owner
+> "commit" → **COMMITTED `c72afdeb` 2026-09-28**, ahead of the walk. The release is its own session, after the walk.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -188,7 +189,7 @@ foundation's release day.
 | 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; COMMITTED `07808a02` 2026-09-27; walked at slice 6 |
 | 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | **BUILT 2026-09-27** — results below; identity 28/28 + both-theme sweep done; /simplify + /review done; COMMITTED `9d1b1670` 2026-09-27; walked at slice 6 |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | **BUILT 2026-09-27** — results below; /simplify + /review done; COMMITTED `530d87e9` 2026-09-27; walked at slice 6 |
-| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | **PROVE + WALK BUILT 2026-09-28** — results below ("Slice 6 — prove and walk"); walk **§245** published; /simplify + /review, the owner's walk and the commit owed; **the RELEASE is its own session after the walk** (its list is in the results) |
+| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | **PROVE + WALK COMMITTED `c72afdeb` 2026-09-28** (after /simplify + /review; owner "commit", ahead of the walk) — results below ("Slice 6 — prove and walk"); walk **§245** published, the owner's walk owed; **the RELEASE is its own session after the walk** (its list is in the results) |
 
 **Slice 4 — the split (2026-09-27, written before starting, as the build prompt requires).** The
 tournament area measured at the start of slice 4 (same scope as the inventory's footnote 2): **54,112
