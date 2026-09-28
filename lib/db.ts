@@ -2188,7 +2188,10 @@ export async function getArchivesByOrg(orgId: string): Promise<TournamentArchive
 }
 
 export async function getArchiveById(id: string): Promise<TournamentArchive | null> {
-  const { data, error } = await supabase
+  // readClient(), like getArchivesByOrg: on the server it is the service role. The bare anon
+  // client holds no privilege on tournament_archives (migration 310), so reading through it
+  // 404'd every archive page — the caller checks the archive belongs to the org in the URL.
+  const { data, error } = await readClient()
     .from('tournament_archives')
     .select('*')
     .eq('id', id)

@@ -13,7 +13,7 @@
 | Severity | Open | Addressed | Accepted Risk |
 |---|---|---|---|
 | Critical | 0 | 0 | 0 |
-| High | 2 | 7 | 1 |
+| High | 3 | 7 | 1 |
 | Medium | 2 | 5 | 2 |
 | Low | 2 | 4 | 3 |
 | Advisory | 9 | 1 | 0 |
@@ -25,6 +25,39 @@
 ---
 
 ## Open Findings
+
+---
+
+### [2026-09-28] — Finding #44: Prod's public key reads every club's registrations — identity-blind policies × prod's blanket Data API grants; dev and prod differ in GRANTS, not policies
+**Severity:** High (cross-tenant PII readable with a key shipped to every browser; cross-tenant WRITE on `pools`; unmetered anonymous INSERT on `teams`) — mitigated only by being pre-customer.
+**Finding:** Read live, read-only, 2026-09-28 (probe scripts `.probe/dba-*.mjs`, `.probe/rt-*.mjs`). Surfaced by the stack-health "Live-update errors" amber on dev.
+- **Policies are identical on both envs** (305 of 306; the one extra is prod-only, below). The difference is **grants**: prod `anon` + `authenticated` hold `arwdDxtm` on 181 of 184 public tables (the legacy default); dev holds SELECT for `authenticated` on 12 tables and for `anon` on 5, all from explicit migration grants. So **a policy is only a door on prod** — which is why dev "structurally cannot reproduce" this class ([[reference_supabase_rls_grants]], migs 212/223).
+- **16 identity-blind policies** (`USING (true)` / `auth.role()`) exist on both envs; on prod every one is live. The ones that matter, all readable with the publishable key via PostgREST (and via realtime where published):
+  - `teams_anon_read` (`USING true`, mig 009): every org's registrations — `email`, `coach_email`, `coach` (even where `tournaments.coach_names_show_on_public` is off), `payment_status`, `deposit_paid`, `total_paid`, `admin_notes`, `check_in_notes`. 53 rows, 35 with an email. `teams` is in prod's `supabase_realtime` publication (NOT dev's), so an unfiltered anon subscription live-streams new registrations across all orgs.
+  - `games_anon_read` (`USING true`): `score_submitted_by_email` (set on **all 53** prod games), `score_submitted_by_user_id`, admin `notes`; drafts of unpublished schedules.
+  - `tournaments_anon_read`: `contact_email` even when `contact_show_on_public` is off; `chat_reminder_last_sent_by`; `settings`. `announcements_anon_read`: `sent_by_email`, `email_failed_addresses` (family addresses; 0 rows today), soft-deleted rows. `age_groups_anon_read` (divisions: fees, `contact_member_id`), `diamonds_anon_read`, `archives_anon_read` + `anon_read_archives` (duplicate pair; `final_snapshot`, `sealed_by`).
+- **Writes:** `teams_anon_insert` (`WITH CHECK true`) — anyone can insert a registration into any tournament, bypassing capacity, waitlist, fees and the `public_hidden_pages` gate (the known-open cleanup item T5). **`"Allow all for authenticated users on pools"`** (`ALL`, `USING (auth.role() = 'authenticated')`) is **prod-only** and survived mig 199 because it is not spelled `USING (true)` — any signed-in account (any family, any coach, any org) can insert/update/delete any club's pools. The member-keyed write policies on `teams`/`games` (`can_access_tournament` — true for **any** org member without tournament assignments) let a club coach rewrite scores, payment status or registrations directly, around the scoring service's approval flow — the mig-212 shape.
+- **Nothing in the product uses the public path.** (1) Code: every read/write of these tables goes through `supabaseAdmin` — public pages pass `{ admin: true }`, registration inserts with the service role; the session-client writers left in `lib/db.ts` (`saveTournament`, `initializeDivisions`, `saveDivision`, `deleteTeam`, `saveGame`) have **no callers**. (2) Dev has run without these grants for months. (3) **Prod edge logs 2026-09-21..27: every one of 1,928 PostgREST calls to the 11 tournament/notification tables used the secret key from the server; zero publishable-key or browser calls.** The only genuine browser readers are **realtime**: `LogicSyncBracket` (public pages, `anon`, `games` UPDATE), the scorekeeper board and the admin rail (`LiveLogicProvider`, `LiveEventLog`: `games` UPDATE + `teams` INSERT, reading only `id`/`status`/scores/team ids and a new team's `name`), and the notification bell (`notifications` INSERT by `user_id`, own-rows policy — correct).
+- `realtime.subscription_check_filters()` and `realtime.apply_rls()` both honour **column** privileges (`has_column_privilege`), so a column grant is enough both to keep the feeds working and to keep private columns out of their payloads. It is also why dev logs 2–4k `invalid column for filter` errors a day: the error means "this role may not read that column", not "the column is missing".
+**Tables affected:** teams, games, pools, tournaments, divisions, announcements, diamonds, tournament_archives, notifications (grant only); Stage 2: every public table.
+**Recommendation:** Two stages. Plan of record: `docs/projects/active/PROD_DATA_API_EXPOSURE_PLAN.md`.
+- **Stage 1 — one migration, both envs, no code dependency.** `revoke all … from anon, authenticated` on the eight tournament tables. Then grant back only what the browser reads: `teams` → `select (id, tournament_id, name)` to `authenticated` under a new member-scoped read policy (the admin rail's new-registration line). `games` → `select` on 27 of 30 columns (every column except `score_submitted_by_email`, `score_submitted_by_user_id`, `notes`) to `anon, authenticated` (the public bracket and the scorekeeper). `notifications` → `select` to `authenticated` (a no-op on prod; turns the bell on for dev). Drop `teams_anon_read`, `teams_anon_insert` (**closes T5**), the `teams`/`games` member write policies and the prod-only `pools` ALL policy. Add `teams` to dev's publication so the envs match. **After it, dev and prod hold identical grants on these tables — dev becomes a faithful security replica for them.**
+- **Stage 2 — converge prod's grants on dev's for every remaining table** (policies already match, so this retires the whole class, including any mig-212-shaped policy nobody has found). Evidence gate before applying: 14 days of prod edge logs, no publishable-key call to a table the dev ACL does not grant.
+- `games.score_submitted_by_email` **belongs in Stage 1**: it is the same `games` grant surgery; splitting it would touch the same table's ACL twice.
+- **Guard recommendations (watched automation; build only on the owner's explicit ask):** the snapshot/drift tooling compares neither grants nor policy bodies — the second time that blindness has hidden a prod-only security door (see mig 199). A migration guard should reject new identity-blind INSERT/UPDATE/DELETE/ALL policies.
+- Advisory (owner's call, not in Stage 1): scope `games_anon_read` to published schedules.
+**Status:** Stage 1 **Addressed**: migration 310 was applied to dev and prod on 2026-09-28 (owner go: "go ahead with stage 1"). The admin rail's name-only line was kept (the recommended default).
+- **Dev verification: 25/25 end to end** (`.probe/dba-310-verify.mjs dev --writes`), with real realtime payloads for a visitor, an org admin and another club's user:
+  - the public bracket receives game updates with 27 fields, and the email and notes are withheld;
+  - the admin rail receives "new team registered" carrying only `id, name, tournament_id`;
+  - another club's user receives nothing;
+  - the bell ticks.
+- **Prod verification: 14/14 read-only.**
+  - **Before 310:** the publishable key read all eight tables, a team insert reached the NOT NULL check, and a pools PATCH returned 204.
+  - **After 310:** every read and write is 42501, public game fields return 200, and the bracket feed subscribes.
+- **Dev and prod now match:** identical grants on the nine tables, and identical policies (299 = 299).
+- **`/review` found two 310 regressions, both latent on prod (0 archives there) and fixed in code:** the public archive page read through the anon client, and the admin Archives list read through the browser session. It also found a pre-existing dead realtime binding on `announcements` that killed the dashboard Recent Activity channel; it is removed. The plan (Status) has the detail.
+- **Stage 2 is Open:** converge the remaining tables' grants. The owner decision is owed.
 
 ---
 

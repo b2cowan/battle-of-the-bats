@@ -2,7 +2,6 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Archive, ExternalLink, Lock, Sparkles } from 'lucide-react';
-import { getTournamentsByOrg } from '@/lib/db';
 import { useOrg } from '@/lib/org-context';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { Tournament, TournamentArchive } from '@/lib/types';
@@ -20,6 +19,21 @@ async function getAdminArchives(orgSlug?: string): Promise<TournamentArchive[]> 
   return Array.isArray(data) ? data : [];
 }
 
+type ArchivableTournament = Pick<Tournament, 'id' | 'name' | 'year' | 'status'>;
+
+// The org's tournaments INCLUDING archived ones, through the scoped admin endpoint (org and
+// assignment filters enforced server-side). Not getTournamentsByOrg: in the browser that reads
+// `tournaments` with the signed-in session, which holds no privilege on it (migration 310), so the
+// "archived, not yet sealed" list silently came back empty.
+async function getAdminTournaments(orgSlug?: string): Promise<ArchivableTournament[]> {
+  const orgQuery = orgSlug ? `?orgSlug=${encodeURIComponent(orgSlug)}` : '';
+  const res = await fetch(`/api/admin/tournaments${orgQuery}`, { cache: 'no-store' });
+  if (!res.ok) return [];
+  const data: unknown = await res.json();
+  if (!Array.isArray(data)) return [];
+  return (data as ArchivableTournament[]).map(r => ({ id: r.id, name: r.name, year: r.year, status: r.status }));
+}
+
 function getErrorMessage(error: unknown, fallback = 'Something went wrong.') {
   return error instanceof Error ? error.message : fallback;
 }
@@ -35,7 +49,7 @@ export default function AdminArchivesPage() {
   const dashStyle = kx({ color: 'var(--white-20)' }, KIT_INK.tertiary);
   const canSealArchives = currentOrg ? hasPlanFeature(currentOrg.planId, 'sealed_archives') : false;
   const [archives, setArchives] = useState<TournamentArchive[]>([]);
-  const [archivedUnsealed, setArchivedUnsealed] = useState<Tournament[]>([]);
+  const [archivedUnsealed, setArchivedUnsealed] = useState<ArchivableTournament[]>([]);
   const [feedback, setFeedback] = useState<{
     isOpen: boolean;
     title: string;
@@ -48,7 +62,7 @@ export default function AdminArchivesPage() {
   async function refresh() {
     if (!currentOrg) return;
     const [ts, arcs] = await Promise.all([
-      getTournamentsByOrg(currentOrg.id),
+      getAdminTournaments(currentOrg.slug),
       getAdminArchives(currentOrg.slug),
     ]);
     const sealedIds = new Set(arcs.map(a => a.tournamentId).filter(Boolean) as string[]);
@@ -58,7 +72,7 @@ export default function AdminArchivesPage() {
 
   useEffect(() => { refresh(); }, [currentOrg?.id]); // eslint-disable-line
 
-  function openSealConfirm(t: Tournament) {
+  function openSealConfirm(t: ArchivableTournament) {
     if (!canSealArchives) {
       setFeedback({
         isOpen: true,

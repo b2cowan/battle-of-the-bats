@@ -108,14 +108,10 @@ export function LiveEventLog({ tournamentId, orgSlug }: { tournamentId: string; 
           prepend({ id: `reg-${String(row.id)}`, type: 'registration', message: `${name} registered`, timestamp: new Date().toISOString(), timeAgo: 'just now' });
         },
       )
-      .on(
-        'postgres_changes',
-        { event: 'INSERT', schema: 'public', table: 'announcements', filter: `tournament_id=eq.${tournamentId}` },
-        (payload) => {
-          const row = payload.new as Record<string, unknown>;
-          prepend({ id: `ann-${String(row.id)}`, type: 'announcement', message: `Announcement posted: "${String(row.title ?? '')}"`, timestamp: new Date().toISOString(), timeAgo: 'just now' });
-        },
-      )
+      // No live `announcements` binding: that table is not in the realtime publication, and Realtime
+      // rejects a binding on an unpublished table — which takes down EVERY binding on the channel, so
+      // this feed never updated live on either env until it was removed (2026-09-28, mig 310 review).
+      // New announcements still arrive through fetchHistory() on load.
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };

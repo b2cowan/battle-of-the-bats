@@ -456,7 +456,18 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
 - **`teams` is the *registration* unit**, not a persistent rep/house-league team. `teams.players` (jsonb) was **dropped** (mig 111) — roster lives in `tournament_roster_players`.
 - **Game length is per-game now** (mig 112): `games.duration_minutes` + `resolveGameTiming(division, tournament, gameDurationOverride?)`. The old tournament-level `settings.playoff_game_duration_minutes` is **gone**.
 - **Real dev/prod drift exists** on legacy tournament tables (nullability/defaults, `id` default function, three `created_at` columns missing from dev) — see [DRIFT_dev_vs_prod.md](schema-snapshots/DRIFT_dev_vs_prod.md) and the per-field `Dev/prod` notes below. Never `SELECT *` and rely on column order — several columns differ only in ordinal position between envs.
-- **Legacy wide-open RLS policies DROPPED from prod (mig 199, 2026-07-24).** Prod-only permissive policies `"Allow public full access to X"` (`anon`, `ALL`, `USING(true)`) on `announcements`/`diamonds`/`divisions`/`games`/`teams`/`tournaments`, plus `pools_admin_all` (`authenticated`, `ALL`, `USING(true)`) and two duplicate pools read policies, were removed — the public anon key could previously WRITE these tables via REST. Public reads still flow through the scoped `*_anon_read` policies (both envs); app writes use the service role (BYPASSRLS). Still open + deliberate: `teams_anon_insert` (public INSERT on `teams`, both envs) — flagged to the DB cleanup tranche, verify the register flow's dependency before touching. Note the snapshot/drift tooling does NOT diff `pg_policies` content (only the RLS on/off bit) — policy drift is invisible to `DRIFT_dev_vs_prod.md` until the refresh script is extended.
+- **Legacy wide-open RLS policies DROPPED from prod (mig 199, 2026-07-24).** Prod-only permissive policies `"Allow public full access to X"` (`anon`, `ALL`, `USING(true)`) on `announcements`/`diamonds`/`divisions`/`games`/`teams`/`tournaments`, plus `pools_admin_all` (`authenticated`, `ALL`, `USING(true)`) and two duplicate pools read policies, were removed — the public anon key could previously WRITE these tables via REST. ⚠ **Corrected 2026-09-28 (DB_ARCHITECTURE_REVIEW Finding #44):** the `*_anon_read` policies are **not** scoped. Most are `USING (true)`, and on prod, where `anon`/`authenticated` hold blanket grants, they let the public key read every org's rows, including `teams` contact emails and payments. The public site does **not** read through them: every public page reads with the service role (`{ admin: true }`), and prod's edge logs show zero publishable-key calls to these tables. The only genuine browser readers are the realtime feeds. App writes use the service role (BYPASSRLS).
+- **🔒 The public key's access to these tables is closed (mig 310, applied to dev + prod 2026-09-28).**
+  - **What happened:** `anon`/`authenticated` lost every privilege on `tournaments`, `divisions`, `pools`, `announcements`, `diamonds`, `tournament_archives`, `teams` and `games`. They got back only what the realtime feeds read:
+    - `games`: 27 of 30 columns to both roles. `score_submitted_by_email`, `score_submitted_by_user_id` and `notes` are withheld.
+    - `teams`: `(id, tournament_id, name)` to `authenticated` only, under `teams_member_read_for_live_feed`.
+    - `notifications`: SELECT to `authenticated`.
+  - **Policies dropped:** `teams_anon_read`, `teams_anon_insert` (registration always inserted with the service role), the `teams`/`games` member write policies, and the prod-only `"Allow all for authenticated users on pools"`. That last one was missed by mig 199 because it is spelled `auth.role()`.
+  - **Dev and prod are now identical on these tables**, in grants and in policies (299 = 299).
+  - The remaining `*_anon_read` policies on the six server-only tables are **inert**: no grant, no door. **A future `grant … to anon` on any of them reopens every row at once — don't.**
+  - **Realtime honours column privileges** for both the subscription filter and the payload, so a feed that needs one more field gets ONE more column grant, never `grant all`.
+  - **Cross-environment gotcha:** everywhere else, prod still holds the legacy blanket grant and dev does not, until Stage 2 of `PROD_DATA_API_EXPOSURE_PLAN.md`.
+- Note the snapshot/drift tooling does NOT diff `pg_policies` content (only the RLS on/off bit) — policy drift is invisible to `DRIFT_dev_vs_prod.md` until the refresh script is extended.
 
 ---
 
@@ -657,6 +668,11 @@ Also surfaced read-only on the dashboard funnel payload as `reminderLastSentAt` 
 5. **Finding #25 drift on 4 columns** — `coach` (dev nullable / **prod NOT NULL** — a no-coach-name registration passes on dev, **fails on prod**), and `status`/`payment_status`/`registered_at` (dev NOT NULL / prod nullable). Defaults identical.
 6. **`coach` stores a NAME, `email` stores the email.** Naming smell — `coach` is the display name (from form `coachName`), not a FK/email.
 7. **`slot_id` and `waitlist_position` are mutually exclusive** states managed by the `claim_next_slot` RPC; rejecting a team releases the slot on **both** sides (`pool_slots.team_id` AND `teams.slot_id`).
+8. **🔒 Server-only, except a member may see a new team's NAME (mig 310, dev + prod 2026-09-28).**
+   - **Access:** `anon` holds nothing on `teams`. `authenticated` holds SELECT on `(id, tournament_id, name)` only, under `teams_member_read_for_live_feed` (`USING can_access_tournament(tournament_id)`).
+   - **Why:** it exists for the admin live rail's "new team registered" line (`LiveLogicProvider`, `LiveEventLog`: realtime INSERT by `tournament_id`).
+   - **Publication:** `teams` is in `supabase_realtime` on **both** envs (added to dev by 310).
+   - **History:** until 310, prod's public key read every org's registrations (`teams_anon_read USING (true)` × prod's blanket grant — Finding #44), and anyone could insert one (`teams_anon_insert`). Both policies are dropped. Registration inserts with the service role.
 
 **Fields** (boilerplate `id` = the "registration id"; omitted):
 
@@ -739,6 +755,11 @@ Also surfaced read-only on the dashboard funnel payload as `reminderLastSentAt` 
 7. **⚠ `home_team_id`/`away_team_id` were ON DELETE CASCADE on PROD and SET NULL on DEV — deleting a team DESTROYED its games on prod (mig 200 fixes it).** Both environments carried a constraint named `games_home_team_id_fkey`, so every existing check — the drift report, `check:migrations`, and the first cut of `check:parity` — compared names and called it parity. Prod additionally had duplicate `fk_games_home_team`/`fk_games_away_team` (also CASCADE). The admin team-delete endpoint had **no guard**, so removing one team silently deleted its whole schedule *and the opponent's record of those fixtures and scores*. **A foreign key's name says nothing about what it does** — `delete_rule`/`update_rule` are now captured in the snapshots and compared by `check:parity`. Migration 200 converges both environments on `games_home_team_id_fkey` / `games_away_team_id_fkey`, both `ON DELETE SET NULL`, and drops the duplicates; `DELETE /api/admin/teams` now returns **409 `TEAM_HAS_GAMES`** (with game + scored-game counts) unless `force: true` is passed. Verified on dev inside a rolled-back transaction: deleting a team blanked its game's team reference and the total game count did not move. _Dev/prod:_ mig 200 is **applied to BOTH environments** (verified live 2026-07-27: both keys `SET NULL`, no `fk_games_*` duplicates remain on prod).
 8. **⚠ The SAME trap, one level up: `division_id`.** Dev has `games_age_group_id_fkey` (→ `divisions.id`, **CASCADE**); **prod has no key on that column at all**, so deleting a division orphans its games there while destroying them on dev. `POST /api/admin/divisions {action:'delete'}` had **no guard** either — and its confirmation dialog actively claimed *"Teams, games, and results in this division will remain but lose their division link"*, which is the **opposite** of what CASCADE does. Migration 203 adds the key to prod as **CASCADE** (audited: 0 orphans, 0 null `division_id` of 53 prod games) and ships a **409 `DIVISION_HAS_GAMES`** guard with game/scored/team counts unless `force: true`, plus corrected dialog copy. **CASCADE here, SET NULL for teams (gotcha 7), is deliberate:** a game references *two* teams, so cascading from one destroys the opponent's record — but a division *owns* its games and teams outright (`teams.division_id` already CASCADEs in both envs), so SET NULL would strand games belonging to no division **and** no team. The fix was consent, not the action. _Dev/prod:_ 203 **applied to DEV + PROD 2026-07-27** — verified live: the key is present on prod as CASCADE and the guard ships with it.
 9. **`score_submitted_at` is a domain audit timestamp, not a row-mtime** — it only moves when a score is written. The `score_submitted_*` fields are written *only* via `updateGame`/the scoring service, never in the insert.
+10. **🔒 Public schedule by COLUMN GRANT (mig 310, dev + prod 2026-09-28).**
+    - **Access:** `anon` and `authenticated` hold SELECT on 27 of 30 columns — everything except `score_submitted_by_email`, `score_submitted_by_user_id` and `notes`. They hold no INSERT/UPDATE/DELETE. `games_anon_read` (`USING true`) is the only policy left.
+    - **Who reads it:** the public bracket (`LogicSyncBracket`), the scorekeeper board and the admin live rail, all via realtime UPDATE by `tournament_id`. Realtime drops ungranted columns from the payload.
+    - **⚠ A column added to `games` later is invisible to those feeds until it is added to the grant.** That is deliberate: it fails closed.
+    - **Writes:** the member write policies were dropped. Every write goes through the service role (the scoring service passes `{ admin: true }`).
 
 **Fields** (boilerplate `id` omitted):
 
@@ -918,6 +939,10 @@ the studio and mirrored to the platform audit log.
 1. **The prompt's old `pools` drift is resolved** — `display_order` and `created_at` are now **identical** dev↔prod (migration 081 reconciled both; no `pools` entries in the drift report). Don't present them as live drift.
 2. **`pools.settings` (jsonb) is a dead column** — declared (`Pool.settings`, [lib/types.ts:347](../../../lib/types.ts#L347)) and present in schema, but **no code reads/writes it**. The `settings` writes in `divisions/route.ts` belong to the *division*, not a pool.
 3. **`division_id` is the only parent** — a pool's tournament is reached transitively via the division. A single-pool division may have **no** `pools` row (creation gated on `poolCount >= 2`).
+4. **🔒 Server-only (mig 310, dev + prod 2026-09-28).**
+   - **Access:** `anon`/`authenticated` hold nothing on `pools`.
+   - **What 310 fixed:** until then, prod carried `"Allow all for authenticated users on pools"` (`ALL`, `USING (auth.role() = 'authenticated')`), which let **any signed-in account in any org** insert, update or delete any club's pools. Mig 199 dropped `pools_admin_all` but missed this one because it is not spelled `USING (true)`.
+   - **What's left:** `pools_anon_read` is inert — there is no grant behind it.
 
 **Fields** (boilerplate `id`, `created_at` omitted):
 
@@ -7176,6 +7201,10 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 3. **The unread badge is a separate `head:true` count query** ([route.ts:41](../../../app/api/notifications/route.ts#L41)), independent of the list — the badge stays accurate even when the bell fetches only 1 row.
 4. **`event_type` is a name-collision + has 5 dead values** (see the column). **`metadata` is no longer dead** — the `coach_insights_digest` weekly digest writes `{ teamId }` and the sweep queries it (jsonb `.contains`) for its no-migration 6-day dedupe ([lib/insights-digest.ts](../../../lib/insights-digest.ts)); still unread by any UI.
 5. **`link` navigation is a hard reload** — `NotificationPanel` assigns `window.location.href = notification.link` ([:82](../../../components/notifications/NotificationPanel.tsx#L82)), not the Next router; links are relative app paths.
+6. **🔒 The live badge needs an explicit GRANT as well as the policy (mig 310, 2026-09-28).**
+   - **The grant:** `grant select on public.notifications to authenticated`. It was a no-op on prod (legacy blanket grant) and the fix on dev.
+   - **What dev looked like without it:** every bell subscription was refused with `invalid column for filter user_id` — realtime vets filter columns by the ROLE's column privilege, not by existence. That was ~2–4k refusals a day in stack health, and a badge that only moved on reload.
+   - **Still open:** prod `anon`/`authenticated` also still hold the legacy INSERT/UPDATE/DELETE grant here. The own-rows policies contain it; Stage 2 of `PROD_DATA_API_EXPOSURE_PLAN.md` removes it.
 
 **Fields** (boilerplate `id` + `created_at` omitted — `created_at` is DB-default `now()`, the newest-first sort + relative-time label; no `updated_at` column):
 
