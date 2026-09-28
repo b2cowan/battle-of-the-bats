@@ -19,6 +19,20 @@
    - ⚠ **`check:migrations` is NOT a parity gate.** `check-prod-migration-drift.mjs` compares table + column *existence* only. It cannot see defaults, nullability, constraints, indexes or CHECKs — it reported "prod is in sync with dev" while prod defaulted new tournaments to `completed`, hid them from the directory, lacked the `games`→`divisions` foreign key, and was missing a practice-schedule index. Use both gates: `check:migrations` answers "did a migration reach prod", `check:parity` answers "do the two schemas actually agree".
 5. **Ownership:** `/db` + `/dba` keep it current; `DB_ARCHITECTURE_REVIEW.md` cross-references it.
 6. **Code is branch-relative; schema is not.** A column exists in the *database*; the code that reads it can differ by branch. `file:line` refs name a commit. When behavior is branch-dependent, say so.
+7. **🔒 Who can reach a table from outside the server is a GRANT decision, made explicitly per table (migs 310 + 311, DB_ARCHITECTURE_REVIEW Finding #44).**
+   - **The default is nothing.** `anon`/`authenticated` hold no privilege on a `public` table unless a migration grants it, and every product read and write goes through the service role.
+   - **The browser keep-list is the whole list:**
+     - chat tables (authenticated SELECT — realtime);
+     - `notifications` (authenticated SELECT — the bell);
+     - `games` (27-column SELECT) and `teams` (`id, tournament_id, name`), for the live feeds;
+     - `org_venues`, `org_venue_facilities`;
+     - `rules`, `rule_items`, `resources`, `venue_facilities`, `schedule_facility_lanes`.
+   - **Adding a table to the keep-list is a decision.** Grant the narrowest columns the feed reads (realtime drops ungranted columns from its payload), never `grant all`.
+   - **A new function called inside a policy needs an explicit `grant execute … to authenticated`,** because defaults no longer grant it.
+   - **A new server-only RPC:** `revoke execute … from public, anon, authenticated` and grant to `service_role`.
+   - **Status:** 311 was applied to **dev and prod 2026-09-28**.
+     - **Dev and prod now match** on anon/authenticated privileges for all 184 tables, on default privileges, on storage policies, on all 299 public policies and on function EXECUTE.
+     - **⚠ This reverses the old rule.** "Dev cannot reproduce prod's access" (migs 212/223) no longer holds: a who-can-read-what test on dev is now evidence about prod. Keep it that way by granting in migrations, never in the dashboard.
 
 > **Branch-drift, observed live (2026-06-08):** while this domain was being written, an `origin/dev` merge (`1f61801`) replaced the tournament-level playoff-duration timing model with the **per-game-length** model (migration 112). Mid-project, `resolveGameTiming`'s signature and `playoff_game_duration_minutes`'s existence both flipped. This is *exactly* why rule 6 exists — and why rule 1 points at the live schema, not migrations. The entries below reflect the post-merge (`ad9dc66`) tree.
 
@@ -466,7 +480,7 @@ The core event domain: a **tournament** (under an org) contains **divisions**; a
   - **Dev and prod are now identical on these tables**, in grants and in policies (299 = 299).
   - The remaining `*_anon_read` policies on the six server-only tables are **inert**: no grant, no door. **A future `grant … to anon` on any of them reopens every row at once — don't.**
   - **Realtime honours column privileges** for both the subscription filter and the payload, so a feed that needs one more field gets ONE more column grant, never `grant all`.
-  - **Cross-environment gotcha:** everywhere else, prod still holds the legacy blanket grant and dev does not, until Stage 2 of `PROD_DATA_API_EXPOSURE_PLAN.md`.
+  - **Cross-environment:** mig 311 (both envs, 2026-09-28) did the same for every other table, so prod's legacy blanket grant is gone everywhere. See Maintenance rule 7.
 - Note the snapshot/drift tooling does NOT diff `pg_policies` content (only the RLS on/off bit) — policy drift is invisible to `DRIFT_dev_vs_prod.md` until the refresh script is extended.
 
 ---
@@ -7204,7 +7218,7 @@ FieldLogicHQ's three notification **delivery channels** and the preference/opt-o
 6. **🔒 The live badge needs an explicit GRANT as well as the policy (mig 310, 2026-09-28).**
    - **The grant:** `grant select on public.notifications to authenticated`. It was a no-op on prod (legacy blanket grant) and the fix on dev.
    - **What dev looked like without it:** every bell subscription was refused with `invalid column for filter user_id` — realtime vets filter columns by the ROLE's column privilege, not by existence. That was ~2–4k refusals a day in stack health, and a badge that only moved on reload.
-   - **Still open:** prod `anon`/`authenticated` also still hold the legacy INSERT/UPDATE/DELETE grant here. The own-rows policies contain it; Stage 2 of `PROD_DATA_API_EXPOSURE_PLAN.md` removes it.
+   - **Closed by mig 311 (both envs, 2026-09-28):** prod's legacy INSERT/UPDATE/DELETE grant for `anon`/`authenticated` is gone. `authenticated` holds SELECT only, and `anon` holds nothing.
 
 **Fields** (boilerplate `id` + `created_at` omitted — `created_at` is DB-default `now()`, the newest-first sort + relative-time label; no `updated_at` column):
 

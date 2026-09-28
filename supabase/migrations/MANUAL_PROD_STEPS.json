@@ -150,6 +150,10 @@
     "310_the_tournament_tables_leave_the_public_key.sql": {
       "prod": "applied",
       "note": "Applied to prod 2026-09-28 (owner go: \"go ahead with stage 1\"), minutes after dev; independent of any code promote — prod code needs nothing (every read/write of these tables is service-role; the browser only reads through realtime, which keeps its columns). Flagged by the gate for its GRANTS/POLICIES/PUBLICATION, which the schema drift check cannot see. Verified with .probe/dba-310-verify.mjs: dev 25/25 end to end (visitor + org admin + another club's user, real realtime payloads), prod 14/14 read-only (publishable key denied on teams/tournaments/divisions/pools/announcements/diamonds/tournament_archives and on games.score_submitted_by_email/notes; insert/update denied; public bracket feed subscribes). After it dev and prod hold identical anon/authenticated grants on the nine tables and identical policies (299 = 299). Finding #44; plan PROD_DATA_API_EXPOSURE_PLAN.md."
+    },
+    "311_prod_grants_match_dev.sql": {
+      "prod": "applied",
+      "note": "Applied to prod 2026-09-28 on the owner's explicit \"apply stage 2 to prod\" (the session permission guard had stopped the first attempt), after dev the same day. Stage 2 of PROD_DATA_API_EXPOSURE_PLAN.md. Verified: .probe/dba-311-verify.mjs prod --after 11/11 (the publishable key is denied on all 178 server-only tables, still reads the six public-content tables, cannot insert; the five server-only functions are executable by service_role only; no \"Allow public\" storage policies), and the Stage 1 probe still passes 14/14 on prod. Dev and prod are now IDENTICAL on anon/authenticated privileges for all 184 public tables, on postgres's default privileges, on storage policies (3 = 3), on public policies (299 = 299) and on function EXECUTE (28 = 28). No code dependency. Invisible to the schema drift check (grants, default privileges, function EXECUTE, storage policies only)."
     }
   }
 }

@@ -108,6 +108,37 @@ If a live feed misses a field it needs, add that one column to the grant. Never 
 
 ## 4. Stage 2 — converge prod's grants on dev's, every table
 
+> **Status:** migration `311_prod_grants_match_dev.sql` was **applied to dev and prod 2026-09-28**. Dev went first on "proceed with stage 2". Prod followed on "apply stage 2 to prod", after the session's permission guard had stopped the first attempt. It is registered `applied` in `MANUAL_PROD_STEPS.json`.
+>
+> **Prod verification: 11/11**, and the Stage 1 probe still passes 14/14.
+>
+> **Dev and prod are now IDENTICAL** on:
+> - anon/authenticated privileges for all 184 tables;
+> - default privileges;
+> - storage policies (3 = 3);
+> - public policies (299 = 299);
+> - function EXECUTE (28 = 28).
+>
+> **The project's outcome is met.**
+> - **Owed:** the §246 prod smoke, which now also covers chat and the rules/resources editor, and the next release, which carries the three code fixes from `/review`.
+>
+> **Evidence gathered before writing it:**
+> - **Prod edge logs 2026-09-07..27:** 277,833 PostgREST calls used the secret key. The only publishable-key calls were 62 reads of `organizations` by `proxy.ts`'s early Tournament-tier bounce. That read is refused on dev and skipped, and the org-admin layout does the same redirect with the service role, so nothing visible changes.
+> - **Full code sweep** of app/, components/, lib/ and proxy.ts (`/review` lens). There is no other anon/session table access outside the keep-list: the rules/resources editor, the chat feeds, the bell, and the live bracket and admin rail.
+> - **Catalog:** no policy on a staying-open table and no storage policy depends on a closing table. Function EXECUTE was already identical on both envs.
+>
+> **What 311 does:**
+> 1. Revokes select/insert/update/delete from anon/authenticated on every public table except the 15-table keep-list, and brings the keep-list to dev's exact shape.
+> 2. Makes prod's default privileges match dev's.
+> 3. Takes EXECUTE on five server-only functions away from PUBLIC/anon/authenticated on **both** envs. These were callable with the public key everywhere: accepting a tryout and creating dues, claiming a schedule slot, completing a team ownership transfer, an accounting transfer, and the error recorder.
+> 4. Drops the four **prod-only** `"Allow public delete/select/update/upload"` storage policies, which let anyone upload, overwrite or delete files in the `resources` bucket.
+>
+> **Dev verification** (`.probe/dba-311-verify.mjs dev`): 22/23 before prod. The one fail was "dev and prod identical", which passed once prod had 311. The Stage 1 feed probe still passes 25/25 on dev.
+>
+> **Follow-ups (not blocking):**
+> - `proxy.ts`'s early bounce now issues a refused query on every org-admin visit. Drop it or read with the service role. This is a proxy change and needs a dev-server restart.
+> - Bucket-wide `"Authenticated users can upload/delete resources"` lets any signed-in account delete any org's resource files (both envs, the mig-212 shape). It needs an org-scoped storage path design.
+
 Policies already match (305/306), so after Stage 2 dev becomes a faithful replica of prod security everywhere. This retires the whole class: any mig-212-shaped policy nobody has found yet stops being a door on prod.
 
 - **Evidence gate:** 14 days of prod edge logs, grouped by table × key type. Any publishable-key or browser call to a table that the dev ACL does not grant must be resolved before applying. The probe is `.probe/dba-rest-callers.mjs`; widen its table filter to all tables.

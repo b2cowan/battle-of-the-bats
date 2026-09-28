@@ -13,7 +13,7 @@
 | Severity | Open | Addressed | Accepted Risk |
 |---|---|---|---|
 | Critical | 0 | 0 | 0 |
-| High | 3 | 7 | 1 |
+| High | 2 | 8 | 1 |
 | Medium | 2 | 5 | 2 |
 | Low | 2 | 4 | 3 |
 | Advisory | 9 | 1 | 0 |
@@ -57,7 +57,20 @@
   - **After 310:** every read and write is 42501, public game fields return 200, and the bracket feed subscribes.
 - **Dev and prod now match:** identical grants on the nine tables, and identical policies (299 = 299).
 - **`/review` found two 310 regressions, both latent on prod (0 archives there) and fixed in code:** the public archive page read through the anon client, and the admin Archives list read through the browser session. It also found a pre-existing dead realtime binding on `announcements` that killed the dashboard Recent Activity channel; it is removed. The plan (Status) has the detail.
-- **Stage 2 is Open:** converge the remaining tables' grants. The owner decision is owed.
+- **Stage 2 (migration 311):** applied to dev, then to prod on the owner's explicit go ("apply stage 2 to prod"), both 2026-09-28.
+  - **What it does on prod:** anon/authenticated privileges on every public table become identical to dev's (a 15-table browser keep-list), and prod's default privileges match dev's.
+  - **Also, on both envs:** EXECUTE on five server-only functions is taken from the public key (tryout acceptance + dues, slot claim, ownership transfer, accounting transfer, error recorder).
+  - **Storage:** the four prod-only `"Allow public …"` policies, which let anyone write or delete `resources` bucket files, are dropped.
+  - **Prod verification: 11/11** (`.probe/dba-311-verify.mjs prod --after`), and the Stage 1 probe still passes 14/14.
+  - **Dev and prod are now identical** on:
+    - anon/authenticated privileges for all 184 public tables;
+    - postgres's default privileges;
+    - storage policies (3 = 3);
+    - public policies (299 = 299);
+    - function EXECUTE (28 = 28).
+  - **The class is closed:** dev is a faithful security replica of prod again. Follow-ups are listed in the plan §4 (the proxy's refused early-bounce read, and bucket-wide resource delete by any signed-in account).
+
+**Status (both stages):** **Addressed 2026-09-28** — 310 (`69e13025`) and 311, applied to dev + prod.
 
 ---
 
