@@ -1,6 +1,6 @@
 # Groups at every level of a practice — plan
 
-**Plan · 28 September 2026 · DRAWN on the hub (7 screens, findings F01–F04, decisions G1–G8) · RULED 2026-09-28 (G1–G8 as drawn) · BUILT ON DEV 2026-09-28, both stages (§8) · owner walk §247 on the hub's QA Walk tab**
+**Plan · 28 September 2026 · DRAWN on the hub (7 screens, findings F01–F04, decisions G1–G8) · RULED 2026-09-28 (G1–G8 as drawn) · BUILT ON DEV 2026-09-28, both stages (§8) · committed `9d9705f1` 2026-09-28 · owner walk §247 ✅ PASSED 2026-09-28 (owner's word) · `/review` not run (owner's call) · in-app help owed**
 
 Hub (mockup · brief · plan · decisions, one artifact): `docs/projects/active/COACH_PRACTICE_GROUPS_HUB.html`
 → https://claude.ai/artifact/Jkd7EmKs6tjwechsDk2N5t · PM brief: [COACH_PRACTICE_GROUPS_PM_BRIEF.md](COACH_PRACTICE_GROUPS_PM_BRIEF.md)

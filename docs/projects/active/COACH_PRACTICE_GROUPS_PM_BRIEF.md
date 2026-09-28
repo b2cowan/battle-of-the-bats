@@ -1,6 +1,6 @@
 # Groups at every level of a practice — PM brief
 
-**28 September 2026 · drawn and ruled (G1–G8 as drawn), built on dev the same day · owner walk §247** · Hub: https://claude.ai/artifact/Jkd7EmKs6tjwechsDk2N5t ·
+**28 September 2026 · drawn and ruled (G1–G8 as drawn), built on dev the same day · committed `9d9705f1` · owner walk §247 ✅ passed 2026-09-28** · Hub: https://claude.ai/artifact/Jkd7EmKs6tjwechsDk2N5t ·
 Plan: [COACH_PRACTICE_GROUPS_PLAN.md](COACH_PRACTICE_GROUPS_PLAN.md)
 
 ## What changes for the coach

@@ -44,6 +44,68 @@ export const CATEGORY_LABELS: Record<ReleaseCategory, string> = {
  */
 export const RELEASE_ENTRIES: ReleaseEntry[] = [
   {
+    date: '2026-09-28',
+    title: 'Pairs and groups for any drill, practice plans on your phone, and awards at any event',
+    highlights: [
+      {
+        category: 'new',
+        text: "Split a practice into pairs or groups anywhere you list players: warm-up partners, pitcher-and-catcher batteries at their own station, or the groups a circuit rotates. The practice keeps one list of tonight's groups, so moving a late arrival into a pair updates every drill that uses it. You can reuse groups from another practice, and the pairs show on the run screen and the printed sheet.",
+      },
+      {
+        category: 'new',
+        text: 'Practice plans now work on a phone: the plan reads as a list, each block opens on its own screen, the rotation table fits, and the last block or station offers to add the next one.',
+      },
+      {
+        category: 'new',
+        text: "During practice, Run practice fills your phone with a step-through bar at the bottom, and a circuit remembers which round it's on while you run it.",
+      },
+      {
+        category: 'new',
+        text: 'Give an award at a practice, a team event or a tournament, not just a game, and every award says what it was for. The Awards report fits a phone, and certificates print one to a page.',
+      },
+      {
+        category: 'new',
+        text: 'Record an observation before your team has any skills set up: "+ New skill…" adds one right from the form.',
+      },
+      {
+        category: 'new',
+        text: 'Every event on your schedule reads the same way: what, when and where, then its jobs (lineup, attendance, practice plan), each showing where it stands. Attendance opens on its own screen with the whole roster at once.',
+      },
+      {
+        category: 'improved',
+        text: 'A cancelled Premium Coaches Portal team is now kept for a full year. The cancellation email gives the exact date, and resubscribing brings back the same team, with nothing to rebuild.',
+      },
+      {
+        category: 'improved',
+        text: "More of the coach portal fits a phone: a player's record reads first with Edit on each section, tapping a player's name switches players, reports read down their columns, the season scoreboard sits on one card, and a notification opens with a tap.",
+      },
+      {
+        category: 'improved',
+        text: 'On a phone, a practice page opens with where and when to arrive, and Send to staff lives in the ⋯ menu.',
+      },
+      {
+        category: 'improved',
+        text: "House-league registration and tryout sign-up now limit rapid repeat submissions, to keep a family's inbox from being flooded with confirmation emails.",
+      },
+      {
+        category: 'improved',
+        text: 'The bottom bar reads clearly in the Dark look, and cards in the Warm look lose their heavy shadow.',
+      },
+      {
+        category: 'fixed',
+        text: 'Club and league admin controls that had stopped working are back: searching and adding payees on a money entry, adding budget items and categories, the audit log, roster links and payment reminders.',
+      },
+      {
+        category: 'fixed',
+        text: 'Calendar downloads now put an evening event on the right day and show a cancelled game as cancelled, on both the coach schedule and the house-league schedule.',
+      },
+      {
+        category: 'fixed',
+        text: 'A tap on the bottom bar no longer gets lost under an open menu.',
+      },
+    ],
+  },
+  {
     date: '2026-09-23',
     title:
       'Coaching from a phone, a borrowed player for one game, and a sponsorship that shows where its money went',
