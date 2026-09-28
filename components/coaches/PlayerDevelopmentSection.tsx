@@ -661,9 +661,9 @@ export default function PlayerDevelopmentSection({
                   onClick={() => { setGoalErr(''); setGoalSheet({ editing: null }); }}>
                   <Plus size={13} aria-hidden /> Add goal
                 </button>
+                {/* Never switched off (owner ruling 2026-09-28): with no skill in the library the sheet
+                    still opens and offers "+ New skill…", as Record a result offers "+ New test…". */}
                 <button type="button" className={`btn btn-ghost ${styles.tapFloor} ${styles.devSectionAction} ${css.door}`}
-                  disabled={activeSkills.length === 0}
-                  title={activeSkills.length === 0 ? 'Define a skill in Metrics first' : undefined}
                   onClick={() => { setObsErr(''); setObsDialog({ editing: null, goalId: null }); }}>
                   <Plus size={13} aria-hidden /> Record an observation
                 </button>
@@ -745,8 +745,7 @@ export default function PlayerDevelopmentSection({
                           <div className={css.goalActions}>
                             <button type="button" className={`btn btn-lime ${styles.tapFloor} ${css.door}`}
                               onClick={() => { setReviewErr(''); setReviewSheet({ goal: g, editing: null }); }}>Review goal</button>
-                            <button type="button" className={`btn btn-ghost ${styles.tapFloor} ${css.door}`} disabled={activeSkills.length === 0}
-                              title={activeSkills.length === 0 ? 'Define a skill in Metrics first' : undefined}
+                            <button type="button" className={`btn btn-ghost ${styles.tapFloor} ${css.door}`}
                               onClick={() => { setObsErr(''); setObsDialog({ editing: null, goalId: g.id }); }}>Record an observation</button>
                             <button type="button" className={`btn btn-ghost ${styles.tapFloor} ${css.door}`}
                               onClick={() => { setGoalErr(''); setGoalSheet({ editing: g }); }}>Edit wording</button>
@@ -966,6 +965,8 @@ export default function PlayerDevelopmentSection({
       {obsDialog && (
         <RecordObservationDialog key={obsDialog.editing?.id ?? 'new'} skills={obsSkills} goals={data.goals} editing={obsDialog.editing} presetGoalId={obsDialog.goalId}
           fixed={obsDialog.editing ? fixedObservation(obsDialog.editing, skillById.get(obsDialog.editing.measurableTypeId), playerName, author(obsDialog.editing.createdBy)) : null}
+          // Both doors are behind canWriteGoals, which holds the Development grant the definition needs.
+          defineSkill={{ orgSlug, teamId, onDefined: typeDefined }}
           busy={busy} error={obsErr} onSubmit={submitObservation} onClose={() => { if (!busy) setObsDialog(null); }}
           onRemove={obsDialog.editing ? () => deleteObservation(obsDialog.editing!.id) : undefined} />
       )}

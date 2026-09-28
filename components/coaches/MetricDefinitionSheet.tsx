@@ -23,10 +23,18 @@ import type { MeasurableAim, MeasurableHeadline, MeasurableKind, RepTeamMeasurab
  * A SHEET over the screen it was opened from, not a page (stage 1): a metric is one record on the
  * Metrics list, and the portal opens a record over its list the way a player's dues open over the
  * dues table. It opens from the Metrics tab, from the Overview's getting-started card, from the
- * session grid's "+ New test…" and from the player's Record-a-result form — the SAME definition
- * from every door, so a test defined at the fence is a whole test, never the name-and-unit
- * shortcut that used to leave "method not recorded" in every report. Save or cancel lands the
- * coach back where they were; the host re-reads its data on `onSaved`.
+ * session grid's "+ New test…", from the player's Record-a-result form ("+ New test…") and from
+ * the player's Record-an-observation form ("+ New skill…") — the SAME definition from every door,
+ * so a test defined at the fence is a whole test, never the name-and-unit shortcut that used to
+ * leave "method not recorded" in every report. Save or cancel lands the coach back where they
+ * were; the host re-reads its data on `onSaved`.
+ *
+ * ⚠ A RECORD SHEET'S DOOR FIXES THE KIND (`kind`, owner ruling 2026-09-28). A result can only be
+ * of a test and an observation only of a skill, so from those two doors Kind reads as a fact and
+ * the title names it ("Define a skill"): a door that answers a question does not ask it. Left a
+ * choice, a coach could define a skill from "+ New test…" and be handed back a result sheet whose
+ * Test select cannot hold it. The Metrics tab, the getting-started card and the session planner
+ * (where either kind can join the plan) pass nothing and keep the choice.
  *
  * One column of fields. The consequence of a choice is shown WHERE IT IS MADE: a live one-line
  * read-back under the unit and aim ("Reads back as 8.05 seconds · best attempt · lower is the
@@ -78,6 +86,9 @@ const EMPTY: Draft = {
   headline: 'best', descriptors: '',
 };
 
+/** A new definition's starting draft — of the fixed kind when the door fixed one. */
+const blankDraft = (kind: MeasurableKind | null): Draft => (kind ? { ...EMPTY, kind } : EMPTY);
+
 function draftFrom(t: RepTeamMeasurableType): Draft {
   return {
     kind: t.kind,
@@ -122,11 +133,17 @@ function sampleAttempts(d: Draft): number[] {
   return [8.12, 8.05, 8.2, 8.16, 8.09].slice(0, PREVIEW_ATTEMPTS);
 }
 
-export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial = null, onClose, onSaved }: {
+export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial = null, kind = null, onClose, onSaved }: {
   orgSlug: string;
   teamId: string;
   /** Null = defining a new metric. */
   typeId: string | null;
+  /**
+   * Fixes the kind of a NEW definition — the door that opened the sheet can only use one (see the
+   * header's note). Kind reads as a fact and the title names it. Ignored when editing: an existing
+   * definition's kind is already fixed.
+   */
+  kind?: MeasurableKind | null;
   /**
    * The record as the host already holds it (the Metrics tab opens a row it is looking at), so
    * the sheet paints at once instead of behind a loading frame; the read still runs, for
@@ -150,12 +167,16 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
   // Until the read answers, nothing is known to point at it — so Delete is not drawn until it does.
   const [hasRecords, setHasRecords] = useState(true);
   const [loading, setLoading] = useState(typeId !== null && !initial);
-  const [draft, setDraft] = useState<Draft>(initial ? draftFrom(initial) : EMPTY);
+  const isNew = typeId === null;
+  // A door that fixes the kind starts from a blank of THAT kind, and dirtiness is measured against
+  // the same blank — otherwise the fixed kind alone reads as typed work and Cancel asks to discard.
+  const fixedKind = isNew ? kind : null;
+  const [draft, setDraft] = useState<Draft>(initial ? draftFrom(initial) : blankDraft(fixedKind));
   // What the host's copy said at mount — so the read can tell a field the coach TYPED from one
   // that merely differs because the host's copy was behind the server (another coach's edit).
   const seed = useRef<Draft | null>(initial ? draftFrom(initial) : null);
   // What the record says now — derived from `current`, never a second copy to keep in step.
-  const baseline = useMemo(() => (current ? draftFrom(current) : EMPTY), [current]);
+  const baseline = useMemo(() => (current ? draftFrom(current) : blankDraft(fixedKind)), [current, fixedKind]);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -193,7 +214,6 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
   const requestClose = useDiscardGuard({ dirty, close: onClose, noun: 'definition' });
 
   const isTest = draft.kind === 'test';
-  const isNew = typeId === null;
   const headlineOptions = headlineOptionsFor(draft.aim);
 
   function set<K extends keyof Draft>(key: K, value: Draft[K]) {
@@ -307,7 +327,9 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
   }
 
   // ── render ────────────────────────────────────────────────────────────────
-  const title = isNew ? 'Define a metric' : (current?.name ?? 'Metric');
+  // A fixed kind names itself: "Define a skill" / "Define a test".
+  const newTitle = fixedKind ? `Define a ${KIND_LABELS[fixedKind].toLowerCase()}` : 'Define a metric';
+  const title = isNew ? newTitle : (current?.name ?? 'Metric');
   const retired = current ? !current.isActive : false;
   // The unit is the measurement: fixed once a result exists (a live test reads it as its value).
   const unitFixed = !isNew && hasReadings;
@@ -330,7 +352,7 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
       <QuestionShell
         open
         onClose={requestClose}
-        ariaLabel={isNew ? 'Define a metric' : `Edit ${title}`}
+        ariaLabel={isNew ? newTitle : `Edit ${title}`}
         title={title}
         subtitle={retired ? 'Retired. Its saved results stay where they were recorded.' : undefined}
         busy={busy}
@@ -344,7 +366,7 @@ export default function MetricDefinitionSheet({ orgSlug, teamId, typeId, initial
         ) : (
           <form id="metric-definition-form" className={`${shared.formBody} ${shared.scrollPane} ${css.form}`} onSubmit={e => { e.preventDefault(); void save(); }}>
             {field('Kind of metric', 'metric-kind',
-              isNew
+              isNew && !fixedKind
                 ? (
                   <select id="metric-kind" className={shared.select} value={draft.kind} onChange={e => set('kind', e.target.value as MeasurableKind)}>
                     {MEASURABLE_KINDS.map(k => <option key={k} value={k}>{KIND_LABELS[k]}</option>)}

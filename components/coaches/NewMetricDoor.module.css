@@ -1,0 +1,24 @@
+/* ═══ "+ New test…" / "+ New skill…" — the define line under a record sheet's metric select ═══
+   Moved here from PlayerDevelopment.module.css (`.defineLink`) when the observation sheet became its
+   second consumer (owner ruling 2026-09-28). Tokens only. */
+.door {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 700;
+  color: var(--logic-lime);
+  cursor: pointer;
+}
+.door:hover { text-decoration: underline; text-underline-offset: 3px; }
+
+/* ── the touch floor (≤768), the same band the player tab's controls clear it in ──
+   With no skill yet this is the coach's ONLY way forward, and as a bare text link it is only as tall
+   as its line of text. The height is the button's own, not a pseudo-element, so the layout sweep
+   measures it. */
+@media (max-width: 768px) {
+  .door { min-height: var(--tap-min, 44px); }
+}

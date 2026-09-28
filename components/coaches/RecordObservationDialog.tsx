@@ -1,7 +1,8 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import { Check } from 'lucide-react';
 import QuestionShell from '@/components/coaches/QuestionShell';
+import { useNewMetricDoor } from '@/components/coaches/NewMetricDoor';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { todayLocal } from '@/lib/measurable-format';
@@ -25,6 +26,16 @@ import css from './RecordObservationDialog.module.css';
  * for. A door that answers a question does not ask it. Editing reuses the form from every door as
  * the record's own editor: the skill it names is fixed, the goal link stays changeable. Nothing
  * saves until Save. Visible to coaches with Internal notes.
+ *
+ * ⚠ **"+ NEW SKILL…" — THE SHEET OPENS EVEN WHEN THE TEAM HAS NO SKILL** (owner ruling 2026-09-28).
+ * The player page's two doors used to be switched off with no skill in the library, and the
+ * product's button has no switched-off look, so the coach met a live-looking button that did
+ * nothing, explained only by a hover tooltip a phone never shows. Now the doors always open this
+ * sheet, and a host that passes `defineSkill` gets "+ New skill…" under the Skill select on every
+ * NEW, un-fixed observation — the Metrics definition sheet, stacked, fixed to a skill; saving it
+ * picks the new skill here and keeps what was typed. Record a result's "+ New test…" is the twin
+ * (`useNewMetricDoor`). Absent when editing (the skill is the record's identity) and from a session's
+ * grid (`fixed`). Typing is allowed with no skill; Save waits for one.
  *
  * ⚠ THE SHEET TAKES REMOVE (re-evaluation stage 3, owner ruling E2, 2026-09-15). An observation's
  * home is the Notes tab; the goal's history, Player progress and the session row are its doors; and
@@ -76,10 +87,17 @@ import css from './RecordObservationDialog.module.css';
  * nothing; "Save" alone closes back to the list, for the coach who has finished.
  */
 export default function RecordObservationDialog({
-  skills, goals, editing, presetGoalId, fixed, notAssessed, nextLabel, busy, error, onSubmit, onClose, onRemove,
+  skills, goals, editing, presetGoalId, fixed, notAssessed, nextLabel, defineSkill, busy, error, onSubmit, onClose, onRemove,
 }: {
   /** Active skills. In `fixed` mode, the one the session's chip is on. */
   skills: RepTeamMeasurableType[];
+  /**
+   * "+ New skill…" under the Skill select (see the header's note). The host adds the defined skill
+   * to the library it passes as `skills`; this sheet picks it. Absent = no link (the session grid,
+   * the Notes tab's edit). Offer it only to a coach who holds the Development grant — the
+   * definition sheet's door is the grant.
+   */
+  defineSkill?: { orgSlug: string; teamId: string; onDefined: (type: RepTeamMeasurableType) => void } | null;
   goals: Pick<RepPlayerDevelopmentGoal, 'id' | 'focusArea'>[];
   editing?: RepPlayerObservation | null;
   presetGoalId?: string | null;
@@ -153,6 +171,7 @@ export default function RecordObservationDialog({
   const [answer, setAnswer] = useState<Answer | null>(initialAnswer);
   const [goalId, setGoalId] = useState(initialGoalId);
   const [localErr, setLocalErr] = useState('');
+  const skillFieldId = useId();
   const isPhone = useIsPhone();
   const descriptor = answer?.kind === 'descriptor' ? answer.value : '';
   const naToday = answer?.kind === 'not-assessed';
@@ -195,6 +214,15 @@ export default function RecordObservationDialog({
     setAnswer(a => (a && a.kind === next.kind && (next.kind !== 'descriptor' || (a.kind === 'descriptor' && a.value === next.value)) ? null : next));
     setLocalErr('');
   };
+  /** "+ New skill…" saved: pick it here (its descriptors, if any, are the answers now) and hand it to
+   *  the host, whose library comes back down as `skills`. What was typed stays. */
+  function skillDefined(type: RepTeamMeasurableType) {
+    setSkillId(type.id);
+    setAnswer(null);
+    setLocalErr('');
+    defineSkill?.onDefined(type);
+  }
+  const newSkill = useNewMetricDoor('skill', defineSkill, skillDefined);
   const chosen = (a: Answer) => (a.kind === 'descriptor'
     ? answer?.kind === 'descriptor' && answer.value === a.value
     : answer?.kind === 'not-assessed');
@@ -218,6 +246,7 @@ export default function RecordObservationDialog({
   }
 
   return (
+    <>
     <QuestionShell open onClose={close} ariaLabel={fixed ? `${verb} — ${title}` : title} title={title} subtitle={subtitle} busy={busy}>
         {/* ⚠ `css.phoneForm` + `css.phoneScroll` are what dock the foot at ≤640 — three declarations
             in this component's own module, deliberately NOT the shell's `scroll` variant (see the
@@ -226,17 +255,21 @@ export default function RecordObservationDialog({
         <form className={`${styles.formBody} ${styles.formBodyTight} ${css.phoneForm}`} onSubmit={e => { e.preventDefault(); submit(false); }}>
           <div className={`${styles.formGrid} ${css.phoneScroll}`}>
             {!fixed && (
-              <label className={`${styles.field} ${styles.formGridFull}`}>
-                <span className={styles.label}>Skill</span>
+              /* A div + label htmlFor, not a wrapping label — see `useNewMetricDoor`. */
+              <div className={`${styles.field} ${styles.formGridFull}`}>
+                <label className={styles.label} htmlFor={skillFieldId}>Skill</label>
                 {editing ? (
-                  <span className={styles.input} aria-readonly>{skills.find(s => s.id === editing.measurableTypeId)?.name ?? 'Skill'}</span>
+                  <span id={skillFieldId} className={styles.input} aria-readonly>{skills.find(s => s.id === editing.measurableTypeId)?.name ?? 'Skill'}</span>
                 ) : (
-                  <select className={styles.select} value={skillId} onChange={e => { setSkillId(e.target.value); setAnswer(null); }} required>
-                    {skills.length === 0 && <option value="">No skill defined yet</option>}
-                    {skills.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
-                  </select>
+                  <>
+                    <select id={skillFieldId} className={styles.select} value={skillId} onChange={e => { setSkillId(e.target.value); setAnswer(null); }} required>
+                      {skills.length === 0 && <option value="">No skill defined yet</option>}
+                      {skills.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}
+                    </select>
+                    {newSkill.link}
+                  </>
                 )}
-              </label>
+              </div>
             )}
             {!fixed && (
               <label className={styles.field}>
@@ -352,5 +385,8 @@ export default function RecordObservationDialog({
           </div>
         </form>
     </QuestionShell>
+    {/* "+ New skill…" — stacked over the sheet, OUTSIDE its form (see `useNewMetricDoor`). */}
+    {newSkill.sheet}
+    </>
   );
 }

@@ -154,8 +154,8 @@
 /* ── the sheets: the footer's Remove at the left (the attempt boxes are the session grid's own —
    `DevelopmentSession.module.css`, imported by the result sheet; one idiom, one module) ── */
 .footRemove { margin-right: auto; }
-.defineLink { display: inline-block; padding: 0; border: 0; background: none; font: inherit; font-size: var(--type-support); font-weight: 700; color: var(--logic-lime); cursor: pointer; }
-.defineLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+/* (The "+ New test…" define line moved to its own hook, `useNewMetricDoor`, when the observation
+   sheet's "+ New skill…" became its second consumer — 2026-09-28.) */
 
 /* ── the Previous-seasons fold at the tab's foot (E1): shut, one line; titled by the season's name ── */
 .archive { margin-top: 1rem; border-top: 1px solid var(--home-line, var(--border-2)); }

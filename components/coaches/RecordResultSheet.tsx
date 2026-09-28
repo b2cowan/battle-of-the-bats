@@ -1,7 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useId, useState } from 'react';
 import QuestionShell from '@/components/coaches/QuestionShell';
-import MetricDefinitionSheet from '@/components/coaches/MetricDefinitionSheet';
+import { useNewMetricDoor } from '@/components/coaches/NewMetricDoor';
 import { useDiscardGuard } from '@/components/coaches/useDiscardGuard';
 import SheetRemoveButton from '@/components/coaches/SheetRemoveButton';
 import { describeHeadline, type SessionResult } from '@/lib/measurable-series';
@@ -12,7 +12,6 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 // The attempt boxes are the session grid's own (one box, the "+", the read-back under them) — one
 // idiom, one module, so a change to the box changes it on the grid and in this sheet together.
 import grid from './DevelopmentSession.module.css';
-import css from './PlayerDevelopment.module.css';
 
 /** What the sheet hands back: one value per attempt box, in attempt order; a blank box is null. */
 export interface ResultSheetValues {
@@ -32,7 +31,8 @@ export interface ResultSheetValues {
  * groups the attempts of one day into one result with a headline.
  *
  * The sheet/page test (stage 1): a result is a sheet over the Results table; the record is the page.
- * "+ New test…" defines a whole test in the definition sheet, stacked over this one (B8). Opened on a
+ * "+ New test…" (`useNewMetricDoor`) defines a whole test in the definition sheet, stacked over this
+ * one (B8) with its kind fixed to a test (owner ruling 2026-09-28). Opened on a
  * saved bench-side result it is filled — the test and the date are the record's identity and read
  * as facts; the attempts and the note are edited — and the footer's left carries Remove result (the
  * host confirms; delete is never a row action). A session's attempts are edited on the session.
@@ -68,7 +68,7 @@ export default function RecordResultSheet({
   const [values, setValues] = useState<string[]>(initialValues);
   const [note, setNote] = useState(initialNote);
   const [localErr, setLocalErr] = useState('');
-  const [defineOpen, setDefineOpen] = useState(false);
+  const testFieldId = useId();
 
   const type = editing?.type ?? tests.find(t => t.id === typeId) ?? null;
   const typed = values.map(v => Number(v)).filter((n, i) => values[i].trim() !== '' && Number.isFinite(n));
@@ -82,13 +82,14 @@ export default function RecordResultSheet({
     || note !== initialNote || values.join('|') !== initialValues.join('|');
   const close = useDiscardGuard({ dirty, close: onClose, noun: 'result', detail: typed.length > 0 ? `${typed.length} attempt${typed.length === 1 ? '' : 's'}` : undefined });
 
-  // The host adds the new test to the library it holds; it comes back down as `tests` on the render
-  // the select reads it in.
+  // "+ New test…" saved: pick it (clearing a stale "Pick a test first."); the host adds it to the
+  // library it holds, and it comes back down as `tests` on the render the select reads it in.
   function typeDefined(t: RepTeamMeasurableType) {
-    setDefineOpen(false);
     setTypeId(t.id);
+    setLocalErr('');
     onTypeDefined?.(t);
   }
+  const newTest = useNewMetricDoor('test', { orgSlug, teamId }, typeDefined);
 
   function submit() {
     if (!type) { setLocalErr('Pick a test first.'); return; }
@@ -116,22 +117,21 @@ export default function RecordResultSheet({
       <QuestionShell open onClose={close} ariaLabel={`${title} — ${playerName}`} title={title} subtitle={`${playerName} · outside a session`} busy={busy}>
         <form className={`${styles.formBody} ${styles.formBodyTight}`} onSubmit={e => { e.preventDefault(); submit(); }}>
           <div className={styles.formGrid}>
-            <label className={styles.field}>
-              <span className={styles.label}>Test</span>
+            {/* A div + label htmlFor, not a wrapping label — see `useNewMetricDoor`. */}
+            <div className={styles.field}>
+              <label className={styles.label} htmlFor={testFieldId}>Test</label>
               {editing ? (
-                <span className={styles.input} aria-readonly>{editing.type.name}{editing.type.unit ? ` · ${editing.type.unit}` : ''}</span>
+                <span id={testFieldId} className={styles.input} aria-readonly>{editing.type.name}{editing.type.unit ? ` · ${editing.type.unit}` : ''}</span>
               ) : (
                 <>
-                  <select className={styles.select} value={typeId} onChange={e => { setTypeId(e.target.value); setLocalErr(''); }} required>
+                  <select id={testFieldId} className={styles.select} value={typeId} onChange={e => { setTypeId(e.target.value); setLocalErr(''); }} required>
                     {tests.length === 0 && <option value="">No active test yet</option>}
                     {tests.map(t => <option key={t.id} value={t.id}>{t.name}{t.unit ? ` · ${t.unit}` : ''}</option>)}
                   </select>
-                  <span className={styles.formHint}>
-                    <button type="button" className={css.defineLink} onClick={() => setDefineOpen(true)}>+ New test…</button> defines a whole test, as everywhere.
-                  </span>
+                  {newTest.link}
                 </>
               )}
-            </label>
+            </div>
             <label className={styles.field}>
               <span className={styles.label}>Date</span>
               {editing ? (
@@ -174,10 +174,9 @@ export default function RecordResultSheet({
           </div>
         </form>
       </QuestionShell>
-      {/* "+ New test…" — the whole definition, stacked over the sheet (stage 1's precedent). */}
-      {defineOpen && (
-        <MetricDefinitionSheet orgSlug={orgSlug} teamId={teamId} typeId={null} onClose={() => setDefineOpen(false)} onSaved={typeDefined} />
-      )}
+      {/* "+ New test…" — stacked over the sheet, OUTSIDE its form (see `useNewMetricDoor`), fixed to
+          a TEST: a skill defined here could never sit in the Test select it returns to. */}
+      {newTest.sheet}
     </>
   );
 }

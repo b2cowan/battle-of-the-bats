@@ -1,0 +1,749 @@
+<title>Observation Before a Skill</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root {
+    --doc-bg: #ECEDF1; --doc-panel: #F7F7F9; --doc-ink: #1B1D23; --doc-muted: #5C6070; --doc-line: rgba(27,29,35,0.12);
+    --doc-accent: #57651E; --doc-on: rgba(87,101,30,0.16); --doc-warn: #835006; --doc-bad: #9E3030; --doc-focus: #134FD3; --doc-re: #1D4A8E;
+    --home-paper: #F8F4ED; --home-card: #FFFFFF; --home-ink: #241E15; --home-ink-soft: #4A4235; --home-dim: #615A54;
+    --home-line: rgba(70,55,30,0.12); --home-line-strong: rgba(70,55,30,0.20); --home-grid: rgba(70,55,30,0.045);
+    --home-olive: #57651E; --home-olive-soft: rgba(87,101,30,0.10); --home-lime: #D9F99D; --home-btn: #EFEDE8; --home-due: #9E3030;
+    --measure: #134FD3;
+    --display: "Barlow Condensed", "Arial Narrow", sans-serif; --mono: "IBM Plex Mono", ui-monospace, monospace;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-bad:#E28B8B; --doc-focus:#7FA3FF; --doc-re:#8FB2FF; color-scheme: dark; } }
+  :root[data-theme="dark"] { --doc-bg:#17191F; --doc-panel:#1F2229; --doc-ink:#E8E9EE; --doc-muted:#9A9EAD; --doc-line:rgba(232,233,238,0.14); --doc-accent:#B7C96A; --doc-on:rgba(183,201,106,0.20); --doc-warn:#E0A85A; --doc-bad:#E28B8B; --doc-focus:#7FA3FF; --doc-re:#8FB2FF; color-scheme: dark; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--doc-bg); color: var(--doc-ink); font-family: Inter, system-ui, sans-serif; font-size: 15px; line-height: 1.5; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-block: 28px 64px; padding-inline: 20px; }
+
+  /* hub chrome */
+  .hubbar { display:flex; flex-wrap:wrap; align-items:center; gap:12px 24px; padding:14px 20px; background:var(--doc-ink); color:var(--doc-bg); }
+  .hubbar .t { margin-right:auto; } .hubbar .t strong { display:block; font-size:15px; } .hubbar .t small { color: color-mix(in srgb, var(--doc-bg) 75%, transparent); font-size:12px; }
+  .stages { display:flex; flex-wrap:wrap; gap:4px; list-style:none; margin:0; padding:0; }
+  .stages li { font-family:var(--mono); font-size:11px; letter-spacing:.06em; text-transform:uppercase; padding:5px 10px; border-radius:999px; color: color-mix(in srgb, var(--doc-bg) 55%, transparent); white-space:nowrap; cursor:default; }
+  .stages li.done { color: var(--doc-bg); }
+  .stages li.current { color:var(--doc-ink); background:var(--doc-accent); }
+  .hubactions button { min-height:40px; padding:7px 12px; border:1px solid color-mix(in srgb, var(--doc-bg) 40%, transparent); border-radius:6px; background:transparent; color:var(--doc-bg); font:inherit; font-size:13px; cursor:pointer; }
+  .hubactions button[aria-pressed="true"] { background:var(--doc-bg); color:var(--doc-ink); }
+  .hubtabs { display:flex; gap:22px; overflow:auto; white-space:nowrap; padding:0 20px; background:var(--doc-panel); border-bottom:1px solid var(--doc-line); }
+  .hubtabs button { min-height:46px; padding:9px 0; border:0; border-bottom:3px solid transparent; background:transparent; color:var(--doc-muted); font:inherit; font-size:14px; cursor:pointer; }
+  .hubtabs button[aria-pressed="true"] { border-bottom-color:var(--doc-accent); color:var(--doc-ink); font-weight:700; }
+  button:focus-visible, [tabindex]:focus-visible { outline:2px solid var(--doc-focus); outline-offset:2px; }
+
+  /* document header */
+  .head { display:grid; gap:8px; max-width:74ch; margin-bottom:24px; }
+  .eyebrow { font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-muted); }
+  h1 { margin:0; font-size:28px; line-height:1.15; font-weight:700; letter-spacing:-.01em; text-wrap:balance; }
+  .lede { margin:0; color:var(--doc-muted); max-width:70ch; } .lede strong { color:var(--doc-ink); font-weight:600; }
+  .tag { font-family:var(--mono); font-size:11px; letter-spacing:.06em; padding:2px 6px; border-radius:4px; border:1px solid var(--doc-line); color:var(--doc-muted); background:transparent; font-weight:500; cursor:default; white-space:nowrap; }
+  .tag.new { color:var(--doc-accent); border-color:var(--doc-accent); } .tag.re { color:var(--doc-re); border-color:var(--doc-re); }
+  .tag.call { color:var(--doc-warn); border-color:var(--doc-warn); } .tag.today { color:var(--doc-bad); border-color:var(--doc-bad); }
+  button.tag { cursor:pointer; } button.tag:hover { background:var(--doc-on); }
+  h2.sec { font-size:20px; margin:40px 0 14px; text-wrap:balance; }
+
+  /* specimens */
+  .row { display:grid; grid-template-columns:repeat(auto-fit, minmax(min(460px,100%),1fr)); gap:28px 36px; align-items:start; margin-bottom:24px; }
+  .spec { display:grid; gap:10px; justify-items:start; min-width:0; }
+  .spec-cap { display:flex; flex-wrap:wrap; align-items:baseline; gap:8px 10px; font-size:13px; color:var(--doc-muted); }
+  .spec-cap b { font-family:var(--mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--doc-ink); }
+  .stage { position:relative; width:100%; max-width:100%; container-type:inline-size; }
+  .stage.sheet { width:540px; } .stage.phone { width:390px; }
+  @media (min-width:760px) { .spec { padding-left:44px; } }
+  .region { border-radius:8px; outline:2px solid transparent; outline-offset:4px; transition:outline-color .15s; }
+  .region.lit { outline-color:var(--measure); }
+  .mk { position:absolute; left:-14px; top:0; transform:translateX(-100%); width:26px; height:26px; border-radius:6px; font-family:var(--mono); font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; background:var(--doc-ink); color:var(--doc-bg); border:0; cursor:pointer; box-shadow:0 1px 2px rgba(0,0,0,.2); z-index:3; }
+  .mk.prob { background:var(--doc-bad); color:#fff; }
+  .mk.lit { background:var(--doc-focus); color:#fff; }
+  @media (max-width:759px) { .mk { left:auto; right:-6px; transform:none; } }
+
+  /* ── the product, drawn: warm portal, fixed light (it is a specimen, not page) ── */
+  .scr { position:relative; background:var(--home-paper); background-image:linear-gradient(var(--home-grid) 1px, transparent 1px), linear-gradient(90deg, var(--home-grid) 1px, transparent 1px); background-size:28px 28px; border:1px solid var(--home-line-strong); border-radius:12px; overflow:hidden; color:var(--home-ink); font-family:Inter, system-ui, sans-serif; font-size:14px; line-height:1.4; box-shadow:0 1px 2px rgba(70,55,30,.05), 0 10px 30px rgba(20,15,10,.14); }
+  .p-top { display:flex; align-items:center; gap:18px; padding:11px 20px; background:var(--home-card); border-bottom:1px solid var(--home-line); }
+  .p-brand { font-weight:800; letter-spacing:-.3px; }
+  .p-portal { font-family:var(--mono); font-size:11px; letter-spacing:.14em; color:var(--home-ink-soft); padding-left:18px; border-left:1px solid var(--home-line); }
+  .p-ws { margin-left:auto; font-family:var(--display); font-weight:700; font-size:14px; letter-spacing:.06em; border:1px solid var(--home-olive); color:var(--home-olive); border-radius:999px; padding:4px 14px; }
+  .p-team { display:flex; justify-content:space-between; align-items:flex-end; gap:16px; padding:12px 28px; background:var(--home-card); border-bottom:1px solid var(--home-line); }
+  .p-tname { font-weight:700; font-size:18px; }
+  .p-tsub { font-family:var(--mono); font-size:12px; color:var(--home-ink-soft); } .p-tsub b { color:var(--home-ink); }
+  .p-next { text-align:right; font-size:13px; } .p-next span { display:block; font-family:var(--mono); font-size:11px; letter-spacing:.12em; font-weight:600; }
+  .p-body { padding:22px 28px 28px; display:flex; flex-direction:column; gap:16px; }
+  .p-phead { display:flex; align-items:center; gap:14px; }
+  .p-back { font-family:var(--display); font-weight:600; font-size:17px; padding-right:14px; border-right:1px solid var(--home-line); white-space:nowrap; }
+  .p-av { width:36px; height:36px; border-radius:9px; background:var(--home-olive-soft); border:1px solid rgba(87,101,30,.25); display:inline-flex; align-items:center; justify-content:center; color:var(--home-olive); flex:0 0 auto; }
+  .p-pname { font-family:var(--display); font-weight:700; font-size:24px; }
+  .p-psel { margin-left:auto; background:var(--home-card); border:1px solid var(--home-line-strong); border-radius:6px; padding:8px 14px; min-width:190px; display:flex; justify-content:space-between; gap:12px; font-weight:500; }
+  .p-card { background:var(--home-card); border:1px solid var(--home-line); border-radius:12px; padding:18px 20px; display:flex; flex-direction:column; gap:14px; }
+  .p-chips { display:flex; gap:10px 26px; flex-wrap:wrap; font-weight:600; font-size:13px; color:var(--home-ink-soft); }
+  .p-tiles { display:grid; grid-template-columns:repeat(4, 1fr); gap:10px; }
+  .p-tile { border:1px solid var(--home-line); border-radius:8px; padding:10px 14px; position:relative; }
+  .p-tile .k { font-family:var(--mono); font-size:10px; letter-spacing:.12em; font-weight:600; }
+  .p-tile .v { font-weight:700; font-size:18px; } .p-tile .v.due { color:var(--home-due); }
+  .p-tile .s { font-size:12.5px; color:var(--home-ink-soft); }
+  .p-tile .c { position:absolute; right:12px; top:8px; color:var(--home-dim); }
+  .p-tabs { display:flex; gap:30px; border-bottom:1px solid var(--home-line); padding:0 14px; font-family:var(--display); font-weight:600; font-size:17px; color:var(--home-ink-soft); overflow:hidden; white-space:nowrap; }
+  .p-tabs span { padding:8px 2px 10px; } .p-tabs .on { color:var(--home-olive); border-bottom:2px solid var(--home-olive); }
+  .p-tool { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .p-seg { display:inline-flex; border:1px solid var(--home-line-strong); border-radius:6px; overflow:hidden; font-family:var(--display); font-weight:600; font-size:17px; }
+  .p-seg span { padding:8px 18px; } .p-seg .on { background:var(--home-ink); color:#fff; }
+  .p-acts { margin-left:auto; display:flex; gap:10px; flex-wrap:wrap; position:relative; }
+  .p-btn { display:inline-flex; align-items:center; gap:6px; min-height:44px; padding:0 16px; background:var(--home-btn); border:1px solid var(--home-line-strong); border-radius:4px; font-family:var(--display); font-weight:700; font-size:14px; letter-spacing:.02em; color:var(--home-ink); white-space:nowrap; }
+  .p-btn.lime { background:var(--home-lime); border-color:#b9d88c; }
+  .p-empty { margin:0; font-style:italic; color:var(--home-ink-soft); }
+  .p-arch { display:flex; align-items:center; gap:12px; flex-wrap:wrap; padding-top:12px; border-top:1px solid var(--home-line); }
+  .p-archchip { font-family:var(--mono); font-size:11px; letter-spacing:.1em; border:1px solid var(--home-line-strong); border-radius:4px; padding:2px 8px; }
+  .p-dim { color:var(--home-ink-soft); font-size:13px; } .p-chev { margin-left:auto; color:var(--home-dim); }
+  .p-tip { position:absolute; right:0; top:calc(100% + 8px); background:#241E15; color:#fff; font-size:12px; padding:6px 10px; border-radius:5px; white-space:nowrap; z-index:2; }
+  .p-tip small { display:block; color:#E0A85A; font-family:var(--mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; }
+
+  /* the sheet (QuestionShell) */
+  .p-scrim { position:absolute; inset:0; background:rgba(36,30,21,.42); display:flex; justify-content:center; align-items:flex-start; padding:96px 20px 20px; }
+  .p-sheet { width:100%; background:var(--home-card); border-radius:12px; box-shadow:0 20px 50px rgba(20,15,10,.28); display:flex; flex-direction:column; color:var(--home-ink); font-family:Inter, system-ui, sans-serif; font-size:14px; line-height:1.4; border:1px solid var(--home-line-strong); }
+  .p-scrim .p-sheet { width:min(540px, 100%); }
+  .p-shead { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--home-line); }
+  .p-stitle { font-size:16px; font-weight:700; margin:0; } .p-ssub { font-size:12.5px; color:var(--home-ink-soft); margin:2px 0 0; }
+  .p-x { color:var(--home-dim); font-size:18px; line-height:1; } .p-sback { display:none; font-size:18px; line-height:1; margin-right:4px; }
+  .p-sbody { padding:16px 20px; display:grid; grid-template-columns:1fr 1fr; gap:12px 14px; }
+  .p-full { grid-column:1 / -1; }
+  .p-field { display:flex; flex-direction:column; gap:5px; min-width:0; }
+  .p-lbl { font-size:12px; font-weight:600; color:var(--home-ink-soft); }
+  .p-in { display:flex; align-items:center; justify-content:space-between; gap:8px; background:var(--home-paper); border:1px solid var(--home-line-strong); border-radius:6px; padding:8px 12px; min-height:38px; }
+  .p-in.ph { color:var(--home-dim); } .p-in svg { flex:0 0 auto; color:var(--home-dim); }
+  .p-in.fact { background:transparent; border-color:transparent; padding-left:0; font-weight:600; min-height:0; }
+  .p-ta { min-height:92px; align-items:flex-start; }
+  .p-count { text-align:right; font-size:11.5px; color:var(--home-dim); font-variant-numeric:tabular-nums; }
+  .p-hint { font-size:12px; color:var(--home-ink-soft); line-height:1.45; }
+  .p-def { color:var(--home-olive); font-weight:700; }
+  .p-sfoot { display:flex; justify-content:flex-end; align-items:center; gap:8px; padding:14px 20px; border-top:1px solid var(--home-line); }
+  .p-sec { padding:9px 16px; border-radius:6px; border:1px solid var(--home-line-strong); background:var(--home-card); font-weight:600; }
+  .p-pri { padding:9px 16px; border-radius:6px; background:var(--home-lime); font-weight:700; border:1px solid #b9d88c; }
+  .p-pri.off { opacity:.5; }
+  .p-ghost { padding:9px 10px; font-weight:600; color:var(--home-ink-soft); }
+  .p-grow { flex:1; }
+  .stack { position:relative; padding:22px 0 0 22px; }
+  .stack .behind { position:absolute; top:0; left:0; right:22px; height:140px; background:var(--home-card); border:1px solid var(--home-line-strong); border-radius:12px; padding:13px 18px; font-weight:700; color:var(--home-dim); box-shadow:0 4px 14px rgba(20,15,10,.08); }
+  .stack .p-sheet { position:relative; }
+
+  /* the goal row */
+  .p-goal { border:1px solid var(--home-line-strong); border-radius:10px; overflow:hidden; }
+  .p-ghead { display:flex; align-items:center; gap:12px; padding:12px 14px; }
+  .p-gname { font-weight:700; margin-right:auto; } .p-gname small { display:block; font-weight:400; font-size:12px; color:var(--home-ink-soft); }
+  .p-pill { font-size:12px; font-weight:600; padding:3px 10px; border-radius:999px; background:rgba(29,74,142,.10); color:#1D4A8E; white-space:nowrap; }
+  .p-gbody { padding:4px 14px 14px; display:flex; flex-direction:column; gap:10px; }
+  .p-facts { display:flex; flex-wrap:wrap; gap:4px 18px; font-size:13px; color:var(--home-ink-soft); } .p-facts b { color:var(--home-ink); }
+  .p-gacts { display:flex; flex-wrap:wrap; gap:8px; }
+  .p-gacts .p-btn { font-family:Inter, system-ui, sans-serif; font-size:13px; font-weight:600; letter-spacing:0; min-height:40px; }
+  .p-hlabel { font-family:var(--mono); font-size:10.5px; letter-spacing:.12em; text-transform:uppercase; color:var(--home-dim); margin:4px 0 0; }
+  .p-hrow { display:flex; justify-content:space-between; gap:12px; font-size:13px; color:var(--home-ink-soft); }
+
+  /* phone-only pieces */
+  .only-phone { display:none; }
+  .p-picks { display:flex; flex-direction:column; gap:8px; }
+  .p-pick { min-height:56px; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:0 14px; border:1px solid var(--home-line-strong); border-radius:8px; background:var(--home-card); font-weight:500; }
+  .p-pick.on { border-color:var(--home-olive); background:var(--home-olive-soft); font-weight:600; }
+  .p-pick svg { color:var(--home-olive); visibility:hidden; } .p-pick.on svg { visibility:visible; }
+  .tap44 { display:inline-flex; align-items:center; min-height:44px; padding:0 8px; margin-left:-8px; border-radius:6px; outline:1.5px dashed var(--measure); outline-offset:-1px; }
+  .meas { font-family:var(--mono); font-size:10.5px; color:var(--measure); letter-spacing:.02em; font-weight:500; }
+  .pf { border-radius:22px; overflow:hidden; border:1px solid var(--home-line-strong); box-shadow:0 10px 30px rgba(20,15,10,.14); background:var(--home-card); min-height:720px; display:flex; }
+  .pf .p-sheet { border:0; border-radius:0; box-shadow:none; min-height:720px; }
+
+  /* the drawn screens at phone width (Phone width toggle, or a narrow reader) */
+  @container (max-width:600px) {
+    .p-top { padding:10px 14px; gap:10px; } .p-portal { display:none; }
+    .p-team { padding:10px 16px; } .p-next { display:none; }
+    .p-body { padding:14px 14px 20px; gap:12px; }
+    .p-psel { display:none; } .p-back { font-size:15px; padding-right:10px; } .p-pname { font-size:21px; }
+    .p-card { padding:14px; }
+    .p-tiles { grid-template-columns:1fr 1fr; }
+    .p-tabs { gap:18px; font-size:15px; padding:0; }
+    .p-acts { margin-left:0; width:100%; }
+    .p-acts .p-btn { flex:1 1 auto; justify-content:center; }
+    .p-tip { right:auto; left:0; }
+    .p-scrim { padding:0; background:transparent; }
+    .p-scrim .p-sheet, .p-sheet { width:100%; border-radius:0; box-shadow:none; border:0; min-height:100%; }
+    .p-scrim .p-sheet { min-height:100%; }
+    .p-x { display:none; } .p-sback { display:inline; }
+    .p-shead { justify-content:flex-start; align-items:center; }
+    .p-sbody { grid-template-columns:1fr; }
+    .p-sbody .p-field { grid-column:1 / -1; }
+    .desk { display:none; } .only-phone { display:flex; }
+    .p-sfoot { margin-top:auto; }
+    .p-sfoot .p-pri { flex:1; min-height:56px; display:flex; align-items:center; justify-content:center; }
+  }
+
+  /* notes + documents */
+  .notes { display:grid; gap:12px; margin-top:10px; }
+  .note { display:grid; grid-template-columns:34px 1fr; gap:14px; padding:16px 18px; background:var(--doc-panel); border:1px solid var(--doc-line); border-radius:10px; cursor:pointer; }
+  .note.lit { background:var(--doc-on); border-color:var(--doc-accent); }
+  .note .n { width:26px; height:26px; border-radius:6px; background:var(--doc-ink); color:var(--doc-bg); font-family:var(--mono); font-size:12px; font-weight:600; display:inline-flex; align-items:center; justify-content:center; margin-top:2px; }
+  .note.prob .n { background:var(--doc-bad); color:#fff; }
+  .note h3 { margin:0 0 4px; font-size:16px; display:flex; flex-wrap:wrap; align-items:center; gap:8px; text-wrap:balance; }
+  .note p { margin:0; color:var(--doc-muted); max-width:78ch; } .note p + p { margin-top:6px; } .note p b { color:var(--doc-ink); font-weight:600; }
+  .note .rec-line { color:var(--doc-ink); }
+  .doc { max-width:78ch; margin:0 auto; padding-block:28px 56px; padding-inline:20px; }
+  .doc h1 { font-size:24px; margin-bottom:4px; } .doc h2 { font-size:18px; margin:28px 0 8px; } .doc h3 { font-size:15px; margin:18px 0 6px; }
+  .doc p, .doc li { color:var(--doc-ink); } .doc ul, .doc ol { padding-left:22px; } .doc li { margin:5px 0; }
+  .doc .meta { color:var(--doc-muted); font-size:13px; margin:0 0 16px; }
+  .doc .callout { padding:12px 16px; border-left:3px solid var(--doc-accent); background:var(--doc-panel); border-radius:0 6px 6px 0; margin:14px 0; }
+  .doc code { font-family:var(--mono); font-size:13px; background:var(--doc-panel); border:1px solid var(--doc-line); border-radius:4px; padding:0 4px; }
+  .drow { border:1px solid var(--doc-line); border-radius:10px; background:var(--doc-panel); padding:14px 16px; margin-bottom:10px; }
+  .drow .dh { display:flex; justify-content:space-between; gap:12px; align-items:baseline; flex-wrap:wrap; } .drow .dh strong { font-size:15px; }
+  .drow p { margin:6px 0 0; color:var(--doc-muted); } .drow p b { color:var(--doc-ink); }
+  /* QA walk */
+  .qapart { border:1px solid var(--doc-line); border-radius:10px; background:var(--doc-panel); padding:14px 16px; margin:14px 0; }
+  .qapart h3 { margin:0 0 6px; }
+  .qastep { display:flex; gap:10px; align-items:flex-start; padding:8px 0; font-size:14px; color:var(--doc-ink); cursor:pointer; }
+  .qastep input { width:20px; height:20px; flex:0 0 auto; margin-top:2px; accent-color:var(--doc-accent); }
+  .verdictrow { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin:8px 0; font-size:13px; color:var(--doc-muted); }
+  .verdictrow button, .qabtn { min-height:40px; padding:7px 12px; border:1px solid var(--doc-line); border-radius:6px; background:var(--doc-bg); color:var(--doc-ink); font:inherit; font-size:13px; cursor:pointer; }
+  .verdictrow button[aria-pressed="true"] { background:var(--doc-on); border-color:var(--doc-accent); font-weight:700; }
+  .qapart textarea, #summaryOut { width:100%; border:1px solid var(--doc-line); border-radius:6px; padding:8px 10px; background:var(--doc-bg); color:var(--doc-ink); font:inherit; font-size:13px; }
+  #summaryOut { margin-top:12px; font-family:var(--mono); font-size:12px; }
+  .qaprogress { font-weight:700; margin:18px 0 10px; }
+  @media (prefers-reduced-motion: reduce) { * { transition:none !important; scroll-behavior:auto !important; } }
+</style>
+
+<div class="hubbar">
+  <div class="t"><strong>Record an observation, before the team has a skill — project hub</strong><small>Reported on production 2026-09-28 · ruled, built, reviewed and QA marked complete by the owner the same day · ships with the next release</small></div>
+  <ul class="stages" aria-label="Project lifecycle">
+    <li class="done" title="Mockup v1 published 2026-09-28; ruled the same day: “agree with your recommendations, go ahead”">Design</li>
+    <li class="done" title="Plan + PM brief on this hub, 2026-09-28">Plan</li>
+    <li class="done" title="Built on dev 2026-09-28: lint clean, 123 unit tests, CSS / spelling / contrast gates clean, 35/35 browser checks at 1440 and 390">Build</li>
+    <li class="done" title="/simplify 2026-09-28 (4 lenses; the shared door widened to own the whole flow, plus polish, all fixed) · /review 2026-09-28 (standard tier, 3 lenses, layout check at 4 widths; nothing above Advisory)">Review</li>
+    <li class="done" title="Owner marked the QA walk complete 2026-09-28">QA</li>
+    <li class="current" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions"><button type="button" id="phoneToggle" aria-pressed="false">Phone width</button></div>
+</div>
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<!-- ═════════════════════════════ MOCKUP ═════════════════════════════ -->
+<section id="hub-mockup">
+<div class="wrap">
+  <header class="head">
+    <div class="eyebrow">Coaches portal · Roster · a player · Skills &amp; Goals · proposal · 2026-09-28</div>
+    <h1>Record an observation, before the team has a skill</h1>
+    <p class="lede">You reported this button as a dead link. It is switched off whenever the team’s Metrics hold no active skill, but it doesn’t look switched off, and the reason is a hover tooltip that a phone never shows. <strong>Its twin, Record a result, never switches off:</strong> its form opens and offers “+ New test…” on the spot. The proposal gives observations the same treatment. Names on these screens are samples. Click a marker or a tag to light its note: red markers are today’s problem, black ones the proposal.</p>
+  </header>
+
+  <!-- ── 1 · TODAY ── -->
+  <h2 class="sec" style="margin-top:0">1 · Today: a button that looks live and does nothing</h2>
+  <div class="spec">
+    <div class="spec-cap"><b>Before · whole screen</b> a player on a team whose Metrics hold tests but no skill <button type="button" class="tag today" data-n="1">switched off</button> <button type="button" class="tag today" data-n="2">hover only</button></div>
+    <div class="stage" id="beforeStage">
+      <div class="scr">
+        <div class="p-top"><span class="p-brand">FLHQ</span><span class="p-portal">COACHES PORTAL</span><span class="p-ws">WORKSPACES ▾</span></div>
+        <div class="p-team"><div><div class="p-tname">Riverdale Ridge U13</div><div class="p-tsub">2027 Season · <b>3-0</b></div></div><div class="p-next"><span>NEXT</span><b>Today 6:00 p.m. practice</b></div></div>
+        <div class="p-body">
+          <div class="p-phead"><span class="p-back">← Roster</span><span class="p-av"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.7c2 .7 3.2 2.5 3.5 5.3"/></svg></span><span class="p-pname">Jordan Reyes</span><span class="p-psel">Jordan Reyes <span>▾</span></span></div>
+          <div class="p-card">
+            <div class="p-chips"><span>P4 · 4 IP cap</span><span>3B / CF / SS / 1B</span><span>A-squad</span></div>
+            <div class="p-tiles">
+              <div class="p-tile"><span class="c">›</span><div class="k">DUES</div><div class="v due">$1,200.00</div><div class="s">1/4 installments paid</div></div>
+              <div class="p-tile"><span class="c">›</span><div class="k">ATTENDANCE</div><div class="v">86%</div><div class="s">12 recorded · 1 not recorded</div></div>
+              <div class="p-tile"><span class="c">›</span><div class="k">FAMILY</div><div class="v">No contact</div><div class="s">Add a contact</div></div>
+              <div class="p-tile"><span class="c">›</span><div class="k">AWARDS</div><div class="v">0</div><div class="s">this season</div></div>
+            </div>
+          </div>
+          <div class="p-tabs"><span>Details</span><span>This season</span><span class="on">Skills &amp; Goals</span><span>Notes</span><span>Family &amp; paperwork</span></div>
+          <div class="p-card">
+            <div class="p-tool">
+              <div class="p-seg"><span class="on">Goals</span><span>Results</span></div>
+              <div class="p-acts">
+                <span class="p-btn"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9V2h12v7"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><path d="M6 14h12v8H6z"/></svg> Preview development handout</span>
+                <span class="p-btn">+ Add goal</span>
+                <span class="p-btn region" data-r="1">+ Record an observation</span>
+                <span class="p-tip region" data-r="2"><small>on hover · desktop only</small>Define a skill in Metrics first</span>
+              </div>
+            </div>
+            <p class="p-empty">No goals yet — add the first thing Jordan is working on.</p>
+            <div class="p-arch"><b>Riverdale Ridge U13 2026</b><span class="p-archchip">ARCHIVE</span><span class="p-dim">no development records that season</span><span class="p-chev">›</span></div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="mk prob" data-n="1" aria-label="Note 1">1</button>
+      <button type="button" class="mk prob" data-n="2" aria-label="Note 2">2</button>
+    </div>
+  </div>
+  <div class="notes" aria-label="Notes for section 1">
+    <div class="note prob" data-n="1" tabindex="0"><span class="n">1</span><div><h3>The button is switched off, and nothing shows it <span class="tag today">today</span></h3><p>“Record an observation” is switched off whenever the team’s Metrics hold <b>no active skill</b>. A test like a sprint doesn’t count, because an observation is always about a skill, and a retired skill doesn’t count either. The product’s standard button has no switched-off look at all, so it looks exactly like “+ Add goal” beside it and even lights up under the mouse. A click does nothing.</p><p>Production matches the current code here: nothing in these files has changed since the 09-23 promote.</p></div></div>
+    <div class="note prob" data-n="2" tabindex="0"><span class="n">2</span><div><h3>The only explanation is a hover tooltip <span class="tag today">today</span></h3><p>“Define a skill in Metrics first” appears only while a mouse rests on the button. A phone has no hover and a keyboard never shows it. Even a coach who does see it is sent away: to the Metrics tab, to set up a skill, then back through the roster to find the player again.</p><p class="rec-line"><b>A quick check you can do:</b> hover the button on Milton Bats U13 Purple. If this is the cause, the tooltip appears, and Metrics lists tests but no skill.</p></div></div>
+  </div>
+
+  <!-- ── 2 · PROPOSAL ── -->
+  <h2 class="sec">2 · The proposal: the form opens, and the skill is made inside it</h2>
+  <div class="spec">
+    <div class="spec-cap"><b>After · whole screen</b> the same screen; the button opens its form, even with no skill yet <button type="button" class="tag new" data-n="4">+ New skill…</button> <button type="button" class="tag re" data-n="5">type first, save later</button></div>
+    <div class="stage" id="afterStage">
+      <div class="scr">
+        <div class="p-top"><span class="p-brand">FLHQ</span><span class="p-portal">COACHES PORTAL</span><span class="p-ws">WORKSPACES ▾</span></div>
+        <div class="p-team"><div><div class="p-tname">Riverdale Ridge U13</div><div class="p-tsub">2027 Season · <b>3-0</b></div></div><div class="p-next"><span>NEXT</span><b>Today 6:00 p.m. practice</b></div></div>
+        <div class="p-body">
+          <div class="p-phead"><span class="p-back">← Roster</span><span class="p-av"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c.8-3.6 3.4-5.5 6.5-5.5s5.7 1.9 6.5 5.5"/><path d="M16 4.5a3.5 3.5 0 0 1 0 7"/><path d="M18 14.7c2 .7 3.2 2.5 3.5 5.3"/></svg></span><span class="p-pname">Jordan Reyes</span><span class="p-psel">Jordan Reyes <span>▾</span></span></div>
+          <div class="p-card">
+            <div class="p-chips"><span>P4 · 4 IP cap</span><span>3B / CF / SS / 1B</span><span>A-squad</span></div>
+            <div class="p-tiles">
+              <div class="p-tile"><span class="c">›</span><div class="k">DUES</div><div class="v due">$1,200.00</div><div class="s">1/4 installments paid</div></div>
+              <div class="p-tile"><span class="c">›</span><div class="k">ATTENDANCE</div><div class="v">86%</div><div class="s">12 recorded · 1 not recorded</div></div>
+              <div class="p-tile"><span class="c">›</span><div class="k">FAMILY</div><div class="v">No contact</div><div class="s">Add a contact</div></div>
+              <div class="p-tile"><span class="c">›</span><div class="k">AWARDS</div><div class="v">0</div><div class="s">this season</div></div>
+            </div>
+          </div>
+          <div class="p-tabs"><span>Details</span><span>This season</span><span class="on">Skills &amp; Goals</span><span>Notes</span><span>Family &amp; paperwork</span></div>
+          <div class="p-card">
+            <div class="p-tool">
+              <div class="p-seg"><span class="on">Goals</span><span>Results</span></div>
+              <div class="p-acts"><span class="p-btn">Preview development handout</span><span class="p-btn">+ Add goal</span><span class="p-btn">+ Record an observation</span></div>
+            </div>
+            <p class="p-empty">No goals yet — add the first thing Jordan is working on.</p>
+            <div class="p-arch"><b>Riverdale Ridge U13 2026</b><span class="p-archchip">ARCHIVE</span><span class="p-dim">no development records that season</span><span class="p-chev">›</span></div>
+          </div>
+        </div>
+        <div class="p-scrim">
+          <div class="p-sheet">
+            <div class="p-shead"><span class="p-sback">←</span><div><p class="p-stitle">Record an observation</p></div><span class="p-x">✕</span></div>
+            <div class="p-sbody">
+              <div class="p-field p-full">
+                <span class="p-lbl">Skill</span>
+                <div class="p-in ph">No skill defined yet <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+                <span class="p-hint region" data-r="4"><span class="p-def">+ New skill…</span> defines a whole skill, and it joins your Metrics.</span>
+              </div>
+              <div class="p-field"><span class="p-lbl">Observed on</span><div class="p-in">2026-09-28</div></div>
+              <div class="p-field p-full region" data-r="5">
+                <span class="p-lbl">What did you see?</span>
+                <div class="p-in p-ta">Set feet on every throw to first after one reminder.</div>
+                <span class="p-count">52 / 600</span>
+              </div>
+            </div>
+            <div class="p-sfoot"><span class="p-sec desk">Cancel</span><span class="p-pri off">Save observation</span></div>
+          </div>
+        </div>
+      </div>
+      <button type="button" class="mk" data-n="4" aria-label="Note 4">4</button>
+      <button type="button" class="mk" data-n="5" aria-label="Note 5">5</button>
+    </div>
+  </div>
+
+  <div class="row" style="margin-top:32px">
+    <div class="spec">
+      <div class="spec-cap"><b>+ New skill…</b> the Metrics setup form, on top of the observation <button type="button" class="tag re" data-n="6">arrives as a skill</button></div>
+      <div class="stage sheet">
+        <div class="stack">
+          <div class="behind">Record an observation</div>
+          <div class="p-sheet">
+            <div class="p-shead"><span class="p-sback">←</span><div><p class="p-stitle">Define a skill</p></div><span class="p-x">✕</span></div>
+            <div class="p-sbody">
+              <div class="p-field p-full region" data-r="6">
+                <span class="p-lbl">Kind of metric</span>
+                <div class="p-in fact">Skill</div>
+                <span class="p-hint">Describe what you saw, in your own words — never a score.</span>
+              </div>
+              <div class="p-field p-full"><span class="p-lbl">Name</span><div class="p-in">Sets feet before throwing</div></div>
+              <div class="p-field p-full">
+                <span class="p-lbl">Descriptors to choose from</span>
+                <div class="p-in p-ta" style="flex-direction:column;align-items:flex-start;gap:2px">With support — coach guides the setup<br>With a reminder — one verbal cue<br>Independently — without a cue</div>
+                <span class="p-hint">One per line, in your order — up to 10, each 60 characters or fewer. “Not observed” stays separate; it is an evidence state, never the lowest rung.</span>
+              </div>
+            </div>
+            <div class="p-sfoot"><span class="p-ghost">Preview</span><span class="p-grow"></span><span class="p-sec desk">Cancel</span><span class="p-pri">Save definition</span></div>
+          </div>
+        </div>
+        <button type="button" class="mk" data-n="6" aria-label="Note 6">6</button>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>Saved · back in the form</b> the new skill picked, the sentence kept <button type="button" class="tag new" data-n="7">ready to save</button></div>
+      <div class="stage sheet">
+        <div class="p-sheet">
+          <div class="p-shead"><span class="p-sback">←</span><div><p class="p-stitle">Record an observation</p></div><span class="p-x">✕</span></div>
+          <div class="p-sbody">
+            <div class="p-field p-full region" data-r="7">
+              <span class="p-lbl">Skill</span>
+              <div class="p-in">Sets feet before throwing <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <span class="p-hint"><span class="p-def">+ New skill…</span> defines a whole skill, and it joins your Metrics.</span>
+            </div>
+            <div class="p-field"><span class="p-lbl">Observed on</span><div class="p-in">2026-09-28</div></div>
+            <div class="p-field"><span class="p-lbl">Descriptor</span><div class="p-in">With a reminder — one ver… <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div></div>
+            <div class="p-field p-full">
+              <span class="p-lbl">What did you see?</span>
+              <div class="p-in p-ta">Set feet on every throw to first after one reminder.</div>
+              <span class="p-count">52 / 600</span>
+            </div>
+          </div>
+          <div class="p-sfoot"><span class="p-sec desk">Cancel</span><span class="p-pri">Save observation</span></div>
+        </div>
+        <button type="button" class="mk" data-n="7" aria-label="Note 7">7</button>
+      </div>
+    </div>
+  </div>
+  <div class="notes" aria-label="Notes for section 2">
+    <div class="note" data-n="4" tabindex="0"><span class="n">4</span><div><h3>“+ New skill…” under the Skill field <span class="tag new">new</span></h3><p>This mirrors <b>“+ New test…”</b> on Record a result, which has always been live. The Skill field still says “No skill defined yet”, as it does today, and the link under it is the way forward. It shows on <b>every new observation</b>, not only when the list is empty, so a coach can add a second skill mid-thought the same way.</p><p>It does not show when editing a saved observation, because the skill is that record’s identity. It also does not show from a session’s grid, where the session has already fixed the skill.</p><p class="rec-line"><b>The wording is new.</b> The test link says “defines a whole test, as everywhere”, but “+ New skill…” exists nowhere else yet, so this one says where the skill ends up: in Metrics.</p></div></div>
+    <div class="note" data-n="5" tabindex="0"><span class="n">5</span><div><h3>Typing first is fine; saving waits for a skill <span class="tag re">restyled</span></h3><p>A coach often has the sentence in mind before they think about the Metrics library, so the fields work straight away. <b>Save observation</b> stays greyed out until a skill is picked. The form’s own buttons do have a switched-off look, unlike the toolbar button. Nothing typed is lost on the way to “+ New skill…” and back.</p><p>Nothing else on the screen moves: the toolbar keeps its three buttons in the same order, and the tab reads exactly as it did before the tap.</p></div></div>
+    <div class="note" data-n="6" tabindex="0"><span class="n">6</span><div><h3>The setup form arrives already set to Skill <span class="tag re">restyled</span></h3><p>This is the same form Metrics uses to define a metric, opened on top of the observation the way “+ New test…” opens it on top of Record a result. From this door the <b>Kind</b> is shown as a fact rather than a choice, and the title reads <b>“Define a skill”</b> instead of “Define a metric”. An observation can only be about a skill, and a door that has answered a question shouldn’t ask it again, which is the rule the observation form was built on. If Kind stayed a choice, a coach could define a test here and be left with no skill.</p><p>From Metrics and the session planner it is unchanged. <b>Built one step further than drawn:</b> Record a result’s “+ New test…” now opens as “Define a test” the same way, because a skill defined there could never sit in the Test list it returns to (see D3).</p></div></div>
+    <div class="note" data-n="7" tabindex="0"><span class="n">7</span><div><h3>Back in the form, the new skill is picked <span class="tag new">new</span></h3><p>After <b>Save definition</b>, the setup form closes and the coach lands back in the observation with the new skill in the Skill field. If they listed descriptors, the Descriptor choice appears, as it does for any skill that has them. The sentence they typed is still there, and Save observation is now live.</p><p>The skill is in Metrics like any other: the session planner, the goal’s own button and every other player’s page offer it from now on.</p></div></div>
+  </div>
+
+  <!-- ── 3 · PHONE ── -->
+  <h2 class="sec">3 · On a phone, where the tooltip never appeared</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>390 · no skill yet</b> the phone form, as it works today, plus the link <button type="button" class="tag call" data-n="8">tap area · your call</button></div>
+      <div class="stage phone">
+        <div class="pf">
+          <div class="p-sheet">
+            <div class="p-shead"><span class="p-sback">←</span><div><p class="p-stitle">Record an observation</p></div><span class="p-x">✕</span></div>
+            <div class="p-sbody">
+              <div class="p-field p-full">
+                <span class="p-lbl">Skill</span>
+                <div class="p-in ph">No skill defined yet <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+                <span class="p-hint" style="display:flex;flex-wrap:wrap;align-items:center;gap:0 8px"><span class="tap44 region" data-r="8"><span class="p-def">+ New skill…</span></span><span class="meas">44px tap area · today’s “+ New test…” link is text height</span></span>
+              </div>
+              <div class="p-field"><span class="p-lbl">Observed on</span><div class="p-in">2026-09-28</div></div>
+              <div class="p-field p-full">
+                <span class="p-lbl">What did you see?</span>
+                <div class="p-in p-ta ph" style="min-height:120px">The action, the setting and any cue you gave</div>
+                <span class="p-count">0 / 600</span>
+              </div>
+            </div>
+            <div class="p-sfoot"><span class="p-pri off">Save observation</span></div>
+          </div>
+        </div>
+        <button type="button" class="mk" data-n="8" aria-label="Note 8">8</button>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>390 · skill defined</b> the answers become rows, as they already do for any skill <button type="button" class="tag" data-n="9">unchanged</button></div>
+      <div class="stage phone">
+        <div class="pf">
+          <div class="p-sheet">
+            <div class="p-shead"><span class="p-sback">←</span><div><p class="p-stitle">Record an observation</p></div><span class="p-x">✕</span></div>
+            <div class="p-sbody">
+              <div class="p-field p-full">
+                <span class="p-lbl">Skill</span>
+                <div class="p-in">Sets feet before throwing <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+                <span class="p-hint"><span class="tap44"><span class="p-def">+ New skill…</span></span></span>
+              </div>
+              <div class="p-field"><span class="p-lbl">Observed on</span><div class="p-in">2026-09-28</div></div>
+              <div class="p-field p-full region" data-r="9">
+                <span class="p-lbl">What did you see? <span class="meas">· rows 56px</span></span>
+                <div class="p-picks">
+                  <div class="p-pick"><span>With support — coach guides the setup</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+                  <div class="p-pick on"><span>With a reminder — one verbal cue</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+                  <div class="p-pick"><span>Independently — without a cue</span><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+                </div>
+              </div>
+              <div class="p-field p-full">
+                <span class="p-lbl">Anything to add?</span>
+                <div class="p-in p-ta" style="min-height:70px">Set feet on every throw to first after one reminder.</div>
+                <span class="p-count">52 / 600</span>
+              </div>
+            </div>
+            <div class="p-sfoot"><span class="meas">56px</span><span class="p-pri">Save observation</span></div>
+          </div>
+        </div>
+        <button type="button" class="mk" data-n="9" aria-label="Note 9">9</button>
+      </div>
+    </div>
+  </div>
+  <div class="notes" aria-label="Notes for section 3">
+    <div class="note" data-n="8" tabindex="0"><span class="n">8</span><div><h3>On a phone, give the link a thumb-sized tap area <span class="tag call">your call · recommend yes</span></h3><p>The phone form is today’s: a back arrow instead of Cancel, and the save docked at the bottom at 56px. The only addition is the link. As a bare text link it is only as tall as its line of text, well under the portal’s 44px floor, and it is a coach’s only way forward when there is no skill yet. <b>Built: 44px tall on a phone</b> (measured 76 × 44 at 390). <b>Recommendation:</b> give it a 44px tap area at phone width (the dashed box). Its twin, <b>“+ New test…”</b> on Record a result, has the same problem today, and the two links share one style, so fixing one fixes both.</p><p class="rec-line"><b>The alternative:</b> leave both as text links to match today, and take the tap floor up with the dialog-footer tap-floor ruling that is still open.</p><p>Open this page on your phone to judge the size. The frames are drawn at true width.</p></div></div>
+    <div class="note" data-n="9" tabindex="0"><span class="n">9</span><div><h3>Once the skill exists, the phone form works as it already does <span class="tag">unchanged</span></h3><p>At phone width a skill’s descriptors are 56px rows, the text box becomes “Anything to add?”, and the save docks at the foot. That is phone stage 4, untouched. It is drawn here so you can follow the whole path on the device: no skill, then + New skill…, then back in the form with the answers ready.</p></div></div>
+  </div>
+
+  <!-- ── 4 · THE GOAL'S OWN BUTTON ── -->
+  <h2 class="sec">4 · The goal’s own button gets the same fix</h2>
+  <div class="row">
+    <div class="spec">
+      <div class="spec-cap"><b>Today · an open goal</b> the middle button is switched off on the same condition <button type="button" class="tag today" data-n="3">switched off</button></div>
+      <div class="stage sheet">
+        <div class="scr" style="padding:18px">
+          <div class="p-goal" style="background:var(--home-card)">
+            <div class="p-ghead"><span class="p-gname">First-step quickness off the bag<small>Set this season</small></span><span class="p-pill">Working on it ▾</span><span style="color:var(--home-dim)">⌃</span></div>
+            <div class="p-gbody">
+              <div class="p-facts"><span><b>Success looks like:</b> a clean first step on every steal sign</span><span><b>Next review:</b> Oct 12</span></div>
+              <div class="p-gacts"><span class="p-btn lime">Review goal</span><span class="p-btn region" data-r="3">Record an observation</span><span class="p-btn">Edit wording</span></div>
+              <p class="p-hlabel">How this goal has developed</p>
+              <div class="p-hrow"><span>Goal set</span><span>Sep 14</span></div>
+            </div>
+          </div>
+        </div>
+        <button type="button" class="mk prob" data-n="3" aria-label="Note 3">3</button>
+      </div>
+    </div>
+    <div class="spec">
+      <div class="spec-cap"><b>After · the form it opens</b> the goal named under the title, as today, and the same link <button type="button" class="tag new" data-n="10">same door</button></div>
+      <div class="stage sheet">
+        <div class="p-sheet">
+          <div class="p-shead region" data-r="10"><span class="p-sback">←</span><div><p class="p-stitle">Record an observation</p><p class="p-ssub">First-step quickness off the bag</p></div><span class="p-x">✕</span></div>
+          <div class="p-sbody">
+            <div class="p-field p-full">
+              <span class="p-lbl">Skill</span>
+              <div class="p-in ph">No skill defined yet <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg></div>
+              <span class="p-hint"><span class="p-def">+ New skill…</span> defines a whole skill, and it joins your Metrics.</span>
+            </div>
+            <div class="p-field"><span class="p-lbl">Observed on</span><div class="p-in">2026-09-28</div></div>
+            <div class="p-field p-full"><span class="p-lbl">What did you see?</span><div class="p-in p-ta ph">The action, the setting and any cue you gave</div><span class="p-count">0 / 600</span></div>
+          </div>
+          <div class="p-sfoot"><span class="p-sec desk">Cancel</span><span class="p-pri off">Save observation</span></div>
+        </div>
+        <button type="button" class="mk" data-n="10" aria-label="Note 10">10</button>
+      </div>
+    </div>
+  </div>
+  <div class="notes" aria-label="Notes for section 4">
+    <div class="note prob" data-n="3" tabindex="0"><span class="n">3</span><div><h3>Inside a goal, the same dead button <span class="tag today">today</span></h3><p>An open goal offers Review goal, Record an observation and Edit wording. The middle one is switched off on the same condition, with the same hover-only tooltip. Jordan has no goal yet, so it isn’t on the screen you reported, but every player with a goal on that team has it.</p></div></div>
+    <div class="note" data-n="10" tabindex="0"><span class="n">10</span><div><h3>One form, from every door <span class="tag new">new</span></h3><p>The goal’s button always opens the form too. As today, the goal is named under the title and not asked again. With no skill yet, it offers the same <b>+ New skill…</b>, and the observation saves as evidence for that goal once the skill exists. Both doors are fixed together, so there is no second dead button left behind.</p></div></div>
+  </div>
+
+  <!-- ── 5 · NOT IN THIS CHANGE ── -->
+  <h2 class="sec">5 · Wider than this button, and deliberately not in this change</h2>
+  <div class="notes" aria-label="Notes for section 5">
+    <div class="note" data-n="11" tabindex="0"><span class="n">11</span><div><h3>Switched-off buttons look live across the whole product <span class="tag call">separate item · recommend</span></h3><p>The root cause is broader than this screen. The platform’s standard button has <b>no switched-off look at all</b>, in any portal. Roughly a hundred buttons across admin, coaches and public screens can be switched off. Most are only off for a moment while something saves, which does little harm. Some stay off for a reason the screen never shows, as this one did.</p><p class="rec-line"><b>Recommendation:</b> treat it as its own item with its own design ruling. It changes how buttons look in every portal, and the Admin Design Continuity work is mid-flight on the same surfaces. This fix doesn’t depend on it: once it lands, no button on the Skills &amp; Goals tab is switched off.</p></div></div>
+  </div>
+</div>
+</section>
+
+<!-- ═════════════════════════════ PM BRIEF ═════════════════════════════ -->
+<section id="hub-brief" hidden>
+<div class="doc">
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Record an observation, before the team has a skill</h1>
+  <p class="meta">Proposed 2026-09-28 · small fix to a defect reported on production</p>
+
+  <h2>What changes for the coach</h2>
+  <ul>
+    <li>On a player’s <b>Skills &amp; Goals</b> tab, <b>Record an observation</b> always opens its form: on the toolbar, and inside an open goal.</li>
+    <li>If the team hasn’t set up a skill yet, the form says so and offers <b>+ New skill…</b> under the Skill field. That opens the same skill setup Metrics uses, on top of the form. Saving it brings the coach straight back with the new skill picked and anything they had typed still there.</li>
+    <li><b>+ New skill…</b> is offered on every new observation, so a coach can add another skill mid-thought the same way.</li>
+    <li>On a phone, the link gets a thumb-sized tap area, and so does its twin “+ New test…” (if ruled in, D4).</li>
+  </ul>
+
+  <h2>Who it affects</h2>
+  <p>Coaches who can record observations today: those with the Development permission plus Internal notes. Nobody gains or loses access. Creating a skill needs the Development permission, and every coach who sees this button already has it, so the link never appears for someone it would refuse.</p>
+
+  <h2>Why it matters</h2>
+  <p>Today the button looks live and does nothing when the team has no skill. The only explanation is a hover tooltip that phones never show. A coach who clicks it assumes the feature is broken, and one who hovers is sent to another tab and has to find the player again. You found it on production.</p>
+
+  <h2>Customer impact</h2>
+  <p>It affects every team whose Metrics hold no active skill: teams that have only set up tests, and teams that haven’t opened Metrics yet. For most coaches this is their first try at observations, so it is the feature’s first impression.</p>
+
+  <h2>Priority</h2>
+  <p>Small and self-contained: a visible defect on production, no database change, one screen and the two forms it opens. It fits alongside current work.</p>
+
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach on a team with no skills goes from a player’s page to a saved observation without leaving the page.</li>
+    <li>No switched-off button remains on the Skills &amp; Goals tab.</li>
+    <li>A skill made this way appears in Metrics and in the session planner like any other.</li>
+  </ul>
+</div>
+</section>
+
+<!-- ═════════════════════════════ FULL PLAN ═════════════════════════════ -->
+<section id="hub-plan" hidden>
+<div class="doc">
+  <div class="eyebrow">Full plan</div>
+  <h1>Record an observation, before the team has a skill: implementation plan</h1>
+  <p class="meta">Drafted 2026-09-28 · waiting on D1–D5 · no migration</p>
+
+  <h2>What the code does today</h2>
+  <ul>
+    <li>Both “Record an observation” doors on the player’s Skills &amp; Goals section (the toolbar and an open goal) are <code>disabled</code> when the team has no active skill (<code>kind = skill</code> and active). The only explanation is a <code>title</code> tooltip: “Define a skill in Metrics first”. Source: <code>components/coaches/PlayerDevelopmentSection.tsx</code>, the toolbar door and the goal-row door.</li>
+    <li>The global <code>.btn</code> rule in <code>app/globals.css</code> has <b>no <code>:disabled</code> style</b>, so a disabled <code>btn btn-ghost</code> renders identically to an enabled one and still takes the hover fill.</li>
+    <li>The twin, <b>Record a result</b>, is never disabled. <code>RecordResultSheet</code> shows “+ New test…” under the Test select, which stacks <code>MetricDefinitionSheet</code> over the form (stage 1’s precedent, B8); on save it selects the new test and hands it to the host (<code>onTypeDefined</code>).</li>
+    <li>Production matches the current code for these files: no change since the 09-23 promote.</li>
+    <li>The reporting team’s skill list was not read directly in this session. The owner can confirm the cause by hovering the button.</li>
+  </ul>
+
+  <h2>Scope</h2>
+  <ol>
+    <li><b>The two doors (D1).</b> In <code>PlayerDevelopmentSection</code>, remove <code>disabled</code> and <code>title</code> from the toolbar door and the goal-row door.</li>
+    <li><b>The observation form (D1, D2).</b> <code>RecordObservationDialog</code> gains an optional define path: on a <b>new, un-fixed</b> observation (no <code>editing</code>, no <code>fixed</code>), a “+ New skill…” link under the Skill select, in the result sheet’s link style. It opens <code>MetricDefinitionSheet</code> stacked, with the kind fixed to skill. On save: select the new skill, clear the answer, and hand it to the host. It needs <code>orgSlug</code>, <code>teamId</code> and an <code>onSkillDefined</code> callback; hosts that pass nothing draw no link. The typed sentence survives, because the form stays mounted beneath the stacked sheet.</li>
+    <li><b>The setup form (D3).</b> <code>MetricDefinitionSheet</code> gains an optional <code>kind</code> prop. On a new definition it fixes the kind: Kind renders as a fact, and the title reads “Define a skill” or “Define a test”. Every existing caller passes nothing and is unchanged.</li>
+    <li><b>The host.</b> The player section adds the new skill to the library it holds, the same move <code>typeDefined</code> already makes for a test, so the skill list and the goal door see it at once.</li>
+    <li><b>Phone tap area (D4, if ruled in).</b> The shared link class gets a 44px tap area at ≤640px. That covers both “+ New skill…” and “+ New test…”.</li>
+    <li><b>Help.</b> One sentence in the Skills &amp; Goals article: with no skill yet, “+ New skill…” in the form defines one.</li>
+  </ol>
+  <div class="callout"><b>Where the link does not appear:</b> editing a saved observation (the skill is the record’s identity); a session’s grid (the chip fixes the skill); the Notes tab’s Edit (always editing). The session page and the Notes tab pass no define props, so nothing changes there.</div>
+
+  <h2>Out of scope</h2>
+  <ul>
+    <li><b>The product-wide switched-off look (D5).</b> About a hundred disabled global buttons, most transient while saving. That needs its own design ruling, and it overlaps the Admin Design Continuity work in flight.</li>
+    <li>Restoring a retired skill from the form. Metrics does that, as today.</li>
+  </ul>
+
+  <h2>Build notes (2026-09-28)</h2>
+  <ul>
+    <li><b>One shared door, <code>useNewMetricDoor</code>.</b> “+ New test…” and “+ New skill…” come from one hook. It returns the link (for inside the host’s form) and the stacked definition sheet (for beside the host’s shell), with the wording, the tap floor (44px at ≤768) and the kind-fixing in one place. The link style moved out of <code>PlayerDevelopment.module.css</code>’s <code>.defineLink</code>. <i>/simplify 2026-09-28 widened it from a shared link to the whole door, because the open, stack, pick and hand-back wiring was duplicated in both hosts and had already drifted (only one cleared a stale error).</i></li>
+    <li><b><code>MetricDefinitionSheet</code> takes <code>kind</code>.</b> A new definition from a record sheet’s door is fixed to that kind: Kind reads as a fact, the title is “Define a skill” or “Define a test”, and the unsaved-changes baseline starts from the same blank, so an untouched sheet cancels without asking.</li>
+    <li><b>Beyond the drawing (D3 applied to the twin):</b> Record a result passes <code>kind="test"</code>. Left a choice, a skill defined from “+ New test…” came back to a Test select that cannot hold it, with Save switched off and no reason given.</li>
+    <li><b>The Skill and Test fields are a <code>div</code> with a <code>label htmlFor</code></b>, no longer a wrapping <code>&lt;label&gt;</code>. Inside the label, the link’s whole sentence had become part of the select’s accessible name.</li>
+    <li><b>The setup sheet mounts beside the record sheet, never inside its form.</b> <code>QuestionShell</code> renders in place, so a sheet inside the form would be a form inside a form, and its submit would bubble into the observation’s save.</li>
+    <li>The help sentence is left for <code>/docs</code> (the article carries search keywords to keep in step).</li>
+  </ul>
+
+  <h2>Verification</h2>
+  <ul>
+    <li><b>Lint:</b> clean on the five components. <b>Unit:</b> the four suites that read these forms, 123/123. <b>Gates:</b> CSS selectors, CSS module purity, spelling and both contrast checks clean.</li>
+    <li><b>Typecheck:</b> nothing in these files. The run reports errors only in the practice-plan files another session has open (<code>lib/rep-practice-plan.ts</code>, <code>lib/types.ts</code> and their callers and tests).</li>
+    <li><b>Browser, 35/35</b> (<code>.probe/obs-first-skill.mjs</code>, dev, UAT Test Team in <code>uat-rep-club</code>, at 1440 and at 390 with touch). A team with no skill is simulated by hiding skills from that player’s read in the browser only. Both doors are live, with no tooltip. The goal door names the goal and offers the link. Save waits for a skill. The link measures 76 × 44 on a phone. The Skill select is named “Skill” alone. The setup sheet arrives as “Define a skill” with no Kind choice, and cancels without asking when untouched. Defining returns to the sheet with the skill picked, the sentence kept and the descriptors offered (a select at 1440, three rows at 390). Save goes live. No page errors. “+ New test…” arrives as “Define a test”. The probe skills were deleted, and the database was re-checked for leftovers.</li>
+  </ul>
+
+  <h2>Review (2026-09-28)</h2>
+  <ul>
+    <li><b>/simplify</b> (reuse, simplification, efficiency, altitude). One real finding: the link was shared but the open, stack, pick and hand-back wiring behind it was copied in both hosts and had already drifted. That became <code>useNewMetricDoor</code>. Also fixed: a duplicated <code>isNew</code> test, an unneeded memo, rationale written twice, and two parallel wording switches (now one table). Left alone: the session planner’s own “+ New test…” chip, which keeps the Kind choice deliberately.</li>
+    <li><b>/review</b> (standard tier; lenses: correctness, regression and blast radius, stacked-sheet state). Nothing above Advisory. Advisories, not acted on: (1) the observation sheet’s “initial skill” is recomputed from the library, so right after a team’s first skill is defined an untouched sheet closes without a discard question (nothing is lost, the skill is already saved); (2) a status re-read landing while the stack is open could drop the just-defined skill from the host’s list, but no control is reachable to trigger one, and Record a result has the same shape today; (3) the observation sheet has never carried a leave-page guard, which predates this change.</li>
+    <li><b>Gate:</b> lint clean; typecheck clean for these files (the tree’s errors are another session’s practice-plan work); CSS selectors clean for these files (the tree’s 14 orphans are the same session’s); CSS purity, spelling and contrast clean; <b>check:layout</b> on the player’s Skills &amp; Goals tab clean at 361, 390, 768 and 1440; 123/123 unit; the browser probe re-run after /simplify, 35/35.</li>
+  </ul>
+
+  <h2>Rollout</h2>
+  <p>No migration and no demo reseed; it ships with the next promote. The owner marked the QA walk complete on 2026-09-28.</p>
+</div>
+</section>
+
+<!-- ═════════════════════════════ DECISIONS ═════════════════════════════ -->
+<section id="hub-decisions" hidden>
+<div class="doc">
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="meta">Ruled 2026-09-28, all five as recommended: “agree with your recommendations, go ahead”.</p>
+  <div class="drow"><div class="dh"><strong>D1 · The button always opens its form; with no skill, the form offers “+ New skill…”</strong><span class="tag new">Accepted 2026-09-28 · built</span></div><p>This matches Record a result, which has never been switched off. <b>Rejected alternatives:</b> hiding the button until a skill exists removes the one place a coach finds out observations exist; greying it out with a visible reason is honest, but it is still a dead end that sends the coach to Metrics and leaves them to find their way back.</p></div>
+  <div class="drow"><div class="dh"><strong>D2 · “+ New skill…” shows on every new observation, not only when the list is empty</strong><span class="tag new">Accepted 2026-09-28 · built</span></div><p>“+ New test…” is always there on a new result. A link that appears only when the list is empty would teach the coach it’s an error path rather than a normal way to add a skill.</p></div>
+  <div class="drow"><div class="dh"><strong>D3 · From this door the setup form is fixed to Skill and titled “Define a skill”</strong><span class="tag new">Accepted 2026-09-28 · built</span></div><p>An observation can only be about a skill. Leaving Kind as a choice would let a coach define a test here and still have no skill.</p><p><b>Built one step further than drawn, so please confirm on the walk:</b> the drawing said Record a result was unchanged, but its “+ New test…” had the mirror-image defect. A skill defined there came back to a Test list that can’t hold it, with Save switched off and no reason given. The build applies the same rule to it, so it opens as “Define a test”. Metrics and the session planner keep the choice, because either kind belongs there.</p></div>
+  <div class="drow"><div class="dh"><strong>D4 · On a phone, the link gets a 44px tap area, and so does its twin “+ New test…”</strong><span class="tag new">Accepted 2026-09-28 · built</span></div><p>With no skill yet, the link is the coach’s only way forward, and as a bare text link it is only as tall as its text. Built: 76 × 44 at 390. The two links share one style, so one change covers both. The alternative is to leave both as they are and decide it with the dialog-footer tap-floor ruling that is still open.</p></div>
+  <div class="drow"><div class="dh"><strong>D5 · Switched-off buttons that look live, product-wide</strong><span class="tag new">Accepted 2026-09-28 · a separate item</span></div><p>This changes how buttons look in every portal and overlaps the Admin Design Continuity work, so it should get its own design ruling. This fix does not depend on it.</p></div>
+</div>
+</section>
+
+<section id="hub-qa" hidden>
+<div class="doc">
+  <div class="eyebrow">Owner QA walk · one purpose</div>
+  <h1>Record an observation, with no skill yet</h1>
+  <div class="callout"><b>✓ Marked complete by the owner, 2026-09-28.</b> The steps stay below as the record of what was walked.</div>
+  <p class="meta">Does a coach on a team with no skill get from a player’s page to a saved observation without leaving it? Tick as you go; ticks, verdicts and notes stay in this browser. “Build paste-back summary” at the foot gives text to paste into the chat.</p>
+  <div class="callout"><b>Sign in as</b> the UAT coach on the dev server (http://localhost:3000): uat-coach@uat-test-org.local, password in .env.local. Club <b>UAT Rep Club</b>, team <b>UAT Test Team</b>. The team’s only skill is <b>Sets feet before throwing</b>; the walk retires it at the start and restores it at the end, which loses nothing.</div>
+
+  <div class="qapart" data-part="A"><h3>A · Make it a team with no skill</h3>
+    <label class="qastep"><input type="checkbox" data-step="A-1"> Skills &amp; Goals → Metrics: open <b>Sets feet before throwing</b> and <b>Retire</b> it. Metrics now lists tests only.</label>
+    <div class="verdictrow" data-verdict="A"></div><textarea data-notes="A" rows="2" placeholder="Anything worth recording"></textarea>
+  </div>
+
+  <div class="qapart" data-part="B"><h3>B · The toolbar button, on a desktop</h3>
+    <label class="qastep"><input type="checkbox" data-step="B-1"> Roster → <b>Devon Test</b> → Skills &amp; Goals → Goals. <b>+ Record an observation</b> on the toolbar opens the form. Skill reads <b>No skill defined yet</b>, with “<b>+ New skill…</b> defines a whole skill, and it joins your Metrics.” under it. <b>Save observation</b> is greyed out.</label>
+    <label class="qastep"><input type="checkbox" data-step="B-2"> Type a sentence in <b>What did you see?</b>, then click <b>+ New skill…</b>. A form titled <b>Define a skill</b> opens on top, and <b>Kind of metric</b> reads <b>Skill</b> as plain text, not a dropdown. <b>Cancel</b> closes it straight away with no “discard?” question, and your sentence is still in the observation.</label>
+    <label class="qastep"><input type="checkbox" data-step="B-3"> <b>+ New skill…</b> again. Name it <b>Walk skill</b>, list three descriptors one per line, then <b>Save definition</b>. You are back in the observation: Skill reads <b>Walk skill</b>, <b>Descriptor</b> offers your three words, your sentence is still there, and <b>Save observation</b> is live. Save it: it appears on the <b>Notes</b> tab.</label>
+    <div class="verdictrow" data-verdict="B"></div><textarea data-notes="B" rows="2" placeholder="Anything worth recording"></textarea>
+  </div>
+
+  <div class="qapart" data-part="C"><h3>C · The goal’s own button</h3>
+    <label class="qastep"><input type="checkbox" data-step="C-1"> Open one of Devon’s goals. <b>Record an observation</b>, between Review goal and Edit wording, opens the same form with the goal’s name under the title, and <b>Walk skill</b> is in the Skill list. Close it.</label>
+    <div class="verdictrow" data-verdict="C"></div><textarea data-notes="C" rows="2" placeholder="Anything worth recording"></textarea>
+  </div>
+
+  <div class="qapart" data-part="D"><h3>D · On a phone</h3>
+    <label class="qastep"><input type="checkbox" data-step="D-1"> On your phone, same player: <b>+ Record an observation</b>. <b>+ New skill…</b> is easy to hit with a thumb. Define <b>Phone skill</b> with three descriptors. Back in the form, the descriptors are big tappable rows and <b>Save observation</b> sits at the bottom of the screen. Back out without saving.</label>
+    <div class="verdictrow" data-verdict="D"></div><textarea data-notes="D" rows="2" placeholder="Anything worth recording"></textarea>
+  </div>
+
+  <div class="qapart" data-part="E"><h3>E · The twin, and tidying up</h3>
+    <label class="qastep"><input type="checkbox" data-step="E-1"> Results → <b>Record a result</b> → <b>+ New test…</b> opens <b>Define a test</b>, with Kind as plain text. <i>(This is the one step past the drawing, D3.)</i> Cancel both.</label>
+    <label class="qastep"><input type="checkbox" data-step="E-2"> Notes tab: remove the observation from B-3. Metrics: <b>Restore</b> Sets feet before throwing, then <b>Delete</b> Walk skill and Phone skill (Delete is offered because nothing points at them any more).</label>
+    <div class="verdictrow" data-verdict="E"></div><textarea data-notes="E" rows="2" placeholder="Anything worth recording"></textarea>
+  </div>
+
+  <p class="qaprogress" id="qaCount"></p>
+  <button type="button" class="qabtn" id="buildSummary">Build paste-back summary</button>
+  <textarea id="summaryOut" rows="10" readonly hidden></textarea>
+</div>
+</section>
+
+<script>
+  (function () {
+    var $ = function (id) { return document.getElementById(id); };
+    var HUBS = ['mockup', 'brief', 'plan', 'decisions', 'qa'];
+    function showHub(w) {
+      HUBS.forEach(function (h) { var s = $('hub-' + h); if (s) s.hidden = (h !== w); });
+      document.querySelectorAll('[data-hub]').forEach(function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-hub') === w)); });
+      try { history.replaceState(null, '', '#' + w); } catch (e) {}
+      window.dispatchEvent(new Event('resize'));
+    }
+    document.querySelectorAll('[data-hub]').forEach(function (b) { b.addEventListener('click', function () { showHub(b.getAttribute('data-hub')); }); });
+    var initial = (location.hash || '').slice(1); if (HUBS.indexOf(initial) > -1) showHub(initial);
+
+    /* phone width: reflows the two whole-screen stages only */
+    var phone = $('phoneToggle'), wholes = [$('beforeStage'), $('afterStage')];
+    phone.addEventListener('click', function () {
+      var on = phone.getAttribute('aria-pressed') !== 'true';
+      phone.setAttribute('aria-pressed', String(on)); phone.textContent = on ? 'Full width' : 'Phone width';
+      wholes.forEach(function (s) { if (s) s.classList.toggle('phone', on); });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    /* markers, notes and regions: every highlight opens its explanation */
+    var lit = null;
+    function setLit(n) {
+      var same = (n === lit);
+      document.querySelectorAll('.lit').forEach(function (el) { el.classList.remove('lit'); });
+      lit = same ? null : n; if (!lit) return;
+      document.querySelectorAll('.mk[data-n="' + lit + '"], .note[data-n="' + lit + '"], [data-r="' + lit + '"]').forEach(function (el) { el.classList.add('lit'); });
+    }
+    function place() {
+      document.querySelectorAll('.stage').forEach(function (stage) {
+        stage.querySelectorAll('.mk').forEach(function (b) {
+          var r = stage.querySelector('[data-r="' + b.getAttribute('data-n') + '"]'); if (!r) return;
+          var top = 0, el = r; while (el && el !== stage) { top += el.offsetTop; el = el.offsetParent; }
+          b.style.top = (top + Math.max(0, (r.offsetHeight - 26) / 2)) + 'px';
+        });
+      });
+    }
+    place(); window.addEventListener('resize', place); if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    function lightAndScroll(n) { setLit(n); var note = document.querySelector('.note[data-n="' + n + '"]'); if (note && lit) note.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
+    document.querySelectorAll('.mk, button.tag[data-n]').forEach(function (b) { b.addEventListener('click', function () { lightAndScroll(b.getAttribute('data-n')); }); });
+    document.querySelectorAll('.note').forEach(function (nt) {
+      nt.addEventListener('click', function () { setLit(nt.getAttribute('data-n')); });
+      nt.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setLit(nt.getAttribute('data-n')); } });
+    });
+  })();
+</script>
+<script>
+  /* QA walk: ticks, verdicts and notes kept in this browser only. Its own script, so a slip here can
+     never take the tabs down with it. */
+  (function () {
+    var KEY = 'obs-first-skill-qa-v1', qa = {};
+    try { qa = JSON.parse(localStorage.getItem(KEY) || '{}'); } catch (e) { qa = {}; }
+    function save() { try { localStorage.setItem(KEY, JSON.stringify(qa)); } catch (e) {} }
+    var VERDICTS = [['pass', 'Pass'], ['issue', 'Issue'], ['call', 'Needs a call']];
+    var steps = Array.prototype.slice.call(document.querySelectorAll('[data-step]'));
+    function paint() { var n = steps.filter(function (s) { return s.checked; }).length; document.getElementById('qaCount').textContent = 'Checked ' + n + ' of ' + steps.length; }
+    steps.forEach(function (s) { s.checked = !!qa[s.getAttribute('data-step')]; s.addEventListener('change', function () { qa[s.getAttribute('data-step')] = s.checked; save(); paint(); }); });
+    document.querySelectorAll('.verdictrow').forEach(function (row) {
+      var part = row.getAttribute('data-verdict');
+      row.appendChild(document.createTextNode('Verdict:'));
+      VERDICTS.forEach(function (v) {
+        var b = document.createElement('button'); b.type = 'button'; b.textContent = v[1];
+        b.setAttribute('aria-pressed', String(qa['verdict-' + part] === v[0]));
+        b.addEventListener('click', function () { qa['verdict-' + part] = v[0]; save(); row.querySelectorAll('button').forEach(function (x) { x.setAttribute('aria-pressed', String(x === b)); }); });
+        row.appendChild(b);
+      });
+    });
+    document.querySelectorAll('[data-notes]').forEach(function (t) { var part = t.getAttribute('data-notes'); t.value = qa['notes-' + part] || ''; t.addEventListener('input', function () { qa['notes-' + part] = t.value; save(); }); });
+    paint();
+    document.getElementById('buildSummary').addEventListener('click', function () {
+      var lines = ['Record an observation, with no skill yet: QA summary', document.getElementById('qaCount').textContent, ''];
+      document.querySelectorAll('.qapart').forEach(function (p) {
+        var id = p.getAttribute('data-part');
+        lines.push(p.querySelector('h3').textContent + ' (verdict: ' + (qa['verdict-' + id] || 'unset') + ')');
+        p.querySelectorAll('[data-step]').forEach(function (s) { lines.push('  [' + (s.checked ? 'x' : ' ') + '] ' + s.getAttribute('data-step') + ' ' + s.parentNode.textContent.trim().slice(0, 90)); });
+        if (qa['notes-' + id]) lines.push('  Notes: ' + qa['notes-' + id]);
+        lines.push('');
+      });
+      var out = document.getElementById('summaryOut'); out.value = lines.join('\n'); out.hidden = false; out.focus(); out.select();
+    });
+  })();
+</script>
