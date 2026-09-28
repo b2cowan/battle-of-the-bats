@@ -80,8 +80,8 @@ const accountingHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to add income or expenses',
       summary: 'Record confirmed and expected money with descriptions, categories, payees, and statuses.',
-      keywords: ['add income', 'add expense', 'entry', 'posted', 'pending', 'category', 'payee', 'payment method'],
-      searchText: 'add income add expense ledger entry posted pending category description date amount payee payer payment method notes receipt invoice tournament fees umpire diamond rental',
+      keywords: ['add income', 'add expense', 'entry', 'posted', 'pending', 'category', 'payee', 'payment method', 'save payee', 'one-time payee'],
+      searchText: 'add income add expense ledger entry posted pending category description date amount payee payer saved payee list save as org payee one-time payee new payee vendor payment method notes receipt invoice tournament fees umpire diamond rental',
       content: (
         <>
           <p>Every ledger entry should be understandable later without needing to remember the context.</p>
@@ -89,7 +89,7 @@ const accountingHelp: HelpPageContent = {
             <li>Open the ledger where the money belongs and add a new entry.</li>
             <li>Choose <strong>Income</strong> for money received or <strong>Expense</strong> for money spent.</li>
             <li>Enter a clear description, date, amount, and category.</li>
-            <li>Optionally record the <strong>Payee/Payer</strong> (an org member or a typed name), the <strong>Payment Method</strong> (e-transfer, cheque, cash, etc.), and internal <strong>Notes</strong>.</li>
+            <li>Optionally record the <strong>Payee/Payer</strong> — pick one from your organization&apos;s saved list, or type a new name and choose <strong>Use &ldquo;…&rdquo; as one-time</strong> or <strong>Save &ldquo;…&rdquo; as org payee</strong> to keep it in the list for next time. You can also record the <strong>Payment Method</strong> (e-transfer, cheque, cash, etc.) and internal <strong>Notes</strong>.</li>
             <li>Use <strong>Posted</strong> for confirmed transactions and <strong>Pending</strong> for expected invoices or deposits.</li>
             <li>Save, then confirm the balance summary changed as expected.</li>
           </ol>
@@ -250,14 +250,14 @@ const accountingHelp: HelpPageContent = {
       id: 'reminders',
       heading: 'Automated reminders and planning tools',
       summary: 'Send dues and allocation reminders, and open the Org Budget and Budget vs. Actual tools.',
-      keywords: ['reminders', 'dues reminders', 'allocation reminders', 'org budget', 'budget vs actual', 'planning'],
-      searchText: 'automated reminders dues reminders 30-day 7-day wave guardians allocation reminders org budget budget vs actual planning tools owner treasurer admin send reminders automatic daily send now runs on its own do i have to click',
+      keywords: ['reminders', 'dues reminders', 'allocation reminders', 'org budget', 'budget vs actual', 'planning', 'add budget item', 'new budget line'],
+      searchText: 'automated reminders dues reminders 30-day 7-day wave guardians allocation reminders org budget budget vs actual planning tools owner treasurer admin send reminders automatic daily send now runs on its own do i have to click add a budget line add budget item new item not in the list add to your list item category',
       content: (
         <>
           <p>The Accounting Overview gives owners and treasurers two planning tools and two reminder actions.</p>
           <p><strong>Planning Tools:</strong></p>
           <ul>
-            <li><strong>Org Budget</strong> — plan the season&apos;s budget by category and line, and allocate costs to teams.</li>
+            <li><strong>Org Budget</strong> — plan the season&apos;s budget by category and line, and allocate costs to teams. Each line picks an item from your list; for something new, type its name in the item box, choose <strong>+ Add &ldquo;…&rdquo; to your list</strong>, pick its category and click <strong>Add item</strong>.</li>
             <li><strong>Budget vs. Actual</strong> — track allocation and team collection status (see below).</li>
           </ul>
           <p><strong>Dues Reminders</strong> now go out <strong>automatically</strong>. Each day, guardians of players with an upcoming installment receive a reminder email — one about a week ahead and one about a month ahead — for any team whose <strong>Automatic Dues Reminders</strong> switch is on (each coach controls their own team&apos;s switch under Team settings → Money). A guardian is never emailed twice in the same week for the same installment, and quiet days send nothing. You don&apos;t have to do anything to keep this running.</p>

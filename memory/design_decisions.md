@@ -59,6 +59,84 @@ live coaches immediately (the coaches portal has no switch).
 **Why it ships now, not with the admin:** 1 is a reading defect coaches in Dark have today; 2 and 3 make
 the portal consistent with its own rules. Owner chose it knowingly.
 
+### 2026-09-25 (later) — THE WHOLE ADMIN SIDE JOINS THE ONE ACCOUNT THEME AND THE COACHES PORTAL'S DESIGN SYSTEM — club, tournament, house league, scorekeeper and gate; a shared foundation first, redesigns after (owner; program `ADMIN_DESIGN_CONTINUITY_PLAN.md`, hub https://claude.ai/artifact/R1Zcp2s93gmgaHGHn6SLSZ)
+
+**The question.** Owner, reading the Club Stage 1 mockups: *"I would like to have continuity there
+(including in the tournament modules) where we have light/dark theme in all and they follow the same
+design patterns. I want to use the coaches portal as the model since that one is the most recent and has
+had the most optimal design decisions made."* The entry below (D12) only covered club screens, only in
+warm, one screen at a time.
+
+**The ruling (R0–R5, all accepted as recommended).**
+- **R0** Every working screen an organization's people use follows the ONE account theme (warm default,
+  dark opt-in — the 2026-07-21 TH-1 rider's single preference) and the coaches portal's kit. This reopens
+  TH-1's **"admin deferred"** clause.
+- **R1** The organization's colour leaves the admin chrome (today ~76 reads of the org's `--primary*` /
+  `--border` / `--glow*` in admin CSS); it stays on public pages. This completes M2 rather than reversing it:
+  the admin is platform chrome.
+- **R2** Public pages (and the admin's previews of them) keep the organization's branding and never follow
+  the account theme — M2 restated.
+- **R3** Scorekeeper and gate screens: excluded from the preference (guest links, no account) but NOT from
+  the design system — restyled to the kit in the warm default.
+- **R4** The help guide follows the theme once the admin does — supersedes the 2026-08-14 "one fixed dark
+  reading surface" ruling recorded in `app/globals.css` (`[data-help-surface]`).
+- **R5** The foundation (the frame + every admin screen restyled to render in both themes, layouts
+  unchanged) lands BEFORE the Club Stage 1 build; club, tournament and house-league REDESIGNS follow in
+  their own mockup sessions.
+
+**Why the order changed.** D12's screen-by-screen path, stretched to the owner's wider goal, would have
+produced a patchwork for months: a warm club hub, dark Rep Teams pages and dark tournament screens inside one
+shared frame, which is less consistent than today. The frame is one piece of code for club and tournament
+admin, so it cannot follow the theme for clubs alone. **Restyle ≠ redesign** is the load-bearing split:
+the foundation changes how screens LOOK and nothing about how they WORK, so a both-theme screenshot sweep
+can prove it; each redesign keeps its own owner mockup session.
+
+**Weight.** An owner acceptance of recommendations, made in chat after the scope was explained; the
+specific look of each screen is still decided in its own mockup session. Scale measured the same day:
+86 admin screens (27 tournament), ~812 colour literals in 54 admin stylesheets, ~1,868 inline style blocks.
+
+**Phase 1 foundation rulings F1–F4 (owner, 2026-09-25, "I agree with your recommendations on F1-F4"; drawn
+on hub v2, specimens 3–7):**
+- **F1** The admin ignores the organization's public card style. `data-card-style` (glass / outlined) is a
+  public-site choice that is stamped on the whole `[orgSlug]` tree today; the admin stops reading it (R1's
+  reasoning: the organization's look belongs on its public pages).
+- **F2** Admin type follows the kit: the monospace face (`--font-data`) only on eyebrows, chips and
+  readouts; titles, navigation, buttons and table headings in the body face (561 uses in 47 admin sheets).
+- **F3** Admin page headers carry NO subtitle line — the `CoachPageHeader` 2026-08-11 rule, extended to the
+  admin. Context goes in the eyebrow or in the body it describes. (The ratified Club Stage 1 drawings were
+  corrected to this in club hub v8.)
+- **F4** Dense money tables (ledgers, budget-vs-actual) are RESTYLED in place in Phase 1: same columns, the
+  kit's table and chips, amounts right-aligned in the body face with tabular digits. They are REDESIGNED only
+  in Club Stage 3's own money mockup session.
+
+**How Phase 1 is built, and R5 refined (owner, 2026-09-25, "I agree"):** behind a dev-only switch, released
+on ONE day (the coaches portal's warm rollout precedent), because every session promotes the same `dev`.
+Club Stage 1 is split: its server half runs now; its six screens are redesigned behind the same switch
+after the foundation's first slice, so the foundation does not restyle screens about to be replaced. Plan
+§3a of `ADMIN_DESIGN_CONTINUITY_PLAN.md`.
+
+### 2026-09-25 — THE CLUB-ADMIN SIDE ADOPTS THE WARM KIT SCREEN BY SCREEN, AS EACH STAGE'S MOCKUP TOUCHES A SCREEN — never as a separate blanket re-theme (owner, Club readiness D12; plan `CLUB_TIER_PRODUCTION_READINESS_PLAN.md` §5)
+
+> ⚠ **AMENDED THE SAME DAY — see the entry above.** Club screens are still redesigned inside each club
+> stage, but drawn in BOTH themes, on a shared foundation (all admin, tournament included) that lands first.
+
+**The question.** The coaches portal is warm; the club-admin side still wears the older dark
+"HUD/blueprint" theme (`admin.module.css`, `admin-common.module.css`), so an owner who also coaches
+flips between two visual worlds, and the rep-teams cluster's raw white-alpha literals (J4-050)
+break in light mode. Should the admin side move to the warm design system before the Club release?
+
+**The ruling.** Yes, but **inside the work, not beside it**: every Club readiness stage's mockup
+session draws its screens in the warm kit's tokens and components, and the build adopts them for
+the screens that stage touches. No standalone "re-theme the admin" project. The first decision
+point is the Stage 1 mockup session (hub, sidebar, phone bar are redrawn there), so no later stage
+is drawn twice. The rep-teams light-mode literals are fixed with Stage 2.
+
+**Why.** A re-theme as its own project competes with the readiness work for the same screens and
+lands twice; drawing each screen once, in the kit it will ship in, is the cheaper path and keeps the
+[[project_coach_shared_style_kit]] rule (shared component over shared class) in force on the admin
+side. Weight: an owner acceptance of a recommendation, not a visual ruling from a screenshot — the
+specifics of each screen are still decided in that stage's mockup session.
+
 ### 2026-09-23 — A FORM COVERS THE NAV; A MENU SITS ON TOP OF IT: the coaches portal has TWO drawer layers and the test is the surface's CONTRACT WITH THE COACH, not what opened it or how big it looks (owner ruling, binding, portal-wide)
 
 **The question.** Owner, reading the observation dialog on a phone: *"what is our rule about opening

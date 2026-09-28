@@ -444,11 +444,12 @@ const orgHelp: HelpPageContent = {
         {
           id: 'faq-public-page-no-teams-tab',
           question: 'Why is there no Teams tab on my public page?',
-          answerText: 'Rep teams do not have a public index page yet, so there is nowhere for a Teams tab to lead. Individual team pages exist and are reachable from your front page, and a visitor on one still sees the trail back to your organization. The tab appears once the index page ships. The row deliberately leaves it out rather than offering a tab that would bounce the visitor somewhere unexpected.',
-          keywords: ['teams tab', 'no teams tab', 'rep teams missing', 'teams section', 'tryouts link'],
+          answerText: 'Rep teams do not have a public index page yet, so there is nowhere for a Teams tab to lead. Individual team pages exist, each with a link back to your front page, but your front page does not list them. The exception is tryouts: while a team\'s tryout registration is open, your front page shows a Tryouts Are Open card that takes families straight to that tryout\'s page, which links to the team\'s own page. The tab appears once the index page ships. The row deliberately leaves it out rather than offering a tab that would bounce the visitor somewhere unexpected.',
+          keywords: ['teams tab', 'no teams tab', 'rep teams missing', 'teams section', 'tryouts link', 'tryouts are open', 'team page link'],
           answer: (
             <>
-              <p>Rep teams don&rsquo;t have a public <em>index</em> page yet — there is no single page listing them — so there is nowhere for a Teams tab to lead. Individual team pages do exist and are reachable from your front page, and a visitor on one still sees the trail back to your organization.</p>
+              <p>Rep teams don&rsquo;t have a public <em>index</em> page yet — there is no single page listing them — so there is nowhere for a Teams tab to lead. Individual team pages do exist, each with a link back to your front page, but your front page doesn&rsquo;t list them.</p>
+              <p>The exception is tryouts: while a team&rsquo;s tryout registration is open, your front page shows a <strong>Tryouts Are Open</strong> card that takes families straight to that tryout&rsquo;s page, which links on to the team&rsquo;s own page.</p>
               <p>The tab appears as soon as that index page ships. Until then the row deliberately leaves it out rather than offering a tab that would bounce the visitor somewhere unexpected.</p>
             </>
           ),

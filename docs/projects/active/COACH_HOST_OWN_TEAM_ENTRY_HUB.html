@@ -442,6 +442,10 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 </section>
 
 <script>
+/* CORE NAVIGATION — its own script (2026-09-27). A syntax error stops a whole script, and for two weeks
+   twelve unescaped apostrophes in the decisions and QA data below disabled every tab on this hub,
+   the QA walk included. Keep this block free of prose. Before publishing, parse both scripts:
+   node -e "new (require('vm').Script)(text)". */
 'use strict';
 const $=id=>document.getElementById(id);
 const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -451,6 +455,11 @@ function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden
 document.querySelectorAll('[data-hub]').forEach(b=>b.onclick=()=>showHub(b.dataset.hub));
 
 $('phone').onclick=()=>{const narrow=$('frame').classList.toggle('phone');$('phone').setAttribute('aria-pressed',String(narrow));$('phone').textContent=narrow?'Full width':'Phone width'};
+</script>
+<script>
+/* CONTENT — screens, findings, decisions, the QA walk. Uses $, esc and showHub from above.
+   ⚠ Strings are single-quoted: escape every apostrophe (host\'s), or this whole block stops. */
+'use strict';
 
 const intents={
  's-before':'The owner\'s screenshot, redrawn. The whole page exists to get teams in, and the host has one door that cannot mean "me".',
@@ -484,33 +493,33 @@ document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){
 const DECISIONS=[
  {date:'2026-09-13',ask:'Should a hosting coach be able to search other clubs\' teams from the Teams page "to ensure proper linkage"?',ruling:'rejected',label:'Rejected',why:'Every connection on the platform is made by the team\'s own coach — registering or accepting. An organizer-side directory would attach a roster, schedule and chat to a team that never agreed to it, and open a cross-club read the product has nowhere else. The worry behind the ask is answered by Parts A and B instead.'},
  {date:'2026-09-13',ask:'The three-part proposal: Add my team for the host · email-aware Add Team · no directory',ruling:'accepted',label:'Accepted',why:'"I agree with your proposal, write it up." Parts A and B accepted; Part C surfaced as a prerequisite while planning.'},
- {date:'2026-09-13',ask:'D1 — Payment status of the host's own team',ruling:'accepted',label:'Paid by default',why:'"Go ahead" on the recommendation: the team owes nothing to its own event, and an Unpaid row would sit in every chase list. Editable on the dialog and on the row like any team.'},
+ {date:'2026-09-13',ask:'D1 — Payment status of the host\'s own team',ruling:'accepted',label:'Paid by default',why:'"Go ahead" on the recommendation: the team owes nothing to its own event, and an Unpaid row would sit in every chase list. Editable on the dialog and on the row like any team.'},
  {date:'2026-09-13',ask:'D2 — May a staff member holding Run tournaments click Add my team?',ruling:'accepted',label:'Yes',why:'The switch hands over the whole tournament page or nothing (delegation ruling); a second gate on one button contradicts it. The entry is written under the head coach whoever clicks.'},
  {date:'2026-09-13',ask:'D3 — Email-aware Add Team: a real lookup, or copy only?',ruling:'accepted',label:'The lookup',why:'Org-admin only, exact match, a yes/no and nothing else, rate-limited per user. What it discloses is the fact the notify email discloses anyway by landing or bouncing.'},
  {date:'2026-09-13',ask:'D4 — Backfill existing from-scratch portals on production',ruling:'accepted',label:'Yes',why:'Data-only migration 297, applied to dev the same day (four from-scratch workspaces repaired, incl. the UAT standalone fixture); prod-owed at the next promote and recorded in MANUAL_PROD_STEPS. The runtime also self-heals on first read, so a late apply degrades to "created on first visit", never "stranded".'},
- {date:'2026-09-13',ask:'D5 — Part D (the record follows the list) in scope?',ruling:'accepted',label:'In, roster deferred',why:'Built: the record and its two APIs read the same right the Tournaments list reads. Deferred to its own line: whose roster a Premium team submits (roster submission still reads the free-team shadow's master roster, which may be empty).'}
+ {date:'2026-09-13',ask:'D5 — Part D (the record follows the list) in scope?',ruling:'accepted',label:'In, roster deferred',why:'Built: the record and its two APIs read the same right the Tournaments list reads. Deferred to its own line: whose roster a Premium team submits (roster submission still reads the free-team shadow\'s master roster, which may be empty).'}
 ];
 $('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('')||'<p class="sub">No rulings recorded yet.</p>';
 
 const QA_PARTS=[
- {id:'A',title:'Add my team — the host's own team, one click',steps:[
+ {id:'A',title:'Add my team — the host\'s own team, one click',steps:[
   'In uat-standalone → Tournaments → Run your own tournament: create a small tournament (any style) with at least one division. Open Manage → Teams.',
   'The Teams header shows a ghost "Add my team" (star) LEFT of the lime Add Team; the empty state shows both buttons side by side. Screenshot 2 on the Mockup tab.',
   'Click Add my team. The dialog is titled "Add UAT Standalone Team to this tournament" — no team name, coach or email field. Division is preselected; Payment status defaults to Paid; one sentence says it is registered under your head coach and shows on your Tournaments page.',
   'Add my team → the row appears, status Accepted, payment Paid, coach = YOUR name and email. The row carries a lime "Your team" chip; the header button is GONE (not greyed) and the empty-state button with it.',
   'Click the "Your team" chip: a dialog explains the row (your team, registered under the head coach, edits like any other team). Close it.',
   'Refresh the page. Button still gone, chip still present (the state is read from the server, not remembered by the browser).',
-  'Go to the portal's Tournaments page. The tournament appears under "This season" AS AN ENTRY (accepted) and under "Tournaments you run" as the host — both. Tap the entry: the record opens (schedule, status, roster submission, announcements).',
+  'Go to the portal\'s Tournaments page. The tournament appears under "This season" AS AN ENTRY (accepted) and under "Tournaments you run" as the host — both. Tap the entry: the record opens (schedule, status, roster submission, announcements).',
   'Back on Teams: edit the row (status, payment, seed) — it edits like any other registration. Do NOT delete it.',
  ]},
  {id:'B',title:'Add my team — a delegate, and the refusals',steps:[
   'On uat-standalone → Staff: give a non-head-coach staff member the "Run tournaments" switch (Manager preset has it on). Sign in as that person (or use a second browser).',
-  'As the head coach, create a SECOND hosted tournament (leave your team out of it). As the delegate, open it from Tournaments you run → Manage → Teams: "Add my team" is present. Add it: the registration's coach and email are the HEAD COACH's, not the delegate's.',
-  'In uat-test-org (the club) → any tournament → Teams: there is NO "Add my team" anywhere — header or empty state. The club's "Link to rep team" control is unchanged.',
+  'As the head coach, create a SECOND hosted tournament (leave your team out of it). As the delegate, open it from Tournaments you run → Manage → Teams: "Add my team" is present. Add it: the registration\'s coach and email are the HEAD COACH\'s, not the delegate\'s.',
+  'In uat-test-org (the club) → any tournament → Teams: there is NO "Add my team" anywhere — header or empty state. The club\'s "Link to rep team" control is unchanged.',
   'Complete (lock) a hosted tournament that has no entry from your team, then open Teams: Add my team is absent (locked tournaments take no new teams), same as Add Team.',
  ]},
  {id:'C',title:'Email-aware Add Team — every organization',steps:[
-  'In uat-test-org → a tournament → Teams → Add Team. Type a team name; in Email, type the UAT coach's own email and tab out. A lime status line appears under the field: "This coach is on FieldLogicHQ…" and the Notify checkbox turns itself ON.',
+  'In uat-test-org → a tournament → Teams → Add Team. Type a team name; in Email, type the UAT coach\'s own email and tab out. A lime status line appears under the field: "This coach is on FieldLogicHQ…" and the Notify checkbox turns itself ON.',
   'Untick Notify (allowed — it does not fight you). Change the email to a made-up address (e.g. nobody-here-2026@example.com) and tab out: the line changes to the "When you notify them, this email becomes their sign-in…" wording; the checkbox stays as you left it.',
   'Clear the email: no status line at all. Type half an address (no @): no status line.',
   'Save a team with the made-up email and Notify ON: the same email arrives as before — nothing about the save changed. Close and re-open Add Team: the status line starts blank (it never carries over).',
@@ -518,12 +527,12 @@ const QA_PARTS=[
  {id:'D',title:'The from-scratch portal sees its entries (Part C)',steps:[
   'Signed in as the UAT coach, open a PUBLIC registration page of a uat-test-org tournament (Register). In the "which team" picker your teams are listed; the portal team reads "UAT Standalone Team · Coaches Portal". Pick it and register.',
   'Open uat-standalone → Tournaments: the entry appears under "This season" (before this build a from-scratch portal never saw it). Tap it: the record opens.',
-  'In uat-test-org → that tournament → Teams: the new row is an ordinary registration (no "Your team" chip — that chip is only for the HOST's own team on a portal-run tournament).',
+  'In uat-test-org → that tournament → Teams: the new row is an ordinary registration (no "Your team" chip — that chip is only for the HOST\'s own team on a portal-run tournament).',
  ]},
  {id:'E',title:'The record follows the list (Part D — W1 and W2)',steps:[
   'W2: sign in as an assistant coach or the team manager of uat-standalone (someone who did NOT register anything). Tournaments → tap the entry from Part A or Part D: the record OPENS (before: a 404). Roster submission shows the submit form; its pick list may be empty for a from-scratch portal — expected, deferred (plan §3.D).',
-  'W1: in uat-test-org (League/Club) → a tournament → Teams → on any registration use "Link to rep team" and link it to a uat-test-org rep team you coach. Then, as that rep team's coach, open the coach Tournaments page: the entry is listed and TAPPING IT OPENS the record (before: 404).',
-  'Negative: from the record URL of Part A, swap the teamId segment in the address bar for a different team you coach (or a random id): you are sent back to that team's Tournaments list, not shown a record under the wrong team.',
+  'W1: in uat-test-org (League/Club) → a tournament → Teams → on any registration use "Link to rep team" and link it to a uat-test-org rep team you coach. Then, as that rep team\'s coach, open the coach Tournaments page: the entry is listed and TAPPING IT OPENS the record (before: 404).',
+  'Negative: from the record URL of Part A, swap the teamId segment in the address bar for a different team you coach (or a random id): you are sent back to that team\'s Tournaments list, not shown a record under the wrong team.',
   'Negative: sign in as a coach with NO assignment on the team (or a staff member whose access is "Everyday" only, no schedule) and open the record URL: no record (list redirect or 404).',
  ]},
 ];

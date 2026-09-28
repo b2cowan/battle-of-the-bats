@@ -98,3 +98,28 @@
     order: -1;
   }
 }
+
+/* ── Inside the admin kit (warm or dark) — the kit's notice band and its ink-on-lime button.
+   The rules above were drawn for the old dark admin; under the warm theme their lime and blue
+   remap to olive, which made the button an olive FILL (olive is for lime-as-text, never a fill —
+   globals.css `.btn-lime` warm rule). The band matches the kit's plain `.notice` (ClubKit). */
+:global([data-coach-warm-enabled]) .banner {
+  border-radius: 8px;
+  border-color: var(--home-line-strong);
+  background: var(--home-olive-soft);
+}
+
+:global([data-coach-warm-enabled]) .error {
+  color: var(--danger-light);
+}
+
+:global([data-coach-warm-enabled]) .cta {
+  border-radius: var(--radius-sm);
+  background: var(--home-lime);
+  color: var(--home-lime-ink);
+}
+
+:global([data-coach-warm-enabled]) .cta:hover:not(:disabled) {
+  opacity: 1;
+  background: rgba(var(--home-lime-rgb), 0.82);
+}

@@ -497,19 +497,26 @@ const platformAdminHelp: HelpPageContent = {
       group: 'Billing SOP',
       heading: 'How to handle retained or at-risk accounts',
       summary: 'Use the retention queue for accounts approaching retention deadlines after downgrade or cancellation.',
-      keywords: ['retention', 'cancel', 'cancellation', 'downgrade', 'archive', 'purge', 'deadline'],
+      keywords: ['retention', 'cancel', 'cancellation', 'downgrade', 'archive', 'purge', 'deadline', 'coaches portal retention', '365 days', 'one year', 'retention reminder', 'warning email', 'process retention'],
+      searchText: 'retention window length how long is data kept 90 days organization 365 days one year coaches portal cancelled coaches portal reminder warning email 14 days 30 days before deadline process expiry button run the sweep manually pending purge',
       links: [
         { label: 'Retention', href: '/platform-admin/retention' },
       ],
       content: (
         <>
           <p>The retention queue helps platform staff review accounts with retained data after cancellation or downgrade. Use it to see upcoming deadlines and extend a retention date when the business has approved more time.</p>
+          <ul>
+            <li><strong>Organizations</strong> are kept for 90 days. The owner is warned 14 days before the deadline.</li>
+            <li><strong>A standalone Coaches Portal</strong> is kept for 365 days, whichever way it ended: the coach cancelled, you cancelled, or Stripe ended it after failed payments. The owner is warned 30 days before the deadline.</li>
+          </ul>
           <ol>
             <li>Open <strong>Retention</strong>.</li>
+            <li>Select <strong>Process expiry</strong>. This sends the warning emails that are due and marks expired records as pending purge.</li>
             <li>Review accounts due soon, including the retention deadline and reason.</li>
             <li>If approved, extend the deadline using the available action and enter the reason.</li>
             <li>Document any customer communication in the org's internal notes.</li>
           </ol>
+          <HelpNote variant="warning" title="Nothing runs this on a schedule">Warning emails go out only when someone selects Process expiry. Run it at least weekly, or a customer can miss the reminder they were promised.</HelpNote>
           <p>Do not promise permanent retention unless product and billing policy explicitly allow it.</p>
         </>
       ),
@@ -833,6 +840,7 @@ const platformAdminHelp: HelpPageContent = {
           content: (
             <>
               <p>After cancellation the account moves to <code>canceled</code> status, the public site is unpublished, all non-archived tournaments are archived, and data is retained for 90 days. The Stripe subscription is canceled immediately.</p>
+              <p>A standalone Coaches Portal is kept for 365 days instead. If you tick <strong>Send cancellation confirmation email to org owner</strong>, the coach gets the Coaches Portal cancellation email: it gives the date the team is kept until, and its Resubscribe link brings back the same team rather than starting a new portal.</p>
               <HelpNote variant="warning" title="If Stripe fails but the in-app state succeeded">You will see a warning — complete the Stripe cancellation manually from the <strong>Open Stripe</strong> link on the org detail page.</HelpNote>
             </>
           ),
@@ -979,10 +987,10 @@ const platformAdminHelp: HelpPageContent = {
           id: 'faq-delete-org-retention',
           question: 'Does org deletion immediately erase data or is it retained for 90 days?',
           answer: (
-            <p>Canceling a subscription creates a 90-day retention window before data is purged. Hard-deleting the org bypasses retention and removes data immediately. Use the retention queue for standard cancellations, and hard deletion only for GDPR or explicitly approved data erasure requests.</p>
+            <p>Canceling a subscription creates a retention window: 90 days for an organization, 365 days for a standalone Coaches Portal. When the window ends, the account is marked pending purge in the retention queue. Nothing is deleted automatically. Hard-deleting the org bypasses retention and removes data immediately. Use the retention queue for standard cancellations, and hard deletion only for GDPR or explicitly approved data erasure requests.</p>
           ),
-          answerText: 'Cancellation creates a 90-day retention window. Hard deletion bypasses retention and removes data immediately — use it only for GDPR or approved erasure requests.',
-          keywords: ['retention', '90 days', 'immediate deletion', 'gdpr'],
+          answerText: 'Cancellation creates a retention window: 90 days for an organization, 365 days for a standalone Coaches Portal. When it ends the account is marked pending purge; nothing is deleted automatically. Hard deletion bypasses retention and removes data immediately — use it only for GDPR or approved erasure requests.',
+          keywords: ['retention', '90 days', '365 days', 'coaches portal retention', 'pending purge', 'immediate deletion', 'gdpr'],
           popular: true,
         },
       ],

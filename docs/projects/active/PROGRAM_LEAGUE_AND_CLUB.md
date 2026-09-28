@@ -1,8 +1,16 @@
 # Program — League & Club segments
 
-> **Status: PARKED — owner decision 2026-07-28.** League is not production-ready as a whole. It will
-> be picked up as a **full capability evaluation**, started by the owner once the Coach Portal work is
-> finalised. Nothing here is scheduled and no launch decision is open.
+> **Status: EVALUATION STARTED 2026-09-25 (owner).** The full capability evaluation this ledger
+> waited for is now the staged programme in
+> [CLUB_TIER_PRODUCTION_READINESS_PLAN.md](CLUB_TIER_PRODUCTION_READINESS_PLAN.md) (+ PM brief +
+> hub). **Release target: the Club plan for rep clubs with NO house league; house league is the
+> last stage** and is expected to ship as its own standalone plan (= un-park League Plus) and as a
+> Club feature. The §2 inventory below was re-verified against the current tree on 2026-09-25 and is
+> superseded by that plan's §4 defect ledger — read the plan, not this section, for what is broken.
+>
+> *(Superseded header, kept for the record:)* **PARKED — owner decision 2026-07-28.** League is not
+> production-ready as a whole. It will be picked up as a **full capability evaluation**, started by
+> the owner once the Coach Portal work is finalised.
 >
 > **Consolidated 2026-07-28.** Replaces 7 league/club plan-brief files (§4).
 > **Purpose while parked:** hold the inventory — what exists, what's known-broken, what the future

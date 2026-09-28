@@ -82,14 +82,14 @@ const repTeamsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to open tryouts and review applicants',
       summary: 'Turn on the public tryout form, process applications, and close registration when evaluations are done.',
-      keywords: ['tryouts', 'open registration', 'applicants', 'offer', 'accept', 'decline', 'consent', 'compliance', 'no emails to families', 'tell families yourself'],
-      searchText: 'open tryouts review applicants public tryout form registration pending review extend offer accept decline close registration add applicant offer extended consent guardian consent privacy data collection PIPEDA CASL compliance consent column consent record export no emails sent to families nothing emailed decisions recorded only you tell families yourself no offer email no accept decline link no welcome email no release note application received receipt offer letter you write',
+      keywords: ['tryouts', 'open registration', 'applicants', 'offer', 'accept', 'decline', 'consent', 'compliance', 'no emails to families', 'tell families yourself', 'tryouts are open', 'tryout link', 'too many attempts'],
+      searchText: 'open tryouts review applicants public tryout form registration tryouts are open card front page home page where do families apply tryout link family cannot submit too many attempts try again later limit pending review extend offer accept decline close registration add applicant offer extended consent guardian consent privacy data collection PIPEDA CASL compliance consent column consent record export no emails sent to families nothing emailed decisions recorded only you tell families yourself no offer email no accept decline link no welcome email no release note application received receipt offer letter you write',
       content: (
         <>
           <p>Tryout registration belongs to a specific team program year.</p>
           <ol>
             <li>Open the team and select the correct program year, then go to <strong>Tryouts</strong>.</li>
-            <li>Turn on <strong>Open Registration</strong> so families can apply from your org&apos;s public page.</li>
+            <li>Turn on <strong>Open Registration</strong> so families can apply. While it is open, your organization&apos;s public front page shows a <strong>Tryouts Are Open</strong> card for it that takes families straight to the tryout&apos;s page and its form.</li>
             <li>Review incoming applicants in <strong>Pending Review</strong>.</li>
             <li>Use <strong>Extend Offer</strong> to mark a player as invited. It <strong>records your decision and sends nothing</strong> — the offer itself is a letter your club writes, on your own terms, so you reach the family yourself. That holds for every decision on this screen: no email leaves it.</li>
             <li>Use <strong>Accept</strong> once the family has said yes — one click puts them on the roster and makes them visible to the coach. <strong>No fees are set here</strong>: what a family owes usually depends on the final roster size, so dues are set afterwards from the team&apos;s Money screens. <strong>Waitlist</strong> and <strong>Decline</strong> likewise only record where things stand.</li>
@@ -110,6 +110,19 @@ const repTeamsHelp: HelpPageContent = {
               <p>Yes. The public tryout form requires the parent or guardian to confirm <strong>two</strong> things before they can submit: consent to data collection, and that they&apos;re the guardian and the player is eligible to try out.</p>
               <p>Emails about <strong>club news and future seasons</strong> are a separate <strong>optional</strong> box, unchecked by default — Canada&apos;s anti-spam rules (CASL) treat that as marketing consent, and it&apos;s never a condition of applying. The only email the form sends is <strong>one confirmation that the application was received</strong> — transactional, so it goes regardless of that box, and the form says so plainly. Offers, waitlist moves and decisions are <strong>never</strong> emailed by us; you reach the family directly.</p>
               <p>The <strong>Tryouts</strong> list shows a <strong>Consent</strong> column with the date, and the <strong>applicant export</strong> includes the consent record plus the news-email answer. Applicants you enter manually with <strong>Add Applicant</strong> won&apos;t carry a form consent record.</p>
+            </>
+          ),
+        },
+        {
+          id: 'faq-tryout-too-many-attempts',
+          question: 'A family says the tryout form told them “Too many attempts.” What happened?',
+          answerText: 'The public tryout form limits how many times it can be sent from one internet connection, and how many confirmation emails one address can receive, within an hour. It stops automated abuse, such as someone using the form to flood a stranger\'s inbox. A family normally only meets it when many applications go in from the same connection in a short time, for example several families applying on one shared tablet, or the same email address sent again and again. Ask them to wait a few minutes and try again. If you are taking applications in person on one device, enter them yourself with Add Applicant, which has no such limit (manually added applicants do not carry a form consent record).',
+          keywords: ['too many attempts', 'try again later', 'form limit', 'cannot submit', 'form blocked', 'rate limit'],
+          answer: (
+            <>
+              <p>The public tryout form limits how many times it can be sent from one internet connection, and how many confirmation emails one address can receive, within an hour. It stops automated abuse, such as someone using the form to flood a stranger&apos;s inbox.</p>
+              <p>A family normally meets it only when many applications go in from the same connection in a short time (several families on one shared tablet, say) or the same email address is sent again and again. Ask them to wait a few minutes and try again.</p>
+              <p>Taking applications in person on one device? Enter them yourself with <strong>Add Applicant</strong>, which has no such limit. Manually added applicants don&apos;t carry a form consent record.</p>
             </>
           ),
         },
@@ -196,11 +209,11 @@ const repTeamsHelp: HelpPageContent = {
       group: 'Org-level tools',
       heading: 'Organizing teams into groups',
       summary: 'Group teams by competitive tier (e.g. AA, A, Select) to filter and organize the list.',
-      keywords: ['team groups', 'groups', 'competitive tier', 'filter teams'],
-      searchText: 'team groups competitive tier AA A select filter organize teams create rename delete group assign team to group',
+      keywords: ['team groups', 'groups', 'competitive tier', 'filter teams', 'ungrouped'],
+      searchText: 'team groups competitive tier AA A select filter organize teams create rename delete group assign team to group ungrouped teams without a group no group all groups',
       content: (
         <>
-          <p>If you run many teams, use <strong>Team Groups</strong> to organize them by tier or category (for example, AA, A, and Select). From the Rep Teams page you can create, rename, and delete groups, assign a team to a group when you create it, and filter the team list by group.</p>
+          <p>If you run many teams, use <strong>Team Groups</strong> to organize them by tier or category (for example, AA, A, and Select). From the Rep Teams page you can create, rename, and delete groups, assign a team to a group when you create it, and filter the team list by group. Choose <strong>Ungrouped</strong> in the filter to find the teams that don&apos;t belong to a group yet.</p>
         </>
       ),
     },

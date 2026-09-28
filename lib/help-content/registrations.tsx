@@ -96,8 +96,8 @@ const registrationsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to add a manual registration',
       summary: 'Enter a player who registered outside the public form.',
-      keywords: ['manual registration', 'add registration', 'walk-in', 'carry-over player'],
-      searchText: 'manual registration add registration walk-in carry-over player public form offline division status active pending waitlisted guardian fee paid',
+      keywords: ['manual registration', 'add registration', 'walk-in', 'carry-over player', 'registration night'],
+      searchText: 'manual registration add registration walk-in carry-over player public form offline division status active pending waitlisted guardian fee paid registration night in person table one laptop too many attempts',
       content: (
         <>
           <p>Use manual registration for walk-ins, migrated records, late approvals, or players collected outside the public form.</p>
@@ -129,6 +129,34 @@ const registrationsHelp: HelpPageContent = {
           answerText:
             'Yes since August 2026. Public-form acceptance stores the time and the exact waiver wording, and shows as consent on the family record. Older rows and manual registrations show no acceptance, meaning not recorded rather than refused.',
           keywords: ['waiver', 'accepted', 'consent', 'recorded', 'proof', 'signed'],
+        },
+        {
+          id: 'faq-registration-too-many-attempts',
+          question: 'A family says the registration form told them “Too many attempts.” What happened?',
+          answer: (
+            <>
+              <p>
+                The public registration form and the registration status lookup limit how many times
+                they can be used from one internet connection, and how many confirmation emails one
+                address can receive, within an hour. It stops automated abuse, such as someone using
+                the form to flood a stranger&rsquo;s inbox.
+              </p>
+              <p>
+                A family normally meets it only when many registrations go in from the same
+                connection in a short time (a registration table running everyone through one
+                laptop, say) or the same email address is sent again and again. Ask them to wait a
+                few minutes and try again.
+              </p>
+              <p>
+                Taking registrations in person on one device? Enter them yourself with{' '}
+                <strong>Add Registration</strong>, which has no such limit. No guardian sees the
+                waiver on a manual entry, so it shows no acceptance.
+              </p>
+            </>
+          ),
+          answerText:
+            'The public registration form and the status lookup limit how many times they can be used from one internet connection, and how many confirmation emails one address can receive, within an hour, to stop automated abuse such as flooding a stranger\'s inbox. A family normally meets it only when many registrations go in from the same connection in a short time (a registration table running everyone through one laptop) or the same email is sent again and again. Ask them to wait a few minutes and try again. For in-person registration on one device, use Add Registration, which has no such limit; a manual entry shows no waiver acceptance.',
+          keywords: ['too many attempts', 'try again later', 'form limit', 'cannot register', 'form blocked', 'rate limit', 'registration night', 'status lookup'],
         },
       ],
     },
