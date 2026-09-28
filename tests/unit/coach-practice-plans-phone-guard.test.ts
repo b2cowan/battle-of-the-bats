@@ -122,7 +122,26 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     const station = fn('StationModal');
     assert.match(station, /const phone = useIsPhone\(\);/);
     assert.match(station, /\{phone && \(\s*<WalkOnward /);
-    assert.match(station, /<RoomWalkNav nav=\{\{ \.\.\.walk, noun: 'stations', onSelect: onStep \}\} compact=\{phone\} \/>/);
+    assert.match(station, /<RoomWalkNav nav=\{\{ \.\.\.walk, noun: 'stations', onSelect: onStep \}\} compact=\{phone\}\s*end=\{onAddStation && \{ label: 'Add a station', onSelect: onAddStation \}\} \/>/);
+  });
+
+  it('the LAST station adds one instead of dead-ending on "End" (owner, 2026-09-28)', () => {
+    // "When I get to the end I should be able to add a station rather than just having a dead end."
+    const station = fn('StationModal');
+    assert.match(station, /kicker="Next station" meta=\{nextWho \|\| null\} onAdd=\{onAddStation\} \/>/);
+    // The phone's end-of-body row: the fact, then the action — "Add a station", never the dead line.
+    const onward = fn('WalkOnward');
+    assert.match(onward, /\) : onAdd \? \(\s*<button type="button" className=\{styles\.ppWalkNext\} onClick=\{onAdd\}>/);
+    // The block's own add, so the two can never add differently; never while reading or on a full block.
+    assert.match(src, /onAddStation=\{!readOnly && \(openStationBlock\.stations\?\.length \?\? 0\) < MAX_STATIONS_PER_BLOCK\s*\? \(\) => addStationTo\(openStation\.blockId\) : undefined\}/);
+    // A drill picked from inside the form is the station the form steps to.
+    assert.match(src, /if \(openStation\?\.blockId === blockId\) setOpenStation\(\{ blockId, stationId: fresh\.id \}\);/);
+    // The shared stepper: the end action takes the dead "End"'s place only when one is passed —
+    // the money rooms pass none and keep it.
+    const nav = stripComments(readSource('components/coaches/RoomShell.tsx'));
+    assert.match(nav, /\{!nav\.next && end \? \(/);
+    assert.match(nav, /\{nav\.next\?\.label \?\? 'End'\}/);
+    assert.doesNotMatch(nav, /<RoomWalkNav nav=\{nav\} busy=\{busy\} end=/);
   });
 
   it('K2 — the sheet mounts BEFORE the station modal, so every door inside a block opens over it', () => {
@@ -335,7 +354,8 @@ describe('practice plans on a phone · stage 2 (S1 · S2 · S4)', () => {
 
   it('S2 — adding opens the station it made, at every width; on a phone there is no chooser first', () => {
     assert.match(src, /setOpenStation\(\{ blockId, stationId: made\.id, fresh: true \}\);/);
-    assert.match(src, /onAddStation: \(swapId\?: string\) => \(!swapId && phoneSheet\s*\? addBlankStation\(block\.id\)/);
+    assert.match(src, /const addStationTo = \(blockId: string\) => \(phoneSheet\s*\? addBlankStation\(blockId\)\s*: setDrillSheet\(\{ kind: 'station', blockId \}\)\);/);
+    assert.match(src, /onAddStation: \(swapId\?: string\) => \(swapId\s*\? setDrillSheet\(\{ kind: 'station', blockId: block\.id, swapId \}\)\s*: addStationTo\(block\.id\)\)/);
     // The cursor in the name — after the floor, so it survives the dev build's double mount.
     const modal = fn('StationModal');
     assert.ok(modal.indexOf('useDialogFloor(') < modal.indexOf('if (focusName) nameRef.current?.focus();'), 'the name focus runs after the floor');

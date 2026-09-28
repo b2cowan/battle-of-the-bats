@@ -681,6 +681,18 @@ The target is met for the head coach and the assistant; the stress case needs on
 
 **Verified:** the phone guard (the N2 describe rewritten, a sheet-shape test added) and the two practice vocabulary / week guards — 106 / 106 · `tsc` clean · lint 0 errors · spelling and CSS-selector gates · `check:layout --only=coach-practice-plan-head,coach-practice-plan` clean at 361 / 390 / 1440 (768: the known masthead "?"). The sweep does not open dialogs, so the dialog geometry rests on the probes. Help: the practice plan article, the Send to staff FAQ and the phone FAQ name the ⋯ and the sheet's first line. Walk: QA walk · 1, part N (now 9 steps) — **✅ walked and passed 2026-09-25**, owner: *"ok that is much better, go ahead and consider the QA walk complete"*.
 
+## 6j · The last station adds one (owner ask 2026-09-28, on a desktop screenshot; built on dev the same day, uncommitted)
+
+Owner: *"While I am making stations, when I get to the end I should be able to add a station rather than just having a dead end."* The station form's walk ended on a disabled **"End ›"**.
+
+- **Every width.** On the last station the walk's next slot is **"+ Add a station"** (compact on a phone: **+**), and a phone's end-of-body row reads *That's the last station · **Add a station** +* instead of the dead line. It is the block's own add (`addStationTo`, now the one behaviour both call): a desk opens the "Add a station" chooser over the form; a phone makes a blank station and opens it (cursor in the name, "Start from a drill ›" under it).
+- **The form steps to what it added.** "Write a station" already opened the blank one; a drill picked from the chooser now does too, when it was asked for from inside that block's form. From the block's columns it still lands shut.
+- **Not offered** while reading, or on a block at `MAX_STATIONS_PER_BLOCK` (12) — "End" as before. The shared stepper takes the end action only when passed (`RoomWalkNav`'s `end`); the money rooms pass none and keep "End".
+- **Not done (the twin, left for the owner):** the phone block sheet's walk dead-ends the same way ("That's the last block."). Keys unchanged: → at the end still does nothing.
+- **Verified:** the phone guard (a new test pins the end action, the shared add, the step to a picked drill and the money rooms keeping "End") — 33 / 33 · `verify:changed` 5,057 / 5,057 · `tsc` clean · lint clean · `check:layout --only=coach-practice-station,coach-practice-circuit` no new findings at 361 / 390 / 768 / 1440 (the sweep opens station 1, so it never sees the add).
+- **/review 2026-09-28** (3 lenses): no defect in the change. Probe `.probe/pp-last-station-add.mjs 390|1440` — every localhost non-GET answered locally, the one PUT stubbed, a reload proves 3 stations as found — ALL PASSED: reading keeps "End"; editing offers the add (phone 44×44 foot + 359×57 row; desk 130×30); desk chooser → Write one → 4 of 4, cursor in name → a drill → 5 of 5, chooser shut, focus on the foot's add inside the form, ← still steps; phone row → 4 of 4, cursor in name, Escape → the untouched new one gone. Kept on purpose: → at the end does NOT add (an arrow key steps, never creates). Found, pre-existing, NOT fixed (owner's call): both station adds return at the 12-station limit without closing the chooser — reachable only when another tab fills the block while it is open.
+- ⚠ The UAT coach fixture lives in `uat-rep-club` since 2026-09-26 (Club Tier B05); the older probes' `uat-test-org` URLs now hit the plan wall. Resolve the practice with the sweep's `resolveUatContext`.
+
 ## 7 · Not in scope
 
 - The desktop and the 641–768 band — every drawing here is a ≤640 form.

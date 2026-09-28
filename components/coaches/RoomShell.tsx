@@ -1,6 +1,6 @@
 'use client';
 import { useRef, type ReactNode } from 'react';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import CoachModalHeader from './CoachModalHeader';
 import CoachCollapseSection from './CoachCollapseSection';
@@ -76,8 +76,18 @@ export interface RoomNav {
  * `compact` — "‹ 2 of 3 ›", the arrows unnamed on screen (the names stay in their `aria-label`s).
  * For a phone foot, where a named pair gets ~7 letters a name (§227 walk, owner 2026-09-23): the
  * practice sheets name the next stop IN FULL at the end of their body instead (`WalkOnward`).
+ *
+ * `end` — what the LAST record offers in place of the dead "End": the station form's "+ Add a
+ * station" (owner, 2026-09-28: "when I get to the end I should be able to add a station rather
+ * than just having a dead end"). Only where making the next one IS the walk's natural next step —
+ * the money rooms pass none and keep "End".
  */
-export function RoomWalkNav({ nav, busy = false, compact = false }: { nav: RoomNav; busy?: boolean; compact?: boolean }) {
+export function RoomWalkNav({ nav, busy = false, compact = false, end }: {
+  nav: RoomNav;
+  busy?: boolean;
+  compact?: boolean;
+  end?: { label: string; onSelect: () => void };
+}) {
   return (
     <nav className={`${s.nav}${compact ? ` ${s.navCompact}` : ''}`} aria-label={`Other ${nav.noun}`}>
       <button
@@ -91,16 +101,23 @@ export function RoomWalkNav({ nav, busy = false, compact = false }: { nav: RoomN
         {!compact && <span className={s.navLabel}>{nav.prev?.label ?? 'Start'}</span>}
       </button>
       <span className={s.navCount}>{nav.index} of {nav.total}{compact ? '' : ` ${nav.noun}`}</span>
-      <button
-        type="button"
-        className={s.navBtn}
-        disabled={!nav.next || busy}
-        aria-label={nav.next ? `Next: ${nav.next.label}` : 'No next record'}
-        onClick={() => { if (nav.next) nav.onSelect(nav.next.id); }}
-      >
-        {!compact && <span className={s.navLabel}>{nav.next?.label ?? 'End'}</span>}
-        <ChevronRight size={16} aria-hidden />
-      </button>
+      {!nav.next && end ? (
+        <button type="button" className={s.navBtn} disabled={busy} aria-label={end.label} onClick={end.onSelect}>
+          <Plus size={16} aria-hidden />
+          {!compact && <span className={s.navLabel}>{end.label}</span>}
+        </button>
+      ) : (
+        <button
+          type="button"
+          className={s.navBtn}
+          disabled={!nav.next || busy}
+          aria-label={nav.next ? `Next: ${nav.next.label}` : 'No next record'}
+          onClick={() => { if (nav.next) nav.onSelect(nav.next.id); }}
+        >
+          {!compact && <span className={s.navLabel}>{nav.next?.label ?? 'End'}</span>}
+          <ChevronRight size={16} aria-hidden />
+        </button>
+      )}
     </nav>
   );
 }

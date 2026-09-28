@@ -750,11 +750,15 @@ function StationModal({
   block, station, readOnly, focusName = false, onStartFromDrill, onTouched, onEdit, onDoneEditing, withoutPeople,
   staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, equipmentTags, onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
-  nameOf, onPatch, onDelete, onStep, onClose, onOpenPicker, onDetach, onSwapDrill, onPromote,
+  nameOf, onPatch, onDelete, onStep, onClose, onOpenPicker, onDetach, onSwapDrill, onPromote, onAddStation,
 }: {
   block: PracticePlanBlock;
   station: PracticeStation;
   readOnly: boolean;
+  /** The LAST station's way on (owner, 2026-09-28 — "rather than just having a dead end"): the
+   *  walk's "End" becomes "+ Add a station", the block's own add. Absent while reading and on a
+   *  full block, where "End" stays. */
+  onAddStation?: () => void;
   /** A station the coach JUST ADDED opens with the cursor in its name (practice plans on a phone,
    *  S2 — the new block's title rule, one level down). */
   focusName?: boolean;
@@ -874,7 +878,7 @@ function StationModal({
           />
           {phone && (
             <WalkOnward walk={{ ...walk, noun: 'stations', onSelect: onStep }} noun="station"
-              kicker="Next station" meta={nextWho || null} />
+              kicker="Next station" meta={nextWho || null} onAdd={onAddStation} />
           )}
         </div>
 
@@ -883,7 +887,8 @@ function StationModal({
             sat under ✓ "Done editing", which does the opposite. */}
         {(!phone || walk.total > 1) && (
           <div className={`${styles.modalFooter} ${styles.ppSheetFoot}`}>
-            <RoomWalkNav nav={{ ...walk, noun: 'stations', onSelect: onStep }} compact={phone} />
+            <RoomWalkNav nav={{ ...walk, noun: 'stations', onSelect: onStep }} compact={phone}
+              end={onAddStation && { label: 'Add a station', onSelect: onAddStation }} />
             {!phone && <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>}
           </div>
         )}
@@ -1768,13 +1773,15 @@ function stationDoorFor(key: string): HTMLElement | null {
  * wraps rather than cuts. The way back is a quiet link under it. Both steps go through the walk's
  * own `onSelect`, so they are exactly the foot's arrows.
  */
-function WalkOnward({ walk, noun, kicker, meta }: {
+function WalkOnward({ walk, noun, kicker, meta, onAdd }: {
   walk: RoomNav;
   noun: 'block' | 'station';
   /** "Next · 11:45 p.m." — the destination's clock where it has one. */
   kicker: string;
   /** One quiet line under the name — the block's length, the station's people. */
   meta?: string | null;
+  /** At the last stop, the row adds one instead of saying there is none (the foot's `end`, in full). */
+  onAdd?: () => void;
 }) {
   if (walk.total <= 1) return null;
   return (
@@ -1787,6 +1794,14 @@ function WalkOnward({ walk, noun, kicker, meta }: {
             {meta && <span className={styles.ppWalkNextMeta}>{meta}</span>}
           </span>
           <ChevronRight size={16} aria-hidden />
+        </button>
+      ) : onAdd ? (
+        <button type="button" className={styles.ppWalkNext} onClick={onAdd}>
+          <span className={styles.ppWalkNextText}>
+            <span className={styles.ppWalkNextKicker}>That’s the last {noun}</span>
+            <span className={styles.ppWalkNextName}>Add a {noun}</span>
+          </span>
+          <Plus size={16} aria-hidden />
         </button>
       ) : (
         <p className={styles.ppWalkEnd}>That’s the last {noun}.</p>
@@ -3217,6 +3232,10 @@ export default function PracticePlanEditor({
       // station 2. `splitBlockIntoStations` is the whole decision; a wordless block or a circuit
       // simply gains the station.
       setBlocks(plan.blocks.map(b => (b.id === blockId ? splitBlockIntoStations(b, fresh) : b)));
+      // Asked for from INSIDE this block's station form (the last station's "+ Add a station"):
+      // the form steps to the drill it just added, as "Write a station" steps to the blank one —
+      // left behind on the station before, the coach would have to find what they asked for.
+      if (openStation?.blockId === blockId) setOpenStation({ blockId, stationId: fresh.id });
     }
     setDrillSheet(null);
   }
@@ -3513,6 +3532,14 @@ export default function PracticePlanEditor({
      lone block stays on its page — it has no list to leave. Decided in JS, not CSS: the two
      presentations differ in STRUCTURE (a row plus a dialog vs a card), which a stylesheet cannot do. */
   const phoneSheet = useIsPhone(!soloBlock); // `false` answers false — the circuit editor never asks
+  /* "+ Add a station" — ONE behaviour for the block's add control and the last station's walk
+     (owner, 2026-09-28), so the two can never add differently. On a phone it makes the station and
+     opens it — no chooser first (S2 = A: the block's own K4, one level down; the library is "Start
+     from a drill ›" inside it). A desk keeps the chooser as its first stop: it has the library
+     panel to drag from as well. */
+  const addStationTo = (blockId: string) => (phoneSheet
+    ? addBlankStation(blockId)
+    : setDrillSheet({ kind: 'station', blockId }));
   const sheetIndex = phoneSheet && openId ? plan.blocks.findIndex(b => b.id === openId) : -1;
   const sheetBlock = sheetIndex >= 0 ? plan.blocks[sheetIndex] : undefined;
   useOverlayOpen(!!pickerTarget || !!openDrillSheet || !!openPromoting || !!openStationRow || !!openGroupsBlock || !!openNewDrill || !!sheetBlock);
@@ -3636,12 +3663,9 @@ export default function PracticePlanEditor({
     },
     onPatch: (patch: Partial<PracticePlanBlock>) => patchBlock(block.id, patch),
     onOpenPicker: setAttach,
-    /* On a phone "+ Add a station" and "+ Stations" make the station and open it — no chooser first
-       (S2 = A: the block's own K4, one level down; the library is "Start from a drill ›" inside it).
-       A desk keeps the chooser as its first stop: it has the library panel to drag from as well. */
-    onAddStation: (swapId?: string) => (!swapId && phoneSheet
-      ? addBlankStation(block.id)
-      : setDrillSheet({ kind: 'station', blockId: block.id, swapId })),
+    onAddStation: (swapId?: string) => (swapId
+      ? setDrillSheet({ kind: 'station', blockId: block.id, swapId })
+      : addStationTo(block.id)),
     onDetachStation: (stationId: string) => detachStation(block.id, stationId),
     onSwapStation: (stationId: string) => setDrillSheet({ kind: 'station', blockId: block.id, swapId: stationId }),
     onPromoteStation: (stationId: string) => {
@@ -4050,6 +4074,8 @@ export default function PracticePlanEditor({
           onDetach={() => detachStation(openStation.blockId, openStation.stationId)}
           onSwapDrill={() => setDrillSheet({ kind: 'station', blockId: openStation.blockId, swapId: openStation.stationId })}
           onPromote={() => { setPromoteError(''); setPromoting({ kind: 'station', blockId: openStation.blockId, stationId: openStation.stationId }); }}
+          onAddStation={!readOnly && (openStationBlock.stations?.length ?? 0) < MAX_STATIONS_PER_BLOCK
+            ? () => addStationTo(openStation.blockId) : undefined}
         />
       )}
 
