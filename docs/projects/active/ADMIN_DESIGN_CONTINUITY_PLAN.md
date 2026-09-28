@@ -18,7 +18,7 @@
 > sweep done; /simplify + /review done (owner: "Go ahead with simplify, review and commit"); **COMMITTED
 > `9d1b1670` 2026-09-27**. **Slice 1's open questions RULED 2026-09-27** (the shared phone bar's Dark
 > labels and its case, Warm's card shadows — fixed in BOTH portals, live coaches included; the preview's
-> Warm tab bar → slice 6) — results in §3a after 4c's. Slice 5 (scorekeeper, official, gate; the help
+> Warm tab bar → slice 6) — results in §3a after 4c's; /review done; **COMMITTED `dca4ac25` 2026-09-27**. Slice 5 (scorekeeper, official, gate; the help
 > guide) is next.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
@@ -1144,6 +1144,20 @@ stylesheet and the warm block, so they reach live coaches with the next promote.
   the admin carries only with the switch on (the notification panel's warm prop is kit-only too). Guards
   23 / 23, `verify:changed` green, lint clean. A whole-portal coach sweep was not run (a shared-stylesheet
   change widens it to every coach screen; the scoped before/after stands in) — slice 6's prove step runs it.
+- **`/review` (standard tier — shared tokens + the shared bar; 2 lenses + main loop; owner: "ok run review
+  then commit"):** no defect. **Raised to the owner, open:** in Dark the inactive tab names are now as light
+  as the active one (`--data-gray` #94A3B8 vs `--blueprint-light` #859BD5, 1.07:1 between them; was 1.86:1),
+  so the active tab is told apart by its pill and dot — as **Warm has been since 2026-08-18** (`b291e02`):
+  the warm `.tab { color: var(--text-tertiary) }` outranks `.tab.active` (0,3,1 over 0,2,0) and greys the
+  active name too, where both hubs draw it olive and bolder. A one-line follow-up either way. **Refuted:**
+  "the help surface re-reads `--home-line-rgb` for the warm shadows" (a custom property's `var()` resolves
+  on the declaring element; no help surface consumes the tokens, and the `--dk-*` list's own rule covers the
+  day one does); "the warm `.tab` override is dead" (it is what greys the active tab; the `.dropSectionLabel`
+  one is redundant, kept as a harmless pin). Checked fine: no `drop-shadow()` / `inset` use of the tokens,
+  every consumer has a border, no label relied on the capitals, no dangling `barLabel`. Extra rendered check
+  (team hub, team switch sheet, notifications, help; both themes): no faint bar label anywhere; Dark's "new"
+  items are pre-existing card and badge debt. Aside, not this diff: `--shadow-md` (ChatPanel ×5) is defined
+  nowhere, so those panels have no shadow in either theme. **COMMITTED `dca4ac25` 2026-09-27.**
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as

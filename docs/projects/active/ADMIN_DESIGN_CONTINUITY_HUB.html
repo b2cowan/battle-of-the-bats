@@ -453,7 +453,7 @@ dialog.truesize::backdrop{background:#16201899}
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27. Slice 1's open questions ruled 2026-09-27; the phone bar and Warm shadow fixes built for both portals">Build</li>
+    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27. Slice 1's open questions ruled 2026-09-27; the phone bar and Warm shadow fixes committed dca4ac25 for both portals">Build</li>
     <li class="stage" title="—">Review</li>
     <li class="stage" title="—">QA</li>
     <li class="stage" title="—">Shipped</li>
@@ -490,9 +490,9 @@ dialog.truesize::backdrop{background:#16201899}
 
   <h2>Waiting on you</h2>
   <div class="waiting">
-    <p class="sub" style="margin:0">You answered slice 1's three open questions and placed the preview issue on 2026-09-27 (see Decisions). What is left is a commit and the calls to confirm on your walk. Neither blocks the next slice.</p>
+    <p class="sub" style="margin:0">You answered slice 1's three open questions and placed the preview issue on 2026-09-27 (see Decisions); the fixes are committed. One question from their review, and the calls to confirm on your walk. Neither blocks the next slice.</p>
     <ol>
-      <li><b>Your word to commit the phone bar and Warm shadow fixes.</b><span>Built and measured (the row below the schedule). Unlike the rest of this program they are not behind the switch: the coaches portal shares the bar and the Warm look, so coaches get them with the next release. You said "go" to that.</span></li>
+      <li><b>Should the tab you're on stand out by its colour, in both themes?</b><span>With the Dark labels now readable, the tab you're on is as light as the others; it is marked by its pill and dot. Warm has worked that way since August, because a Warm-only rule greys every tab's name, the active one included, although the drawings show it olive. Recommended: the active tab's name in olive in Warm and in a brighter ink in Dark, a one-line change in each.</span></li>
       <li><b>Build-time calls to confirm on your walk.</b><span>Each slice's report lists the places the build chose differently from the drawing, or chose where the drawing was silent (for example, Finalize becoming the lime button in 4b). They are confirmed or reversed on the slice 6 walk.</span></li>
     </ol>
   </div>
@@ -538,7 +538,7 @@ dialog.truesize::backdrop{background:#16201899}
     <article class="slice" id="sl-bar">
       <div class="sid">+</div>
       <div><h3>Both portals: the phone bar and Warm shadows</h3><p>Your answers to slice 1's questions. The phone bar's labels read clearly in Dark and are in ordinary capitalization, in both portals; cards on cream lose their heavy dark shadow in Warm. Not behind the switch: coaches see it with the next release.</p><p class="proof">Coaches portal, Dark: 45 hard-to-read labels → 0, nothing new · Warm: the same 28 findings before and after</p></div>
-      <div class="state"><span class="st built">Built</span><span class="meta">2026-09-27 · waiting for your word</span><button type="button" class="linkbtn" data-report="Both portals">Read the report</button></div>
+      <div class="state"><span class="st committed">Committed</span><span class="meta">dca4ac25 · 2026-09-27</span><button type="button" class="linkbtn" data-report="Both portals">Read the report</button></div>
     </article>
     <article class="slice" id="sl-5">
       <div class="sid">5</div>
@@ -1436,6 +1436,8 @@ dialog.truesize::backdrop{background:#16201899}
   </table></div>
   <p><strong>The proof.</strong> Four coaches portal screens (Overview, the More menu, Schedule, the player switch menu) at four widths, measured before and after. In Dark, all 45 hard-to-read labels are gone and nothing new appeared. In Warm, the same 28 findings before and after, none of them about reading, and no button changed size, so the new lettering pushed nothing out of place. With the switch on, the admin's Schedule in Dark lost its 12 faint bar labels and gained nothing. With the switch off, the admin cannot see any of it: its own phone bar has its own styling, and it only takes the Warm look when the switch is on. The admin's switch tests, the build checks and the code checks all pass.</p>
   <p><strong>Not measured:</strong> a sweep of every coaches portal screen. The bar is on every screen, so the scoped before-and-after stands in, and slice 6's full sweep covers the rest. How soft the new shadow looks is your eye's call, not the sweep's: check a few cards on cream in Warm.</p>
+  <p><strong>Review.</strong> No fault found. Four more coaches portal screens were measured in both themes (the team page, the team switch menu, Notifications and Help): no faint bar label anywhere. The review raised one question for you. In Dark, the tab you're on is now as light as the others, and is marked by its pill and dot. Warm has worked that way since August, although the drawings show the active tab in olive (it's first on the Progress tab's waiting list). Along the way it noticed the chat panels ask for a shadow that doesn't exist, so they have none in either theme. That predates this work.</p>
+  <p><strong>Committed</strong> (dca4ac25, 2026-09-27).</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1549,6 +1551,7 @@ $('s1TrueClose').onclick=()=>$('s1True').close();
 document.querySelectorAll('[data-truesize]').forEach(b=>b.addEventListener('click',()=>{const src=document.getElementById(b.dataset.truesize);if(!src)return;const d=$('s1True');const body=d.querySelector('.tsbody');body.innerHTML='';const c=src.cloneNode(true);c.removeAttribute('id');body.appendChild(c);d.showModal()}));
 
 const DECISIONS=[
+  {date:'2026-09-27 · review of Q1–Q3',ask:'Q5 · Should the tab you\'re on stand out by its colour, in both themes?',ruling:'open',label:'Open: your call',why:'Raised by the review of the phone bar fix. In Dark the inactive tab names are now as light as the active one, so the tab you\'re on is marked by its pill and dot. Warm has worked that way since August 2026, because a Warm-only rule greys every tab name, the active one included; the drawings show it olive and bolder. Recommended: the active name in olive in Warm and in a brighter ink in Dark.'},
   {date:'2026-09-27 · after slice 4c',ask:'Q1 · The Dark phone bar\'s faint labels: fix them in both portals now, or at slice 6?',ruling:'accepted',label:'Accepted: fixed now, both portals',why:'Owner, 2026-09-27: "fix it", then "go" once told it reaches the live coaches portal with the next release. The tab names and the More menu\'s headings take the quiet grey used for other secondary text in Dark. One shared bar, so one fix repairs both portals.'},
   {date:'2026-09-27 · after slice 4c',ask:'Q2 · The phone bar\'s labels: mixed case (the admin, as drawn) or capitals (the coaches portal)?',ruling:'accepted',label:'Accepted: mixed case, both portals',why:'Owner, 2026-09-27: "go with your recommendation". The recommendation was mixed case: the portal\'s own type rule of August 2026 already sets navigation that way, and this bar was the one place still in capitals; in capitals "Accounting" is cut off in the admin; both hubs draw mixed case.'},
   {date:'2026-09-27 · after slice 4c',ask:'Q3 · Cards carry a dark shadow on cream. Soften it in both portals?',ruling:'accepted',label:'Accepted: softened in Warm',why:'Owner, 2026-09-27: "soften it". In Warm, cards and pop-up menus take the soft warm-brown shadow the portal already uses for its paper cards; Dark keeps its shadows. Public page previews keep the organization\'s own look.'},
