@@ -631,7 +631,7 @@ dialog.truesize::backdrop{background:#16201899}
     <li><strong>Prove</strong>: done in slice 6 (2026-09-28). Every admin and volunteer screen swept in both themes with the switch on, the switch-off pictures one last time, the public Schedule preview's Warm tab bar fixed. See the slice 6 report.</li>
     <li><strong>Confirm Club Stage 1's screens</strong>: done. All six have their new versions; the one gap, Plan &amp; billing for every plan except Club, was restyled in slice 6 on your word, and Club Stage 1's windows got the portal's keyboard and Back behaviour.</li>
     <li><strong>Your walk</strong>: done 2026-09-28. §245's eight walks (the frame, the club's desk, game day, setup and the public previews, the volunteer at the field, help, the club's windows, and the release check) all passed in both themes with nothing flagged, and every build-time call was kept.</li>
-    <li><strong>Release</strong>, on your word and outside a tournament weekend: the switch comes out, the old look is deleted, and a What's New note says where the Dark choice lives and that your colours stay on your public pages.</li>
+    <li><strong>Release</strong>: done 2026-09-28 (74f45113, production job 273). The switch came out and everyone got the new look; What's New says where the Dark choice lives and that your colours stay on your public pages. The old look stays in the code until the cleanup, so undoing one change is the rollback.</li>
   </ol>
 </section>
 
@@ -1560,7 +1560,21 @@ dialog.truesize::backdrop{background:#16201899}
   </ul>
   <p><strong>One lesson for the tools:</strong> two sweeps running side by side shared the test accounts and cancelled each other's sign-ins partway through, which cost an hour. They now run one at a time, each with fresh sign-ins.</p>
   <p><strong>Cleanup and review (2026-09-28).</strong> The cleanup pass trimmed the code without changing what anyone sees. The review found one real flaw, now fixed: on a Settings page with unsaved changes, if you had opened any window earlier on the page (or saved and then edited again), pressing Back with a window open left the window on screen and filled the browser's history with extra steps. The first proof missed it because it always edited before opening a window. That order is now in the browser proof: 36 checks, all passing. The help guide needs nothing today; on release day the billing page's old name, "Subscription", changes to "Plan &amp; billing" in the help and on tournament Settings in one go (listed in the full plan).</p>
-  <p><strong>Your walk</strong>, §245 on the QA Walk tab, <strong>passed on 2026-09-28</strong>: all eight walks, both themes, 96 ticks, nothing flagged, and every build-time call placed on a step kept. Walk 8 put the test club back on the platform colours. Found on walk 4, and not this program's: Plan &amp; subscription's Coaches Portal card said "Coming soon" to every Tournament and Tournament Plus organizer. It is fixed on dev and waits on its own re-check (Progress tab).</p>
+  <p><strong>Your walk</strong>, §245 on the QA Walk tab, <strong>passed on 2026-09-28</strong>: all eight walks, both themes, 96 ticks, nothing flagged, and every build-time call placed on a step kept. Walk 8 put the test club back on the platform colours. Found on walk 4, and not this program's: Plan &amp; subscription's Coaches Portal card said "Coming soon" to every Tournament and Tournament Plus organizer. It was re-checked on release day (28 of 28) and shipped with the release.</p>
+  <h2>Release — 2026-09-28</h2>
+  <p>The new look went live for every organization the same day as your walk. Production had only the public demo's games in the week ahead, so nothing busy was disturbed. You chose to split the release: this part switched the new look on and left the old code in place, so undoing one change is the rollback. The cleanup that deletes the old code comes later.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>What shipped</th><th>What a customer sees</th></tr></thead>
+    <tbody>
+      <tr><td>The new look, for everyone</td><td>Every admin screen, the scorekeeper and gate, and the admin's help. Warm by default; Dark in Account → Appearance (which now says it covers the admin) or the account menu. Each organization's colours stay on its public pages.</td></tr>
+      <tr><td>Coaches help follows the theme</td><td>The coaches portal's help guide and "?" panel follow Warm / Dark, where they were always dark.</td></tr>
+      <tr><td>Club Stage 1</td><td>Its screens are live for a club the platform provisions (Club is not on sale), and its seven help articles are published.</td></tr>
+      <tr><td>Help and What's New</td><td>The billing page is "Plan &amp; billing" everywhere (search still finds "subscription"). Four What's New lines, and today's title names the new look.</td></tr>
+      <tr><td>The Plan &amp; billing fix</td><td>The Coaches Portal card shows as open, with a way in. Re-checked 28 of 28.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The proof, on release day.</strong> Every admin, volunteer and coach-help screen was measured in both themes, 448 screen-and-width combinations each. There is no text too faint to read on any working screen. The only findings are inside the public-page previews, and they belong to the public pages. The marketing pages didn't move. The public demo was checked in both themes on phone and desktop, and it works on the live site too. 440 reference pictures (220 in each theme) are kept for the cleanup to prove itself against. A review with three independent reviewers found no fault in the change itself, and eight places where the help text didn't match the screens, all fixed.</p>
+  <p><strong>Next: the cleanup (Part B).</strong> It starts only after at least one tournament weekend on the new look with no rollback call, because it removes the old code, and with it the one-step rollback. It goes one area at a time, and each area has to match the reference pictures pixel for pixel.</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1573,7 +1587,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat), and the game list, moved in from 4c</td><td>Committed 07808a02, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Committed 9d1b1670, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Committed 530d87e9, 2026-09-27; walked at slice 6</td></tr>
-      <tr><td>6</td><td>Prove, walk, release</td><td>Prove and walk committed c72afdeb 2026-09-28; your walk §245 passed 2026-09-28 (all eight walks, nothing flagged); the release is its own session</td></tr>
+      <tr><td>6</td><td>Prove, walk, release</td><td>Prove and walk committed c72afdeb 2026-09-28; your walk §245 passed 2026-09-28 (all eight walks, nothing flagged); <strong>released 2026-09-28</strong> (74f45113, production job 273)</td></tr>
     </tbody>
   </table></div>
 </section>
