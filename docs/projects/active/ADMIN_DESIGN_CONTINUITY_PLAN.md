@@ -1481,7 +1481,12 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   radius, switch-off and floor lenses found nothing else: the header and both meters byte-identical with the
   switch off, every kit rule scoped, the guard tests fail on a revert.
 - **For the release session** (after the walk; outside a tournament weekend; everything each slice left "for the
-  release", in one place): (1) delete the switch (`lib/admin-kit-preview.ts`, the door, the cookie) — the marker
+  release", in one place). **Release prompt written 2026-09-28:
+  [ADMIN_DESIGN_CONTINUITY_RELEASE_PROMPT.md](ADMIN_DESIGN_CONTINUITY_RELEASE_PROMPT.md)**. It re-sorts this list into
+  **Part A, the flip** (items 1, 3–7 and 9; ends in the promote; the legacy code stays as dead code so a revert of
+  one commit is the rollback) and **Part B, the cleanup** (items 2 and 8; after a settling weekend, area by area,
+  proven by pixel identity against the new look, so item 7's "the identity tool retires" moves to Part B's end).
+  The split is recommended and the owner confirms it at kickoff: (1) delete the switch (`lib/admin-kit-preview.ts`, the door, the cookie) — the marker
   becomes unconditional on the admin and both volunteer shells; (2) delete the legacy frame, the `legacy` header
   props and branches, and the marker-scoped duplicates, folding each area's kit layer into its base rules (per rule,
   directly); (3) remove the coaches portal's help dark pin AND give its "?" drawer its own portal root (slice 5 — or
@@ -1513,6 +1518,36 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   paths, the timeline's "now" line and check-in's stripes cannot show on the fixture (recorded in "Not in this
   walk"); Revert / Forfeit appear only in a game's editing bar; the dev server's "N" badge sits over the phone's
   Overview tab. Each slice's build-time calls sit on the step where they show, to keep or reverse.
+  **W1 ✅ PASSED 2026-09-28** (16 of 16, both themes, zero flags) — kept: the rail's full-width rows and the
+  full-width More sheet (slice 1), and Q5's coloured active tab. The club wears Battle Purple until W8.
+  **W2 ✅ PASSED 2026-09-28** (14 of 14, both themes, zero flags) — kept: the ledger's toolbar above the table and
+  its signed green / red amounts, Approve / Deny as main / danger (slice 3); a finished season as the quiet grey
+  chip (slices 2–3); sentence-case titles, button labels unchanged (slice 2); Families' lenses as the portal's
+  filter chip (slice 1).
+  **W3 ✅ PASSED 2026-09-28** (18 of 18, both themes, zero flags) — kept: the rail's red live tone / green / olive,
+  Finalize lime with Revert + Forfeit red and Cancel amber, the stacked game row over "A vs B", "Add roster" olive,
+  the QR on fixed white, "Organizer" quiet + "Muted" amber (4b); every chosen schedule filter olive (4c).
+  **W4 ✅ PASSED 2026-09-28** (14 of 14, both themes, zero flags) — kept: the card-style thumbnails as token icons
+  and Past tournaments' organization label (4a); the page titled "Plan & billing" without its old describing line
+  (F3); a "coming soon" plan as a plain card with its chip (slice 6). Confirmed: the public Schedule preview's tab
+  row reads in Warm (Q4), and the plan panel covers the phone bar so "Not right now" is reachable.
+  **W5 ✅ PASSED 2026-09-28** (8 of 8, walked once on a Dark phone, zero flags) — kept (slice 5): "Up next" the olive
+  chip with pending / finalized as plain cards; "To Score" / "Pending Review" / "Finalized" as the product writes them;
+  the chosen filter olive, not lime. Confirmed R3: scorekeeper and gate warm on a Dark phone; the score sheet over the
+  bar, an outside tap discards nothing.
+  **W6 ✅ PASSED 2026-09-28** (10 of 10, both themes, zero flags) — kept (slice 5): Help's accents olive, only a
+  callout's "info" tone blue, a tip olive not green. Confirmed R4: the guide, articles, search, the "?" panel and the
+  field hints follow the theme; a hint's bubble has one arrow.
+  **W7 ✅ PASSED 2026-09-28** (10 of 10, zero flags) — confirmed S6b: Club Stage 1's windows keep Tab inside, return
+  focus on Escape, close one layer per Escape / Back without leaving the page; Settings' guard stays quiet for a
+  cancelled window opened before or after an edit, asks "Save your changes?" on a real Back, and Back on that
+  question keeps the edit; both themes read clearly.
+  **W8 ✅ PASSED 2026-09-28** (6 of 6, zero flags) — confirmed: switch off = today's dark admin exactly (club admin and
+  tournament dashboard), wearing the club's purple where R1 now keeps it out; the club reverted to the platform
+  colours; live coaches' bar readable in both themes, mixed case, current tab olive (Warm) / white (Dark), and Warm's
+  soft card shadow (Q3).
+  **§245 ✅ PASSED 2026-09-28 — all eight walks, 96 ticks, zero flags, every build-time call kept.** Next: the release
+  session. Separate and still owed: the W4 finding's re-check (ledger §245; its fix is on dev, uncommitted).
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as

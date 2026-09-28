@@ -506,8 +506,8 @@ dialog.truesize::backdrop{background:#16201899}
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
     <li class="stage done" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27. Slice 1's open questions ruled 2026-09-27; the phone bar and Warm shadow fixes committed dca4ac25 for both portals. Slice 5, the volunteer screens and the help guide, committed 530d87e9 2026-09-27. Slice 6, the prove step (Plan &amp; billing for every plan, the club windows, the preview fix, Q5, the two Dark fixes), committed c72afdeb 2026-09-28">Build</li>
     <li class="stage done" title="Every slice 0–5 ran its cleanup and adversarial review before its commit; slice 6 ran its own on 2026-09-28 (one Back flaw on Settings found and fixed)">Review</li>
-    <li class="stage current" title="Owner walk §245 published 2026-09-28 on the QA Walk tab: eight walks, both themes">QA</li>
-    <li class="stage" title="—">Shipped</li>
+    <li class="stage done" title="Owner walk §245 PASSED 2026-09-28: all eight walks, both themes, zero flags; every build-time call kept">QA</li>
+    <li class="stage current" title="Next: the release, its own session, outside a tournament weekend">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="phone" aria-pressed="false" hidden>Phone width</button></div>
 </div>
@@ -524,7 +524,7 @@ dialog.truesize::backdrop{background:#16201899}
 <section id="hub-progress" class="hubsection prog">
   <div class="eyebrow">Progress · Phase 1, the foundation</div>
   <h1>Where the program stands</h1>
-  <p class="lede"><strong>Everything is built and proven; your walk is next.</strong> Slice 6 swept every admin and volunteer screen in both themes with the switch on: no text anywhere in the working screens is too faint to read, in Warm or in Dark. It also restyled Plan &amp; billing for every plan (not just Club), gave Club Stage 1's windows the portal's keyboard and Back behaviour, and fixed the public preview's Warm tab bar. The <strong>QA Walk</strong> tab holds your eight walks (§245). After the walk, the release is its own session. Customers see none of it until that day. <strong>The exceptions, on your word:</strong> the phone bar changes (your answers to Q1–Q3 and Q5) and the two Dark fixes you approved in slice 6 are in both portals, so coaches get them with the next release.</p>
+  <p class="lede"><strong>Everything is built, proven and walked; the release is next.</strong> Your walk, §245, passed on 2026-09-28: all eight walks, in Warm and in Dark, with nothing flagged, and every build-time call placed on a step kept. Slice 6 had already swept every admin and volunteer screen in both themes with the switch on: no text anywhere in the working screens is too faint to read. The release is its own session. Customers see none of it until that day. <strong>The exceptions, on your word:</strong> the phone bar changes (your answers to Q1–Q3 and Q5) and the two Dark fixes you approved in slice 6 are in both portals, so coaches get them with the next release.</p>
 
   <ol class="track" aria-label="The nine build slices, in order">
     <li><button type="button" class="s-committed" data-goto="sl-0"><b>0</b><span>Baseline</span></button></li>
@@ -543,8 +543,8 @@ dialog.truesize::backdrop{background:#16201899}
   <div class="waiting">
     <p class="sub" style="margin:0">Every open question is answered (see Decisions: Q5 "colour it", Plan &amp; billing "restyle it here", Club windows "build it here", the Dark fixes "fix both"). What waits on you now:</p>
     <ol>
-      <li><b>Your walk, §245.</b><span>Eight short walks on the QA Walk tab, one job each, signed off one by one, each step ticked in Warm and in Dark. Each slice's build-time calls sit on the step where they show, so you keep or reverse them as you go. Walk 8 turns the switch off and goes last.</span></li>
-      <li><b>Then a release session</b>, outside a tournament weekend (slice 6 is committed, c72afdeb).</li>
+      <li><b>The release session</b>, on your word and outside a tournament weekend.<span>The switch comes out, the old look is deleted, and a What's New note says where the Dark choice lives and that your colours stay on your public pages. The help's old name for the billing page changes to "Plan &amp; billing" the same day. Your walk, §245, passed on 2026-09-28.</span></li>
+      <li><b>One re-check, not this program's.</b><span>Found on your walk 4: Plan &amp; subscription tells every Tournament and Tournament Plus organizer that the Coaches Portal is "Coming soon", though it has been open to them since July 24. That is live on production today. It is fixed on dev but not yet re-checked or committed, and your walks 7 and 8 did not include it. To re-check: set the developer plan setting back to "enforced" first. Then the Coaches Portal card reads "Free through …" with a lime "Start your Coaches Portal" that reaches the coach sign-up, and its "See what's included" panel carries the same button, in both themes.</span></li>
     </ol>
   </div>
 
@@ -599,7 +599,7 @@ dialog.truesize::backdrop{background:#16201899}
     <article class="slice" id="sl-6">
       <div class="sid">6</div>
       <div><h3>Prove, walk, release</h3><p>Every admin and volunteer screen swept in both themes with the switch on; Plan &amp; billing restyled for every plan; Club Stage 1's windows given the portal's keyboard and Back behaviour; the public preview's Warm tab bar fixed; your walk, §245. Then, in its own session, the switch comes out and everyone gets the new look on one day (with the coaches portal's "?" panel fix found in slice 5).</p><p class="proof">Switch off: 206 of 206 identical · hard-to-read text in the working screens: 0 in Warm, 0 in Dark (4,400 today)</p></div>
-      <div class="state"><span class="st committed">Committed · walk ready</span><span class="meta">c72afdeb · 2026-09-28</span><button type="button" class="linkbtn" data-report="Slice 6">Read the report</button></div>
+      <div class="state"><span class="st committed">Committed · walk passed</span><span class="meta">c72afdeb · 2026-09-28</span><button type="button" class="linkbtn" data-report="Slice 6">Read the report</button></div>
     </article>
   </div>
 
@@ -618,7 +618,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>Tournaments: setup, records, game day</td><td>—</td><td>4a · 4b</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Tournaments: the schedule</td><td>—</td><td>4c</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Club hub, Members and audit log, Plan &amp; billing for Club, Settings, setup checklist</td><td>6</td><td>Club Stage 1</td><td><span class="st stage1">Redesigned by Club Stage 1</span></td></tr>
-      <tr><td>Plan &amp; billing for every other plan (Tournament, Tournament Plus as "Plan &amp; subscription", League) and its plan panel</td><td>1</td><td>6</td><td><span class="st built">On the kit, built</span></td></tr>
+      <tr><td>Plan &amp; billing for every other plan (Tournament, Tournament Plus as "Plan &amp; subscription", League) and its plan panel</td><td>1</td><td>6</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Scorekeeper, official and gate (fixed warm)</td><td>4</td><td>5</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Help guide, the "?" panel, hints on work pages</td><td>10</td><td>5</td><td><span class="st committed">On the kit</span></td></tr>
     </tbody>
@@ -630,7 +630,7 @@ dialog.truesize::backdrop{background:#16201899}
     <li><strong>Slice 5</strong>: the volunteer screens and the help guide. Committed (530d87e9).</li>
     <li><strong>Prove</strong>: done in slice 6 (2026-09-28). Every admin and volunteer screen swept in both themes with the switch on, the switch-off pictures one last time, the public Schedule preview's Warm tab bar fixed. See the slice 6 report.</li>
     <li><strong>Confirm Club Stage 1's screens</strong>: done. All six have their new versions; the one gap, Plan &amp; billing for every plan except Club, was restyled in slice 6 on your word, and Club Stage 1's windows got the portal's keyboard and Back behaviour.</li>
-    <li><strong>Your walk</strong>: §245 on the QA Walk tab. Eight walks: the frame, the club's desk, game day, setup and the public previews, the volunteer at the field, help, the club's windows, and the release check.</li>
+    <li><strong>Your walk</strong>: done 2026-09-28. §245's eight walks (the frame, the club's desk, game day, setup and the public previews, the volunteer at the field, help, the club's windows, and the release check) all passed in both themes with nothing flagged, and every build-time call was kept.</li>
     <li><strong>Release</strong>, on your word and outside a tournament weekend: the switch comes out, the old look is deleted, and a What's New note says where the Dark choice lives and that your colours stay on your public pages.</li>
   </ol>
 </section>
@@ -1560,7 +1560,7 @@ dialog.truesize::backdrop{background:#16201899}
   </ul>
   <p><strong>One lesson for the tools:</strong> two sweeps running side by side shared the test accounts and cancelled each other's sign-ins partway through, which cost an hour. They now run one at a time, each with fresh sign-ins.</p>
   <p><strong>Cleanup and review (2026-09-28).</strong> The cleanup pass trimmed the code without changing what anyone sees. The review found one real flaw, now fixed: on a Settings page with unsaved changes, if you had opened any window earlier on the page (or saved and then edited again), pressing Back with a window open left the window on screen and filled the browser's history with extra steps. The first proof missed it because it always edited before opening a window. That order is now in the browser proof: 36 checks, all passing. The help guide needs nothing today; on release day the billing page's old name, "Subscription", changes to "Plan &amp; billing" in the help and on tournament Settings in one go (listed in the full plan).</p>
-  <p><strong>Your walk</strong> is on the QA Walk tab: §245, eight walks.</p>
+  <p><strong>Your walk</strong>, §245 on the QA Walk tab, <strong>passed on 2026-09-28</strong>: all eight walks, both themes, 96 ticks, nothing flagged, and every build-time call placed on a step kept. Walk 8 put the test club back on the platform colours. Found on walk 4, and not this program's: Plan &amp; subscription's Coaches Portal card said "Coming soon" to every Tournament and Tournament Plus organizer. It is fixed on dev and waits on its own re-check (Progress tab).</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1573,7 +1573,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat), and the game list, moved in from 4c</td><td>Committed 07808a02, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Committed 9d1b1670, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Committed 530d87e9, 2026-09-27; walked at slice 6</td></tr>
-      <tr><td>6</td><td>Prove, walk, release</td><td>Prove and walk committed c72afdeb 2026-09-28; your walk §245 is on the QA Walk tab; the release is its own session</td></tr>
+      <tr><td>6</td><td>Prove, walk, release</td><td>Prove and walk committed c72afdeb 2026-09-28; your walk §245 passed 2026-09-28 (all eight walks, nothing flagged); the release is its own session</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -1681,6 +1681,7 @@ $('s1TrueClose').onclick=()=>$('s1True').close();
 document.querySelectorAll('[data-truesize]').forEach(b=>b.addEventListener('click',()=>{const src=document.getElementById(b.dataset.truesize);if(!src)return;const d=$('s1True');const body=d.querySelector('.tsbody');body.innerHTML='';const c=src.cloneNode(true);c.removeAttribute('id');body.appendChild(c);d.showModal()}));
 
 const DECISIONS=[
+  {date:'2026-09-28 · walk §245',ask:'The build-time calls placed on the walk: keep them, or reverse any?',ruling:'accepted',label:'Kept, every one',why:'Owner, 2026-09-28: all eight walks passed in Warm and in Dark with nothing flagged, so every call placed on a step stands. Among them: the full-width rail rows and More sheet; the ledger toolbar above the table with signed green and red amounts; Finalize lime, Revert and Forfeit red, Cancel amber; the stacked game row; every chosen filter olive; the page titled Plan & billing; a coming-soon plan as a plain card with its chip; the olive Up next chip and the product spelling Pending Review; olive accents in help.'},
   {date:'2026-09-27 · slice 6, at the start',ask:'S6a · Plan & billing for every plan except Club is still today\'s page with the switch on. What happens before release?',ruling:'accepted',label:'Accepted: restyle it here',why:'Owner, 2026-09-27: "Restyle it here" (recommended), over "the release waits for a redesign" and "ship today\'s page as is". Club Stage 1 redesigned the page for the Club plan only, so Tournament and Tournament Plus organizers, who reach it as Plan & subscription, and League would have met the old page inside the new frame. Restyled like every other screen: same sections, words and buttons. Its "See what … includes" panel is restyled too.'},
   {date:'2026-09-27 · slice 6, at the start',ask:'S6b · Club Stage 1\'s windows lack the portal\'s window behaviour (keyboard trap, focus return, phone Back). Where is it built?',ruling:'accepted',label:'Accepted: here, before the walk',why:'Owner, 2026-09-27: "Build it here, before the walk" (recommended). The club windows now stand on the coaches portal\'s own window behaviour, so your walk checks it once. Building it found a flaw in that shared behaviour (a hidden phone-only button let Shift+Tab walk out of a window at desktop width), fixed for both portals.'},
   {date:'2026-09-27 · review of Q1–Q3; ruled at slice 6',ask:'Q5 · Should the tab you\'re on stand out by its colour, in both themes?',ruling:'accepted',label:'Accepted: colour it',why:'Owner, 2026-09-27: "Colour it" (recommended). The tab you are on shows its name in olive in Warm, as the drawings show, and in the bright primary ink in Dark, besides its pill and dot. Both portals share the bar, so coaches get it with the next release, like Q1–Q3.'},
