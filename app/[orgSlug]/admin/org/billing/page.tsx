@@ -18,9 +18,10 @@ import {
   FOUNDING_SEASON_END_LABEL, FOUNDING_SEASON_FIRST_CHARGE_LABEL, FOUNDING_SEASON_DECISION_MONTH_LABEL, FOUNDING_SEASON_NEXT_YEAR_LABEL,
 } from '@/lib/plan-config';
 import { formatCardOnFile } from '@/lib/billing-format';
-import { teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
+import { COACHES_START_PATH, teamWorkspaceReactivatePath } from '@/lib/coaches-portal-routes';
 import { nextSeasonPlanOptions } from '@/lib/next-season-choice';
 import { PLAN_ARTICLE_CONTENT } from '@/lib/plan-article-content';
+import { usePlanGating } from '@/lib/use-plan-gating';
 import FeedbackModal from '@/components/FeedbackModal';
 import PlanArticlePanel from '@/components/billing/PlanArticlePanel';
 import type { OrgPlan, SubscriptionStatus } from '@/lib/types';
@@ -252,6 +253,10 @@ function BillingPageLegacy() {
   // 2026-09-07) — a seasonal buyer charged monthly from October has nothing to use until spring.
   const [nextSeasonCycle, setNextSeasonCycle] = useState<'annual' | 'monthly'>('annual');
   const [nextSeasonLoading, setNextSeasonLoading] = useState(false);
+  // Which plans can be bought is the LIVE switch, never the code's fixed setting alone — reading only
+  // the code, the shelf below said the Coaches Portal was "Coming soon" for two months after it opened.
+  const gating = usePlanGating();
+  const isGated = (planKey: OrgPlan) => (gating ? gating[planKey] : isEffectivelyGated(planKey));
 
   async function refreshBillingState() {
     await Promise.all([refreshOrg(), refreshTournaments()]);
@@ -548,7 +553,8 @@ function BillingPageLegacy() {
   const usageLimit     = currentOrg.tournamentLimit;
   const usagePct       = usageLimit >= 9999 ? 0 : Math.min(100, Math.round((usageCount / usageLimit) * 100));
   const primaryUpgradePlans: OrgPlan[] = currentPlanKey === 'tournament' ? ['tournament_plus'] : [];
-  const productShelfPlans = isTeamWorkspaceBilling
+  // The shelf waits for the live switch, so a card never flashes "Coming soon" before it opens.
+  const productShelfPlans = isTeamWorkspaceBilling || !gating
     ? []
     : PRODUCT_SHELF_PLANS.filter(planKey => planKey !== currentPlanKey);
   const downgradePlans: OrgPlan[] = currentPlanKey === 'tournament_plus' ? ['tournament'] : [];
@@ -604,7 +610,7 @@ function BillingPageLegacy() {
     ? `Premium tools will become inactive and premium team data is retained for ${cancelPreflight?.retentionDays ?? 365} days. Basic tournament records stay available in Coaches Portal.`
     : `Cancellation suspends the full account. Public pages and modules shut down, and data is retained for ${cancelPreflight?.retentionDays ?? 90} days.`;
   function getPrice(planKey: OrgPlan): string {
-    if (isEffectivelyGated(planKey)) return 'Coming soon';
+    if (isGated(planKey)) return 'Coming soon';
     if (isFoundingSeasonPromoActive(planKey)) return `Free through ${FOUNDING_SEASON_END_LABEL}`;
     const plan = PLAN_CONFIG[planKey];
     if (plan.monthlyPrice === 0) return 'Free';
@@ -620,14 +626,14 @@ function BillingPageLegacy() {
   }
 
   function getSavings(planKey: OrgPlan): string | null {
-    if (isEffectivelyGated(planKey)) return null;
+    if (isGated(planKey)) return null;
     if (isFoundingSeasonPromoActive(planKey)) return null;
     if (billingCycle !== 'annual') return null;
     return formatAnnualSavings(planKey);
   }
 
   function getTrialNote(planKey: OrgPlan): string {
-    if (isEffectivelyGated(planKey)) return 'Early access only. Self-serve checkout is not open yet.';
+    if (isGated(planKey)) return 'Early access only. Self-serve checkout is not open yet.';
     if (isFoundingSeasonPromoActive(planKey)) return `No credit card — nothing is charged before ${FOUNDING_SEASON_FIRST_CHARGE_LABEL}`;
     const days = PLAN_CONFIG[planKey].trialDays;
     if (days === 90) return 'Early-access trial details collected in Stripe';
@@ -640,7 +646,7 @@ function BillingPageLegacy() {
 
   // ── Cancelled-state view: stripped page with reactivate CTA ──────────────
   if (status === 'canceled') {
-    const isComingSoon = isEffectivelyGated(currentPlanKey);
+    const isComingSoon = isGated(currentPlanKey);
     const canSelfServeReactivate =
       !isTeamWorkspaceBilling && !isComingSoon && currentPlanKey !== 'tournament';
 
@@ -1056,7 +1062,7 @@ function BillingPageLegacy() {
                 {primaryUpgradePlans.map(planKey => {
                   const plan = PLAN_CONFIG[planKey];
                   const savings = getSavings(planKey);
-                  const isComingSoon = isEffectivelyGated(planKey);
+                  const isComingSoon = isGated(planKey);
                   const article = planKey in PLAN_ARTICLE_CONTENT
                     ? PLAN_ARTICLE_CONTENT[planKey as keyof typeof PLAN_ARTICLE_CONTENT]
                     : null;
@@ -1116,7 +1122,7 @@ function BillingPageLegacy() {
                 {productShelfPlans.map(planKey => {
                   const plan = PLAN_CONFIG[planKey];
                   const productMeta = PRODUCT_SHELF_META[planKey as ProductShelfPlan];
-                  const isComingSoon = isEffectivelyGated(planKey);
+                  const isComingSoon = isGated(planKey);
                   const article = planKey in PLAN_ARTICLE_CONTENT
                     ? PLAN_ARTICLE_CONTENT[planKey as keyof typeof PLAN_ARTICLE_CONTENT]
                     : null;
@@ -1183,14 +1189,27 @@ function BillingPageLegacy() {
                           </button>
                         </div>
                       )}
-                      <button
-                        className={`btn btn-lime btn-data ${styles.planButton}`}
-                        onClick={() => setPanelPlan(planKey as 'tournament_plus' | 'league' | 'club' | 'team')}
-                        id={`billing-upgrade-${planKey}`}
-                      >
-                        See what {plan.label} includes
-                        <ArrowRight size={14} />
-                      </button>
+                      {/* An open Coaches Portal is its own workspace, not a change to this plan: the door
+                          is the coach sign-up (same login), never this org's checkout. */}
+                      {planKey === 'team' ? (
+                        <Link
+                          className={`btn btn-lime btn-data ${styles.planButton}`}
+                          href={COACHES_START_PATH}
+                          id={`billing-upgrade-${planKey}`}
+                        >
+                          Start your Coaches Portal
+                          <ArrowRight size={14} />
+                        </Link>
+                      ) : (
+                        <button
+                          className={`btn btn-lime btn-data ${styles.planButton}`}
+                          onClick={() => setPanelPlan(planKey as 'tournament_plus' | 'league' | 'club' | 'team')}
+                          id={`billing-upgrade-${planKey}`}
+                        >
+                          See what {plan.label} includes
+                          <ArrowRight size={14} />
+                        </button>
+                      )}
                       <p className={styles.trialNote}>{getTrialNote(planKey)}</p>
                     </div>
                   );
@@ -1416,7 +1435,7 @@ function BillingPageLegacy() {
         onClose={() => setPanelPlan(null)}
         onUpgrade={(key) => { setPanelPlan(null); if (key !== 'team') handleUpgrade(key); }}
         upgradeLoading={loading as 'tournament_plus' | 'league' | 'club' | 'team' | null}
-        isComingSoon={panelPlan ? isEffectivelyGated(panelPlan as OrgPlan) : false}
+        isComingSoon={panelPlan ? isGated(panelPlan as OrgPlan) : false}
         canUpgrade={panelPlan === 'tournament_plus' && primaryUpgradePlans.includes('tournament_plus')}
       />
     </div>
