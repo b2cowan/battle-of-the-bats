@@ -7,6 +7,33 @@ a date does not, and "we decided this before" is never an argument. Many entries
 side-clauses of a larger decision, context-specific, or the assistant's own inference recorded as
 binding — weight them accordingly, and say so when citing one.
 
+### 2026-09-27 (slice 6) — THE TAB YOU ARE ON IS NAMED BY ITS COLOUR; EVERY PLAN'S BILLING PAGE JOINS THE KIT; THE CLUB WINDOWS STAND ON THE PORTAL'S DIALOG FLOOR (owner, at the start of Admin Design Continuity slice 6 — all four asked with a recommendation, all four answered as recommended)
+
+**Q5 · the active tab.** Once the Dark bar's inactive names took the quiet tier (the entry below), they read
+as light as the old blue active name (1.07:1 apart), and Warm had greyed the active name since 2026-08-18
+(a warm `.tab` rule outranked `.tab.active`). Ruling: *"colour it"* — the tab you are on shows its NAME in
+olive in Warm (as both hubs draw it) and in the primary ink in Dark, besides its pill and dot. Both portals
+share the bar, so **coaches get it with the next release** (not behind the switch), like Q1–Q3.
+
+**Plan & billing for every plan but Club.** Club Stage 1 redesigned Plan & billing for the Club plan only
+(2026-09-26), so every other plan — Tournament and Tournament Plus reach it as "Plan & subscription", the
+page every paying organizer bills through — would have shown today's page inside the new frame on release
+day. Ruling: *"restyle it here"* (not "the release waits for a redesign", not "ship it as is"). A restyle:
+same sections, words and buttons; on the kit the title is "Plan & billing" (the rail's and the Club page's
+one name; a team workspace keeps "Coaches Portal billing"), no subtitle (F3), meters in the Club page's
+own olive / amber / live-red tones, and its "See what … includes" panel restyled with it.
+
+**The club windows' behaviour.** Club Stage 1's windows (Invite, Manage, the plan move, every question)
+trapped no Tab, returned no focus and ignored the phone's Back. Ruling: *"build it here, before the walk"*
+— they stand on the coaches portal's own `useDialogFloor` (one window model for both portals). Two things
+this forced, recorded because each reverses something that looked fine: (1) a club QUESTION is
+`role="dialog"`, as the portal's are — the floor reads `alertdialog` as a confirmation docked inside a
+panel and holds Back while one is on screen; (2) the floor now traps Tab among RENDERED controls only — a
+phone-only ← hidden at desktop width let Shift+Tab walk out (a latent flaw in the shared floor; coaches get
+the fix with the next release). Settings' own "Save your changes?" guard marks its history entry so a
+window tidying its Back step away never reads as leaving, and its leave buttons navigate with the question
+still open (a step tidied before the router pushes cancels the navigation).
+
 ### 2026-09-27 — THE SHARED PHONE BAR READS IN DARK AND IN MIXED CASE; WARM SHADOWS ARE WARM — three open questions from Admin Design Continuity slice 1, settled for BOTH portals (owner; ships to coaches with the next release, not on the admin's release day)
 
 **The questions** (hub Progress tab, "Waiting on you"): the Dark phone bar's faint labels; mixed case (the

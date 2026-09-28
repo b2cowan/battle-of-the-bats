@@ -1442,6 +1442,15 @@ export const SCREENS = [
     // The Schedule opens on its REMEMBERED view — state it (see `setScheduleView`), a no-op when fresh.
     ...(id === 'admin-t-schedule' ? { interact: (p) => setScheduleView(p, 'Round Robin', 'List') } : {}),
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments${sub}?tournamentId=${c.tournamentId}` })),
+  // Plan & subscription's "See what … includes" panel (Admin Design Continuity slice 6 restyled it with
+  // the page — every plan but Club still renders the legacy billing page). Switch-on only: the panel is
+  // unchanged with the switch off (its kit layer is scoped), so it carries no switch-off baseline.
+  { id: 'admin-t-settings-subscription-panel', area: 'tournaments', session: 'orgOwner', ready: 'h1', kitOnly: true,
+    interact: async (p) => {
+      await p.getByRole('button', { name: /^See what .+ includes$/ }).first().click();
+      await p.getByRole('dialog', { name: /plan details$/ }).waitFor({ state: 'visible', timeout: 15_000 });
+    },
+    path: (c) => `/${c.tournOrgSlug}/admin/tournaments/settings/subscription?tournamentId=${c.tournamentId}` },
   // Chat draws no heading — its room column is the screen. Ready on the room's own control.
   { id: 'admin-t-chat', area: 'tournaments', session: 'orgOwner', ready: '[aria-label="Manage room"]',
     path: (c) => `/${c.tournOrgSlug}/admin/tournaments/chat?tournamentId=${c.tournamentId}` },

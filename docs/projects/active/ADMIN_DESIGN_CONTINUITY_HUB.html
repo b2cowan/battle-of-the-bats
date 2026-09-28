@@ -76,6 +76,57 @@ dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:570px
 .verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
 .verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
 .qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+/* QA walks — one purpose per walk, signed off one by one (the Club hub's shape, 2026-09-26), plus a Warm
+   and a Dark tick per step: the foundation's whole promise is that every screen works in both. */
+.qwwrap{max-width:900px;margin:0 auto;padding:28px 36px 48px}
+.qwwrap h1{margin:4px 0 8px}
+.qwlead{font-size:15px;color:var(--ink);margin:0 0 18px;max-width:720px}
+.qwblock{border:1px solid rgba(158,48,48,.35);background:#fbf1ee;border-radius:10px;padding:12px 16px;font-size:14px;margin:0 0 18px}
+.qwblock strong{color:var(--error)}
+.qwsetup{margin:0 0 22px}
+.qwsetup summary{cursor:pointer;font-weight:700;font-size:14px;padding:6px 0;min-height:44px;display:flex;align-items:center}
+.qwgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 26px}
+.qwcard{display:flex;flex-direction:column;gap:6px;text-align:left;border:1px solid var(--line);background:var(--white);border-radius:10px;padding:14px 16px;min-height:44px}
+.qwcard:hover{border-color:var(--olive)}
+.qwcard .n{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.qwcard .t{font-size:16px;font-weight:750;line-height:1.3}
+.qwcard .p{font-size:13.5px;color:var(--muted);line-height:1.45}
+.qwcard .m{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;margin-top:auto;padding-top:6px;font-size:12.5px;color:var(--muted)}
+.qwchip{display:inline-flex;align-items:center;gap:4px;font-size:11.5px;font-weight:700;padding:3px 9px;border-radius:999px;border:1px solid var(--line);background:var(--soft);color:var(--ink);white-space:nowrap}
+.qwchip.pass{background:#e6f1e4;border-color:#b9d4b3;color:var(--ok)}
+.qwchip.issue{background:#fbf1ee;border-color:#e3bdb3;color:var(--error)}
+.qwchip.call,.qwchip.wait,.qwchip.gap{background:#fbf4e6;border-color:#e6cf9f;color:var(--warn)}
+.qwback{margin:0 0 14px}
+.qwhead{display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap}
+.qwhead h2{font-size:24px;line-height:1.25;margin:4px 0 0}
+.qwintent{border-left:3px solid var(--olive);background:var(--white);border-radius:0 10px 10px 0;padding:14px 18px;margin:16px 0}
+.qwintent h3,.qwfacts h3{font-size:11px;letter-spacing:1.2px;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.qwintent p{margin:0;font-size:15px}
+.qwfacts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 20px}
+.qwfacts>div{border:1px solid var(--line);background:var(--white);border-radius:10px;padding:12px 14px;font-size:14px}
+.qwfacts p{margin:0}
+.qwthemes{font-size:13.5px;color:var(--muted);margin:0 0 12px}
+.qwsteps{list-style:none;margin:0 0 20px;padding:0}
+.qwsteps li{border:1px solid var(--line);background:var(--white);border-radius:10px;margin:0 0 8px;display:grid;grid-template-columns:28px 1fr auto;gap:10px;align-items:start;padding:12px 14px}
+.qwsteps .num{font-weight:800;color:var(--muted);font-size:14px;padding-top:1px}
+.qwsteps .do{display:block;font-size:14.5px}
+.qwsteps .see{display:block;font-size:14px;color:var(--ink);margin-top:4px}
+.qwsteps .lbl{font-size:11px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--muted);margin-right:6px}
+.qwsteps .who{display:inline-block;font-size:11.5px;font-weight:700;color:var(--blue);margin-bottom:3px}
+.qwsteps .call{display:block;font-size:13px;color:var(--warn);margin-top:6px}
+.qwticks{display:flex;gap:6px}
+.qwticks label{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:10.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);min-width:44px;min-height:44px;justify-content:center;border:1px solid var(--line);border-radius:8px;padding:4px 6px;cursor:pointer}
+.qwticks label.dark{background:#2a2f27;color:#d5dfcc;border-color:#2a2f27}
+.qwticks input{width:20px;height:20px;accent-color:var(--olive);margin:0}
+.qwsteps li.done{background:#f3f7ee}
+.qwsign{border:1px solid var(--line);background:var(--white);border-radius:10px;padding:16px 18px;margin:0 0 16px}
+.qwsign h3{margin:0 0 4px;font-size:16px}
+.qwsign .verdictrow{margin-top:10px}
+.qwsign textarea,.qwout{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:10px;resize:vertical}
+.qwout{font:12px/1.5 ui-monospace,monospace}
+.qwwarn{font-size:13px;color:var(--warn);margin-top:8px}
+.qwnav{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+@media(max-width:700px){.qwwrap{padding:20px 16px 36px}.qwgrid,.qwfacts{grid-template-columns:1fr}.qwsteps li{grid-template-columns:22px 1fr;padding:12px}.qwticks{grid-column:2}}
 #summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
 @media(max-width:600px){.hubbar{padding:11px 15px;gap:8px}.hubtabs{padding:0 14px}.docpage{padding:22px 18px 36px}}
 @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
@@ -453,9 +504,9 @@ dialog.truesize::backdrop{background:#16201899}
   <ul class="stagestrip" aria-label="Project lifecycle">
     <li class="stage done" title="Phase 1 foundation drawn 2026-09-25 (hub v2) and ratified the same day with F1–F4 as recommended (hub v3)">Design</li>
     <li class="stage done" title="Planned and ruled 2026-09-25 (R0–R5); Phase 0 desk measurement 2026-09-25 — ADMIN_DESIGN_CONTINUITY_PLAN.md">Plan</li>
-    <li class="stage current" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27. Slice 1's open questions ruled 2026-09-27; the phone bar and Warm shadow fixes committed dca4ac25 for both portals. Slice 5, the volunteer screens and the help guide, committed 530d87e9 2026-09-27">Build</li>
-    <li class="stage" title="—">Review</li>
-    <li class="stage" title="—">QA</li>
+    <li class="stage done" title="Build prompt written 2026-09-25: behind a switch, slices 0–6 (plan §3a slice ledger). Slice 0, the baseline, built 2026-09-25. Slice 1, the switch and the frame, built 2026-09-25. Slice 2, buttons, chips, type, House league and Organization, committed ee175263 2026-09-26. Slice 3, Rep Teams and Accounting, committed 35705e32 2026-09-27. Slice 4 split in three by job; 4a, tournament setup and records, committed 8e76362f 2026-09-27; 4b, tournament operations on game day, committed 07808a02 2026-09-27; 4c, the schedule, committed 9d1b1670 2026-09-27. Slice 1's open questions ruled 2026-09-27; the phone bar and Warm shadow fixes committed dca4ac25 for both portals. Slice 5, the volunteer screens and the help guide, committed 530d87e9 2026-09-27. Slice 6, the prove step (Plan &amp; billing for every plan, the club windows, the preview fix, Q5, the two Dark fixes), built 2026-09-28">Build</li>
+    <li class="stage done" title="Every slice 0–5 ran its cleanup and adversarial review before its commit; slice 6 ran its own on 2026-09-28 (one Back flaw on Settings found and fixed)">Review</li>
+    <li class="stage current" title="Owner walk §245 published 2026-09-28 on the QA Walk tab: eight walks, both themes">QA</li>
     <li class="stage" title="—">Shipped</li>
   </ul>
   <div class="hubactions"><button type="button" id="phone" aria-pressed="false" hidden>Phone width</button></div>
@@ -467,13 +518,13 @@ dialog.truesize::backdrop{background:#16201899}
   <button data-hub="brief" aria-pressed="false">PM Brief</button>
   <button data-hub="plan" aria-pressed="false">Full Plan</button>
   <button data-hub="decisions" aria-pressed="false">Decisions</button>
-  <button data-hub="qa" aria-pressed="false" hidden>QA Walk</button>
+  <button data-hub="qa" aria-pressed="false">QA Walk</button>
 </nav>
 
 <section id="hub-progress" class="hubsection prog">
   <div class="eyebrow">Progress · Phase 1, the foundation</div>
   <h1>Where the program stands</h1>
-  <p class="lede"><strong>Every admin area, the volunteer screens and the help guide are now on the coaches portal's look.</strong> The admin in Warm and Dark, the scorekeeper and gate in warm on every phone. Eight of the nine build slices are committed, the volunteer screens and the help guide last. One remains: slice 6, which proves everything, walks it with you and releases it. Customers see none of it until that release day; until then it shows only in a browser that turns the switch on. <strong>One exception, on your word:</strong> your answers to slice 1's open questions (the phone bar and the Warm shadows) are built for both portals, so coaches see them with the next release.</p>
+  <p class="lede"><strong>Everything is built and proven; your walk is next.</strong> Slice 6 swept every admin and volunteer screen in both themes with the switch on: no text anywhere in the working screens is too faint to read, in Warm or in Dark. It also restyled Plan &amp; billing for every plan (not just Club), gave Club Stage 1's windows the portal's keyboard and Back behaviour, and fixed the public preview's Warm tab bar. The <strong>QA Walk</strong> tab holds your eight walks (§245). After the walk, the release is its own session. Customers see none of it until that day. <strong>The exceptions, on your word:</strong> the phone bar changes (your answers to Q1–Q3 and Q5) and the two Dark fixes you approved in slice 6 are in both portals, so coaches get them with the next release.</p>
 
   <ol class="track" aria-label="The nine build slices, in order">
     <li><button type="button" class="s-committed" data-goto="sl-0"><b>0</b><span>Baseline</span></button></li>
@@ -484,16 +535,16 @@ dialog.truesize::backdrop{background:#16201899}
     <li><button type="button" class="s-committed" data-goto="sl-4b"><b>4b</b><span>Game day</span></button></li>
     <li><button type="button" class="s-committed" data-goto="sl-4c"><b>4c</b><span>The schedule</span></button></li>
     <li><button type="button" class="s-committed" data-goto="sl-5"><b>5</b><span>Volunteers &amp; help</span></button></li>
-    <li><button type="button" class="s-next" data-goto="sl-6"><b>6</b><span>Prove, walk, release</span></button></li>
+    <li><button type="button" class="s-built" data-goto="sl-6"><b>6</b><span>Prove, walk, release</span></button></li>
   </ol>
   <div class="legend2" aria-hidden="true"><span><i class="l-committed"></i>Committed</span><span><i class="l-built"></i>Built, being committed</span><span><i class="l-next"></i>Next</span><span><i class="l-todo"></i>Not started</span></div>
 
   <h2>Waiting on you</h2>
   <div class="waiting">
-    <p class="sub" style="margin:0">You answered slice 1's three open questions and placed the preview issue on 2026-09-27 (see Decisions); the fixes are committed. One question from their review, and the calls to confirm on your walk. Neither blocks the next slice.</p>
+    <p class="sub" style="margin:0">Every open question is answered (see Decisions: Q5 "colour it", Plan &amp; billing "restyle it here", Club windows "build it here", the Dark fixes "fix both"). What waits on you now:</p>
     <ol>
-      <li><b>Should the tab you're on stand out by its colour, in both themes?</b><span>With the Dark labels now readable, the tab you're on is as light as the others; it is marked by its pill and dot. Warm has worked that way since August, because a Warm-only rule greys every tab's name, the active one included, although the drawings show it olive. Recommended: the active tab's name in olive in Warm and in a brighter ink in Dark, a one-line change in each.</span></li>
-      <li><b>Build-time calls to confirm on your walk.</b><span>Each slice's report lists the places the build chose differently from the drawing, or chose where the drawing was silent (for example, Finalize becoming the lime button in 4b). They are confirmed or reversed on the slice 6 walk.</span></li>
+      <li><b>Your walk, §245.</b><span>Eight short walks on the QA Walk tab, one job each, signed off one by one, each step ticked in Warm and in Dark. Each slice's build-time calls sit on the step where they show, so you keep or reverse them as you go. Walk 8 turns the switch off and goes last.</span></li>
+      <li><b>Your word to commit slice 6</b> (its cleanup and review are done), and then <b>a release session</b>, outside a tournament weekend.</li>
     </ol>
   </div>
 
@@ -547,8 +598,8 @@ dialog.truesize::backdrop{background:#16201899}
     </article>
     <article class="slice" id="sl-6">
       <div class="sid">6</div>
-      <div><h3>Prove, walk, release</h3><p>Every admin screen swept in both themes with the switch on, the public Schedule preview's Warm tab bar fixed, your walk, then the switch comes out and everyone gets the new look on one day. On release day the coaches portal's "?" panel also needs its own fix to follow the theme (found in slice 5).</p></div>
-      <div class="state"><span class="st next">Next</span></div>
+      <div><h3>Prove, walk, release</h3><p>Every admin and volunteer screen swept in both themes with the switch on; Plan &amp; billing restyled for every plan; Club Stage 1's windows given the portal's keyboard and Back behaviour; the public preview's Warm tab bar fixed; your walk, §245. Then, in its own session, the switch comes out and everyone gets the new look on one day (with the coaches portal's "?" panel fix found in slice 5).</p><p class="proof">Switch off: 206 of 206 identical · hard-to-read text in the working screens: 0 in Warm, 0 in Dark (4,400 today)</p></div>
+      <div class="state"><span class="st built">Built · walk ready</span><span class="meta">2026-09-28</span><button type="button" class="linkbtn" data-report="Slice 6">Read the report</button></div>
     </article>
   </div>
 
@@ -566,7 +617,8 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>Accounting (the treasurer's view included)</td><td>6</td><td>3</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Tournaments: setup, records, game day</td><td>—</td><td>4a · 4b</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Tournaments: the schedule</td><td>—</td><td>4c</td><td><span class="st committed">On the kit</span></td></tr>
-      <tr><td>Club hub, Members and audit log, Plan &amp; billing, Settings, setup checklist</td><td>6</td><td>Club Stage 1</td><td><span class="st stage1">Redesigned by Club Stage 1</span></td></tr>
+      <tr><td>Club hub, Members and audit log, Plan &amp; billing for Club, Settings, setup checklist</td><td>6</td><td>Club Stage 1</td><td><span class="st stage1">Redesigned by Club Stage 1</span></td></tr>
+      <tr><td>Plan &amp; billing for every other plan (Tournament, Tournament Plus as "Plan &amp; subscription", League) and its plan panel</td><td>1</td><td>6</td><td><span class="st built">On the kit, built</span></td></tr>
       <tr><td>Scorekeeper, official and gate (fixed warm)</td><td>4</td><td>5</td><td><span class="st committed">On the kit</span></td></tr>
       <tr><td>Help guide, the "?" panel, hints on work pages</td><td>10</td><td>5</td><td><span class="st committed">On the kit</span></td></tr>
     </tbody>
@@ -576,9 +628,9 @@ dialog.truesize::backdrop{background:#16201899}
   <h2>Before release day</h2>
   <ol class="release">
     <li><strong>Slice 5</strong>: the volunteer screens and the help guide. Committed (530d87e9).</li>
-    <li><strong>Prove</strong>: every admin screen swept in both themes with the switch on, the reading-contrast check on the admin's backgrounds, and the switch-off pictures one last time. The public Schedule preview's Warm tab bar is fixed here (your ruling).</li>
-    <li><strong>Confirm Club Stage 1's six screens</strong> are ready on the same switch; they ship the same day.</li>
-    <li><strong>Your walk</strong>: a sample of every area in both themes, the frame at desktop and phone width, a dense table, a tournament on game day, the scorekeeper sheet and the help guide.</li>
+    <li><strong>Prove</strong>: done in slice 6 (2026-09-28). Every admin and volunteer screen swept in both themes with the switch on, the switch-off pictures one last time, the public Schedule preview's Warm tab bar fixed. See the slice 6 report.</li>
+    <li><strong>Confirm Club Stage 1's screens</strong>: done. All six have their new versions; the one gap, Plan &amp; billing for every plan except Club, was restyled in slice 6 on your word, and Club Stage 1's windows got the portal's keyboard and Back behaviour.</li>
+    <li><strong>Your walk</strong>: §245 on the QA Walk tab. Eight walks: the frame, the club's desk, game day, setup and the public previews, the volunteer at the field, help, the club's windows, and the release check.</li>
     <li><strong>Release</strong>, on your word and outside a tournament weekend: the switch comes out, the old look is deleted, and a What's New note says where the Dark choice lives and that your colours stay on your public pages.</li>
   </ol>
 </section>
@@ -1485,6 +1537,30 @@ dialog.truesize::backdrop{background:#16201899}
   </ul>
   <p>It also confirmed that every sign-in, organization and permission check on the volunteer screens runs exactly as before, that the switch still cannot turn on in production, and that the coaches portal and public pages are untouched. With the switch off the volunteer screens' pictures are still identical after the cleanup, and a Dark phone and a Warm phone still show them pixel-identical.</p>
   <p><strong>Committed</strong> (530d87e9, 2026-09-27), after the type check, the switch's guard tests and the colour checks passed on this change alone. Another session's unfinished change to the help "?" button stays out of it.</p>
+  <h2>Slice 6 — prove and walk (2026-09-28)</h2>
+  <p>The proof that the whole foundation holds, the last fixes it turned up, and your walk. Still nothing customers see, except the few changes you approved for both portals (marked below). The release is its own session, after your walk.</p>
+  <p><strong>Your four calls at the start</strong>, all as recommended: restyle Plan &amp; billing here for every plan, not only Club; give Club Stage 1's windows the portal's keyboard and Back behaviour before the walk; colour the name of the phone bar's current tab (Q5); and, mid-slice, fix the two Dark defects the coaches portal shares.</p>
+  <div class="tablewrap"><table>
+    <thead><tr><th>What changed</th><th>What you see</th></tr></thead>
+    <tbody>
+      <tr><td>Plan &amp; billing, every plan but Club</td><td>Tournament and Tournament Plus organizers (as "Plan &amp; subscription") and League clubs get the new look, titled "Plan &amp; billing" like the rail and the Club page, with no line under the title. Same sections, words and buttons. The "See what … includes" panel is restyled too, and on a phone it now covers the bottom bar; before, its "Not right now" sat under the bar, today's page included.</td></tr>
+      <tr><td>Club Stage 1's windows</td><td>Invite, Manage, the plan move and every question keep the keyboard inside, give focus back to the button that opened them, and close on the phone's Back, one window at a time. Building it found two flaws, both fixed: the portal's shared window behaviour let Shift+Tab walk out of a window that holds a hidden phone-only button (coaches get this fix too), and Settings would have asked "Save your changes?" whenever you merely cancelled a window on it.</td></tr>
+      <tr><td>The public preview's Warm tab bar</td><td>With the switch on and Warm chosen, the preview's tab row sat on a lighter ground than families see, too faint to read. It now sits on the public page's own ground. Both previews are now pixel-identical with the switch on and off, in both themes, at every width checked.</td></tr>
+      <tr><td>Q5, both portals</td><td>The phone bar's current tab shows its name in olive (Warm) or bright white (Dark), besides its pill and dot. Coaches get this with the next release.</td></tr>
+      <tr><td>Two Dark fixes, both portals</td><td>The dim caption grey is a touch brighter in Dark (it measured just under the reading floor), and Upcoming Bills' chosen day and "Review queue →" take the portal's accent instead of navy (nearly invisible in Dark). Warm doesn't change. Coaches get these with the next release.</td></tr>
+      <tr><td>Club Stage 1's Plan &amp; billing on a small phone</td><td>It no longer scrolls sideways by a few pixels at 361px.</td></tr>
+    </tbody>
+  </table></div>
+  <p><strong>The proof.</strong> With the switch on, every admin and volunteer screen (110 views, four widths, both themes) was measured against today's dark look. <strong>Text too faint to read: none in the working screens, in Warm or in Dark</strong> (4,400 today). The only contrast findings left are inside the public previews and are the public pages' own, exactly as today, as ruled. Everything else the sweep found new is explained in the full plan: mostly Club Stage 1's new screens using the product's standard button size, and headers whose words changed. With the switch off, all 206 pictures of every admin and volunteer screen are pixel-identical, so customers still see nothing. In the coaches portal, the phone bar and the Dark fixes only improved things: on the screens slice 1 measured in Dark, hard-to-read text fell from 557 to 80, with nothing new.</p>
+  <p><strong>Found on the way, written down rather than fixed:</strong></p>
+  <ul>
+    <li>House league's "Season statuses" help bubble runs off the right edge of a phone when opened there. It does this today too.</li>
+    <li>A team's seasons say "1 coaches". Words aren't a restyle's to change.</li>
+    <li>On a small phone, event settings' "Fee model" choice doesn't quite fit. It overflows today too, slightly more on the new look. That's for the tournament redesign.</li>
+  </ul>
+  <p><strong>One lesson for the tools:</strong> two sweeps running side by side shared the test accounts and cancelled each other's sign-ins partway through, which cost an hour. They now run one at a time, each with fresh sign-ins.</p>
+  <p><strong>Cleanup and review (2026-09-28).</strong> The cleanup pass trimmed the code without changing what anyone sees. The review found one real flaw, now fixed: on a Settings page with unsaved changes, if you had opened any window earlier on the page (or saved and then edited again), pressing Back with a window open left the window on screen and filled the browser's history with extra steps. The first proof missed it because it always edited before opening a window. That order is now in the browser proof: 36 checks, all passing. The help guide needs nothing today; on release day the billing page's old name, "Subscription", changes to "Plan &amp; billing" in the help and on tournament Settings in one go (listed in the full plan).</p>
+  <p><strong>Your walk</strong> is on the QA Walk tab: §245, eight walks.</p>
   <h3>Slice ledger</h3>
   <div class="tablewrap"><table>
     <thead><tr><th>Slice</th><th>Scope</th><th>Status</th></tr></thead>
@@ -1497,7 +1573,7 @@ dialog.truesize::backdrop{background:#16201899}
       <tr><td>4b</td><td>Tournaments: operations on game day (dashboard, Teams, Results, Check-in, Staff kit, Communication, Chat), and the game list, moved in from 4c</td><td>Committed 07808a02, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>4c</td><td>Tournaments: the schedule (with its generator, playoff wizard and brackets)</td><td>Committed 9d1b1670, 2026-09-27; walked at slice 6</td></tr>
       <tr><td>5</td><td>Scorekeeper, official and gate (fixed warm); the help guide</td><td>Committed 530d87e9, 2026-09-27; walked at slice 6</td></tr>
-      <tr><td>6</td><td>Prove, walk, release</td><td>Not started</td></tr>
+      <tr><td>6</td><td>Prove, walk, release</td><td>Prove and walk built 2026-09-28; your walk §245 is on the QA Walk tab; the release is its own session</td></tr>
     </tbody>
   </table></div>
 </section>
@@ -1512,14 +1588,21 @@ dialog.truesize::backdrop{background:#16201899}
 <dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
 
 <section id="hub-qa" class="hubsection" hidden>
-  <div class="eyebrow">Owner QA walk</div>
-  <h1 style="padding:0 24px">Admin Design Continuity — QA walk</h1>
-  <div style="padding:0 24px 24px">
-    <div class="qaprogress" id="qaCount"></div>
-    <div id="qaParts"></div>
-    <button class="button primary" type="button" id="buildSummary">Build paste-back summary</button>
-    <textarea id="summaryOut" rows="8" readonly hidden></textarea>
+ <div class="qwwrap">
+  <div class="eyebrow">Owner QA · §245</div>
+  <h1>Admin Design Continuity — QA walks</h1>
+  <p class="qwlead" id="qwLead"></p>
+  <details class="qwsetup" open>
+   <summary>Before any walk — accounts, the preview switch, and Warm / Dark</summary>
+   <div class="signin" id="qwSetup"></div>
+  </details>
+  <div id="qwIndex">
+   <div class="qwgrid" id="qwGrid"></div>
+   <button type="button" class="button" id="qwAll">Build a paste-back of every walk</button>
+   <textarea class="qwout" id="qwAllOut" rows="10" readonly hidden></textarea>
   </div>
+  <div id="qwWalk" hidden></div>
+ </div>
 </section>
 <dialog id="s1True" class="truesize" aria-label="Phone frame at true size"><div class="tsbar"><span>True size: on a phone this is exactly what the screen shows</span><button type="button" id="s1TrueClose">Close</button></div><div class="tsbody"></div></dialog>
 
@@ -1598,7 +1681,9 @@ $('s1TrueClose').onclick=()=>$('s1True').close();
 document.querySelectorAll('[data-truesize]').forEach(b=>b.addEventListener('click',()=>{const src=document.getElementById(b.dataset.truesize);if(!src)return;const d=$('s1True');const body=d.querySelector('.tsbody');body.innerHTML='';const c=src.cloneNode(true);c.removeAttribute('id');body.appendChild(c);d.showModal()}));
 
 const DECISIONS=[
-  {date:'2026-09-27 · review of Q1–Q3',ask:'Q5 · Should the tab you\'re on stand out by its colour, in both themes?',ruling:'open',label:'Open: your call',why:'Raised by the review of the phone bar fix. In Dark the inactive tab names are now as light as the active one, so the tab you\'re on is marked by its pill and dot. Warm has worked that way since August 2026, because a Warm-only rule greys every tab name, the active one included; the drawings show it olive and bolder. Recommended: the active name in olive in Warm and in a brighter ink in Dark.'},
+  {date:'2026-09-27 · slice 6, at the start',ask:'S6a · Plan & billing for every plan except Club is still today\'s page with the switch on. What happens before release?',ruling:'accepted',label:'Accepted: restyle it here',why:'Owner, 2026-09-27: "Restyle it here" (recommended), over "the release waits for a redesign" and "ship today\'s page as is". Club Stage 1 redesigned the page for the Club plan only, so Tournament and Tournament Plus organizers, who reach it as Plan & subscription, and League would have met the old page inside the new frame. Restyled like every other screen: same sections, words and buttons. Its "See what … includes" panel is restyled too.'},
+  {date:'2026-09-27 · slice 6, at the start',ask:'S6b · Club Stage 1\'s windows lack the portal\'s window behaviour (keyboard trap, focus return, phone Back). Where is it built?',ruling:'accepted',label:'Accepted: here, before the walk',why:'Owner, 2026-09-27: "Build it here, before the walk" (recommended). The club windows now stand on the coaches portal\'s own window behaviour, so your walk checks it once. Building it found a flaw in that shared behaviour (a hidden phone-only button let Shift+Tab walk out of a window at desktop width), fixed for both portals.'},
+  {date:'2026-09-27 · review of Q1–Q3; ruled at slice 6',ask:'Q5 · Should the tab you\'re on stand out by its colour, in both themes?',ruling:'accepted',label:'Accepted: colour it',why:'Owner, 2026-09-27: "Colour it" (recommended). The tab you are on shows its name in olive in Warm, as the drawings show, and in the bright primary ink in Dark, besides its pill and dot. Both portals share the bar, so coaches get it with the next release, like Q1–Q3.'},
   {date:'2026-09-27 · after slice 4c',ask:'Q1 · The Dark phone bar\'s faint labels: fix them in both portals now, or at slice 6?',ruling:'accepted',label:'Accepted: fixed now, both portals',why:'Owner, 2026-09-27: "fix it", then "go" once told it reaches the live coaches portal with the next release. The tab names and the More menu\'s headings take the quiet grey used for other secondary text in Dark. One shared bar, so one fix repairs both portals.'},
   {date:'2026-09-27 · after slice 4c',ask:'Q2 · The phone bar\'s labels: mixed case (the admin, as drawn) or capitals (the coaches portal)?',ruling:'accepted',label:'Accepted: mixed case, both portals',why:'Owner, 2026-09-27: "go with your recommendation". The recommendation was mixed case: the portal\'s own type rule of August 2026 already sets navigation that way, and this bar was the one place still in capitals; in capitals "Accounting" is cut off in the admin; both hubs draw mixed case.'},
   {date:'2026-09-27 · after slice 4c',ask:'Q3 · Cards carry a dark shadow on cream. Soften it in both portals?',ruling:'accepted',label:'Accepted: softened in Warm',why:'Owner, 2026-09-27: "soften it". In Warm, cards and pop-up menus take the soft warm-brown shadow the portal already uses for its paper cards; Dark keeps its shadows. Public page previews keep the organization\'s own look.'},
@@ -1621,16 +1706,205 @@ const DECISIONS=[
 ];
 $('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.ask)}</strong><span class="tag ${d.ruling}">${esc(d.label)}</span></div><p class="meta">${esc(d.date)}</p><p>${esc(d.why)}</p></div>`).join('');
 
-const QA_PARTS=[];
-let qa={};try{qa=JSON.parse(localStorage.getItem('adc-qa')||'{}')}catch(e){qa={}}
-function saveQA(){try{localStorage.setItem('adc-qa',JSON.stringify(qa))}catch(e){}}
-function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
-function paintQACount(){const c=qaCounts();$('qaCount').textContent=`Checked ${c.checked} of ${c.total}`}
-function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>Part ${esc(p.id)} · ${esc(p.title)}</h3>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" id="qa-${esc(p.id)}-${i}" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea id="qa-notes-${esc(p.id)}" data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
- document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
- document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
- document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
- paintQACount()}
-drawQA();
-$('buildSummary').onclick=()=>{const c=qaCounts();const lines=[`${document.title} — QA summary`,`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`Part ${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>lines.push(`  [${qa[p.id+'-'+i]?'x':' '}] ${s}`));if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>
+<script>
+/* QA WALKS (§245, slice 6) — their own script, so a typo in the walk text can only break this tab.
+   One purpose per walk, signed off one by one (the Club hub's shape, 2026-09-26). Every step carries a
+   Warm tick and a Dark tick unless it is marked `one` (the volunteer screens are fixed warm; the switch-off
+   check has one look). Tick state lives in THIS browser only (localStorage); the paste-back is how a result
+   travels. ⚠ Prose uses typographic apostrophes (’) — a straight one in a single-quoted string stops the
+   whole script. Parse before publishing. */
+'use strict';
+const QW_KEY='adc-walks-245-v1';
+const QW_LEAD='The foundation is walked as <strong>eight short walks</strong>, one job each, signed off one by one. Every step gets a <strong>Warm</strong> tick and a <strong>Dark</strong> tick: walk it in Warm, flip Appearance to Dark and walk it again. The volunteer walk has one tick per step (those screens are warm on every phone). Walks 1–7 go in any order; walk 8 turns the preview switch off, so it goes last. Steps name places and relationships, never counts — the test clubs’ figures move.';
+const QW_SETUP='<strong>Sign in as</strong> — dev only, keep this page private. URL <strong>http://localhost:3000</strong> (the dev server must be up). Every account’s password is <strong>UATPassword2026!</strong> (the source of truth is the <code>UAT_*</code> lines in <code>.env.local</code>).<ul style="margin:8px 0 6px 18px;padding:0"><li><strong>Club owner</strong> — Morgan Ellis — <code>uat-club-owner@uat-rep-club.local</code> — UAT Rep Club (walks 1, 2, 6, 7, 8)</li><li><strong>Tournament organizer</strong> — <code>uat-owner@uat-test-org.local</code> — the tournament club <code>uat-plus-org</code> and its <em>UAT Phase 2C Plus Championship 2026</em> (walks 3, 4, 8)</li><li><strong>Volunteer</strong> — <code>uat-plus-scorekeeper@uat-plus-org.local</code> — an official of that club (walk 5)</li><li><strong>Coach</strong> — <code>uat-coach@uat-test-org.local</code> — UAT Test Team (walk 8 only)</li></ul><strong>The new look sits behind a preview switch.</strong> Turn it on once in each browser or private window you walk in: <code>http://localhost:3000/api/dev/admin-kit?on=1&amp;next=/uat-rep-club/admin</code> — one door covers every organization in that browser (off again with <code>?on=0</code>). A new or private window starts WITHOUT it: if you meet a dark admin with square lime headings, that window hasn’t had the link. <strong>Warm / Dark</strong> is the account menu (top right on a desktop) → Appearance. One private window per account saves signing in and out.';
+const WALKS=[
+ {id:'W1',n:1,title:'Finding your way',who:'Club owner',minutes:15,
+  short:'The top bar, the sidebar, the phone bar and More, and every page header — the coaches portal’s own frame, without the club’s colour.',
+  intent:'The frame is on every admin screen, so it is where “one product” is won or lost. You are checking that the admin’s top bar, sidebar, phone bar, More menu and page headers are the coaches portal’s own; that your organization’s colour has left them (it stays on your public pages, ruling R1); and that page headers carry no grey line under the title (ruling F3). New in this slice: the tab you are on in the phone bar now stands out by its name (your Q5 answer).',
+  passes:'Moving around the admin feels like moving around the coaches portal, nothing in the frame wears the club’s colour, and every word in it reads in both themes.',
+  notIn:'What is inside each page (walks 2–6). The public pages keep the club’s own look by design.',
+  signIn:'Club owner — Morgan Ellis.',
+  where:'Desktop browser for steps 1–5, then phone width (about 390 px, or a real phone) for 6–9. Preview switch on. (The black “N” circle in the bottom-left corner is the dev server’s own badge, not the product — on a phone it sits over the Overview tab.)',
+  steps:[
+   {do:'Open http://localhost:3000/uat-rep-club/admin.',see:'A white top bar with the FieldLogicHQ wordmark, the bell and your account; the club’s name across the page with a “Public site” switch pill; and the rail — Overview at the top, then Programs (Rep Teams, House league, Accounting, Families, Public site), Also on your plan (Tournaments) and Organization.'},
+   {do:'Both test clubs use the platform’s own colours, so give this one a colour to lose: Organization → Settings → Colour theme — it is on “FieldLogicHQ”; choose “Battle Purple” and press Save changes. (Walk 8 puts it back.)',see:'Settings’ preview of your public page turns purple — and NOTHING else in the admin does: no purple buttons, borders or glows in the frame or on any page, in walks 2–7 either. The one main button on a page stays lime with dark text.',one:true},
+   {do:'Open Rep Teams → 15U AAA → its 2026 season.',see:'Over each title a small label says where you are, with a way back up to the page above; no grey sentence sits under any title.'},
+   {do:'Open the account menu (top right) → Appearance → Dark, then back to Warm.',see:'The whole admin changes at once — rail, cards, tables, the top bar — and no part stays behind in the other theme.',one:true},
+   {see:'The rail’s group names and rows read clearly; the row for the page you are on is marked.',call:'Rail rows are the coaches portal’s full-width rows, not the rounded inset rows the drawing showed (slice 1).'},
+   {do:'Narrow to phone width.',see:'The bottom bar is Overview, the club’s first three programs and More. Labels are in ordinary capitals (“Rep Teams”, not “REP TEAMS”) and none is cut off.'},
+   {see:'NEW (Q5): the tab you are on shows its NAME in olive (Warm) or bright white (Dark), as well as its pill and dot; the other names are grey.'},
+   {do:'Tap More.',see:'A sheet slides up over the page while the bar stays in place beneath it (More turns into ×): Notifications, then More programs, Organization and You. Every heading reads in both themes.',call:'More is the coaches portal’s full-width sheet, not the narrower popover drawn (slice 1).'},
+   {do:'Close More and tap one of the programs in the bar.',see:'At the top of the program’s first screen, a row “In Accounting” (or the program you tapped) listing its other pages; tap it and they open as a list.'}
+  ]},
+ {id:'W2',n:2,title:'The club’s desk — money, teams, families',who:'Club owner',minutes:15,
+  short:'The densest screens: ledgers, allocations and payment requests, a team, house league and Families — same columns and buttons, the portal’s look.',
+  intent:'Rep Teams, Accounting, House league and Families carried the heaviest hand-set colours in the admin. They keep every column, button and word; only the look changes (ruling F4: dense money tables are restyled in place, redesigned later in Club Stage 3). You are checking that the money tables still read at a glance in both themes — amounts lined up on the right, each status chip saying what it said before — and you are confirming the build-time calls made on these screens.',
+  passes:'Every table reads in both themes with the same columns and actions as today, amounts line up, and each status chip says what it said before in a colour that fits.',
+  notIn:'New money features (Club Stage 3). Void ledger entries — the test ledger holds none (a void entry is struck through as well as tagged, slice 3). Pressing any button: look only.',
+  signIn:'Club owner — Morgan Ellis.',
+  where:'Desktop browser, preview switch on.',
+  steps:[
+   {do:'Accounting → the club’s General ledger.',see:'Above the table, Export on the left, Add entry and Add transfer on the right. Columns Date · Description · Category · Type · Amount · Status. Amounts right-aligned in even-width digits: money in green with +, money out red with −. Type chips: Income green, Expense amber, Transfer in blue; Posted green.',call:'Export, Add entry and Add transfer stay above the table where they are today, and amounts keep their + / − signs and green / red (slice 3).'},
+   {do:'Rep Teams → Cost allocations → “Diamond permits — team share”.',see:'“← Cost allocations” beside the title and “Created …” at the top of the page; five figures across — Total, Allocated, Collected, Outstanding, and Overdue tinted red. Check: Collected plus Outstanding equals Allocated. 15U AA reads “1 overdue”.'},
+   {do:'Rep Teams → Payment requests.',see:'Pending and History tabs; each request is a card — the team, a green “Request from org” chip, the amount and the reason — with a lime Approve and a red Deny (do not press). In History, each answered request says approved in green or denied in red.',call:'Approve and Deny became the portal’s main and danger buttons (slice 3).'},
+   {do:'Accounting → Budget vs. Actual.',see:'The same columns as today; amounts right-aligned; nothing faint in Dark.'},
+   {do:'Rep Teams → 15U AAA.',see:'The team’s sport and age group as chips beside its name, with its colour swatch; its seasons as cards — 2026 Active with Tryouts open (green), 2025 Completed as the quiet grey chip.',call:'A finished (“Completed”) season is the quiet grey chip, not a verdict colour — House league’s seasons the same (slices 2 and 3).'},
+   {do:'House league → the season → Registrations.',see:'“← 2026 Fall House League” on the left and “House league” above the title; Export, Message registrants and a lime Add registration; the status tabs with their counts; each row’s status chip and its Approve / Waitlist / Decline (do not press).',call:'Page titles are in sentence case (“Registrations”, “House league”); the product’s button labels are unchanged (slice 2).'},
+   {do:'Families.',see:'The worklist’s lenses are the portal’s filter chips — the chosen one olive, an empty one greyed — and each row’s fix is an “Open roster” link.',call:'The lenses are the portal’s real filter chip in the body face, not the drawn monospace chip (slice 1).'}
+  ]},
+ {id:'W3',n:3,title:'Game day at the Championship',who:'Tournament organizer',minutes:15,
+  short:'The dashboard on game day, entering and finalizing scores, the schedule, check-in, the staff kit and chat.',
+  intent:'Paying tournament organizers work in these screens every weekend, so this walk is the one a customer would feel first. The Championship’s first games have been played, so its dashboard is in its game-day view. You are checking that game day reads at a glance in both themes, that the score buttons say what they do by their colour, and confirming the tone calls made when these screens were restyled.',
+  passes:'You could run a game day from these screens in either theme: live things read red, good outcomes green, the one main action on each row is the lime button, and nothing is faint.',
+  notIn:'Changing a score or a game — look, do not press. Three build-time calls the test tournament cannot show, recorded rather than walked: the bracket’s winners’ path olive and losers’ path grey-dashed (its playoff games are all still placeholders), the timeline’s red “now” line (it draws only on today’s date; the Championship was in June), and the checked-in / no-show stripes on check-in (no team is checked in). Setup screens (walk 4); the volunteer’s own screens (walk 5).',
+  signIn:'Tournament organizer — uat-owner@uat-test-org.local.',
+  where:'Desktop browser, preview switch on (the door works for any organization: http://localhost:3000/api/dev/admin-kit?on=1&next=/uat-plus-org/admin/tournaments/dashboard). If another tournament opens, pick “UAT Phase 2C Plus Championship 2026” in the tournament switcher.',
+  steps:[
+   {do:'Open the dashboard.',see:'The event bar across the top (the organization and dates over the Championship’s name and its phase chip), then the dashboard: an “Active · Live” state beside the title, the red-edged “It’s game day — here’s your live view” with a lime “Enter & review scores”, then Now playing and Needs a score.',call:'The guidance rail’s live tone is red (the same game-day fact as the Live chip), “ready to finalize” and “+N this week” green, finished items olive (slice 4b).'},
+   {do:'Open Results.',see:'The game list: each game’s two teams one over the other in plain bold type with their scores; a finished game marked ✓ Final in green; the game waiting for review marked Pending review with a lime Finalize beside it (do not press).',call:'Finalize became the lime main button; Revert score and Forfeit are red because they erase a recorded result; Cancel game stays amber because Reinstate undoes it (slice 4b).'},
+   {do:'Press the pencil on the finished game, look, then press it again to close without saving.',see:'Its editing bar shows Revert Score and Forfeit in red.',call:'The drawing’s one-line “A vs B” was not adopted — the stacked layout is kept (slice 4b).'},
+   {do:'Open Schedule.',see:'The title “Schedule management” with a green “Published” beside it; the filter chips (Scheduled, Cancelled, Final) with the chosen one olive; Schedule health folded, with its score.',call:'Every chosen filter is olive, “Scheduled” included (slice 4c).'},
+   {do:'In Schedule, switch the stage to Playoffs and the view to Bracket.',see:'The bracket’s games as white cards under their round’s name, on the paper page.'},
+   {do:'Switch the stage back to Round Robin and the view to Timeline.',see:'Each field a column and each game a block in its pool’s colour, with Conflicts and the day switcher above.'},
+   {do:'Open Check-in.',see:'Three figures across (checked in, no-shows, unpaid), then each team with its roster and payment note and a lime Check in (do not press). Tap a team’s row: its sheet rises from the bottom with Add roster in olive — close it without saving.',call:'“Add roster” is the olive accent, not a second lime button (slice 4b).'},
+   {do:'Open Staff kit.',see:'Each QR code sits on white in BOTH themes (so a phone can scan it).',call:'The QR backing is a fixed white (slice 4b).'},
+   {do:'Open Chat.',see:'The room column — Rooms, “All coaches”, Manage room — and, while empty, “No messages yet”. Open Manage room: the room’s people and their role tags in the portal’s look.',call:'“Organizer” is the quiet chip (a name, not a verdict); “Muted” gains an amber tint (slice 4b).'}
+  ]},
+ {id:'W4',n:4,title:'Setting up a tournament, and what the public sees',who:'Tournament organizer',minutes:12,
+  short:'Setup screens, the public site editor and its preview in the club’s own colours, the new-tournament wizard, Archives — and Plan & subscription, restyled in this slice.',
+  intent:'Two different rules meet here. The setup screens are working screens and follow your Warm / Dark setting. The public pages — and the admin’s previews of them — stay in the organization’s own colours whatever you chose (ruling R2). This slice fixed one place where that leaked: the public preview’s tab row in Warm. And Plan & subscription, which every Tournament and Tournament Plus organizer uses, was still today’s page inside the new frame; your ruling was to restyle it here.',
+  passes:'Every setup screen follows your setting, every preview of a public page looks exactly like the public page, and Plan & subscription reads like the rest of the admin.',
+  notIn:'Changing any setting or creating a tournament — open, look, cancel. Actually buying or changing a plan (Club Stage 1’s walk 8 covered money moving).',
+  signIn:'Tournament organizer — uat-owner@uat-test-org.local.',
+  where:'Desktop browser, preview switch on; step 4 also at phone width.',
+  steps:[
+   {do:'Open Event settings, then Divisions.',see:'Both on the portal’s cards and fields; the division fill board keeps its filling / almost / full colours.'},
+   {do:'Open Public site (branding).',see:'The page’s own controls follow your theme; the colour swatches, the font samples and the light / dark preview show the club’s own colours in both themes.',call:'The card-style thumbnails are redrawn as small token icons of each style (slice 4a).'},
+   {do:'At phone width and in Warm, open the admin’s preview of the public Schedule: http://localhost:3000/uat-plus-org/admin/tournaments/preview/uat-phase2c-plus-championship-2026/schedule (“Exit preview” at the bottom brings you back).',see:'The preview is the public page in its own colours — dark, whatever your setting — and its row of tabs (Overview, News, Schedule, Standings …) reads clearly across the top. Until this slice, in Warm that row sat on a lighter ground and its names fell under the reading floor (your Q4).'},
+   {do:'Press the “+” beside the tournament’s name at the top of the sidebar to start a new tournament — look at the wizard, then close it.',see:'The style cards and fields on the portal’s look; nothing is created.'},
+   {do:'Admin → Past tournaments.',see:'The small label above the title is the organization’s name (the page lists every tournament).',call:'This page’s label is the organization, not a tournament (slice 4a).'},
+   {do:'Admin → Settings & access → Plan & subscription.',see:'“Organization” above the title; the plan card (Tournament Plus, with its Active chip); the Founding Season note in the olive accent; the tournament-slot meter filling olive; staff seats; then the other plans as cards, each with a “Coming soon” chip.',call:'On the new look the page is titled “Plan & billing”, the rail’s and the Club page’s name for it; its old line “Manage your plan and payment method” describes the page and is not kept (F3). A “coming soon” plan is a plain card whose chip says so (slice 6).'},
+   {do:'On Plan & subscription, press “See what … includes” on any plan.',see:'A panel slides in from the right over a dimmed page, in your theme: its label, a price strip, “The old way” and “How it works” as cards, and “Not right now” at its foot. At phone width it now covers the bottom bar, so “Not right now” can be reached (it sat under the bar before — today’s page too).'}
+  ]},
+ {id:'W5',n:5,title:'The volunteer at the field',who:'Volunteer',minutes:12,themes:'One tick per step: these screens are warm on EVERY phone (ruling R3). The first steps set this browser to Dark on purpose, to prove it.',
+  short:'The scorekeeper and the gate stay warm whatever the phone is set to; the score sheet covers the screen and never loses a half-typed score.',
+  intent:'Volunteers score games and check teams in on phones that are often shared, in the sun. Those screens are fixed warm (R3): the Warm / Dark choice lives on the device, and the last person to hold a shared gate phone would otherwise decide what the next volunteer sees. You are checking that they stay warm on a phone set to Dark, that the game to score next is obvious, and that the score sheet is a form that covers the screen and cannot be thrown away by a stray tap.',
+  passes:'The volunteer screens look the same on a Dark phone as a Warm one, the next game is obvious, and nothing lets a half-typed score disappear.',
+  notIn:'Finalizing or changing a score — open the sheet, then Cancel. The organizer’s check-in board (walk 3).',
+  signIn:'Volunteer — uat-plus-scorekeeper@uat-plus-org.local (step 1 needs any admin account in the same window to set Dark).',
+  where:'Phone width (about 390 px, or a real phone), preview switch on. Set Appearance back to Warm afterwards.',
+  steps:[
+   {do:'In this window, set Appearance to Dark (as any admin account: account menu → Appearance → Dark). Then sign out and sign in as the volunteer.',see:'The volunteer lands on the scorekeeper.',one:true},
+   {do:'Look at the scorekeeper.',see:'Warm — cream paper, white cards — not dark, although this phone is set to Dark.',one:true},
+   {do:'Set the date to 14 June 2026 (the Championship’s busiest day).',see:'The Championship’s games that day as cards: the first game still to score wears an olive stripe and an “Up next” chip; the others say “To Score”; each card names its time, field and division.',one:true,call:'“Up next” is the olive chip; a pending or finalized game is a plain card whose chip says its state (slice 5).'},
+   {see:'Status words as the product always wrote them: “To Score”, “Pending Review”, “Finalized”.',one:true,call:'The drawing’s sentence case was not used: “Pending Review” is the product’s one spelling everywhere (slice 5).'},
+   {do:'Tap a game to score.',see:'A score sheet rises over the bottom of the screen, covering the bar, over a dimmed warm page: the two teams’ score boxes, “This score becomes final immediately after saving.” in olive, then Cancel and a lime Finalize Score (do not press Finalize).',one:true},
+   {do:'Tap the dimmed area outside the sheet, then press Cancel.',see:'The dimmed tap does nothing (a half-typed score is never thrown away); Cancel closes the sheet.',one:true},
+   {see:'The four filter buttons sit at the thumb; the chosen one is olive.',one:true,call:'The chosen filter is olive, not the drawn lime — lime is the one main button per view (slice 5).'},
+   {do:'Open the gate: http://localhost:3000/uat-plus-org/check-in (pick the Championship if asked), then tap a team.',see:'The check-in board in warm; the team opens as a sheet from the bottom (close it without checking anyone in).',one:true}
+  ]},
+ {id:'W6',n:6,title:'Reading the help guide',who:'Club owner or organizer',minutes:8,
+  short:'The admin’s help pages, the “?” panel and the hints on work pages follow your setting.',
+  intent:'Help used to be dark only because the admin was. Now the guide follows the theme like every other working screen (ruling R4). You are checking that the Help pages, the “?” panel that slides in from a page, and the small “?” hints read well in both themes.',
+  passes:'Every part of help reads in both themes, and nothing in it looks like a different product.',
+  notIn:'The coaches portal’s help panel — it still stays dark until release day, when it gets its own fix (found in slice 5).',
+  signIn:'Club owner — Morgan Ellis, or the tournament organizer.',
+  where:'Desktop browser, preview switch on.',
+  steps:[
+   {do:'Open Help from the sidebar.',see:'“Help & Guides” on the portal’s paper: the search box, then the guides as white cards, each with its topic count and an olive “Read guide →”.',call:'Help’s accents are olive; only a callout’s own “info” tone keeps the blue; a tip is olive, not green (slice 5).'},
+   {do:'Open any article, then search for “schedule”.',see:'The contents rail, the article and the results read clearly.'},
+   {do:'As the organizer, open Results and press the “?” beside its title.',see:'The help panel slides in, in your theme.'},
+   {do:'Find a small “?” hint near the top of a page and open it.',see:'Its bubble opens below it with ONE small arrow pointing up at the “?”.'},
+   {do:'As the organizer, open Schedule → Tools → Round-Robin Generator (then cancel).',see:'The small hints under its fields read clearly.'}
+  ]},
+ {id:'W7',n:7,title:'The club’s windows — keyboard and Back',who:'Club owner',minutes:12,themes:'Behaviour steps have one tick (it works the same in both themes); the last step checks the look in both.',
+  short:'Built in this slice: Invite, Manage and every club question keep the keyboard inside, give focus back, and close on the phone’s Back — one window at a time.',
+  intent:'Club Stage 1’s windows had no keyboard trap and ignored the phone’s Back: Tab walked out behind the window, and Back left the page from under it. They now stand on the coaches portal’s own window behaviour (your ruling: build it here). You are checking that the keyboard stays inside a window, that Escape and Back close the TOP window only, that focus returns to the button that opened it, and that the Settings page’s “Save your changes?” question still asks exactly when it should — and never when you only closed a window.',
+  passes:'Every window can be used and closed from the keyboard and with the phone’s Back, one layer at a time, and Settings asks about unsaved changes only when you are really leaving.',
+  notIn:'Sending an invitation, suspending anyone or saving Settings — every question is answered “no”. The windows’ contents (Club Stage 1’s walks).',
+  signIn:'Club owner — Morgan Ellis.',
+  where:'Desktop browser for steps 1–3 (a keyboard), phone width for 4–8. Preview switch on.',
+  steps:[
+   {do:'Organization → Members → Invite. Press Tab ten times, then Shift+Tab ten times.',see:'The highlight moves only through the window’s own controls and never lands on the page behind it.',one:true},
+   {do:'Press Escape.',see:'The window closes and the highlight is back on Invite.',one:true},
+   {do:'Manage on Riley Okonkwo → Suspend… Press Escape, then Escape again.',see:'The first Escape closes only the question (Manage stays, the highlight on Suspend…); the second closes Manage.',one:true},
+   {do:'At phone width: Invite, then the browser’s (or phone’s) Back.',see:'The window closes and you are still on Members.',one:true},
+   {do:'Manage Riley → Suspend… → Back → Back.',see:'The first Back closes the question, the second closes Manage; you are still on Members.',one:true},
+   {do:'Organization → Settings. Open “Choose a stock logo” and press Cancel FIRST, before changing anything. Now change the club’s name (do not save). Open the stock logos again and press Cancel; open them once more and press Back.',see:'Every time the window closes and NOTHING asks about saving. (The order matters: a window opened before the edit is the case the review caught — Back used to leave the window on screen.)',one:true},
+   {do:'Press Back again; on the question, press Back once more.',see:'“Save your changes?” appears; Back on it closes it, and your changed name is still there (the same as “Stay on page”).',one:true},
+   {do:'Tap a link to Members (in More, or the sidebar at desktop width) → “Discard and leave”. Then press Back.',see:'You land on Members; Back returns to Settings with the old name and no question open.',one:true},
+   {do:'Open Invite, Manage and a Suspend… question in both themes.',see:'Every window and question reads clearly.'}
+  ]},
+ {id:'W8',n:8,title:'Release check — the switch off, and what coaches see',who:'Club owner, organizer, coach',minutes:10,themes:'One tick per step, except the coaches portal’s, which reads in both themes.',
+  short:'With the switch off the admin is today’s, exactly; and the three phone-bar and shadow changes coaches get with the next release.',
+  intent:'Two release facts. Until release day the new look sits behind the switch, and with it off the admin must be today’s exactly — the proof that none of this reaches a customer early (every slice’s pictures proved it pixel for pixel; this is your look). And three of your answers are NOT behind the switch: the phone bar’s readable Dark labels, its ordinary capitals, the soft Warm shadows (Q1–Q3), and now Q5’s coloured tab name — coaches get those with the next release.',
+  passes:'With the switch off you cannot tell the foundation exists; in the coaches portal the phone bar and cards look as you ruled.',
+  notIn:'Anything already walked with the switch on.',
+  signIn:'Club owner — Morgan Ellis; tournament organizer — uat-owner@uat-test-org.local; coach — uat-coach@uat-test-org.local.',
+  where:'Desktop for steps 1–3; phone width for 4–5.',
+  steps:[
+   {do:'As the club owner: http://localhost:3000/api/dev/admin-kit?on=0&next=/uat-rep-club/admin',see:'Today’s dark admin exactly — the tile hub, square console headings, the grey line under page titles — and, since walk 1 made the club purple, today’s admin wears the purple in its buttons, borders and highlights: the colour the new look keeps off your working screens.',one:true},
+   {do:'Turn the switch back on (http://localhost:3000/api/dev/admin-kit?on=1&next=/uat-rep-club/admin/org/settings), set Colour theme back to “FieldLogicHQ” and Save changes.',see:'The club is back on the platform colours.',one:true},
+   {do:'As the organizer: http://localhost:3000/api/dev/admin-kit?on=0&next=/uat-plus-org/admin/tournaments/dashboard',see:'Today’s dark tournament dashboard.',one:true},
+   {do:'As the coach, open the coaches portal at phone width.',see:'The bar’s names read clearly in both themes, in ordinary capitals, and the tab you are on shows its name in olive (Warm) or bright white (Dark).'},
+   {do:'Still in the coaches portal, in Warm, look at any page of cards.',see:'Cards on cream carry a soft warm shadow, not a heavy dark one (Q3).',one:true}
+  ]}
+];
+let qw={ticks:{},verdict:{},notes:{},open:null};
+try{const raw=localStorage.getItem(QW_KEY);if(raw)qw=Object.assign(qw,JSON.parse(raw))}catch(e){}
+function qwSave(){try{localStorage.setItem(QW_KEY,JSON.stringify(qw))}catch(e){}}
+function qwKeys(w){const ks=[];w.steps.forEach((s,i)=>{if(s.one)ks.push(`${w.id}-${i}`);else{ks.push(`${w.id}-${i}-w`);ks.push(`${w.id}-${i}-d`)}});return ks}
+function qwCount(w){return qwKeys(w).filter(k=>qw.ticks[k]).length}
+function qwTotal(w){return qwKeys(w).length}
+function qwStatus(w){const v=qw.verdict[w.id],c=qwCount(w),t=qwTotal(w);
+ if(v==='pass')return c<t?{cls:'gap',txt:`Passed · only ${c} of ${t} ticked`}:{cls:'pass',txt:`Passed · ${t} of ${t}`};
+ if(v==='issue')return{cls:'issue',txt:`Issue · ${c} of ${t} ticked`};
+ if(v==='call')return{cls:'call',txt:`Needs a call · ${c} of ${t} ticked`};
+ if(c)return{cls:'',txt:`In progress · ${c} of ${t}`};
+ if(w.before)return{cls:'wait',txt:w.before.short};
+ return{cls:'',txt:'Not started'}}
+function qwStepText(s){return (s.who?`[${s.who}] `:'')+(s.do?`Do: ${s.do} → `:'')+`See: ${s.see}`+(s.call?` (Build-time call: ${s.call})`:'')}
+function qwTickMarks(w,s,i){return s.one?`[${qw.ticks[`${w.id}-${i}`]?'x':' '}]`:`[W ${qw.ticks[`${w.id}-${i}-w`]?'x':' '}][D ${qw.ticks[`${w.id}-${i}-d`]?'x':' '}]`}
+function qwSummary(ws){const lines=[];ws.forEach(w=>{const st=qwStatus(w);lines.push(`Walk ${w.n} · ${w.title} — ${st.txt}`);
+ w.steps.forEach((s,i)=>lines.push(`  ${qwTickMarks(w,s,i)} ${i+1}. ${qwStepText(s)}`));
+ if(qw.notes[w.id])lines.push('  Notes: '+qw.notes[w.id]);lines.push('')});return lines.join('\n')}
+function qwIndex(){$('qwWalk').hidden=true;$('qwIndex').hidden=false;document.querySelector('.qwsetup').open=true;
+ $('qwGrid').innerHTML=WALKS.map(w=>{const st=qwStatus(w);return `<button type="button" class="qwcard" data-qwopen="${w.id}"><span class="n">Walk ${w.n} of ${WALKS.length}</span><span class="t">${esc(w.title)}</span><span class="p">${esc(w.short)}</span><span class="m"><span class="qwchip ${st.cls}">${esc(st.txt)}</span><span>${esc(w.who)}</span><span>· about ${w.minutes} min · ${w.steps.length} steps</span></span></button>`}).join('');
+ document.querySelectorAll('[data-qwopen]').forEach(b=>b.onclick=()=>qwOpen(b.dataset.qwopen));
+ qw.open=null;qwSave()}
+function qwTick(key,label,dark){const on=!!qw.ticks[key];return `<label class="${dark?'dark':''}"><input type="checkbox" data-qwtick="${key}" ${on?'checked':''} aria-label="${label}">${label}</label>`}
+function qwStepDone(w,s,i){return s.one?!!qw.ticks[`${w.id}-${i}`]:!!(qw.ticks[`${w.id}-${i}-w`]&&qw.ticks[`${w.id}-${i}-d`])}
+function qwOpen(id){const i=WALKS.findIndex(w=>w.id===id);if(i<0)return qwIndex();const w=WALKS[i],st=qwStatus(w),next=WALKS[i+1];
+ qw.open=id;qwSave();$('qwIndex').hidden=true;document.querySelector('.qwsetup').open=false;const box=$('qwWalk');box.hidden=false;
+ box.innerHTML=`<button type="button" class="button qwback" data-qwhome>← All walks</button>
+ <div class="qwhead"><div><div class="eyebrow">Walk ${w.n} of ${WALKS.length} · §245</div><h2>${esc(w.title)}</h2></div><span class="qwchip ${st.cls}" id="qwChip">${esc(st.txt)}</span></div>
+ ${w.before?`<div class="qwblock"><strong>Before you start:</strong> ${esc(w.before.long)}</div>`:''}
+ <div class="qwintent"><h3>What this walk is for</h3><p>${esc(w.intent)}</p></div>
+ <div class="qwfacts">
+  <div><h3>It passes when</h3><p>${esc(w.passes)}</p></div>
+  <div><h3>Not in this walk</h3><p>${esc(w.notIn)}</p></div>
+  <div><h3>Sign in as</h3><p>${esc(w.signIn)}</p></div>
+  <div><h3>Where and on what</h3><p>${esc(w.where)}</p></div>
+ </div>
+ <p class="qwthemes">${esc(w.themes||'Walk it once in Warm and tick the W column, then account menu → Appearance → Dark, walk it again and tick D.')}</p>
+ <ol class="qwsteps">${w.steps.map((s,k)=>`<li class="${qwStepDone(w,s,k)?'done':''}"><span class="num">${k+1}</span><span>${s.who?`<span class="who">${esc(s.who)}</span>`:''}${s.do?`<span class="do"><span class="lbl">Do</span>${esc(s.do)}</span>`:''}<span class="see"><span class="lbl">${s.do?'You should see':'Check'}</span>${esc(s.see)}</span>${s.call?`<span class="call">Build-time call — tick to keep it, or say in the notes to reverse it: ${esc(s.call)}</span>`:''}</span><span class="qwticks">${s.one?qwTick(`${w.id}-${k}`,'Seen',false):qwTick(`${w.id}-${k}-w`,'Warm',false)+qwTick(`${w.id}-${k}-d`,'Dark',true)}</span></li>`).join('')}</ol>
+ <div class="qwsign"><h3>Sign off walk ${w.n}</h3><p class="sub">Your verdict is separate from the ticks: a walk can pass with a step you chose to skip — say which in the notes.</p>
+  <div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button type="button" data-qwverdict="${v}" aria-pressed="${qw.verdict[w.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div>
+  <div class="qwwarn" id="qwWarn" ${qw.verdict[w.id]==='pass'&&qwCount(w)<qwTotal(w)?'':'hidden'}>Passed with ticks missing — say in the notes which ones you skipped and why.</div>
+  <label>Notes<textarea data-qwnotes rows="3" placeholder="What you saw that was wrong, surprising, or worth a decision — and any build-time call you want reversed">${esc(qw.notes[w.id]||'')}</textarea></label>
+  <button type="button" class="button primary" data-qwcopy style="margin-top:12px">Build this walk’s paste-back</button>
+  <textarea class="qwout" rows="8" readonly hidden data-qwout></textarea></div>
+ <div class="qwnav"><button type="button" class="button" data-qwhome>← All walks</button>${next?`<button type="button" class="button" data-qwnext="${next.id}">Next: walk ${next.n} · ${esc(next.title)} →</button>`:''}</div>`;
+ const repaint=()=>{const s=qwStatus(w),c=$('qwChip');c.className='qwchip '+s.cls;c.textContent=s.txt;$('qwWarn').hidden=!(qw.verdict[w.id]==='pass'&&qwCount(w)<qwTotal(w))};
+ box.querySelectorAll('[data-qwhome]').forEach(b=>b.onclick=()=>{qwIndex();$('hub-qa').scrollIntoView()});
+ box.querySelectorAll('[data-qwnext]').forEach(b=>b.onclick=()=>{qwOpen(b.dataset.qwnext);$('hub-qa').scrollIntoView()});
+ box.querySelectorAll('[data-qwtick]').forEach(el=>el.onchange=()=>{qw.ticks[el.dataset.qwtick]=el.checked;const li=el.closest('li'),k=[...li.parentNode.children].indexOf(li);li.classList.toggle('done',qwStepDone(w,w.steps[k],k));qwSave();repaint()});
+ box.querySelectorAll('[data-qwverdict]').forEach(b=>b.onclick=()=>{qw.verdict[w.id]=b.dataset.qwverdict;qwSave();box.querySelectorAll('[data-qwverdict]').forEach(x=>x.setAttribute('aria-pressed',x===b));repaint()});
+ box.querySelector('[data-qwnotes]').oninput=e=>{qw.notes[w.id]=e.target.value;qwSave()};
+ box.querySelector('[data-qwcopy]').onclick=()=>{const o=box.querySelector('[data-qwout]');o.value=`${document.title} — §245\n`+qwSummary([w]);o.hidden=false;o.focus();o.select()}}
+$('qwLead').innerHTML=QW_LEAD;
+$('qwSetup').innerHTML=QW_SETUP;
+$('qwAll').onclick=()=>{const o=$('qwAllOut');const done=WALKS.filter(w=>qw.verdict[w.id]).length;o.value=`${document.title} — §245 QA walks · ${done} of ${WALKS.length} signed off\n\n`+qwSummary(WALKS);o.hidden=false;o.focus();o.select()};
+if(qw.open&&WALKS.some(w=>w.id===qw.open))qwOpen(qw.open);else qwIndex();
 </script>

@@ -59,9 +59,13 @@
 }
 .daysBtn:hover { background: var(--home-card, rgba(255,255,255,0.05)); color: var(--home-ink-soft, rgba(255,255,255,0.7)); }
 
+/* The chosen day and "Review queue →" (below) ink with the portal's ACCENT, falling back to today's navy
+   where no theme marker is set (the admin with the switch off — unchanged). Warm already resolved the navy
+   to olive; in Dark the navy stayed navy on the dark card, 1.61:1 — nearly invisible in both portals
+   (owner, 2026-09-27, Admin Design Continuity slice 6: "fix both, both portals"). */
 .daysBtnActive {
   background: rgba(var(--blueprint-blue-rgb, 79,163,224), 0.15);
-  color: var(--blueprint-blue);
+  color: var(--home-olive, var(--blueprint-blue));
 }
 
 /* ── Loading / empty ──────────────────────────────────────────────────────── */
@@ -216,7 +220,7 @@
   padding: 0.5rem 0.85rem;
   font-size: var(--type-support);
   font-weight: 600;
-  color: var(--blueprint-blue);
+  color: var(--home-olive, var(--blueprint-blue));
   text-decoration: none;
   border-top: 1px solid var(--home-line, rgba(255,255,255,0.06));
   transition: background 0.1s;

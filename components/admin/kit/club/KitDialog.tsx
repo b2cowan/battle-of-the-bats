@@ -18,9 +18,24 @@
  * where it is mounted, `position: fixed`, above the phone bar's layer.
  * ⚠ Kit only: nothing outside the switch mounts it. TOKENS ONLY (the scrim is the one exemption,
  * annotated — the kit's "themed scrim" gap, ADC Phase 0).
+ *
+ * THE PORTAL'S WINDOW FLOOR (Admin Design Continuity slice 6, owner 2026-09-27: "build it here"). Every
+ * window stands on the coaches portal's own `useDialogFloor`: Tab is trapped inside the panel, focus
+ * returns to the button that opened it, Escape closes the TOP window only, and the phone's Back closes
+ * the top window (one history step per window, the shared Back stack — a question over a form closes
+ * alone). All of it holds while `busy`. Before this the club windows hand-rolled Escape and nothing
+ * else: a keyboard walked out behind the window, and Back left the page from under it.
+ * ⚠ A QUESTION IS role="dialog", as the portal's own questions are (`QuestionShell`). The floor reads an
+ * `alertdialog` as a confirmation docked INSIDE a panel and holds Back while one is on screen, so the
+ * old role would have made Back do nothing on every club question.
+ * ⚠ A BUTTON THAT CLOSES A WINDOW AND NAVIGATES (`router.push`) must navigate with the window still
+ * open: the step tidies its history entry one tick after the click, before the router has pushed the
+ * new address, and that Back cancels the navigation (`useBackStep`'s header). Settings' "Save your
+ * changes?" is the one case today.
  */
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { ArrowLeft, X } from 'lucide-react';
+import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import styles from './KitDialog.module.css';
 
 // The page stops scrolling while ANY window is open, and scrolls again only when the LAST one closes.
@@ -64,33 +79,17 @@ export default function KitDialog({
 }) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
-  // The latest close handler and busy flag, for the one Escape listener below (bound once, on mount).
-  const closeRef = useRef(onClose);
-  const busyRef = useRef(busy);
-  useEffect(() => {
-    closeRef.current = onClose;
-    busyRef.current = busy;
-  });
+  // Mounted = open. Called BEFORE the focus effect below, so the floor records the opener while it
+  // still has focus, then that effect moves the cursor into the first field.
+  useDialogFloor(true, panelRef, { onClose, busy });
 
   useEffect(() => {
     const panel = panelRef.current;
     // Focus the first field (a form) or the panel itself (a question), so the keyboard is inside.
     const first = panel?.querySelector<HTMLElement>('[data-autofocus], input:not([type=hidden]), select, textarea');
     (first ?? panel)?.focus();
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape' || busyRef.current) return;
-      // Only the TOP window answers Escape — a question over a form closes alone.
-      const all = document.querySelectorAll('[data-kit-dialog]');
-      if (all[all.length - 1] !== panel) return;
-      e.stopPropagation();
-      closeRef.current();
-    };
-    document.addEventListener('keydown', onKey);
     lockPageScroll();
-    return () => {
-      document.removeEventListener('keydown', onKey);
-      unlockPageScroll();
-    };
+    return unlockPageScroll;
   }, []);
 
   return (
@@ -103,7 +102,7 @@ export default function KitDialog({
       <div
         ref={panelRef}
         className={`${styles.panel} ${kind === 'question' ? styles.question : styles.form}`}
-        role={kind === 'question' ? 'alertdialog' : 'dialog'}
+        role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}

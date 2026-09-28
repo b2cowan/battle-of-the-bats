@@ -323,3 +323,136 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 6 — only with the switch on) ═══════════════════════
+   The "See what X includes" slide-over, opened from Plan & billing's upgrade/product-shelf cards.
+   Not portalled and reached only from the legacy billing page, so no public-preview exclusion is
+   needed here.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here. */
+
+/* The panel COVERS the phone bar on the kit, as the club's windows do (KitDialog's 400; the drawer-layers
+   ruling: a form covers the nav). At 200/201 the bar (300) and its "games to finalize" strip sat over the
+   panel's foot, so "Not right now" could not be reached on a phone — found by slice 6's sweep, and the
+   same with the switch off (today's page keeps its layering until the release). */
+:global([data-admin-kit]) .backdrop {
+  background: var(--home-scrim);
+  z-index: 400;
+}
+
+:global([data-admin-kit]) .panel {
+  z-index: 401;
+  background: var(--card-bg);
+  border-left-color: var(--home-line);
+  box-shadow: var(--home-shadow);
+}
+
+:global([data-admin-kit]) .panelHeader {
+  border-bottom-color: var(--home-line);
+}
+
+/* A true eyebrow (labels .panelHeadline below it) — mono stays, lime→olive. */
+:global([data-admin-kit]) .panelEyebrow {
+  color: var(--home-olive);
+}
+/* The panel's real heading (nothing above it labels IT) — body face (F2). */
+:global([data-admin-kit]) .panelHeadline {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+
+/* A bespoke icon button (not a global .btn-*) — F2's body-face bucket; KIT_BUTTON.secondary shape. */
+:global([data-admin-kit]) .closeBtn {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .closeBtn:hover {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+
+/* The price strip is a recessed band inside the panel. */
+:global([data-admin-kit]) .priceStrip {
+  background: var(--home-paper);
+  border-bottom-color: var(--home-line);
+}
+:global([data-admin-kit]) .priceAmount {
+  color: var(--text-primary);
+}
+/* A lime "savings" chip is a promo accent → olive (chips keep whatever face they already had). */
+:global([data-admin-kit]) .priceSavings {
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+
+/* The scrollbar itself, tokenised rather than left as a raw white rgba. */
+:global([data-admin-kit]) .panelBody {
+  scrollbar-color: rgba(var(--home-line-rgb), 0.6) transparent;
+}
+:global([data-admin-kit]) .panelBody::-webkit-scrollbar-thumb {
+  background: rgba(var(--home-line-rgb), 0.6);
+}
+
+/* A true eyebrow (labels .sectionHeadline below it) — mono stays, dim white→the eyebrow ink. */
+:global([data-admin-kit]) .sectionEyebrow {
+  color: var(--text-secondary);
+}
+/* The section's real heading ("Still copying rosters…", "How it works", "What's included") —
+   uppercase + letter-spaced in the legacy sheet, but it is the section's OWN heading — the same call
+   as billing.module.css's .sectionTitle: body face, caps dropped. */
+:global([data-admin-kit]) .sectionHeadline {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+/* Pain / step mini-cards — recessed bands nested inside the panel. */
+:global([data-admin-kit]) .painCard,
+:global([data-admin-kit]) .stepCard {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .painTitle,
+:global([data-admin-kit]) .stepTitle {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .painBody,
+:global([data-admin-kit]) .stepBody {
+  color: var(--text-secondary);
+}
+/* stepNum is a small mono readout ("01", "02") — mono stays, lime→olive. */
+:global([data-admin-kit]) .stepNum {
+  color: var(--home-olive);
+}
+/* A true eyebrow (labels .stepTitle below it). */
+:global([data-admin-kit]) .stepLabel {
+  color: var(--text-secondary);
+}
+
+:global([data-admin-kit]) .featureList li {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .featureIcon {
+  color: var(--home-olive);
+}
+
+/* Footer — a recessed band, mirroring the price strip. .upgradeBtn/.cancelBtn use the global
+   .btn-lime/.btn-ghost classes (already on the kit); .cancelBtn ALSO sets its own quieter ink on top
+   of .btn-ghost today, a LOCAL rule reaching a global class with more weight (the 4c brief's ⚠), so
+   it still needs its own kit rule here to keep reading quieter than an ordinary ghost button. */
+:global([data-admin-kit]) .panelFooter {
+  background: var(--home-paper);
+  border-top-color: var(--home-line);
+}
+:global([data-admin-kit]) .cancelBtn {
+  color: var(--text-tertiary);
+}
+
+:global([data-admin-kit]) .comingSoonNote {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+  color: var(--text-secondary);
+}

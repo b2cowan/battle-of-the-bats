@@ -144,9 +144,25 @@ export default function SettingsKit() {
       setPendingHref(href);
       setGuardOpen(true);
     };
-    window.history.pushState(null, '', window.location.href);
-    const onPop = () => {
-      window.history.pushState(null, '', window.location.href);
+    // ⚠ THE GUARD'S OWN ENTRY IS MARKED (slice 6). Every club window now stands one Back step above
+    // the page (KitDialog → the portal's dialog floor), and a window TIDIES its step away as it closes
+    // — a `history.back()` that lands on this entry exactly as a Back pressed with the window open
+    // does. Unmarked, the two were one event here: cancelling any window on a page with unsaved
+    // changes asked "Save your changes?". A pop that lands ON the marked entry came from a window
+    // above it (answered by the window's own step); a Back on the page itself lands BELOW it.
+    // ⚠ READ THE LANDING OFF THE EVENT, never `history.state` (/review, 2026-09-28). The portal's Back
+    // stack answers the same popstate and, closing a window, re-pushes that window's entry at once —
+    // when its listener ran first (any window opened before this listener was last added: a window
+    // earlier on the page, or an edit → Save → edit), `history.state` was already the window's, the
+    // mark was missed, and a stray guard entry went on top that nothing ever consumed.
+    // ⚠ The mark lasts only while nothing re-stamps the entry: Next replaces it with its own state on a
+    // `router.refresh()` or a navigation. Nothing here does either while the form is dirty — add one
+    // and this guard belongs on the shared stack (`useBackStep`) instead.
+    const GUARD_ENTRY = { settingsGuard: true };
+    window.history.pushState(GUARD_ENTRY, '', window.location.href);
+    const onPop = (e: PopStateEvent) => {
+      if ((e.state as { settingsGuard?: boolean } | null)?.settingsGuard) return;
+      window.history.pushState(GUARD_ENTRY, '', window.location.href);
       // Back while another window is open (the offline question, the stock logos, the deletion
       // request) stays put and asks nothing — never a second question stacked on the first.
       if (document.querySelector('[data-kit-dialog]')) return;
@@ -738,13 +754,18 @@ export default function SettingsKit() {
           footer={
             <>
               <button type="button" className="btn btn-outline" onClick={() => { setGuardOpen(false); setPendingHref(null); }}>Stay on page</button>
-              <button type="button" className="btn btn-ghost" onClick={() => { discard(); setGuardOpen(false); if (pendingHref) router.push(pendingHref); setPendingHref(null); }}>
+              {/* ⚠ LEAVING NAVIGATES WITH THIS QUESTION STILL OPEN (slice 6). Closing it first let its
+                  Back step tidy its history entry before the router had pushed the new address, and
+                  that Back cancels the navigation (KitDialog's header). The page unmounts as it
+                  leaves, so the question goes with it; discarding a page being left is moot. Back
+                  (no link waiting) keeps today's behaviour: discard, close, stay. */}
+              <button type="button" className="btn btn-ghost" onClick={() => { if (pendingHref) { router.push(pendingHref); return; } discard(); setGuardOpen(false); }}>
                 Discard and leave
               </button>
               <button
                 type="button"
                 className="btn btn-lime"
-                onClick={async () => { if (await saveAll()) { setGuardOpen(false); if (pendingHref) router.push(pendingHref); setPendingHref(null); } }}
+                onClick={async () => { if (!(await saveAll())) return; if (pendingHref) { router.push(pendingHref); return; } setGuardOpen(false); }}
                 disabled={saving}
               >
                 {saving ? 'Saving…' : 'Save and continue'}

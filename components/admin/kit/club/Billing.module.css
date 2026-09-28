@@ -4,7 +4,10 @@
    move window's figures. Kit only. TOKENS ONLY.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
-.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Pinned to its containing block's corner (left/top 0): at its STATIC position — the sizes table's last
+   header cell — its containing block sits outside the table's own scroller, so on a 361px phone the
+   invisible label reached 4px past the screen and the whole page scrolled sideways (ADC slice 6 sweep). */
+.srOnly { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 /* ── The plan-and-capacity card: the plan on the left, the teams it holds on the right ── */
 .planCard { --card-pad: 1.1rem 1.25rem; margin-bottom: 1.75rem; }

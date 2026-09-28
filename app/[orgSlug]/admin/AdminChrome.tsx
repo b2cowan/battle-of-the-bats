@@ -86,7 +86,12 @@ export default function AdminChrome({
       <CancellationGuard />
       <AdminTitleManager />
       <FeedbackRequestIdProvider />
-      <div className={shellClassName}>
+      {/* R2 on the preview's own GROUND too (slice 6, the preview's Warm tab bar): the preview shell
+          paints `--pitch-black`, which the kit turns to paper in Warm, and the public top-tab row is a
+          92%-opaque bar composited over it — its tab labels fell to 4.40:1. The island below restores
+          the public palette only INSIDE `main`; marking the shell as well puts the public ground back
+          under everything the preview draws. Kit only: with the switch off the shell is untouched. */}
+      <div className={shellClassName} {...(kit && isTournamentPreview ? { 'data-public-preview': '' } : {})}>
         {/* Stage C — the operator frame strip: desktop-only fixed top bar (wordmark → Home,
             bell · account · Workspaces). NO chat door: chat is a destination for a fan and a
             SECTION OF THE WORK for an operator, so the strips deliberately don't eject into

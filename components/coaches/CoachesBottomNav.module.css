@@ -69,7 +69,11 @@
     min-width: 0;
   }
 
-  .tab.active { color: var(--blueprint-light); }
+  /* The tab you are on stands out by its NAME as well as its pill and dot (owner, 2026-09-27, Q5:
+     "colour it"). Once the inactive names took the quiet tier (above) they read as light as the
+     old blue active one (1.07:1 apart), so the active name moves to the primary ink in Dark; the
+     warm override below makes it olive, as both hubs draw it. Both portals share this bar. */
+  .tab.active { color: var(--text-primary); }
   .tab:active { opacity: 0.65; }
 
   .iconWrap {
@@ -413,6 +417,9 @@
     --nav-scrollbar-thumb: rgba(var(--home-line-rgb), 0.55);
   }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab { color: var(--text-tertiary); }
+  /* ⚠ The rule above (0,3,1) outranks `.tab.active` (0,2,0), which is why Warm greyed the active
+     name from 2026-08-18 until Q5. Olive, restated at its own weight. */
+  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab.active { color: var(--home-olive); }
   :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .tab.active .iconWrap { background: var(--home-olive-soft); }
   /* A WHITE panel on a CREAM page separated by a hairline barely reads as a panel at all —
      the list appears to sit directly on the screen and run off the top of it, which is a good

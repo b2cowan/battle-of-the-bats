@@ -186,6 +186,16 @@ split into the slice ledger before starting.
   slice.
 - Update the slice ledger (status, commit, date, what was re-homed, what was left for a redesign) and the
   plan's status line. Republish the hub if its tabs changed. Memory `project_admin_design_continuity`.
+- **The hub's Progress tab is the owner's view of the program** (added 2026-09-27): update its track step,
+  the slice's row (status chip, hash · date, the proof line) and the coverage table as the slice moves
+  from built to committed. **Parse both of the hub's scripts before every publish** — a single unescaped
+  apostrophe in a single-quoted string disabled every tab and button for a day:
+  `node -e "const h=require('fs').readFileSync('docs/projects/active/ADMIN_DESIGN_CONTINUITY_HUB.html','utf8');[...h.matchAll(/<script>([\s\S]*?)<\/script>/g)].forEach(m=>new (require('vm').Script)(m[1]))"`.
+- ⚠ **One runner at a time, and a fresh sign-in before each pass** (slice 6 lost an hour to this): the sweep,
+  the identity check and every probe sign in with the SAME UAT accounts, and a session one process refreshes
+  rotates the refresh token another holds, so the sign-in service revokes it and every later screen "did not
+  render". Run `npx playwright test --project=auth-setup` before each pass. The coaches portal's routes compile
+  heavy (~8 GB in the dev server): sweep them in chunks with a restart between.
 - Handoff in product-owner voice. Offer `/review` (and `/simplify` where a shared component was added).
 
 ## Do not

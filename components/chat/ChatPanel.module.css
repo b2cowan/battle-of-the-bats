@@ -319,7 +319,10 @@
   margin-bottom: 0.35rem;
 }
 .emptyTitle { color: var(--white-80); font-weight: 700; font-size: 0.95rem; margin: 0; }
-.emptyBody { color: var(--white-45); font-size: 0.82rem; margin: 0; }
+/* The dim tier, not a raw 45% white (owner, 2026-09-27, Admin Design Continuity slice 6: "fix both, both
+   portals"): 45% measured 4.48:1 on the dark card in the coaches portal and the admin. `--home-dim` is 50% in
+   Dark and the warm dim ink in Warm (which --white-45 already resolved to there); no theme marker → today's. */
+.emptyBody { color: var(--home-dim, var(--white-45)); font-size: 0.82rem; margin: 0; }
 
 .loadMore {
   align-self: center;

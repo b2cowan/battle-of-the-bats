@@ -195,7 +195,12 @@ export function useDialogFloor(
         return;
       }
       if (event.key !== 'Tab') return;
-      const focusables = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE));
+      // ⚠ ONLY WHAT IS RENDERED (Admin Design Continuity slice 6, found putting the club windows on
+      // this floor). A control hidden by a media query — a phone-only ← at desktop width — still
+      // matches the selector but cannot take focus: as the LAST it made Tab stick, as the FIRST it let
+      // Shift+Tab walk out behind the panel (80 presses in a club window: 34 landed outside it).
+      const focusables = Array.from(panel.querySelectorAll<HTMLElement>(FOCUSABLE))
+        .filter(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
       if (focusables.length === 0) {
         event.preventDefault();
         panel.focus();

@@ -2,7 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import dynamic from 'next/dynamic';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
+import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
+import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import { isClubPlan } from '@/lib/module-entitlements';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CreditCard, CheckCircle, Archive, ShieldOff, Link2, Star, ArrowRight, Users, CalendarRange, Building2 } from 'lucide-react';
@@ -162,8 +164,18 @@ export default function BillingPage() {
   return kit && isClubPlan(currentOrg?.planId) ? <BillingKit /> : <BillingPageLegacy />;
 }
 
+// Slice 6 (owner, 2026-09-27: "restyle it here"): every plan but Club renders THIS page with the switch
+// on too, so it carries a kit layer like every other admin screen — `billing.module.css`'s kit section,
+// the shared header, and the hand-set colours below through `kx` (the exact legacy object with the switch
+// off). A restyle, not the Club page's redesign: same sections, words and buttons.
+// The meter's three tones are the Club page's own capacity bar (`Billing.module.css` .capFill/.capNear/
+// .capFull), so the two plan pages fill alike.
+const LEGACY_METER = { ok: 'var(--logic-lime)', near: 'var(--warning)', full: 'var(--danger)' } as const;
+const KIT_METER = { ok: 'var(--home-olive)', near: 'var(--warning)', full: 'var(--home-live)' } as const;
+
 function BillingPageLegacy() {
   const { currentOrg, refresh: refreshOrg, userRole } = useOrg();
+  const kx = useKitStyle();
   usePageTitle('Plan & Billing');
   const { tournaments, refresh: refreshTournaments }  = useTournament();
   const searchParams     = useSearchParams();
@@ -479,7 +491,7 @@ function BillingPageLegacy() {
   }
 
   if (!currentOrg) {
-    return <div className={styles.page}><p style={{ color: 'var(--white-40)' }}>Loading…</p></div>;
+    return <div className={styles.page}><p style={kx({ color: 'var(--white-40)' }, KIT_INK.tertiary)}>Loading…</p></div>;
   }
 
   // Tournament and Tournament Plus orgs have no org-level modules beyond core.
@@ -562,6 +574,30 @@ function BillingPageLegacy() {
   const subscriptionSub = isTeamWorkspaceBilling
     ? 'Manage Premium Coaches Portal billing and reactivation'
     : 'Manage your plan and payment method';
+  // Today's header while the switch is off. On the kit (F3): the eyebrow, the page's name as the rail
+  // and the Club page say it ("Plan & billing"; a team workspace keeps its own), no icon tile, and no
+  // subtitle — it describes the page, not a fact on it, so it is not re-homed.
+  const pageHeader = (
+    <AdminPageHeader
+      eyebrow="Organization"
+      title={isTeamWorkspaceBilling ? subscriptionTitle : 'Plan & billing'}
+      legacy={
+        <div className={styles.pageHeader}>
+          <div className={styles.headerLeft}>
+            <div className={styles.headerIcon}><CreditCard size={20} /></div>
+            <div>
+              <h1 className={styles.pageTitle}>{subscriptionTitle}</h1>
+              <p className={styles.pageSub}>{subscriptionSub}</p>
+            </div>
+          </div>
+        </div>
+      }
+    />
+  );
+  const meterFill = (pct: number) => {
+    const tone = pct >= 100 ? 'full' : pct >= 80 ? 'near' : 'ok';
+    return kx({ width: `${pct}%`, background: LEGACY_METER[tone] }, { background: KIT_METER[tone] });
+  };
   const cancelReviewTitle = isTeamWorkspaceBilling ? 'Cancel Premium Coaches Portal' : 'Cancel account';
   const cancelWarningCopy = isTeamWorkspaceBilling
     ? `Premium tools will become inactive and premium team data is retained for ${cancelPreflight?.retentionDays ?? 90} days. Basic tournament records stay available in Coaches Portal.`
@@ -609,15 +645,7 @@ function BillingPageLegacy() {
 
     return (
       <div className={styles.page}>
-        <div className={styles.pageHeader}>
-          <div className={styles.headerLeft}>
-            <div className={styles.headerIcon}><CreditCard size={20} /></div>
-            <div>
-              <h1 className={styles.pageTitle}>{subscriptionTitle}</h1>
-              <p className={styles.pageSub}>{subscriptionSub}</p>
-            </div>
-          </div>
-        </div>
+        {pageHeader}
 
         {/* Cancelled plan card */}
         <div className={styles.currentCard}>
@@ -751,15 +779,7 @@ function BillingPageLegacy() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.pageHeader}>
-        <div className={styles.headerLeft}>
-          <div className={styles.headerIcon}><CreditCard size={20} /></div>
-          <div>
-            <h1 className={styles.pageTitle}>{subscriptionTitle}</h1>
-            <p className={styles.pageSub}>{subscriptionSub}</p>
-          </div>
-        </div>
-      </div>
+      {pageHeader}
 
       {/* Current plan card */}
       <div className={styles.currentCard}>
@@ -967,10 +987,7 @@ function BillingPageLegacy() {
           <div className={styles.usageBar}>
             <div
               className={styles.usageFill}
-              style={{
-                width: `${usagePct}%`,
-                background: usagePct >= 100 ? 'var(--danger)' : usagePct >= 80 ? 'var(--warning)' : 'var(--logic-lime)',
-              }}
+              style={meterFill(usagePct)}
             />
           </div>
         )}
@@ -982,7 +999,7 @@ function BillingPageLegacy() {
             <span className={styles.usageLabel}>
               Staff seats
               {seatUsage.officialsFree && seatUsage.officials > 0 && (
-                <span style={{ marginLeft: '0.5rem', fontWeight: 400, color: 'var(--white-30)' }}>
+                <span style={kx({ marginLeft: '0.5rem', fontWeight: 400, color: 'var(--white-30)' }, KIT_INK.tertiary)}>
                   · {seatUsage.officials} scorekeeper{seatUsage.officials === 1 ? '' : 's'} free
                 </span>
               )}
@@ -998,10 +1015,7 @@ function BillingPageLegacy() {
                 return (
                   <div
                     className={styles.usageFill}
-                    style={{
-                      width: `${pct}%`,
-                      background: pct >= 100 ? 'var(--danger)' : pct >= 80 ? 'var(--warning)' : 'var(--logic-lime)',
-                    }}
+                    style={meterFill(pct)}
                   />
                 );
               })()}

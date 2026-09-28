@@ -622,6 +622,12 @@ const RESTYLED_FILES = [
   'components/admin/NumberStepper.module.css',
   'components/admin/BottomSheet.tsx',
   'components/admin/BottomSheet.module.css',
+  // slice 6 — Plan & billing for every plan but Club (the Club plan's page is Club Stage 1's kit screen) and its
+  // "See what … includes" panel (reached only from that page), restyled on the owner's word; seeded from HEAD
+  'app/[orgSlug]/admin/org/billing/page.tsx',
+  'app/[orgSlug]/admin/org/billing/billing.module.css',
+  'components/billing/PlanArticlePanel.tsx',
+  'components/billing/PlanArticlePanel.module.css',
 ];
 const ANY_LITERAL = new RegExp(COLOR_LITERAL, 'g');
 

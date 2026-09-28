@@ -278,7 +278,8 @@ describe('warm palette — legible by construction', () => {
 
 type Ink = { rgb: RGB; alpha: number };
 
-function readRootTokens(file: string): Record<string, string> {
+/** Declarations of every top-level block whose selector list contains `selector` (last one wins). */
+function readSelectorTokens(file: string, selector: string): Record<string, string> {
   const css = readFileSync(file, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
   const decls: Record<string, string> = {};
   let depth = 0;
@@ -292,10 +293,10 @@ function readRootTokens(file: string): Record<string, string> {
     } else if (ch === '}') {
       depth--;
       if (depth === 0) {
-        // A selector LIST counts when any of its members is `:root` — `:root, html { … }` would
-        // otherwise be skipped in silence and a later override read as the stale value (review
+        // A selector LIST counts when any of its members is the one asked for — `:root, html { … }`
+        // would otherwise be skipped in silence and a later override read as the stale value (review
         // finding, 2026-09-25: a wrong-but-plausible number is the worst thing this can return).
-        if (sel.split(',').some((part) => part.trim() === ':root')) {
+        if (sel.split(',').some((part) => part.trim() === selector)) {
           for (const m of css.slice(start, i).matchAll(/(--[a-z0-9-]+)\s*:\s*([^;]+);/gi)) decls[m[1]] = m[2].trim();
         }
         start = i + 1;
@@ -305,6 +306,10 @@ function readRootTokens(file: string): Record<string, string> {
     }
   }
   return decls;
+}
+
+function readRootTokens(file: string): Record<string, string> {
+  return readSelectorTokens(file, ':root');
 }
 
 function resolveInk(decls: Record<string, string>, name: string, seen = new Set<string>()): Ink | null {
@@ -406,5 +411,60 @@ describe('admin dark palette — held from its first day in the check', () => {
       }
     }
     assert.deepEqual(problems, [], `Admin dark inks:\n  ${problems.join('\n  ')}`);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════════════════════════
+//
+// ⚠ THE ADMIN ON THE KIT, IN DARK — the look an organizer who chose Dark gets on release day (Admin
+// Design Continuity slice 6, 2026-09-28). The block above holds today's dark admin, whose grounds retire
+// with the switch; the warm block holds the kit in Warm. This holds the kit's DARK inks — the portal's
+// text tiers and the dark gate's `--home-dim` — on the grounds the kit actually paints in Dark, MEASURED
+// switch-on by `.probe/6/grounds.mjs` (20 admin + volunteer screens × 1440 + 390; ~99% of text sits on
+// these). NO DEBT: the switch-on sweep of every admin screen found no Dark contrast failure outside the
+// public previews once the two shared defects were fixed (owner, 2026-09-27: "fix both, both portals" —
+// `--home-dim` 45% → 50% white). An ink that falls under AA here fails outright.
+// ⚠ Per-ink grounds, as the warm block's accents are held: the prose tiers on every text ground; the
+// state inks on the card and the page, where their words sit (a tinted chip's own ink is the sweep's).
+
+const KIT_DARK_GATE = 'html[data-user-theme="dark"] [data-coach-warm-enabled]';
+
+/** Measured 2026-09-28, switch on, Dark (share of text runs in brackets). */
+const KIT_DARK_GROUNDS: Record<string, RGB> = {
+  'kit card': parseHex('#111827'),        // --card-bg: every card, window and table (63.5%)
+  'kit page': parseHex('#0A0A0A'),        // --pitch-black under the 7% grid (14%)
+  'phone bar': parseHex('#0D111A'),       // the bar and More sheet at 390 (2.4%)
+  'chosen chip': parseHex('#131E39'),     // --home-olive-soft over the card: chosen rows, tabs, chips (2.2%)
+  'kit panel': parseHex('#0E141D'),       // a recessed band, measured on the ledger and Families
+  'navy row': parseHex('#121B31'),        // a navy-tinted row, measured on the club hub (17 screen-widths)
+};
+const KIT_DARK_PROSE = ['--text-primary', '--text-secondary', '--text-tertiary', '--home-dim'] as const;
+const KIT_DARK_STATE = ['--success-light', '--warning-light', '--danger-light', '--info-light'] as const;
+
+describe('admin kit dark palette — the release-day Dark look, no debt', () => {
+  const root = readRootTokens(COACH_PALETTE);
+  const gate = readSelectorTokens(COACH_PALETTE, KIT_DARK_GATE);
+  // The dark gate's own definitions sit over :root's (the gate is where `--home-dim` lives).
+  const decls = { ...root, ...gate };
+
+  it('the dark gate and every kit ink were read', () => {
+    assert.ok(Object.keys(gate).length > 10, `the dark gate "${KIT_DARK_GATE}" yielded no tokens — has its selector moved?`);
+    for (const name of [...KIT_DARK_PROSE, ...KIT_DARK_STATE]) {
+      assert.ok(resolveInk(decls, name), `${name} did not resolve for the kit's Dark palette`);
+    }
+  });
+
+  it('every prose tier clears AA on every kit ground, and every state ink on the card and the page', () => {
+    const problems: string[] = [];
+    const check = (name: string, grounds: string[]) => {
+      const ink = resolveInk(decls, name)!;
+      for (const g of grounds) {
+        const r = contrast(over(ink, KIT_DARK_GROUNDS[g]), KIT_DARK_GROUNDS[g]);
+        if (r < AA_NORMAL) problems.push(`${name} on ${g}: ${r.toFixed(2)}:1 (needs ${AA_NORMAL}:1)`);
+      }
+    };
+    for (const name of KIT_DARK_PROSE) check(name, Object.keys(KIT_DARK_GROUNDS));
+    for (const name of KIT_DARK_STATE) check(name, ['kit card', 'kit page']);
+    assert.deepEqual(problems, [], `Kit Dark inks:\n  ${problems.join('\n  ')}`);
   });
 });

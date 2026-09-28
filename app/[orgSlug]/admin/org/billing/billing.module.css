@@ -1081,3 +1081,434 @@
   .nextSeasonActions { align-items: stretch; }
   .nextSeasonActions > button { width: 100%; justify-content: center; }
 }
+
+/* ═══ ON THE KIT (Admin Design Continuity slice 6 — only with the switch on) ═══════════════════════
+   Plan & billing for every plan except Club (BillingPageLegacy in app/[orgSlug]/admin/org/billing/
+   page.tsx) — the current-plan card, usage meters, upgrade/product-shelf cards, Founding Season
+   banner + next-season chooser/chosen/consequence, the reactivate (cancelled) card, and the
+   downgrade/cancel review flow. SAME layout as today; only surfaces, inks, chips and type move.
+   Append verbatim to the end of billing.module.css.
+   ⚠ TOKENS ONLY — scripts/check-public-tokens.mjs (checkAdminKit) fails on a literal colour here.
+   Base rule before every state/modifier throughout, per the brief's shadow-audit warning.
+   NOT here: .pageHeader/.headerLeft/.headerIcon/.pageTitle/.pageSub (AdminPageHeader replaces them). */
+
+/* ── Current plan card ───────────────────────────────────────────────────────────────────────── */
+:global([data-admin-kit]) .currentCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .planName {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+/* The price line reads as prose ("$49 CAD / month · billed monthly"), not a bare figure — body
+   face + secondary ink, matching the Club kit's own .planPrice (which carries no console face). */
+:global([data-admin-kit]) .planPrice {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+/* DECIDED AT BUILD TIME: legacy IS uppercase+letter-spaced here, which reads as an eyebrow by the
+   letter of F2 — but the content is a full sentence ("normally $10/month · in September you'll
+   choose a plan for 2027"), exactly the shouty-caps-on-prose pattern F2 exists to retire. Body
+   face, caps dropped, quiet ink (a supporting fact, not a label). */
+:global([data-admin-kit]) .planBillingCycle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .planRenewalDate {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .planMetaCopy {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+
+/* ── Billing nudge card (Coaches Portal cross-links: "Part of a club?", "Basic records available") ── */
+:global([data-admin-kit]) .billingNudgeCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+/* A fully-lime icon chip → the kit's accent chip (same recipe reused below for .foundingSeasonIcon). */
+:global([data-admin-kit]) .billingNudgeIcon {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+/* Title is a real heading (nothing above it labels it) → body face, drop the caps, per F2 and the
+   healthHeader h4 precedent (frag-health.css). */
+:global([data-admin-kit]) .billingNudgeTitle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .billingNudgeCopy {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+
+/* ── Status notes (past-due warning / cancelled danger banner) ──────────────────────────────────── */
+:global([data-admin-kit]) .statusNoteWarning {
+  background: rgba(var(--warning-rgb), 0.08);
+  border-color: var(--warning);
+  color: var(--warning-light);
+}
+:global([data-admin-kit]) .statusNoteDanger {
+  background: rgba(var(--danger-rgb), 0.08);
+  border-color: var(--danger);
+  color: var(--danger-light);
+}
+
+/* ── Usage meters (tournament slots, staff seats) ────────────────────────────────────────────────
+   Fill colour is set inline by page.tsx (usagePct/pct ternaries) — see handoff for the kx() patch;
+   this fragment only carries the track and the two text pieces. */
+:global([data-admin-kit]) .usageCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .usageLabel {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .usageCount {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .usageBar {
+  background: var(--home-line);
+}
+
+/* ── Billing tools / retention / review cards ────────────────────────────────────────────────────
+   DECIDED AT BUILD TIME: .reviewCard's lime-tinted border (today's "this is an active flow" cue)
+   drops to the plain kit card — a review panel is not a promo, and the one-primary-per-view rule
+   already reserves the accent for the Confirm button inside it. */
+:global([data-admin-kit]) .billingTools {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .manageHint {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .retentionCard,
+:global([data-admin-kit]) .reviewCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .retentionCopy {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+
+/* Local buttons that do NOT use the global .btn-* classes — F2's "buttons that are not global .btn"
+   bucket moves to body face; shapes borrow KIT_BUTTON.secondary / .danger. */
+:global([data-admin-kit]) .changeButton {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .changeButton:hover {
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .dangerButton {
+  border-color: rgba(var(--danger-rgb), 0.3);
+  color: var(--danger-light);
+}
+:global([data-admin-kit]) .dangerButton:hover {
+  border-color: rgba(var(--danger-rgb), 0.4);
+  background: rgba(var(--danger-rgb), 0.08);
+  color: var(--danger-light);
+}
+
+/* A bespoke textarea (not the shared .form-textarea) — mirrors that field's own kit recipe exactly
+   (app/globals.css, [data-admin-kit] .form-textarea). */
+:global([data-admin-kit]) .reasonInput {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+  border-radius: 7px;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .reasonInput:focus {
+  border-color: var(--home-olive);
+  box-shadow: none;
+}
+:global([data-admin-kit]) .reasonInput::placeholder {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .tournamentChoice {
+  background: var(--home-card);
+  border-color: var(--home-line);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .tournamentChoiceSelected {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .tournamentChoice small {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+
+/* ── Section titles ───────────────────────────────────────────────────────────────────────────────
+   Real headings ("Get more from your tournaments", "Billing tools", "Reduce or cancel plan") →
+   body face, caps dropped, per F2 + the mapping "--logic-lime headings → --text-primary (a title)". */
+:global([data-admin-kit]) .sectionTitle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+/* .sectionTitleLime carries `!important` in the legacy sheet, so the kit override needs it too —
+   ordinary specificity cannot win against it. This rule sits after .sectionTitle's above, and after
+   the legacy .sectionTitleLime (this fragment is appended at the end of the file), so it wins. */
+:global([data-admin-kit]) .sectionTitleLime {
+  color: var(--text-primary) !important;
+}
+
+/* ── Plan cards (upgrade grid + product shelf) ───────────────────────────────────────────────────
+   .planCardComingSoon's dimmed border/background is not restated — it collapses into the plain
+   card look below (the "Coming soon" chip already carries that signal). Decided at build time. */
+:global([data-admin-kit]) .planCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .planCardIcon {
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .planCardName {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+/* A true eyebrow (uppercase + letter-spaced, labels the plan name below it) — keeps mono, lime→olive. */
+:global([data-admin-kit]) .productEyebrow {
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .productValueProp {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+/* The big price figure is a readout (F2) — console face stays, ink only. */
+:global([data-admin-kit]) .priceAmount {
+  color: var(--text-primary);
+}
+
+:global([data-admin-kit]) .upgradeIntro {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+/* The Monthly/Annual segmented control — a field-like edge, "chosen" state = the kit's accent. */
+:global([data-admin-kit]) .billingToggle {
+  background: var(--card-bg);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .toggleOption {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .toggleOption:hover {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .toggleActive {
+  background: var(--home-olive-soft);
+  color: var(--home-olive);
+}
+/* A neutral "not a verdict" chip — the same recipe app/globals.css gives .badge-neutral/.badge-primary
+   on the kit. Chips keep the console face (F2) — colour only. */
+:global([data-admin-kit]) .comingSoonBadge {
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  border-color: var(--home-line-strong);
+}
+
+:global([data-admin-kit]) .cancelImpactSection {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+/* A real heading for its box ("Premium data retained") — body face, not an eyebrow (nothing above
+   it labels it) — same call as frag-health.css's .healthHeader h4. */
+:global([data-admin-kit]) .cancelImpactSection h3 {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .cancelImpactSection p {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .impactList {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .impactList li::before {
+  background: var(--danger);
+}
+
+/* A lime-tinted "savings" tag is a promo accent → olive. Chips keep the console face (F2). */
+:global([data-admin-kit]) .savingsBadge {
+  color: var(--home-olive);
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .trialNote {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+/* The box within the plan card ("How do I run monthly local tournaments…") is a recessed band
+   inside a card → --home-paper (both .planQuestion and its .productPitch modifier resolve the same
+   way, so their legacy override order doesn't matter here). */
+:global([data-admin-kit]) .planQuestion,
+:global([data-admin-kit]) .productPitch {
+  background: var(--home-paper);
+  border-color: var(--home-line);
+}
+:global([data-admin-kit]) .planQuestionText {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .planQuestionSub {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+
+/* ── Feature list (reactivate card + upgrade cards) ──────────────────────────────────────────────── */
+:global([data-admin-kit]) .featureList li {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .featureList li svg {
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .planTagline {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+
+/* ── Reactivate card (cancelled-account state) ───────────────────────────────────────────────────
+   DECIDED AT BUILD TIME: legacy tints this card lime; the Club kit's OWN equivalent (.reactivate in
+   components/admin/kit/club/Billing.module.css) carries no tint at all — a plain CoachCard. Same
+   screen, same job: follow that direct precedent rather than inventing a new lime→olive promo frame. */
+:global([data-admin-kit]) .reactivateCard {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+  border-radius: 8px;
+}
+:global([data-admin-kit]) .reactivateCopy {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+/* .sectionTitleLime above already handles both "Reactivate your account" / "Reactivate Coaches
+   Portal" headings (both carry that class alongside .sectionTitle). */
+
+/* ── Founding Season banner + the summer ask (next-season chooser / chosen / consequence) ──────────
+   Every lime tint here is the SAME promo→olive mapping (owner tone-call): the founding-season
+   moment is the one place this page invites an upgrade decision outside the plan grid, and lime
+   stays reserved for the one primary action (the Choose/Reactivate button). */
+:global([data-admin-kit]) .foundingSeasonBanner {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+:global([data-admin-kit]) .foundingSeasonIcon {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .foundingSeasonEyebrow {
+  color: var(--home-olive);
+}
+/* Real headings ("Your Founding Season ends…", also reused by .nextSeasonChosen/.nextSeasonCard's
+   own h2) — body face, caps dropped. */
+:global([data-admin-kit]) .foundingSeasonTitle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  text-transform: none;
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .foundingSeasonCopy {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+
+:global([data-admin-kit]) .nextSeasonCard {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+/* An unchosen cycle option, nested inside the (already-tinted) card above → the kit's neutral
+   "option" surface, so the chosen one (below) still reads as selected against it. */
+:global([data-admin-kit]) .nextSeasonPlan {
+  background: var(--home-card);
+  border-color: var(--home-line-strong);
+}
+:global([data-admin-kit]) .nextSeasonPlan:focus-within {
+  outline-color: var(--home-olive);
+}
+:global([data-admin-kit]) .nextSeasonPlanActive {
+  background: var(--home-olive-soft);
+  border-color: var(--home-olive);
+}
+/* A true eyebrow ("MONTHLY" / "ANNUAL", labels the price below it) — mono stays; base ink then the
+   chosen-row override restated at equal (2-class) specificity right after it (shadow-audit trap:
+   .nextSeasonPlanActive .nextSeasonPlanLabel is a DIFFERENT selector string from the base, so it is
+   not shadowed automatically — restating it here is what keeps it winning). */
+:global([data-admin-kit]) .nextSeasonPlanLabel {
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .nextSeasonPlanActive .nextSeasonPlanLabel {
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .nextSeasonPrice {
+  color: var(--text-primary);
+}
+:global([data-admin-kit]) .nextSeasonPriceUnit {
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .nextSeasonSave {
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .nextSeasonGuarantee {
+  color: var(--home-olive);
+}
+:global([data-admin-kit]) .nextSeasonFootnote {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-tertiary);
+}
+:global([data-admin-kit]) .nextSeasonSecondary {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  color: var(--text-secondary);
+}
+:global([data-admin-kit]) .nextSeasonSecondary:hover {
+  color: var(--home-olive);
+}
+
+/* The confirmed state — a genuine "good" outcome (KIT_SURFACE.good's exact recipe). */
+:global([data-admin-kit]) .nextSeasonChosen {
+  background: rgba(var(--success-rgb), 0.07);
+  border-color: rgba(var(--success-rgb), 0.28);
+}
+:global([data-admin-kit]) .nextSeasonChosenEyebrow {
+  color: var(--success-light);
+}
+
+:global([data-admin-kit]) .nextSeasonConsequence {
+  background: var(--card-bg);
+  border-color: var(--home-line);
+}
+/* A real heading for its box ("If you choose nothing") — same call as cancelImpactSection h3 above:
+   short + uppercase in legacy, but it is the box's own heading, not a label above something else. */
+:global([data-admin-kit]) .nextSeasonConsequenceTitle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--text-primary);
+}

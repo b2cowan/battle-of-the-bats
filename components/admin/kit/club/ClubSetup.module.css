@@ -1,7 +1,9 @@
 /* The club's setup checklist on the kit (Club Tier Stage 1, specimen 10). Kit only. TOKENS ONLY. */
 
 .page { padding-top: 0.5rem; }
-.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+/* Pinned to its containing block's corner, as Billing.module.css's — a label left at its static position
+   can sit past a phone's edge and scroll the page sideways (ADC slice 6). */
+.srOnly { position: absolute; left: 0; top: 0; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
 
 .steps {
   list-style: none;

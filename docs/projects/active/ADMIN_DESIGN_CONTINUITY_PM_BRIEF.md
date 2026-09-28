@@ -25,6 +25,15 @@
 > themes, the money tables restyled in place (same columns; amounts right-aligned; a voided entry struck
 > through). With the switch off nothing moved; with it on, faint-text problems on these screens fell from
 > 1,594 to none in Warm and to 354 in Dark, none of them on these screens' own parts.
+> **Slices 4–5 built (2026-09-27), behind the switch:** every tournament screen (setup, game day, the
+> schedule), then the scorekeeper and gate (warm on every phone) and the help guide.
+> **Slice 6, prove and walk (2026-09-28):** every admin and volunteer screen checked in both themes with the
+> switch on: no text too faint to read anywhere in the working screens, in Warm or Dark (about 4,400 today);
+> with the switch off, every screen still pixel-identical to what customers see. On the owner's word it also
+> restyled Plan & billing for every plan (the page every tournament organizer bills through), gave the club
+> windows the coaches portal's keyboard and Back behaviour, and fixed two Dark reading problems and the phone
+> bar's current tab in both portals (coaches get those with the next release). The owner's walk (§245, eight
+> short walks) is next; the release is its own session after it.
 
 ## What it is
 One design system and one theme choice across every working screen in FieldLogicHQ. The club admin,

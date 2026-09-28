@@ -21,7 +21,11 @@
 > Warm tab bar → slice 6) — results in §3a after 4c's; /review done; **COMMITTED `dca4ac25` 2026-09-27**.
 > **Slice 5 (the volunteer screens in fixed warm — R3; the admin's help guide following the theme — R4)
 > BUILT 2026-09-27** — results in §3a after slice 1's open questions; /simplify + /review done (owner: "go ahead with
-> simplify, review, and commit"); **COMMITTED `530d87e9` 2026-09-27**. Slice 6 (prove, walk, release) is next.
+> simplify, review, and commit"); **COMMITTED `530d87e9` 2026-09-27**. **Slice 6 (prove + walk) BUILT
+> 2026-09-28** — results in §3a after slice 5's; owner rulings at the start: Plan & billing restyled for every
+> plan, the club windows onto the portal's dialog floor, Q5 "colour it", then the two shared Dark fixes "fix both,
+> both portals"; switch-on contrast in the working screens 0 Warm / 0 Dark; identity 206/206; **walk §245 published
+> on the hub's QA tab**. The release is its own session, after the walk.
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -184,7 +188,7 @@ foundation's release day.
 | 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; COMMITTED `07808a02` 2026-09-27; walked at slice 6 |
 | 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | **BUILT 2026-09-27** — results below; identity 28/28 + both-theme sweep done; /simplify + /review done; COMMITTED `9d1b1670` 2026-09-27; walked at slice 6 |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | **BUILT 2026-09-27** — results below; /simplify + /review done; COMMITTED `530d87e9` 2026-09-27; walked at slice 6 |
-| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | not started |
+| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | **PROVE + WALK BUILT 2026-09-28** — results below ("Slice 6 — prove and walk"); walk **§245** published; /simplify + /review, the owner's walk and the commit owed; **the RELEASE is its own session after the walk** (its list is in the results) |
 
 **Slice 4 — the split (2026-09-27, written before starting, as the build prompt requires).** The
 tournament area measured at the start of slice 4 (same scope as the inventory's footnote 2): **54,112
@@ -1317,6 +1321,197 @@ restarted (healthy throughout: no crashed page worker, 2.8 → ~5 GB, ≥5.5 GB 
   section (another session's uncommitted `.helpButtonIconOnly` hunk and `HelpButton.tsx` left out), `TODO.md` with
   this slice's clause only; the staged tree typechecked alone (a `git archive` copy, `next typegen`, node_modules
   junctioned), guards 19 / 19, token gate green.
+
+**Slice 6 — prove and walk: results (2026-09-27/28).** One quiet window on the owner's word ("Go now, it's
+quiet"), covering the "before" set, the build, the both-theme switch-on sweep, the fixes, the "after" set, the
+coaches-portal sweep and the kit's contrast grounds. The release is a separate session.
+- **Owner rulings at the start** (all four asked with a recommendation, all four as recommended; design log
+  2026-09-27 (slice 6)): **S6a** Plan & billing for every plan but Club — "Restyle it here" (not "the release
+  waits", not "ship it as is"); **S6b** Club Stage 1's windows onto the portal's dialog floor — "Build it here,
+  before the walk"; **Q5** the phone bar's active tab — "Colour it" (both portals, reaches coaches with the next
+  release); and, mid-slice, the two shared Dark defects — "Fix both, both portals".
+- **Confirm Club Stage 1's replaced screens (the prompt's check):** all six have kit versions (hub, Members,
+  audit log, Settings, the setup checklist, Plan & billing) — but Plan & billing's is the **Club plan's only**
+  (Club Stage 1 ruling 2026-09-26), so Tournament / Tournament Plus ("Plan & subscription", the page every paying
+  organizer bills through) and League met today's page inside the new frame. Closed by S6a (below). Club Stage
+  1's other owed item, the windows' dialog floor, closed by S6b.
+- **Built:**
+  1. **The public preview's Warm tab bar (Q4, "fix in slice 6").** Cause: the preview shell paints
+     `--pitch-black`, which the kit turns to paper in Warm, and the public top-tab row is a 92%-opaque bar
+     composited over it (4.40:1). The R2 island restored the palette only inside `main`; the preview SHELL now
+     carries `data-public-preview` too, with the switch on (`AdminChrome`). **Proof:** both previews pixel-identical
+     switch-on vs switch-off, Warm and Dark, 390 / 768 / 1440 (9 of 9); the sweep's 15 Warm tab-label findings
+     gone, the preview's findings otherwise equal to the switch-off baseline key for key in both themes.
+  2. **Q5 — the tab you are on is named by its colour** (`CoachesBottomNav.module.css`, both portals): the
+     active name is `--text-primary` in Dark and `--home-olive` in Warm (restated at (0,4,1) over the warm `.tab`
+     grey that had outranked `.tab.active` since 2026-08-18). No bar finding in the full sweep, either theme.
+  3. **Plan & billing for every plan but Club (S6a)** — one Sonnet builder against `.probe/6/BILLING_BRIEF.md`,
+     its whole fragment reviewed and appended by the main loop: `billing.module.css` gained its kit layer (83
+     selectors after `/simplify` dropped two empty rules); on the kit the page header is `AdminPageHeader` — eyebrow "Organization", title "Plan & billing"
+     (the rail's and the Club page's one name; a team workspace keeps "Coaches Portal billing"), no subtitle, not
+     re-homed (it describes the page); the meters fill in the Club page's own olive / amber / live-red; the three
+     inline colours go through `kx`. The "See what … includes" panel (`PlanArticlePanel`, 27 kit rules) also
+     **covers the phone bar** on the kit now (z 400/401, KitDialog's layer — its foot sat under the bar and the
+     "games to finalize" strip, the same switch-off; found by the sweep). Audits clean (literals, shadow on the
+     merged sheet, background shorthand). New kit-only sweep entry `admin-t-settings-subscription-panel` (opens
+     the panel; switch-off unchanged, so no baseline).
+  4. **Club windows on the portal's dialog floor (S6b):** `KitDialog` calls `useDialogFloor(true, panelRef,
+     { onClose, busy })` and drops its hand-rolled Escape; a question is `role="dialog"` (the floor holds Back
+     while an `alertdialog` is on screen — the old role would have made Back do nothing on every club question).
+     **Two defects found building it, both fixed:** (a) **the shared floor trapped Tab among controls that were
+     not rendered** — KitDialog's phone-only ← is `display:none` at desktop, so the wrap target could not take
+     focus and Shift+Tab walked out (34 of 80 presses landed outside a club window). The floor now filters to
+     rendered controls — a fix in the coaches portal's own floor, so coaches get it with the next release;
+     (b) **Settings' "Save your changes?" guard could not tell a window tidying its Back step away from a real
+     Back** — cancelling ANY window on a dirty Settings page would have asked the question. Its history entry is
+     now marked (`{ settingsGuard: true }`): a pop landing ON it came from a window above; a Back on the page
+     lands below it. Its two leave buttons navigate with the question still open — a step tidied before the
+     router pushes cancels the navigation. **Proof, in a browser** (`.probe/6/windows.mjs`, 29 checks): Tab /
+     Shift+Tab never leave Invite or a question (100 presses); Escape and phone Back close the top window only;
+     focus returns to the opener; on a dirty Settings page a window cancelled or closed by Back asks nothing, Back
+     then asks, Back on the question stays, a link → "Discard and leave" reaches it and Back returns cleanly.
+     Pinned by `tests/unit/kit-dialog-floor-guard.test.ts` (8 checks). **`/review` found the order this proof
+     missed** (below): 36 checks after the fix.
+  5. **The two shared Dark defects (owner: "fix both, both portals"):** the dark gate's `--home-dim` 45% → 50%
+     white (4.48 → ~5.2:1 on the card: Club Stage 1's Overview cards and a billing line, the Upcoming Bills panel,
+     chat); Upcoming Bills' chosen day and "Review queue →" ink `var(--home-olive, var(--blueprint-blue))` (1.61:1 →
+     the accent; Warm unchanged — navy already resolved to olive there; switch-off unchanged — no marker, so the
+     fallback); chat's empty line `var(--home-dim, var(--white-45))`. All three reach live coaches in Dark.
+  6. **Club Stage 1's Plan & billing scrolled 4px sideways at 361** (the sweep's one page overflow): a
+     visually-hidden "Your choice" label in the sizes table's last header cell, absolutely positioned at its
+     static position with its containing block outside the table's scroller → pinned `left: 0; top: 0`.
+- **Switch-on sweep — every admin and volunteer screen, both themes** (110 entries incl. the six Club Stage 1
+  `kitOnly` screens and the new panel entry × 361 / 390 / 768 / 1440, against the switch-off dark baseline):
+
+  | | baseline | Warm | Dark (first pass → after the fixes) |
+  |---|---|---|---|
+  | contrast | 4,411 / 4,433 | **34** | 142 → **38** |
+  | …outside the public previews | | **0** | 108 → **0** (see the re-sweep below) |
+  | tap floor | 2,850 | 2,520 | 2,520 |
+  | control width | 524 | 491 | 491 |
+  | content overflow | 135 | 114 | 118 |
+  | type ladder | 64 | 40 | 40 |
+
+  **The 34 inside the previews are the public pages' own** (R2 — equal to the switch-off baseline key for key;
+  two keys at 768 differ by a hovered row, pixel-proven identical). **Every other new key, attributed:**
+  (a) **tap floor on Club Stage 1's screens** — new screens, so every element is "new": the portal's standard
+  button (37–39px, the product-wide size; ~2,300 of the baseline's findings), inline text links ("Contact us",
+  "View by team", "Turn it on or off in Settings"), the "Public site" rail door (30px), "Keep Club · Association"
+  (a 19px text button) — recorded for the release's re-baseline, not changed in a restyle; (b) **re-keyed, the
+  same finding**: page headers whose words changed (the Rep Teams / Accounting / history / tryouts header spills
+  exist switch-off at about the same size), the Results "?" named after 4a's title, House league's crumb link
+  (slice 4a's known sub-floor crumb — the release's unification); (c) **fixture growth since the baseline**
+  (slice 3's attribution, re-checked): a second payment request, the shared library's Rename / Delete, the
+  tryout table's cells, "Publish to all teams"; (d) **the playoff wizard's temporary-facility stepper** (42px —
+  every stepper field is 42 in the baseline; the wizard's state showed one more); (e) **Event settings' Fee model
+  control** spills 31 / 48px at 361 (19 / 36 switch-off — the body face is ~12px wider than the condensed
+  console face, slice 3's finding; a layout fix for Phase 3); (f) **the new panel entry's** page findings (no
+  baseline). **No new finding is left unargued; none is a contrast finding.**
+- **Found, written down, not fixed:** (1) House league's "Season statuses" help bubble, when open near the
+  right edge on a phone, runs ~109px off-screen (the Dark pass caught it open under the resting pointer — a
+  HelpTooltip placement flaw, switch-off too); (2) "1 coaches" on a team's seasons (words are not a restyle's);
+  (3) `STATUS_BADGE.canceled` is the quiet chip on the legacy billing page, danger on the Club page;
+  (4) `FeedbackModal`'s `items` list inline colours bypass `kx` (unused on billing today); (5) three
+  product-shelf "See what … includes" buttons are lime on one page (the one-primary rule; legacy the same);
+  (6) dead CSS in `billing.module.css` (`.planIcon`, `.priceUnit`, `.billingNudgeActions`).
+- **Tooling lesson (cost an hour):** **two sweeps in parallel share the UAT accounts, and one refreshing a
+  session rotates the refresh token the other holds — Supabase then revokes the session and every later screen
+  "did not render".** Measured screens stayed valid; the gaps were re-run one runner at a time, with a fresh
+  sign-in (`auth-setup`) before every pass (`.probe/6/sweep-seq.sh`). Never run two runners on shared accounts.
+- **Identity (switch off): 206 of 206 pixel-identical.** "Before" 2026-09-28 ~02:47Z at `eabbfa1c` on the untouched tree after a restart and a fresh sign-in (88 + 46 + 72, none failed); "after" in three passes after a second restart, a fresh sign-in before each — every pass "every admin screen is pixel-identical", no mask added. Between them: this slice's working tree only (plus other sessions' untracked plan documents, which render nowhere). Every change here is kit-only, marker-gated, or keeps today's value as its fallback with no marker — and the pictures agree.
+- **The coaches portal (Q5 and the Dark fixes reach it; slice 1’s deferred whole-portal check).** Warm against the
+  committed baseline: the first chunk (42 of 124 coach + marketing screens, all four widths) has **no contrast
+  finding and no bar finding**; its 18 new keys are all tap-floor / width / overflow on surfaces other sessions
+  built (the attendance room, the lineup builder, drills and templates, practice plans) plus another session’s
+  uncommitted 34px "?" button (`HelpButton` / `help.module.css`, left untouched) — none can be this slice’s (its
+  coach changes are colour-only; the floor fix moves no layout). The other two chunks tripped the memory floor
+  twice (the coach routes compile ~8 GB into the dev server; the first attempt ran beside the identity job) —
+  **not retaken, argued**: every coach change here is a colour, the bar is one component on every screen and was
+  measured clean on 42 of them at every width. **Dark, a sample of 18 screens** (slice 1’s 14 + money, lineups,
+  practice plans) against slice 1’s own Dark reading: contrast **557 → 80**, no new finding (the 30 "new" keys
+  are the same red chips re-keyed by the calendar — "55d late" is now "58d late"). ⚠ The coach Warm baseline is
+  stale for other sessions’ recent surfaces — theirs to re-seed.
+- **Contrast grounds (the prompt’s "contrast over the admin grounds in both palettes"):** `.probe/6/grounds.mjs`
+  measured the kit’s grounds switch-on on 20 admin + volunteer screens × 1440 + 390 in each theme — **no text /
+  ground pair under 4.5:1 in either**. The kit’s Warm grounds were already held by the warm block (paper, the
+  white card, the tinted panel, the bar); **the kit’s DARK palette had never been held** (the admin dark block
+  holds today’s dark admin, which retires with the switch), so `tests/unit/warm-palette-contrast.test.ts` gained
+  "admin kit dark palette": the text tiers and the dark gate’s `--home-dim` on six measured grounds (the card
+  63.5% of text, the page, the phone bar, the chosen-chip tint, a recessed band, a navy row), the state inks on
+  the card and the page — **no debt**. At the old 45% the dim ink is 4.48:1 on the card, so the block would have
+  failed before the fix; it now holds it.
+- **Gates:** the restyled ratchet gained the four billing files (seeded from HEAD, additive: 179 files, 928
+  held, none new); strict kit check 2,765 rules, no literal; typecheck clean (after `next typegen`); lint clean on
+  every changed file (one pre-existing warning in `useDialogFloor`); unit **5,055 / 5,055** incl. the new guard;
+  every `verify:changed` check green except `check-snapshot-freshness`, which fails on ANOTHER session’s
+  untracked migration `311_prod_grants_match_dev.sql` (the Data API exposure work) — not this slice’s; the
+  checks after it in the chain were run one by one, all green.
+- **`/simplify` (2026-09-28, four lenses):** applied — the billing kit layer's two empty rules gone, the meter's
+  tone decided once (`LEGACY_METER` / `KIT_METER` indexed by one tier; the legacy object unchanged), the contrast
+  test's selector reader folded into one (`readRootTokens` is `readSelectorTokens(file, ':root')`), and Club
+  setup's `.srOnly` pinned `left: 0; top: 0` like Club billing's (a switch-on-only screen). **Declined, argued:**
+  merging the billing layer's repeated card / body-copy recipes into grouped selectors (hundreds of lines apart;
+  regrouping can reorder them against their state rules — the shadow trap — and the release folds these layers
+  anyway); `.reasonInput` reusing the global `form-textarea` (adding that class brings today's base rule with it
+  and changes the switch-off page); dropping the preview island's inner `data-public-preview` now the shell carries
+  it (provably redundant, but it is the boundary the switch guard pins and the previews were pixel-proven with it).
+  **Named follow-ups** (not this slice): (1) Settings' unsaved-changes guard still hand-rolls its history entry
+  beside the shared Back mechanism — moving it on needs the press gate to count a `router.push` as leaving,
+  a change to every consumer of the shared Back; (2) a `--z-kit-dialog` token for KitDialog's and the plan
+  panel's raw 400 / 401 / 410; (3) **Dark navy text ink in the coaches portal** — `color: var(--blueprint-blue)`
+  as TEXT in `BudgetItemPicker`, `PayeeCombobox`, `SubscriptionEndedWall`, `notifications`, `CoachChatView` is
+  the same 1.61:1 shape Upcoming Bills had; the Dark coach sample did not reach them, and the root fix (the dark
+  gate remapping navy as Warm does) repaints every navy accent a Dark coach sees — an owner call with a full Dark
+  coach sweep, not a patch; (4) `.srOnly` without `left / top` in `CoachPortalTour` and platform-admin change
+  requests (live, no measured spill).
+- **`/review` (2026-09-28, high-risk tier, four lenses; gate green — `verify:changed` all checks incl. snapshot
+  freshness, unit 5,055 / 5,055, typecheck, lint):** one **confirmed defect, fixed** — the Settings guard read
+  its mark off `history.state`, but the portal's Back stack answers the same popstate and re-pushes a closing
+  window's entry at once; when the stack's listener was the older one (a window opened before the edit, or an
+  edit → Save → edit), the guard missed its mark and pushed a stray entry. **Measured, old line:** Back with a
+  window open left the window on screen, history grew 4 → 11 entries, and Back on the question did not close
+  it. The guard now reads the landing off the event (`e.state`); the probe gained that order (section D:
+  window first, then the edit) — **36 / 36**, the new order 4 → 5 entries, one popstate per Back. **Latent,
+  commented, not fixed:** the mark survives only while nothing re-stamps the entry (a `router.refresh()` or a
+  navigation) — nothing on Settings does either while dirty; one added moves the guard onto the shared stack.
+  **Not defects:** the leave buttons keep the question open during the route change (a same-page link would
+  leave it open — none exists; a Stay tapped in that moment stays or leaves, never loses work); a payee
+  placeholder is brighter in Dark with `--home-dim` (legibility, still two tiers below typed text). The blast
+  radius, switch-off and floor lenses found nothing else: the header and both meters byte-identical with the
+  switch off, every kit rule scoped, the guard tests fail on a revert.
+- **For the release session** (after the walk; outside a tournament weekend; everything each slice left "for the
+  release", in one place): (1) delete the switch (`lib/admin-kit-preview.ts`, the door, the cookie) — the marker
+  becomes unconditional on the admin and both volunteer shells; (2) delete the legacy frame, the `legacy` header
+  props and branches, and the marker-scoped duplicates, folding each area's kit layer into its base rules (per rule,
+  directly); (3) remove the coaches portal's help dark pin AND give its "?" drawer its own portal root (slice 5 — or
+  it stays dark); (4) the account Appearance copy names the admin; (5) a What's New note from `/marketing` (where
+  Dark lives; "your colours stay on your public pages"); (6) `/docs` for help that describes the old look, and Club
+  Stage 1's drafted help published — **the billing page's one name, listed by slice 6's `/docs` pass
+  (2026-09-28):** on the kit the page, the rail and the Club page all say **"Plan & billing"**, but live help
+  still says "Subscription" in three places — `org.tsx` Roles ("Cannot open org Settings or the
+  **Subscription**"), `tournaments.tsx` the Tournament Plus section's link labelled "Subscription", and
+  `tournaments.tsx` Settings & access ("**Subscription** stays inside tournament admin…") — and the screen
+  itself still says it twice: tournament **Settings & access** titles the card "Plan & subscription" (walk 4
+  opens the page from it, beside the new heading), and the legacy sidebar's "Subscription" retires with the legacy
+  frame. Rename them in ONE unit on release day (screen words + help prose + each section's `keywords` /
+  `searchText`, keeping "subscription" as a search term); none can change before it, since the switch-off page
+  still reads "Subscription". A team workspace keeps "Coaches Portal billing". The generic "your billing page"
+  lines (`org.tsx`, `platform-admin.tsx`) stay. ⚠ Nothing in live help describes the slice's LIVE changes (the
+  phone bar's current tab, the floor's Tab order, the Dark dim tone, Upcoming Bills' accent), so those needed no
+  edit; (7) re-baseline the layout sweep in the new look (the switch-off dark baseline
+  and the identity tool retire with the switch); (8) the unifications recorded along the way — slice 3's crumb
+  links (sub-floor on a phone) and House league's eyebrow, one `.kitLede` recipe, the guest twins into `:is()`, the
+  volunteer foot rule re-anchored on the shell; (9) `/release` records the promote, Club Stage 1's screens shipping
+  the same day. Before it: the walk's W8 puts the club's colour back to "FieldLogicHQ", and Club Stage 1's owed
+  test-club rebuild.
+- **The walk — §245, published on the hub's QA tab:** eight walks, one job each, signed off one by one, each
+  step ticked in Warm and in Dark (the volunteer walk and behaviour steps once); every step checked against
+  this slice's own screenshots before publishing. Corrections that made: the club's public site is OFF on the
+  fixture and both test clubs wear the platform colours, so R1 is walked by giving the club "Battle Purple" in
+  walk 1 and turning the switch off in walk 8 (which reverts it); the ledger holds no void entry; the bracket's
+  paths, the timeline's "now" line and check-in's stripes cannot show on the fixture (recorded in "Not in this
+  walk"); Revert / Forfeit appear only in a game's editing bar; the dev server's "N" badge sits over the phone's
+  Overview tab. Each slice's build-time calls sit on the step where they show, to keep or reverse.
 
 ### Phase 2 — Club screens (inside the Club Tier stages)
 Each club stage's mockup session draws its screens in **both themes** and its build adopts the kit (D12 as

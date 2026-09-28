@@ -1127,7 +1127,11 @@ html[data-user-theme="dark"] [data-coach-warm-enabled],
   --home-card:        var(--bg-card);
   --home-ink:         var(--fl-text);
   --home-ink-soft:    var(--white-70);
-  --home-dim:         var(--white-45);
+  /* 50%, not 45% (owner, 2026-09-27, Admin Design Continuity slice 6: "fix both, both portals"). At 45%
+     the dim ink measured 4.48:1 on the dark card (#111827) — under the 4.5 floor on Club Stage 1's
+     Overview cards, the shared Upcoming Bills panel and chat's empty line, in both portals. 50% clears it
+     (~5.2:1) and stays a visible step below --home-ink-soft (70%). */
+  --home-dim:         var(--white-50);
   --home-line:        var(--border-2);
   --home-line-strong: var(--border);
   --home-nav-bg:      var(--nav-mobile-bg);
