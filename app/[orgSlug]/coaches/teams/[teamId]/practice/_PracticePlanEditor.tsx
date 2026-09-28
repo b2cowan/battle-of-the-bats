@@ -9,17 +9,19 @@ import {
   Check, ChevronLeft, ChevronRight, ChevronUp, GripVertical, Library, Pencil, Plus, Repeat, Trash2, Users, X,
 } from 'lucide-react';
 import {
-  MAX_BLOCKS, MAX_COACHING_POINTS, MAX_DESCRIPTION_LEN, MAX_MINUTES, MAX_SHORT_TEXT_LEN,
+  MAX_BLOCKS, MAX_COACHING_POINTS, MAX_DESCRIPTION_LEN, MAX_GROUPS, MAX_MINUTES, MAX_SHORT_TEXT_LEN,
   MAX_STATIONS_PER_BLOCK, MAX_TEXT_LEN, MAX_TITLE_LEN,
-  arrangeGroup, blockAsksForTeaching, blockRotates, collapseSoleStation, computeRotation, defaultIntervalMinutes, dropEmptyStations,
-  describeRounds, describeSplit, forgetArrangement, formatDuration, newPracticePlanId, practiceKitBag,
+  arrangeGroup, blockAsksForTeaching, blockOwnGroupingId, blockRotates, collapseSoleStation, computeRotation, copyGrouping,
+  defaultIntervalMinutes, dropEmptyStations,
+  describeRounds, describeSplit, forgetArrangement, formatDuration, groupNames, groupingById, groupingShape, groupingUses,
+  groupingWords, isPairSet, newGrouping, newPracticePlanId, nextGroupingName, practiceKitBag,
   resolveStationTeaching, mergedTagNames, rotationByStation, settlePlanLevels, splitBlockIntoStations, stationLabel,
-  soleStationOf, stationIsEmpty, stationWalk, blockWalk, tagNamesById, unplacedPlayers, walkBlockClocks,
-  type BlockClock, type PracticePlan, type PracticePlanBlock,
+  soleStationOf, stationIsEmpty, stationWalk, blockWalk, tagNamesById, unplacedInSet, walkBlockClocks,
+  type BlockClock, type GroupingElsewhere, type GroupingUse, type PracticeGrouping, type PracticePlan, type PracticePlanBlock,
   type PracticeRotation, type PracticeStation,
 } from '@/lib/rep-practice-plan';
-import PracticeGroupsRoom from '@/components/coaches/PracticeGroupsRoom';
-import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
+import PracticeGroupsRoom, { type DrawChoice } from '@/components/coaches/PracticeGroupsRoom';
+import { CoachToolbarMenu, CoachToolbarMenuHeading, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
 import {
   blockToDrillInput, detachStationFromDrill, drillToStation, emptyDrillDraft, filterTagged, sortDrillsForPicker,
   stationToDrillInput,
@@ -45,6 +47,7 @@ import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { RoomWalkNav, type RoomNav } from '@/components/coaches/RoomShell';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { formatInOrgZone } from '@/lib/timezone';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
@@ -295,7 +298,7 @@ type DoorProps = Omit<TeachingDoor, 'show'>;
  * note already holds it. The stored key stays readable; nothing migrates.
  */
 function StationFields({
-  station, block, sole, isRotation, readOnly, withoutPeople, doors,
+  station, block, sole, isRotation, readOnly, withoutPeople, doors, sets, roster, notRepliedIds,
   staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, equipmentTags, onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   nameOf, onPatch, onOpenPicker, onDetach, onSwapDrill, onPromote,
@@ -308,6 +311,10 @@ function StationFields({
   readOnly: boolean;
   /** A TEMPLATE has no roster and no staff — the practice supplies both. See the module header. */
   withoutPeople: boolean;
+  /** Tonight's sets and their doors (G1–G8) — a station that does not rotate splits as a block does. */
+  sets: SetsWiring;
+  roster: PracticeRosterPlayer[];
+  notRepliedIds: ReadonlySet<string>;
   /** The block's door idiom when flattened: which optional fields are on screen, and each label's
    *  quiet × / autofocus. Absent in the modal, where every field shows. */
   doors?: (door: StationDoor) => TeachingDoor;
@@ -335,6 +342,9 @@ function StationFields({
   const door = (id: StationDoor): TeachingDoor => (doors ? doors(id) : OPEN_DOOR);
   const staff = door('staff'), note = door('note');
   const playerCount = station.playerIds?.length ?? 0;
+  // The set this station uses ("Batteries" at the bullpen) — only where a station's people live.
+  const stationSet = isRotation ? undefined : groupingById(sets.groupings, station.groupingId);
+  const target: SetTarget = { kind: 'station', blockId: block.id, stationId: station.id };
   /* ONE word for the people line — "Staff" — on a block and on a station alike (owner, 2026-09-20):
      the door that opens this line already said "+ Staff", and the field it opened said something
      else. The one place two Staff rows can now stand on a single flattened block is a block that
@@ -377,32 +387,21 @@ function StationFields({
 
       {/* People live at exactly ONE level. In a rotation that level is the block's groups (listed
           under the grid), so a rotating station offers no roster of its own — and no "Starts with"
-          either: the grid's first row says who starts here (D6). Everywhere else the station owns
-          its list; flattened into its block it reads as the block's Players line (Whole team until
-          names are chosen). Read, a station in a non-rotating circuit that names nobody has no
-          line — the roster door was the only thing on it. */}
-      {!withoutPeople && !isRotation && (!readOnly || playerCount > 0 || sole) && (
+          either: the grid's first row says who starts here (D6), and pairs inside an arriving group
+          are the tonight note's to say (G4). Everywhere else the station owns its people — its
+          names, or one of tonight's sets (G1–G8: "Split into groups…" is the block's door, one
+          level down); flattened into its block it reads as the block's Players line (Whole team
+          until names are chosen). Read, a station in a non-rotating circuit that names nobody has
+          no line — the roster door was the only thing on it. A template shows a set's SHAPE only. */}
+      {!isRotation && (!withoutPeople || stationSet) && (!readOnly || playerCount > 0 || sole || stationSet) && (
         <div className={styles.ppFieldRow}>
           <FieldLabel>Players</FieldLabel>
-          {playerCount > 0 ? (
-            <div className={styles.ppChipWrap}>
-              {station.playerIds!.map(pid => <span key={pid} className={styles.ppChip}>{nameOf(pid)}</span>)}
-              <PlayerPickerButton count={playerCount} readOnly={readOnly} onOpen={onOpenPicker} />
-            </div>
-          ) : sole ? (
-            <div className={styles.ppWhoLine}>
-              <b>Whole team</b>
-              {!readOnly && (
-                <span className={styles.ppTlQuietAlt}>
-                  {' · '}
-                  <button type="button" className={styles.ppTlQuietLink} onClick={onOpenPicker}>Choose players…</button>
-                </span>
-              )}
-            </div>
+          {stationSet ? (
+            <SetReadBack set={stationSet} target={target} wiring={sets} readOnly={readOnly} withoutPeople={withoutPeople}
+              roster={roster} notRepliedIds={notRepliedIds} nameOf={nameOf} />
           ) : (
-            <div className={styles.ppChipWrap}>
-              <PlayerPickerButton count={0} readOnly={readOnly} onOpen={onOpenPicker} />
-            </div>
+            <PeopleLine target={target} playerIds={station.playerIds} wholeTeamWord={sole} readOnly={readOnly}
+              wiring={sets} nameOf={nameOf} onOpenPicker={onOpenPicker} />
           )}
         </div>
       )}
@@ -492,10 +491,14 @@ function YouMark() {
 }
 
 function StationColumns({
-  blockId, stations, readOnly, phone = false, staffTags, mineStations, onOpen, onMove, onAdd,
+  blockId, stations, readOnly, phone = false, staffTags, mineStations, whoOf, onOpen, onMove, onAdd,
 }: {
   blockId: string;
   stations: PracticeStation[];
+  /** Who is at each station of a block that does NOT rotate — "Batteries · 3 pairs", "4 players"
+   *  (G4, 2026-09-28): there the station holds its people, so its column says who they are. Absent in
+   *  a circuit, where the grid under the columns says who is where each round. */
+  whoOf?: (station: PracticeStation) => string;
   readOnly: boolean;
   /** The block's phone sheet — the stations as ONE list of rows (practice plans on a phone, S1). */
   phone?: boolean;
@@ -524,6 +527,7 @@ function StationColumns({
     return {
       station, mine,
       who: mergedTagNames(station.staff, station.staffTagIds, staffTags),
+      people: whoOf?.(station) ?? '',
       name: (
         <span className={station.name.trim() ? nameClass : `${nameClass} ${styles.ppTlUntitled}`}>
           {label}{mine && <YouMark />}
@@ -541,7 +545,7 @@ function StationColumns({
   if (phone) {
     return (
       <div className={`${styles.ppStCols} ${styles.ppStList}`}>
-        {cells.map(({ station, mine, who, name, handles }) => {
+        {cells.map(({ station, mine, who, people, name, handles }) => {
           const tonight = !!station.note?.trim();
           return (
             <div key={station.id} id={`station-${station.id}`} className={styles.ppStCol} data-mine={mine ? 'mine' : undefined}>
@@ -551,10 +555,10 @@ function StationColumns({
                 <span className="sr-only">Open </span>
                 <span className={styles.ppStRowText}>
                   {name}
-                  {(who.length > 0 || tonight) && (
+                  {(who.length > 0 || people || tonight) && (
                     <span className={styles.ppStRowFacts}>
-                      {who.join(', ')}
-                      {who.length > 0 && tonight && ' · '}
+                      {[who.join(', '), people].filter(Boolean).join(' · ')}
+                      {(who.length > 0 || !!people) && tonight && ' · '}
                       {tonight && <span className={styles.ppStRowTonight}>{DOOR_LABELS.note}</span>}
                     </span>
                   )}
@@ -578,11 +582,12 @@ function StationColumns({
   }
   return (
     <div className={styles.ppStCols}>
-      {cells.map(({ station, mine, who, name, handles }) => (
+      {cells.map(({ station, mine, who, people, name, handles }) => (
         <div key={station.id} id={`station-${station.id}`} className={styles.ppStCol} data-mine={mine ? 'mine' : undefined}>
           <button type="button" className={styles.ppStColDoor} data-station-door onClick={() => onOpen(station.id)}>
             {name}
             {who.length > 0 && <span className={styles.ppStColLine}>{who.join(' · ')}</span>}
+            {people && <span className={styles.ppStColLine}>{people}</span>}
             {station.note && <span className={styles.ppStColNote}>Tonight: {station.note}</span>}
             {station.description && <span className={styles.ppStColFirst}>{station.description}</span>}
             <span className={styles.ppStColOpen}>Open ›</span>
@@ -748,6 +753,7 @@ function GapTarget({ index, startLabel, blockCount }: { index: number; startLabe
  */
 function StationModal({
   block, station, readOnly, focusName = false, onStartFromDrill, onTouched, onEdit, onDoneEditing, withoutPeople,
+  sets, roster, notRepliedIds,
   staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, equipmentTags, onCreateEquipmentTag,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   nameOf, onPatch, onDelete, onStep, onClose, onOpenPicker, onDetach, onSwapDrill, onPromote, onAddStation,
@@ -774,6 +780,10 @@ function StationModal({
   onEdit?: () => void;
   onDoneEditing?: () => void;
   withoutPeople: boolean;
+  /** Tonight's sets (G1–G8) — the station's Players line offers them where its people live. */
+  sets: SetsWiring;
+  roster: PracticeRosterPlayer[];
+  notRepliedIds: ReadonlySet<string>;
   staffTags: PickableTag[];
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
   /** The staff picker's "People on this team" group (mig 303) — absent on a read-only surface. */
@@ -844,7 +854,13 @@ function StationModal({
             <SheetDeleteButton label={label} onDelete={onDelete}
               message={`Removes it from ${block.title.trim() || 'this block'}. This can't be undone.`} />
           )}
-          <SheetEditToggle readOnly={readOnly} onEdit={onEdit} onDoneEditing={onDoneEditing} />
+          {/* ✎ Edit / ✓ Done editing on a PHONE only (owner, 2026-09-28: "done editing in desktop can
+              live only above the main sheet" — then, asked, no Edit either). A phone's form covers
+              the toolbar, so it carries the toggle (R3); a desk's sits over the sheet, whose toolbar
+              holds both words — as a desk's open block already has no toggle of its own. Keeping ✎
+              alone on a desk would put the bin, which arrives as editing starts, under the pointer
+              that pressed ✎ (measured: ✎ 920–991, click 956, bin 947–991 at 1440) — the §227 rule. */}
+          {phone && <SheetEditToggle readOnly={readOnly} onEdit={onEdit} onDoneEditing={onDoneEditing} />}
         </CoachModalHeader>
 
         <div className={`${styles.scrollPane} ${styles.ppStationBody}`} onInput={onTouched}>
@@ -869,6 +885,7 @@ function StationModal({
             key={station.id}
             station={station} block={block} sole={false} isRotation={isRotation}
             readOnly={readOnly} withoutPeople={withoutPeople}
+            sets={sets} roster={roster} notRepliedIds={notRepliedIds}
             staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
             equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
             staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
@@ -882,14 +899,15 @@ function StationModal({
           )}
         </div>
 
-        {/* The foot: the walk, then Done on a desk — the block sheet's own foot. On a phone the walk
-            alone (§231 walk, owner 2026-09-25): Done only closed, the head's ← already does, and it
-            sat under ✓ "Done editing", which does the opposite. */}
-        {(!phone || walk.total > 1) && (
+        {/* The foot: the walk ALONE, at every width — the block sheet's own foot. ⚠ NO "Done" HERE: it
+            left the phone on the §231 walk (owner 2026-09-25) and the desk on 2026-09-28 (owner, on a
+            desk screenshot: "why do we have 2 done buttons?"). It only closed — the head's × / ← and
+            Escape already do, and the plan autosaves — and it sat under ✓ "Done editing", which does
+            the opposite: ✓ ends editing and keeps the station open, Done closed it and kept editing. */}
+        {walk.total > 1 && (
           <div className={`${styles.modalFooter} ${styles.ppSheetFoot}`}>
             <RoomWalkNav nav={{ ...walk, noun: 'stations', onSelect: onStep }} compact={phone}
               end={onAddStation && { label: 'Add a station', onSelect: onAddStation }} />
-            {!phone && <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>}
           </div>
         )}
       </div>
@@ -998,10 +1016,14 @@ function RotationStrip({
  * cells, re-keyed (`rotationByStation`).
  */
 function RotationBoard({
-  rotation, stations, blockMinutes, blockStartMs, readOnly, withoutPeople, shapeNoun = 'a template', roster, notRepliedIds,
-  nameOf, onOpenGroups, onSetRotation,
+  blockId, rotation, set, sets, stations, blockMinutes, blockStartMs, readOnly, withoutPeople, shapeNoun = 'a template', roster, notRepliedIds,
+  nameOf, onSetRotation,
 }: {
+  blockId: string;
   rotation: PracticeRotation;
+  /** The set that rotates here (G3) — absent until the coach chooses or draws one. */
+  set: PracticeGrouping | undefined;
+  sets: SetsWiring;
   stations: PracticeStation[];
   blockMinutes: number | null;
   blockStartMs?: number;
@@ -1014,16 +1036,14 @@ function RotationBoard({
   /** Who has NOT replied yes, when attendance is known — named as such, never silently dropped (D21). */
   notRepliedIds: ReadonlySet<string>;
   nameOf: (playerId: string) => string;
-  onOpenGroups: () => void;
   /** The grid's own writes (D14): one hand move, or back to the standard rotation. */
   onSetRotation: (patch: Partial<PracticeRotation>) => void;
 }) {
-  const grid = computeRotation(rotation, stations, blockMinutes, blockStartMs);
+  // The arithmetic reads the rotation's clock and arrangement with the SET's groups (G3).
+  const input = { intervalMinutes: rotation.intervalMinutes, arrangement: rotation.arrangement, groups: set?.groups ?? [] };
+  const grid = computeRotation(input, stations, blockMinutes, blockStartMs);
   const turned = rotationByStation(grid, stations);
-  const unplaced = unplacedPlayers(roster, rotation.groups);
-  const unplacedReplied = unplaced.filter(p => !notRepliedIds.has(p.id));
-  const unplacedNotReplied = unplaced.filter(p => notRepliedIds.has(p.id));
-  const names = (people: PracticeRosterPlayer[]) => people.map(p => playerDisplayName(p)).join(', ');
+  const target: SetTarget = { kind: 'rotation', blockId };
 
   /* ── The grid as a starting point (D14) ──
      A group in a cell is a pill: tap it for "Move to <station> · Sits this round out" (the phone
@@ -1032,8 +1052,8 @@ function RotationBoard({
      the settle pass; the board notices the drop and SAYS SO — reset and stated, never silently. */
   const canArrange = !readOnly && !withoutPeople && turned.rows.length > 0;
   const arrange = (round: number, groupId: string, stationId: string | null) => {
-    const next = arrangeGroup(rotation, stations, blockMinutes, round, groupId, stationId);
-    if (next !== rotation) onSetRotation({ arrangement: next.arrangement });
+    const next = arrangeGroup(input, stations, blockMinutes, round, groupId, stationId);
+    if (next !== input) onSetRotation({ arrangement: next.arrangement });
   };
   const forgotByCoach = useRef(false);
   const forget = () => { forgotByCoach.current = true; setResetNote(false); onSetRotation({ arrangement: forgetArrangement(rotation).arrangement }); };
@@ -1163,49 +1183,27 @@ function RotationBoard({
         </p>
       )}
 
-      {/* ── The groups, read back (D9 · D11). A read, not an editor: no name boxes, no chips,
-          no bins — the room behind the door is the only place anything changes. ── */}
-      {rotation.groups.length === 0 ? (
+      {/* ── The groups, read back (D9 · D11) — the circuit's SET now (G3, 2026-09-28): a read, not an
+          editor; the room behind "Edit groups ›" is the only place anyone moves. With no set yet, one
+          door — "Choose groups…" — offers tonight's sets FIRST (a second circuit of the night uses the
+          first one's groups: F02's whole fix), then a new draw, then another practice's (G6). The
+          honest split line stays over the names (D25's rule for an uneven draw). ── */}
+      {!set ? (
         <p className={styles.ppGroupReadLine}>
           {/* Read (stage 6), the fact without the promise: a record's groups are not "yet". */}
           <span className={styles.ppRailNone}>{readOnly ? 'No groups' : 'No groups yet'}</span>
           {!readOnly && (
             <>
               <span className={styles.ppClockSep} aria-hidden>·</span>
-              <button type="button" className={styles.ppTlQuietLink} onClick={onOpenGroups}>Draw the groups ›</button>
+              <GroupsMenu label="Choose groups…" target={target} wiring={sets} />
             </>
           )}
         </p>
       ) : (
         <div className={styles.ppGroupRead}>
-          <p className={styles.ppSplitNote}>{describeSplit(rotation.groups)}</p>
-          {rotation.groups.map(group => (
-            <p key={group.id} className={styles.ppGroupReadLine}>
-              <b>{group.name || 'Unnamed group'}</b>
-              <span className={styles.ppClockSep} aria-hidden>·</span>
-              {group.playerIds.length > 0
-                ? group.playerIds.map(nameOf).join(', ')
-                : <span className={styles.ppRailNone}>nobody yet</span>}
-            </p>
-          ))}
-          {/* Who is in NO group is NAMED, never silently dropped (D21) — the draw's leftovers and
-              the names who haven't replied yes, said as such. Absent when everyone is placed. */}
-          {unplaced.length > 0 && (
-            <p className={`${styles.ppGroupReadLine} ${styles.ppGroupReadQuiet}`}>
-              <b>Not in a group</b>
-              <span className={styles.ppClockSep} aria-hidden>·</span>
-              {unplacedReplied.length > 0 && names(unplacedReplied)}
-              {unplacedReplied.length > 0 && unplacedNotReplied.length > 0 && <span className={styles.ppClockSep} aria-hidden>·</span>}
-              {unplacedNotReplied.length > 0 && (
-                <>{names(unplacedNotReplied)} <i>({unplacedNotReplied.length === 1 ? "hasn't" : "haven't"} replied yes)</i></>
-              )}
-            </p>
-          )}
-          {!readOnly && (
-            <p className={styles.ppGroupReadLine}>
-              <button type="button" className={styles.ppTlQuietLink} onClick={onOpenGroups}>Edit groups ›</button>
-            </p>
-          )}
+          {set.groups.some(g => g.playerIds.length > 0) && <p className={styles.ppSplitNote}>{describeSplit(set.groups)}</p>}
+          <SetReadBack set={set} target={target} wiring={sets} readOnly={readOnly} withoutPeople={withoutPeople}
+            roster={roster} notRepliedIds={notRepliedIds} nameOf={nameOf} />
         </div>
       )}
     </div>
@@ -1269,6 +1267,411 @@ function GridPill({ round, group, at, stations, onArrange }: {
         {at !== null && <CoachToolbarMenuItem label="Sits this round out" onSelect={() => onArrange(round, group.id, null)} />}
       </CoachToolbarMenu>
     </span>
+  );
+}
+
+// ── Sets of groups on the practice (groups at every level, owner rulings G1–G8, 2026-09-28) ──
+//
+// A set is the PRACTICE's (`plan.groupings`); a block with no stations, a station that does not
+// rotate and a circuit's rotation each POINT at one. Nothing on screen says "level": a Players line
+// says who is in THIS block ("In pairs · Throwing partners"), the Groups fold under the goal says
+// who is with whom TONIGHT, and a shared set says where else it is used — the whole answer to
+// "which groups win?" is that a place only ever holds one. docs/projects/active/COACH_PRACTICE_GROUPS_PLAN.md.
+
+/** A place that can hold a set — a block (no stations), a station (the block's only one, or one of
+ *  several that do not rotate), or a circuit's rotation. */
+/** What a place holds: its own names, or the set it points at — never both (the one-level law). */
+type Holding = { playerIds?: string[]; groupingId?: string };
+
+type SetTarget =
+  | { kind: 'block'; blockId: string }
+  | { kind: 'station'; blockId: string; stationId: string }
+  | { kind: 'rotation'; blockId: string };
+
+/**
+ * Everything a Players line, a station and a circuit's board need to offer tonight's sets — ONE
+ * bundle threaded from the editor, so the three places can never offer them differently.
+ */
+type SetsWiring = {
+  groupings: readonly PracticeGrouping[];
+  uses: ReadonlyMap<string, GroupingUse[]>;
+  /** Another practice this season holds a set with anyone in it (G6). */
+  canCopyFromPractice: boolean;
+  onUse: (target: SetTarget, setId: string) => void;
+  /** "New groups…" — a new set on the practice, this place pointing at it, the room open on it. */
+  onNew: (target: SetTarget) => void;
+  /** “From another practice…” — onto a place, or (from the fold) onto the practice alone. */
+  onFromPractice: (target: SetTarget | null) => void;
+  /** Opens the room on a set — from a place (the copy door needs to know which) or from the fold. */
+  onEdit: (target: SetTarget | null, setId: string) => void;
+  /** Leave the set: back to the whole team, or to choosing players (a block or a station); a
+   *  circuit's "No groups". The set stays on the practice's list for whatever else uses it. */
+  onLeave: (target: SetTarget, then: 'team' | 'choose') => void;
+};
+
+/** "used in Warm-up and Partner throwing" — the menu's and the read-back's one phrasing. */
+function usedInWords(uses: readonly GroupingUse[] | undefined, except?: SetTarget): string {
+  const others = (uses ?? []).filter(u => !except || !sameTarget(u, except));
+  const labels = others.map(u => u.label);
+  if (labels.length === 0) return '';
+  if (labels.length === 1) return labels[0];
+  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
+}
+/** Is this use the place `target` names? A circuit's rotation and its block are one place. */
+function sameTarget(use: GroupingUse, target: SetTarget): boolean {
+  if (use.blockId !== target.blockId) return false;
+  return target.kind === 'station' ? use.stationId === target.stationId : !use.stationId;
+}
+
+/**
+ * The door to tonight's sets (G2 — on the line that already says who): "Split into groups…" on a
+ * Players line, "Change…" beside a set in use, "Choose groups ›" on a circuit with none. The
+ * portal's own action menu (a drawer on a phone): reuse FIRST — the second block of the night asks
+ * "same pairs?", not "draw again?" — then New groups…, then From another practice… (G6), and, beside
+ * a set in use, the way back out.
+ */
+function GroupsMenu({ label, target, current, wiring }: {
+  label: string;
+  target: SetTarget;
+  /** The set this place uses now — left out of the list, and the menu offers the way out of it. */
+  current?: string;
+  wiring: SetsWiring;
+}) {
+  const others = wiring.groupings.filter(s => s.id !== current);
+  /* A set lasts as long as something uses it (owner ruling 2026-09-28): when THIS place is its last
+     use, every choice below leaves it and it goes from the list — said before the choice, never after. */
+  const currentSet = current ? wiring.groupings.find(s => s.id === current) : undefined;
+  const leavingRemoves = !!currentSet && !currentSet.standing && (wiring.uses.get(currentSet.id)?.length ?? 0) <= 1;
+  return (
+    <span className={styles.ppGroupsMenu}>
+      <CoachToolbarMenu label={label} triggerClassName={styles.ppGroupsDoor} drawerOnPhone drawerTitle="Groups">
+        {leavingRemoves && (
+          <p className={styles.ppGroupsMenuNote}>
+            “{currentSet!.name.trim() || 'These groups'}” is only used here — choosing anything below removes it from tonight’s groups.
+          </p>
+        )}
+        {others.length > 0 && <CoachToolbarMenuHeading>Use groups from tonight</CoachToolbarMenuHeading>}
+        {others.map(s => {
+          const where = usedInWords(wiring.uses.get(s.id));
+          return (
+            <CoachToolbarMenuItem key={s.id} label={s.name.trim() || 'Unnamed groups'}
+              hint={[groupingShape(s), where ? `used in ${where}` : 'not used yet'].join(' · ')}
+              onSelect={() => wiring.onUse(target, s.id)} />
+          );
+        })}
+        {others.length > 0 && <CoachToolbarMenuSeparator />}
+        <CoachToolbarMenuItem label="New groups…" onSelect={() => wiring.onNew(target)} />
+        {wiring.canCopyFromPractice && (
+          <CoachToolbarMenuItem label="From another practice…" onSelect={() => wiring.onFromPractice(target)} />
+        )}
+        {current && <CoachToolbarMenuSeparator />}
+        {current && target.kind !== 'rotation' && (
+          <>
+            <CoachToolbarMenuItem label="Whole team" hint="no groups" onSelect={() => wiring.onLeave(target, 'team')} />
+            <CoachToolbarMenuItem label="Choose players…" hint="no groups" onSelect={() => wiring.onLeave(target, 'choose')} />
+          </>
+        )}
+        {current && target.kind === 'rotation' && (
+          <CoachToolbarMenuItem label="No groups" onSelect={() => wiring.onLeave(target, 'team')} />
+        )}
+      </CoachToolbarMenu>
+    </span>
+  );
+}
+
+/**
+ * A set READ BACK where it is used (G1 · G5) — a read, not an editor: the set's name and shape with
+ * Change…, then its groups (pairs on ONE line — "Avery & Gray · Blake & Harper"; groups one line
+ * each), then who it is for and not in it (D21: named, never silently dropped), then the room's door
+ * and — only when the set is shared — where else it is used, the warning before any edit.
+ * Read-only (a viewer, a record) keeps the words and loses the doors; a template keeps the SHAPE
+ * ("in pairs · drawn on the practice") — a template carries no players.
+ */
+function SetReadBack({ set, target, wiring, readOnly, withoutPeople, roster, notRepliedIds, nameOf }: {
+  set: PracticeGrouping;
+  target: SetTarget;
+  wiring: SetsWiring;
+  readOnly: boolean;
+  withoutPeople: boolean;
+  roster: PracticeRosterPlayer[];
+  notRepliedIds: ReadonlySet<string>;
+  nameOf: (playerId: string) => string;
+}) {
+  const words = groupingWords(set);
+  const pairs = isPairSet(set);
+  const filled = set.groups.filter(g => g.playerIds.length > 0);
+  const elsewhere = usedInWords(wiring.uses.get(set.id), target);
+  if (withoutPeople) {
+    return (
+      <p className={styles.ppGroupReadLine}>
+        <b>{set.name.trim() || 'Unnamed groups'}</b>
+        <span className={styles.ppClockSep} aria-hidden>·</span>
+        <span className={styles.ppGroupReadQuiet}>{words.inWord.toLowerCase()} · drawn on the practice</span>
+      </p>
+    );
+  }
+  const unplaced = unplacedInSet(set, roster);
+  const replied = unplaced.filter(p => !notRepliedIds.has(p.id));
+  const notReplied = unplaced.filter(p => notRepliedIds.has(p.id));
+  const names = (people: PracticeRosterPlayer[]) => people.map(p => playerDisplayName(p)).join(', ');
+  const editWord = `Edit ${words.many} ›`;
+  return (
+    <div className={styles.ppGroupRead} data-set-read={set.id}>
+      <p className={styles.ppGroupReadLine}>
+        <b>{set.name.trim() || 'Unnamed groups'}</b>
+        <span className={styles.ppClockSep} aria-hidden>·</span>
+        <span className={styles.ppGroupReadQuiet}>{groupingShape(set)}</span>
+        {!readOnly && (
+          <>
+            <span className={styles.ppClockSep} aria-hidden>·</span>
+            <GroupsMenu label="Change…" target={target} current={set.id} wiring={wiring} />
+          </>
+        )}
+      </p>
+      {pairs && filled.length > 0 && (
+        <p className={styles.ppGroupReadLine}>{filled.map(g => groupNames(g, nameOf, true)).filter(Boolean).join(' · ')}</p>
+      )}
+      {!pairs && filled.map(group => (
+        <p key={group.id} className={styles.ppGroupReadLine}>
+          <b>{group.name || 'Unnamed group'}</b>
+          <span className={styles.ppClockSep} aria-hidden>·</span>
+          {groupNames(group, nameOf, false)}
+        </p>
+      ))}
+      {filled.length > 0 && unplaced.length > 0 && (
+        <p className={`${styles.ppGroupReadLine} ${styles.ppGroupReadQuiet}`}>
+          <b>{words.notIn}</b>
+          <span className={styles.ppClockSep} aria-hidden>·</span>
+          {replied.length > 0 && names(replied)}
+          {replied.length > 0 && notReplied.length > 0 && <span className={styles.ppClockSep} aria-hidden>·</span>}
+          {notReplied.length > 0 && (
+            <>{names(notReplied)} <i>({notReplied.length === 1 ? "hasn't" : "haven't"} replied yes)</i></>
+          )}
+        </p>
+      )}
+      {(!readOnly || elsewhere) && (
+        <p className={styles.ppGroupReadLine}>
+          {!readOnly && (
+            <button type="button" className={styles.ppTlQuietLink} onClick={() => wiring.onEdit(target, set.id)}>
+              {filled.length === 0 ? `Draw the ${words.many} ›` : editWord}
+            </button>
+          )}
+          {elsewhere && (
+            <span className={styles.ppGroupReadQuiet}>
+              {!readOnly && <span className={styles.ppClockSep} aria-hidden>·</span>}
+              also used in {elsewhere}
+            </span>
+          )}
+        </p>
+      )}
+    </div>
+  );
+}
+
+/**
+ * A place's WHO when it holds no set: "Whole team · Choose players… · Split into groups…", or the
+ * chosen players as chips with "Split them into groups…" (the draw then deals only from them).
+ * The block's line and a station's, one component — G2's door is the same door at both levels.
+ */
+function PeopleLine({ target, playerIds, wholeTeamWord, readOnly, wiring, nameOf, onOpenPicker }: {
+  target: SetTarget;
+  playerIds: readonly string[] | undefined;
+  /** "Whole team" — only where the level can mean it (a block, or the station that IS its block). */
+  wholeTeamWord: boolean;
+  readOnly: boolean;
+  wiring: SetsWiring;
+  nameOf: (playerId: string) => string;
+  onOpenPicker: () => void;
+}) {
+  const count = playerIds?.length ?? 0;
+  // After "Whole team · Choose players…" the door is one more phrase on the line (" · " before it);
+  // after the chips it stands on its own, as the picker button beside it does.
+  const split = (afterWords: boolean) => !readOnly && (
+    <span className={styles.ppTlQuietAlt}>
+      {afterWords ? ' · ' : ''}
+      <GroupsMenu label={count > 0 ? 'Split them into groups…' : 'Split into groups…'} target={target} wiring={wiring} />
+    </span>
+  );
+  if (count > 0) {
+    return (
+      <div className={styles.ppChipWrap}>
+        {playerIds!.map(pid => <span key={pid} className={styles.ppChip}>{nameOf(pid)}</span>)}
+        <PlayerPickerButton count={count} readOnly={readOnly} onOpen={onOpenPicker} />
+        {split(false)}
+      </div>
+    );
+  }
+  if (wholeTeamWord) {
+    return (
+      <div className={styles.ppWhoLine}>
+        <b>Whole team</b>
+        {!readOnly && (
+          <span className={styles.ppTlQuietAlt}>
+            {' · '}
+            <button type="button" className={styles.ppTlQuietLink} onClick={onOpenPicker}>Choose players…</button>
+          </span>
+        )}
+        {split(true)}
+      </div>
+    );
+  }
+  return (
+    <div className={styles.ppChipWrap}>
+      <PlayerPickerButton count={0} readOnly={readOnly} onOpen={onOpenPicker} />
+      {split(false)}
+    </div>
+  );
+}
+
+/**
+ * TONIGHT'S GROUPS — the practice level (G1 · G7), under the goal and "About this practice". Every
+ * set made tonight, whichever block made it: its name and shape, its names, where it is used, and
+ * the room's door. Before any set exists the fold is ONE quiet line, "+ Groups for tonight" — the
+ * grammar of the focus section's invitation — so a coach who thinks "groups for the night" first
+ * finds it where the night's things are, and a coach who never groups anyone sees one line.
+ * Read-only (a viewer, a record) and in a template it lists without doors.
+ */
+function GroupsFold({ groupings, wiring, readOnly, withoutPeople, roster, notRepliedIds, nameOf, open, onToggle, onMake }: {
+  groupings: readonly PracticeGrouping[];
+  wiring: SetsWiring;
+  readOnly: boolean;
+  withoutPeople: boolean;
+  roster: PracticeRosterPlayer[];
+  notRepliedIds: ReadonlySet<string>;
+  nameOf: (playerId: string) => string;
+  open: boolean;
+  onToggle: () => void;
+  /** "+ Make groups" / "+ Groups for tonight" — a new set, used by nothing yet, the room open on it. */
+  onMake: () => void;
+}) {
+  const writable = !readOnly && !withoutPeople;
+  if (groupings.length === 0) {
+    if (!writable) return null;
+    return (
+      <div className={styles.ppFold} data-groups-fold>
+        <div className={styles.ppFoldHead}>
+          <button type="button" className={styles.ppFoldToggle} onClick={onMake}>
+            <Plus size={14} aria-hidden className={styles.ppFoldChevron} />
+            <span className={styles.ppFoldTitle}>Groups for tonight</span>
+          </button>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className={styles.ppFold} data-groups-fold>
+      <FoldHead title="Groups" summary={`· ${groupings.length} for ${withoutPeople ? 'this template' : 'tonight'}`}
+        open={open} onToggle={onToggle} />
+      {open && (
+        <div className={`${styles.ppFoldBody} ${styles.ppSetList}`}>
+          {groupings.map(set => {
+            const words = groupingWords(set);
+            const pairs = isPairSet(set);
+            const filled = set.groups.filter(g => g.playerIds.length > 0);
+            const where = usedInWords(wiring.uses.get(set.id));
+            const unplaced = withoutPeople ? [] : unplacedInSet(set, roster);
+            return (
+              <div key={set.id} className={styles.ppSetRow}>
+                <div className={styles.ppSetRowHead}>
+                  <b>{set.name.trim() || 'Unnamed groups'}</b>
+                  <span className={styles.ppGroupReadQuiet}>
+                    {withoutPeople ? `${words.inWord.toLowerCase()} · drawn on the practice` : groupingShape(set)}
+                  </span>
+                  {writable && (
+                    <button type="button" className={`${styles.ppTlQuietLink} ${styles.ppSetRowEdit}`}
+                      onClick={() => wiring.onEdit(null, set.id)}>
+                      {filled.length === 0 ? `Draw the ${words.many} ›` : 'Edit ›'}
+                    </button>
+                  )}
+                </div>
+                {!withoutPeople && filled.length > 0 && (
+                  <p className={styles.ppGroupReadLine}>
+                    {pairs
+                      ? filled.map(g => groupNames(g, nameOf, true)).filter(Boolean).join(' · ')
+                      : filled.map(g => `${g.name} · ${groupNames(g, nameOf, false)}`).join(' — ')}
+                  </p>
+                )}
+                {filled.length > 0 && unplaced.length > 0 && (
+                  <p className={`${styles.ppGroupReadLine} ${styles.ppGroupReadQuiet}`}>
+                    {words.notIn} · {unplaced.map(p => playerDisplayName(p)).join(', ')}
+                    {unplaced.some(p => notRepliedIds.has(p.id)) && <i> (some haven&apos;t replied yes)</i>}
+                  </p>
+                )}
+                <p className={`${styles.ppGroupReadLine} ${styles.ppGroupReadQuiet}`}>
+                  {where ? `Used in ${where}` : 'Not used by any block yet'}
+                </p>
+              </div>
+            );
+          })}
+          {writable && (
+            <p className={styles.ppGroupReadLine}>
+              <button type="button" className={styles.ppTlQuietLink} onClick={onMake}>+ Make groups</button>
+              {wiring.canCopyFromPractice && (
+                <>
+                  <span className={styles.ppClockSep} aria-hidden>·</span>
+                  <button type="button" className={styles.ppTlQuietLink}
+                    onClick={() => wiring.onFromPractice(null)}>From another practice…</button>
+                </>
+              )}
+            </p>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * "Groups from another practice" (G6 — D21's third way, "same groups as last practice", ruled
+ * 2026-07-31 and first built here): every set with anyone in it that another practice this season
+ * holds, newest first, each with its names and "Use these". It COPIES — a plan belongs to one
+ * practice (D7), so a change tonight never rewrites Tuesday — and anyone no longer on the roster is
+ * left behind. The pitcher-and-catcher win: batteries are made once a season, not once a practice.
+ */
+function GroupsFromPracticeSheet({ sets, nameOf, onPick, onClose }: {
+  sets: readonly GroupingElsewhere[];
+  nameOf: (playerId: string) => string;
+  onPick: (from: GroupingElsewhere) => void;
+  onClose: () => void;
+}) {
+  const panelRef = useRef<HTMLDivElement>(null);
+  useDialogFloor(true, panelRef, { onClose });
+  const [query, setQuery] = useState('');
+  const q = query.trim().toLowerCase();
+  const shown = q ? sets.filter(s => `${s.set.name} ${s.eventName}`.toLowerCase().includes(q)) : sets;
+  const dayOf = (iso: string | null) => (iso ? formatInOrgZone(iso, { weekday: 'short', month: 'short', day: 'numeric' }) : '');
+  return (
+    <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
+      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label="Groups from another practice"
+        className={`${styles.modal} ${styles.modalScrollBody}`}>
+        <CoachModalHeader onClose={onClose} closeAriaLabel="Close" title="Groups from another practice" />
+        <div className={`${styles.scrollPane} ${styles.ppGroupsBody}`}>
+          {sets.length > 4 && (
+            <input className={styles.input} type="search" value={query} onChange={e => setQuery(e.target.value)}
+              placeholder="Search practices or groups" aria-label="Search practices or groups" />
+          )}
+          {shown.length === 0 && <p className={styles.formHint}>Nothing matches “{query}”.</p>}
+          {shown.map(from => {
+            const pairs = isPairSet(from.set);
+            const filled = from.set.groups.filter(g => g.playerIds.length > 0);
+            const line = pairs
+              ? filled.map(g => groupNames(g, nameOf, true)).filter(Boolean).join(' · ')
+              : filled.map(g => `${g.name} · ${groupNames(g, nameOf, false)}`).join(' — ');
+            return (
+              <div key={`${from.eventId}:${from.set.id}`} className={styles.ppSetPick}>
+                <div className={styles.ppSetPickBody}>
+                  <b>{from.set.name.trim() || 'Unnamed groups'}</b>
+                  <span className={styles.ppGroupReadQuiet}> · {groupingShape(from.set)} · {dayOf(from.startsAt) || from.eventName}</span>
+                  {line && <p className={styles.ppGroupReadLine}>{line}</p>}
+                </div>
+                <button type="button" className={styles.btnSecondary} onClick={() => onPick(from)}>Use these</button>
+              </div>
+            );
+          })}
+          <p className={styles.formHint}>Newest first, this season only. Anyone no longer on the team is left behind.</p>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -1780,10 +2183,12 @@ function WalkOnward({ walk, noun, kicker, meta, onAdd }: {
   kicker: string;
   /** One quiet line under the name — the block's length, the station's people. */
   meta?: string | null;
-  /** At the last stop, the row adds one instead of saying there is none (the foot's `end`, in full). */
+  /** At the last stop, the row adds one instead of saying there is none (the foot's `end`, in full).
+   *  It stands even when the walk is ONE stop long — the plan's first block, just made, is exactly
+   *  where the coach reaches for the next (the foot stays away: there is nothing to walk). */
   onAdd?: () => void;
 }) {
-  if (walk.total <= 1) return null;
+  if (walk.total <= 1 && !onAdd) return null;
   return (
     <div className={styles.ppWalkOnward} data-walk-onward>
       {walk.next ? (
@@ -1865,7 +2270,7 @@ function SheetDeleteButton({ label, message, onDelete }: { label: string; messag
 }
 
 function BlockSheet({
-  bodyKey, label, eyebrow, walk, onward, readOnly, onEdit, onDoneEditing, deleteMessage, onDelete, onClose, children,
+  bodyKey, label, eyebrow, walk, onward, onAdd, readOnly, onEdit, onDoneEditing, deleteMessage, onDelete, onClose, children,
 }: {
   bodyKey: string;
   label: string;
@@ -1874,6 +2279,9 @@ function BlockSheet({
   walk: RoomNav;
   /** The next block's clock and length, for the full-name row at the body's end (`WalkOnward`). */
   onward: { kicker: string; meta: string | null };
+  /** The LAST block's way on — the list's own "+ Add a block" (owner, 2026-09-28: "it's the same
+   *  workflow" as the station form's). Absent while reading and on a full plan. */
+  onAdd?: () => void;
   readOnly: boolean;
   /** The head's Edit / Done editing (`SheetEditToggle`) — the page's doors, absent where it gives none. */
   onEdit?: () => void;
@@ -1916,7 +2324,7 @@ function BlockSheet({
               search is local state — the station modal's /review lesson); the PANEL is not keyed,
               so the floor, its focus rule and its history step stay armed across the walk. */}
           <div key={bodyKey} className={`${styles.ppTlOpen} ${styles.ppBlockSheetBody}`}>{children}</div>
-          <WalkOnward walk={walk} noun="block" kicker={onward.kicker} meta={onward.meta} />
+          <WalkOnward walk={walk} noun="block" kicker={onward.kicker} meta={onward.meta} onAdd={onAdd} />
         </div>
         {/* ⚠ NO "Done" IN THIS FOOT (§231 walk, owner 2026-09-25). It only closed the sheet — the
             head's ← and the phone's back gesture already do — and while writing it sat under the
@@ -1925,7 +2333,7 @@ function BlockSheet({
             one block has nothing to walk to. */}
         {walk.total > 1 && (
           <div className={styles.modalFooter}>
-            <RoomWalkNav nav={walk} compact />
+            <RoomWalkNav nav={walk} compact end={onAdd && { label: 'Add a block', onSelect: onAdd }} />
           </div>
         )}
       </div>
@@ -1936,11 +2344,11 @@ function BlockSheet({
 function BlockCard({
   block, index, blockCount, clock, clockPreview = false, blockStartMs, open, focusTitle, openDoors, readOnly, withoutPeople, solo,
   phone = false, sheet, onStartFromDrill,
-  restTakenElsewhere, roster, notRepliedIds,
+  restTakenElsewhere, roster, notRepliedIds, sets,
   staffTags, onCreateStaffTag, staffPeople, onPickStaffPerson, mineBlocks, mineStations, equipmentTags, onCreateEquipmentTag, nameOf,
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   onOpen, onClose, onOpenDoor, onCloseDoor, onMove, onDelete, onPatch, onOpenPicker, onAddStation, onDetachStation,
-  onSwapStation, onPromoteStation, onPromoteBlock, onPromoteCircuit, onOpenStation, onPatchStation, onMoveStation, onOpenGroups,
+  onSwapStation, onPromoteStation, onPromoteBlock, onPromoteCircuit, onOpenStation, onPatchStation, onMoveStation,
 }: {
   block: PracticePlanBlock;
   index: number;
@@ -1957,7 +2365,7 @@ function BlockCard({
    *  reorder pair — the pair lives on the block sheet's head. */
   phone?: boolean;
   /** Render the OPEN block as the phone's full-screen sheet (K2) rather than a card in the spine. */
-  sheet?: { walk: RoomNav; onward: { kicker: string; meta: string | null }; onEdit?: () => void; onDoneEditing?: () => void };
+  sheet?: { walk: RoomNav; onward: { kicker: string; meta: string | null }; onAdd?: () => void; onEdit?: () => void; onDoneEditing?: () => void };
   /** "Start from a drill ›" inside a just-added block's sheet while the coach is still on it (K4 —
    *  the editor asks first when there is anything to lose, §231 walk) — absent otherwise. */
   onStartFromDrill?: () => void;
@@ -1974,6 +2382,8 @@ function BlockCard({
   roster: PracticeRosterPlayer[];
   /** Who has NOT replied yes, when attendance is known (empty otherwise). */
   notRepliedIds: ReadonlySet<string>;
+  /** Tonight's sets and their doors (G1–G8) — the Players lines, the stations and the circuit's board. */
+  sets: SetsWiring;
   staffTags: PickableTag[];
   onCreateStaffTag?: (name: string) => Promise<PickableTag | null>;
   /** The staff picker's "People on this team" group (mig 303) — absent on a read-only surface. */
@@ -2015,8 +2425,6 @@ function BlockCard({
   /** Reorders a station within this block — the grip's menu on the column's foot (the drag drops
    *  through the editor's `onDragEnd`). */
   onMoveStation: (stationId: string, delta: number) => void;
-  /** Opens this block's groups room (D9) — the editor owns which block's is open. */
-  onOpenGroups: () => void;
 }) {
   const stationCount = block.stations?.length ?? 0;
   // ONE answer to "does this rotate", shared with the sanitiser, the grid and the printed sheet.
@@ -2026,9 +2434,15 @@ function BlockCard({
      without a write the coach didn't ask for. It seeds the total from the block's own length,
      which is what they just typed, and leaves the interval blank so the grid asks for it rather
      than inventing a round length. */
-  const rotation: PracticeRotation = block.rotation ?? { intervalMinutes: null, groups: [], groupSource: 'manual' };
+  const rotation: PracticeRotation = block.rotation ?? { intervalMinutes: null };
   const label = block.title || `Block ${index + 1}`;
   const stations = block.stations ?? [];
+  // The set the block's own line holds (no stations, or the station that IS the block), and the
+  // set its circuit rotates (G1–G8) — each read from the practice's list, never stored twice.
+  const ownSet = groupingById(sets.groupings, blockOwnGroupingId(block));
+  const circuitSet = isRotation ? groupingById(sets.groupings, block.rotation?.groupingId) : undefined;
+  /** A block's who-word when it uses a set: "In pairs · Throwing partners". */
+  const setWho = (set: PracticeGrouping) => `${groupingWords(set).inWord} · ${set.name.trim() || 'unnamed'}`;
 
 
   /* The gutter — the block's start in the org's clock, its length in small, and under them the
@@ -2059,11 +2473,17 @@ function BlockCard({
      the sheet's dialog floor seats focus on the panel whenever focus is outside it, and in the dev
      build's double-mounted effects the floor's first cleanup hands focus back to "+ Add a block"
      before the second mount re-seats it on the panel. This effect runs after the floor's (a parent's
-     effects run after its children's), so the title wins in either build. */
+     effects run after its children's), so the title wins in either build.
+     ⚠ ONCE PER BLOCK, keyed on the block's id — NEVER on `sheet` itself (owner-visible, 2026-09-28).
+     `sheet` is a fresh object every render, so keyed on it this ran after EVERY keystroke: on a just-
+     added block, typing in "What happens" put one letter there and sent the rest into the title
+     (measured: "abc" → "a" in the field, "bc" on the title). The id is what makes a step from one new
+     block to the next (the last block's "+ Add a block") place the cursor again. */
   const titleRef = useRef<HTMLInputElement>(null);
+  const inSheet = !!sheet;
   useEffect(() => {
-    if (sheet && open && focusTitle) titleRef.current?.focus();
-  }, [sheet, open, focusTitle]);
+    if (inSheet && open && focusTitle) titleRef.current?.focus();
+  }, [inSheet, open, focusTitle, block.id]);
   const lengthWord = block.duration.restOfPractice ? 'Rest of practice' : gutterLength;
   const gutter = (
     <div ref={setHandleRef} {...(canMove ? handleListeners : {})}
@@ -2119,10 +2539,14 @@ function BlockCard({
       clock ? lengthWord || null : null,
       withoutPeople ? null : (mergedTagNames((sole ?? block).staff, (sole ?? block).staffTagIds, staffTags)[0] ?? null),
     ] : [];
+    // Who, in the block's own word (G1): the set it uses ("In pairs · Throwing partners") where the
+    // block holds its people; a circuit's set after its station count.
     const rowMeta = [
       ...phoneFacts,
       stationCount >= 2 ? `${stationCount} stations` : null,
-      withoutPeople || stationCount > 0 ? null : playerCount > 0 ? `${playerCount} player${playerCount === 1 ? '' : 's'}` : 'Whole team',
+      circuitSet ? circuitSet.name.trim() || null : null,
+      ownSet ? setWho(ownSet)
+        : withoutPeople || stationCount > 0 ? null : playerCount > 0 ? `${playerCount} player${playerCount === 1 ? '' : 's'}` : 'Whole team',
     ].filter(Boolean).join(' · ');
     // The reader's block (mig 303): its own staff, or — when the station is the block — that
     // station's. A block whose people live on its stations wears the mark on the columns, not here.
@@ -2163,11 +2587,12 @@ function BlockCard({
      are the circuit's intro, then the rotation strip, the columns and the grid. */
   const sole = soleStationOf(block);
   const soleWritten = !!soleWrittenStationOf(block);
-  const playerCount = block.playerIds?.length ?? 0;
   const isRest = !!block.duration.restOfPractice;
   const shows = (door: BlockDoor) => held[door] || openDoors.has(door);
   const showTeaching = shows('teaching');
-  const showPlayers = !withoutPeople && stationCount === 0;
+  // A template shows a set's SHAPE on the line ("in pairs · drawn on the practice") and nothing else.
+  const showPlayers = stationCount === 0 && (!withoutPeople || !!ownSet);
+  const blockTarget: SetTarget = { kind: 'block', blockId: block.id };
   /* Every optional field, one row each: whether the block's SHAPE offers it at all, and whether
      it is on screen (held ∨ opened this time). A door at the foot is a field that applies and is
      not showing; the field renders when it is showing — one table, so the two can never disagree
@@ -2336,23 +2761,12 @@ function BlockCard({
         {showPlayers && (
           <div className={styles.ppFieldRow}>
             <FieldLabel>Players</FieldLabel>
-            {playerCount > 0 ? (
-              <div className={styles.ppChipWrap}>
-                {block.playerIds!.map(pid => <span key={pid} className={styles.ppChip}>{nameOf(pid)}</span>)}
-                <PlayerPickerButton count={playerCount} readOnly={readOnly}
-                  onOpen={() => onOpenPicker({ kind: 'block', blockId: block.id })} />
-              </div>
+            {ownSet ? (
+              <SetReadBack set={ownSet} target={blockTarget} wiring={sets} readOnly={readOnly} withoutPeople={withoutPeople}
+                roster={roster} notRepliedIds={notRepliedIds} nameOf={nameOf} />
             ) : (
-              <div className={styles.ppWhoLine}>
-                <b>Whole team</b>
-                {!readOnly && (
-                  <span className={styles.ppTlQuietAlt}>
-                    {' · '}
-                    <button type="button" className={styles.ppTlQuietLink}
-                      onClick={() => onOpenPicker({ kind: 'block', blockId: block.id })}>Choose players…</button>
-                  </span>
-                )}
-              </div>
+              <PeopleLine target={blockTarget} playerIds={block.playerIds} wholeTeamWord readOnly={readOnly}
+                wiring={sets} nameOf={nameOf} onOpenPicker={() => onOpenPicker({ kind: 'block', blockId: block.id })} />
             )}
           </div>
         )}
@@ -2425,7 +2839,7 @@ function BlockCard({
           <StationFields
             station={sole} block={block} sole isRotation={false}
             readOnly={readOnly} withoutPeople={withoutPeople}
-            doors={stationDoor}
+            doors={stationDoor} sets={sets} roster={roster} notRepliedIds={notRepliedIds}
             staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
             equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
             staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
@@ -2463,13 +2877,22 @@ function BlockCard({
               phone={!!sheet}
               staffTags={staffTags}
               mineStations={mineStations}
+              whoOf={isRotation || withoutPeople ? undefined : station => {
+                const set = groupingById(sets.groupings, station.groupingId);
+                if (set) return `${set.name.trim() || 'Groups'} · ${groupingShape(set)}`;
+                const n = station.playerIds?.length ?? 0;
+                return n > 0 ? `${n} player${n === 1 ? '' : 's'}` : '';
+              }}
               onOpen={onOpenStation}
               onMove={onMoveStation}
               onAdd={() => onAddStation()}
             />
             {isRotation && (
               <RotationBoard
+                blockId={block.id}
                 rotation={rotation}
+                set={circuitSet}
+                sets={sets}
                 stations={stations}
                 blockMinutes={block.duration.minutes ?? null}
                 blockStartMs={blockStartMs}
@@ -2479,7 +2902,6 @@ function BlockCard({
                 roster={roster}
                 notRepliedIds={notRepliedIds}
                 nameOf={nameOf}
-                onOpenGroups={onOpenGroups}
                 onSetRotation={patch => onPatch({ rotation: { ...rotation, ...patch } })}
               />
             )}
@@ -2537,6 +2959,7 @@ function BlockCard({
         eyebrow={{ place: `Block ${index + 1} of ${blockCount}`, clock: clock?.startLabel ?? null }}
         walk={sheet.walk}
         onward={sheet.onward}
+        onAdd={sheet.onAdd}
         readOnly={readOnly}
         onEdit={sheet.onEdit}
         onDoneEditing={sheet.onDoneEditing}
@@ -2705,6 +3128,12 @@ interface Props {
   /** The reader's own blocks and stations, decided server-side by identity — the "you" marks. */
   viewerBlockIds?: readonly string[];
   viewerStationIds?: readonly string[];
+  /**
+   * Every set with anyone in it that ANOTHER practice this season holds, newest first — "From another
+   * practice…" (G6, groups at every level 2026-09-28). The page's; absent in the template room and
+   * the circuit editor, where the door is absent too.
+   */
+  groupingsElsewhere?: readonly GroupingElsewhere[];
 }
 
 export default function PracticePlanEditor({
@@ -2715,7 +3144,7 @@ export default function PracticePlanEditor({
   staffManage, onStaffTagsChanged, equipmentManage, onEquipmentTagsChanged,
   focusManage, onFocusTagsChanged,
   eventStartsAt, eventEndsAt, readOnly, onEdit, onDoneEditing, record = false, goalInputId, withoutPeople = false, onStartFrom,
-  staffPeople = [], onPickStaffPerson, viewerBlockIds, viewerStationIds,
+  staffPeople = [], onPickStaffPerson, viewerBlockIds, viewerStationIds, groupingsElsewhere = [],
 }: Props) {
   const confirm = useConfirm();
   const [attach, setAttach] = useState<AttachTarget | null>(null);
@@ -2858,8 +3287,23 @@ export default function PracticePlanEditor({
    * in the plan is the coach's, and is left alone. Forgotten on that close.
    */
   const [freshStations, setFreshStations] = useState<ReadonlySet<string>>(() => new Set());
-  /** The block whose GROUPS ROOM is open (stage 3 revision, D9) — one at a time, like a station. */
-  const [openGroups, setOpenGroups] = useState<{ blockId: string } | null>(null);
+  /**
+   * The GROUPS ROOM — one set at a time (D9; groups at every level, G1–G8, 2026-09-28): the set,
+   * the place it was opened from (the room's "Make a separate copy for …" is that place's), and, for
+   * a set THIS visit just made, what that place held before — a room closed with nobody placed in
+   * the new set puts the place back and the set goes (practice plans on a phone S4's rule, one level
+   * over: a door opened by mistake costs nothing). `note` is the copied set's one line (G6).
+   */
+  const [openSet, setOpenSet] = useState<{
+    setId: string;
+    from: SetTarget | null;
+    made?: { held: Holding | null };
+    note?: string;
+  } | null>(null);
+  /** "From another practice…" (G6) — onto a place, or (from the fold) onto the practice alone. */
+  const [fromPractice, setFromPractice] = useState<{ target: SetTarget | null } | null>(null);
+  /** The Groups fold under the goal — open whenever it renders, until the coach shuts it. */
+  const [groupsOpen, setGroupsOpen] = useState(true);
 
   // Keyed on plan.blocks, NOT the whole plan: typing in "Tonight's goal" replaces the plan object
   // but changes no block, and re-running this would rebuild an Intl formatter per block per
@@ -3311,6 +3755,161 @@ export default function PracticePlanEditor({
     return next;
   });
 
+  // ── Tonight's sets (groups at every level, owner rulings G1–G8, 2026-09-28) ──────────────────
+  // Every write goes through `commitSets` — the sets and the blocks in ONE change, through the same
+  // settling passes as `setBlocks`, so the screen and the column agree on who is where.
+
+  /** The practice's sets, and where each is used (the fold, the menus, the room's "Used in …"). */
+  const groupings = useMemo(() => plan.groupings ?? [], [plan.groupings]);
+  const uses = useMemo(() => groupingUses({ blocks: plan.blocks }), [plan.blocks]);
+  const rosterIdSet = useMemo(() => new Set(roster.map(p => p.id)), [roster]);
+
+  const commitSets = (nextSets: readonly PracticeGrouping[], blocks: PracticePlanBlock[] = plan.blocks) => {
+    const next: PracticePlan = { ...plan, blocks };
+    if (nextSets.length) next.groupings = [...nextSets];
+    else delete next.groupings;
+    onChange(settlePlanLevels(next));
+  };
+  /** What `target` holds right now, or null when the place is gone. */
+  const holdingOf = (target: SetTarget): Holding | null => {
+    const block = plan.blocks.find(b => b.id === target.blockId);
+    if (!block) return null;
+    if (target.kind === 'block') return { playerIds: block.playerIds, groupingId: block.groupingId };
+    if (target.kind === 'rotation') return { groupingId: block.rotation?.groupingId };
+    const station = block.stations?.find(s => s.id === target.stationId);
+    return station ? { playerIds: station.playerIds, groupingId: station.groupingId } : null;
+  };
+  /** The blocks with `target` holding `holding` — its names OR its set, the other key cleared. */
+  const blocksWith = (target: SetTarget, holding: Holding, blocks: PracticePlanBlock[] = plan.blocks) => blocks.map(b => {
+    if (b.id !== target.blockId) return b;
+    if (target.kind === 'block') return { ...b, playerIds: holding.playerIds, groupingId: holding.groupingId };
+    if (target.kind === 'rotation') return { ...b, rotation: { ...(b.rotation ?? { intervalMinutes: null }), groupingId: holding.groupingId } };
+    return {
+      ...b,
+      stations: (b.stations ?? []).map(st => (st.id === target.stationId
+        ? { ...st, playerIds: holding.playerIds, groupingId: holding.groupingId } : st)),
+    };
+  });
+  /** Everyone in a set, in roster order — who a place keeps as a plain list when it leaves the set. */
+  const membersOf = (set: PracticeGrouping | undefined) => rosterOrder.filter(pid => set?.groups.some(g => g.playerIds.includes(pid)));
+  /** A place by its name — "Partner throwing", "Warm up pitchers → Bullpen" (the room's copy door). */
+  const placeLabel = (target: SetTarget, setId: string) => {
+    const use = (uses.get(setId) ?? []).find(u => sameTarget(u, target));
+    return use?.label ?? (plan.blocks.find(b => b.id === target.blockId)?.title.trim() || 'this block');
+  };
+  /** The room's draw when a set has never been drawn: one group per named station for a circuit;
+   *  PAIRS for a block or a station that is one activity (G5); three groups for the night's own. */
+  const defaultDrawFor = (target: SetTarget | null): DrawChoice => {
+    if (target?.kind === 'rotation') {
+      const named = plan.blocks.find(b => b.id === target.blockId)?.stations?.filter(s => s.name.trim()).length ?? 0;
+      return { mode: 'groups', n: Math.max(2, Math.min(named, MAX_GROUPS)) };
+    }
+    return target ? { mode: 'perGroup', n: 2 } : { mode: 'groups', n: 3 };
+  };
+
+  /** "Use groups from tonight" — the place points at a set that is already there (G1). */
+  const pointAtSet = (target: SetTarget, setId: string) => commitSets(groupings, blocksWith(target, { groupingId: setId }));
+  /**
+   * "New groups…" / "+ Groups for tonight" — a new, empty set; the place (when there is one) points
+   * at it at once, and the room opens on it. A place that had CHOSEN players makes a set for them
+   * alone ("Split them into groups…": the draw deals only from them). Named in the place's words —
+   * "Pairs" where the draw opens on pairs, "Groups" elsewhere — the coach types over it.
+   */
+  const newSet = (target: SetTarget | null) => {
+    const held = target ? holdingOf(target) : null;
+    const draw = defaultDrawFor(target);
+    const pairs = draw.mode === 'perGroup' && draw.n === 2;
+    // The set carries its SHAPE from the start (pairs, or so many groups), so its words are right
+    // before the first draw; one made from the Groups list itself may stand with nothing using it.
+    const set = newGrouping(nextGroupingName(groupings, pairs ? 'Pairs' : 'Groups'), {
+      forPlayerIds: held?.groupingId ? undefined : held?.playerIds,
+      draw,
+      standing: !target,
+    });
+    commitSets([...groupings, set], target ? blocksWith(target, { groupingId: set.id }) : plan.blocks);
+    setOpenSet({ setId: set.id, from: target, made: { held } });
+  };
+  /** Every change in the room writes the set whole. */
+  const changeSet = (next: PracticeGrouping) => commitSets(groupings.map(s => (s.id === next.id ? next : s)));
+  /**
+   * Leave a set (the menu's way out): a block or a station back to the whole team, or to choosing
+   * players — starting from the set's own people, the picker open on them; a circuit to no groups.
+   * The set stays on the practice's list for whatever else uses it.
+   */
+  const leaveSet = (target: SetTarget, then: 'team' | 'choose') => {
+    const set = groupingById(groupings, holdingOf(target)?.groupingId);
+    const names = then === 'choose' ? membersOf(set) : undefined;
+    commitSets(groupings, blocksWith(target, { playerIds: names?.length ? names : undefined }));
+    if (then === 'choose' && target.kind !== 'rotation') setAttach(target);
+  };
+  /** "Make a separate copy for Partner throwing" (G1) — the copy takes this place, the room follows. */
+  const copySetFor = (target: SetTarget, setId: string) => {
+    const set = groupingById(groupings, setId);
+    if (!set) return;
+    const copy = copyGrouping(set, { name: nextGroupingName(groupings, `${set.name.trim() || 'Groups'} (copy)`) });
+    commitSets([...groupings, copy], blocksWith(target, { groupingId: copy.id }));
+    setOpenSet({ setId: copy.id, from: target });
+  };
+  /**
+   * Delete a set (the room asks first). People MOVE, never vanish (D8): a block or a station that
+   * used it keeps the same players as a plain list; a circuit goes back to no groups.
+   */
+  const deleteSet = (setId: string) => {
+    const set = groupingById(groupings, setId);
+    const names = membersOf(set);
+    let blocks = plan.blocks;
+    for (const use of uses.get(setId) ?? []) {
+      const target: SetTarget = use.rotates ? { kind: 'rotation', blockId: use.blockId }
+        : use.stationId ? { kind: 'station', blockId: use.blockId, stationId: use.stationId }
+          : { kind: 'block', blockId: use.blockId };
+      blocks = blocksWith(target, use.rotates || names.length === 0 ? {} : { playerIds: names }, blocks);
+    }
+    commitSets(groupings.filter(s => s.id !== setId), blocks);
+    setOpenSet(null);
+  };
+  /**
+   * "From another practice…" (G6) — a COPY of that practice's set joins tonight's (a plan belongs to
+   * one practice, D7), with anyone off tonight's roster left behind; the place points at it and the
+   * room opens on it, one line saying where it came from and who in it hasn't replied yes.
+   */
+  const adoptFromPractice = (target: SetTarget | null, from: GroupingElsewhere) => {
+    const copied = copyGrouping(from.set, {
+      name: nextGroupingName(groupings, from.set.name.trim() || 'Groups'), groupSource: 'previous', rosterIds: rosterIdSet,
+    });
+    // Brought in from the Groups list (no place yet): it stands on the list until something uses it.
+    const copy: PracticeGrouping = target ? copied : { ...copied, standing: true };
+    commitSets([...groupings, copy], target ? blocksWith(target, { groupingId: copy.id }) : plan.blocks);
+    const day = from.startsAt ? formatInOrgZone(from.startsAt, { weekday: 'short', month: 'short', day: 'numeric' }) : from.eventName;
+    const waiting = membersOf(copy).filter(pid => notRepliedIds.has(pid)).map(nameOf);
+    const waitingLine = waiting.length === 0 ? ''
+      : ` ${waiting.join(', ')} ${waiting.length === 1 ? 'hasn’t' : 'haven’t'} replied yes for tonight — still placed, shown dashed.`;
+    setFromPractice(null);
+    setOpenSet({ setId: copy.id, from: target, note: `Copied from ${day}.${waitingLine}` });
+  };
+  /**
+   * The room CLOSES — and a set this visit just made that still places nobody goes, the place back
+   * as it was (a "New groups…" pressed by mistake costs nothing). Only while writing.
+   */
+  const closeSet = () => {
+    const made = openSet?.made;
+    const set = openSet ? groupingById(groupings, openSet.setId) : undefined;
+    const from = openSet?.from ?? null;
+    setOpenSet(null);
+    if (readOnly || !made || !set || set.groups.some(g => g.playerIds.length > 0)) return;
+    const blocks = from && made.held && holdingOf(from)?.groupingId === set.id ? blocksWith(from, made.held) : plan.blocks;
+    commitSets(groupings.filter(s => s.id !== set.id), blocks);
+  };
+  const setsWiring: SetsWiring = {
+    groupings,
+    uses,
+    canCopyFromPractice: !withoutPeople && groupingsElsewhere.length > 0,
+    onUse: pointAtSet,
+    onNew: newSet,
+    onFromPractice: target => setFromPractice({ target }),
+    onEdit: (target, setId) => setOpenSet({ setId, from: target }),
+    onLeave: leaveSet,
+  };
+
   /**
    * "Edit just for this practice" — keeps every word, drops the drill identity.
    *
@@ -3439,13 +4038,17 @@ export default function PracticePlanEditor({
     const inRosterOrder = (ids: string[]) => rosterOrder.filter(pid => ids.includes(pid));
     const block = plan.blocks.find(b => b.id === target.blockId);
     if (!block) return;
+    // A place that uses a set LEAVES it on the first tick (the picker opened from "Choose players…"
+    // on its menu): its names start as the set's people, and the set stays on the practice's list.
+    const names = (level: { playerIds?: string[]; groupingId?: string }) =>
+      (level.groupingId ? membersOf(groupingById(groupings, level.groupingId)) : level.playerIds);
 
     if (target.kind === 'block') {
-      patchBlock(block.id, { playerIds: inRosterOrder(toggle(block.playerIds)) });
+      patchBlock(block.id, { playerIds: inRosterOrder(toggle(names(block))), groupingId: undefined });
     } else {
       patchBlock(block.id, {
         stations: (block.stations ?? []).map(s =>
-          (s.id === target.stationId ? { ...s, playerIds: inRosterOrder(toggle(s.playerIds)) } : s)),
+          (s.id === target.stationId ? { ...s, playerIds: inRosterOrder(toggle(names(s))), groupingId: undefined } : s)),
       });
     }
     // A GROUP's people are moved in the groups room, one chip at a time (`movePlayerToGroup` —
@@ -3455,8 +4058,10 @@ export default function PracticePlanEditor({
   function selectedIdsFor(target: AttachTarget): string[] {
     const block = plan.blocks.find(b => b.id === target.blockId);
     if (!block) return [];
-    if (target.kind === 'block') return block.playerIds ?? [];
-    return block.stations?.find(s => s.id === target.stationId)?.playerIds ?? [];
+    const level = target.kind === 'block' ? block : block.stations?.find(s => s.id === target.stationId);
+    if (!level) return [];
+    // A place using a set shows the set's people ticked — the first tick makes them its own list.
+    return level.groupingId ? membersOf(groupingById(groupings, level.groupingId)) : level.playerIds ?? [];
   }
 
   /**
@@ -3512,14 +4117,11 @@ export default function PracticePlanEditor({
     }
     setDrillSheet({ kind: 'station', blockId: openStation.blockId, swapId: openStation.stationId, startFrom: true });
   };
-  /* The groups room's block, resolved the same way — and only while it still ROTATES with two or
-     more stations, which is the only shape that has groups; a station deleted under the room
-     (another tab's autosave) closes it rather than leaving a room with nothing to arrange. */
-  const openGroupsBlock = (() => {
-    if (readOnly) return undefined;
-    const block = openGroups ? plan.blocks.find(b => b.id === openGroups.blockId) : undefined;
-    return block && blockRotates(block) && (block.stations?.length ?? 0) >= 2 ? block : undefined;
-  })();
+  /* The groups room's set, resolved the same way — a set deleted under the room (another tab's
+     autosave) closes it rather than leaving a room with nothing to arrange; and never in read mode
+     (the room writes). The same for the "From another practice" sheet. */
+  const openSetRow = readOnly || withoutPeople || !openSet ? undefined : groupingById(plan.groupings, openSet.setId);
+  const fromPracticeOpen = !readOnly && !withoutPeople && !!fromPractice;
   const openDrillSheet = readOnly ? null : drillSheet;
   const openPromoting = readOnly ? null : promoting;
   const openNewDrill = readOnly ? null : newDrill;
@@ -3542,7 +4144,7 @@ export default function PracticePlanEditor({
     : setDrillSheet({ kind: 'station', blockId }));
   const sheetIndex = phoneSheet && openId ? plan.blocks.findIndex(b => b.id === openId) : -1;
   const sheetBlock = sheetIndex >= 0 ? plan.blocks[sheetIndex] : undefined;
-  useOverlayOpen(!!pickerTarget || !!openDrillSheet || !!openPromoting || !!openStationRow || !!openGroupsBlock || !!openNewDrill || !!sheetBlock);
+  useOverlayOpen(!!pickerTarget || !!openDrillSheet || !!openPromoting || !!openStationRow || !!openSetRow || fromPracticeOpen || !!openNewDrill || !!sheetBlock);
   /* When the block's sheet closes, the list picks out the block the coach was LAST on (K2); gone →
      the add row. */
   useFocusLastShownOnClose(sheetBlock?.id ?? null, blockRowFor);
@@ -3679,7 +4281,7 @@ export default function PracticePlanEditor({
     onOpenStation: (stationId: string) => setOpenStation({ blockId: block.id, stationId }),
     onPatchStation: (stationId: string, patch: Partial<PracticeStation>) => patchStation(block.id, stationId, patch),
     onMoveStation: (stationId: string, delta: number) => moveStation(block.id, stationId, delta),
-    onOpenGroups: () => setOpenGroups({ blockId: block.id }),
+    sets: setsWiring,
   });
 
   /* The sheet's walk (K2): the neighbouring blocks by their titles, the arrows stopping at the ends.
@@ -3865,6 +4467,12 @@ export default function PracticePlanEditor({
           ⚠ ≤640 it waits UNDER the plan (practice plans on a phone, stage 4 · N3 = A, 2026-09-25) —
           see `aboutFold` above the return for why. */}
       {!aboutAfterPlan && aboutFold}
+
+      {/* ── Tonight's groups (G1 · G7) — the practice level, under the goal and About (on a phone,
+          where About waits under the plan, straight under the goal). ── */}
+      <GroupsFold groupings={groupings} wiring={setsWiring} readOnly={readOnly} withoutPeople={withoutPeople}
+        roster={roster} notRepliedIds={notRepliedIds} nameOf={nameOf}
+        open={groupsOpen} onToggle={() => setGroupsOpen(o => !o)} onMake={() => newSet(null)} />
       </>)}
 
       {/* ── The timeline (stage 1, D2 · D5) ──
@@ -4044,7 +4652,7 @@ export default function PracticePlanEditor({
           open
           openDoors={openDoors}
           phone
-          sheet={{ walk: sheetWalk, onward: sheetOnward, onEdit, onDoneEditing }}
+          sheet={{ walk: sheetWalk, onward: sheetOnward, onAdd: !readOnly && canAddBlock ? addBlock : undefined, onEdit, onDoneEditing }}
           onStartFromDrill={startSheetFromDrill && (() => void startSheetFromDrill())} />
       )}
 
@@ -4061,6 +4669,7 @@ export default function PracticePlanEditor({
           onEdit={onEdit}
           onDoneEditing={doneEditingStation}
           withoutPeople={withoutPeople}
+          sets={setsWiring} roster={roster} notRepliedIds={notRepliedIds}
           staffTags={staffTags} onCreateStaffTag={onCreateStaffTag} staffPeople={staffPeople} onPickStaffPerson={onPickStaffPerson}
           equipmentTags={equipmentTags} onCreateEquipmentTag={onCreateEquipmentTag}
           staffManage={staffManage} onStaffTagsChanged={onStaffTagsChanged}
@@ -4079,24 +4688,34 @@ export default function PracticePlanEditor({
         />
       )}
 
-      {/* ── The groups room (stage 3 revision, D9 · D10 · D11 · D12) — the block's groups are
-          drawn and arranged here; the block only reads them back. Never for a template: a
-          template carries no people, and its board never offers the door. ── */}
-      {openGroupsBlock && !withoutPeople && !readOnly && (
+      {/* ── The groups room (stage 3 revision, D9 · D10 · D11 · D12; every level, G1–G8) — one of
+          tonight's sets is drawn and arranged here; the places that use it only read it back. Never
+          for a template (a template carries no people) and never while reading. ── */}
+      {openSet && openSetRow && (
         <PracticeGroupsRoom
-          blockTitle={openGroupsBlock.title || 'Block'}
-          rotation={openGroupsBlock.rotation ?? { intervalMinutes: null, groups: [], groupSource: 'manual' }}
-          stationCount={(openGroupsBlock.stations ?? []).filter(s => s.name.trim()).length}
+          set={openSetRow}
+          uses={uses.get(openSetRow.id) ?? []}
+          defaultDraw={defaultDrawFor(openSet.from)}
           roster={roster}
           notReplied={notRepliedIds}
           drawPool={drawPool}
           attendanceKnown={attendanceKnown}
           nameOf={nameOf}
-          onSetRotation={patch => {
-            const current = openGroupsBlock.rotation ?? { intervalMinutes: null, groups: [], groupSource: 'manual' as const };
-            patchBlock(openGroupsBlock.id, { rotation: { ...current, ...patch } });
-          }}
-          onClose={() => setOpenGroups(null)}
+          note={openSet.note}
+          onChange={changeSet}
+          copyFor={openSet.from ? { label: placeLabel(openSet.from, openSetRow.id), onCopy: () => copySetFor(openSet.from!, openSetRow.id) } : undefined}
+          onDelete={() => deleteSet(openSetRow.id)}
+          onClose={closeSet}
+        />
+      )}
+
+      {/* ── "From another practice…" (G6) — copies one of another practice's sets onto tonight. ── */}
+      {fromPracticeOpen && fromPractice && (
+        <GroupsFromPracticeSheet
+          sets={groupingsElsewhere}
+          nameOf={nameOf}
+          onPick={from => adoptFromPractice(fromPractice.target, from)}
+          onClose={() => setFromPractice(null)}
         />
       )}
 
@@ -4146,8 +4765,8 @@ export default function PracticePlanEditor({
               {(pickerTarget.kind === 'block' || pickerIsSoleStation) && selectedIds.length > 0 && (
                 <button type="button" className={styles.btnGhost}
                   onClick={() => {
-                    if (pickerTarget.kind === 'station') patchStation(pickerTarget.blockId, pickerTarget.stationId, { playerIds: [] });
-                    else patchBlock(pickerTarget.blockId, { playerIds: [] });
+                    if (pickerTarget.kind === 'station') patchStation(pickerTarget.blockId, pickerTarget.stationId, { playerIds: [], groupingId: undefined });
+                    else patchBlock(pickerTarget.blockId, { playerIds: [], groupingId: undefined });
                     setAttach(null);
                   }}>
                   Whole team

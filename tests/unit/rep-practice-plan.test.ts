@@ -21,8 +21,10 @@ import {
   arrangeGroup, forgetArrangement, settleArrangements,
   sanitizePracticePlan,
   totalPlannedMinutes,
+  groupingById,
+  type RotationInput,
 } from '../../lib/rep-practice-plan.ts';
-import type { PracticePlan, PracticeRotation, PracticeStation } from '../../lib/types.ts';
+import type { PracticeGrouping, PracticePlan, PracticeStation } from '../../lib/types.ts';
 
 /** A deterministic rng for the draw — sequence repeats, so shuffles are reproducible. */
 function seededRng(seed: number): () => number {
@@ -38,6 +40,11 @@ const station = (id: string, name: string): PracticeStation => ({ id, name });
 function plan(overrides: Partial<PracticePlan> = {}): PracticePlan {
   return { version: 1, blocks: [], ...overrides };
 }
+
+/** The set a block's circuit rotates, and its groups — the SET's since groups at every level (G3):
+ *  a rotation stored the old way is lifted onto the plan's list on the way in. */
+const circuitSet = (p: PracticePlan | null | undefined, i = 0) => groupingById(p?.groupings, p?.blocks[i]?.rotation?.groupingId);
+const circuitGroups = (p: PracticePlan | null | undefined, i = 0) => circuitSet(p, i)?.groups ?? [];
 
 describe('sanitizePracticePlan', () => {
   it('returns null for a plan with nothing in it (so the column goes back to NULL)', () => {
@@ -146,7 +153,7 @@ describe('sanitizePracticePlan', () => {
     });
     assert.equal(p?.blocks[0].playerIds, undefined);
     assert.equal(p?.blocks[0].stations?.[0].playerIds, undefined);
-    assert.deepEqual(p?.blocks[0].rotation?.groups[0].playerIds, ['p1', 'p2'], 'p2 was a stray and joined the standing group');
+    assert.deepEqual(circuitGroups(p)[0].playerIds, ['p1', 'p2'], 'p2 was a stray and joined the standing group');
   });
 
   it('drops a legacy range entirely — ranges were removed (owner 2026-08-01)', () => {
@@ -190,8 +197,8 @@ describe('sanitizePracticePlan', () => {
         },
       }],
     });
-    assert.deepEqual(p?.blocks[0].rotation?.groups[0].playerIds, ['p1', 'p2']);
-    assert.deepEqual(p?.blocks[0].rotation?.groups[1].playerIds, ['p3'], 'p2 stays where it was first placed');
+    assert.deepEqual(circuitGroups(p)[0].playerIds, ['p1', 'p2']);
+    assert.deepEqual(circuitGroups(p)[1].playerIds, ['p3'], 'p2 stays where it was first placed');
   });
 
   it('rotation is the DEFAULT once there are two stations', () => {
@@ -228,7 +235,7 @@ describe('sanitizePracticePlan', () => {
     }, roster);
     assert.deepEqual(p?.blocks[0].playerIds, ['p1']);
     assert.deepEqual(p?.blocks[1].stations?.[0].playerIds, ['p1']);
-    assert.deepEqual(p?.blocks[2].rotation?.groups[0].playerIds, ['p1']);
+    assert.deepEqual(circuitGroups(p, 2)[0].playerIds, ['p1']);
   });
 
   // ── Equipment / practice types as reusable tags (owner ruling 2026-08-01) ──
@@ -404,8 +411,8 @@ describe('drawGroups (D21 — deliberately dumb)', () => {
 
 describe('the groups room — movePlayerToGroup / unplacedPlayers (stage 3 revision, D10 · D11)', () => {
   const roster = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
-  const rotation = (): PracticeRotation => ({
-    intervalMinutes: 15,
+  const rotation = (): PracticeGrouping => ({
+    id: 'set', name: 'Groups',
     groupSource: 'random',
     groups: [
       { id: 'a', name: 'Group A', playerIds: ['p1', 'p2'] },
@@ -440,7 +447,7 @@ describe('the groups room — movePlayerToGroup / unplacedPlayers (stage 3 revis
   });
 
   it('a stale id (off the roster) sorts last and is never dropped', () => {
-    const r: PracticeRotation = { ...rotation(), groups: [{ id: 'a', name: 'Group A', playerIds: ['gone', 'p2'] }] };
+    const r: PracticeGrouping = { ...rotation(), groups: [{ id: 'a', name: 'Group A', playerIds: ['gone', 'p2'] }] };
     assert.deepEqual(movePlayerToGroup(r, 'p1', 'a', roster).groups[0].playerIds, ['p1', 'p2', 'gone']);
   });
 
@@ -480,10 +487,11 @@ describe('D13 — "+ Stations" on a written block makes TWO; binning back to one
     assert.deepEqual(out.equipmentTagIds, ['cones']);
     assert.deepEqual(out.playerIds, ['p1', 'p2']);
     // and the settle pass moves them onto station 1 / into the first draw
-    const settled = settlePlanLevels({ version: 3, blocks: [out] }).blocks[0];
+    const settledPlan = settlePlanLevels({ version: 3, blocks: [out] });
+    const settled = settledPlan.blocks[0];
     assert.deepEqual(settled.stations?.[0].equipmentTagIds, ['cones']);
     assert.equal(settled.playerIds, undefined);
-    assert.equal(settled.rotation?.groups.flatMap(g => g.playerIds).length, 2);
+    assert.equal(circuitGroups(settledPlan).flatMap(g => g.playerIds).length, 2);
   });
 
   it('an EMPTY block — no title, no words — splits too: what arrives is station 1 and a blank station 2 stands beside it (owner, 2026-09-16)', () => {
@@ -588,20 +596,34 @@ describe('D13 — "+ Stations" on a written block makes TWO; binning back to one
     // new station empty brings every one of them home, in order, once the settle pass runs.
     const players = ['p1', 'p2', 'p3', 'p4', 'p5', 'p6'];
     const warm: PracticePlan['blocks'][number] = { id: 'w', title: 'Warm-up', duration: { minutes: 15 }, description: 'Jog.', playerIds: players };
-    const settled = settlePlanLevels({ version: 3, blocks: [splitBlockIntoStations(warm, { id: 'new', name: '' }, ids)] } as PracticePlan).blocks[0];
+    const settledPlan = settlePlanLevels({ version: 3, blocks: [splitBlockIntoStations(warm, { id: 'new', name: '' }, ids)] } as PracticePlan);
+    const settled = settledPlan.blocks[0];
     assert.equal(settled.playerIds, undefined, 'the split moved them into the rotation');
-    const back = settlePlanLevels({ version: 3, blocks: [dropEmptyStations(settled, new Set(settled.stations!.map(s => s.id)))] } as PracticePlan).blocks[0];
+    assert.equal(settledPlan.groupings?.length, 1, 'the first draw is a set the plan dealt');
+    const backPlan = settlePlanLevels({ ...settledPlan, blocks: [dropEmptyStations(settled, new Set(settled.stations!.map(s => s.id)))] });
+    const back = backPlan.blocks[0];
     assert.equal(back.stations, undefined);
     assert.deepEqual(back.playerIds, players, 'every player home, in order');
     assert.equal(back.rotation, undefined, 'no rotation left behind');
+    assert.equal(backPlan.groupings, undefined, 'and the dealt set dissolved with it — nothing left behind (S4)');
   });
 });
 
 describe('D14 — the rotation grid is a starting point the coach can arrange', () => {
   const stations: PracticeStation[] = [{ id: 'test', name: 'test' }, { id: 'test2', name: 'test2' }];
-  const rotation = (): PracticeRotation => ({
-    intervalMinutes: 15, groupSource: 'random',
+  const rotation = (): RotationInput => ({
+    intervalMinutes: 15,
     groups: [{ id: 'A', name: 'Group A', playerIds: ['p1'] }, { id: 'B', name: 'Group B', playerIds: ['p2'] }],
+  });
+  /** A plan whose circuit points at a set holding `groups` — the arrangement stays the rotation's. */
+  const planWith = (arranged: RotationInput, over: Partial<PracticePlan['blocks'][number]> = {}, groups = arranged.groups): PracticePlan => ({
+    version: 3,
+    groupings: [{ id: 'set', name: 'Groups', groupSource: 'random', groups }],
+    blocks: [{
+      id: 'b', title: 'Circuit', duration: { minutes: 30 }, stations,
+      rotation: { intervalMinutes: arranged.intervalMinutes, groupingId: 'set', arrangement: arranged.arrangement },
+      ...over,
+    }],
   });
 
   it('the first move remembers the carousel and changes one cell; the grid reads it', () => {
@@ -646,27 +668,26 @@ describe('D14 — the rotation grid is a starting point the coach can arrange', 
 
   it('a station or group added, or the clock changed, RESETS it — the settle pass drops what no longer fits', () => {
     const arranged = arrangeGroup(rotation(), stations, 30, 1, 'B', 'test');
-    const block = (over: Partial<PracticePlan['blocks'][number]>): PracticePlan => ({
-      version: 3, blocks: [{ id: 'b', title: 'Circuit', duration: { minutes: 30 }, stations, rotation: arranged, ...over }],
-    });
-    assert.ok(settleArrangements(block({})).blocks[0].rotation?.arrangement, 'unchanged facts keep it');
-    assert.equal(settleArrangements(block({ stations: [...stations, { id: 'x', name: 'X' }] })).blocks[0].rotation?.arrangement, undefined, 'a station added');
-    assert.equal(settleArrangements(block({ duration: { minutes: 45 } })).blocks[0].rotation?.arrangement, undefined, 'three rounds now');
-    assert.equal(settleArrangements(block({ rotation: { ...arranged, groups: [...arranged.groups, { id: 'C', name: 'Group C', playerIds: ['p3'] }] } })).blocks[0].rotation?.arrangement, undefined, 'a group added');
+    const settled = (p: PracticePlan) => settleArrangements(p).blocks[0].rotation?.arrangement;
+    assert.ok(settled(planWith(arranged)), 'unchanged facts keep it');
+    assert.equal(settled(planWith(arranged, { stations: [...stations, { id: 'x', name: 'X' }] })), undefined, 'a station added');
+    assert.equal(settled(planWith(arranged, { duration: { minutes: 45 } })), undefined, 'three rounds now');
+    assert.equal(settled(planWith(arranged, {}, [...arranged.groups, { id: 'C', name: 'Group C', playerIds: ['p3'] }])), undefined,
+      'a group added — to the SET the circuit uses (G3)');
     // a rename or reorder of the same stations keeps it
-    assert.ok(settleArrangements(block({ stations: [{ id: 'test2', name: 'Renamed' }, { id: 'test', name: 'test' }] })).blocks[0].rotation?.arrangement, 'same ids, new names and order');
+    assert.ok(settled(planWith(arranged, { stations: [{ id: 'test2', name: 'Renamed' }, { id: 'test', name: 'test' }] })), 'same ids, new names and order');
     // computeRotation makes the same call at read time when it does not fit
     assert.equal(computeRotation(arranged, [...stations, { id: 'x', name: 'X' }], 30).arranged, false);
   });
 
   it('the sanitiser keeps a well-formed arrangement and drops a malformed or unfitting one', () => {
     const arranged = arrangeGroup(rotation(), stations, 30, 1, 'B', 'test');
-    const plan: PracticePlan = { version: 3, blocks: [{ id: 'b', title: 'Circuit', duration: { minutes: 30 }, stations, rotation: arranged }] };
-    const clean = sanitizePracticePlan(plan);
+    const p = planWith(arranged);
+    const clean = sanitizePracticePlan(p);
     assert.deepEqual(clean!.blocks[0].rotation?.arrangement?.placements, arranged.arrangement!.placements);
-    const junk = sanitizePracticePlan({ ...plan, blocks: [{ ...plan.blocks[0], rotation: { ...arranged, arrangement: { rounds: 'two', placements: 'no' } } }] });
+    const junk = sanitizePracticePlan({ ...p, blocks: [{ ...p.blocks[0], rotation: { ...p.blocks[0].rotation, arrangement: { rounds: 'two', placements: 'no' } } }] });
     assert.equal(junk!.blocks[0].rotation?.arrangement, undefined);
-    const stale = sanitizePracticePlan({ ...plan, blocks: [{ ...plan.blocks[0], duration: { minutes: 45 } }] });
+    const stale = sanitizePracticePlan({ ...p, blocks: [{ ...p.blocks[0], duration: { minutes: 45 } }] });
     assert.equal(stale!.blocks[0].rotation?.arrangement, undefined, 'the clock moved — dropped on the way in');
   });
 });
@@ -680,7 +701,7 @@ describe('computeRotation (D22–D26)', () => {
   const stations = [station('s1', 'Tees'), station('s2', 'Front toss'), station('s3', 'Fielding')];
 
   it('computes 3 rounds of 15 from 45 and everyone does everything', () => {
-    const grid = computeRotation({ intervalMinutes: 15, groups, groupSource: 'manual' }, stations, 45);
+    const grid = computeRotation({ intervalMinutes: 15, groups }, stations, 45);
     assert.equal(grid.rounds, 3);
     assert.equal(grid.spareMinutes, 0);
     assert.equal(grid.roundsList.length, 3);
@@ -688,7 +709,7 @@ describe('computeRotation (D22–D26)', () => {
   });
 
   it('moves each group forward one station per round, coaches staying put', () => {
-    const grid = computeRotation({ intervalMinutes: 15, groups, groupSource: 'manual' }, stations, 45);
+    const grid = computeRotation({ intervalMinutes: 15, groups }, stations, 45);
     assert.equal(grid.roundsList[0].cells[0].stationName, 'Tees');        // A starts at Tees
     assert.equal(grid.roundsList[1].cells[0].stationName, 'Front toss');  // …then moves on
     assert.equal(grid.roundsList[2].cells[0].stationName, 'Fielding');
@@ -696,7 +717,7 @@ describe('computeRotation (D22–D26)', () => {
   });
 
   it('STATES the leftover minutes rather than rounding them away (D24)', () => {
-    const grid = computeRotation({ intervalMinutes: 15, groups, groupSource: 'manual' }, stations, 50);
+    const grid = computeRotation({ intervalMinutes: 15, groups }, stations, 50);
     assert.equal(grid.rounds, 3);
     assert.equal(grid.spareMinutes, 5);
     assert.ok(grid.notes.some(n => n.includes('5 min spare')));
@@ -704,7 +725,7 @@ describe('computeRotation (D22–D26)', () => {
 
   it('names the groups that will not reach a station, never inventing a round (D25)', () => {
     // 30 minutes at 15 = 2 rounds across 3 stations: every group misses one.
-    const grid = computeRotation({ intervalMinutes: 15, groups, groupSource: 'manual' }, stations, 30);
+    const grid = computeRotation({ intervalMinutes: 15, groups }, stations, 30);
     assert.equal(grid.rounds, 2, 'a third round is never invented to tidy it up');
     assert.ok(grid.notes.some(n => n.startsWith("Group A won't reach")));
     assert.ok(grid.notes.some(n => n.startsWith("Group C won't reach")));
@@ -712,27 +733,27 @@ describe('computeRotation (D22–D26)', () => {
 
   it('says which groups SHARE a station when there are more groups than stations', () => {
     const fourGroups = [...groups, { id: 'gD', name: 'Group D', playerIds: ['p7'] }];
-    const grid = computeRotation({ intervalMinutes: 15, groups: fourGroups, groupSource: 'manual' }, stations, 45);
+    const grid = computeRotation({ intervalMinutes: 15, groups: fourGroups }, stations, 45);
     assert.equal(grid.roundsList[0].cells.length, 4, 'no group is dropped to make it fit');
     assert.ok(grid.notes.some(n => n.includes('share')));
   });
 
   it('refuses to compute when the interval is longer than the block, and says why', () => {
-    const grid = computeRotation({ intervalMinutes: 60, groups, groupSource: 'manual' }, stations, 45);
+    const grid = computeRotation({ intervalMinutes: 60, groups }, stations, 45);
     assert.equal(grid.rounds, 0);
     assert.equal(grid.incomplete, true);
     assert.ok(grid.notes[0].includes("doesn't fit"));
   });
 
   it('asks for what is missing instead of rendering an empty grid', () => {
-    const grid = computeRotation({ intervalMinutes: null, groups: [], groupSource: 'manual' }, [], null);
+    const grid = computeRotation({ intervalMinutes: null, groups: [] }, [], null);
     assert.equal(grid.incomplete, true);
     assert.ok(grid.notes[0].startsWith('Add '));
   });
 
   it('ignores unnamed stations rather than printing blank stops', () => {
     const grid = computeRotation(
-      { intervalMinutes: 15, groups: groups.slice(0, 2), groupSource: 'manual' },
+      { intervalMinutes: 15, groups: groups.slice(0, 2) },
       [station('s1', 'Tees'), station('s2', '  ')], 30,
     );
     assert.equal(grid.roundsList[0].cells.every(c => c.stationName === 'Tees'), true);
@@ -754,7 +775,7 @@ describe('defaultIntervalMinutes', () => {
   it('is what the grid falls back to when the coach has not set one', () => {
     const grid = computeRotation(
       {
-        intervalMinutes: null, groupSource: 'manual',
+        intervalMinutes: null,
         groups: [{ id: 'a', name: 'A', playerIds: ['p1'] }, { id: 'b', name: 'B', playerIds: ['p2'] }],
       },
       [station('s1', 'Tees'), station('s2', 'Toss')],
@@ -767,7 +788,6 @@ describe('defaultIntervalMinutes', () => {
 
 describe('startingGroupsForStation', () => {
   const rotation = {
-    totalMinutes: 45, intervalMinutes: 15, groupSource: 'manual' as const,
     groups: [
       { id: 'gA', name: 'Group A', playerIds: ['p1'] },
       { id: 'gB', name: 'Group B', playerIds: ['p2'] },
@@ -776,18 +796,18 @@ describe('startingGroupsForStation', () => {
   };
 
   it('starts group i at station i, so each station can say who it begins with', () => {
-    assert.deepEqual(startingGroupsForStation(rotation, 3, 0).map(g => g.name), ['Group A']);
-    assert.deepEqual(startingGroupsForStation(rotation, 3, 1).map(g => g.name), ['Group B']);
-    assert.deepEqual(startingGroupsForStation(rotation, 3, 2).map(g => g.name), ['Group C']);
+    assert.deepEqual(startingGroupsForStation(rotation.groups, 3, 0).map(g => g.name), ['Group A']);
+    assert.deepEqual(startingGroupsForStation(rotation.groups, 3, 1).map(g => g.name), ['Group B']);
+    assert.deepEqual(startingGroupsForStation(rotation.groups, 3, 2).map(g => g.name), ['Group C']);
   });
 
   it('names BOTH groups when more groups than stations share a start', () => {
-    assert.deepEqual(startingGroupsForStation(rotation, 2, 0).map(g => g.name), ['Group A', 'Group C']);
-    assert.deepEqual(startingGroupsForStation(rotation, 2, 1).map(g => g.name), ['Group B']);
+    assert.deepEqual(startingGroupsForStation(rotation.groups, 2, 0).map(g => g.name), ['Group A', 'Group C']);
+    assert.deepEqual(startingGroupsForStation(rotation.groups, 2, 1).map(g => g.name), ['Group B']);
   });
 
   it('says nobody starts at a station with more stations than groups', () => {
-    assert.deepEqual(startingGroupsForStation(rotation, 4, 3), []);
+    assert.deepEqual(startingGroupsForStation(rotation.groups, 4, 3), []);
     assert.deepEqual(startingGroupsForStation(null, 3, 0), []);
   });
 });
@@ -934,7 +954,7 @@ describe('copyPracticePlanForReuse (D7 — a copy, never a series write)', () =>
     assert.deepEqual(copy.equipment, ['balls']);
     assert.equal(copy.blocks[0].id, 'new-0');
     assert.notEqual(copy.blocks[0].id, source.blocks[0].id);
-    assert.deepEqual(copy.blocks[0].rotation?.groups[0].playerIds, ['p1']);
+    assert.deepEqual(circuitGroups(copy)[0].playerIds, ['p1']);
   });
 
   it('carries the description forward — the paragraph is shape, like the goal', () => {
@@ -1125,10 +1145,10 @@ describe('sanitizePracticePlan — people live at exactly ONE level, and MOVE wi
         stations: [{ name: 'Tees', playerIds: six }, { name: 'Toss' }, { name: 'Bunt' }],
       }],
     });
-    const groups = p?.blocks[0].rotation?.groups ?? [];
+    const groups = circuitGroups(p);
     assert.deepEqual(groups.map(g => g.name), ['Group A', 'Group B', 'Group C']);
     assert.deepEqual(groups.map(g => g.playerIds), [['p1', 'p2'], ['p3', 'p4'], ['p5', 'p6']], 'consecutive runs in stored order');
-    assert.equal(p?.blocks[0].rotation?.groupSource, 'manual', 'not a shuffle — Draw is the shuffle');
+    assert.equal(circuitSet(p)?.groupSource, 'manual', 'not a shuffle — Draw is the shuffle');
     assert.ok(p?.blocks[0].stations?.every(s => s.playerIds === undefined), 'no station holds people in a rotation');
   });
 
@@ -1136,7 +1156,7 @@ describe('sanitizePracticePlan — people live at exactly ONE level, and MOVE wi
     const two = sanitizePracticePlan({
       blocks: [{ title: 'Circuit', duration: { minutes: 45 }, playerIds: ['p1', 'p2'], stations: [{ name: 'A' }, { name: 'B' }, { name: 'C' }] }],
     });
-    assert.deepEqual(two?.blocks[0].rotation?.groups.map(g => g.playerIds), [['p1'], ['p2']]);
+    assert.deepEqual(circuitGroups(two).map(g => g.playerIds), [['p1'], ['p2']]);
     const standing = sanitizePracticePlan({
       blocks: [{
         title: 'Circuit', duration: { minutes: 45 }, playerIds: ['p5', 'p6', 'p7'],
@@ -1144,8 +1164,8 @@ describe('sanitizePracticePlan — people live at exactly ONE level, and MOVE wi
         rotation: { intervalMinutes: 15, groupSource: 'random', groups: [{ name: 'Group A', playerIds: ['p1', 'p2'] }, { name: 'Group B', playerIds: ['p3', 'p4'] }] },
       }],
     });
-    assert.deepEqual(standing?.blocks[0].rotation?.groups.map(g => g.playerIds), [['p1', 'p2', 'p5', 'p7'], ['p3', 'p4', 'p6']]);
-    assert.equal(standing?.blocks[0].rotation?.groupSource, 'random', 'the sanitiser joining a stray is not a coach\'s hand on a drawn group — the source stands (/review, 2026-09-15)');
+    assert.deepEqual(circuitGroups(standing).map(g => g.playerIds), [['p1', 'p2', 'p5', 'p7'], ['p3', 'p4', 'p6']]);
+    assert.equal(circuitSet(standing)?.groupSource, 'random', 'the sanitiser joining a stray is not a coach\'s hand on a drawn group — the source stands (/review, 2026-09-15)');
   });
 
   it('a stale rotation beside a hand-placed station list never books one child at two stations (/review, 2026-09-15)', () => {
@@ -1170,7 +1190,7 @@ describe('sanitizePracticePlan — people live at exactly ONE level, and MOVE wi
         rotation: { intervalMinutes: 15, groups: [{ name: 'Group A', playerIds: many }] },
       }],
     });
-    assert.equal(p?.blocks[0].rotation?.groups[0].playerIds.length, 60, 'the cap holds on the way in');
+    assert.equal(circuitGroups(p)[0].playerIds.length, 60, 'the cap holds on the way in');
     assert.deepEqual(sanitizePracticePlan(JSON.parse(JSON.stringify(p))), p, 'and the read returns the same plan');
   });
 
@@ -1271,13 +1291,13 @@ describe('the rotation as the editor lays it out (stage 3 — presentation over 
 
   it('rotationByStation — two groups sharing a station sit in one cell; an idle station is an empty cell; an unnamed station has no column', () => {
     const stations: PracticeStation[] = [{ id: 's1', name: 'Ladder' }, { id: 's2', name: 'Control' }, { id: 's3', name: '   ' }];
-    const four = computeRotation({ intervalMinutes: 15, groupSource: 'manual', groups: [
+    const four = computeRotation({ intervalMinutes: 15, groups: [
       { id: 'a', name: 'A', playerIds: ['p1'] }, { id: 'b', name: 'B', playerIds: ['p2'] }, { id: 'c', name: 'C', playerIds: ['p3'] },
     ] }, stations, 30);
     const turned = rotationByStation(four, stations);
     assert.equal(turned.stations.length, 2, 'the blank station is not a stop');
     assert.deepEqual(turned.rows[0].cells, [['A', 'C'], ['B']], 'A and C share the Ladder in round 1');
-    const one = computeRotation({ intervalMinutes: 15, groupSource: 'manual', groups: [{ id: 'a', name: 'A', playerIds: ['p1'] }] }, stations, 30);
+    const one = computeRotation({ intervalMinutes: 15, groups: [{ id: 'a', name: 'A', playerIds: ['p1'] }] }, stations, 30);
     assert.deepEqual(rotationByStation(one, stations).rows[0].cells, [['A'], []], 'Control sits idle in round 1');
   });
 

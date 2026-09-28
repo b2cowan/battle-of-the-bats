@@ -1558,16 +1558,26 @@
 .helpButton:hover {
   color: var(--primary-light);
 }
-/* Icon-only round "?" — for tight spots (hero/identity band corner). Compact and
-   self-contained so it never collides with surrounding header content. */
+/* Icon-only "?" — a BARE GLYPH at every width (owner, 2026-09-24; the phone had it from
+   2026-09-20). The HelpCircle icon draws its own ring, so the button paints nothing: no fill, no
+   border — the owner read the old ghost disc as "extra blue area" around the symbol. The 34px box
+   is the hit area, not a shape; the radius only rounds the focus ring. HelpButton renders this
+   WITHOUT the ghost-button classes, so there is no skin fill to override here or anywhere else. */
 .helpButtonIconOnly {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
   width: 34px;
   height: 34px;
   min-height: 34px;
   padding: 0;
   gap: 0;
+  border: 0;
   border-radius: 999px;
-  justify-content: center;
+  background: transparent;
+  color: var(--white);
+  transition: color 0.12s;
 }
 .helpButton:focus-visible,
 .helpDrawerClose:focus-visible {

@@ -23,13 +23,13 @@
 import { formatInOrgZone } from './timezone';
 import { roomNeighbours, type RoomNeighbours } from './room-neighbours';
 import type {
-  PracticeDuration, PracticeGroup, PracticeGroupSource,
+  PracticeDrawMode, PracticeDuration, PracticeGroup, PracticeGroupSource, PracticeGrouping,
   PracticePlan, PracticePlanBlock, PracticeRotation, PracticeRotationArrangement, PracticeStation,
 } from './types';
 
 // Re-exported so a caller can take the model and its types from one place.
 export type {
-  PracticeDuration, PracticeGroup, PracticeGroupSource,
+  PracticeDrawMode, PracticeDuration, PracticeGroup, PracticeGroupSource, PracticeGrouping,
   PracticePlan, PracticePlanBlock, PracticeRotation, PracticeRotationArrangement, PracticeStation,
 } from './types';
 
@@ -148,6 +148,18 @@ export function blockOwnPeople(block: Pick<PracticePlanBlock, 'stations' | 'play
   return (count === 1 ? block.stations![0].playerIds : block.playerIds) ?? [];
 }
 
+/**
+ * The set of groups a block holds as ITS OWN people (groups at every level, G1–G8, 2026-09-28) —
+ * the block's with no stations, the sole station's when the station is the block — or `undefined`
+ * when it holds none (its people are named, or they live on its stations). `blockOwnPeople`'s
+ * twin: a block's own line is its names OR its set, never both, so every reader asks this first.
+ */
+export function blockOwnGroupingId(block: Pick<PracticePlanBlock, 'stations' | 'groupingId'>): string | undefined {
+  const count = block.stations?.length ?? 0;
+  if (count > 1) return undefined;
+  return count === 1 ? block.stations![0].groupingId : block.groupingId;
+}
+
 /** True while a station holds NOTHING — an id and a blank name, every other field unset (an empty
  *  list or a blank string counts as unset). A field the station type grows later counts as work by
  *  default. Kit or people the settle pass moved onto a station make it not empty. */
@@ -204,8 +216,11 @@ export function collapseSoleStation(block: PracticePlanBlock): PracticePlanBlock
   if (staffTagIds) next.staffTagIds = staffTagIds;
   const kitIds = strList([...(block.equipmentTagIds ?? []), ...(s.equipmentTagIds ?? [])], MAX_TAGS_PER_ITEM, 64);
   if (kitIds) next.equipmentTagIds = kitIds;
+  // Its set comes up whole (the station's pairs are the block's pairs now); otherwise its names.
+  const set = s.groupingId ?? block.groupingId;
   const people = unionIds(block.playerIds, s.playerIds);
-  if (people) next.playerIds = people;
+  if (set) next.groupingId = set;
+  else if (people) next.playerIds = people;
   return next;
 }
 
@@ -217,18 +232,20 @@ export function collapseSoleStation(block: PracticePlanBlock): PracticePlanBlock
  * winning, because the station card has to be able to say so.
  */
 export function startingGroupsForStation(
-  rotation: PracticeRotation | null | undefined,
+  groups: readonly PracticeGroup[] | null | undefined,
   stationCount: number,
   stationIndex: number,
 ): PracticeGroup[] {
-  if (!rotation || stationCount <= 0) return [];
-  return rotation.groups.filter((_, i) => i % stationCount === stationIndex);
+  if (!groups || stationCount <= 0) return [];
+  return groups.filter((_, i) => i % stationCount === stationIndex);
 }
 
 // ── Caps (app-layer; there are no DB constraints on the jsonb) ───────────────
 export const MAX_BLOCKS = 30;
 export const MAX_STATIONS_PER_BLOCK = 12;
 export const MAX_GROUPS = 12;
+/** Sets of groups on one practice (G1–G8) — a night rarely needs more than three or four. */
+export const MAX_GROUPINGS = 20;
 export const MAX_STAFF_PER_ITEM = 8;
 export const MAX_TAGS_PER_ITEM = 12;
 export const MAX_COACHING_POINTS = 8;
@@ -263,9 +280,11 @@ export function isPracticePlanEmpty(plan: PracticePlan | null | undefined): bool
   // Every plan-level field that counts as content, one per line — appending the next one is one
   // entry, not a `!` and an `&&` in the right place. The focus section counts: a coach who adds it
   // and saves must find it there on reload.
+  // A set of groups made before any block counts too (G7 — "+ Groups for tonight" is a way in).
   const hasContent = [
     plan.goal?.trim(), plan.description?.trim(), plan.practiceTypes?.length,
     plan.equipment?.length, plan.equipmentTagIds?.length, plan.includeFocusAreas,
+    plan.groupings?.length,
   ].some(Boolean);
   return !hasContent && plan.blocks.length === 0;
 }
@@ -384,6 +403,10 @@ function sanitizeStation(v: unknown, index: number): PracticeStation | null {
   if (staffTagIds) station.staffTagIds = staffTagIds;
   const playerIds = strList(raw.playerIds, MAX_PLAYERS_PER_LIST, 64);
   if (playerIds) station.playerIds = playerIds;
+  // Structural only — whether the set still exists, and whether this level may hold it, is the
+  // plan's question (`settleBlockPeople`), asked once every block and set has been read.
+  const groupingId = optionalStr(raw.groupingId, 64);
+  if (groupingId) station.groupingId = groupingId;
   const rotationNote = optionalStr(raw.rotationNote, MAX_SHORT_TEXT_LEN);
   if (rotationNote) station.rotationNote = rotationNote;
   const note = optionalStr(raw.note, MAX_TEXT_LEN);
@@ -428,50 +451,85 @@ export function resolveStationTeaching(
 }
 
 const GROUP_SOURCES: PracticeGroupSource[] = ['manual', 'random', 'previous'];
+const DRAW_MODES: PracticeDrawMode[] = ['groups', 'perGroup'];
 
-function sanitizeRotation(v: unknown): PracticeRotation | null {
-  if (!v || typeof v !== 'object') return null;
-  const raw = v as Record<string, unknown>;
+const groupSourceOf = (v: unknown): PracticeGroupSource =>
+  typeof v === 'string' && GROUP_SOURCES.includes(v as PracticeGroupSource) ? v as PracticeGroupSource : 'manual';
+
+/**
+ * A list of groups — a set's, or a rotation's as it was stored before sets existed.
+ *
+ * ⚠ A PLAYER BELONGS TO EXACTLY ONE GROUP of a set. Tracked across the whole list, so a player who
+ * appears in a second group is dropped from it rather than being in two places at once — which the
+ * grid would then render as one child standing at two stations in the same round.
+ */
+function sanitizeGroupList(v: unknown): PracticeGroup[] {
   const groups: PracticeGroup[] = [];
-  /**
-   * ⚠ A PLAYER BELONGS TO EXACTLY ONE GROUP. Tracked across the whole rotation, so a player who
-   * appears in a second group is dropped from it rather than being in two places at once — which
-   * the grid would then render as one child standing at two stations in the same round.
-   */
+  if (!Array.isArray(v)) return groups;
   const placed = new Set<string>();
-  if (Array.isArray(raw.groups)) {
-    for (const g of raw.groups) {
-      const gr = (g && typeof g === 'object' ? g : {}) as Record<string, unknown>;
-      const playerIds = (strList(gr.playerIds, MAX_PLAYERS_PER_LIST, 64) ?? []).filter(pid => {
-        if (placed.has(pid)) return false;
-        placed.add(pid);
-        return true;
-      });
-      // groupLabel(), not a second inline copy of it: the inline version stopped at Z, so
-      // raising MAX_GROUPS past 26 would have produced garbage characters here while the draw
-      // produced "Group A2". One naming rule, one place.
-      const name = str(gr.name, 60) || groupLabel(groups.length);
-      groups.push({ id: id(gr.id, `g${groups.length}`), name, playerIds });
-      if (groups.length >= MAX_GROUPS) break;
-    }
+  for (const g of v) {
+    const gr = (g && typeof g === 'object' ? g : {}) as Record<string, unknown>;
+    const playerIds = (strList(gr.playerIds, MAX_PLAYERS_PER_LIST, 64) ?? []).filter(pid => {
+      if (placed.has(pid)) return false;
+      placed.add(pid);
+      return true;
+    });
+    // groupLabel(), not a second inline copy of it: the inline version stopped at Z, so raising
+    // MAX_GROUPS past 26 would have produced garbage characters here while the draw produced
+    // "Group A2". One naming rule, one place.
+    const name = str(gr.name, 60) || groupLabel(groups.length);
+    groups.push({ id: id(gr.id, `g${groups.length}`), name, playerIds });
+    if (groups.length >= MAX_GROUPS) break;
   }
-  const source = typeof raw.groupSource === 'string' && GROUP_SOURCES.includes(raw.groupSource as PracticeGroupSource)
-    ? raw.groupSource as PracticeGroupSource
-    : 'manual';
-  const rotation: PracticeRotation = {
-    intervalMinutes: posInt(raw.intervalMinutes, MAX_MINUTES),
-    groups,
-    groupSource: source,
-  };
-  // A hand-arranged grid (D14): its SHAPE is read here; whether it still FITS the block's
-  // stations and clock is the block sanitiser's question (`settleArrangements`, once the stations
-  // and minutes are known). Anything malformed is simply not an arrangement.
-  const arrangement = sanitizeArrangement(raw.arrangement, new Set(groups.map(g => g.id)));
-  if (arrangement) rotation.arrangement = arrangement;
-  return rotation;
+  return groups;
 }
 
-function sanitizeArrangement(v: unknown, groupIds: ReadonlySet<string>): PracticeRotationArrangement | null {
+/** One of the practice's sets of groups (G1–G8). Junk that was never a row is not a set. */
+function sanitizeGrouping(v: unknown, index: number): PracticeGrouping | null {
+  if (!isRowLike(v)) return null;
+  const raw = v;
+  const set: PracticeGrouping = {
+    id: id(raw.id, `set${index}`),
+    name: str(raw.name, 60) || 'Groups',
+    groups: sanitizeGroupList(raw.groups),
+    groupSource: groupSourceOf(raw.groupSource),
+  };
+  const forPlayerIds = strList(raw.forPlayerIds, MAX_PLAYERS_PER_LIST, 64);
+  if (forPlayerIds) set.forPlayerIds = forPlayerIds;
+  const draw = raw.draw && typeof raw.draw === 'object' ? raw.draw as Record<string, unknown> : null;
+  const mode = draw && DRAW_MODES.includes(draw.mode as PracticeDrawMode) ? draw.mode as PracticeDrawMode : null;
+  const n = draw ? posInt(draw.n, MAX_GROUPS) : null;
+  if (mode && n) set.draw = { mode, n };
+  if (raw.standing === true) set.standing = true;
+  return set;
+}
+
+/**
+ * A rotation as stored. `legacy` is a rotation saved before sets existed, whose groups were stored
+ * ON it — returned beside the rotation, never inside it, so the plan sanitiser can lift them onto
+ * the plan's list (G3) and nothing else ever reads the old key.
+ */
+function sanitizeRotation(v: unknown): { rotation: PracticeRotation; legacy: PracticeGrouping | null } | null {
+  if (!v || typeof v !== 'object') return null;
+  const raw = v as Record<string, unknown>;
+  const rotation: PracticeRotation = { intervalMinutes: posInt(raw.intervalMinutes, MAX_MINUTES) };
+  const groupingId = optionalStr(raw.groupingId, 64);
+  if (groupingId) rotation.groupingId = groupingId;
+  // A hand-arranged grid (D14): its SHAPE is read here; whether it still FITS the block's
+  // stations, set and clock is the plan's question (`settleArrangements`, once all three are
+  // known). Anything malformed is simply not an arrangement.
+  const arrangement = sanitizeArrangement(raw.arrangement);
+  if (arrangement) rotation.arrangement = arrangement;
+  // Only a rotation that points at no set yet is lifted: one that points at a set has been saved
+  // since sets existed, and a stale `groups` beside it is an old tab's, not the coach's.
+  const oldGroups = !groupingId && Array.isArray(raw.groups) ? sanitizeGroupList(raw.groups) : [];
+  const legacy: PracticeGrouping | null = oldGroups.length > 0
+    ? { id: '', name: '', groups: oldGroups, groupSource: groupSourceOf(raw.groupSource) }
+    : null;
+  return { rotation, legacy };
+}
+
+function sanitizeArrangement(v: unknown): PracticeRotationArrangement | null {
   if (!v || typeof v !== 'object') return null;
   const raw = v as Record<string, unknown>;
   const stationIds = strList(raw.stationIds, MAX_STATIONS_PER_BLOCK, 64);
@@ -479,12 +537,15 @@ function sanitizeArrangement(v: unknown, groupIds: ReadonlySet<string>): Practic
   const rounds = posInt(raw.rounds, 200);
   if (!stationIds || !groupIdsListed || !rounds || !Array.isArray(raw.placements)) return null;
   if (raw.placements.length !== rounds) return null;
+  // Only the groups the arrangement was made for are kept in a row; whether those are still the
+  // set's groups is `arrangementFits`' question, asked when the set is known.
+  const listed = new Set(groupIdsListed);
   const placements: Record<string, string | null>[] = [];
   for (const row of raw.placements) {
     if (!row || typeof row !== 'object') return null;
     const clean: Record<string, string | null> = {};
     for (const [gid, sid] of Object.entries(row as Record<string, unknown>)) {
-      if (!groupIds.has(gid)) continue;
+      if (!listed.has(gid)) continue;
       if (sid === null) clean[gid] = null;
       else if (typeof sid === 'string' && sid.length <= 64) clean[gid] = sid;
     }
@@ -499,7 +560,9 @@ function sanitizeArrangement(v: unknown, groupIds: ReadonlySet<string>): Practic
  *   afterwards could hollow a block out and leave it in the array anyway, so the write kept a
  *   block that the very next read then dropped — a block vanishing in the same breath that saved it.
  */
-function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): PracticePlanBlock | null {
+function sanitizeBlock(
+  v: unknown, index: number, restAlreadyUsed: boolean,
+): { block: PracticePlanBlock; legacy: PracticeGrouping | null } | null {
   if (!isRowLike(v)) return null;
   const raw = v;
   // Rotation defaults ON. `shape: 'activity'` is the pre-2026-08-01 spelling of "don't rotate".
@@ -533,6 +596,9 @@ function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): Pra
   if (staffTagIds) block.staffTagIds = staffTagIds;
   const playerIds = strList(raw.playerIds, MAX_PLAYERS_PER_LIST, 64);
   if (playerIds) block.playerIds = playerIds;
+  // Structural only, like a station's — see `sanitizeStation`.
+  const groupingId = optionalStr(raw.groupingId, 64);
+  if (groupingId) block.groupingId = groupingId;
   const points = strList(raw.coachingPoints, MAX_COACHING_POINTS, MAX_SHORT_TEXT_LEN);
   if (points) block.coachingPoints = points;
   if (stations.length) block.stations = stations;
@@ -551,21 +617,21 @@ function sanitizeBlock(v: unknown, index: number, restAlreadyUsed: boolean): Pra
   if (circuitName) block.circuitName = circuitName;
 
   /**
-   * People are read STRUCTURALLY here, at every level they arrive on — the block's list, each
-   * station's, the rotation's groups. WHERE they live is settled by `settleBlockPeople` after the
-   * roster check (stage 3, D8): a list at the wrong level for the block's shape is MOVED to the
-   * right one, never deleted. The rotation is therefore read whenever it is present (its groups
-   * hold people even on a block that has stopped rotating); a rotating block with none stored gets
-   * the empty shape so the editor's controls have something to hold.
+   * People are read STRUCTURALLY here, at every level they arrive on — the block's list or set,
+   * each station's, the rotation's set. WHERE they live is settled by `settleBlockPeople` after the
+   * roster check (stage 3, D8): a holding at the wrong level for the block's shape is MOVED to the
+   * right one, never deleted. The rotation is therefore read whenever it is present (its set holds
+   * people even on a block that has stopped rotating); a rotating block with none stored gets the
+   * empty shape so the editor's controls have something to hold.
    */
-  const rotation = sanitizeRotation(raw.rotation);
-  if (rotation) block.rotation = rotation;
+  const read = sanitizeRotation(raw.rotation);
+  if (read) block.rotation = read.rotation;
   else if (blockRotates(block as PracticePlanBlock)) {
-    block.rotation = { intervalMinutes: null, groups: [], groupSource: 'manual' };
+    block.rotation = { intervalMinutes: null };
   }
 
   // Kept even when nothing has been typed yet — the coach pressed "Add a block". See isRowLike.
-  return block;
+  return { block, legacy: read?.legacy ?? null };
 }
 
 /**
@@ -593,19 +659,46 @@ export function sanitizePracticePlan(
   if (!input || typeof input !== 'object') return null;
   const raw = input as Record<string, unknown>;
 
+  // Tonight's sets (G1–G8) — read first, so a block's legacy groups can be lifted beside them.
+  // A second set with an id already taken is junk, not a set: two sets under one id would make
+  // every pointer to it ambiguous.
+  const groupings: PracticeGrouping[] = [];
+  if (Array.isArray(raw.groupings)) {
+    for (const g of raw.groupings) {
+      const set = sanitizeGrouping(g, groupings.length);
+      if (!set || groupings.some(s => s.id === set.id)) continue;
+      groupings.push(set);
+      if (groupings.length >= MAX_GROUPINGS) break;
+    }
+  }
+
   const blocks: PracticePlanBlock[] = [];
   let restUsed = false;
   if (Array.isArray(raw.blocks)) {
     for (const b of raw.blocks) {
-      const block = sanitizeBlock(b, blocks.length, restUsed);
-      if (!block) continue;
+      const read = sanitizeBlock(b, blocks.length, restUsed);
+      if (!read) continue;
+      const { block, legacy } = read;
       if (block.duration.restOfPractice) restUsed = true;
+      /* ⚠ THE LIFT (G3, 2026-09-28). A rotation saved before sets existed carried its groups ON
+         it; they become one of the practice's sets, named after the block, and the rotation points
+         at it. The set's id is derived from the block's, so reading the same stored plan twice
+         lifts to the same set (the sanitiser runs on every read and every write, and must be
+         idempotent). A plan full of sets cannot take one more: the rotation keeps no groups rather
+         than a pointer to nothing — its people are still on the roster, and "Choose groups" is
+         one tap. */
+      if (legacy && block.rotation && groupings.length < MAX_GROUPINGS) {
+        const setId = freeGroupingId(`${block.id}-groups`, groupings);
+        groupings.push({ ...legacy, id: setId, name: `${block.title.trim() || 'Circuit'} groups`.slice(0, 60) });
+        block.rotation = { ...block.rotation, groupingId: setId };
+      }
       blocks.push(block);
       if (blocks.length >= MAX_BLOCKS) break;
     }
   }
 
   const plan: PracticePlan = { version: PRACTICE_PLAN_VERSION, blocks };
+  if (groupings.length) plan.groupings = groupings;
   // Provenance only — which TEMPLATE this plan started from, plus the name snapshotted at load
   // time so the line keeps reading after a rename. Kept opaque and capped like `station.drillId`.
   // ⚠ Unlike a drill's id this SURVIVES editing: a template is scaffolding, so "started from
@@ -635,8 +728,28 @@ export function sanitizePracticePlan(
   // Kit and people settle to the activity's level LAST (D11 · D8) — after the roster and library
   // checks, so a stale id can never take a slot a live one needed when two capped lists meet
   // (/review, 2026-09-15).
+  // (A set lifted from a rotation that no longer rotates hands its people to the stations and, used
+  // by nothing, leaves the list in the same pass — a set lasts as long as something uses it.)
   scoped = settlePlanLevels(scoped);
   return isPracticePlanEmpty(scoped) ? null : scoped;
+}
+
+/** `base`, or `base-2`, `base-3`… — the first id no set in `taken` already has. Deterministic, so
+ *  a lift or a settle that mints a set mints the same one on every pass. */
+function freeGroupingId(base: string, taken: readonly { id: string }[]): string {
+  const ids = new Set(taken.map(s => s.id));
+  if (!ids.has(base)) return base;
+  let n = 2;
+  while (ids.has(`${base}-${n}`)) n += 1;
+  return `${base}-${n}`;
+}
+
+/** The plan with `groupings` replaced — the key absent when there are none, as the sanitiser writes it. */
+function withGroupings(plan: PracticePlan, groupings: readonly PracticeGrouping[]): PracticePlan {
+  const next: PracticePlan = { ...plan };
+  if (groupings.length) next.groupings = [...groupings];
+  else delete next.groupings;
+  return next;
 }
 
 /**
@@ -650,24 +763,34 @@ export function newPracticePlanId(): string {
   return globalThis.crypto?.randomUUID?.() ?? `pp-${Math.random().toString(36).slice(2)}`;
 }
 
-/** Drop every player reference that isn't a current roster id (blocks, stations, groups). */
+/** Drop every player reference that isn't a current roster id (blocks, stations, sets). */
 function restrictToRoster(plan: PracticePlan, rosterPlayerIds: ReadonlySet<string>): PracticePlan {
   const keep = (ids?: string[]) => {
     if (!ids) return undefined;
     const filtered = ids.filter(pid => rosterPlayerIds.has(pid));
     return filtered.length ? filtered : undefined;
   };
-  return {
+  const next: PracticePlan = {
     ...plan,
     blocks: plan.blocks.map(block => ({
       ...block,
       playerIds: keep(block.playerIds),
       stations: block.stations?.map(s => ({ ...s, playerIds: keep(s.playerIds) })),
-      rotation: block.rotation
-        ? { ...block.rotation, groups: block.rotation.groups.map(g => ({ ...g, playerIds: g.playerIds.filter(pid => rosterPlayerIds.has(pid)) })) }
-        : block.rotation,
     })),
   };
+  if (plan.groupings) {
+    next.groupings = plan.groupings.map(set => {
+      const scoped: PracticeGrouping = {
+        ...set,
+        groups: set.groups.map(g => ({ ...g, playerIds: g.playerIds.filter(pid => rosterPlayerIds.has(pid)) })),
+      };
+      const forPlayerIds = keep(set.forPlayerIds);
+      if (forPlayerIds) scoped.forPlayerIds = forPlayerIds;
+      else delete scoped.forPlayerIds;
+      return scoped;
+    });
+  }
+  return next;
 }
 
 /**
@@ -743,111 +866,243 @@ export function settleBlockKit(plan: PracticePlan): PracticePlan {
   return next;
 }
 
-/** The station without its people — the level they are leaving. */
-function withoutPlayers(station: PracticeStation): PracticeStation {
+/** The station without its people — its names and its set: the level they are leaving. */
+function withoutHolding(station: PracticeStation): PracticeStation {
   const copy = { ...station };
   delete copy.playerIds;
+  delete copy.groupingId;
   return copy;
 }
 const unionIds =(...lists: (readonly string[] | undefined)[]): string[] | undefined =>
   strList(lists.flatMap(l => l ?? []), MAX_PLAYERS_PER_LIST, 64);
 
 /**
+ * One level's holding made honest (G1–G8): a pointer to a set that no longer exists points at
+ * nothing and goes; a level that points at a set AND names people keeps the set — the set IS its
+ * people (the editor never writes both; only a stale tab or a hand-rolled payload can). The same
+ * object back when nothing changed.
+ */
+function cleanHolding<T extends { groupingId?: string; playerIds?: string[] }>(level: T, known: ReadonlySet<string>): T {
+  if (level.groupingId === undefined) return level;
+  const copy = { ...level };
+  if (!known.has(level.groupingId)) delete copy.groupingId;
+  else if (level.playerIds !== undefined) delete copy.playerIds;
+  else return level;
+  return copy;
+}
+
+/**
  * ⚠ PEOPLE LIVE AT EXACTLY ONE LEVEL (owner ruling 2026-08-01) — AND THEY MOVE WHEN THE LEVEL
  * MOVES (practices re-evaluation stage 3, owner ruling D8, 2026-09-15). The block's shape says
  * where its people live, and every other level is emptied INTO that one, never deleted:
- *   · no stations        → the block's own list
- *   · stations, separate → each station's list
- *   · stations, rotating → the rotation's groups, and nothing else
+ *   · no stations        → the block's own list, or the set it points at
+ *   · stations, separate → each station's list, or its set
+ *   · stations, rotating → the rotation's set, and nothing else
+ * A level holds names OR a set, never both (groups at every level, G1–G8, 2026-09-28): a set is
+ * the practice's (`plan.groupings`) and the level only points at it, so a set can be shared by
+ * several blocks without anyone being listed twice at any ONE level.
  * Enforced here rather than trusted to the UI, so a stale client or a hand-rolled payload can
  * never produce two disagreeing answers to "who is at this station?" — and so the printed sheet
- * renders one list without choosing. Until this stage the sanitiser enforced it by DELETING what
- * sat at the wrong level: six names chosen on a block vanished the moment a station arrived.
- * Now they follow the level, the way kit does (D11):
- *   · a station arrives      → the block's names land on the FIRST station (a drill station holds
- *                              people too — people are the practice's half, never the drill's)
- *   · rotating turns on      → every name on the block or a station becomes the FIRST DRAW: dealt
- *                              in stored order into one group per station (fewer when there are
- *                              fewer names); with groups already standing, a stray name joins them
- *                              round-robin from the first. Not shuffled — a deal the coach did not
- *                              ask for should at least be one they can read; Draw shuffles.
+ * renders one list without choosing. Until stage 3 the sanitiser enforced it by DELETING what sat
+ * at the wrong level: six names chosen on a block vanished the moment a station arrived. Now they
+ * follow the level, the way kit does (D11):
+ *   · a station arrives      → the block's names land on the FIRST station, and its set with them
+ *                              (a drill station holds people too — the practice's half, never the
+ *                              drill's); two stations make a circuit, which takes the set whole
+ *   · rotating turns on      → a set standing alone on the block or a station becomes the circuit's;
+ *                              otherwise every name (and every member of a set) becomes the FIRST
+ *                              DRAW: dealt in stored order into one group per station — a new set,
+ *                              named after the block. With a set already rotating, a stray name
+ *                              joins its groups round-robin from the first. Not shuffled — a deal
+ *                              the coach did not ask for should at least be one they can read.
  *   · rotating turns off     → each group lands on the station it started at (group i → station i)
- *   · the last station goes  → everyone comes back to the block's own list
- * A player belongs to exactly one group and is listed once at the level they land on; a
- * rotation on a block that does not rotate is dropped once its people have moved (the shape a
- * reader expects — `blockRotates` decides, not the key's presence).
+ *   · the last station goes  → the circuit's set comes home as the block's own (the pairs stay pairs)
+ *   ⚠ a set the PLAN dealt for that circuit (its `…-groups` id) dissolves instead, when nothing else
+ *     uses it: back to names, off the list — so an abandoned "+ Stations" leaves nothing behind
+ * A player belongs to exactly one group of a set; a rotation on a block that does not rotate is
+ * dropped once its people have moved (`blockRotates` decides, not the key's presence), and its set
+ * stays on the practice's list. A pointer to a set that no longer exists is dropped (`cleanHolding`).
  *
  * ONE pure pass, run in two places so the screen and the column agree: the sanitiser runs it
  * last (after the roster check — every read and every write) and the editor runs it on every
  * change to the blocks, so the coach SEES the names move rather than watching them vanish until
  * a reload. Idempotent by construction: after the move nothing sits at a wrong level, so a
  * second pass finds nothing to move and hands the same object back. Deterministic on purpose
- * (no shuffle, fixed group ids) — a sanitiser that rolled dice would save a different plan than
- * the one it was shown.
+ * (no shuffle, fixed ids — a minted set's id is derived from its block's) — a sanitiser that
+ * rolled dice would save a different plan than the one it was shown.
  */
 export function settleBlockPeople(plan: PracticePlan): PracticePlan {
+  const known = new Set((plan.groupings ?? []).map(s => s.id));
+  /** Sets this pass changed or minted, by id — composed onto the plan's list at the end. */
+  const setsNow = new Map((plan.groupings ?? []).map(s => [s.id, s] as const));
+  let setsChanged = false;
+  const membersOf = (setId: string | undefined) =>
+    (setId ? setsNow.get(setId)?.groups.flatMap(g => g.playerIds) : undefined) ?? [];
+  /* A circuit's set the PLAN dealt (its first draw from names, or a set lifted from a circuit saved
+     before sets existed — both take the block's own `…-groups` id) DISSOLVES when the circuit stops
+     being one and nothing else uses it: its people come back as names, exactly as a circuit's groups
+     always did, and the set leaves the list — a "+ Stations" pressed and abandoned leaves nothing
+     behind (practice plans on a phone, S4). A set the coach made, or one another place also uses,
+     stays on the list. */
+  const useCount = new Map<string, number>();
+  for (const s of usedGroupingIdsWithRepeats(plan)) useCount.set(s, (useCount.get(s) ?? 0) + 1);
+  const dissolves = (setId: string, blockId: string) =>
+    (setId === `${blockId}-groups` || setId.startsWith(`${blockId}-groups-`)) && (useCount.get(setId) ?? 0) <= 1;
+  const dissolved = new Set<string>();
+
   let moved = false;
-  const blocks = plan.blocks.map(block => {
+  const blocks = plan.blocks.map(original => {
+    // Honest holdings first — a pointer to nothing goes, a set wins over a list at one level.
+    let block = cleanHolding(original, known);
+    const cleanedStations = block.stations?.map(s => cleanHolding(s, known));
+    if (cleanedStations && cleanedStations.some((s, i) => s !== block.stations![i])) block = { ...block, stations: cleanedStations };
+    if (block.rotation?.groupingId && !known.has(block.rotation.groupingId)) {
+      const rotation = { ...block.rotation };
+      delete rotation.groupingId;
+      block = { ...block, rotation };
+    }
+    if (block !== original) moved = true;
+
     const stations = block.stations ?? [];
     const rotating = blockRotates(block);
-    const strayOnBlock = block.playerIds !== undefined && stations.length > 0;
-    const strayOnStations = rotating && stations.some(s => s.playerIds !== undefined);
+    const holds = (l: { playerIds?: string[]; groupingId?: string }) => l.playerIds !== undefined || l.groupingId !== undefined;
+    const strayOnBlock = holds(block) && stations.length > 0;
+    const strayOnStations = rotating && stations.some(holds);
     const strayRotation = block.rotation !== undefined && !rotating;
     if (!strayOnBlock && !strayOnStations && !strayRotation) return block;
     moved = true;
 
-    const { playerIds: blockNames, rotation, ...rest } = block;
-    const groups = rotation?.groups ?? [];
+    const { playerIds: blockNames, groupingId: blockSet, rotation, ...rest } = block;
+    const rotationSet = rotation?.groupingId;
     const next: PracticePlanBlock = { ...rest };
 
     if (stations.length === 0) {
-      // The block is the activity again (its stations were removed): the groups come home.
-      const home = unionIds(blockNames, ...groups.map(g => g.playerIds));
-      if (home) next.playerIds = home;
+      // The block is the activity again (its stations were removed): the circuit's set comes home
+      // as the block's own (the pairs stay pairs) — unless it is a set the plan dealt, which
+      // dissolves into names; the block's own set, or names, stand first and the set's players join
+      // those names.
+      const dissolving = !!rotationSet && dissolves(rotationSet, block.id);
+      if (dissolving) dissolved.add(rotationSet!);
+      if (blockSet) next.groupingId = blockSet;
+      else if (blockNames?.length || dissolving) {
+        const home = unionIds(blockNames, membersOf(rotationSet));
+        if (home) next.playerIds = home;
+      } else if (rotationSet) next.groupingId = rotationSet;
       return next;
     }
 
     if (!rotating) {
-      // Separate stations: the block's names onto the first; each group onto the station it
-      // STARTED at (the grid's own first row — `startingGroupsForStation`, so the two answers
-      // agree). The rotation itself goes with its people. What a station already holds is the
-      // coach's own placement and stands first; a name that moves lands on ONE station — the
-      // first it is due at — never on two (a stale rotation beside a hand-placed list must not
-      // book one child at two stations of a block that does not rotate — /review, 2026-09-15).
-      const placed = new Set(stations.flatMap(s => s.playerIds ?? []));
+      // Separate stations: the block's set onto the first station when that station holds nobody
+      // (a block "in pairs" that gains a station keeps its pairs there), otherwise the block's
+      // people join the first station's names; each group of a circuit that stopped rotating onto
+      // the station it STARTED at (the grid's own first row — `startingGroupsForStation`, so the
+      // two answers agree). The rotation itself goes with its people; its set stays on the list.
+      // What a station already holds is the coach's own placement and stands first; a name that
+      // moves lands on ONE station — the first it is due at — never on two (a stale rotation
+      // beside a hand-placed list must not book one child at two stations — /review, 2026-09-15).
+      const startGroups = rotationSet ? setsNow.get(rotationSet)?.groups ?? [] : [];
+      const placed = new Set(stations.flatMap(s => (s.groupingId ? membersOf(s.groupingId) : s.playerIds ?? [])));
       next.stations = stations.map((s, i) => {
-        const station = withoutPlayers(s);
+        const first = i === 0;
+        if (first && blockSet && !s.groupingId && !s.playerIds?.length) {
+          membersOf(blockSet).forEach(pid => placed.add(pid));
+          return { ...withoutHolding(s), groupingId: blockSet };
+        }
+        // A station's own set stands: nothing joins a set in this pass (only the room changes one).
+        if (s.groupingId) return s;
         const arriving = (unionIds(
-          i === 0 ? blockNames : undefined,
-          ...startingGroupsForStation(rotation, stations.length, i).map(g => g.playerIds),
+          first ? blockNames : undefined,
+          first ? membersOf(blockSet) : undefined,
+          ...startingGroupsForStation(startGroups, stations.length, i).map(g => g.playerIds),
         ) ?? []).filter(pid => !placed.has(pid));
         arriving.forEach(pid => placed.add(pid));
         const settled = unionIds(s.playerIds, arriving);
+        const station = withoutHolding(s);
         return settled ? { ...station, playerIds: settled } : station;
       });
+      if (rotationSet && dissolves(rotationSet, block.id)) dissolved.add(rotationSet);
       return next;
     }
 
-    // Rotating: everyone named on the block or a station joins the groups — the first draw.
-    const placed = new Set(groups.flatMap(g => g.playerIds));
-    const strays = (unionIds(blockNames, ...stations.map(s => s.playerIds)) ?? []).filter(pid => !placed.has(pid));
-    next.stations = stations.map(withoutPlayers);
-    const base: PracticeRotation = rotation ?? { intervalMinutes: null, groups: [], groupSource: 'manual' };
-    if (strays.length === 0) {
+    // Rotating: the block's and the stations' people join the circuit.
+    next.stations = stations.map(withoutHolding);
+    const base: PracticeRotation = rotation ?? { intervalMinutes: null };
+    const strayNames = unionIds(blockNames, ...stations.map(s => s.playerIds)) ?? [];
+    const straySets = [...new Set([blockSet, ...stations.map(s => s.groupingId)].filter((sid): sid is string => !!sid))];
+    const strayPlayers = unionIds(strayNames, ...straySets.map(membersOf)) ?? [];
+
+    if (rotationSet) {
+      // A set already rotates here: a stray joins its groups round-robin from the first. Standing
+      // groups keep their source — a stray joining them is this pass's move, not a coach's hand on
+      // a drawn group (which is what turns 'random' into 'manual' in the room). Capped as every
+      // list here is, so a read after the write sees exactly what was written.
+      const set = setsNow.get(rotationSet)!;
+      const inSet = new Set(membersOf(rotationSet));
+      const joiners = strayPlayers.filter(pid => !inSet.has(pid));
+      if (joiners.length > 0) {
+        const groups = set.groups.map(g => ({ ...g, playerIds: g.playerIds.slice() }));
+        if (groups.length === 0) groups.push(...dealGroups(joiners, stations.length, set.id));
+        else joiners.forEach((pid, i) => { groups[i % groups.length].playerIds.push(pid); });
+        setsNow.set(rotationSet, { ...set, groups: groups.map(g => ({ ...g, playerIds: unionIds(g.playerIds) ?? [] })) });
+        setsChanged = true;
+      }
       next.rotation = base;
-    } else if (groups.length === 0) {
-      next.rotation = { ...base, groups: dealGroups(strays, stations.length), groupSource: 'manual' };
+    } else if (strayNames.length === 0 && straySets.length === 1) {
+      // One set standing alone ("Circuit groups" on a block that just gained its stations): it is
+      // the circuit's now — whole, with its names and its pairs as they were.
+      next.rotation = { ...base, groupingId: straySets[0] };
+    } else if (strayPlayers.length > 0 && setsNow.size < MAX_GROUPINGS) {
+      // The first draw, dealt in stored order — a NEW set named after the block. Sets that were
+      // standing on a station stay on the practice's list for whatever else uses them. (A practice
+      // already holding every set it may is the one case the circuit starts with no groups.)
+      const setId = freeGroupingId(`${block.id}-groups`, [...setsNow.values()]);
+      setsNow.set(setId, {
+        id: setId,
+        name: `${block.title.trim() || 'Circuit'} groups`.slice(0, 60),
+        groups: dealGroups(strayPlayers, stations.length, setId),
+        groupSource: 'manual',
+      });
+      setsChanged = true;
+      next.rotation = { ...base, groupingId: setId };
     } else {
-      // Standing groups keep their source — a stray joining them is the sanitiser's move, not a
-      // coach's hand on a drawn group (which is what turns 'random' into 'manual' in the editor).
-      // Capped as every list here is, so a read after the write sees exactly what was written.
-      const joined = groups.map(g => ({ ...g, playerIds: g.playerIds.slice() }));
-      strays.forEach((pid, i) => { joined[i % joined.length].playerIds.push(pid); });
-      next.rotation = { ...base, groups: joined.map(g => ({ ...g, playerIds: unionIds(g.playerIds) ?? [] })) };
+      next.rotation = base;
     }
     return next;
   });
-  return moved ? { ...plan, blocks } : plan;
+
+  for (const setId of dissolved) { setsNow.delete(setId); setsChanged = true; }
+  /* ⚠ A SET LASTS AS LONG AS SOMETHING USES IT (owner ruling 2026-09-28: "if … a group is no longer
+     linked to a block, why does it stay on the practice plan?"). The moment its last block, station or
+     circuit leaves it — back to the whole team, another set, a copy made for the one place that used
+     it, a circuit that stopped rotating — it leaves the list; its people are wherever the leaving put
+     them, so nobody goes with it. The one exception is a set made from the Groups list itself
+     (`standing`), which stands with nothing using it until something does — and from then on is
+     ordinary. The editor's menu says so before a coach leaves a set's last use. */
+  const usedNow = usedGroupingIds({ blocks });
+  for (const [setId, set] of setsNow) {
+    if (!usedNow.has(setId)) {
+      if (!set.standing) { setsNow.delete(setId); setsChanged = true; }
+    } else if (set.standing) {
+      const ordinary = { ...set };
+      delete ordinary.standing;
+      setsNow.set(setId, ordinary);
+      setsChanged = true;
+    }
+  }
+  if (!moved && !setsChanged) return plan;
+  const out: PracticePlan = { ...plan, blocks };
+  return setsChanged ? withGroupings(out, [...setsNow.values()]) : out;
+}
+
+/** Every pointer on the plan, repeats kept — how many places use each set. */
+function usedGroupingIdsWithRepeats(plan: Pick<PracticePlan, 'blocks'>): string[] {
+  const out: string[] = [];
+  for (const block of plan.blocks) {
+    if (block.groupingId) out.push(block.groupingId);
+    for (const s of block.stations ?? []) if (s.groupingId) out.push(s.groupingId);
+    if (block.rotation?.groupingId) out.push(block.rotation.groupingId);
+  }
+  return out;
 }
 
 /**
@@ -871,7 +1126,9 @@ export function settleArrangements(plan: PracticePlan): PracticePlan {
   const blocks = plan.blocks.map(block => {
     const rotation = block.rotation;
     if (!rotation?.arrangement) return block;
-    const { stops, groups, rounds } = rotationShape(rotation, block.stations, block.duration.minutes ?? null);
+    // The groups are the SET's (G3) — a change to the set (a group added, a set changed) is a change
+    // under the arrangement, exactly as a group added on the rotation always was.
+    const { stops, groups, rounds } = rotationShape(rotationInput(plan.groupings, block), block.stations, block.duration.minutes ?? null);
     const minutesKnown = block.duration.minutes != null;
     const fits = minutesKnown
       ? arrangementFits(rotation.arrangement, stops, groups, rounds)
@@ -1068,7 +1325,7 @@ export function totalPlannedMinutes(plan: PracticePlan): number {
 
 // ── Grouping (D21) ───────────────────────────────────────────────────────────
 
-export type DrawMode = 'groups' | 'perGroup';
+export type DrawMode = PracticeDrawMode;
 
 /** Fisher–Yates. `rng` is injectable so the draw is testable; production passes `Math.random`. */
 function shuffle<T>(items: readonly T[], rng: () => number): T[] {
@@ -1086,6 +1343,14 @@ export function groupLabel(index: number): string {
   const cycle = Math.floor(index / 26);
   return `Group ${letter}${cycle > 0 ? cycle + 1 : ''}`;
 }
+
+/** "Pair 1", "Pair 2"… — a drawn group of two reads as a pair (G5, 2026-09-28). */
+export function pairLabel(index: number): string {
+  return `Pair ${index + 1}`;
+}
+
+/** Is this a draw of pairs — two players in each? The one test the draw and the room share. */
+export const drawsPairs = (mode: DrawMode, n: number) => mode === 'perGroup' && Math.floor(n) === 2;
 
 /**
  * D21 — draw groups at random from the players who replied yes.
@@ -1110,15 +1375,22 @@ export function drawGroups(
     : Math.ceil(players.length / Math.floor(n));
   const count = Math.max(1, Math.min(groupCount, MAX_GROUPS, players.length));
 
-  return dealGroups(shuffle(players, rng), count);
+  // Two a group reads as pairs — "Pair 1", "Pair 2" (G5); every other draw keeps "Group A".
+  return dealGroups(shuffle(players, rng), count, 'grp', drawsPairs(mode, n) ? pairLabel : groupLabel);
 }
 
 /**
  * The DEAL: names into `count` groups in the order given — consecutive runs, the first groups one
  * larger when it does not divide (an uneven split produced honestly, never rounded away). The one
  * step `drawGroups` (after its shuffle) and `settleBlockPeople` (in stored order, no shuffle) share.
+ * `idPrefix` makes the ids unique across sets when the settle pass mints one (a set's own id).
  */
-function dealGroups(playerIds: readonly string[], count: number): PracticeGroup[] {
+function dealGroups(
+  playerIds: readonly string[],
+  count: number,
+  idPrefix = 'grp',
+  label: (index: number) => string = groupLabel,
+): PracticeGroup[] {
   const n = Math.max(1, Math.min(count, MAX_GROUPS, playerIds.length));
   const base = Math.floor(playerIds.length / n);
   const remainder = playerIds.length % n;
@@ -1126,7 +1398,7 @@ function dealGroups(playerIds: readonly string[], count: number): PracticeGroup[
   let cursor = 0;
   for (let i = 0; i < n; i++) {
     const size = base + (i < remainder ? 1 : 0);
-    groups.push({ id: `grp-${i}-${cursor}`, name: groupLabel(i), playerIds: playerIds.slice(cursor, cursor + size) });
+    groups.push({ id: `${idPrefix}-${i}-${cursor}`, name: label(i), playerIds: playerIds.slice(cursor, cursor + size) });
     cursor += size;
   }
   return groups;
@@ -1154,23 +1426,23 @@ export function describeSplit(groups: readonly PracticeGroup[]): string {
  * Returns the same object when nothing would change — an unknown target, or a player already
  * where they were asked to go — so a caller can skip the write.
  */
-export function movePlayerToGroup(
-  rotation: PracticeRotation,
+export function movePlayerToGroup<T extends { groups: PracticeGroup[]; groupSource: PracticeGroupSource }>(
+  set: T,
   playerId: string,
   groupId: string | null,
   rosterOrder: readonly string[],
-): PracticeRotation {
-  if (groupId !== null && !rotation.groups.some(g => g.id === groupId)) return rotation;
-  const holder = rotation.groups.find(g => g.playerIds.includes(playerId));
-  if ((holder?.id ?? null) === groupId) return rotation;
+): T {
+  if (groupId !== null && !set.groups.some(g => g.id === groupId)) return set;
+  const holder = set.groups.find(g => g.playerIds.includes(playerId));
+  if ((holder?.id ?? null) === groupId) return set;
   // A stale id (a player since removed from the roster) sorts last, in the order it already had.
   const rank = new Map(rosterOrder.map((id, i) => [id, i] as const));
   const inRosterOrder = (ids: readonly string[]) =>
     [...ids].sort((a, b) => (rank.get(a) ?? rosterOrder.length) - (rank.get(b) ?? rosterOrder.length));
   return {
-    ...rotation,
+    ...set,
     groupSource: 'manual',
-    groups: rotation.groups.map(g => {
+    groups: set.groups.map(g => {
       if (g.id === groupId) return { ...g, playerIds: inRosterOrder([...g.playerIds, playerId]) };
       return g.playerIds.includes(playerId) ? { ...g, playerIds: g.playerIds.filter(p => p !== playerId) } : g;
     }),
@@ -1189,6 +1461,216 @@ export function unplacedPlayers<T extends { id: string }>(
 ): T[] {
   const placed = new Set(groups.flatMap(g => g.playerIds));
   return roster.filter(p => !placed.has(p.id));
+}
+
+// ── Sets of groups on the practice (groups at every level, owner rulings G1–G8, 2026-09-28) ──
+// A set is the PRACTICE's (`plan.groupings`); a block with no stations, a station that does not
+// rotate and a rotation each point at one. docs/projects/active/COACH_PRACTICE_GROUPS_PLAN.md.
+
+/** A rotation as the arithmetic reads it: the clock and the hand arrangement are the block's, the
+ *  groups are the set it points at (none yet → no groups). */
+export type RotationInput = Pick<PracticeRotation, 'intervalMinutes' | 'arrangement'> & { groups: PracticeGroup[] };
+
+export function groupingById(
+  groupings: readonly PracticeGrouping[] | undefined,
+  id: string | undefined,
+): PracticeGrouping | undefined {
+  return id ? groupings?.find(s => s.id === id) : undefined;
+}
+
+/** The rotation of `block` with its set's groups — what `computeRotation` and the grid read. */
+export function rotationInput(
+  groupings: readonly PracticeGrouping[] | undefined,
+  block: Pick<PracticePlanBlock, 'rotation'>,
+): RotationInput | null {
+  const rotation = block.rotation;
+  if (!rotation) return null;
+  return {
+    intervalMinutes: rotation.intervalMinutes,
+    arrangement: rotation.arrangement,
+    groups: groupingById(groupings, rotation.groupingId)?.groups ?? [],
+  };
+}
+
+/** Every set something on the plan points at — a block, a station or a rotation. */
+export function usedGroupingIds(plan: Pick<PracticePlan, 'blocks'>): Set<string> {
+  const used = new Set<string>();
+  for (const block of plan.blocks) {
+    if (block.groupingId) used.add(block.groupingId);
+    for (const s of block.stations ?? []) if (s.groupingId) used.add(s.groupingId);
+    if (block.rotation?.groupingId) used.add(block.rotation.groupingId);
+  }
+  return used;
+}
+
+/** One place a set is used, by name — "Warm-up", "Warm up pitchers → Bullpen", "Skills circuit". */
+export interface GroupingUse {
+  blockId: string;
+  /** Set when a station holds it (never for the sole station, which IS its block). */
+  stationId?: string;
+  label: string;
+  /** Used by a circuit's rotation. */
+  rotates: boolean;
+}
+
+/**
+ * Where each set is used, in plan order — the fold's "Used in …", the room's "A change here changes
+ * both" (G1) and the menu's "used in Warm-up". A sole station reads as its block (D1).
+ */
+export function groupingUses(plan: Pick<PracticePlan, 'blocks'>): Map<string, GroupingUse[]> {
+  const uses = new Map<string, GroupingUse[]>();
+  const add = (setId: string | undefined, use: GroupingUse) => {
+    if (!setId) return;
+    uses.set(setId, [...(uses.get(setId) ?? []), use]);
+  };
+  plan.blocks.forEach((block, i) => {
+    const title = block.title.trim() || `Block ${i + 1}`;
+    add(block.groupingId, { blockId: block.id, label: title, rotates: false });
+    const sole = soleStationOf(block);
+    (block.stations ?? []).forEach((s, si) => add(s.groupingId, {
+      blockId: block.id, stationId: s.id, label: sole ? title : `${title} → ${stationLabel(s, si)}`, rotates: false,
+    }));
+    if (blockRotates(block)) add(block.rotation?.groupingId, { blockId: block.id, label: title, rotates: true });
+  });
+  return uses;
+}
+
+/**
+ * Is this a set of PAIRS (G5)? Its SHAPE says so — made or drawn as two a group (`draw`) — and it
+ * keeps saying so when hand moves leave it uneven; `groupingShape` then states what is uneven (owner
+ * ruling 2026-09-28: "Throwing partners · 3 groups" named Pair 1–3 had the words disagreeing). A set
+ * with no shape stored (one carried over from before sets, or hand-built before shapes were kept) is
+ * pairs when every group anyone is in holds exactly two.
+ */
+export function isPairSet(set: Pick<PracticeGrouping, 'groups' | 'draw'>): boolean {
+  if (set.draw) return drawsPairs(set.draw.mode, set.draw.n);
+  const placed = set.groups.filter(g => g.playerIds.length > 0);
+  return placed.length > 0 && placed.every(g => g.playerIds.length === 2);
+}
+
+/** The set's words, pairs or groups — one table, so no surface spells one of them its own way. */
+export function groupingWords(set: Pick<PracticeGrouping, 'groups' | 'draw'>): {
+  one: string; many: string; inWord: string; notIn: string;
+} {
+  return isPairSet(set)
+    ? { one: 'pair', many: 'pairs', inWord: 'In pairs', notIn: 'Not in a pair' }
+    : { one: 'group', many: 'groups', inWord: 'In groups', notIn: 'Not in a group' };
+}
+
+/**
+ * "5 pairs" · "3 groups" · "1 group" · "no pairs yet" — counted by the groups anyone is IN. A set of
+ * pairs that is uneven SAYS so, the way an uneven draw always has (D25 — never tidied away):
+ * "3 pairs · one of 3, one of 1".
+ */
+export function groupingShape(set: Pick<PracticeGrouping, 'groups' | 'draw'>): string {
+  const words = groupingWords(set);
+  const filled = set.groups.filter(g => g.playerIds.length > 0);
+  if (filled.length === 0) return `no ${words.many} yet`;
+  const shape = `${filled.length} ${filled.length === 1 ? words.one : words.many}`;
+  if (!isPairSet(set)) return shape;
+  const odd = new Map<number, number>();
+  for (const g of filled) if (g.playerIds.length !== 2) odd.set(g.playerIds.length, (odd.get(g.playerIds.length) ?? 0) + 1);
+  if (odd.size === 0) return shape;
+  const word = (n: number) => (n === 1 ? 'one' : n === 2 ? 'two' : n === 3 ? 'three' : String(n));
+  const uneven = [...odd.entries()].sort((a, b) => b[0] - a[0]).map(([size, count]) => `${word(count)} of ${size}`);
+  return `${shape} · ${uneven.join(', ')}`;
+}
+
+/** One group's names as a line reads them — "Avery & Gray" for a pair, "Avery, Blake, Casey"
+ *  otherwise. Names the reader may not see (an empty `nameOf`) are left out, never "&"-ed. */
+export function groupNames(group: PracticeGroup, nameOf: (playerId: string) => string, pairs: boolean): string {
+  const names = group.playerIds.map(nameOf).filter(Boolean);
+  if (pairs && names.length === 2) return `${names[0]} & ${names[1]}`;
+  return names.join(', ');
+}
+
+/**
+ * Who the set is FOR and is in no group of it — "Not in a pair" (D21: named, never silently
+ * dropped), in roster order. A set made from chosen players ("Split them into groups…") names only
+ * those; a whole-team set names the roster.
+ */
+export function unplacedInSet<T extends { id: string }>(
+  set: Pick<PracticeGrouping, 'groups' | 'forPlayerIds'>,
+  roster: readonly T[],
+): T[] {
+  const scope = set.forPlayerIds ? new Set(set.forPlayerIds) : null;
+  const placed = new Set(set.groups.flatMap(g => g.playerIds));
+  return roster.filter(p => !placed.has(p.id) && (!scope || scope.has(p.id)));
+}
+
+/** "Pairs", then "Pairs 2"… — a new set's name, never one already on the practice. */
+export function nextGroupingName(groupings: readonly Pick<PracticeGrouping, 'name'>[] | undefined, base: string): string {
+  const taken = new Set((groupings ?? []).map(s => s.name.trim().toLowerCase()));
+  if (!taken.has(base.toLowerCase())) return base;
+  let n = 2;
+  while (taken.has(`${base} ${n}`.toLowerCase())) n += 1;
+  return `${base} ${n}`;
+}
+
+/** A new, empty set — no groups until the coach draws or places them. `standing`: made from the
+ *  Groups list itself, so it may stand with nothing using it (see `PracticeGrouping.standing`). */
+export function newGrouping(
+  name: string,
+  opts: { forPlayerIds?: readonly string[]; draw?: PracticeGrouping['draw']; standing?: boolean } = {},
+  newId: () => string = newPracticePlanId,
+): PracticeGrouping {
+  const set: PracticeGrouping = { id: newId(), name, groups: [], groupSource: 'manual' };
+  if (opts.forPlayerIds?.length) set.forPlayerIds = [...opts.forPlayerIds];
+  if (opts.draw) set.draw = opts.draw;
+  if (opts.standing) set.standing = true;
+  return set;
+}
+
+/**
+ * A set COPIED — fresh ids for it and every group, so the copy and the original can never be
+ * confused anywhere (a hand arrangement names groups by id). "Make a separate copy for this block"
+ * (G1) and "From another practice…" (G6 — which also leaves behind anyone off tonight's roster).
+ */
+export function copyGrouping(
+  set: PracticeGrouping,
+  opts: { name?: string; groupSource?: PracticeGroupSource; rosterIds?: ReadonlySet<string> } = {},
+  newId: () => string = newPracticePlanId,
+): PracticeGrouping {
+  const onRoster = (ids: readonly string[]) => (opts.rosterIds ? ids.filter(pid => opts.rosterIds!.has(pid)) : [...ids]);
+  const copy: PracticeGrouping = {
+    id: newId(),
+    name: (opts.name ?? set.name).slice(0, 60),
+    groups: set.groups.map(g => ({ ...g, id: newId(), playerIds: onRoster(g.playerIds) })),
+    groupSource: opts.groupSource ?? set.groupSource,
+  };
+  const forPlayerIds = set.forPlayerIds ? onRoster(set.forPlayerIds) : [];
+  if (forPlayerIds.length) copy.forPlayerIds = forPlayerIds;
+  if (set.draw) copy.draw = { ...set.draw };
+  return copy;
+}
+
+/** A set with its people gone and its SHAPE kept — its name and how it draws — for a template,
+ *  whose practice draws its own from that night's roster. */
+export function groupingShapeOnly(set: PracticeGrouping): PracticeGrouping {
+  const shape: PracticeGrouping = { id: set.id, name: set.name, groups: [], groupSource: 'manual' };
+  // A set drawn before `draw` existed still knows its shape by its groups: two a group is pairs.
+  const draw = set.draw ?? (isPairSet(set) ? { mode: 'perGroup' as const, n: 2 } : undefined);
+  if (draw) shape.draw = draw;
+  return shape;
+}
+
+/** One set from another practice this season, for "From another practice…" (G6). */
+export interface GroupingElsewhere {
+  eventId: string;
+  eventName: string;
+  startsAt: string | null;
+  set: PracticeGrouping;
+}
+
+/** Every set with anyone in it that other practices hold, newest practice first. */
+export function groupingsFromPractices(
+  practices: readonly { eventId: string; name: string; startsAt: string | null; plan: PracticePlan | null }[],
+): GroupingElsewhere[] {
+  return practices
+    .flatMap(p => (p.plan?.groupings ?? [])
+      .filter(set => set.groups.some(g => g.playerIds.length > 0))
+      .map(set => ({ eventId: p.eventId, eventName: p.name, startsAt: p.startsAt, set })))
+    .sort((a, b) => (b.startsAt ?? '').localeCompare(a.startsAt ?? ''));
 }
 
 // ── The rotation grid (D22–D26) ──────────────────────────────────────────────
@@ -1262,7 +1744,7 @@ function listNames(names: string[]): string {
  * `rounds` is 0 when any fact is missing.
  */
 export function rotationShape(
-  rotation: PracticeRotation | null | undefined,
+  rotation: RotationInput | null | undefined,
   stations: readonly PracticeStation[] | undefined,
   blockMinutes: number | null | undefined,
 ): { stops: PracticeStation[]; groups: PracticeGroup[]; intervalMinutes: number | null; totalMinutes: number | null; rounds: number } {
@@ -1310,14 +1792,14 @@ const standardStop = (stops: readonly PracticeStation[], groupIndex: number, rou
  * standard place); later moves edit it. Returns the same rotation when the move changes nothing
  * or names a round, group or station the rotation does not have.
  */
-export function arrangeGroup(
-  rotation: PracticeRotation,
+export function arrangeGroup<T extends RotationInput>(
+  rotation: T,
   stations: readonly PracticeStation[] | undefined,
   blockMinutes: number | null | undefined,
   round: number,
   groupId: string,
   stationId: string | null,
-): PracticeRotation {
+): T {
   const { stops, groups, rounds } = rotationShape(rotation, stations, blockMinutes);
   if (rounds <= 0 || round < 1 || round > rounds) return rotation;
   if (!groups.some(g => g.id === groupId)) return rotation;
@@ -1335,15 +1817,15 @@ export function arrangeGroup(
 }
 
 /** "Back to the standard rotation ›" — the carousel again. The same object back when there was nothing to forget. */
-export function forgetArrangement(rotation: PracticeRotation): PracticeRotation {
+export function forgetArrangement<T extends Pick<PracticeRotation, 'arrangement'>>(rotation: T): T {
   if (rotation.arrangement == null) return rotation;
-  const rest: PracticeRotation = { ...rotation };
+  const rest: T = { ...rotation };
   delete rest.arrangement;
   return rest;
 }
 
 export function computeRotation(
-  rotation: PracticeRotation | null | undefined,
+  rotation: RotationInput | null | undefined,
   stations: readonly PracticeStation[] | undefined,
   blockMinutes: number | null | undefined,
   blockStartMs?: number,
@@ -1572,11 +2054,15 @@ export interface RunStep {
  * rather than vanishing from the run, because a half-written block is still ninety seconds of a
  * real practice and the coach still has to get past it.
  */
-export function buildRunSteps(blocks: readonly PracticePlanBlock[]): RunStep[] {
+export function buildRunSteps(
+  blocks: readonly PracticePlanBlock[],
+  /** The practice's sets — a circuit's groups are its set's (G3). */
+  groupings?: readonly PracticeGrouping[],
+): RunStep[] {
   const steps: RunStep[] = [];
   blocks.forEach((block, blockIndex) => {
     if (blockRotates(block) && block.rotation) {
-      const grid = computeRotation(block.rotation, block.stations, block.duration.minutes ?? null);
+      const grid = computeRotation(rotationInput(groupings, block), block.stations, block.duration.minutes ?? null);
       if (grid.rounds > 0 && grid.intervalMinutes) {
         for (let r = 0; r < grid.rounds; r++) {
           steps.push({
@@ -1683,7 +2169,33 @@ export function copyPracticePlanForReuse(
     delete next.circuitName;
     return next;
   };
+  // The night's sets come too (G1), each with a fresh id, and every pointer follows its set. A
+  // set's new id is minted where it is first pointed at (so the blocks keep minting first, as they
+  // always did), and its groups' ids after every block.
+  const known = new Set((scoped.groupings ?? []).map(s => s.id));
+  const setIds = new Map<string, string>();
+  const repoint = (setId: string | undefined) => {
+    if (!setId || !known.has(setId)) return undefined;
+    if (!setIds.has(setId)) setIds.set(setId, newId());
+    return setIds.get(setId);
+  };
+  const blocks = scoped.blocks.map(block => ({
+    ...withoutCircuit(block),
+    id: newId(),
+    groupingId: repoint(block.groupingId),
+    stations: block.stations?.map(s => ({ ...s, id: newId(), groupingId: repoint(s.groupingId) })),
+    // A hand arrangement names the OLD stations' and groups' ids, and both are new here — it
+    // could never fit, so the copied circuit starts from the standard rotation.
+    rotation: block.rotation
+      ? forgetArrangement({ ...block.rotation, groupingId: repoint(block.rotation.groupingId) })
+      : block.rotation,
+  }));
+  // A set made for the night from the Groups list stays that kind on the copy (it may stand unused).
+  const groupings = (scoped.groupings ?? []).map(set => ({
+    ...copyGrouping(set, {}, newId), id: repoint(set.id)!, ...(set.standing ? { standing: true as const } : {}),
+  }));
   return {
+    ...(groupings.length ? { groupings } : {}),
     version: PRACTICE_PLAN_VERSION,
     ...(scoped.goal ? { goal: scoped.goal } : {}),
     ...(scoped.description ? { description: scoped.description } : {}),
@@ -1695,14 +2207,7 @@ export function copyPracticePlanForReuse(
     // Shape, like kit: a template that carries the focus section hands it to every plan started
     // from it (owner ruling 2026-09-14). The section still reads only for those who may see goals.
     ...(scoped.includeFocusAreas ? { includeFocusAreas: true } : {}),
-    blocks: scoped.blocks.map(block => ({
-      ...withoutCircuit(block),
-      id: newId(),
-      stations: block.stations?.map(s => ({ ...s, id: newId() })),
-      rotation: block.rotation
-        ? { ...block.rotation, groups: block.rotation.groups.map(g => ({ ...g, id: newId() })) }
-        : block.rotation,
-    })),
+    blocks,
   };
 }
 

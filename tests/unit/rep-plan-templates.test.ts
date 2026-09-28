@@ -8,7 +8,7 @@ import {
   templateUseLabel,
   validatePlanTemplateInput,
 } from '../../lib/rep-plan-templates.ts';
-import { sanitizePracticePlan } from '../../lib/rep-practice-plan.ts';
+import { groupingById, sanitizePracticePlan } from '../../lib/rep-practice-plan.ts';
 import type { PracticePlan } from '../../lib/types.ts';
 
 /**
@@ -68,10 +68,14 @@ describe('planToTemplateShape — a template carries the shape and the teaching,
 
   it('drops players and the rotation GROUPS but keeps the rotation SHAPE', () => {
     assert.equal(block.playerIds, undefined);
-    assert.deepEqual(block.rotation?.groups, []);
+    // The circuit still points at its set (groups at every level, G3) — the set keeps its NAME and
+    // how it draws, and nobody is in it: the practice draws its own.
+    const set = groupingById(shape.groupings, block.rotation?.groupingId);
+    assert.ok(set, 'the set travels as shape');
+    assert.deepEqual(set!.groups, []);
+    assert.equal(set!.groupSource, 'manual', 'a template has drawn nothing');
     // How often groups move is part of how the practice runs, and is worth saving.
     assert.equal(block.rotation?.intervalMinutes, 10);
-    assert.equal(block.rotation?.groupSource, 'manual', 'a template has drawn nothing');
   });
 
   it('drops "just for tonight" — the one field that must never travel in either direction', () => {
@@ -131,7 +135,8 @@ describe('templateToPlan — copy-on-load, fully editable, provenance stamped', 
   it('carries no people, so a template can never smuggle a departed player into October', () => {
     assert.equal(plan.blocks[0].staff, undefined);
     assert.equal(plan.blocks[0].playerIds, undefined);
-    assert.deepEqual(plan.blocks[0].rotation?.groups, []);
+    assert.deepEqual(plan.groupings?.flatMap(s => s.groups), [], 'every set arrives empty');
+    assert.ok(groupingById(plan.groupings, plan.blocks[0].rotation?.groupingId), 'and the circuit points at its fresh set');
     assert.equal(plan.blocks[0].stations![0].note, undefined);
   });
 
@@ -218,7 +223,7 @@ describe('validatePlanTemplateInput', () => {
     const parsed = validatePlanTemplateInput({ name: 'T', plan: planWith() });
     assert.ok('template' in parsed);
     assert.equal(parsed.template.plan!.blocks[0].staff, undefined);
-    assert.deepEqual(parsed.template.plan!.blocks[0].rotation?.groups, []);
+    assert.deepEqual(parsed.template.plan!.groupings?.flatMap(s => s.groups), []);
   });
 
   it('drops tag ids that are not uuids, so nothing malformed reaches a PostgREST filter', () => {

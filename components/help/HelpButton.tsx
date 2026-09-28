@@ -13,8 +13,11 @@ import styles from './help.module.css';
  * `label` is the work-page name; it becomes the drawer header and the button's
  * accessible name unless the help request supplies its own label.
  *
- * `iconOnly` renders a compact round "?" with no label at every width — used when
- * the trigger sits in a tight spot like a hero/identity band corner.
+ * `iconOnly` renders a bare "?" glyph with no label at every width — the coaches portal's one
+ * help trigger (owner, 2026-09-24: the phone's bare glyph became the look at every width). It
+ * drops the ghost-button classes rather than overriding them: the HelpCircle icon draws its own
+ * ring, the ghost fill drew a second one around it, and the warm skin re-applies that fill at a
+ * specificity a module rule cannot reach — so the fill is never asked for instead of fought.
  */
 export default function HelpButton({
   help,
@@ -29,12 +32,14 @@ export default function HelpButton({
   return (
     <button
       type="button"
-      className={`btn btn-ghost btn-data ${styles.helpButton}${iconOnly ? ` ${styles.helpButtonIconOnly}` : ''}`}
+      className={iconOnly
+        ? `${styles.helpButton} ${styles.helpButtonIconOnly}`
+        : `btn btn-ghost btn-data ${styles.helpButton}`}
       onClick={() => openHelp({ ...help, label: help.label ?? label })}
       aria-haspopup="dialog"
       aria-label={label ? `Help: ${label}` : 'Help'}
     >
-      <HelpCircle size={iconOnly ? 15 : 13} aria-hidden />
+      <HelpCircle size={iconOnly ? 20 : 13} aria-hidden />
       {!iconOnly && <span className={styles.helpButtonLabel}>Help</span>}
     </button>
   );

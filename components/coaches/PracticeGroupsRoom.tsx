@@ -7,24 +7,31 @@ import {
 } from '@dnd-kit/core';
 import { ChevronRight, ChevronUp, GripVertical, MoreHorizontal, Plus, Shuffle, Trash2 } from 'lucide-react';
 import {
-  MAX_GROUPS, drawGroups, groupLabel, movePlayerToGroup, newPracticePlanId, unplacedPlayers,
-  type DrawMode, type PracticeGroup, type PracticeRotation,
+  MAX_GROUPS, drawGroups, drawsPairs, groupLabel, groupingWords, isPairSet, movePlayerToGroup, newPracticePlanId,
+  pairLabel, unplacedInSet,
+  type DrawMode, type GroupingUse, type PracticeGroup, type PracticeGrouping,
 } from '@/lib/rep-practice-plan';
 import CoachModalHeader from '@/components/coaches/CoachModalHeader';
 import { CoachToolbarMenu, CoachToolbarMenuItem, CoachToolbarMenuSeparator } from '@/components/coaches/CoachToolbarMenu';
+import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import { useDialogFloor } from '@/components/coaches/useDialogFloor';
 import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 /**
- * The GROUPS ROOM — where a rotating block's groups are drawn and arranged (practices
+ * The GROUPS ROOM — where one of the practice's SETS of groups is drawn and arranged (practices
  * re-evaluation, stage 3 revision; owner rulings D9 · D10 · D11 · D12, 2026-09-16, drawn on the
- * hub as "B · the Groups room" and "B · after Done").
+ * hub as "B · the Groups room" and "B · after Done"; widened to every level of a practice by
+ * groups at every level, owner rulings G1–G8, 2026-09-28).
  *
- * The block itself only READS its groups back (one quiet line each, under the grid) with one
- * door, "Edit groups ›", into here. Inside: the draw as a two-way switch (how many groups ·
- * players per group) with the number beside it and the pool named; a dashed "Not in a group"
- * column; one column per group (its name, its players as chips, a bin); "+ Add a group"; Done.
+ * A block, a station or a circuit only READS its set back (one quiet line each) with one door,
+ * "Edit groups ›" / "Edit pairs ›", into here. Inside: the set's NAME first (the anatomy every
+ * sheet on the page shares — the name leads the body); the draw as a two-way switch (how many
+ * groups · players per group) with the number beside it and the pool named; a dashed "Not in a
+ * group" column; one column per group (its name, its players as chips, a bin); then WHERE THE SET
+ * IS USED — "Used in Warm-up and Partner throwing. A change here changes both." with the one way
+ * out, "Make a separate copy for Partner throwing" (G1: linked, never silently shared); "+ Add a
+ * group"; Done. A set of pairs speaks in pairs — "Pair 1", "Not in a pair", "+ Add a pair" (G5).
  *
  * ⚠ **A chip moves two ways, and the tap is the one that must always work** (D10). Drag a chip
  * onto another column with a mouse, or press-and-hold on a phone; OR press the chip — it is the
@@ -60,41 +67,60 @@ const POOL = 'pool';
 
 const DRAW_GROUP_SIZES = [2, 3, 4, 5, 6, 7, 8];
 
-type DrawChoice = { mode: DrawMode; n: number };
+export type DrawChoice = { mode: DrawMode; n: number };
 
 export type PracticeGroupsRoomProps = {
-  blockTitle: string;
-  rotation: PracticeRotation;
-  /** The NAMED stations — the draw's default count: one group per station. */
-  stationCount: number;
+  set: PracticeGrouping;
+  /** Everywhere the set is used, in plan order — the room says a change reaches all of them (G1). */
+  uses: readonly GroupingUse[];
+  /** The draw's default when the set has never been drawn: one group per station for a circuit;
+   *  "Players per group: 2" for a block or a station that is one activity (G5 — pairs are the
+   *  commonest split there). */
+  defaultDraw: DrawChoice;
   /** Tonight's roster in ROSTER order — the pool column and every drop are sorted by it. */
   roster: readonly { id: string }[];
   /** Ids that have NOT replied yes — dashed chips, and the pool column's caption. Empty when
    *  attendance is unknown (then nobody is singled out). */
   notReplied: ReadonlySet<string>;
   /** Only players who replied yes enter a draw (D21); with no attendance known the whole roster
-   *  does. */
+   *  does. A set made from CHOSEN players draws from them instead (`set.forPlayerIds`). */
   drawPool: readonly { id: string }[];
   attendanceKnown: boolean;
   nameOf: (playerId: string) => string;
-  onSetRotation: (patch: Partial<PracticeRotation>) => void;
+  /** Every change writes straight through to the plan — the set, whole. */
+  onChange: (next: PracticeGrouping) => void;
+  /** "Make a separate copy for Partner throwing" — offered when the room was opened from ONE place
+   *  and the set is used somewhere else as well; the copy takes that place's pointer. */
+  copyFor?: { label: string; onCopy: () => void };
+  /** "Delete these groups" — asks first, naming what uses them. */
+  onDelete: () => void;
+  /** One line at the top — a set copied from another practice says where from, and names anyone
+   *  still placed who hasn't replied yes for tonight (G6). */
+  note?: string;
   onClose: () => void;
 };
 
 export default function PracticeGroupsRoom({
-  blockTitle, rotation, stationCount, roster, notReplied, drawPool, attendanceKnown, nameOf, onSetRotation, onClose,
+  set, uses, defaultDraw, roster, notReplied, drawPool, attendanceKnown, nameOf, onChange, copyFor, onDelete, note, onClose,
 }: PracticeGroupsRoomProps) {
   const panelRef = useRef<HTMLDivElement>(null);
   useDialogFloor(true, panelRef, { onClose });
+  const confirm = useConfirm();
 
   const rosterOrder = useMemo(() => roster.map(p => p.id), [roster]);
-  const unplaced = useMemo(() => unplacedPlayers(roster, rotation.groups), [roster, rotation.groups]);
-  const groups = rotation.groups;
+  // Who the set is for and not in it — the whole roster, or the players it was made from.
+  const unplaced = useMemo(() => unplacedInSet(set, roster), [set, roster]);
+  const groups = set.groups;
+  const words = groupingWords(set);
+  const pairs = isPairSet(set);
+  const setGroups = (next: PracticeGroup[], patch: Partial<PracticeGrouping> = {}) => onChange({ ...set, groups: next, ...patch });
 
-  /* The draw's one value — the count, said one of two ways. Null = follow the station count,
-     which is the sensible default (one group per station); once the coach picks it is theirs. */
-  const [choice, setChoice] = useState<DrawChoice | null>(null);
-  const draw: DrawChoice = choice ?? { mode: 'groups', n: Math.max(2, Math.min(stationCount, MAX_GROUPS)) };
+  /* The draw's one value — the count, said one of two ways — IS THE SET'S SHAPE (owner ruling
+     2026-09-28): picked here it is saved on the set at once, not only on Draw, because it decides the
+     set's words ("pairs" or "groups") even for a set placed by hand. Opens on the set's own, else the
+     place's default (pairs for a block, one group per station for a circuit). */
+  const draw: DrawChoice = set.draw ?? defaultDraw;
+  const setChoice = (next: DrawChoice) => onChange({ ...set, draw: next });
   const groupCounts = Array.from({ length: MAX_GROUPS - 1 }, (_, i) => i + 2);
   const counts = draw.mode === 'groups' ? groupCounts : DRAW_GROUP_SIZES;
   const setMode = (mode: DrawMode) => {
@@ -109,9 +135,9 @@ export default function PracticeGroupsRoom({
      rather than falling to the page body — the menu's own "and then where?" rule). */
   const [settled, setSettled] = useState<{ playerId: string; at: number } | null>(null);
   const move = (playerId: string, groupId: string | null) => {
-    const next = movePlayerToGroup(rotation, playerId, groupId, rosterOrder);
-    if (next === rotation) return;
-    onSetRotation({ groups: next.groups, groupSource: next.groupSource });
+    const next = movePlayerToGroup(set, playerId, groupId, rosterOrder);
+    if (next === set) return;
+    onChange(next);
     setSettled({ playerId, at: Date.now() });
   };
 
@@ -130,13 +156,13 @@ export default function PracticeGroupsRoom({
     move(String(e.active.id), e.over.id === POOL ? null : String(e.over.id));
   };
 
-  const addGroup = () => onSetRotation({
-    groups: [...groups, { id: newPracticePlanId(), name: groupLabel(groups.length), playerIds: [] }],
-    groupSource: 'manual',
-  });
-  const removeGroup = (groupId: string) => onSetRotation({ groups: groups.filter(g => g.id !== groupId) });
-  const renameGroup = (groupId: string, name: string) =>
-    onSetRotation({ groups: groups.map(g => (g.id === groupId ? { ...g, name } : g)) });
+  // A new group is named in the set's own words — the next pair, or the next letter.
+  const addGroup = () => setGroups(
+    [...groups, { id: newPracticePlanId(), name: (pairs || drawsPairs(draw.mode, draw.n) ? pairLabel : groupLabel)(groups.length), playerIds: [] }],
+    { groupSource: 'manual' },
+  );
+  const removeGroup = (groupId: string) => setGroups(groups.filter(g => g.id !== groupId));
+  const renameGroup = (groupId: string, name: string) => setGroups(groups.map(g => (g.id === groupId ? { ...g, name } : g)));
 
   const notRepliedUnplaced = unplaced.filter(p => notReplied.has(p.id)).length;
 
@@ -145,10 +171,43 @@ export default function PracticeGroupsRoom({
      would deal a draw of three. So once replies exist the coach can say "the whole team"; with
      none, the whole team is the only pool and the line says so. D21's real rule is untouched —
      nobody is dropped silently: a no-reply player still wears the dashed chip wherever they land.
-     Local to this visit on purpose: a draw is a one-off act, not a setting. */
+     Local to this visit on purpose: a draw is a one-off act, not a setting.
+     ⚠ A set made from CHOSEN players (G, "Split them into groups…") draws from those players and
+     nobody else — the six the coach picked for the bullpen, not the team. */
   const [poolChoice, setPoolChoice] = useState<'replied' | 'team'>('replied');
-  const fromTeam = !attendanceKnown || poolChoice === 'team';
-  const pool = fromTeam ? roster : drawPool;
+  const scoped = !!set.forPlayerIds?.length;
+  const fromTeam = !scoped && (!attendanceKnown || poolChoice === 'team');
+  const scope = scoped ? new Set(set.forPlayerIds) : null;
+  const pool = scope ? roster.filter(p => scope.has(p.id)) : fromTeam ? roster : drawPool;
+  const poolWord = scoped ? `the ${pool.length} chosen` : fromTeam ? 'the whole team' : 'who replied';
+  // The shuffle decides WHO is together; inside each group the names stand in roster order, as every
+  // list in the practice does (§4 — no order may imply a ranking; a moved chip lands the same way).
+  const redraw = () => setGroups(
+    drawGroups(pool.map(p => p.id), draw.mode, draw.n).map(g => ({ ...g, playerIds: rosterOrder.filter(pid => g.playerIds.includes(pid)) })),
+    { groupSource: 'random', draw },
+  );
+
+  /* Where the set is used — "Used in Warm-up and Partner throwing. A change here changes both."
+     (G1: the link is said before anyone is moved, never discovered afterwards). */
+  const useLabels = uses.map(u => u.label);
+  const usedLine = useLabels.length === 0 ? 'Not used by any block yet.'
+    : `Used in ${listLabels(useLabels)}.${useLabels.length > 1 ? ` A change here changes ${useLabels.length === 2 ? 'both' : `all ${useLabels.length}`}.` : ''}`;
+  /* Delete asks, and says what happens to each place that uses the set: a block or a station keeps
+     the same players as a plain list (people move, never vanish — D8); a circuit goes back to no
+     groups. Nothing here is undone by the plan's autosave, so the question is the safeguard. */
+  const deleteSet = async () => {
+    const name = set.name.trim() || 'these groups';
+    const circuits = uses.some(u => u.rotates);
+    const lists = uses.some(u => !u.rotates);
+    const message = uses.length === 0
+      ? `${name} isn’t used by any block, so nothing else changes.`
+      : `Used in ${listLabels(useLabels)}. ${[
+        lists ? 'A block or station keeps the same players as a list' : '',
+        circuits ? `${lists ? 'a' : 'A'} circuit goes back to no groups` : '',
+      ].filter(Boolean).join('; ')}.`;
+    const ok = await confirm({ title: `Delete ${name}?`, message, confirmText: 'Delete', cancelText: 'Keep them', tone: 'danger' });
+    if (ok) onDelete();
+  };
 
   /* ── The phone's shape (G1 · G2). One listener for the room, never one per chip. ── */
   const phone = useIsPhone();
@@ -181,11 +240,18 @@ export default function PracticeGroupsRoom({
 
   return (
     <div className={styles.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) onClose(); }}>
-      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`Groups — ${blockTitle}`}
+      <div ref={panelRef} tabIndex={-1} role="dialog" aria-modal="true" aria-label={`${words.many === 'pairs' ? 'Pairs' : 'Groups'} — ${set.name || 'unnamed'}`}
         className={`${styles.modal} ${styles.modalWide} ${styles.modalScrollBody} ${styles.ppGroupsRoom}`}>
-        <CoachModalHeader onClose={onClose} closeAriaLabel="Close" title="Groups" />
+        <CoachModalHeader onClose={onClose} closeAriaLabel="Close" title={pairs ? 'Pairs' : 'Groups'} />
 
         <div className={`${styles.scrollPane} ${styles.ppGroupsBody}`}>
+          {/* ── The set's NAME leads the body (G1) — the anatomy the block sheet and the station form
+              share. It is what the menus, the fold and every "used in" line call these groups. ── */}
+          <input className={`${styles.input} ${styles.ppGroupsSetName}`} value={set.name} maxLength={60}
+            aria-label="Name for these groups" placeholder={pairs ? 'Pairs' : 'Groups'}
+            onChange={e => onChange({ ...set, name: e.target.value })} />
+          {note && <p className={styles.ppGroupsNote} role="status">{note}</p>}
+
           {/* ── The draw: the way as a switch, the number beside it, the pool named, the button.
               Deliberately dumb — a shuffle and a deal (D21); press again to re-draw.
               On a phone, once groups exist, it folds to one line (G1): the line only opens and closes
@@ -194,8 +260,8 @@ export default function PracticeGroupsRoom({
             <button type="button" className={styles.ppDrawSummary} aria-expanded={drawOpen} aria-controls={drawId}
               onClick={() => setDrawOpen(v => !v)}>
               <Shuffle size={14} aria-hidden />
-              <b>{groups.length} {groups.length === 1 ? 'group' : 'groups'}</b>
-              <span>· from {fromTeam ? 'the whole team' : 'who replied'}</span>
+              <b>{groups.length} {groups.length === 1 ? words.one : words.many}</b>
+              <span>· from {poolWord}</span>
               <span className={styles.ppDrawSummaryDoor}>
                 {drawOpen ? <>Close <ChevronUp size={14} aria-hidden /></> : <>Change <ChevronRight size={14} aria-hidden /></>}
               </span>
@@ -214,18 +280,17 @@ export default function PracticeGroupsRoom({
               onChange={e => setChoice({ mode: draw.mode, n: Number(e.target.value) })}>
               {counts.map(n => <option key={n} value={n}>{n}</option>)}
             </select>
-            {attendanceKnown ? (
+            {attendanceKnown && !scoped ? (
               <select className={`${styles.input} ${styles.ppDrawSelect}`} value={poolChoice}
                 aria-label="Draw from" onChange={e => setPoolChoice(e.target.value === 'team' ? 'team' : 'replied')}>
                 <option value="replied">Who replied</option>
                 <option value="team">Whole team</option>
               </select>
             ) : (
-              <span className={styles.ppRotQuiet}>from the whole team</span>
+              <span className={styles.ppRotQuiet}>from {poolWord}</span>
             )}
-            <button type="button" className={styles.ppDrawBtn} disabled={pool.length === 0}
-              onClick={() => onSetRotation({ groups: drawGroups(pool.map(p => p.id), draw.mode, draw.n), groupSource: 'random' })}>
-              <Shuffle size={13} aria-hidden /> {rotation.groupSource === 'random' ? 'Draw again' : 'Draw'}
+            <button type="button" className={styles.ppDrawBtn} disabled={pool.length === 0} onClick={redraw}>
+              <Shuffle size={13} aria-hidden /> {set.groupSource === 'random' ? 'Draw again' : 'Draw'}
             </button>
           </div>
           )}
@@ -247,7 +312,7 @@ export default function PracticeGroupsRoom({
                      a foot row for one caption was a row of nothing. */
                   head={
                     <span className={styles.ppGroupPoolName}>
-                      Not in a group
+                      {words.notIn}
                       {phone && notRepliedUnplaced > 0 && (
                         <span className={styles.ppGroupHeadingCount}>&nbsp;· {notRepliedUnplaced === 1 ? "1 hasn't" : `${notRepliedUnplaced} haven't`} replied yes</span>
                       )}
@@ -256,10 +321,10 @@ export default function PracticeGroupsRoom({
                   foot={!phone && notRepliedUnplaced > 0
                     ? <span className={styles.ppGroupColHint}>{notRepliedUnplaced === 1 ? "1 hasn't" : `${notRepliedUnplaced} haven't`} replied yes</span>
                     : null}>
-                  {unplaced.length === 0 && <span className={styles.ppGroupColHint}>Drop here to take them out of their group</span>}
+                  {unplaced.length === 0 && <span className={styles.ppGroupColHint}>Drop here to take them out of their {words.one}</span>}
                   {unplaced.map(p => (
                     <PlayerChip key={p.id} playerId={p.id} name={nameOf(p.id)} inGroup={null} groups={groups}
-                      noReply={notReplied.has(p.id)} onMove={move} settled={settled} />
+                      notIn={words.notIn} noReply={notReplied.has(p.id)} onMove={move} settled={settled} />
                   ))}
                 </GroupColumn>
               )}
@@ -286,7 +351,7 @@ export default function PracticeGroupsRoom({
                   {group.playerIds.length === 0 && <span className={styles.ppRailNone}>nobody yet</span>}
                   {group.playerIds.map(pid => (
                     <PlayerChip key={pid} playerId={pid} name={nameOf(pid)} inGroup={group.id} groups={groups}
-                      noReply={notReplied.has(pid)} onMove={move} settled={settled} />
+                      notIn={words.notIn} noReply={notReplied.has(pid)} onMove={move} settled={settled} />
                   ))}
                 </GroupColumn>
               ))}
@@ -302,6 +367,29 @@ export default function PracticeGroupsRoom({
               document.body,
             )}
           </DndContext>
+
+          {/* ── Where the set is used (G1) — said in the room, where a move is made, not only on the
+              blocks: "Used in Warm-up and Partner throwing. A change here changes both." The one way
+              to change one place alone is a copy for it, which the room offers right here. Then the
+              set's own delete, quiet, last. ── */}
+          <p className={styles.ppGroupsUsed}>
+            <span>{usedLine}</span>
+            {copyFor && uses.length > 1 && (
+              <>
+                {' '}
+                <button type="button" className={styles.ppTlQuietLink} onClick={copyFor.onCopy}>
+                  Make a separate copy for {copyFor.label}
+                </button>
+              </>
+            )}
+          </p>
+          <p className={styles.ppGroupsUsed}>
+            <button type="button" className={styles.ppTlQuietLink} onClick={() => void deleteSet()}>
+              {/* A name the coach gave reads as itself ("Delete Batteries…"); the default one reads as
+                  what it is ("Delete these pairs…", never "Delete Pairs…"). */}
+              <Trash2 size={12} aria-hidden /> Delete {/^(pairs|groups)( \d+)?$/i.test(set.name.trim()) || !set.name.trim() ? `these ${words.many}` : set.name.trim()}…
+            </button>
+          </p>
         </div>
 
         {/* ⚠ No "Done" on a phone (§231 walk, owner 2026-09-25 — "remove the done from the group
@@ -313,7 +401,7 @@ export default function PracticeGroupsRoom({
           <div className={styles.modalFooter}>
             {groups.length < MAX_GROUPS ? (
               <button type="button" className={styles.ppAddInline} onClick={addGroup}>
-                <Plus size={13} aria-hidden /> Add a group
+                <Plus size={13} aria-hidden /> Add a {pairs || drawsPairs(draw.mode, draw.n) ? 'pair' : 'group'}
               </button>
             ) : <span />}
             {!phone && <button type="button" className={styles.btnPrimary} onClick={onClose}>Done</button>}
@@ -322,6 +410,12 @@ export default function PracticeGroupsRoom({
       </div>
     </div>
   );
+}
+
+/** "Warm-up", "Warm-up and Partner throwing", "Warm-up, Partner throwing and Skills circuit". */
+function listLabels(labels: readonly string[]): string {
+  if (labels.length <= 1) return labels[0] ?? '';
+  return `${labels.slice(0, -1).join(', ')} and ${labels[labels.length - 1]}`;
 }
 
 /** A column is a drop target — the row under the pointer says so (`data-over`), and while any
@@ -402,11 +496,13 @@ function PhoneGroupHead({ group, renaming, onRename, onStartRename, onEndRename,
  * swallowed by the kit. With nowhere to move to — no groups yet and the chip already in the pool —
  * it is a plain pill: a control that exists only to refuse should not exist.
  */
-function PlayerChip({ playerId, name, inGroup, groups, noReply, onMove, settled }: {
+function PlayerChip({ playerId, name, inGroup, groups, notIn, noReply, onMove, settled }: {
   playerId: string;
   name: string;
   inGroup: string | null;
   groups: readonly PracticeGroup[];
+  /** The way out, in the set's own words — "Not in a pair" / "Not in a group" (G5). */
+  notIn: string;
   noReply: boolean;
   onMove: (playerId: string, groupId: string | null) => void;
   /** The chip that just landed, and when — it takes focus where it now stands. */
@@ -435,7 +531,7 @@ function PlayerChip({ playerId, name, inGroup, groups, noReply, onMove, settled 
           <CoachToolbarMenuItem key={g.id} label={`Move to ${g.name || 'the unnamed group'}`} onSelect={() => onMove(playerId, g.id)} />
         ))}
         {inGroup && others.length > 0 && <CoachToolbarMenuSeparator />}
-        {inGroup && <CoachToolbarMenuItem label="Not in a group" onSelect={() => onMove(playerId, null)} />}
+        {inGroup && <CoachToolbarMenuItem label={notIn} onSelect={() => onMove(playerId, null)} />}
       </CoachToolbarMenu>
     </span>
   );

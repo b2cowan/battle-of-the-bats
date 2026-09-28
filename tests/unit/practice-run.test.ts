@@ -3,13 +3,14 @@ import { describe, it } from 'node:test';
 import {
   blockRotates,
   buildRunOutline,
-  buildRunSteps,
+  buildRunSteps as buildRunStepsFor,
   computeRotation,
   namesWholeTeam,
   rotationByStation,
+  rotationInput,
   runStepLengthLabel,
 } from '../../lib/rep-practice-plan.ts';
-import type { PracticePlanBlock } from '../../lib/types.ts';
+import type { PracticeGrouping, PracticePlanBlock } from '../../lib/types.ts';
 
 /**
  * The field run screen's arithmetic (Practice Plans 1b).
@@ -26,6 +27,18 @@ function block(overrides: Partial<PracticePlanBlock> = {}): PracticePlanBlock {
   return { id: 'b1', title: 'Warm-up', duration: { minutes: 10 }, ...overrides };
 }
 
+/** The practice's one set — the circuit's three groups (groups at every level, G3: a circuit's
+ *  groups are its SET's, and the run reads the practice's sets beside its blocks). */
+const SETS: PracticeGrouping[] = [{
+  id: 'set', name: 'Circuit groups', groupSource: 'random',
+  groups: [
+    { id: 'g1', name: 'Group A', playerIds: ['p1'] },
+    { id: 'g2', name: 'Group B', playerIds: ['p2'] },
+    { id: 'g3', name: 'Group C', playerIds: ['p3'] },
+  ],
+}];
+const buildRunSteps = (blocks: PracticePlanBlock[]) => buildRunStepsFor(blocks, SETS);
+
 /** A rotation block: 45 minutes, three stations, three groups → three rounds of 15. */
 function rotationBlock(overrides: Partial<PracticePlanBlock> = {}): PracticePlanBlock {
   return {
@@ -37,15 +50,7 @@ function rotationBlock(overrides: Partial<PracticePlanBlock> = {}): PracticePlan
       { id: 's2', name: 'Short hop' },
       { id: 's3', name: 'Toss' },
     ],
-    rotation: {
-      intervalMinutes: 15,
-      groupSource: 'random',
-      groups: [
-        { id: 'g1', name: 'Group A', playerIds: ['p1'] },
-        { id: 'g2', name: 'Group B', playerIds: ['p2'] },
-        { id: 'g3', name: 'Group C', playerIds: ['p3'] },
-      ],
-    },
+    rotation: { intervalMinutes: 15, groupingId: 'set' },
     ...overrides,
   };
 }
@@ -95,7 +100,7 @@ describe('buildRunSteps', () => {
     // No groups yet ⇒ no computable grid. The block is still real minutes on a real Tuesday and
     // the coach still has to get past it.
     const rot = rotationBlock();
-    const steps = buildRunSteps([{ ...rot, rotation: { ...rot.rotation!, groups: [] } }]);
+    const steps = buildRunSteps([{ ...rot, rotation: { intervalMinutes: 15 } }]);
     assert.equal(steps.length, 1);
     assert.equal(steps[0].round, null, 'a plain stop is how the screen knows to show block-level content');
     assert.equal(steps[0].minutes, 45);
@@ -132,7 +137,7 @@ describe('buildRunSteps', () => {
 
 describe('runStepLengthLabel — the plan\'s length as information, never a countdown (P10)', () => {
   it('reads "15 min" for a timed block and "10 min a round" inside a rotation', () => {
-    const [warm, r1] = buildRunSteps([block({ duration: { minutes: 15 } }), rotationBlock({ rotation: { intervalMinutes: 10, groupSource: 'random', groups: rotationBlock().rotation!.groups } })]);
+    const [warm, r1] = buildRunSteps([block({ duration: { minutes: 15 } }), rotationBlock({ rotation: { intervalMinutes: 10, groupingId: 'set' } })]);
     assert.equal(runStepLengthLabel(warm), '15 min');
     assert.equal(runStepLengthLabel(r1), '10 min a round');
   });
@@ -167,7 +172,7 @@ describe('namesWholeTeam — "Whole team" is a SET comparison, never a count (P5
 
 describe('the rotation\'s rows, keyed by station (P7) — the field reads the board\'s own re-key', () => {
   const rot = rotationBlock();
-  const grid = computeRotation(rot.rotation!, rot.stations, 45, startMs);
+  const grid = computeRotation(rotationInput(SETS, rot), rot.stations, 45, startMs);
   const turned = rotationByStation(grid, rot.stations);
   it('one row per named station, the group at each — and the NEXT round is the due state\'s row', () => {
     assert.deepEqual(turned.stations.map(s => s.name), ['Tees', 'Short hop', 'Toss']);
@@ -186,7 +191,7 @@ describe('the rotation\'s rows, keyed by station (P7) — the field reads the bo
         { g1: 's3', g2: 's2', g3: 's1' },
       ],
     } } });
-    const g = computeRotation(arranged.rotation!, arranged.stations, 45, startMs);
+    const g = computeRotation(rotationInput(SETS, arranged), arranged.stations, 45, startMs);
     const t = rotationByStation(g, arranged.stations);
     assert.deepEqual(t.rows[1].cells, [['Group A', 'Group B'], [], []]);
     assert.deepEqual(t.rows[1].out.map(o => o.name), ['Group C']);
@@ -242,7 +247,7 @@ describe('buildRunOutline — the list Run practice opens on', () => {
   });
 
   it('a rotation that cannot be walked yet (no groups) is one plain stop, with no shape', () => {
-    const half = rotationBlock({ id: 'half', rotation: { intervalMinutes: 15, groupSource: 'random', groups: [] } });
+    const half = rotationBlock({ id: 'half', rotation: { intervalMinutes: 15 } });
     const [row] = buildRunOutline({ version: 1, blocks: [half] }, buildRunSteps([half]), new Set());
     assert.equal(row.shape, '');
     assert.equal(row.stepIndex, 0);

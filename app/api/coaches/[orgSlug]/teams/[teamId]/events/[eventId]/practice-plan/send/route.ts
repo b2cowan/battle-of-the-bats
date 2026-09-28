@@ -15,7 +15,8 @@ import { sendEmail } from '@/lib/email';
 import { formatInOrgZone } from '@/lib/timezone';
 import { formatStoredClock } from '@/lib/utils';
 import {
-  blockOwnPeople, computeBlockClocks, namesWholeTeam, practicePlanLevels, resolvePracticePlanTagNames, soleStationOf,
+  blockOwnGroupingId, blockOwnPeople, blockRotates, computeBlockClocks, groupingById, groupingWords, namesWholeTeam,
+  practicePlanLevels, resolvePracticePlanTagNames, soleStationOf,
 } from '@/lib/rep-practice-plan';
 import { practiceLengthMinutes } from '@/lib/practice-state';
 
@@ -107,13 +108,25 @@ export const POST = withObservability(async (req: Request,
     const staff = [...new Set([...(l.block.staff ?? []), ...(sole?.staff ?? [])])];
     // The one rule for whose people these are (stage 5, P5) — "Whole team" is a set comparison.
     const own = blockOwnPeople(l.block);
-    const whole = own !== undefined && namesWholeTeam(own, rosterIds);
+    // A set says its SHAPE and its name — "In pairs · Throwing partners" — never who is in it: the
+    // outline names no child (ruling K; groups at every level, G8, 2026-09-28). The pairs are one tap
+    // away behind the button, on the plan and the printed sheet.
+    const setWord = (setId: string | undefined) => {
+      const set = groupingById(plan.groupings, setId);
+      return set ? `${groupingWords(set).inWord} · ${set.name.trim() || 'Groups'}` : '';
+    };
+    const ownSetWord = setWord(blockOwnGroupingId(l.block));
+    const whole = !ownSetWord && own !== undefined && namesWholeTeam(own, rosterIds);
     return {
       time: clocks[l.index]?.startLabel ?? '',
       title: l.title,
-      staffLine: [staff.join(' · '), whole ? 'Whole team' : ''].filter(Boolean).join(' · '),
+      staffLine: [staff.join(' · '), ownSetWord || (whole ? 'Whole team' : '')].filter(Boolean).join(' · '),
       mine: false,
-      stations: l.stations.map(s => ({ name: s.label, staffLine: (s.station.staff ?? []).join(' · '), mine: false })),
+      stations: l.stations.map(s => ({
+        name: s.label,
+        staffLine: [(s.station.staff ?? []).join(' · '), blockRotates(l.block) ? '' : setWord(s.station.groupingId)].filter(Boolean).join(' · '),
+        mine: false,
+      })),
     };
   });
   const outlineFor = (mineTagIds: ReadonlySet<string>): PracticePlanEmailBlock[] => {

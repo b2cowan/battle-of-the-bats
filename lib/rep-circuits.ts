@@ -112,6 +112,22 @@ export function blockToCircuitShape(input: unknown): PracticePlanBlock {
   const next = blockForTemplate(block);
   delete next.circuitId;
   delete next.circuitName;
+  // A circuit is ONE block with no practice around it, so it has nowhere to keep a set of groups
+  // (groups at every level, 2026-09-28): every pointer goes, and a placed circuit's rotation
+  // chooses or draws its groups on the practice, as it always did.
+  delete next.groupingId;
+  if (next.stations) {
+    next.stations = next.stations.map(s => {
+      const copy = { ...s };
+      delete copy.groupingId;
+      return copy;
+    });
+  }
+  if (next.rotation) {
+    const rotation = { ...next.rotation };
+    delete rotation.groupingId;
+    next.rotation = rotation;
+  }
   if (next.duration.restOfPractice) next.duration = { minutes: null };
   return next;
 }
@@ -138,7 +154,7 @@ export function circuitToBlock(
     circuitId: circuit.id,
     circuitName: circuit.name.slice(0, MAX_TITLE_LEN),
     stations: shape.stations?.map(s => ({ ...s, id: newId() })),
-    rotation: shape.rotation ? { ...shape.rotation, groups: [] } : shape.rotation,
+    rotation: shape.rotation,
   };
 }
 

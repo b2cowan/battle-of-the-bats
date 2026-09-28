@@ -20,8 +20,8 @@ import { formatStoredClock } from '@/lib/utils';
 import { useMinuteClock } from '@/lib/use-minute-clock';
 import { practiceHasPlan, practiceIsRecord, practicePlanState, practiceStarted } from '@/lib/practice-state';
 import {
-  computeBlockClocks, copyPracticePlanForReuse, emptyPracticePlan, isPracticePlanEmpty, levelsForStaffTags, newPracticePlanId,
-  practicePlanLevels,
+  computeBlockClocks, copyPracticePlanForReuse, emptyPracticePlan, groupingsFromPractices, isPracticePlanEmpty, levelsForStaffTags,
+  newPracticePlanId, practicePlanLevels,
   type PracticePlan,
 } from '@/lib/rep-practice-plan';
 import { HowItWent, NoPlanRecord, PracticeScheduleLink, PracticeWhenDoor, PracticeWhenLine } from '@/components/coaches/PracticeSheetChrome';
@@ -861,6 +861,13 @@ export default function CoachPracticePlanPage({
   // through its ghost row, which sets `docked` first. Never while reading: the library is a writing tool.
   const isDocked = canWrite && canDock && docked && !reading;
   const previousWithPlans = (data?.previousPlans ?? []).filter(p => p.plan);
+  /* "From another practice…" (groups at every level, G6, 2026-09-28): every set with anyone in it
+     that another practice THIS season holds, newest first — the same season's plans the copy
+     picker already has, so it costs no second read. (A plain walk, not a memo: this sits past the
+     page's early returns, where no hook may run.) */
+  const groupingsElsewhere = groupingsFromPractices(
+    (data?.previousPlans ?? []).map(p => ({ eventId: p.eventId, name: p.name, startsAt: p.startsAt, plan: p.plan })),
+  );
   const hasPastSeasonPlans = data?.hasPastSeasonPlans ?? false;
   // Read once here so the picker below (which renders outside the `!data` guard) never has to
   // null-check the load state mid-JSX.
@@ -1239,10 +1246,12 @@ export default function CoachPracticePlanPage({
                   </Link>
                   {/* ── Edit / Done editing (stage 1b, R3 = A) — ONE button whose word flips, beside
                       Run practice at every width: the one way into writing is never behind "⋯".
-                      Pressed-looking while editing, so the mode is visible on the button itself. */}
+                      Its neighbours' border in both states (owner, 2026-09-28): ✓ and the words say
+                      the mode. On a desk it is also the ONLY Edit / Done editing — the station form
+                      over the sheet carries none there. */}
                   {editDoor && (
                     <button type="button" className={`${styles.btnSecondary} ${styles.ppEditDoor}`} data-testid="edit-the-plan"
-                      aria-pressed={editDoor === 'done'} data-on={editDoor === 'done' ? 'on' : undefined}
+                      aria-pressed={editDoor === 'done'}
                       onClick={() => (editDoor === 'edit' ? startEditing() : setEditing(false))}>
                       {editDoor === 'edit'
                         ? <><Pencil size={13} aria-hidden /> Edit</>
@@ -1401,6 +1410,7 @@ export default function CoachPracticePlanPage({
                   onPickStaffPerson={writing ? pickStaffPerson : undefined}
                   viewerBlockIds={mine.blockIds}
                   viewerStationIds={mine.stationIds}
+                  groupingsElsewhere={writing ? groupingsElsewhere : undefined}
                   equipmentTags={equipmentTags}
                   onCreateEquipmentTag={writing ? createEquipmentTag : undefined}
                   planTagIds={planTagIds}

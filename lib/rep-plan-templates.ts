@@ -16,9 +16,11 @@
  * count — and nothing would fail loudly. That is the seam frame 06 of the mockups draws.
  *
  * ⚠ **A template carries NO PEOPLE** (D20, one level up from a drill). No players, no staff, no
- * rotation groups, no "just for tonight". The template supplies the shape and the teaching; the
+ * one in any group, no "just for tonight". The template supplies the shape and the teaching; the
  * practice supplies the people and the moment. That is what lets one template work in April with
  * twelve and July with nine — and it keeps the "people live at exactly one level" invariant intact.
+ * A SET of groups keeps its SHAPE (groups at every level, 2026-09-28): its name and how it draws
+ * ("Throwing partners · in pairs"), and which blocks use it — the practice draws its own players.
  *
  * ⚠ **PLANS, never practices.** "Started 8 plans", never "used 8×": nothing records what was
  * actually run (D4), so "used" would be a claim the data cannot support.
@@ -27,7 +29,7 @@
  * tell a coach which of their own ideas is best. Nothing here counts, scores or orders a child.
  */
 import {
-  MAX_TITLE_LEN, PRACTICE_PLAN_VERSION, forgetArrangement, newPracticePlanId, sanitizePracticePlan,
+  MAX_TITLE_LEN, PRACTICE_PLAN_VERSION, forgetArrangement, groupingShapeOnly, newPracticePlanId, sanitizePracticePlan,
   totalPlannedMinutes,
   type PracticePlan, type PracticePlanBlock, type PracticeStation,
 } from './rep-practice-plan';
@@ -114,10 +116,12 @@ export function blockForTemplate(block: PracticePlanBlock): PracticePlanBlock {
   delete next.playerIds;
   if (next.stations) next.stations = next.stations.map(stationForTemplate);
   // A rotation's SHAPE is worth keeping — how often groups move is part of how the practice runs.
-  // Its GROUPS are people, so they go, and the plan the template produces draws fresh ones. A
-  // hand-arranged grid (D14) names those groups by id, so it goes with them — the practice deals
-  // its own rotation from the groups it draws.
-  if (next.rotation) next.rotation = forgetArrangement({ ...next.rotation, groups: [], groupSource: 'manual' });
+  // Its GROUPS are people, so the set it points at keeps only its shape (`planToTemplateShape`),
+  // and the plan the template produces draws fresh ones. A hand-arranged grid (D14) names those
+  // groups by id, so it goes with them — the practice deals its own rotation from the groups it
+  // draws. The POINTERS stay (a block "in pairs" is part of how the practice runs); a circuit,
+  // which has no practice to hold a set, drops them (`blockToCircuitShape`).
+  if (next.rotation) next.rotation = forgetArrangement(next.rotation);
   return next;
 }
 
@@ -135,6 +139,8 @@ export function planToTemplateShape(input: unknown): PracticePlan {
   const plan = sanitizePracticePlan(input);
   if (!plan) return { version: PRACTICE_PLAN_VERSION, blocks: [] };
   const next: PracticePlan = { ...plan, blocks: plan.blocks.map(blockForTemplate) };
+  // Each set keeps its name and how it draws; nobody is in it (see `groupingShapeOnly`).
+  if (plan.groupings) next.groupings = plan.groupings.map(groupingShapeOnly);
   delete next.templateId;
   delete next.templateName;
   return next;
@@ -159,17 +165,24 @@ export function templateToPlan(
   newId: () => string = newPracticePlanId,
 ): PracticePlan {
   const shape = planToTemplateShape(template.plan);
-  return {
+  // Fresh ids for the sets too, every pointer following its set — a template loaded twice onto
+  // two practices must not hand both the same ids.
+  const setIds = new Map((shape.groupings ?? []).map(s => [s.id, newId()] as const));
+  const repoint = (setId: string | undefined) => (setId ? setIds.get(setId) : undefined);
+  const next: PracticePlan = {
     ...shape,
     templateId: template.id,
     templateName: template.name.slice(0, MAX_TITLE_LEN),
     blocks: shape.blocks.map(block => ({
       ...block,
       id: newId(),
-      stations: block.stations?.map(s => ({ ...s, id: newId() })),
-      rotation: block.rotation ? { ...block.rotation, groups: [] } : block.rotation,
+      groupingId: repoint(block.groupingId),
+      stations: block.stations?.map(s => ({ ...s, id: newId(), groupingId: repoint(s.groupingId) })),
+      rotation: block.rotation ? { ...block.rotation, groupingId: repoint(block.rotation.groupingId) } : block.rotation,
     })),
   };
+  if (shape.groupings) next.groupings = shape.groupings.map(s => ({ ...s, id: setIds.get(s.id)! }));
+  return next;
 }
 
 /** What a plan template's row says about itself, for the room's meta line. */

@@ -60,9 +60,9 @@ describe('blockToCircuitShape — sanitised, then emptied of people', () => {
     assert.equal(shape.stations?.[0].setup, 'Two ladders');
     assert.deepEqual(shape.stations?.[2].equipment, ['Bibs']);
     assert.equal(shape.rotation?.intervalMinutes, 15);
-    assert.deepEqual(shape.rotation?.groups, []);
+    assert.equal(shape.rotation?.groupingId, undefined, 'a circuit keeps no set — it has no practice to hold one (groups at every level)');
     assert.equal(shape.rotation?.arrangement, undefined, 'a hand-arranged grid names groups that are gone');
-    assert.equal(shape.rotation?.groupSource, 'manual', 'the practice deals its own draw');
+    assert.equal(shape.stations?.every(s => s.groupingId === undefined), true, 'and no station points at one either');
   });
 
   it('PRESERVES a station\'s drillId and drillTags — stripping them breaks every drill\'s count', () => {
@@ -99,7 +99,7 @@ describe('circuitToBlock — placed: fresh ids, provenance, empty groups, fully 
     assert.equal(block.circuitId, 'c1');
     assert.equal(block.circuitName, 'Tee stations');
     assert.deepEqual(block.stations?.map(s => s.id), ['id-2', 'id-3', 'id-4']);
-    assert.deepEqual(block.rotation?.groups, []);
+    assert.equal(block.rotation?.groupingId, undefined, 'placed with no groups — the practice chooses or draws them');
     assert.equal(block.rotation?.intervalMinutes, 15);
     // The drill rule inside it holds.
     assert.equal(block.stations?.[1].drillId, 'd-close');
@@ -240,7 +240,8 @@ describe('the rows\' lines', () => {
   it('blockForTemplate strips a hand-arranged grid with the groups it names', () => {
     const stripped = blockForTemplate(sanitizePracticePlan({ blocks: [circuitBlock()] })!.blocks[0]);
     assert.equal(stripped.rotation?.arrangement, undefined);
-    assert.deepEqual(stripped.rotation?.groups, []);
+    // A TEMPLATE keeps the pointer — its set keeps its shape and loses its players (`planToTemplateShape`).
+    assert.ok(stripped.rotation?.groupingId);
   });
 });
 

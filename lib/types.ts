@@ -1455,6 +1455,49 @@ export interface PracticeGroup {
   playerIds: string[];
 }
 
+/** How a set of groups is drawn — so many groups, or so many players in each (D21). */
+export type PracticeDrawMode = 'groups' | 'perGroup';
+
+/**
+ * A SET OF GROUPS that belongs to the PRACTICE (groups at every level, owner rulings G1–G8,
+ * 2026-09-28 — docs/projects/active/COACH_PRACTICE_GROUPS_PLAN.md). "Throwing partners · 5 pairs",
+ * "Batteries · 3 pairs", "Circuit groups · 3 groups". A block with no stations, a station that does
+ * not rotate, and a rotation each POINT at one set (`groupingId`) — never a copy — so moving a late
+ * arrival into a pair moves them in every block that uses the pairs (G1). Until this, groups lived
+ * only on a rotating block (`PracticeRotation.groups`); the sanitiser lifts those onto this list on
+ * read, so a plan saved before it reads forward with nothing lost (G3).
+ *
+ * ⚠ People still live at exactly ONE level (owner ruling 2026-08-01): a level holds its own names
+ * OR points at a set, never both, and when it points at a set the set's groups ARE its people.
+ */
+export interface PracticeGrouping {
+  id: string;
+  /** The coach's own name for it ("Throwing partners"); the one the menus and the fold read. */
+  name: string;
+  groups: PracticeGroup[];
+  groupSource: PracticeGroupSource;
+  /**
+   * Who the set is FOR — the players a block had chosen when it was split ("Split them into
+   * groups…"): the draw deals from them and "Not in a pair" names only them. Absent = the whole team
+   * (who replied yes, as every draw has always read it).
+   */
+  forPlayerIds?: string[];
+  /**
+   * The set's SHAPE — pairs, or so many groups — as the coach last set it in the room (and how the
+   * next Draw deals). It decides the set's words: a set made as pairs keeps saying pairs when hand
+   * moves leave it uneven ("3 pairs · one of 3, one of 1"). A TEMPLATE keeps it once its players are
+   * gone — the practice then draws its own from that night's roster.
+   */
+  draw?: { mode: PracticeDrawMode; n: number };
+  /**
+   * Made from the Groups list itself ("+ Groups for tonight", "+ Make groups") — the one kind of set
+   * that may stand on the practice with nothing using it (owner ruling 2026-09-28). Every other set
+   * lasts only while a block, a station or a circuit uses it, and leaves the list with its last use.
+   * Cleared the moment something uses it: from then on it is an ordinary set.
+   */
+  standing?: true;
+}
+
 /**
  * D27 — a station, split by SOURCE. **A station IS the drill** (owner-confirmed 2026-08-01), and
  * Phase 2 makes that literal: the DRILL supplies the shape + the teaching, the PRACTICE supplies
@@ -1524,6 +1567,12 @@ export interface PracticeStation {
   staffTagIds?: string[];
   /** ⚠ Only when the block has stations that do NOT rotate. See `blockRotates`. */
   playerIds?: string[];
+  /**
+   * The practice's set of groups this station uses ("Batteries" at the bullpen) — in place of,
+   * never beside, `playerIds`, and only where `playerIds` may live (a station that does not rotate:
+   * in a circuit the groups hold the people, and a different group arrives every round — G4).
+   */
+  groupingId?: string;
   rotationNote?: string;
   /** "Just for tonight" — the one-off note that is never saved back to the drill. */
   note?: string;
@@ -1542,8 +1591,13 @@ export interface PracticeStation {
  */
 export interface PracticeRotation {
   intervalMinutes: number | null;
-  groups: PracticeGroup[];
-  groupSource: PracticeGroupSource;
+  /**
+   * Which of the practice's sets rotates here (G3, 2026-09-28) — absent until the coach chooses or
+   * draws one. ⚠ The groups themselves are the SET's (`PracticePlan.groupings`); they used to be
+   * stored here, and a stored `groups` list is read once more, lifted onto the plan's list, and
+   * never written again (`sanitizePracticePlan`).
+   */
+  groupingId?: string;
   /**
    * A HAND-ARRANGED rotation (practices re-evaluation stage 3, owner ruling D14, 2026-09-16) —
    * absent for the standard carousel (every group forward one station a round). When present it
@@ -1574,9 +1628,9 @@ export interface PracticeRotationArrangement {
  * either ROTATE (groups move between them) or run separately (each station keeps its own players).
  *
  * ⚠ **People live at exactly ONE level** (owner ruling 2026-08-01) — see `blockRotates`:
- *   · no stations       → `playerIds` on the block
- *   · stations, no rotate → `playerIds` on each station
- *   · stations, rotating  → `rotation.groups` only
+ *   · no stations       → the block's `playerIds`, or the set it points at (`groupingId`)
+ *   · stations, no rotate → each station's `playerIds`, or its set
+ *   · stations, rotating  → the rotation's set only (`rotation.groupingId`)
  * Whichever level doesn't apply is stripped on save, so no surface can ever show two different
  * answers to "who's here".
  */
@@ -1597,6 +1651,12 @@ export interface PracticePlanBlock {
   staffTagIds?: string[];
   /** ⚠ Only when the block has NO stations. */
   playerIds?: string[];
+  /**
+   * The practice's set of groups this block uses ("In pairs · Throwing partners") — in place of,
+   * never beside, `playerIds`, and only while the block has no stations (it is the activity). A
+   * station arriving takes it with the block's other people (D8: people move, never vanish).
+   */
+  groupingId?: string;
   /**
    * The activity's kit — real 'equipment' tag ids (mig 266), ⚠ only while the block has NO
    * stations (practices re-evaluation stage 2, owner ruling D11, 2026-09-15). Kit lives at exactly
@@ -1654,6 +1714,12 @@ export interface PracticePlan {
    */
   equipmentTagIds?: string[];
   blocks: PracticePlanBlock[];
+  /**
+   * Tonight's sets of groups (G1–G8, 2026-09-28) — the practice level. Every set made tonight lives
+   * here, whichever block made it; blocks, stations and rotations point at one by id. A set nothing
+   * points at is kept (a coach may make "groups for the night" before any block asks for them).
+   */
+  groupings?: PracticeGrouping[];
 
   /**
    * PROVENANCE ONLY — which plan TEMPLATE this practice was started from (Phase 3).

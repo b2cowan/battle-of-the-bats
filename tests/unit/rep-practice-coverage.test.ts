@@ -31,10 +31,15 @@ describe('summarizePlanCoverage — one walk, three answers', () => {
       { plan: plan([{ id: 'b1', title: 'A', duration: { minutes: 10 }, playerIds: ['p1'] }]) },
       { plan: plan([{ id: 'b2', title: 'B', duration: { minutes: 10 }, stations: [{ id: 's', name: 'Tees', playerIds: ['p2'] }] }]) },
       {
-        plan: plan([{
-          id: 'b3', title: 'C', duration: { minutes: 10 },
-          rotation: { intervalMinutes: 5, groupSource: 'manual', groups: [{ id: 'g', name: 'A', playerIds: ['p3'] }] },
-        }]),
+        // A rotation's groups are its SET's (groups at every level, G3) — counted because it is USED.
+        plan: {
+          ...plan([{ id: 'b3', title: 'C', duration: { minutes: 10 }, rotation: { intervalMinutes: 5, groupingId: 'set' } }]),
+          groupings: [
+            { id: 'set', name: 'Groups', groupSource: 'manual', groups: [{ id: 'g', name: 'A', playerIds: ['p3'] }] },
+            // A set nobody uses is not an activity anyone was planned into — p9 is not counted.
+            { id: 'unused', name: 'Spare', groupSource: 'manual', groups: [{ id: 'h', name: 'B', playerIds: ['p9'] }] },
+          ],
+        },
       },
     ]);
     assert.deepEqual([...coverage.namedPlayerIds].sort(), ['p1', 'p2', 'p3']);

@@ -23,7 +23,7 @@
  *     against anything, so it is never reported as uncovered. Only tags a coach actually chose are
  *     compared, and never against a child's name.
  */
-import type { PracticePlan } from './rep-practice-plan';
+import { usedGroupingIds, type PracticePlan } from './rep-practice-plan';
 
 /**
  * How many practice plans a season needs before "not in a plan yet" means anything.
@@ -55,7 +55,9 @@ export interface PlanCoverage {
   coveredTagNames: Set<string>;
 }
 
-/** Every player id this plan names, at whichever level the plan puts its people. */
+/** Every player id this plan names, at whichever level the plan puts its people — a block's or a
+ *  station's own list, or a set of groups something on the plan USES (a set made and never used is
+ *  not an activity anyone was planned into). */
 function namedInPlan(plan: PracticePlan | null | undefined, into: Set<string>): void {
   if (!plan) return;
   for (const block of plan.blocks) {
@@ -63,9 +65,11 @@ function namedInPlan(plan: PracticePlan | null | undefined, into: Set<string>): 
     for (const station of block.stations ?? []) {
       for (const id of station.playerIds ?? []) into.add(id);
     }
-    for (const group of block.rotation?.groups ?? []) {
-      for (const id of group.playerIds) into.add(id);
-    }
+  }
+  const used = usedGroupingIds(plan);
+  for (const set of plan.groupings ?? []) {
+    if (!used.has(set.id)) continue;
+    for (const group of set.groups) for (const id of group.playerIds) into.add(id);
   }
 }
 

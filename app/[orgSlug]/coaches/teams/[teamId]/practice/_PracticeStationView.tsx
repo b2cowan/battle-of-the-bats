@@ -1,7 +1,10 @@
 'use client';
 import { useMemo, type ReactNode } from 'react';
 import { ArrowLeft } from 'lucide-react';
-import { resolveStationTeaching, type PracticePlanBlock, type PracticeStation, type RotationGrid } from '@/lib/rep-practice-plan';
+import {
+  groupNames, groupingWords, isPairSet, resolveStationTeaching,
+  type PracticeGroup, type PracticeGrouping, type PracticePlanBlock, type PracticeStation, type RotationGrid,
+} from '@/lib/rep-practice-plan';
 import styles from '../../../coaches.module.css';
 
 /**
@@ -80,6 +83,38 @@ export function StationLines({ station, block }: { station: PracticeStation | nu
   );
 }
 
+/**
+ * A SET on the field (groups at every level, G8, 2026-09-28) — a block's pairs read at arm's length:
+ * one per line, large, tagged as the room tags them ("1" for Pair 1, "Group A"), then who the set
+ * is for and is not in it. The run screen's plain stop reads it; nothing here records anything.
+ */
+export function FieldSet({ set, nameOf, unplaced }: {
+  set: PracticeGrouping;
+  nameOf: (playerId: string) => string;
+  /** "Not in a pair · Kai, Logan" — names only, in roster order; absent when everyone is placed. */
+  unplaced?: readonly string[];
+}) {
+  const pairs = isPairSet(set);
+  const words = groupingWords(set);
+  const rows = set.groups
+    .map(g => ({ id: g.id, tag: pairs ? g.name.replace(/^Pair\s+/i, '') : g.name, names: groupNames(g, nameOf, pairs) }))
+    .filter(r => r.names);
+  if (rows.length === 0) return null;
+  return (
+    <div className={styles.ppRunSet}>
+      <p className={styles.ppStLbl}>{words.inWord} · {set.name.trim() || 'Groups'}</p>
+      <ol className={styles.ppRunSetList}>
+        {rows.map(r => (
+          <li key={r.id}><span className={styles.ppRunSetTag}>{r.tag}</span>{r.names}</li>
+        ))}
+      </ol>
+      {unplaced && unplaced.length > 0 && (
+        <p className={styles.ppStTxtSoft}>{words.notIn} · {unplaced.join(', ')}</p>
+      )}
+    </div>
+  );
+}
+
 /** One headed line — the teaching set loud (`ppStTxt`), a reference line quieter. Nothing when empty. */
 function StationFactLine({ label, text, loud, bold }: { label: string; text?: string; loud?: boolean; bold?: boolean }) {
   if (!text) return null;
@@ -99,6 +134,10 @@ type Props = {
   rotating: boolean;
   /** The computed carousel, when this block has one. */
   grid: RotationGrid | null;
+  /** The circuit's groups — its SET's (G3); empty when the block does not rotate. */
+  groups: readonly PracticeGroup[];
+  /** The set THIS station uses when it does not rotate ("Batteries" at the bullpen, G4). */
+  stationSet?: PracticeGrouping;
   /** 1-based round showing on the run screen, when this block is a rotation. */
   round: number | null;
   /** The reader is tagged on this station, so the screen greets them rather than describing it. */
@@ -129,9 +168,10 @@ type Props = {
  */
 type StationFacts = {
   station: PracticeStation;
-  block: PracticePlanBlock;
   rotating: boolean;
   grid: RotationGrid | null;
+  groups: readonly PracticeGroup[];
+  stationSet?: PracticeGrouping;
   round: number | null;
   nameOf: (playerId: string) => string;
 };
@@ -139,13 +179,12 @@ type StationFacts = {
 /** The players standing at this station right now, and under whose group name. */
 type Present = { label: string; players: string };
 
-function presentNow({ station, block, rotating, grid, round, nameOf }: StationFacts): Present | null {
+function presentNow({ station, rotating, grid, groups, stationSet, round, nameOf }: StationFacts): Present | null {
   if (rotating && grid && round != null) {
     const cells = grid.roundsList[round - 1]?.cells ?? [];
     // ⚠ Both groups are named when two share a station — never one silently winning (§10.4 item 4).
     const here = cells.filter(c => c.stationId === station.id);
     if (here.length === 0) return null;
-    const groups = block.rotation?.groups ?? [];
     return {
       label: here.map(c => c.groupName).join(' + '),
       players: here
@@ -154,7 +193,13 @@ function presentNow({ station, block, rotating, grid, round, nameOf }: StationFa
     };
   }
 
-  // Stations that don't rotate keep their own list — the one level people live at here.
+  // Stations that don't rotate keep their own people — the one level they live at here: a set
+  // ("Batteries", its pairs on one line, G8), or the station's own list.
+  if (stationSet) {
+    const pairs = isPairSet(stationSet);
+    const line = stationSet.groups.map(g => groupNames(g, nameOf, pairs)).filter(Boolean).join(pairs ? ' · ' : '  ·  ');
+    return line ? { label: stationSet.name.trim() || 'At this station', players: line } : null;
+  }
   const ids = station.playerIds ?? [];
   if (ids.length === 0) return null;
   return { label: 'At this station', players: ids.map(nameOf).filter(Boolean).join(' · ') };
@@ -167,9 +212,8 @@ function presentNow({ station, block, rotating, grid, round, nameOf }: StationFa
  */
 type Arrival = { when: string; who: string };
 
-function arrivals({ station, block, grid, round, nameOf }: StationFacts): Arrival[] {
+function arrivals({ station, grid, groups, round, nameOf }: StationFacts): Arrival[] {
   if (!grid || round == null) return [];
-  const groups = block.rotation?.groups ?? [];
   const out: Arrival[] = [];
   for (const r of grid.roundsList) {
     if (r.round <= round) continue;
@@ -195,9 +239,9 @@ function arrivals({ station, block, grid, round, nameOf }: StationFacts): Arriva
  * reaches this one, and saying "everyone's been through" would be a small confident lie told to
  * the person best placed to notice it.
  */
-function everyoneHasBeenThrough({ station, block, grid }: StationFacts): boolean {
+function everyoneHasBeenThrough({ station, grid, groups }: StationFacts): boolean {
   if (!grid || grid.roundsList.length === 0) return false;
-  const groupCount = block.rotation?.groups.length ?? 0;
+  const groupCount = groups.length;
   if (groupCount === 0) return false;
   const visited = new Set<string>();
   for (const r of grid.roundsList) {
@@ -207,14 +251,14 @@ function everyoneHasBeenThrough({ station, block, grid }: StationFacts): boolean
 }
 
 export default function PracticeStationView(props: Props) {
-  const { station, stationIndex, block, rotating, round, grid, isMine, nameOf } = props;
+  const { station, stationIndex, block, rotating, round, grid, groups, stationSet, isMine, nameOf } = props;
   const name = station.name.trim() || `Station ${stationIndex + 1}`;
 
   // Memoised against the round: these three walk every round in the rotation and look up a name
   // per player, and they need redoing only when the round on screen changes.
   const facts: StationFacts = useMemo(
-    () => ({ station, block, rotating, grid, round, nameOf }),
-    [station, block, rotating, grid, round, nameOf],
+    () => ({ station, rotating, grid, groups, stationSet, round, nameOf }),
+    [station, rotating, grid, groups, stationSet, round, nameOf],
   );
   const here = useMemo(() => presentNow(facts), [facts]);
   const coming = useMemo(() => arrivals(facts), [facts]);

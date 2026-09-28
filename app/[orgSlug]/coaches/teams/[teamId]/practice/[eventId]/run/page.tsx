@@ -11,12 +11,12 @@ import { useBackStep } from '@/components/coaches/useBackStep';
 import HelpButton from '@/components/help/HelpButton';
 import { playerDisplayName } from '@/lib/coach-roster-name';
 import {
-  blockOwnPeople, blockRotates, buildRunOutline, buildRunSteps, computeRotation, formatDuration,
-  levelsForStaffTags, namesWholeTeam, resolvePracticePlanTagNames,
-  rotationByStation, runStepLengthLabel, soleStationOf, stationLabel,
+  blockOwnGroupingId, blockOwnPeople, blockRotates, buildRunOutline, buildRunSteps, computeRotation, formatDuration,
+  groupingById, groupingWords, levelsForStaffTags, namesWholeTeam, resolvePracticePlanTagNames,
+  rotationByStation, rotationInput, runStepLengthLabel, soleStationOf, stationLabel, unplacedInSet,
   type PracticePlan, type PracticePlanBlock, type PracticeStation, type RotationGrid, type RunStep,
 } from '@/lib/rep-practice-plan';
-import PracticeStationView, { StationLines } from '../../_PracticeStationView';
+import PracticeStationView, { FieldSet, StationLines } from '../../_PracticeStationView';
 import type { PracticeRosterPlayer } from '../../_PracticePlanEditor';
 import type { PickableTag } from '@/components/coaches/TagPicker';
 import styles from '../../../../../coaches.module.css';
@@ -242,14 +242,16 @@ export default function CoachPracticeRunPage({
     [data],
   );
   const blocks = useMemo(() => plan?.blocks ?? [], [plan]);
-  const steps = useMemo(() => buildRunSteps(blocks), [blocks]);
+  // A circuit's groups are its SET's (G3) — the steps and the grids read the practice's sets.
+  const groupings = plan?.groupings;
+  const steps = useMemo(() => buildRunSteps(blocks, groupings), [blocks, groupings]);
   /* ⚰ The effect that set the cursor to 0 once the plan arrived is DELETED (stage 7, W1): the
      screen opens on the list, every time, on any day, and the coach picks the stop. */
 
   const gridFor = useCallback((block: PracticePlanBlock): RotationGrid | null => {
     if (!blockRotates(block) || !block.rotation) return null;
-    return computeRotation(block.rotation, block.stations, block.duration.minutes ?? null);
-  }, []);
+    return computeRotation(rotationInput(groupings, block), block.stations, block.duration.minutes ?? null);
+  }, [groupings]);
 
   /** ⚠ A MAP, not a scan — a rotation round asks for a dozen names, and every tap re-reads them. */
   const rosterById = useMemo(
@@ -378,6 +380,17 @@ export default function CoachPracticeRunPage({
   // The lib's one rule for whose people these are (`blockOwnPeople`); the staff line reads the same
   // holder — the sole station when the station is the block, else the block.
   const ownPeople = useMemo(() => (block ? blockOwnPeople(block) : undefined), [block]);
+  /* The set the block's own line holds (G8) — "In pairs · Throwing partners", its pairs listed
+     large under the words; and the circuit's own groups, for the station screen. */
+  const ownSet = useMemo(() => (block ? groupingById(groupings, blockOwnGroupingId(block)) : undefined), [block, groupings]);
+  const circuitGroups = useMemo(
+    () => (block && blockRotates(block) ? groupingById(groupings, block.rotation?.groupingId)?.groups ?? [] : []),
+    [block, groupings],
+  );
+  const ownSetUnplaced = useMemo(
+    () => (ownSet ? unplacedInSet(ownSet, data?.roster ?? []).map(p => playerDisplayName(p)) : []),
+    [ownSet, data?.roster],
+  );
   const blockStaff = useMemo(() => (block ? (soleStationOf(block) ?? block).staff ?? [] : []), [block]);
   // "Mine", by IDENTITY (mig 303): the staff tags whose person is the reader, matched by id at
   // every level through the one reader's walk — never a name. The sole-station block reads the
@@ -401,8 +414,8 @@ export default function CoachPracticeRunPage({
   // "Whole team" (P5): nobody named, or every active player named — the roster the route handed
   // this screen, compared as a SET (twelve of twelve is the whole team tonight; eleven is chips).
   const wholeTeam = useMemo(
-    () => ownPeople !== undefined && namesWholeTeam(ownPeople, (data?.roster ?? []).map(p => p.id)),
-    [ownPeople, data?.roster],
+    () => !ownSet && ownPeople !== undefined && namesWholeTeam(ownPeople, (data?.roster ?? []).map(p => p.id)),
+    [ownSet, ownPeople, data?.roster],
   );
   /**
    * The rotation TURNED to its stations (P7) — the board's own re-key, one column per named
@@ -530,7 +543,9 @@ export default function CoachPracticeRunPage({
               const holder = soleStationOf(row.block) ?? row.block;
               const staffLine = holder.staff?.length ? holder.staff.join(' · ') : '';
               const own = blockOwnPeople(row.block);
-              const peopleWord = own === undefined ? '' : namesWholeTeam(own, rosterIds) ? 'Whole team' : own.length > 0 ? `${own.length} players` : '';
+              const rowSet = groupingById(groupings, blockOwnGroupingId(row.block));
+              const peopleWord = rowSet ? `${groupingWords(rowSet).inWord} · ${rowSet.name.trim() || 'Groups'}`
+                : own === undefined ? '' : namesWholeTeam(own, rosterIds) ? 'Whole team' : own.length > 0 ? `${own.length} players` : '';
               const who = staffLine || peopleWord;
               const meta = `${who}${row.mine ? `${who ? ' — ' : ''}that’s you` : ''}`;
               return (
@@ -640,6 +655,8 @@ export default function CoachPracticeRunPage({
         block={block}
         rotating={rotating}
         grid={grid}
+        groups={circuitGroups}
+        stationSet={rotating ? undefined : groupingById(groupings, openStation.groupingId)}
         round={step.round}
         isMine={mineStations.has(openStation.id)}
         nameOf={nameOf}
@@ -698,7 +715,11 @@ export default function CoachPracticeRunPage({
   const sole = soleStationOf(block);
   const soleNameSaysMore = !!sole && !!sole.name.trim() && !!block.title.trim() && sole.name.trim() !== block.title.trim();
 
-  const people: ReactNode = wholeTeam ? 'Whole team' : blockPlayers.length > 0 ? (
+  // A set's pairs are listed under the words with their own heading (`FieldSet`), so the who-line
+  // names the set only while it has nobody in it yet — never the same words twice.
+  const setListed = !!ownSet?.groups.some(g => g.playerIds.length > 0);
+  const people: ReactNode = ownSet ? (setListed ? null : `${groupingWords(ownSet).inWord} · ${ownSet.name.trim() || 'Groups'}`)
+    : wholeTeam ? 'Whole team' : blockPlayers.length > 0 ? (
     <span className={styles.ppRunWho}>
       {blockPlayers.map(name => <span key={name} className={styles.ppRunChip}>{name}</span>)}
     </span>
@@ -804,6 +825,8 @@ export default function CoachPracticeRunPage({
                 {people}
               </div>
             )}
+            {/* The block's pairs, one per line at arm's length (G8) — who is with whom, read standing up. */}
+            {ownSet && <FieldSet set={ownSet} nameOf={nameOf} unplaced={ownSetUnplaced} />}
           </>
         )}
 

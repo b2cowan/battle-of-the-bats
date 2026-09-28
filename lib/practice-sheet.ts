@@ -25,9 +25,10 @@ import { formatInOrgZone } from './timezone';
 import { formatStoredClock } from './utils';
 import { surfaceLabel } from './sports';
 import {
-  blockOwnPeople, blockRotates, computeBlockClocks, computeRotation, formatDuration, practiceKitBag,
-  resolvePracticePlanTagNames, resolveStationTeaching, rotationByStation, soleStationOf, stationLabel, tagNamesById,
-  type PracticePlan,
+  blockOwnGroupingId, blockOwnPeople, blockRotates, computeBlockClocks, computeRotation, formatDuration, groupNames,
+  groupingById, groupingWords, isPairSet, practiceKitBag, resolvePracticePlanTagNames, resolveStationTeaching,
+  rotationByStation, rotationInput, soleStationOf, stationLabel, tagNamesById,
+  type PracticeGrouping, type PracticePlan,
 } from './rep-practice-plan';
 
 /** "Tue, May 5, 2026" — the printed sheet's date, where the year matters. */
@@ -86,6 +87,31 @@ export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOpti
     return p ? playerDisplayName(p) : '';
   };
 
+  /* ── Sets of groups on paper (groups at every level, G8, 2026-09-28) ──
+     A set's names print under the FIRST block (or station) that uses it; a later block using the
+     same set says "in pairs, Throwing partners" and does not repeat them — the paper has room for
+     one copy of the pairs, and the name says where to find it. */
+  const printed = new Set<string>();
+  /** "In pairs, Throwing partners" — the level's who-word when it uses a set. */
+  const setWord = (set: PracticeGrouping) => `${groupingWords(set).inWord}, ${set.name}`;
+  /** The set's names as the sheet's membership lines: pairs as ONE line ("Pairs — Avery & Gray ·
+   *  Blake & Harper"), groups one line each ("Group A — Avery, Blake, Casey"). */
+  const setLines = (set: PracticeGrouping): { name: string; players: string }[] => {
+    const pairs = isPairSet(set);
+    const filled = set.groups.filter(g => g.playerIds.length > 0);
+    if (pairs) {
+      const line = filled.map(g => groupNames(g, nameOf, true)).filter(Boolean).join('  ·  ');
+      return line ? [{ name: 'Pairs', players: line }] : [];
+    }
+    return filled.map(g => ({ name: g.name, players: groupNames(g, nameOf, false) })).filter(l => l.players);
+  };
+  /** Names once, the first time a set is met on the page. */
+  const firstLines = (set: PracticeGrouping) => {
+    if (printed.has(set.id)) return [];
+    printed.add(set.id);
+    return setLines(set);
+  };
+
   const blocks: PracticeSheetBlock[] = resolved.blocks.map(block => {
     const clock = clockByBlock.get(block.id);
     const time = clock ? `${clock.startLabel}${clock.endLabel ? `–${clock.endLabel}` : ''}` : '';
@@ -111,6 +137,16 @@ export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOpti
       // tee station actually carries, so a station whose teaching came from a drill must print
       // it — and a plan written before the library existed must still print the block's.
       const { description, goal } = resolveStationTeaching(s, block);
+      // A station that uses a set ("Batteries" at the bullpen): the set's word, and its names the
+      // first time the page meets it — on the station's own Players line, where its coach looks.
+      const stationSet = groupingById(plan.groupings, s.groupingId);
+      let setPlayers = '';
+      if (stationSet) {
+        // One fact line: "In pairs, Batteries — Avery & Blake · Casey & Devon" (groups by name).
+        const lines = firstLines(stationSet);
+        const names = isPairSet(stationSet) ? lines.map(l => l.players) : lines.map(l => `${l.name}: ${l.players}`);
+        setPlayers = [setWord(stationSet), names.join('  ·  ')].filter(Boolean).join(' — ');
+      }
       return {
         name: stationLabel(s, i),
         runBy: (s.staff ?? []).join(', '),
@@ -129,7 +165,8 @@ export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOpti
           ['Equipment', (s.equipment ?? []).join(', ')],
           // The station's own people — and when the station IS the block (its sole station) and
           // names nobody, the block's word: "Whole team", as the field says for the same block.
-          ['Players', (s.playerIds ?? []).map(nameOf).filter(Boolean).join(', ')
+          ['Players', setPlayers
+            || (s.playerIds ?? []).map(nameOf).filter(Boolean).join(', ')
             || (soleStationOf(block) === s && !(s.playerIds ?? []).length ? 'Whole team' : '')],
           ['Tonight', s.note ?? ''],
           ['Rotation', s.rotationNote ?? ''],
@@ -149,10 +186,9 @@ export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOpti
     // drop the whole thing, so a coach reading only the paper had no idea a station plan was
     // ever intended. It now prints the statement and whatever groups exist, with no grid.
     let rotation: PracticeSheetRotation | null = null;
-    if (blockRotates(block) && block.rotation) {
-      const grid = computeRotation(
-        block.rotation, block.stations, block.duration.minutes ?? null, clock?.startMs,
-      );
+    const input = blockRotates(block) ? rotationInput(plan.groupings, block) : null;
+    if (input) {
+      const grid = computeRotation(input, block.stations, block.duration.minutes ?? null, clock?.startMs);
       // The grid TURNED to station columns (stage 5, P1 — the paper reads as the screen's board
       // has since D6): the block's named stations across, one row per round, the group(s) in
       // each cell. Assembled from the screen's own re-key (`rotationByStation`) — by station
@@ -168,17 +204,27 @@ export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOpti
           out: r.out.map(o => o.name),
         })),
         notes: grid.notes,
-        groups: block.rotation.groups.map(g => ({
+        // The circuit's own groups print beside its grid every time — the grid's cells name them.
+        groups: input.groups.map(g => ({
           name: g.name,
           players: g.playerIds.map(nameOf).filter(Boolean).join(', '),
         })),
       };
+      const circuitSet = groupingById(plan.groupings, block.rotation?.groupingId);
+      if (circuitSet) printed.add(circuitSet.id);
     }
 
     // Whose line this is — the lib's one rule (`blockOwnPeople`): the block's own people, or
-    // nothing when they live on its stations (a sole station's print under that station).
-    const own = block.stations?.length ? undefined : blockOwnPeople(block);
+    // nothing when they live on its stations (a sole station's print under that station). A block
+    // with no stations that uses a set says so on its line and prints the set's names beneath its
+    // words, the way a circuit prints its groups beneath its grid (a region with no grid).
+    const blockSet = block.stations?.length ? undefined : groupingById(plan.groupings, blockOwnGroupingId(block));
+    const own = block.stations?.length || blockSet ? undefined : blockOwnPeople(block);
     const players = (own ?? []).map(nameOf).filter(Boolean).join(', ');
+    if (blockSet) {
+      const lines = firstLines(blockSet);
+      if (lines.length > 0) rotation = { stationNames: [], rounds: [], notes: [], groups: lines };
+    }
     return {
       time,
       title: block.title || '(untitled)',
@@ -187,7 +233,7 @@ export function buildPracticeSheet(input: PracticeSheetInput): PracticeSheetOpti
       // "Whole team" where the sheet printed nothing (stage 5, P5) — the plan page's own word
       // for a block that names nobody; a coach's list prints as written, because the record is
       // the coach's own list (the page keeps "12 players" apart from "Whole team" on purpose).
-      players: players || (own && own.length === 0 ? 'Whole team' : ''),
+      players: blockSet ? setWord(blockSet) : players || (own && own.length === 0 ? 'Whole team' : ''),
       notes,
       stations,
       rotation,

@@ -84,7 +84,7 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.match(src, /open=\{soloBlock \|\| \(!phoneSheet && openId === block\.id\)\}/);
     assert.match(src, /openDoors=\{soloBlock \|\| \(!phoneSheet && openId === block\.id\) \? openDoors : NO_DOORS\}/);
     assert.match(src, /\{sheetBlock && sheetWalk && \(/);
-    assert.match(src, /sheet=\{\{ walk: sheetWalk, onward: sheetOnward, onEdit, onDoneEditing \}\}/);
+    assert.match(src, /sheet=\{\{ walk: sheetWalk, onward: sheetOnward, onAdd: !readOnly && canAddBlock \? addBlock : undefined, onEdit, onDoneEditing \}\}/);
   });
 
   it('K2 — ONE wiring for the row and the sheet, so the two cannot drift', () => {
@@ -100,12 +100,12 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.match(sheet, /role="dialog" aria-modal="true"/);
     // §227 walk, option C (owner 2026-09-23): the foot's walk is COMPACT ("‹ 2 of 3 ›") — a named
     // pair got ~7 letters a name at 390 — and the next block is named in full at the body's end.
-    assert.match(sheet, /<RoomWalkNav nav=\{walk\} compact \/>/);
-    assert.match(sheet, /<WalkOnward walk=\{walk\} noun="block"/);
+    assert.match(sheet, /<RoomWalkNav nav=\{walk\} compact end=\{onAdd && \{ label: 'Add a block', onSelect: onAdd \}\} \/>/);
+    assert.match(sheet, /<WalkOnward walk=\{walk\} noun="block" kicker=\{onward\.kicker\} meta=\{onward\.meta\} onAdd=\{onAdd\} \/>/);
     // §231 walk (owner 2026-09-25): NO Done in the foot — it only closed, which the head's ← does,
     // and it sat under ✓ "Done editing", which does the opposite. One block: nothing to walk, no foot.
     assert.doesNotMatch(sheet, />Done<\/button>/);
-    assert.match(sheet, /\{walk\.total > 1 && \(\s*<div className=\{styles\.modalFooter\}>\s*<RoomWalkNav nav=\{walk\} compact \/>\s*<\/div>/);
+    assert.match(sheet, /\{walk\.total > 1 && \(\s*<div className=\{styles\.modalFooter\}>\s*<RoomWalkNav nav=\{walk\} compact end=\{[^}]*\}\} \/>\s*<\/div>/);
     assert.match(sheet, /<div key=\{bodyKey\} className=\{`\$\{styles\.ppTlOpen\} \$\{styles\.ppBlockSheetBody\}`\}>/);
     // It covers the nav as every form does, and takes it out of reach while up.
     assert.match(src, /useOverlayOpen\([^)]*!!sheetBlock\)/);
@@ -117,7 +117,8 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.match(onward, /walk\.onSelect\(walk\.next!\.id\)/);
     assert.match(onward, /walk\.onSelect\(walk\.prev!\.id\)/);
     assert.match(onward, /That’s the last \{noun\}\./);
-    assert.match(onward, /if \(walk\.total <= 1\) return null;/);
+    // One stop and nothing to add: no row. One stop that CAN add (the plan's first block): the row.
+    assert.match(onward, /if \(walk\.total <= 1 && !onAdd\) return null;/);
     // The station form: compact + the onward row on a phone, the named pair kept on a desk.
     const station = fn('StationModal');
     assert.match(station, /const phone = useIsPhone\(\);/);
@@ -144,6 +145,20 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.doesNotMatch(nav, /<RoomWalkNav nav=\{nav\} busy=\{busy\} end=/);
   });
 
+  it('the LAST block on a phone adds one too — "it\'s the same workflow" (owner, 2026-09-28)', () => {
+    // The list's own "+ Add a block" (`addBlock`: the end of the plan, opened, title focused) — never
+    // while reading, never past MAX_BLOCKS, never in the circuit editor (it has no block sheet).
+    assert.match(src, /onAdd: !readOnly && canAddBlock \? addBlock : undefined/);
+    assert.match(src, /const canAddBlock = layout\.timeline && plan\.blocks\.length < MAX_BLOCKS;/);
+    const card = fn('BlockCard');
+    assert.match(card, /onAdd=\{sheet\.onAdd\}/);
+    // The title's cursor is placed ONCE per new block — keyed on its id, never on the `sheet` object
+    // (a new object every render: keyed on it, each keystroke in another field of a just-added block
+    // was sent back into the title). The id re-places it when the add steps to the next new block.
+    assert.match(card, /const inSheet = !!sheet;\s*useEffect\(\(\) => \{\s*if \(inSheet && open && focusTitle\) titleRef\.current\?\.focus\(\);\s*\}, \[inSheet, open, focusTitle, block\.id\]\);/);
+    assert.doesNotMatch(card, /\}, \[sheet, open, focusTitle\]\);/);
+  });
+
   it('K2 — the sheet mounts BEFORE the station modal, so every door inside a block opens over it', () => {
     const sheetAt = src.indexOf('{sheetBlock && sheetWalk && (');
     const stationAt = src.indexOf('<StationModal');
@@ -155,17 +170,23 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     // Owner, §227 walk 2026-09-24: "aren't they effectively the same?" — they are now.
     const sheet = fn('BlockSheet');
     const station = fn('StationModal');
+    // The block sheet is a phone's alone, so it always carries the toggle. The station form carries
+    // it on a PHONE only (owner, 2026-09-28: "done editing in desktop can live only above the main
+    // sheet", then no ✎ either — a lone ✎ put the bin under the pointer that pressed it). On a desk
+    // the toolbar above the sheet is the one Edit / Done editing.
+    assert.match(sheet, /<SheetEditToggle readOnly=\{readOnly\} onEdit=\{onEdit\} onDoneEditing=\{onDoneEditing\} \/>/, 'block sheet: the head\'s one control');
+    assert.match(station, /\{phone && <SheetEditToggle readOnly=\{readOnly\} onEdit=\{onEdit\} onDoneEditing=\{onDoneEditing\} \/>\}/, 'station form: the toggle on a phone only');
     for (const [name, body] of [['block sheet', sheet], ['station form', station]]) {
-      assert.match(body, /<SheetEditToggle readOnly=\{readOnly\} onEdit=\{onEdit\} onDoneEditing=\{onDoneEditing\} \/>/, `${name}: the head's one control`);
       // The bin rides the head beside ✓ while writing (owner, 09-24: "so the user doesn't have to go
       // digging for the delete") — and it ASKS first, because the delete has no undo.
       assert.match(body, /\{!readOnly && \(?\s*<SheetDeleteButton label=\{label\}/, `${name}: the bin in the head, while writing`);
     }
-    // The foot's Done: a desk's station form keeps it; on a phone neither sheet has one (§231 walk,
-    // owner 2026-09-25) — the head's ← and the back gesture are the way back.
-    assert.doesNotMatch(sheet, /onClick=\{onClose\}>Done<\/button>/, 'block sheet (phone only): no Done');
-    assert.match(station, /\{!phone && <button type="button" className=\{styles\.btnPrimary\} onClick=\{onClose\}>Done<\/button>\}/, 'station form: Done on a desk only');
-    assert.match(station, /\{\(!phone \|\| walk\.total > 1\) && \(/, 'station form: no empty foot on a phone');
+    // NO Done in either foot, at any width: the phone's left on the §231 walk (owner 2026-09-25), the
+    // desk station form's on 2026-09-28 (owner: "why do we have 2 done buttons?") — it only closed,
+    // which × / ← and Escape do, and it sat under ✓ "Done editing", which does the opposite.
+    assert.doesNotMatch(sheet, />Done<\/button>/, 'block sheet: no Done');
+    assert.doesNotMatch(station, />Done<\/button>/, 'station form: no Done, a desk included');
+    assert.match(station, /\{walk\.total > 1 && \(\s*<div className=\{`\$\{styles\.modalFooter\} \$\{styles\.ppSheetFoot\}`\}>/, 'station form: the walk alone, and no empty foot');
     // …and the desk's open card asks the same question (owner, 2026-09-24) — no bin deletes unasked.
     assert.match(fn('BlockCard'), /\{!readOnly && !solo && <SheetDeleteButton label=\{label\} message=\{deleteMessage\} onDelete=\{onDelete\} \/>\}/);
     const bin = fn('SheetDeleteButton');
@@ -287,7 +308,7 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     assert.match(blank, /d\.minutes === DEFAULT_BLOCK_MINUTES/);
     const card = fn('BlockCard');
     assert.match(card, /\{sheet && onStartFromDrill && \(/);
-    assert.match(card, /if \(sheet && open && focusTitle\) titleRef\.current\?\.focus\(\);/);
+    assert.match(card, /if \(inSheet && open && focusTitle\) titleRef\.current\?\.focus\(\);/);
   });
 
   it('the stylesheet: the phone gutter is the clock alone, and the eyebrow is never uppercased', () => {
@@ -300,6 +321,14 @@ describe('practice plans on a phone · stage 1 (K1–K4)', () => {
     // The foot is the walk alone, centred; the Done it styled is gone (§231 walk).
     assert.match(css, /\.ppBlockSheet \.modalFooter \{ align-items: center; justify-content: center; \}/);
     assert.doesNotMatch(css, /\.ppBlockSheet \.modalFooter \.btnPrimary/);
+    // The station form's foot the same at every width — centred, and nothing left styling a Done.
+    assert.match(css, /\.ppSheetFoot \{ align-items: center; justify-content: center; \}/);
+    assert.doesNotMatch(css, /\.ppSheetFoot \.btnPrimary/);
+    // The toolbar's Edit / Done editing wears its neighbours' border (owner, 2026-09-28), and the
+    // Library toggle's press is a fill — never the `--white-45` outline Warm turns into dim TEXT ink.
+    assert.doesNotMatch(css, /\.ppEditDoor\[data-on='on'\]/);
+    assert.match(css, /\.ppToolbarEnd\[data-on='on'\] \{ color: var\(--text-primary\); background: rgba\(var\(--home-olive-rgb, var\(--logic-lime-rgb\)\), 0\.1\); \}/);
+    assert.doesNotMatch(css.slice(css.indexOf(".ppToolbarEnd[data-on='on']"), css.indexOf('}', css.indexOf(".ppToolbarEnd[data-on='on']"))), /--white-45/);
     // The rows' focus mark is the list row's, INSIDE the row — the global ring drew a second box
     // round the station list's edge (§231 walk, owner 2026-09-25). Quieted, never removed.
     assert.match(css, /\.ppTlClosed:focus-visible, \.ppTlAddRow:focus-visible, \.ppStRowDoor:focus-visible \{ outline: 2px solid var\(--primary-light\); outline-offset: -2px; \}/);

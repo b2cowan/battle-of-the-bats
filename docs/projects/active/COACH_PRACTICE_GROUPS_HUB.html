@@ -1,0 +1,1128 @@
+<title>Practice Groups</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* ── Hub chrome (the project-hub template, 2026-09-11) ── */
+:root{--paper:#f5f4ef;--white:#fff;--ink:#222b21;--muted:#5c6658;--line:#d3d9cd;--soft:#edf0e5;--lime:#d9f99d;--olive:#486224;--blue:#245f79;--error:#9e3030;--warn:#8a5a12;color-scheme:light}
+*{box-sizing:border-box}body{margin:0;background:#e7e9e1;color:var(--ink);font:15px/1.55 system-ui,-apple-system,'Segoe UI',sans-serif}
+button,input,select,textarea{font:inherit;color:inherit}button{cursor:pointer}a{color:var(--blue);text-underline-offset:3px}
+button:focus-visible,a:focus-visible,input:focus-visible,textarea:focus-visible,[role=button]:focus-visible{outline:3px solid var(--blue);outline-offset:3px}
+[hidden]{display:none!important}
+h1{font-size:27px;line-height:1.2;letter-spacing:-.7px;margin:4px 0 8px;text-wrap:balance}h2{font-size:19px;margin:26px 0 10px;text-wrap:balance}h3{font-size:15px;margin:18px 0 6px}
+p{margin:0 0 12px}.sub{font-size:14px;color:var(--muted);margin:0}.meta{font-size:12px;color:var(--muted)}
+.button{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:9px 15px;gap:8px;border:1px solid var(--line);border-radius:7px;background:var(--white);color:var(--ink);font-size:14px;font-weight:650;text-decoration:none}
+.primary{background:var(--lime);border-color:#b9d88c}
+
+.hubbar{background:#222d1e;color:#fff;padding:13px 25px;display:flex;gap:14px 24px;align-items:center;flex-wrap:wrap}.hubbar small{color:#d5dfcc}
+.hubtitle{margin-right:auto}
+.hubactions{display:flex;gap:8px;flex-wrap:wrap}
+.hubactions button{background:#3a4932;color:#fff;border:1px solid #748267;border-radius:6px;padding:8px 13px;min-height:44px}
+.hubactions button[aria-pressed=true]{background:var(--lime);color:#1c2417;border-color:var(--lime);font-weight:700}
+.stagestrip{display:flex;gap:3px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+.stage{padding:6px 11px;font-size:12px;font-weight:700;color:#9fac8f;border-radius:20px;white-space:nowrap;cursor:default}
+.stage.done{color:#e7f0da;background:#3a4932}.stage.current{color:#1c2417;background:var(--lime)}
+.hubtabs{display:flex;gap:24px;overflow:auto;white-space:nowrap;padding:0 24px;background:var(--paper);border-bottom:1px solid var(--line)}
+.hubtabs button{min-height:46px;display:flex;align-items:center;padding:9px 0;color:var(--muted);border:0;border-bottom:3px solid transparent;background:transparent;font-size:14px}
+.hubtabs button[aria-pressed=true]{border-bottom-color:var(--olive);font-weight:700;color:var(--ink)}
+.walk{display:flex;gap:5px;flex-wrap:wrap;padding:10px 24px;background:#fafbf7;border-bottom:1px solid var(--line)}
+.walk a{min-height:44px;display:flex;align-items:center;padding:8px 12px;color:var(--muted);text-decoration:none;font-size:13px;border-radius:6px}
+.walk a[aria-current=page]{background:var(--soft);color:var(--ink);font-weight:700}
+
+.stagewrap{max-width:1500px;margin:0 auto;padding:22px 24px 40px}
+.screenhead{max-width:880px;margin:0 0 16px}
+.eyebrow{font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12.5px;color:var(--muted);margin:8px 0 0;align-items:center}
+.cap{font-size:14px;font-weight:700;margin:22px 0 8px;display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline}
+.cap .k{font:500 11.5px/1.4 'IBM Plex Mono',ui-monospace,monospace;color:var(--muted)}
+.fw{overflow-x:auto;overflow-y:hidden;border:1px solid #c6cebc;border-radius:10px;background:#dfe2d8;padding:16px;position:relative}
+.fw>.pf{transform-origin:0 0}
+.row2{display:flex;flex-wrap:wrap;gap:22px;align-items:flex-start}
+.row2>div{min-width:0}
+.intent{margin:14px 0 0;padding:14px 18px;background:#fafbf7;border:1px solid var(--line);border-radius:8px;font-size:13.5px;color:var(--muted);max-width:900px}.intent strong{color:var(--ink)}
+.says{max-width:880px;font-size:14.5px;color:var(--ink)}
+.says li{margin:4px 0}
+
+.docpage{max-width:780px;margin:0 auto;padding:32px 36px 48px}
+.docpage .note{padding:14px 16px;border-left:3px solid var(--blue);background:#edf5f8;font-size:14px;margin:0 0 18px;border-radius:0 6px 6px 0}
+.docpage table{border-collapse:collapse;width:100%;font-size:14px;margin:0 0 16px}
+.docpage th,.docpage td{text-align:left;vertical-align:top;padding:8px 10px;border-bottom:1px solid var(--line)}
+.docpage th{font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.docpage li{margin:5px 0}
+.docpage code{font:12.5px 'IBM Plex Mono',ui-monospace,monospace;background:var(--soft);padding:1px 4px;border-radius:3px}
+.tblwrap{overflow-x:auto}
+
+/* decisions */
+.decisionrow{border:1px solid var(--line);border-radius:10px;background:white;padding:16px 18px;margin-bottom:12px}
+.decisionrow .dhead{display:flex;justify-content:space-between;gap:12px;align-items:start;margin-bottom:6px}
+.decisionrow .rec{font-size:14px;background:#f3f7ea;border:1px solid #d6e3bd;border-radius:6px;padding:8px 11px;margin:8px 0}
+.decisionrow .seeon{font-size:12.5px;color:var(--muted)}
+.tag{display:inline-flex;padding:4px 8px;font-size:12px;background:var(--soft);border:1px solid var(--line);border-radius:5px;white-space:nowrap}
+.tag.open{background:#f4ecd9;border-color:#e0c98a}.tag.ruled{background:#e3f3d4;border-color:#b9d88c}
+.rulepick{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+.rulepick button{border:1px solid var(--line);background:white;border-radius:20px;padding:7px 13px;min-height:40px;font-size:13px}
+.rulepick button[aria-pressed=true]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.decisionrow textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:8px 10px;margin-top:8px;resize:vertical;font-size:14px}
+.signin{border:1px solid var(--line);background:#fafbf7;border-radius:10px;padding:14px 18px;font-size:13px;margin:16px 0 20px}
+.qaprogress{font-weight:700;margin-bottom:16px}
+.qapart{border:1px solid var(--line);border-radius:10px;background:white;padding:18px 20px;margin-bottom:16px}
+.qapart .sub{margin:0 0 6px}
+.qastep{display:flex;gap:10px;align-items:start;padding:8px 0;font-size:14px}
+.qastep input{width:20px;height:20px;min-height:20px;accent-color:var(--olive);margin-top:2px;flex-shrink:0}
+.verdictrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px;font-size:13px}
+.verdictrow button{border:1px solid var(--line);background:white;border-radius:6px;padding:8px 12px;min-height:40px;font-size:13px}
+.verdictrow button[aria-pressed=true]{background:var(--soft);font-weight:700}
+.qapart textarea{width:100%;border:1px solid #aab6a1;border-radius:6px;padding:9px 11px;margin-top:8px;resize:vertical}
+#summaryOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+#pasteOut{width:100%;border:1px solid var(--line);border-radius:8px;padding:12px;margin-top:14px;font:12px/1.5 ui-monospace,monospace}
+
+/* clickable highlights */
+.mk{display:inline-block;font:800 10px/1.4 system-ui,sans-serif;letter-spacing:.6px;text-transform:uppercase;padding:2px 6px;border-radius:4px;vertical-align:middle;margin-left:6px;cursor:pointer;white-space:nowrap;font-style:normal}
+.mk[data-k=new]{background:#d9f99d;color:#2b3f12;border:1px solid #9fc46a}.mk[data-k=re]{background:#e3edf2;color:#1d4a5e;border:1px solid #9fbfcf}.mk[data-k=un]{background:#eeeee9;color:#5c6658;border:1px solid #c9cfc2}
+.mk:hover{filter:brightness(.94)}
+.fl{cursor:pointer;color:#fff;background:var(--error);border:0;font:800 10px/1.4 system-ui,sans-serif;border-radius:4px;padding:2px 6px;letter-spacing:.5px;margin-left:6px;vertical-align:middle;white-space:nowrap}.fl:hover{filter:brightness(1.1)}
+.fl.fix{background:var(--olive);letter-spacing:.3px;font-weight:700}
+.explain h3{margin:16px 0 4px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--muted)}.explain p{font-size:14.5px}.explain .here{background:#fafbf7;border:1px solid var(--line);border-radius:6px;padding:10px 12px}
+dialog{padding:0;border:1px solid var(--line);border-radius:12px;max-width:580px;width:calc(100% - 30px);background:var(--paper);color:var(--ink)}dialog::backdrop{background:#16201880}
+.dialoghead{padding:16px 22px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:12px}.dialoghead h2{margin:0;font-size:18px}.dialogbody{padding:20px 22px}
+
+/* ── The portal, drawn in its own materials (warm theme tokens, globals.css) ── */
+.pf{--pp:#F8F4ED;--card:#fff;--ink:#241E15;--ink2:#4A4235;--dim:#615A54;--faint:#8B847B;--ln:rgba(70,55,30,.12);--ln2:rgba(70,55,30,.2);--ol:#57651E;--ols:rgba(87,101,30,.10);--fill:rgba(70,55,30,.08);--amb:#835006;
+  font-family:Inter,system-ui,-apple-system,sans-serif;color:var(--ink);font-size:15px;line-height:1.45;background:var(--pp);position:relative;display:inline-block;vertical-align:top;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.18);overflow:hidden;text-align:left;-webkit-font-smoothing:antialiased}
+.pf *{box-sizing:border-box}.pf p{margin:0}
+.pf.w1440{width:1440px}.pf.w960{width:960px}.pf.w820{width:820px}.pf.ph{width:390px}
+.pf u{text-decoration:none;color:var(--ol);font-weight:600}
+.pf .top{height:48px;background:#fff;border-bottom:1px solid var(--ln);display:flex;align-items:center;padding:0 18px;justify-content:space-between}
+.pf .brand{font-family:"Barlow Condensed",sans-serif;font-weight:700;letter-spacing:.14em;font-size:13px;text-transform:uppercase;color:var(--ink2)}
+.pf .topr{display:flex;gap:16px;align-items:center;color:var(--ink2)}
+.pf .av{width:30px;height:30px;border-radius:50%;background:#EAE6D8;border:1px solid var(--ln2);display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700}
+.pf .bodyrow{display:flex}
+.pf .side{width:52px;flex:none;border-right:1px solid var(--ln);background:var(--pp)}
+.pf .main{flex:1;min-width:0}
+.pf .mast{background:#fff;border-bottom:1px solid var(--ln);display:flex;justify-content:space-between;align-items:center;padding:12px 40px}
+.pf .team{font-size:20px;font-weight:700;letter-spacing:-.01em}
+.pf .season{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--dim);margin-top:2px}
+.pf .today{font-weight:700;font-size:15px}
+.pf .ground{background-image:linear-gradient(rgba(70,55,30,.055) 1px,transparent 1px),linear-gradient(90deg,rgba(70,55,30,.055) 1px,transparent 1px);background-size:50px 50px;padding:30px 0 60px}
+.pf .col{width:1156px;margin:0 auto}
+.pf .phead{display:flex;justify-content:space-between;align-items:flex-end;margin:0 0 18px;width:960px}
+.pf .back{font-size:13.5px;color:var(--ol);font-weight:600}
+.pf h1{font-family:"Barlow Condensed",sans-serif;font-weight:800;font-size:26px;margin:4px 0 2px;letter-spacing:.005em}
+.pf .psub{font-size:14px;color:var(--dim)}
+.pf .pacts{display:flex;gap:8px}
+.pf .btn{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--ln2);background:#fff;border-radius:8px;padding:8px 14px;font-size:14px;font-weight:600;color:var(--ink);white-space:nowrap}
+.pf .btn.ink{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pf .btn.lime{background:#D9F99D;border-color:#b9d88c}
+.pf .sheet{width:960px;background:#fff;border:1px solid var(--ln2);border-radius:10px;box-shadow:0 1px 2px rgba(70,55,30,.05),0 6px 18px rgba(70,55,30,.07);padding:26px 34px 34px}
+.pf .goal{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.pf .goal b{font-size:15px}
+.pf .goal .gin{flex:1;border:1px solid transparent;border-bottom:1px dashed var(--ln2);padding:6px 2px;font-size:15px}
+.pf .fold{border-top:1px solid var(--ln);padding:2px 0}
+.pf .fold+.fold{border-top:1px solid var(--ln)}
+.pf .fh{display:flex;align-items:center;gap:8px;min-height:44px;font-size:14px}
+.pf .fh .chev{color:var(--dim);width:14px;text-align:center}
+.pf .fh b{font-weight:700}
+.pf .fh .fs{color:var(--dim)}
+.pf .fh .fr{margin-left:auto;font-size:13.5px;color:var(--dim)}
+.pf .fb{padding:2px 0 14px 22px;display:flex;flex-direction:column;gap:10px}
+.pf .grp{display:grid;grid-template-columns:190px minmax(0,1fr) auto;gap:4px 16px;padding:10px 12px;border:1px solid var(--ln);border-radius:8px;background:var(--pp)}
+.pf .grp .gn b{display:block;font-size:14.5px}
+.pf .grp .gn span{font-size:13px;color:var(--dim)}
+.pf .grp .gl2{font-size:13.5px;min-width:0}
+.pf .grp .gl2 p+p{margin-top:2px}
+.pf .q{color:var(--dim)}.pf .q i{color:var(--faint)}
+.pf .use{font-size:13px;color:var(--dim)}
+.pf .grp .ed{font-size:13.5px;align-self:start;white-space:nowrap}
+.pf .foldadd{font-size:13.5px;color:var(--dim);display:flex;gap:6px;align-items:center;min-height:32px}
+/* the timeline */
+.pf .tl{margin-top:6px}
+.pf .tr{display:grid;grid-template-columns:88px minmax(0,1fr)}
+.pf .tg{font-family:"IBM Plex Mono",monospace;font-size:13.5px;line-height:1.4;color:var(--dim);text-align:right;padding:13px 10px 13px 0;border-right:2px solid var(--ink);white-space:nowrap}
+.pf .tg small{display:block;font-size:12px;color:var(--faint)}
+.pf .tg .mv{display:block;color:var(--faint);font-size:12px;margin-top:4px;letter-spacing:2px}
+.pf .shut{padding:10px 8px 12px 18px;border-bottom:1px dotted var(--ln2);min-width:0}
+.pf .shut .t{font-weight:700;font-size:15px}
+.pf .shut .d{color:var(--dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pf .shut .m{font-size:13.5px;color:var(--faint)}
+.pf .shut .m b{color:var(--ink2);font-weight:600}
+.pf .ghost{padding:12px 0 12px 18px;display:flex;align-items:center;gap:12px;font-size:13.5px;color:var(--dim);font-weight:600}
+.pf .ob{margin:6px 0 8px 12px;background:var(--pp);border:1px solid var(--ln2);border-radius:8px;min-width:0}
+.pf .obh{display:flex;align-items:center;gap:10px;padding:10px 12px;border-bottom:1px solid var(--ln)}
+.pf .obh .ti{flex:1;background:#fff;border:1px solid var(--ln2);border-radius:8px;padding:9px 14px;font-size:16px;font-weight:700}
+.pf .ic{width:34px;height:34px;display:inline-flex;align-items:center;justify-content:center;color:var(--dim);font-size:15px}
+.pf .obb{padding:14px 16px 16px;display:flex;flex-direction:column;gap:13px}
+.pf .flab{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);margin-bottom:6px}
+.pf .crow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-size:14px;color:var(--dim)}
+.pf .qc{display:inline-flex;align-items:center;justify-content:center;min-width:40px;padding:5px 12px;border-radius:999px;border:1px solid var(--ln2);background:#fff;font-size:14px;font-weight:600;color:var(--ink2);white-space:nowrap}
+.pf .qc.on{background:var(--ink);color:#fff;border-color:var(--ink)}
+.pf .fin{background:#fff;border:1px solid var(--ln2);border-radius:8px;padding:9px 14px;font-size:15px;min-height:42px}
+.pf .fin.num{width:88px}
+.pf .fin.ta{min-height:78px}
+.pf .fin.ph0{color:#9A938B}
+.pf .who{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 6px;font-size:15px}
+.pf .who .sep{color:var(--faint)}
+.pf .rb{font-size:14px;line-height:1.55}
+.pf .rb p+p{margin-top:2px}
+.pf .rb .pl{font-size:14px}
+.pf .rb .doorl{margin-top:6px;font-size:13.5px;color:var(--dim)}
+.pf .doors{display:flex;flex-wrap:wrap;align-items:center;gap:4px 8px;font-size:14px;font-weight:600;color:var(--dim)}
+.pf .doors .rt{margin-left:auto}
+.pf .strip{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:14px;color:var(--dim)}
+.pf .stcols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.pf .stcol{background:#fff;border:1px solid var(--ln2);border-radius:8px;padding:10px 12px 11px;display:flex;flex-direction:column;gap:3px;font-size:13.5px;min-width:0}
+.pf .stcol b{font-size:14.5px}
+.pf .stcol .l{color:var(--dim)}
+.pf .stcol .pp2{color:var(--ink2)}
+.pf .stcol.add{border-style:dashed;background:transparent;justify-content:center;align-items:flex-start}
+/* menus + modals */
+.pf .dim{position:absolute;inset:0;background:rgba(36,30,21,.38)}
+.pf .menu{position:absolute;z-index:3;width:330px;background:#fff;border:1px solid var(--ln2);border-radius:10px;box-shadow:0 12px 30px rgba(36,30,21,.22);padding:6px 0;font-size:14px}
+.pf .menu .mh{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);padding:8px 14px 4px}
+.pf .menu .mi{padding:8px 14px;min-height:40px;display:flex;flex-direction:column;justify-content:center}
+.pf .menu .mi.on{background:var(--ols)}
+.pf .menu .mi small{color:var(--dim);font-size:12.5px}
+.pf .menu .msep{height:1px;background:var(--ln);margin:5px 0}
+.pf .mod{position:relative;z-index:2;background:#fff;border:1px solid var(--ln2);border-radius:12px;box-shadow:0 18px 44px rgba(36,30,21,.28);overflow:hidden}
+.pf .modh{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--ln)}
+.pf .modh .nm{flex:1;border:1px solid var(--ln2);border-radius:8px;padding:8px 12px;font-size:17px;font-weight:700;background:var(--pp)}
+.pf .modh .stp{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--dim);white-space:nowrap}
+.pf .modb{padding:12px 14px 14px;display:flex;flex-direction:column;gap:12px}
+.pf .modf{display:flex;align-items:center;gap:12px;padding:10px 14px;border-top:1px solid var(--ln);font-size:13.5px}
+.pf .drawrow{display:flex;align-items:center;gap:6px 8px;flex-wrap:wrap;font-size:13.5px;color:var(--dim)}
+.pf .seg{display:inline-flex;gap:4px}
+.pf .sel{border:1px solid var(--ln2);border-radius:8px;padding:4px 26px 4px 10px;font-weight:600;color:var(--ink);background:#fff;position:relative}
+.pf .sel:after{content:"▾";position:absolute;right:8px;color:var(--dim)}
+.pf .gcols{display:grid;grid-template-columns:repeat(auto-fill,minmax(144px,1fr));gap:10px}
+.pf .gcol{display:flex;flex-direction:column;gap:7px;min-height:118px;padding:9px 10px 8px;border-radius:10px;border:1px solid var(--ln2);background:var(--pp);min-width:0}
+.pf .gcol.pool{border-style:dashed;background:#fff}
+.pf .gcol .gh{font-size:13.5px;font-weight:700;display:flex;align-items:center;gap:6px;min-height:28px}
+.pf .gcol .gh .gname{flex:1;border:1px solid var(--ln2);border-radius:6px;padding:3px 8px;background:#fff;font-weight:600}
+.pf .gcol .gh .pooln{color:var(--dim);font-weight:600}
+.pf .chips{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.pf .chp{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--ln2);border-radius:999px;background:#fff;padding:4px 10px;font-size:13.5px;font-weight:600}
+.pf .chp i{font-style:normal;color:var(--faint);font-size:11px;letter-spacing:-1px}
+.pf .chp.nr{border-style:dashed;color:var(--dim);background:var(--pp)}
+.pf .nrq{font-size:12px;color:var(--faint);font-style:italic}
+.pf .gfoot{margin-top:auto;display:flex;justify-content:flex-end;color:var(--faint)}
+.pf .search{border:1px solid var(--ln2);border-radius:8px;padding:8px 12px;color:#9A938B;font-size:14px;background:#fff}
+.pf .pick{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 16px;align-items:center;padding:11px 12px;border:1px solid var(--ln);border-radius:8px;background:var(--pp)}
+.pf .pick b{font-size:14.5px}
+.pf .pick .m2{font-size:13px;color:var(--dim)}
+.pf .pick .m3{font-size:13.5px;color:var(--ink2)}
+.pf .banner{font-size:13.5px;background:var(--ols);border:1px solid rgba(87,101,30,.25);border-radius:8px;padding:8px 12px}
+/* phone */
+.pf.ph .top{height:46px;padding:0 14px}
+.pf.ph .mast{padding:11px 16px;display:block}
+.pf.ph .team{font-size:18px}
+.pf.ph .ground{padding:14px 0 30px;background-size:40px 40px}
+.pf.ph .pcol{padding:0 12px}
+.pf.ph .sheet{width:auto;padding:14px 12px 16px;border-radius:10px}
+.pf.ph .tr{grid-template-columns:70px minmax(0,1fr)}
+.pf.ph .tg{font-size:12.5px;padding:10px 8px 10px 0}
+.pf.ph .shut{padding:9px 4px 10px 12px;min-height:56px}
+.pf.ph .shut .d{font-size:14px}
+.pf.ph .grp{grid-template-columns:minmax(0,1fr) auto;padding:9px 10px}
+.pf.ph .grp .gl2{grid-column:1 / -1}
+.pf.ph .fb{padding-left:4px}
+.pf .psheet{background:#fff;min-height:100%}
+.pf .psh{display:flex;align-items:center;gap:6px;padding:6px 8px;border-bottom:1px solid var(--ln)}
+.pf .psh .bk{width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;font-size:20px;color:var(--ink2)}
+.pf .psh .eb{font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:600;color:var(--dim);line-height:1.25;flex:1}
+.pf .psh .eb b{color:var(--ink)}
+.pf .psb{padding:14px 14px 18px;display:flex;flex-direction:column;gap:14px}
+.pf .psb .fin{background:var(--pp)}
+.pf .psb .ttl{font-size:20px;font-weight:700}
+.pf .psf{border-top:1px solid var(--ln);padding:10px;display:flex;justify-content:center;font-family:"IBM Plex Mono",monospace;font-size:14px;color:var(--ink2);gap:18px}
+.pf .sheetmenu{position:absolute;left:0;right:0;bottom:0;z-index:3;background:#fff;border-radius:14px 14px 0 0;box-shadow:0 -10px 30px rgba(36,30,21,.25);padding:8px 0 16px}
+.pf .sheetmenu .grab{width:40px;height:4px;border-radius:2px;background:var(--ln2);margin:4px auto 8px}
+.pf .sheetmenu .mi{min-height:48px;padding:8px 18px;display:flex;flex-direction:column;justify-content:center;font-size:15px}
+.pf .sheetmenu .mi small{font-size:13px;color:var(--dim)}
+.pf .sheetmenu .mh{font-size:11.5px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--dim);padding:8px 18px 2px}
+.pf .sheetmenu .msep{height:1px;background:var(--ln);margin:6px 0}
+.pf .drawsum{display:flex;align-items:center;gap:6px;min-height:44px;padding:0 12px;border:1px solid var(--ln2);border-radius:8px;background:#fff;font-size:13.5px;color:var(--dim)}
+.pf .drawsum b{color:var(--ink)}
+.pf .drawsum u{margin-left:auto}
+.pf .prow{border:1px solid var(--ln2);border-radius:10px;background:var(--pp);padding:8px 10px 10px}
+.pf .prow.pool{border-style:dashed;background:#fff}
+.pf .prow .gh{display:flex;align-items:center;min-height:32px;font-weight:700;font-size:15px;gap:6px}
+.pf .prow .gh span{font-weight:500;font-size:13.5px;color:var(--dim)}
+.pf .prow .gh .more{margin-left:auto;color:var(--dim);font-weight:700;letter-spacing:1px}
+.pf .prow .chp{min-height:36px;font-size:14px}
+/* the field screen */
+.pf .run{background:#fff;padding:16px 18px 20px;display:flex;flex-direction:column;gap:14px;min-height:760px}
+.pf .run .re{font-family:"IBM Plex Mono",monospace;font-size:13px;color:var(--dim)}
+.pf .run .rt{font-size:30px;font-weight:800;line-height:1.1;letter-spacing:-.01em}
+.pf .run .clock{font-family:"IBM Plex Mono",monospace;font-size:44px;font-weight:600;letter-spacing:-.02em;line-height:1}
+.pf .run .clock small{font-size:14px;font-weight:500;color:var(--dim);letter-spacing:0;margin-left:6px}
+.pf .run .rn{font-size:15.5px;color:var(--ink2)}
+.pf .pairs{border-top:1px solid var(--ln);padding-top:10px}
+.pf .pairs .flab{margin-bottom:4px}
+.pf .pairs p{font-size:18px;font-weight:600;padding:5px 0;border-bottom:1px dotted var(--ln2)}
+.pf .pairs p span{color:var(--faint);font-weight:500;font-size:14px;margin-right:8px;font-family:"IBM Plex Mono",monospace}
+.pf .pairs .q{font-size:14px;font-weight:500;border:0}
+.pf .run .nx{font-size:14px;color:var(--dim)}
+.pf .run .big{min-height:56px;border-radius:10px;background:#D9F99D;border:1px solid #b9d88c;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:700}
+.pf .run .sm{min-height:44px;display:flex;align-items:center;justify-content:center;font-weight:600;color:var(--ink2)}
+.pf .youon{display:inline-block;font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;background:var(--ols);color:var(--ol);border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:middle}
+/* the printed sheet */
+.pf.paper{background:#fff;font-size:11.5px;line-height:1.45;width:640px;padding:28px 32px}
+.pf.paper .ph1{font-weight:800;font-size:17px}
+.pf.paper .ph2{color:var(--dim);font-size:11.5px;margin-bottom:14px}
+.pf.paper .prw{display:grid;grid-template-columns:84px minmax(0,1fr);}
+.pf.paper .pg{font-family:"IBM Plex Mono",monospace;text-align:right;padding:8px 10px 8px 0;border-right:2px solid var(--ol);color:var(--ink2)}
+.pf.paper .pg small{display:block;color:var(--dim)}
+.pf.paper .pb{padding:8px 0 10px 14px;border-bottom:1px solid var(--ln)}
+.pf.paper .pb b{font-size:12.5px}
+.pf.paper .pb .pm{color:var(--dim)}
+.pf.paper .pb .pr{margin-top:3px}
+</style>
+
+<div class="hubbar">
+  <div class="hubtitle"><strong>Groups at every level of a practice — project hub</strong><br><small>Drawn 28 Sep · ruled 28 Sep (G1–G8 as drawn; G9–G10 on trying it) · built on dev 28 Sep · QA walk §247 on the "QA Walk" tab</small></div>
+  <ul class="stagestrip" aria-label="Project lifecycle">
+    <li class="stage done" title="Drawn 2026-09-28 on this hub">Design</li>
+    <li class="stage done" title="Ruled 2026-09-28 — owner: &quot;looks good, go ahead&quot; (G1–G8 as drawn)">Plan</li>
+    <li class="stage current" title="Built on dev 2026-09-28 — see the Full Plan tab, &quot;Build record&quot;">Build</li>
+    <li class="stage" title="—">Review</li>
+    <li class="stage" title="—">QA</li>
+    <li class="stage" title="—">Shipped</li>
+  </ul>
+  <div class="hubactions">
+    <button type="button" id="viewDesk" aria-pressed="true">Desktop</button>
+    <button type="button" id="viewPhone" aria-pressed="false">Phone</button>
+    <button type="button" id="trueSize" aria-pressed="false">True size</button>
+  </div>
+</div>
+
+<nav class="hubtabs" aria-label="Project documents">
+  <button type="button" data-hub="mockup" aria-pressed="true">Mockup</button>
+  <button type="button" data-hub="brief" aria-pressed="false">PM Brief</button>
+  <button type="button" data-hub="plan" aria-pressed="false">Full Plan</button>
+  <button type="button" data-hub="decisions" aria-pressed="false">Decisions</button>
+  <button type="button" data-hub="qa" aria-pressed="false">QA Walk</button>
+</nav>
+
+<section id="hub-mockup">
+  <nav class="walk" aria-label="Mockup walkthrough">
+    <a href="#s1">1 · Today</a>
+    <a href="#s2">2 · The page, after</a>
+    <a href="#s3">3 · A block in pairs</a>
+    <a href="#s4">4 · The Groups room</a>
+    <a href="#s5">5 · Stations</a>
+    <a href="#s6">6 · From another practice</a>
+    <a href="#s7">7 · On the field and on paper</a>
+  </nav>
+  <div class="stagewrap">
+
+<!-- ═══════════════ 1 · TODAY ═══════════════ -->
+<section class="screen" id="s1">
+  <div class="screenhead">
+    <div class="eyebrow">Before · the plan page as it is</div>
+    <h1 tabindex="-1">Today: a block can name players, but it cannot split them</h1>
+    <p class="sub">Your “Warm up pitchers” block, drawn the way it reads now. Groups exist in the product, but they sit behind a door this block does not have. Click the red flags for what the code does.</p>
+    <div class="legend">Tags: <span class="mk" data-k="new">New</span> not in the product today · <span class="mk" data-k="re">Restyled</span> exists, changes · <span class="mk" data-k="un">Unchanged</span> drawn as it is · <button type="button" class="fl" data-finding="F01" data-here="The legend. Every red flag on these screens opens the same kind of explanation.">F01</button> a finding about today</div>
+  </div>
+
+  <div class="v-desk">
+    <div class="cap">The whole page at 1440 <span class="k">desktop · chrome simplified, the sheet is what is in scope</span></div>
+    <div class="fw fit"><div class="pf w1440">
+      <div class="top"><span class="brand">Coaches Portal</span><span class="topr"><span>🔔</span><span class="av">BC</span></span></div>
+      <div class="bodyrow"><div class="side"></div><div class="main">
+        <div class="mast"><div><div class="team">Milton Bats U13 Purple</div><div class="season">2027 Season · <b>3-0</b></div></div><div class="today">Today 6:00 p.m. · Practice</div></div>
+        <div class="ground"><div class="col">
+          <div class="phead"><div><div class="back">← Practice plans</div><h1>Practice plan</h1><div class="psub">Thu, Oct 1 · 6:00–7:30 p.m. · Milton Sports Park, Diamond 2</div></div><div class="pacts"><span class="btn">Send to staff</span><span class="btn">Print</span><span class="btn">Run practice</span></div></div>
+          <div class="sheet">
+            <div class="goal"><b>Tonight:</b><span class="gin">Loose arms before anyone throws hard</span></div>
+            <div class="fold"><div class="fh"><span class="chev">▸</span><b>About this practice</b><span class="fs">· Throwing · Pitching · 6 things to bring</span></div></div>
+            <div class="tl">
+              <div class="tr"><div class="tg">6:00 p.m.<small>10 min</small><span class="mv">⠿</span></div>
+                <div class="shut"><div class="t">Warm-up</div><div class="d">Run and stretching. Light arm warm-up.</div><div class="m">Whole team</div></div></div>
+              <div class="tr"><div class="tg">6:10 p.m.<small>15 min</small><span class="mv">⠿</span></div>
+                <div class="ob">
+                  <div class="obh"><span class="ti">Warm up pitchers</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+                  <div class="obb">
+                    <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num">15</span> min · <span class="qc">Rest of practice</span> ends 6:25 p.m.</div></div>
+                    <div><div class="flab">Players <button type="button" class="fl" data-finding="F01" data-here="Warm up pitchers is a block with no stations. Its Players line offers Whole team or Choose players, and nothing else. There is no way to say who throws to whom.">F01</button></div><div class="who"><b>Whole team</b><span class="sep">·</span><u>Choose players…</u></div></div>
+                    <div><div class="flab">What you're doing</div><div class="fin ta ph0">What happens, and how it's set up</div></div>
+                    <div><div class="flab">What you're watching for</div><div class="fin ph0">What good looks like here</div></div>
+                    <div class="doors"><u>+ Staff</u> · <u>+ Coaching points</u> · <u>+ Equipment</u> · <u>+ Stations</u> <button type="button" class="fl" data-finding="F04" data-here="+ Stations is the only road to groups today: add two stations, leave Groups rotate pressed, and the Groups room appears. A block that is one activity has no road there.">F04</button><span class="rt"><u>Save to my drills…</u></span></div>
+                  </div>
+                </div></div>
+              <div class="tr"><div class="tg">6:25 p.m.<small>next</small></div><div class="ghost"><span class="btn">+ Add a block</span>15 min · or <u>start from a drill</u></div></div>
+            </div>
+          </div>
+        </div></div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <div class="v-phone">
+    <div class="cap">The same block on a phone <span class="k">390 · the block opens as its own full-screen sheet (phone stage 1)</span></div>
+    <div class="fw"><div class="pf ph">
+      <div class="psheet">
+        <div class="psh"><span class="bk">←</span><span class="eb"><b>Block 2 of 2</b><br>6:10 p.m. · 15 min</span><span class="ic">🗑</span></div>
+        <div class="psb">
+          <div class="fin ttl">Warm up pitchers</div>
+          <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span></div></div>
+          <div><div class="flab">Players <button type="button" class="fl" data-finding="F01" data-here="On a phone the block sheet carries the same Players line: Whole team or Choose players.">F01</button></div><div class="who"><b>Whole team</b><span class="sep">·</span><u>Choose players…</u></div></div>
+          <div><div class="flab">What you're doing</div><div class="fin ta ph0">What happens, and how it's set up</div></div>
+          <div><div class="flab">What you're watching for</div><div class="fin ph0">What good looks like here</div></div>
+          <div class="doors"><u>+ Staff</u> · <u>+ Coaching points</u> · <u>+ Equipment</u> · <u>+ Stations</u></div>
+        </div>
+        <div class="psf">‹ 2 of 2 ›</div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="intent"><strong>What this screen shows:</strong> the product already has a good Groups room (draw by count or by size, drag between groups, a “Not in a group” pool), but it only opens from a block with two or more stations that rotate. The four findings are the whole gap: <button type="button" class="fl" data-finding="F01" data-here="The Players line on a block with no stations.">F01</button> <button type="button" class="fl" data-finding="F02" data-here="Two rotating blocks in one practice.">F02</button> <button type="button" class="fl" data-finding="F03" data-here="Batteries rarely change week to week, and there is no way to bring them forward.">F03</button> <button type="button" class="fl" data-finding="F04" data-here="A station that does not rotate.">F04</button></div>
+</section>
+
+<!-- ═══════════════ 2 · THE PAGE, AFTER ═══════════════ -->
+<section class="screen" id="s2" hidden>
+  <div class="screenhead">
+    <div class="eyebrow">After · the whole page</div>
+    <h1 tabindex="-1">Groups belong to the practice. Any block can use them.</h1>
+    <p class="sub">One list of tonight’s groups at the top, and one line on each block saying which groups it uses. Warm-up and Partner throwing share the same pairs, the bullpen station has its batteries, and the circuit uses its own three groups.</p>
+  </div>
+
+  <div class="v-desk">
+    <div class="cap">The whole page at 1440, after <span class="k">desktop · same practice, filled in · Partner throwing open</span></div>
+    <div class="fw fit"><div class="pf w1440">
+      <div class="top"><span class="brand">Coaches Portal</span><span class="topr"><span>🔔</span><span class="av">BC</span></span></div>
+      <div class="bodyrow"><div class="side"></div><div class="main">
+        <div class="mast"><div><div class="team">Milton Bats U13 Purple</div><div class="season">2027 Season · <b>3-0</b></div></div><div class="today">Today 6:00 p.m. · Practice</div></div>
+        <div class="ground"><div class="col">
+          <div class="phead"><div><div class="back">← Practice plans</div><h1>Practice plan</h1><div class="psub">Thu, Oct 1 · 6:00–7:30 p.m. · Milton Sports Park, Diamond 2</div></div><div class="pacts"><span class="btn">Send to staff</span><span class="btn">Print</span><span class="btn">Run practice</span></div></div>
+          <div class="sheet">
+            <div class="goal"><b>Tonight:</b><span class="gin">Loose arms before anyone throws hard</span></div>
+            <div class="fold"><div class="fh"><span class="chev">▸</span><b>About this practice</b><span class="fs">· Throwing · Pitching · 6 things to bring</span><span class="mk" data-k="un" data-note="The About fold is unchanged. The new Groups fold sits under it and uses the same fold grammar: a chevron, a bold title and a quiet summary.">Unchanged</span></div></div>
+            <div class="fold">
+              <div class="fh"><span class="chev">▾</span><b>Groups</b><span class="fs">· 3 for tonight</span><span class="mk" data-k="new" data-note="NEW — the practice level. Every set of groups made tonight lives here, whichever block made it. It appears the moment the first set exists (or earlier, from the quiet “+ Groups for tonight” line, decision G7). Folded, it reads as one line; open, one row per set of groups.">New</span><button type="button" class="fl fix" data-finding="F02" data-here="One list for the practice. A second block uses a set that is already here instead of drawing again.">fixes F02</button><span class="fr"><u>+ Make groups</u> · <u>From another practice…</u><span class="mk" data-k="new" data-note="NEW — the two ways to add a set of groups up front, before any block asks for one. “From another practice…” is decision G6 (screen 6).">New</span></span></div>
+              <div class="fb">
+                <div class="grp"><div class="gn"><b>Throwing partners</b><span>5 pairs</span></div>
+                  <div class="gl2"><p>Avery &amp; Gray · Blake &amp; Harper · Casey &amp; Indigo · Devon &amp; Jules · Emerson &amp; Frankie</p><p class="q">Not in a pair · Kai, Logan <i>(haven't replied yes)</i></p><p class="use">Used in <u>Warm-up</u> and <u>Partner throwing</u><span class="mk" data-k="new" data-note="NEW — where each set is used, by block (and by station). The names are links that open that block. This is how the coach knows a change to these pairs reaches two blocks (decision G1).">New</span></p></div>
+                  <u class="ed">Edit ›</u></div>
+                <div class="grp"><div class="gn"><b>Batteries</b><span>3 pairs</span></div>
+                  <div class="gl2"><p>Avery &amp; Blake · Casey &amp; Devon · Emerson &amp; Frankie</p><p class="use">Used in <u>Warm up pitchers → Bullpen</u></p></div>
+                  <u class="ed">Edit ›</u></div>
+                <div class="grp"><div class="gn"><b>Circuit groups</b><span>3 groups</span></div>
+                  <div class="gl2"><p><b>A</b> · Avery, Blake, Casey, Devon — <b>B</b> · Emerson, Frankie, Gray — <b>C</b> · Harper, Indigo, Jules</p><p class="q">Not in a group · Kai, Logan <i>(haven't replied yes)</i></p><p class="use">Used in <u>Skills circuit</u> (rotates)<span class="mk" data-k="re" data-note="RESTYLED — a rotating block’s groups are no longer stored inside the block. They are one more set on this list, and the circuit points at them (decision G3). A plan saved before this change shows its circuit’s groups here, named after the block.">Restyled</span></p></div>
+                  <u class="ed">Edit ›</u></div>
+              </div>
+            </div>
+            <div class="tl">
+              <div class="tr"><div class="tg">6:00 p.m.<small>10 min</small><span class="mv">⠿</span></div>
+                <div class="shut"><div class="t">Warm-up</div><div class="d">Run and stretching. Light arm warm-up with your partner.</div><div class="m"><b>In pairs</b> · Throwing partners<span class="mk" data-k="re" data-note="RESTYLED — the shut row’s last line says who, in the block’s own word. Today it reads “Whole team” or “6 players”; a block that uses groups reads “In pairs · Throwing partners” or “3 groups · Circuit groups”.">Restyled</span></div></div></div>
+              <div class="tr"><div class="tg">6:10 p.m.<small>15 min</small><span class="mv">⠿</span></div>
+                <div class="ob">
+                  <div class="obh"><span class="ti">Partner throwing</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+                  <div class="obb">
+                    <div><div class="flab">Minutes</div><div class="crow"><span class="qc">5</span><span class="qc">10</span><span class="qc on">15</span><span class="qc">20</span><span class="qc">30</span><span class="fin num">15</span> min · <span class="qc">Rest of practice</span> ends 6:25 p.m.</div></div>
+                    <div><div class="flab">Players<span class="mk" data-k="re" data-note="RESTYLED — the Players line reads the groups back, one quiet line, and names where else they are used. Screen 3 draws each state of this line.">Restyled</span><button type="button" class="fl fix" data-finding="F01" data-here="A block with no stations now uses a set of pairs.">fixes F01</button></div>
+                      <div class="rb">
+                        <p class="pl"><b>Throwing partners</b> · 5 pairs · <u>Change…</u></p>
+                        <p>Avery &amp; Gray · Blake &amp; Harper · Casey &amp; Indigo · Devon &amp; Jules · Emerson &amp; Frankie</p>
+                        <p class="q">Not in a pair · Kai, Logan <i>(haven't replied yes)</i></p>
+                        <p class="doorl"><u>Edit pairs ›</u> · also used in <u>Warm-up</u></p>
+                      </div></div>
+                    <div><div class="flab">What you're doing</div><div class="fin ta">Partners 10 steps apart, then back a step every 10 throws. Stop at 30 steps.</div></div>
+                    <div><div class="flab">What you're watching for</div><div class="fin">Glove side pointed at the target; follow through past the hip.</div></div>
+                    <div class="doors"><u>+ Staff</u> · <u>+ Coaching points</u> · <u>+ Equipment</u> · <u>+ Stations</u><span class="rt"><u>Save to my drills…</u></span></div>
+                  </div>
+                </div></div>
+              <div class="tr"><div class="tg">6:25 p.m.<small>15 min</small><span class="mv">⠿</span></div>
+                <div class="shut"><div class="t">Warm up pitchers</div><div class="d">Bullpen for the batteries; everyone else on long toss.</div><div class="m">2 stations</div></div></div>
+              <div class="tr"><div class="tg">6:40 p.m.<small>45 min</small><span class="mv">⠿</span></div>
+                <div class="shut"><div class="t">Skills circuit</div><div class="d">Three stations; groups move every 15 minutes.</div><div class="m">3 stations · rotate every 15 min · <b>Circuit groups</b></div></div></div>
+              <div class="tr"><div class="tg">7:25 p.m.<small>5 min</small><span class="mv">⠿</span></div>
+                <div class="shut"><div class="t">Team talk</div><div class="d">One thing that went well, one to work on.</div><div class="m">Whole team</div></div></div>
+              <div class="tr"><div class="tg">7:30 p.m.<small>end</small></div><div class="ghost"><span class="btn">+ Add a block</span>15 min · or <u>start from a drill</u></div></div>
+            </div>
+          </div>
+        </div></div>
+      </div></div>
+    </div></div>
+
+    <div class="cap">Before any groups exist tonight <span class="k">decision G7 · the top of the sheet only · 960</span></div>
+    <div class="fw"><div class="pf w960" style="padding:22px 34px 10px;background:#fff">
+      <div class="goal"><b>Tonight:</b><span class="gin">Loose arms before anyone throws hard</span></div>
+      <div class="fold"><div class="fh"><span class="chev">▸</span><b>About this practice</b><span class="fs">· Throwing · Pitching · 6 things to bring</span></div></div>
+      <div class="fold"><div class="fh"><span class="chev">+</span><b>Groups for tonight</b><span class="mk" data-k="new" data-note="NEW (decision G7) — before any set exists, the Groups fold is one quiet line with a plus where its chevron will be: the same size and grammar as the invitation that adds “What everyone’s working on” further down the page. Pressed, it opens the Groups room for a new set; once a set exists, this line becomes the Groups fold drawn above. A coach who never makes groups sees one quiet line and nothing else.">New</span></div></div>
+      <div class="tl">
+        <div class="tr"><div class="tg">6:00 p.m.<small>10 min</small><span class="mv">⠿</span></div><div class="shut"><div class="t">Warm-up</div><div class="d">Run and stretching. Light arm warm-up.</div><div class="m">Whole team</div></div></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="v-phone">
+    <div class="cap">The page on a phone, after <span class="k">390 · blocks read as 56px rows; the Groups fold under the goal</span></div>
+    <div class="fw"><div class="pf ph">
+      <div class="top"><span class="brand">Coaches Portal</span><span class="topr"><span>🔔</span><span class="av">BC</span></span></div>
+      <div class="mast"><div class="team">Milton Bats U13 Purple</div><div class="season">2027 Season · <b>3-0</b></div></div>
+      <div class="ground"><div class="pcol">
+        <div class="sheet">
+          <div class="goal"><b>Tonight:</b><span class="gin">Loose arms before anyone throws hard</span></div>
+          <div class="fold">
+            <div class="fh"><span class="chev">▾</span><b>Groups</b><span class="fs">· 3 for tonight</span><span class="mk" data-k="new" data-note="NEW — the same practice-level list at phone width. Each set is a row: its name, its shape, Edit, then the names and where it is used.">New</span></div>
+            <div class="fb">
+              <div class="grp"><div class="gn"><b>Throwing partners</b><span>5 pairs</span></div><u class="ed">Edit ›</u>
+                <div class="gl2"><p>Avery &amp; Gray · Blake &amp; Harper · Casey &amp; Indigo · Devon &amp; Jules · Emerson &amp; Frankie</p><p class="use">Used in <u>Warm-up</u>, <u>Partner throwing</u></p></div></div>
+              <div class="grp"><div class="gn"><b>Batteries</b><span>3 pairs</span></div><u class="ed">Edit ›</u>
+                <div class="gl2"><p>Avery &amp; Blake · Casey &amp; Devon · Emerson &amp; Frankie</p><p class="use">Used in <u>Warm up pitchers → Bullpen</u></p></div></div>
+              <div class="grp"><div class="gn"><b>Circuit groups</b><span>3 groups</span></div><u class="ed">Edit ›</u>
+                <div class="gl2"><p class="use">Used in <u>Skills circuit</u></p></div></div>
+              <div class="foldadd"><u>+ Make groups</u> · <u>From another practice…</u></div>
+            </div>
+          </div>
+          <div class="fold"><div class="fh"><span class="chev">▸</span><b>About this practice</b></div></div>
+          <div class="tl">
+            <div class="tr"><div class="tg">6:00 p.m.<small>10 min</small></div><div class="shut"><div class="t">Warm-up</div><div class="m"><b>In pairs</b> · Throwing partners</div></div></div>
+            <div class="tr"><div class="tg">6:10 p.m.<small>15 min</small></div><div class="shut"><div class="t">Partner throwing</div><div class="m"><b>In pairs</b> · Throwing partners</div></div></div>
+            <div class="tr"><div class="tg">6:25 p.m.<small>15 min</small></div><div class="shut"><div class="t">Warm up pitchers</div><div class="m">2 stations</div></div></div>
+            <div class="tr"><div class="tg">6:40 p.m.<small>45 min</small></div><div class="shut"><div class="t">Skills circuit</div><div class="m">3 stations · <b>Circuit groups</b></div></div></div>
+            <div class="tr"><div class="tg">7:25 p.m.<small>5 min</small></div><div class="shut"><div class="t">Team talk</div><div class="m">Whole team</div></div></div>
+          </div>
+        </div>
+      </div></div>
+    </div></div>
+  </div>
+
+  <div class="intent"><strong>Design intent:</strong> the practice level and the block level are the same groups seen from two places. The fold at the top answers “who is with whom tonight?” in one look; the line on each block answers “who is in this one?”. Nothing on the page says “level”. Where a set is shared, both places say so. That is the whole answer to “which groups win?”: there is only ever one set in play for a block.</div>
+</section>
+
+<!-- ═══════════════ 3 · A BLOCK IN PAIRS ═══════════════ -->
+<section class="screen" id="s3" hidden>
+  <div class="screenhead">
+    <div class="eyebrow">After · the block level, step by step</div>
+    <h1 tabindex="-1">A block in pairs: one new door on the Players line</h1>
+    <p class="sub">The Players line gains “Split into groups…”. It opens a short menu: reuse tonight’s groups, make new ones, or bring some from another practice. Pick a set and the block reads it back.</p>
+  </div>
+
+  <div class="v-desk">
+    <div class="row2">
+      <div>
+        <div class="cap">State 1 · “Split into groups…” pressed, with two sets already made tonight <span class="k">960 · the sheet only</span></div>
+        <div class="fw"><div class="pf w820" style="padding:18px 22px 180px;background:#fff">
+          <div class="ob" style="margin:0">
+            <div class="obh"><span class="ti">Partner throwing</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Players</div><div class="who" style="position:relative"><b>Whole team</b><span class="sep">·</span><u>Choose players…</u><span class="sep">·</span><u style="background:var(--ols);border-radius:4px;padding:1px 4px">Split into groups…</u><span class="mk" data-k="new" data-note="NEW — the one door, on the line that already answers “who”. Decision G2 puts it here rather than as a fifth “+ Groups” door beside “+ Stations”: stations answer “what else happens at the same time”, groups answer “who works with whom”.">New</span>
+                <div class="menu" style="top:30px;left:250px">
+                  <div class="mh">Use groups from tonight</div>
+                  <div class="mi on"><b>Throwing partners</b><small>5 pairs · used in Warm-up</small></div>
+                  <div class="mi"><b>Circuit groups</b><small>3 groups · used in Skills circuit</small></div>
+                  <div class="msep"></div>
+                  <div class="mi">New groups…</div>
+                  <div class="mi">From another practice…</div>
+                </div></div></div>
+              <div><div class="flab">What you're doing</div><div class="fin ta">Partners 10 steps apart, then back a step every 10 throws.</div></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="cap">State 2 · Throwing partners picked <span class="k">960 · the same block a moment later</span></div>
+        <div class="fw"><div class="pf w820" style="padding:18px 22px;background:#fff">
+          <div class="ob" style="margin:0">
+            <div class="obh"><span class="ti">Partner throwing</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">Players</div>
+                <div class="rb">
+                  <p class="pl"><b>Throwing partners</b> · 5 pairs · <u>Change…</u><span class="mk" data-k="new" data-note="NEW — the set’s name, its shape (G5: groups of two read as pairs), and Change…, which opens the same menu plus “Whole team” and “Choose players…” to go back.">New</span></p>
+                  <p>Avery &amp; Gray · Blake &amp; Harper · Casey &amp; Indigo · Devon &amp; Jules · Emerson &amp; Frankie<span class="mk" data-k="re" data-note="RESTYLED from the rotating block’s read-out (one quiet line per group). Pairs fit on one line, joined with an ampersand, so five pairs cost one line rather than five.">Restyled</span></p>
+                  <p class="q">Not in a pair · Kai, Logan <i>(haven't replied yes)</i><span class="mk" data-k="un" data-note="UNCHANGED rule from D21: players who have not replied yes are named, never silently dropped.">Unchanged</span></p>
+                  <p class="doorl"><u>Edit pairs ›</u> · also used in <u>Warm-up</u><span class="mk" data-k="new" data-note="NEW — “also used in” appears only when the set is shared. It is the warning before the edit: moving Gray here moves Gray in Warm-up too. The room itself says it again and offers a copy (screen 4).">New</span></p>
+                </div></div>
+              <div><div class="flab">What you're doing</div><div class="fin ta">Partners 10 steps apart, then back a step every 10 throws.</div></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <div class="cap">With nothing made yet tonight <span class="k">the menu skips its first section</span></div>
+    <ul class="says">
+      <li>“Split into groups…” goes straight to the Groups room (screen 4), with <b>Players per group: 2</b> already chosen for a block with no stations. Pairs are the commonest split for a block that is one activity. A block with stations keeps today’s default (one group per station).</li>
+      <li>After “Choose players…” the door reads <b>“Split them into groups…”</b>, and the draw uses only the chosen players. That is the early pitchers-and-catchers session: choose the six, split into pairs.</li>
+    </ul>
+  </div>
+
+  <div class="v-phone">
+    <div class="row2">
+      <div>
+        <div class="cap">The menu on a phone <span class="k">390 · the portal’s sheet menu, 48px rows</span></div>
+        <div class="fw"><div class="pf ph" style="height:700px">
+          <div class="psheet">
+            <div class="psh"><span class="bk">←</span><span class="eb"><b>Block 2 of 5</b><br>6:10 p.m. · 15 min</span><span class="ic">🗑</span></div>
+            <div class="psb">
+              <div class="fin ttl">Partner throwing</div>
+              <div><div class="flab">Players</div><div class="who"><b>Whole team</b><span class="sep">·</span><u>Choose players…</u><span class="sep">·</span><u>Split into groups…</u></div></div>
+              <div><div class="flab">What you're doing</div><div class="fin ta">Partners 10 steps apart…</div></div>
+            </div>
+          </div>
+          <div class="dim"></div>
+          <div class="sheetmenu"><div class="grab"></div>
+            <div class="mh">Use groups from tonight</div>
+            <div class="mi"><b>Throwing partners</b><small>5 pairs · used in Warm-up</small></div>
+            <div class="mi"><b>Circuit groups</b><small>3 groups · used in Skills circuit</small></div>
+            <div class="msep"></div>
+            <div class="mi">New groups…</div>
+            <div class="mi">From another practice…</div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="cap">Picked <span class="k">390 · the block sheet reads the pairs back</span></div>
+        <div class="fw"><div class="pf ph">
+          <div class="psheet">
+            <div class="psh"><span class="bk">←</span><span class="eb"><b>Block 2 of 5</b><br>6:10 p.m. · 15 min</span><span class="ic">🗑</span></div>
+            <div class="psb">
+              <div class="fin ttl">Partner throwing</div>
+              <div><div class="flab">Players</div>
+                <div class="rb">
+                  <p class="pl"><b>Throwing partners</b> · 5 pairs · <u>Change…</u></p>
+                  <p>Avery &amp; Gray · Blake &amp; Harper · Casey &amp; Indigo · Devon &amp; Jules · Emerson &amp; Frankie</p>
+                  <p class="q">Not in a pair · Kai, Logan <i>(haven't replied yes)</i></p>
+                  <p class="doorl"><u>Edit pairs ›</u> · also used in <u>Warm-up</u></p>
+                </div></div>
+              <div><div class="flab">What you're doing</div><div class="fin ta">Partners 10 steps apart, then back a step every 10 throws.</div></div>
+              <div class="doors"><u>+ Staff</u> · <u>+ Coaching points</u> · <u>+ Equipment</u> · <u>+ Stations</u></div>
+            </div>
+            <div class="psf">‹ 2 of 5 ›</div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="intent"><strong>Design intent:</strong> the coach never chooses a “level”. They are on a block, they want pairs, and the door is on the line that already says who is in the block. Reuse comes first in the menu because it is usually what they want. The second block of the night asks “same pairs?”, not “draw again?”.</div>
+</section>
+
+<!-- ═══════════════ 4 · THE GROUPS ROOM ═══════════════ -->
+<section class="screen" id="s4" hidden>
+  <div class="screenhead">
+    <div class="eyebrow">After · the room you already approved, reached from more places</div>
+    <h1 tabindex="-1">The Groups room: a name, and where it is used</h1>
+    <p class="sub">The same room (the draw, drag, the tap menu, the “Not in a group” column). It gains a name box at the top and a foot that says which blocks use this set, with a way to split it off.</p>
+  </div>
+
+  <div class="v-desk">
+    <div class="cap">The room over the plan, editing Throwing partners <span class="k">the room at its real 800px, over the dimmed plan</span></div>
+    <div class="fw"><div class="pf w960" style="padding:30px 80px 40px;background:#fff">
+      <div class="dim"></div>
+      <div class="mod" style="width:800px">
+        <div class="modh"><span class="nm">Throwing partners</span><span class="mk" data-k="new" data-note="NEW — the set has a name, because it is now something several blocks point at. It starts as “Pairs” or “Groups” (or the block’s title for a set lifted from an old circuit), and the coach types over it.">New</span><span class="ic">✕</span></div>
+        <div class="modb">
+          <div class="drawrow"><span class="seg"><span class="qc">How many groups</span><span class="qc on">Players per group</span></span><span class="sel">2</span> from who replied <span class="btn" style="padding:5px 11px;font-size:13.5px">⇄ Draw again</span><span class="mk" data-k="un" data-note="UNCHANGED — the draw from 16 Sep (D12): two ways as a switch, the number beside it, the pool in words, Draw again. Still a shuffle and a deal, never sorted by ability or position. The one change: a block with no stations opens on Players per group: 2.">Unchanged</span></div>
+          <div class="gcols">
+            <div class="gcol pool"><div class="gh"><span class="pooln">Not in a pair</span><span class="mk" data-k="re" data-note="RESTYLED wording only — the pool column says “Not in a pair” when every group has two (G5). It is still the pool to drag from, the way out of a group, and where a binned pair’s players land.">Restyled</span></div><div class="chips"><span class="chp nr"><i>⠿</i>Kai</span><span class="chp nr"><i>⠿</i>Logan</span></div><span class="nrq">haven't replied yes</span></div>
+            <div class="gcol"><div class="gh"><span class="gname">Pair 1</span></div><div class="chips"><span class="chp"><i>⠿</i>Avery</span><span class="chp"><i>⠿</i>Gray</span></div><div class="gfoot">🗑</div></div>
+            <div class="gcol"><div class="gh"><span class="gname">Pair 2</span></div><div class="chips"><span class="chp"><i>⠿</i>Blake</span><span class="chp"><i>⠿</i>Harper</span></div><div class="gfoot">🗑</div></div>
+            <div class="gcol"><div class="gh"><span class="gname">Pair 3</span></div><div class="chips"><span class="chp"><i>⠿</i>Casey</span><span class="chp"><i>⠿</i>Indigo</span></div><div class="gfoot">🗑</div></div>
+            <div class="gcol"><div class="gh"><span class="gname">Pair 4</span></div><div class="chips"><span class="chp"><i>⠿</i>Devon</span><span class="chp"><i>⠿</i>Jules</span></div><div class="gfoot">🗑</div></div>
+            <div class="gcol"><div class="gh"><span class="gname">Pair 5</span><span class="mk" data-k="re" data-note="RESTYLED default names — a drawn group of two is “Pair 1, Pair 2…” rather than “Group A, Group B…” (G5). Still a name box the coach can type over.">Restyled</span></div><div class="chips"><span class="chp"><i>⠿</i>Emerson</span><span class="chp"><i>⠿</i>Frankie</span></div><div class="gfoot">🗑</div></div>
+          </div>
+        </div>
+        <div class="modf"><u>+ Add a pair</u><span style="color:var(--dim);flex:1">Used in <b style="color:var(--ink)">Warm-up</b> and <b style="color:var(--ink)">Partner throwing</b>. A change here changes both. <u>Make a separate copy for Partner throwing</u><span class="mk" data-k="new" data-note="NEW — the room says where this set is used, in the same words as the block, and offers the way out: a copy that only this block uses. The copy is named “Throwing partners (copy)” and lands on the list at the top. Without this, linking would trap a coach who wants the same pairs almost everywhere.">New</span></span><span class="btn ink">Done</span></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="v-phone">
+    <div class="cap">The room on a phone <span class="k">390 · the phone layout ruled 24 Sep (G1–G3 = A): the draw folded to one line, a heading and ⋯ per group, no grips</span></div>
+    <div class="fw"><div class="pf ph">
+      <div class="psheet">
+        <div class="psh"><span class="nm" style="flex:1;border:1px solid var(--ln2);border-radius:8px;padding:8px 12px;font-size:17px;font-weight:700;background:var(--pp)">Throwing partners</span><span class="bk">✕</span></div>
+        <div class="psb" style="gap:10px">
+          <div class="drawsum"><b>Players per group: 2</b> · from who replied <u>Change ›</u></div>
+          <div class="prow pool"><div class="gh">Not in a pair</div><div class="chips"><span class="chp nr">Kai</span><span class="chp nr">Logan</span></div><span class="nrq">haven't replied yes</span></div>
+          <div class="prow"><div class="gh">Pair 1 <span>· 2</span><span class="more">⋯</span></div><div class="chips"><span class="chp">Avery</span><span class="chp">Gray</span></div></div>
+          <div class="prow"><div class="gh">Pair 2 <span>· 2</span><span class="more">⋯</span></div><div class="chips"><span class="chp">Blake</span><span class="chp">Harper</span></div></div>
+          <div class="prow"><div class="gh">Pair 3 <span>· 2</span><span class="more">⋯</span></div><div class="chips"><span class="chp">Casey</span><span class="chp">Indigo</span></div></div>
+          <div class="prow"><div class="gh">Pair 4 <span>· 2</span><span class="more">⋯</span></div><div class="chips"><span class="chp">Devon</span><span class="chp">Jules</span></div></div>
+          <div class="prow"><div class="gh">Pair 5 <span>· 2</span><span class="more">⋯</span></div><div class="chips"><span class="chp">Emerson</span><span class="chp">Frankie</span></div></div>
+          <p style="font-size:13.5px;color:var(--dim)">Used in <b style="color:var(--ink)">Warm-up</b> and <b style="color:var(--ink)">Partner throwing</b>. A change here changes both. <u>Make a separate copy</u><span class="mk" data-k="new" data-note="NEW — on a phone the “used in” line sits under the last group rather than in the foot, so the foot stays “+ Add a pair” alone, pinned left (the 25 Sep ruling that took Done out of the phone room’s foot).">New</span></p>
+        </div>
+        <div class="psf" style="justify-content:flex-start;font-family:Inter,sans-serif;font-weight:600"><u>+ Add a pair</u></div>
+      </div>
+    </div></div>
+  </div>
+
+  <div class="intent"><strong>Design intent:</strong> nothing about arranging people changes. Everything the owner walked on 16 Sep (drag, the tap menu, the pool, the bin that names rather than drops) carries over as it is. The two additions are the price of sharing one set between blocks: the set needs a name you can recognise in a menu, and the room must say who else is affected before you move anyone.</div>
+</section>
+
+<!-- ═══════════════ 5 · STATIONS ═══════════════ -->
+<section class="screen" id="s5" hidden>
+  <div class="screenhead">
+    <div class="eyebrow">After · the station level</div>
+    <h1 tabindex="-1">Stations: a separate station splits the same way; a rotating one does not</h1>
+    <p class="sub">If only the pitchers and catchers pair up while everyone else does something else, that is two things at once, and in this builder two things at once are stations. The Bullpen station takes the Batteries; Long toss takes the rest.</p>
+  </div>
+
+  <div class="v-desk">
+    <div class="cap">Warm up pitchers, open: two stations that run separately <span class="k">960 · the sheet only</span></div>
+    <div class="fw"><div class="pf w960" style="padding:18px 22px;background:#fff">
+      <div class="tl" style="margin:0">
+        <div class="tr"><div class="tg">6:25 p.m.<small>15 min</small><span class="mv">⠿</span></div>
+          <div class="ob">
+            <div class="obh"><span class="ti">Warm up pitchers</span><span class="ic">⌃</span><span class="ic">🗑</span></div>
+            <div class="obb">
+              <div><div class="flab">What you're doing</div><div class="fin">Bullpen for the batteries; everyone else on long toss.</div></div>
+              <div class="strip"><span class="qc">↻ Groups rotate</span> · stations run separately, each with its own players<span class="mk" data-k="un" data-note="UNCHANGED — the Groups rotate chip, un-pressed. With it off, each station keeps its own players, which is where a station-level split lives.">Unchanged</span></div>
+              <div class="stcols">
+                <div class="stcol"><b>Bullpen</b><span class="l">Brett</span><span class="pp2"><b style="font-size:13.5px">Batteries</b> · 3 pairs<span class="mk" data-k="new" data-note="NEW — a station that runs separately shows who is there on its column: the set it uses, or “4 players”. Today a separate station’s players are only visible inside its dialog.">New</span><button type="button" class="fl fix" data-finding="F04" data-here="The Bullpen station uses the Batteries set.">fixes F04</button></span><span class="l">Tonight: 25 pitches each, fastballs only.</span><u>Open ›</u></div>
+                <div class="stcol"><b>Long toss</b><span class="l">Sam</span><span class="pp2">4 players · Gray, Harper, Indigo, Jules</span><u>Open ›</u></div>
+                <div class="stcol add"><u>+ Add a station</u><span class="l">a drill, or write one</span></div>
+              </div>
+              <div class="doors"><u>+ Coaching points</u><span class="rt"><u>Save to my circuits…</u></span></div>
+            </div>
+          </div></div>
+      </div>
+    </div></div>
+
+    <div class="row2">
+      <div>
+        <div class="cap">The Bullpen station, opened <span class="k">the station dialog · 640</span></div>
+        <div class="fw"><div class="pf" style="width:680px;padding:20px;background:#fff">
+          <div class="mod" style="width:640px">
+            <div class="modh"><span class="nm">Bullpen</span><span class="stp">‹ 1 of 2 ›</span><span class="ic">✕</span></div>
+            <div class="modb">
+              <div><div class="flab">What you're doing</div><div class="fin">Each pitcher throws to their catcher from the mound.</div></div>
+              <div><div class="flab">Who runs it</div><div class="who"><span class="chp">Brett</span></div></div>
+              <div><div class="flab">Players<span class="mk" data-k="re" data-note="RESTYLED — the station’s Players line is the block’s, with the same Split into groups… door and the same read-back. One control, every place people are listed.">Restyled</span></div>
+                <div class="rb">
+                  <p class="pl"><b>Batteries</b> · 3 pairs · <u>Change…</u></p>
+                  <p>Avery &amp; Blake · Casey &amp; Devon · Emerson &amp; Frankie</p>
+                  <p class="doorl"><u>Edit pairs ›</u></p>
+                </div></div>
+              <div><div class="flab">Just for tonight</div><div class="fin">25 pitches each, fastballs only.</div></div>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="cap">A station in a rotating circuit <span class="k">decision G4 · unchanged on purpose</span></div>
+        <div class="fw"><div class="pf" style="width:520px;padding:20px;background:#fff">
+          <div class="mod" style="width:480px">
+            <div class="modh"><span class="nm">Footwork ladder</span><span class="stp">‹ 1 of 3 ›</span><span class="ic">✕</span></div>
+            <div class="modb">
+              <div><div class="flab">What you're doing</div><div class="fin">Two ladders along the sideline, ten steps apart.</div></div>
+              <div><div class="flab">Who runs it</div><div class="who"><span class="chp">Brett</span></div></div>
+              <div><div class="flab">Just for tonight</div><div class="fin">Only two ladders. Pair up inside your group.</div></div>
+              <p style="font-size:13.5px;color:var(--dim)">No Players line: in a circuit the groups hold the people, and a different group arrives every round.<span class="mk" data-k="un" data-note="UNCHANGED — a rotating station has no Players line today and gets none. Naming pairs inside each arriving group, per round, per station, is a grid nobody fills in. The coach says “pair up” in the note, or builds the circuit groups out of whole pairs (see the plan’s later ideas).">Unchanged</span></p>
+            </div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <ul class="says">
+      <li><b>Not every pitcher-and-catcher session needs stations.</b> If the rest of the team is not there (an early bullpen at 5:45), it is one block: <u>Choose players…</u> the six, then <u>Split them into groups…</u> into pairs.</li>
+      <li><b>Pairing pitchers with catchers is done by hand</b>, by dragging or tapping in the room. The draw does not learn positions: it is baseball-only logic in a product that stays neutral across sports, and the draw never sorts by ability or position (the July rule). Three pairs take seconds by hand, and screen 6 means they are made once a season, not once a practice.</li>
+    </ul>
+  </div>
+
+  <div class="v-phone">
+    <div class="cap">On a phone <span class="k">nothing new to draw</span></div>
+    <ul class="says"><li>The station form is already a full-screen sheet on a phone (phone stage 2). Its Players line is the block’s, drawn on screen 3, and a separate station’s row adds the same “Batteries · 3 pairs” line under Brett’s name.</li></ul>
+  </div>
+
+  <div class="intent"><strong>Design intent:</strong> “people live in exactly one place” (your 1 Aug ruling) still decides where a split can go. With no stations, the block holds its people, so the block can be split. With separate stations, each station holds its people, so each station can be split. In a circuit, the groups hold the people, so the circuit uses a set and its stations do not.</div>
+</section>
+
+<!-- ═══════════════ 6 · FROM ANOTHER PRACTICE ═══════════════ -->
+<section class="screen" id="s6" hidden>
+  <div class="screenhead">
+    <div class="eyebrow">After · the option approved in July, finally built</div>
+    <h1 tabindex="-1">From another practice: make the batteries once a season</h1>
+    <p class="sub">Your July 31 grouping ruling (D21) listed three ways to make groups: pick them myself, draw at random, and same groups as last practice. Only the first two were built. This is the third, widened to any earlier practice this season.</p>
+  </div>
+
+  <div class="v-desk">
+    <div class="row2">
+      <div>
+        <div class="cap">The picker <span class="k">opened from the menu or the Groups fold · 640</span></div>
+        <div class="fw"><div class="pf" style="width:680px;padding:20px;background:#fff">
+          <div class="mod" style="width:640px">
+            <div class="modh"><b style="flex:1;font-size:17px">Groups from another practice</b><span class="ic">✕</span></div>
+            <div class="modb">
+              <div class="search">Search practices or groups</div>
+              <div class="pick"><div><b>Batteries</b> <span class="m2">· 3 pairs · Tue, Sep 29</span><div class="m3">Avery &amp; Blake · Casey &amp; Logan · Emerson &amp; Frankie</div></div><span class="btn">Use these</span></div>
+              <div class="pick"><div><b>Throwing partners</b> <span class="m2">· 6 pairs · Tue, Sep 29</span><div class="m3">Avery &amp; Harper · Blake &amp; Jules · Casey &amp; Kai · …</div></div><span class="btn">Use these</span></div>
+              <div class="pick"><div><b>Skills circuit groups</b> <span class="m2">· 3 groups · Thu, Sep 24</span><div class="m3">A · Avery, Blake, Casey, Devon — B · …</div></div><span class="btn">Use these</span></div>
+              <p style="font-size:13.5px;color:var(--dim)">Newest first, this season only. Players who have left the team are not brought over.<span class="mk" data-k="new" data-note="NEW — the picker lists every set of groups from earlier practices this season, newest first. It COPIES: tonight gets its own set, so a change tonight never rewrites Tuesday’s plan (your 31 Jul rule that a plan belongs to one practice). Players no longer on the roster are left behind, as copying a whole plan already does.">New</span><button type="button" class="fl fix" data-finding="F03" data-here="The picker is D21’s third option.">fixes F03</button></p>
+            </div>
+          </div>
+        </div></div>
+      </div>
+      <div>
+        <div class="cap">Copied into tonight <span class="k">the room opens on the copy · 640</span></div>
+        <div class="fw"><div class="pf" style="width:680px;padding:20px;background:#fff">
+          <div class="mod" style="width:640px">
+            <div class="modh"><span class="nm">Batteries</span><span class="ic">✕</span></div>
+            <div class="modb">
+              <div class="banner">Copied from Tue, Sep 29. Logan hasn't replied yes for tonight and is still in Pair 2, shown dashed.<span class="mk" data-k="new" data-note="NEW — one line that says where the set came from and names anyone placed who has not replied yes. They stay where they were (the coach may know they are coming) and wear the dashed edge they wear everywhere in the room.">New</span></div>
+              <div class="gcols">
+                <div class="gcol pool"><div class="gh"><span class="pooln">Not in a pair</span></div><div class="chips"><span class="chp"><i>⠿</i>Devon</span><span class="chp"><i>⠿</i>Gray</span><span class="chp"><i>⠿</i>Harper</span><span class="chp"><i>⠿</i>Indigo</span><span class="chp"><i>⠿</i>Jules</span><span class="chp nr"><i>⠿</i>Kai</span></div></div>
+                <div class="gcol"><div class="gh"><span class="gname">Pair 1</span></div><div class="chips"><span class="chp"><i>⠿</i>Avery</span><span class="chp"><i>⠿</i>Blake</span></div></div>
+                <div class="gcol"><div class="gh"><span class="gname">Pair 2</span></div><div class="chips"><span class="chp"><i>⠿</i>Casey</span><span class="chp nr"><i>⠿</i>Logan</span></div></div>
+                <div class="gcol"><div class="gh"><span class="gname">Pair 3</span></div><div class="chips"><span class="chp"><i>⠿</i>Emerson</span><span class="chp"><i>⠿</i>Frankie</span></div></div>
+              </div>
+            </div>
+            <div class="modf"><u>+ Add a pair</u><span style="flex:1"></span><span class="btn ink">Done</span></div>
+          </div>
+        </div></div>
+      </div>
+    </div>
+    <ul class="says"><li>From here, tap Logan → <b>Not in a pair</b>, and tap Devon → <b>Pair 2</b>. That is the Batteries set shown on screens 2 and 5.</li></ul>
+  </div>
+
+  <div class="v-phone">
+    <div class="cap">On a phone <span class="k">nothing new to draw</span></div>
+    <ul class="says"><li>The picker is a list of rows with a “Use these” button each, the shape the plan’s “Start this plan from…” picker already has on a phone. The copy opens in the phone room drawn on screen 4.</li></ul>
+  </div>
+
+  <div class="intent"><strong>Design intent:</strong> this is where pitcher-and-catcher pairs get efficient. They are standing pairings that change a few times a season, so the win is not re-making them every practice. No team-level “saved groups” library yet: copying from last week covers it, and a library is a larger feature to build only if coaches ask for one.</div>
+</section>
+
+<!-- ═══════════════ 7 · FIELD AND PAPER ═══════════════ -->
+<section class="screen" id="s7" hidden>
+  <div class="screenhead">
+    <div class="eyebrow">After · where the pairs are read</div>
+    <h1 tabindex="-1">On the field and on paper: the pairs are readable where they are used</h1>
+    <p class="sub">A plan the field cannot read is half built. The run screen lists the block’s pairs large, “My station” shows the station’s pairs to the coach running it, and the printed sheet prints them under the block.</p>
+  </div>
+  <div class="row2">
+    <div>
+      <div class="cap">Run practice · a block in pairs <span class="k">390 · the field screen</span></div>
+      <div class="fw"><div class="pf ph">
+        <div class="run">
+          <div class="re">6:10 p.m. · block 2 of 5</div>
+          <div class="rt">Partner throwing</div>
+          <div class="clock">12:40<small>left of 15 min</small></div>
+          <div class="rn">Partners 10 steps apart, then back a step every 10 throws. Stop at 30 steps.</div>
+          <div class="pairs"><div class="flab">In pairs<span class="mk" data-k="new" data-note="NEW on the run screen — the block’s pairs, one per line at 18px, numbered as they are in the room, so a coach can read “Pair 3 · Casey & Indigo” across a field. Groups of three or more read the same way, one group per line.">New</span></div>
+            <p><span>1</span>Avery &amp; Gray</p><p><span>2</span>Blake &amp; Harper</p><p><span>3</span>Casey &amp; Indigo</p><p><span>4</span>Devon &amp; Jules</p><p><span>5</span>Emerson &amp; Frankie</p>
+            <p class="q">Not in a pair · Kai, Logan (haven't replied yes)</p></div>
+          <div class="nx">Up next · 6:25 p.m. Warm up pitchers</div>
+          <div class="big">Next block</div>
+          <div class="sm">Back</div>
+        </div>
+      </div></div>
+    </div>
+    <div>
+      <div class="cap">My station · Brett at the bullpen <span class="k">390 · the field screen, one station</span></div>
+      <div class="fw"><div class="pf ph">
+        <div class="run">
+          <div class="re">6:25 p.m. · block 3 of 5</div>
+          <div class="rt">Bullpen<span class="youon">You're on</span></div>
+          <div class="clock">14:05<small>left of 15 min</small></div>
+          <div class="rn">Each pitcher throws to their catcher from the mound.</div>
+          <div class="rn"><b>Tonight:</b> 25 pitches each, fastballs only.</div>
+          <div class="pairs"><div class="flab">Batteries<span class="mk" data-k="new" data-note="NEW — a separate station’s set, shown to the coach whose station it is. The same list prints on their sheet and goes in the staff email, so Brett knows his three pairs before arriving.">New</span></div>
+            <p><span>1</span>Avery &amp; Blake</p><p><span>2</span>Casey &amp; Devon</p><p><span>3</span>Emerson &amp; Frankie</p></div>
+          <div class="nx">Up next · 6:40 p.m. Skills circuit</div>
+          <div class="big">Next block</div>
+        </div>
+      </div></div>
+    </div>
+    <div>
+      <div class="cap">The printed sheet <span class="k">the run sheet ruled 22 Aug · a crop</span></div>
+      <div class="fw"><div class="pf paper">
+        <div class="ph1">Practice plan · Thu, Oct 1</div>
+        <div class="ph2">Milton Bats U13 Purple · 6:00–7:30 p.m. · Milton Sports Park, Diamond 2</div>
+        <div class="prw"><div class="pg">6:00 p.m.<small>10 min</small></div><div class="pb"><b>Warm-up</b> <span class="pm">· in pairs, Throwing partners</span><div class="pr">Run and stretching. Light arm warm-up with your partner.</div></div></div>
+        <div class="prw"><div class="pg">6:10 p.m.<small>15 min</small></div><div class="pb"><b>Partner throwing</b> <span class="pm">· in pairs, Throwing partners</span><div class="pr">Partners 10 steps apart, then back a step every 10 throws. Stop at 30 steps.</div><div class="pr"><b>Pairs:</b> Avery &amp; Gray · Blake &amp; Harper · Casey &amp; Indigo · Devon &amp; Jules · Emerson &amp; Frankie. Not in a pair: Kai, Logan (haven't replied yes).<span class="mk" data-k="new" data-note="NEW on the sheet — a set’s names print under the FIRST block that uses it that night; a later block using the same set says “in pairs, Throwing partners” and does not repeat the names. The rotation grid already prints group membership right beneath it; this is the same rule for a block with no grid.">New</span></div></div></div>
+        <div class="prw"><div class="pg">6:25 p.m.<small>15 min</small></div><div class="pb"><b>Warm up pitchers</b> <span class="pm">· 2 stations</span><div class="pr"><b>Bullpen</b> (Brett) · Batteries: Avery &amp; Blake · Casey &amp; Devon · Emerson &amp; Frankie</div><div class="pr"><b>Long toss</b> (Sam) · Gray, Harper, Indigo, Jules</div></div></div>
+      </div></div>
+    </div>
+  </div>
+  <div class="intent"><strong>Design intent:</strong> the plan is written at a desk and used on a field. Every place a plan is read (the run screen, “My station”, a helper’s home screen, the printed sheet, the staff email) names the pairs where they apply. Nothing on the field changes a group: the run screen still records nothing.</div>
+</section>
+
+  </div>
+</section>
+
+<!-- ═══════════════ PM BRIEF ═══════════════ -->
+<section id="hub-brief" class="docpage" hidden>
+  <div class="eyebrow">Product-manager brief</div>
+  <h1>Groups at every level of a practice</h1>
+  <h2>What changes for the coach</h2>
+  <p>A coach can split players into pairs or groups anywhere players are listed in a practice plan, not only inside a rotating circuit. On any block, “Split into groups…” sits next to “Choose players…”. On a station that runs on its own, the same door appears. The practice keeps one list of tonight’s groups at the top of the plan, and a block can reuse a set that already exists (“same pairs as the warm-up”) instead of drawing again. A set of groups can also be brought forward from an earlier practice this season, which is how pitcher-and-catcher pairs stop being re-made every week.</p>
+  <p>Wherever the plan is read, the pairs are there too: the run screen lists them large, the coach running a station sees that station’s pairs, and the printed sheet and the staff email name them.</p>
+  <h2>Why it matters</h2>
+  <p>Partner work is most of a youth warm-up, and battery work is a standing part of every baseball and softball practice. Today the product can only group players inside a circuit with two or more rotating stations, so a coach who wants “warm-up in pairs” either fakes stations or writes the pairs in a note. And every circuit draws its own groups, so a late arrival has to be placed twice.</p>
+  <h2>Customer impact</h2>
+  <ul>
+    <li><b>Head coaches and assistants who write plans</b> (Coach Premium): fewer taps per practice, and pairs that carry across blocks and across weeks.</li>
+    <li><b>Staff and helpers on the field</b>: they see who is paired with whom on their phone and on paper, before and during practice.</li>
+    <li><b>No change to who can see what.</b> Groups show player names wherever the plan already shows them, under the same permissions.</li>
+  </ul>
+  <h2>Priority</h2>
+  <p>Medium-high. It is the next gap coaches hit once they use the practice builder for real, and most of the parts exist: the Groups room, the draw and the drag were built and walked in September. The work is mostly letting the room open from more places and giving groups a home on the practice.</p>
+  <h2>Success criteria</h2>
+  <ul>
+    <li>A coach can put a no-station block in pairs in three taps or fewer from the Players line.</li>
+    <li>A second block reuses tonight’s pairs in two taps, and moving one player updates both blocks.</li>
+    <li>Pitcher-and-catcher pairs are brought forward from last week without re-making them.</li>
+    <li>No coach is ever unsure which groups a block uses: every block that uses a set names it, and a shared set says where else it is used.</li>
+  </ul>
+  <h2>Not in this project</h2>
+  <ul>
+    <li>Automatic pitcher-to-catcher pairing (sport-specific, and the draw never sorts by ability or position).</li>
+    <li>A team-level library of saved groups (build only if copying from a past practice proves not to be enough).</li>
+    <li>Named pairs inside each group at each station of a rotating circuit.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════ FULL PLAN ═══════════════ -->
+<section id="hub-plan" class="docpage" hidden>
+  <div class="eyebrow">Full plan · design stage</div>
+  <h1>Groups at every level of a practice: implementation plan</h1>
+  <div class="note">Status: drawn and ruled 28 Sep 2026 (G1–G8 as drawn), built on dev the same day — see “Build record” below. The owner walk is §247, on the QA Walk tab.</div>
+
+  <h2>Problem and context</h2>
+  <p>Owner ask (28 Sep 2026): <i>“we need a way to split the team into groups outside of the stations… players paired up during warm ups or for pitcher/catcher practice… options of applying groups at the stations level, block level, or practice level, and make it easy for the coach to understand.”</i></p>
+  <p>What the code does today, read from the model and the editor, not from the plans:</p>
+  <h3>F01 — Groups live only inside a rotating block</h3>
+  <p>A set of groups is stored on a block’s rotation, which exists only while the block has two or more stations and “Groups rotate” is pressed. The Groups room opens only from that board. A block with no stations has a flat player list: Whole team, or chosen players.</p>
+  <h3>F02 — Every rotating block draws its own groups</h3>
+  <p>Two circuits in one practice hold two independent sets. There is no way to say “the same groups as before”, so a late arrival must be placed in each.</p>
+  <h3>F03 — “Same groups as last practice” was ruled and never built</h3>
+  <p>D21 (owner-accepted 31 Jul 2026) listed three ways to make groups: pick them myself, draw at random, and same groups as last practice. The model still carries a “previous” source value that nothing sets. The only reuse path today is copying a whole earlier plan.</p>
+  <h3>F04 — A separate station cannot be split</h3>
+  <p>A station in a block that does not rotate holds its own player list, with no grouping. The bullpen case (three batteries while the rest play long toss) has nowhere to go.</p>
+
+  <h2>Scope</h2>
+  <ul>
+    <li>A practice-level list of sets of groups (“Groups” fold on the plan page), each with a name and a list of groups.</li>
+    <li>“Split into groups…” on a block’s Players line and on a separate station’s Players line, reusing tonight’s sets, making a new one, or copying one from another practice.</li>
+    <li>A rotating block’s groups become a set on the same list (G3).</li>
+    <li>The Groups room gains a name box, a “used in” foot and “Make a separate copy”.</li>
+    <li>Pairs read as pairs (G5).</li>
+    <li>“From another practice…” (G6).</li>
+    <li>The run screen, “My station”, the helper home, the printed sheet and the staff email name the pairs (G8).</li>
+  </ul>
+  <div class="note"><strong>Out of scope</strong><p>Position-aware pairing; a team-level saved-groups library; pairs inside each group per round at a rotating station; any change to the random draw’s rules (still a shuffle and a deal).</p></div>
+
+  <h2>Approach</h2>
+  <h3>The one idea</h3>
+  <p>Groups belong to the practice; a block or a station points at one set. The existing rule that people live in exactly one place (1 Aug 2026) is extended, not broken: with no stations, the block’s people are its player list <i>or</i> its set; with separate stations, each station’s people are its list <i>or</i> its set; in a circuit, the circuit’s set. Whichever does not apply is settled away, and the settle step moves people rather than dropping them (the D8 rule from 15 Sep).</p>
+  <h3>The model (technical)</h3>
+  <ul>
+    <li>The plan gains a list of named sets: an id, a name, its groups (the existing group shape), and how they were made.</li>
+    <li>A block with no stations, a separate station, and a rotation each gain a pointer to one set, in place of (never beside) a player list. A rotation keeps its clock and its hand arrangement; its groups come from the set.</li>
+    <li><b>Plans saved before this change:</b> the sanitiser lifts each rotation’s groups onto the plan list on read, with a set id derived from the block id so the step is deterministic and idempotent (it runs on every read and write and must hand back the same plan twice). The lifted set is named after its block (“Skills circuit groups”). Plan version bumps.</li>
+    <li><b>No database migration expected.</b> A plan is stored as a document on the practice, so this is a change to its shape, not a new column. To be confirmed at build time against the live schema snapshots.</li>
+    <li>A set used by nothing is kept (it may have been made up front). Deleting a set that blocks use asks first, names those blocks, and hands each block its players back as a plain list. People move; they never vanish.</li>
+    <li>The hand-arranged rotation’s fit check already resets when its groups change. A change to a shared set therefore resets a hand arrangement on the circuit that uses it, and the editor says so (the D14 rule).</li>
+  </ul>
+  <h3>Everything that reads a plan’s groups</h3>
+  <div class="tblwrap"><table>
+    <tr><th>Surface</th><th>Change</th></tr>
+    <tr><td>Plan editor</td><td>Groups fold · Players line door, menu and read-back · station column people line · room name, foot and copy</td></tr>
+    <tr><td>Rotation grid and board</td><td>Reads the circuit’s set; board read-out unchanged</td></tr>
+    <tr><td>Run screen, My station, helper home</td><td>Pairs listed under a block or station that uses a set</td></tr>
+    <tr><td>Printed sheet</td><td>Names under the first block that uses a set; later uses name the set only</td></tr>
+    <tr><td>Staff email</td><td>Same as the sheet</td></tr>
+    <tr><td>Templates</td><td>A template keeps the shape (“in pairs”, “3 groups”) with no players; the practice draws them, as a circuit’s groups already are</td></tr>
+    <tr><td>Copy from a previous practice, template or past season</td><td>Sets copy with fresh ids; players checked against the current roster</td></tr>
+    <tr><td>Finished-season reader</td><td>Renders through the sheet, so it follows the sheet</td></tr>
+    <tr><td>Coverage (“In a plan”)</td><td>Counts players named in a set the same as players named on a block</td></tr>
+    <tr><td>In-app help</td><td>The practice plans guide gains a Groups section (/docs)</td></tr>
+  </table></div>
+  <h3>The alternative this beat</h3>
+  <p>Each block keeps its own groups, and “same as Warm-up” copies them. Cheaper (no plan-level list, no lift), but two blocks can then quietly disagree about who is paired with whom, which is the confusion the owner asked to avoid. Rejected unless G1 rules otherwise.</p>
+
+  <h2>Stages</h2>
+  <ol>
+    <li><b>Groups on the practice.</b> The model, the lift, the fold, the block door and menu, the room’s name and foot, pairs wording, and the circuit using a set. The field screen and the sheet read sets in the same stage, so nothing is written that cannot be read.</li>
+    <li><b>Stations and other practices.</b> The separate station’s door and column line; “From another practice…”.</li>
+  </ol>
+  <p>If the owner prefers one pass, both fit in one build; the split exists only so the first walk is shorter.</p>
+
+  <h2>Rulings</h2>
+  <p>G1–G8 ruled as drawn on 28 Sep — the Decisions tab records each.</p>
+
+  <h2>Rollout</h2>
+  <ul>
+    <li>No migration expected (confirm at build). Plans already saved read forward through the lift.</li>
+    <li>Coach demo sandbox: its practice plans hold circuit groups, which the lift turns into sets on read. The master build re-seeds on its own; no tour anchor points at the groups board today, and the build fails if one does.</li>
+    <li>/simplify, then /review, then /docs, then an owner QA walk on this hub.</li>
+  </ul>
+
+  <h2>Build record (28 Sep 2026)</h2>
+  <p>Ruled the same day on the drawings (<i>“looks good, go ahead”</i> — G1–G8 as recommended) and built on dev in one pass, both stages. No database migration: a practice plan is a document on the practice, and its shape gained the practice's list of sets. Plans saved before today read forward — a circuit's groups become one of the practice's sets, named after the circuit.</p>
+  <h3>Where the build differs from the drawings, and why</h3>
+  <ul>
+    <li><b>The run screen has no countdown.</b> Screen 7 drew one by mistake; the field screen has had no clock since your ruling of 17 Sep (P10). The build keeps today's run screen and adds the pairs under the block's words.</li>
+    <li><b>The staff email names no children.</b> Screen 7 said the email carries the pairs. The email was ruled an outline that names no child (it can be forwarded, and it reaches people whatever their settings), so it says “In pairs · Throwing partners” and the button leads to the plan and the printed sheet, which carry the names.</li>
+    <li><b>The set's name leads the room's body</b>, rather than sitting in the head row as drawn — the shape every sheet on the page shares (the block sheet and the station form both lead with the name).</li>
+    <li><b>The run screen's list keeps who RUNS a block first</b>, as it always has; the set appears on the block's own screen.</li>
+    <li><b>Names inside a drawn pair stand in roster order</b> — the shuffle decides who is together; every list in the practice is in roster order.</li>
+    <li><b>Groups the plan dealt for a circuit dissolve when the circuit goes.</b> Today, pressing “+ Stations” and abandoning it puts every player back on the block. To keep that, a circuit's automatic first deal (and a circuit's groups carried over from before) turn back into the block's players when the circuit stops being one — unless something else uses them. Groups you made yourself stay on the list.</li>
+    <li><b>A template shows its sets read-only.</b> A template keeps each set's name and “in pairs”, with nobody in it; the practice draws them. Sets are made on a practice, not in the template room.</li>
+    <li><b>The printed sheet names a set's players once</b>, under the first block that uses it; a later block says “In pairs, Throwing partners”.</li>
+  </ul>
+  <h3>Revised the same day, on trying it (G9 · G10)</h3>
+  <ul>
+    <li><b>G9 · A set lasts as long as something uses it.</b> You asked why a set nothing links to stays on the plan. It no longer does: when its last block, station or circuit leaves it — back to the whole team, another set, a copy made for the one place that used it — it leaves the Groups list. Its players stay wherever the leaving put them. The one exception is a set made from the Groups list itself (“+ Groups for tonight”, “+ Make groups”, or brought in from another practice there): it stands unused until a block picks it, and from then on it is ordinary. Before a coach leaves a set's last use, the menu says so at its top: “‘Pairs’ is only used here — choosing anything below removes it from tonight's groups.” A shared set warns nothing, because it stays for the other block.</li>
+    <li><b>G10 · A set made as pairs keeps saying pairs.</b> Hand moves had left “Throwing partners” uneven, and it switched to “3 groups” while its names still said Pair 1–3. Now the set's shape — pairs, or so many groups — is saved the moment it is chosen in the room, and an uneven set of pairs says what is uneven: “3 pairs · one of 3, one of 1”, the way an uneven draw already does.</li>
+  </ul>
+  <h3>Verified</h3>
+  <ul>
+    <li>Typecheck clean; lint clean on every changed file; the full unit suite (5,085 tests) passes, including 26 new tests for the lift, the one-level rule with sets, pairs wording, the copies, templates and the sheet.</li>
+    <li>The layout gate on the plan, circuit, station, Groups room, record and run screens at 361, 390, 768 and 1440: no new findings.</li>
+    <li>A browser walk at 1440 and 390 on the UAT practice (writes stubbed): Split into groups…, New groups…, the room on pairs, the read-back, the circuit on its carried-over set, and the run screen listing pairs — no page errors.</li>
+  </ul>
+
+  <h2>Later ideas, not proposed</h2>
+  <ul>
+    <li><b>Groups built from pairs:</b> make circuit groups out of whole pairs, so partners stay together at every station. Worth asking coaches about after this ships.</li>
+    <li><b>A team-level saved-groups library</b> (“Batteries” kept on the team): only if copying from a past practice is not enough.</li>
+  </ul>
+</section>
+
+<!-- ═══════════════ DECISIONS ═══════════════ -->
+<section id="hub-decisions" class="docpage" hidden>
+  <div class="eyebrow">Rulings</div>
+  <h1>Decisions</h1>
+  <p class="sub">G1–G8 ruled on 28 Sep 2026, in chat on the drawings: <i>“looks good, go ahead”</i> — every one as recommended. G9–G10 ruled the same day on trying the build: <i>“yes make both changes”</i>.</p>
+  <div id="decisionRows" style="margin-top:18px"></div>
+</section>
+
+<!-- ═══════════════ QA WALK ═══════════════ -->
+<section id="hub-qa" class="docpage" hidden>
+  <div class="eyebrow">Owner QA walk · ledger §247</div>
+  <h1>Groups at every level — the walk</h1>
+  <p class="sub">Seven short walks, one job each, signed off one by one. Ticks and notes stay in this browser; press “Build paste-back” and paste the result into the chat.</p>
+  <div class="signin"><strong>Sign in as</strong> — URL: http://localhost:3000 · the UAT coach account (password in .env.local) · UAT Rep Club → UAT Test Team → Practice plans → the probe practice (Warm-up · Skills circuit · Small-sided game). Press <b>Edit</b> first. Pin names and relationships, never counts.</div>
+  <div class="qaprogress" id="qaCount"></div>
+  <div id="qaParts"></div>
+  <button class="button primary" type="button" id="buildSummary">Build paste-back</button>
+  <textarea id="summaryOut" rows="10" readonly hidden></textarea>
+</section>
+
+<dialog id="dialog" aria-labelledby="dialogtitle"><div class="dialoghead"><h2 id="dialogtitle"></h2><button class="button" id="closeDialog" type="button">Close</button></div><div class="dialogbody" id="dialogbody"></div></dialog>
+
+<script>
+'use strict';
+/* Navigation lives in its own script so a data typo below can never kill the tabs. */
+const $=id=>document.getElementById(id);
+const HUBS=['mockup','brief','plan','decisions','qa'];
+function showHub(which){HUBS.forEach(h=>{const sec=$('hub-'+h);if(sec)sec.hidden=h!==which});document.querySelectorAll('[data-hub]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.hub===which)));if(which==='mockup')requestAnimationFrame(fitAll)}
+document.querySelectorAll('[data-hub]').forEach(b=>b.addEventListener('click',()=>showHub(b.dataset.hub)));
+
+let view='desk',trueSize=false;
+function applyView(){document.querySelectorAll('.v-desk').forEach(el=>el.hidden=view!=='desk');document.querySelectorAll('.v-phone').forEach(el=>el.hidden=view!=='phone');$('viewDesk').setAttribute('aria-pressed',String(view==='desk'));$('viewPhone').setAttribute('aria-pressed',String(view==='phone'));requestAnimationFrame(fitAll)}
+$('viewDesk').addEventListener('click',()=>{view='desk';applyView()});
+$('viewPhone').addEventListener('click',()=>{view='phone';applyView()});
+$('trueSize').addEventListener('click',()=>{trueSize=!trueSize;$('trueSize').setAttribute('aria-pressed',String(trueSize));fitAll()});
+
+/* Wide frames are drawn at their real pixel width. "Fit" scales a 1440 frame down to the window;
+   "True size" shows it 1:1 and lets the frame scroll sideways. */
+function fitAll(){document.querySelectorAll('.fw.fit').forEach(w=>{const f=w.firstElementChild;if(!f||!f.offsetWidth)return;f.style.transform='';w.style.height='';if(trueSize)return;const avail=w.clientWidth-32;const s=Math.min(1,avail/f.offsetWidth);if(s<1){f.style.transform='scale('+s+')';w.style.height=Math.ceil(f.offsetHeight*s+34)+'px'}})}
+window.addEventListener('resize',fitAll);
+
+function showScreen(){const ids=[...document.querySelectorAll('.screen')].map(s=>s.id);let id=location.hash.slice(1);if(!ids.includes(id))id='s1';document.querySelectorAll('.screen').forEach(el=>el.hidden=el.id!==id);document.querySelectorAll('.walk a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+id?'page':'false'));if(ids.includes(location.hash.slice(1))){showHub('mockup');$(id).querySelector('h1')?.focus({preventScroll:true})}requestAnimationFrame(fitAll)}
+window.addEventListener('hashchange',showScreen);
+applyView();showScreen();
+</script>
+
+<script>
+'use strict';
+/* ---- explanations behind every highlight ---- */
+const esc=v=>String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function modal(title,body){$('dialogtitle').textContent=title;$('dialogbody').innerHTML=body;$('dialog').showModal()}
+$('closeDialog').addEventListener('click',()=>$('dialog').close());
+const FINDINGS={
+  F01:{t:`Groups live only inside a rotating block`,now:`A set of groups is stored on a block’s rotation, and a rotation exists only while the block has two or more stations and Groups rotate is pressed. The Groups room opens only from there. A block with no stations has a flat player list: Whole team, or chosen players.`,fix:`Every Players line (a block’s, and a separate station’s) gets “Split into groups…”, which opens the same Groups room. The block then reads its groups back in place.`},
+  F02:{t:`Every rotating block draws its own groups`,now:`Two circuits in one practice hold two independent sets of groups. There is no “same groups as before”, so a late arrival has to be placed in each one.`,fix:`Groups belong to the practice. A block points at a set; a second block picks the same set from a menu. Moving one player updates every block that uses the set, and each of those blocks says so.`},
+  F03:{t:`“Same groups as last practice” was ruled and never built`,now:`Your grouping ruling of 31 Jul (D21) listed three ways to make groups: by hand, at random, and same groups as last practice. Only the first two were built; the model still carries a “previous” source that nothing sets. The only reuse path is copying a whole earlier plan.`,fix:`“From another practice…” lists every set of groups from earlier practices this season and copies one into tonight. That is how batteries are made once a season instead of once a practice.`},
+  F04:{t:`A separate station cannot be split`,now:`A station in a block that does not rotate holds its own player list, with no grouping, and its column on the plan does not show who is there.`,fix:`The station dialog’s Players line gets the same “Split into groups…”, and a separate station’s column shows who is there (“Batteries · 3 pairs”).`}
+};
+const KIND={new:'New',re:'Restyled from today',un:'Unchanged from today'};
+const GENERIC_NOTE={new:`Not in the product today.`,re:`Exists today and changes in shape, wording or place.`,un:`Exists today and is drawn here unchanged, so a build cannot drop it by accident.`};
+function explainFinding(id,here){const f=FINDINGS[id];if(!f)return;modal(id+' · '+f.t,`<div class="explain"><h3>What the code does today</h3><p>${esc(f.now)}</p>${here?'<h3>Where you are looking</h3><p class="here">'+esc(here)+'</p>':''}<h3>What the proposal does</h3><p>${esc(f.fix)}</p><p><button class="button" type="button" data-plan="${id}">Read the finding in the plan →</button></p></div>`)}
+function explainTag(el){const k=el.dataset.k;modal(KIND[k]||'Tag',`<div class="explain"><p>${esc(el.dataset.note||GENERIC_NOTE[k]||'')}</p>${el.dataset.note?'<p class="sub">'+esc(GENERIC_NOTE[k])+'</p>':''}</div>`)}
+function jumpToFinding(id){$('dialog').close();showHub('plan');const hit=[...document.querySelectorAll('#hub-plan h3')].find(n=>n.textContent.trim().startsWith(id+' —'));if(hit){hit.scrollIntoView({block:'start',behavior:'smooth'});hit.style.background='var(--lime)';setTimeout(()=>hit.style.background='',2500)}}
+document.querySelectorAll('.mk').forEach(el=>{el.title='Click to read what this refers to';el.setAttribute('role','button');el.tabIndex=0;el.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();explainTag(el)}})});
+document.addEventListener('click',e=>{const tag=e.target.closest('.mk');if(tag){e.preventDefault();e.stopPropagation();explainTag(tag);return}const el=e.target.closest('button,a');if(!el)return;if(el.dataset.finding){e.preventDefault();explainFinding(el.dataset.finding,el.dataset.here);return}if(el.dataset.plan)jumpToFinding(el.dataset.plan)});
+</script>
+
+<script>
+'use strict';
+/* ---- Decisions: open calls with a recommendation, a pick per row, a paste-back ---- */
+const DECISIONS=[
+  {id:'G1',ask:`One set of groups shared by every block that uses it (linked), or each block keeps its own copy?`,rec:`Linked. Move a late arrival once and every block that uses the set is right. Each block names where else its set is used, and the room offers “Make a separate copy for this block” when one block needs to differ.`,see:'Screens 2, 3, 4'},
+  {id:'G2',ask:`Where does “split” live on a block: on the Players line, or as a “+ Groups” door beside “+ Stations”?`,rec:`The Players line. Groups answer “who is in this block”, which that line already answers. The door row adds “what else” to a block.`,see:'Screen 3'},
+  {id:'G3',ask:`Does a rotating circuit take its groups from the same practice list?`,rec:`Yes. Otherwise the product has two kinds of groups. Plans saved before this change show their circuit groups on the list, named after the block, with nothing lost.`,see:'Screen 2'},
+  {id:'G4',ask:`Stations: a separate station splits the same way; a station in a rotating circuit gets no pairs of its own?`,rec:`Yes to both. A rotating station has a different group every round, so pairs there go in the tonight note (“pair up inside your group”).`,see:'Screen 5'},
+  {id:'G5',ask:`Groups of two read as pairs everywhere (“5 pairs”, “Pair 1”, “Avery & Gray”, “Not in a pair”)?`,rec:`Yes. Coaches say pairs. A block with no stations opens the draw on “Players per group: 2”.`,see:'Screens 3, 4'},
+  {id:'G6',ask:`Build “From another practice…” now (your 31 Jul D21 option, never built)?`,rec:`Yes. It is what makes pitcher-and-catcher pairs efficient. It copies, never links, so tonight’s changes never rewrite an earlier plan.`,see:'Screen 6'},
+  {id:'G7',ask:`Before any groups exist, show a quiet “+ Groups for tonight” line at the top of the plan?`,rec:`Yes, one quiet line in the same style as the focus section’s invitation, so a coach who thinks “groups for the night” first finds it where the night’s things are. It turns into the Groups fold once a set exists.`,see:'Screen 2'},
+  {id:'G8',ask:`The field and paper name the pairs: run screen, My station, helper home, printed sheet, staff email?`,rec:`Yes, in the same build. A plan the field cannot read is half built.`,see:'Screen 7'},
+  {id:'G9',ask:`A set nothing uses any more — keep it on the list, or remove it?`,rec:`Remove it with its last use (ruled on trying the build: "if … a group is no longer linked to a block, why does it stay on the practice plan?"). A set made from the Groups list itself stands unused until something picks it. The menu warns before a set's last use is left.`,see:'Full Plan → Revised the same day'},
+  {id:'G10',ask:`A set made as pairs that hand moves leave uneven — call it groups, or pairs?`,rec:`Pairs, saying what is uneven: "3 pairs · one of 3, one of 1". The set's shape is saved the moment it is chosen in the room.`,see:'Full Plan → Revised the same day'}
+];
+$('decisionRows').innerHTML=DECISIONS.map(d=>`<div class="decisionrow"><div class="dhead"><strong>${esc(d.id)} · ${esc(d.ask)}</strong><span class="tag ruled">Ruled · as drawn</span></div><p class="meta">2026-09-28</p><p class="rec"><b>What was ruled:</b> ${esc(d.rec)}</p><p class="seeon">See ${esc(d.see)}</p></div>`).join('');
+</script>
+
+<script>
+'use strict';
+/* ---- QA walk §247 — one purpose per walk, signed off one by one ---- */
+const QA_PARTS=[
+  {id:'W1',title:`A block in pairs`,purpose:`Split a block with no stations into pairs from its Players line, and see the pairs everywhere the block is read.`,pass:`The pairs show on the block, on its row and in the Groups list; an abandoned "New groups…" leaves nothing behind.`,steps:[
+    `At the top of the plan, under "Tonight:" and About, a "Groups" list shows "Skills circuit groups · 3 groups · Used in Skills circuit" — the circuit's old groups, carried over with nothing to set up.`,
+    `Open Warm-up. Its Players line ends with "Split into groups…" (or "Split them into groups…" when players are chosen).`,
+    `Press it: a menu offers "Use groups from tonight: Skills circuit groups", then "New groups…". Pick New groups….`,
+    `The room is headed Pairs; the name box says "Pairs"; "Players per group" is pressed with 2. Press Draw: Pair 1, Pair 2…, the two names in each pair in roster order.`,
+    `Rename it "Throwing partners". Close the room.`,
+    `Warm-up reads "Throwing partners · N pairs · Change…", one line of "Name & Name · Name & Name…", then "Not in a pair · …" if anyone is out, then "Edit pairs ›".`,
+    `Close Warm-up: its row's last line reads "In pairs · Throwing partners". The Groups list shows Throwing partners, "Used in Warm-up".`,
+    `A mistake costs nothing: on Small-sided game press Split into groups… → New groups…, then close the room WITHOUT drawing. The block is exactly as it was, and nothing new is in the Groups list.`]},
+  {id:'W2',title:`Same pairs, two blocks — and a separate copy`,purpose:`Reuse tonight's pairs on a second block, see that a change reaches both, and split one off.`,pass:`A shared set changes everywhere it is used and says so; the copy separates cleanly; a set leaves the list with its last use, after a warning; pairs stay pairs when uneven.`,steps:[
+    `Open Small-sided game → Split into groups…: the menu lists Throwing partners, "used in Warm-up". Pick it.`,
+    `The block reads the same pairs, with "also used in Warm-up" beside "Edit pairs ›".`,
+    `Edit pairs ›: the room says "Used in Warm-up and Small-sided game. A change here changes both."`,
+    `Tap a player → Move to another pair. Close, open Warm-up: the same move is there.`,
+    `Back on Small-sided game → Edit pairs › → "Make a separate copy for Small-sided game". The room now edits "Throwing partners (copy)". Move someone; Warm-up does NOT change.`,
+    `Change… on Small-sided game: the menu opens with "'Throwing partners (copy)' is only used here — choosing anything below removes it". Pick Whole team: the block reads Whole team and the copy is GONE from the Groups list.`,
+    `Edit pairs › on Warm-up and move a player so one pair has three: the set still says pairs — "3 pairs · one of 3, one of 1" — in the room, on the block and in the Groups list.`,
+    `Open Change… on Warm-up while Small-sided game also uses the same pairs: no warning — a shared set stays for the other block.`]},
+  {id:'W3',title:`Batteries at a separate station`,purpose:`Pair pitchers with catchers at a bullpen station while everyone else does something else.`,pass:`A station that does not rotate holds its own pairs and its column says so; a circuit's station offers none.`,steps:[
+    `Add a block "Warm up pitchers", + Stations, name the two stations Bullpen and Long toss, and un-press "Groups rotate".`,
+    `Open Bullpen → Players → Choose players… → pick four → Done. The line now ends "Split them into groups…".`,
+    `Split them into groups… → New groups…: the draw reads "from the 4 chosen". Do NOT draw — tap each chip and Move it, making two pairs by hand. Rename the set "Batteries".`,
+    `Close: Bullpen's column reads "Batteries · 2 pairs"; Long toss's column shows its own players or nothing.`,
+    `Open a station of Skills circuit: it has no Players line — in a circuit the groups carry the people.`]},
+  {id:'W4',title:`A circuit uses tonight's groups`,purpose:`Point a circuit at one of tonight's sets, and take it back.`,pass:`The old circuit reads exactly as before; a circuit can switch sets, drop to no groups, and come back.`,steps:[
+    `Open Skills circuit: under the grid, "Skills circuit groups · 3 groups · Change…" with the three groups by name — the grid is as it was before today.`,
+    `Change… → Throwing partners: the grid re-deals by pairs, and the lines under it say what changed.`,
+    `Change… → No groups: "No groups yet · Choose groups…".`,
+    `Choose groups… → Skills circuit groups: back as it was.`]},
+  {id:'W5',title:`From another practice`,purpose:`Bring batteries forward from another practice instead of making them again.`,pass:`Another practice's sets are listed and copied; a change here never rewrites the other practice.`,steps:[
+    `After W1–W3, open ANOTHER practice this season from the Schedule, open its plan, press Edit.`,
+    `On a block, Split into groups… → From another practice…: the list shows Batteries and Throwing partners from the probe practice, newest first, each with its names.`,
+    `Use these on Batteries: the room opens on a copy, with "Copied from <that day>." — and, if anyone in it hasn't replied yes for THIS practice, their names ("still placed, shown dashed").`,
+    `Change a pair here, then go back to the probe practice: its Batteries is unchanged.`]},
+  {id:'W6',title:`On the field and on paper`,purpose:`Read the pairs where the practice is run — the field screen, a station coach's screen, the printed sheet, the staff email.`,pass:`Pairs are readable at arm's length and on paper; the email names no child.`,steps:[
+    `On the probe practice press Run practice → Warm-up: under its words, "IN PAIRS · THROWING PARTNERS", one pair per line, large, then "Not in a pair · …".`,
+    `Warm up pitchers → Bullpen: "Who's at it" names Batteries with its pairs on one line.`,
+    `Print the sheet: Warm-up's line says "In pairs, Throwing partners" and the pairs print under it; a later block using the same pairs names the set without repeating them; Bullpen's Players line reads "In pairs, Batteries — …".`,
+    `Send to staff with "Also email them", to yourself: the email's rows say "In pairs · Throwing partners" and name no child.`]},
+  {id:'W7',title:`Delete, abandon, and a phone`,purpose:`Nobody ever vanishes: deleting a set or abandoning "+ Stations" puts people back; the phone offers the same doors.`,pass:`Every place keeps its players; nothing stray is left in the Groups list; the phone path works by tap.`,steps:[
+    `Groups list → Throwing partners → Edit › → "Delete Throwing partners…": the question names the blocks that use it. Confirm.`,
+    `Those blocks now list the same players by name (no pairs), and the Groups list no longer shows it.`,
+    `On a block with words, + Stations, then close the new blank station untouched: the block is back exactly as it was, and no "… groups" set is left in the Groups list.`,
+    `From the Groups list, "+ Make groups" → Draw → close: the set stays, "Not used by any block yet". Pick it on a block, then Change… → Whole team (the menu warns first): it leaves the list.`,
+    `On a phone (or a window under 640 wide): open a block → Split into groups… rises as a drawer; in the room the draw folds to "N pairs · from … · Change ›"; a chip moves by tap.`]}
+];
+let qa={};try{qa=JSON.parse(localStorage.getItem('practice-groups-qa')||'{}')}catch(e){qa={}}
+function saveQA(){try{localStorage.setItem('practice-groups-qa',JSON.stringify(qa))}catch(e){}}
+function qaCounts(){let checked=0,total=0;QA_PARTS.forEach(p=>p.steps.forEach((_,i)=>{total++;if(qa[p.id+'-'+i])checked++}));return{checked,total}}
+function paintQACount(){const c=qaCounts();const passed=QA_PARTS.filter(p=>qa['verdict-'+p.id]==='pass').length;$('qaCount').textContent=`Checked ${c.checked} of ${c.total} · ${passed} of ${QA_PARTS.length} walks passed`}
+function drawQA(){$('qaParts').innerHTML=QA_PARTS.map(p=>`<div class="qapart"><h3>${esc(p.id)} · ${esc(p.title)}</h3><p class="sub"><b>Purpose:</b> ${esc(p.purpose)}</p><p class="sub"><b>Passes when:</b> ${esc(p.pass)}</p>${p.steps.map((s,i)=>`<label class="qastep"><input type="checkbox" data-step="${p.id}-${i}" ${qa[p.id+'-'+i]?'checked':''}> ${esc(s)}</label>`).join('')}<div class="verdictrow">Verdict:${['pass','issue','call'].map(v=>`<button type="button" data-verdict="${p.id}" data-value="${v}" aria-pressed="${qa['verdict-'+p.id]===v}">${v==='pass'?'Pass':v==='issue'?'Issue':'Needs a call'}</button>`).join('')}</div><label>Notes<textarea data-notes="${p.id}" rows="2" placeholder="Anything worth recording">${esc(qa['notes-'+p.id]||'')}</textarea></label></div>`).join('');
+ document.querySelectorAll('[data-step]').forEach(el=>el.onchange=()=>{qa[el.dataset.step]=el.checked;saveQA();paintQACount()});
+ document.querySelectorAll('[data-verdict]').forEach(el=>el.onclick=()=>{qa['verdict-'+el.dataset.verdict]=el.dataset.value;saveQA();drawQA()});
+ document.querySelectorAll('[data-notes]').forEach(el=>el.oninput=()=>{qa['notes-'+el.dataset.notes]=el.value;saveQA()});
+ paintQACount()}
+drawQA();
+$('buildSummary').onclick=()=>{const c=qaCounts();const lines=['Groups at every level — QA §247',`Checked ${c.checked} of ${c.total}`,''];QA_PARTS.forEach(p=>{const v=qa['verdict-'+p.id]||'unset';lines.push(`${p.id} · ${p.title} — verdict: ${v}`);p.steps.forEach((s,i)=>{if(!qa[p.id+'-'+i])lines.push(`  [ ] ${s}`)});if(qa['notes-'+p.id])lines.push('  Notes: '+qa['notes-'+p.id]);lines.push('')});const out=$('summaryOut');out.value=lines.join('\n');out.hidden=false;out.focus();out.select()};
+</script>

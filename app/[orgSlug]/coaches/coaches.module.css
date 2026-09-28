@@ -807,8 +807,8 @@
    ⚠ It STAYS through scroll at every width. Until 2026-09-21 it folded with `.teamHeaderCollapsed`
    (≤900) along with the flip, so "help stops scrolling away" was true on a desktop and false on a
    phone; the phone re-evaluation (stage 1 · B2) deleted the collapse, so it is true everywhere.
-   ⚠ NO desktop size override: the button is the shared 34px `.helpButtonIconOnly` circle, exactly
-   the control the band used to hold, so nothing about it changes except where it lives. */
+   ⚠ NO desktop size override: the button is the shared `.helpButtonIconOnly` — a bare glyph in a
+   34px hit box at every width since 2026-09-24 — so nothing about it changes except where it lives. */
 .teamHeaderHelp { flex-shrink: 0; display: inline-flex; }
 
 /* ── The switcher's door on the team name (phone re-evaluation stage 1 · B1, 2026-09-21) ─────────
@@ -896,7 +896,7 @@
    ⚠ The "?" keeps its 44px tap target (the ≤640 floor below) and the row stays 36px because the
    button's vertical margins are negative: the hit area overhangs the bar's edges by 4px each way
    rather than growing the bar. The sweep still measures a 44px control. The overhang paints
-   NOTHING — on a phone the "?" is a bare glyph (`.teamHeaderHelp button` at ≤640, below), so the
+   NOTHING — the "?" is a bare glyph at every width (`.helpButtonIconOnly`, the help module), so the
    4px that sit above a pinned bar's top edge are transparent. ⚠ It was briefly a disc: first the
    full 44px circle, whose crown the viewport sliced off; then a 34px disc clipped inside the box
    with a border/background-clip trick that needed restating under the warm skin (the shorthand
@@ -961,28 +961,10 @@
      stack is ~42px. The band gives back 8px + 4px of margin, so the screen still nets ahead —
      MEASURE it rather than quoting this comment. */
   .teamHeaderHelp button { min-height: var(--tap-min, 44px); min-width: var(--tap-min, 44px); }
-  /* ── A BARE GLYPH ON A PHONE (owner, 2026-09-20): no fill, no hairline, a bigger "?" ──────────
-     The 44px box above is a tap target, not a shape. The HelpCircle icon already draws a ring
-     around its "?", and the ghost button's disc drew a second one around that — the owner read
-     the disc as "extra blue area" beside the team name and asked for the symbol bigger instead.
-     So on a phone the button paints nothing and the glyph grows 15px → 20px; the tap target,
-     the 36px rest bar and the desktop's 34px ghost disc are all unchanged.
-     ⚠ Four selectors for one look, on purpose: the warm skin (the default) sets the ghost
-     button's `background` at 0,3,1 and its hover at 0,4,1 (globals.css), which a 0,1,1 rule here
-     cannot reach. The warm-gate prefix is the module's standing way past that skin — same
-     declaration, one more selector — and the bare pair still covers the dark portal. Do not
-     collapse these to one; the disc comes straight back under warm and only shows on a phone.
-     ⚠ Width/height on the svg beat the icon's own size attributes; the component's `size` prop
-     is shared with the desktop and every other iconOnly "?", which keep 15px. */
-  .teamHeaderHelp button,
-  .teamHeaderHelp button:hover,
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .teamHeaderHelp button,
-  :global(html[data-user-theme="warm"] [data-coach-warm-enabled]) .teamHeaderHelp button:hover {
-    background: transparent;
-    border-color: transparent;
-    box-shadow: none;
-  }
-  .teamHeaderHelp button svg { width: 20px; height: 20px; }
+  /* (The phone-only BARE GLYPH override stood here, 2026-09-20 — four selectors forcing the ghost
+     disc transparent past the warm skin, plus a 20px svg. The owner made that look the "?" at
+     every width, 2026-09-24, so it moved into `HelpButton` itself, which no longer asks for the
+     ghost fill at all. Nothing is left to override; do not bring a masthead-only rule back.) */
   /* ⚠⚠ THE ROW RESERVES THE BUTTON'S HEIGHT WHETHER OR NOT A "?" IS THERE, AND THAT IS THE POINT.
      The slot is filled by an EFFECT (the page publishes after hydration), so the server sends a bar
      with no "?" and the client adds one — a 44px control landing in a row whose text stack is ~42px
@@ -1467,7 +1449,8 @@
   /* The "?" is a 34×34 circle (help module); the tap floor above stretched only its HEIGHT, so
      every coach page header showed a 34×44 oval at phone width (owner-spotted 2026-08-23, §80
      walk). Matching min-width lets the tap target grow into a LARGER CIRCLE — min-width beats
-     the module's fixed width, radius 999 does the rest. */
+     the module's fixed width, radius 999 does the rest. (Since 2026-09-24 the "?" paints no disc
+     at any width, so no oval can show — the rule now only keeps the TAP TARGET square.) */
   /* (The 641–768 tablet band gets the same FLOOR via its own block below — the grid reshaping
      and icon-only labels in THIS block are phone decisions the band must not inherit.) */
   .pageHeaderStd .pageHeaderHelp button {
@@ -10730,6 +10713,60 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppGroupReadQuiet i { color: var(--text-tertiary); }
 .ppGroupReadLine .ppTlQuietLink { font-size: var(--type-support); }
 
+/* ── GROUPS AT EVERY LEVEL (owner rulings G1–G8, 2026-09-28) ──
+   The door to tonight's sets is the shared action menu's trigger WORN AS THE LINE'S QUIET LINK —
+   "Split into groups…", "Change…", "Choose groups…": no box, no chevron, the olive word, like
+   "Choose players…" beside it. Two classes deep so it outranks the menu module's `.trigger` (and its
+   hover) whatever the bundle order; the chevron is the trigger's own svg, hidden here. */
+.ppGroupsMenu { display: inline-flex; vertical-align: baseline; min-width: 0; }
+.ppGroupsMenu .ppGroupsDoor {
+  background: none; border: 0; border-radius: 0; padding: 0; gap: 0; min-height: 0;
+  font: inherit; font-size: var(--type-support); font-weight: 700; color: var(--home-olive, var(--blueprint-light));
+  white-space: normal; text-align: left;
+}
+.ppGroupsMenu .ppGroupsDoor:hover:not(:disabled) { background: none; text-decoration: underline; }
+.ppGroupsMenu .ppGroupsDoor > svg { display: none; }
+/* The practice's own list — the Groups fold under the goal: one quiet card per set, on the paper
+   tone the open block wears (the sheet is white), its name and shape, its names, where it is used. */
+.ppSetList { gap: 0.6rem; }
+.ppSetRow {
+  display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; padding: 0.55rem 0.75rem;
+  border: 1px solid var(--home-line, var(--border-2)); border-radius: 8px; background: var(--home-paper, var(--white-05));
+}
+.ppSetRowHead { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.15rem 0.5rem; min-width: 0; font-size: var(--type-body); color: var(--text-primary); }
+.ppSetRowHead b { font-weight: 700; overflow-wrap: anywhere; }
+.ppSetRowEdit { margin-left: auto; font-size: var(--type-support); }
+/* The room's additions: the set's NAME leads the body; a copied set's one line; where it is used
+   and the way to a separate copy; the set's own delete, quiet, last. */
+.ppGroupsSetName { width: 100%; font-size: var(--type-heading); font-weight: 700; }
+.ppGroupsNote {
+  margin: 0; padding: 0.45rem 0.7rem; border-radius: 8px; font-size: var(--type-support); color: var(--text-primary);
+  background: var(--home-olive-soft, var(--white-8)); border: 1px solid var(--home-line-strong, var(--border-2));
+}
+.ppGroupsUsed { margin: 0; display: flex; flex-wrap: wrap; align-items: center; gap: 0.2rem 0.4rem; font-size: var(--type-support); color: var(--text-secondary); }
+/* The groups menu's one warning, at its top: this place is the set's last use, so any choice removes
+   it (owner ruling 2026-09-28 — a set lasts as long as something uses it). Said before, never after. */
+.ppGroupsMenuNote {
+  margin: 0 0 0.25rem; padding: 0.45rem 0.6rem; border-radius: var(--home-radius-sm, 9px);
+  background: var(--home-olive-soft, var(--white-8)); font-size: var(--type-support); line-height: 1.4; color: var(--text-primary);
+}
+.ppGroupsUsed .ppTlQuietLink { display: inline-flex; align-items: center; gap: 0.3rem; font-size: var(--type-support); }
+/* "Groups from another practice" — a row per set: its name, shape and day, its names, Use these. */
+.ppSetPick {
+  display: flex; align-items: center; gap: 0.75rem; min-width: 0; padding: 0.6rem 0.75rem;
+  border: 1px solid var(--home-line, var(--border-2)); border-radius: 8px; background: var(--home-paper, var(--white-05));
+}
+.ppSetPickBody { flex: 1 1 auto; min-width: 0; font-size: var(--type-body); color: var(--text-primary); overflow-wrap: anywhere; }
+/* On the field (G8): a block's pairs one per line at arm's length, tagged as the room tags them. */
+.ppRunSet { margin-top: 0.35rem; }
+.ppRunSetList { list-style: none; margin: 0.2rem 0 0.35rem; padding: 0; display: flex; flex-direction: column; }
+.ppRunSetList li {
+  display: flex; align-items: baseline; gap: 0.6rem; padding: 0.4rem 0;
+  border-bottom: 1px dotted var(--home-line-strong, var(--border-2));
+  font-size: 1.125rem; font-weight: 600; color: var(--text-primary); overflow-wrap: anywhere;
+}
+.ppRunSetTag { flex: 0 0 auto; min-width: 1.6rem; font-family: var(--font-data); font-size: var(--type-support); font-weight: 500; color: var(--text-tertiary); }
+
 /* ── The GROUPS ROOM (stage 3 revision, D9 · D10 · D11 · D12, 2026-09-16) — a modal on the shared
    floor: the draw as a row (the way as two pressed chips, the number, the pool word, the button),
    then the columns — a dashed "Not in a group" pool and one card per group (its name, its chips,
@@ -10739,6 +10776,9 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* Wider than the standing wide modal: the pool and three groups side by side at ~9rem each (the
    drawing's 760); a fourth and more wrap to a second row rather than shrink under a finger. */
 .ppGroupsRoom { max-width: 800px; }
+/* On a phone the room's foot is "+ Add a group" alone (its Done left on the §231 walk, owner
+   2026-09-25) — pinned LEFT, so it never sits where a thumb used to find Done. */
+@media (max-width: 640px) { .ppGroupsRoom .modalFooter { justify-content: flex-start; } }
 .ppGroupsBody { display: flex; flex-direction: column; gap: 0.8rem; padding: 0.7rem 0.8rem 0.9rem;
   /* The pool column mounts ABOVE the groups when a chip is lifted with everyone placed. Scroll
      anchoring would scroll the body to hold the groups still, which the drag kit reads as a scroll
@@ -10755,9 +10795,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   padding: 0.55rem 0.6rem 0.5rem; border-radius: 10px;
   border: 1px solid var(--home-line-strong, var(--border-2)); background: var(--home-paper, var(--white-05));
 }
-/* On a phone the room's foot is "+ Add a group" alone (its Done left on the §231 walk, owner
-   2026-09-25) — pinned LEFT, so it never sits where a thumb used to find Done. */
-@media (max-width: 640px) { .ppGroupsRoom .modalFooter { justify-content: flex-start; } }
 .ppGroupColPool { border-style: dashed; background: var(--home-card, var(--white-05)); }
 /* While a chip is lifted every column shows its edge; the one under the pointer fills. */
 .ppGroupCols[data-lifting='on'] .ppGroupCol { border-style: dashed; border-color: var(--text-tertiary); }
@@ -10801,6 +10838,11 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppGroupMore { flex: 0 0 auto; margin: -0.375rem 0 -0.375rem auto; }
 @media (max-width: 640px) {
   .ppGroupsRoom .ppGroupColHead { min-height: 2rem; }
+  /* The ⋯ sits 0.45rem into the card's right padding, its glyph on the card's edge. The HEAD
+     reaches there, not the ⋯ past the head: a ⋯ overhanging its own row is content no scroller
+     owns, which the layout sweep flags (§231 /review, 2026-09-25 — the look is unchanged). Only
+     while it HOLDS the ⋯: renaming, the head is the name box alone and keeps the card's padding. */
+  .ppGroupsRoom .ppGroupColHead:has(.ppGroupMore) { margin-right: -0.45rem; }
   /* G3 · the chips drop their ⠿ dots and tighten their sides; tap and hold are unchanged. Two
      classes deep so the padding beats the chip's own rule from its module on any bundle order. */
   .ppGroupCols .ppGroupGrip { display: none; }
@@ -10817,11 +10859,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* The shared column-heading recipe (see `.insightsTable th`) — the fourth and last of the four
    that had drifted apart. `.ppGridScroll` already scrolls, so the wider heading stays contained. */
 .ppGrid thead th {
-  /* The ⋯ sits 0.45rem into the card's right padding, its glyph on the card's edge. The HEAD
-     reaches there, not the ⋯ past the head: a ⋯ overhanging its own row is content no scroller
-     owns, which the layout sweep flags (§231 /review, 2026-09-25 — the look is unchanged). Only
-     while it HOLDS the ⋯: renaming, the head is the name box alone and keeps the card's padding. */
-  .ppGroupsRoom .ppGroupColHead:has(.ppGroupMore) { margin-right: -0.45rem; }
   font-size: var(--type-support); text-transform: uppercase; letter-spacing: 0.05em;
   color: var(--text-secondary); font-weight: 700;
 }
@@ -11258,9 +11295,15 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   display: flex;
 }
 .ppToolbarEnd { margin-left: auto; }
-.ppToolbarEnd[data-on='on'] { color: var(--text-primary); background: var(--white-8); border-color: var(--white-45); }
-/* Edit / Done editing (stage 1b, R3): pressed-looking while editing, so the mode reads on the button. */
-.ppEditDoor[data-on='on'] { color: var(--text-primary); background: var(--white-8); border-color: var(--white-45); }
+/* The docked Library toggle, PRESSED: a light olive fill under the toolbar's own hairline — its word
+   never changes, so the fill is the only thing saying "docked". ⚠ Never `--white-45` / `--white-8`
+   (owner, 2026-09-28: "why the border is different than the other buttons around it"): written for
+   the dark palette (a faint lighter line, a slight lift), Warm maps them to the dim TEXT ink and the
+   card's own white — a solid dark outline on no fill, which reads as a focus ring, not a press. */
+.ppToolbarEnd[data-on='on'] { color: var(--text-primary); background: rgba(var(--home-olive-rgb, var(--logic-lime-rgb)), 0.1); }
+/* Edit / Done editing (stage 1b, R3) wears its neighbours' border in both states (owner, 2026-09-28):
+   ✓ and the words "Done editing" already say the mode, and the "pressed" outline it wore was the
+   `--white-45` defect above. */
 /* At a 360 phone "Run practice · ✓ Done editing · ⋯" is 4px wider than the row, and the ⋯ fell to
    a second line (probe, 2026-09-23); the door's own side padding gives that back. */
 @media (max-width: 640px) { .ppEditDoor { padding-inline: 0.7rem; } }
@@ -11333,6 +11376,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   .ppGroupReadLine .ppTlQuietLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
   .ppGroupsRoom .ppDrawSelect, .ppGroupsRoom .ppDrawBtn, .ppGroupsRoom .ppGroupName { min-height: var(--tap-min, 44px); }
   .ppGroupsRoom .ppIconBtn { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+  /* Groups at every level (G1–G8): the sets' doors on a Players line, a circuit's board and the fold,
+     and the room's own links, take the same floor as "Choose players…" beside them. */
+  .ppGroupsMenu .ppGroupsDoor, .ppGroupsUsed .ppTlQuietLink, .ppSetList .ppTlQuietLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .ppGroupsRoom .ppGroupsSetName { min-height: var(--tap-min, 44px); }
   /* The station MODAL's fields (stage 3, D4) sit outside the open block, so the block's one floor
      rule above cannot reach them — the same floor from the modal's own wrapper (the sweep's
      first look at the modal found the name, the goal, the pickers and the note at 35–37px). */
@@ -11920,6 +11967,14 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 /* "+ Add a station" — one 44px row, the list's last: the block list's "+ Add a block", composed. */
 .ppStList > .ppStColAddWrap { border-top: 1px solid var(--home-line, rgba(255,255,255,0.08)); border-radius: 0 0 10px 10px; }
 .ppStRowAdd { composes: ppTlAddRow; padding: 0 0.8rem; font-size: var(--type-body); }
+/* ⚠ THE ROWS' FOCUS MARK IS THE LIST ROW'S (`.rowListDoor:focus-visible`) — drawn INSIDE the row.
+   The portal's global ring sits 2px OUTSIDE, so on a full-width row of a bordered list it drew a
+   second box over the list's edge (§231 walk, owner 2026-09-25: "this border … is dominating").
+   It is where focus lands when a sheet is closed by Escape or Back, and a keyboard coach needs it —
+   so it is quieted, never removed. The block list's rows are its twin and wear the same mark; the
+   add row takes the list's bottom corners so the mark follows them. */
+.ppTlClosed:focus-visible, .ppTlAddRow:focus-visible, .ppStRowDoor:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
+.ppStList .ppStRowAdd { border-radius: 0 0 9px 9px; }
 /* A carried station's slots meet ON the divider: with no gap between rows, half a pixel of reach
    puts the two halves' lines on one pixel and leaves no dead strip (the columns' reach is half a
    0.6rem gap). */
@@ -11936,14 +11991,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
      (owner, §227 walk 2026-09-24: "is there a reason one button has a border and the other does
      not?" — no; it was the desk's worded button, cut down). */
   .ppSheetEditDoor, .ppSheetEditDoor[data-on='on'] {
-/* ⚠ THE ROWS' FOCUS MARK IS THE LIST ROW'S (`.rowListDoor:focus-visible`) — drawn INSIDE the row.
-   The portal's global ring sits 2px OUTSIDE, so on a full-width row of a bordered list it drew a
-   second box over the list's edge (§231 walk, owner 2026-09-25: "this border … is dominating").
-   It is where focus lands when a sheet is closed by Escape or Back, and a keyboard coach needs it —
-   so it is quieted, never removed. The block list's rows are its twin and wear the same mark; the
-   add row takes the list's bottom corners so the mark follows them. */
-.ppTlClosed:focus-visible, .ppTlAddRow:focus-visible, .ppStRowDoor:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
-.ppStList .ppStRowAdd { border-radius: 0 0 9px 9px; }
     width: var(--tap-min, 44px); padding: 0; justify-content: center;
     background: none; border-color: transparent; box-shadow: none; color: var(--text-tertiary);
   }
@@ -11952,11 +11999,10 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 }
 /* A drill's or a read station's name, leading the body where the typed name's box would be. */
 .ppStationName { margin: 0; font-size: var(--type-heading); font-weight: 700; line-height: 1.25; overflow-wrap: anywhere; }
-/* The station form's foot: on a desk the walk leads and Done sits at the right; on a phone it is
-   the block sheet's — the walk alone, centred (§231 walk, owner 2026-09-25). */
-.ppSheetFoot { align-items: center; }
+/* The station form's foot: the block sheet's — the walk alone, centred, at every width (§231 walk,
+   owner 2026-09-25, the phone; 2026-09-28, the desk — its Done left: "why do we have 2 done buttons?"). */
+.ppSheetFoot { align-items: center; justify-content: center; }
 .ppSheetFoot > nav { margin-left: 0; }
-.ppSheetFoot .btnPrimary { min-height: var(--tap-min, 44px); margin-left: auto; }
 /* The next stop, named IN FULL at the end of the body (§227 walk, owner 2026-09-23 — option C):
    the phone foot's walk is compact, so this is where a coach reads where › goes. One row that
    wraps, never cuts; the way back is a quiet link under it. Block sheet and station form alike. */
@@ -11973,7 +12019,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
 .ppWalkNextName { font-weight: 700; overflow-wrap: anywhere; }
 .ppWalkNextMeta { font-size: var(--type-support); color: var(--text-secondary); }
 .ppWalkBack { composes: linkBtn ppQuietLink; align-self: flex-start; display: inline-flex; align-items: center; gap: 0.2rem; min-height: var(--tap-min, 44px); font-family: inherit; font-size: var(--type-support); font-weight: 600; }
-@media (max-width: 640px) { .ppSheetFoot { justify-content: center; } }
 .ppWalkEnd { font-size: var(--type-support); color: var(--text-tertiary); padding: 0.5rem 0; }
 
 /* Marks a drill the CLUB shares. Coaches use it; only an org admin can change it. */
@@ -12182,6 +12227,11 @@ span.libCardMain { cursor: default; }
 
 @media (max-width: 640px) {
   .ppDrillFilters .scoutSearch { flex-basis: 100%; }
+  /* …so on a phone Tags always starts the SECOND line, at the LEFT, and the right anchor above
+     (right for the 320px docked library, where Tags ends the row) hung its menu off the phone's left
+     edge (§231 walk, owner 2026-09-25: "the tags dropdown … is opening off screen on mobile").
+     Left-anchored here, where the row always wraps. */
+  .ppDrillFilters .multiSelectPanel { left: 0; right: auto; }
 }
 
 
@@ -12198,11 +12248,6 @@ span.libCardMain { cursor: default; }
   padding: 0.08rem 0.45rem;
   white-space: nowrap;
 }
-  /* …so on a phone Tags always starts the SECOND line, at the LEFT, and the right anchor above
-     (right for the 320px docked library, where Tags ends the row) hung its menu off the phone's left
-     edge (§231 walk, owner 2026-09-25: "the tags dropdown … is opening off screen on mobile").
-     Left-anchored here, where the row always wraps. */
-  .ppDrillFilters .multiSelectPanel { left: 0; right: auto; }
 .tagReadRow { display: inline-flex; gap: 0.25rem; flex-wrap: wrap; align-items: center; }
 
 /* ══════════════════════════════════════════════════════════════════════════════
