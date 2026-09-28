@@ -681,7 +681,7 @@ The target is met for the head coach and the assistant; the stress case needs on
 
 **Verified:** the phone guard (the N2 describe rewritten, a sheet-shape test added) and the two practice vocabulary / week guards — 106 / 106 · `tsc` clean · lint 0 errors · spelling and CSS-selector gates · `check:layout --only=coach-practice-plan-head,coach-practice-plan` clean at 361 / 390 / 1440 (768: the known masthead "?"). The sweep does not open dialogs, so the dialog geometry rests on the probes. Help: the practice plan article, the Send to staff FAQ and the phone FAQ name the ⋯ and the sheet's first line. Walk: QA walk · 1, part N (now 9 steps) — **✅ walked and passed 2026-09-25**, owner: *"ok that is much better, go ahead and consider the QA walk complete"*.
 
-## 6j · The last station adds one (owner ask 2026-09-28, on a desktop screenshot; built on dev the same day, uncommitted)
+## 6j · The last station adds one (owner ask 2026-09-28, on a desktop screenshot; built, /review'd and COMMITTED `8a955a52` the same day; walk owed)
 
 Owner: *"While I am making stations, when I get to the end I should be able to add a station rather than just having a dead end."* The station form's walk ended on a disabled **"End ›"**.
 
