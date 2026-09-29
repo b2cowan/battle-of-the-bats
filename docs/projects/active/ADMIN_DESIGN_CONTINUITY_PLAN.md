@@ -1753,6 +1753,14 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   proven; the likeliest is the old server still releasing its port), cured by a clean restart; `.probe/partb/fresh-pass.sh` now waits for the port and probes those
   routes before a capture. (2) `check-layout-invariants.mjs` has NO `--help`: an unknown flag starts a full sweep
   (one ran for ~2 minutes beside an identity pass before it was stopped; it writes nothing without `--init`).
+- **The tournament defects pass changed pixels on purpose (2026-09-29, commit `936655a9`; `TOURNAMENT_ADMIN_REDESIGN_PLAN.md`
+  §5 row D):** the tournament dashboard (the archive confirm's sentence; the reuse window's plan notice and error as the
+  kit callout; the activity frame not drawn while empty), Teams (the pools view restacks at ≤768; the Accept/Reject
+  confirms' email line; the payment-reminder note), the New tournament wizard's plan notice, Results' empty state,
+  Summary (the Divisions card's champions line, the recap subtitle, the Leader badge, the load error), the phone context
+  strip (never on its own page) and the Tournaments list's archive confirm. None sits in Part B's re-scoped areas, but
+  **an identity compare that still includes any of them recaptures its reference first** — a diff there is this pass,
+  not a leak.
 
 
 ### Phase 2 — Club screens (inside the Club Tier stages)

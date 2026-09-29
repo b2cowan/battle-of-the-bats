@@ -99,6 +99,14 @@ Each stage below is independently decidable. **Nothing proceeds without an expli
 | 5 | Storm Mode | Plan + mockups | L | ☐ open |
 | 6 | The Big Board | Plan + mockups | L | ☐ open |
 
+> **Pointer — the tournament admin redesign (opened 2026-09-28, verified against the code that day).** The
+> screens an organizer works in are redesigned in stages as Admin Design Continuity's Phase 3:
+> `TOURNAMENT_ADMIN_REDESIGN_PLAN.md` + `_PM_BRIEF.md`, hub https://claude.ai/artifact/HQoRuEsKd7i6cAvCrMNzgM.
+> Its walk re-checked the June journeys against the code: J1's 76 organizer-screen rows — 26 fixed, 9 partly,
+> 6 changed, 32 open; J8's 23 volunteer rows — 14 fixed, 4 partly, 1 changed, 3 open. It does not design
+> Stages 5 or 6 above; its Stage 1 (game day) leaves them a place on the board (a "Running late?" row on
+> today's rain-delay tool, and a reserved spot for the Big Board's door).
+
 ---
 
 ### Stage 0 — Close the books ✅ COMPLETE (2026-08-06)
