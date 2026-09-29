@@ -241,6 +241,19 @@ and their sticky offsets are ONE constant in the component (`PINNED`), mirrored 
 column rules. Measured at 1440 and 768: every row 52/53px, the pinned columns flush (0px) before and
 after a sideways scroll. At 768 the pinned block is 64px wider, so the positions scroll a little sooner.
 
+**/review (2026-09-29, after `61993de7`) — high-risk tier, four lenses + the scoped rendered check.**
+Fixed: (1) MEDIUM — the pill stuck on "Unsaved changes" when the taps since the last save cancelled
+out (a star on then off, an undo back to the saved profile): `mutate` set 'dirty' unconditionally and
+the empty flush only cleared 'saving' — it now clears 'dirty' too (probed: on-then-off shows the word,
+sends nothing, and the pill clears; a real edit still saves). (2) LOW — the sheet counted as open
+while its player was off the list (nav hidden, page locked, nothing to close): `sheetOpen` now
+requires the player on the list. Accepted, not fixed: the keepalive-on-hide PATCH and a later debounced
+PATCH could in theory land out of order (needs a >0.9s delivery inversion and a re-edit of the same
+player — the same exposure as two back-to-back debounced saves; a real fix is a server version check).
+Out of scope, reported: every coach screen's masthead "Public site" link is 29px tall at 361–768 (the
+Club Tier's, `69ee4101`); the Settings document-look controls and the lineup builder's "Call up a
+player" sit under the tap floor at 768.
+
 **Build-time calls (on the QA walk):** the reorder menu's last button is **Done**, not the lineup's
 "Cancel" (moves apply at once); the phone roster's grid rows (above); Undo / Redo stay at the foot
 of the depth-chart list.

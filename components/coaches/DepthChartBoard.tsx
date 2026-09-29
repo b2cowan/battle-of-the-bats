@@ -111,7 +111,9 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
   // and the phone's own back gesture closing it. A FORM covers the nav (the drawer-layer ruling),
   // so the sheet registers with the overlay counter. Desktop and tablet keep the grid.
   const isPhone = useIsPhone();
-  const sheetOpen = isPhone && openId !== null;
+  // Open only while its player is on the list: if that player left it (a reload), the sheet has nothing
+  // to show, and a sheet that stayed "open" would keep the nav hidden and the page locked (/review).
+  const sheetOpen = isPhone && openId !== null && players.some(p => p.id === openId);
   useOverlayOpen(sheetOpen);
   useBackStep(sheetOpen, () => setOpenId(null));
   const sheetRef = useRef<HTMLDivElement>(null);
@@ -201,7 +203,10 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
   const flush = useCallback(async () => {
     if (!canEdit) return;
     const ids = [...dirtyRef.current];
-    if (!ids.length) { setSaveState(s => (s === 'saving' ? 'saved' : s)); return; }
+    // Nothing left to send — also when the taps since the last save cancelled out (a star on then off,
+    // an undo back to the saved profile): 'dirty' clears here too, or the pill says "Unsaved changes"
+    // for ever over a board that matches the server (/review 2026-09-29).
+    if (!ids.length) { setSaveState(s => (s === 'saving' || s === 'dirty' ? 'saved' : s)); return; }
     setSaveState('saving');
     let anyError = false, forbidden = false;
     for (const id of ids) {
