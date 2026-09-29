@@ -27,7 +27,7 @@
  */
 import {
   Users, DollarSign, Contact, Globe, CalendarDays, Trophy, Building2, Users2, CreditCard, Settings,
-  MapPin, FileText, Link2, ScrollText,
+  MapPin, FileText, ScrollText,
   type LucideIcon,
 } from 'lucide-react';
 import type { Capability } from '@/lib/roles';
@@ -99,6 +99,9 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
           { key: 'rt-docs', label: 'Document templates', href: `${r}/documents` },
           { key: 'rt-shared-library', label: 'Shared library', href: `${r}/shared-library` },
           { key: 'rt-past', label: 'Past seasons', href: `${r}/past` },
+          // Club Tier Stage 2, specimen 9: moved here from Organization ("Coaches Portal links"), beside
+          // the teams it adds to. The name is /marketing's to rule on (drawn; `BRING_IN_PAGE_TITLE`).
+          { key: 'rt-bring-in', label: 'Bring in a coach’s team', href: `${r}/bring-in`, also: [`${base}/org/coaches-portal-links`] },
         ],
       };
     }
@@ -228,9 +231,6 @@ export function kitOrgLinks({
     !isCanceled && role === 'owner' && { key: 'org/settings', label: 'Settings', href: `${o}/settings`, exact: true, icon: Settings },
     !isCanceled && hasVenueLibrary && { key: 'org/venues', label: 'Venue library', href: `${o}/venues`, icon: MapPin },
     !isCanceled && ownerOrAdmin && { key: 'org/pdf', label: 'PDF settings', href: `${o}/settings/pdf`, icon: FileText },
-    !isCanceled && ownerOrAdmin && {
-      key: 'org/coaches-portal-links', label: 'Coaches Portal links', href: `${o}/coaches-portal-links`, icon: Link2,
-    },
   ];
   return links.filter((l): l is KitLink => Boolean(l));
 }

@@ -1,6 +1,6 @@
 'use client';
 import Link from 'next/link';
-import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText, Link2, UserCheck } from 'lucide-react';
+import { Users2, RefreshCw, MapPin, CreditCard, Settings, FileText, UserCheck } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { useCurrentOrgCoachAccess } from '@/lib/use-current-org-coach-access';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
@@ -52,12 +52,6 @@ export default function OrgAdminHub() {
         desc: 'Configure header, logo, footer, and branding for all PDF exports',
         icon: FileText,
         href: `${base}/settings/pdf`,
-      },
-      {
-        label: 'Coaches Portal Links',
-        desc: 'Invite paid Coaches Portals, review link requests, and see portal-link history',
-        icon: Link2,
-        href: `${base}/coaches-portal-links`,
       },
       ...(coachAccess.hasRepAccess ? [{
         label: 'My Coaches Portal',

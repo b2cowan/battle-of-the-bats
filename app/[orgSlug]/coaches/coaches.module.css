@@ -8525,11 +8525,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   flex: 1 1 18rem;
 }
 
-.linkList {
-  display: grid;
-  gap: 0.75rem;
-}
-
 .linkCard {
   background: var(--home-card, var(--card-bg));
   border: 1px solid var(--home-line, rgba(255,255,255,0.08));
@@ -8549,21 +8544,6 @@ button.lineupReadinessDoor:focus-visible { outline: 2px solid var(--primary-ligh
   color: var(--text-primary);
   font-size: var(--type-heading);
   font-weight: 800;
-}
-
-.linkCardMeta {
-  margin: 0.2rem 0 0;
-  color: var(--text-tertiary);
-  font-size: var(--type-body);
-}
-
-.linkFacts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.45rem 1rem;
-  margin-top: 0.8rem;
-  color: var(--text-tertiary);
-  font-size: var(--type-support);
 }
 
 /* ════════════════════════════════════════════════════════════════════════

@@ -1763,7 +1763,7 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 
 ## Standalone team workspaces (Premium plumbing)
 
-> The paid "Team" plan: a per-team provisioned org with its own billing. All four tables (mig 065) are **RLS-enabled with NO client policies** — `supabaseAdmin` only; `workspace_org_id` is the tenancy anchor. They forward-link into the **rep_\*** module (`rep_team_id`, `active_program_year_id` → Rep domain, later phase). No `lib/team-workspaces.ts` exists — the surface is split across `lib/team-workspace-provisioning.ts` (INSERT), `lib/team-workspace-entitlements.ts` (SELECT/mapper), `lib/team-org-billing.ts` + `lib/team-checkout.ts` (billing), and the Stripe webhook.
+> The paid "Team" plan: a per-team provisioned org with its own billing. All four tables (mig 065) are **RLS-enabled with NO client policies** — `supabaseAdmin` only; `workspace_org_id` is the tenancy anchor. They forward-link into the **rep_\*** module (`rep_team_id`, `active_program_year_id` → Rep domain, later phase). No `lib/team-workspaces.ts` exists — the surface is split across `lib/team-workspace-provisioning.ts` (INSERT), `lib/team-workspace-entitlements.ts` (SELECT/mapper), `lib/team-org-billing.ts` + `lib/team-checkout.ts` (billing), and the Stripe webhook. **Bringing a workspace's team into a club** is `move_team_into_club` (mig 313, 2026-09-29 — replaces 067's `complete_team_workspace_ownership_transfer`; see *Functions & mechanics* after `team_org_links`), driven by `lib/team-ownership-transfer.ts`.
 
 ### `team_workspaces`
 <!-- dict:table:team_workspaces -->
@@ -1793,7 +1793,7 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 **Provenance block** — `source` (NOT NULL, default `'direct_signup'`; CHECK `direct_signup|tournament_claim|org_invite|platform_admin`; gotcha 3); `source_tournament_id` (FK → `tournaments.id`) / `source_tournament_team_id` (FK → `teams.id`) set only for tournament-sourced workspaces (used to resolve the `basic_coach_team` bridge at provisioning).
 
 <!-- dict:col:team_workspaces.workspace_state -->
-**`workspace_state`** (text, NOT NULL, default `'independent'`) — `independent|linked|archived|org_owned`; `archived`/`org_owned` block billing-mode transfer.
+**`workspace_state`** (text, NOT NULL, default `'independent'`) — `independent|linked|archived|org_owned`; `archived`/`org_owned` block billing-mode transfer. **`org_owned` = the team moved into a club** (`move_team_into_club`, mig 313): the team and every team table now carry the CLUB's `org_id`, this row keeps pointing at the (suspended) coach org as history, `billing_mode = 'club_included'`, and its Stripe ids are NULLed by the move itself — before the app cancels the subscription, so the `customer.subscription.deleted` webhook finds no workspace. `linked` (the retired Basic visibility link, B12) is no longer written.
 
 <!-- dict:col:team_workspaces.billing_mode -->
 **`billing_mode`** (text, NOT NULL, default `'team_direct'`) — `team_direct` (team pays its own sub) vs `org_team_addon` (org pays; workspace Stripe fields NULLed — gotcha 2).
@@ -1817,9 +1817,9 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 ### `team_org_links`
 <!-- dict:table:team_org_links -->
 
-**Purpose:** auditable relationship between a Team workspace and a **parent org** — a rep org "adopting" a team (visibility-sharing → billing-takeover → full ownership-transfer states), with two-sided approval.
+**Purpose:** **one request to bring a coach's own team into a club** (Club Tier Stage 2, B04 — owner ruling 2026-09-28), asked by either side and answered by the other; the second yes MOVES the team (`move_team_into_club`, mig 313). Historically also the "visibility" and "billing" links — both retired; their rows stay as history.
 
-**Gotchas:** (1) **No direct `org_id` on the team side** — reached 2-hop via `team_workspace_id → team_workspaces.workspace_org_id` (Finding #16, **accepted risk** because the parent-org side has a direct indexed `linked_org_id`). (2) **Two-sided approval** — `approved_by_team_user_id` + `approved_by_org_user_id` (the org one is NULL until the parent org accepts). (3) Closed value domains via CHECK on `status`/`link_type`/`sharing_level`/`billing_mode_after_approval`. Partial unique on `(team_workspace_id, linked_org_id)` blocks dup active links.
+**Gotchas:** (1) **No direct `org_id` on the team side** — reached 2-hop via `team_workspace_id → team_workspaces.workspace_org_id` (Finding #16, **accepted risk** because the parent-org side has a direct indexed `linked_org_id`). (2) **Two-sided approval** — `approved_by_team_user_id` + `approved_by_org_user_id` (the org one is NULL until the parent org accepts). (3) Closed value domains via CHECK on `status`/`link_type`/`sharing_level`/`billing_mode_after_approval`. Partial unique on `(team_workspace_id, linked_org_id)` blocks dup active links; **`team_org_links_one_open_request` (mig 313) allows ONE `ownership_pending` row per team** — one move at a time, enforced where two clubs asking in the same instant cannot both succeed (the app refused with an unlocked read; /review 2026-09-29 found the race and the approval deadlock it set up). (4) **The live shapes since 2026-09-29 (mig 313):** an OPEN request is `ownership_pending` + `link_type='ownership'` with EXACTLY ONE approval column set — `approved_by_org_user_id` = the club asked (waiting on the coach), `approved_by_team_user_id` = the coach asked (waiting on the club); `lib/team-move-state.ts` `askedByOf` is the one reading. The second side's yes is recorded BY the move function, in the move's transaction — never on its own, so "both said yes, nothing moved" (the old operator queue) cannot exist. Answered: `org_owned` (moved), `declined`, `revoked` (withdrawn by the asker, or closed by a move for every other open row of that team). (5) **The Basic visibility link is RETIRED** (B12): `requested`/`invited`/`linked` rows and `link_type` `visibility`/`billing` are no longer written; they read as history (`historyStateOf` → `retired_link`). A retired row between the same team and club is REUSED as the new request (the partial unique index allows one live row per pair).
 
 **Fields** (boilerplate `id`, `created_at`, `updated_at` omitted):
 
@@ -1833,7 +1833,7 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 **`rep_team_id`** (FK → `rep_teams.id`, NOT NULL) — denormalized for org-side billing reconciliation; forward-links to Rep.
 
 <!-- dict:col:team_org_links.status -->
-**`status`** (text, NOT NULL, default `'requested'`; CHECK `requested|invited|linked|ownership_pending|org_owned|declined|revoked`) — the adoption/transfer state machine.
+**`status`** (text, NOT NULL, default `'requested'`; CHECK `requested|invited|linked|ownership_pending|org_owned|declined|revoked`) — the request's state (gotchas 4–5). Written today: `ownership_pending` (asked), `org_owned` (moved), `declined`, `revoked` (withdrawn). `requested|invited|linked` are the retired visibility link's, history only.
 
 <!-- dict:col:team_org_links.link_type -->
 <!-- dict:col:team_org_links.sharing_level -->
@@ -1846,6 +1846,17 @@ Two halves bridged by an upgrade: the **free Basic Coaches Portal** (`basic_coac
 
 <!-- dict:col:team_org_links.billing_mode_after_approval -->
 **`billing_mode_after_approval`** (text, nullable; CHECK `team_direct|org_team_addon|club_included|club_extra_team|platform_override`) — billing arrangement post-approval (null = no billing change). Value domain parallels `team_entitlements.source`.
+
+### Functions & mechanics (not tables — not coverage-checked, documented for completeness)
+
+**`move_team_into_club(p_link_id, p_approving_side, p_actor_user_id, p_actor_email, p_team_cap)`** (mig 313, SECURITY DEFINER, service-role EXECUTE only; replaces 067's `complete_team_workspace_ownership_transfer`, which it DROPS). Records the approving side's yes AND moves the whole team into the club in ONE transaction; returns jsonb (`alreadyMoved`, `clubSlug`, `teamSlug`, `slugChanged`, `previousStripeSubscriptionId`, `staffSeats`, `moved` = per-table row counts).
+- **What moves is decided by rule, and a build gate holds it:** a coach's own org holds exactly one team (guarded: `team_move_workspace_holds_other_teams`), so every row it holds in a team table is the team's. `c_moves` (≈65 tables — every `rep_*` except `rep_team_groups`/`rep_team_tournament_registrations`, plus `assistant_invite_tokens`, `budget_categories`, `budget_items`, `family_links`, `family_recap_views`, `org_payees`) moves every row by `org_id`; `c_moves_some` moves the team's part only (`accounting_ledgers` = the team ledger, `chat_rooms` = the team's staff room re-keyed `ref_id` → the club, `chat_message_reports` on it, `family_email_optouts` / `family_consents` unless the club already holds the same one). **Every other table carrying `org_id` stays for a written reason in `tests/unit/team-move-coverage.test.ts`, which fails the build when the snapshot grows an `org_id` table none of the three lists names.**
+- **Re-pointed, never left across two orgs:** `person_id` on roster / tryout / family-link rows is cleared and re-attached IN THE CLUB by `families_attach_people(club)`; `rep_team_payment_requests.budget_line_id` / `rep_cost_allocations.source_budget_line_id` pointing at the coach org's `org_budget_lines` are cleared; the team's `group_id` is cleared; library rows the coach org held with `team_id` NULL (tags, drills, award types, budget categories/items, payees, document templates) become the team's (`team_id` set) so they don't land in the club's shared library.
+- **Staff:** every ACTIVE `rep_team_staff_memberships` user gets a capability-less `coach` seat in the club; an existing real role keeps its role AND status (067 re-activated any conflicting row — a suspended admin would have come back).
+- **Refusals (raised, all-or-nothing):** `team_move_not_waiting` (not open, or this side already said yes / asked), `team_move_open_tournament` (the coach org's own tournament is draft/active — it does not move), `team_move_team_limit` (club's non-archived teams ≥ `p_team_cap`, counted under the club's row lock), `team_move_team_ledger_conflict`, `team_move_workspace_archived`, `team_move_target_not_a_club`. A slug taken in the club is NOT a refusal: the first free `-2`, `-3`… is used. An `org_owned` link answers `alreadyMoved` (idempotent).
+- **Closes the coach's own portal (as 067):** team entitlements cancelled, the workspace `org_owned` with its Stripe ids NULLed, the coach org `team_workspace_status='org_owned'` / `subscription_status='canceled'` with its Stripe ids NULLed, its members suspended, other open links revoked; `org_audit_log` `team_moved_into_club` on both orgs — the coach org's row carries `previousStripeSubscriptionId`, the one durable record of what to cancel if the app dies between the commit and the Stripe call. **Stripe is cancelled by the app AFTER commit** (no refund, no proration — owner ruling 2026-09-28).
+- **Files do not move:** document rows store their own storage path (under the coach org's folder) and are read by it; nothing checks the prefix.
+- ⚠ **Function-only → invisible to `check:migrations`**; recorded in `supabase/migrations/MANUAL_PROD_STEPS.json`.
 
 ### `team_workspace_claims`
 <!-- dict:table:team_workspace_claims -->
@@ -2237,7 +2248,7 @@ moment it lands.
 **Gotchas (read first):**
 1. **Revoke ≠ delete.** Removal flips `status='revoked'` (+`revoked_at`/`revoked_by`) — the row survives so re-adding reactivates it with grants where they were left ("nothing was destroyed", the ruling). The live season's `rep_team_coaches` projection row IS deleted on revoke; closed seasons' rows are never touched (they are the record).
 2. **Capabilities live HERE and survive rollover.** Rollover used to re-mint season rows with NULL `capabilities`, silently resetting every customized grant yearly — under M1 the membership persists and the new season's rows are written FROM it (role + grants).
-3. **`UNIQUE(team_id, user_id)`** — reactivation updates, never duplicates. Indexed `(org_id, user_id)` and `(team_id)`.
+3. **`UNIQUE(team_id, user_id)`** — reactivation updates, never duplicates. Indexed `(org_id, user_id)` and `(team_id)`. **`org_id` follows the TEAM:** when a coach's own team moves into a club (`move_team_into_club`, mig 313) its memberships move with it — the one thing 067's move missed, which left the head coach refused on every membership-gated screen.
 4. **Service-role only** — RLS enabled, **zero policies** (the [[reference_supabase_rls_grants]] class). All access via `lib/coach-membership.ts`.
 5. **Backfill (in mig 245) took each team's newest season THAT HAS coach rows** — not the newest season outright, or a club team whose admin pre-created a blank draft year would have backfilled nobody (the lock-out that got the rejected M2 design rejected). Users whose only rows sit on older seasons got NO membership — that shipping revocation of ex-staff is Design A's point, not an oversight.
 6. **Entitlement posture rides on top:** for team-workspace orgs, `getEntitledTeamMembership` intersects with `getActiveTeamEntitledRepTeamIds` — a lapsed standalone plan serves no portal through this table either.
@@ -8059,7 +8070,7 @@ One generic engine, three tables: **chat_rooms** (a conversation, typed by `surf
 ## `chat_rooms`
 <!-- dict:table:chat_rooms -->
 
-**Purpose:** one row per conversation. `surface` types it; `ref_id`/`ref_sub_id` point at what it belongs to (a tournament + optional division, etc.). Created/managed by the service role.
+**Purpose:** one row per conversation. `surface` types it; `ref_id`/`ref_sub_id` point at what it belongs to (a tournament + optional division, etc.). Created/managed by the service role. ⚠ A team's staff room (`surface='coach_peer'`) is `ref_id` = the TEAM'S org, `ref_sub_id` = the team — so when a coach's own team moves into a club (`move_team_into_club`, mig 313) the room is re-keyed (`org_id` and `ref_id` → the club); left behind, the club portal would open a new, empty room.
 
 **Fields** (boilerplate `id`, `created_at` omitted):
 

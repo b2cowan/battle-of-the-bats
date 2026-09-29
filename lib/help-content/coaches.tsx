@@ -5456,7 +5456,7 @@ const coachesHelp: HelpPageContent = {
       heading: 'Team settings (Premium)',
       summary: 'Your division, how your printed documents look, the season you are in, the lineup rules Auto-fill follows, how dues behave, who can see your schedule, book sharing, and — for a standalone team — your link to a club or league.',
       keywords: ['team settings', 'settings', 'setting', 'arrive before a game', 'arrive before a practice', 'arrival default', 'schedule settings', 'tags', 'tag libraries', 'manage tags', 'merge tags', 'rename tag', 'manage awards', 'merge awards', 'retire award', 'award types', 'division', 'change division', 'edit division', 'age group', 'lineup rules', 'lineup settings', 'innings cap', 'pitching cap', 'pitch count', 'arm care', 'max innings', 'minimum innings', 'min play', 'playing time rule', 'rotation', 'auto-fill', 'autofill', 'auto fill rules', 'season status', 'season name', 'start next season', 'parent organization', 'link org', 'join a club', 'transfer team', 'club admin', 'where do i change', 'team options', 'configure team', 'money settings', 'dues settings', 'automatic dues reminders', 'reminders toggle', 'where is the reminders toggle', 'turn off reminder emails', 'stop reminder emails', 'credits reduce', 'credit setting', 'where did the dues settings go', 'settings groups', 'collapsed settings', 'sections are closed', 'share our book', 'club shared book', 'sharing', 'schedule visibility', 'who can see my schedule', 'staff only', 'public link', 'families setting', 'hide schedule', 'public schedule', 'where is schedule visibility', 'how your documents look', 'documents look', 'team crest', 'crest', 'team logo', 'logo on pdf', 'logo on roster', 'accent colour', 'accent color', 'footer line', 'pdf branding', 'document branding', 'customize pdf', 'club look', 'use club look', 'paper', 'printed documents'],
-      searchText: 'team settings screen collapsed groups closed until you open them each group shows what it is set to tags tag libraries money tags game tags focus tags staff equipment awards rename merge delete tag shared by your club manage tags manage awards drawer retire award merge instead division age group change division club admin manages division standalone team how your documents look team crest logo accent colour color footer line printed pdf paper roster dues lineup poster branding customize preview upload crest square image use your team colour back to your club look inherited club look head coach only season name status active complete start next season rollover lineup rules season defaults auto-fill max innings at one position rotation pitching innings cap arm care per pitcher player own pitcher cap stricter wins minimum innings per player everyone plays leave blank to turn off override for a single game auto-fill menu money group automatic dues reminders 30 days 7 days see an example credits reduce last payment first next payment first settle at season end where did the dues settings go moved from player dues money access view only sharing schedule visibility who can see games and practices staff only families public link public team page shows the schedule moved from roster team family access card club shared book scouting book parent organization link to a club or league recognition transfer team invited by your organization manage organization link premium coaches portal where do i change my division where are lineup caps where is the reminders toggle turn off reminder emails',
+      searchText: 'team settings screen collapsed groups closed until you open them each group shows what it is set to tags tag libraries money tags game tags focus tags staff equipment awards rename merge delete tag shared by your club manage tags manage awards drawer retire award merge instead division age group change division club admin manages division standalone team how your documents look team crest logo accent colour color footer line printed pdf paper roster dues lineup poster branding customize preview upload crest square image use your team colour back to your club look inherited club look head coach only season name status active complete start next season rollover lineup rules season defaults auto-fill max innings at one position rotation pitching innings cap arm care per pitcher player own pitcher cap stricter wins minimum innings per player everyone plays leave blank to turn off override for a single game auto-fill menu money group automatic dues reminders 30 days 7 days see an example credits reduce last payment first next payment first settle at season end where did the dues settings go moved from player dues money access view only sharing schedule visibility who can see games and practices staff only families public link public team page shows the schedule moved from roster team family access card club shared book scouting book join a club bring your team into a club a club asked to bring in your team premium coaches portal where do i change my division where are lineup caps where is the reminders toggle turn off reminder emails',
       content: (
         <>
           <p><strong>Team settings</strong> is the small set of things that are true about your team for a whole season, rather than about one game or one player. Each group is <strong>closed until you open it</strong>, and shows what it&rsquo;s currently set to on its own line — the answers below cover each group in the order it appears on the screen.</p>
@@ -5761,32 +5761,44 @@ const coachesHelp: HelpPageContent = {
       ],
     },
     {
+      // Club Tier Stage 2, B04 / Ask 2 (2026-09-29): the Basic visibility link and the FieldLogicHQ
+      // step are retired. ⚖ "Won't be charged again", never a refund (owner ruling 2026-09-28).
       id: 'recipe-link-parent-org',
       group: 'Premium Coaches Portal',
-      heading: 'Linking your team to a parent organization (Premium)',
-      summary: 'Connect a Premium team to a club or league for recognition, or hand it over entirely.',
-      keywords: ['link organization', 'parent org', 'club', 'basic visibility', 'ownership transfer', 'premium', 'settings', 'invite'],
-      searchText: 'link organization parent org club league association basic visibility link ownership transfer team becomes org owned premium workspace settings organization invite banner overview org invited my team review accept decline where to link',
+      heading: 'Joining a club with your team (Premium)',
+      summary: 'If your club runs on FieldLogicHQ, it can bring your team in. Everything the team built comes with it.',
+      keywords: ['join a club', 'join club', 'bring my team into a club', 'club', 'link organization', 'parent org', 'move my team', 'premium', 'settings', 'request', 'invite'],
+      searchText: 'join a club bring my team into a club club runs on fieldlogichq own premium coaches portal everything comes with it seasons roster schedule results practices lineups attendance awards development tryouts documents money records staff keep what they can open banner overview club asked approve and join type your team name decline ask a club web address contact email withdraw cannot be undone club starts and closes seasons wont be charged again head coach only own tournament stays link organization parent org',
       content: (
         <>
-          <p>If your team runs in the <strong>Premium team workspace</strong> and belongs to a parent club, league, or association, open <strong>Settings → Organization</strong> to connect them. (The free standalone portal doesn&apos;t have this; it applies once your team is on Premium.)</p>
-          <p>There are two levels, from lighter to stronger:</p>
+          <p>If your team runs on your own Premium Coaches Portal and your club runs on FieldLogicHQ, the club can bring your team in. Everything the team built comes with it — seasons, roster, schedule and results, practices, lineups, attendance, awards, player development, tryouts, documents and money records — and your staff keep what each of them can open.</p>
           <ul>
-            <li><strong>Basic visibility</strong> — records the association only. It does not change who runs the team or give the organization access to your roster, documents, or accounting.</li>
-            <li><strong>Ownership transfer</strong> — the team becomes fully org-owned. After both sides approve, roster, schedule, documents, budget, and accounting move under the organization.</li>
+            <li>Usually the club asks: a banner appears on your <strong>Overview</strong>, and the request waits on <strong>Join a club</strong> (Settings → Organization).</li>
+            <li>You can also ask a club yourself from <strong>Join a club</strong>, with the club&apos;s web address or contact email.</li>
+            <li>Press <strong>Approve and join</strong>, type your team&apos;s name to confirm, and the team moves there and then. Nothing moves until both sides say yes, and it can&apos;t be undone.</li>
           </ul>
-          <p>Usually the organization starts this — if a club or league <strong>invites your team</strong>, a banner appears on your <strong>Overview</strong> to review the invitation and accept or decline. You don&apos;t need to go looking for it.</p>
+          <p>Afterwards you keep coaching the team as one of the club&apos;s teams, and the club starts and closes your seasons. You won&apos;t be charged for your own Coaches Portal again — it stops the moment the move completes.</p>
+          <p>Only the head coach can bring the team into a club.</p>
         </>
       ),
       faqs: [
         {
-          id: 'faq-link-billing-vs-ownership',
-          question: 'Does linking to an organization hand over my team?',
-          answerText: 'Not by itself. A Basic visibility link only records the association and does not change who runs the team. Only an ownership transfer makes the team org-owned, and it requires approval from both sides.',
-          keywords: ['link org', 'visibility', 'ownership', 'org owned'],
+          id: 'faq-join-club-plan',
+          question: 'What happens to my own Coaches Portal plan?',
+          answerText: 'You won’t be charged for your own Coaches Portal again. It stops the moment the move completes, and your team is included in the club’s plan from then on.',
+          keywords: ['my plan', 'subscription', 'charged', 'billing'],
           popular: true,
           answer: (
-            <p>Not by itself. A <strong>Basic visibility</strong> link only records the association and does not change who runs the team. Only an <strong>ownership transfer</strong> makes the team org-owned, and it requires approval from both sides.</p>
+            <p>You won&apos;t be charged for your own Coaches Portal again. It stops the moment the move completes, and your team is included in the club&apos;s plan from then on.</p>
+          ),
+        },
+        {
+          id: 'faq-join-club-tournament',
+          question: 'Does my own tournament move too?',
+          answerText: 'No. Your own tournament stays with your own portal. While it is still running, the move waits until it is finished or archived.',
+          keywords: ['tournament', 'my tournament', 'waits'],
+          answer: (
+            <p>No. Your own tournament stays with your own portal. While it is still running, the move waits until it is finished or archived.</p>
           ),
         },
       ],

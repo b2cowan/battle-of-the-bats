@@ -22,8 +22,17 @@ import { supabaseAdmin } from './supabase-admin';
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 export async function authAccountExistsForEmail(email: string): Promise<boolean> {
+  return (await findAuthUserIdByEmail(email)) !== null;
+}
+
+/**
+ * The same scan, answering WHICH account (a club naming a coach by email, Club Tier Stage 2 — the
+ * team move's lookup used the weak single-page form, so a real coach past row 1000 read as "no
+ * such coach"). Fails closed exactly as above: a listUsers error throws.
+ */
+export async function findAuthUserIdByEmail(email: string): Promise<string | null> {
   const target = (email ?? '').trim().toLowerCase();
-  if (!target) return false;
+  if (!target) return null;
   const perPage = 1000;
   // Hard page ceiling so a pathological account count can't spin forever: 50 x 1000 = 50k auth
   // users, far beyond current scale, and the loop exits on the first partial page anyway.
@@ -31,8 +40,9 @@ export async function authAccountExistsForEmail(email: string): Promise<boolean>
     const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage });
     if (error) throw error;
     const users = data?.users ?? [];
-    if (users.some(u => u.email?.trim().toLowerCase() === target)) return true;
-    if (users.length < perPage) return false; // last page reached — no match
+    const match = users.find(u => u.email?.trim().toLowerCase() === target);
+    if (match) return match.id;
+    if (users.length < perPage) return null; // last page reached — no match
   }
-  return false;
+  return null;
 }

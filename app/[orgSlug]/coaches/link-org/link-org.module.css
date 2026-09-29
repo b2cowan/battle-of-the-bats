@@ -1,0 +1,41 @@
+/* Join a club — the club's request card (Club Tier Stage 2, B04 / Ask 2). Only what the new words
+   need: the three facts a coach reads before saying yes, in the same eyebrow + sentence idiom as the
+   club's own card (specimen 9). Tokens only. */
+
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.85rem 1.25rem; margin-top: 0.9rem; }
+.factCol { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.eye {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.factText { margin: 0.25rem 0 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-primary); }
+/* Something that holds the move back (the coach's open tournament): a warning edge, no tint. */
+.hold {
+  margin: 0.85rem 0 0;
+  padding: 0.55rem 0.75rem;
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--warning);
+  border-radius: 6px;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.actions { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; margin-top: 1rem; }
+.lede { margin: 0 0 1rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); max-width: 64ch; }
+.hint { margin: 0.5rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+.row { display: flex; align-items: center; gap: 0.75rem; padding: 0.6rem 0; border-top: 1px solid var(--home-line); }
+.row:first-child { border-top: 0; }
+.rowMain { flex: 1; min-width: 0; }
+.rowTitle { font-weight: 650; color: var(--text-primary); }
+.rowSub { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.confirmBody { margin: 0 0 0.75rem; font-size: var(--type-body); line-height: 1.45; color: var(--text-secondary); }
+.confirmMiss { margin: 0.4rem 0 0; font-size: var(--type-support); color: var(--danger); }
+
+@media (max-width: 640px) {
+  .facts { grid-template-columns: 1fr; }
+  .actions > * { flex: 1 1 auto; }
+}

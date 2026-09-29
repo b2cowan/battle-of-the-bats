@@ -1374,7 +1374,7 @@ export const SCREENS = [
     interact: openKitTakeOffline, scope: '[data-kit-dialog]' },
   { id: 'admin-org-settings-pdf',      area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/settings/pdf` },
   { id: 'admin-org-venues',            area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/venues` },
-  { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/coaches-portal-links` },
+  { id: 'admin-org-coach-links',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/bring-in` },
   { id: 'admin-org-tournaments',       area: 'org', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/org/tournaments` },
 
   // ── Rep Teams (15U AAA: a live 2026 season and a finished 2025 one) ──

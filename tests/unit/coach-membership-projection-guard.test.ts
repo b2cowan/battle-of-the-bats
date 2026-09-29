@@ -47,6 +47,10 @@ const MEMBERSHIP_TABLE_ACCESSORS = [
   // Read-only membership FILTER inside the closed-assignments lookup — inlined there because
   // coach-membership.ts imports db.ts (a reverse import would cycle). Never writes.
   join('lib', 'db.ts'),
+  // Read-only ACTIVE-membership check inside getTeamScopedRepTeamAccess — inlined there because this
+  // file is in the BROWSER bundle (via db.ts) and coach-membership reaches next/headers; importing it
+  // (even dynamically) 500'd every dev page on 2026-09-29. Never writes.
+  join('lib', 'team-workspace-entitlements.ts'),
 ];
 
 function walk(dir: string, out: string[] = []): string[] {

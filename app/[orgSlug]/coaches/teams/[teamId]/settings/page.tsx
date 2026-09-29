@@ -1017,21 +1017,21 @@ export default function TeamSettingsPage({
             meta="Not connected to a club"
           >
             <p className={styles.settingWho}>
-              Most teams are invited by their organization — if that happens, you&apos;ll see it on
-              your Overview and here.
+              If a club asks to bring your team in, you&apos;ll see it on your Overview and on Join a
+              club.
             </p>
             <div className={styles.settingRows}>
               <div className={styles.settingRow}>
                 <div className={styles.settingRowMain}>
-                  <span className={styles.settingRowLabel}>Connect to a club or league</span>
+                  <span className={styles.settingRowLabel}>Join a club</span>
                   <span className={styles.settingRowDesc}>
-                    Belong to a club or league? Connect your team for recognition, or transfer it in
-                    entirely.
+                    If your club runs on FieldLogicHQ, it can bring this team in. Everything the team
+                    built comes with it.
                   </span>
                 </div>
                 <div className={styles.settingRowCtl}>
                   <Link href={`/${orgSlug}/coaches/link-org`} className={styles.btnSecondary}>
-                    Manage organization link
+                    Join a club
                   </Link>
                 </div>
               </div>

@@ -1,10 +1,10 @@
 {
-  "generated": "2026-09-28",
-  "total": 6,
+  "generated": "2026-09-29",
+  "total": 7,
   "counts": {
     "tables": 0,
     "columns": 3,
-    "indexes": 0,
+    "indexes": 1,
     "constraints": 0,
     "rls": 3
   },
@@ -31,6 +31,10 @@
     },
     {
       "key": "column:only-dev:assistant_invite_tokens.sent_by",
+      "sig": ""
+    },
+    {
+      "key": "index:only-dev:team_org_links_one_open_request",
       "sig": ""
     }
   ]

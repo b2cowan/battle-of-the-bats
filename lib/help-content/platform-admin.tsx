@@ -329,7 +329,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>Enter a reason and click <strong>Confirm Transfer</strong>.</li>
             <li>Add an internal note on the <strong>Support</strong> tab recording who requested the change and why.</li>
           </ol>
-          <p>The selected member becomes the owner and <strong>all previous owners are demoted to admin</strong>. The change is audit-logged and cannot be reversed from this screen — to undo it, run another transfer. This is different from <em>Coaches Portal Ownership Transfers</em> on the same Support tab, which moves a Premium Coaches Portal team into an organization (see <em>How to complete Coaches Portal ownership transfer</em>).</p>
+          <p>The selected member becomes the owner and <strong>all previous owners are demoted to admin</strong>. The change is audit-logged and cannot be reversed from this screen — to undo it, run another transfer. This is different from <em>Teams brought in</em> on the same Support tab, the record of coaches&apos; own teams moved into a club (see <em>Teams brought into a club</em>).</p>
         </>
       ),
       faqs: [
@@ -348,36 +348,32 @@ const platformAdminHelp: HelpPageContent = {
     {
       id: 'team-ownership-transfer',
       group: 'Support SOP',
-      heading: 'How to complete Coaches Portal ownership transfer',
-      summary: 'Finish a mutually approved Premium Coaches Portal transfer from the organization detail support workflow.',
-      keywords: ['coaches portal ownership transfer', 'premium portal', 'org owned team', 'rep teams', 'platform assisted transfer'],
-      searchText: 'complete coaches portal premium ownership transfer platform assisted org owned rep team roster documents accounting ledger',
+      heading: 'Teams brought into a club (no operator step)',
+      summary: 'A coach’s own team moves into a club when the second side says yes. Support keeps a read-only record, and one thing can need your hand: a Stripe cancel that failed.',
+      keywords: ['coaches portal ownership transfer', 'team brought in', 'bring in a coach team', 'join a club', 'org owned team', 'rep teams', 'stripe cancel failed'],
+      searchText: 'team brought into a club coaches portal ownership transfer no operator step second yes moves the team read only record support tab teams brought in stripe cancellation failed cancel by hand error dashboard org owned rep team',
       links: [
         { label: 'Organizations', href: '/platform-admin/orgs' },
         { label: 'Audit Log', href: '/platform-admin/audit' },
       ],
       content: (
         <>
-          <p>Use this only after the coach and organization have both approved ownership transfer from Coaches Portal Links. Basic visibility links do not require this step.</p>
+          <p>Since Club Tier Stage 2 (2026-09-29) a coach&apos;s own team moves into a club on its own: the club asks and the coach approves, or the other way round, and the second yes moves the whole team, its staff included. There is no <strong>Complete Transfer</strong> button any more.</p>
           <ol>
-            <li>Open the target organization from <strong>Organizations</strong>.</li>
-            <li>Confirm the account has Club or Rep Teams module access.</li>
-            <li>Open <strong>Support</strong> and review <strong>Coaches Portal Ownership Transfers</strong>.</li>
-            <li>Confirm the team name, portal slug, current billing mode, and customer request.</li>
-            <li>Enter a reason, then click <strong>Complete Transfer</strong>.</li>
-            <li>Review the audit log and, if Stripe cancellation reports a warning, finish the cancellation manually in Stripe.</li>
+            <li>Open the club from <strong>Organizations</strong> and open <strong>Support</strong>. <strong>Teams brought in</strong> lists each request with where it stands: waiting on the coach, waiting on the club, or moved.</li>
+            <li>After a move the coach&apos;s own subscription is cancelled automatically. If Stripe refused, the error dashboard shows <em>Team moved into a club, but the coach&apos;s own subscription was not cancelled</em>, naming the subscription — cancel it by hand in Stripe, immediately, the way the move would have.</li>
+            <li>The club&apos;s and the coach&apos;s audit logs both carry <code>team_moved_into_club</code>, with what moved.</li>
           </ol>
-          <p>The transfer moves team-scoped rep-team records and the team ledger under the organization, creates coach membership access in the parent org, retires active Premium entitlements, marks the link org-owned, and suspends the retired portal memberships.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-team-transfer-retry',
-          question: 'What if the transfer fails?',
+          question: 'What if a move fails?',
           answer: (
-            <p>The database move runs as one transaction. If it fails, no partial data reassignment should remain. Read the error, resolve conflicts such as duplicate team slugs, and retry from the same organization detail page.</p>
+            <p>The move runs as one database transaction: if it fails, both organizations stay exactly as they were and the person approving sees why (the club is at its team limit, the coach&apos;s own tournament is still open). A taken team address is not a failure — the team takes the next free one, ending in -2.</p>
           ),
-          answerText: 'The database move is transactional. Resolve conflicts such as duplicate team slugs and retry.',
+          answerText: 'The move is one transaction: a failure leaves both organizations as they were, and the approver sees why. A taken team address takes the next free one.',
           keywords: ['retry', 'failed transfer', 'duplicate slug'],
         },
       ],
@@ -406,7 +402,7 @@ const platformAdminHelp: HelpPageContent = {
             <li>Complete manual sandbox smokes for direct Coaches Portal checkout, tournament-claim checkout, cancellation or past-due simulation, and Club / Club&nbsp;·&nbsp;Association band checkout.</li>
             <li>Ask the product owner to visually check the public pricing page, Coaches Portal signup page, and mobile Coaches Portal flows.</li>
           </ol>
-          <p>Customer-facing help should explain Premium Coaches Portal, season rollover, the one free-tier local tournament slot, Basic org linking, billing transfer, ownership transfer, and the difference between direct Premium, org-billed Premium, Club included teams, and Club extra teams.</p>
+          <p>Customer-facing help should explain Premium Coaches Portal, season rollover, the one free-tier local tournament slot, bringing a coach’s own team into a club, and the difference between direct Premium and Club included teams.</p>
         </>
       ),
       faqs: [

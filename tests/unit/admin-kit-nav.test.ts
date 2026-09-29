@@ -18,8 +18,9 @@ import { readCode } from './_source-code.ts';
  *      real route. A door to a page that does not exist is "the 404 wearing a politer face" — which
  *      is exactly why the drawn Audit log / Notifications rows wait for Club Stage 1.
  *   2. TODAY'S GATES. A restyle must not widen or narrow who sees a door: Plan & billing and
- *      Settings stay owner-only, PDF settings and Coaches Portal links owner-or-admin, a cancelled
- *      club keeps only its billing door.
+ *      Settings stay owner-only, PDF settings owner-or-admin, a cancelled club keeps only its billing
+ *      door. ("Coaches Portal links" left Organization for Rep Teams › Bring in a coach's team, Club
+ *      Tier Stage 2 — the Rep Teams group is gated by the module, and the page by owner/admin.)
  *   3. THE NAVS DO NOT DRIFT. The rail and the phone bar read ONE model through ONE hook; neither
  *      may grow its own list (the coaches portal pins the same thing in coach-nav-groups.test.ts).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
@@ -67,10 +68,17 @@ describe("the admin kit nav — today's gates", () => {
     const labels = (role: string, isCanceled = false) => kitOrgLinks({
       base: BASE, role, isCanceled, canSeeMembers: true, hasVenueLibrary: true,
     }).map(l => l.label);
-    assert.deepEqual(labels('owner'), ['Members', 'Audit log', 'Plan & billing', 'Settings', 'Venue library', 'PDF settings', 'Coaches Portal links']);
-    assert.deepEqual(labels('admin'), ['Members', 'Venue library', 'PDF settings', 'Coaches Portal links']);
+    assert.deepEqual(labels('owner'), ['Members', 'Audit log', 'Plan & billing', 'Settings', 'Venue library', 'PDF settings']);
+    assert.deepEqual(labels('admin'), ['Members', 'Venue library', 'PDF settings']);
     assert.deepEqual(labels('treasurer'), ['Members', 'Venue library']);
     assert.deepEqual(labels('owner', true), ['Plan & billing'], 'a cancelled club keeps only the way to pay again');
+  });
+
+  it('bringing in a coach’s team lives under Rep Teams, beside the teams it adds to (Club Tier Stage 2)', () => {
+    const repTeams = kitPrograms({ base: BASE, canUse: c => c === 'module_rep_teams' }).find(p => p.key === 'rep-teams')!;
+    const page = repTeams.pages.find(p => p.key === 'rt-bring-in');
+    assert.equal(page?.href, `${BASE}/rep-teams/bring-in`);
+    assert.ok(page?.also?.includes(`${BASE}/org/coaches-portal-links`), 'the old address still lights the row');
   });
 
   it("a non-owner sees the owner's areas as LOCKED rows, never as doors (specimens 2–3)", () => {

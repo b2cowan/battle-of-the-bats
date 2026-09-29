@@ -1,135 +1,130 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { forbidden, getAuthContextWithRole, unauthorized } from '@/lib/api-auth';
 import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { listTeamOrgLinksForLinkedOrg } from '@/lib/team-org-links';
 import {
-  createTeamOrgLinkInvite,
-  listTeamOrgLinksForLinkedOrg,
-  reviewTeamOrgLink,
-} from '@/lib/team-org-links';
-import {
-  declineTeamOwnershipTransferRequest,
-  inviteTeamOwnershipTransfer,
+  approveTeamMove,
+  askCoachToBringTeam,
+  clubTeamPlaces,
+  declineTeamMove,
+  withdrawTeamMove,
+  type TeamMoveRefusal,
 } from '@/lib/team-ownership-transfer';
+import { teamLimitRefusal } from '@/lib/team-cap';
+import { REFUSAL } from '@/lib/team-move-words';
+import { PLAN_CONFIG } from '@/lib/plan-config';
 import { withObservability } from '@/lib/observability';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { hasCapability } from '@/lib/roles';
+import type { OrgPlan } from '@/lib/types';
 
-export const GET = withObservability(async (req: NextRequest) => {
+/**
+ * Rep Teams › Bring in a coach's team — the club's side of a TEAM MOVE (Club Tier Stage 2, B04 /
+ * Ask 2, specimen 9). A request is the only thing a club and a coach agree to: the Basic visibility
+ * link is retired (B12), and the club's yes on a coach's request MOVES THE TEAM (no FieldLogicHQ
+ * step). The writes and their rules live in `lib/team-ownership-transfer.ts`.
+ *
+ * Who: the club's owner or admin, holding Rep Teams — the people who add a team (session 1's rule
+ * for every club team write; the treasurer never). Before 2026-09-29 only the owner could answer a
+ * transfer; bringing a team in is adding a team, and the team place is checked like one.
+ */
+async function resolveClub(req: NextRequest) {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
   const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
-  if (isTeamWorkspaceOrg(ctx.org)) return forbidden();
+  if (!ctx) return { error: unauthorized() };
+  if (ctx.role !== 'owner' && ctx.role !== 'admin') return { error: forbidden() };
+  if (isTeamWorkspaceOrg(ctx.org)) return { error: forbidden() };
   // Bringing a coach's portal into the club is a Rep Teams act (Club Tier Stage 2, B12): the plan must
   // carry Rep Teams and the member must hold it — a League or Tournament Plus org could link before.
   if (!hasModuleEntitlement(ctx.org, 'module_rep_teams') || !hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams')) {
-    return forbidden();
+    return { error: forbidden() };
   }
+  return { ctx };
+}
 
-  // Club Repackaging (2026-06-22): the per-team "$19/team" org-paid summary + the
-  // "upgrade to save" nudge are retired — Club includes the whole coaching staff up to
-  // the plan cap. Linked Coaches Portals are visibility-only or transfer ownership in.
-  const links = await listTeamOrgLinksForLinkedOrg(ctx.org.id);
-  return NextResponse.json({ links });
+/** A refusal as a response — the team-cap one in the shape the club's team-cap window reads. */
+function refusalResponse(result: TeamMoveRefusal): NextResponse {
+  if (result.code === 'team_limit_reached' && result.cap) {
+    return teamLimitRefusal(result.cap.planId, result.cap.teamLimit, result.cap.activeTeams);
+  }
+  return NextResponse.json({ error: result.error, code: result.code ?? null }, { status: result.status });
+}
+
+export const GET = withObservability(async (req: NextRequest) => {
+  const resolved = await resolveClub(req);
+  if ('error' in resolved) return resolved.error!;
+  const { ctx } = resolved;
+
+  const [links, places] = await Promise.all([
+    listTeamOrgLinksForLinkedOrg(ctx.org.id),
+    clubTeamPlaces({ id: ctx.org.id, plan_id: ctx.org.planId ?? null, team_limit: ctx.org.teamLimit ?? null }),
+  ]);
+  return NextResponse.json({
+    links,
+    // "What it costs the club": a team place, never a price (Club Repackaging — Premium for club
+    // teams is included up to the plan cap).
+    teamPlaces: { used: places.used, limit: places.limit },
+    planLabel: PLAN_CONFIG[places.planId as OrgPlan]?.label ?? 'Club',
+  });
 }, { route: '/api/admin/org/team-links' });
 
 export const POST = withObservability(async (req: NextRequest) => {
-  const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  if (!ctx) return unauthorized();
-  if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
-  if (isTeamWorkspaceOrg(ctx.org)) return forbidden();
-  // Bringing a coach's portal into the club is a Rep Teams act (Club Tier Stage 2, B12): the plan must
-  // carry Rep Teams and the member must hold it — a League or Tournament Plus org could link before.
-  if (!hasModuleEntitlement(ctx.org, 'module_rep_teams') || !hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams')) {
-    return forbidden();
-  }
+  const resolved = await resolveClub(req);
+  if ('error' in resolved) return resolved.error!;
+  const { ctx } = resolved;
 
-  let body: { linkId?: unknown; action?: unknown; target?: unknown; billingCycle?: unknown };
+  let body: { coachEmail?: unknown; linkId?: unknown; action?: unknown; confirmTeamName?: unknown; target?: unknown };
   try {
     body = await req.json();
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body.' }, { status: 400 });
   }
 
-  const targetInput = typeof body.target === 'string' ? body.target.trim() : '';
-  if (targetInput) {
-    const result = await createTeamOrgLinkInvite({
-      orgId: ctx.org.id,
-      targetInput,
-      invitedByUserId: ctx.user.id,
-      invitedByEmail: ctx.user.email ?? null,
-    });
+  const actor = { actorUserId: ctx.user.id, actorEmail: ctx.user.email ?? null };
 
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
-
-    return NextResponse.json({ link: result.link, reusedExisting: result.reusedExisting }, { status: result.reusedExisting ? 200 : 201 });
+  const coachEmail = typeof body.coachEmail === 'string' ? body.coachEmail.trim() : '';
+  if (coachEmail) {
+    const result = await askCoachToBringTeam({ clubOrgId: ctx.org.id, coachEmail, ...actor });
+    if (!result.ok) return refusalResponse(result);
+    return NextResponse.json(
+      { link: result.link, reusedExisting: result.reusedExisting },
+      { status: result.reusedExisting ? 200 : 201 },
+    );
   }
 
   const linkId = typeof body.linkId === 'string' ? body.linkId.trim() : '';
   const action = typeof body.action === 'string' ? body.action : '';
 
+  // Retired: the Basic visibility link (`target` invites, approve/decline of a link request — B12)
+  // and the per-team billing takeover (Club Repackaging, 2026-06-22). Old rows stay as history.
+  if (
+    typeof body.target === 'string'
+    || ['invite_billing', 'decline_billing', 'approve_billing', 'invite_ownership', 'decline_ownership'].includes(action)
+  ) {
+    return NextResponse.json({ error: REFUSAL.retired, code: 'retired' }, { status: 410 });
+  }
+
   if (!linkId || !action) {
     return NextResponse.json({ error: 'linkId and action are required.' }, { status: 400 });
   }
+  const scope = { side: 'club' as const, clubOrgId: ctx.org.id };
 
-  // Ownership actions are owner-reserved. (Club Repackaging 2026-06-22: the org-paid
-  // "$19/team" billing-takeover actions — invite_billing / decline_billing / approve_billing —
-  // are retired. Teams in a Club are included up to the plan cap; an external coach either
-  // keeps a standalone portal or transfers ownership in.)
-  if (action === 'invite_billing' || action === 'decline_billing' || action === 'approve_billing') {
-    return NextResponse.json(
-      { error: 'Org billing transfer has been retired. Teams in a Club are included up to the plan cap.' },
-      { status: 410 },
-    );
+  if (action === 'approve') {
+    const confirmTeamName = typeof body.confirmTeamName === 'string' ? body.confirmTeamName : '';
+    const result = await approveTeamMove({ scope, linkId, confirmTeamName, ...actor });
+    if (!result.ok) return refusalResponse(result);
+    return NextResponse.json({ moved: result.moved });
   }
-  if (action === 'invite_ownership' && ctx.role !== 'owner') {
-    return forbidden();
+  if (action === 'decline') {
+    const result = await declineTeamMove({ scope, linkId, ...actor });
+    if (!result.ok) return refusalResponse(result);
+    return NextResponse.json({ link: result.link });
   }
-
-  if (action === 'invite_ownership') {
-    const result = await inviteTeamOwnershipTransfer({
-      orgId: ctx.org.id,
-      linkId,
-      actorUserId: ctx.user.id,
-      actorEmail: ctx.user.email ?? null,
-    });
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
+  if (action === 'withdraw') {
+    const result = await withdrawTeamMove({ scope, linkId, ...actor });
+    if (!result.ok) return refusalResponse(result);
     return NextResponse.json({ link: result.link });
   }
 
-  if (action === 'decline_ownership') {
-    const result = await declineTeamOwnershipTransferRequest({
-      orgId: ctx.org.id,
-      linkId,
-      actorUserId: ctx.user.id,
-      actorEmail: ctx.user.email ?? null,
-    });
-    if (!result.ok) {
-      return NextResponse.json({ error: result.error }, { status: result.status });
-    }
-    return NextResponse.json({ link: result.link });
-  }
-
-  if (action !== 'approve' && action !== 'decline') {
-    return NextResponse.json({ error: 'Unsupported Team link action.' }, { status: 400 });
-  }
-
-  const result = await reviewTeamOrgLink({
-    orgId: ctx.org.id,
-    linkId,
-    action,
-    actorUserId: ctx.user.id,
-    actorEmail: ctx.user.email ?? null,
-  });
-
-  if (!result.ok) {
-    return NextResponse.json({ error: result.error }, { status: result.status });
-  }
-
-  return NextResponse.json({ link: result.link });
+  return NextResponse.json({ error: 'Unsupported action.' }, { status: 400 });
 }, { route: '/api/admin/org/team-links' });

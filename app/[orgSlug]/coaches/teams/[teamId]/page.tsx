@@ -804,8 +804,9 @@ export default function TeamOverviewPage({
     return () => { cancelled = true; };
   }, [loading, isClosedTeam, orgSlug, teamId, needsDevelopmentRead]);
 
-  // Org-invite banner — show only when an organization has actually invited this team
-  // to connect (org-initiated). Self-serve linking lives quietly in Settings otherwise.
+  // A club's request to bring this team in (Club Tier Stage 2, B04) — shown only when a club has
+  // actually asked (club-initiated). Asking a club yourself lives quietly in Settings › Join a club.
+  // (The Basic visibility "invited to connect" link it used to announce is retired, B12.)
   const isWorkspaceOrg = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
   // Head coach only (`/review`, 2026-09-10): the link read now refuses everyone else, and the
   // banner's "Review invite" opens a page only the head coach can act on — so an assistant is
@@ -818,8 +819,8 @@ export default function TeamOverviewPage({
       .then(res => (res.ok ? res.json() : null))
       .then(json => {
         if (cancelled || !json?.links) return;
-        const invited = (json.links as Array<{ status: string; linkedOrg?: { name?: string } | null }>).find(l => l.status === 'invited');
-        if (invited) setOrgInvite({ orgName: invited.linkedOrg?.name ?? 'An organization' });
+        const asked = (json.links as Array<{ askedBy?: string | null; linkedOrg?: { name?: string } | null }>).find(l => l.askedBy === 'club');
+        if (asked) setOrgInvite({ orgName: asked.linkedOrg?.name ?? 'A club' });
       })
       .catch(() => {});
     return () => { cancelled = true; };
@@ -1942,17 +1943,17 @@ export default function TeamOverviewPage({
     <div className={styles.page}>
       <UpgradeSummaryBanner orgSlug={orgSlug} teamId={teamId} />
 
-      {/* Contextual org invitation — only when an org actually invited this team */}
+      {/* A club's request to bring this team in — only when a club actually asked */}
       {orgInvite && (
         <div className={styles.orgInviteBanner} role="status">
           <Building2 size={18} className={styles.orgInviteIcon} aria-hidden />
           <div className={styles.orgInviteText}>
-            <p className={styles.orgInviteTitle}>{orgInvite.orgName} invited your team to connect</p>
-            <p className={styles.orgInviteBody}>Review the invitation to join their organization, or keep running independently.</p>
+            <p className={styles.orgInviteTitle}>{orgInvite.orgName} wants to bring your team into the club</p>
+            <p className={styles.orgInviteBody}>Nothing moves until you say yes. Review what comes with the team, or keep running on your own portal.</p>
           </div>
           {/* Outlined (not lime) so the phase anchor keeps the single lime action per CP-1 — the
               invite is a notification, not the page's primary task. */}
-          <Link href={`/${orgSlug}/coaches/link-org`} className="btn btn-outline btn-sm">Review invite</Link>
+          <Link href={`/${orgSlug}/coaches/link-org`} className="btn btn-outline btn-sm">Review</Link>
         </div>
       )}
 

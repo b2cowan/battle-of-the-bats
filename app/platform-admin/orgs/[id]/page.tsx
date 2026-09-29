@@ -47,6 +47,7 @@ type OwnershipTransferRow = {
   team_workspace_id: string;
   rep_team_id: string;
   linked_org_id: string;
+  status: string;
   approved_by_team_user_id: string | null;
   approved_by_org_user_id: string | null;
   updated_at: string;
@@ -202,17 +203,23 @@ async function getInternalNotes(orgId: string) {
   }));
 }
 
-async function getPendingOwnershipTransfers(orgId: string) {
+/**
+ * The org's team moves — a coach's own team brought into this club (Club Tier Stage 2, B04). A READ-ONLY
+ * record: the second side's yes moves the team (`move_team_into_club`, mig 313), so there is no operator
+ * step left to take. Open requests and finished moves; a failed Stripe cancel after a move shows on the
+ * error dashboard, not here.
+ */
+async function getTeamMoves(orgId: string) {
   const { data: links, error } = await supabaseAdmin
     .from('team_org_links')
-    .select('id, team_workspace_id, rep_team_id, linked_org_id, approved_by_team_user_id, approved_by_org_user_id, updated_at')
+    .select('id, team_workspace_id, rep_team_id, linked_org_id, status, approved_by_team_user_id, approved_by_org_user_id, updated_at')
     .eq('linked_org_id', orgId)
-    .eq('status', 'ownership_pending')
+    .in('status', ['ownership_pending', 'org_owned'])
     .eq('link_type', 'ownership')
     .order('updated_at', { ascending: false });
 
   if (error) {
-    console.warn('[platform-admin] ownership transfer read failed', error);
+    console.warn('[platform-admin] team move read failed', error);
     return [];
   }
 
@@ -266,7 +273,10 @@ async function getPendingOwnershipTransfers(orgId: string) {
       workspaceOrgSlug: workspaceOrg?.slug ?? null,
       billingMode: workspace?.billing_mode ?? null,
       updatedAt: row.updated_at,
-      readyForCompletion: Boolean(row.approved_by_team_user_id && row.approved_by_org_user_id),
+      // Where it stands: moved, or waiting on whichever side has not said yes.
+      state: row.status === 'org_owned'
+        ? 'moved' as const
+        : row.approved_by_org_user_id ? 'waiting_on_coach' as const : 'waiting_on_club' as const,
     };
   });
 }
@@ -324,7 +334,7 @@ export default async function OrgDetailPage({
   // Defensive area guard — `organizations` is currently visible to every platform role
   // (the layout already enforces the platform-admin session), so this is a no-op today. It
   // also yields the auth context used for the permission props below.
-  const [auth, org, members, tournaments, overrides, auditEvents, internalNotes, pendingOwnershipTransfers] = await Promise.all([
+  const [auth, org, members, tournaments, overrides, auditEvents, internalNotes, teamMoves] = await Promise.all([
     requirePlatformAreaView('organizations'),
     getOrgDetail(id),
     getMembers(id),
@@ -332,7 +342,7 @@ export default async function OrgDetailPage({
     getOverrides(id),
     getRecentAuditEvents(id),
     getInternalNotes(id),
-    getPendingOwnershipTransfers(id),
+    getTeamMoves(id),
   ]);
 
   if (!org) notFound();
@@ -592,7 +602,7 @@ export default async function OrgDetailPage({
         tournaments={tournaments}
         auditEvents={auditEvents}
         auditHref={`/platform-admin/audit?q=${encodeURIComponent(org.name as string)}`}
-        pendingOwnershipTransfers={pendingOwnershipTransfers}
+        teamMoves={teamMoves}
         stripeSubscriptionId={(org.stripe_subscription_id as string | null) ?? null}
         subscriptionStatus={subscriptionStatus}
         isSuperAdmin={auth?.role === 'super_admin'}

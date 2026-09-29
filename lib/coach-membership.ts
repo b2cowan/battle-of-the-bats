@@ -333,6 +333,21 @@ export async function listActiveHeadCoachesForTeams(
   return (data ?? []).map((r: { team_id: string; user_id: string }) => ({ teamId: r.team_id, userId: r.user_id }));
 }
 
+/**
+ * The orgs where this person is an ACTIVE head coach — a club naming a coach by email finds the
+ * coach's own portal through it (Club Tier Stage 2, the team move: the portal's owner OR a co-head).
+ */
+export async function listHeadCoachOrgIdsForUser(userId: string): Promise<string[]> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('org_id')
+    .eq('user_id', userId)
+    .eq('status', 'active')
+    .eq('coach_role', 'head_coach');
+  if (error) throw error;
+  return [...new Set((data ?? []).map((r: { org_id: string }) => r.org_id))];
+}
+
 /** Every ACTIVE member of a team's staff (head coach first, then assistants oldest-first). */
 async function getTeamStaffMembershipList(teamId: string): Promise<TeamStaffMembership[]> {
   const { data, error } = await supabaseAdmin

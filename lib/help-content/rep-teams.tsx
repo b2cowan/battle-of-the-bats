@@ -185,6 +185,72 @@ const repTeamsHelp: HelpPageContent = {
       ),
     },
     {
+      // Club Tier Stage 2, B04 / Ask 2 (2026-09-29): was Organization › "Coaches portal links" (help
+      // org.tsx recipe-review-team-link-request) — the Basic visibility link and the FieldLogicHQ step
+      // are retired. ⚖ The coach's own plan: "won't be charged again", never a refund (owner 2026-09-28).
+      id: 'recipe-bring-in-coach-team',
+      group: 'How-to recipes',
+      heading: 'How to bring a coach’s own team into the club',
+      summary: 'When a coach already runs their team on their own Coaches Portal, bring the whole team in: its records, and its staff with what each of them can open.',
+      keywords: ['bring in a coach’s team', 'coach’s own team', 'own coaches portal', 'standalone portal', 'join the club', 'move a team', 'coaches portal links', 'coach bridge', 'team place', 'waiting on you'],
+      searchText: 'bring in a coachs team coach runs their own coaches portal standalone premium team join the club move a team into the club send request coach email waiting on you approve type the team name decline withdraw team place plan limit included everything comes with it seasons roster schedule results practices lineups attendance awards development tryouts documents money records staff cannot be undone coaches portal links',
+      links: [
+        { label: 'Bring in a coach’s team', href: '../rep-teams/bring-in' },
+      ],
+      content: (
+        <>
+          <p>A coach who runs their team on their own FieldLogicHQ Coaches Portal can bring it into the club. Everything the team built comes with it — its seasons, roster, schedule and results, practices, lineups, attendance, awards, player development, tryouts, documents and money records — and its staff, with what each of them can open.</p>
+          <ol>
+            <li>Open <strong>Rep Teams › Bring in a coach&apos;s team</strong>.</li>
+            <li>Under <strong>Ask a coach to bring in their team</strong>, enter the coach&apos;s email and press <strong>Send request</strong>. The coach answers from their own portal.</li>
+            <li>If the coach asks first, the request waits under <strong>Waiting on you</strong>. Before any button it shows what it costs the club (one of your team places, included in your plan), what happens to the coach&apos;s own plan, and what comes with the team.</li>
+            <li>Press <strong>Approve and bring in</strong>, type the team&apos;s name to confirm, and the team moves in there and then.</li>
+          </ol>
+          <p>Nothing moves until both of you say yes, and the move can&apos;t be undone. The coach keeps coaching the team, now as one of the club&apos;s teams, and from then on the club starts and closes its seasons.</p>
+          <p>Adding a new coach to a team you already have is different: use <strong>Invite a coach</strong> on that team&apos;s page.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-bring-in-coach-plan',
+          question: 'What happens to the coach’s own Coaches Portal plan?',
+          answerText: 'The coach won’t be charged for their own Coaches Portal again. It stops the moment the move completes, and the team is included in your plan from then on.',
+          keywords: ['coach plan', 'coach subscription', 'charged', 'coach billing'],
+          popular: true,
+          answer: (
+            <p>The coach won&apos;t be charged for their own Coaches Portal again. It stops the moment the move completes, and the team is included in your plan from then on.</p>
+          ),
+        },
+        {
+          id: 'faq-bring-in-at-limit',
+          question: 'What if we are at our plan’s team limit?',
+          answerText: 'Bringing a team in uses one of your plan’s team places. At the limit, Approve offers the move to a larger plan, or you can archive a team you no longer run first.',
+          keywords: ['team limit', 'team places', 'cap', 'full'],
+          answer: (
+            <p>Bringing a team in uses one of your plan&apos;s team places. At the limit, <strong>Approve</strong> offers the move to a larger plan, or you can archive a team you no longer run first.</p>
+          ),
+        },
+        {
+          id: 'faq-bring-in-tournament-waits',
+          question: 'Why is there no Approve button on a request?',
+          answerText: 'The coach’s own tournament is still running. It stays with the coach’s own portal and does not move, so the move waits until it is finished or archived.',
+          keywords: ['no approve', 'tournament', 'waiting'],
+          answer: (
+            <p>The coach&apos;s own tournament is still running. It stays with the coach&apos;s own portal and does not move, so the move waits until it is finished or archived.</p>
+          ),
+        },
+        {
+          id: 'faq-bring-in-who',
+          question: 'Who can bring a coach’s team into the club?',
+          answerText: 'The club’s owner and admins. On the coach’s side, the team’s head coach.',
+          keywords: ['who can', 'owner', 'admin', 'head coach'],
+          answer: (
+            <p>The club&apos;s owner and admins. On the coach&apos;s side, the team&apos;s head coach.</p>
+          ),
+        },
+      ],
+    },
+    {
       id: 'recipe-publish-document-templates',
       group: 'How-to recipes',
       heading: 'How to publish document templates for coaches',

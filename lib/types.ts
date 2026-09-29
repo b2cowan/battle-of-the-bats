@@ -3258,7 +3258,13 @@ export type NotificationEventType =
   | 'club_season_changed'
   // Club Tier Stage 2 — a coach the club invited from a team's Coaches page accepted (mig 312).
   // Reaches the person at the club who sent the invitation. Targeted lifecycle bell; TS-union only.
-  | 'club_coach_joined';
+  | 'club_coach_joined'
+  // Club Tier Stage 2, B04 (mig 313) — a coach's own team moving into a club. 'team_move_requested'
+  // reaches the side that must answer (the team's head coaches, or the club's owner and admins);
+  // 'team_move_answered' tells the other side how it ended (moved / declined). Targeted lifecycle
+  // bells with no toggle row, like the two above; TS-union only (no DB CHECK on event_type).
+  | 'team_move_requested'
+  | 'team_move_answered';
 
 export interface AppNotification {
   id: string;

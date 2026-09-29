@@ -548,16 +548,22 @@ describe('B09 / B11 / B12 / B13 — the rest of the server list', () => {
 
   it('B10: coach standing on the four routes and the oversight list is TEAM MEMBERSHIP', () => {
     const access = functionBody(readCode('lib/team-workspace-entitlements.ts'), 'getTeamScopedRepTeamAccess');
-    assert.match(access, /getActiveTeamMembership\(params\.orgId, params\.repTeamId, params\.userId\)/);
+    // The membership read, inline (session 2, 2026-09-29): same four filters as getActiveTeamMembership.
+    assert.match(access, /\.from\('rep_team_staff_memberships'\)[\s\S]*?\.eq\('org_id', params\.orgId\)[\s\S]*?\.eq\('team_id', params\.repTeamId\)[\s\S]*?\.eq\('user_id', params\.userId\)[\s\S]*?\.eq\('status', 'active'\)/);
     assert.doesNotMatch(access, /rep_team_coaches/);
+    // ⚠ Never through coach-membership, even dynamically: this file is in the BROWSER bundle (via
+    // db.ts), and coach-membership → api-auth → next/headers 500'd every dev page (2026-09-29).
+    assert.doesNotMatch(readCode('lib/team-workspace-entitlements.ts'), /['"]\.\/coach-membership['"]/);
     assert.match(functionBody(readCode('lib/db.ts'), 'getOrgAssistantCoaches'), /from\('rep_team_staff_memberships'\)/);
     assert.match(readCode('app/api/coaches/[orgSlug]/team-links/route.ts'), /getActiveTeamMembership\(ctx\.org\.id, workspace\.repTeamId, ctx\.user\.id\)/);
   });
 
   it('B12: the club\'s team-links API needs the Rep Teams module', () => {
+    // Session 2 (the team move) folded the gate into the route's one resolver; both verbs call it.
     const src = readCode(ROUTE.teamLinks);
+    assert.match(functionBody(src, 'resolveClub'), /hasModuleEntitlement\(ctx\.org, 'module_rep_teams'\)/);
     for (const verb of ['GET', 'POST']) {
-      assert.match(handler(src, verb), /hasModuleEntitlement\(ctx\.org, 'module_rep_teams'\)/, verb);
+      assert.match(handler(src, verb), /await resolveClub\(req\)/, verb);
     }
   });
 

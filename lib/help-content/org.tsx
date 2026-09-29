@@ -123,62 +123,6 @@ const orgHelp: HelpPageContent = {
       ],
     },
     {
-      id: 'recipe-review-team-link-request',
-      group: 'How-to recipes',
-      heading: 'How to invite or review Coaches Portal links',
-      summary: 'Invite or approve Basic visibility links with coach-run teams, and start ownership transfer when both sides agree.',
-      keywords: ['coaches portal links', 'coaches portal', 'invite coach portal', 'approve request', 'parent organization', 'basic visibility', 'ownership transfer'],
-      searchText: 'invite review approve decline coaches portal link request parent organization club association basic visibility sharing ownership transfer roster documents accounting',
-      links: [
-        { label: 'Coaches Portal Links', href: '../org/coaches-portal-links' },
-      ],
-      content: (
-        <>
-          <p>Owners and admins can connect coach-run Coaches Portals to the organization from <strong>Org Admin &gt; Coaches Portal Links</strong>.</p>
-          <ol>
-            <li>Open <strong>Org Admin &gt; Coaches Portal Links</strong>.</li>
-            <li>To invite a Coaches Portal, enter the portal URL slug or primary coach email, then click <strong>Send Invite</strong>.</li>
-            <li>The coach reviews the invitation from their Coaches Portal and chooses <strong>Accept Invitation</strong> or <strong>Decline</strong>.</li>
-            <li>For coach-requested links, review the portal name, team name, and requested sharing level.</li>
-            <li>Click <strong>Approve Link</strong> if the team should be associated with your organization, or <strong>Decline</strong> if it is not.</li>
-            <li>Use Link history later to confirm what was approved or declined.</li>
-          </ol>
-          <p>Approving a coach request or receiving a coach&apos;s acceptance creates a <strong>Basic visibility</strong> link only. It records the association — it does not give the organization access to the team&apos;s roster, documents, or accounting, or change who runs the team.</p>
-          <p>Use <strong>Ownership transfer</strong> only when a coach-run team should become a normal org-owned rep team. Both the coach and the organization approve it, after which the team&apos;s roster, schedule, documents, and accounting move under the organization.</p>
-        </>
-      ),
-      faqs: [
-        {
-          id: 'faq-basic-team-link-access',
-          question: 'What can we see after approving a Basic visibility link?',
-          answerText: 'You can see the approved association and a basic Coaches Portal summary. You do not receive the team’s roster, documents, accounting, or full rep-team admin access from this approval.',
-          keywords: ['basic visibility', 'coaches portal link access', 'roster', 'documents'],
-          popular: true,
-          answer: (
-            <p>You can see the approved association and a basic Coaches Portal summary. You do not receive the team&apos;s roster, documents, accounting, or full rep-team admin access from this approval.</p>
-          ),
-        },
-        {
-          id: 'faq-team-link-invite-access',
-          question: 'Can we invite a Coaches Portal without taking over the team?',
-          answerText: 'Yes. Sending a Basic visibility invitation only asks the coach to confirm the association — it does not change who runs the team or move any of its data.',
-          keywords: ['invite coaches portal', 'basic visibility', 'ownership'],
-          answer: (
-            <p>Yes. Sending a Basic visibility invitation only asks the coach to confirm the association — it does not change who runs the team or move any of its data.</p>
-          ),
-        },
-        {
-          id: 'faq-team-link-ownership-transfer',
-          question: 'When should we use ownership transfer?',
-          answerText: 'Use ownership transfer only when a coach-run team should become a normal org-owned rep team. It is stronger than a Basic visibility link because it moves data ownership and access for roster, documents, schedule, and accounting records.',
-          keywords: ['ownership transfer', 'org owned team', 'club transfer', 'roster access'],
-          answer: (
-            <p>Use ownership transfer only when a coach-run team should become a normal org-owned rep team. It is stronger than a Basic visibility link because it moves data ownership and access for roster, documents, schedule, and accounting records.</p>
-          ),
-        },
-      ],
-    },
-    {
       id: 'recipe-invite-member',
       group: 'How-to recipes',
       heading: 'How to invite a member and choose the right role',

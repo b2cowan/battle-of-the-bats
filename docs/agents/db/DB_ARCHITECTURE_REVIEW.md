@@ -15,7 +15,7 @@
 | Critical | 0 | 0 | 0 |
 | High | 2 | 9 | 1 |
 | Medium | 2 | 5 | 2 |
-| Low | 2 | 4 | 3 |
+| Low | 2 | 5 | 3 |
 | Advisory | 9 | 1 | 0 |
 
 > **Newest (2026-08-17, quarterly health check):** #33 FK columns with no usable index, 25+ of them `org_id` — this log's own standing rule, silently untrue — **fixed the same day, migration 249, 139 indexes — on dev AND prod (release `5ae39f10`); the standing gate that stops it recurring is built (`npm run check:indexes`)**; #34 twin tables (`org_budget_periods` ≡ `rep_budget_periods` column-for-column; `rep_dues_payments` ≡ `rep_dues_payouts` but for one date-column name); #35 **identity is a string** — guardian/coach identity travels as a normalized email across 30 tables with no person entity (**High**, the one real architectural debt); #36 opponent + venue links recomputed from free text on rep events only; #37 six polymorphic `(type, id)` pairs and 18 unconstrained ID columns — all deliberate, but no orphan check exists; #38 preference/opt-out sprawl (8 tables + 1 column); #39 schema is ahead of the business (86 of 162 prod tables empty).
@@ -25,6 +25,23 @@
 ---
 
 ## Open Findings
+
+---
+
+### [2026-09-29] — Finding #45: Migration 313 review — a coach's own team moves into a club whole (`move_team_into_club`, replaces 067)
+**Severity:** Low (approved; three pre-release prod reads owed, none blocking the build)
+**Finding:** Reviewed pre-prod, after the dev apply, against the live dev catalog (read-only `.probe/tm-dba-checks.sql`) and the rolled-back dev rehearsals (`.probe/tm-rehearse*.sql`: two real workspaces moved whole, 23 and 39 tables each; wrong side refused; idempotent; cap refused under the lock; slug clash → `-2`).
+- **Approved — correctness.** One transaction; the second side's yes is recorded INSIDE it (no "both approved, nothing moved" state can exist). The org-scoped move is sound only for a one-team org, and the function guards that (`team_move_workspace_holds_other_teams`). Every moved table has `org_id` indexed. Every unique index on a moved table that carries `org_id` without `team_id` is handled by name: the team ledger (conflict check; the coach org's general ledger stays), `family_consents` / `family_email_optouts` (moved only where the club holds none), `rep_teams (org_id, slug)` (suffix loop), `budget_items_unique_default_name` (`org_id IS NULL` — never moved). No composite FK carries `org_id`.
+- **Approved — locking.** Link → workspace → team → coach org → club, all `FOR UPDATE`. Two moves into one club serialize on the club's `organizations` row (the team-place count is taken under it); a coach org is never a club, so no lock cycle. Two links racing for the SAME workspace serialize on the workspace row; the second reads `org_owned` and refuses.
+- **Approved — security.** SECURITY DEFINER owned by `postgres`, `search_path` pinned, every relation schema-qualified (scanned), EXECUTE `postgres` + `service_role` only (revoked from public/anon/authenticated, Finding #43's pattern). 067's function is dropped in the same transaction (its only caller, the operator route, is removed with it).
+- **Low — the guardian-cap trigger fires on the move.** `family_links_guardian_cap` (BEFORE UPDATE, mig 217) re-counts live guardians per player on every `family_links` update; a legacy player holding more than two live guardian links (pre-217 data) would abort the move with `guardian_cap_reached` (reported to the approver as "the move couldn't finish"). **Recommendation:** before the release, read prod for players with >2 live guardian links (expect 0).
+- **Low — the library re-own can collide.** A coach org holding an org-level (`team_id` NULL) budget item or payee AND a same-named team one would hit `budget_items_unique_scope_side_name` / `idx_org_payees_team_name` when the former is re-owned to the team → the move aborts, atomically — **and since /review it refuses in words, naming the kind** (`team_move_library_name_clash: <table>` → "The team has two tags with the same name. Rename one…"; rehearsed on dev, rolled back). Dev holds zero `team_id`-NULL rows in any workspace org. **Recommendation:** the same prod read, for `team_id IS NULL` rows in team-workspace orgs across the seven library tables (expect 0).
+- **Advisory — the families attach runs club-wide.** `families_attach_people(club)` inside the move locks the club's still-unattached roster/tryout/link rows and refreshes its people's names — fine at the Club bands' ≤30 teams. If clubs grow past that, scope the attach to the moved team's rows.
+- **Advisory — words that carry the old address.** Free text (announcement bodies, delivered bells) and the team's public/tryout addresses under the coach org's slug are not rewritten; they dead-end after a move. A product item (public-face redirect, Stage 4), not schema.
+**Tables affected:** `team_org_links`, `team_workspaces`, `organizations`, `organization_members`, `rep_team_staff_memberships`, `chat_rooms`, `family_links`, `family_consents`, `family_email_optouts`, every table in `c_moves`.
+- **Added after /review (2026-09-29):** (a) `team_org_links_one_open_request` — a partial unique index, one `ownership_pending` row per team: the app's "one open request" check was an unlocked read, so two clubs asking at once could both open one, and two approvals of the same team then deadlocked (link → workspace vs workspace → the other link). ⚠ Its CREATE fails if a team already holds two open requests — a THIRD prod read (expected 0; the old routine allowed one active link per team). (b) the coach org's audit row carries `previousStripeSubscriptionId`, so a process dying between commit and the Stripe cancel leaves a durable record of what to cancel.
+**Recommendation:** Apply 313 to prod before the promote that ships the club's page (recorded `pending` in `MANUAL_PROD_STEPS.json`); run the three prod reads above first. The coverage gate (`tests/unit/team-move-coverage.test.ts`) is the standing control for the table list.
+**Status:** Addressed — the three prod reads RUN 2026-09-29 (owner go), all 0: players over the guardian cap 0, `team_id`-NULL library rows in coach orgs 0, teams with two open requests 0. Prod holds ONE coach workspace (independent, one team) with an OPEN tournament of its own, and no link rows at all. The migration is approved; it stays prod-owed until the release (`MANUAL_PROD_STEPS.json` `pending`).
 
 ---
 

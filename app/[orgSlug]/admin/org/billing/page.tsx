@@ -964,13 +964,13 @@ function BillingPageLegacy() {
         <div className={styles.billingNudgeCard}>
           <div className={styles.billingNudgeIcon}><Link2 size={18} /></div>
           <div className={styles.billingNudgeBody}>
-            <h2 className={styles.billingNudgeTitle}>Part of a club or association?</h2>
+            <h2 className={styles.billingNudgeTitle}>Part of a club?</h2>
             <p className={styles.billingNudgeCopy}>
-              Add a Basic visibility link so the organization can see your team — your Coaches Portal stays coach-operated, and roster, document, accounting, and ownership access stay with you. If the organization is on Club, transferring the team into it includes the Premium portal for the whole coaching staff.
+              If your club runs on FieldLogicHQ, it can bring your team in. Everything the team built comes with it, and you won’t be charged for your own Coaches Portal again.
             </p>
           </div>
           <Link className="btn btn-lime btn-data" href={`/${currentOrg.slug}/coaches/link-org`}>
-            Link Parent Org
+            Join a club
             <ArrowRight size={14} />
           </Link>
         </div>

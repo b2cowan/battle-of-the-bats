@@ -100,12 +100,12 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(url, { status: 301 });
   }
 
-  // Redirect legacy org-admin link URLs before auth so login next paths
-  // also use the Coaches Portal vocabulary.
+  // Redirect legacy org-admin link URLs before auth so login next paths use today's page — Rep Teams ›
+  // Bring in a coach's team (Club Tier Stage 2; it was Organization › Coaches portal links). One hop.
   if (segments.length >= 4 && segments[0] !== 'api' && segments[1] === 'admin' && segments[2] === 'org' && segments[3] === 'team-links') {
     const url = request.nextUrl.clone();
     const remainingPath = segments.slice(4).join('/');
-    url.pathname = `/${segments[0]}/admin/org/coaches-portal-links${remainingPath ? '/' + remainingPath : ''}`;
+    url.pathname = `/${segments[0]}/admin/rep-teams/bring-in${remainingPath ? '/' + remainingPath : ''}`;
     return NextResponse.redirect(url, { status: 307 });
   }
 

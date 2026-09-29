@@ -1,0 +1,138 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   Rep Teams › Bring in a coach's team (Club Tier Stage 2, specimen 9) — drawn to the Coaches Portal
+   benchmark (plan §6 "Across every stage — formatting"), restated BY VALUE: admin pages do not load
+   the portal's stylesheet (the reason `AdminPageHeader` restates `CoachPageHeader`).
+   - a section is a CARD with its heading INSIDE (16 / 700, sentence case) and a mono count beside it
+     (`CoachPageSection`);
+   - cards: 8px, a hairline, no shadow (`CoachKit .card`);
+   - no tinted panels — a callout is a white card with a 3px coloured edge (`CoachKit .cardAccent`);
+   - a card's eyebrow is mono, uppercase, SECONDARY ink (Ask 8 ruling 8).
+   ⚠ TOKENS ONLY (this folder is in the restyled ratchet, scripts/check-public-tokens.mjs).
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.page { max-width: 52rem; }
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  margin: 0 0 0.75rem;
+  min-width: 0;
+}
+/* The callout: the first line of the page (J4-034), on the card ground with an accent edge. */
+.callout {
+  composes: card;
+  border-left: 3px solid var(--home-olive);
+  display: flex;
+  gap: 0.65rem;
+  padding: 0.85rem 1.05rem;
+  font-size: var(--type-body);
+  line-height: 1.5;
+  color: var(--text-primary);
+}
+.callout > svg { flex-shrink: 0; margin-top: 0.2rem; color: var(--home-olive); }
+.calloutSub { margin: 0.3rem 0 0; font-size: var(--type-support); color: var(--text-secondary); }
+/* Something that holds a request back (the coach's open tournament): the warning edge, same card. */
+.hold {
+  border-left: 3px solid var(--warning);
+  padding: 0.55rem 0.75rem;
+  margin: 0.85rem 0 0;
+  border-radius: 6px;
+  background: var(--card-bg);
+  border-top: 1px solid var(--home-line);
+  border-right: 1px solid var(--home-line);
+  border-bottom: 1px solid var(--home-line);
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.1rem 0.4rem;
+}
+.title {
+  margin: 0 auto 0 0;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+.count {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+}
+.body { padding: 0.4rem 1.1rem 1.05rem; }
+
+/* The request form: the field and its button on one line, wrapping on a phone. */
+.formRow { display: flex; gap: 0.5rem; align-items: flex-end; flex-wrap: wrap; }
+.formRow .field { flex: 1 1 16rem; margin: 0; }
+.hint { margin: 0.45rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); line-height: 1.45; }
+
+/* ── A request waiting on the club (the drawn card) ── */
+.request { padding: 1.05rem 1.1rem 1.1rem; }
+.request + .request { border-top: 1px solid var(--home-line); }
+.requestTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.requestTitle { margin: 0; font-size: var(--type-heading); font-weight: 700; line-height: 1.3; color: var(--text-primary); }
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 0.9rem 1.25rem; margin-top: 0.9rem; }
+.factCol { display: flex; flex-direction: column; gap: 0.75rem; min-width: 0; }
+.eye {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.factText { margin: 0.25rem 0 0; font-size: var(--type-body); line-height: 1.45; color: var(--text-primary); }
+.after { margin: 0.85rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+.actions { display: flex; gap: 0.5rem; justify-content: flex-end; flex-wrap: wrap; margin-top: 0.95rem; }
+
+/* ── The quiet lists: waiting on the coach, and what happened before ── */
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0;
+  border-top: 1px solid var(--home-line);
+}
+.row:first-child { border-top: 0; }
+.rowMain { flex: 1; min-width: 0; }
+.rowTitle { font-weight: 650; color: var(--text-primary); overflow-wrap: anywhere; }
+.rowSub { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* History folds away: the live requests are the page (the quiet-history rule). */
+.history > summary {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.85rem 1.1rem;
+  cursor: pointer;
+  list-style: none;
+}
+.history > summary::-webkit-details-marker { display: none; }
+.history > summary::marker { content: ''; }
+.chevron { margin-left: auto; color: var(--text-tertiary); transition: transform 0.2s ease; flex-shrink: 0; }
+.history[open] > summary .chevron { transform: rotate(90deg); }
+.history .body { border-top: 1px solid var(--home-line); padding-top: 0.2rem; }
+
+.confirmField { margin: 0.75rem 0 0; }
+.confirmMiss { margin: 0.4rem 0 0; font-size: var(--type-support); color: var(--home-live); }
+
+/* The phone's tap floor (44px): the inline pointer link and the form's button. */
+@media (max-width: 768px) {
+  .pointerLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .sendBtn { min-height: var(--tap-min, 44px); }
+}
+
+@media (max-width: 640px) {
+  .facts { grid-template-columns: 1fr; }
+  .actions { justify-content: stretch; }
+  .actions > * { flex: 1 1 auto; }
+}

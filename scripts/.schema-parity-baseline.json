@@ -6,6 +6,7 @@
     "check:only-dev:assistant_invite_tokens.assistant_invite_tokens_sent_by_check": "",
     "column:changed:assistant_invite_tokens.program_year_id": "uuid|uuid|YES| :: uuid|uuid|NO|",
     "column:only-dev:assistant_invite_tokens.coach_role": "",
-    "column:only-dev:assistant_invite_tokens.sent_by": ""
+    "column:only-dev:assistant_invite_tokens.sent_by": "",
+    "index:only-dev:team_org_links_one_open_request": ""
   }
 }

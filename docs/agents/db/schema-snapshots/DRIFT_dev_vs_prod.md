@@ -1,14 +1,14 @@
 # Dev vs Prod — structural drift
 
-**Generated:** 2026-09-28 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
+**Generated:** 2026-09-29 by `scripts/refresh-db-snapshots.mjs` (structure only — no business data).
 
-**⚠️ 6 divergence(s)** across dev/prod.
+**⚠️ 7 divergence(s)** across dev/prod.
 
 | Dimension | Only in DEV | Only in PROD | Changed |
 |---|---|---|---|
 | Tables | 0 | 0 | — |
 | Columns | 2 | 0 | 1 |
-| Indexes | 0 | 0 | 0 |
+| Indexes | 1 | 0 | 0 |
 | Constraints | 0 | 0 | — |
 | RLS / CHECK | 3 | 0 | 0 (RLS state) |
 
@@ -31,8 +31,8 @@ _none_
 - `assistant_invite_tokens.program_year_id` — dev: `uuid|uuid|YES|` | prod: `uuid|uuid|NO|`
 
 ## Indexes
-### Only in DEV (0)
-_none_
+### Only in DEV (1)
+- `team_org_links_one_open_request`
 
 ### Only in PROD (0)
 _none_

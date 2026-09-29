@@ -295,11 +295,6 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
                 `${base}/org/billing`,
                 pathname.startsWith(`${base}/org/billing`),
               )}
-              {!isCanceled && (userRole === 'owner' || userRole === 'admin') && navLink(
-                'org/coaches-portal-links', Link2, 'Coaches Portal Links',
-                `${base}/org/coaches-portal-links`,
-                pathname.startsWith(`${base}/org/coaches-portal-links`) || pathname.startsWith(`${base}/org/team-links`),
-              )}
               {!isCanceled && userRole === 'owner' && navLink(
                 'org/settings', Settings, 'Settings',
                 `${base}/org/settings`,
@@ -439,6 +434,9 @@ export default function AdminSidebar({ chatUnread: chatUnreadProp }: {
               {navLink('rt-past', Archive, 'Past Seasons',
                 `${base}/rep-teams/past`,
                 pathname.startsWith(`${base}/rep-teams/past`))}
+              {(userRole === 'owner' || userRole === 'admin') && navLink('rt-bring-in', Link2, 'Bring in a coach’s team',
+                `${base}/rep-teams/bring-in`,
+                pathname.startsWith(`${base}/rep-teams/bring-in`))}
               {coachAccess.hasRepAccess && navLink('rt-coaches-portal', ExternalLink, 'Coaches Portal',
                 `/${currentOrg?.slug ?? ''}/coaches`,
                 pathname.startsWith(`/${currentOrg?.slug ?? ''}/coaches`))}

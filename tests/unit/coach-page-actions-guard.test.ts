@@ -156,17 +156,17 @@ const SITES: Site[] = [
     // of a load error. Same shape on the seven team pages below — each is the page's own title
     // over `CoachNotGranted`, never a header with actions.
     file: 'app/[orgSlug]/coaches/link-org/page.tsx', occurrence: 0,
-    screen: 'Link Organization — the "only the head coach" early return',
+    screen: 'Join a club — the "only the head coach" early return',
     variant: 'standard', helpHost: 'own', actions: null,
   },
   {
     file: 'app/[orgSlug]/coaches/link-org/page.tsx', occurrence: 1,
-    screen: 'Link Organization — the "already inside an org" early return',
+    screen: 'Join a club — the "already part of a club" early return',
     variant: 'standard', helpHost: 'own', actions: null,
   },
   {
     file: 'app/[orgSlug]/coaches/link-org/page.tsx', occurrence: 2,
-    screen: 'Link Organization',
+    screen: 'Join a club',
     variant: 'standard', helpHost: 'own',
     actions: {
       from: 'inline', slot: 'action', holds: 'Refresh (re-reads the link list)',

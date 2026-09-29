@@ -264,10 +264,20 @@ export async function getTeamScopedRepTeamAccess(params: {
        the team's staff was DENIED between seasons by the four routes that ask it (tournament
        history, tournament games, hosted tournaments, team links) while every other door admitted
        them. Staff belong to the team; a removed coach holds no active membership. */
-    // Through the one membership module (a dynamic import: coach-membership imports this file, so
-    // a static import would cycle). It throws on a query error rather than reading "not a coach".
-    const { getActiveTeamMembership } = await import('./coach-membership');
-    const membership = await getActiveTeamMembership(params.orgId, params.repTeamId, params.userId);
+    // ⚠ A DIRECT READ, NOT `coach-membership`'s helper (2026-09-29). This file is reachable from the
+    // BROWSER bundle (org-context → member-access → module-entitlements → db → here), and even a
+    // dynamic import is followed by the bundler: coach-membership → api-auth → next/headers took
+    // down every page on the dev server. Same question as `getActiveTeamMembership` (org, team,
+    // person, ACTIVE); throws on a query error rather than reading "not a coach".
+    const { data: membership, error: membershipError } = await supabaseAdmin
+      .from('rep_team_staff_memberships')
+      .select('id')
+      .eq('org_id', params.orgId)
+      .eq('team_id', params.repTeamId)
+      .eq('user_id', params.userId)
+      .eq('status', 'active')
+      .maybeSingle();
+    if (membershipError) throw membershipError;
     if (!membership) return { allowed: false, reason: 'not_team_coach' };
   }
 

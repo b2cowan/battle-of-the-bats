@@ -32,6 +32,8 @@ export type PlatformEventType =
   | 'team_org_ownership_request_declined'
   | 'team_org_ownership_invite_declined'
   | 'team_org_ownership_transfer_completed'
+  // Club Tier Stage 2: the asking side took its team-move request back (free text, no CHECK).
+  | 'team_org_ownership_withdrawn'
   // Free Tier Phase 6 — Free League Starter (§13 instrumentation). Reuse this store; no new
   // analytics pipeline. `platform_events.event_type` is free text (no CHECK), so no migration.
   // First five are server-fired (route handlers); last two are client-fired via /api/events/league.

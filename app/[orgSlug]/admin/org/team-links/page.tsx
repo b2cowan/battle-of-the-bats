@@ -6,5 +6,5 @@ export default async function LegacyOrgTeamLinksPage({
   params: Promise<{ orgSlug: string }>;
 }) {
   const { orgSlug } = await params;
-  redirect(`/${orgSlug}/admin/org/coaches-portal-links`);
+  redirect(`/${orgSlug}/admin/rep-teams/bring-in`);
 }

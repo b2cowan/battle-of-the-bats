@@ -66,19 +66,21 @@ interface InternalNote {
   updatedAt: string;
 }
 
-interface PendingOwnershipTransfer {
+/** A coach's own team brought into this org (Club Tier Stage 2, B04) — a read-only record: the second
+ *  side's yes moves the team, so an operator has nothing to complete. */
+interface TeamMove {
   linkId: string;
   teamWorkspaceId: string;
   repTeamId: string;
   teamName: string;
   teamSlug: string | null;
-  /** The counterpart (coach's Team workspace) org whose subscription is cancelled on completion. */
+  /** The coach's own (Team workspace) org the team came from. */
   workspaceOrgId: string | null;
   workspaceOrgName: string;
   workspaceOrgSlug: string | null;
   billingMode: string | null;
   updatedAt: string;
-  readyForCompletion: boolean;
+  state: 'moved' | 'waiting_on_coach' | 'waiting_on_club';
 }
 
 interface PlanOption {
@@ -133,7 +135,7 @@ interface Props {
   tournaments: Tournament[];
   auditEvents: AuditEvent[];
   auditHref: string;
-  pendingOwnershipTransfers: PendingOwnershipTransfer[];
+  teamMoves: TeamMove[];
   stripeSubscriptionId: string | null;
   subscriptionStatus: string;
   isSuperAdmin: boolean;
@@ -252,7 +254,7 @@ export default function OrgDetailClient({
   tournaments,
   auditEvents,
   auditHref,
-  pendingOwnershipTransfers: initialPendingOwnershipTransfers,
+  teamMoves,
   stripeSubscriptionId,
   subscriptionStatus,
   isSuperAdmin,
@@ -294,14 +296,6 @@ export default function OrgDetailClient({
   /** What the downgrade did to the org's existing tournaments — archived N, or failed to. */
   const [planArchiveNote, setPlanArchiveNote] = useState('');
   const [planError, setPlanError] = useState('');
-  const [pendingOwnershipTransfers, setPendingOwnershipTransfers] = useState(initialPendingOwnershipTransfers);
-  const [ownershipReasons, setOwnershipReasons] = useState<Record<string, string>>({});
-  const [ownershipSaving, setOwnershipSaving] = useState<Record<string, boolean>>({});
-  const [ownershipError, setOwnershipError] = useState<Record<string, string>>({});
-  const [ownershipSaved, setOwnershipSaved] = useState<Record<string, boolean>>({});
-  // Named confirmation gate before a Complete Transfer fires — it cancels the counterpart
-  // (coach's) org subscription and moves its data, so the operator must confirm that org first.
-  const [confirmTransfer, setConfirmTransfer] = useState<PendingOwnershipTransfer | null>(null);
 
   async function handleIdentitySave(e: React.FormEvent) {
     e.preventDefault();
@@ -413,57 +407,6 @@ export default function OrgDetailClient({
       setPlanError('Network error');
     } finally {
       setPlanSaving(false);
-    }
-  }
-
-  // Step 1 — validate the reason, then open the named confirmation. Nothing fires yet.
-  function requestOwnershipTransferComplete(transfer: PendingOwnershipTransfer) {
-    const reason = ownershipReasons[transfer.linkId]?.trim() ?? '';
-    if (reason.length < 5) {
-      setOwnershipError(prev => ({ ...prev, [transfer.linkId]: 'Reason is required' }));
-      return;
-    }
-    setOwnershipError(prev => ({ ...prev, [transfer.linkId]: '' }));
-    setConfirmTransfer(transfer);
-  }
-
-  // Step 2 — fire the completion, echoing the counterpart org id back so the server can verify
-  // the operator confirmed the exact org whose subscription will be cancelled.
-  async function handleOwnershipTransferComplete(transfer: PendingOwnershipTransfer) {
-    const linkId = transfer.linkId;
-    const reason = ownershipReasons[linkId]?.trim() ?? '';
-    if (reason.length < 5) {
-      setOwnershipError(prev => ({ ...prev, [linkId]: 'Reason is required' }));
-      return;
-    }
-
-    setConfirmTransfer(null);
-    setOwnershipSaving(prev => ({ ...prev, [linkId]: true }));
-    setOwnershipError(prev => ({ ...prev, [linkId]: '' }));
-    setOwnershipSaved(prev => ({ ...prev, [linkId]: false }));
-    try {
-      const res = await fetch(`/api/platform-admin/team-ownership-transfers/${linkId}/complete`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason, confirmWorkspaceOrgId: transfer.workspaceOrgId }),
-      });
-      const data = await res.json().catch((): ApiErrorBody => ({}));
-      if (!res.ok) {
-        setOwnershipError(prev => ({ ...prev, [linkId]: data.error ?? 'Ownership transfer failed' }));
-        return;
-      }
-      setPendingOwnershipTransfers(prev => prev.filter(t => t.linkId !== linkId));
-      setOwnershipReasons(prev => {
-        const next = { ...prev };
-        delete next[linkId];
-        return next;
-      });
-      setOwnershipSaved(prev => ({ ...prev, [linkId]: true }));
-      router.refresh();
-    } catch {
-      setOwnershipError(prev => ({ ...prev, [linkId]: 'Network error' }));
-    } finally {
-      setOwnershipSaving(prev => ({ ...prev, [linkId]: false }));
     }
   }
 
@@ -812,7 +755,7 @@ export default function OrgDetailClient({
   const canCancelSubscription =
     canManageBilling && subscriptionStatus !== 'canceled' && (isPaidPlanNow || hasStripeLink);
   const tabItems: Array<{ id: TabId; label: string; count?: number }> = [
-    { id: 'support', label: 'Support', count: notes.length + pendingOwnershipTransfers.length },
+    { id: 'support', label: 'Support', count: notes.length },
     { id: 'billing', label: 'Billing & Access', count: activeOverrides.length },
     { id: 'entitlements', label: 'Entitlements', count: addonEdits.length },
     { id: 'people', label: 'People & Tournaments', count: members.length + tournaments.length },
@@ -1169,50 +1112,29 @@ export default function OrgDetailClient({
 
             <section className={styles.section}>
               <div className={styles.sectionHeader}>
-                <h3 className={styles.sectionTitle}>Coaches Portal Ownership Transfers</h3>
-                {pendingOwnershipTransfers.length > 0 && <span className={styles.savedIndicator}>{pendingOwnershipTransfers.length} pending</span>}
+                <h3 className={styles.sectionTitle}>Teams brought in</h3>
               </div>
-              {pendingOwnershipTransfers.length === 0 ? (
-                <p className={styles.emptyNote}>No Coaches Portal ownership transfers are waiting for platform completion.</p>
+              {/* Club Tier Stage 2 (B04): a READ-ONLY record. The second side's yes moves the team
+                  (`move_team_into_club`, mig 313) — there is no operator step. A Stripe cancel that
+                  failed after a move is on the error dashboard, named with the subscription to cancel. */}
+              {teamMoves.length === 0 ? (
+                <p className={styles.emptyNote}>No coach has brought a team of their own into this organization.</p>
               ) : (
                 <div className={styles.noteTimeline}>
-                  {pendingOwnershipTransfers.map(transfer => (
-                    <article key={transfer.linkId} className={styles.noteItem}>
+                  {teamMoves.map(move => (
+                    <article key={move.linkId} className={styles.noteItem}>
                       <div className={styles.noteMeta}>
-                        <span>{transfer.teamName}</span>
-                        <span>{transfer.workspaceOrgSlug ? `/${transfer.workspaceOrgSlug}` : transfer.workspaceOrgName}</span>
-                        <span>{fmtDateTime(transfer.updatedAt)}</span>
+                        <span>{move.teamName}</span>
+                        <span>{move.workspaceOrgSlug ? `/${move.workspaceOrgSlug}` : move.workspaceOrgName}</span>
+                        <span>{fmtDateTime(move.updatedAt)}</span>
                       </div>
                       <p className={styles.noteBody}>
-                        Ready to move roster, schedule, documents, budget, and team ledger into this organization.
-                        Current Team billing: {transfer.billingMode ?? 'unknown'}.
+                        {move.state === 'moved'
+                          ? 'Moved into this organization, with its staff and every team record.'
+                          : move.state === 'waiting_on_coach'
+                            ? 'Requested by this organization — waiting on the coach.'
+                            : 'Requested by the coach — waiting on this organization.'}
                       </p>
-                      {canManageSupport || canManageBilling ? (
-                        <>
-                          <textarea
-                            className={styles.notesTextarea}
-                            value={ownershipReasons[transfer.linkId] ?? ''}
-                            onChange={event => setOwnershipReasons(prev => ({ ...prev, [transfer.linkId]: event.target.value }))}
-                            rows={3}
-                            placeholder="Reason for completing this ownership transfer"
-                          />
-                          <div className={styles.notesActions}>
-                            <button
-                              type="button"
-                              className={styles.saveBtn}
-                              onClick={() => requestOwnershipTransferComplete(transfer)}
-                              disabled={!transfer.readyForCompletion || ownershipSaving[transfer.linkId]}
-                            >
-                              {ownershipSaving[transfer.linkId] ? 'Completing...' : 'Complete Transfer'}
-                            </button>
-                            {!transfer.readyForCompletion && <span className={styles.warningNote}>Both coach and org approval are required.</span>}
-                            {ownershipError[transfer.linkId] && <span className={styles.rowError}>{ownershipError[transfer.linkId]}</span>}
-                            {ownershipSaved[transfer.linkId] && <span className={styles.savedIndicator}>Completed</span>}
-                          </div>
-                        </>
-                      ) : (
-                        <p className={styles.emptyNote}>Support or billing permission is required to complete this transfer.</p>
-                      )}
                     </article>
                   ))}
                 </div>
@@ -2166,55 +2088,6 @@ export default function OrgDetailClient({
                 disabled={transferOwnerSaving || !transferOwnerReason.trim()}
               >
                 {transferOwnerSaving ? 'Transferring…' : 'Confirm Transfer'}
-              </button>
-            </div>
-          </section>
-        </div>
-      )}
-
-      {confirmTransfer && (
-        <div className={styles.modalBackdrop} role="presentation">
-          <section
-            className={styles.confirmModal}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="confirm-transfer-title"
-          >
-            <div>
-              <div className={styles.sectionTitle} id="confirm-transfer-title">Complete ownership transfer?</div>
-              <p className={styles.modalCopy}>
-                This moves <strong>{confirmTransfer.teamName}</strong> into <strong>{orgName}</strong> and
-                will do the following to the coach&rsquo;s organization{' '}
-                <strong>{confirmTransfer.workspaceOrgSlug ? `/${confirmTransfer.workspaceOrgSlug}` : confirmTransfer.workspaceOrgName}</strong>:
-              </p>
-              <ul className={styles.modalCopy} style={{ margin: '0.5rem 0 0', paddingLeft: '1.1rem' }}>
-                <li>Its Coaches Portal subscription is cancelled</li>
-                <li>Its Stripe billing records are cleared</li>
-                <li>Its members are suspended</li>
-                <li>Its roster, schedule, documents, budget, and ledger move into {orgName}</li>
-              </ul>
-              <p className={styles.modalCopy} style={{ marginTop: '0.6rem' }}>
-                This is audit-logged and cannot be reversed from here.
-              </p>
-            </div>
-            <div className={styles.modalActions}>
-              <button
-                type="button"
-                className={styles.cancelBtn}
-                onClick={() => setConfirmTransfer(null)}
-                disabled={ownershipSaving[confirmTransfer.linkId]}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className={styles.confirmBtn}
-                onClick={() => handleOwnershipTransferComplete(confirmTransfer)}
-                disabled={ownershipSaving[confirmTransfer.linkId]}
-              >
-                {ownershipSaving[confirmTransfer.linkId]
-                  ? 'Completing…'
-                  : `Cancel ${confirmTransfer.workspaceOrgSlug ? `/${confirmTransfer.workspaceOrgSlug}` : confirmTransfer.workspaceOrgName} & transfer`}
               </button>
             </div>
           </section>
