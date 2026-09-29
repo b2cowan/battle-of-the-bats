@@ -29,8 +29,12 @@
 > "commit" → **COMMITTED `c72afdeb` 2026-09-28**, ahead of the walk. **Walk §245 PASSED 2026-09-28.**
 > **RELEASED — Part A, the flip: `74f45113`, promoted to production 2026-09-28 (Amplify job 273).** The admin, the scorekeeper and gate and the admin's help wear
 > the kit in every build; coaches help follows the theme; Club Stage 1's screens live (Club not on sale). The
-> legacy code stays as dead code until **Part B (the cleanup)**, which starts only after the owner confirms a
-> settling tournament weekend; until then the rollback is one revert (runbook in §3a "Release — Part A").
+> legacy code stays as dead code until **Part B (the cleanup)**. **The settling weekend was WAIVED by the owner
+> 2026-09-29** (no tournaments for 8–10 months, Club not live — no weekend to wait for and no customer the
+> one-commit rollback protects); Part B started the same day, and the one-revert rollback (runbook in §3a
+> "Release — Part A") ended with Part B's first commit. **Part B area 1 (the frame and shared parts)
+> COMMITTED `f6d36059` 2026-09-29** — pixel-identical (Dark 230/230, Warm 228/230 + 2 attributed), /review
+> done. Next: the tournament areas, in the redesign's stage order. Part B's record: §3a "PART B — the cleanup".
 > **Phase 0 desk half DONE 2026-09-25** ([ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md](ADMIN_DESIGN_CONTINUITY_PHASE0_INVENTORY.md);
 > results in §3 Phase 0). **Phase 1 foundation DRAWN and RATIFIED 2026-09-25** (hub v2 → v3; F1–F4
 > accepted as recommended). **Build prompt written 2026-09-25**
@@ -193,7 +197,7 @@ foundation's release day.
 | 4b | Tournaments — **operations on game day**: dashboard (both frames), Teams, results, check-in, staff kit, communication, chat — **and the game list** (moved from 4c by the owner, 2026-09-27: it is Results' body) | **BUILT 2026-09-27** — results below; identity 60/60 + both-theme sweep done; /simplify + /review done; COMMITTED `07808a02` 2026-09-27; walked at slice 6 |
 | 4c | Tournaments — **the schedule**: schedule, generator, playoff wizard, brackets, timeline, the schedule windows (the game list's kit block is 4b's, already in `schedule-admin.module.css`) | **BUILT 2026-09-27** — results below; identity 28/28 + both-theme sweep done; /simplify + /review done; COMMITTED `9d1b1670` 2026-09-27; walked at slice 6 |
 | 5 | Scorekeeper, official, gate (R3 fixed warm) · help guide (R4) | **BUILT 2026-09-27** — results below; /simplify + /review done; COMMITTED `530d87e9` 2026-09-27; walked at slice 6 |
-| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | **PROVE + WALK COMMITTED `c72afdeb` 2026-09-28** (after /simplify + /review; owner "commit", ahead of the walk) — results below ("Slice 6 — prove and walk"); walk **§245** PASSED 2026-09-28; **RELEASED (Part A) — `74f45113`, promoted to production 2026-09-28 (Amplify job 273)**; **Part B (the cleanup) next**, after a settling weekend |
+| 6 | Prove (both-theme sweep, contrast, identity) · the public preview's Warm tab bar (owner, 2026-09-27: "fix in slice 6") · owner § walk · release (switch deleted, legacy removed, coaches help pin removed — ⚠ AND the coaches portal's "?" drawer given its own portal root, or it stays dark: it portals outside the coach marker (found in slice 5) —, What's New, `/docs`, `/release`) | **PROVE + WALK COMMITTED `c72afdeb` 2026-09-28** (after /simplify + /review; owner "commit", ahead of the walk) — results below ("Slice 6 — prove and walk"); walk **§245** PASSED 2026-09-28; **RELEASED (Part A) — `74f45113`, promoted to production 2026-09-28 (Amplify job 273)**; **Part B (the cleanup) STARTED 2026-09-29** (settling weekend waived by the owner) — area 1, the frame and shared parts, **COMMITTED `f6d36059`** |
 
 **Slice 4 — the split (2026-09-27, written before starting, as the build prompt requires).** The
 tournament area measured at the start of slice 4 (same scope as the inventory's footnote 2): **54,112
@@ -1629,12 +1633,126 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   failed, none unsettled; memory low-water 2.0–3.0 GB. Another session committed `d3b0c119` (a coaches money
   form's grid, `align-content: start`) at 15:17, before every picture; each set's manifest names its HEAD.
   **⚠ Part B must run on this machine** (the pictures are local).
-  **ROLLBACK RUNBOOK (valid until Part B starts):** revert `74f45113` — the flip commit, **never** `6978f978`
+  **ROLLBACK RUNBOOK — ENDED with Part B's first commit, `f6d36059` 2026-09-29 (kept as the record; it was valid until that commit — the owner waived the settling weekend
+  2026-09-29, see "PART B" below; after that commit a revert of `74f45113` no longer restores the old admin,
+  because the legacy code it would switch back on is gone):** revert `74f45113` — the flip commit, **never** `6978f978`
   (the W4 billing fix) — commit, push `dev`, and `/release promote`. The legacy code is still in the tree, so
   the revert restores today's admin exactly; note it also reverts the help and What's New lines that describe the
   new look (they ride the same commit on purpose), and it brings the dev switch back, so Club Stage 1's screens
   return behind it (off on production). The old layout baseline comes back with it.
   **RELEASED: `74f45113`, promoted to production 2026-09-28 (Amplify job 273).**
+- **PART B — the cleanup (started 2026-09-29; prompt `ADMIN_DESIGN_CONTINUITY_RELEASE_PROMPT.md` Part B).**
+  **The settling weekend is WAIVED (owner, 2026-09-29):** no tournaments are coming for 8–10 months and Club is
+  not live, so there is no weekend to wait for and no customer the one-commit rollback protects. This is the
+  owner's confirmation that the prompt's "Start only after…" line and its "Do not start Part B" rule ask for.
+  **The rollback runbook above ended with Part B's first commit (`f6d36059`, area 1, 2026-09-29).**
+  **Area order, re-sorted 2026-09-29 with the tournament admin redesign in mind** (`TOURNAMENT_ADMIN_REDESIGN_PLAN.md`
+  §8, amended 2026-09-29): (1) the frame and shared parts; then **the tournament areas, in the redesign's stage
+  order** — game day, teams and registration, the schedule, after the event, create and set up — so each later
+  redesign stage finds its screens already clean; **a tournament screen a redesign stage has built or is building
+  is SKIPPED** (the redesign removes its old look as it rebuilds it — Club Tier Stage 2's precedent), so each
+  tournament area first reads that stage's build file list, and never cleans a file that session has open; then
+  House league + Organization; Rep Teams (minus Stage 2's screens, the skip line above) + Accounting; the
+  volunteers (redesign Stage 6 — the same skip rule); help. With the settling weekend waived, the redesign's
+  Stage 1 builds on the released look (§8's amended path), so game day's pass skips Stage 1's screens rather
+  than clearing the way for them. **The tournament-only parts that live in `components/admin`** go with their
+  tournament area (area 1's scope ruling, below): game day — the check-in board, the dashboard's guidance
+  rail, persona panel and live event log; teams — the team import window; the schedule — the number stepper
+  and the tournament toolbar (`TournamentAdminUI`, Results + Schedule); create and set up — the setup wizard,
+  the style cards, the tie-breaker editor. **Owed to the tournaments' pass:** the tournament nav's labels still
+  carry the old console rail's Title Case in `admin-nav-config.ts`, mapped to the kit's case by
+  `kitTournamentLabel`; with the old rail gone the words can move into the config and the map can go.
+  **Owed to the volunteer pass:** `GuestKitRoot`'s `on` prop and both layouts' `const guestKit = true`.
+  **Owed to the Organization pass:** the old hub (`AdminHubClient`), Members, Settings and Billing pages
+  behind `useAdminKit()` false branches.
+  **AREA 1 — the frame and shared parts (2026-09-29) — COMMITTED `f6d36059`** (owner: "commit now"; the
+  one-revert rollback of `74f45113` ended with it). Owner at the start: quiet window **"Go now"**; scope
+  **"as recommended"**. Three findings in the code changed the prompt's recipe for this area, put to the owner
+  before any edit:
+  (1) **Not every "legacy" look is dead.** `useAdminKit()` answers false OUTSIDE the admin, and that is live:
+  the tournament preview island (R2) turns it off, and shared parts carry another surface's look in their base
+  rules — `ExportMenu` (seven platform-console pages), `CollapsibleCard` (platform console → observability),
+  `BottomSheet` (the public follow / unfollow sheets), `CoinTossRecorder` (public standings), `AdminSkeleton`
+  (the coaches portal). And `app/globals.css`'s kit layer restyles GLOBAL classes (`.btn`, `.badge`, `.card`,
+  `.modal`, `.form-*`, Tailwind utilities) that the public site, marketing, the platform console and the
+  coaches portal also wear: there is no base rule to fold them into without restyling those surfaces — it is
+  the admin's skin, as `[data-coach-warm-enabled]` is the coaches'. The identity tool photographs only admin
+  screens, so such a fold would pass its proof. **Those layers stay scoped; only an admin-only sheet folds,
+  and only a sheet nothing outside the admin reads joins the strict gate's `KIT_FILES`.**
+  (2) **`components/admin` is mostly tournament screens' parts** — ~296 of its ~332 `[data-admin-kit]`
+  mentions (the setup wizard 77, the check-in board 72, the toolbar UI 48, the import dialog 32, the guidance
+  rail 26, the tie-breaker editor 19, the persona panel 12, the style cards 5, the number stepper 5), plus
+  `LiveEventLog`'s and the wizard's `kx()`. Several are what the tournament redesign rebuilds (the check-in
+  board in Stage 1, G7; the wizard in Stage 5), so they go with their tournament areas (above), where the skip
+  rule applies.
+  (3) **Plan item 8's unifications, for this area:** the volunteer foot rule's re-anchor is **MOOT** — it was
+  needed only if the marker were deleted, and the marker stays (it is how the shells are told apart); the guest
+  twins into `:is()` is **DROPPED** — `:is()` takes its heaviest argument, so it would raise the guest branch's
+  weight on LIVE coaches-portal rules (the twins share their selector lists) for a cosmetic gain, where the
+  admin identity tool cannot see; slice 3's crumb tap floor is a **VISIBLE** change, not a cleanup → its own
+  ruling (the tournament redesign's G1 already drops the tournament eyebrow).
+  **The `legacy` header prop:** 55 files pass it — 39 with real old-header markup, 16 with `legacy={null}`
+  (22 occurrences, Club Tier Stage 2's among them). `AdminPageHeader` no longer reads it (optional,
+  `@deprecated`); the 16 placeholders go now; each later area deletes its own pages' old header markup with
+  the rest of its dead branches; the last area deletes the prop.
+  **The reference was RE-TAKEN (2026-09-29) on the current tree, not the release day's.** Since release day
+  Club Tier Stage 2 replaced the old season pages and redrew Rep Teams, the phone-list ruling ("Phone lists in
+  one frame", `61993de7`) changed list styles, and the test club was rebuilt — the release-day pictures would
+  show hundreds of differences that are not leaks. The current tree is the new look before any cleanup, so it
+  is a valid reference. The release-day sets are kept, renamed `.admin-identity/release-day-{warm,dark}/`; the
+  fresh sets are `before-{warm,dark}/`, **115 screens × phone + desktop = 230 per theme** (Stage 2 added five
+  screens since the release's 110), every screen, because the frame and `globals.css` reach every admin screen.
+  ⚠ **The first two capture attempts aborted on the memory floor** after 10 and 20 screens: Club Tier Stage 2
+  changed the shared frame, so every admin route recompiled from cold and the capture's back-to-back visits
+  stacked Turbopack compiles until the dev server held ~10 GB (it fell back to ~2 GB once idle — compiling,
+  not a leak). Fix: `.probe/partb/warm.mjs` visits each screen once and waits for free memory to recover
+  before the next (230 visits, low-water 3.5 GB); Turbopack's disk cache then carries the compiled routes
+  across restarts, and every pass ran at ≥5.4 GB free. **Any change to the shared frame needs this warm-up
+  before a capture.**
+  **Built:** the old console rail and phone bar deleted (`AdminSidebar`, `AdminBottomNav` + their sheets, ~1,850
+  lines that still rode every admin page as static imports, the setup wizard with them), `AdminTopStrip` on the
+  coaches strip's sheet only (its own sheet deleted), `AdminEventHeader` in its kit form only (its old sheet
+  deleted), `AdminChrome`'s switch-era branches (the kit frame's imports stay DYNAMIC on purpose: a static import
+  moves their sheets in the bundle, and equal-weight rules resolve by bundle order), `admin.module.css`'s
+  slice-2 console overrides (all fenced `:where(:not([data-admin-kit] *))`, unmatchable since the release);
+  `AdminPageHeader` stops reading `legacy`; the 22 `legacy={null}` placeholders; `AdminContextStrip.module.css`
+  folded (admin-only; nothing outranks its (0,1,0) rules — checked against globals' element resets and the
+  bar's sheets). `KIT_FILES` += `admin.module.css`, `AdminContextStrip.module.css`. Comment truth-ups across
+  the kit frame, the club kit screens, `globals.css` (why its kit layer stays scoped), `lib/admin-kit-nav.ts`
+  (now the only statement of the old frame's gates) and `AdminKitProvider` (its OFF answer is live for the
+  preview island and other surfaces; an admin page's false branch is what is dead). Guards re-pinned:
+  admin-kit-guard ("the console overrides are gone"), role-defaults-guard (the deleted sidebar's assertions
+  out, the rail's in), club-stage1-screens-guard + kit-dialog-floor-guard (AdminChrome's new shape; the island
+  still turns the kit off).
+  **Proof.** Identity "after", the whole set in both themes on a re-warmed server (the frame changed, so every
+  route recompiled): **Dark 230 / 230 pixel-identical; Warm 228 / 230** — the two are `admin-club-setup` (phone +
+  desktop), confined to one line, "Staff your board": the same two names in the opposite order ("Dana Kowalski
+  (Admin) and Avery Chen (Treasurer)" → "Avery Chen … and Dana Kowalski …"). **Attributed, not a leak:**
+  `lib/club-checklist.ts` orders the board by `accepted_at` alone, the rebuilt test club's two board members tie
+  on it, and a tie falls back to physical row order, which moves when a row is touched (each pass's sign-in
+  touches both); six loads of the checklist in a row agree with each other, and none of that code is in this
+  diff. ⚠ **Finding for the club work (report-only):** add a tie-breaker (`.order('user_id')`) so the line
+  cannot reorder between visits. **Layout sweep** (`.probe/partb/sweep-after.sh`: every admin + volunteer entry,
+  361 / 390 / 768 / 1440, default theme, against the committed baseline, three groups, one runner, a fresh
+  server and sign-in each; 460 screen-widths): tournaments **no new finding**; the other two groups 25 "new",
+  **every one attributed, none this area's** — 19 are baseline findings RE-KEYED by the 2026-09-29 test-club
+  rebuild (a key embeds the element's words: Families' duplicate rows with renumbered emails ×10, House
+  league's player chips under new names ×6, Accounting allocate's team picker whose option list gained a
+  12U AA team ×3 — same element, same measure as the baseline's), and 6 are the help hub's two new article
+  links from Club Tier Stage 2 (`00865a6d`; its re-baseline covered Rep Teams, the setup checklist and the
+  Overview, not help) — the same 16px link kind the baseline already holds 117 of. Not re-baselined here
+  (another session's data and help; `--init` reorders the whole baseline): the next re-baseline takes them.
+  Gate: verify:changed green (unit 5,232 / 5,232,
+  strict kit gate 2,925 rules), typecheck, eslint 0 errors. **/review (standard, three lenses — blast radius,
+  CSS cascade, guards):** no defect in behaviour or pixels; one Low confirmed and fixed (the new console guard
+  read only selectors that START a line — a same-line `.x, .adminShell h1 {` slipped it; it now reads every
+  selector, proven on five bad and four good samples); two stale comments naming the deleted sidebar (the
+  layout sweep's fixed; `CheckInBoard.tsx`'s left for the game-day pass).
+  ⚠ **Lessons (this area's):** (1) one restart came up with the team sub-routes (`…/teams/[teamId]/coaches`,
+  `/roster`, the coaches API) answering Next's own 404 while the team page served — a bad start (cause not
+  proven; the likeliest is the old server still releasing its port), cured by a clean restart; `.probe/partb/fresh-pass.sh` now waits for the port and probes those
+  routes before a capture. (2) `check-layout-invariants.mjs` has NO `--help`: an unknown flag starts a full sweep
+  (one ran for ~2 minutes beside an identity pass before it was stopped; it writes nothing without `--init`).
 
 
 ### Phase 2 — Club screens (inside the Club Tier stages)

@@ -40,9 +40,16 @@
 > one choice away in Account → Appearance; the organization's colours stay on its public pages. The coaches
 > portal's help now follows Warm / Dark too. Club Stage 1's screens went live the same day, for clubs the
 > platform provisions only (Club is not on sale), with their help published. What's New tells customers all of
-> it. **Rollback, while it stands:** undo one change and release again, because the old look is still in the
-> code. **Next, after at least one tournament weekend with no rollback call:** the invisible cleanup (Part B),
-> one area at a time, proven to change no pixel customers see.
+> it. **Rollback, while it stood:** undo one change and release again, because the old look was still in the
+> code. **The invisible cleanup (Part B) STARTED 2026-09-29.** The owner waived the planned wait for a
+> tournament weekend: none is coming for 8–10 months and Club is not live, so no customer needed the quick
+> rollback, and it ends with the cleanup's first change. The cleanup goes one area at a time, each proven to
+> change no pixel customers see. **The first area, the admin's frame and shared parts, is done (committed
+> 2026-09-29):** the old sidebar, phone bar, top strip and event header are gone from the code, and every
+> admin and volunteer screen matched its before-picture in Warm and Dark (the only two differences were two
+> test-club names listed in swapped order, a test-data quirk). The quick rollback ended with it. The
+> tournament areas come next, in the tournament redesign's order, skipping any screen a redesign stage is
+> rebuilding.
 
 ## What it is
 One design system and one theme choice across every working screen in FieldLogicHQ. The club admin,
