@@ -1,6 +1,814 @@
 {
-  "generated": "2026-09-28T18:51:38.769Z",
+  "generated": "2026-09-29T15:13:51.518Z",
   "entries": {
+    "admin-hub|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocations|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocations|361|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-allocations|361|tap-floor|a·View →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-allocation|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocation|361|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-allocation|361|tap-floor|button·Mark Paid": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|361|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|361|tap-floor|input·e.g. Field rental — 2025 season": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|361|tap-floor|input·e.g. 3000.00": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|361|tap-floor|input·Paste accounting entry ID to link": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|361|tap-floor|button·Team Splits": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|361|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|361|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|361|tap-floor|button·Revoke": {
+      "reason": "DEFERRED to this page’s redraw: pre-existing debt on Assistant coaches (not touched by Club Tier Stage 2), surfaced when the rebuilt test club (2026-09-29) put a pending club invitation on the list. Admin Design Continuity Part B · Rep Teams area.",
+      "detail": "27px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|361|tap-floor|button·Remove": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "admin-rep-past|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-past|361|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-past|361|tap-floor|a·Full history →": {
+      "reason": null,
+      "detail": "20px tall (floor 44)"
+    },
+    "admin-rep-past|361|tap-floor|a·View →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|361|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|361|tap-floor|button·Pending2": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|361|tap-floor|button·History": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|361|tap-floor|button·Approve": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|361|tap-floor|button·Deny": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|361|content-overflow|div·15U AAA Request from Org$480.00Tournamen": {
+      "reason": null,
+      "detail": "content spills 8px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-rep-payment-requests|361|content-overflow|p·Submitted Sep 29, 2026": {
+      "reason": "DEFERRED to this page’s redraw: pre-existing debt on Payment requests (not touched by Club Tier Stage 2); the signature carries the fixture’s date, so it re-keys when the test club is rebuilt. Admin Design Continuity Part B · Rep Teams area.",
+      "detail": "content spills 8px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-rep-payment-requests|361|content-overflow|div·UAT Test Team Request from Org$450.00Dia": {
+      "reason": null,
+      "detail": "content spills 16px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-rep-payment-requests|361|content-overflow|p·Diamond permit reimbursement": {
+      "reason": null,
+      "detail": "content spills 16px with overflow-x:visible — no scroller owns it"
+    },
+    "admin-rep-rename-slugs|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|361|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|361|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|361|tap-floor|button·Save All Renames": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|tap-floor|input·Add a shared game tag…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|tap-floor|button·Add": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|tap-floor|button·Rename": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|control-width|button·Rename": {
+      "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|361|tap-floor|button·Delete": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|control-width|button·Delete": {
+      "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|361|tap-floor|input·Add a shared money tag…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|tap-floor|button·🏆": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|tap-floor|input·Add a shared award type…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|361|tap-floor|input·Add a shared drill…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-hub|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocations|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocations|390|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-allocations|390|tap-floor|a·View →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-allocation|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocation|390|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-allocation|390|tap-floor|button·Mark Paid": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|390|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|390|tap-floor|input·e.g. Field rental — 2025 season": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|390|tap-floor|input·e.g. 3000.00": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|390|tap-floor|input·Paste accounting entry ID to link": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|390|tap-floor|button·Team Splits": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|390|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|390|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|390|tap-floor|button·Revoke": {
+      "reason": "DEFERRED to this page’s redraw: pre-existing debt on Assistant coaches (not touched by Club Tier Stage 2), surfaced when the rebuilt test club (2026-09-29) put a pending club invitation on the list. Admin Design Continuity Part B · Rep Teams area.",
+      "detail": "27px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|390|tap-floor|button·Remove": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "admin-rep-past|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-past|390|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-past|390|tap-floor|a·Full history →": {
+      "reason": null,
+      "detail": "20px tall (floor 44)"
+    },
+    "admin-rep-past|390|tap-floor|a·View →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|390|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|390|tap-floor|button·Pending2": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|390|tap-floor|button·History": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|390|tap-floor|button·Approve": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|390|tap-floor|button·Deny": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|390|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|390|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|390|tap-floor|button·Save All Renames": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|tap-floor|input·Add a shared game tag…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|tap-floor|button·Add": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|tap-floor|button·Rename": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|control-width|button·Rename": {
+      "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|390|tap-floor|button·Delete": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|control-width|button·Delete": {
+      "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|390|tap-floor|input·Add a shared money tag…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|tap-floor|button·🏆": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|tap-floor|input·Add a shared award type…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|390|tap-floor|input·Add a shared drill…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-hub|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocations|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocations|768|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-allocations|768|tap-floor|a·View →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-allocation|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocation|768|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-allocation|768|tap-floor|button·Mark Paid": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|768|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|768|tap-floor|input·e.g. Field rental — 2025 season": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|768|tap-floor|input·e.g. 3000.00": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|768|tap-floor|input·Paste accounting entry ID to link": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-allocation-new|768|tap-floor|button·Team Splits": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|768|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|768|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|768|tap-floor|button·Revoke": {
+      "reason": "DEFERRED to this page’s redraw: pre-existing debt on Assistant coaches (not touched by Club Tier Stage 2), surfaced when the rebuilt test club (2026-09-29) put a pending club invitation on the list. Admin Design Continuity Part B · Rep Teams area.",
+      "detail": "27px tall (floor 44)"
+    },
+    "admin-rep-assistant-coaches|768|tap-floor|button·Remove": {
+      "reason": null,
+      "detail": "27px tall (floor 44)"
+    },
+    "admin-rep-past|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-past|768|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-past|768|tap-floor|a·Full history →": {
+      "reason": null,
+      "detail": "20px tall (floor 44)"
+    },
+    "admin-rep-past|768|tap-floor|a·View →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|768|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|768|tap-floor|button·Pending2": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|768|tap-floor|button·History": {
+      "reason": null,
+      "detail": "33px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|768|tap-floor|button·Approve": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-rep-payment-requests|768|tap-floor|button·Deny": {
+      "reason": null,
+      "detail": "31px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|768|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|768|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-rename-slugs|768|tap-floor|button·Save All Renames": {
+      "reason": null,
+      "detail": "37px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|tap-floor|input·<input>": {
+      "reason": null,
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|tap-floor|input·Add a shared game tag…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|tap-floor|button·Add": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|tap-floor|button·Rename": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|control-width|button·Rename": {
+      "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|768|tap-floor|button·Delete": {
+      "reason": null,
+      "detail": "24px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|control-width|button·Delete": {
+      "reason": null,
+      "detail": "30px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-shared-library|768|tap-floor|input·Add a shared money tag…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|tap-floor|button·🏆": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|tap-floor|input·Add a shared award type…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-shared-library|768|tap-floor|input·Add a shared drill…": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-team-coaches|361|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-tryouts|361|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-tryouts-closed|361|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-roster|361|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-roster|361|tap-floor|button·Export as Excel": {
+      "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-team-roster|361|control-width|button·Export as Excel": {
+      "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
+      "detail": "32px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-team-roster|361|tap-floor|button·More export formats": {
+      "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-team-roster|361|control-width|button·More export formats": {
+      "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
+      "detail": "32px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-team-coaches|390|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-tryouts|390|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-tryouts-closed|390|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-roster|390|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-roster|390|tap-floor|button·Export as Excel": {
+      "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-team-roster|390|control-width|button·Export as Excel": {
+      "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
+      "detail": "32px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-team-roster|390|tap-floor|button·More export formats": {
+      "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-team-roster|390|control-width|button·More export formats": {
+      "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
+      "detail": "32px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-team-coaches|768|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-tryouts|768|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-tryouts-closed|768|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-roster|768|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-roster|768|control-width|button·More export formats": {
+      "reason": "ACCEPTED here, owned elsewhere: the shared ExportMenu split button, short on every admin screen that exports (baselined across the admin). Fixed once at the component, not per screen. Added with Club Tier Stage 2 · session 3’s Roster page.",
+      "detail": "29px wide (floor 44) — icon-only control"
+    },
+    "admin-rep-teams|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-teams|361|tap-floor|button·30d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-teams|361|tap-floor|button·60d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-teams|361|tap-floor|button·90d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-teams|361|tap-floor|button·Allocation Collections2": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-teams|361|tap-floor|button·Pending Payment Requests": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-documents|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-start-season|361|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each carry in the Start next season window is a <label> with a 44px min-height at touch widths, and a tap anywhere in it toggles the checkbox. Same decision as the handout and Money filter checkboxes; a 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-team-closed|361|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-schedule|361|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-history|361|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-history|361|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-team-history|361|tap-floor|a·View →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-teams|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-teams|390|tap-floor|button·30d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-teams|390|tap-floor|button·60d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-teams|390|tap-floor|button·90d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-teams|390|tap-floor|button·Allocation Collections2": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-teams|390|tap-floor|button·Pending Payment Requests": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-documents|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-start-season|390|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each carry in the Start next season window is a <label> with a 44px min-height at touch widths, and a tap anywhere in it toggles the checkbox. Same decision as the handout and Money filter checkboxes; a 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-team-closed|390|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-schedule|390|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-history|390|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-history|390|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-team-history|390|tap-floor|a·View →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
+    "admin-rep-teams|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-teams|768|tap-floor|button·30d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-teams|768|tap-floor|button·60d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-teams|768|tap-floor|button·90d": {
+      "reason": null,
+      "detail": "25px tall (floor 44)"
+    },
+    "admin-rep-teams|768|tap-floor|button·Allocation Collections2": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-teams|768|tap-floor|button·Pending Payment Requests": {
+      "reason": null,
+      "detail": "35px tall (floor 44)"
+    },
+    "admin-rep-documents|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-start-season|768|tap-floor|input·<input>": {
+      "reason": "ACCEPTED, not deferred. The TARGET is the label row, not this box: each carry in the Start next season window is a <label> with a 44px min-height at touch widths, and a tap anywhere in it toggles the checkbox. Same decision as the handout and Money filter checkboxes; a 44px native checkbox is the wrong fix.",
+      "detail": "16px tall (floor 44)"
+    },
+    "admin-rep-team-closed|768|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-schedule|768|tap-floor|a·Public site": {
+      "reason": "ACCEPTED here, owned elsewhere: the admin frame’s own \"Public site\" link, carried by every admin screen in this baseline (the frame’s debt, not this page’s). Club Tier Stage 2 · session 3 added these screens; the fix is the frame’s, in Admin Design Continuity Part B.",
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-history|768|tap-floor|a·Public site": {
+      "reason": null,
+      "detail": "30px tall (floor 44)"
+    },
+    "admin-rep-team-history|768|tap-floor|a·Rep Teams": {
+      "reason": null,
+      "detail": "14px tall (floor 44)"
+    },
+    "admin-rep-team-history|768|tap-floor|a·View →": {
+      "reason": null,
+      "detail": "32px tall (floor 44)"
+    },
     "admin-t-schedule-health|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
       "detail": "38px tall (floor 44)"
@@ -2517,10 +3325,6 @@
       "reason": null,
       "detail": "27px tall (floor 44)"
     },
-    "admin-hub|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-notifications|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -2677,238 +3481,6 @@
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "admin-rep-teams|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·Team Groups (2)": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|select·All groupsSeniorJuniorUngrouped": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|a·View Team →": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·Archive team": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-rep-teams|361|control-width|button·Archive team": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-teams|361|tap-floor|button·30d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·60d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·90d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·Pending Payment Requests": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocations|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocations|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocations|361|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-allocation|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation|361|tap-floor|button·Mark Paid": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|input·e.g. 3000.00": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|input·Paste accounting entry ID to link": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|361|tap-floor|button·Team Splits": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-documents|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-documents|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-past|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-past|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-past|361|tap-floor|a·Full history →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-past|361|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|button·History": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|button·Approve": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|button·Deny": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|content-overflow|div·15U AAA Request from Org$480.00Tournamen": {
-      "reason": null,
-      "detail": "content spills 8px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-rename-slugs|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|361|tap-floor|button·Save All Renames": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|input·Add a shared game tag…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|button·Add": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|input·Add a shared money tag…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|button·🏆": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|input·Add a shared award type…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|input·Add a shared drill…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-team|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team|361|tap-floor|a·View history →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team|361|tap-floor|a·Coaches": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-rep-team|361|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-rep-team-history|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-history|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-history|361|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "admin-rep-team-history-year|361|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -2924,162 +3496,6 @@
     "admin-rep-team-history-year|361|content-overflow|div·RosterSchedule & ResultsCoachesDocuments": {
       "reason": null,
       "detail": "content spills 56px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-team-year|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|tap-floor|button·What is a program year?": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|tap-floor|button·Mark Completed": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|tap-floor|a·View roster →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|tap-floor|a·View tryouts →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|tap-floor|a·Manage coaches →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|tap-floor|a·View schedule →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-team-year|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year-coaches|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|361|tap-floor|a·15U AAA": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|361|tap-floor|button·Remove": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|361|tap-floor|select·Head CoachAssistant Coach": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|361|tap-floor|button·Assign Coach": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-schedule|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year-schedule|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-schedule|361|tap-floor|a·15U AAA": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|a·15U AAA": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·Tryout registration": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·Copy Link": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·Close Registration": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·Pending Review": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·Offer Extended": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·Waitlist": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·Accepted": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·Declined / Withdrawn": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|tap-floor|button·All": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|content-overflow|div·Registration?OpenCopy LinkClose Registra": {
-      "reason": null,
-      "detail": "content spills 145px with overflow-x:visible — no scroller owns it"
     },
     "admin-accounting|361|tap-floor|a·Public site": {
       "reason": null,
@@ -4085,10 +4501,6 @@
       "reason": null,
       "detail": "42px tall (floor 44)"
     },
-    "admin-hub|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-notifications|390|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -4237,234 +4649,6 @@
       "reason": null,
       "detail": "40px tall (floor 44)"
     },
-    "admin-rep-teams|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·Team Groups (2)": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|select·All groupsSeniorJuniorUngrouped": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|a·View Team →": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·Archive team": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-rep-teams|390|control-width|button·Archive team": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-teams|390|tap-floor|button·30d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·60d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·90d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·Pending Payment Requests": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocations|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocations|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocations|390|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-allocation|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation|390|tap-floor|button·Mark Paid": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|input·e.g. 3000.00": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|input·Paste accounting entry ID to link": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|390|tap-floor|button·Team Splits": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-documents|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-documents|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-past|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-past|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-past|390|tap-floor|a·Full history →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-past|390|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|button·History": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|button·Approve": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|390|tap-floor|button·Deny": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|390|tap-floor|button·Save All Renames": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|tap-floor|input·Add a shared game tag…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|tap-floor|button·Add": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|tap-floor|input·Add a shared money tag…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|tap-floor|button·🏆": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|tap-floor|input·Add a shared award type…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|tap-floor|input·Add a shared drill…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-team|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team|390|tap-floor|a·View history →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team|390|tap-floor|a·Coaches": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-rep-team|390|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-rep-team-history|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-history|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-history|390|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "admin-rep-team-history-year|390|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -4480,162 +4664,6 @@
     "admin-rep-team-history-year|390|content-overflow|div·RosterSchedule & ResultsCoachesDocuments": {
       "reason": null,
       "detail": "content spills 27px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-team-year|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|tap-floor|button·What is a program year?": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|tap-floor|button·Mark Completed": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|tap-floor|a·View roster →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|tap-floor|a·View tryouts →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|tap-floor|a·Manage coaches →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|tap-floor|a·View schedule →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-team-year|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year-coaches|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|390|tap-floor|a·15U AAA": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|390|tap-floor|button·Remove": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|390|tap-floor|select·Head CoachAssistant Coach": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|390|tap-floor|button·Assign Coach": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-schedule|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year-schedule|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-schedule|390|tap-floor|a·15U AAA": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|a·15U AAA": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|control-width|button·Export as Excel": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "32px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·Tryout registration": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·Copy Link": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·Close Registration": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·Pending Review": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·Offer Extended": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·Waitlist": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·Accepted": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·Declined / Withdrawn": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|tap-floor|button·All": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|390|content-overflow|div·Registration?OpenCopy LinkClose Registra": {
-      "reason": null,
-      "detail": "content spills 116px with overflow-x:visible — no scroller owns it"
     },
     "admin-accounting|390|tap-floor|a·Public site": {
       "reason": null,
@@ -5585,10 +5613,6 @@
       "reason": null,
       "detail": "42px tall (floor 44)"
     },
-    "admin-hub|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
     "admin-notifications|768|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -5813,330 +5837,6 @@
       "reason": null,
       "detail": "39px wide (floor 44) — icon-only control"
     },
-    "admin-rep-teams|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·Team Groups (2)": {
-      "reason": null,
-      "detail": "40px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|select·All groupsSeniorJuniorUngrouped": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|a·View Team →": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·Archive team": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-rep-teams|768|control-width|button·Archive team": {
-      "reason": null,
-      "detail": "35px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-teams|768|tap-floor|button·30d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·60d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·90d": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·Pending Payment Requests": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-teams|361|tap-floor|button·Allocation Collections2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-teams|390|tap-floor|button·Allocation Collections2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-teams|768|tap-floor|button·Allocation Collections2": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocations|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocations|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocations|768|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-allocation|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation|768|tap-floor|button·Mark Paid": {
-      "reason": null,
-      "detail": "25px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|input·e.g. Field rental — 2025 season": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|input·e.g. 3000.00": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|input·Paste accounting entry ID to link": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-allocation-new|768|tap-floor|button·Team Splits": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|768|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|361|tap-floor|button·Remove": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|390|tap-floor|button·Remove": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-rep-assistant-coaches|768|tap-floor|button·Remove": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-rep-documents|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-documents|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-past|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-past|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-past|768|tap-floor|a·Full history →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-past|768|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|button·History": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|button·Approve": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|button·Deny": {
-      "reason": null,
-      "detail": "31px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|tap-floor|button·Pending2": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|361|content-overflow|p·Submitted Sep 28, 2026": {
-      "reason": null,
-      "detail": "content spills 8px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-payment-requests|361|content-overflow|div·UAT Test Team Request from Org$450.00Dia": {
-      "reason": null,
-      "detail": "content spills 16px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-payment-requests|361|content-overflow|p·Diamond permit reimbursement": {
-      "reason": null,
-      "detail": "content spills 16px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-payment-requests|390|tap-floor|button·Pending2": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-payment-requests|768|tap-floor|button·Pending2": {
-      "reason": null,
-      "detail": "33px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|768|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-rename-slugs|768|tap-floor|button·Save All Renames": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|tap-floor|input·Add a shared game tag…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|tap-floor|button·Add": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|tap-floor|input·Add a shared money tag…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|tap-floor|button·🏆": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|tap-floor|input·Add a shared award type…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|tap-floor|input·Add a shared drill…": {
-      "reason": null,
-      "detail": "35px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|tap-floor|button·Rename": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|control-width|button·Rename": {
-      "reason": null,
-      "detail": "30px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-shared-library|361|tap-floor|button·Delete": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-rep-shared-library|361|control-width|button·Delete": {
-      "reason": null,
-      "detail": "30px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-shared-library|390|tap-floor|button·Rename": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|control-width|button·Rename": {
-      "reason": null,
-      "detail": "30px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-shared-library|390|tap-floor|button·Delete": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-rep-shared-library|390|control-width|button·Delete": {
-      "reason": null,
-      "detail": "30px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-shared-library|768|tap-floor|button·Rename": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|control-width|button·Rename": {
-      "reason": null,
-      "detail": "30px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-shared-library|768|tap-floor|button·Delete": {
-      "reason": null,
-      "detail": "24px tall (floor 44)"
-    },
-    "admin-rep-shared-library|768|control-width|button·Delete": {
-      "reason": null,
-      "detail": "30px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team|768|tap-floor|a·View history →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team|768|tap-floor|a·Coaches": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-rep-team|768|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "34px tall (floor 44)"
-    },
-    "admin-rep-team-history|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-history|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-history|768|tap-floor|a·View →": {
-      "reason": null,
-      "detail": "32px tall (floor 44)"
-    },
     "admin-rep-team-history-year|768|tap-floor|a·Public site": {
       "reason": null,
       "detail": "30px tall (floor 44)"
@@ -6172,162 +5872,6 @@
     "admin-rep-team-history-year|390|content-overflow|div·HistoryRep Teams · 15U AAA2025 SeasonCom": {
       "reason": null,
       "detail": "content spills 11px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-team-year|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|tap-floor|button·What is a program year?": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|tap-floor|button·Mark Completed": {
-      "reason": null,
-      "detail": "39px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|tap-floor|a·View roster →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|tap-floor|a·View tryouts →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|tap-floor|a·Manage coaches →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|tap-floor|a·View schedule →": {
-      "reason": null,
-      "detail": "20px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|tap-floor|button·Export as Excel": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|tap-floor|button·More export formats": {
-      "reason": null,
-      "detail": "27px tall (floor 44)"
-    },
-    "admin-rep-team-year|768|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year-coaches|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|768|tap-floor|a·15U AAA": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|768|tap-floor|button·Remove": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|768|tap-floor|select·Head CoachAssistant Coach": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|768|tap-floor|button·Assign Coach": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|361|tap-floor|select·— select a member —UAT Assistant (no mon": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|390|tap-floor|select·— select a member —Morgan Ellis (uat-clu": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-coaches|768|tap-floor|select·— select a member —Morgan Ellis (uat-clu": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-schedule|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year-schedule|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-schedule|768|tap-floor|a·15U AAA": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|a·Public site": {
-      "reason": null,
-      "detail": "30px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|a·Rep Teams": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|a·15U AAA": {
-      "reason": null,
-      "detail": "14px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|control-width|button·More export formats": {
-      "reason": null,
-      "detail": "29px wide (floor 44) — icon-only control"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|button·Tryout registration": {
-      "reason": null,
-      "detail": "16px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|input·<input>": {
-      "reason": null,
-      "detail": "29px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|button·Copy Link": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|button·Close Registration": {
-      "reason": null,
-      "detail": "38px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|button·Pending Review": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|button·Offer Extended": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|button·Waitlist": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|button·Accepted": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|button·Declined / Withdrawn": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|768|tap-floor|button·All": {
-      "reason": null,
-      "detail": "37px tall (floor 44)"
-    },
-    "admin-rep-team-year-tryouts|361|content-overflow|div·2026 SeasonRep Teams · 15U AAATryoutsExp": {
-      "reason": null,
-      "detail": "content spills 128px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-rep-team-year-tryouts|390|content-overflow|div·2026 SeasonRep Teams · 15U AAATryoutsExp": {
-      "reason": null,
-      "detail": "content spills 99px with overflow-x:visible — no scroller owns it"
     },
     "admin-accounting|768|tap-floor|a·Public site": {
       "reason": null,

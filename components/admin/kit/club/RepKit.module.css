@@ -20,6 +20,12 @@
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .page { max-width: 68rem; min-width: 0; }
+/* The touch floor on these screens' own buttons (the layout sweep's R2, ≤768): the shared `.btn`
+   renders a few px short, a debt the older admin carries in its baseline; the Stage 2 screens
+   clear it rather than add to it. Icon-only header actions already are 44px squares. */
+@media (max-width: 768px) {
+  .page :global(.btn) { min-height: var(--tap-min, 44px); }
+}
 
 /* ── The section (CoachPageSection) ── */
 .section {
@@ -152,30 +158,29 @@
   .rowActions button { min-height: var(--tap-min, 44px); }
 }
 
-/* ≤ 640 — the frame stands down and each row is a white card with a corner chevron (§3.10.8, Ask 8
-   rulings 4 and 6); a worded action becomes a full-width 44px button inside the card (K-09). */
+/* ≤ 640 — ONE FRAME, THE ROWS HAIRLINED (owner ruling P1, 2026-09-29, "Phone lists in one frame",
+   which retired the drawn row-cards — the portal's `.rowList` phone block says the same). The frame,
+   the band and the hairline keep the desktop recipe; only the arrangement changes: the chevron sits
+   in the row's corner and a worded pair of actions becomes full-width 44px buttons under the row
+   (K-09). `overflow: clip`, not `hidden`, so the frame is never a scroll container. */
 @media (max-width: 640px) {
-  .rowList { border: 0; border-radius: 0; background: none; overflow: visible; }
-  .rowBand { background: none; border: 0; padding: 0.55rem 0.15rem 0.25rem; }
-  .rowList > .rowItem {
-    position: relative;
-    border: 1px solid var(--home-line-strong);
-    border-radius: 10px;
-    background: var(--home-card);
-    margin-bottom: 0.65rem;
-  }
-  .rowList > .rowItem:last-child { border-bottom: 1px solid var(--home-line-strong); }
-  .rowList .row { padding: 0.65rem 0.85rem; min-height: var(--tap-min, 44px); }
-  .rowList .rowItem:has(.rowChevron) .row { padding-right: 2.6rem; }
-  .rowList .rowChevron { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); }
-  .rowList .rowItemWithActions { flex-wrap: wrap; }
-  .rowList .rowItemWithActions > .row { flex-basis: 100%; }
-  .rowList .rowActions { flex-basis: 100%; padding: 0 0.85rem 0.75rem; }
-  .rowList .rowActions > * { flex: 1 1 0; }
+  .rowList { overflow: clip; }
+  .rowItem { position: relative; }
+  .row { padding: 0.65rem 0.85rem; min-height: var(--tap-min, 44px); }
+  .rowItem:has(.rowChevron) .row { padding-right: 2.6rem; }
+  .rowChevron { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); }
+  .rowItemWithActions { flex-wrap: wrap; }
+  .rowItemWithActions > .row { flex-basis: 100%; }
+  .rowActions { flex-basis: 100%; padding: 0 0.85rem 0.75rem; }
+  .rowActions > * { flex: 1 1 0; }
 }
 
 /* ── The table (standard §3.2–3.6) ── */
 .tableFrame {
+  /* ⚠ `position: relative` is load-bearing: the last column's visually-hidden "Open" heading is
+     absolutely positioned, and without a positioned frame it escapes this scroll box and widens
+     the whole page on a phone (the layout sweep's R1, found 2026-09-29). */
+  position: relative;
   border: 1px solid var(--home-line);
   border-radius: 8px;
   background: var(--card-bg);
@@ -231,7 +236,12 @@
 .nameCell { display: flex; align-items: center; gap: 0.45rem; }
 /* A name that opens a WINDOW rather than a page (a tryout applicant): a button that reads as the name link. */
 .nameButton { background: none; border: 0; padding: 0; font: inherit; font-size: var(--type-body); text-align: left; cursor: pointer; }
-@media (max-width: 768px) { .nameButton { min-height: var(--tap-min, 44px); } }
+@media (max-width: 768px) {
+  .nameButton { min-height: var(--tap-min, 44px); }
+  /* At a touch width the table's two doors are thumb-sized: the name, and the chevron beside it. */
+  .nameLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+  .goLink { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
+}
 
 /* The status views that LEAD a list's toolbar (the portal's rule: the lens leads, Export pins right). */
 .views {
@@ -293,6 +303,9 @@
 .detailList dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
 
 /* ── The chip — ONE chip, uppercase mono (Ask 8 ruling 7) ── */
+/* Red TEXT reads through --danger-light, the text tier: the warm skin maps it to --home-live (the
+   same ink as before) and dark to the brighter red, which clears 4.5:1 on the chip's own tint (the
+   base red measured 4.41:1 there in dark — layout sweep, 2026-09-29). */
 .chip {
   display: inline-flex;
   align-items: center;
@@ -312,7 +325,7 @@
 }
 .chipGood { color: var(--badge-success-ink); background: rgba(var(--success-rgb), 0.08); border-color: rgba(var(--success-rgb), 0.28); }
 .chipWarn { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
-.chipBad { color: var(--home-live); background: rgba(var(--danger-rgb), 0.08); border-color: rgba(var(--danger-rgb), 0.3); }
+.chipBad { color: var(--danger-light); background: rgba(var(--danger-rgb), 0.08); border-color: rgba(var(--danger-rgb), 0.3); }
 .chipInfo { color: var(--info-light); background: rgba(var(--info-rgb), 0.08); border-color: rgba(var(--info-rgb), 0.3); }
 
 /* ── The callout — a white card with a coloured edge (tinted panels retired 2026-09-21) ── */
@@ -406,7 +419,7 @@
    something went wrong). */
 .req { margin-left: 0.15rem; color: inherit; }
 /* A refusal inside a window: one line in the danger ink above the fields (standard §3.7's error row). */
-.formError { margin: 0 0 0.85rem; font-size: var(--type-support); line-height: 1.45; color: var(--home-live); }
+.formError { margin: 0 0 0.85rem; font-size: var(--type-support); line-height: 1.45; color: var(--danger-light); }
 .fieldGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
 @media (max-width: 640px) { .fieldGrid { grid-template-columns: minmax(0, 1fr); } }
 .fieldRow { display: flex; align-items: center; gap: 0.5rem; }
@@ -441,7 +454,7 @@
 }
 .saveWordSaved { color: var(--home-olive); }
 .saveWordHidden { opacity: 0; }
-.saveWordError { color: var(--home-live); }
+.saveWordError { color: var(--danger-light); }
 
 /* ── A window's facts: a label, then its words (the invite window's "What they'll be able to open") ── */
 .facts {
