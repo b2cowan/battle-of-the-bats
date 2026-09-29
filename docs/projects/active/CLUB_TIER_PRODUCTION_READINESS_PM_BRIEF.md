@@ -97,6 +97,19 @@ restores everything. All of this was verified against Stripe's sandbox. The club
 redesigned screens (the second half) are built on top of this and reach customers on the new admin
 design's release day.
 
+**Bringing a coach's own team into the club — built and committed 2026-09-29 (Stage 2, session 2),
+not released.** A coach who already runs a team on their own Coaches Portal can now bring it into a club,
+whole: its seasons, roster, schedule and results, practices, lineups, attendance, awards, development,
+tryouts, documents and money records, and its staff with what each of them can open. Either side asks —
+the club from Rep Teams › *Bring in a coach's team*, the coach from *Join a club* — and the other side's
+yes moves the team there and then, after typing the team's name. There is no FieldLogicHQ step any more.
+Before anyone agrees, both sides read what it costs the club (one team place, included in the plan),
+that the coach won't be charged for their own portal again, and that it can't be undone. Before this,
+the move ended with a FieldLogicHQ operator and left most of the team behind, so a coach arrived in the
+club locked out of their own team. A build gate now lists every table that carries a club's id and
+fails when a new one isn't accounted for, so a table added next year can't be left behind silently.
+The database change must reach production before the release that ships these pages.
+
 ## Trade-offs made in this plan
 
 - **Fix the club side to read the coach's records, rather than rebuilding both.** The coach money

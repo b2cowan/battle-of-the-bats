@@ -8,6 +8,46 @@
 
 ---
 
+### 2026-09-28 — The coach bridge: a coach's own team joins a club whole, the second "yes" moves it, and the coach's own subscription stops at once with no refund — every word says only "won't be charged again"
+**Status:** Decided (owner, 2026-09-28 — Club readiness Stage 2, Ask 2 *"finish it"*, ratified with the Stage 2 drawings (hub https://claude.ai/artifact/K4MPu4ni53Ct7yrDcmWJd9 v15); the billing clause in the owner's words: *"we don't need to refund them, they just don't need to get charged in the future, so we can leave it as cancel now with no refund, make sure the messaging doesn't mention refunds and focuses on how they will simply not get charged in the future"*). **Built on dev 2026-09-29** (`CLUB_TIER_STAGE2_TRANSFER_PROMPT.md`; migration 313 prod-owed); **not released**.
+**Decision:**
+1. **The bridge is finished, not retired.** A coach who runs a team on their own Premium Coaches Portal can bring it into a Club, and **everything the team built comes with it** — seasons, roster, schedule and results, practices, lineups, attendance, awards, development, tryouts, documents, money records — and its **staff**, with what each of them can open.
+2. **Either side asks; the other side's yes moves the team there and then.** No FieldLogicHQ operator step (it existed only because the move was incomplete). The approving side types the team's name to confirm; the move can't be undone.
+3. **What it costs the club: one team place, included in the Club plan** — never a price. At the plan's cap, the club is offered the move to the larger band (the 2026-09-25 paid→paid rules) or to archive a team.
+4. **The coach's own subscription is cancelled the moment the move completes — no refund, no proration** (today's behaviour, now ratified). A Founding Season coach has nothing to cancel. **Every surface a coach or a club reads says only that the coach won't be charged again** — never a refund, a credit, proration or money back. This is build-enforced on the move's words, both approval pages and the help (`tests/unit/team-move-words.test.ts`).
+5. The retired "Basic visibility" link stays retired (Club readiness B12).
+
+**Rationale:** The Facts doc sells the bridge, and every early Club buyer will have coaches on standalone (Founding Season) portals — a club's first question is whether its coaches' seasons come with them. Retiring the bridge would have meant removing the page and saying so on pricing. No refund: the standalone portal was paid for a period the coach used, the move is the coach's own choice, and refund arithmetic for a $29 product is support cost with no customer asking for it; "you stop paying" is the whole promise the coach needs. The words rule exists because a refund mention invites a claim the product will not honour.
+
+**Affects:** the club's Rep Teams › Bring in a coach's team page, the coach's Join a club page, the move's bells, help (Rep Teams, Coaches, platform SOP), the Facts doc's Coach bridge bullet, and persona/pricing copy that describes the bridge. **No price, plan name, capacity band, SKU, feature key or gate value moves; `lib/plan-config.ts` untouched.**
+
+**Drift found in this reconcile (live on production today):** four marketing lines promise the workspace **"carries over automatically"** — `/for-clubs` (the Coaches Portal FAQ body), `/for-coaches` (hero line ×2 and meta description), `/for-leagues` (the Coaches Portal body) and `/pricing` (the rep-coach FAQ). On production that is false until this release (the move is operator-completed and leaves most of the team behind — B04); after it, "automatically" is still wrong — it takes both sides' yes. The `/for-coaches` bridge card (rewritten 2026-08-20) is already right and consistent with this ruling ("you stop paying the standalone rate", no refund words).
+
+**Handoff:**
+```
+HANDOFF → /marketing
+- The move's words are drafts in lib/team-move-words.ts (one module; the words test holds the
+  no-refund rule over it): polish within the rule. The two page names — "Bring in a coach's team"
+  (club, under Rep Teams) and "Join a club" (coach) — are yours to rule; the drawn ones stand until then.
+- The four "carries over automatically" lines (/for-clubs, /for-coaches ×3, /for-leagues, /pricing FAQ):
+  at the release that ships the move, say it comes with them when their club brings the team in (both
+  say yes) — never "automatically"; before that release, do not strengthen them. The /for-coaches
+  bridge card needs nothing.
+HANDOFF → /billing
+- Verify the Stripe side matches: cancel immediately, no proration, no refund (stripe.subscriptions.cancel
+  defaults); the move clears the workspace's and its org's Stripe ids BEFORE the cancel, so the
+  customer.subscription.deleted webhook finds no workspace and sends no "your Coaches Portal has been
+  cancelled" email; a failed cancel lands on the error dashboard naming the subscription. Sandbox run owed.
+HANDOFF → /plan
+- None — Club readiness plan §6 Stage 2 (session 2 record).
+HANDOFF → /strategy (self)
+- At the release: flip the Facts doc's Coach bridge bullet from "built, not released" to live.
+```
+
+**Supersedes:** nothing. **Refines:** 2026-06-22 Club capacity bands + Coaches Portal anti-cannibalization ("standalone Premium is $29/mo until the coach's org joins Club, at which point the portal is included — coach stops paying"): *how* the coach stops paying is now ruled. **Relates to:** 2026-07-20 Founding Season (a comped coach has no subscription to cancel); 2026-09-25 paid→paid moves (the team-cap window's move up).
+
+---
+
 ### 2026-09-28 — The in-app billing shelf stops promising League Plus "Coming soon · Early access only" — extend the 2026-08-20 de-imminence ruling to the upsell the product itself shows
 **Status:** Decided (owner, 2026-09-28 — *"yes"* to the recommendation below, both questions as recommended: the 2026-08-20 ruling extends to the in-app shelf and panel; Club keeps a date-free "Coming soon". Raised by the owner on the Admin Design Continuity walk §245 the same day, logged Proposed first at their request.)
 
