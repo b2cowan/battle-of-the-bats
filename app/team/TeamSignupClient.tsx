@@ -67,7 +67,7 @@ const VALUE_POINTS = [
   ['Roster and documents', 'Keep player details, jersey numbers, positions, and season documents in one coach-owned workspace.'],
   ['Schedule and game day', 'Plan practices, games, attendance, and baseball/softball lineups from the same calendar.'],
   ['Dues and budget', 'Track player dues, expenses, payment requests, budget lines, and reminders without a club admin account.'],
-  ['Club-ready when your org joins', 'If your organization moves to FieldLogicHQ, your portal carries over automatically — your roster, budget and documents stay yours.'],
+  ['Club-ready when your org joins', 'If your organization moves to Club, it can bring your team in with everything you’ve built — and you won’t be charged for your own portal again.'],
 ] as const;
 
 const WORKFLOW_STEPS = [

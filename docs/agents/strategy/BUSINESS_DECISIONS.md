@@ -25,7 +25,9 @@
 
 **Handoff:**
 ```
-HANDOFF → /marketing
+HANDOFF → /marketing — DONE 2026-09-29 on dev (owner: "go ahead with the marketing updates"); canon:
+  PRICING_PAGE_COPY.md "The coach bridge, said truthfully". Page names ruled as drawn; five surfaces fixed
+  (a fifth found: the coach sign-up page); ships with the move's release.
 - The move's words are drafts in lib/team-move-words.ts (one module; the words test holds the
   no-refund rule over it): polish within the rule. The two page names — "Bring in a coach's team"
   (club, under Rep Teams) and "Join a club" (coach) — are yours to rule; the drawn ones stand until then.

@@ -31,7 +31,7 @@ const CROSS_SELLS = [
   {
     label: 'Coaches Portal',
     q: 'Do your coaches need their own workspace?',
-    body: 'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. And when your organization joins FieldLogicHQ, their workspace carries over automatically.',
+    body: 'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. And if your organization moves to Club, it can bring each coach’s team in with everything they’ve built.',
     cta: 'Express interest',
     initialPlanInterest: ['coaches_portal'],
     initialFeaturesInterested: ['roster', 'lineups', 'budget', 'team_documents'],

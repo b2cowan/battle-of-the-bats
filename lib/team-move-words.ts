@@ -8,7 +8,7 @@
  * completes, with no refund and no proration — and **the words never mention a refund, a credit,
  * proration or money back**. They say only that the coach won't be charged again.
  * `tests/unit/team-move-words.test.ts` holds that rule over this file and every screen that shows
- * the move. Drafts: the words are /marketing's to polish, within that rule.
+ * the move. Polished by /marketing 2026-09-29 (page names ruled as drawn); canon: PRICING_PAGE_COPY.md.
  *
  * ⚠ NEVER A PRONOUN FOR THE COACH. The drawing said "his own Coaches Portal"; the product does not
  * guess anyone's pronouns, so a sentence names the coach or says "their".
@@ -55,12 +55,12 @@ export function clubCostLine(p: { planLabel: string; placesAfter: number | null;
 
 /** "{Coach}'s own plan" — the ruling's sentence. */
 export function coachPlanLineForClub(coachName: string): string {
-  return `${coachName} won’t be charged for their own Coaches Portal again. It stops the moment the move completes.`;
+  return `${coachName} won’t be charged for their own Coaches Portal again. Billing for it stops the moment the move completes.`;
 }
 
 export function clubAfterLine(p: { coachName: string; teamName: string; clubName: string }): string {
   return `${p.coachName} keeps coaching ${p.teamName}, now as a ${p.clubName} team. ` +
-    `From then on the club starts and closes its seasons. ${CANT_BE_UNDONE}`;
+    `From then on, the club starts and closes its seasons. ${CANT_BE_UNDONE}`;
 }
 
 export function clubCardTitle(teamName: string, clubName: string): string {
@@ -100,7 +100,7 @@ export function coachCardTitle(clubName: string, teamName: string): string {
 
 /** "What it costs you" — the ruling's sentence, to the coach. */
 export const COACH_PLAN_LINE =
-  'You won’t be charged for your own Coaches Portal again. It stops the moment the move completes.';
+  'You won’t be charged for your own Coaches Portal again. Billing for it stops the moment the move completes.';
 
 export function coachAfterLine(p: { teamName: string; clubName: string }): string {
   return `You keep coaching ${p.teamName}, now as a ${p.clubName} team. ${p.clubName} starts and closes your seasons ` +
@@ -164,7 +164,7 @@ export const REFUSAL = {
   clubNotFound: 'We couldn’t find a club with that web address or contact email.',
   notYourOwnOrg: 'Choose a club, not your own portal.',
   coachAtClubCap: (clubName: string) =>
-    `${clubName} has no team place left on its plan right now. They need to make room first — nothing has moved.`,
+    `${clubName} has no team place left on its plan right now. It needs to make room first — nothing has moved.`,
   openTournament: 'The coach’s own tournament is still open. The move waits until it’s finished or archived.',
   libraryNameClash: (items: string) =>
     `The team has two ${items} with the same name. Rename one of them in the team’s settings, then try again — nothing has moved.`,

@@ -14,7 +14,7 @@ import styles from './page.module.css';
 export const metadata: Metadata = {
   title: 'For Coaches — FieldLogicHQ',
   description:
-    'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed. Your workspace carries over if your organization joins later.',
+    'A complete workspace for one rep team — roster, lineups, budget, schedule, and documents. No org account needed, and if your organization moves to Club, it can bring your team in.',
   alternates: { canonical: '/for-coaches' },
 };
 
@@ -56,14 +56,14 @@ export default async function ForCoachesPage() {
               schedule, and documents for the whole season.{' '}
               <span className={styles.heroNoteAccent}>It&apos;s free for your whole {FOUNDING_SEASON_YEAR_LABEL} season</span>
               {' '}when you sign up by {FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} — normally {formatPriceAmount(PLAN_CONFIG.team.monthlyPrice)}/month.
-              No organization account needed, and your workspace carries over if your organization joins later.
+              No organization account needed, and if your organization moves to Club, it can bring your team in with everything you&apos;ve built.
             </p>
           ) : (
             <p className={styles.heroSub}>
               Every coach on FieldLogicHQ starts with the free Coaches Portal — a companion for the
               tournaments you enter. The Premium Coaches Portal turns it into your team&apos;s
               operations HQ: roster, lineups, budget, schedule, and documents for the whole season.
-              No org account needed, and your workspace carries over if your organization joins later.
+              No org account needed, and if your organization moves to Club, it can bring your team in with everything you&apos;ve built.
             </p>
           )}
           <div className={styles.heroActions}>

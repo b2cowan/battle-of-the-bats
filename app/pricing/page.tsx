@@ -122,7 +122,7 @@ const FAQS = [
   },
   {
     q: 'What if I only manage one competitive team?',
-    a: 'Use the Coaches Portal. It\'s a standalone workspace for one rep team — roster, schedule, budget, documents, attendance, and lineups. No org account needed. If your organization joins FieldLogicHQ later, your workspace carries over automatically. The Coaches Portal is coming soon — express interest to be notified.',
+    a: 'Use the Coaches Portal. It\'s a standalone workspace for one rep team — roster, schedule, budget, documents, attendance, and lineups. No org account needed. If your organization moves to Club later, it can bring your team in with everything you\'ve built. The Coaches Portal is coming soon — express interest to be notified.',
   },
   {
     q: 'Can I buy League Plus, Club, or the Coaches Portal today?',
@@ -195,7 +195,7 @@ export default async function PricingPage() {
         if (faq.q === 'What if I only manage one competitive team?') {
           return {
             ...faq,
-            a: `Use the Coaches Portal. Registering for a tournament gives you the free portal — your tournament record, schedule, and team chat in one place. The Premium Coaches Portal is the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? `Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and it's free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month.` : 'It\'s $29/month, cancel anytime.'} If your organization joins FieldLogicHQ later, your workspace carries over automatically.`,
+            a: `Use the Coaches Portal. Registering for a tournament gives you the free portal — your tournament record, schedule, and team chat in one place. The Premium Coaches Portal is the operations HQ for the whole season — roster, lineups, attendance, budget, and documents. ${teamPromoActive ? `Sign up by ${FOUNDING_SEASON_SIGNUP_CLOSE_LABEL} and it's free through ${FOUNDING_SEASON_END_LABEL} — normally $29/month.` : 'It\'s $29/month, cancel anytime.'} If your organization moves to Club later, it can bring your team in with everything you\'ve built.`,
           };
         }
         if (faq.q === 'Can I buy League Plus, Club, or the Coaches Portal today?') {

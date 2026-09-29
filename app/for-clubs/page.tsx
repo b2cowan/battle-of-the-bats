@@ -29,7 +29,7 @@ const CROSS_SELLS: Array<{
   {
     label: 'Coaches Portal',
     q: 'Do coaches need access before Club opens?',
-    body: "The Coaches Portal is also available standalone — coaches can get started independently and their workspace carries over automatically when your org moves to Club.",
+    body: "The Coaches Portal is also available standalone — coaches can start on their own today. When you move to Club, you can bring each coach’s team in with everything they’ve built, and it’s included in your plan from then on.",
     // Flips to a live "Start free" link with the coach checkout gate below — this card held an
     // express-interest trigger for a live product until 2026-08-10 (the same stale trap as the
     // /for-tournament-organizers cross-sell, found in the door-placement build).

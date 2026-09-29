@@ -161,6 +161,7 @@ Owner-ratified from the 2026-06-22 pricing & product review. **Canonical numbers
 **/for-clubs "what you pay":** "one predictable price for your whole club, by size — up to 15 teams, or up to 30 on Club · Association. Every team you run gets the full Premium Coaches Portal: rosters, lineups, budgets, schedules, and documents. No per-team fees, no 'select team' discount tier — every team counts the same, because every team gets the same tools."
 
 **Coach pricing bridge (Segment 4) — the "$19/mo, $10 less than standalone" line is retired:**
+- ⚠ **Superseded 2026-09-29 — see the amendment "The coach bridge, said truthfully" at the end:** the "carries over … automatically" wording below is retired.
 - Coach-facing: "Start independently with the standalone Premium Coaches Portal at $29/month — everything you need to run your team, whether or not your organization is on FieldLogicHQ. When your org joins Club, your portal is **included** in their plan: your account carries over and you stop paying the standalone rate."
 - Club-facing: "Club includes the Premium Coaches Portal for your **whole coaching staff** — every coach, every team, no per-team fee. Coaches already on the standalone portal? Their account carries over and rolls into your Club plan automatically."
 
@@ -955,3 +956,49 @@ BUSINESS_DECISIONS.md "THE DOORS ARE OPEN"). No price, plan-name, capacity, or g
 tryout day to season's end" (dropped an ambiguous "real team's"); the /for-clubs block body reads
 "tournaments and the Premium Coaches Portal" (dropped "the tournament platform"); the 2026-08-10
 changelog demo line broadened to "homepage, product pages, and pricing."
+
+---
+
+## AMENDMENT — The coach bridge, said truthfully (applied 2026-09-29, /marketing)
+
+Executes the `BUSINESS_DECISIONS.md` 2026-09-28 "coach bridge" handoff (Club readiness Stage 2,
+session 2 — the move built and committed `b2b87429`, not released). **These words ship in the same
+release as the move** — before it, production still runs the old partial transfer, so no surface
+may promise more than the release delivers.
+
+**The rule for every bridge sentence:**
+- **Never "automatically", never "carries over".** A coach's team moves into a club when the club
+  brings it in and **both sides say yes** — a request and an answer, not a background event.
+- **Name Club.** Only a Club (the plan with Rep Teams) can bring a team in. "When your organization
+  joins FieldLogicHQ" is false for a league or tournament organization.
+- **What moves: "everything you've built"** (the product's own sentence lists it: seasons, roster,
+  schedule and results, practices, lineups, attendance, awards, development, tryouts, documents,
+  money records, and the staff).
+- **Money, coach-facing: "you won't be charged for your own portal again"** — never a refund, a
+  credit, proration or money back (owner ruling 2026-09-28; build-enforced on the product's words).
+  Club-facing: "included in your plan", never a price.
+
+**Applied copy (live files are authoritative; this records approved intent):**
+- **/for-coaches hero (both variants):** "…No organization account needed, and if your organization
+  moves to Club, it can bring your team in with everything you've built." · **meta description:**
+  "…No org account needed, and if your organization moves to Club, it can bring your team in."
+- **/for-clubs, "Do coaches need access before Club opens?":** "The Coaches Portal is also available
+  standalone — coaches can start on their own today. When you move to Club, you can bring each
+  coach's team in with everything they've built, and it's included in your plan from then on."
+- **/for-leagues, Coaches Portal card:** "…No org account needed. And if your organization moves to
+  Club, it can bring each coach's team in with everything they've built."
+- **/pricing, "What if I only manage one competitive team?" (both variants):** "…If your
+  organization moves to Club later, it can bring your team in with everything you've built."
+- **Coach sign-up, "Club-ready when your org joins":** "If your organization moves to Club, it can
+  bring your team in with everything you've built — and you won't be charged for your own portal
+  again." ("your roster, budget and documents stay yours" retired — after a move the club holds them.)
+- **Unchanged, already right:** the /for-coaches bridge card (rewritten 2026-08-20: both sides
+  approve, "you stop paying the standalone rate").
+
+**The in-product words** (one module, `lib/team-move-words.ts`, guarded by
+`tests/unit/team-move-words.test.ts`): page names **ruled as drawn** — the club's **"Bring in a
+coach's team"** (names the act; never reuses "Coaches Portal", which the club's own coaches use) and
+the coach's **"Join a club"**. Voice pass: the coach's-plan line reads "…won't be charged for their
+own Coaches Portal again. **Billing for it stops** the moment the move completes." ("It stops" could
+read as the portal stopping); a club at its cap is "it", never "they"; a comma in "From then on, the
+club starts and closes its seasons."
