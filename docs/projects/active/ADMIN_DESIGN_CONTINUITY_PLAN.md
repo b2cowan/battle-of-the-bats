@@ -1514,6 +1514,13 @@ coaches-portal sweep and the kit's contrast grounds. The release is a separate s
   volunteer foot rule re-anchored on the shell; (9) `/release` records the promote, Club Stage 1's screens shipping
   the same day. Before it: the walk's W8 puts the club's colour back to "FieldLogicHQ", and Club Stage 1's owed
   test-club rebuild.
+  **⚠ PART B SKIPS the rep-teams screens Club Tier Stage 2 replaced (session 3, 2026-09-29 — the precedent Stage 1
+  set):** Rep Teams (the health board), the team page, its Coaches · Tryouts · Roster · Schedule pages, Document
+  templates, and the old season pages (now one redirect). They were built on the released kit with no switch and
+  carry no legacy branch; their styles live in `components/admin/kit/club/RepKit.module.css`, not in
+  `rep-teams.module.css`. The rep-teams pages Part B DOES clean are the rest (allocations, payment requests,
+  assistant coaches, shared library, past seasons, a team's history, rename URLs) — and `rep-teams.module.css`'s
+  kit layer, whose `.th` sentence-case override is S2-06 (report: drop it when those tables fold in).
 - **The walk — §245, published on the hub's QA tab:** eight walks, one job each, signed off one by one, each
   step ticked in Warm and in Dark (the volunteer walk and behaviour steps once); every step checked against
   this slice's own screenshots before publishing. Corrections that made: the club's public site is OFF on the

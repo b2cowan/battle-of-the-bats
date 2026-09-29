@@ -97,6 +97,43 @@ restores everything. All of this was verified against Stripe's sandbox. The club
 redesigned screens (the second half) are built on top of this and reach customers on the new admin
 design's release day.
 
+**Stage 2 — drawn and ratified 2026-09-28 (hub v15, all eight asks ruled); the screens built and
+committed 2026-09-29 (session 3, `00865a6d`) on top of session 1's server half and session 2's team move.** What a
+club gets: a Rep Teams page that works as a health board (one row per team: its season, its head
+coach, its roster, what's next, and red where only the club can fix something); a team page where the
+club edits the team and runs its seasons with the same *Start next season* / *Close* / *Reopen* doors a
+standalone coach has, carrying the roster, budget plan, fee plan, opening balance and player history;
+one "Invite a coach" door that works between seasons and emails the coach, who lands on a team that is
+already populated; tryouts that always belong to the team's live season; one table of document
+templates; and a plain-words page for bringing a coach's own portal into the club. The first ruling
+matters most: the drawings recommend **one season model for club and standalone teams**, because the
+plan's alternative (next season as a draft beside the live one) would either move a coach's whole
+portal to an empty season mid-year or hide the tryout from the coach who runs it.
+
+**The Stage 2 screens, as built (2026-09-29).** A club owner opens Rep Teams on one table — every
+team's season, head coach, roster, next event and signed documents — with the only red being what the
+club alone can fix: a team with no head coach, or a season running with nobody on it. Each team has a
+page: its details (they save as you type), its seasons with *Start next season* / *Close the season* /
+*Reopen*, and its coaches. *Invite a coach* asks for an email and whether they're the head coach or an
+assistant; the coach gets the email, lands in a working portal with a one-time welcome, and the club
+hears the answer either way (a coach who already has an account can answer from their Home page). The
+club reads each team's tryout applicants and makes the same calls the coach can; roster and schedule are
+read-only, in the club's own time. Document templates are one table, each reaching every team or one
+team. On the coach's side, a season the club starts or closes is announced in the portal, and a save
+refused because the club just closed the season now says why and offers that season's page instead of a
+bare error. Why it matters: before this, a club could not name a new head coach without making them a
+board member, could not start a team's next season at all, and saw rosters that added up every season a
+team had ever played. Success = the owner's ten Stage 2 walks pass (ledger §249 and §250). Trade-off
+taken: the club's pages follow the Coaches Portal's look exactly, so a few older admin pages beside
+them still wear the admin's own table style until the design programme reaches them.
+
+**Looking like one product (owner direction, 2026-09-28).** The Coaches Portal is the formatting benchmark
+for every club screen, and by the end of this programme the product has one written formatting standard,
+with every exception named. The Stage 2 drawings were redrawn to it the same day. Table cells carry no
+action links, headings, numbers, cards and phone lists follow the portal's rules, and a "Formatting check"
+page on the hub records what changed. The club admin's navigation groups its pages differently from the
+portal's; that is noted for a nav review before release.
+
 **Bringing a coach's own team into the club — built and committed 2026-09-29 (Stage 2, session 2),
 not released.** A coach who already runs a team on their own Coaches Portal can now bring it into a club,
 whole: its seasons, roster, schedule and results, practices, lineups, attendance, awards, development,
