@@ -5,7 +5,7 @@ product at 390 and 360). **Every ask RULED 2026-09-29** — P1 · R1 as drawn; R
 phone roster; D1 a depth-chart player opens full-screen; D2 **Previous and next** (over the drawn
 Next alone); D3 the Best order drags on the portal standard; M1 as drawn. **Built on dev 2026-09-29
 in one pass** (§6), revised on the walk the same day (§6 "And" notes); **owner QA walk §248 ✅ PASSED
-2026-09-29** on the owner's word. No migration.
+2026-09-29** on the owner's word; **committed `61993de7` 2026-09-29**. No migration.
 PM brief: `COACH_PHONE_LIST_FRAME_PM_BRIEF.md`.
 
 ## 1 · Why this exists
