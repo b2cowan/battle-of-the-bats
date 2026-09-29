@@ -25,9 +25,12 @@ describe('the switch — the hub', () => {
     assert.match(readCode('app/[orgSlug]/admin/page.tsx'), /<AdminHub \/>/);
   });
 
-  it('the morning brief provider mounts only under the switch', () => {
+  it('the morning brief provider wraps the whole frame (one read for the hub, the rail and the phone bar)', () => {
+    // Admin Design Continuity Part B (2026-09-29): the frame's switch-off branch is gone, so the provider
+    // is unconditional; it stays its own chunk.
     const chrome = readCode('app/[orgSlug]/admin/AdminChrome.tsx');
-    assert.match(chrome, /\{kit \? <ClubBriefProvider>\{frame\}<\/ClubBriefProvider> : frame\}/);
+    assert.match(chrome, /<ClubBriefProvider>\{frame\}<\/ClubBriefProvider>/);
+    assert.match(chrome, /const ClubBriefProvider = dynamic\(/);
   });
 });
 

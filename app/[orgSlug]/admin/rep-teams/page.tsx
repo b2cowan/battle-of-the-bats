@@ -127,7 +127,6 @@ export default function RepTeamsBoardPage() {
 
   const header = (
     <AdminPageHeader
-      legacy={null}
       eyebrow={currentOrg?.name}
       title="Rep Teams"
       actions={canWrite ? (

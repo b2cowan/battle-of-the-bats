@@ -1,8 +1,8 @@
 'use client';
 /**
  * ORGANIZATION SETTINGS on the kit (Club Tier Stage 1, screens session; specimen 9 "the decisions
- * only"). Renders only with the Admin Design Continuity switch on; today's page renders untouched
- * with it off. Owner only, as today.
+ * only"). Rendered by the Settings page, whose old page is dead since the release and goes in Admin
+ * Design Continuity Part B's Organization pass. Owner only, as always.
  *
  *   NEW — "Your public site": the one mislabelled checkbox ("Listed on /discover", which really
  *   switched the WHOLE site, A09/F04) becomes the two real settings — the site's master switch and
@@ -195,7 +195,7 @@ export default function SettingsKit() {
   if (userRole !== 'owner') {
     return (
       <div className={ck.pageNarrow}>
-        <AdminPageHeader legacy={null} eyebrow="Organization" title="Settings" />
+        <AdminPageHeader eyebrow="Organization" title="Settings" />
         <div className={styles.lockedCard}>
           <h2 className={styles.lockedTitle}>Settings are the owner’s</h2>
           <p className={styles.lockedBody}>Only {currentOrg.name}’s owner can change the organization’s name, address and look.</p>
@@ -374,7 +374,7 @@ export default function SettingsKit() {
 
   return (
     <div className={ck.pageNarrow}>
-      <AdminPageHeader legacy={null} eyebrow="Organization" title="Settings" />
+      <AdminPageHeader eyebrow="Organization" title="Settings" />
 
       {notice && <PageNotice notice={notice} />}
       {loadFailed && (

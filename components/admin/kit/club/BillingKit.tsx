@@ -1,9 +1,8 @@
 'use client';
 /**
  * PLAN & BILLING for a Club, on the kit (Club Tier Stage 1 + 1b, specimen 7; built to club hub v8).
- * Renders only with the Admin Design Continuity switch on, and only for the two Club bands — every
- * other plan keeps today's page under the switch (owner, 2026-09-26: the drawings cover the Club's
- * billing only; the others are a gap slice 6 must close).
+ * Renders only for the two Club bands — every other plan keeps the org billing page's own view,
+ * restyled onto the kit in slice 6 (owner, 2026-09-26: the drawings cover the Club's billing only).
  *
  *   The plan card        — price, renewal, status; the secure payment portal (unchanged).
  *   Teams on your plan   — the capacity readout (A15): the count the rep-team cap enforces, against
@@ -128,7 +127,7 @@ export default function BillingKit() {
   if (!isOwner) {
     return (
       <div className={ck.pageNarrow}>
-        <AdminPageHeader legacy={null} eyebrow="Organization" title="Plan & billing" />
+        <AdminPageHeader eyebrow="Organization" title="Plan & billing" />
         <div className={styles.lockedCard}>
           <h2 className={styles.lockedTitle}>Plan &amp; billing is the owner’s</h2>
           <p className={styles.lockedBody}>Only {orgName}’s owner can see and change the plan and how it’s paid.</p>
@@ -185,7 +184,7 @@ export default function BillingKit() {
 
     return (
       <div className={ck.pageNarrow}>
-        <AdminPageHeader legacy={null} eyebrow="Organization" title="Plan & billing" />
+        <AdminPageHeader eyebrow="Organization" title="Plan & billing" />
         {notice && <PageNotice notice={notice} />}
         <CoachCard className={styles.reactivate}>
           <CoachEyebrow chip={<CoachChip tone="danger">{since ? `Cancelled ${since}` : 'Cancelled'}</CoachChip>}>
@@ -298,7 +297,7 @@ export default function BillingKit() {
 
   return (
     <div className={ck.pageNarrow}>
-      <AdminPageHeader legacy={null} eyebrow="Organization" title="Plan & billing" />
+      <AdminPageHeader eyebrow="Organization" title="Plan & billing" />
       {notice && <PageNotice notice={notice} />}
 
       {currentOrg.subscriptionStatus === 'past_due' && (

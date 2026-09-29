@@ -133,7 +133,6 @@ export default function TeamSchedulePage({ params }: { params: Promise<{ orgSlug
 
   const header = (
     <AdminPageHeader
-      legacy={null}
       backTo={{ href: teamBase, label: team?.name ?? 'Team' }}
       crumbs={[{ label: 'Rep Teams' }, team?.groupName ? { label: team.groupName } : null]}
       title="Schedule"

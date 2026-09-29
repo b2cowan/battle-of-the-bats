@@ -23,8 +23,10 @@ import { readCode, stripComments } from './_source-code.ts';
  *   4. PUBLIC LAYOUTS NEVER CARRY IT — R2: public pages stay in the organization's own branding, and the
  *      tournament preview island inside the admin turns the kit off.
  *
- * The legacy branches (`useAdminKit()` false paths, `legacy` props, the switch-off stylesheet rules) are
- * dead code until Part B (the cleanup) deletes them; that is also what keeps the rollback one revert.
+ * The legacy branches (an admin page's `useAdminKit()` false path, `legacy` props, the switch-off
+ * stylesheet rules) are dead code that Part B (the cleanup) deletes area by area; its first area (the
+ * frame and shared parts, 2026-09-29) ended the one-revert rollback. The context's OFF answer itself is
+ * not legacy: the preview island and other surfaces still rely on it (`AdminKitProvider`'s header).
  * ══════════════════════════════════════════════════════════════════════════════════════════════
  */
 

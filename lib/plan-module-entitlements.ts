@@ -128,7 +128,7 @@ export const getEffectivePlanModuleEntitlements = cache(async (): Promise<PlanMo
  * "Feature matrix published", and not one customer's access would change.
  *
  * Why it is not simply wired up: `hasModuleEntitlement` is SYNCHRONOUS, sits on the hot path of
- * every request, and is called from client components (AdminSidebar among ~85 call sites). Making
+ * every request, and is called from client components (the admin rail's `lib/admin-kit-nav.ts` among ~85 call sites). Making
  * the plan→module mapping dynamic means an async, cached lookup threaded through all of them, with
  * a cache-invalidation design where being wrong means wrong entitlements platform-wide. That is a
  * project with its own plan, not a line in an audit fix.

@@ -58,11 +58,12 @@
   min-height: 100vh;
 }
 
-/* ── The kit's ground (Admin Design Continuity slice 1 — rendered only with the switch on) ──
+/* ── The kit's ground (Admin Design Continuity slice 1) — every admin shell but the help guide's ──
    The coaches shell's page, value for value (`.coachesShell` / `.coachesMain`): the page tone with
    its 40px grid at 7%, in both themes (the warm block turns the tone to paper and the grid to olive).
-   Compound selectors, so they win over the legacy `.adminShell` / `.adminMain` (and the legacy phone
-   grid below) whatever their order. */
+   Compound selectors, so they win over the base `.adminShell` / `.adminMain` (and the phone grid
+   below) whatever their order. The base ground and phone grid are still what the help guide stands on
+   (`AdminChrome`'s `kitGround`), so they stay. */
 .adminShell.adminShellKit { background: var(--pitch-black); }
 .adminMain.adminMainKit {
   background: var(--pitch-black);
@@ -137,149 +138,3 @@
   }
 
 }
-
-/* ── Override global utility classes within admin shell ── */
-/* ⚠ THE CONSOLE LOOK STOPS AT THE KIT (Admin Design Continuity slice 2). Every override below carries
-   `:where(:not([data-admin-kit] *))`: zero added specificity, so with the switch off each matches
-   and weighs exactly as before (the identity check holds it); with the switch on none matches, and
-   the global recipes, the warm skin and the kit layer in app/globals.css show through, as they do in
-   the coaches portal. `tests/unit/admin-kit-guard.test.ts` fails on an override without it. The
-   release slice deletes this whole block. */
-/* Scoped so public org pages are unaffected.               */
-/* Key principle: operational/terminal aesthetic — matches sidebar design language.
-   Zero or near-zero radius, monospace labels, muted text, no consumer-app theatrics. */
-
-/* ── Buttons: flat, square, no glow, no lift ── */
-.adminShell :global(.btn:where(:not([data-admin-kit] *))) {
-  border-radius: 2px;
-  box-shadow: none;
-}
-.adminShell :global(.btn:where(:not([data-admin-kit] *)):hover) {
-  transform: none;
-  box-shadow: none;
-}
-.adminShell :global(.btn-primary:where(:not([data-admin-kit] *))) {
-  background: var(--blueprint-blue);
-  box-shadow: none;
-}
-.adminShell :global(.btn-primary:where(:not([data-admin-kit] *)):hover) {
-  background: rgba(var(--blueprint-blue-rgb), 0.82);
-  box-shadow: none;
-  transform: none;
-}
-.adminShell :global(.btn-outline:where(:not([data-admin-kit] *))) {
-  color: var(--logic-lime);
-  border-color: rgba(var(--blueprint-blue-rgb), 0.6);
-}
-.adminShell :global(.btn-outline:where(:not([data-admin-kit] *)):hover) {
-  background: rgba(var(--blueprint-blue-rgb), 0.12);
-  box-shadow: none;
-  color: var(--logic-lime);
-}
-
-/* ── Badges: flat data tags, not pills ── */
-.adminShell :global(.badge:where(:not([data-admin-kit] *))) {
-  border-radius: 2px;
-  font-family: var(--font-data);
-  font-size: 0.58rem;
-  font-weight: 700;
-  letter-spacing: 0.09em;
-  padding: 0.16rem 0.48rem;
-}
-.adminShell :global(.badge-primary:where(:not([data-admin-kit] *))),
-.adminShell :global(.badge-purple:where(:not([data-admin-kit] *))) {
-  background: rgba(var(--blueprint-blue-rgb), 0.15);
-  color: var(--logic-lime);
-  border-color: rgba(var(--blueprint-blue-rgb), 0.3);
-}
-/* ── Tone down PAID/success badge — noticeable but not dominant ── */
-.adminShell :global(.badge-success:where(:not([data-admin-kit] *))) {
-  background: rgba(var(--success-rgb), 0.07);
-  color: rgba(var(--success-rgb), 0.72);
-  border-color: rgba(var(--success-rgb), 0.22);
-}
-/* ── Tone down PENDING/warning badge to match ── */
-.adminShell :global(.badge-warning:where(:not([data-admin-kit] *))) {
-  background: rgba(var(--warning-rgb), 0.07);
-  color: rgba(var(--warning-rgb), 0.72);
-  border-color: rgba(var(--warning-rgb), 0.22);
-}
-
-/* ── Form controls: square corners to match operational feel ── */
-.adminShell :global(.form-input:where(:not([data-admin-kit] *))),
-.adminShell :global(.form-select:where(:not([data-admin-kit] *))),
-.adminShell :global(.form-textarea:where(:not([data-admin-kit] *))) {
-  border-radius: 2px;
-}
-.adminShell :global(.form-input:where(:not([data-admin-kit] *)):focus),
-.adminShell :global(.form-select:where(:not([data-admin-kit] *)):focus),
-.adminShell :global(.form-textarea:where(:not([data-admin-kit] *)):focus) {
-  border-color: var(--blueprint-blue);
-  box-shadow: 0 0 0 2px rgba(var(--blueprint-blue-rgb), 0.2);
-}
-
-/* ── Cards: square corners + reduce hover glow theatrics ── */
-.adminShell :global(.card:where(:not([data-admin-kit] *))) {
-  border-radius: 2px;
-}
-.adminShell :global(.card:where(:not([data-admin-kit] *)):hover) {
-  border-color: rgba(var(--blueprint-blue-rgb), 0.4);
-  box-shadow: none;
-}
-
-/* ── Accent text colour ── */
-.adminShell :global(.text-primary:where(:not([data-admin-kit] *))),
-.adminShell :global(.text-primary-light:where(:not([data-admin-kit] *))),
-.adminShell :global(.text-purple:where(:not([data-admin-kit] *))) {
-  color: var(--logic-lime);
-}
-
-/* ══════════════════════════════════════════════════════════════════
-   SWEEP ADDITIONS — 2026-05-23
-   Global cascade fixes for admin-shell design violations.
-   These catch patterns that appear across many pages without
-   requiring per-page edits.
-   ══════════════════════════════════════════════════════════════════ */
-
-/* ── h1 / h2: terminal type hierarchy ──────────────────────────── */
-/* Catches page titles and section headers still using font-sans/white.
-   font-sans Tailwind on the element is overridden via the rule below. */
-.adminShell h1:where(:not([data-admin-kit] *)) {
-  font-family: var(--font-data);
-  color: var(--logic-lime);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.adminShell h2:where(:not([data-admin-kit] *)) {
-  font-family: var(--font-data);
-  color: rgba(var(--logic-lime-rgb), 0.75);
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-/* ── Tailwind font-sans global shim ────────────────────────────── */
-/* Targets any element using Tailwind's font-sans utility inside the
-   admin shell (hub tile labels, section headings, data rows).
-   !important required to beat Tailwind's specificity.              */
-.adminShell :global(.font-sans:where(:not([data-admin-kit] *))) {
-  font-family: var(--font-data) !important;
-}
-
-/* ── btn-sm shim: restyle to match btn-data sizing ─────────────── */
-/* Prevents the global btn-sm (0.875rem, pill padding) from appearing
-   in the admin shell. Per design rule (2026-05-23): never use btn-sm
-   inside admin; use btn-data instead. This shim bridges existing
-   usages without per-page class renames.                           */
-.adminShell :global(.btn-sm:where(:not([data-admin-kit] *))) {
-  font-family: var(--font-data);
-  font-size: 0.62rem;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  border-radius: 2px !important;
-  padding: 0.3rem 0.62rem;
-  min-height: unset;
-  gap: 0.28rem;
-}
-

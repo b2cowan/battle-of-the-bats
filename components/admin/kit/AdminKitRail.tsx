@@ -1,19 +1,18 @@
 'use client';
 /**
  * AdminKitRail — the admin's desktop rail on the coaches portal's kit (Admin Design Continuity
- * slice 1). Renders ONLY with the switch on (`AdminChrome` picks it over `AdminSidebar`); the release
- * slice deletes the legacy rail and keeps this one.
+ * slice 1). The admin's only rail since Part B deleted the old console sidebar (2026-09-29).
  *
- * ⚠ ONE RAIL, ALWAYS POPULATED (ratified club Stage 1 specimen 3). Today's rail is a set of MODES —
+ * ⚠ ONE RAIL, ALWAYS POPULATED (ratified club Stage 1 specimen 3). The old rail was a set of MODES —
  * empty at the hub, a different rail inside each program, "All Sections" to get out. This is one
  * object: Overview pinned, then the programs, then Organization, and the program you are in opens
- * onto its pages. Inside a TOURNAMENT the middle swaps for today's tournament rail (switcher,
+ * onto its pages. Inside a TOURNAMENT the middle swaps for the old rail's tournament section (switcher,
  * Operations / Setup / Admin), restyled only, with Overview still pinned above it, so there is always
  * a way back to the club. A tournament-only organization (the Tournament plans have no club hub)
- * sees the tournament rail alone, as it does today.
+ * sees the tournament section alone, as it always has.
  *
  * ⚠ The programs, their pages and the Organization links come from `lib/admin-kit-nav.ts`, which the
- * phone bar reads too. Every gate is today's gate — read that file's header before adding a row.
+ * phone bar reads too. Every gate is the old rail's gate — read that file's header before adding a row.
  */
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';

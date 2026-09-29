@@ -1,7 +1,8 @@
 'use client';
 /**
  * THE CLUB HUB on the kit — "Overview" (Club Tier Stage 1, screens session; ratified specimens 1–2,
- * built to club hub v8). Renders only with the Admin Design Continuity switch on (`AdminHub`).
+ * built to club hub v8). Rendered by `AdminHub`, whose old hub branch is dead since the release and
+ * goes in Admin Design Continuity Part B's Organization pass.
  *
  *   This morning   — the president's brief: COUNTS the person can act on, never money (C04). A card
  *                    is a door only where its page opens for this person; the treasurer's two are
@@ -219,7 +220,7 @@ export default function ClubHubKit() {
 
   return (
     <div className={ck.page}>
-      <AdminPageHeader legacy={null} eyebrow={club ? 'Club' : noun === 'league' ? 'League' : 'Organization'} title={currentOrg.name} />
+      <AdminPageHeader eyebrow={club ? 'Club' : noun === 'league' ? 'League' : 'Organization'} title={currentOrg.name} />
 
       {hasBriefSection && (
         <section className={ck.section} aria-labelledby="hub-brief">

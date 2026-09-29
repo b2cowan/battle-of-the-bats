@@ -481,9 +481,17 @@ function checkScope(name) {
 // scopes under `[data-admin-kit]`, may hold NO literal colour at all — no hex, no rgb()/hsl() without
 // a var() inside, no named colour. Zero, not a baseline: the layer is new, so it starts clean and a
 // restyled area cannot regress. It WIDENS as the areas come clean — when an area's legacy rules are
-// deleted (the release slice), its whole stylesheet joins KIT_FILES.
+// deleted (Part B, the cleanup, area by area), its whole stylesheet joins KIT_FILES.
+// ⚠ Only a sheet that NOTHING outside the admin reads: a shared part's base rules are another surface's
+// look (the export menu and the collapsible card on the platform console, the bottom sheet on public
+// pages), so those keep their scoped kit layer and never join.
 const KIT_DIRS = ['components/admin/kit/'];
-const KIT_FILES = new Set(['components/admin/AdminPageHeader.module.css']);
+const KIT_FILES = new Set([
+  'components/admin/AdminPageHeader.module.css',
+  // Part B area 1 — the frame and shared parts (2026-09-29).
+  'app/[orgSlug]/admin/admin.module.css',
+  'components/admin/AdminContextStrip.module.css',
+]);
 // A colour literal: hex, or rgb/rgba/hsl/hsla with no var() inside. The kit check also refuses the keywords.
 const COLOR_LITERAL = String.raw`#[0-9a-fA-F]{3,8}\b|\b(?:rgba?|hsla?)\((?![^()]*var\()[^()]*\)`;
 const KIT_LITERAL = new RegExp(`${COLOR_LITERAL}|(?:^|\\s)(?:white|black)(?:\\s|$)`);

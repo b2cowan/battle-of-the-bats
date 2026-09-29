@@ -131,7 +131,6 @@ export default function DocumentTemplatesPage() {
 
   const header = (
     <AdminPageHeader
-      legacy={null}
       crumbs={[{ label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
       title="Document templates"
       actions={canWrite ? (

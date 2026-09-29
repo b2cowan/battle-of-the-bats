@@ -2,10 +2,8 @@
    THE ADMIN'S KIT FRAME — the desktop rail, the phone's "In <program>" row and the shell's ground,
    on the coaches portal's kit (Admin Design Continuity slice 1, 2026-09-25).
 
-   ⚠ RENDERED ONLY WITH THE SWITCH ON (`lib/admin-kit-preview.ts`). With it off the legacy frame
-   (`AdminSidebar`, `admin.module.css`) renders untouched; the release slice deletes that and keeps
-   this. So nothing here needs a `[data-admin-kit]` guard — the component that uses it only mounts
-   under the switch.
+   ⚠ THE ADMIN'S ONLY FRAME: the old console sidebar went in Part B (2026-09-29). Nothing here needs a
+   `[data-admin-kit]` guard — only the admin shell mounts the components that use it.
 
    ⚠ THE SKIN IS THE COACH RAIL'S, VALUE FOR VALUE (`coaches.module.css` → `.sidebar`,
    `.sidebarItem`, `.sidebarItemActive`, `.sidebarGroupHeader`, `.sidebarDivider`, and their two warm

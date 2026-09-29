@@ -16,7 +16,7 @@
  * ⚠ NOT PORTALLED. The admin kit's tokens (the warm palette, R1's colours) live on a wrapper above
  * the shell; a window portalled to <body> would render outside it, in the wrong palette. It renders
  * where it is mounted, `position: fixed`, above the phone bar's layer.
- * ⚠ Kit only: nothing outside the switch mounts it. TOKENS ONLY (the scrim is the one exemption,
+ * ⚠ Admin only: nothing outside the admin shell mounts it. TOKENS ONLY (the scrim is the one exemption,
  * annotated — the kit's "themed scrim" gap, ADC Phase 0).
  *
  * THE PORTAL'S WINDOW FLOOR (Admin Design Continuity slice 6, owner 2026-09-27: "build it here"). Every

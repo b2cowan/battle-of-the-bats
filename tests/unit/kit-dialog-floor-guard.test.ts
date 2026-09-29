@@ -68,9 +68,12 @@ describe('Settings\' unsaved-changes guard shares the Back stack', () => {
 });
 
 describe('R2 — the tournament preview is the public page down to its ground', () => {
-  it('the preview shell carries the island marker with the switch on, and nothing with it off', () => {
+  it('the preview shell carries the island marker, and the island turns the kit off inside it', () => {
+    // Admin Design Continuity Part B (2026-09-29): the switch-off branch is gone, so the marker rides the
+    // preview shell alone — every other admin shell is the kit's own ground.
     const chrome = readCode('app/[orgSlug]/admin/AdminChrome.tsx');
-    assert.match(chrome, /<div className=\{shellClassName\} \{\.\.\.\(kit && isTournamentPreview \? \{ 'data-public-preview': '' \} : \{\}\)\}>/);
+    assert.match(chrome, /<div className=\{shellClassName\} \{\.\.\.\(isTournamentPreview \? \{ 'data-public-preview': '' \} : \{\}\)\}>/);
+    assert.match(chrome, /<div className=\{styles\.previewIsland\} data-public-preview><AdminKitProvider on=\{false\}>\{children\}<\/AdminKitProvider><\/div>/);
   });
 });
 

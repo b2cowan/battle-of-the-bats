@@ -6,7 +6,7 @@
  * what the club runs). Three readers, one fetch, one set of numbers — a rail that said "3 waiting"
  * beside a hub that said 2 would be the two-navs drift the coaches portal already paid for once.
  *
- * Mounted by `AdminChrome` under the switch only. It reads again whenever you come back to the hub
+ * Mounted by `AdminChrome` round the whole frame. It reads again whenever you come back to the hub
  * (the page whose job is "what waits this morning"), so the counts there are never a visit stale.
  *
  * ⚠ Before the first answer the ORDER is still right for most clubs: `fallbackShape` reads what the
@@ -99,8 +99,8 @@ export function ClubBriefProvider({ children }: { children: ReactNode }) {
 }
 
 /**
- * The morning brief and the club's shape. Outside the provider (the legacy frame, a test) it answers
- * "nothing known yet" with the org-less shape, so a caller never has to branch on the switch.
+ * The morning brief and the club's shape. Outside the provider (a test, anything rendered outside the
+ * admin frame) it answers "nothing known yet" with the org-less shape, so a caller never has to branch.
  */
 export function useClubBrief(): ClubBriefValue {
   return useContext(ClubBriefContext) ?? {

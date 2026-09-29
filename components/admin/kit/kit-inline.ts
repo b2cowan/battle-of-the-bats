@@ -7,10 +7,11 @@ import type { CSSProperties } from 'react';
  * colours inline in hundreds of places — some as literals that ignore the theme, some as dark-ramp
  * tokens that mean the wrong thing on cream (`--white-8` as a border paints WHITE on a white card;
  * `--white-30` as text is a hairline). `useKitStyle()` (AdminKitProvider) lays one of these patches
- * over the legacy style while the switch is on and returns the legacy style untouched while it is off.
+ * over the legacy style inside the admin and returns the legacy style untouched anywhere else.
  *
  * ⚠ TOKENS ONLY — each value must resolve in BOTH themes (the warm block and the dark gate).
- * ⚠ The release slice folds each patch into its style and deletes this file.
+ * ⚠ Part B (the cleanup) folds each patch into its style, area by area, and deletes this file with the
+ *   last caller.
  */
 
 const body: CSSProperties = { fontFamily: 'var(--font-sans, system-ui, sans-serif)', fontWeight: 650, borderRadius: 'var(--radius-sm)' };
@@ -82,9 +83,9 @@ export const KIT_INK = {
 export const KIT_LINE = '1px solid var(--home-line)';
 
 /**
- * `kx(legacy, kit)` for a switch state already known — `useKitStyle()` (AdminKitProvider) is this behind the
- * context, and a SERVER component that read the switch itself (the volunteer shells' layouts, slice 5)
- * calls it directly. Off: `legacy`, the same object. On: the patch laid over it.
+ * `kx(legacy, kit)` for a kit state already known — `useKitStyle()` (AdminKitProvider) is this behind the
+ * context, and a SERVER component that knows it itself (the volunteer shells' layouts, slice 5) calls it
+ * directly. Off: `legacy`, the same object. On: the patch laid over it.
  */
 export function kitStyler(on: boolean): (legacy: CSSProperties, kit: CSSProperties) => CSSProperties {
   return on ? (legacy, kit) => ({ ...legacy, ...kit }) : (legacy) => legacy;

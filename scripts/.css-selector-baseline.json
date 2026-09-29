@@ -402,18 +402,6 @@
     "components/accounting/BudgetItemPicker.module.css": [
       "selectBad"
     ],
-    "components/admin/AdminBottomNav.module.css": [
-      "densityBtn",
-      "densityBtnActive",
-      "densityRow"
-    ],
-    "components/admin/AdminSidebar.module.css": [
-      "densityBtn",
-      "densityBtnActive",
-      "densityToggle",
-      "orgSection",
-      "setActiveBtn"
-    ],
     "components/admin/CheckInBoard.module.css": [
       "dobInput"
     ],

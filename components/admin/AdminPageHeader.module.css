@@ -7,12 +7,11 @@
 
    ⚠ NO SUBTITLE SLOT EXISTS (F3, the 2026-08-11 coach ruling). A fact that sat under a title moves
    to the body it describes, and every move is listed in the slice's handoff.
-   ⚠ Only mounted with the switch on: with it off the page renders its own legacy header.
-   ⚠ TOKENS ONLY (`tests/unit/admin-kit-guard.test.ts`).
+   ⚠ TOKENS ONLY (`scripts/check-public-tokens.mjs`, `checkAdminKit` — this sheet is a kit file).
 
-   The legacy shell's `.adminShell h1 { font-family: mono; color: lime; text-transform: uppercase }`
-   (0,1,1) stops at the kit since slice 2 (`:where(:not([data-admin-kit] *))`), so the title is one
-   class again; the other rules keep their `.header` prefix only as the module's grouping.
+   The old console shell's `.adminShell h1 { font-family: mono; color: lime; text-transform: uppercase }`
+   (0,1,1) is gone (Part B, 2026-09-29), so the title is one class; the other rules keep their
+   `.header` prefix only as the module's grouping.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .header {

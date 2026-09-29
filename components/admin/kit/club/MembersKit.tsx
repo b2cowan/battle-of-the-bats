@@ -1,7 +1,8 @@
 'use client';
 /**
- * MEMBERS on the kit (Club Tier Stage 1, screens session; ratified specimen 5, club hub v8). Renders
- * only with the Admin Design Continuity switch on; today's page renders untouched with it off.
+ * MEMBERS on the kit (Club Tier Stage 1, screens session; ratified specimen 5, club hub v8). Rendered
+ * by the Members page, whose old page is dead since the release and goes in Admin Design Continuity
+ * Part B's Organization pass.
  *
  *   The board first — the people who run the organization — with "What they can open", computed by
  *   the one access computation (`whatTheyCanOpen`), never typed, and a chip per change from the
@@ -129,7 +130,7 @@ export default function MembersKit() {
   if (!canSee) {
     return (
       <div className={ck.pageNarrow}>
-        <AdminPageHeader legacy={null} eyebrow="Organization" title="Members" />
+        <AdminPageHeader eyebrow="Organization" title="Members" />
         <div className={styles.empty}>
           <h2 className={styles.emptyTitle}>Members isn’t turned on for you</h2>
           <p className={styles.emptyBody}>Ask the organization’s owner if you need to see who is on the board.</p>
@@ -277,7 +278,6 @@ export default function MembersKit() {
   return (
     <div className={ck.page}>
       <AdminPageHeader
-        legacy={null}
         eyebrow={tournamentTier ? 'Tournament settings' : 'Organization'}
         title="Members"
         actions={

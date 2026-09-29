@@ -2,7 +2,7 @@
 
 /**
  * AdminTopStrip — the operator frame strip (Nav Unification Stage C, owner-directed
- * 2026-07-31). The app's thin top bar, worn by the admin shell in its own dark skin:
+ * 2026-07-31). The app's thin top bar, worn by the admin shell in the coaches portal's skin:
  * the wordmark exits to Home on the left (grammar Zone 1 — platform identity lives HERE
  * now, not in the sidebar), and the person's own doors sit in the top-right corner every
  * other surface uses (Zone 3): notifications · account · the Workspaces popover.
@@ -35,9 +35,7 @@ import { useRoleSummary } from '@/lib/use-role-summary';
 import { useOrg } from '@/lib/org-context';
 import { useIsSandbox } from '@/components/sandbox/SandboxProvider';
 import { getNotificationSettingsHref } from '@/lib/billing-urls';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
-import legacyStyles from './AdminTopStrip.module.css';
-import kitStyles from '@/components/coaches/CoachTopStrip.module.css';
+import styles from '@/components/coaches/CoachTopStrip.module.css';
 
 export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
   /** Hoisted unread count from the admin shell — see the header comment. */
@@ -52,14 +50,10 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
    *  binding sandbox rule is hide the entry point, never let it dead-end. The wordmark beside it
    *  goes inert for the same reason (BrandLockup). False for every real org. */
   const inSandbox = useIsSandbox();
-  // Admin Design Continuity — with the switch on, the strip wears the COACHES PORTAL'S strip,
-  // stylesheet and all (one stylesheet is the only way two strips cannot drift), its doors take
-  // their warm skins, and the account menu offers the Appearance choice: the admin follows the
-  // account theme now, so the "a toggle that visibly does nothing reads as broken" reason for
-  // hiding it (below) no longer holds. Off: every prop and class below is exactly today's.
-  const kit = useAdminKit();
-  const styles = kit ? kitStyles : legacyStyles;
-  const warm = kit ? { warm: true } : {};
+  // Admin Design Continuity — the strip wears the COACHES PORTAL'S strip, stylesheet and all (one
+  // stylesheet is the only way two strips cannot drift), its doors take their warm skins, and the
+  // account menu offers the Appearance choice: the admin follows the account theme, so the old "a
+  // toggle that visibly does nothing reads as broken" reason for hiding it no longer holds.
 
   return (
     <header className={styles.strip}>
@@ -77,24 +71,24 @@ export default function AdminTopStrip({ notifCount, onNotifCountChange }: {
             count={notifCount}
             onCountChange={onNotifCountChange}
             panelPlacement="topStrip"
-            {...warm}
+            warm
           />
         )}
         {/* The account door opens IN PLACE (2026-09-01, shared with the coach strip — plan
             `docs/projects/active/COACH_ACCOUNT_MENU_PLAN.md`): identity, notification
-            settings, feedback, the account pages, sign out. NO theme control here —
-            tournament pages always show the organizer's colors, and a toggle that visibly
-            does nothing where you stand reads as broken. */}
+            settings, feedback, the account pages, sign out — and the Appearance choice, since
+            the admin follows the account theme (above). */}
         {!inSandbox && (
           <AccountMenu
             className={styles.iconDoor}
             settingsHref={
               currentOrg?.slug ? getNotificationSettingsHref(currentOrg.slug) : '/account/notifications'
             }
-            {...(kit ? { warm: true, showTheme: true } : {})}
+            warm
+            showTheme
           />
         )}
-        <WorkspacesPill workspaces={roleSummary?.workspaces ?? []} className={styles.pill} {...warm} />
+        <WorkspacesPill workspaces={roleSummary?.workspaces ?? []} className={styles.pill} warm />
       </div>
     </header>
   );

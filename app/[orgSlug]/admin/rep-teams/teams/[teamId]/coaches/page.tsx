@@ -131,7 +131,6 @@ export default function TeamCoachesPage({ params }: { params: Promise<{ orgSlug:
 
   const header = (
     <AdminPageHeader
-      legacy={null}
       backTo={{ href: teamBase, label: teamName ?? 'Team' }}
       crumbs={[{ label: 'Rep Teams' }, read?.team.groupName ? { label: read.team.groupName } : null]}
       title="Coaches"

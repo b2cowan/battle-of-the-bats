@@ -1,8 +1,8 @@
 'use client';
 /**
  * SET UP YOUR CLUB — the club's setup checklist on the kit (Club Tier Stage 1, specimen 10; built to
- * club hub v8). Renders only with the Admin Design Continuity switch on, and only for a Club owner;
- * every other plan keeps today's setup page (slice 2 restyles it).
+ * club hub v8). Renders only for a Club owner; every other plan keeps its own setup page (restyled
+ * onto the kit in slice 2).
  *
  * Five steps, each with a REAL done condition (session 1's `computeClubChecklist`) and a button that
  * opens the screen that does the job (A11): the board, the teams, a head coach for every team, the
@@ -103,7 +103,7 @@ export default function ClubSetupKit() {
 
   return (
     <div className={`${ck.pageNarrow} ${styles.page}`}>
-      <AdminPageHeader legacy={null} eyebrow="Set up your club" title={`Get ${currentOrg.name} ready for the season`} />
+      <AdminPageHeader eyebrow="Set up your club" title={`Get ${currentOrg.name} ready for the season`} />
 
       {status === 'error' ? (
         <div className={`${ck.notice} ${ck.noticeBad}`} role="alert">

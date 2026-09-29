@@ -1,7 +1,7 @@
 'use client';
 /**
  * AdminKitBottomNav — the admin's phone bar and More menu on the coaches portal's kit (Admin Design
- * Continuity slice 1). Renders ONLY with the switch on (`AdminChrome` picks it over `AdminBottomNav`).
+ * Continuity slice 1). The admin's only phone bar since Part B deleted the old console bar (2026-09-29).
  *
  * ⚠ THE SKIN IS THE COACH BAR'S OWN STYLESHEET, imported, not copied (`CoachesBottomNav.module.css`):
  * the 72px bar, its tabs, the More sheet that rises over a scrim while the bar stays visible and

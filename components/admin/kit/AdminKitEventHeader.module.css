@@ -1,12 +1,12 @@
 /* ═══════════════════════════════════════════════════════════════════════════════════════════════
-   The admin's event header ON THE KIT (Admin Design Continuity slice 1) — `AdminEventHeader`'s kit
-   branch, rendered only with the switch on. Drawn as ADC specimen 2: "today's event header, drawn as
+   The admin's event header ON THE KIT (Admin Design Continuity slice 1) — `AdminEventHeader`'s only
+   form since Part B (2026-09-29) deleted the old one. Drawn as ADC specimen 2: "today's event header, drawn as
    the kit's page header: an eyebrow, a title and one status chip. The same phase rule and the same
    dates; only the skin changes." The ground and hairline are the coach masthead's (`.teamHeader`:
    the card tone over the page tone, so scrolled content never ghosts through the pinned bar).
-   Behaviour is the legacy header's, unchanged: sticky below the strip, and on a phone it condenses
+   Behaviour is the old header's, unchanged: sticky below the strip, and on a phone it condenses
    on scroll (the eyebrow folds away, the name drops to one line, the pill to its glyph).
-   ⚠ TOKENS ONLY (`tests/unit/admin-kit-guard.test.ts`).
+   ⚠ TOKENS ONLY (`scripts/check-public-tokens.mjs`, `checkAdminKit` — the kit folder is held whole).
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */
 
 .header {

@@ -94,7 +94,7 @@ export default function AuditLogKit() {
   if (userRole !== 'owner') {
     return (
       <div className={ck.pageNarrow}>
-        <AdminPageHeader legacy={null} eyebrow={eyebrow} title="Audit log" backTo={{ href: membersHref, label: 'Members' }} />
+        <AdminPageHeader eyebrow={eyebrow} title="Audit log" backTo={{ href: membersHref, label: 'Members' }} />
         <div className={styles.empty}>
           <h2 className={styles.emptyTitle}>The audit log is the owner’s</h2>
           <p className={styles.emptyBody}>Only the organization’s owner can read who changed what about the board.</p>
@@ -129,7 +129,6 @@ export default function AuditLogKit() {
   return (
     <div className={ck.page}>
       <AdminPageHeader
-        legacy={null}
         eyebrow={eyebrow}
         title="Audit log"
         backTo={{ href: membersHref, label: 'Members' }}

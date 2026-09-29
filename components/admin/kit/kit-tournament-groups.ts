@@ -1,11 +1,11 @@
 /**
  * The tournament's nav groups as ONE person sees them — built once for the kit rail and the kit
- * phone bar (Admin Design Continuity slice 1, `/simplify`). Today's legacy pair each build this
- * themselves and disagree in a small way (the phone sheet role-filters only Setup; the rail every
- * group); harmless while `settings/event` is the only role-gated row, and exactly the drift that
- * lets a future gated row show on one nav and not the other. Pure: no hooks, no browser.
+ * phone bar (Admin Design Continuity slice 1, `/simplify`). The old console rail and phone bar
+ * (deleted in Part B, 2026-09-29) each built this themselves and disagreed in a small way (the phone
+ * sheet role-filtered only Setup; the rail every group) — exactly the drift that lets a gated row show
+ * on one nav and not the other. Pure: no hooks, no browser.
  *
- * In order: the Summary row joins Operations once the event is over (the legacy rule), the "See it
+ * In order: the Summary row joins Operations once the event is over (the old rails' rule), the "See it
  * live" sandbox's curated corners drop out (lib/sandbox-curation.ts), role-gated rows drop out for
  * roles that cannot open them, and a group left empty drops out entirely.
  */

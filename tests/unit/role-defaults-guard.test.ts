@@ -127,21 +127,19 @@ describe('D8 — "tournament-only" is decided from the plan', () => {
     assert.equal(isTournamentOnlyWorkspace(org('club', { subscriptionStatus: 'canceled' })), false);
   });
 
-  it('the hub, the sidebar and the post-login resolver all ask the plan helper, not the member', () => {
+  it('the hub, the rail and the post-login resolver all ask the plan helper, not the member', () => {
     const hub = read('app/[orgSlug]/admin/AdminHubClient.tsx');
     assert.match(hub, /isTournamentOnlyWorkspace\(currentOrg\)/);
     assert.doesNotMatch(hub, /!canSeePublicSite && !canSeeAccounting/, 'the hub derives tournament-only from the member again (A01)');
-    const sidebar = read('components/admin/AdminSidebar.tsx');
-    assert.match(sidebar, /isTournamentOnlyWorkspace\(currentOrg\)/);
-    assert.doesNotMatch(sidebar, /!canSeePublicSite && !canSeeAccounting/, 'the sidebar derives tournament-only from the member again (A01)');
     const resolver = read('lib/user-contexts.ts');
     assert.match(resolver, /isTournamentOnlyWorkspace\(entitlementOrg\)/);
-    // The Admin Design Continuity rail (slice 1) — its note said this line must move with Stage 1.
+    // The admin's rail and phone bar (Admin Design Continuity slice 1; the old console sidebar that this
+    // test also held was deleted in Part B, 2026-09-29).
     const kitNav = read('components/admin/kit/useAdminKitNav.ts');
     assert.match(kitNav, /isTournamentOnlyWorkspace\(currentOrg\)/);
-    // Both rails ask the ONE gate through the org context (`canOpen` → `canOpenModule`), never restate it.
+    assert.doesNotMatch(kitNav, /!canSeePublicSite && !canSeeAccounting/, 'the rail derives tournament-only from the member again (A01)');
+    // The rail asks the ONE gate through the org context (`canOpen` → `canOpenModule`), never restates it.
     assert.match(kitNav, /const canUse = canOpen;/, 'the kit rail should ask the ONE gate, not restate it');
-    assert.match(sidebar, /const canUseModule = canOpen;/, 'today\'s rail should ask the ONE gate, not restate it');
     assert.match(read('lib/org-context.tsx'), /canOpenModule\(\{ role: userRole, capabilities: userCapabilities \}, currentOrg, cap\)/);
   });
 

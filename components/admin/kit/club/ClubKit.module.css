@@ -6,7 +6,6 @@
    table standard's ground (`docs/agents/design/TABLE_AND_LIST_STANDARD.md`), the collapsed section,
    the fields, the settings switch row (a kit gap, ADC Phase 0) and the inline notices.
 
-   ⚠ KIT ONLY — every screen that uses this renders only with the switch on.
    ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder.
    ⚠ MONOSPACE ONLY ON EYEBROWS, CHIPS AND READOUTS (F2): headings, labels and buttons are the body face.
    ═══════════════════════════════════════════════════════════════════════════════════════════════ */

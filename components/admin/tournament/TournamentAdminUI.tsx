@@ -93,7 +93,6 @@ export function TournamentAdminHeader({
     return (
       <>
         <AdminPageHeader
-          legacy={null}
           crumbs={[crumb]}
           title={shownTitle}
           titleChips={meta}

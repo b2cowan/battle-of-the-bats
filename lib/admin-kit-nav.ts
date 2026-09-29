@@ -16,8 +16,10 @@
  * is not built yet), and a door to a page that does not do its job is the "404 wearing a politer
  * face" the portal forbids.
  *
- * ⚠ EVERY GATE IS TODAY'S GATE. Each row carries exactly the condition `AdminSidebar` /
- * `AdminBottomNav` / the org hub apply today — a restyle must not widen or narrow who sees a door.
+ * ⚠ EVERY GATE IS THE OLD FRAME'S GATE. Each row carries exactly the condition the old console rail,
+ * phone bar and org hub applied (the rail and bar were deleted in Admin Design Continuity Part B,
+ * 2026-09-29; this file is now the only statement of those gates) — a restyle must not widen or
+ * narrow who sees a door.
  * The ROWS are the drawing's, which is a different thing: ruling B12 gives Budget, Budget vs. Actual,
  * Payment requests, Assistant coaches and Shared library a rail row where today they are only tiles
  * on their program's first screen. Each of those pages checks the same capability as its program,
@@ -205,8 +207,8 @@ export function kitPrograms({
 export const ORGANIZATION_ICON: LucideIcon = Building2;
 
 /**
- * The Organization group — `AdminSidebar`'s org mode + the org hub's PDF settings tile, each with
- * the gate it has today. ⚠ "Plan & billing", not "Subscription": the rail said one thing and the
+ * The Organization group — the old console rail's org mode + the org hub's PDF settings tile, each
+ * with the gate it had there. ⚠ "Plan & billing", not "Subscription": the rail said one thing and the
  * page's own tab another; the ratified drawing settles it on the page's name (one spelling).
  */
 export function kitOrgLinks({
@@ -273,8 +275,9 @@ export function activeKitSection(pathname: string, base: string): AdminProgramKe
 /**
  * The tournament rail's labels in the kit's case (ADC specimens 2 and 4 draw "Event settings",
  * "Venues & facilities", "Past tournaments" — the coaches portal's sentence case). The SAME words;
- * only the capitals move. `admin-nav-config.ts` keeps today's labels for the legacy rail, which
- * renders them unchanged while the switch is off. Anything not listed is already in sentence case.
+ * only the capitals move. `admin-nav-config.ts` still holds the old console rail's Title Case, which
+ * that rail rendered; the rail went in Part B (2026-09-29), so the words can move into the config and
+ * this map can go — owed to the tournaments' Part B pass. Anything not listed is already in sentence case.
  */
 const KIT_TOURNAMENT_LABELS: Readonly<Record<string, string>> = {
   'Staff Kit': 'Staff kit',

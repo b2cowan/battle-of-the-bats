@@ -9,7 +9,7 @@ import { isTournamentTier } from '@/lib/billing-urls';
  * with no concept of an "org" — they live entirely within /admin/tournaments/ and
  * must never reach any /admin/org/ page (billing, members, venues, settings, etc.).
  * This server-side guard is the authoritative boundary; proxy.ts adds an earlier
- * redirect, and AdminSidebar hides the section in the nav.
+ * redirect, and the admin rail (`AdminKitRail`) hides the section in the nav.
  */
 export default async function OrgAdminLayout({
   params,

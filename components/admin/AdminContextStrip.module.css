@@ -1,5 +1,10 @@
 /* Docked above the bottom nav (its positioned ancestor). The nav is mobile-only
-   (display:none >900px), so this is implicitly mobile-only too. */
+   (display:none >900px), so this is implicitly mobile-only too.
+
+   On the kit (Admin Design Continuity slice 1; its layer folded into these rules in Part B, 2026-09-29) —
+   ADC specimen 4: "the strip above [the bar] keeps its content and becomes a white kit row": the card
+   tone between two hairlines, the one waiting thing in the body type and the secondary ink, its icon in
+   amber, the way in in olive. Same height, same content, same dismiss. ⚠ TOKENS ONLY (a kit file). */
 .strip {
   position: absolute;
   bottom: 100%;
@@ -10,12 +15,10 @@
   gap: 0.4rem;
   height: 44px;
   padding: 0 0.4rem 0 0.85rem;
-  /* Opaque chrome base + lime tint — the strip overlays the game list, so a
-     translucent background made the label hard to read. */
-  background-color: var(--hud-surface);
-  background-image: linear-gradient(rgba(var(--logic-lime-rgb), 0.14), rgba(var(--logic-lime-rgb), 0.14));
-  border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-bottom: 1px solid rgba(var(--logic-lime-rgb), 0.18);
+  /* Opaque: the strip overlays the page's foot, so a translucent ground made the label hard to read. */
+  background-color: var(--card-bg);
+  border-top: 1px solid var(--home-line);
+  border-bottom: 1px solid var(--home-line);
 }
 
 .action {
@@ -24,9 +27,9 @@
   gap: 0.5rem;
   flex: 1;
   min-width: 0;
-  color: var(--logic-lime);
+  color: var(--text-secondary);
   text-decoration: none;
-  font-family: var(--font-data);
+  font-family: var(--font-sans);
 }
 
 .action:active { opacity: 0.65; }
@@ -34,6 +37,7 @@
 .icon {
   display: inline-flex;
   flex-shrink: 0;
+  color: var(--home-amber);
 }
 
 .label {
@@ -42,15 +46,15 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  font-size: var(--type-body);
+  font-weight: 650;
+  letter-spacing: normal;
+  text-transform: none;
 }
 
 .arrow {
   flex-shrink: 0;
-  opacity: 0.7;
+  color: var(--home-olive);
 }
 
 .dismiss {
@@ -62,31 +66,9 @@
   flex-shrink: 0;
   border: none;
   background: transparent;
-  color: var(--data-gray);
+  color: var(--text-tertiary);
   cursor: pointer;
 }
 
-.dismiss:hover { color: var(--fl-text); }
+.dismiss:hover { color: var(--text-primary); }
 .dismiss:active { opacity: 0.6; }
-
-/* ── On the kit (Admin Design Continuity slice 1 — only with the switch on) ──
-   ADC specimen 4: "the strip above [the bar] keeps its content and becomes a white kit row" — the
-   card tone between two hairlines, the one waiting thing in the body type and the secondary ink, its
-   icon in amber, the way in in olive. Same height, same content, same dismiss. */
-:global([data-admin-kit]) .strip {
-  background-color: var(--card-bg);
-  background-image: none;
-  border-top: 1px solid var(--home-line);
-  border-bottom: 1px solid var(--home-line);
-}
-:global([data-admin-kit]) .action { color: var(--text-secondary); font-family: var(--font-sans); }
-:global([data-admin-kit]) .label {
-  font-size: var(--type-body);
-  font-weight: 650;
-  letter-spacing: normal;
-  text-transform: none;
-}
-:global([data-admin-kit]) .icon { color: var(--home-amber); }
-:global([data-admin-kit]) .arrow { color: var(--home-olive); opacity: 1; }
-:global([data-admin-kit]) .dismiss { color: var(--text-tertiary); }
-:global([data-admin-kit]) .dismiss:hover { color: var(--text-primary); }

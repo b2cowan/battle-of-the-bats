@@ -214,7 +214,6 @@ export default function BringInACoachsTeamPage({ params }: { params: Promise<{ o
 
   const header = (
     <AdminPageHeader
-      legacy={null}
       // Plain words, as drawn: an eyebrow link is a 14px tap target (the tournament eyebrow's ruling).
       crumbs={[{ label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
       title={BRING_IN_PAGE_TITLE}

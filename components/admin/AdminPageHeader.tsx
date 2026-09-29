@@ -14,22 +14,20 @@
  * that sat under a title moves to the body it describes; a required framing line moves into the card
  * it frames. Every move is listed in the slice's handoff — a fact is re-homed, never dropped.
  *
- * ⚠ BEHIND THE SWITCH. `legacy` is the page's own header exactly as it renders today, and it is
- * what renders while the switch is off (`useAdminKit()`), byte for byte — the identity check holds
- * that. The release slice deletes the prop and every page's legacy markup with it. Pages convert
- * as their area is restyled, not all at once (build prompt, slice 1).
+ * ⚠ `legacy` IS READ BY NOTHING (Admin Design Continuity Part B, 2026-09-29). It held each page's old
+ * header for the dev-only switch; since the release this header is the only one that renders. The prop
+ * stays accepted while the cleanup runs area by area — each area deletes its pages' old header markup
+ * in its own pass — and the last area deletes the prop. Never pass it on a new page.
  */
 import { Fragment, type ReactNode } from 'react';
 import Link from 'next/link';
 import { ArrowLeft } from 'lucide-react';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import styles from './AdminPageHeader.module.css';
 
 /** One step of the eyebrow's path: a way back when it has an `href`, plain words when it does not. */
 export type AdminCrumb = { href?: string; label: string };
 
 export default function AdminPageHeader({
-  legacy,
   eyebrow,
   crumbs,
   title,
@@ -37,8 +35,8 @@ export default function AdminPageHeader({
   actions,
   backTo,
 }: {
-  /** Today's header, rendered unchanged while the switch is off. */
-  legacy: ReactNode;
+  /** @deprecated Read by nothing — the page's old header, deleted by its area's Part B pass (above). */
+  legacy?: ReactNode;
   /** The program or tournament the page sits in. Never a count — that is a subtitle wearing a hat. */
   eyebrow?: ReactNode;
   /** The eyebrow as a PATH — "Rep Teams · Northfield Minor Ball", each step with an `href` a link back —
@@ -55,8 +53,6 @@ export default function AdminPageHeader({
   /** The way up, in the leading corner (the coach header's `backTo`, owner ruling 2026-08-26). */
   backTo?: { href: string; label: string };
 }) {
-  const kit = useAdminKit();
-  if (!kit) return <>{legacy}</>;
   const path = crumbs?.filter((c): c is AdminCrumb => !!c && !!c.label);
   const eyebrowContent = path?.length
     ? path.map((c, i) => (

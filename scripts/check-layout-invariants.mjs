@@ -1154,7 +1154,7 @@ for (const { session, clock, list } of groups) {
   //
   // The admin rail has the same trap (admin slice 0, 2026-09-25): a tournament's Setup group opens
   // only for a draft and Admin never by default, so an active tournament's sweep would measure the
-  // Operations rows alone. Its own key (`fl_nav_groups`, `AdminSidebar`) opens all three.
+  // Operations rows alone. Its own key (`fl_nav_groups`, `AdminKitRail`) opens all three.
   await context.addInitScript(() => {
     try {
       localStorage.setItem(

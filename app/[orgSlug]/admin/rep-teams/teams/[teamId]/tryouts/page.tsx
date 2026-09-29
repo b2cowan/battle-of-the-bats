@@ -287,7 +287,6 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
   const seasonChip = season ? <RepChip tone={isLive ? 'good' : 'neutral'}>{season.name} · {isLive ? 'Live' : 'Closed'}</RepChip> : null;
   const header = (
     <AdminPageHeader
-      legacy={null}
       backTo={{ href: teamBase, label: team?.name ?? 'Team' }}
       crumbs={[{ label: 'Rep Teams' }, team?.groupName ? { label: team.groupName } : null]}
       title="Tryouts"

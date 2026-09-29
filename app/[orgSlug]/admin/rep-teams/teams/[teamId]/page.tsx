@@ -138,7 +138,6 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
 
   const header = (chip?: React.ReactNode, actions?: React.ReactNode) => (
     <AdminPageHeader
-      legacy={null}
       backTo={{ href: base, label: 'Teams' }}
       crumbs={[{ label: 'Rep Teams' }, team?.groupName ? { label: team.groupName } : null]}
       title={team?.name ?? 'Team'}
@@ -156,7 +155,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
   if (loadError || !read || !team) {
     return (
       <div className={repKit.page}>
-        <AdminPageHeader legacy={null} backTo={{ href: base, label: 'Teams' }} crumbs={[{ label: 'Rep Teams' }]} title="Team" />
+        <AdminPageHeader backTo={{ href: base, label: 'Teams' }} crumbs={[{ label: 'Rep Teams' }]} title="Team" />
         {loadError?.notFound ? (
           <LoadFailed
             title={`This team isn’t in ${currentOrg?.name ?? 'your club'}.`}

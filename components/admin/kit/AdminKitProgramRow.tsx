@@ -5,8 +5,7 @@
  * for the whole club, so a program's pages cannot live in it the way today's per-module bars tried
  * to; they live here instead — the same list the desktop rail opens (`lib/admin-kit-nav.ts`).
  *
- * Phone only (the rail carries them above 900 — CSS), kit only (mounted by `AdminChrome` under the
- * switch), and only on a program's FIRST screen, as drawn. A program with one page has nothing to add.
+ * Phone only (the rail carries them above 900 — CSS), and only on a program's FIRST screen, as drawn. A program with one page has nothing to add.
  * The chrome mounts it keyed by the path, so it opens closed on every page.
  */
 import { useState } from 'react';

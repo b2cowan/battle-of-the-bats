@@ -736,7 +736,7 @@ body:has([data-chat-fullbleed]) {
    the sun. No account attribute in the selector, and the guest marker carries no
    [data-coach-warm-enabled], so the dark gate below never answers it. `:root` gives it (0,2,0), above
    R1's `[data-admin-kit]` block (0,1,0) on the same element — theme first, platform beneath, as for the
-   admin. Inert with the switch off: only `guestKitAttr` (lib/admin-kit-preview.ts) writes the attribute. */
+   admin. Only `guestKitAttr` (lib/admin-kit-preview.ts, through `GuestKitRoot`) writes the attribute. */
 :root [data-guest-kit],
 html[data-user-theme="warm"] [data-coach-warm-enabled] {
   /* Warm palette — mirrors warmTheme.module.css .warmVars (Round-1 ratified values). */
@@ -1095,14 +1095,16 @@ html[data-user-theme="dark"] [data-coach-warm-enabled] {
 
 /* ═══ THE ADMIN ON THE KIT (Admin Design Continuity, Phase 1) ═════════════════════════════════════
    Everything in this section keys off `[data-admin-kit]`, which ONLY the admin shell and (since slice 5)
-   the two volunteer shells carry, and ONLY while the dev switch is on (`lib/admin-kit-preview.ts`: false
-   in every production build, off by default on the dev server). The volunteer shells are platform
-   chrome too, so R1 below reaches them as intended; their palette is the warm block's, fixed
-   (`[data-guest-kit]`). With it off, not one rule here matches — the identity check
-   (`npm run identity:admin`) holds that every admin screen is pixel-identical. The shell carries
+   the two volunteer shells carry — in every build since the release (2026-09-28; the dev switch that
+   once decided it is gone). The volunteer shells are platform chrome too, so R1 below reaches them as
+   intended; their palette is the warm block's, fixed (`[data-guest-kit]`). The shell carries
    `[data-coach-warm-enabled]` beside it, so the warm block above (and the dark gate) apply to the
-   admin exactly as they do to the coaches portal. The release slice keeps these rules and deletes
-   the switch.
+   admin exactly as they do to the coaches portal.
+   ⚠ THIS IS A SURFACE'S SKIN, NOT A SWITCH-ERA LAYER — do not "fold" it into the base rules (Part B,
+   2026-09-29). The classes it restyles (`.btn`, `.badge`, `.card`, `.modal`, `.form-*`, the Tailwind
+   utilities) are GLOBAL: the public site, the marketing pages, the platform console and the coaches
+   portal wear them too. Scoped to the marker is how the admin differs from them, exactly as
+   `[data-coach-warm-enabled]` is how the coaches portal does.
 
    ── R1: THE ORGANIZATION'S COLOUR LEAVES THE ADMIN CHROME (owner ruling, 2026-09-25) ──
    `app/[orgSlug]/layout.tsx` writes the org's brand onto `:root` for the whole org tree, admin
@@ -1129,10 +1131,9 @@ html[data-user-theme="dark"] [data-coach-warm-enabled] {
    the Responsive block). The scorekeeper and the gate carry their own bars and compose their own bottom
    clearance (`--dayof-bottom-h`, DayOfShell.module.css), so under them that reservation is empty page:
    the body's near-black ground below the paper at tablet width, and a darker strip behind the phone's
-   translucent bars. It is there in today's dark too, where it barely shows; with the switch on it goes.
-   Nothing but `guestKitAttr` writes the attribute, so the switch-off page keeps its 72px.
-   ⚠ RELEASE SLICE: when the switch and its marker are deleted, re-anchor this on the shell itself
-   (`body > main:has(…DayOfShell .shell)`), or the band comes back on the day the kit ships. */
+   translucent bars. Nothing but `guestKitAttr` writes the attribute, so no other page loses its 72px.
+   (The switch-era note to re-anchor this on the shell "when the marker is deleted" is moot: the marker
+   stays — it is how the volunteer shells are told apart — Part B, 2026-09-29.) */
 @media (max-width: 900px) {
   body > main:has([data-guest-kit]) { padding-bottom: 0; }
 }
@@ -1638,10 +1639,10 @@ h1, h2, h3, h4, h5, h6 {
 /* ─── Card style variants (set via data-card-style on org layout wrapper) ─────
    ⚠ F1 (Admin Design Continuity, 2026-09-25): the org's card style is a PUBLIC-page setting, but the
    org layout stamps it on its whole tree, so a club that picked "glass" got glass on every one of its
-   admin's ~227 cards. Under the admin kit (`[data-admin-kit]`, switch on) the variants stop at the
-   admin shell. `:where()` carries ZERO specificity, so each rule weighs exactly what it always did
-   and nothing it used to beat (or lose to) changes; with the switch off `:not()` matches every card,
-   which is today's behaviour. A public preview inside the admin keeps the org's style: it is
+   admin's ~227 cards. Under the admin kit (`[data-admin-kit]`) the variants stop at the admin
+   shell. `:where()` carries ZERO specificity, so each rule weighs exactly what it always did and
+   nothing it used to beat (or lose to) changes; on the public pages `:not()` matches every card, as
+   it always has. A public preview inside the admin keeps the org's style: it is
    `[data-public-preview]`, and a card inside it is excluded from the exclusion. */
 [data-card-style="glass"] .card:where(:not([data-admin-kit] .card), [data-public-preview] .card) {
   background: rgba(26, 21, 48, 0.4);
@@ -1848,15 +1849,13 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 6px rgba(var(--danger-rgb), 0.7);
 }
 
-/* ═══ THE ADMIN'S SHARED PARTS ON THE KIT (Admin Design Continuity slice 2 — switch on only) ═══════
-   The admin shell's console overrides (`admin.module.css`: square flat buttons, 2px tags, mono lime
-   headings, the mono `.font-sans` shim, the `.btn-sm` shim) stop at the kit — each carries
-   `:where(:not([data-admin-kit] *))`, so they weigh and match exactly as before with the switch off.
-   With it on, the global recipes above and the warm skin show through, as they do in the coaches
-   portal, and these rules finish the job: type follows the kit (F2 — the body face on buttons and
-   labels, monospace only on eyebrows and chips) and the tags become the kit's chips.
-   Every rule keys off `[data-admin-kit]`: inert with the switch off (the identity check holds it).
-   ⚠ TOKENS ONLY. */
+/* ═══ THE ADMIN'S SHARED PARTS ON THE KIT (Admin Design Continuity slice 2) ═════════════════════════
+   The admin shell's old console overrides (`admin.module.css`: square flat buttons, 2px tags, mono lime
+   headings, the mono `.font-sans` shim, the `.btn-sm` shim) are gone (Part B, 2026-09-29), so the
+   global recipes above and the warm skin show through, as they do in the coaches portal, and these
+   rules finish the job: type follows the kit (F2 — the body face on buttons and labels, monospace only
+   on eyebrows and chips) and the tags become the kit's chips. Every rule keys off `[data-admin-kit]`
+   (the section header above says why they stay scoped). ⚠ TOKENS ONLY. */
 
 /* ── Buttons: the portal's own button (body face, 14px, sentence case as written, 6px corner) ──
    The portal's buttons (`coaches.module.css` `.btnPrimary`/`.btnSecondary`, 232 uses) wear the body
@@ -2011,15 +2010,15 @@ h1, h2, h3, h4, h5, h6 {
 .form-input::placeholder,
 .form-textarea::placeholder { color: var(--white-30); }
 
-/* ── The admin's form fields on the kit (Admin Design Continuity slice 4a — switch on only) ──
+/* ── The admin's form fields on the kit (Admin Design Continuity slice 4a) ──
    The global `.form-input` / `.form-select` / `.form-textarea` as the coaches portal's field (the
    recipe slice 3 gave its own fields by value): the card ground, the strong hairline, a 7px corner,
    the olive focus edge in place of the platform blue glow, and a placeholder in the tertiary ink —
    `--white-30` is a HAIRLINE in Warm (~1.4:1). The colours already followed the theme through their
    tokens; this finishes the recipe. Written at the kit marker's ZERO weight (`:where(…)`), after the
-   legacy rules, so it beats only them and never a page's own field style. Stops at a public preview.
-   Reaches every admin form with the switch on (Families, House league, Rep Teams, Accounting and the
-   tournament screens alike). ⚠ TOKENS ONLY. */
+   base rules, so it beats only them and never a page's own field style. Stops at a public preview.
+   Reaches every admin form (Families, House league, Rep Teams, Accounting and the tournament screens
+   alike). ⚠ TOKENS ONLY. */
 :where([data-admin-kit]) .form-input:where(:not([data-public-preview] *)),
 :where([data-admin-kit]) .form-select:where(:not([data-public-preview] *)),
 :where([data-admin-kit]) .form-textarea:where(:not([data-public-preview] *)) {
@@ -2433,11 +2432,11 @@ tbody tr:last-child td { border-bottom: none; }
   border-top: 1px solid rgba(var(--blueprint-blue-rgb), 0.25);
 }
 
-/* ── The admin's plain window on the kit (Admin Design Continuity slice 4a — switch on only) ──
+/* ── The admin's plain window on the kit (Admin Design Continuity slice 4a) ──
    The global `.modal` (the tournament screens' "Leave setup?" and other one-question windows) as the
    coaches portal's window: its scrim, the card ground, a hairline, a 12px corner, the display face on
    the title and the body face in the text. Written at the kit marker's ZERO weight (`:where(…)`), so
-   it beats only the legacy rules above (same weight, later) and never a window that already wears its
+   it beats only the base rules above (same weight, later) and never a window that already wears its
    own skin — `FeedbackModal`'s portal dialog (`[data-coach-warm-enabled] .dialog`) keeps its own.
    Stops at a public preview like every kit class rule. ⚠ TOKENS ONLY. */
 :where([data-admin-kit]) .modal-overlay:where(:not([data-public-preview] *)) { background: var(--home-scrim); }

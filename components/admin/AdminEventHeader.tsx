@@ -3,11 +3,11 @@
 /**
  * Shared admin header ("The Flip") — one persistent header across the whole admin shell (desktop +
  * mobile), so the flip door to the public side is always in the same top-right spot and never
- * disappears. Shows event identity (monogram + tournament name + live/open/draft state + a date-range
- * meta line) with the FlipPill anchored top-right; on non-tournament screens it shows the org instead
- * and the pill flips to the org's public site. Collapses to a slim name + state + pill strip on scroll
- * and expands back at the top — mirroring the public event header. Supersedes the old mobile top bar
- * and the floating desktop pill. Not rendered on focused shells (onboarding/help/preview).
+ * disappears. Shows event identity (an eyebrow with the org and the dates, the tournament name and its
+ * live/open/draft chip) with the FlipPill anchored top-right; on non-tournament screens it shows the org
+ * instead and the pill flips to the org's public site. On a phone it collapses to a slim name + chip +
+ * pill strip on scroll and expands back at the top — mirroring the public event header. Supersedes the
+ * old mobile top bar and the floating desktop pill. Not rendered on focused shells (onboarding/help/preview).
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -18,10 +18,8 @@ import { useOrg } from '@/lib/org-context';
 import { useTournament } from '@/lib/tournament-context';
 import { useAdminFlip } from '@/lib/use-admin-flip';
 import { resolvePhase, isWithinEventDates, PHASE_LABEL } from '@/lib/tournament-phase';
-import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import { kit as coachKit } from '@/components/coaches/kit';
-import styles from './AdminEventHeader.module.css';
-import kitStyles from './kit/AdminKitEventHeader.module.css';
+import styles from './kit/AdminKitEventHeader.module.css';
 
 /** Nearest scrollable ancestor (the app-shell scroll container on mobile), or null. */
 function getScrollParent(el: HTMLElement): HTMLElement | null {
@@ -55,7 +53,6 @@ export default function AdminEventHeader() {
   const { currentOrg } = useOrg();
   const { currentTournament } = useTournament();
   const flip = useAdminFlip();
-  const kit = useAdminKit();
   const ref = useRef<HTMLElement>(null);
   const [collapsed, setCollapsed] = useState(false);
 
@@ -135,60 +132,30 @@ export default function AdminEventHeader() {
       ? <Link href={titleHref} className={cls} title={`${title} — open dashboard`}>{title}</Link>
       : <span className={cls}>{title}</span>;
 
-  // ── The kit form (Admin Design Continuity slice 1, switch on) — ADC specimen 2: "today's event
-  // header, drawn as the kit's page header: an eyebrow, a title and one status chip. The same phase
-  // rule and the same dates; only the skin changes." The org and the dates share the eyebrow; the
-  // phase chip sits beside the name in the kit's chip (red for a live event, as drawn in specimen 4;
-  // olive while open; quiet otherwise). Same element, same ref, same collapse — the effects above
-  // serve both forms, so the sticky offset and the published height cannot drift between them.
-  if (kit) {
-    const tone = phase === 'gameday' ? coachKit.chipDanger : phase === 'open' ? coachKit.chipGood : kitStyles.chipNeutral;
-    const eyebrowLine = [eyebrow, sub].filter(Boolean).join(' · ');
-    return (
-      <header ref={ref} role="banner" className={`${kitStyles.header} ${collapsed ? kitStyles.collapsed : ''}`}>
-        <div className={kitStyles.row}>
-          <div className={kitStyles.identity}>
-            {eyebrowLine && <div className={kitStyles.eyebrow}>{eyebrowLine}</div>}
-            <div className={kitStyles.titleRow}>
-              {nameEl(kitStyles.name)}
-              {phaseLabel && (
-                <span className={`${coachKit.chip} ${kitStyles.chip} ${tone}`} data-phase={phase ?? undefined}>
-                  {phase === 'gameday' && <span className={kitStyles.dot} aria-hidden />}
-                  {phaseLabel}
-                </span>
-              )}
-            </div>
-          </div>
-          <FlipPill resolution={flip} variant="inline" compact={collapsed} className={kitStyles.pill} />
-        </div>
-      </header>
-    );
-  }
-
-  // ONE structure (no DOM swap on scroll — that caused the jitter). The eyebrow + meta rows fade via
-  // CSS on collapse, the name shrinks 2→1 line, and the pill drops to its ⇄ glyph — all transitioned.
+  // ADC specimen 2: "today's event header, drawn as the kit's page header: an eyebrow, a title and one
+  // status chip. The same phase rule and the same dates; only the skin changes." The org and the dates
+  // share the eyebrow; the phase chip sits beside the name in the kit's chip (red for a live event, as
+  // drawn in specimen 4; olive while open; quiet otherwise). One structure — no DOM swap on scroll (that
+  // caused the jitter): the collapse is a class, and the effects above publish the height it leaves.
+  const tone = phase === 'gameday' ? coachKit.chipDanger : phase === 'open' ? coachKit.chipGood : styles.chipNeutral;
+  const eyebrowLine = [eyebrow, sub].filter(Boolean).join(' · ');
   return (
     <header ref={ref} role="banner" className={`${styles.header} ${collapsed ? styles.collapsed : ''}`}>
-      {eyebrow && (
-        <div className={styles.eyebrowRow}>
-          <span className={styles.org}>{eyebrow}</span>
+      <div className={styles.row}>
+        <div className={styles.identity}>
+          {eyebrowLine && <div className={styles.eyebrow}>{eyebrowLine}</div>}
+          <div className={styles.titleRow}>
+            {nameEl(styles.name)}
+            {phaseLabel && (
+              <span className={`${coachKit.chip} ${styles.chip} ${tone}`} data-phase={phase ?? undefined}>
+                {phase === 'gameday' && <span className={styles.dot} aria-hidden />}
+                {phaseLabel}
+              </span>
+            )}
+          </div>
         </div>
-      )}
-      <div className={styles.mainRow}>
-        {nameEl(styles.name)}
         <FlipPill resolution={flip} variant="inline" compact={collapsed} className={styles.pill} />
       </div>
-      {(phaseLabel || sub) && (
-        <div className={styles.meta}>
-          {phaseLabel && (
-            <span className={styles.status} data-phase={phase ?? undefined}>
-              {phase === 'gameday' && <span className={styles.dot} aria-hidden />}
-              {phaseLabel}
-            </span>
-          )}
-          {sub && <span className={styles.date}>{sub}</span>}
-        </div>
-      )}
     </header>
   );
 }

@@ -462,7 +462,7 @@ export default function TournamentSummaryPage() {
           states the same tournament start/end dates. */}
       {kit ? (
         <div data-sandbox-tour="post-event-summary">
-          <AdminPageHeader crumbs={tournamentCrumbs} title="Post-event summary" legacy={null} />
+          <AdminPageHeader crumbs={tournamentCrumbs} title="Post-event summary" />
         </div>
       ) : (
         <div className={styles.pageHeader} data-sandbox-tour="post-event-summary">
