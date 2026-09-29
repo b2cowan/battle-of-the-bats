@@ -400,6 +400,24 @@ export function staffKindLabel(c: CoachCapabilities, storedKind?: StaffKind | nu
   return looksLikeHelper ? 'helper' : 'assistant';
 }
 
+/**
+ * The SENSITIVE grants a bundle holds, in words ("team money", "family contacts" …) — DISPLAY ONLY.
+ * The portal's staff sheet names them in its one-shot confirmations; the club's Coaches page names
+ * them on a person's window (Club Tier Stage 2, specimen 5: "their role, what they can open"). One
+ * list, so the club and the head coach call a grant the same thing.
+ */
+export function sensitiveGrantWords(c: CoachCapabilities): string[] {
+  const out: string[] = [];
+  if (c.money !== 'off') out.push('team money');
+  if (c.rosterPii) out.push('family contacts');
+  if (c.notes) out.push('internal notes');
+  if (c.announcementsSend) out.push('emailing families');
+  if (c.tryouts) out.push('tryouts');
+  if (c.tournaments) out.push('running tournaments');
+  if (c.manageStaff) out.push('managing staff');
+  return out;
+}
+
 /** The word on the row — "Head coach", or the kind's name from the one copy table. Display only. */
 export function staffKindWord(c: CoachCapabilities, storedKind?: StaffKind | null): string {
   const kind = staffKindLabel(c, storedKind);

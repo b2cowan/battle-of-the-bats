@@ -2921,12 +2921,6 @@ a.oneChip:hover { border-color: currentColor; }
   background: var(--home-olive-soft, rgba(255,255,255,0.06));
 }
 
-.teamCardTop {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-}
-
 .colorSwatch {
   width: 14px;
   height: 14px;
@@ -3004,14 +2998,6 @@ a.oneChip:hover { border-color: currentColor; }
   color: var(--text-primary);
   line-height: 1;
 }
-
-.summaryCardLink {
-  font-size: var(--type-support);
-  color: var(--blueprint-light);
-  margin-top: 0.25rem;
-  text-decoration: none;
-}
-.summaryCardLink:hover { text-decoration: underline; }
 
 /* ── Badges ─────────────────────────────────────────────────────────────── */
 .setupPanel {
@@ -6184,23 +6170,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
    shared CoachToolbarMenu, which brought the keyboard pattern, click-away and the focus hand-back
    with it — none of which the copy here had. The nesting mark it carried (a turn-down arrow under
    Tournament) moved to .itemNested in that component's own stylesheet. */
-
-.wltWidget {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-  /* Clear separation from the tile row above (no section header there anymore). */
-  margin-top: 1.5rem;
-  width: fit-content;
-  max-width: 100%;
-  background: var(--white-8);
-  /* Match the snapshot tiles so the two bands read as one system. */
-  border: 1px solid rgba(var(--blueprint-blue-rgb), 0.3);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm), var(--highlight-top);
-  padding: 0.85rem 1.15rem;
-  margin-bottom: 1.5rem;
-}
 .wltMain { display: flex; align-items: baseline; gap: 0.75rem; flex-wrap: wrap; }
 .wltScope { font-size: var(--type-support); color: var(--text-tertiary); }
 /* Recent form: last 5 W/L/T pips (oldest → newest) + a "Last: …" detail line. */
@@ -6276,12 +6245,6 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 }
 .wltBreakdownRow[data-on="false"] .wltBreakdownDot { background: transparent; }
 .wltBreakdownVal { color: var(--text-primary); font-variant-numeric: tabular-nums; }
-.wltLabel { font-size: var(--type-support); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-tertiary); }
-.wltRow { display: flex; align-items: baseline; gap: 0.4rem; }
-.wltW  { font-size: var(--type-figure); font-weight: 900; color: var(--success); line-height: 1; }
-.wltL  { font-size: var(--type-figure); font-weight: 900; color: var(--danger); line-height: 1; }
-.wltT  { font-size: var(--type-figure); font-weight: 900; color: var(--warning); line-height: 1; }
-.wltW small, .wltL small, .wltT small { font-size: var(--type-label); font-weight: 600; margin-left: 0.15rem; opacity: 0.7; }
 .wltSep { color: var(--white-20); font-size: var(--type-heading); } /* punctuation — see .statStripDot */
 
 .calNav { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }

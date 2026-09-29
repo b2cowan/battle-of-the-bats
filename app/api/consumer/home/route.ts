@@ -20,6 +20,7 @@ import { rollupFollowFeedByTournament, mergeWholeEventIntoRollup, type ConsumerH
 import { getWholeEventFollowCards, getOrgFollowRollups } from '@/lib/entity-follow-status';
 import { getCoachedRegistrationTeamIds } from '@/lib/basic-coach-teams';
 import { reconcilePendingInvitesForUser, listPendingInvitesForUser, withInvitationDetails } from '@/lib/invite-reconciliation';
+import { listPendingClubCoachInvitesForEmail } from '@/lib/assistant-invites';
 
 const EMPTY: ConsumerHomePayload = {
   signedIn: false,
@@ -40,10 +41,16 @@ export const GET = withObservability(async () => {
   // invite surfaces on Home (mirrors the retired /home launchpad). Idempotent — safe on load.
   await reconcilePendingInvitesForUser({ id: user.id, email: user.email, emailConfirmedAt: user.email_confirmed_at });
 
-  const [contexts, pendingInvites, follows, followedTournaments, followedOrgs, lapsed] = await Promise.all([
+  const [contexts, pendingInvites, coachInvites, follows, followedTournaments, followedOrgs, lapsed] = await Promise.all([
     getUserAccessContexts({ id: user.id, email: user.email }),
     // The card names who is asking and what the role opens (specimen 6).
     listPendingInvitesForUser(user.id).then(withInvitationDetails),
+    // A club's COACH invitations wait here too (Club Tier Stage 2, specimen 6 · 2b) — keyed on the
+    // CONFIRMED address only; an unconfirmed account answers from the emailed link instead. A failed
+    // read hides the list rather than failing Home.
+    user.email_confirmed_at
+      ? listPendingClubCoachInvitesForEmail(user.email).catch(() => [])
+      : Promise.resolve([]),
     getFollowedTeamsForUser(user.id),
     getFollowedTournamentsForUser(user.id),
     getFollowedOrgsForUser(user.id),
@@ -106,6 +113,7 @@ export const GET = withObservability(async () => {
       orgName: i.orgName,
       role: i.role,
     })),
+    coachInvites,
     workspaces: filterWorkspaceContexts(contexts),
     lapsed,
     // Raw follow count (post coach-dedupe) — carried alongside the enriched cards so the client

@@ -604,9 +604,8 @@ export default function TeamSettingsPage({
                   <div className={styles.settingRowMain}>
                     <span className={styles.settingRowLabel}>Start next season</span>
                     <span className={styles.settingRowDesc}>
-                      Your active roster carries forward; the schedule starts fresh; and {season.name} moves
-                      to its read-only Season&apos;s End page — the season wrap-up, plus every result and
-                      money record in the Insights archive.
+                      Your active roster carries forward; the schedule starts fresh; and {season.name} closes
+                      into one page — its wrap-up, results, roster, practices and money.
                     </span>
                   </div>
                   <div className={styles.settingRowCtl}>

@@ -103,6 +103,7 @@ export default async function AccountNotificationsPage({
         badgeLabel:        ctx.badgeLabel,
         subtitle:          'Coaches Portal',
         modules:           [],
+        clubTeam:          ctx.isTeamWorkspace !== true,
       });
     }
   }

@@ -26,15 +26,15 @@ const orgHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to set up your club',
       summary: 'Five steps to get a new club ready for its first season, tracked on one checklist.',
-      keywords: ['set up club', 'club setup', 'setup checklist', 'get ready for the season', 'staff your board', 'add your teams', 'head coach', 'public site', 'budget', 'families', 'club checklist', 'new club', 'club onboarding'],
-      searchText: 'set up your club setup checklist get club ready for the season five steps staff your board invite admin treasurer add your teams season head coach every team premium coaches portal put your club online tagline contact email public page plan the club budget what the season costs come back from overview families not a step household appears automatically house league tournaments one line shortcuts no founding season offer club already includes',
+      keywords: ['set up club', 'club setup', 'setup checklist', 'get ready for the season', 'staff your board', 'add your teams', 'head coach', 'public site', 'budget', 'families', 'club checklist', 'new club', 'club onboarding', 'invite a coach'],
+      searchText: 'set up your club setup checklist get club ready for the season five steps staff your board invite admin treasurer add your teams season head coach every team invite a coach first team without one coaches page premium coaches portal put your club online tagline contact email public page plan the club budget what the season costs come back from overview families not a step household appears automatically house league tournaments one line shortcuts no founding season offer club already includes',
       content: (
         <>
           <p>When you sign in as a Club owner for the first time, you land on a five-step checklist instead of the admin panel — <strong>Set up your club</strong>. Each step opens the screen that does the job, and a step is marked done only once it genuinely is.</p>
           <ol>
             <li><strong>Staff your board.</strong> Invite an admin and a treasurer so the work isn&rsquo;t all yours.</li>
             <li><strong>Add your teams.</strong> Each team, and the season it&rsquo;s playing.</li>
-            <li><strong>Name a head coach for every team.</strong> Each coach gets the Premium Coaches Portal, included in your plan.</li>
+            <li><strong>Name a head coach for every team.</strong> Each coach gets the Premium Coaches Portal, included in your plan. <strong>Invite a coach</strong> opens the first team still without one — its Coaches page, where you enter their email.</li>
             <li><strong>Put your club online.</strong> Add a tagline and a contact email to your public page.</li>
             <li><strong>Plan the club&rsquo;s budget.</strong> What the season costs, and what each team contributes.</li>
           </ol>
@@ -47,8 +47,8 @@ const orgHelp: HelpPageContent = {
       id: 'roles',
       heading: 'Roles explained — who can do what',
       summary: 'What each role can open, at a glance, then Owner, Admin, Treasurer, Staff, League Admin, League Registrar, Coach, and Scorekeeper one by one.',
-      keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'coach', 'scorekeeper', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families'],
-      searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner only what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows',
+      keywords: ['roles', 'permissions', 'owner', 'admin', 'staff', 'treasurer', 'league admin', 'registrar', 'team manager', 'coach', 'scorekeeper', 'what each role can open', 'role guide', 'plan & billing', 'billing', 'audit log', 'families'],
+      searchText: 'roles permissions who can do what owner admin staff treasurer league admin league registrar rep club no registrar team manager forms documents coach scorekeeper capabilities grant revoke org settings plan and billing subscription owner only what each role can open role guide table rep teams accounting public site house league tournaments families members audit log locked owner only rows',
       content: (
         <p>Every member of your organization holds one of these roles, and the role decides what they can open. Owners can grant or remove individual programs for any member from <strong>Members → Manage</strong>.</p>
       ),
@@ -102,6 +102,7 @@ const orgHelp: HelpPageContent = {
                 <li><strong>Coach</strong> — Accesses the Coaches Portal for their assigned rep team. Cannot access the main admin panel.</li>
                 <li><strong>Scorekeeper</strong> — Submits scores for assigned tournaments via Scorekeeper View at <code>/{'{orgSlug}'}/scorekeeper</code>. Doesn&rsquo;t access the admin panel at all.</li>
               </ul>
+              <p><strong>A rep club has no registrar role.</strong> The registration-type work on a rep team — forms, documents, keeping the roster tidy — belongs to that team&rsquo;s <strong>team manager</strong>: a staff member the head coach adds on the team&rsquo;s <strong>Staff</strong> page in the Coaches Portal. League Registrar is for house league only.</p>
               <p>Owners can grant or revoke individual programs on any member from <strong>Members → Manage</strong> — a chip on their row marks anything different from their role&rsquo;s defaults.</p>
             </>
           ),

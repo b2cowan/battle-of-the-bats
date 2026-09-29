@@ -36,6 +36,7 @@ import { canConfigureTeam, canManageStaff, hasNoTeamRecordAccess, hasRecordAcces
 import { isInRunWindow, practicePlanState } from '@/lib/practice-state';
 import { nextOpenEvent } from '@/lib/coach-next-event';
 import CoachOneThingCard from '@/components/coaches/CoachOneThingCard';
+import CoachClubArrivalCard from '@/components/coaches/CoachClubArrivalCard';
 import { CoachRow } from '@/components/coaches/CoachRowList';
 import { CoachFigureRows, CoachFigureRow } from '@/components/coaches/CoachFigureRows';
 import { tallyResults, formatRecord } from '@/lib/coach-season-record';
@@ -2003,6 +2004,10 @@ export default function TeamOverviewPage({
           incomplete. <button type="button" className={styles.loadErrorRetry} onClick={() => void loadSetup()}>Try again</button>
         </p>
       )}
+
+      {/* A club team's one-time card (Club Tier Stage 2, specimens 4 and 6): the club started a new
+          season, or welcomed a coach it invited. Never a season door — the club holds those. */}
+      {!isTeamWorkspace && <CoachClubArrivalCard orgSlug={orgSlug} teamId={teamId} />}
 
       {/* ══ THE ONE THING ══════════════════════════════════════════════════════
           Exactly one card. Which one is the resolver's decision; this renders it in one of three

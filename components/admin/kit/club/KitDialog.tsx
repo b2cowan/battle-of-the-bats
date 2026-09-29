@@ -56,6 +56,7 @@ function unlockPageScroll() {
 export default function KitDialog({
   kind,
   title,
+  eyebrow,
   identity,
   onClose,
   children,
@@ -65,6 +66,8 @@ export default function KitDialog({
 }: {
   kind: 'question' | 'form';
   title: ReactNode;
+  /** The record the window is about, ABOVE the title ("9U A" over "Start the 2027 Season?"). */
+  eyebrow?: ReactNode;
   /** A form's identity line under its title (Manage: "sam@example.com · Admin since August 2026").
    *  Not a page header, so it keeps its second line (hub v8). */
   identity?: ReactNode;
@@ -115,6 +118,7 @@ export default function KitDialog({
             </button>
           )}
           <div className={styles.titleBlock}>
+            {eyebrow && <p className={styles.eyebrow}>{eyebrow}</p>}
             <h2 id={titleId} className={styles.title}>{title}</h2>
             {identity && <p className={styles.identity}>{identity}</p>}
           </div>

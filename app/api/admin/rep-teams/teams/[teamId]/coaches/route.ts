@@ -3,7 +3,7 @@ import { resolveClubTeam } from '@/lib/club-team-route';
 import { memberDisplayName } from '@/lib/member-names';
 import { getTeamStaffPanelList, resolveMembershipCapabilities, resolveWorkingProgramYear } from '@/lib/coach-membership';
 import {
-  STAFF_KIND_COPY, STAFF_PRESETS, applyOrgGrantPolicy, staffKindWord,
+  STAFF_KIND_COPY, STAFF_PRESETS, applyOrgGrantPolicy, sensitiveGrantWords, staffKindWord,
 } from '@/lib/coach-capabilities';
 import {
   createAssistantInvite, listOpenAssistantInvitesForTeam, sendClubCoachInviteEmail, type InviteCoachRole,
@@ -51,17 +51,22 @@ export const GET = withObservability(async (req: Request,
     listOpenAssistantInvitesForTeam(team.id, 'club'),
   ]);
   const now = Date.now();
-  const staff = members.map(m => ({
-    membershipId: m.id,
-    userId: m.userId,
-    name: m.displayName,
-    email: m.email,
-    coachRole: m.coachRole,
-    staffKind: m.staffKind,
-    /** "Head coach", "Assistant coach", "Team manager"… — the portal's own word for the row. */
-    kindWord: staffKindWord(resolveMembershipCapabilities(m), m.staffKind),
-    since: m.createdAt,
-  }));
+  const staff = members.map(m => {
+    const caps = resolveMembershipCapabilities(m);
+    return {
+      membershipId: m.id,
+      userId: m.userId,
+      name: m.displayName,
+      email: m.email,
+      coachRole: m.coachRole,
+      staffKind: m.staffKind,
+      /** "Head coach", "Assistant coach", "Team manager"… — the portal's own word for the row. */
+      kindWord: staffKindWord(caps, m.staffKind),
+      since: m.createdAt,
+      /** The sensitive grants they hold, in the portal's words (the person window's "what they can open"). */
+      opens: caps.isHeadCoach ? [] : sensitiveGrantWords(caps),
+    };
+  });
   const invitations = invites.map(i => ({
     id: i.id,
     email: i.invitedEmail,
@@ -77,6 +82,7 @@ export const GET = withObservability(async (req: Request,
     expired: new Date(i.expiresAt).getTime() < now,
   }));
   return NextResponse.json({
+    team: { id: team.id, name: team.name, groupName: team.groupName ?? null },
     staff,
     invitations,
     hasHeadCoach: staff.some(s => s.coachRole === 'head_coach'),

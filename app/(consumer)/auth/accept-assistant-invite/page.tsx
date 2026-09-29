@@ -149,6 +149,14 @@ function AcceptForm() {
     ? { inviteVerb: 'to coach', asA: 'head coach' }
     : STAFF_KIND_COPY[invite.staffKind ?? 'assistant'];
   const verb = kind.inviteVerb;
+  /**
+   * ⚖ THE CLUB'S INVITATION wears Stage 1's accept page (Club Tier Stage 2, specimen 6 · 2a/2b): the
+   * club, the team, the role and the inviter in the first frame — "NORTHFIELD MINOR BALL / Coach 10U A
+   * as head coach / Dana Whitfield invited you." A head coach's own staff invites keep their words.
+   */
+  const club = invite.sentBy === 'club';
+  const clubTitle = `${verb.replace(/^to /, '').replace(/^./, c => c.toUpperCase())} ${teamLabel} as ${kind.asA}`;
+  const clubInviter = invite.invitedByName ? `${invite.invitedByName} invited you.` : `${invite.orgName ?? 'The club'} invited you.`;
 
   const loginHref = `/auth/login?next=${encodeURIComponent(`/auth/accept-assistant-invite?token=${token}`)}&email=${encodeURIComponent(invite.invitedEmail)}`;
 
@@ -188,13 +196,16 @@ function AcceptForm() {
       <div className={styles.card}>
         <div className={styles.header}>
           <div className={styles.iconWrap}><UserPlus size={20} /></div>
-          <h1 className={styles.title}>Join {teamLabel}</h1>
-          <p className={styles.sub}>{byLabel} {verb} <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as {kind.asA}.</p>
+          {club && invite.orgName && <p className={styles.sub} style={{ marginBottom: '0.4rem' }}>{invite.orgName}</p>}
+          <h1 className={styles.title}>{club ? clubTitle : `Join ${teamLabel}`}</h1>
+          <p className={styles.sub}>
+            {club ? clubInviter : <>{byLabel} {verb} <strong>{teamLabel}</strong>{invite.orgName ? ` at ${invite.orgName}` : ''} as {kind.asA}.</>}
+          </p>
         </div>
         <div className={styles.form}>
           {error && <div className={styles.error}>{error}</div>}
           <button type="button" className="btn btn-lime" style={{ width: '100%' }} disabled={busy} onClick={acceptForSignedInUser}>
-            {busy ? 'Joining…' : 'Accept & join team'}
+            {busy ? 'Joining…' : club ? `Accept and join ${teamLabel}` : 'Accept & join team'}
           </button>
         </div>
       </div>
@@ -242,8 +253,11 @@ function AcceptForm() {
     <div className={styles.card}>
       <div className={styles.header}>
         <div className={styles.iconWrap}><UserPlus size={20} /></div>
-        <h1 className={styles.title}>Set up your account</h1>
-        <p className={styles.sub}>{byLabel} {verb} <strong>{teamLabel}</strong> as {kind.asA}. Create your account to accept.</p>
+        {club && invite.orgName && <p className={styles.sub} style={{ marginBottom: '0.4rem' }}>{invite.orgName}</p>}
+        <h1 className={styles.title}>{club ? clubTitle : 'Set up your account'}</h1>
+        <p className={styles.sub}>
+          {club ? `${clubInviter} Set a password to finish.` : <>{byLabel} {verb} <strong>{teamLabel}</strong> as {kind.asA}. Create your account to accept.</>}
+        </p>
       </div>
       <form onSubmit={createAccountAndAccept} className={styles.form}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
@@ -273,7 +287,7 @@ function AcceptForm() {
         </div>
         {error && <div className={styles.error}>{error}</div>}
         <button type="submit" className="btn btn-lime" style={{ width: '100%' }} disabled={busy}>
-          {busy ? 'Setting up…' : 'Create account & join'}
+          {busy ? 'Setting up…' : club ? `Create password and join ${teamLabel}` : 'Create account & join'}
         </button>
       </form>
       <div className={styles.footer}>

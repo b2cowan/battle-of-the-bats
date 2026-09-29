@@ -7,6 +7,7 @@ import {
 } from './coach-capabilities';
 import { sendEmail, assistantCoachInviteHtml, clubCoachInviteHtml, clubCoachInviteSubject } from './email';
 import { notify } from './notify';
+import type { ConsumerHomeCoachInvite } from './home-following';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
 
@@ -486,6 +487,41 @@ export async function acceptAssistantInvite(
     .maybeSingle<AssistantInviteRow>();
 
   if (!row) return { ok: false, error: 'This invite link is not valid.', status: 404 };
+  return acceptInviteRow(row, userId, userEmail);
+}
+
+/**
+ * The home page's door to the SAME accept (Club Tier Stage 2, specimen 6 · 2b: a club's coach
+ * invitation waits on the invitee's home page, as Stage 1's member invitations do). Found by id
+ * instead of by the emailed link; every check after that is the link's own (`acceptInviteRow`),
+ * including the one that matters most here — the invite's address must be the signed-in account's.
+ * ⚠ The caller must also hold a CONFIRMED email (the route checks it): the confirmed address is the
+ * proof the link's possession was. The lookup is narrowed to what this door is for — a CLUB's
+ * invitation addressed to this account — so an id alone never reaches another invitation, and the
+ * link's "sent to {address}" refusal never answers someone the invite wasn't for (/review).
+ */
+export async function acceptAssistantInviteById(
+  inviteId: string,
+  userId: string,
+  userEmail: string,
+): Promise<Awaited<ReturnType<typeof acceptAssistantInvite>>> {
+  const { data: row } = await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .select('*')
+    .eq('id', inviteId)
+    .eq('sent_by', 'club')
+    .eq('invited_email', userEmail.trim().toLowerCase())
+    .maybeSingle<AssistantInviteRow>();
+  if (!row) return { ok: false, error: 'This invitation is no longer available.', status: 404 };
+  return acceptInviteRow(row, userId, userEmail);
+}
+
+/** The accept itself, once the invitation row is in hand (by link or by id). */
+async function acceptInviteRow(
+  row: AssistantInviteRow,
+  userId: string,
+  userEmail: string,
+): Promise<Awaited<ReturnType<typeof acceptAssistantInvite>>> {
   if (row.status === 'accepted') return { ok: false, error: 'This invite has already been used.', status: 409 };
   if (row.status !== 'pending') return { ok: false, error: 'This invite is no longer available.', status: 409 };
   if (new Date(row.expires_at).getTime() < Date.now()) {
@@ -595,5 +631,69 @@ export async function acceptAssistantInvite(
     ok: true, orgSlug: org.data.slug, teamId: row.team_id, staffKind,
     coachRole: seated, sentBy: row.sent_by === 'club' ? 'club' : 'portal',
     invitedByUserId: row.invited_by_user_id, teamName: row.team_name,
+  };
+}
+
+/** A club's coach invitation, as the invitee's home page shows it (Club Tier Stage 2, specimen 6 · 2b).
+ *  One shape with the home payload's own (a client-safe module), so the two can't drift (/review). */
+export type ClubCoachInviteForHome = ConsumerHomeCoachInvite;
+
+/**
+ * The club's coach invitations still waiting for this address — pending, unexpired, sent by a club
+ * (a head coach's own staff invites keep their emailed link alone, as before). Keyed on the
+ * CONFIRMED address of the signed-in account, never a client-supplied one.
+ */
+export async function listPendingClubCoachInvitesForEmail(email: string): Promise<ClubCoachInviteForHome[]> {
+  const address = email.trim().toLowerCase();
+  if (!address) return [];
+  const { data, error } = await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .select('id, org_id, coach_role, invited_by_name, team_name, created_at, expires_at')
+    .eq('invited_email', address)
+    .eq('status', 'pending')
+    .eq('sent_by', 'club')
+    .gt('expires_at', new Date().toISOString())
+    .order('created_at', { ascending: false });
+  if (error) throw error;
+  const rows = (data ?? []) as { id: string; org_id: string; coach_role: InviteCoachRole; invited_by_name: string | null; team_name: string | null; created_at: string }[];
+  if (rows.length === 0) return [];
+  const { data: orgs } = await supabaseAdmin
+    .from('organizations').select('id, name').in('id', [...new Set(rows.map(r => r.org_id))]);
+  const orgName = new Map(((orgs ?? []) as { id: string; name: string }[]).map(o => [o.id, o.name]));
+  return rows.map(r => ({
+    inviteId: r.id,
+    orgName: orgName.get(r.org_id) ?? null,
+    teamName: r.team_name,
+    coachRole: r.coach_role === 'head_coach' ? 'head_coach' : 'assistant_coach',
+    invitedByName: r.invited_by_name,
+    invitedAt: r.created_at,
+  }));
+}
+
+/**
+ * The invitee DECLINES a club's coach invitation from their home page. A conditional flip (still
+ * pending, still theirs, still the club's), so a decline racing an accept or a cancel changes
+ * nothing. Recorded as `revoked` — the status a cancelled invitation already takes; nothing reads the
+ * difference, and the club is TOLD (the caller sends `club_coach_declined`). Returns the invitation,
+ * or null when there was nothing to decline.
+ */
+export async function declineClubCoachInvite(
+  inviteId: string,
+  userEmail: string,
+): Promise<{ orgId: string; teamId: string; coachRole: InviteCoachRole; invitedByUserId: string; teamName: string | null } | null> {
+  const address = userEmail.trim().toLowerCase();
+  const { data } = await supabaseAdmin
+    .from('assistant_invite_tokens')
+    .update({ status: 'revoked' })
+    .eq('id', inviteId)
+    .eq('status', 'pending')
+    .eq('sent_by', 'club')
+    .eq('invited_email', address)
+    .select('org_id, team_id, coach_role, invited_by_user_id, team_name')
+    .maybeSingle<{ org_id: string; team_id: string; coach_role: InviteCoachRole; invited_by_user_id: string; team_name: string | null }>();
+  if (!data) return null;
+  return {
+    orgId: data.org_id, teamId: data.team_id, coachRole: data.coach_role === 'head_coach' ? 'head_coach' : 'assistant_coach',
+    invitedByUserId: data.invited_by_user_id, teamName: data.team_name,
   };
 }

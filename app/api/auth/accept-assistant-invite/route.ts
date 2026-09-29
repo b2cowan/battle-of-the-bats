@@ -2,10 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAuthenticatedUser } from '@/lib/api-auth';
 import { getAssistantInviteByToken, acceptAssistantInvite } from '@/lib/assistant-invites';
 import { authAccountExistsForEmail } from '@/lib/auth-account-lookup';
-import { getRepTeam } from '@/lib/db';
-import { listActiveStaffUserIds } from '@/lib/coach-membership';
-import { STAFF_KIND_COPY } from '@/lib/coach-capabilities';
-import { notify } from '@/lib/notify';
+import { tellInviteAccepted } from '@/lib/assistant-invite-notices';
 import { withObservability } from '@/lib/observability';
 
 // GET — invite preview for the accept page (public; the invitee may not be signed in yet).
@@ -73,47 +70,8 @@ export const POST = withObservability(async (req: Request) => {
   const result = await acceptAssistantInvite(token, user.id, user.email ?? '');
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
 
-  // Tell the people who need to know (their bell). Best-effort — the join itself has landed.
-  //  · An ASSISTANT seat: the team's head coach(es). ⚠ Read from team MEMBERSHIP (Club Tier Stage 2):
-  //    this read the live season's record rows, so between seasons it told nobody.
-  //  · A seat the CLUB offered (mig 312): the person at the club who sent it, in the club's words.
-  try {
-    const team = await getRepTeam(result.teamId);
-    if (team) {
-      const who = user.email ?? 'Someone';
-      if (result.coachRole === 'assistant_coach') {
-        const headUserIds = await listActiveStaffUserIds(result.teamId, { headCoachesOnly: true });
-        if (headUserIds.length > 0) {
-          const copy = STAFF_KIND_COPY[result.staffKind ?? 'assistant'];
-          await notify({
-            orgId: team.orgId,
-            eventType: 'assistant_coach_joined',
-            title: `${copy.name} joined`,
-            body: result.sentBy === 'club'
-              ? `${who} accepted the club’s invite and joined as ${copy.asA}.`
-              : `${who} accepted your invite and joined as ${copy.asA}.`,
-            userIds: headUserIds,
-            excludeUserIds: [user.id],
-            link: `/${result.orgSlug}/coaches/teams/${result.teamId}/settings`,
-          });
-        }
-      }
-      if (result.sentBy === 'club') {
-        const seat = result.coachRole === 'head_coach' ? 'head coach' : 'an assistant coach';
-        await notify({
-          orgId: team.orgId,
-          eventType: 'club_coach_joined',
-          title: result.coachRole === 'head_coach'
-            ? `${team.name} has its head coach`
-            : `A coach joined ${team.name}`,
-          body: `${who} accepted your invitation and joined ${team.name} as ${seat}.`,
-          userIds: [result.invitedByUserId],
-          excludeUserIds: [user.id],
-          link: `/${result.orgSlug}/admin/rep-teams/teams/${result.teamId}`,
-        });
-      }
-    }
-  } catch { /* notification is best-effort */ }
+  // Tell the people who need to know — the one helper both answer doors share (the home card too).
+  await tellInviteAccepted(result, user);
 
   return NextResponse.json({ ok: true, orgSlug: result.orgSlug, teamId: result.teamId });
 }, { route: '/api/auth/accept-assistant-invite' });

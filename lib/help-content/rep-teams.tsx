@@ -4,23 +4,24 @@ import { HelpNote } from '@/components/help/HelpBlocks';
 const repTeamsHelp: HelpPageContent = {
   title: 'Rep Teams',
   role: 'Admin, Owner',
-  intro: 'Rep Teams manages competitive travel teams through a franchise model — your org creates and oversees teams at the top level, while coaches operate their teams day-to-day from their team workspace. It is part of the Club plan, which includes the Premium Coaches Portal for your whole coaching staff — every team, no per-team fee. (A coach can also run a single team independently on the standalone Premium Coaches Portal.)',
+  intro: 'Rep Teams is where your club runs its competitive teams. The club owns each team — its name, group, seasons and coaches — and each team’s coaches run it day-to-day in their Coaches Portal. It is part of the Club plan, which includes the Premium Coaches Portal for your whole coaching staff — every team, no per-team fee. (A coach can also run a single team independently on the standalone Premium Coaches Portal.)',
   sections: [
     {
       id: 'franchise-model',
       group: 'Getting started',
-      heading: 'The franchise model explained',
-      summary: 'Org HQ sets up and oversees teams; coaches operate their own team day-to-day.',
-      keywords: ['franchise model', 'org hq', 'coach operator', 'rep team', 'oversight'],
-      searchText: 'franchise model org hq coach operator rep team oversight tryouts allocations documents program year coaches portal scoped team',
+      heading: 'What the club runs, and what the coach runs',
+      summary: 'The club owns each team, its seasons and its coaches; the team’s coaches run it day-to-day in their portal.',
+      keywords: ['franchise model', 'what the club sees', 'club owns', 'coach runs', 'rep team', 'oversight', 'attendance', 'lineups', 'what can the club see'],
+      searchText: 'franchise model what the club sees yours to run the coach’s and you can read it the coach’s alone club owns team name division colour group seasons coaches tryout sign-ups documents allocations payment requests roster schedule results attendance lineups awards development opponents scouting practice plans cannot see attendance',
       content: (
         <>
-          <p>FieldLogicHQ separates rep team management into two layers:</p>
+          <p>Every team page has a <strong>What the club sees</strong> panel that says this in three columns:</p>
           <ul>
-            <li><strong>Org HQ (you)</strong> — creates teams, runs tryouts, sets cost allocations, publishes document templates, and controls the program-year lifecycle.</li>
-            <li><strong>Coach operators</strong> — manage their assigned team day-to-day from their team workspace: roster, schedule, and team finances. Coaches see only their own team.</li>
+            <li><strong>Yours to run</strong> — the team&apos;s name, division, colour and group; its seasons (start, close, reopen); its coaches; tryout sign-ups; the documents families sign; allocations and payment-request decisions.</li>
+            <li><strong>The coach&apos;s, and you can read it</strong> — the roster, the schedule and results, payment requests, how many families are connected, and a closed season&apos;s record, roster and staff.</li>
+            <li><strong>The coach&apos;s alone</strong> — attendance, lineups, awards, player development, opponents and scouting, and practice plans.</li>
           </ul>
-          <p>This separation keeps org-level decisions centralized while giving coaches the autonomy they need to operate efficiently.</p>
+          <p>A team&apos;s coaches never get season buttons: the club starts and closes a club team&apos;s seasons, and the coaches are told each time.</p>
         </>
       ),
     },
@@ -28,51 +29,98 @@ const repTeamsHelp: HelpPageContent = {
       id: 'plans-access',
       group: 'Getting started',
       heading: 'Plans and access',
-      summary: 'Rep Teams is a Club-plan module; some actions are owner/treasurer-only.',
-      keywords: ['club plan', 'add-on', 'access', 'owner', 'treasurer', 'admin', 'coach access'],
-      searchText: 'rep teams club plan add-on access owner treasurer admin permission cost allocation owner treasurer only coach scoped per-team billing entitlement module',
+      summary: 'Rep Teams is a Club-plan module; owners and admins run teams, seasons and coaches.',
+      keywords: ['club plan', 'add-on', 'access', 'owner', 'treasurer', 'admin', 'coach access', 'team manager', 'registrar'],
+      searchText: 'rep teams club plan add-on access owner treasurer admin permission cost allocation owner treasurer only coach scoped team group limit registrar team manager',
       content: (
         <>
           <p>Rep Teams is included with the <strong>Club</strong> plan. If your org doesn&apos;t have it, the module is hidden.</p>
-          <p>Within the module, access varies by role:</p>
           <ul>
-            <li><strong>Owners and admins</strong> — create teams and program years, run tryouts, publish document templates, and move program years through their lifecycle.</li>
-            <li><strong>Owners and treasurers only</strong> — create and change <strong>cost allocations</strong>. Admins can view allocations but not create them.</li>
-            <li><strong>Coaches</strong> — operate their assigned team from their team workspace, scoped to that team and program year. You don&apos;t need to make a coach a full admin to give them their team.</li>
+            <li><strong>Owners and admins</strong> — add teams, start and close seasons, invite coaches, run tryout sign-ups and publish document templates. An admin limited to some team groups sees only those groups&apos; teams.</li>
+            <li><strong>Owners and treasurers only</strong> — create and change <strong>cost allocations</strong>.</li>
+            <li><strong>Coaches</strong> — run their own team in their Coaches Portal and see only that team. A coach is never made a club admin to get their team.</li>
           </ul>
+          <p>A rep club doesn&apos;t need a registrar: the paperwork a registrar does elsewhere belongs to each team&apos;s <strong>team manager</strong>, whom the head coach adds from the team&apos;s Staff page.</p>
+        </>
+      ),
+    },
+    {
+      id: 'team-board',
+      group: 'Getting started',
+      heading: 'Reading the Teams board',
+      summary: 'One row per team: its season and record, head coach, roster, next event and documents — and what only the club can fix, in red.',
+      keywords: ['teams board', 'health board', 'no head coach', 'no players', 'invited', 'documents column', 'next event', 'team list'],
+      searchText: 'rep teams board health board one row per team season live closed record head coach no head coach invited roster no players next event documents signed of players band rows groups ungrouped archived filter phone cards',
+      content: (
+        <>
+          <p><strong>Rep Teams</strong> lists every team, grouped by team group, one row each:</p>
+          <ul>
+            <li><strong>Season</strong> — Live (a season is running) or Closed, with the record (12-8-1) under it.</li>
+            <li><strong>Head coach</strong> — who is in place. A red <strong>No head coach</strong> means nobody is; an amber <strong>Invited</strong> means an invitation is waiting for an answer.</li>
+            <li><strong>Roster</strong> — the players on the live season. A live season with nobody on it shows a red <strong>No players</strong>.</li>
+            <li><strong>Next event</strong> — the next thing on the coach&apos;s schedule.</li>
+            <li><strong>Documents</strong> — how many players on the live season have signed every club template that applies to the team. A new season starts at zero, because families sign again each season.</li>
+          </ul>
+          <p>The team&apos;s name opens its page, and so does the arrow at the end of the row. Use the filter to see one group, <strong>Ungrouped</strong>, or <strong>Archived</strong> teams.</p>
         </>
       ),
     },
     {
       id: 'recipe-create-team-program-year',
       group: 'How-to recipes',
-      heading: 'How to create a rep team and program year',
-      summary: 'Set up the team once, then create a program year for each competitive season.',
-      keywords: ['create rep team', 'program year', 'season', 'team setup', 'active year', 'team billing'],
-      searchText: 'create rep team add team program year competitive season slug active draft completed archived roster tryouts documents coaches description group per-team billing club',
+      heading: 'How to add a team and start its first season',
+      summary: 'Add the team once, start its first season, then invite its head coach.',
+      keywords: ['create rep team', 'add team', 'first season', 'program year', 'season', 'team setup', 'team details', 'archive team', 'bring back'],
+      searchText: 'create rep team add team first season start the first season program year season name year public address slug sport division colour group description team details autosave saved archive team bring back team places plan limit',
       content: (
         <>
-          <p>Use a team record for the long-running franchise, and a program year for each season of activity.</p>
           <ol>
-            <li>Go to <strong>Rep Teams</strong> and click <strong>Add Team</strong>.</li>
-            <li>Enter the team name, URL slug, sport, division, colour, and an optional description. If you use team groups, pick the group here too.</li>
-            <li>Open the team and create a <strong>Program Year</strong> for the upcoming season.</li>
-            <li>Keep the program year in <strong>Draft</strong> while you prepare tryouts, coaches, documents, and cost allocations.</li>
-            <li>Move it to <strong>Active</strong> when coaches and families should begin using it; only one program year per team should be Active at a time.</li>
-            <li>At season&apos;s end, complete and archive the program year instead of overwriting it.</li>
+            <li>Go to <strong>Rep Teams</strong> and press <strong>Add team</strong>. Enter the name, public address, sport, division, group, colour and an optional description, then <strong>Add team</strong>. At your plan&apos;s team limit you&apos;re offered the larger plan, or you can archive a team you no longer run.</li>
+            <li>Open the team. With no season yet, press <strong>Start the first season</strong> and give it a name and a year.</li>
+            <li>Invite the team&apos;s head coach from <strong>Coaches</strong> (see How to invite a coach).</li>
           </ol>
-          <p>On the Club plan, creating teams beyond your included count shows a prorated billing confirmation before the team is created — so you always see the cost first.</p>
+          <p>Change a team&apos;s name, group, division, colour, sport or description in <strong>Team details</strong> on its page — it saves as you type. The division is what coaches see in their Team settings; only the club changes it. <strong>Archive team</strong> sits there too: it hides the team from your lists and frees its place on your plan, keeps its seasons and history, and <strong>Bring back</strong> undoes it.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-rep-team-vs-program-year',
-          question: 'What is the difference between a team and a program year?',
-          answerText: 'The team is the long-running franchise. The program year is one competitive season with its own roster, tryouts, documents, schedule, and finances.',
-          keywords: ['team', 'program year', 'season'],
+          question: 'What is the difference between a team and a season?',
+          answerText: 'The team is the long-running franchise. A season is one year of it, with its own roster, tryouts, schedule, documents and money. A team has one live season at a time; a closed season is kept as a record you and its coaches can open any time.',
+          keywords: ['team', 'season', 'program year'],
           popular: true,
           answer: (
-            <p>The <strong>team</strong> is the long-running franchise. The <strong>program year</strong> is one season with its own roster, tryouts, documents, schedule, and finances.</p>
+            <p>The <strong>team</strong> is the long-running franchise. A <strong>season</strong> is one year of it, with its own roster, tryouts, schedule, documents and money. A team has one live season at a time; a closed season is kept as a record you and its coaches can open any time.</p>
+          ),
+        },
+      ],
+    },
+    {
+      id: 'recipe-seasons',
+      group: 'How-to recipes',
+      heading: 'How to start the next season, close one, or reopen it',
+      summary: 'Start next season carries the team forward; Close the season ends it for a team that isn’t coming back; Reopen undoes a close.',
+      keywords: ['start next season', 'close the season', 'reopen', 'season end', 'rollover', 'what carries over', 'unsettled money', 'two seasons open'],
+      searchText: 'start next season close the season reopen closed this by mistake season end rollover roll forward what carries over roster budget plan fee plan opening balance returning players history staff stays schedule tryouts documents start fresh unsettled money families owe dues money waiting to go back warns never blocks coaches are told notification two seasons open',
+      content: (
+        <>
+          <p>A club team&apos;s seasons are the club&apos;s to change. The team page carries the doors, and the team&apos;s coaches are told each time.</p>
+          <ul>
+            <li><strong>Start next season</strong> closes the current season and starts the next one with the team in it: the roster, the budget plan and the fee plan (both optional), the opening balance, and each returning player&apos;s history. The coaching staff stays. The schedule, tryouts and player documents start fresh.</li>
+            <li><strong>Close the season</strong> ends it and starts nothing — for a team that isn&apos;t coming back. Nothing is deleted; the season becomes a record.</li>
+            <li><strong>Reopen</strong> — on a closed team&apos;s page, &ldquo;Closed this by mistake?&rdquo; brings the season back. It&apos;s offered only while no season is live.</li>
+          </ul>
+          <p>If families still owe dues, or money is waiting to go back to them, the window says how many before you go ahead — it never stops you. The head coach settles those in the Coaches Portal. Starting a season can&apos;t be undone, so the window says what it closes first.</p>
+        </>
+      ),
+      faqs: [
+        {
+          id: 'faq-two-seasons-open',
+          question: 'Why does a team say it has two seasons open?',
+          answerText: 'An older way of adding a season could leave two open at once. A club team’s next season can’t start while two are open, so the team page asks you to close one of them first. Nothing was changed.',
+          keywords: ['two seasons open', 'cannot start', 'close one'],
+          answer: (
+            <p>An older way of adding a season could leave two open at once. A club team&apos;s next season can&apos;t start while two are open, so the team page asks you to close one of them first. Nothing was changed.</p>
           ),
         },
       ],
@@ -81,48 +129,44 @@ const repTeamsHelp: HelpPageContent = {
       id: 'recipe-open-tryouts-review-applicants',
       group: 'How-to recipes',
       heading: 'How to open tryouts and review applicants',
-      summary: 'Turn on the public tryout form, process applications, and close registration when evaluations are done.',
-      keywords: ['tryouts', 'open registration', 'applicants', 'offer', 'accept', 'decline', 'consent', 'compliance', 'no emails to families', 'tell families yourself', 'tryouts are open', 'tryout link', 'too many attempts'],
-      searchText: 'open tryouts review applicants public tryout form registration tryouts are open card front page home page where do families apply tryout link family cannot submit too many attempts try again later limit pending review extend offer accept decline close registration add applicant offer extended consent guardian consent privacy data collection PIPEDA CASL compliance consent column consent record export no emails sent to families nothing emailed decisions recorded only you tell families yourself no offer email no accept decline link no welcome email no release note application received receipt offer letter you write',
+      summary: 'Tryouts run on the team’s live season: open sign-ups, share the team’s link, and decide in each applicant’s window.',
+      keywords: ['tryouts', 'open sign-ups', 'close sign-ups', 'applicants', 'offer', 'waitlist', 'accept', 'decline', 'consent', 'compliance', 'no emails to families', 'tell families yourself', 'tryouts are open', 'tryout link', 'too many attempts', 'copy link'],
+      searchText: 'open tryouts review applicants sign-ups open sign-ups close sign-ups copy link team tryout address public tryout form tryouts are open card front page where do families apply family cannot submit too many attempts pending review extend offer waitlist add to roster decline final mark withdrawn add applicant consent guardian privacy PIPEDA CASL export no emails sent to families decisions recorded only you tell families yourself closed season record coach runs the tryout same list',
       content: (
         <>
-          <p>Tryout registration belongs to a specific team program year.</p>
+          <p>A tryout belongs to the team&apos;s <strong>live season</strong> — the same list the coach sees in their portal, where they run the sessions, scoring and decisions.</p>
           <ol>
-            <li>Open the team and select the correct program year, then go to <strong>Tryouts</strong>.</li>
-            <li>Turn on <strong>Open Registration</strong> so families can apply. While it is open, your organization&apos;s public front page shows a <strong>Tryouts Are Open</strong> card for it that takes families straight to the tryout&apos;s page and its form.</li>
-            <li>Review incoming applicants in <strong>Pending Review</strong>.</li>
-            <li>Use <strong>Extend Offer</strong> to mark a player as invited. It <strong>records your decision and sends nothing</strong> — the offer itself is a letter your club writes, on your own terms, so you reach the family yourself. That holds for every decision on this screen: no email leaves it.</li>
-            <li>Use <strong>Accept</strong> once the family has said yes — one click puts them on the roster and makes them visible to the coach. <strong>No fees are set here</strong>: what a family owes usually depends on the final roster size, so dues are set afterwards from the team&apos;s Money screens. <strong>Waitlist</strong> and <strong>Decline</strong> likewise only record where things stand.</li>
-            <li>Close registration when tryouts finish so the public form goes offline.</li>
+            <li>Open the team and go to <strong>Tryouts</strong>. In <strong>Sign-ups</strong>, press <strong>Open sign-ups</strong>. While they are open, your club&apos;s public front page shows a <strong>Tryouts are open</strong> card, and <strong>Copy link</strong> gives you the team&apos;s own tryout address — it names the team, so it keeps working from one season to the next.</li>
+            <li>Applications arrive in <strong>Pending review</strong>. Open one to decide: <strong>Extend offer</strong>, <strong>Waitlist</strong>, <strong>Add to roster</strong> once the family says yes, or <strong>Decline</strong>. A decline is final, so it asks first. Every decision is recorded and <strong>nothing is emailed</strong> — you reach the family yourself.</li>
+            <li>Press <strong>Close sign-ups</strong> when you&apos;re done; the address then tells families sign-ups aren&apos;t open.</li>
           </ol>
-          <p>The applicant list shows a <strong>Consent</strong> column: when a family submits the public form they confirm consent to data collection and that they&apos;re the guardian of an eligible player, and the date is captured for your records. A separate <strong>optional</strong> box covers club news and future-season emails. The only email the form itself sends is a <strong>confirmation that the application was received</strong> — the form says so plainly, and tells families that news about a spot comes from you directly. The <strong>applicant export</strong> includes both the consent record and the news-email answer when you need documentation — as a spreadsheet, or as a printable list grouped by status with counts.</p>
-          <p>If an applicant registered outside the form, use <strong>Add Applicant</strong> so the decision history stays with the program year — note that manually added applicants won&apos;t carry a form consent record.</p>
+          <p>A closed season&apos;s tryout is a record: no sign-ups and no decisions. To take sign-ups for next year, start the next season first. The list shows each family&apos;s <strong>Consent</strong> date, and <strong>Export</strong> gives the consent record too. Use <strong>Add applicant</strong> for someone who applied outside the form (they carry no form consent).</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-tryout-consent',
           question: 'Do families consent to us collecting their information?',
-          answerText: 'Yes. The public tryout form requires the parent or guardian to confirm two things before they can submit: consent to data collection, and that they are the guardian and the player is eligible to try out. Emails about club news and future seasons are a separate OPTIONAL box, unchecked by default — Canada\'s anti-spam rules (CASL) treat that as marketing consent, and it is never a condition of applying. The only email the form sends is one confirmation that the application was received — transactional, so it goes regardless of that optional box, and the form says so plainly. Offers, waitlist moves and decisions are never emailed by us; you reach the family directly. The Tryouts list shows a Consent column with the date, and the applicant export includes the consent record plus the news-email answer. Applicants you enter manually with Add Applicant do not carry a form consent record.',
+          answerText: 'Yes. The public tryout form requires the parent or guardian to confirm two things before they can submit: consent to data collection, and that they are the guardian and the player is eligible to try out. Emails about club news and future seasons are a separate OPTIONAL box, unchecked by default — Canada\'s anti-spam rules (CASL) treat that as marketing consent, and it is never a condition of applying. The only email the form sends is one confirmation that the application was received — transactional, so it goes regardless of that optional box, and the form says so plainly. Offers, waitlist moves and decisions are never emailed by us; you reach the family directly. The Tryouts list shows a Consent column with the date, and the applicant export includes the consent record plus the news-email answer. Applicants you enter manually with Add applicant do not carry a form consent record.',
           keywords: ['consent', 'privacy', 'PIPEDA', 'CASL', 'compliance', 'guardian consent', 'data collection', 'consent record', 'marketing consent', 'news email', 'optional email', 'anti-spam'],
           answer: (
             <>
               <p>Yes. The public tryout form requires the parent or guardian to confirm <strong>two</strong> things before they can submit: consent to data collection, and that they&apos;re the guardian and the player is eligible to try out.</p>
               <p>Emails about <strong>club news and future seasons</strong> are a separate <strong>optional</strong> box, unchecked by default — Canada&apos;s anti-spam rules (CASL) treat that as marketing consent, and it&apos;s never a condition of applying. The only email the form sends is <strong>one confirmation that the application was received</strong> — transactional, so it goes regardless of that box, and the form says so plainly. Offers, waitlist moves and decisions are <strong>never</strong> emailed by us; you reach the family directly.</p>
-              <p>The <strong>Tryouts</strong> list shows a <strong>Consent</strong> column with the date, and the <strong>applicant export</strong> includes the consent record plus the news-email answer. Applicants you enter manually with <strong>Add Applicant</strong> won&apos;t carry a form consent record.</p>
+              <p>The <strong>Tryouts</strong> list shows a <strong>Consent</strong> column with the date, and the <strong>applicant export</strong> includes the consent record plus the news-email answer. Applicants you enter manually with <strong>Add applicant</strong> won&apos;t carry a form consent record.</p>
             </>
           ),
         },
         {
           id: 'faq-tryout-too-many-attempts',
           question: 'A family says the tryout form told them “Too many attempts.” What happened?',
-          answerText: 'The public tryout form limits how many times it can be sent from one internet connection, and how many confirmation emails one address can receive, within an hour. It stops automated abuse, such as someone using the form to flood a stranger\'s inbox. A family normally only meets it when many applications go in from the same connection in a short time, for example several families applying on one shared tablet, or the same email address sent again and again. Ask them to wait a few minutes and try again. If you are taking applications in person on one device, enter them yourself with Add Applicant, which has no such limit (manually added applicants do not carry a form consent record).',
+          answerText: 'The public tryout form limits how many times it can be sent from one internet connection, and how many confirmation emails one address can receive, within an hour. It stops automated abuse, such as someone using the form to flood a stranger\'s inbox. A family normally only meets it when many applications go in from the same connection in a short time, for example several families applying on one shared tablet, or the same email address sent again and again. Ask them to wait a few minutes and try again. If you are taking applications in person on one device, enter them yourself with Add applicant, which has no such limit (manually added applicants do not carry a form consent record).',
           keywords: ['too many attempts', 'try again later', 'form limit', 'cannot submit', 'form blocked', 'rate limit'],
           answer: (
             <>
               <p>The public tryout form limits how many times it can be sent from one internet connection, and how many confirmation emails one address can receive, within an hour. It stops automated abuse, such as someone using the form to flood a stranger&apos;s inbox.</p>
               <p>A family normally meets it only when many applications go in from the same connection in a short time (several families on one shared tablet, say) or the same email address is sent again and again. Ask them to wait a few minutes and try again.</p>
-              <p>Taking applications in person on one device? Enter them yourself with <strong>Add Applicant</strong>, which has no such limit. Manually added applicants don&apos;t carry a form consent record.</p>
+              <p>Taking applications in person on one device? Enter them yourself with <strong>Add applicant</strong>, which has no such limit. Manually added applicants don&apos;t carry a form consent record.</p>
             </>
           ),
         },
@@ -132,33 +176,28 @@ const repTeamsHelp: HelpPageContent = {
       id: 'recipe-accept-player-to-roster',
       group: 'How-to recipes',
       heading: 'How to accept a player onto a rep roster',
-      summary: 'Move a player from tryout application to coach-visible roster in one click. Fees are set later, from Money.',
-      keywords: ['accept player', 'roster', 'offer extended', 'coach portal', 'tryout applicant', 'fees', 'dues', 'standard fee'],
-      searchText: 'accept player roster tryout applicant offer extended accepted coach portal missing player pending review roster visibility one click no drawer no fees at accept fees are set later dues from money set dues for all players depends on roster size',
+      summary: 'Add to roster in the applicant’s window puts the player on the live season’s roster in one step. Fees are set later, from Money.',
+      keywords: ['accept player', 'add to roster', 'roster', 'offer extended', 'coach portal', 'tryout applicant', 'fees', 'dues'],
+      searchText: 'accept player add to roster tryout applicant offered coach portal missing player pending review roster visibility one step no fees at accept fees are set later dues from money depends on roster size live season',
       content: (
         <>
-          <p>A player becomes visible to the coach only after the application reaches the accepted state.</p>
           <ol>
-            <li>Open the program year&apos;s <strong>Tryouts</strong> tab.</li>
-            <li>Find the applicant by player name or guardian email.</li>
-            <li>If the player is still pending, extend an offer first if your workflow requires it.</li>
-            <li>Click <strong>Accept</strong> when the player is confirmed — one click, no form. They are on the roster immediately and visible to the coach.</li>
-            <li><strong>No fees are set here.</strong> Accepting gets the player a roster place and nothing more — what a family owes usually depends on the final roster size, so it cannot sensibly be decided one player at a time. Dues are set afterwards from the team&apos;s Money screens, for everyone at once. Squad numbers, positions and jersey sizes are filled in on the roster.</li>
-            <li>If the coach can&apos;t see them yet, ask them to refresh their workspace.</li>
-            <li>If the player is still missing, confirm you accepted them in the same program year the coach is viewing.</li>
+            <li>Open the team&apos;s <strong>Tryouts</strong> and open the applicant.</li>
+            <li>If they&apos;re still pending, <strong>Extend offer</strong> first if your club works that way.</li>
+            <li>Press <strong>Add to roster</strong> once the family says yes. The player is on the live season&apos;s roster at once, and the coach sees them.</li>
           </ol>
-          <p>Declined and offer-only players do not appear on the active roster. Standalone Premium head coaches can also accept players directly from their own Decision board — the same one-step flow.</p>
+          <p><strong>No fees are set here</strong> — what a family owes usually depends on the final roster size, so dues are set afterwards from the team&apos;s Money screens, for everyone at once. Declined and offered players don&apos;t appear on the roster.</p>
         </>
       ),
       faqs: [
         {
           id: 'faq-coach-missing-rep-player',
           question: 'Why can a coach not see a player on the roster?',
-          answerText: 'The player may still be pending or only offered, or the coach may be looking at a different program year. The player must be Accepted, and the coach must be viewing the same program year.',
+          answerText: 'The player may still be pending or only offered. They must be added to the roster from their tryout window. Tryouts and the roster both belong to the team’s live season, so the coach and the club always look at the same one.',
           keywords: ['missing roster', 'coach portal', 'accepted player'],
           popular: true,
           answer: (
-            <p>Check the Tryouts tab. The player must be <strong>Accepted</strong>, not just offered or pending. Also confirm the coach is viewing the same program year.</p>
+            <p>Check the team&apos;s <strong>Tryouts</strong>: the player must be added to the roster, not just offered or pending. Tryouts and the roster both belong to the team&apos;s live season, so the coach and the club always look at the same one.</p>
           ),
         },
       ],
@@ -166,21 +205,18 @@ const repTeamsHelp: HelpPageContent = {
     {
       id: 'recipe-assign-coach-access',
       group: 'How-to recipes',
-      heading: 'How to give a coach access to their team',
-      summary: 'Invite the coach, assign them to the correct team, and verify they only see their own program year.',
-      keywords: ['coach access', 'assign coach', 'coaches portal', 'member invite', 'team access'],
-      searchText: 'coach access assign coach invite coach coaches portal team program year member role missing team cannot access coach portal scoped',
+      heading: 'How to invite a coach',
+      summary: 'Invite a head coach or an assistant from the team’s Coaches page. They get an email; their access starts when they accept.',
+      keywords: ['invite a coach', 'head coach', 'assistant coach', 'coach access', 'assign coach', 'coaches portal', 'remove coach', 'no head coach', 'resend', 'cancel invitation'],
+      searchText: 'invite a coach head coach assistant coach coaches page who are they email link 7 days access starts when they accept between seasons pending invitation resend cancel remove coach last head coach no head coach team managers treasurers helpers staff page require admin approval assistant coaches coach access coach role members',
       content: (
         <>
-          <p>Coach access has two parts: the person needs a member account, and that account needs to be assigned to the team/program year.</p>
           <ol>
-            <li>Invite the person from <strong>Members</strong> using the <strong>Coach</strong> role if they do not already have an account.</li>
-            <li>Open the rep team program year and go to the coaches area.</li>
-            <li>Add the coach to the correct team/program year.</li>
-            <li>Ask the coach to sign in and open their team workspace.</li>
-            <li>If they cannot see the team, confirm their invite was accepted and that they were assigned to the active program year.</li>
+            <li>Open the team and go to <strong>Coaches</strong>, then press <strong>Invite a coach</strong>.</li>
+            <li>Enter their email and choose <strong>Who are they?</strong> — <strong>Head coach</strong> (everything in the team&apos;s Coaches Portal) or <strong>Assistant coach</strong> (the portal&apos;s everyday tools; the head coach can change what they open). Press <strong>Send invite</strong>.</li>
+            <li>They get an email with a link that works for 7 days. When they accept, they land on the team. Someone who already has a FieldLogicHQ account can also accept from their home page.</li>
           </ol>
-          <p>Coaches should not be made full admins just to operate a team. The coach assignment keeps their access scoped to the team they manage.</p>
+          <p>It works between seasons, because coaches belong to the team, not to a season. A waiting invitation shows <strong>Resend</strong> and <strong>Cancel</strong>. Open a person to see their role and what they can open, and to <strong>Remove</strong> them — it asks first, and says so when the team would be left with no head coach. Team managers, treasurers and helpers are added by the head coach from the team&apos;s Staff page. There is no Coach role on the Members page.</p>
         </>
       ),
     },
@@ -207,7 +243,7 @@ const repTeamsHelp: HelpPageContent = {
             <li>Press <strong>Approve and bring in</strong>, type the team&apos;s name to confirm, and the team moves in there and then.</li>
           </ol>
           <p>Nothing moves until both of you say yes, and the move can&apos;t be undone. The coach keeps coaching the team, now as one of the club&apos;s teams, and from then on the club starts and closes its seasons.</p>
-          <p>Adding a new coach to a team you already have is different: use <strong>Invite a coach</strong> on that team&apos;s page.</p>
+          <p>Adding a new coach to a team you already have is different: use <strong>Invite a coach</strong> on that team&apos;s Coaches page.</p>
         </>
       ),
       faqs: [
@@ -254,19 +290,17 @@ const repTeamsHelp: HelpPageContent = {
       id: 'recipe-publish-document-templates',
       group: 'How-to recipes',
       heading: 'How to publish document templates for coaches',
-      summary: 'Create reusable document requirements and publish them to a program year.',
-      keywords: ['document templates', 'waiver', 'medical form', 'coach documents', 'publish template'],
-      searchText: 'publish document templates coach documents player waiver medical consent code of conduct upload program year org-wide team-specific',
+      summary: 'Upload a form once and say which teams it applies to — every team, or one. It stays in force, season after season, until you switch it off.',
+      keywords: ['document templates', 'waiver', 'medical form', 'medical consent', 'code of conduct', 'coach documents', 'publish template', 'applies to', 'switch off', 'every team'],
+      searchText: 'publish document templates upload template waiver medical consent code of conduct applies to every team one team switch off switch on download delete families sign again each season documents column board signed',
       content: (
         <>
-          <p>Use document templates for forms every team or player needs.</p>
           <ol>
-            <li>Open <strong>Document Templates</strong> from the Rep Teams page.</li>
-            <li>Create or upload a template for the document type — waiver, medical form, code of conduct, and so on.</li>
-            <li>Publish it for the appropriate program year. You can publish org-wide templates or ones scoped to a specific team.</li>
-            <li>Coaches then see the published templates in their team&apos;s Documents area and can download them to share with families.</li>
+            <li>Open <strong>Rep Teams › Document templates</strong> and press <strong>Upload template</strong>.</li>
+            <li>Give it a name and a type, choose <strong>Applies to</strong> — <strong>Every team</strong>, or one of your teams — and pick the file (PDF, JPG, PNG or Word, up to 10 MB). Press <strong>Upload</strong>.</li>
+            <li>The coaches of every team it applies to see it in their team&apos;s Documents area, to share with families.</li>
           </ol>
-          <p>Templates are program-year specific. Re-publish or recreate them for the next season when requirements carry forward.</p>
+          <p>A template isn&apos;t tied to a season: it applies until you switch it off. Families sign again each season, which is why the board&apos;s Documents count starts at zero on a new season. Open a template to <strong>Download</strong> it, change who it applies to, <strong>Switch off</strong> or on, or <strong>Delete</strong> it (which asks first).</p>
         </>
       ),
     },
@@ -276,10 +310,10 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'Organizing teams into groups',
       summary: 'Group teams by competitive tier (e.g. AA, A, Select) to filter and organize the list.',
       keywords: ['team groups', 'groups', 'competitive tier', 'filter teams', 'ungrouped'],
-      searchText: 'team groups competitive tier AA A select filter organize teams create rename delete group assign team to group ungrouped teams without a group no group all groups',
+      searchText: 'team groups competitive tier AA A select boys girls filter organize teams create rename delete group assign team to group change a team group team details ungrouped archived teams without a group no group all groups band rows cannot delete group with teams',
       content: (
         <>
-          <p>If you run many teams, use <strong>Team Groups</strong> to organize them by tier or category (for example, AA, A, and Select). From the Rep Teams page you can create, rename, and delete groups, assign a team to a group when you create it, and filter the team list by group. Choose <strong>Ungrouped</strong> in the filter to find the teams that don&apos;t belong to a group yet.</p>
+          <p>If you run many teams, use team groups to organize them by tier or category (for example Boys and Girls, or AA and A). On Rep Teams, <strong>Team groups</strong> adds, renames and deletes groups; the board shows each group as its own band, and the filter shows one group, <strong>Ungrouped</strong>, or <strong>Archived</strong> teams. Pick a new team&apos;s group when you add it, or change a team&apos;s group in <strong>Team details</strong> on its page. A group that still holds a team can&apos;t be deleted — move its teams first.</p>
         </>
       ),
     },

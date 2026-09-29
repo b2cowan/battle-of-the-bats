@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Mail, Check, X } from 'lucide-react';
 import { formatStoredDate, orgDayKey } from '@/lib/timezone';
 import { roleLabel } from '@/lib/member-access';
+import type { ConsumerHomeCoachInvite } from '@/lib/home-following';
 import styles from './PendingInvitationsCard.module.css';
 
 export type PendingInvite = {
@@ -27,13 +28,53 @@ export type PendingInvite = {
  * could not tell a real invitation from a mistake. Accepting lands them where their role starts,
  * through the same resolver sign-in uses (J10-011), rather than a hard-coded /admin.
  */
-export default function PendingInvitationsCard({ invitations }: { invitations: PendingInvite[] }) {
+export default function PendingInvitationsCard({
+  invitations,
+  coachInvitations = [],
+}: {
+  invitations: PendingInvite[];
+  /** A club's coach invitations (Club Tier Stage 2, specimen 6 · 2b) — the same card, the same two answers. */
+  coachInvitations?: ConsumerHomeCoachInvite[];
+}) {
   const router = useRouter();
   const [items, setItems] = useState(invitations);
+  const [coachItems, setCoachItems] = useState(coachInvitations);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [error, setError] = useState('');
 
-  if (items.length === 0) return null;
+  if (items.length === 0 && coachItems.length === 0) return null;
+  const total = items.length + coachItems.length;
+
+  /** A club's coach invitation: accept lands on the team (the server says where); decline tells the club. */
+  async function respondCoach(inviteId: string, action: 'accept' | 'decline') {
+    setError('');
+    setBusyId(inviteId);
+    try {
+      const res = await fetch(`/api/auth/coach-invitations/${inviteId}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError(data?.error ?? 'Something went wrong. Please try again.');
+        setBusyId(null);
+        return;
+      }
+      if (action === 'accept' && data?.destination) {
+        router.push(data.destination);
+        router.refresh();
+        return;
+      }
+      setCoachItems(prev => prev.filter(i => i.inviteId !== inviteId));
+      setBusyId(null);
+      // The same nudge as a member invitation's decline, so the two handlers never drift (/review).
+      window.dispatchEvent(new Event('flhq:invites-changed'));
+    } catch {
+      setError('Could not reach the server. Please try again.');
+      setBusyId(null);
+    }
+  }
 
   async function respond(memberId: string, action: 'accept' | 'decline') {
     setError('');
@@ -76,12 +117,45 @@ export default function PendingInvitationsCard({ invitations }: { invitations: P
     <section className={styles.wrap} aria-label="Pending invitations">
       <div className={styles.heading}>
         <Mail size={14} strokeWidth={2} aria-hidden />
-        <span>{items.length === 1 ? 'You have an invitation' : `You have ${items.length} invitations`}</span>
+        <span>{total === 1 ? 'You have an invitation' : `You have ${total} invitations`}</span>
       </div>
 
       {error && <div className={styles.error}>{error}</div>}
 
       <div className={styles.list}>
+        {coachItems.map(invite => {
+          const busy = busyId === invite.inviteId;
+          const club = invite.orgName ?? 'A club';
+          const team = invite.teamName ?? 'a team';
+          const seat = invite.coachRole === 'head_coach' ? 'head coach' : 'an assistant coach';
+          const sent = formatStoredDate(orgDayKey(invite.invitedAt));
+          return (
+            <div key={invite.inviteId} className={styles.item}>
+              <div className={styles.info}>
+                <div className={styles.headline}>{club} invited you to coach {team} as {seat}</div>
+                <div className={styles.from}>
+                  {invite.invitedByName ? <>From <strong>{invite.invitedByName}</strong> · </> : null}{sent}
+                </div>
+              </div>
+              <div className={styles.actions}>
+                <button type="button" className={styles.accept} disabled={busy} onClick={() => respondCoach(invite.inviteId, 'accept')}>
+                  <Check size={14} strokeWidth={2.5} aria-hidden />
+                  {busy ? 'Working…' : 'Accept'}
+                </button>
+                <button
+                  type="button"
+                  className={styles.decline}
+                  disabled={busy}
+                  onClick={() => respondCoach(invite.inviteId, 'decline')}
+                  aria-label={`Decline the invitation to coach ${team}`}
+                >
+                  <X size={14} strokeWidth={2.5} aria-hidden />
+                  Decline
+                </button>
+              </div>
+            </div>
+          );
+        })}
         {items.map(invite => {
           const busy = busyId === invite.memberId;
           const org = invite.orgName ?? invite.orgSlug ?? 'An organization';

@@ -10,7 +10,7 @@ import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { formatStoredDate } from '@/lib/timezone';
 import {
   STAFF_KINDS, STAFF_KIND_COPY, STAFF_PRESETS, LAST_HEAD_COACH_MESSAGE, staffKindCopyFor, applyOrgGrantPolicy,
-  resolveCoachCapabilities, scheduleAccessOf, scheduleGrantsFor, hasRecordAccess, grantsOf,
+  resolveCoachCapabilities, scheduleAccessOf, scheduleGrantsFor, hasRecordAccess, grantsOf, sensitiveGrantWords,
   type CoachCapabilities, type AssistantCapabilityGrants, type StaffKind, type ScheduleAccess,
 } from '@/lib/coach-capabilities';
 import {
@@ -231,18 +231,10 @@ const CONFIRM_ON_GRANT: Partial<Record<keyof Caps, ConfirmOnGrant>> = {
     : null,
 };
 
-/** The sensitive grants a bundle holds, as the words the one-shot confirmations use. */
-function sensitiveWords(c: Caps): string[] {
-  const out: string[] = [];
-  if (c.money !== 'off') out.push('team money');
-  if (c.rosterPii) out.push('family contacts');
-  if (c.notes) out.push('internal notes');
-  if (c.announcementsSend) out.push('emailing families');
-  if (c.tryouts) out.push('tryouts');
-  if (c.tournaments) out.push('running tournaments');
-  if (c.manageStaff) out.push('managing staff');
-  return out;
-}
+/** The sensitive grants a bundle holds, as the words the one-shot confirmations use — the shared
+ *  helper, which the club's Coaches page also reads (Club Tier Stage 2), so the two sides name a
+ *  grant the same way. */
+const sensitiveWords: (c: Caps) => string[] = sensitiveGrantWords;
 function joinWords(words: string[]): string {
   if (words.length <= 1) return words.join('');
   return `${words.slice(0, -1).join(', ')} and ${words[words.length - 1]}`;

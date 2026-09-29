@@ -159,9 +159,21 @@ export interface ConsumerHomePendingInvite {
   role: string;
 }
 
+/** A club's coach invitation waiting for this account (Club Tier Stage 2, specimen 6 · 2b). */
+export interface ConsumerHomeCoachInvite {
+  inviteId: string;
+  orgName: string | null;
+  teamName: string | null;
+  coachRole: 'head_coach' | 'assistant_coach';
+  invitedByName: string | null;
+  invitedAt: string;
+}
+
 export interface ConsumerHomePayload {
   signedIn: boolean;
   pendingInvites: ConsumerHomePendingInvite[];
+  /** A club's coach invitations for this (confirmed) address — optional, so an older payload omits it. */
+  coachInvites?: ConsumerHomeCoachInvite[];
   /** Non-fan access contexts (org admin / official / coach) — the Workspaces section. */
   workspaces: UserAccessContext[];
   /** Lapsed-subscription workspaces surfaced as explicit "reactivate" cards (never silent omission). */

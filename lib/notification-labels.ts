@@ -35,9 +35,12 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   tournament_announcement:           'Tournament announcement',
   coach_insights_digest:             'Weekly team insights',
   practice_plan_sent:                'Practice plan sent',
-  // Club Tier Stage 2 — targeted lifecycle bells (no preferences row, like assistant_coach_joined).
+  // Club Tier Stage 2 — targeted lifecycle bells (no org-grid row, like assistant_coach_joined).
+  // `club_season_changed` has ONE preferences row: "Your club" on a club coach's card in
+  // /account/notifications (session 3), where it can arrive; never on a standalone portal's.
   club_season_changed:               'Season changed by your club',
   club_coach_joined:                 'Coach joined from your invitation',
+  club_coach_declined:               'Coach declined your invitation',
   team_move_requested:               'A request to bring a team into a club',
   team_move_answered:                'A team move answered',
 };
@@ -68,6 +71,7 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   practice_plan_sent:                'A coach sent you the practice plan to read before practice — with the stations you’re running.',
   club_season_changed:               'Your club closed, started or reopened your team’s season.',
   club_coach_joined:                 'A coach you invited from a team’s Coaches page accepted and joined the team.',
+  club_coach_declined:               'A coach you invited from a team’s Coaches page declined the invitation.',
   team_move_requested:               'A club asked to bring your own team in, or a coach asked to bring theirs into your club. Nothing moves until you say yes.',
   team_move_answered:                'A team you asked to bring into a club moved, or the other side declined.',
 };
@@ -176,6 +180,7 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   // Rare, and it changes what the coach can do today (their screens close or reopen).
   'club_season_changed',
   'club_coach_joined',
+  'club_coach_declined',
   // Rare, and it waits on the recipient's yes (or reports the answer to theirs).
   'team_move_requested',
   'team_move_answered',
@@ -245,6 +250,7 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   // The club changed the season / a club-invited coach joined — news, not a decision to make.
   club_season_changed:                'know',
   club_coach_joined:                  'know',
+  club_coach_declined:                'know',
   // A team move: the request is a decision to make; the answer is news.
   team_move_requested:                'act',
   team_move_answered:                 'know',

@@ -132,6 +132,7 @@ export default function HomePersonalization() {
   const workspaces = signedIn ? (payload?.workspaces ?? []) : [];
   const lapsed = signedIn ? (payload?.lapsed ?? []) : [];
   const invites = signedIn ? (payload?.pendingInvites ?? []) : [];
+  const coachInvites = signedIn ? (payload?.coachInvites ?? []) : [];
 
   // Honest follow count (server-provided for accounts, device list otherwise) — independent of feed
   // enrichment. A followed team whose tournament went unpublished drops out of `following` but must
@@ -142,7 +143,7 @@ export default function HomePersonalization() {
 
   const signedInEmpty =
     loaded && signedIn &&
-    invites.length === 0 && workspaces.length === 0 && lapsed.length === 0 &&
+    invites.length === 0 && coachInvites.length === 0 && workspaces.length === 0 && lapsed.length === 0 &&
     followCount === 0 && organizations.length === 0;
 
   return (
@@ -150,7 +151,7 @@ export default function HomePersonalization() {
       {/* Loading placeholder for the account sections (Browse below is already painted). */}
       {!loaded && <div className={styles.skeleton} aria-hidden />}
 
-      {invites.length > 0 && <PendingInvitationsCard invitations={invites} />}
+      {(invites.length > 0 || coachInvites.length > 0) && <PendingInvitationsCard invitations={invites} coachInvitations={coachInvites} />}
 
       {workspaces.length > 0 && (
         <section className={styles.section}>

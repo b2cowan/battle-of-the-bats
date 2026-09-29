@@ -127,7 +127,7 @@ describe('Ask 1 (a) — one live-season rule, and NO SELF-HEAL for a club', () =
   });
 
   it('accepting names the seat actually held — a lost promotion never announces a head coach', () => {
-    const accept = functionBody(readCode('lib/assistant-invites.ts'), 'acceptAssistantInvite');
+    const accept = functionBody(readCode('lib/assistant-invites.ts'), 'acceptInviteRow');
     assert.match(accept, /if \(promoted\.ok\) \{ staffKind = null; seated = 'head_coach'; \}/);
     assert.match(accept, /coachRole: seated,/);
   });
@@ -337,7 +337,7 @@ describe('D10 + Ask 4 — Invite a coach: one door, both memberships, between se
   });
 
   it('an invitation writes BOTH memberships on accept, in the seat it offers', () => {
-    const accept = functionBody(readCode('lib/assistant-invites.ts'), 'acceptAssistantInvite');
+    const accept = functionBody(readCode('lib/assistant-invites.ts'), 'acceptInviteRow');
     assert.match(accept, /from\('organization_members'\)\.insert\(\{[\s\S]*?role: 'coach'/, 'the coach\'s org membership');
     assert.match(accept, /await addStaffMember\(\{[\s\S]*?coachRole,/, 'the TEAM membership, in the invite\'s seat');
     assert.match(accept, /row\.coach_role === 'head_coach' \? 'head_coach' : 'assistant_coach'/);
@@ -386,7 +386,11 @@ describe('D10 + Ask 4 — Invite a coach: one door, both memberships, between se
   });
 
   it('the "joined" notice reads memberships, and a club invite tells the club person who sent it', () => {
-    const src = readCode(ROUTE.accept);
+    // Session 3: the notices moved into ONE helper both answer doors call (the emailed link and the
+    // home page's invitation card), so the two cannot tell different people.
+    assert.match(readCode(ROUTE.accept), /await tellInviteAccepted\(result, user\)/);
+    assert.match(readCode('app/api/auth/coach-invitations/[inviteId]/route.ts'), /await tellInviteAccepted\(result, user\)/);
+    const src = readCode('lib/assistant-invite-notices.ts');
     assert.match(src, /listActiveStaffUserIds\(result\.teamId, \{ headCoachesOnly: true \}\)/);
     assert.doesNotMatch(src, /getRepTeamCoaches|getActiveRepProgramYear/, 'no season rows — between seasons they told nobody');
     assert.match(src, /eventType: 'club_coach_joined'/);
@@ -480,7 +484,7 @@ describe('B08 — one roster rule and one record rule, and every club surface ca
       [ROUTE.team, /loadRosterCounts\(yearIds\)/],
       [ROUTE.team, /loadSeasonRecords\(yearIds\)/],
       [ROUTE.programYear, /loadRosterCounts\(\[programYear\.id\]\)/],
-      ['app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/schedule/page.tsx', /seasonRecordOf\(events\)/],
+      ['app/[orgSlug]/admin/rep-teams/teams/[teamId]/schedule/page.tsx', /seasonRecordOf\(events\)/],
       ['app/[orgSlug]/admin/rep-teams/teams/[teamId]/history/[yearId]/page.tsx', /seasonRecordOf\(events\)/],
       ['app/[orgSlug]/admin/rep-teams/teams/[teamId]/history/[yearId]/page.tsx', /rosterCountOf\(roster\)/],
     ];
@@ -496,7 +500,7 @@ describe('B08 — one roster rule and one record rule, and every club surface ca
 
   it('no club surface hand-tallies a record or counts a roster by hand any more', () => {
     for (const rel of [
-      'app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/schedule/page.tsx',
+      'app/[orgSlug]/admin/rep-teams/teams/[teamId]/schedule/page.tsx',
       'app/[orgSlug]/admin/rep-teams/teams/[teamId]/history/[yearId]/page.tsx',
       ROUTE.teams, ROUTE.team, 'lib/club-team-board.ts',
     ]) {

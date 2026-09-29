@@ -36,6 +36,7 @@ import { useChatUnread } from '@/lib/use-chat-unread';
 import { TOUR_GROUPS } from '@/components/admin/admin-nav-config';
 import { isKitLinkActive, kitTournamentLabel, ORGANIZATION_ICON, type KitLink, type KitProgram } from '@/lib/admin-kit-nav';
 import { useAdminKitNav } from './useAdminKitNav';
+import { useRailTeamName } from './useRailTeam';
 import { briefPageCount, briefProgramCount } from './club/ClubBriefProvider';
 import styles from './AdminKitFrame.module.css';
 
@@ -98,7 +99,7 @@ export default function AdminKitRail() {
     base, orgSlug, programs, alsoOnPlan, brief, orgLinks, orgLockedRows, section, tournamentOnly, isCanceled,
     onTournaments, coachDoor,
   } = nav;
-  const repMatch = pathname.match(/\/rep-teams\/teams\/([^/]+)\/program-years\/([^/]+)/);
+  const repTeamId = pathname.match(/\/rep-teams\/teams\/([^/]+)/)?.[1] ?? null;
   const seasonId = pathname.match(/\/house-league\/seasons\/([^/]+)/)?.[1] ?? null;
   const [creating, setCreating] = useState(false);
 
@@ -139,8 +140,8 @@ export default function AdminKitRail() {
           count={briefProgramCount(brief, p.key)}
         />
         {open && p.pages.map(pageRow)}
-        {open && p.key === 'rep-teams' && repMatch && (
-          <RepTeamBlock y={`${base}/rep-teams/teams/${repMatch[1]}/program-years/${repMatch[2]}`} />
+        {open && p.key === 'rep-teams' && repTeamId && (
+          <RepTeamBlock teamId={repTeamId} t={`${base}/rep-teams/teams/${repTeamId}`} />
         )}
         {open && p.key === 'house-league' && seasonId && <SeasonBlock seasonId={seasonId} />}
       </div>
@@ -227,16 +228,25 @@ export default function AdminKitRail() {
   );
 }
 
-/** Inside one rep team's season — today's "Team" block, unchanged in content (Stage 2 redraws it). */
-function RepTeamBlock({ y }: { y: string }) {
+/**
+ * Inside one rep team — the TEAM's block (Club Tier Stage 2, specimen 2's rail). It used to open only
+ * inside a season page and point at that season's screens; the club now works on a team's live season,
+ * so the block belongs to the team: its page, then Roster · Schedule · Tryouts · Coaches. Its label is
+ * the team's name once the page has read it (`useRailTeamName`), "Team" until then. How the admin rail
+ * groups things against the portal's rail is the project's nav review (Stage 8), not redesigned here.
+ */
+function RepTeamBlock({ teamId, t }: { teamId: string; t: string }) {
   const pathname = usePathname();
+  const name = useRailTeamName(teamId);
+  const under = (path: string) => pathname === path || pathname.startsWith(`${path}/`);
   return (
     <>
-      <div className={styles.subLabel}>Team</div>
-      <RailRow href={`${y}/tryouts`} label="Tryouts" active={pathname.startsWith(`${y}/tryouts`)} sub />
-      <RailRow href={`${y}#roster`} label="Roster" active={pathname === y} sub />
-      <RailRow href={`${y}/schedule`} label="Schedule" active={pathname.startsWith(`${y}/schedule`)} sub />
-      <RailRow href={`${y}/coaches`} label="Coaches" active={pathname.startsWith(`${y}/coaches`)} sub />
+      <div className={`${styles.subLabel} ${styles.subLabelTeam}`}>{name ?? 'Team'}</div>
+      <RailRow href={t} label="Team page" active={pathname === t || under(`${t}/history`)} sub />
+      <RailRow href={`${t}/roster`} label="Roster" active={under(`${t}/roster`)} sub />
+      <RailRow href={`${t}/schedule`} label="Schedule" active={under(`${t}/schedule`)} sub />
+      <RailRow href={`${t}/tryouts`} label="Tryouts" active={under(`${t}/tryouts`)} sub />
+      <RailRow href={`${t}/coaches`} label="Coaches" active={under(`${t}/coaches`)} sub />
     </>
   );
 }

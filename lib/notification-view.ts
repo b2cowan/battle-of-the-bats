@@ -37,6 +37,7 @@ export const EVENT_ICONS: Record<string, string> = {
   practice_plan_sent:                '📋',
   club_season_changed:               '📅',
   club_coach_joined:                 '🧑‍🏫',
+  club_coach_declined:               '✉️',
   team_move_requested:               '🤝',
   team_move_answered:                '🏟️',
   // ⚠ This map is Record<string, …>, so TypeScript does NOT enforce a key per event type the

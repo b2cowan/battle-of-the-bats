@@ -136,7 +136,9 @@ describe('the admin kit nav — where you are', () => {
     const [rep] = kitPrograms({ base: BASE, canUse: c => c === 'module_rep_teams' });
     const teams = rep.pages[0];
     assert.equal(isKitLinkActive(`${BASE}/rep-teams`, teams), true);
-    assert.equal(isKitLinkActive(`${BASE}/rep-teams/teams/t1/program-years/y1`, teams), true, 'a team page is inside Teams');
+    // Club Tier Stage 2 (specimen 2's rail): inside a team, the rail's TEAM block lights "Team page",
+    // and "Teams" — the board the back arrow leads to — does not light as well.
+    assert.equal(isKitLinkActive(`${BASE}/rep-teams/teams/t1`, teams), false, 'a team page is lit in its own block, not as Teams');
     assert.equal(isKitLinkActive(`${BASE}/rep-teams/allocations`, teams), false);
     const budget = kitPrograms({ base: BASE, canUse: c => c === 'module_accounting' })[0].pages[1];
     assert.equal(isKitLinkActive(`${BASE}/accounting/budget-vs-actual`, budget), false, 'Budget must not light on Budget vs. Actual');

@@ -34,6 +34,9 @@ export type NotificationCard = {
   subtitle: string;
   /** Reserved module capabilities the org holds (org card only) — gates optional sections. */
   modules: string[];
+  /** A coach card for a CLUB's team (not the coach's own standalone portal): its club holds the
+   *  season doors, so the "Your club" row (the club's season notices) belongs on it. */
+  clubTeam?: boolean;
 };
 
 function initials(name: string): string {
@@ -144,7 +147,15 @@ function CoachCard({ card }: { card: NotificationCard }) {
   // ⚠ The practice-plan row governs the BELL and the PUSH only. When the sending coach ticks
   // "Also email them", that email is the coach's own act and arrives whatever these switches say
   // (owner ruling J, 2026-09-17 — the dues-reminder ground); the row's blurb says so.
-  const eventTypes = useMemo<NotificationEventType[]>(() => ['coach_insights_digest', 'practice_plan_sent'], []);
+  //
+  // ⚖ A CLUB team's coach gets a third row (Club Tier Stage 2, specimen 4): the club closed, started
+  // or reopened the team's season. It ships with its event (the club's season doors send it) and
+  // appears only where it can arrive — a standalone portal's head coach holds those doors themselves.
+  const clubTeam = card.clubTeam === true;
+  const eventTypes = useMemo<NotificationEventType[]>(
+    () => (clubTeam ? ['coach_insights_digest', 'practice_plan_sent', 'club_season_changed'] : ['coach_insights_digest', 'practice_plan_sent']),
+    [clubTeam],
+  );
   const groups = useMemo<PreferenceGroup[]>(
     () => [
       {
@@ -158,8 +169,13 @@ function CoachCard({ card }: { card: NotificationCard }) {
         blurb: 'When a coach sends you the practice plan, with the stations you’re running. An email the coach chooses to send arrives whatever you set here.',
         eventTypes: ['practice_plan_sent'],
       },
+      ...(clubTeam ? [{
+        label: 'Your club',
+        blurb: 'When your club closes, starts or reopens your team’s season — the portal’s screens change when it does.',
+        eventTypes: ['club_season_changed'] as NotificationEventType[],
+      }] : []),
     ],
-    [],
+    [clubTeam],
   );
 
   const p = useOrgPreferences({ orgSlug: card.orgSlug, role: card.role, eventTypes });

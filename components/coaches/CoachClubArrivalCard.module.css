@@ -1,0 +1,27 @@
+/* The club team's one-time Overview card (Club Tier Stage 2, specimens 4 and 6) — the kit's card with
+   the portal's olive accent edge; a white card, never a tinted panel (2026-09-21). Tokens only. */
+.card {
+  --card-accent: var(--home-olive, var(--primary-light));
+  margin-bottom: 0.9rem;
+}
+.kicker {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.title {
+  margin: 0;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--text-primary);
+}
+.body {
+  margin: 0;
+  font-size: var(--type-support);
+  line-height: 1.5;
+  color: var(--text-secondary);
+}

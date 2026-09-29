@@ -3259,6 +3259,9 @@ export type NotificationEventType =
   // Club Tier Stage 2 — a coach the club invited from a team's Coaches page accepted (mig 312).
   // Reaches the person at the club who sent the invitation. Targeted lifecycle bell; TS-union only.
   | 'club_coach_joined'
+  // Club Tier Stage 2, session 3 — the invitee DECLINED that invitation from their home page
+  // (specimen 6 · 2b: "Declining tells Dana"). Same recipient, same targeted bell; TS-union only.
+  | 'club_coach_declined'
   // Club Tier Stage 2, B04 (mig 313) — a coach's own team moving into a club. 'team_move_requested'
   // reaches the side that must answer (the team's head coaches, or the club's owner and admins);
   // 'team_move_answered' tells the other side how it ended (moved / declined). Targeted lifecycle

@@ -277,8 +277,9 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     id: 'rep-teams-tryout-registrations',
     label: 'Rep Teams Tryout Registrations',
     module: 'rep_teams',
-    page: 'Program Year — Tryout Applicants',
-    file: 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx',
+    // Club Tier Stage 2: the team's Tryouts page, on the team's live season (the season page is gone).
+    page: 'Team — Tryouts',
+    file: 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/tryouts/page.tsx',
     // The PDF is the printed REGISTER (Phase 2 Registers pass): status sections with counts, and
     // the consent record. No contact details, no notes, no consent IP — those stay in the sheets.
     formats: ['xlsx', 'csv', 'pdf'],
@@ -664,8 +665,9 @@ export const EXPORT_CATALOG: ExportCatalogEntry[] = [
     id: 'rep-teams-roster-admin',
     label: 'Rep Teams Roster (admin view)',
     module: 'rep_teams',
-    page: 'Program Year Roster',
-    file: 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/page.tsx',
+    // Club Tier Stage 2: the team's Roster page, on the team's live season (the season page is gone).
+    page: 'Team — Roster',
+    file: 'app/[orgSlug]/admin/rep-teams/teams/[teamId]/roster/page.tsx',
     formats: ['xlsx', 'csv', 'pdf'],
     defaultFormat: 'xlsx',
     minPlan: 'club',

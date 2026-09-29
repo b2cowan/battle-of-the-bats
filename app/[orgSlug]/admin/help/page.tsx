@@ -144,10 +144,10 @@ export default function AdminHelpHubPage() {
       {
         title: 'Rep Program Admin',
         steps: [
-          { label: 'Create a team and program year', href: `${helpBase}/rep-teams#recipe-create-team-program-year` },
+          { label: 'Add a team and start its first season', href: `${helpBase}/rep-teams#recipe-create-team-program-year` },
           { label: 'Open tryouts and review applicants', href: `${helpBase}/rep-teams#recipe-open-tryouts-review-applicants` },
           { label: 'Accept a player onto the roster', href: `${helpBase}/rep-teams#recipe-accept-player-to-roster` },
-          { label: 'Give a coach access to their team', href: `${helpBase}/rep-teams#recipe-assign-coach-access` },
+          { label: 'Invite a coach', href: `${helpBase}/rep-teams#recipe-assign-coach-access` },
           { label: 'Publish document templates', href: `${helpBase}/rep-teams#recipe-publish-document-templates` },
         ],
       },

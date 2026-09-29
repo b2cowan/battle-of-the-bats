@@ -123,9 +123,9 @@ export default function PastYearDetailPage({
   if (!isReadOnly) {
     return (
       <p className={styles.muted}>
-        This program year is still active.{' '}
-        <Link href={`${base}/rep-teams/teams/${params.teamId}/program-years/${params.yearId}`}>
-          View active year →
+        This season is still live.{' '}
+        <Link href={`${base}/rep-teams/teams/${params.teamId}`}>
+          Open the team →
         </Link>
       </p>
     );

@@ -15,6 +15,7 @@ import {
 } from '@/lib/coach-masthead-status';
 import CoachTeamHeader from '@/components/coaches/CoachTeamHeader';
 import CoachTeamSeasonGate from '@/components/coaches/CoachTeamSeasonGate';
+import CoachSeasonRefusalNotice from '@/components/coaches/CoachSeasonRefusalNotice';
 import { CoachPageHelpProvider } from '@/components/coaches/CoachPageHelpSlot';
 
 /**
@@ -149,6 +150,10 @@ export default async function CoachTeamLayout({
         closedHref={`/${orgSlug}/coaches/teams/${teamId}/season-end`}
         teamBase={`/${orgSlug}/coaches/teams/${teamId}`}
       >
+        {/* A page opened BEFORE the season closed under it: its next save is refused in words, with
+            the one door — the gate above covers every page opened after (Club Tier Stage 2,
+            specimen 4 frame C). Renders nothing until a save for this team is refused. */}
+        <CoachSeasonRefusalNotice teamId={teamId} closedHref={`/${orgSlug}/coaches/teams/${teamId}/season-end`} />
         {children}
       </CoachTeamSeasonGate>
     </CoachPageHelpProvider>

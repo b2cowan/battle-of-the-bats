@@ -55,6 +55,13 @@ export const GET = withObservability(async (req: Request) => {
   const visible = (includeArchived ? teams : teams.filter(t => !t.isArchived))
     .filter(t => !ungrouped || !t.groupId);
 
+  // `?light=1` — the teams alone, for a picker (Document templates' "Applies to"): no board reads.
+  if (searchParams.get('light') === '1') {
+    return NextResponse.json({
+      teams: visible.map(t => ({ team: { id: t.id, name: t.name, groupId: t.groupId, groupName: t.groupName, isArchived: t.isArchived } })),
+    });
+  }
+
   /**
    * THE HEALTH BOARD'S READ (Club Tier Stage 2, B08 / Ask 5) — one batched read for every team:
    * season + record, head coach, roster, next event, Documents, group. It replaced three queries a

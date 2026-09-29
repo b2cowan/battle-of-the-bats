@@ -54,6 +54,17 @@
   color: var(--text-primary);
 }
 .identity { margin: 0.2rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+/* The record a window is about, ABOVE its title (Club Stage 2's season and coach windows: "9U A" over
+   "Start the 2027 Season?") — a card's eyebrow, secondary ink (Ask 8 ruling 8). */
+.eyebrow {
+  margin: 0 0 0.2rem;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
 /* ← lives on a phone only; a desk has the ✕ and Cancel. */
 .back { display: none; }
 .close,

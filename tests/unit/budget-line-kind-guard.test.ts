@@ -69,6 +69,13 @@ const KIND_AGNOSTIC: Array<{ path: string; reason: string }> = [
       + 'depends on. It sums nothing and reads no amount — and a money-in line carries no item at '
       + 'all (they have no category or item by design), so the kind cannot change the answer.',
   },
+  {
+    path: 'app/api/coaches/[orgSlug]/teams/[teamId]/club-arrival/route.ts',
+    reason: 'COUNTS the new season\'s lines (head only) to say "the budget plan came over" on a club '
+      + 'coach\'s one-time new-season card (Club Tier Stage 2). It reads no amount and sums nothing — '
+      + 'the question is "did a plan carry at all?", where a funding line and a cost line answer '
+      + 'identically ON PURPOSE.',
+  },
   /* ⚠ THIS ENTRY MOVED FROM `lib/coach-budget-items.ts` ON 2026-08-17, and the guard is what noticed.
      The table names live in the reference list, and the list was split into a pure module so the
      fold's confirmation could be written in the browser without dragging the service-role client

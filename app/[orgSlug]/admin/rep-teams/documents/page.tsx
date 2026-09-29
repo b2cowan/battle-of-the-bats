@@ -1,436 +1,226 @@
 'use client';
-import { useState, useEffect, useRef, useCallback } from 'react';
-import Link from 'next/link';
-import { FileText, Upload, Download, Trash2, Eye, EyeOff, X } from 'lucide-react';
+/**
+ * Rep Teams › Document templates — ONE LIST, AND WHO EACH APPLIES TO (Club Tier Stage 2, specimen 8;
+ * J4-009, B11). Two tables (Org-wide · Team-specific) that never said WHICH team a form belonged to,
+ * and an upload that asked for a raw team id, became:
+ *   · one table with an "Applies to" column ("Every team" or the team's name), the name opening the
+ *     template (Download, Switch off/on, Delete — which asks) and one chevron; no "⋯", no row buttons;
+ *   · the scope said once, truly, in the toolbar's lede (templates are club- or team-wide and NOT
+ *     tied to a season — the old help's "program-year specific" was wrong; signed copies are per
+ *     player per season, which is why the board's Documents count starts at zero on a new season);
+ *   · an upload window with an "Applies to" dropdown of the club's teams, grouped, "Every team" first.
+ * The server refuses a team that isn't the club's (B11, session 1).
+ */
+import { useCallback, useMemo, useState } from 'react';
+import dynamic from 'next/dynamic';
+import { ChevronRight, FileText, Upload } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
-import { hasCapability } from '@/lib/roles';
+import { usePageTitle } from '@/lib/usePageTitle';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
-import { useKitStyle } from '@/components/admin/AdminKitProvider';
-import { KIT_SURFACE } from '@/components/admin/kit/kit-inline';
-import styles from '../rep-teams.module.css';
-import type { RepDocumentType } from '@/lib/types';
+import PageNotice, { useNotice } from '@/components/admin/kit/club/PageNotice';
+import ck from '@/components/admin/kit/club/ClubKit.module.css';
+import { CoachListToolbar } from '@/components/coaches/kit';
+import {
+  EmptyCard, LoadFailed, PageLoading, RepChip, repKit, useDeferredLoad, useLatestRead,
+} from '@/components/admin/kit/club/RepKit';
+import { DOC_TYPE_LABEL, type PickerTeam, type TemplateRow } from '@/components/admin/kit/club/TemplateDialogs';
+import { formatStoredDate } from '@/lib/timezone';
 
-const DOC_TYPE_LABELS: Record<RepDocumentType, string> = {
-  waiver:           'Waiver',
-  medical_consent:  'Medical Consent',
-  code_of_conduct:  'Code of Conduct',
-  other:            'Other',
-};
-const VALID_DOC_TYPES = Object.keys(DOC_TYPE_LABELS) as RepDocumentType[];
+const TemplateDialog = dynamic(() => import('@/components/admin/kit/club/TemplateDialogs').then(m => m.TemplateDialog));
+const UploadTemplateDialog = dynamic(() => import('@/components/admin/kit/club/TemplateDialogs').then(m => m.UploadTemplateDialog));
 
-interface TemplateRow {
-  id: string;
-  teamId: string | null;
-  name: string;
-  documentType: RepDocumentType;
-  fileName: string;
-  fileSize: number;
-  isActive: boolean;
-  publishedBy: string | null;
-  createdAt: string;
-}
-
-export default function AdminDocumentsPage() {
-  const { currentOrg, userRole, userCapabilities, loading } = useOrg();
-  const orgQuery = currentOrg?.slug ? `?orgSlug=${encodeURIComponent(currentOrg.slug)}` : '';
+export default function DocumentTemplatesPage() {
+  const { currentOrg, userRole, loading: orgLoading } = useOrg();
+  usePageTitle('Document templates');
+  const orgSlug = currentOrg?.slug ?? '';
+  const q = `orgSlug=${encodeURIComponent(orgSlug)}`;
   const canWrite = userRole === 'owner' || userRole === 'admin';
-  // Admin Design Continuity slice 3: the kit's patch over each hand-set style while the switch is on.
-  const kx = useKitStyle();
 
   const [templates, setTemplates] = useState<TemplateRow[]>([]);
-  const [fetching, setFetching] = useState(true);
-
-  const [uploadOpen, setUploadOpen] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadName, setUploadName] = useState('');
-  const [uploadType, setUploadType] = useState<RepDocumentType>('other');
-  const [uploadTeamId, setUploadTeamId] = useState('');
+  const [teams, setTeams] = useState<PickerTeam[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [openId, setOpenId] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
-  const [uploadError, setUploadError] = useState('');
-  const fileRef = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useNotice();
 
-  const [togglingId, setTogglingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState<TemplateRow | null>(null);
-
-  const [feedbackMsg, setFeedbackMsg] = useState('');
-  const [feedbackType, setFeedbackType] = useState<'success' | 'error'>('success');
-
-  function showFeedback(type: 'success' | 'error', msg: string) {
-    setFeedbackType(type);
-    setFeedbackMsg(msg);
-    setTimeout(() => setFeedbackMsg(''), 4000);
-  }
-
+  const beginRead = useLatestRead();
   const load = useCallback(async () => {
-    setFetching(true);
+    if (!orgSlug) return;
+    const current = beginRead();
+    setLoadError(false);
     try {
-      const res = await fetch(`/api/admin/rep-teams/document-templates${orgQuery}`);
-      const data = await res.json();
-      if (res.ok) setTemplates(data.templates ?? []);
+      const [tplRes, teamsRes] = await Promise.all([
+        fetch(`/api/admin/rep-teams/document-templates?${q}`, { cache: 'no-store' }),
+        // Archived teams too: a template made for one must still name it (the picker offers it only there).
+        fetch(`/api/admin/rep-teams/teams?light=1&archived=true&${q}`, { cache: 'no-store' }),
+      ]);
+      if (!tplRes.ok) { if (current()) setLoadError(true); return; }
+      const tplData = await tplRes.json();
+      const teamsData = await teamsRes.json().catch(() => ({}));
+      if (!current()) return;
+      setTemplates((tplData.templates ?? []) as TemplateRow[]);
+      setTeams(((teamsData.teams ?? []) as { team: PickerTeam }[]).map(t => t.team));
+    } catch {
+      if (current()) setLoadError(true);
     } finally {
-      setFetching(false);
+      if (current()) setLoading(false);
     }
-  }, [orgQuery]);
+  }, [orgSlug, q, beginRead]);
 
-  useEffect(() => { if (!loading) load(); }, [loading, load]);
+  useDeferredLoad(!orgLoading && !!orgSlug, load);
 
-  if (!loading && (!userRole || !hasCapability(userRole, userCapabilities, 'module_rep_teams'))) {
-    return (
-      <div className={styles.accessDenied}>
-        <h2>Access Denied</h2>
-        <p>You do not have permission to manage rep team documents.</p>
-      </div>
-    );
-  }
+  const teamName = useMemo(() => new Map(teams.map(t => [t.id, t.name])), [teams]);
+  const rows = useMemo(() => [...templates].sort((a, b) => {
+    // Every team first, then by team, then by name — the order a club reads "what does each team sign?".
+    const ta = a.teamId ? teamName.get(a.teamId) ?? '' : '';
+    const tb = b.teamId ? teamName.get(b.teamId) ?? '' : '';
+    return ta.localeCompare(tb) || a.name.localeCompare(b.name);
+  }), [templates, teamName]);
+  const opened = openId ? templates.find(t => t.id === openId) ?? null : null;
 
-  async function handleUpload() {
-    if (!uploadFile || !uploadName.trim()) return;
-    setUploading(true);
-    setUploadError('');
-    try {
-      const form = new FormData();
-      form.append('file', uploadFile);
-      form.append('name', uploadName.trim());
-      form.append('documentType', uploadType);
-      if (uploadTeamId.trim()) form.append('teamId', uploadTeamId.trim());
-      const res = await fetch(`/api/admin/rep-teams/document-templates${orgQuery}`, { method: 'POST', body: form });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? 'Upload failed');
-      await load();
-      setUploadOpen(false);
-      setUploadFile(null);
-      setUploadName('');
-      setUploadTeamId('');
-      if (fileRef.current) fileRef.current.value = '';
-      showFeedback('success', 'Template uploaded.');
-    } catch (e: any) {
-      setUploadError(e.message ?? 'Upload failed');
-    } finally {
-      setUploading(false);
-    }
-  }
-
-  async function handleDownload(templateId: string, fileName: string) {
-    const res = await fetch(`/api/admin/rep-teams/document-templates/${templateId}${orgQuery}`);
-    const data = await res.json();
-    if (!res.ok || !data.url) { showFeedback('error', 'Could not generate download link.'); return; }
+  async function download(t: TemplateRow) {
+    const res = await fetch(`/api/admin/rep-teams/document-templates/${t.id}?${q}`);
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || !data.url) { setNotice({ tone: 'bad', text: 'The download link could not be made. Please try again.' }); return; }
     const a = document.createElement('a');
     a.href = data.url;
-    a.download = fileName;
+    a.download = t.fileName;
     a.target = '_blank';
     a.rel = 'noopener noreferrer';
     a.click();
   }
 
-  async function handleToggleActive(t: TemplateRow) {
-    setTogglingId(t.id);
+  async function patch(t: TemplateRow, body: { isActive?: boolean; teamId?: string | null }) {
+    // The Applies-to select fires on every change: one write at a time (/review).
+    if (busy) return;
+    setBusy(true);
     try {
-      const res = await fetch(`/api/admin/rep-teams/document-templates/${t.id}${orgQuery}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !t.isActive }),
+      const res = await fetch(`/api/admin/rep-teams/document-templates/${t.id}?${q}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
       });
-      if (res.ok) {
-        setTemplates(prev => prev.map(r => r.id === t.id ? { ...r, isActive: !r.isActive } : r));
-      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setNotice({ tone: 'bad', text: data.error ?? 'That didn’t work. Please try again.' }); return; }
+      setTemplates(prev => prev.map(r => (r.id === t.id ? { ...r, ...data.template } : r)));
+      setNotice({
+        tone: 'good',
+        text: body.isActive === undefined
+          ? `${t.name} now applies to ${body.teamId ? teamName.get(body.teamId) ?? 'that team' : 'every team'}.`
+          : body.isActive ? `${t.name} is on. Families see it.` : `${t.name} is off. Families no longer see it.`,
+      });
     } finally {
-      setTogglingId(null);
+      setBusy(false);
     }
   }
 
-  async function handleDelete(t: TemplateRow) {
-    setDeletingId(t.id);
+  async function remove(t: TemplateRow) {
+    if (busy) return;
+    setBusy(true);
     try {
-      const res = await fetch(`/api/admin/rep-teams/document-templates/${t.id}${orgQuery}`, { method: 'DELETE' });
-      if (res.ok) {
-        setTemplates(prev => prev.filter(r => r.id !== t.id));
-        showFeedback('success', `"${t.name}" deleted.`);
-      } else {
-        showFeedback('error', 'Delete failed.');
-      }
+      const res = await fetch(`/api/admin/rep-teams/document-templates/${t.id}?${q}`, { method: 'DELETE' });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) { setNotice({ tone: 'bad', text: data.error ?? 'The template could not be deleted.' }); return; }
+      setOpenId(null);
+      setTemplates(prev => prev.filter(r => r.id !== t.id));
+      setNotice({ tone: 'good', text: `${t.name} is deleted.` });
     } finally {
-      setDeletingId(null);
-      setConfirmDelete(null);
+      setBusy(false);
     }
   }
 
-  function formatBytes(n: number) {
-    if (n < 1024) return `${n} B`;
-    if (n < 1024 * 1024) return `${(n / 1024).toFixed(0)} KB`;
-    return `${(n / (1024 * 1024)).toFixed(1)} MB`;
-  }
+  const header = (
+    <AdminPageHeader
+      legacy={null}
+      crumbs={[{ label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
+      title="Document templates"
+      actions={canWrite ? (
+        <button type="button" className={`btn btn-lime ${ck.iconOnlyPhone}`} onClick={() => setUploading(true)} aria-label="Upload template">
+          <Upload size={15} aria-hidden /><span className={ck.btnWord}>Upload template</span>
+        </button>
+      ) : undefined}
+    />
+  );
 
-  const orgWide = templates.filter(t => t.teamId === null);
-  const teamSpecific = templates.filter(t => t.teamId !== null);
-
-  function TemplateTable({ rows }: { rows: TemplateRow[] }) {
-    if (rows.length === 0) return <p className={styles.detailPlaceholder}>No templates.</p>;
-    return (
-      <div className={styles.tableWrap}>
-        <table className={styles.table}>
-          <thead>
-            <tr>
-              <th className={styles.th}>Name</th>
-              <th className={styles.th}>Type</th>
-              <th className={styles.th}>File</th>
-              <th className={styles.th}>Size</th>
-              <th className={styles.th}>Status</th>
-              <th className={styles.th}>Added</th>
-              <th className={styles.th}></th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map(t => (
-              <tr key={t.id} className={styles.tr}>
-                <td className={styles.td} style={{ fontWeight: 600 }}>{t.name}</td>
-                <td className={styles.td}>
-                  <span className={`${styles.badge} ${styles.badgeInfo}`}>
-                    {DOC_TYPE_LABELS[t.documentType] ?? t.documentType}
-                  </span>
-                </td>
-                <td className={styles.td} style={{ color: 'var(--white-60)', fontSize: '0.82rem', maxWidth: 180, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {t.fileName}
-                </td>
-                <td className={styles.td} style={{ color: 'var(--white-50)', fontSize: '0.82rem' }}>
-                  {formatBytes(t.fileSize)}
-                </td>
-                <td className={styles.td}>
-                  <span className={`${styles.badge} ${t.isActive ? styles.badgeActive : styles.badgeDraft}`}>
-                    {t.isActive ? 'Active' : 'Inactive'}
-                  </span>
-                </td>
-                <td className={styles.td} style={{ color: 'var(--white-50)', fontSize: '0.82rem', whiteSpace: 'nowrap' }}>
-                  {new Date(t.createdAt).toLocaleDateString()}
-                </td>
-                <td className={styles.td} style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
-                  <button
-                    type="button"
-                    className="btn btn-ghost"
-                    style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', marginRight: '0.2rem' }}
-                    onClick={() => handleDownload(t.id, t.fileName)}
-                    title="Download"
-                  >
-                    <Download size={13} />
-                  </button>
-                  {canWrite && (
-                    <>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', marginRight: '0.2rem', opacity: togglingId === t.id ? 0.5 : 1 }}
-                        disabled={togglingId === t.id}
-                        onClick={() => handleToggleActive(t)}
-                        title={t.isActive ? 'Deactivate' : 'Activate'}
-                      >
-                        {t.isActive ? <EyeOff size={13} /> : <Eye size={13} />}
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn-ghost"
-                        style={{ fontSize: '0.8rem', padding: '0.25rem 0.5rem', color: 'var(--danger-light)', opacity: deletingId === t.id ? 0.5 : 1 }}
-                        disabled={deletingId === t.id}
-                        onClick={() => setConfirmDelete(t)}
-                        title="Delete"
-                      >
-                        <Trash2 size={13} />
-                      </button>
-                    </>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    );
-  }
-
-  // The header's action — one element both headers render, so the kit header never forks it.
-  const headerActions = canWrite ? (
-          <button
-            type="button"
-            className="btn btn-primary"
-            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.88rem' }}
-            onClick={() => { setUploadOpen(true); setUploadError(''); }}
-          >
-            <Upload size={14} /> Upload Template
-          </button>
-  ) : null;
+  if (orgLoading || loading) return <PageLoading header={header} />;
 
   return (
-    <div className={styles.page}>
-      {/* Header — today's as `legacy` while the switch is off. On the kit the subtitle's breadcrumb is the
-          eyebrow ("Rep Teams", still a link), and its "Documents" was the page's own name (F3). */}
-      <AdminPageHeader
-        crumbs={[{ href: currentOrg ? `/${currentOrg.slug}/admin/rep-teams` : undefined, label: 'Rep Teams' }, { label: currentOrg?.name ?? '' }]}
-        title="Document templates"
-        actions={headerActions}
-        legacy={
-      <div className={styles.pageHeader}>
-        <div className={styles.pageHeaderLeft}>
-          <div className={styles.headerIcon}>
-            <FileText size={22} />
-          </div>
-          <div>
-            <h1 className={styles.pageTitle}>Document Templates</h1>
-            <p className={styles.pageSub}>
-              <Link href={`/${currentOrg?.slug}/admin/rep-teams`} style={{ color: 'var(--white-40)', textDecoration: 'none' }}>
-                Rep Teams
-              </Link>
-              {' → '}Documents
-            </p>
-          </div>
-        </div>
-        {headerActions}
-      </div>
-        }
-      />
-
-      {/* Feedback banner */}
-      {feedbackMsg && (
-        <div style={kx({
-          padding: '0.75rem 1rem',
-          borderRadius: '2px',
-          marginBottom: '1rem',
-          background: feedbackType === 'success' ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)',
-          border: `1px solid ${feedbackType === 'success' ? 'rgba(74,222,128,0.3)' : 'rgba(248,113,113,0.3)'}`,
-          color: feedbackType === 'success' ? 'var(--success-light)' : 'var(--danger-light)',
-          fontSize: '0.88rem',
-        }, feedbackType === 'success' ? KIT_SURFACE.good : { ...KIT_SURFACE.alert, color: 'var(--home-live)' })}>
-          {feedbackMsg}
-        </div>
-      )}
-
-      {fetching ? (
-        <p className={styles.muted}>Loading…</p>
+    <div className={repKit.page}>
+      {header}
+      {notice && <PageNotice notice={notice} />}
+      {loadError ? (
+        <LoadFailed title="We couldn’t load the templates." onRetry={() => { setLoading(true); void load(); }} />
       ) : (
         <>
-          {/* Org-wide templates */}
-          <div className={styles.detailSection}>
-            <p className={styles.detailSectionTitle}>Org-Wide Templates</p>
-            <TemplateTable rows={orgWide} />
-          </div>
-
-          {/* Team-specific templates */}
-          <div className={styles.detailSection}>
-            <p className={styles.detailSectionTitle}>Team-Specific Templates</p>
-            <TemplateTable rows={teamSpecific} />
-          </div>
+          <CoachListToolbar lede="A template belongs to the club. It applies to every team or to one team until you switch it off, whatever the season. Families sign again each season." />
+          {rows.length === 0 ? (
+            <EmptyCard
+              icon={<FileText size={20} aria-hidden />}
+              title="No templates yet"
+              action={canWrite ? <button type="button" className="btn btn-lime" onClick={() => setUploading(true)}>Upload template</button> : undefined}
+            >
+              Upload the waiver your insurer asks for, a code of conduct or a medical consent. Families see and sign it in their team’s portal.
+            </EmptyCard>
+          ) : (
+            <div className={repKit.tableFrame}>
+              <table className={repKit.table}>
+                <thead>
+                  <tr>
+                    <th scope="col">Name</th>
+                    <th scope="col">Applies to</th>
+                    <th scope="col">Type</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Added</th>
+                    <th scope="col" className={repKit.go}><span className={repKit.srOnly}>Open</span></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map(t => (
+                    <tr key={t.id} className={repKit.rowOpens}>
+                      <td>
+                        <button type="button" className={`${repKit.nameLink} ${repKit.nameButton}`} onClick={() => setOpenId(t.id)} aria-haspopup="dialog">{t.name}</button>
+                      </td>
+                      <td>{t.teamId ? teamName.get(t.teamId) ?? 'A team' : 'Every team'}</td>
+                      <td><RepChip tone="info">{DOC_TYPE_LABEL[t.documentType] ?? t.documentType}</RepChip></td>
+                      <td>{t.isActive ? <RepChip tone="good">Active</RepChip> : <RepChip>Off</RepChip>}</td>
+                      <td className={repKit.dim}>{formatStoredDate(t.createdAt, { withYear: false })}</td>
+                      <td className={repKit.go}>
+                        <button type="button" className={`${repKit.goLink} ${repKit.nameButton}`} onClick={() => setOpenId(t.id)} tabIndex={-1} aria-hidden>
+                          <ChevronRight size={16} />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       )}
 
-      {/* Upload modal */}
-      {uploadOpen && (
-        <div className={styles.modalOverlay}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <h3 className={styles.modalTitle}>Upload Template</h3>
-              <button
-                type="button"
-                className={styles.modalCloseBtn}
-                onClick={() => { setUploadOpen(false); setUploadFile(null); setUploadName(''); setUploadTeamId(''); setUploadError(''); if (fileRef.current) fileRef.current.value = ''; }}
-              >
-                <X size={18} />
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-              <div className={styles.field}>
-                <label className={styles.label}>Template Name</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={uploadName}
-                  onChange={e => setUploadName(e.target.value)}
-                  placeholder="e.g. Participant Waiver 2025"
-                  maxLength={120}
-                />
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>Document Type</label>
-                <select
-                  className={styles.select}
-                  value={uploadType}
-                  onChange={e => setUploadType(e.target.value as RepDocumentType)}
-                >
-                  {VALID_DOC_TYPES.map(v => (
-                    <option key={v} value={v}>{DOC_TYPE_LABELS[v]}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>Team (optional)</label>
-                <input
-                  type="text"
-                  className={styles.input}
-                  value={uploadTeamId}
-                  onChange={e => setUploadTeamId(e.target.value)}
-                  placeholder="Team ID — leave blank for org-wide"
-                />
-                <p className={styles.hint}>Leave blank to make this template available to all teams.</p>
-              </div>
-
-              <div className={styles.field}>
-                <label className={styles.label}>File <span style={{ fontWeight: 400, textTransform: 'none', fontSize: '0.75rem' }}>(PDF, JPG, PNG, DOCX — max 10 MB)</span></label>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept=".pdf,.jpg,.jpeg,.png,.docx"
-                  className={styles.input}
-                  onChange={e => setUploadFile(e.target.files?.[0] ?? null)}
-                />
-              </div>
-
-              {uploadError && (
-                <p style={{ color: 'var(--danger-light)', fontSize: '0.85rem', margin: 0 }}>{uploadError}</p>
-              )}
-            </div>
-
-            <div className={styles.modalFooter}>
-              <button
-                type="button"
-                className="btn btn-ghost"
-                onClick={() => { setUploadOpen(false); setUploadFile(null); setUploadName(''); setUploadTeamId(''); setUploadError(''); if (fileRef.current) fileRef.current.value = ''; }}
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                className="btn btn-primary"
-                disabled={!uploadFile || !uploadName.trim() || uploading}
-                onClick={handleUpload}
-              >
-                {uploading ? 'Uploading…' : 'Upload'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {opened && (
+        <TemplateDialog
+          template={opened}
+          teams={teams}
+          canWrite={canWrite}
+          busy={busy}
+          onClose={() => setOpenId(null)}
+          onDownload={() => void download(opened)}
+          onPatch={body => patch(opened, body)}
+          onDelete={() => remove(opened)}
+        />
       )}
-
-      {/* Delete confirm */}
-      {confirmDelete && (
-        <div className={styles.confirmOverlay}>
-          <div className={styles.confirmBox}>
-            <p className={styles.confirmTitle}>Delete Template</p>
-            <p className={styles.confirmMsg}>
-              Delete &ldquo;{confirmDelete.name}&rdquo;? This cannot be undone. The file will be removed from storage.
-            </p>
-            <div className={styles.confirmActions}>
-              <button type="button" className="btn btn-ghost" onClick={() => setConfirmDelete(null)}>Cancel</button>
-              <button
-                type="button"
-                className="btn btn-danger"
-                disabled={deletingId === confirmDelete.id}
-                onClick={() => handleDelete(confirmDelete)}
-              >
-                {deletingId === confirmDelete.id ? 'Deleting…' : 'Delete'}
-              </button>
-            </div>
-          </div>
-        </div>
+      {uploading && (
+        <UploadTemplateDialog
+          orgSlug={orgSlug}
+          teams={teams}
+          onClose={() => setUploading(false)}
+          onUploaded={async name => {
+            setUploading(false);
+            setNotice({ tone: 'good', text: `${name} is uploaded and on.` });
+            await load();
+          }}
+        />
       )}
     </div>
   );

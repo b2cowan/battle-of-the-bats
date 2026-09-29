@@ -46,6 +46,20 @@ export function clubSeasonNotice(p: {
       body: `${teamName} · The season is live again, and every screen is back.`,
     };
   }
+  const started = clubSeasonStartedCard({ clubName, seasonName, previousSeasonName: p.previousSeasonName, carried: p.carried });
+  return { title: started.title, body: `${teamName} · ${started.body}` };
+}
+
+/**
+ * The started notice without the team prefix — the bell's body after "{team} ·", and the one-time
+ * "New season" card on the Overview (specimen 4, second frame), which already stands on the team.
+ */
+export function clubSeasonStartedCard(p: {
+  clubName: string;
+  seasonName: string;
+  previousSeasonName?: string | null;
+  carried?: ClubSeasonCarried | null;
+}): { title: string; body: string } {
   const parts: string[] = [];
   const c = p.carried;
   if (c) {
@@ -54,10 +68,34 @@ export function clubSeasonNotice(p: {
     if (c.feePlan) parts.push('the fee plan');
     if (c.openingBalance) parts.push('the opening balance');
   }
-  const came = parts.length === 0 ? '' : ` Came with the team: ${joinWithAnd(parts)}.`;
+  const came = parts.length === 0 ? '' : `Came with the team: ${joinWithAnd(parts)}. `;
   const kept = p.previousSeasonName ? ` The ${p.previousSeasonName} is kept as a record.` : '';
   return {
-    title: `${clubName} started the ${seasonName}`,
-    body: `${teamName} ·${came} Tryouts are closed until you open them.${kept}`,
+    title: `${p.clubName} started the ${p.seasonName}`,
+    body: `${came}Tryouts are closed until you open them.${kept}`,
+  };
+}
+
+/**
+ * The one-time welcome for a coach the club invited (specimen 6, "Where she lands"): who named them,
+ * as what, and that the team is already there. ⚠ The first name is the account's own (never guessed
+ * from an email); with none, the line drops it rather than inventing one.
+ */
+export function clubWelcomeCard(p: {
+  teamName: string;
+  firstName: string | null;
+  clubName: string;
+  roleWord: string;
+  namedOn: string;
+  players: number;
+  otherStaff: number;
+}): { title: string; body: string } {
+  const here: string[] = [];
+  if (p.players > 0) here.push(pluralize(p.players, 'player'));
+  if (p.otherStaff > 0) here.push(pluralize(p.otherStaff, 'staff', 'staff'));
+  const team = here.length > 0 ? ` Your team is already here: ${joinWithAnd(here)}.` : '';
+  return {
+    title: p.firstName ? `Welcome to ${p.teamName}, ${p.firstName}` : `Welcome to ${p.teamName}`,
+    body: `${p.clubName} named you ${p.roleWord} on ${p.namedOn}.${team}`,
   };
 }

@@ -92,7 +92,9 @@ function programDef(key: AdminProgramKey, base: string): Omit<KitProgram, 'key'>
       return {
         label: 'Rep Teams', icon: Users, href: r,
         pages: [
-          { key: 'rt-teams', label: 'Teams', href: r, exact: true, also: [`${r}/teams`] },
+          // Exact: inside a team, the rail's TEAM block carries the active row (Club Tier Stage 2,
+          // specimen 2 — "Team page" lit, "Teams" not), and its back arrow leads up to this one.
+          { key: 'rt-teams', label: 'Teams', href: r, exact: true },
           { key: 'rt-allocations', label: 'Cost allocation', href: `${r}/allocations` },
           { key: 'rt-payment-requests', label: 'Payment requests', href: `${r}/payment-requests` },
           { key: 'rt-assistant-coaches', label: 'Assistant coaches', href: `${r}/assistant-coaches` },

@@ -1,0 +1,534 @@
+/* ═══════════════════════════════════════════════════════════════════════════════════════════════
+   THE REP-TEAMS SCREENS' KIT (Club Tier Stage 2, session 3 — built to hub v15 and the Coaches Portal
+   benchmark, plan §6 "Across every stage — formatting"). The portal's recipes restated BY VALUE for a
+   shell that does not load the portal's 16,000-line stylesheet (the reason `AdminPageHeader`
+   restates `CoachPageHeader`):
+
+   · the SECTION — `CoachPageSection`: a card, its heading INSIDE (16 / 700, sentence case), a mono
+     count beside it, its actions on the right;
+   · the ROW LIST — `CoachRowList` (table standard §3.10): exactly one painter of the ground, a row is
+     not a card, the whole row is the target, one chevron last; at ≤ 640 each row is a white card with
+     a corner chevron;
+   · the TABLE — standard §3.2–3.6: column headings in the condensed DISPLAY face, uppercase, SECONDARY
+     ink (never the faintest text in their own table — S2-06 is exactly that defect, and this recipe is
+     why these tables do not inherit it); figures right and tabular with the heading aligned the same
+     way; groups as BAND rows; the name is the link; one chevron column; no links or buttons in cells;
+   · the CHIP — Ask 8 ruling 7: one chip, uppercase mono;
+   · the CALLOUT — tinted panels are retired (2026-09-21): a white card with a coloured edge.
+
+   ⚠ TOKENS ONLY — `scripts/check-public-tokens.mjs` (checkAdminKit) holds this folder strictly.
+   ═══════════════════════════════════════════════════════════════════════════════════════════════ */
+
+.page { max-width: 68rem; min-width: 0; }
+
+/* ── The section (CoachPageSection) ── */
+.section {
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  margin: 0 0 0.75rem;
+  min-width: 0;
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  flex-wrap: wrap;
+  padding: 0.85rem 1.1rem 0.4rem;
+}
+/* ⚠ The BODY face, set explicitly: the global h1–h6 rule (app/globals.css) would otherwise draw a
+   section heading in the condensed display face — the drawing (and CoachPageSection) is 16/700 body. */
+.sectionTitle {
+  margin: 0 auto 0 0;
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--text-primary);
+}
+.sectionMeta {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-tertiary);
+  white-space: nowrap;
+}
+.sectionActions { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.sectionBody { padding: 0.4rem 1.1rem 1.05rem; }
+/* A row list inside a section: the section paints the ground (never two painters); rows run edge to
+   edge so their hover tint meets the card's border, and their text lines up with the heading. */
+.sectionBodyList { padding: 0.15rem 0 0.35rem; }
+.sectionFoot {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-top: 0.9rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.sectionFoot > :last-child { margin-left: auto; }
+
+/* ── The row list (CoachRowList, standard §3.10) ── */
+.rowList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow: hidden;
+}
+.rowListInset { list-style: none; margin: 0; padding: 0; }
+.rowBand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1.1rem;
+  font-family: var(--font-display);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--home-paper);
+  border-top: 1px solid var(--home-line);
+  border-bottom: 1px solid var(--home-line);
+}
+.rowBand:first-child { border-top: 0; }
+.rowItem { display: block; border-bottom: 1px solid var(--home-line); }
+.rowItem:last-child { border-bottom: 0; }
+.row {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  width: 100%;
+  padding: var(--table-pad-compact) 1.1rem;
+  color: var(--text-primary);
+  font: inherit;
+  font-size: var(--type-body);
+  text-align: left;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-radius: 0;
+}
+/* Density by what the row HOLDS (§3.1): a caption makes it comfortable. */
+.row:has(.rowCaption) { padding-top: var(--table-pad-comfortable); padding-bottom: var(--table-pad-comfortable); }
+/* Hover only on a row that opens — the tint and the pointer, nothing else (no lift, no shadow). */
+.rowDoor { cursor: pointer; transition: background 0.1s; }
+.rowDoor:hover { background: var(--home-olive-soft); }
+.rowDoor:focus-visible { outline: 2px solid var(--home-olive); outline-offset: -2px; }
+.rowMain { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+.rowTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  font-size: var(--type-body);
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+.rowCaption { font-size: var(--type-support); color: var(--text-tertiary); overflow-wrap: anywhere; }
+.rowTrail { display: flex; align-items: center; gap: 0.5rem; flex: none; }
+.rowChevron { display: inline-flex; align-items: center; flex: none; color: var(--text-tertiary); }
+/* A worded pair of actions on a row (a pending invitation's Resend / Cancel — the portal's staff
+   list draws them so). A sibling of the row inside its <li>, never nested in a link. */
+.rowItemWithActions { display: flex; align-items: center; }
+.rowItemWithActions > .row { flex: 1 1 auto; min-width: 0; width: auto; }
+.rowActions { display: flex; align-items: center; gap: 0.4rem; flex: none; padding-right: 1.1rem; }
+
+@media (max-width: 768px) {
+  a.row, button.row { min-height: var(--tap-min, 44px); }
+  .rowActions button { min-height: var(--tap-min, 44px); }
+}
+
+/* ≤ 640 — the frame stands down and each row is a white card with a corner chevron (§3.10.8, Ask 8
+   rulings 4 and 6); a worded action becomes a full-width 44px button inside the card (K-09). */
+@media (max-width: 640px) {
+  .rowList { border: 0; border-radius: 0; background: none; overflow: visible; }
+  .rowBand { background: none; border: 0; padding: 0.55rem 0.15rem 0.25rem; }
+  .rowList > .rowItem {
+    position: relative;
+    border: 1px solid var(--home-line-strong);
+    border-radius: 10px;
+    background: var(--home-card);
+    margin-bottom: 0.65rem;
+  }
+  .rowList > .rowItem:last-child { border-bottom: 1px solid var(--home-line-strong); }
+  .rowList .row { padding: 0.65rem 0.85rem; min-height: var(--tap-min, 44px); }
+  .rowList .rowItem:has(.rowChevron) .row { padding-right: 2.6rem; }
+  .rowList .rowChevron { position: absolute; right: 0.8rem; top: 50%; transform: translateY(-50%); }
+  .rowList .rowItemWithActions { flex-wrap: wrap; }
+  .rowList .rowItemWithActions > .row { flex-basis: 100%; }
+  .rowList .rowActions { flex-basis: 100%; padding: 0 0.85rem 0.75rem; }
+  .rowList .rowActions > * { flex: 1 1 0; }
+}
+
+/* ── The table (standard §3.2–3.6) ── */
+.tableFrame {
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  background: var(--card-bg);
+  overflow-x: auto;
+}
+.table { width: 100%; border-collapse: collapse; }
+.table th {
+  text-align: left;
+  padding: var(--table-pad-compact) 1rem;
+  font-family: var(--font-display);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--card-bg);
+  border-bottom: 1px solid var(--home-line-strong);
+  white-space: nowrap;
+}
+.table td {
+  padding: var(--table-pad-compact) 1rem;
+  font-size: var(--type-body);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--home-line);
+  vertical-align: middle;
+}
+.table tr:has(.cellSub) > td { padding-top: var(--table-pad-comfortable); padding-bottom: var(--table-pad-comfortable); }
+.table tbody tr:last-child > td { border-bottom: 0; }
+/* A column's heading goes where its figures go (§3.4). */
+.table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.table .dim { color: var(--text-tertiary); }
+/* The last column: one shape on every row — the chevron (K-08). */
+.table .go { width: 2.75rem; text-align: right; }
+.goLink { display: inline-flex; align-items: center; justify-content: center; color: var(--text-tertiary); min-width: 1.5rem; }
+/* A row that opens tints on hover; one that opens nothing does not (F-03). */
+.table tr.rowOpens:hover > td { background: var(--home-olive-soft); }
+/* The band row — a group inside the table, on the paper tone (standard §3.10.5, Ask 8 ruling 1). */
+.table tr.band > td {
+  padding: 0.4rem 1rem;
+  font-family: var(--font-display);
+  font-size: var(--type-support);
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  background: var(--home-paper);
+  border-bottom: 1px solid var(--home-line);
+}
+.table tbody tr:not(:first-child).band > td { border-top: 1px solid var(--home-line); }
+/* The name is the link (§3.6) — the item's own ink, underlined only on hover. */
+.nameLink { color: var(--text-primary); font-weight: 650; text-decoration: none; }
+.nameLink:hover { text-decoration: underline; text-underline-offset: 3px; }
+.nameCell { display: flex; align-items: center; gap: 0.45rem; }
+/* A name that opens a WINDOW rather than a page (a tryout applicant): a button that reads as the name link. */
+.nameButton { background: none; border: 0; padding: 0; font: inherit; font-size: var(--type-body); text-align: left; cursor: pointer; }
+@media (max-width: 768px) { .nameButton { min-height: var(--tap-min, 44px); } }
+
+/* The status views that LEAD a list's toolbar (the portal's rule: the lens leads, Export pins right). */
+.views {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--home-line-strong);
+  border-radius: 8px;
+  background: var(--card-bg);
+}
+.view {
+  min-height: 34px;
+  padding: 0.3rem 0.75rem;
+  border: 0;
+  border-radius: 6px;
+  background: none;
+  font: inherit;
+  font-size: var(--type-support);
+  font-weight: 600;
+  color: var(--text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.view:hover { background: var(--home-olive-soft); color: var(--text-primary); }
+.viewOn, .viewOn:hover { background: var(--home-ink); color: var(--home-paper); }
+@media (max-width: 768px) { .view { min-height: var(--tap-min, 44px); } }
+
+/* A closed season's record card (specimen 7's closed state): a lock, the fact, the season door. */
+.recordCard { display: flex; gap: 0.75rem; align-items: flex-start; padding-top: 1rem; }
+.recordCard > svg { flex: none; margin-top: 0.15rem; }
+
+.cellSub { display: block; margin-top: 0.1rem; font-size: var(--type-support); color: var(--text-tertiary); }
+.swatch { width: 10px; height: 10px; border-radius: 3px; flex: none; border: 1px solid var(--home-line-strong); }
+/* The notes stack under a table, in caption type (§3.5). */
+.notes { margin: 0.6rem 0.25rem 0; font-size: var(--type-support); line-height: 1.5; color: var(--text-tertiary); max-width: 70ch; }
+
+/* The phone card list that stands in for a table whose columns do not fit (§3.8). Only one of the
+   two renders at any width — the other is display:none, so it is out of the accessibility tree. */
+.phoneOnly { display: none; }
+@media (max-width: 640px) {
+  .deskOnly { display: none; }
+  .phoneOnly { display: block; }
+}
+
+/* ── The team schedule (read-only) ── */
+.recordRow { display: grid; grid-template-columns: minmax(0, 16rem); margin: 0 0 0.9rem; }
+.eventCancelled { opacity: 0.6; }
+.detailList { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 0.45rem 1rem; margin: 0; font-size: var(--type-body); }
+.detailList dt {
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  padding-top: 0.15rem;
+}
+.detailList dd { margin: 0; color: var(--text-primary); overflow-wrap: anywhere; }
+
+/* ── The chip — ONE chip, uppercase mono (Ask 8 ruling 7) ── */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-family: var(--font-data);
+  font-size: var(--type-token);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 0.14rem 0.5rem;
+  border-radius: 999px;
+  border: 1px solid var(--home-line-strong);
+  color: var(--text-secondary);
+  background: var(--home-olive-soft);
+  white-space: nowrap;
+  line-height: 1.4;
+}
+.chipGood { color: var(--badge-success-ink); background: rgba(var(--success-rgb), 0.08); border-color: rgba(var(--success-rgb), 0.28); }
+.chipWarn { color: var(--badge-warning-ink); background: rgba(var(--warning-rgb), 0.08); border-color: rgba(var(--warning-rgb), 0.3); }
+.chipBad { color: var(--home-live); background: rgba(var(--danger-rgb), 0.08); border-color: rgba(var(--danger-rgb), 0.3); }
+.chipInfo { color: var(--info-light); background: rgba(var(--info-rgb), 0.08); border-color: rgba(var(--info-rgb), 0.3); }
+
+/* ── The callout — a white card with a coloured edge (tinted panels retired 2026-09-21) ── */
+.callout {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  margin: 0 0 0.9rem;
+  padding: 0.8rem 1rem;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-left: 3px solid var(--home-olive);
+  border-radius: 8px;
+  font-size: var(--type-body);
+  line-height: 1.45;
+  color: var(--text-primary);
+}
+.callout > svg { flex-shrink: 0; margin-top: 0.15rem; color: var(--home-olive); }
+.calloutBad { border-left-color: var(--home-live); }
+.calloutBad > svg { color: var(--home-live); }
+.calloutWarn { border-left-color: var(--warning); }
+.calloutWarn > svg { color: var(--warning); }
+.calloutBody { flex: 1; min-width: 0; }
+.calloutSub { display: block; margin-top: 0.2rem; font-size: var(--type-support); color: var(--text-secondary); }
+.calloutActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.7rem; }
+
+/* ── The figure cards row (the portal's kit cards, four across) ── */
+.cards4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.8rem;
+  margin: 0 0 0.9rem;
+}
+@media (max-width: 960px) { .cards4 { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* A figure that is a day or a word at heading size, in the primary ink ("Sat Oct 3", "Open") — the
+   drawing's next-event and tryouts cards. Anchored under `.cards4` so it beats the kit's `.big`
+   whatever the bundle order of the two modules (same-specificity modules resolve by bundle order). */
+.cards4 .figDay { font-size: var(--type-heading); font-weight: 700; letter-spacing: normal; }
+
+/* The team page's card for a team with no live season (specimen 3, middle frame). */
+.closedCard { margin: 0 0 0.9rem; }
+.closedTitle {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  font-size: var(--type-heading);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+/* "What the club sees" — three fixed columns (one on a phone). */
+.split3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1rem 1.5rem; }
+@media (max-width: 860px) { .split3 { grid-template-columns: minmax(0, 1fr); } }
+.splitHead {
+  font-family: var(--font-sans, system-ui, sans-serif);
+  letter-spacing: normal;
+  text-transform: none;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0 0 0.45rem;
+  font-size: var(--type-body);
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.splitOlive { color: var(--home-olive); }
+.splitBlue { color: var(--info); }
+.splitDim { color: var(--text-tertiary); }
+.splitList { margin: 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.25rem; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+
+/* ── Forms ── */
+.fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+.readonlyValue {
+  display: flex;
+  align-items: center;
+  min-height: 40px;
+  padding: 0.5rem 0.65rem;
+  border: 1px dashed var(--home-line-strong);
+  border-radius: 7px;
+  font-size: var(--type-body);
+  color: var(--text-tertiary);
+  overflow-wrap: anywhere;
+}
+/* A required field's asterisk: plain, in the label's own ink (house rule 2026-08-25 — red means
+   something went wrong). */
+.req { margin-left: 0.15rem; color: inherit; }
+/* A refusal inside a window: one line in the danger ink above the fields (standard §3.7's error row). */
+.formError { margin: 0 0 0.85rem; font-size: var(--type-support); line-height: 1.45; color: var(--home-live); }
+.fieldGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 1rem; }
+@media (max-width: 640px) { .fieldGrid { grid-template-columns: minmax(0, 1fr); } }
+.fieldRow { display: flex; align-items: center; gap: 0.5rem; }
+.fieldRow > input { flex: 1; min-width: 0; }
+.colourSwatch { width: 2.25rem; height: 2.25rem; flex: none; border-radius: 7px; border: 1px solid var(--home-line-strong); }
+.fieldLink { font-weight: 650; color: var(--home-olive); }
+.inlineLink {
+  color: var(--home-olive);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.inlineLink:hover { color: var(--text-primary); }
+@media (max-width: 768px) {
+  .inlineLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
+}
+
+/* ── The save word — transient, at the section's foot (decision_autosave_word_is_transient) ── */
+.saveWord {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-tertiary);
+  transition: opacity 0.3s ease;
+}
+.saveWordSaved { color: var(--home-olive); }
+.saveWordHidden { opacity: 0; }
+.saveWordError { color: var(--home-live); }
+
+/* ── A window's facts: a label, then its words (the invite window's "What they'll be able to open") ── */
+.facts {
+  margin: 0.2rem 0 0;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  font-size: var(--type-support);
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+.factsLabel {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-family: var(--font-data);
+  font-size: var(--type-label);
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+}
+.factsNext { margin-top: 0.75rem; }
+.factList { margin: 0.35rem 0 0; padding-left: 1.1rem; display: flex; flex-direction: column; gap: 0.2rem; }
+
+/* ── The season window's carries (specimen 3) ── */
+.lead { margin: 0 0 0.9rem; font-size: var(--type-body); line-height: 1.5; color: var(--text-primary); }
+.carryLabel {
+  margin: 0.9rem 0 0.4rem;
+  font-size: var(--type-support);
+  font-weight: 650;
+  color: var(--text-secondary);
+}
+.carry { border: 1px solid var(--home-line); border-radius: 8px; }
+.carryRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  padding: 0.6rem 0.85rem;
+  border-top: 1px solid var(--home-line);
+  font-size: var(--type-body);
+  color: var(--text-primary);
+}
+.carryRow:first-child { border-top: 0; }
+.carryRow input { margin-top: 0.2rem; accent-color: var(--home-olive); width: 1rem; height: 1rem; flex: none; }
+.carryFixed { color: var(--home-olive); flex: none; margin-top: 0.1rem; }
+.carryText { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+.carryText b { font-weight: 650; }
+.carryNote { font-size: var(--type-support); color: var(--text-tertiary); }
+.windowWarn { margin-top: 1rem; }
+.windowWarn > .callout { margin: 0; }
+.windowNote { margin: 0.6rem 0 0; font-size: var(--type-support); line-height: 1.45; color: var(--text-secondary); }
+.footNote { flex: 1 1 14rem; font-size: var(--type-support); line-height: 1.4; color: var(--text-tertiary); margin-right: auto; }
+@media (max-width: 768px) {
+  .carryRow { min-height: var(--tap-min, 44px); }
+}
+
+/* ── The team groups section's add row ── */
+.groupAdd { display: flex; gap: 0.5rem; align-items: center; padding: 0.75rem 1.1rem 0.4rem; border-top: 1px solid var(--home-line); }
+.groupAdd > input { flex: 1 1 12rem; min-width: 0; }
+@media (max-width: 768px) { .groupAdd > button { min-height: var(--tap-min, 44px); } }
+
+/* ── A quiet line with an undo in it ("Closed this by mistake? Reopen …") ── */
+.quiet { margin: 0.7rem 0 0; font-size: var(--type-support); color: var(--text-tertiary); }
+
+/* Words for a reader only (a chevron column's heading). */
+.srOnly {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0;
+}
+
+/* Space above the unchanged Upcoming bills panel. */
+.billsGap { margin-top: 1.75rem; }
+
+/* ── The compact empty state (the portal's compact tier): one sentence, the fact, one lime action ── */
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.45rem;
+  padding: 1.1rem 1.2rem;
+  background: var(--card-bg);
+  border: 1px solid var(--home-line);
+  border-radius: 8px;
+  margin: 0 0 0.9rem;
+}
+.empty > svg { color: var(--text-tertiary); }
+.emptyTitle { margin: 0; font-family: var(--font-sans, system-ui, sans-serif); letter-spacing: normal; text-transform: none; font-size: var(--type-heading); font-weight: 700; color: var(--text-primary); }
+.emptyText { margin: 0; font-size: var(--type-body); line-height: 1.5; color: var(--text-secondary); max-width: 62ch; }
+.emptyActions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 0.35rem; }
+

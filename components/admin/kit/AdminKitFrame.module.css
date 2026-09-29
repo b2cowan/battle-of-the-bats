@@ -97,6 +97,9 @@
   color: var(--text-tertiary);
   padding: 0.6rem 1.25rem 0.2rem calc(1.25rem + 14px + 0.5rem);
 }
+/* The team block's label is the TEAM's name (Club Tier Stage 2, specimen 2's rail) — read, not a
+   category word, so it keeps its own case and takes the program's olive. */
+.subLabelTeam { text-transform: none; letter-spacing: 0.02em; font-size: var(--type-label); color: var(--home-olive); }
 .chevron { margin-left: auto; opacity: 0.55; flex-shrink: 0; transition: transform 0.2s ease; }
 .chevronOpen { transform: rotate(90deg); }
 

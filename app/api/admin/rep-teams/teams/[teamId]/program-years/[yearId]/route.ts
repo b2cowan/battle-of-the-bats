@@ -3,8 +3,7 @@ import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } f
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getRepTeam, getRepProgramYear, getRepProgramYears, updateRepProgramYear } from '@/lib/db';
-import type { RepProgramYearStatus } from '@/lib/types';
+import { getRepTeam, getRepProgramYear, updateRepProgramYear } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { refuseUnlessLiveSeason } from '@/lib/club-team-route';
 import { loadRosterCounts } from '@/lib/club-team-board';
@@ -15,13 +14,6 @@ function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!hasModuleEntitlement(ctx.org, 'module_rep_teams')) return forbidden();
   return null;
 }
-
-const VALID_TRANSITIONS: Record<RepProgramYearStatus, RepProgramYearStatus[]> = {
-  draft:     ['active'],
-  active:    ['completed'],
-  completed: ['archived'],
-  archived:  [],
-};
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ teamId: string; yearId: string }> },) => {
@@ -110,31 +102,21 @@ export const PATCH = withObservability(async (req: Request,
   }
   if ('tryoutDescription' in body) fields.tryoutDescription = body.tryoutDescription?.trim() || null;
 
-  /* ⚠ THE STATUS PATH STAYS until session 3 replaces the season page (Club Tier Stage 2 call list):
-     Activate and Archive still fire on one click here (S2-04). Session 3 then REFUSES status changes
-     on this PATCH — seasons change only through the club's season doors
-     (`app/api/admin/rep-teams/teams/[teamId]/seasons`), which tell the coach and never self-heal. */
+  /* ⚖ STATUS CHANGES ARE REFUSED HERE (Club Tier Stage 2, session 3 — session 1's retire list; S2-04).
+     This path let the old season page Activate and Archive on one click, and Mark completed behind a
+     question that promised "an empty coach list". A season now changes ONLY through the club's season
+     doors (`app/api/admin/rep-teams/teams/[teamId]/seasons`: Start next season, Close the season,
+     Reopen), which carry the roll's five things, warn about unsettled money, never self-heal for a
+     club, and TELL the coach. Checked before anything is written, so a body that also carries a name
+     changes nothing. */
   if (body.status !== undefined) {
-    const newStatus = body.status as RepProgramYearStatus;
-    const allowed = VALID_TRANSITIONS[programYear.status];
-    if (!allowed.includes(newStatus)) {
-      return NextResponse.json(
-        { error: `Cannot transition from '${programYear.status}' to '${newStatus}'` },
-        { status: 422 },
-      );
-    }
-    // If activating, ensure no other year for this team is active
-    if (newStatus === 'active') {
-      const siblings = await getRepProgramYears(team.id);
-      const otherActive = siblings.find(py => py.id !== programYear.id && py.status === 'active');
-      if (otherActive) {
-        return NextResponse.json(
-          { error: 'Another program year is already active for this team. Complete or archive it first.' },
-          { status: 409 },
-        );
-      }
-    }
-    fields.status = newStatus;
+    return NextResponse.json(
+      {
+        error: 'A season’s state changes from the team’s page now: Start next season, Close the season or Reopen. The team’s coaches are told each time.',
+        code: 'season_status_retired',
+      },
+      { status: 409 },
+    );
   }
 
   const updated = await updateRepProgramYear(yearId, fields);

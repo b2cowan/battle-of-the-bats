@@ -1398,13 +1398,24 @@ export const SCREENS = [
   { id: 'admin-rep-payment-requests',  area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/payment-requests` },
   { id: 'admin-rep-rename-slugs',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/rename-slugs` },
   { id: 'admin-rep-shared-library',    area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/shared-library` },
+  // Club Tier Stage 2 · session 3: the TEAM is the unit — its page, its Coaches · Tryouts · Roster ·
+  // Schedule, and the season windows. The old season ("program year") pages are one redirect now,
+  // so they are no longer screens of their own.
   { id: 'admin-rep-team',              area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}` },
+  { id: 'admin-rep-team-start-season', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}`,
+    interact: (page) => openKitDialogBy(page, page.locator('button[aria-label="Start next season"]:visible')), scope: '[data-kit-dialog]' },
+  { id: 'admin-rep-team-closed',       area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubClosedTeamId}` },
+  { id: 'admin-rep-team-coaches',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/coaches` },
+  { id: 'admin-rep-team-coach-invite', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/coaches`,
+    interact: (page) => openKitDialogBy(page, page.locator('button[aria-label="Invite a coach"]:visible')), scope: '[data-kit-dialog]' },
+  { id: 'admin-rep-team-tryouts',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/tryouts` },
+  { id: 'admin-rep-team-tryouts-closed', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubClosedTeamId}/tryouts` },
+  { id: 'admin-rep-team-roster',       area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/roster` },
+  { id: 'admin-rep-team-schedule',     area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/schedule` },
+  { id: 'admin-rep-documents-upload',  area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/documents`,
+    interact: (page) => openKitDialogBy(page, page.locator('button[aria-label="Upload template"]:visible')), scope: '[data-kit-dialog]' },
   { id: 'admin-rep-team-history',      area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/history` },
   { id: 'admin-rep-team-history-year', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/history/${c.clubPastYearId}` },
-  { id: 'admin-rep-team-year',         area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/program-years/${c.clubYearId}` },
-  { id: 'admin-rep-team-year-coaches', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/program-years/${c.clubYearId}/coaches` },
-  { id: 'admin-rep-team-year-schedule', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/program-years/${c.clubYearId}/schedule` },
-  { id: 'admin-rep-team-year-tryouts', area: 'rep-teams', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/rep-teams/teams/${c.clubTeamId}/program-years/${c.clubYearId}/tryouts` },
 
   // ── Accounting (the heaviest hand-set colour debt — slice 3) ──
   { id: 'admin-accounting',            area: 'accounting', session: 'repClubOwner', ready: 'h1', path: (c) => `/${c.clubSlug}/admin/accounting` },

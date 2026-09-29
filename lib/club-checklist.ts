@@ -25,7 +25,7 @@ import { listTeamsWithActiveHeadCoach } from './coach-membership';
  *
  * House league and tournaments are two optional lines, never steps, for a club that runs neither.
  * Session 2's checklist screen renders this; the door for step 3 opens the first uncovered team's
- * Coaches page (Stage 2's "Invite a coach" door replaces it, ruling D10).
+ * Coaches page, whose header carries "Invite a coach" (Stage 2, ruling D10).
  */
 
 export type ChecklistStepKey = 'board' | 'teams' | 'coaches' | 'public' | 'budget';
@@ -87,14 +87,11 @@ export async function computeClubChecklist(org: Org): Promise<ClubChecklist> {
   const teams = (teamsRes.data ?? []) as { id: string; name: string }[];
   const uncovered = teams.filter(t => !covered.has(t.id));
 
-  // Step 3's door: the first uncovered team's CURRENT season Coaches page (its newest open year).
-  let coachesHref = `${base}/rep-teams`;
-  if (uncovered.length > 0) {
-    const { data: year } = await supabaseAdmin.from('rep_program_years').select('id')
-      .eq('team_id', uncovered[0].id).in('status', ['draft', 'active'])
-      .order('year', { ascending: false }).limit(1).maybeSingle();
-    if (year?.id) coachesHref = `${base}/rep-teams/teams/${uncovered[0].id}/program-years/${year.id}/coaches`;
-  }
+  // Step 3's door: the first uncovered team's Coaches page, where "Invite a coach" is. Coaches
+  // belong to the team, not a season, so the door needs no season to open.
+  const coachesHref = uncovered.length > 0
+    ? `${base}/rep-teams/teams/${uncovered[0].id}/coaches`
+    : `${base}/rep-teams`;
 
   const tagline = (siteRes.data?.tagline as string | null | undefined)?.trim() ?? '';
 

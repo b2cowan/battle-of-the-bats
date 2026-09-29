@@ -50,6 +50,9 @@ export type UserAccessContext = {
   orgSlug?: string;
   role?: string;
   planId?: OrgPlan | string;
+  /** A coaches_premium hat: true for a coach's OWN standalone portal (a Team workspace), false for a
+   *  club's team. The club's season notices reach only the second (Club Tier Stage 2). */
+  isTeamWorkspace?: boolean;
 };
 
 export type TournamentRegistrationSummary = {
@@ -203,6 +206,7 @@ function buildMembershipContext(member: ActiveMemberRow): UserAccessContext | nu
     return {
       id: `coach-premium:${orgId}`,
       kind: 'coaches_premium',
+      isTeamWorkspace: true,
       title: org?.name ?? 'Coaches Portal',
       subtitle: 'Coaches Portal',
       detail: 'Team management',

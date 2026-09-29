@@ -370,11 +370,12 @@ export async function buildDocuments() {
   const repRow = (i) => [String(i + 2), full(i), POS[i % 9], POS[(i + 4) % 9]];
   doc({
     id: 'rep-program-year-roster',
-    label: 'Rep program-year roster',
-    screens: ['app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/page.tsx'],
+    // The club's team Roster page (Club Tier Stage 2 session 3 retired the per-season page it came from).
+    label: 'Rep team roster',
+    screens: ['app/[orgSlug]/admin/rep-teams/teams/[teamId]/roster/page.tsx'],
     headings: REP_ROSTER_HEADERS,
     render: (name, settings) => downloadPDF(
-      name, 'Program Year Roster', `${TEAM} — ${SEASON}`, REP_ROSTER_HEADERS, [], settings,
+      name, 'Team Roster', `${TEAM} — ${SEASON}`, REP_ROSTER_HEADERS, [], settings,
       {
         identity: ORG, shape: { orientation: 'portrait' },
         groups: [
@@ -387,7 +388,7 @@ export async function buildDocuments() {
     edgeCases: [
       // The common case: everybody active, so ONE group carries the whole grid.
       ['all-active', (name, settings) => downloadPDF(
-        name, 'Program Year Roster', `${TEAM} — ${SEASON}`, REP_ROSTER_HEADERS, [], settings,
+        name, 'Team Roster', `${TEAM} — ${SEASON}`, REP_ROSTER_HEADERS, [], settings,
         {
           identity: ORG, shape: { orientation: 'portrait' },
           groups: [{ label: 'Active · 14', rows: Array.from({ length: 14 }, (_, i) => repRow(i)) }],
@@ -395,20 +396,29 @@ export async function buildDocuments() {
     ],
   });
 
-  const APPLICANT_HEADERS = ['Bib', 'Player', 'Date of Birth', 'Guardian', 'Email', 'Phone', 'Decision'];
+  // The club's team Tryouts page (Club Tier Stage 2 session 3): nothing private prints — no birthdate,
+  // guardian contact or notes — and applicants are grouped by where they stand, as the page shows them.
+  const APPLICANT_HEADERS = ['Player', 'Submitted', 'Consent', 'Consent date', 'Emails OK'];
+  const applicantRow = (i) => [
+    full(i), '2026-09-2' + (i % 8), i % 5 === 4 ? 'No' : 'Yes', i % 5 === 4 ? '—' : '2026-09-2' + (i % 8),
+    i % 5 === 4 ? '—' : (i % 3 ? 'Yes' : 'No'),
+  ];
+  const applicantGroups = [
+    ['Pending review', 14], ['Offer extended', 8], ['Waitlisted', 4], ['Accepted', 6],
+  ].reduce((acc, [label, n]) => {
+    const start = acc.reduce((sum, g) => sum + g.count, 0);
+    acc.push({ label: `${label} — ${n}`, count: n, rows: Array.from({ length: n }, (_, k) => applicantRow(start + k)) });
+    return acc;
+  }, []);
   doc({
     id: 'rep-tryout-applicants',
     label: 'Rep tryout applicants',
-    screens: ['app/[orgSlug]/admin/rep-teams/teams/[teamId]/program-years/[yearId]/tryouts/page.tsx'],
+    screens: ['app/[orgSlug]/admin/rep-teams/teams/[teamId]/tryouts/page.tsx'],
     headings: APPLICANT_HEADERS,
     render: (name, settings) => downloadPDF(
-      name, 'Tryout Applicants', `${TEAM} — ${SEASON}`, APPLICANT_HEADERS,
-      Array.from({ length: 32 }, (_, i) => [
-        String(101 + i), full(i), '2013-05-14', `Pat ${KIDS[i % KIDS.length][1]}`,
-        `${KIDS[i % KIDS.length][1].toLowerCase()}.family@example.ca`, '(555) 014-3392',
-        ['Offered', 'Not offered', 'Undecided'][i % 3],
-      ]),
-      settings, { identity: ORG, shape: { orientation: 'landscape' } },
+      name, 'Tryout Applicants', `${TEAM}  ·  ${SEASON}  ·  every applicant  ·  32 in total`, APPLICANT_HEADERS,
+      applicantGroups.flatMap(g => g.rows),
+      settings, { identity: ORG, groups: applicantGroups.map(({ label, rows }) => ({ label, rows })) },
     ),
   });
 

@@ -497,6 +497,10 @@ export async function resolveAdminContext() {
     .eq('team_id', team.id).eq('status', 'active').order('year', { ascending: false }).limit(1).maybeSingle());
   const pastYear = await need('finished 15U AAA season', db.from('rep_program_years').select('id')
     .eq('team_id', team.id).eq('status', 'completed').order('year', { ascending: false }).limit(1).maybeSingle());
+  // Club Tier Stage 2 · session 3: a team BETWEEN seasons (a closed season, no next one) — the team
+  // page's closed-season card and the closed tryout record. Added to the fixture that session.
+  const closedTeam = await need('rep team "16U AA" (between seasons)', db.from('rep_teams').select('id')
+    .eq('org_id', club.id).eq('slug', '16u-aa').maybeSingle());
   const season = await need('house league season', db.from('league_seasons').select('id')
     .eq('org_id', club.id).eq('name', '2026 Fall House League').maybeSingle());
   // The Okafor household has a child on two teams — the family page's fullest shape.
@@ -539,6 +543,7 @@ export async function resolveAdminContext() {
     clubTeamId: team.id,
     clubYearId: year.id,
     clubPastYearId: pastYear.id,
+    clubClosedTeamId: closedTeam.id,
     clubSeasonId: season.id,
     clubPersonId: person.id,
     clubLedgerId: ledger.id,

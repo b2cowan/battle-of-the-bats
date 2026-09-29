@@ -16,6 +16,12 @@ export const GET = withObservability(async (_req: Request,
   const programYears = await getRepProgramYears(team.id);
   const yearIds = programYears.map(py => py.id);
 
+  // `?light=1` — the team and its seasons only, for the team's sub-pages (Roster, Schedule), which
+  // need its name and its live season and none of the board's reads.
+  if (new URL(_req.url).searchParams.get('light') === '1') {
+    return NextResponse.json({ team: { ...team, pdfLook: undefined }, programYears });
+  }
+
   /**
    * THE TEAM PAGE'S READ (Club Tier Stage 2, B09 / specimen 2): the board's row for this team, plus
    * every season with its record, players and head coach(es) — by the SAME two rules the board uses

@@ -24,8 +24,11 @@
  *         team list and the Payment Requests wall are defect C03 — the walk RECORDS them. Granting
  *         Rep Teams here would hide the defect the walk exists to show.
  *       - The REGISTRAR is on defaults too (house league only) — which is what the role is for.
- *   · Six rep teams in two groups: Senior (15U AAA, 15U AA, 18U AA — archived) and Junior (13U AAA,
- *     11U AA, 9U AA). Program years in all three live states: last year COMPLETED, this year ACTIVE
+ *   · Eight rep teams in two groups: Senior (15U AAA, 15U AA, 16U AA, 18U AA — archived) and Junior
+ *     (13U AAA, 12U AA, 11U AA, 9U AA). Club Tier Stage 2 · session 3 added 12U AA (a live season with a
+ *     roster and NO head coach) and 16U AA (a CLOSED season with no next one), plus a pending head-coach
+ *     invitation on 9U AA (its accept link printed at the end), a club invitation waiting on 11U AA's
+ *     coach's home page, three club templates (one switched off) and signed copies on two teams. Program years in all three live states: last year COMPLETED, this year ACTIVE
  *     (four teams), and one DRAFT year on 9U AA (a team being prepared for next season, no coach).
  *       ⚠ The draft year sits on its OWN team on purpose: the coach projection follows the newest
  *         draft/active year, so a draft beside an active year would land that team's coach on an
@@ -53,6 +56,7 @@
  * UAT password and can be overridden with UAT_REP_CLUB_{OWNER,ADMIN,TREASURER,REGISTRAR}_{EMAIL,PASSWORD}
  * (the `UAT_REP_CLUB_` prefix because `UAT_CLUB_ORG_SLUG` already names the OTHER club org).
  */
+import crypto from 'node:crypto';
 import { createClient } from '@supabase/supabase-js';
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -86,6 +90,8 @@ const DAY = 86_400_000;
 const isoDate = (d) => { const t = new Date(d); t.setMinutes(t.getMinutes() - t.getTimezoneOffset()); return t.toISOString().slice(0, 10); };
 const daysFromNow = (n) => isoDate(Date.now() + n * DAY);
 const nowIso = new Date().toISOString();
+/** The 9U AA head-coach invitation's raw token — set when the fixture is BUILT (printed once, at the end). */
+let inviteToken = null;
 
 const board = [
   { key: 'OWNER',     role: 'owner',            name: 'Morgan Ellis',   title: 'President' },
@@ -113,6 +119,12 @@ const TEAMS = [
   { slug: '11u-aa',  name: '11U AA',  division: '11U', group: 'Junior', color: '#7C3AED', years: ['active'],
     coach: { email: 'uat-club-coach-11aa@uat-rep-club.local', name: 'Marcus Bell' } },
   { slug: '9u-aa',   name: '9U AA',   division: '9U',  group: 'Junior', color: '#CA8A04', years: ['draft'] },
+  // Club Tier Stage 2 · session 3 — the states the §C/§D walks need (the board's reds, the season doors):
+  //   12U AA — a live season with a roster and NO head coach (the red "No head coach");
+  //   16U AA — a CLOSED season with no next one, its head coach still on staff (Start the next / Reopen).
+  { slug: '12u-aa',  name: '12U AA',  division: '12U', group: 'Junior', color: '#0E7490', years: ['completed', 'active'] },
+  { slug: '16u-aa',  name: '16U AA',  division: '16U', group: 'Senior', color: '#9D174D', years: ['completed'],
+    coach: { email: 'uat-club-coach-16aa@uat-rep-club.local', name: 'Casey Morgan' } },
 ];
 const yearFor = (status) => status === 'completed' ? Y - 1 : status === 'draft' ? Y + 1 : Y;
 
@@ -236,7 +248,7 @@ for (const t of TEAMS) {
     team[t.slug].years[status] = py.id;
   }
 }
-ok(`6 teams in 2 groups (18U AA archived); years ${Y - 1} completed · ${Y} active · ${Y + 1} draft (9U AA)`);
+ok(`8 teams in 2 groups (18U AA archived; 12U AA has no head coach; 16U AA between seasons); years ${Y - 1} completed · ${Y} active · ${Y + 1} draft (9U AA)`);
 
 // Coaches — the admin Coaches route's three writes, per team
 const coachIds = {};
@@ -260,7 +272,7 @@ for (const t of TEAMS.filter(x => x.coach)) {
     })).error);
   }
 }
-ok('4 head coaches — membership + staff membership + season projection each');
+ok('5 head coaches — membership + staff membership + season projection each (16U AA’s on its closed season)');
 
 // Rosters
 let nameCursor = 0;
@@ -432,6 +444,59 @@ die('league registrations', (await db.from('league_registrations').insert(league
 })))).error);
 ok(`house league "${Y} Fall House League" open for registration — 5 registrations (Tremblay household among them)`);
 
+// ── Club Tier Stage 2 · session 3 — invitations, templates and signatures ──────────────────
+// A pending HEAD-COACH invitation on 9U AA to a brand-new address (the board's amber "Invited", and
+// the arrival walk: its accept link is printed below, because the raw token lives only in a link).
+// A previous run's account for that address is deleted first, so the walk always meets the
+// "new to FieldLogicHQ" page rather than "Welcome back".
+const NEW_COACH_EMAIL = 'uat-club-newcoach@uat-rep-club.local';
+const priorNewCoach = await findUserByEmail(NEW_COACH_EMAIL);
+if (priorNewCoach) die('delete prior new coach', (await db.auth.admin.deleteUser(priorNewCoach.id)).error);
+inviteToken = crypto.randomBytes(32).toString('base64url');
+const hashToken = (t) => crypto.createHash('sha256').update(t).digest('hex');
+die('head-coach invitation', (await db.from('assistant_invite_tokens').insert({
+  org_id: orgId, team_id: team['9u-aa'].id, program_year_id: team['9u-aa'].years.draft,
+  invited_by_user_id: OWNER, invited_by_name: 'Morgan Ellis', invited_email: NEW_COACH_EMAIL, team_name: '9U AA',
+  token_hash: hashToken(inviteToken), status: 'pending', coach_role: 'head_coach', sent_by: 'club', staff_kind: null,
+})).error);
+// A club invitation waiting on an EXISTING coach's home page: 11U AA's head coach, asked to help coach
+// 16U AA (a team between seasons, so accepting lands on its closed-season page).
+die('home-card invitation', (await db.from('assistant_invite_tokens').insert({
+  org_id: orgId, team_id: team['16u-aa'].id, program_year_id: team['16u-aa'].years.completed,
+  invited_by_user_id: OWNER, invited_by_name: 'Morgan Ellis', invited_email: 'uat-club-coach-11aa@uat-rep-club.local', team_name: '16U AA',
+  token_hash: hashToken(crypto.randomBytes(32).toString('base64url')), status: 'pending', coach_role: 'assistant_coach', sent_by: 'club', staff_kind: 'assistant',
+})).error);
+ok('invitations: 9U AA head coach (new address, link below) · 16U AA assistant (11U AA\'s coach, on their home page)');
+
+// Club-published templates (two on, one switched off) and signed copies on two teams — the board's
+// Documents column reads "9 of 12" on 15U AAA, "12 of 12" on 13U AAA and "0 of 12" elsewhere.
+// Files at FIXED paths with upsert, so a rebuild never strands copies in storage.
+const PDF = Buffer.from('%PDF-1.4\n1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj 3 0 obj<</Type/Page/Parent 2 0 R/MediaBox[0 0 612 792]>>endobj\ntrailer<</Root 1 0 R>>\n%%EOF\n');
+const filePath = (name) => `${ORG_SLUG}-fixture/${name}`;
+for (const name of ['participant-waiver.pdf', 'medical-consent.pdf', 'code-of-conduct-2024.pdf', 'signed-form.pdf']) {
+  die(`upload ${name}`, (await db.storage.from('rep-team-documents').upload(filePath(name), PDF, { contentType: 'application/pdf', upsert: true })).error);
+}
+const template = async (t) => one(`template ${t.name}`, db.from('rep_document_templates').insert({
+  org_id: orgId, published_by: OWNER, storage_path: filePath(t.file), file_name: t.file, file_size: PDF.length, ...t.row,
+}).select('id').single());
+const waiver = await template({ name: 'Participant waiver', file: 'participant-waiver.pdf', row: { name: `Participant waiver ${Y}`, document_type: 'waiver', team_id: null, is_active: true } });
+const medical = await template({ name: 'Medical consent', file: 'medical-consent.pdf', row: { name: 'Medical consent — travel', document_type: 'medical_consent', team_id: team['15u-aaa'].id, is_active: true } });
+await template({ name: 'Code of conduct', file: 'code-of-conduct-2024.pdf', row: { name: 'Code of conduct (old)', document_type: 'code_of_conduct', team_id: null, is_active: false } });
+const playersOf = async (slug) => one(`players ${slug}`, db.from('rep_roster_players').select('id')
+  .eq('program_year_id', team[slug].years.active).order('display_order', { ascending: true }));
+const signed = (players, slug, type, templateId) => players.map(p => ({
+  player_id: p.id, team_id: team[slug].id, org_id: orgId, document_type: type, template_id: templateId,
+  storage_path: filePath('signed-form.pdf'), file_name: 'signed-form.pdf', file_size: PDF.length, uploaded_by: coachIds[slug],
+}));
+const p15 = await playersOf('15u-aaa');
+const p13 = await playersOf('13u-aaa');
+die('signatures', (await db.from('rep_player_documents').insert([
+  ...signed(p15.slice(0, 11), '15u-aaa', 'waiver', waiver.id),
+  ...signed(p15.slice(0, 9), '15u-aaa', 'medical_consent', medical.id),
+  ...signed(p13, '13u-aaa', 'waiver', waiver.id),
+])).error);
+ok('templates: waiver (every team) · medical consent (15U AAA) · an old code of conduct switched off; signatures 15U AAA 9 of 12, 13U AAA 12 of 12');
+
 // ── Families: mint the people (the same call every Families read makes) ────────────────
 die('families attach', (await db.rpc('families_attach_people', { p_org_id: orgId })).error);
 ok('families attached');
@@ -443,5 +508,9 @@ function printSignIns() {
   console.log(`  Club:      http://localhost:3000/${ORG_SLUG}/admin   ·   public page http://localhost:3000/${ORG_SLUG}`);
   for (const p of board) console.log(`  ${p.role.padEnd(17)} ${p.email}  /  ${p.password}`);
   for (const t of TEAMS.filter(x => x.coach)) console.log(`  coach ${t.name.padEnd(11)} ${t.coach.email}  /  ${DEFAULT_PASSWORD}`);
+  console.log(`  new coach (9U AA head-coach invitation, no account yet): ${'uat-club-newcoach@uat-rep-club.local'}`);
+  console.log(inviteToken
+    ? `    accept link: http://localhost:3000/auth/accept-assistant-invite?token=${inviteToken}`
+    : '    accept link: printed only when the fixture is built (--reset) — or Resend it from 9U AA › Coaches');
   console.log('  ⚠ Dev-only credentials.');
 }
