@@ -610,6 +610,18 @@ const tournamentsHelp: HelpPageContent = {
           ),
         },
         {
+          id: 'faq-accept-reject-email',
+          question: 'Does accepting or rejecting a team email the coach?',
+          answerText: 'Yes, when that email is switched on. Accepting sends the Team accepted email and rejecting sends the Registration declined email, to the team\'s coach contact, or to the registration email when no coach contact is set. Both are on by default; turn either off, or pause all automatic coach emails, under Event settings → Coach Emails. A team with no email address gets no email. The Accept or Reject window tells you before you confirm: "An email will go to" the address, or "No email will go out" and why. A bulk accept or reject says how many of the selected teams will get one; a team already in that status gets none.',
+          keywords: ['acceptance email', 'rejection email', 'decline email', 'does accepting email the coach', 'accept email', 'team accepted email', 'registration declined email', 'no email will go out', 'coach emails', 'automatic coach emails'],
+          answer: (
+            <>
+              <p>Yes, when that email is switched on. Accepting sends the <strong>Team accepted</strong> email and rejecting sends the <strong>Registration declined</strong> email, to the team&rsquo;s coach contact (or the registration email when no coach contact is set). Both are on by default; turn either off, or pause all automatic coach emails, under <strong>Event settings &rarr; Coach Emails</strong>. A team with no email address gets no email.</p>
+              <p>The Accept or Reject window tells you before you confirm: <em>&ldquo;An email will go to&rdquo;</em> the address, or <em>&ldquo;No email will go out&rdquo;</em> and why. A bulk accept or reject says how many of the selected teams will get one; a team that is already in that status gets none.</p>
+            </>
+          ),
+        },
+        {
           id: 'faq-delete-team-with-games',
           question: 'Can I delete a team that already has games?',
           answerText: 'Yes, but FieldLogicHQ checks first. If the team appears in any game, deleting is paused and you are told how many games it plays in and how many already have a recorded score — for example "this team appears in 6 games (4 with a recorded score)". You can back out, or confirm to continue. If you continue, those games are KEPT, not deleted: each one loses that one side and shows an empty slot where the team was, and the opponent\'s record and score are untouched. This is deliberate — a game belongs to both teams, so removing one team must never erase the other team\'s history. Tidy up by reassigning or removing those games from the schedule afterwards. Note this differs from deleting a whole division, which does remove its games and scores. If the tournament is Completed and locked, deletion is blocked until you set the status back to Active.',
@@ -1701,7 +1713,7 @@ const tournamentsHelp: HelpPageContent = {
       heading: 'Complete the tournament',
       summary: 'Wrap up once all games are done, share final results, and understand tournament lifecycle states.',
       keywords: ['closeout', 'complete tournament', 'mark complete', 'ready to finalize', 'finalize tournament', 'archive', 'seal', 'final results', 'completed', 'archived', 'sealed'],
-      searchText: 'closeout tournament complete mark complete mark tournament complete ready to finalize finalize dashboard prompt lock results read-only reopen archive seal final results post-event summary free tournament slot immutable snapshot board report results email lifecycle draft active completed archived sealed public page shows final results automatically without marking complete fans champions final standings wrap up next on the schedule do i need to mark complete round robin',
+      searchText: 'closeout tournament complete mark complete mark tournament complete ready to finalize finalize dashboard prompt lock results read-only reopen archive seal final results post-event summary free tournament slot immutable snapshot public site goes offline links stop working bring back an archived tournament unarchive restore board report results email lifecycle draft active completed archived sealed public page shows final results automatically without marking complete fans champions final standings wrap up next on the schedule do i need to mark complete round robin',
       links: [
         { label: 'Manage Tournaments', href: '../tournaments/manage' },
         { label: 'Past Tournaments', href: '../tournaments/archives' },
@@ -1714,7 +1726,7 @@ const tournamentsHelp: HelpPageContent = {
             <li><strong>Draft</strong> — setup mode, visible to admins only.</li>
             <li><strong>Active</strong> — public and accepting registrations or live operations.</li>
             <li><strong>Completed</strong> — event is over but still counts as a tournament slot.</li>
-            <li><strong>Archived</strong> — retired from active views; no longer counts against the active tournament slot limit.</li>
+            <li><strong>Archived</strong> — retired from active views: its public site goes offline and it no longer counts against the active tournament slot limit.</li>
             <li><strong>Sealed</strong> — a permanent immutable snapshot of final results has been created.</li>
           </ul>
           <p>Once every game is in, your tournament <strong>dashboard</strong> shows a <strong>You&rsquo;re ready to finalize</strong> prompt with a one-click <strong>Mark tournament complete</strong> — so you can close out right from the dashboard. You can also change the status from <strong>Event Settings</strong> or <strong>Manage Tournaments</strong>.</p>
@@ -1726,7 +1738,7 @@ const tournamentsHelp: HelpPageContent = {
             <li>Mark the tournament <strong>Completed</strong> — from the dashboard&rsquo;s finalize prompt, <strong>Event Settings</strong>, or <strong>Manage Tournaments</strong>.</li>
             <li>Send or share public final results if your plan and workflow include post-event communication.</li>
             <li>Export any registration, schedule, accounting, or results reports needed by your board.</li>
-            <li>Archive the tournament when it should leave active views and free its tournament slot.</li>
+            <li>Archive the tournament when it should leave active views and free its tournament slot. Its public site goes offline, so every link you&rsquo;ve shared stops working.</li>
             <li>Seal only after final review. Sealing creates a permanent snapshot and cannot be undone.</li>
           </ol>
           <p>For completed or archived tournaments, Tournament Plus adds a <strong>Summary</strong> page with registration totals, payment readiness, schedule progress, division recaps, public results links, print/share actions, and a prompt to reuse the setup for the next event.</p>
@@ -1759,11 +1771,11 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-completed-archived-sealed',
           question: 'What is the difference between completed, archived, and sealed?',
-          answerText: 'Completed means over but still active for slot purposes. Archived retires it and frees a slot. Sealed creates a permanent immutable snapshot.',
+          answerText: 'Completed means over but still active for slot purposes. Archived retires it, takes its public site offline, and frees a slot. Sealed creates a permanent immutable snapshot.',
           keywords: ['completed', 'archived', 'sealed', 'lifecycle'],
           popular: true,
           answer: (
-            <p><strong>Completed</strong> means the event is over. <strong>Archived</strong> retires it from active views and frees a tournament slot. <strong>Sealed</strong> creates a permanent final-results snapshot that cannot be changed.</p>
+            <p><strong>Completed</strong> means the event is over. <strong>Archived</strong> retires it from active views, takes its public site offline, and frees a tournament slot. <strong>Sealed</strong> creates a permanent final-results snapshot that cannot be changed.</p>
           ),
         },
         {
@@ -1779,10 +1791,22 @@ const tournamentsHelp: HelpPageContent = {
         {
           id: 'faq-free-slot',
           question: 'How do I free up a tournament slot?',
-          answerText: 'Archive a completed or old tournament to free a tournament slot.',
+          answerText: 'Archive a completed or old tournament to free a tournament slot. Its public site goes offline, so every link you have shared stops working.',
           keywords: ['free slot', 'plan limit', 'archive tournament'],
           answer: (
-            <p>Change an old tournament to <strong>Archived</strong>. Archived tournaments preserve historical data but no longer count against the active tournament slot limit.</p>
+            <p>Change an old tournament to <strong>Archived</strong>. Archived tournaments preserve historical data but no longer count against the active tournament slot limit. Archiving takes its public site offline, so every link you&rsquo;ve shared stops working.</p>
+          ),
+        },
+        {
+          id: 'faq-bring-back-archived',
+          question: 'Can I bring an archived tournament back?',
+          answerText: 'Yes. On the Tournaments list, change the tournament\'s status from Archived back to Active or Completed. It needs a free tournament slot on your plan: if every slot is in use, archive another tournament first or upgrade. Its public site comes back online. There is no restore button on Past tournaments; that page is for sealing and viewing records.',
+          keywords: ['bring back archived', 'restore tournament', 'unarchive', 'undo archive', 'reactivate tournament', 'archived by mistake', 'public site offline'],
+          answer: (
+            <>
+              <p>Yes. On the <strong>Tournaments</strong> list, change the tournament&rsquo;s status from <strong>Archived</strong> back to <strong>Active</strong> or <strong>Completed</strong>, and its public site comes back online.</p>
+              <p>It needs a free tournament slot on your plan: if every slot is in use, archive another tournament first or upgrade. <strong>Past tournaments</strong> has no restore button &mdash; that page is for sealing and viewing records.</p>
+            </>
           ),
         },
         {

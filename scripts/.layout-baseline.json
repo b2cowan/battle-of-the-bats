@@ -1,5 +1,5 @@
 {
-  "generated": "2026-09-29T15:13:51.518Z",
+  "generated": "2026-09-29T20:10:58.387Z",
   "entries": {
     "admin-hub|361|tap-floor|a·Public site": {
       "reason": null,
@@ -7409,38 +7409,6 @@
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
     },
-    "admin-t-registrations|361|control-offscreen|button·<button>": {
-      "reason": null,
-      "detail": "181px past the right edge (screen 361px) with no scroller to reveal it"
-    },
-    "admin-t-registrations|361|content-overflow|div·Red Team 1Falcons U11 GirlsCoach Falcons": {
-      "reason": null,
-      "detail": "content spills 198px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|361|content-overflow|div·Red Team 2Storm U11 GirlsCoach Stormacce": {
-      "reason": null,
-      "detail": "content spills 225px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|361|content-overflow|div·Red Team 3Ravens U11 GirlsCoach Ravensac": {
-      "reason": null,
-      "detail": "content spills 225px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|361|content-overflow|div·Blue Team 1Comets U11 GirlsCoach Cometsa": {
-      "reason": null,
-      "detail": "content spills 225px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|361|content-overflow|div·Blue Team 2Wolves U11 GirlsCoach Wolvesa": {
-      "reason": null,
-      "detail": "content spills 198px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|361|content-overflow|div·Blue Team 3Royals U11 GirlsCoach Royalsa": {
-      "reason": null,
-      "detail": "content spills 225px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|361|content-overflow|div·#1Titans U11 GirlsCoach TitansNo Slots": {
-      "reason": null,
-      "detail": "content spills 2px with overflow-x:visible — no scroller owns it"
-    },
     "admin-t-results|361|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,
       "detail": "38px tall (floor 44)"
@@ -8904,34 +8872,6 @@
     "admin-t-registrations|390|control-width|button·Dismiss": {
       "reason": null,
       "detail": "34px wide (floor 44) — icon-only control"
-    },
-    "admin-t-registrations|390|control-offscreen|button·<button>": {
-      "reason": null,
-      "detail": "152px past the right edge (screen 390px) with no scroller to reveal it"
-    },
-    "admin-t-registrations|390|content-overflow|div·Red Team 1Falcons U11 GirlsCoach Falcons": {
-      "reason": null,
-      "detail": "content spills 169px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|390|content-overflow|div·Red Team 2Storm U11 GirlsCoach Stormacce": {
-      "reason": null,
-      "detail": "content spills 196px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|390|content-overflow|div·Red Team 3Ravens U11 GirlsCoach Ravensac": {
-      "reason": null,
-      "detail": "content spills 196px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|390|content-overflow|div·Blue Team 1Comets U11 GirlsCoach Cometsa": {
-      "reason": null,
-      "detail": "content spills 196px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|390|content-overflow|div·Blue Team 2Wolves U11 GirlsCoach Wolvesa": {
-      "reason": null,
-      "detail": "content spills 169px with overflow-x:visible — no scroller owns it"
-    },
-    "admin-t-registrations|390|content-overflow|div·Blue Team 3Royals U11 GirlsCoach Royalsa": {
-      "reason": null,
-      "detail": "content spills 196px with overflow-x:visible — no scroller owns it"
     },
     "admin-t-results|390|tap-floor|a·UAT Phase 2C Plus Championship 2026 — op": {
       "reason": null,

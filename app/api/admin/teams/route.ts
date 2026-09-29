@@ -1,7 +1,7 @@
 import {
   sendEmail,
   acceptanceHtml, rejectionHtml, paymentConfirmationHtml, manualTeamRegistrationHtml,
-  coachEmailEnabled, resolveCoachRecipient, acceptanceFeeLine,
+  coachEmailBlock, resolveCoachRecipient, acceptanceFeeLine,
 } from '@/lib/email';
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
 import { getAuthContextWithScope, unauthorized, forbidden, scopeGuard, requireTournamentInOrg } from '@/lib/api-auth';
@@ -594,7 +594,7 @@ export const POST = withObservability(async (req: Request) => {
 
       const updates = item.updates;
       if (updates.status === 'accepted' && current.status !== 'accepted') {
-        if (recipient && coachEmailEnabled(bulkCoachSettings, 'acceptance')) {
+        if (!coachEmailBlock(bulkCoachSettings, 'acceptance', current)) {
           // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team, including
           // when this same update marks it paid (effective post-update status).
           const div = bulkDivisions.get(current.division_id);
@@ -618,7 +618,7 @@ export const POST = withObservability(async (req: Request) => {
         }).catch(console.error);
       }
       if (updates.status === 'rejected' && current.status !== 'rejected') {
-        if (recipient && coachEmailEnabled(bulkCoachSettings, 'rejection')) {
+        if (!coachEmailBlock(bulkCoachSettings, 'rejection', current)) {
           await sendEmail(recipient, `Registration Update — ${current.name}`, rejectionHtml(p));
         }
         // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.
@@ -646,7 +646,7 @@ export const POST = withObservability(async (req: Request) => {
         }).catch(console.error);
       }
       if ((updates.payment_status === 'paid' || updates.paymentStatus === 'paid') && current.payment_status !== 'paid') {
-        if (recipient && coachEmailEnabled(bulkCoachSettings, 'payment')) {
+        if (!coachEmailBlock(bulkCoachSettings, 'payment', current)) {
           await sendEmail(recipient, `Payment Recorded — ${current.name}`, paymentConfirmationHtml(p));
         }
         // Notify org admins of received payment (fire-and-forget)

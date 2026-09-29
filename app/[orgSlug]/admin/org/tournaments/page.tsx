@@ -58,6 +58,7 @@ import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from './tournaments-admin.module.css';
 import { tournamentToday } from '@/lib/timezone';
+import { ARCHIVE_CONFIRM_BODY } from '@/lib/tournament-archive-words';
 
 type ModalMode = 'add' | 'edit' | null;
 type DivisionPreset = 'youth' | 'adult' | 'custom';
@@ -574,7 +575,7 @@ export default function AdminTournamentsPage({
       setFeedback({
         isOpen: true,
         title: 'Archive this tournament?',
-        message: 'It is removed from public view immediately — all public links and coach-portal access for this event go offline — and its tournament slot is freed. You can set the status back later to bring it back.',
+        message: ARCHIVE_CONFIRM_BODY,
         type: 'warning',
         confirmText: 'Archive',
         onConfirm: () => applyTournamentStatus(tournament.id, status),

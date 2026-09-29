@@ -40,7 +40,9 @@ function timeAgo(iso: string): string {
   return `${d}d ago`;
 }
 
-export function LiveEventLog({ tournamentId, orgSlug }: { tournamentId: string; orgSlug?: string }) {
+// `className` is the host's frame: it is drawn only when the feed has something in it, so an empty
+// feed leaves no empty bordered box behind (F04, J1-099).
+export function LiveEventLog({ tournamentId, orgSlug, className }: { tournamentId: string; orgSlug?: string; className?: string }) {
   const [events, setEvents] = useState<EnrichedEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = createClient();
@@ -126,7 +128,7 @@ export function LiveEventLog({ tournamentId, orgSlug }: { tournamentId: string; 
   }
 
   return (
-    <div>
+    <div className={className}>
       <h2 style={feedStyles.heading}>
         Recent Activity
       </h2>

@@ -7,6 +7,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { decidedFinalFor, type ChampionGameInput } from '@/lib/champions';
 import { tournamentToday } from '@/lib/timezone';
+import { computeTournamentStandings, getDivisions, getGames, getTeams } from '@/lib/db';
+import type { TournamentSettings } from '@/lib/types';
 
 type RouteParams = { params: Promise<{ tournamentId: string }> };
 
@@ -24,6 +26,7 @@ type TournamentRow = {
   deposit_due_date: string | null;
   total_fee_amount: number | null;
   total_fee_due_date: string | null;
+  settings: TournamentSettings | null;
 };
 
 type DivisionRow = {
@@ -71,19 +74,6 @@ type FeeRow = {
   total_fee_due_date: string | null;
 };
 
-type StandingRow = {
-  teamId: string;
-  teamName: string;
-  gp: number;
-  w: number;
-  l: number;
-  t: number;
-  pts: number;
-  rf: number;
-  ra: number;
-  rd: number;
-};
-
 function numberValue(value: unknown) {
   return value == null ? 0 : Number(value);
 }
@@ -101,52 +91,6 @@ function isPastDue(team: TeamRow, fee: FeeRow, today: string) {
   if (totalFee <= 0 || totalPaid >= totalFee) return false;
   if (fee.total_fee_due_date && today > fee.total_fee_due_date) return true;
   return Boolean(fee.deposit_amount && fee.deposit_due_date && today > fee.deposit_due_date && depositPaid < numberValue(fee.deposit_amount));
-}
-
-function calculateStandings(teams: TeamRow[], games: GameRow[]): StandingRow[] {
-  const acceptedTeams = teams.filter(team => team.status === 'accepted');
-  return acceptedTeams
-    .map(team => {
-      const teamGames = games.filter(game =>
-        (game.status === 'completed' || game.status === 'submitted' || game.status === 'forfeit') &&
-        !game.is_playoff &&
-        (game.home_team_id === team.id || game.away_team_id === team.id)
-      );
-      let w = 0;
-      let l = 0;
-      let t = 0;
-      let rf = 0;
-      let ra = 0;
-
-      for (const game of teamGames) {
-        const isHome = game.home_team_id === team.id;
-        const own = numberValue(isHome ? game.home_score : game.away_score);
-        const opp = numberValue(isHome ? game.away_score : game.home_score);
-        // Forfeits count for W/L but their nominal margin is excluded from RF/RA/RD,
-        // mirroring lib/tie-breakers.ts so a forfeit can't distort the summary standings.
-        if (game.status !== 'forfeit') {
-          rf += own;
-          ra += opp;
-        }
-        if (own > opp) w++;
-        else if (own < opp) l++;
-        else t++;
-      }
-
-      return {
-        teamId: team.id,
-        teamName: team.name,
-        gp: teamGames.length,
-        w,
-        l,
-        t,
-        pts: w * 2 + t,
-        rf,
-        ra,
-        rd: rf - ra,
-      };
-    })
-    .sort((a, b) => b.pts - a.pts || b.rd - a.rd || b.rf - a.rf || a.ra - b.ra || a.teamName.localeCompare(b.teamName));
 }
 
 // TIER-AWARE via the shared lib/champions helper (single source of truth with the
@@ -243,13 +187,29 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
 
   const { data: tournament, error: tournamentError } = await supabaseAdmin
     .from('tournaments')
-    .select('id, name, slug, year, status, start_date, end_date, org_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date')
+    .select('id, name, slug, year, status, start_date, end_date, org_id, fee_schedule_mode, deposit_amount, deposit_due_date, total_fee_amount, total_fee_due_date, settings')
     .eq('id', tournamentId)
     .maybeSingle<TournamentRow>();
 
   if (tournamentError) return NextResponse.json({ error: tournamentError.message }, { status: 500 });
   if (!tournament || tournament.org_id !== ctx.org.id) return forbidden();
   if (!tournament.slug) return NextResponse.json({ error: 'Tournament slug is required to build public summary links.' }, { status: 500 });
+
+  // F34 / J1-109: the leader is the PUBLISHED standings' first team — the same engine on the same
+  // reads the public standings run (lib/public-tournament-data → getStandings: getTeams + getGames,
+  // the division's playoffConfig, the tournament's settings), so its tie-breakers, head-to-head,
+  // run-diff cap and recorded coin tosses all apply. Summary used to rank by its own fixed sort and
+  // could name a different team. Started beside this route's own reads (one round trip), and
+  // deliberately NOT mapped from them: the shared readers carry the published rules (teams in name
+  // order, the division's playoffConfig). The readers log and return [] on a query error; the no-op
+  // catch below only keeps an early return from leaving a thrown read unhandled — the await still
+  // throws. The leader's `rd` is the published (per-game capped) run differential.
+  const standingsReads = Promise.all([
+    getTeams(tournamentId, { admin: true }),
+    getGames(tournamentId, { admin: true }),
+    getDivisions(tournamentId, { admin: true }),
+  ]);
+  void standingsReads.catch(() => undefined);
 
   const [{ data: divisions, error: divisionsError }, { data: teams, error: teamsError }, { data: games, error: gamesError }, { data: archives, error: archivesError }] = await Promise.all([
     supabaseAdmin
@@ -317,11 +277,16 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
     playoffGames: typedGames.filter(game => game.is_playoff).length,
   };
 
+  const [domainTeams, domainGames, domainDivisions] = await standingsReads;
+  const playoffConfigs = new Map(domainDivisions.map(d => [d.id, d.playoffConfig]));
+
   const champGames = toChampionGames(typedGames);
   const divisionSummaries = typedDivisions.map(group => {
     const groupTeams = typedTeams.filter(team => team.division_id === group.id);
     const groupGames = typedGames.filter(game => game.division_id === group.id);
-    const standings = calculateStandings(groupTeams, groupGames);
+    const standings = computeTournamentStandings(group.id, domainTeams, domainGames, playoffConfigs.get(group.id), tournament.settings ?? undefined);
+    // Before any game counts, the table is every team at 0–0 in name order: that names no leader.
+    const leader = standings.some(row => row.gp > 0) ? standings[0] : null;
     const champion = championFromFinal(champGames, group.id, teamNames);
     return {
       id: group.id,
@@ -338,7 +303,18 @@ export const GET = withObservability(async (req: NextRequest, { params }: RouteP
         total: groupGames.length,
         completed: groupGames.filter(game => game.status === 'completed' || game.status === 'forfeit').length,
       },
-      standingsLeader: standings[0] ?? null,
+      standingsLeader: leader && {
+        teamId: leader.teamId,
+        teamName: leader.teamName,
+        gp: leader.gp,
+        w: leader.w,
+        l: leader.l,
+        t: leader.t,
+        pts: leader.pts,
+        rf: leader.rf,
+        ra: leader.ra,
+        rd: leader.rd,
+      },
       champion,
     };
   });

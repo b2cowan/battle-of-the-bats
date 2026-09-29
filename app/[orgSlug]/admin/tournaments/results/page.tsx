@@ -728,14 +728,13 @@ export default function AdminResultsPage() {
 
 
       {!loading && currentTournament && games.length === 0 && (
-        // No games exist yet → the schedule hasn't been built, so promising
-        // "scores appear live" is a false promise (J1-087). Point the organizer
-        // to build the schedule first; the live-scores reassurance only applies
-        // once games exist and are waiting to be scored.
+        // No games exist yet → point the organizer to build the schedule first (J1-087). Say what
+        // this page is for, and nothing about timing: Results reads its games once, so "live" and
+        // "no refresh needed" were false (F08, J1-086). Stage 1's refresh (G6) may earn them back.
         <HelpCallout
           variant="info"
           title="No schedule built yet"
-          body="There are no games to score yet. Build your schedule first — then scores will appear here live as scorekeepers submit them from the field, no refresh needed."
+          body="There are no games to score yet. Build your schedule first — then you’ll enter scores here and check the ones your scorekeepers send in from the field."
           cta={currentOrg?.slug ? { label: 'Go to Schedule', href: `/${currentOrg.slug}/admin/tournaments/schedule?tournamentId=${currentTournament.id}` } : undefined}
         />
       )}

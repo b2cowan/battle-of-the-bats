@@ -3,7 +3,7 @@ import {
   acceptanceHtml,
   paymentConfirmationHtml,
   rejectionHtml,
-  coachEmailEnabled, resolveCoachRecipient, acceptanceFeeLine, coachPortalUrl,
+  coachEmailBlock, resolveCoachRecipient, acceptanceFeeLine, coachPortalUrl,
 } from '@/lib/email';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
 import { cancelScheduledEmailForRecipient, COACH_GAME_DAY_REMINDER_EMAIL_KEY } from '@/lib/email-sender';
@@ -162,7 +162,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       contactEmail,
     };
 
-    if (action === 'accept' && team.status !== 'accepted' && coachEmailEnabled(coachSettings, 'acceptance')) {
+    if (action === 'accept' && team.status !== 'accepted' && !coachEmailBlock(coachSettings, 'acceptance', team)) {
       // J5-063: state the amount owed (deposit-first) — skipped for an already-paid team.
       const feeLine = team.payment_status === 'paid' ? undefined : acceptanceFeeLine({
         feeMode: tournament.fee_schedule_mode,
@@ -178,7 +178,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       });
     }
     if (action === 'reject' && team.status !== 'rejected') {
-      if (coachEmailEnabled(coachSettings, 'rejection')) {
+      if (!coachEmailBlock(coachSettings, 'rejection', team)) {
         await sendTransactionalEmail({
           key: 'tournament_registration_rejected',
           to: recipient,
@@ -190,7 +190,7 @@ async function sendStatusEmails(teams: TeamRow[], action: BulkAction, tournament
       // 5m: a rejected team is no longer playing — cancel any scheduled game-day reminder.
       if (orgId) await cancelScheduledEmailForRecipient(orgId, COACH_GAME_DAY_REMINDER_EMAIL_KEY, recipient);
     }
-    if (action === 'mark_paid' && team.payment_status !== 'paid' && coachEmailEnabled(coachSettings, 'payment')) {
+    if (action === 'mark_paid' && team.payment_status !== 'paid' && !coachEmailBlock(coachSettings, 'payment', team)) {
       await sendTransactionalEmail({
         key: 'tournament_payment_recorded',
         to: recipient,

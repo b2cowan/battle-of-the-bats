@@ -8,10 +8,11 @@ import { usePageTitle } from '@/lib/usePageTitle';
 import { hasPlanFeature, requiresTournamentPlusCopy } from '@/lib/plan-features';
 import { useTournament } from '@/lib/tournament-context';
 import type { Tournament, CloneCopiedCounts } from '@/lib/types';
-import { copiedSummary } from '@/lib/utils';
+import { copiedSummary, pluralize } from '@/lib/utils';
 import CollapsibleCard from '@/components/admin/CollapsibleCard';
 import { useAdminKit } from '@/components/admin/AdminKitProvider';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { Callout } from '@/components/admin/kit/club/RepKit';
 import { useTournamentCrumb } from '@/components/admin/tournament';
 import styles from './summary.module.css';
 
@@ -212,6 +213,7 @@ export default function TournamentSummaryPage() {
     if (!summary) return '0%';
     return percent(summary.scheduleTotals.completed, summary.scheduleTotals.total);
   }, [summary]);
+  const championCount = summary ? summary.divisions.filter(division => division.champion).length : 0;
 
   useEffect(() => {
     if (!tournamentId || !hasSummary || activeRepeatSetupSuccess) return;
@@ -479,7 +481,7 @@ export default function TournamentSummaryPage() {
       )}
 
       {state === 'error' && (
-        <div className="alert alert-danger">{message}</div>
+        <Callout tone="bad" role="alert">{message}</Callout>
       )}
 
       {state === 'ready' && summary && (
@@ -516,7 +518,8 @@ export default function TournamentSummaryPage() {
               <Trophy size={18} />
               <span>Divisions</span>
               <strong>{summary.divisions.length}</strong>
-              <small>{summary.divisions.filter(division => division.champion).length} champions detected</small>
+              {/* A count of zero is not a finding (F34): with no final decided yet, no line. */}
+              {championCount > 0 && <small>{pluralize(championCount, 'champion')} crowned</small>}
             </div>
             <div className={styles.metricCard}>
               <FileText size={18} />
@@ -529,7 +532,7 @@ export default function TournamentSummaryPage() {
           <section className={styles.section}>
             <div className={styles.sectionHeader}>
               <h2>Division recap</h2>
-              <p>Champions are detected from completed playoff final games when available. Otherwise, the standings leader is shown.</p>
+              <p>A division&rsquo;s champion is the winner of its playoff final. Until then, the team leading the standings is shown.</p>
             </div>
             <div className={styles.divisionList}>
               {summary.divisions.map(division => (

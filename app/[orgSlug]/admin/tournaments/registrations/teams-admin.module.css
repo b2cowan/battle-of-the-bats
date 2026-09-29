@@ -1855,6 +1855,26 @@ button.regHealthKpi:disabled { cursor: default; opacity: 1; }
   padding: 0.25rem;
 }
 
+/* F16 (J1-071) — the reach on a phone. Two fixed columns (the slot 130px, the coach 160px) left no
+   room for the badges and the row's open button, which ran up to 225px past the card at 360 and were
+   clipped by it — unreachable. At ≤768 (where the flat list also becomes cards) a filled row restacks:
+   the slot name as its own line, the team name with the open button, then the coach with the badges
+   (a zero-height `::after` is the line break). An empty slot keeps its one line. The waitlist and
+   "needs a spot" rows share the coach column, so their coach drops below too. Only the reach is fixed;
+   Teams' redesign is Stage 2. */
+@media (max-width: 768px) {
+  .slotRowMain { flex-wrap: wrap; gap: 0.15rem 0.6rem; }
+  .slotRowMain > .slotName { order: -1; flex: 1 0 100%; width: auto; }
+  .slotRowMain::after { content: ''; order: 1; flex: 0 0 100%; height: 0; }
+  .slotRowMain > .slotCoach { order: 2; flex: 0 1 auto; width: auto; }
+  .slotRowMain > :global(.badge) { order: 2; }
+  .slotRowEmpty .slotRowMain > .slotName { flex: 0 0 auto; }
+  .slotRowEmpty .slotRowMain::after { display: none; }
+
+  .waitlistRow { flex-wrap: wrap; gap: 0.15rem 0.6rem; }
+  .waitlistRow > .slotCoach { order: 1; flex: 1 0 100%; width: auto; }
+}
+
 /* ─── Waitlist Section ────────────────────────────────────────────────────── */
 
 .waitlistSection {

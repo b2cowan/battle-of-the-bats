@@ -37,7 +37,9 @@ import { hasPlayoffs, isReadyToFinalize, resolvePhase } from '@/lib/tournament-p
 import { tournamentToday, daysBetweenDateStrings } from '@/lib/timezone';
 import { useAdminKit, useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
+import { Callout } from '@/components/admin/kit/club/RepKit';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
+import { ARCHIVE_CONFIRM_BODY } from '@/lib/tournament-archive-words';
 
 // ── Kit ink patches (Admin Design Continuity slice 4b) ──────────────────────
 // Shared single-property style objects reused across this page's many inline icon/text colours.
@@ -2562,9 +2564,7 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          <div className={styles.recentEvents}>
-            <LiveEventLog tournamentId={currentTournament.id} orgSlug={currentOrg?.slug} />
-          </div>
+          <LiveEventLog tournamentId={currentTournament.id} orgSlug={currentOrg?.slug} className={styles.recentEvents} />
         </>
       )}
 
@@ -2712,7 +2712,7 @@ export default function AdminDashboard() {
                 </div>
                 {!canReuseSetup ? (
                   <div className={styles.reuseModalBody}>
-                    <div className="alert alert-warning">{reuseUpgradeCopy}</div>
+                    <Callout role="note" flush>{reuseUpgradeCopy}</Callout>
                     <Link className="btn btn-lime btn-data" href={subscriptionHref}>Review Tournament Plus</Link>
                   </div>
                 ) : (
@@ -2753,7 +2753,7 @@ export default function AdminDashboard() {
                   </div>
                   <p className={styles.modalNote}>This cannot be undone from the dashboard.</p>
                 </div>
-                {populateError && <div className="alert alert-danger" style={{ marginBottom: '0.75rem', fontSize: '0.82rem' }}>{populateError}</div>}
+                {populateError && <Callout tone="bad" role="alert">{populateError}</Callout>}
                 <div className="modal-footer">
                   <button className="btn btn-ghost btn-data" onClick={() => setPopulateStep('pick')} disabled={populateWorking}>Back</button>
                   <button className="btn btn-danger btn-data" onClick={handlePopulateConfirm} disabled={populateWorking}>{populateWorking ? 'Replacing...' : 'Replace draft setup'}</button>
@@ -2788,7 +2788,7 @@ export default function AdminDashboard() {
               <button className="btn btn-ghost btn-data" onClick={() => setShowArchiveConfirm(false)}>✕</button>
             </div>
             <p style={kx({ fontSize: '0.875rem', color: 'var(--data-gray)', margin: '0 0 0.75rem' }, KIT_INK.tertiary)}>
-              Archiving moves this tournament to <strong>Past Tournaments</strong> and makes it read-only — it stops appearing in your active list and frees up a tournament slot. You can restore it later from Past Tournaments (subject to your plan&rsquo;s tournament limit).
+              {ARCHIVE_CONFIRM_BODY}
             </p>
             {archiveError && <p style={kx({ fontSize: '0.8rem', color: 'var(--danger)', margin: '0 0 0.5rem' }, KIT_INK.danger)}>{archiveError}</p>}
             <div className="modal-footer">

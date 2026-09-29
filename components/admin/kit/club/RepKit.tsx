@@ -133,13 +133,14 @@ export function RepChip({ tone = 'neutral', children }: { tone?: ChipTone; child
   return <span className={`${styles.chip}${CHIP_TONE[tone] ? ` ${CHIP_TONE[tone]}` : ''}`}>{children}</span>;
 }
 
-/** A status callout: a white card with a coloured edge (the live-red edge for a thing only the club can fix). */
+/** A status callout: a white card with a coloured edge (the live-red edge for a thing only the club can fix).
+ *  `flush` drops its own bottom margin, for a host that spaces its children with `gap` (a window body). */
 export function Callout({
-  tone = 'olive', icon, children, role,
-}: { tone?: 'olive' | 'bad' | 'warn'; icon?: ReactNode; children: ReactNode; role?: 'alert' | 'status' | 'note' }) {
+  tone = 'olive', icon, children, role, flush = false,
+}: { tone?: 'olive' | 'bad' | 'warn'; icon?: ReactNode; children: ReactNode; role?: 'alert' | 'status' | 'note'; flush?: boolean }) {
   const toneClass = tone === 'bad' ? styles.calloutBad : tone === 'warn' ? styles.calloutWarn : '';
   return (
-    <div className={`${styles.callout}${toneClass ? ` ${toneClass}` : ''}`} role={role}>
+    <div className={`${styles.callout}${toneClass ? ` ${toneClass}` : ''}`} role={role} style={flush ? { margin: 0 } : undefined}>
       {icon}
       <div className={styles.calloutBody}>{children}</div>
     </div>

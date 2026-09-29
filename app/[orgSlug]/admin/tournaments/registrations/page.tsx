@@ -22,6 +22,7 @@ import {
 } from '@/lib/registration-attention';
 import { buildRegistrationHealth, type RegistrationHealthCapacityGap } from '@/lib/registration-health';
 import { calendarDaysBetween, tournamentToday } from '@/lib/timezone';
+import { coachEmailBlock, resolveCoachRecipient, type CoachEmailBlock } from '@/lib/coach-email-rules';
 import { Division } from '@/lib/types';
 import { buildFilename, downloadPDF, fetchResolvedPdfSettings, DEFAULT_PDF_SETTINGS, type OrgPdfSettings } from '@/lib/export';
 import s from '../../admin-common.module.css';
@@ -30,6 +31,7 @@ import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import FeedbackModal from '@/components/FeedbackModal';
 import ExportMenu from '@/components/admin/ExportMenu';
+import { Callout } from '@/components/admin/kit/club/RepKit';
 import RegistrationHealthPanel from './components/RegistrationHealthPanel';
 import TeamAvatar from '@/components/TeamAvatar';
 import FieldHint from '@/components/help/FieldHint';
@@ -82,6 +84,20 @@ interface PoolSlot {
 }
 
 const SAME_ORIGIN_FETCH: RequestInit = { credentials: 'same-origin' };
+
+// J1-075: Accept/Reject's confirm says an email goes only when the route will send one — read
+// through the route's own rule (lib/coach-email-rules), and says why when it won't. The words name
+// the Event settings switches by their own labels so the organizer can find them (/marketing 09-29).
+type StatusEmailType = 'acceptance' | 'rejection';
+const STATUS_EMAIL_OFF: Record<StatusEmailType, string> = {
+  acceptance: 'the Team accepted email is off in Event settings',
+  rejection: 'the Registration declined email is off in Event settings',
+};
+function noEmailReason(block: CoachEmailBlock, type: StatusEmailType, teamCount = 1): string {
+  if (block === 'paused') return 'automatic coach emails are off in Event settings';
+  if (block === 'off') return STATUS_EMAIL_OFF[type];
+  return teamCount === 1 ? 'this team has no email address' : 'none of them has an email address';
+}
 
 async function readJsonResponse<T>(res: Response, label: string): Promise<T> {
   const data = await res.json().catch(() => null) as T | { error?: string; message?: string } | null;
@@ -562,6 +578,33 @@ export default function UnifiedTeamsPage() {
     } else {
       execute();
     }
+  }
+
+  // The one-team Accept/Reject question, with the email clause (J1-075). The buttons render only
+  // for a team whose status would change, which is the route's other condition for sending. The
+  // switches are the held tournament's `settings`; saving Event settings refreshes it.
+  function statusConfirm(team: TeamRecord, type: StatusEmailType): string {
+    const question = `${type === 'acceptance' ? 'Accept' : 'Reject'} "${team.name}"?`;
+    const block = coachEmailBlock(currentTournament?.settings, type, team);
+    return block
+      ? `${question} No email will go out — ${noEmailReason(block, type)}.`
+      : `${question} An email will go to ${resolveCoachRecipient(team)}.`;
+  }
+
+  // The bulk twin: the route emails each selected team whose status CHANGES, by the same rule.
+  // A reason is given only when one cause explains every selected team.
+  function bulkStatusEmailLine(type: StatusEmailType, selected: TeamRecord[]): string {
+    if (selected.length === 0) return '';
+    const target = type === 'acceptance' ? 'accepted' : 'rejected';
+    const blocks = selected.map(r => (r.status === target ? undefined : coachEmailBlock(currentTournament?.settings, type, r)));
+    const emailed = blocks.filter(b => b === null).length;
+    if (emailed === selected.length) return selected.length === 1 ? ' It will get an email.' : ' Each one will get an email.';
+    if (emailed > 0) return ` ${emailed} of them will get an email.`;
+    const none = selected.length === 1 ? 'No email will go out' : 'No emails will go out';
+    const first = blocks[0];
+    return first && blocks.every(b => b === first)
+      ? ` ${none} — ${noEmailReason(first, type, selected.length)}.`
+      : ` ${none}.`;
   }
 
   async function handleDelete(id: string, name: string) {
@@ -1102,9 +1145,8 @@ export default function UnifiedTeamsPage() {
     if (!currentTournament || selectedRegistrationIds.size === 0) return;
     const selectedCount = selectedRegistrationIds.size;
 
-    const selectedTeamNames = regs
-      .filter(r => selectedRegistrationIds.has(r.id))
-      .map(r => ({ label: r.name }));
+    const selectedTeams = regs.filter(r => selectedRegistrationIds.has(r.id));
+    const selectedTeamNames = selectedTeams.map(r => ({ label: r.name }));
 
     const titleMap: Record<BulkAction, string> = {
       accept:            `Accept ${selectedCount} Team${selectedCount === 1 ? '' : 's'}?`,
@@ -1114,9 +1156,12 @@ export default function UnifiedTeamsPage() {
       mark_paid:         'Mark Paid in Full?',
     };
 
+    // Only Accept and Reject send the status email the line describes.
+    const emailLine = action === 'accept' ? bulkStatusEmailLine('acceptance', selectedTeams)
+      : action === 'reject' ? bulkStatusEmailLine('rejection', selectedTeams) : '';
     const messageMap: Record<BulkAction, string> = {
-      accept:            `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be accepted. Each team contact will receive an automated confirmation email.`,
-      reject:            `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be rejected. Each team contact will receive an automated email.`,
+      accept:            `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be accepted.${emailLine}`,
+      reject:            `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be rejected.${emailLine}`,
       waitlist:          `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be moved to the waitlist.`,
       mark_deposit_paid: `Deposit will be marked as paid for the following ${selectedCount} team${selectedCount === 1 ? '' : 's'}.`,
       mark_paid:         `The following ${selectedCount} team${selectedCount === 1 ? '' : 's'} will be marked as paid in full.`,
@@ -1587,10 +1632,10 @@ export default function UnifiedTeamsPage() {
             </div>
             <div className={styles.teamQuickActions}>
               {team.status !== 'accepted' && (
-                <button className="btn btn-lime btn-data" onClick={() => patch(team.id, { status: 'accepted' }, `Accept "${team.name}"? An automated email will be sent.`)} disabled={busy}>Accept</button>
+                <button className="btn btn-lime btn-data" onClick={() => patch(team.id, { status: 'accepted' }, statusConfirm(team, 'acceptance'))} disabled={busy}>Accept</button>
               )}
               {team.status !== 'rejected' && (
-                <button className="btn btn-ghost btn-data" style={kx({ color: 'rgba(var(--danger-rgb), 0.65)', borderColor: 'transparent', background: 'transparent' }, KIT_INK.danger)} onClick={() => patch(team.id, { status: 'rejected' }, `Reject "${team.name}"? An automated email will be sent.`)} disabled={busy}>Reject</button>
+                <button className="btn btn-ghost btn-data" style={kx({ color: 'rgba(var(--danger-rgb), 0.65)', borderColor: 'transparent', background: 'transparent' }, KIT_INK.danger)} onClick={() => patch(team.id, { status: 'rejected' }, statusConfirm(team, 'rejection'))} disabled={busy}>Reject</button>
               )}
               {team.status === 'accepted' && !effectiveFee.totalFeeAmount ? (
                 <button className="btn btn-ghost btn-data" onClick={() => patch(team.id, { paymentStatus: team.paymentStatus === 'paid' ? 'pending' : 'paid' })} disabled={busy}>
@@ -2996,9 +3041,9 @@ export default function UnifiedTeamsPage() {
               <button className="btn btn-ghost btn-data" onClick={() => setShowReminderModal(false)}><X size={16} /></button>
             </div>
             <div style={{ padding: '1.5rem 2rem', display: 'grid', gap: '1rem' }}>
-              <div className="alert alert-info" style={{ margin: 0 }}>
+              <Callout role="note" flush>
                 {selectedRegistrationIds.size} selected. Reminders are sent only to accepted teams with an outstanding amount.
-              </div>
+              </Callout>
               <div className="form-group">
                 <label className="form-label">Payment Instructions</label>
                 <textarea

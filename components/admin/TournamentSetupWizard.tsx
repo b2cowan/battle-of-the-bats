@@ -15,6 +15,7 @@ import { PRESETS, isThemePresetKey } from '@/lib/themes';
 import { hasPlanFeature } from '@/lib/plan-features';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
 import { KIT_INK, KIT_LINE, KIT_SURFACE } from '@/components/admin/kit/kit-inline';
+import { Callout } from '@/components/admin/kit/club/RepKit';
 
 // Today's hand-set inline styles, hoisted once (same values). Each wears its kit patch through
 // `kx(legacy, patch)` while the switch is on (Admin Design Continuity slice 4a).
@@ -1208,7 +1209,7 @@ export default function TournamentSetupWizard({
                 Best for annual tournaments, seasonal classics, and repeat events where the structure already worked.
               </p>
               {!canClone && upgradeCopy ? (
-                <div className="alert alert-warning">{upgradeCopy}</div>
+                <Callout role="note" flush>{upgradeCopy}</Callout>
               ) : (
                 <div className={styles.sourceList}>
                   {sorted.map(t => (

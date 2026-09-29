@@ -44,9 +44,6 @@ export default function AdminContextStrip() {
   const tournamentId = currentTournament?.id;
   const base = currentOrg?.slug ? `/${currentOrg.slug}/admin/tournaments` : null;
   const onTournamentRoute = pathname.includes('/admin/tournaments');
-  // Don't nudge toward the Results page when you're already on it — the bottom-nav
-  // tab badge already carries the count, so the strip would just duplicate it.
-  const onResultsPage = pathname.includes('/admin/tournaments/results');
   // The chat is a full-screen messaging surface; a dashboard nudge above the composer
   // just steals vertical space from the conversation, so suppress the strip there.
   const onChatPage = pathname.includes('/admin/tournaments/chat');
@@ -92,24 +89,25 @@ export default function AdminContextStrip() {
     if (!onTournamentRoute || onChatPage || !base || !currentTournament) return null;
     const regs = worklist.registrations ?? 0;
     const results = worklist.results ?? 0;
-    if (results > 0 && !onResultsPage) {
-      return { key: 'finalize', label: `${results} game${results === 1 ? '' : 's'} to finalize`, href: `${base}/results`, icon: <Trophy size={15} />, count: results };
-    }
-    if (regs > 0) {
-      return { key: 'review', label: `${regs} team${regs === 1 ? '' : 's'} to review`, href: `${base}/registrations`, icon: <Users size={15} />, count: regs };
-    }
     const phase = resolvePhase({
       status: currentTournament.status,
       isGameDay: isWithinEventDates(currentTournament.startDate, currentTournament.endDate),
     });
-    if (phase === 'draft') {
-      return { key: 'setup', label: 'Finish tournament setup', href: `${base}/dashboard`, icon: <ClipboardList size={15} />, count: 0 };
-    }
-    if (phase === 'completed' || phase === 'archived') {
-      return { key: 'summary', label: 'Review event summary', href: `${base}/summary`, icon: <FileText size={15} />, count: 0 };
-    }
-    return null; // open / game day with nothing pending → nothing to surface
-  }, [onTournamentRoute, onChatPage, onResultsPage, base, currentTournament, worklist]);
+    // In priority order; open / game day with nothing pending → nothing to surface.
+    const candidates: (StripAction | null)[] = [
+      results > 0 ? { key: 'finalize', label: `${results} game${results === 1 ? '' : 's'} to finalize`, href: `${base}/results`, icon: <Trophy size={15} />, count: results } : null,
+      regs > 0 ? { key: 'review', label: `${regs} team${regs === 1 ? '' : 's'} to review`, href: `${base}/registrations`, icon: <Users size={15} />, count: regs } : null,
+      phase === 'draft' ? { key: 'setup', label: 'Finish tournament setup', href: `${base}/dashboard`, icon: <ClipboardList size={15} />, count: 0 } : null,
+      phase === 'completed' || phase === 'archived' ? { key: 'summary', label: 'Review event summary', href: `${base}/summary`, icon: <FileText size={15} />, count: 0 } : null,
+    ];
+    // Never point at the page you're on (J1-116) — an action whose destination IS this page gives
+    // way to the next one. Results had this rule alone (its tab badge already carries the count);
+    // Teams, a draft's dashboard and Summary pointed at themselves. Matched on the page part only
+    // (`/admin/tournaments/results`), never the org prefix: `base` comes from the org context, which
+    // can lag a cross-org navigation, and the old Results check was immune to that (/review 09-29).
+    const isHere = (href: string) => pathname.includes(`/admin/tournaments${href.slice(base.length)}`);
+    return candidates.find((c): c is StripAction => c !== null && !isHere(c.href)) ?? null;
+  }, [onTournamentRoute, onChatPage, pathname, base, currentTournament, worklist]);
 
   // Visible unless dismissed for the same action whose count hasn't increased.
   const visible = !!action && hydrated && !(
