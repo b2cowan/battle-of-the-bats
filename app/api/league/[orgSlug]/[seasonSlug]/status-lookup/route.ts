@@ -4,6 +4,7 @@ import { resolvePublicLeagueContext } from '@/lib/public-league';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
 import { throttlePublicForm } from '@/lib/public-form-throttle';
+import { registrationReference } from '@/lib/utils';
 
 export const dynamic = 'force-dynamic';
 
@@ -73,7 +74,7 @@ export const POST = withObservability(async (req: Request,
   // Possession check: the supplied code must match one of THIS email's registrations.
   // If it does, the caller has proven they hold a real confirmation for this email, so
   // we return all of that email's registrations (e.g. siblings). Otherwise: nothing.
-  const codeMatches = rows.some((r: any) => String(r.id).slice(0, 8).toUpperCase() === refCode);
+  const codeMatches = rows.some((r: any) => registrationReference(String(r.id)) === refCode);
   if (!codeMatches) {
     return NextResponse.json({ registrations: [] });
   }
@@ -82,7 +83,7 @@ export const POST = withObservability(async (req: Request,
   const divisionMap = Object.fromEntries(divisions.map(d => [d.id, d.name]));
 
   const registrations = rows.map((r: any) => ({
-    ref: String(r.id).slice(0, 8).toUpperCase(),
+    ref: registrationReference(String(r.id)),
     status: r.status,
     playerFirstName: r.player_first_name,
     playerLastName: r.player_last_name,

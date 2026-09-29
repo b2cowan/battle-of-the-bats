@@ -215,7 +215,9 @@
 /* The last column: one shape on every row — the chevron (K-08). */
 .table .go { width: 2.75rem; text-align: right; }
 .goLink { display: inline-flex; align-items: center; justify-content: center; color: var(--text-tertiary); min-width: 1.5rem; }
-/* A row that opens tints on hover; one that opens nothing does not (F-03). */
+/* A row that opens tints on hover and opens from anywhere — the tint is the promise, the row keeps it
+   (§3.6, owner 2026-09-29); one that opens nothing does not tint (F-03). */
+.table tr.rowOpens { cursor: pointer; }
 .table tr.rowOpens:hover > td { background: var(--home-olive-soft); }
 /* The band row — a group inside the table, on the paper tone (standard §3.10.5, Ask 8 ruling 1). */
 .table tr.band > td {
@@ -238,7 +240,8 @@
 .nameButton { background: none; border: 0; padding: 0; font: inherit; font-size: var(--type-body); text-align: left; cursor: pointer; }
 @media (max-width: 768px) {
   .nameButton { min-height: var(--tap-min, 44px); }
-  /* At a touch width the table's two doors are thumb-sized: the name, and the chevron beside it. */
+  /* At a touch width the row is the thumb's target; the name keeps the floor for the keyboard's door,
+     and the chevron keeps the last column's shape. */
   .nameLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
   .goLink { min-width: var(--tap-min, 44px); min-height: var(--tap-min, 44px); }
 }
@@ -442,19 +445,58 @@
   .inlineLink { display: inline-flex; align-items: center; min-height: var(--tap-min, 44px); }
 }
 
-/* ── The save word — transient, at the section's foot (decision_autosave_word_is_transient) ── */
-.saveWord {
+/* ── The save word — the portal's `.savePill` restated by value (its stylesheet is not loaded here): a
+   transient pill pinned to the window's bottom-right corner (decision_autosave_word_is_transient;
+   owner 2026-09-29, §249). At ≤900 it rides above the admin's bottom nav (and the context strip, when
+   one shows), exactly as the portal's clears its own — ⚠ /review 2026-09-29 caught the first version
+   sitting at the window's foot UNDER that nav (300 over 250), so a failed save on a phone was
+   invisible. The word never blocks a tap on what is under it — except Retry, which is a button. ── */
+.savePill {
+  position: fixed;
+  right: 1.25rem;
+  bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+  z-index: 250;
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.25rem;
+  max-width: calc(100vw - 1.5rem);
+  padding: 0.4rem 0.8rem;
+  border-radius: 999px;
+  border: 1px solid var(--home-line);
+  background: var(--card-bg);
+  box-shadow: var(--shadow);   /* the portal's literal, as the kit's token: Warm softens it, Dark keeps it */
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+.savePill[data-state='error'] { pointer-events: auto; border-color: var(--danger); }
+.savePill[data-state='held'] { border-color: var(--danger); }
+.savePill[data-phase='fading'],
+.savePill[data-phase='hidden'] { opacity: 0; }
+.saveStatus {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   font-size: var(--type-support);
-  font-weight: 650;
+  font-weight: 600;
   color: var(--text-tertiary);
-  transition: opacity 0.3s ease;
+  white-space: nowrap;
 }
-.saveWordSaved { color: var(--home-olive); }
-.saveWordHidden { opacity: 0; }
-.saveWordError { color: var(--danger-light); }
+.saveStatus svg { color: var(--success); }
+.savePill[data-state='error'] .saveStatus,
+.savePill[data-state='held'] .saveStatus { color: var(--danger-light); }
+.saveRetry { background: none; border: none; padding: 0; cursor: pointer; font: inherit; color: inherit; text-decoration: underline; }
+/* A page carrying the pill leaves it a corner, so the page's last line is never under the word. */
+.savePillPage { padding-bottom: calc(2.25rem + 1.25rem); }
+@media (prefers-reduced-motion: reduce) { .savePill { transition: none; } }
+@media (max-width: 900px) {
+  .savePill {
+    right: 0.75rem;
+    bottom: calc(var(--bottom-nav-height, 72px) + env(safe-area-inset-bottom, 0px) + var(--admin-strip-h, 0px) + 0.6rem);
+  }
+}
+/* A long failure sentence wraps on a phone rather than running off the window. */
+@media (max-width: 640px) { .savePill { border-radius: 1.1rem; } .saveStatus { white-space: normal; } }
 
 /* ── A window's facts: a label, then its words (the invite window's "What they'll be able to open") ── */
 .facts {

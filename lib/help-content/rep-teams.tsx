@@ -50,7 +50,7 @@ const repTeamsHelp: HelpPageContent = {
       heading: 'Reading the Teams board',
       summary: 'One row per team: its season and record, head coach, roster, next event and documents — and what only the club can fix, in red.',
       keywords: ['teams board', 'health board', 'no head coach', 'no players', 'invited', 'documents column', 'next event', 'team list'],
-      searchText: 'rep teams board health board one row per team season live closed record head coach no head coach invited roster no players next event documents signed of players band rows groups ungrouped archived filter phone cards',
+      searchText: 'rep teams board health board one row per team season live closed record head coach no head coach invited roster no players next event documents signed of players band rows groups ungrouped archived filter phone cards open a team click row',
       content: (
         <>
           <p><strong>Rep Teams</strong> lists every team, grouped by team group, one row each:</p>
@@ -61,7 +61,7 @@ const repTeamsHelp: HelpPageContent = {
             <li><strong>Next event</strong> — the next thing on the coach&apos;s schedule.</li>
             <li><strong>Documents</strong> — how many players on the live season have signed every club template that applies to the team. A new season starts at zero, because families sign again each season.</li>
           </ul>
-          <p>The team&apos;s name opens its page, and so does the arrow at the end of the row. Use the filter to see one group, <strong>Ungrouped</strong>, or <strong>Archived</strong> teams.</p>
+          <p>Click anywhere on a team&apos;s row to open its page. Use the filter to see one group, <strong>Ungrouped</strong>, or <strong>Archived</strong> teams.</p>
         </>
       ),
     },
@@ -130,14 +130,14 @@ const repTeamsHelp: HelpPageContent = {
       group: 'How-to recipes',
       heading: 'How to open tryouts and review applicants',
       summary: 'Tryouts run on the team’s live season: open sign-ups, share the team’s link, and decide in each applicant’s window.',
-      keywords: ['tryouts', 'open sign-ups', 'close sign-ups', 'applicants', 'offer', 'waitlist', 'accept', 'decline', 'consent', 'compliance', 'no emails to families', 'tell families yourself', 'tryouts are open', 'tryout link', 'too many attempts', 'copy link'],
-      searchText: 'open tryouts review applicants sign-ups open sign-ups close sign-ups copy link team tryout address public tryout form tryouts are open card front page where do families apply family cannot submit too many attempts pending review extend offer waitlist add to roster decline final mark withdrawn add applicant consent guardian privacy PIPEDA CASL export no emails sent to families decisions recorded only you tell families yourself closed season record coach runs the tryout same list',
+      keywords: ['tryouts', 'open sign-ups', 'close sign-ups', 'applicants', 'offer', 'waitlist', 'accept', 'decline', 'consent', 'compliance', 'no emails to families', 'tell families yourself', 'tryouts are open', 'tryout link', 'too many attempts', 'copy link', 'reference number', 'application reference'],
+      searchText: 'open tryouts review applicants reference number application reference sign-ups open sign-ups close sign-ups copy link team tryout address public tryout form tryouts are open card front page where do families apply family cannot submit too many attempts pending review extend offer waitlist add to roster decline final mark withdrawn add applicant consent guardian privacy PIPEDA CASL export no emails sent to families decisions recorded only you tell families yourself closed season record coach runs the tryout same list',
       content: (
         <>
           <p>A tryout belongs to the team&apos;s <strong>live season</strong> — the same list the coach sees in their portal, where they run the sessions, scoring and decisions.</p>
           <ol>
             <li>Open the team and go to <strong>Tryouts</strong>. In <strong>Sign-ups</strong>, press <strong>Open sign-ups</strong>. While they are open, your club&apos;s public front page shows a <strong>Tryouts are open</strong> card, and <strong>Copy link</strong> gives you the team&apos;s own tryout address — it names the team, so it keeps working from one season to the next.</li>
-            <li>Applications arrive in <strong>Pending review</strong>. Open one to decide: <strong>Extend offer</strong>, <strong>Waitlist</strong>, <strong>Add to roster</strong> once the family says yes, or <strong>Decline</strong>. A decline is final, so it asks first. Every decision is recorded and <strong>nothing is emailed</strong> — you reach the family yourself.</li>
+            <li>Applications arrive in <strong>Pending review</strong>. Open one to decide: <strong>Extend offer</strong>, <strong>Waitlist</strong>, <strong>Add to roster</strong> once the family says yes, or <strong>Decline</strong>. A decline is final, so it asks first. Every decision is recorded and <strong>nothing is emailed</strong> — you reach the family yourself. Under the applicant&apos;s name is the <strong>reference</strong> from the family&apos;s confirmation screen and email, so a family who quotes it can be matched.</li>
             <li>Press <strong>Close sign-ups</strong> when you&apos;re done; the address then tells families sign-ups aren&apos;t open.</li>
           </ol>
           <p>A closed season&apos;s tryout is a record: no sign-ups and no decisions. To take sign-ups for next year, start the next season first. The list shows each family&apos;s <strong>Consent</strong> date, and <strong>Export</strong> gives the consent record too. Use <strong>Add applicant</strong> for someone who applied outside the form (they carry no form consent).</p>

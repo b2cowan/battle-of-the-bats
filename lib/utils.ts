@@ -103,6 +103,27 @@ export function formatStoredClock(value: string | null | undefined): string {
   return /^\d{1,2}:\d{2}(:\d{2})?$/.test(t) ? formatTime(t) : t;
 }
 
+/**
+ * A registration's reference as a family sees it — "01496E50", the first eight characters of its id.
+ * ONE home for the shape, because the family's copy (the confirmation screen, the receipt email) and
+ * the people they quote it to must agree character for character: a house-league family types it
+ * into the status lookup, and a tryout family quotes it to the club or the coach, who find it on the
+ * applicant's window and in check-in's search (owner, §249 walk, 2026-09-29 — until then no club or
+ * coach screen showed a tryout's reference, so a family quoting it could not be matched).
+ */
+export function registrationReference(id: string): string {
+  return id.slice(0, 8).toUpperCase();
+}
+
+/**
+ * Does a search box's text name this registration's reference? Case-free, and a quoted "#01496e50"
+ * matches too. Six characters at least, so a short name or bib search never lands on a reference.
+ */
+export function matchesRegistrationReference(id: string, query: string): boolean {
+  const q = query.trim().replace(/^#/, '').toUpperCase();
+  return q.length >= 6 && registrationReference(id).startsWith(q);
+}
+
 /** "6:00 p.m." from "18:00", "18:00:00", or an already-formatted label. */
 export function formatTime(timeStr: string): string {
   if (!timeStr) return '';

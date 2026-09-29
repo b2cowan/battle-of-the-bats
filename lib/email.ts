@@ -1,4 +1,5 @@
 ﻿import { COACHES_TOURNAMENTS_PATH } from '@/lib/coaches-portal-routes';
+import { registrationReference } from '@/lib/utils';
 import { STAFF_KIND_COPY, staffKindCopyFor, type StaffKind } from '@/lib/coach-capabilities';
 import {
   FOUNDING_SEASON_END_LABEL,
@@ -604,7 +605,7 @@ export function leagueRegistrationApprovedHtml(input: {
   contactEmail?: string;
 }) {
   const p = escapeEmailFields(input);
-  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  const ref = registrationReference(p.registrationId);
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
@@ -632,7 +633,7 @@ export function leagueRegistrationPendingHtml(input: {
   contactEmail?: string;
 }) {
   const p = escapeEmailFields(input);
-  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  const ref = registrationReference(p.registrationId);
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Registration Received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
@@ -661,7 +662,7 @@ export function leagueRegistrationWaitlistHtml(input: {
   contactEmail?: string;
 }) {
   const p = escapeEmailFields(input);
-  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  const ref = registrationReference(p.registrationId);
   return wrap(`
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">You're on the Waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
@@ -692,7 +693,7 @@ export function leagueAdminApprovedHtml(input: {
   contactEmail?: string;
 }) {
   const p = escapeEmailFields(input);
-  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  const ref = registrationReference(p.registrationId);
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">✅ Registration Approved!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
@@ -721,7 +722,7 @@ export function leagueAdminWaitlistedHtml(input: {
   contactEmail?: string;
 }) {
   const p = escapeEmailFields(input);
-  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  const ref = registrationReference(p.registrationId);
   return wrap(`
     <h2 style="color:#F59E0B;font-size:1.4rem;margin:0 0 1rem;">Added to Waitlist</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
@@ -750,7 +751,7 @@ export function leagueWaitlistPromotedHtml(input: {
   contactEmail?: string;
 }) {
   const p = escapeEmailFields(input);
-  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  const ref = registrationReference(p.registrationId);
   return wrap(`
     <h2 style="color:#22C55E;font-size:1.4rem;margin:0 0 1rem;">🎉 You're Off the Waitlist!</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>
@@ -805,7 +806,7 @@ export function tryoutRegistrationConfirmationHtml(input: {
   contactEmail?: string;
 }) {
   const p = escapeEmailFields(input);
-  const ref = p.registrationId.slice(0, 8).toUpperCase();
+  const ref = registrationReference(p.registrationId);
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">Tryout Application Received</h2>
     <p>Hi <strong>${p.guardianFirstName}</strong>,</p>

@@ -127,6 +127,16 @@ team had ever played. Success = the owner's ten Stage 2 walks pass (ledger §249
 taken: the club's pages follow the Coaches Portal's look exactly, so a few older admin pages beside
 them still wear the admin's own table style until the design programme reaches them.
 
+**Stage 2 — success met 2026-09-29: all ten walks passed.** The owner's walks raised three small
+things, each changed the same day: a row on the club's tables now opens from anywhere on it, not
+just the team's name; a team's details say "Saved" in the same floating pill the Coaches Portal
+uses, so a failed save can never scroll out of sight; and the reference number a family gets
+when they apply for a tryout now shows in the club's applicant window and finds the player in the
+coach's check-in search — before, a family could quote it and nobody could match it. Two ideas were
+parked for a later drawing: taking *Team groups* and *Rename team URLs* off the Rep Teams toolbar
+(groups also limit which teams a director can see, which the page never says). The three changes are
+committed. Before release: the stage's two database changes go to production first.
+
 **Looking like one product (owner direction, 2026-09-28).** The Coaches Portal is the formatting benchmark
 for every club screen, and by the end of this programme the product has one written formatting standard,
 with every exception named. The Stage 2 drawings were redrawn to it the same day. Table cells carry no

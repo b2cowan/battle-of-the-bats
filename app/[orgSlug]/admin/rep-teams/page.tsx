@@ -11,8 +11,9 @@
  *     group filter (with Ungrouped — B06, fixed in Stage 0) pinned right. The five door tiles are gone:
  *     the rail carries every one of them (and the phone's "In Rep Teams" row);
  *   · the table: display-face uppercase headings in secondary ink (NOT the admin restyle's S2-06
- *     override), figures right with their headings, groups as band rows, the NAME is the link and ONE
- *     chevron closes the row — no links or buttons in cells (owner ruling 2026-09-28);
+ *     override), figures right with their headings, groups as band rows, the NAME is the link, the
+ *     whole row opens (owner 2026-09-29) and ONE chevron closes it — no links or buttons in cells
+ *     (owner ruling 2026-09-28);
  *   · at ≤ 640 the table becomes white cards with a corner chevron (it does not fit a phone);
  *   · Upcoming bills is unchanged — Stage 3a redraws it.
  * ⚠ Departure, told at build time: an "Archived" choice joins the group filter. The drawing shows no
@@ -21,6 +22,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { ChevronRight, Layers, Link2, Plus, Users } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { usePageTitle } from '@/lib/usePageTitle';
@@ -287,8 +289,12 @@ function rowView(board: ClubBoardRow, viewerId: string | null) {
 
 type Row = BoardTeam & { groupId: string | null; view: ReturnType<typeof rowView> };
 
-/** One band of the desktop table: its band row (when the club has groups), then its teams. */
+/** One band of the desktop table: its band row (when the club has groups), then its teams. The whole
+ *  row opens the team (standard §3.6, owner 2026-09-29): the name stays the real link — the keyboard's,
+ *  a reader's, a new tab's — and the row is the pointer shortcut on top of it; a click that ends a text
+ *  selection is a copy gesture, not a door. */
 function BandRows({ label, rows, base }: { label: string; rows: Row[]; base: string }) {
+  const router = useRouter();
   return (
     <>
       {label && (
@@ -299,11 +305,11 @@ function BandRows({ label, rows, base }: { label: string; rows: Row[]; base: str
       {rows.map(({ team, board, view: { season, coach, next, docs, noPlayers } }) => {
         const href = `${base}/teams/${team.id}`;
         return (
-          <tr key={team.id} className={repKit.rowOpens}>
+          <tr key={team.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; router.push(href); }}>
             <td>
               <span className={repKit.nameCell}>
                 {team.color && <i className={repKit.swatch} style={{ background: team.color }} aria-hidden />}
-                <Link href={href} className={repKit.nameLink}>{team.name}</Link>
+                <Link href={href} className={repKit.nameLink} onClick={e => { e.stopPropagation(); if (window.getSelection()?.toString()) e.preventDefault(); }}>{team.name}</Link>
                 {team.isArchived && <RepChip>Archived</RepChip>}
               </span>
               {team.division && <span className={repKit.cellSub}>{team.division}</span>}
@@ -336,10 +342,10 @@ function BandRows({ label, rows, base }: { label: string; rows: Row[]; base: str
             </td>
             <td className={`${repKit.num}${docs ? '' : ` ${repKit.dim}`}`}>{docs ?? '—'}</td>
             <td className={repKit.go}>
-              {/* The same door as the name, for the pointer; the keyboard and a reader take the name. */}
-              <Link href={href} className={repKit.goLink} tabIndex={-1} aria-hidden>
+              {/* The row's mark, not a second door: the row is the pointer's target, the name the keyboard's. */}
+              <span className={repKit.goLink} aria-hidden>
                 <ChevronRight size={16} />
-              </Link>
+              </span>
             </td>
           </tr>
         );

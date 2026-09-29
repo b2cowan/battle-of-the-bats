@@ -439,9 +439,11 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
                   {filtered.map(r => {
                     const name = `${r.playerFirstName} ${r.playerLastName}`.trim();
                     return (
-                      <tr key={r.id} className={repKit.rowOpens}>
+                      // The whole row opens the applicant (standard §3.6); the name stays the keyboard's
+                      // button, and a click that ends a selection (copying a guardian's email) opens nothing.
+                      <tr key={r.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; setOpenId(r.id); }}>
                         <td>
-                          <button type="button" className={`${repKit.nameLink} ${repKit.nameButton}`} onClick={() => setOpenId(r.id)} aria-haspopup="dialog">
+                          <button type="button" className={`${repKit.nameLink} ${repKit.nameButton}`} onClick={e => { e.stopPropagation(); setOpenId(r.id); }} aria-haspopup="dialog">
                             {name}
                           </button>
                         </td>
@@ -451,9 +453,9 @@ export default function TeamTryoutsPage({ params }: { params: Promise<{ orgSlug:
                         <td><RepChip tone={TRYOUT_STATUS_TONE[r.status]}>{TRYOUT_STATUS_LABEL[r.status]}</RepChip></td>
                         {isLive && <td className={repKit.dim}>{r.consentAt ? formatStoredDate(r.consentAt, { withYear: false }) : '—'}</td>}
                         <td className={repKit.go}>
-                          <button type="button" className={`${repKit.goLink} ${repKit.nameButton}`} onClick={() => setOpenId(r.id)} tabIndex={-1} aria-hidden>
+                          <span className={repKit.goLink} aria-hidden>
                             <ChevronRight size={16} />
-                          </button>
+                          </span>
                         </td>
                       </tr>
                     );

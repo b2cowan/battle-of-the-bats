@@ -175,18 +175,19 @@ export default function DocumentTemplatesPage() {
                 </thead>
                 <tbody>
                   {rows.map(t => (
-                    <tr key={t.id} className={repKit.rowOpens}>
+                    // The whole row opens the template (standard §3.6); the name stays the keyboard's button.
+                    <tr key={t.id} className={repKit.rowOpens} onClick={() => { if (window.getSelection()?.toString()) return; setOpenId(t.id); }}>
                       <td>
-                        <button type="button" className={`${repKit.nameLink} ${repKit.nameButton}`} onClick={() => setOpenId(t.id)} aria-haspopup="dialog">{t.name}</button>
+                        <button type="button" className={`${repKit.nameLink} ${repKit.nameButton}`} onClick={e => { e.stopPropagation(); setOpenId(t.id); }} aria-haspopup="dialog">{t.name}</button>
                       </td>
                       <td>{t.teamId ? teamName.get(t.teamId) ?? 'A team' : 'Every team'}</td>
                       <td><RepChip tone="info">{DOC_TYPE_LABEL[t.documentType] ?? t.documentType}</RepChip></td>
                       <td>{t.isActive ? <RepChip tone="good">Active</RepChip> : <RepChip>Off</RepChip>}</td>
                       <td className={repKit.dim}>{formatStoredDate(t.createdAt, { withYear: false })}</td>
                       <td className={repKit.go}>
-                        <button type="button" className={`${repKit.goLink} ${repKit.nameButton}`} onClick={() => setOpenId(t.id)} tabIndex={-1} aria-hidden>
+                        <span className={repKit.goLink} aria-hidden>
                           <ChevronRight size={16} />
-                        </button>
+                        </span>
                       </td>
                     </tr>
                   ))}

@@ -202,9 +202,27 @@ describe('the formatting benchmark (plan §6 "Across every stage — formatting"
     const board = readCode(PAGE.board);
     const rows = board.slice(board.indexOf('function BandRows'), board.indexOf('function PhoneBand'));
     const links = rows.match(/<Link\b/g) ?? [];
-    assert.equal(links.length, 2, 'the name link and the chevron — no third door in a cell');
+    assert.equal(links.length, 1, 'the name is the one real link — no second door in a cell');
     assert.doesNotMatch(rows, /<button\b/);
     assert.doesNotMatch(rows, /Invite a coach|Start the/);
+  });
+
+  it('a row that opens, opens from anywhere (Ask 8 ruling 5 amended 2026-09-29; standard §3.6)', () => {
+    // The tint promises the whole row; the row keeps it. The name stays the real control (keyboard,
+    // reader, new tab), a click that ends a text selection opens nothing, and the name's own click
+    // stops at the name so one gesture never opens twice.
+    const board = readCode(PAGE.board);
+    for (const [rel, src] of [
+      [PAGE.board, board.slice(board.indexOf('function BandRows'), board.indexOf('function PhoneBand'))],
+      [PAGE.documents, readCode(PAGE.documents)],
+      [PAGE.tryouts, readCode(PAGE.tryouts)],
+    ] as const) {
+      assert.match(src, /<tr key=\{[^}]+\} className=\{repKit\.rowOpens\} onClick=\{\(\) => \{ if \(window\.getSelection\(\)\?\.toString\(\)\) return;/, `${rel}: the row opens, guarded against a text selection`);
+      assert.match(src, /e\.stopPropagation\(\)/, `${rel}: the name's own click stops at the name`);
+      assert.doesNotMatch(src, /goLink[^\n]*tabIndex=\{-1\}/, `${rel}: the chevron is a mark, not a hidden second control`);
+    }
+    const kit = css('components/admin/kit/club/RepKit.module.css');
+    assert.match(kit, /\.table tr\.rowOpens \{ cursor: pointer; \}/, 'a row that opens shows the pointer everywhere it tints');
   });
 
   it('delete is never a row action; tinted panels stay retired', () => {
@@ -227,7 +245,15 @@ describe('the formatting benchmark (plan §6 "Across every stage — formatting"
   it('team details AUTOSAVE (edit saves as you go) with the transient word; creating asks', () => {
     const team = readCode(PAGE.team);
     assert.match(team, /useRecordAutosave\(/);
-    assert.match(team, /<SaveWord /);
+    assert.match(team, /<SavePill /);
+    // The word is PINNED to the window (owner 2026-09-29, §249): at a section's foot it scrolls away,
+    // and a failed save that scrolls off-screen is the defect the 2026-09-20 ruling named.
+    const kit = css('components/admin/kit/club/RepKit.module.css');
+    const pill = kit.slice(kit.indexOf('.savePill {'), kit.indexOf('}', kit.indexOf('.savePill {')));
+    assert.match(pill, /position: fixed/, 'the save word is pinned to the window, never in the page flow');
+    // …and on a phone it rides ABOVE the admin's bottom nav (/review 2026-09-29: the first version sat
+    // at the window's foot under the nav, so a failed save on a phone was invisible).
+    assert.match(kit, /@media \(max-width: 900px\) \{\s*\.savePill \{[^}]*bottom: calc\(var\(--bottom-nav-height/, 'the pill clears the bottom nav at ≤900');
     assert.doesNotMatch(team.slice(team.indexOf('function TeamDetails')), />Save<|Save changes/);
     assert.match(readCode('components/admin/kit/club/AddTeamDialog.tsx'), /Add team'\}/, 'a new team is an explicit Add');
   });

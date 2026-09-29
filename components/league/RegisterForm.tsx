@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
 import HelpCallout from '@/components/help/HelpCallout';
+import { registrationReference } from '@/lib/utils';
 import styles from './register.module.css';
 
 export interface DivisionWithCount {
@@ -193,7 +194,7 @@ export default function RegisterForm({
           )}
         </p>
         <div className={styles.refBox}>
-          Reference: <span className={styles.refCode}>{success.id.slice(0, 8).toUpperCase()}</span>
+          Reference: <span className={styles.refCode}>{registrationReference(success.id)}</span>
         </div>
         <p className={styles.successStatusLink}>
           <a href={`/${orgSlug}/league/${seasonSlug}/status`}>

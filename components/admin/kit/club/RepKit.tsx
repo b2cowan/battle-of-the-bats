@@ -15,7 +15,7 @@
  *   <Callout tone="bad" icon={…}>…</Callout>                     — a white card, a coloured edge
  *   <LoadFailed title onRetry /> · <PageLoading header />        — a screen's read failed / in flight
  *   useDeferredLoad(ready, load) · useLatestRead()               — the first read; only the newest writes
- *   <SaveWord saving dirty error onRetry />                      — transient; only an error stays
+ *   <SavePill saving dirty error held onRetry />                 — pinned to the window, transient; only a failure stays
  */
 import { useCallback, useEffect, useRef, useState, type MouseEventHandler, type ReactNode } from 'react';
 import Link from 'next/link';
@@ -224,20 +224,32 @@ export function EmptyCard({ icon, title, children, action }: { icon?: ReactNode;
 
 const LINGER_MS = 2500;
 const FADE_MS = 300;
-type SaveState = 'error' | 'saving' | 'dirty' | 'saved';
+type SaveState = 'held' | 'error' | 'saving' | 'dirty' | 'saved';
 
 /**
- * The autosave word at a section's foot (house rule 2026-09-24: an edit saves as you go; ruling
- * 2026-09-20: the word is TRANSIENT). "Unsaved changes" → "Saving…" → "✓ Saved", which lingers ~2.5s
- * and fades; nothing shows at rest; only "Couldn't save · Retry" stays. The live region is never
- * unmounted (a reader only announces changes inside a region it already knows) — its text clears
- * once the word has faded. The portal's `SaveStatusPill` is the same word pinned to the window's
- * foot; this one sits where the drawing puts it, under the fields it saves.
+ * The autosave word — the portal's `SaveStatusPill`, restated for the admin shell: a TRANSIENT pill
+ * pinned to the window's bottom-right corner (house rule 2026-09-24: an edit saves as you go; ruling
+ * 2026-09-20: pinned, so it is seen wherever the page is scrolled, and transient, so it is never
+ * furniture over the work). "Unsaved changes" → "Saving…" → "✓ Saved", which lingers ~2.5s and fades;
+ * nothing shows at rest. Only a failure stays: "Couldn’t save · Retry", or the reason an edit is HELD
+ * ("Give the team a name to save it.") — no Retry there, since retrying cannot help.
+ *
+ * It sat at Team details' foot, where the Stage 2 drawing put it, until 2026-09-29 (owner, §249 walk:
+ * "our method of showing saving is the floating pill"): the foot scrolls away with the page, which is
+ * the placement the 2026-09-20 ruling rejected — a failed save that scrolls off-screen is a defect.
+ *
+ * The live region is never unmounted (a reader only announces changes inside a region it already
+ * knows) — the pill fades by opacity and its text clears once hidden. Retry lands focus on the pill
+ * first, because the button it replaces leaves in the same render.
  */
-export function SaveWord({ saving, dirty, error, onRetry }: {
-  saving: boolean; dirty: boolean; error?: string | null; onRetry: () => void;
+export function SavePill({ saving, dirty, error, held, onRetry }: {
+  saving: boolean; dirty: boolean; error?: string | null;
+  /** Why the edit is held right now (a required field emptied), or null. Shown while dirty. */
+  held?: string | null;
+  onRetry: () => void;
 }) {
-  const state: SaveState = error ? 'error' : saving ? 'saving' : dirty ? 'dirty' : 'saved';
+  const state: SaveState = held && dirty ? 'held' : error ? 'error' : saving ? 'saving' : dirty ? 'dirty' : 'saved';
+  const pillRef = useRef<HTMLDivElement>(null);
   const [prevState, setPrevState] = useState<SaveState>(state);
   const [linger, setLinger] = useState<'none' | 'shown' | 'fading'>('none');
   if (state !== prevState) {
@@ -251,24 +263,32 @@ export function SaveWord({ saving, dirty, error, onRetry }: {
     return () => window.clearTimeout(t);
   }, [linger]);
 
-  if (state === 'error') {
-    return (
-      <span className={`${styles.saveWord} ${styles.saveWordError}`} role="status" aria-live="polite">
-        {error} ·{' '}
-        <button type="button" className={styles.inlineLink} onClick={onRetry}>Retry</button>
-      </span>
-    );
-  }
-  const hidden = state === 'saved' && linger !== 'shown';
-  const text = state === 'saving' ? 'Saving…' : state === 'dirty' ? 'Unsaved changes' : linger === 'none' ? '' : 'Saved';
+  // Anything but "saved" holds the pill on screen; "saved" lingers, fades, then leaves.
+  const phase = state !== 'saved' ? 'shown' : linger === 'none' ? 'hidden' : linger;
+
   return (
-    <span
-      className={`${styles.saveWord}${state === 'saved' ? ` ${styles.saveWordSaved}` : ''}${hidden ? ` ${styles.saveWordHidden}` : ''}`}
-      role="status"
-      aria-live="polite"
-    >
-      {state === 'saved' && text && <Check size={13} aria-hidden />}
-      {text}
-    </span>
+    /* -1: never in the tab order; focusable as the landing spot when Retry's own button leaves. */
+    <div ref={pillRef} tabIndex={-1} className={styles.savePill} data-state={state} data-phase={phase}>
+      <span className={styles.saveStatus} aria-live="polite">
+        {phase === 'hidden' ? null
+          : state === 'held' ? held
+            : state === 'error' ? (
+              <>
+                {error} ·{' '}
+                <button
+                  type="button"
+                  className={styles.saveRetry}
+                  disabled={saving}
+                  onClick={() => { pillRef.current?.focus({ preventScroll: true }); onRetry(); }}
+                >
+                  Retry
+                </button>
+              </>
+            )
+              : state === 'saving' ? 'Saving…'
+                : state === 'dirty' ? 'Unsaved changes'
+                  : <><Check size={13} aria-hidden /> Saved</>}
+      </span>
+    </div>
   );
 }

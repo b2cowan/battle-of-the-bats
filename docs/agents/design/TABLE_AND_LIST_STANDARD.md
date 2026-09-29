@@ -200,7 +200,22 @@ the basis, the caveats and the doors — never a sentence inside a money column.
 
 - **A row that opens is a button.** An expanding row carries a real `<button aria-expanded>` named
   for its record; the row itself is the pointer/touch shortcut on top of it (K-07). A row that
-  navigates has the **name as the link**, never a row-level click.
+  navigates has the **name as the link** — the one real control, which a keyboard, a reader and a new
+  tab use — and **the row is the pointer/touch shortcut on top of it**, exactly as for an expanding
+  row. Never a row-level click *instead of* a real control.
+  - **Amended 2026-09-29 (owner).** This sentence used to end "never a row-level click", and the
+    Club Tier Stage 2 formatting ruling (Ask 8 ruling 5, "a table's link is the name") was copied
+    from it. Read literally, it left the club's tables tinting the whole row on hover while only the
+    name and chevron opened — a tint that promises a click the row does not keep (F-03's rule read
+    backwards). The portal benchmark already did the shortcut on navigating tables (Development's
+    sessions, the budget's dues row); only the club tables had taken the old words literally.
+  - **The recipe:** the row's click runs the same door as the name, and returns early when the
+    click ends a text selection (a copy gesture — a guardian's email, a coach's name); the name's
+    own click stops propagation so one gesture never opens twice; the chevron is a mark
+    (`aria-hidden`), not a second control. A control inside the row that goes somewhere *else*
+    stops propagation too (K-19's second door).
+  - **Known limit, accepted:** a middle-click or Ctrl+click on the row's blank area opens in the same
+    tab; only the name opens a new one. The portal has the same limit.
 - **The chevron sits in the last column, right-aligned, and appears only where something opens.**
 - **A figure that opens is a dotted-underline button, and one underline means one thing across the
   whole table** (2026-09-04). When a figure becomes a door, every other affordance that opened the

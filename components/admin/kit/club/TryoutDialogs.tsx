@@ -19,6 +19,7 @@ import KitDialog from './KitDialog';
 import ck from './ClubKit.module.css';
 import { RepChip, repKit } from './RepKit';
 import { formatStoredDate } from '@/lib/timezone';
+import { registrationReference } from '@/lib/utils';
 import type { RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
 
 export const TRYOUT_STATUS_LABEL: Record<RepTryoutRegistrationStatus, string> = {
@@ -113,7 +114,8 @@ export function ApplicantDialog({
       kind="form"
       eyebrow={seasonName}
       title={<>{name} <RepChip tone={TRYOUT_STATUS_TONE[s]}>{TRYOUT_STATUS_LABEL[s]}</RepChip></>}
-      identity={`Submitted ${formatStoredDate(reg.submittedAt)}`}
+      // The reference is the family's receipt number, so a family who quotes it can be matched here.
+      identity={`Submitted ${formatStoredDate(reg.submittedAt)} · Reference ${registrationReference(reg.id)}`}
       onClose={onClose}
       busy={busy || savingNotes}
       footerStart={canWithdraw ? (

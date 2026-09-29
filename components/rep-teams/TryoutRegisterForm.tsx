@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CheckCircle } from 'lucide-react';
+import { registrationReference } from '@/lib/utils';
 import styles from './register.module.css';
 
 interface Props {
@@ -156,7 +157,7 @@ export default function TryoutRegisterForm({
           be in touch.
         </p>
         <div className={styles.refBox}>
-          Reference: <span className={styles.refCode}>{success.id.slice(0, 8).toUpperCase()}</span>
+          Reference: <span className={styles.refCode}>{registrationReference(success.id)}</span>
         </div>
       </div>
     );

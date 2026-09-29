@@ -8,6 +8,7 @@ import {
 } from '@/lib/export';
 import { checkinSheetHeadings, checkinTickColumn } from '@/lib/export/tryout-checkin-columns';
 import { tournamentToday } from '@/lib/timezone';
+import { matchesRegistrationReference } from '@/lib/utils';
 import { describeTryoutSession, tryoutSessionDay } from '@/lib/tryout-session-label';
 import type { RepTryoutRegistration, RepTryoutSession } from '@/lib/types';
 import TryoutNamesSwitch from './TryoutNamesSwitch';
@@ -223,8 +224,9 @@ export default function TryoutCheckIn({
     const bib = (c.bibNumber ?? '').toLowerCase();
     // The coach is never blind (owner 2026-08-26) — search by name works whether or not helpers
     // are on bibs. It was gated on isAnonymous, which meant the person running check-in could not
-    // look up the player standing in front of them.
-    return fullName(c).toLowerCase().includes(q) || bib.includes(q);
+    // look up the player standing in front of them. A family's receipt reference finds its
+    // applicant too (owner, 2026-09-29): it is the one number a family quotes.
+    return fullName(c).toLowerCase().includes(q) || bib.includes(q) || matchesRegistrationReference(c.id, q);
   });
 
   async function setCheckin(c: RepTryoutRegistration, value: boolean) {
@@ -494,7 +496,7 @@ export default function TryoutCheckIn({
           className={styles.search}
           type="text"
           inputMode="search"
-          placeholder="Search name or bib…"
+          placeholder="Search name, bib or reference…"
           value={search}
           onChange={e => setSearch(e.target.value)}
         />

@@ -31,7 +31,7 @@ import { CoachCard, CoachDoorCard, CoachEyebrow, CoachFigure, kit } from '@/comp
 import { useRecordAutosave } from '@/components/coaches/useRecordAutosave';
 import {
   Callout, ClubRow, ClubRowList, ClubSection, EmptyCard, LoadFailed, PageLoading, RepChip, repKit,
-  SaveWord, useDeferredLoad, useLatestRead,
+  SavePill, useDeferredLoad, useLatestRead,
 } from '@/components/admin/kit/club/RepKit';
 import type { SeasonPreflight } from '@/components/admin/kit/club/SeasonDialogs';
 import { usePublishRailTeam } from '@/components/admin/kit/useRailTeam';
@@ -232,7 +232,7 @@ export default function TeamPage({ params }: { params: Promise<{ orgSlug: string
   ) : undefined;
 
   return (
-    <div className={repKit.page}>
+    <div className={`${repKit.page}${canWrite && !team.isArchived ? ` ${repKit.savePillPage}` : ''}`}>
       {header(titleChip, seasonDoors)}
       {notice && <PageNotice notice={notice} />}
 
@@ -514,7 +514,8 @@ function WhatTheClubSees() {
 
 /**
  * Team details — AUTOSAVE (house rule 2026-09-24: an edit saves as you go; creating asks). The word
- * is transient at the section's foot (2026-09-20). The group now actually saves (B09); the division
+ * is the transient pill pinned to the window's corner (2026-09-20; moved off the section's foot
+ * 2026-09-29), and a held edit says why in it. The group now actually saves (B09); the division
  * is the real home of the coach's "Division is managed by your club admin"; archive lives here,
  * never as a row action.
  */
@@ -631,13 +632,12 @@ function TeamDetails({ team, groups, orgSlug, canWrite, onSaved, onArchive }: {
           <>
             <span>Archiving hides {team.name} from the club’s lists and frees its place on your plan. Its seasons and history are kept.</span>
             <button type="button" className="btn btn-danger" onClick={() => void archive()} disabled={saving}>Archive team</button>
-            {(blocked && dirty) ? <span className={`${repKit.saveWord} ${repKit.saveWordError}`} role="status">{blocked}</span>
-              : <SaveWord saving={saving} dirty={dirty} error={saveError || null} onRetry={() => void handleSave()} />}
           </>
         ) : (
           <span>Only the club’s owner and admins change a team’s details.</span>
         )}
       </div>
+      {canWrite && <SavePill saving={saving} dirty={dirty} error={saveError || null} held={blocked} onRetry={() => void handleSave()} />}
     </ClubSection>
   );
 }
