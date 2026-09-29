@@ -82,7 +82,13 @@ export default function CoachTeamSetupPanel({
   // The coach can leave (nav rail, an "Open" link, Back) while a write is in flight. The router
   // outlives this component, so an unguarded push would yank them off the page they chose.
   const aliveRef = useRef(true);
-  useEffect(() => () => { aliveRef.current = false; }, []);
+  // Set TRUE on mount as well as false on unmount: React's development double-mount runs the cleanup
+  // once, and a flag only the cleanup touches stays false for good — the write lands, the guard
+  // reads "left", and the card spins forever (the depth chart's save guard, found 2026-09-29).
+  useEffect(() => {
+    aliveRef.current = true;
+    return () => { aliveRef.current = false; };
+  }, []);
 
   async function turnOn(key: SetupStepKey) {
     if (busy) return;

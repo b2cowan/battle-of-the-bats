@@ -14,12 +14,9 @@ import { useIsPhone } from '@/lib/hooks/useIsPhone';
 import { useIsPhoneNav } from '@/lib/hooks/useIsPhoneNav';
 import { useOverlayOpen } from '@/lib/coaches-overlay';
 import { X, ChevronUp, ChevronDown, ChevronRight, GripVertical, Shuffle, Eraser, UserPlus } from 'lucide-react';
-import {
-  DndContext, closestCenter, MouseSensor, TouchSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
-} from '@dnd-kit/core';
-import {
-  SortableContext, sortableKeyboardCoordinates, verticalListSortingStrategy, useSortable, arrayMove,
-} from '@dnd-kit/sortable';
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { useReorderSensors } from '@/lib/hooks/useReorderSensors';
 import { CSS } from '@dnd-kit/utilities';
 import { useConfirm } from '@/components/coaches/ConfirmProvider';
 import SublinedChoice, { type SublinedOption } from '@/components/coaches/SublinedChoice';
@@ -379,11 +376,9 @@ export default function LineupEditor(props: LineupEditorProps) {
   // direction, so the drag no longer has to be moved out to a list of its own. A quick tap never
   // meets the constraint, so it falls through to the handle's onClick (the row-actions sheet); a
   // drag that did activate swallows the click that follows it (dnd-kit stops it in capture).
-  const sensors = useSensors(
-    useSensor(MouseSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 250, tolerance: 5 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  );
+  // ONE HOOK since 2026-09-29 — the Best-positions order (D3) adopted the same standard, and two
+  // copies of a hold are two gestures the day one of them is tuned.
+  const sensors = useReorderSensors();
 
   const analysis = analyzeLineup(
     rows.map(r => ({ playerId: r.player.id, inningPositions: r.inningPositions })),

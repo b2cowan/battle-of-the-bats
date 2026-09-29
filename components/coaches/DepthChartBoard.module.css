@@ -77,7 +77,10 @@
 
 /* pinned identity cluster: Player + Pitcher + A-squad all sticky-left (solid, no zebra) */
 .cPlayer, .table td.cPlayer { position: sticky; left: 0; z-index: 2; min-width: 150px; width: 150px; text-align: left; padding: 0 12px; }
-.cPitch, .table td.cPitch { position: sticky; z-index: 2; min-width: 86px; width: 86px; }
+/* 150 (was 86): the rank chip and the innings cap sit on ONE row (owner, 2026-09-29) — measured 130px
+   of content; the width is mirrored in DepthChartBoard.tsx's PINNED widths, which place the sticky
+   columns beside it. */
+.cPitch, .table td.cPitch { position: sticky; z-index: 2; min-width: 150px; width: 150px; }
 .cASquad, .table td.cASquad { position: sticky; z-index: 2; min-width: 80px; width: 80px; border-right: 1px solid var(--line); } /* 80 (was 64): room for the header's "?" tooltip trigger */
 .table thead th.cPlayer, .table thead th.cPitch, .table thead th.cASquad { z-index: 4; }
 .table td.cPlayer, .table td.cPitch, .table td.cASquad { background: var(--panel); }
@@ -103,7 +106,9 @@
 .cellbtn.b { background: var(--best-bg); border-color: var(--best-bd); color: var(--ink); } /* rank number WHITE */
 .cellbtn.n { background: var(--never-bg); border-color: var(--never-bd); color: var(--never-fg); }
 
-.pitch { display: inline-flex; flex-direction: column; align-items: center; gap: 4px; user-select: none; padding: 4px 0; }
+/* One row: the rank chip, then the innings cap beside it (it stacked under the chip and doubled every
+   pitcher's row height). */
+.pitch { display: inline-flex; flex-direction: row; flex-wrap: nowrap; align-items: center; gap: 6px; user-select: none; padding: 4px 0; }
 /* The pitcher rank is a <select> dressed as the chip — one tap to any rank or to "—" (not a
    pitcher). The chevron is drawn inline so the chip keeps its pill shape on every browser. */
 .pchip {
@@ -151,9 +156,8 @@
   display: inline-flex; align-items: center; justify-content: center;
 }
 .iconBtn:disabled { opacity: 0.4; cursor: default; }
-.saveStat { color: var(--ink-70); font-size: var(--type-support); display: inline-flex; align-items: center; gap: 6px; }
-.saveStat .chk { color: var(--success); font-weight: 800; }
-.saveRetry { background: none; border: none; color: var(--danger); font-weight: 700; font-size: var(--type-support); cursor: pointer; text-decoration: underline; padding: 0; }
+/* ⚰ `.saveStat` / `.chk` / `.saveRetry` — the board's own "✓ Saved" text — went 2026-09-29: the board wears the
+   portal's one autosave pill (SaveStatusPill), which is transient and rises over the player sheet. */
 .autofill {
   margin-left: auto; padding: 8px 14px; border-radius: var(--radius-sm); font-weight: 700; font-size: var(--type-support);
   border: 1px solid var(--line-soft); background: var(--home-card, rgba(255, 255, 255, 0.04)); color: var(--ink); text-decoration: none; white-space: nowrap;
@@ -187,14 +191,26 @@
   .mobileAcc { display: block; }
 }
 
-/* ── mobile accordion ── */
-.acc { display: flex; flex-direction: column; gap: 8px; }
-.pcardRow {
-  border: 1px solid var(--line); border-radius: var(--radius); background: var(--surface);
-  box-shadow: var(--highlight-top); overflow: hidden; transition: box-shadow 0.12s;
+/* ── phone: the players as ONE framed list; a row opens the player's sheet ──
+   (owner rulings P1 + D1, 2026-09-29, "Phone lists in one frame"). It was an accordion of twelve
+   cards on the board's own recipe — its own border token, 8px gaps, a drop shadow on the open one:
+   a second card recipe (standard §3.10.1), and the editor unfolded in the middle of the list. The
+   list is now the portal's frame (card ground, the neutral hairline, radius 8) and a row is a door
+   (the chevron) to a full-screen sheet; nothing folds inside the list. */
+.acc {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--home-line, var(--border-2)); border-radius: 8px;
+  background: var(--card-bg, var(--surface)); overflow: clip;
 }
-.pcardRow.open { box-shadow: var(--shadow-sm), var(--highlight-top); }
-.pcardHead { display: flex; align-items: center; gap: 8px; padding: 11px 12px; cursor: pointer; min-height: 52px; width: 100%; background: none; border: none; text-align: left; }
+.pcardRow { border-bottom: 1px solid var(--home-line, var(--border-2)); }
+.pcardRow:last-child { border-bottom: 0; }
+.pcardHead {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  min-height: var(--tap-min, 44px); padding: var(--table-pad-compact, 0.42rem) 12px;
+  background: none; border: none; text-align: left; cursor: pointer; transition: background 0.1s;
+}
+.pcardHead:hover { background: var(--home-olive-soft, rgba(255, 255, 255, 0.04)); }
+.pcardHead:focus-visible { outline: 2px solid var(--primary-light); outline-offset: -2px; }
 .miniChips { display: flex; flex-wrap: wrap; gap: 4px; margin-left: 2px; flex: 1 1 auto; }
 .miniChip {
   font-size: var(--type-label); font-weight: 700; padding: 2px 7px; border-radius: 999px;
@@ -202,9 +218,17 @@
 }
 .miniPit { font-size: var(--type-label); font-weight: 800; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--best-bd); background: var(--best-bg); color: var(--best-fg); }
 .miniStarHead { color: var(--gold); font-size: var(--type-heading); text-shadow: 0 0 10px rgba(var(--gold-rgb), 0.4); }
-.chev { color: var(--ink-45); font-size: var(--type-support); transition: 0.15s; flex: 0 0 auto; display: inline-flex; }
-.pcardRow.open .chev { transform: rotate(90deg); }
-.pcardBody { padding: 4px 12px 14px; border-top: 1px solid var(--line-soft); }
+.chev { color: var(--ink-45); flex: 0 0 auto; display: inline-flex; }
+
+/* ── the player's sheet (the portal's full-screen modal on a phone) ── */
+.sheetBody { padding-top: 0.25rem; }
+/* Previous / Next (D2): two equal buttons, each showing ONLY the name of the player it opens — the
+   chevron and the side say which way (owner, 2026-09-29: "is the player's name enough?"). The words
+   "Previous player" / "Next player" stay in the accessible name. One alone takes the row. */
+.sheetFoot { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 8px; }
+.sheetStep { display: flex; align-items: center; justify-content: flex-start; gap: 6px; min-width: 0; min-height: var(--tap-min, 44px); text-align: left; }
+.sheetStepNext { justify-content: flex-end; text-align: right; }
+.sheetStepText { min-width: 0; font-size: var(--type-body); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .grpLbl { font-size: var(--type-label); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-45); margin: 14px 0 8px; }
 
 .pitchRow { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }

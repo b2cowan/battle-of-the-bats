@@ -26,10 +26,10 @@ import { readSource, stripComments } from './_source-code.ts';
  *
  *   B5 **THE BOARD'S GROUND IS ONE WHITE FRAME, NOT SIX ROW-CARDS** (owner, 2026-09-20 — "why are
  *      these tiles grey?"). The recipe's phone form broke the board into six olive-washed cards
- *      where the approved drawing was white; the board declares the recipe's framed phone form
- *      (`phoneFrame`, walk rule S.7) and the recipe carries that form ONCE, at the foot of the
- *      stylesheet, AFTER the stand-down it overrides — order is the mechanism there, so a tidy-up
- *      that moves the block, or a "6px gap" rule that comes back on the board, is the grey coming back.
+ *      where the approved drawing was white; the board declared the recipe's framed phone form
+ *      (`phoneFrame`, walk rule S.7) — and since P1 (2026-09-29, "Phone lists in one frame") that
+ *      form is the recipe's ONLY one: nothing at ≤640 strips the frame, so a row-card rule coming
+ *      back, or a "6px gap" rule on the board, is the grey coming back.
  *
  *   B6 **A PHONE ROW CARRIES A FACT OR NOTHING, AND NO ICON** (owner, 2026-09-21 — "a little squished
  *      and cluttered"). The qualifier is the flag, the pips, or the sub only when the tile has NOT
@@ -109,26 +109,22 @@ describe('B3 — on a phone a tile is a row', () => {
   it('the board renders the grid AND the row list from the same tiles', () => {
     assert.ok(overview.includes('<CoachFigureRows labelledBy="board-title">'), 'the rows are the shared figure rows (the Insights scoreboard is the second consumer, 2026-09-25)');
     const figureRows = stripComments(readSource('components/coaches/CoachFigureRows.tsx'));
-    assert.ok(figureRows.includes('<CoachRowList className={styles.figureRows} label={label} labelledBy={labelledBy} phoneFrame>'), 'the figure rows are the one row recipe, in its framed phone form (B5)');
+    assert.ok(figureRows.includes('<CoachRowList className={styles.figureRows} label={label} labelledBy={labelledBy}>'), 'the figure rows are the one row recipe, framed on a phone like every list (B5, P1)');
     const grid = (overview.match(/board\.slots\.map\(key => \{\s*const tile = buildTile\(key\);/g) || []).length;
     assert.equal(grid, 2, 'both renderings read buildTile for the same slots — the resolver knows neither exists');
     assert.match(styles, /\.figureRows \{ display: none; \}/, 'the rows are hidden above 640');
     assert.match(styles, /\.boardGrid \{ display: none; \}/, 'the grid is hidden at ≤640');
   });
 
-  it('B5 — the board keeps its frame on a phone: the recipe carries the form once, after the stand-down, and the board adds no gap', () => {
+  it('B5 · P1 — every row list keeps its frame on a phone: no declaration, no stand-down, no row-card, and the board adds no gap', () => {
     const rowList = stripComments(readSource('components/coaches/CoachRowList.tsx'));
-    assert.ok(rowList.includes("data-row-list-phone={phoneFrame ? 'frame' : undefined}"), 'the form is DECLARED on the list — the sweep reads the attribute');
-    assert.ok(rowList.includes("${phoneFrame ? ` ${styles.rowListPhoneFrame}` : ''}"), 'the declaration carries the recipe class');
-    const standDown = styles.indexOf('ul.rowList, ul.rowListInset { border: 0; border-radius: 0; background: none;');
-    const framed = styles.indexOf('ul.rowListPhoneFrame {');
-    assert.ok(standDown > 0 && framed > standDown, 'the framed phone form is declared AFTER the stand-down it overrides (same specificity — order is the mechanism)');
-    const lastRule = styles.indexOf('.rowListPhoneFrame .rowListItem:last-child');
-    assert.ok(lastRule > framed, 'the form ends with the last row shedding its hairline');
-    const block = styles.slice(framed, lastRule);
-    assert.ok(block.includes('background: var(--card-bg, var(--surface));'), 'the frame paints the card ground');
-    const rowRule = block.slice(block.indexOf('.rowListPhoneFrame .rowListItem {'));
-    assert.ok(rowRule.includes('background: none;') && rowRule.includes('border-bottom: 1px solid'), 'a row paints nothing; the hairline is the whole separation');
+    assert.ok(!rowList.includes('phoneFrame') && !rowList.includes('data-row-list-phone'), 'one phone form — nothing to declare (P1, 2026-09-29)');
+    assert.ok(!styles.includes('rowListPhoneFrame'), 'the opt-in class is gone with the opt-in');
+    assert.ok(!styles.includes('ul.rowList, ul.rowListInset { border: 0; border-radius: 0; background: none;'), 'nothing at ≤640 strips the frame (the retired stand-down)');
+    assert.match(styles, /@media \(max-width: 640px\) \{\s*ul\.rowList \{ overflow: clip; \}/, 'the phone block keeps the frame and only clips it (clip, never hidden — the sticky band)');
+    for (const m of styles.matchAll(/\.rowListItem \{([^}]*)\}/g)) {
+      assert.ok(!/border-radius|margin-bottom|background:/.test(m[1]), `a row paints nothing and stands apart by nothing but the hairline — found: ${m[1].trim()}`);
+    }
     assert.ok(!styles.includes('.figureRows .rowListItem { margin-bottom: 6px; }'), 'the 6px gap between row-cards went with the row-cards');
   });
 

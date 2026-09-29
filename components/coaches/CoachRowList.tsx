@@ -15,9 +15,12 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
  *   <CoachRowList label="Coming up">            — the frame (the table's own) on the card, or
  *   <CoachRowList inset>                         — no frame, because the card or shelf around it
  *                                                  already paints the ground (never zero, never two)
- *   <CoachRowList phoneFrame>                    — keeps its frame at ≤640 instead of breaking into
- *                                                  the phone's row-cards (S.7 — see the prop)
  *     <CoachRowBand>April 2026</CoachRowBand>    — a label row INSIDE the frame (the feed's day header)
+ *
+ * ONE FORM AT EVERY WIDTH (owner ruling P1, 2026-09-29, "Phone lists in one frame"): on a phone the
+ * frame stays and the rows stay hairlined — only the row's arrangement changes. There used to be a
+ * second phone form (gapped row-cards) and a `phoneFrame` prop a list declared to escape it; the
+ * owner chose the frame every time the two were side by side, so the cards and the prop are gone.
  *     <CoachRow as="link" href … mark lead title caption trail door />
  *
  * A row is a link, a button (`aria-expanded` for a fold) or a static record; the WHOLE row is the
@@ -34,7 +37,6 @@ import styles from '@/app/[orgSlug]/coaches/coaches.module.css';
 export function CoachRowList({
   children,
   inset = false,
-  phoneFrame = false,
   label,
   labelledBy,
   className,
@@ -43,18 +45,6 @@ export function CoachRowList({
   children: ReactNode;
   /** Inside a card or a shelf that already paints the ground: no frame of its own. */
   inset?: boolean;
-  /** At ≤640 the recipe breaks a list into row-cards (the table's phone form — for a table whose
-   *  columns do NOT fit a phone). A list whose columns fit stays a framed list at every width
-   *  (phone walk rule S.7, "a table whose columns fit stays a table"; first consumer the Overview's
-   *  six-row board, owner ruling B5 2026-09-20 — six row-cards under a white hero card read as six
-   *  grey slabs, and the approved drawing was one white frame). Declared, never inferred: the
-   *  rendered sweep's `list-ground` rule reads `data-row-list-phone` and holds the list to the
-   *  framed form at ≤640 (the list paints the card, the rows paint nothing); without it a framed
-   *  phone list is the stand-down FAILING and is reported as such. WITH `inset` (the Schedule's
-   *  attendance list inside the event sheet, phone re-evaluation stage 2 · C3): the list keeps its
-   *  hairlines at ≤640 instead of breaking into row-cards and still paints no ground — the card
-   *  around it is the one painter, on a phone as on a desktop. */
-  phoneFrame?: boolean;
   /** What the list is, for the accessibility tree (§1: a list with no heading row must say). */
   label?: string;
   labelledBy?: string;
@@ -65,9 +55,8 @@ export function CoachRowList({
 }) {
   return (
     <ul
-      className={`${inset ? styles.rowListInset : styles.rowList}${phoneFrame ? ` ${styles.rowListPhoneFrame}` : ''}${className ? ` ${className}` : ''}`}
+      className={`${inset ? styles.rowListInset : styles.rowList}${className ? ` ${className}` : ''}`}
       data-row-list={inset ? 'inset' : 'frame'}
-      data-row-list-phone={phoneFrame ? 'frame' : undefined}
       aria-label={label}
       aria-labelledby={labelledBy}
       data-sandbox-tour={tourAnchor}

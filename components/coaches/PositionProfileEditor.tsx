@@ -1,12 +1,22 @@
 'use client';
-import { ChevronUp, ChevronDown } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { ChevronUp, ChevronDown, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import HelpTooltip from '@/components/help/HelpTooltip';
+import LineupSheetScrim from '@/components/coaches/LineupSheetScrim';
+import { useBackStep } from '@/components/coaches/useBackStep';
+import { useDismissable } from '@/lib/overlay-hooks';
+import { useReorderSensors } from '@/lib/hooks/useReorderSensors';
 import { positionStateOf, cyclePositionState, type PositionState } from '@/lib/lineup-profile';
+import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 
 // Best / Never position picker for the Lineup Intelligence player profile (P1; three states since
 // the owner's 2026-09-12 ruling). Replaces the old Primary/Secondary dropdowns with one control:
 //   • Tap a position chip to cycle it: (blank) → Best → Never → (blank).
-//   • "Best" is RANKED — the order chips are added is the priority; reorder with the arrows.
+//   • "Best" is RANKED — the order chips are added is the priority; reorder by the portal's grip
+//     (hold to drag, tap for Move up / Move down — ruling D3, 2026-09-29; see `BestOrderList`).
 //   • "Never" is a HARD block the lineup auto-fill will never assign.
 //   • Blank means "fine anywhere they're not Never" — it is NOT a fourth rating. The old "Okay"
 //     state sat between blank and Best, was defined in this legend with the same words as blank,
@@ -31,6 +41,10 @@ interface Props {
   onChange: (next: PositionProfileValue) => void;
   labelFor?: (code: string) => string;     // optional display label per code
   disabled?: boolean;
+  /** The editor sits in a full-screen sheet that covers the bottom nav (the depth chart's player
+   *  sheet), so the reorder menu drops to the screen's foot rather than sitting on a nav that is
+   *  not there — the drawer-layer ruling's `overNav`, passed to the menu AND its scrim. */
+  menuCoversNav?: boolean;
 }
 
 const CHIP_STYLE: Record<PositionState, React.CSSProperties> = {
@@ -43,20 +57,14 @@ const STATE_WORD: Record<Exclude<PositionState, 'neutral'>, string> = {
   best: 'Best', never: 'Never',
 };
 
-export default function PositionProfileEditor({ positions, value, onChange, labelFor, disabled }: Props) {
+export default function PositionProfileEditor({ positions, value, onChange, labelFor, disabled, menuCoversNav }: Props) {
   const { best, never } = value;
 
   const stateOf = (code: string): PositionState => positionStateOf(value, code);
 
   const cycle = (code: string) => { if (!disabled) onChange(cyclePositionState(value, code)); };
 
-  const moveBest = (idx: number, dir: -1 | 1) => {
-    const j = idx + dir;
-    if (disabled || j < 0 || j >= best.length) return;
-    const reordered = [...best];
-    [reordered[idx], reordered[j]] = [reordered[j], reordered[idx]];
-    onChange({ best: reordered, never });
-  };
+  const reorderBest = (next: string[]) => { if (!disabled) onChange({ best: next, never }); };
 
   const label = (code: string) => (labelFor ? labelFor(code) : code);
 
@@ -99,9 +107,10 @@ export default function PositionProfileEditor({ positions, value, onChange, labe
 
       {/* Chip grid */}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+        {/* No rank number on a Best chip (owner, 2026-09-29): the priority-order list under the chips
+            IS the order — a number here said it twice. */}
         {allChips.map(code => {
           const st = stateOf(code);
-          const rank = st === 'best' ? best.indexOf(code) + 1 : 0;
           return (
             <button
               key={code}
@@ -116,13 +125,6 @@ export default function PositionProfileEditor({ positions, value, onChange, labe
                 transition: 'all 0.12s ease', ...CHIP_STYLE[st],
               }}
             >
-              {rank > 0 && (
-                <span style={{
-                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-                  minWidth: 16, height: 16, borderRadius: 999, fontSize: 10, fontWeight: 700,
-                  background: 'var(--home-olive, rgba(132,204,22,0.35))', color: '#f7fee7',
-                }}>{rank}</span>
-              )}
               {label(code)}
             </button>
           );
@@ -135,31 +137,129 @@ export default function PositionProfileEditor({ positions, value, onChange, labe
           <p style={{ fontSize: 12, fontWeight: 600, color: 'var(--home-dim, rgba(255,255,255,0.55))', margin: '0 0 6px' }}>
             Best positions — priority order
           </p>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+          <BestOrderList best={best} label={label} disabled={disabled} onReorder={reorderBest} menuCoversNav={menuCoversNav} />
+        </div>
+      )}
+    </div>
+  );
+}
+
+/**
+ * THE BEST-POSITIONS ORDER, ON THE PORTAL'S REORDER STANDARD (owner ruling D3, 2026-09-29 — "can we
+ * update these to drag and move which has become our portal standard?"). The standard is the lineup
+ * builder's D8 handle (2026-09-21), whole: a grip on every row — HOLD it to drag (a finger lifts
+ * after a 250ms hold, a mouse after 6px, the keyboard with Space), TAP it for Move up / Move down.
+ * The tap half is not optional garnish: it is the path for anyone who cannot drag, and every
+ * reorder in the portal keeps one. The up/down arrow pairs this replaced were the portal's last.
+ *
+ * The rows are ONE outlined list with a hairline between positions — they were separate olive-tinted
+ * cards with gaps, the pattern "Phone lists in one frame" retired. It keeps an outline because it is
+ * a control inside a form, the way an input keeps its box.
+ *
+ * The menu is the lineup's own (`.lineupAutoMenu` + `.lineupRowSheet` + `LineupSheetScrim`): a
+ * popover under the list on a desktop, the bottom drawer at the touch widths.
+ */
+function BestOrderList({ best, label, disabled, onReorder, menuCoversNav }: {
+  best: string[];
+  label: (code: string) => string;
+  disabled?: boolean;
+  onReorder: (next: string[]) => void;
+  menuCoversNav?: boolean;
+}) {
+  const sensors = useReorderSensors();
+  const [menuFor, setMenuFor] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const closeMenu = () => setMenuFor(null);
+  useDismissable(menuFor !== null, menuRef, closeMenu);
+  useBackStep(menuFor !== null, closeMenu);
+  // The menu takes focus on its first live item (a keyboard or screen-reader user lands IN it).
+  useEffect(() => {
+    if (menuFor !== null) menuRef.current?.querySelector<HTMLButtonElement>('button:not(:disabled)')?.focus({ preventScroll: true });
+  }, [menuFor]);
+
+  const onDragEnd = ({ active, over }: DragEndEvent) => {
+    if (!over || active.id === over.id) return;
+    const from = best.indexOf(String(active.id));
+    const to = best.indexOf(String(over.id));
+    if (from >= 0 && to >= 0) onReorder(arrayMove(best, from, to));
+  };
+  const move = (code: string, dir: -1 | 1) => {
+    const from = best.indexOf(code);
+    const to = from + dir;
+    if (from >= 0 && to >= 0 && to < best.length) onReorder(arrayMove(best, from, to));
+  };
+  const menuIdx = menuFor ? best.indexOf(menuFor) : -1;
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+        <SortableContext items={best} strategy={verticalListSortingStrategy}>
+          <ol aria-label="Best positions, in priority order" style={{
+            listStyle: 'none', margin: 0, padding: 0,
+            border: '1px solid var(--home-line, rgba(255,255,255,0.12))', borderRadius: 8,
+            background: 'var(--card-bg, transparent)',
+          }}>
             {best.map((code, idx) => (
-              <div key={code} style={{
-                display: 'flex', alignItems: 'center', gap: 8,
-                padding: '6px 10px', borderRadius: 8,
-                background: 'rgba(var(--home-olive-rgb, 132,204,22),0.1)', border: '1px solid rgba(var(--home-olive-rgb, 132,204,22),0.3)',
-              }}>
-                <span style={{ fontSize: 12, fontWeight: 700, color: 'var(--home-olive, #bef264)', minWidth: 16 }}>{idx + 1}</span>
-                <span style={{ flex: 1, fontSize: 13, fontWeight: 600, color: 'var(--home-ink, #ecfccb)' }}>{label(code)}</span>
-                <button type="button" onClick={() => moveBest(idx, -1)} disabled={disabled || idx === 0}
-                  aria-label={`Move ${label(code)} up`}
-                  style={arrowBtn(disabled || idx === 0)}>
-                  <ChevronUp size={15} />
-                </button>
-                <button type="button" onClick={() => moveBest(idx, 1)} disabled={disabled || idx === best.length - 1}
-                  aria-label={`Move ${label(code)} down`}
-                  style={arrowBtn(disabled || idx === best.length - 1)}>
-                  <ChevronDown size={15} />
-                </button>
-              </div>
+              <BestOrderRow key={code} code={code} rank={idx + 1} last={idx === best.length - 1}
+                label={label(code)} disabled={disabled} onMenu={() => setMenuFor(code)} />
             ))}
+          </ol>
+        </SortableContext>
+      </DndContext>
+      {menuFor !== null && menuIdx >= 0 && (
+        <div ref={menuRef}>
+          <LineupSheetScrim onClose={closeMenu} overNav={menuCoversNav} />
+          <div className={`${coach.lineupAutoMenu} ${coach.lineupRowSheet}${menuCoversNav ? ` ${coach.lineupDrawerOverNav}` : ''}`}
+            role="dialog" aria-label={`Options for ${label(menuFor)}`}>
+            <p className={coach.lineupRowSheetHead}>
+              <strong>{label(menuFor)}</strong>
+              <span>Best · {menuIdx + 1} of {best.length}</span>
+            </p>
+            <button type="button" className={coach.lineupRowSheetItem} disabled={menuIdx === 0} onClick={() => move(menuFor, -1)}>
+              <ChevronUp size={18} aria-hidden="true" /> Move up
+            </button>
+            <button type="button" className={coach.lineupRowSheetItem} disabled={menuIdx === best.length - 1} onClick={() => move(menuFor, 1)}>
+              <ChevronDown size={18} aria-hidden="true" /> Move down
+            </button>
+            <button type="button" className={coach.lineupRowSheetCancel} onClick={closeMenu}>Done</button>
           </div>
         </div>
       )}
     </div>
+  );
+}
+
+function BestOrderRow({ code, rank, last, label, disabled, onMenu }: {
+  code: string; rank: number; last: boolean; label: string; disabled?: boolean; onMenu: () => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: code, disabled });
+  return (
+    <li ref={setNodeRef} style={{
+      display: 'flex', alignItems: 'center', gap: 6,
+      minHeight: 44, paddingRight: 12, paddingLeft: disabled ? 12 : 0,
+      borderBottom: last ? 'none' : '1px solid var(--home-line, rgba(255,255,255,0.08))',
+      background: 'var(--card-bg, transparent)', borderRadius: isDragging ? 8 : 0,
+      position: 'relative', zIndex: isDragging ? 2 : undefined,
+      boxShadow: isDragging ? '0 8px 22px rgba(0,0,0,0.18)' : undefined,
+      transform: CSS.Transform.toString(transform), transition,
+    }}>
+      {/* The grip is the one control: hold to drag, tap for the menu (the D8 handle). A coach who
+          cannot edit sees the order and no grip — a disabled handle is a control that looks live. */}
+      {!disabled && (
+        <button type="button" {...attributes} {...listeners} onClick={onMenu}
+          aria-label={`${label}, Best ${rank}. Hold to move, tap for options.`}
+          style={{
+            display: 'grid', placeItems: 'center', flex: 'none', width: 44, height: 44,
+            margin: 0, padding: 0, border: 0, background: 'none', cursor: 'grab',
+            color: 'var(--home-dim, rgba(255,255,255,0.45))',
+            touchAction: 'none', WebkitTouchCallout: 'none', userSelect: 'none',
+          }}>
+          <GripVertical size={16} aria-hidden="true" />
+        </button>
+      )}
+      <span style={{ fontSize: 'var(--type-support)', fontWeight: 700, color: 'var(--home-olive, #bef264)', minWidth: 16, fontVariantNumeric: 'tabular-nums' }}>{rank}</span>
+      <span style={{ flex: 1, fontSize: 'var(--type-body)', fontWeight: 600, color: 'var(--home-ink, #ecfccb)' }}>{label}</span>
+    </li>
   );
 }
 
@@ -185,13 +285,4 @@ function LegendDot({ state, text }: { state: PositionState; text: string }) {
       {text}
     </span>
   );
-}
-
-function arrowBtn(disabled: boolean): React.CSSProperties {
-  return {
-    display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
-    width: 26, height: 26, borderRadius: 6, border: '1px solid var(--home-line-strong, rgba(255,255,255,0.15))',
-    background: 'rgba(var(--home-line-rgb, 255,255,255),0.05)', color: disabled ? 'var(--home-dim, rgba(255,255,255,0.25))' : 'var(--home-ink-soft, rgba(255,255,255,0.7))',
-    cursor: disabled ? 'default' : 'pointer',
-  };
 }

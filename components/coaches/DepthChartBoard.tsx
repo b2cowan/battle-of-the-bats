@@ -1,8 +1,14 @@
 'use client';
 import { useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
-import { Undo2, Redo2 } from 'lucide-react';
+import { Undo2, Redo2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useCoaches } from '@/lib/coaches-context';
+import { useOverlayOpen } from '@/lib/coaches-overlay';
+import { useIsPhone } from '@/lib/hooks/useIsPhone';
+import { useBackStep } from '@/components/coaches/useBackStep';
+import CoachModalHeader from '@/components/coaches/CoachModalHeader';
+import SaveStatusPill from '@/components/coaches/SaveStatusPill';
+import coach from '@/app/[orgSlug]/coaches/coaches.module.css';
 import { getSportPack, DEFAULT_SPORT } from '@/lib/sports';
 import { playerPositionPrefs, positionStateOf, cyclePositionState } from '@/lib/lineup-profile';
 import { hasRecordAccess } from '@/lib/coach-capabilities';
@@ -61,7 +67,13 @@ function profilePayload(pp: PlayerProfile, pitcherPos: string | null) {
 const sigOf = (pp: PlayerProfile, pitcherPos: string | null) => JSON.stringify(profilePayload(pp, pitcherPos));
 const cloneBoard = (b: Board): Board => JSON.parse(JSON.stringify(b));
 
-type SaveState = 'idle' | 'saving' | 'saved' | 'error' | 'forbidden';
+// 'dirty' = edits waiting for the debounce; 'saving' = a request really open (the pill's three-state rule).
+// The desktop grid's three pinned columns — their widths, mirrored in the module's .cPlayer / .cPitch /
+// .cASquad rules, and the sticky offsets that stack them. ONE place, so a width change cannot leave a
+// pinned column overlapping or gapping its neighbour.
+const PINNED = { player: 150, pitch: 150, aSquad: 80 } as const;
+
+type SaveState = 'idle' | 'dirty' | 'saving' | 'saved' | 'error' | 'forbidden';
 
 export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; teamId: string }) {
   const { assignments, loading: assignmentsLoading } = useCoaches();
@@ -93,6 +105,34 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
   const cancelledRef = useRef(false); // set on unmount so a failed final flush can't reschedule forever
   useEffect(() => { boardRef.current = board; }, [board]);
 
+  // ── THE PLAYER SHEET (phone only — owner ruling D1, 2026-09-29) ──
+  // On a phone a player no longer folds open inside the list: the row opens their editor as the
+  // portal's full-screen sheet, with the back arrow to the list, Previous / Next at its foot (D2),
+  // and the phone's own back gesture closing it. A FORM covers the nav (the drawer-layer ruling),
+  // so the sheet registers with the overlay counter. Desktop and tablet keep the grid.
+  const isPhone = useIsPhone();
+  const sheetOpen = isPhone && openId !== null;
+  useOverlayOpen(sheetOpen);
+  useBackStep(sheetOpen, () => setOpenId(null));
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const lastOpenRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (openId) {
+      lastOpenRef.current = openId;
+      // Previous / Next change the player without closing: start the new one at its top, and land
+      // a keyboard or screen-reader user in the sheet.
+      sheetRef.current?.scrollTo({ top: 0 });
+      sheetRef.current?.focus({ preventScroll: true });
+      return;
+    }
+    // Closed: back on the row of the player last shown (after Next × 8, that is where the coach is).
+    const id = lastOpenRef.current;
+    lastOpenRef.current = null;
+    const row = id ? document.querySelector<HTMLButtonElement>(`[data-depth-row="${id}"]`) : null;
+    row?.focus({ preventScroll: true });
+    row?.scrollIntoView({ block: 'nearest' });
+  }, [openId]);
+
   const load = useCallback(async () => {
     setFetching(true); setLoadError(null);
     try {
@@ -116,11 +156,41 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
   useEffect(() => { if (!assignmentsLoading && canView) void load(); }, [assignmentsLoading, canView, load]);
   // On unmount (e.g. switching back to the List view), flush any pending debounced save so an edit
   // made in the last ~0.9s isn't lost. State updates after unmount are no-ops (React 18).
-  useEffect(() => () => {
-    cancelledRef.current = true; // block any reschedule from the final flush below
-    if (saveTimer.current) clearTimeout(saveTimer.current);
-    if (dirtyRef.current.size) flushRef.current(); // one best-effort save of pending edits; never re-loops
+  // ⚠ THE GUARD IS RESET ON MOUNT (owner, 2026-09-29 — "they don't seem to be saving"). It used to be
+  // set only in the cleanup, which is right for a real unmount and fatal under React's development
+  // double-mount: the first pass's cleanup set it, nothing ever cleared it, and `scheduleSave` then
+  // refused every edit — the board looked edited and never sent a single save.
+  useEffect(() => {
+    cancelledRef.current = false;
+    return () => {
+      cancelledRef.current = true; // block any reschedule from the final flush below
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+      if (dirtyRef.current.size) flushRef.current(); // one best-effort save of pending edits; never re-loops
+    };
   }, []);
+
+  // A refresh, a closed tab or a pocketed phone must not eat the last second of edits (the save waits
+  // ~0.9s for more taps): on visibility loss, best-effort keepalive saves go out for whatever is still
+  // unsaved — the game-day console's pattern. The ordinary debounced save still runs if the page comes
+  // back; the same body twice is harmless (the PATCH writes the whole profile).
+  useEffect(() => {
+    const onHide = () => {
+      if (document.visibilityState !== 'hidden' || !canEdit) return;
+      for (const id of dirtyRef.current) {
+        const pp = boardRef.current[id];
+        if (!pp) continue;
+        try {
+          void fetch(`/api/coaches/${orgSlug}/teams/${teamId}/roster/${id}`, {
+            method: 'PATCH', keepalive: true,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ lineupProfile: profilePayload(pp, pitcherPos) }),
+          });
+        } catch { /* best-effort only */ }
+      }
+    };
+    document.addEventListener('visibilitychange', onHide);
+    return () => document.removeEventListener('visibilitychange', onHide);
+  }, [canEdit, orgSlug, teamId, pitcherPos]);
 
   const scheduleSave = useCallback(() => {
     if (cancelledRef.current) return; // unmounted — don't arm timers on a dead instance
@@ -160,7 +230,7 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
     }
     if (forbidden) setSaveState('forbidden');
     else if (anyError) setSaveState('error');
-    else if (dirtyRef.current.size) { setSaveState('saving'); scheduleSave(); }
+    else if (dirtyRef.current.size) { setSaveState('dirty'); scheduleSave(); }
     else setSaveState('saved');
   }, [canEdit, orgSlug, teamId, pitcherPos, scheduleSave]);
   useEffect(() => { flushRef.current = () => { void flush(); }; }, [flush]);
@@ -185,6 +255,7 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
     setBoard(next);
     if (savedRef.current[id] === sigOf(nextP, pitcherPos)) dirtyRef.current.delete(id); else dirtyRef.current.add(id);
     setHist({ u: undoRef.current.length, r: redoRef.current.length });
+    setSaveState(s => (s === 'saving' ? s : 'dirty'));
     scheduleSave();
   }, [canEdit, pitcherPos, scheduleSave]);
 
@@ -195,6 +266,7 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
     }
     setBoard(snap); boardRef.current = snap;
     setHist({ u: undoRef.current.length, r: redoRef.current.length });
+    setSaveState(s => (s === 'saving' ? s : 'dirty'));
     scheduleSave();
   }, [pitcherPos, scheduleSave]);
 
@@ -243,24 +315,33 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
   if (!canView) return <div className={styles.empty}><p>You don’t have access to this team’s roster.</p></div>;
   if (loadError) return <div className={styles.empty}><p>{loadError}</p><button className={styles.editlink} onClick={() => void load()}>Try again</button></div>;
 
-  const saveStatus = (
-    <span className={styles.saveStat} aria-live="polite" aria-atomic="true">
-      {saveState === 'saving' && <>Saving…</>}
-      {saveState === 'saved' && <><span className={styles.chk}>✓</span> Saved</>}
-      {saveState === 'error' && <>Couldn’t save · <button className={styles.saveRetry} onClick={() => void flush()}>Retry</button></>}
-      {saveState === 'forbidden' && <>You can no longer edit this team.</>}
-    </span>
-  );
+  // The autosave word is the portal's ONE pill (the transient-Saved ruling, 2026-09-20): at the
+  // window's foot, above the phone bar — and over the player sheet, just above its docked foot (the
+  // stylesheet raises it over any full-screen form). Only a failure persists. "No longer permitted"
+  // is not a retryable failure, so it is a sentence where the coach is working instead.
+  const forbiddenNote = saveState === 'forbidden'
+    ? <p className={styles.readOnlyNote} role="alert">You can no longer edit this team.</p>
+    : null;
   const saveBar = canEdit ? (
     <div className={styles.saveBar}>
       <button className={styles.iconBtn} onClick={undo} disabled={!hist.u} title="Undo" aria-label="Undo"><Undo2 size={16} /></button>
       <button className={styles.iconBtn} onClick={redo} disabled={!hist.r} title="Redo" aria-label="Redo"><Redo2 size={16} /></button>
-      {saveStatus}
       <Link href={`${base}/schedule`} className={styles.autofill}>Prepare a game lineup →</Link>
     </div>
   ) : (
     <p className={styles.readOnlyNote}>View only — ask the head coach to change positions, pitching, or A-squad.</p>
   );
+
+  // The player the sheet shows, and their neighbours for Previous / Next (D2) — the roster's order.
+  const sheetIdx = sheetOpen ? players.findIndex(x => x.id === openId) : -1;
+  const sheetPlayer = sheetIdx >= 0 ? players[sheetIdx] : null;
+  const sheetProfile = sheetPlayer ? board[sheetPlayer.id] : null;
+  const nameOf = (x: RepRosterPlayer) => `${x.playerFirstName} ${x.playerLastName}`.trim();
+  const sheet = sheetPlayer && sheetProfile ? {
+    p: sheetPlayer, pp: sheetProfile, name: nameOf(sheetPlayer),
+    prev: sheetIdx > 0 ? players[sheetIdx - 1] : null,
+    next: sheetIdx < players.length - 1 ? players[sheetIdx + 1] : null,
+  } : null;
 
   return (
     <div className={styles.wrap}>
@@ -300,12 +381,12 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                   against the scroller CoachScrollX renders); frame=false — the card already
                   draws the frame. */}
               <CoachScrollX hint="swipe for more positions" frame={false} className={styles.gridScrollWrap} scrollerClassName={styles.gridScroller}>
-                <table className={styles.table} style={{ minWidth: 150 + (pitcherPos ? 86 : 0) + 80 + fieldCols.length * 56 }}>
+                <table className={styles.table} style={{ minWidth: PINNED.player + (pitcherPos ? PINNED.pitch : 0) + PINNED.aSquad + fieldCols.length * 56 }}>
                   <thead>
                     <tr>
                       <th scope="col" className={styles.cPlayer}>Player</th>
-                      {pitcherPos && <th scope="col" className={`${styles.cPitch} ${styles.colPitch}`} style={{ left: 150 }}>Pitcher</th>}
-                      <th scope="col" className={`${styles.cASquad} ${styles.colASquad}`} style={{ left: pitcherPos ? 236 : 150 }}>
+                      {pitcherPos && <th scope="col" className={`${styles.cPitch} ${styles.colPitch}`} style={{ left: PINNED.player }}>Pitcher</th>}
+                      <th scope="col" className={`${styles.cASquad} ${styles.colASquad}`} style={{ left: PINNED.player + (pitcherPos ? PINNED.pitch : 0) }}>
                         <span className={styles.colASquadInner}>A-squad
                           <HelpTooltip title="A-squad" body="A gold-medal starter. In Competitive games Auto-fill gives A-squad players their Best positions and, with the A-squad dial set to prioritized, keeps them off the bench. It does nothing in Balanced or Development games." />
                         </span>
@@ -323,7 +404,7 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                             <Link href={`${base}/roster/${p.id}`} className={styles.pname}>{p.playerFirstName} {p.playerLastName}</Link>
                           </td>
                           {pitcherPos && (
-                            <td className={styles.cPitch} style={{ left: 150 }}>
+                            <td className={styles.cPitch} style={{ left: PINNED.player }}>
                               <span className={styles.pitch}>
                                 <select className={`${styles.pchip}${pp.isPitcher ? '' : ' ' + styles.off}`} value={pp.isPitcher ? pp.rank : 0} disabled={!canEdit}
                                   aria-label={`${p.playerFirstName} pitching rank: ${pp.isPitcher ? rankLabel(pp) : 'not a pitcher'}`}
@@ -342,7 +423,7 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
                               </span>
                             </td>
                           )}
-                          <td className={styles.cASquad} style={{ left: pitcherPos ? 236 : 150 }}>
+                          <td className={styles.cASquad} style={{ left: PINNED.player + (pitcherPos ? PINNED.pitch : 0) }}>
                             <button type="button" className={`${styles.star}${pp.aSquad ? ' ' + styles.on : ''}`} onClick={() => toggleASquad(p.id)} disabled={!canEdit}
                               aria-pressed={pp.aSquad} title="Gold-medal starter"
                               aria-label={`${p.playerFirstName} A-squad: ${pp.aSquad ? 'yes' : 'no'}.${canEdit ? (pp.aSquad ? ' Tap to remove.' : ' Tap to add.') : ''}`}>★</button>
@@ -368,84 +449,125 @@ export default function DepthChartBoard({ orgSlug, teamId }: { orgSlug: string; 
               </CoachScrollX>
             </section>
             {saveBar}
+            {forbiddenNote}
             {/* What Auto-fill will DO with the board — the sentence a coach needs before building
                 their first lineup, and the same one the Auto-fill mode picker and help now carry. */}
             <p className={styles.footNote}><strong>What Auto-fill does with this:</strong> it never places a player at a Never. Your Best ranks matter most in Competitive games; Balanced rotates anyone rated Best; Development rotates everyone.</p>
             <p className={styles.foot}>Saves automatically as you go — Undo and Redo above if you mis-tap.</p>
           </div>
 
-          {/* ── Phone: per-player accordion ── */}
+          {/* ── Phone: the players as ONE framed list; a row opens the player's sheet (D1) ── */}
           <div className={styles.mobileAcc}>
             <div className={styles.acc}>
               {players.map(p => {
                 const pp = board[p.id]; if (!pp) return null;
-                const open = openId === p.id;
                 return (
-                  <div key={p.id} className={`${styles.pcardRow}${open ? ' ' + styles.open : ''}`}>
-                    <button type="button" className={styles.pcardHead} onClick={() => setOpenId(open ? null : p.id)} aria-expanded={open}>
+                  <div key={p.id} className={styles.pcardRow}>
+                    <button type="button" className={styles.pcardHead} data-depth-row={p.id} aria-haspopup="dialog"
+                      onClick={() => setOpenId(p.id)}>
                       <span className={styles.pnum}>#{p.playerNumber || '—'}</span>
                       <span className={styles.pname}>{p.playerFirstName} {p.playerLastName}</span>
                       <span className={styles.miniChips}>
-                        {pp.best.map((c, i) => <span key={c} className={styles.miniChip}>{c} {i + 1}</span>)}
+                        {/* The Best positions in priority order — the SEQUENCE is the order ("C CF 2B"), so no rank
+                            number on a chip (owner, 2026-09-29). The desktop grid keeps its numbers: its
+                            columns are the positions in a fixed order. */}
+                        {pp.best.map(c => <span key={c} className={styles.miniChip}>{c}</span>)}
                         {pitcherPos && pp.isPitcher && <span className={styles.miniPit}>{rankLabel(pp)}{pp.maxInnings ? ` ≤${pp.maxInnings}` : ''}</span>}
                       </span>
                       {pp.aSquad && <span className={styles.miniStarHead} aria-hidden>★</span>}
-                      <span className={styles.chev} aria-hidden>▶</span>
+                      <span className={styles.chev} aria-hidden><ChevronRight size={18} /></span>
                     </button>
-                    {open && (
-                      <div className={styles.pcardBody}>
-                        <PositionProfileEditor
-                          positions={fieldCols}
-                          value={{ best: pp.best, never: pp.never }}
-                          disabled={!canEdit}
-                          onChange={next => mutate(p.id, x => ({ ...x, best: next.best, never: next.never }))}
-                        />
-                        {pitcherPos && (
-                          <>
-                            <div className={styles.grpLbl}>Pitching</div>
-                            <div className={styles.pitchRow}>
-                              <label className={styles.checkLabel}>
-                                <input type="checkbox" checked={pp.isPitcher} disabled={!canEdit}
-                                  onChange={e => mutate(p.id, x => ({ ...x, isPitcher: e.target.checked }))} />
-                                <span>This player pitches</span>
-                              </label>
-                              {pp.isPitcher && (
-                                <>
-                                  <div className={styles.fieldMini}>
-                                    <label htmlFor={`rk-${p.id}`}>Rank</label>
-                                    <select id={`rk-${p.id}`} className={styles.rankSelect} value={pp.rank} disabled={!canEdit}
-                                      onChange={e => mutate(p.id, x => ({ ...x, rank: Number(e.target.value) }))}>
-                                      <option value={1}>1 — Ace</option><option value={2}>2</option><option value={3}>3</option><option value={4}>4</option><option value={5}>5</option>
-                                    </select>
-                                  </div>
-                                  <div className={styles.fieldMini}>
-                                    <label htmlFor={`cap-${p.id}`}>Max IP / game</label>
-                                    <input id={`cap-${p.id}`} className={styles.capNum} type="number" min={1} max={20} placeholder="No cap" value={pp.maxInnings}
-                                      disabled={!canEdit} onChange={e => mutate(p.id, x => ({ ...x, maxInnings: e.target.value }), false)} />
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                          </>
-                        )}
-                        <div className={styles.aSquadRow}>
-                          <div>
-                            <div className={styles.lab}>A-squad</div>
-                            <p className={styles.sub}>Gold-medal starter — protected in competitive games</p>
-                          </div>
-                          <button type="button" className={`${styles.miniStar}${pp.aSquad ? ' ' + styles.on : ''}`} onClick={() => toggleASquad(p.id)} disabled={!canEdit}
-                            aria-pressed={pp.aSquad}
-                            aria-label={`${p.playerFirstName} A-squad: ${pp.aSquad ? 'yes' : 'no'}.${canEdit ? (pp.aSquad ? ' Tap to remove.' : ' Tap to add.') : ''}`}>★</button>
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
             {saveBar}
+            {forbiddenNote}
           </div>
         </>
+      )}
+      {canEdit && players.length > 0 && (
+        <SaveStatusPill
+          saving={saveState === 'saving'}
+          dirty={saveState === 'dirty'}
+          error={saveState === 'error' ? 'Couldn’t save' : null}
+          onRetry={() => void flush()}
+        />
+      )}
+      {sheet && (
+          <div className={coach.modalOverlay} onPointerDown={e => { if (e.target === e.currentTarget) setOpenId(null); }}>
+            <div ref={sheetRef} className={coach.modal} role="dialog" aria-modal="true" aria-label={`${sheet.name}, depth chart`} tabIndex={-1}>
+              <CoachModalHeader title={sheet.name} subtitle={`#${sheet.p.playerNumber || '—'} · Depth chart`} onClose={() => setOpenId(null)} closeAriaLabel="Back to the depth chart" />
+              <div className={styles.sheetBody}>
+                <PositionProfileEditor
+                  positions={fieldCols}
+                  value={{ best: sheet.pp.best, never: sheet.pp.never }}
+                  disabled={!canEdit}
+                  menuCoversNav
+                  onChange={nextValue => mutate(sheet.p.id, x => ({ ...x, best: nextValue.best, never: nextValue.never }))}
+                />
+                {pitcherPos && (
+                  <>
+                    <div className={styles.grpLbl}>Pitching</div>
+                    <div className={styles.pitchRow}>
+                      <label className={styles.checkLabel}>
+                        <input type="checkbox" checked={sheet.pp.isPitcher} disabled={!canEdit}
+                          onChange={e => mutate(sheet.p.id, x => ({ ...x, isPitcher: e.target.checked }))} />
+                        <span>This player pitches</span>
+                      </label>
+                      {sheet.pp.isPitcher && (
+                        <>
+                          <div className={styles.fieldMini}>
+                            <label htmlFor={`rk-${sheet.p.id}`}>Rank</label>
+                            <select id={`rk-${sheet.p.id}`} className={styles.rankSelect} value={sheet.pp.rank} disabled={!canEdit}
+                              onChange={e => mutate(sheet.p.id, x => ({ ...x, rank: Number(e.target.value) }))}>
+                              <option value={1}>1 — Ace</option><option value={2}>2</option><option value={3}>3</option><option value={4}>4</option><option value={5}>5</option>
+                            </select>
+                          </div>
+                          <div className={styles.fieldMini}>
+                            <label htmlFor={`cap-${sheet.p.id}`}>Max IP / game</label>
+                            <input id={`cap-${sheet.p.id}`} className={styles.capNum} type="number" min={1} max={20} placeholder="No cap" value={sheet.pp.maxInnings}
+                              disabled={!canEdit} onChange={e => mutate(sheet.p.id, x => ({ ...x, maxInnings: e.target.value }), false)} />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+                <div className={styles.aSquadRow}>
+                  <div>
+                    <div className={styles.lab}>A-squad</div>
+                    <p className={styles.sub}>Gold-medal starter — protected in competitive games</p>
+                  </div>
+                  <button type="button" className={`${styles.miniStar}${sheet.pp.aSquad ? ' ' + styles.on : ''}`} onClick={() => toggleASquad(sheet.p.id)} disabled={!canEdit}
+                    aria-pressed={sheet.pp.aSquad}
+                    aria-label={`${sheet.p.playerFirstName} A-squad: ${sheet.pp.aSquad ? 'yes' : 'no'}.${canEdit ? (sheet.pp.aSquad ? ' Tap to remove.' : ' Tap to add.') : ''}`}>★</button>
+                </div>
+                {!canEdit && <p className={styles.readOnlyNote}>View only — ask the head coach to change positions, pitching, or A-squad.</p>}
+                {/* Saving is quiet here — only a failure speaks, and it speaks HERE: the list's save
+                    bar is behind the sheet (the transient-Saved ruling: only an error persists). */}
+                {forbiddenNote}
+              </div>
+              {(sheet.prev || sheet.next) && (
+                <div className={`${coach.modalFooter} ${styles.sheetFoot}`}>
+                  {sheet.prev && (
+                    <button type="button" className={`${coach.btnSecondary} ${styles.sheetStep}`} onClick={() => setOpenId(sheet.prev?.id ?? null)}
+                      aria-label={`Previous player, ${nameOf(sheet.prev)}`}>
+                      <ChevronLeft size={18} aria-hidden />
+                      <span className={styles.sheetStepText}>{nameOf(sheet.prev)}</span>
+                    </button>
+                  )}
+                  {sheet.next && (
+                    <button type="button" className={`${coach.btnSecondary} ${styles.sheetStep} ${styles.sheetStepNext}`} onClick={() => setOpenId(sheet.next?.id ?? null)}
+                      aria-label={`Next player, ${nameOf(sheet.next)}`}>
+                      <span className={styles.sheetStepText}>{nameOf(sheet.next)}</span>
+                      <ChevronRight size={18} aria-hidden />
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
       )}
     </div>
   );

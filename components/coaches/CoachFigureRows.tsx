@@ -33,7 +33,7 @@ export function CoachFigureRows({
   labelledBy?: string;
 }) {
   return (
-    <CoachRowList className={styles.figureRows} label={label} labelledBy={labelledBy} phoneFrame>
+    <CoachRowList className={styles.figureRows} label={label} labelledBy={labelledBy}>
       {children}
     </CoachRowList>
   );

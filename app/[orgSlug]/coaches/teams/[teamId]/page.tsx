@@ -2272,9 +2272,9 @@ export default function TeamOverviewPage({
             THE GROUND IS ONE WHITE FRAME, NOT SIX ROW-CARDS (B5, owner ruling 2026-09-20): the recipe's
             phone form broke the board into six olive-washed cards — the table's phone card, right for
             a stack of records, wrong for six doors under a white hero card — where the approved
-            drawing was white. `phoneFrame` keeps the desktop frame at ≤640 (walk rule S.7: the
-            board's three columns fit a phone), hairlines between rows, no gaps; the sweep's
-            `list-ground` rule reads the declaration and holds the list to that form.
+            drawing was white. The desktop frame stays at ≤640 (walk rule S.7: the board's three
+            columns fit a phone), hairlines between rows, no gaps — every row list's only phone form
+            since P1 (2026-09-29), held by the sweep's `list-ground` rule.
             ⚠ `CoachFigureRows` since 2026-09-25: the Insights scoreboard is the same rows (ruling A1),
             so the frame, the density and the phone-only visibility live in ONE component. */}
         <CoachFigureRows labelledBy="board-title">

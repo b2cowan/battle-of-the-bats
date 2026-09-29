@@ -35,7 +35,7 @@ const css = stripComments(readSource(STYLES));
 
 describe('E1 — one shape: the summary, the door rows, the foot row', () => {
   it('the rows are the portal\'s row recipe in one frame, and a view is opened by a ROW, never a tab', () => {
-    assert.match(sheet, /<CoachRowList label="On this event" phoneFrame className=\{styles\.sheetDoorRows\}>\s*\{planRow\}\{attendanceRow\}\{lineupRow\}\{scoutingRow\}\s*<\/CoachRowList>/,
+    assert.match(sheet, /<CoachRowList label="On this event" className=\{styles\.sheetDoorRows\}>\s*\{planRow\}\{attendanceRow\}\{lineupRow\}\{scoutingRow\}\s*<\/CoachRowList>/,
       'the order a job is done in: the plan, Attendance, the Lineup, the book');
     assert.match(sheet, /const doorRows = planRow \|\| attendanceRow \|\| lineupRow \|\| scoutingRow \? \(/, 'no empty frame when no row applies');
   });
@@ -74,7 +74,7 @@ describe('E2 — attendance in its own room', () => {
     assert.match(room, /<div className=\{styles\.attendanceRoom\} data-field-floor>/);
     assert.match(room, /role="group" aria-label="Filter attendance by status"/);
     assert.ok(room.includes("onClick={() => setAllAttendance('attending')}") && room.includes("onClick={() => setAllAttendance('unknown')}"));
-    assert.match(room, /<CoachRowList label="Attendance" inset phoneFrame className=\{styles\.attendanceRows\}>/);
+    assert.match(room, /<CoachRowList label="Attendance" inset className=\{styles\.attendanceRows\}>/);
     assert.match(room, /<CoachRow\s+key=\{row\.player\.id\}\s+as="button"\s+aria-haspopup="dialog"/, 'the row is the tap and says it opens a dialog');
     assert.ok(room.includes('onClick={() => setRsvpEditId(row.player.id)}'));
     assert.ok(room.includes('<SaveStatusPill'), 'the transient Saved pill');

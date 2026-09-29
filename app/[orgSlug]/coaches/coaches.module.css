@@ -253,7 +253,23 @@
      `.tableAsCards td.cardStackCell { flex-direction: column }` sits ~90 lines BELOW this block at
      (0,2,1), and the copy this replaced only ever won because it lived at the END of the file. A
      rule that wins by position loses the day someone moves it; (0,3,1) wins wherever it stands. */
-  .tableAsCards.cardsOneLine tr { padding: 0.15rem 0.85rem; margin-bottom: 0.4rem; }
+  /* `.cardsFramed` — A PHONE CARD WITH NO LABELLED LINES IS NOT A CARD (owner ruling P1, 2026-09-29,
+     "Phone lists in one frame"). Where `.cardPhoneLine` has already folded a table's columns into
+     one line under the title, nothing on the phone card is a "Label  value" line, and a stack of
+     separate cards is the gapped-tile pattern the ruling retired: the frame STAYS (it does not stand
+     down with `.tableAsCards`) and the rows are hairlined. The rule's one reason for a separate
+     card is a record that carries labelled lines (the Ledger, Club) — those tables never wear this.
+     On the WRAPPER beside `.tableAsCards`: Insights → Development's Coverage, the practice libraries. */
+  .tableWrap.tableAsCards.cardsFramed { border: 1px solid var(--home-line, var(--border-2)) !important; border-radius: 8px; background: var(--card-bg, var(--surface)); overflow: clip; }
+  .tableAsCards.cardsFramed tr {
+    margin-bottom: 0;
+    border: 0; border-radius: 0; background: none;
+    border-bottom: 1px solid var(--home-line, var(--border-2));
+  }
+  .tableAsCards.cardsFramed tbody tr:last-child { border-bottom: 0; }
+  /* The one-line row clears the tap floor — each is a door (the Coverage rows were 38px). */
+  .tableAsCards.cardsOneLine tr { display: flex; align-items: center; min-height: var(--tap-min, 44px); padding: 0.15rem 0.85rem; }
+  .tableAsCards.cardsOneLine td.cardsOneLineLead { flex: 1 1 auto; }
   .tableAsCards.cardsOneLine td.cardsOneLineLead { flex-direction: row; align-items: center; justify-content: space-between; gap: 0.6rem; }
   .tableAsCards.cardsOneLine td.cardsOneLineLead .cardPhoneLine { margin-top: 0; text-align: right; }
   .tableAsCards.cardsOneLine td.cardActionCorner { top: 50%; transform: translateY(-50%); }
@@ -1880,8 +1896,8 @@
 @media (max-width: 640px) {
   .boardGrid { display: none; }
   ul.figureRows { display: block; }
-  /* The ground is the recipe's framed phone form (`phoneFrame` on the list — the block at the foot
-     of this file; owner ruling B5, 2026-09-20): one white frame, hairlines, no gaps. The 6px gap
+  /* The ground is the recipe's framed phone form (the block at the foot of this file; owner ruling
+     B5, 2026-09-20, and every list's only phone form since P1, 2026-09-29): one white frame, hairlines, no gaps. The 6px gap
      between row-cards that B3 built went with the row-cards. Only the density is the board's own: */
   /* Measured on the first build: 72px rows — the figure's 20px type at the row's 1.6 line-height
      made the title's line 32px tall, and the built card and page line each came in taller than
@@ -4312,9 +4328,9 @@ a.oneChip:hover { border-color: currentColor; }
   font-size: var(--type-support);
   color: var(--warning);
 }
-/* Reorder hint: drag variant (desktop) vs arrows variant (mobile, where drag is disabled). */
-.rosterHintDrag, .rosterHintMove { display: inline-flex; align-items: center; gap: 0.3rem; }
-.rosterHintMove { display: none; }
+/* The reorder hint — desktop only (a phone does not reorder the roster; the arrows variant went
+   with the arrows, 2026-09-29). */
+.rosterHintDrag { display: inline-flex; align-items: center; gap: 0.3rem; }
 
 /* The reorder tip's home BELOW the list (design review 2026-08-24). Above the rows it was one of
    two stacked chrome lines on a phone; under them it reads as a footnote to the thing it explains.
@@ -4373,9 +4389,7 @@ a.oneChip:hover { border-color: currentColor; }
 
 /* Positions cell: the pitching chip leads, the field positions follow (hub F04/F05). */
 .rosterPosCell { display: inline-flex; align-items: center; gap: 0.5rem; min-width: 0; }
-/* The phone card's positions chip (`.playerPosChip`, below) in olive, because "Ace" is a ROLE,
-   not a value. Not `composes`: that chip is declared LATER in this file, and with equal
-   specificity the later declaration wins — the olive would lose to the grey. */
+/* The pitching chip in olive, because "Ace" is a ROLE, not a value. */
 .rosterPitchChip {
   font-family: var(--font-data, monospace);
   font-size: var(--type-label); font-weight: 700; letter-spacing: 0.02em;
@@ -4387,8 +4401,9 @@ a.oneChip:hover { border-color: currentColor; }
   white-space: nowrap;
 }
 
-/* The phone card's Call button — its cell is drawn only at ≤640, see the roster reflow block. */
-.rosterCallTd { display: none; }
+/* ⚰ `.rosterCallTd` / `.rosterCallBtn` — the phone card's Call button (hub F06, 2026-09-13) — REMOVED
+   by owner ruling R2 (2026-09-29): a coach opens the roster many times to record things, usually has
+   parents' numbers in their own phone, and has contacts one tap away on the player's page. */
 
 /* The two markers on a name: A-squad and medical notes. Both come off data the row already
    carries. Each is a SHAPE plus a label, never a colour alone. (The pitcher marker moved to the
@@ -4519,28 +4534,9 @@ a.oneChip:hover { border-color: currentColor; }
   white-space: nowrap;
 }
 
-/* Mobile header meta: jersey # + status badges fold into the player row (their own rows hide). */
-.playerCellMeta { display: none; }
-.playerNumBadge {
-  font-size: var(--type-support); font-weight: 800; color: var(--text-secondary);
-  background: var(--white-8); border-radius: 6px; padding: 0.1rem 0.42rem;
-  font-variant-numeric: tabular-nums; white-space: nowrap;
-}
-.playerNumBadgeDup { color: var(--warning); }
-/* Positions, folded into the phone card's name row (their own card line is hidden at 640 — see the
-   roster reflow block). Quiet on purpose: this is identity, not a warning. It renders nothing at
-   all when a player has no position yet, rather than printing an em dash the coach must read past
-   — the desktop table keeps its dash, where a column of them lines up and genuinely reads as
-   "these are the ones to fill in". */
-.playerPosChip {
-  font-size: var(--type-support); font-weight: 600; color: var(--text-secondary);
-  background: var(--white-8); border-radius: 6px; padding: 0.1rem 0.42rem;
-  /* Positions are FREE TEXT (no CHECK on the column, no Sport Pack enforcement at write time), so
-     a coach who types "Catcher / Second Base" must not be able to push a card sideways. The chip
-     ellipsizes; the full value is still on the row it links to and in the desktop column. */
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  max-width: 8.5rem; min-width: 0;
-}
+/* ⚰ `.playerCellMeta` / `.playerNumBadge` / `.playerPosChip` — the jersey number and positions folded
+   into the phone CARD's name row — went with the card (R1, 2026-09-29): on a phone the number and
+   positions are columns of the roster table again. */
 
 /* Duplicate jersey number flag (warn, don't block) */
 .jerseyDup {
@@ -4557,133 +4553,66 @@ a.oneChip:hover { border-color: currentColor; }
 .guardianEmail:hover { text-decoration: underline; }
 .guardianPhone { color: var(--text-tertiary); font-size: var(--type-support); }
 
-/* Mobile-only up/down reorder (replaces touch drag, which is disabled in card
-   mode). Hidden on desktop where the drag grip handles reordering. */
-.rosterMoveControls { display: none; }
-.rosterMoveBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border: 1px solid var(--border-2);
-  border-radius: 8px;
-  background: var(--home-card, rgba(255,255,255,0.04));
-  color: var(--text-tertiary);
-  cursor: pointer;
-}
-.rosterMoveBtn:hover { background: var(--home-olive-soft, rgba(255,255,255,0.09)); color: var(--text-primary); }
-.rosterMoveBtn:disabled { opacity: 0.3; cursor: default; }
+/* ⚰ `.rosterMoveControls` / `.rosterMoveBtn` — up/down reorder arrows, hidden at EVERY width since
+   2026-08-26 (reordering is a desktop job) — deleted 2026-09-29. If a phone ever reorders the roster
+   again it takes the portal's reorder standard, the lineup's grip (D8, 2026-09-21), not arrows. */
 
 /* Let header help popovers (e.g. the Source "?") escape instead of being clipped.
    Safe because the roster table is width:100% — it compresses rather than
    needing horizontal scroll, and reflows to cards on small screens. */
 .rosterWrap { overflow: visible; }
 
-/* Mobile: reflow the roster table into stacked cards */
+/* ≤640 — THE ROSTER IS A TABLE ON A PHONE TOO (owner rulings R1 + R2, 2026-09-29, "Phone lists in
+   one frame" — COACH_PHONE_LIST_FRAME_PLAN.md). `# · Player · Positions` fit at 360 with a long name
+   on two lines, so walk rule S.7 ("a table whose columns fit stays a table", 2026-09-24) keeps the
+   table; until now it reflowed into a stack of gapped cards, never re-measured after S.7. Two
+   columns leave at this width, both by standing rulings — the drag grip (reordering is a desktop
+   job, 2026-08-26) and Family (contacts are on the player's page, 2026-08-26) — and the card's call
+   button went with the card (R2). The frame is the table's own (`.tableWrap`); the hairlines and
+   the heading row are the desktop's.
+   ⚠ EACH ROW IS A GRID ON A PHONE, NOT A TABLE ROW, AND THAT IS DELIBERATE. The whole row is the door
+   to the player (hub F06): the name link stretches over the row through its ::after, which needs
+   the ROW to be the containing block — and `position: relative` on a real table row is not
+   honoured everywhere a coach's phone may be (where it is not, every row's stretched link would
+   cover the whole list, and a tap anywhere would open the last player). A grid row is an ordinary
+   box, so the stretch is safe; the three columns are the same fixed tracks in the heading row and
+   every body row, so they still line up as one table. The positions track is fixed (positions are
+   FREE TEXT — "Catcher / Second Base" ellipsizes rather than pushing the name). */
+.rosterPosNone { display: none; color: var(--text-tertiary); }
 @media (max-width: 640px) {
-  /* Border AND ground go — the roster's own reflow, so it takes `.tableAsCards`'s stand-down by hand (F-24). */
-  .rosterWrap { border: none; overflow: visible; background: none; }
-  .rosterTable thead { display: none; }
-  .rosterTable,
-  .rosterTable tbody,
-  .rosterTable tr,
-  .rosterTable td { display: block; width: auto; }
-  /* ⚠ THE CARD IS TWO LINES, NOT THREE (owner call 2026-08-26). At three labelled lines plus the
-     chrome above them a phone showed two-and-a-bit players out of twelve, so reading the roster
-     meant scrolling a list short enough to have been taken in at a glance. Positions moved up into
-     the name row (below) and the paddings came in a notch. The guardian contact keeps a line of
-     its own — it is the one value here too long to ride beside anything. */
+  .rosterTable, .rosterTable thead, .rosterTable tbody { display: block; }
   .rosterTable tr {
-    border: 1px solid var(--border-2);
-    border-radius: 10px;
-    padding: 0.4rem 0.7rem;
-    margin-bottom: 0.4rem;
-    background: var(--home-card, var(--card-bg));
+    display: grid;
+    grid-template-columns: 2.6rem minmax(0, 1fr) 8.5rem;
+    position: relative;
   }
-  .rosterTable td {
+  .rosterTable th, .rosterTable td {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.75rem;
-    padding: 0.16rem 0 !important;
-    border-bottom: none !important;
-    text-align: right;
+    min-width: 0;
+    padding: var(--table-pad-compact) 0.5rem;
   }
-  /* ⚠ THE PHONE CARD IS ONE LINE (owner ruling 2026-08-26). Jersey # and positions ride the name
-     row; the FAMILY cell is hidden outright — a guardian's email is the tallest and widest thing
-     on a card, and a coach who wants it is one tap from the player who owns it. Nothing is lost,
-     and roughly twice as many players fit on a screen again.
-     ⚠ The desktop table keeps its Family column — this is a phone decision, not a data one. */
-  .rosterTable td[data-label="#"],
-  .rosterTable td[data-label="Positions"],
-  .rosterTable td[data-label="Family"] { display: none; }
-  /* ⚠ THE CARD IS THE DOOR (hub F06, register F-23, 2026-09-13). The name link was the card's
-     only door, at 19–22px on a phone — below the tap floor — and the register offered two exits:
-     raise the link, or make the card the door. The card wins, the way practice-plan and scouting
-     rows already work: the name link stretches over the whole card through its ::after, so a
-     thumb anywhere on the row opens the player. Desktop never gets this (the row stays inert there
-     by the standard's rule); it lives inside this ≤640 block only. */
-  .rosterTable tr { position: relative; }
+  .rosterTable td { min-height: var(--tap-min, 44px); }
+  .rosterTable th:first-child, .rosterTable td.gripTd,
+  .rosterTable th:nth-child(5), .rosterTable td[data-label="Family"] { display: none; }
+  .rosterTable th:nth-child(2), .rosterTable td.rosterNumTd { width: auto; padding-left: 0.85rem; }
+  .rosterTable th:nth-child(4), .rosterTable td[data-label="Positions"] { padding-right: 0.85rem; }
+  .rosterTable td[data-label="Positions"] { overflow: hidden; }
+  .rosterTable td[data-label="Positions"] .rosterPosCell { min-width: 0; }
+  .rosterTable td[data-label="Positions"] .rosterPosCell > span:last-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  /* An empty position is the dash on a phone (the desktop's "+ Add a position" prompt is a link in a
+     cell — the nudge above the list already counts the players without one). */
+  .rosterTable td[data-label="Positions"] .rosterAddPrompt { display: none; }
+  .rosterPosNone { display: inline; }
+  /* The name wraps — two lines at most by the table standard, never an ellipsis on the thing that
+     identifies the row (§3.4); the A-squad and medical marks flow after it. */
+  .playerCell { display: block; }
+  .playerNameLink { white-space: normal; overflow: visible; }
+  .rosterFlags { display: inline-flex; vertical-align: -0.1em; }
+  /* The row is the door (hub F06): the name link stretches over the row. */
   .playerNameLink::after { content: ''; position: absolute; inset: 0; }
-  .playerCell { width: 100%; flex-wrap: wrap; row-gap: 0.2rem; }
-  .playerCellMeta { display: inline-flex; align-items: center; gap: 0.4rem; margin-left: auto; flex-shrink: 0; }
-  /* The Call button, corner-pinned ABOVE the stretched link (standard K-09: an icon-only card
-     action is a corner, not a row). 44px both ways. Drawn only when a phone is on file — the cell
-     is not rendered otherwise — and the card makes room for it only then (density by content). */
-  .rosterCallTd { display: block; padding: 0 !important; position: static; }
-  .rosterCallBtn {
-    display: grid; place-items: center;
-    position: absolute; right: 0.45rem; top: 50%; transform: translateY(-50%);
-    width: var(--tap-min, 44px); height: var(--tap-min, 44px);
-    border-radius: 9px;
-    border: 1px solid var(--home-line-strong, var(--border-2));
-    background: var(--home-card, rgba(255,255,255,0.06));
-    color: var(--home-olive, var(--text-primary));
-    z-index: 1;
-    text-decoration: none;
-  }
-  .rosterCallBtn:hover, .rosterCallBtn:focus-visible { background: var(--home-olive-soft, rgba(255,255,255,0.1)); }
-  .rosterTable tr:has(.rosterCallBtn) { padding-right: 3.6rem; }
-  /* The drag hint stands down here (no grip on a phone); the arrows variant it used to swap in is
-     retired with the arrows themselves — see the tip rule at the foot of this block. */
+  /* The reorder tip stands down with the grip it describes (no reordering on a phone). */
   .rosterHintDrag { display: none; }
-  /* House rule 3 (2026-08-23): on a phone words become symbols in the header AND the toolbar, so
-     "+ Add Player" renders as a bare lime "+" here — deliberately. (An older note in this spot
-     claimed the primary kept its word; the CSS never did, and the rule says it should not.) */
-  .rosterTable td::before {
-    content: attr(data-label);
-    flex-shrink: 0;
-    font-size: var(--type-label);
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    color: var(--text-tertiary);
-  }
-  .rosterTable td:not([data-label])::before { content: none; }
-  .rosterTable .gripTd { display: none; }
-  /* ⚠ NO SEPARATOR ANY MORE. This rule drew the line between the name row and the data rows
-     beneath it — and with Family hidden there is nothing beneath it, so the line became a stray
-     rule across the bottom of every card, under nothing. */
-  .rosterTable .playerCellTd {
-    padding-bottom: 0 !important;
-    margin-bottom: 0;
-    border-bottom: none !important;
-  }
-  .rosterTable .playerCellTd::before { content: none; }
-  .rosterTable .guardianStack { align-items: flex-end; text-align: right; }
-  /* ⚠ REORDERING IS A DESKTOP JOB (owner call 2026-08-26), so the arrows come off the phone card
-     and nothing replaces them — the drag grip is already hidden here, so a phone cannot reorder the
-     roster at all. That is the intended trade, not an oversight: a coach sets the batting order
-     once when the season starts, almost certainly at a desk, and the two 30px buttons it cost were
-     the tallest thing in every card and sat on all twelve of them forever after. The hint that
-     described them goes with them (below) rather than pointing at controls that are no longer
-     drawn. */
-  .rosterMoveControls { display: none; }
-
-  /* ⚠ THE REORDER TIP GOES WITH THE CONTROL IT DESCRIBES. Both variants hide: the drag one because
-     the grip is hidden here, the arrows one because the arrows now are too. A tip explaining a
-     control that is not on screen is worse than no tip — it reads as something being broken. */
   .rosterHintBelow { display: none; }
 }
 
@@ -6723,6 +6652,11 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
     max-height: 100dvh;
     margin: 0;
     border-radius: 0;
+    /* A panel that IS the screen has no edge to draw (owner, 2026-09-29 — "why is there an extra
+       border?"). The desktop dialog's 1px tinted outline rode along to the phone and ran round the
+       very edge of the screen, and beside the docked foot's own hairline it read as a second box
+       around the buttons — on every full-screen sheet in the portal, not just the one asked about. */
+    border: 0;
     /* Trim the side gutters (was 24px) so content uses the width; keep top/bottom. */
     padding-left: 0.9rem;
     padding-right: 0.9rem;
@@ -6845,7 +6779,7 @@ a.noteAbout:hover, a.noteAbout:focus-visible { color: var(--text-primary); borde
 
 /* ⚰ `.attendanceList` / `.attendanceRow` / `.attendancePlayerName` (→ 2026-09-21, phone
    re-evaluation stage 2 · C3): the attendance list is the portal's one row recipe now
-   (`CoachRowList phoneFrame`, `.attendanceRows` at the foot of this file) — one frame, hairlines,
+   (`CoachRowList`, `.attendanceRows` at the foot of this file) — one frame, hairlines,
    the row is the tap. The per-row "Edit RSVP" button and its inline editor (`.rsvpBtn`,
    `.rsvpEditor`, `.rsvpOption*`) went with them; a player's RSVP is a bottom sheet
    (`components/coaches/CoachRsvpSheet`, which carries the option palette). */
@@ -12715,20 +12649,29 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   .rowListTrail .lineupTplIconBtn { width: var(--tap-min, 44px); height: var(--tap-min, 44px); }
 }
 
-/* ≤ 640 — the frame stands down with its ground and each row is the table's own phone card
-   (K-09: the title is the card's title, the door is the corner chevron, a worded door hides —
-   the whole card is the link, which is what today's hubs already did at this width). The date
-   column moves onto the caption's line with a separator drawn only when there is a caption. */
+/* ≤ 640 — ONE PHONE FORM: THE FRAME STAYS, THE ROWS ARE HAIRLINED (owner ruling P1, 2026-09-29,
+   "Phone lists in one frame" — docs/projects/active/COACH_PHONE_LIST_FRAME_PLAN.md). Until then
+   this block broke every list into gapped row-cards, and a list had to DECLARE the framed form
+   (`phoneFrame`, walk rule S.7) to keep it — five lists did (the Overview board, the Schedule, the
+   event sheet, the attendance room, the day list). Every time the two forms were side by side the
+   owner chose the frame, so the frame is the rule now and the declaration is gone: a row is never
+   a card, at any width. What changes at this width is only the row's ARRANGEMENT (below) — the
+   ground, the hairline and the band keep the desktop recipe exactly:
+   · the frame is the desktop's own (`.tableWrap`: card ground, neutral hairline, radius 8); an
+     INSET list (inside a card or a sheet) paints nothing and keeps its hairlines — exactly one
+     painter, as on a desktop;
+   · the band keeps its recipe (paper tone, ruled above and below) — stripped to a bare kicker it
+     read as one more row ("SEPTEMBER 2026", owner, 2026-09-21);
+   · ⚠ `overflow: clip`, NOT `hidden` (stage 2 · C1, 2026-09-21): `hidden` makes the frame a scroll
+     container, which becomes the scrollport of any `position: sticky` band inside it — the
+     Schedule's pinned month header pinned against the frame, i.e. never. `clip` clips the end rows'
+     hover tint to the radius exactly the same and establishes no scroll container.
+   The row: the title leads, the door is the corner chevron and a worded door hides (K-09), the
+   whole row is the link; the date column moves onto the caption's line with a separator drawn only
+   when there is a caption. */
 @media (max-width: 640px) {
-  ul.rowList, ul.rowListInset { border: 0; border-radius: 0; background: none; overflow: visible; }
-  .rowListBand { background: none; border: 0; padding: 0.55rem 0.15rem 0.25rem; }
-  .rowListItem {
-    position: relative;
-    border: 1px solid var(--border-2);
-    border-radius: 10px;
-    background: var(--home-card, var(--card-bg));
-    margin-bottom: 0.65rem;
-  }
+  ul.rowList { overflow: clip; }
+  .rowListItem { position: relative; }
   .rowListRow, .rowListRow:has(.rowCaption) {
     flex-wrap: wrap; align-items: center;
     gap: 0.15rem 0.5rem;
@@ -12777,59 +12720,9 @@ ul.rowListInset { border: 0; border-radius: 0; background: none; }
   }
 }
 
-/* ≤ 640 · THE FRAMED PHONE LIST — the recipe's SECOND phone form, declared per list
-   (`<CoachRowList phoneFrame>` → `.rowListPhoneFrame` + `data-row-list-phone="frame"`).
-   The stand-down above exists for a table whose columns do NOT fit a phone; a list whose columns fit
-   stays a framed list at every width (phone walk rule S.7, "a table whose columns fit stays a
-   table"). First consumer: the Overview's six-row board (owner ruling B5, 2026-09-20). Its three
-   columns — the label with its qualifier · the figure · the chevron — fit at 360 and 390, and the six
-   rows are the coach's numbers, not a stack of records; as six row-cards they read as six grey slabs
-   under a white hero card, while the approved B3 drawing was one white frame. Measured on the
-   drawings: the band 342 → 314px, the sixth row's foot 4 → 33px clear of the bar.
-   The frame is the desktop's own (`.tableWrap`: card ground, neutral hairline, radius 8), the rows
-   paint nothing and the hairline under each but the last is the whole separation — the desktop
-   sentence "a row is not a card", kept. `ul.rowListPhoneFrame` ties `ul.rowList` on specificity and
-   wins by ORDER, as the whole block does; the row rule out-ranks `.rowListItem` on its own. The
-   chevron stays absolute in its relative <li>; `overflow: clip` on the frame clips only the end
-   rows' hover tint to the corners. ⚠ `clip`, NOT `hidden` (stage 2 · C1, 2026-09-21): `hidden`
-   makes the frame a scroll container, which becomes the scrollport of any `position: sticky`
-   band inside it — the Schedule's pinned month header pinned against the frame, i.e. never.
-   `clip` clips to the radius exactly the same and establishes no scroll container, so a band
-   sticks against the real scroller outside the frame. Every list without the declaration keeps
-   its row-cards, and the rendered sweep holds each form to its own sentence (`list-ground`,
-   `check-layout-invariants.mjs`). */
-@media (max-width: 640px) {
-  ul.rowListPhoneFrame {
-    border: 1px solid var(--home-line, var(--border-2));
-    border-radius: 8px;
-    background: var(--card-bg, var(--surface));
-    overflow: clip;
-  }
-  .rowListPhoneFrame .rowListItem {
-    border: 0;
-    border-radius: 0;
-    background: none;
-    margin-bottom: 0;
-    border-bottom: 1px solid var(--home-line, var(--border-2));
-  }
-  .rowListPhoneFrame .rowListItem:last-child { border-bottom: 0; }
-  /* ⚠ A BAND INSIDE THE PHONE FRAME KEEPS THE BAND'S RECIPE (owner, 2026-09-21). The ≤640 rule
-     above strips the band to a bare kicker because in the row-CARD form it sits on the page
-     paper between white cards and needs no ground of its own. In the frame it sits on the
-     frame's white — and stripped, "SEPTEMBER 2026" read as one more row. The standard's band
-     (§3.10.5: paper tone, ruled above and below) comes back here exactly as the desktop draws
-     it; a month, "To be scheduled" and the day list's "On …" are the bands this reaches. */
-  .rowListPhoneFrame .rowListBand {
-    padding: 0.4rem 1rem;
-    background: var(--home-paper, var(--surface-2));
-    border-top: 1px solid var(--home-line, var(--border-2));
-    border-bottom: 1px solid var(--home-line, var(--border-2));
-  }
-  .rowListPhoneFrame .rowListBand:first-child { border-top: 0; }
-  /* Declared on an INSET list (a card already paints — the event sheet's attendance list, stage 2 ·
-     C3): the hairlines stay and the frame's own ground does not come back. Exactly one painter. */
-  ul.rowListInset.rowListPhoneFrame { border: 0; border-radius: 0; background: none; }
-}
+/* ⚰ THE FRAMED PHONE LIST (`.rowListPhoneFrame` / `<CoachRowList phoneFrame>`, 2026-09-20 →
+   2026-09-29) — the recipe's second phone form is its ONLY one now (owner ruling P1, the block
+   above). Its frame, hairlines and band recipe are the desktop's, which nothing at ≤640 strips. */
 
 /* The scouting book's own back-link is RETIRED (page-header ruling 2026-08-11): every drill-in
    in the portal now uses the one .lineupBackLink treatment. */
@@ -14337,16 +14230,31 @@ div.gdRow { cursor: default; }
     border-right: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
   }
 }
+/* ONE FRAME, NOT A STACK OF CARDS (owner rulings P1 + M1, 2026-09-29, "Phone lists in one frame").
+   The phone's families were separate cards on a recipe of their own (the strong line, radius 10,
+   0.7rem gaps); they are one frame with a hairline between families now, and a family still FOLDS
+   IN PLACE — its detail is a short read (the installment lines, a link to the full record), not a
+   form, so it does not take the depth chart's full-screen sheet. The opened detail sits on the
+   paper tone, set apart from the families around it. */
+.duesCards {
+  border: 1px solid var(--home-line, var(--border-2));
+  border-radius: 8px;
+  background: var(--card-bg, var(--surface));
+  overflow: clip;
+}
 .duesCard,
 .duesCardStatic {
   display: block;
   width: 100%;
-  background: var(--home-card, rgba(255,255,255,0.03));
-  border: 1px solid var(--home-line-strong, rgba(255,255,255,0.12));
-  border-radius: 10px;
-  margin-bottom: 0.7rem;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--home-line, var(--border-2));
+  border-radius: 0;
   overflow: hidden;
 }
+.duesCard:last-child,
+.duesCardStatic:last-child { border-bottom: 0; }
+.duesCard[open] > :not(summary) { background: var(--home-paper, var(--surface-2)); border-top: 1px solid var(--home-line, var(--border-2)); }
 /* The not-set card is a plain button (nothing to expand — it opens the drawer directly). */
 .duesCardStatic {
   display: flex;
@@ -16497,7 +16405,7 @@ th.gridColNow.gridColNow.gridColNow .duesThDate { color: var(--primary-light); }
    2026-09-25, E1–E6 "as drawn"). Every width: the desktop dialog draws the same rows. ──────────── */
 /* A DOOR ROW (E1): the row recipe at 64px — a 22px icon in the olive, the job's name, a second line
    that says where the job stands, the chevron; the whole row is the tap. One frame for the rows
-   (`CoachRowList phoneFrame`). The two-selector shape is the recipe's own (it is served as
+   (`CoachRowList`). The two-selector shape is the recipe's own (it is served as
    `:is()` at the stronger member's weight — see `.figureRows`), so this outranks it at ≤640 too. */
 .sheetDoorRows { margin: 0.9rem 0 0.35rem; }
 .sheetDoorRows .rowListRow,

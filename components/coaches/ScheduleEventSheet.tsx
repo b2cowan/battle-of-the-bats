@@ -987,7 +987,7 @@ export default function ScheduleEventSheet({
   ) : null;
 
   const doorRows = planRow || attendanceRow || lineupRow || scoutingRow ? (
-    <CoachRowList label="On this event" phoneFrame className={styles.sheetDoorRows}>
+    <CoachRowList label="On this event" className={styles.sheetDoorRows}>
       {planRow}{attendanceRow}{lineupRow}{scoutingRow}
     </CoachRowList>
   ) : null;

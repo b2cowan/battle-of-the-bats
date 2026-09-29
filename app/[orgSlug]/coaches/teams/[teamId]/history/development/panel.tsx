@@ -564,7 +564,7 @@ function CoverageReport({ data, metric, focus, base, here, tag }: {
           the chevron to Progress. The figure cells are hidden there and the lead cell carries the
           line — the shared `.cardPhoneLine` / `.cardDesktopCell` family, with `.cardsOneLine` as its one-line
           variant (folded from this table's own pair by the shared style kit, 2026-09-16). */}
-      <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.cardsOneLine}`}>
+      <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.cardsOneLine} ${styles.cardsFramed}`}>
         <table className={styles.devBoardTable}>
           <thead>
             <tr>

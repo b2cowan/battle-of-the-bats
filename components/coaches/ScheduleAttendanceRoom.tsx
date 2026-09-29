@@ -130,7 +130,7 @@ export default function ScheduleAttendanceRoom({
            status badge is its trail (its word at the body size — on attendance-taking the status
            IS the looked-for value, A4's field key), the note flag beside it, a chevron says it
            opens. */
-        <CoachRowList label="Attendance" inset phoneFrame className={styles.attendanceRows}>
+        <CoachRowList label="Attendance" inset className={styles.attendanceRows}>
           {filteredRows.map(row => {
             const cur = ATTENDANCE_BY_VALUE[row.status] ?? ATTENDANCE_BY_VALUE.unknown;
             const StatusIcon = cur.icon;

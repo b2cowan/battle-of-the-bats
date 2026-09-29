@@ -325,7 +325,7 @@ export function libraryDateCell(iso: string | null): ReactNode {
 /** The table's frame on the list recipe — the tabs' three tables share it. */
 export function LibraryTable({ label, head, children }: { label: string; head: ReactNode; children: ReactNode }) {
   return (
-    <div className={`${styles.tableWrap} ${styles.tableAsCards}`}>
+    <div className={`${styles.tableWrap} ${styles.tableAsCards} ${styles.cardsFramed}`}>
       <table className={styles.table} aria-label={label}>
         <thead><tr>{head}<th className={styles.th} aria-label="Open" /></tr></thead>
         <tbody>{children}</tbody>

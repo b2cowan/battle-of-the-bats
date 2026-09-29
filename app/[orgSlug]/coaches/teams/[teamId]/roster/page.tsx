@@ -2,7 +2,7 @@
 import { use, useState, useEffect, useCallback, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter, usePathname, useSearchParams } from 'next/navigation';
-import { Users, Plus, GripVertical, AlertTriangle, ChevronUp, ChevronDown, ClipboardPaste, HelpCircle, Upload, Phone } from 'lucide-react';
+import { Users, Plus, GripVertical, AlertTriangle, ClipboardPaste, HelpCircle, Upload } from 'lucide-react';
 import {
   DndContext, closestCenter, PointerSensor, KeyboardSensor, useSensor, useSensors, type DragEndEvent,
 } from '@dnd-kit/core';
@@ -320,17 +320,9 @@ export default function RosterPage({
     await persistOrder(withOffRosterAppended(arrayMove(shown, oldIndex, newIndex)), players);
   }
 
-  /* Up/down reorder. ⚠ CSS-hidden at every width since 2026-08-26 — desktop reorders by drag and
-     a phone no longer reorders at all (owner call: a coach sets the order once, at a desk) — but
-     kept correct rather than left to rot, because the put-back is one line of CSS. */
-  async function movePlayer(playerId: string, dir: -1 | 1) {
-    const shown = players.filter(p => p.status === 'active');
-    const from = shown.findIndex(p => p.id === playerId);
-    if (from < 0) return;
-    const to = from + dir;
-    if (to < 0 || to >= shown.length) return;
-    await persistOrder(withOffRosterAppended(arrayMove(shown, from, to)), players);
-  }
+  /* ⚰ `movePlayer` (up/down arrows) — hidden at every width since 2026-08-26 and deleted 2026-09-29.
+     A phone does not reorder the roster (owner call: a coach sets the order once, at a desk); if it
+     ever does, it takes the portal's reorder standard — the lineup's grip (D8) — not arrows. */
 
   async function handleAdd(keepOpen = false) {
     if (!addForm.playerFirstName.trim()) return; // first name required; last + guardian optional
@@ -831,16 +823,13 @@ export default function RosterPage({
                 </thead>
                 <tbody>
                   <SortableContext items={activePlayers.map(p => p.id)} strategy={verticalListSortingStrategy}>
-                    {activePlayers.map((p, i) => (
+                    {activePlayers.map(p => (
                       <SortableRow
                         key={p.id}
                         player={p}
                         base={base}
                         dragDisabled={activePlayers.length < 2 || !canWriteRoster}
                         isDuplicateNumber={!!p.playerNumber && dupNumbers.has(p.playerNumber.trim())}
-                        index={i}
-                        count={activePlayers.length}
-                        onMove={movePlayer}
                       />
                     ))}
                   </SortableContext>
@@ -942,18 +931,13 @@ export default function RosterPage({
             </details>
           )}
 
-          {/* The reorder tip, in its new home under the rows it describes. Same copy, same two
-              variants (drag on desktop, arrows where drag is disabled) — only the position moved,
-              and it moved at EVERY width rather than only on a phone: one control, one place to
-              read about it, is worth more than the few pixels a width-gated version would save. */}
+          {/* The reorder tip, under the rows it describes — a desktop line (a phone does not reorder
+              the roster, so the tip stands down there with the grip). */}
           {activePlayers.length >= 2 && (
             <div className={styles.rosterHintBelow}>
               <span className={styles.rosterHint}>
                 <span className={styles.rosterHintDrag}>
                   <GripVertical size={13} /> Drag to set the order players appear in
-                </span>
-                <span className={styles.rosterHintMove}>
-                  <ChevronUp size={12} /><ChevronDown size={12} /> Use the arrows to set the order players appear in
                 </span>
               </span>
             </div>
@@ -1150,18 +1134,12 @@ function SortableRow({
   base,
   dragDisabled,
   isDuplicateNumber,
-  index,
-  count,
-  onMove,
 }: {
   player: RepRosterPlayer;
   /** Chunk F: keeps a player link inside the season the roster is showing. */
   base: string;
   dragDisabled: boolean;
   isDuplicateNumber: boolean;
-  index: number;
-  count: number;
-  onMove: (playerId: string, dir: -1 | 1) => void;
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: p.id, disabled: dragDisabled });
   const style = {
@@ -1206,7 +1184,7 @@ function SortableRow({
               : p.playerNumber)
           : <span className={styles.cellEmpty}>—</span>}
       </td>
-      <td className={`${styles.td} ${styles.playerCellTd}`} data-label="Player">
+      <td className={styles.td} data-label="Player">
         <span className={styles.playerCell}>
           <Link href={playerHref} className={styles.playerNameLink}>{fullName}</Link>
           {/* ⚠ TWO MARKERS, BOTH FROM DATA ALREADY ON THIS ROW — no extra call, nothing new for a
@@ -1228,47 +1206,6 @@ function SortableRow({
               )}
             </span>
           )}
-          {/* Mobile only: jersey # + positions fold into the card (their own rows are hidden). */}
-          <span className={styles.playerCellMeta}>
-            {p.playerNumber && (
-              <span
-                className={`${styles.playerNumBadge}${isDuplicateNumber ? ` ${styles.playerNumBadgeDup}` : ''}`}
-                title={isDuplicateNumber ? 'Another player wears this number' : undefined}
-              >
-                #{p.playerNumber}
-              </span>
-            )}
-            {/* Positions ride the card on a phone; their own card line is hidden at 640. Pitching
-                leads here too, so the ace's card does not read as a player with no position. */}
-            {hasPositions && (
-              <span className={styles.playerPosChip}>
-                {[pitchLabel, fieldPositions].filter(Boolean).join(' · ')}
-              </span>
-            )}
-            {/* Reorder arrows live here on mobile (drag is disabled on touch); hidden on desktop. */}
-            {!dragDisabled && (
-              <span className={styles.rosterMoveControls}>
-                <button
-                  type="button"
-                  className={styles.rosterMoveBtn}
-                  aria-label={`Move ${fullName} up`}
-                  disabled={index === 0}
-                  onClick={() => onMove(p.id, -1)}
-                >
-                  <ChevronUp size={15} />
-                </button>
-                <button
-                  type="button"
-                  className={styles.rosterMoveBtn}
-                  aria-label={`Move ${fullName} down`}
-                  disabled={index === count - 1}
-                  onClick={() => onMove(p.id, 1)}
-                >
-                  <ChevronDown size={15} />
-                </button>
-              </span>
-            )}
-          </span>
         </span>
       </td>
       {/* ⚠ THE PROMPTS LINK TO THE TAB THEY NAME. The player page's tabs carry a `?tab=` address
@@ -1282,7 +1219,12 @@ function SortableRow({
               )}
               {fieldPositions && <span>{fieldPositions}</span>}
             </span>
-          : <Link href={playerTabHref(playerHref, 'details', { section: 'player' })} className={styles.rosterAddPrompt}><span aria-hidden="true">+</span> Add a position</Link>}
+          : <>
+              <Link href={playerTabHref(playerHref, 'details', { section: 'player' })} className={styles.rosterAddPrompt}><span aria-hidden="true">+</span> Add a position</Link>
+              {/* A phone shows the dash instead of a link in the cell (R1) — the nudge above the list
+                  already counts the players without a position. */}
+              <span className={styles.rosterPosNone}><span aria-hidden="true">—</span><span className={styles.srOnly}>No position yet</span></span>
+            </>}
       </td>
       {/* ⚠ THE COLUMN LEADS WITH THE PERSON, NOT THE ADDRESS (owner ruling 2026-08-26). It used to
           print the guardian's email as the whole cell — the widest thing on the page, and the least
@@ -1307,25 +1249,10 @@ function SortableRow({
             </span>
           : <Link href={playerTabHref(playerHref, 'family', { section: 'guardian' })} className={styles.rosterAddPrompt}><span aria-hidden="true">+</span> Add a contact</Link>}
       </td>
-      {/* ⚠ THE PHONE CARD'S ONE ACTION (hub F06, register F-23). At ≤640 the Family cell above is
-          hidden and the whole card becomes the door to the player (the name link stretches over
-          the card — see the roster reflow block). A parent's phone number is the one thing a coach
-          at the field wants from this list, so when one is on file the card carries a 44px Call
-          button, corner-pinned above the stretched link (standard K-09). Desktop never draws it —
-          the Family cell already has the tel: link there. PII-gated the same way as that cell: a
-          coach without guardian-contact access gets `guardianPhone` nulled by the API. */}
-      {p.guardianPhone && (
-        <td className={`${styles.td} ${styles.rosterCallTd}`}>
-          <a
-            href={telHref(p.guardianPhone)}
-            className={styles.rosterCallBtn}
-            aria-label={`Call ${guardianName || fullName + '’s family'}`}
-            title={`Call ${guardianName || 'the family'} · ${p.guardianPhone}`}
-          >
-            <Phone size={17} />
-          </a>
-        </td>
-      )}
+      {/* ⚰ The phone card's Call button (hub F06, 2026-09-13) — REMOVED by owner ruling R2
+          (2026-09-29): a coach opens the roster many times to record things, usually has parents'
+          numbers in their own phone, and has contacts on the player's page. The Family cell above
+          keeps its tel: link on a desktop. */}
     </tr>
   );
 }

@@ -242,11 +242,15 @@ the basis, the caveats and the doors — never a sentence inside a money column.
   its cells grows taller than its own cards (Insights → Coverage: 80px rows, 1,014px, against 550 as
   cards). Attendance (Player · Games · Practices, 291 of 326px) is the case that forced this sentence —
   it had been carded as a list, twelve × 148px, for a comparison down one column.
-- **If it does not fit: a LIST becomes cards at ≤ 640; a COMPARISON keeps its columns and scrolls**
+- **If it does not fit: a LIST OF LABELLED RECORDS becomes cards at ≤ 640; a COMPARISON keeps its columns and scrolls**
   with the first column pinned and a swipe hint that only shows while the content overflows (K-05) —
   the portal's `CoachScrollX` (sticky), every cell on one line inside it. The test: does a reader
-  compare figures — **along a row or down a column**? grid. Does a reader read one record at a time
-  (a log, a roster)? cards.
+  compare figures — **along a row or down a column**? grid. Does a reader read one record at a time,
+  and does each record carry LABELLED lines (a ledger entry: Date · Category · Money in · Balance)?
+  cards. ⚠ **A record with no labelled line is not a card** (owner P1, 2026-09-29, "Phone lists in
+  one frame"): where the columns fold into one line under the title (`.cardPhoneLine`), the frame
+  STAYS and the rows are hairlined (`.cardsFramed`) — the Coverage report, the practice libraries.
+  The roster used to be this bullet's example of cards; it fits (S.7), so it is a table on a phone.
 - In card mode: headings become `data-label` lines; **the lead cell is the card's title and takes
   no label when its value is a name a human wrote**; an icon-only action is corner-pinned, a
   worded action is a full-width `--tap-min` row (K-09). ⚠ Known limit of both card recipes: the
@@ -288,9 +292,8 @@ them (staff, the feed, the shelves, tags, notes) and wrong where nothing does (O
    border, radius, `--card-bg`) — when the list stands on the page; the section card or shelf
    around it when the list sits inside one (then the list draws no frame of its own). **Never
    zero** (a list on the paper) and **never two** (a framed list inside a card). Rows are
-   transparent over it. At ≤ 640 the frame stands down with its ground and each row is its own
-   card on **the table's card recipe** (`--border-2`, radius, the `--home-olive-soft` wash) — never
-   a second card recipe. ⚠ **The gate reads the ancestor:** the rendered rule asserts that the first
+   transparent over it. **The same at every width** (owner P1, 2026-09-29): a phone keeps the frame
+   and the hairlines — it never breaks a row list into cards (see 8). ⚠ **The gate reads the ancestor:** the rendered rule asserts that the first
    painted ground behind a row IS the card token, not that the row is transparent (F-24's lesson).
 2. **A row is not a card.** On a desktop a row list draws no per-row border, radius, shadow, fill
    or gap; the hairline (`--home-line`) under every row but the last is the whole separation. A
@@ -323,9 +326,16 @@ them (staff, the feed, the shelves, tags, notes) and wrong where nothing does (O
 7. **One lead mark.** A row may lead with ONE mark in a fixed-width slot — a type icon, a status
    dot, a date. A coloured rail on the row's edge is a calendar-cell idiom (K-21) and is not drawn
    in a list; the icon already carries the type's colour.
-8. **Phone** (≤ 640): the frame stands down; each row is a card on the table's card recipe; the
-   item line is the card's title; a date lead is the card's first meta line; the door is the
-   corner chevron or a full-width worded row (K-09).
+8. **Phone** (≤ 640) — **ONE FORM: the frame stays, the rows are hairlined** (owner ruling P1,
+   2026-09-29, "Phone lists in one frame"; register F-41). Only the row's ARRANGEMENT changes: the
+   item line leads; a date lead moves onto the caption's line; the door is the corner chevron and a
+   worded door hides (K-09); the whole row is the target. Until 2026-09-29 the frame stood down and
+   each row became a card unless the list declared `phoneFrame` (S.7) — five lists did, and the owner
+   chose the frame every time the two were side by side; the card form and the prop are gone.
+   **A row that opens a FORM opens it full-screen** (the portal's modal: back arrow, the phone's back
+   closes it — the depth chart's player, D1); **a row that opens a SHORT READ folds in place**, its
+   detail on the paper tone (Player Dues, M1). A separate card on a phone is kept only for a record
+   that carries labelled lines (K-25 Ledger, K-26 Club).
 9. **The unit is a component, not a class** (owner ruling): every bin-B list renders through ONE
    row-list component (`CoachRowList` / `CoachRow` — the plan names it), whose classes
    (`.rowList`, composing `.tableWrap`; `.rowListBand`; `.rowListRow`; `.rowListCaption`, composing

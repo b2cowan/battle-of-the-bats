@@ -715,7 +715,10 @@ describe('D5 — one inning at a time', () => {
     assert.match(dnd, /<div className=\{styles\.lineupTableWrap\}>/, 'the grid stays for the desktop');
     assert.match(list, /<SortableContext items=\{rows\.map\(r => r\.player\.id\)\} strategy=\{verticalListSortingStrategy\}>/);
     assert.match(list, /useSortable\(\{ id: row\.player\.id \}\)/);
-    assert.match(editor, /useSensor\(TouchSensor, \{ activationConstraint: \{ delay: 250, tolerance: 5 \} \}\)/, 'the D8 sensors, unchanged');
+    assert.match(editor, /const sensors = useReorderSensors\(\);/, 'the D8 sensors, from the one shared hook');
+    const hook = readSource('lib/hooks/useReorderSensors.ts');
+    assert.match(hook, /useSensor\(TouchSensor, \{ activationConstraint: \{ delay: 250, tolerance: 5 \} \}\)/, 'the D8 hold, unchanged');
+    assert.match(hook, /useSensor\(MouseSensor, \{ activationConstraint: \{ distance: 6 \} \}\)/, 'the D8 mouse travel, unchanged');
   });
   it('the number is the D8 handle, unchanged: lineupBatHandle, the sortable listeners, a tap opens the row sheet', () => {
     assert.match(list, /className=\{coach\.lineupBatHandle\}[^>]*\{\.\.\.attributes\} \{\.\.\.listeners\} onClick=\{\(\) => onRowActions\(row\.player\.id\)\}/);

@@ -385,12 +385,12 @@ export function ScheduleListView({ data, canAddEvents, onAddEvent, onHelp }: {
   });
   // The LIST view is a row list on the recipe (§3.10, F-26): one frame on the card, compact
   // rows with a hairline, months as bands. The week and month views keep their chips (K-21).
-  // `phoneFrame` (stage 2 · C1, the owner's "no card gaps"): the rows fit a phone — the name, then
-  // the date-time beneath — so they keep ONE white frame with hairlines at ≤640, the recipe's
-  // declared second phone form (S.7; the Overview's board was the first), and the month band
-  // pins at the top of the scroller as the coach slides.
+  // On a phone (stage 2 · C1, the owner's "no card gaps"): ONE white frame with hairlines — the
+  // name, then the date-time beneath — and the month band pins at the top of the scroller as the
+  // coach slides. The Schedule was one of the five lists that declared this form before it became
+  // every list's (P1, 2026-09-29).
   return (
-    <CoachRowList label="Schedule" phoneFrame>
+    <CoachRowList label="Schedule">
       {monthGroups}
       {tbdGames.length > 0 && (
         <>
@@ -646,7 +646,7 @@ export function ScheduleMonthView({ data, curMonth, selectedDay, onSelectDay, on
     <>
       {grid}
       <div className={styles.calMonthDayRows}>
-        <CoachRowList label={`On ${selectedLong}`} phoneFrame>
+        <CoachRowList label={`On ${selectedLong}`}>
           <CoachRowBand>{selectedLong}</CoachRowBand>
           {selectedRows.length > 0
             ? selectedRows

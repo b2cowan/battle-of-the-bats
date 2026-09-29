@@ -79,13 +79,13 @@ function sheetPanel(): string {
 }
 
 describe('C1 — the list is the scroller and opens on today', () => {
-  it('the schedule list declares the recipe\'s framed phone form', () => {
-    assert.match(views, /<CoachRowList label="Schedule" phoneFrame>/, 'one white frame with hairlines at ≤640 (S.7; B5\'s second phone form)');
+  it('the schedule list is the row recipe, framed on a phone', () => {
+    assert.match(views, /<CoachRowList label="Schedule">/, 'one white frame with hairlines at ≤640 — every row list\'s one phone form (P1)');
   });
   it('the band pins inside the scroller, and the frame clips with `clip`, not `hidden` — both at ≤640', () => {
     assert.match(phoneCss, /\.scheduleScroller \.rowListBand \{[^}]*position: sticky;[^}]*top: 0;/, 'the month band is sticky at the scroller\'s top');
-    assert.match(phoneCss, /ul\.rowListPhoneFrame \{[^}]*overflow: clip;/, '`overflow: hidden` on the frame would make it the sticky container and kill the pin');
-    assert.doesNotMatch(phoneCss, /ul\.rowListPhoneFrame \{[^}]*overflow: hidden;/);
+    assert.match(phoneCss, /ul\.rowList \{[^}]*overflow: clip;/, '`overflow: hidden` on the frame would make it the sticky container and kill the pin');
+    assert.doesNotMatch(phoneCss, /ul\.rowList \{[^}]*overflow: hidden;/);
     assert.match(phoneCss, /\.schedulePage > \.scheduleScroller \{[^}]*overflow-y: auto;/, 'the scroller scrolls; the page fits the viewport');
   });
   it('the open-on-today effect decides by the club-local DAY, never by an instant', () => {
@@ -198,7 +198,7 @@ describe('C3 — the sheet by the clock; the row is the tap; the RSVP sheet is a
     assert.ok(sheet.includes('const [view, setView] = useState<SheetView | null>(initialView);'), 'the sheet opens on the view it is handed');
   });
   it('the attendance row is the tap — a button that says it opens a dialog — and the old button is gone (in the room, since stage 1 · E2)', () => {
-    assert.match(room, /<CoachRowList label="Attendance" inset phoneFrame className=\{styles\.attendanceRows\}>/, 'the portal\'s one row recipe, framed on a phone');
+    assert.match(room, /<CoachRowList label="Attendance" inset className=\{styles\.attendanceRows\}>/, 'the portal\'s one row recipe, hairlined inside the sheet on a phone');
     assert.match(room, /<CoachRow\s+key=\{row\.player\.id\}\s+as="button"\s+aria-haspopup="dialog"/, 'the whole row raises the sheet');
     assert.ok(room.includes('onClick={() => setRsvpEditId(row.player.id)}'));
     assert.ok(!/Edit RSVP/.test(page + sheet + room), 'no "Edit RSVP" anywhere on the page, its sheet or its room');

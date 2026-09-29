@@ -264,7 +264,7 @@ if (has('--changed') && !onlyIds) {
     // (stripped) or a `clock`. A field that ever becomes a PATH segment needs its own sentinel and
     // `.replace`, or its screen silently stops matching its own route folder.
     const SENTINEL = { orgSlug: '__ORG__', teamId: '__TEAM__', finishedTeamId: '__TEAM__', practiceEventId: '__EVENT__', recordPracticeEventId: '__EVENT__', gameEventId: '__EVENT__', finishedPracticeEventId: '__EVENT__', fundraiserId: '__ID__', finishedYearId: '__ID__', receiptPlayerId: '__PLAYER__', planTemplateId: '__TEMPLATE__', lineupTemplateId: '__TEMPLATE__', evalSessionId: '__SESSION__', opponentKey: '__OPPONENT__', commitmentId: '__ID__', measurableTypeId: '__ID__',
-      clubSlug: '__ORG__', tournOrgSlug: '__ORG__', onboardingOrgSlug: '__ORG__', clubTeamId: '__TEAM__', clubYearId: '__YEAR__', clubPastYearId: '__YEAR__', clubSeasonId: '__SEASON__', clubPersonId: '__PERSON__', clubLedgerId: '__LEDGER__', clubBudgetLineId: '__LINE__', clubAllocationId: '__ALLOC__', tournamentSlug: '__TSLUG__', tournamentId: '__ID__', clubTournamentId: '__ID__', tournamentGameDay: '__ID__' };
+      clubSlug: '__ORG__', tournOrgSlug: '__ORG__', onboardingOrgSlug: '__ORG__', clubTeamId: '__TEAM__', clubYearId: '__YEAR__', clubPastYearId: '__YEAR__', clubClosedTeamId: '__TEAM__', clubSeasonId: '__SEASON__', clubPersonId: '__PERSON__', clubLedgerId: '__LEDGER__', clubBudgetLineId: '__LINE__', clubAllocationId: '__ALLOC__', tournamentSlug: '__TSLUG__', tournamentId: '__ID__', clubTournamentId: '__ID__', tournamentGameDay: '__ID__' };
     // `route` on an entry names its folder outright, for the one shape a path cannot be turned back
     // into: a dynamic segment the entry fills with a literal word (the preview's `[section]`).
     const dirOf = (s) => s.route ??
@@ -647,17 +647,12 @@ function probeInPage(opts) {
   // what the first painted ancestor is, and compares it to the card token resolved on that very
   // element (both skins, no literal).
   //
-  // At ≤ 640 the frame stands down and each row is its own card (the table's phone recipe), so
-  // the question flips: the row's <li> must paint the wash, and NOTHING between it and `main`
-  // may paint — a slab behind a stack of cards is the defect `.devTableCard` shipped (F-24).
-  //
-  // …unless the list DECLARES the recipe's second phone form, `data-row-list-phone="frame"`
-  // (`<CoachRowList phoneFrame>`; walk rule S.7 — a list whose columns fit a phone stays a framed
-  // list; first consumer the Overview's six-row board, owner ruling B5 2026-09-20). A declared
-  // framed phone list is held to the DESKTOP sentence at ≤ 640: the list paints the card, the rows
-  // paint nothing, nothing above paints. The declaration is what keeps the rule strict — a frame
-  // that failed to stand down looks exactly like this form, and without the attribute it is still
-  // reported as the stand-down failing.
+  // ONE SENTENCE AT EVERY WIDTH (owner ruling P1, 2026-09-29, "Phone lists in one frame"). Until
+  // then a phone flipped the question — each row its own card, nothing behind the stack — unless
+  // the list declared the framed form (`data-row-list-phone="frame"`, S.7). The row-card form is
+  // gone, so a phone is held to the desktop's sentence: the rows paint nothing, the frame (or the
+  // card around an inset list) paints the card, and nothing paints twice. A row that paints its own
+  // ground on a phone is the retired card form coming back.
   if (wanted('list-ground')) {
     const transparent = (c) => !c || c === 'transparent' || /^rgba\(\s*\d+,\s*\d+,\s*\d+,\s*0\s*\)$/.test(c);
     const resolve = (el, token) => {
@@ -673,7 +668,6 @@ function probeInPage(opts) {
       probe.remove();
       return out;
     };
-    const phone = window.innerWidth <= 640;
     for (const list of Array.from(root.querySelectorAll('[data-row-list]'))) {
       if (!visible(list) || isExempt(list)) continue;
       // The walk ends at the list's OWN nearest <main> — the paper is main's ground and does not
@@ -689,59 +683,36 @@ function probeInPage(opts) {
       const label = `list·${list.getAttribute('aria-label') || nameOf(list)}`;
       const card = resolve(list, '--card-bg');
       if (!card) continue; // a surface with no card token cannot be held to one
-      const framedOnPhone = phone && list.getAttribute('data-row-list-phone') === 'frame';
-      if (!phone || framedOnPhone) {
-        // Walk up from the row: the first painted ancestor must be the card.
-        let node = row.parentElement;
-        let painter = null;
-        while (node && node !== stopAt.parentElement) {
-          const bg = getComputedStyle(node).backgroundColor;
-          if (!transparent(bg)) { painter = { node, bg }; break; }
-          node = node.parentElement;
-        }
-        const rowBg = getComputedStyle(row).backgroundColor;
-        if (!transparent(rowBg)) {
-          add('list-ground', label, framedOnPhone
-            ? `declared a framed phone list (S.7) but the row itself paints ${rowBg} — the row-card wash is still on; two painters`
-            : `the row itself paints ${rowBg} — a row is not a card on a desktop (§3.10.2)`);
-        } else if (!painter) {
-          add('list-ground', label, framedOnPhone
-            ? `declared a framed phone list (S.7) but nothing paints a ground at ≤ 640 — the frame stood down anyway (a later rule, or the class is missing)`
-            : `nothing between the row and the page paints a ground — the list sits on the paper (§3.10.1: exactly one painter)`);
-        } else if (painter.bg !== card) {
-          add('list-ground', label, `the ground behind the row is ${painter.bg}, painted by <${painter.node.tagName.toLowerCase()} class="${String(painter.node.className).slice(0, 60)}">, not the card (${card})`);
-        } else {
-          // Exactly ONE painter: a framed list must be the painter itself; an inset list must
-          // find it above. A framed list inside a painted card is "two" — and since a healthy
-          // frame is always the FIRST painter the walk meets, the second is looked for by
-          // continuing ABOVE the frame to `main` (the paper is main's own ground and does not count).
-          const declared = list.getAttribute('data-row-list');
-          if (declared === 'frame' && painter.node !== list) add('list-ground', label, `declared as a framed list but the card is painted by an ancestor <${painter.node.tagName.toLowerCase()}> — two painters, or the frame lost its ground`);
-          if (declared === 'inset' && painter.node === list) add('list-ground', label, `declared inset (the card around it paints) but the list paints its own ground`);
-          if (declared === 'frame' && painter.node === list) {
-            let above = list.parentElement;
-            while (above && above !== stopAt) {
-              const bg = getComputedStyle(above).backgroundColor;
-              if (!transparent(bg)) { add('list-ground', label, `a framed list inside a painted <${above.tagName.toLowerCase()} class="${String(above.className).slice(0, 60)}"> (${bg}) — two painters; pass \`inset\` and let the card paint`); break; }
-              above = above.parentElement;
-            }
-          }
-        }
+      // Walk up from the row: the first painted ancestor must be the card.
+      let node = row.parentElement;
+      let painter = null;
+      while (node && node !== stopAt.parentElement) {
+        const bg = getComputedStyle(node).backgroundColor;
+        if (!transparent(bg)) { painter = { node, bg }; break; }
+        node = node.parentElement;
+      }
+      const rowBg = getComputedStyle(row).backgroundColor;
+      if (!transparent(rowBg)) {
+        add('list-ground', label, `the row itself paints ${rowBg} — a row is not a card, at any width (§3.10.2, P1)`);
+      } else if (!painter) {
+        add('list-ground', label, `nothing between the row and the page paints a ground — the list sits on the paper (§3.10.1: exactly one painter)`);
+      } else if (painter.bg !== card) {
+        add('list-ground', label, `the ground behind the row is ${painter.bg}, painted by <${painter.node.tagName.toLowerCase()} class="${String(painter.node.className).slice(0, 60)}">, not the card (${card})`);
       } else {
-        const rowBg = getComputedStyle(row).backgroundColor;
-        if (transparent(rowBg)) add('list-ground', label, `at ≤ 640 each row is its own card and this row paints nothing`);
-        // The list and any PURE wrapper above it (a node whose only child is the list — a frame
-        // by another name) must paint nothing. A section card that also holds a label or stat
-        // boxes is the page's card, not the list's frame, and the walk stops there.
-        let node = list;
-        while (node && node !== stopAt.parentElement) {
-          const bg = getComputedStyle(node).backgroundColor;
-          if (!transparent(bg)) { add('list-ground', label, `at ≤ 640 a slab (${bg}) is painted behind the stack by <${node.tagName.toLowerCase()} class="${String(node.className).slice(0, 60)}"> — the frame did not stand down`); break; }
-          // "Pure" counts VISIBLE children — a hidden label or an inert marker beside the list
-          // must not end the walk with the slab one level up unread.
-          const parent = node.parentElement;
-          if (!parent || Array.from(parent.children).filter(visible).length !== 1) break;
-          node = parent;
+        // Exactly ONE painter: a framed list must be the painter itself; an inset list must
+        // find it above. A framed list inside a painted card is "two" — and since a healthy
+        // frame is always the FIRST painter the walk meets, the second is looked for by
+        // continuing ABOVE the frame to `main` (the paper is main's own ground and does not count).
+        const declared = list.getAttribute('data-row-list');
+        if (declared === 'frame' && painter.node !== list) add('list-ground', label, `declared as a framed list but the card is painted by an ancestor <${painter.node.tagName.toLowerCase()}> — two painters, or the frame lost its ground`);
+        if (declared === 'inset' && painter.node === list) add('list-ground', label, `declared inset (the card around it paints) but the list paints its own ground`);
+        if (declared === 'frame' && painter.node === list) {
+          let above = list.parentElement;
+          while (above && above !== stopAt) {
+            const bg = getComputedStyle(above).backgroundColor;
+            if (!transparent(bg)) { add('list-ground', label, `a framed list inside a painted <${above.tagName.toLowerCase()} class="${String(above.className).slice(0, 60)}"> (${bg}) — two painters; pass \`inset\` and let the card paint`); break; }
+            above = above.parentElement;
+          }
         }
       }
     }
