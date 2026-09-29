@@ -9,6 +9,7 @@ import {
   createRepTryoutRegistration,
 } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
+import { refuseUnlessLiveSeason } from '@/lib/club-team-route';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -79,6 +80,10 @@ export const POST = withObservability(async (req: Request,
   if (!programYear || programYear.teamId !== team.id) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+
+  // Tryouts run on the team's LIVE season only (Club Tier B07) — never onto a finished roster.
+  const notLive = await refuseUnlessLiveSeason(team, programYear, 'its tryouts can’t take new applications');
+  if (notLive) return notLive;
 
   const body = await req.json();
 

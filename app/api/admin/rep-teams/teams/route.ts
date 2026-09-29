@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeams, createRepTeam, getNonArchivedRepTeamCount } from '@/lib/db';
 import { withObservability } from '@/lib/observability';
 import { teamLimitRefusal } from '@/lib/team-cap';
 import { getOrgFamilyRollup, EMPTY_TEAM_FAMILY_ROLLUP } from '@/lib/family-access';
 import { DEFAULT_SPORT } from '@/lib/sports';
+import { loadClubBoard } from '@/lib/club-team-board';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -55,37 +55,31 @@ export const GET = withObservability(async (req: Request) => {
   const visible = (includeArchived ? teams : teams.filter(t => !t.isArchived))
     .filter(t => !ungrouped || !t.groupId);
 
-  // Fetch summary counts per team in one query each
-  const summaries = await Promise.all(visible.map(async team => {
-    const [{ data: years }, { count: rosterCount }, { count: pendingCount }] = await Promise.all([
-      supabaseAdmin
-        .from('rep_program_years')
-        .select('id, name, year, status')
-        .eq('team_id', team.id)
-        .order('year', { ascending: false })
-        .limit(1),
-      supabaseAdmin
-        .from('rep_roster_players')
-        .select('id', { count: 'exact', head: true })
-        .eq('team_id', team.id)
-        .eq('status', 'active'),
-      supabaseAdmin
-        .from('rep_tryout_registrations')
-        .select('id', { count: 'exact', head: true })
-        .eq('team_id', team.id)
-        .eq('status', 'pending_review'),
-    ]);
-    const activeYear = years?.[0] ?? null;
+  /**
+   * THE HEALTH BOARD'S READ (Club Tier Stage 2, B08 / Ask 5) — one batched read for every team:
+   * season + record, head coach, roster, next event, Documents, group. It replaced three queries a
+   * team whose numbers did not mean what they seemed: the roster added up EVERY season's rows (a
+   * team of 14 read 27), pending tryouts counted every season, and the season chip was simply the
+   * highest year whatever its state. `activeYear`, `rosterCount` and `pendingTryouts` keep their
+   * names for today's cards and now answer from the board's one rules (live season first).
+   */
+  const board = await loadClubBoard(ctx!.org.id, visible);
+  const summaries = visible.map(team => {
+    const row = board.get(team.id)!;
     // pdfLook can carry a base64 crest (~hundreds of KB per team) and nothing on the admin
     // list reads it — stripped so a many-team club's listing doesn't ship megabytes of images.
     const teamJson = { ...team, pdfLook: undefined };
     return {
-      team: teamJson, activeYear,
-      rosterCount: rosterCount ?? 0,
-      pendingTryouts: pendingCount ?? 0,
+      team: teamJson,
+      activeYear: row.season
+        ? { id: row.season.id, name: row.season.name, year: row.season.year, status: row.season.status }
+        : null,
+      rosterCount: row.rosterCount ?? 0,
+      pendingTryouts: row.pendingTryouts,
       family: familyByTeam.get(team.id) ?? { repTeamId: team.id, ...EMPTY_TEAM_FAMILY_ROLLUP },
+      board: row,
     };
-  }));
+  });
 
   return NextResponse.json({ teams: summaries });
 }, { route: '/api/admin/rep-teams/teams' });

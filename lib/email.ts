@@ -1113,10 +1113,12 @@ export function assistantCoachInviteHtml(p: {
   /** A standalone Premium workspace — where the manager's promise includes the team's tournaments. */
   isTeamWorkspace?: boolean;
 }) {
-  const by = p.invitedByName ? `<strong>${p.invitedByName}</strong>` : 'The head coach';
+  // The inviter's name and the team's name are typed by people → escaped before interpolating
+  // (found in Club Tier Stage 2: this template was the one invite email that did not).
+  const by = p.invitedByName ? `<strong>${escapeEmailHtml(p.invitedByName)}</strong>` : 'The head coach';
   const copy = staffKindCopyFor(p.staffKind, { isTeamWorkspace: p.isTeamWorkspace ?? false });
   const heading = copy.emailHeading;
-  const line = `${by} invited you ${copy.inviteVerb} <strong>${p.teamName}</strong> as <strong>${copy.asA}</strong> on <strong>FieldLogicHQ</strong>.`;
+  const line = `${by} invited you ${copy.inviteVerb} <strong>${escapeEmailHtml(p.teamName)}</strong> as <strong>${copy.asA}</strong> on <strong>FieldLogicHQ</strong>.`;
   const what = copy.emailWhat;
   return wrap(`
     <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${heading}</h2>
@@ -1124,6 +1126,53 @@ export function assistantCoachInviteHtml(p: {
     <p style="color:rgba(241,245,249,0.7);">${what}</p>
     <a href="${p.inviteUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">Accept invite &rarr;</a>
     <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This link expires in 7 days. If you weren't expecting this, you can safely ignore this email.</p>
+  `);
+}
+
+/**
+ * THE CLUB'S "INVITE A COACH" EMAIL (Club Tier Stage 2, D10 + S2-02; specimen 6, frame 1).
+ *
+ * The portal's staff invite knows four helper kinds and, with no inviter name, says "The head
+ * coach invited you". Neither fits a club naming a team's coach: the words must say WHO (the club,
+ * and the person who pressed Send, with their role) and WHAT SEAT. So the club's door has its own
+ * template, and it NEVER falls back to "The head coach" — without an inviter name it names the club
+ * alone.
+ *
+ * ⚠ COPY IS /marketing's (drafted 2026-09-28 to the drawing, marked for review in the plan's call
+ * list). The subject lines live in `clubCoachInviteSubject` beside this so the two cannot drift.
+ */
+export function clubCoachInviteSubject(p: { clubName: string; teamName: string; coachRole: 'head_coach' | 'assistant_coach' }): string {
+  return p.coachRole === 'head_coach'
+    ? `You’re the head coach of ${p.teamName} at ${p.clubName}`
+    : `You’re invited to help coach ${p.teamName} at ${p.clubName}`;
+}
+
+export function clubCoachInviteHtml(p: {
+  clubName: string;
+  teamName: string;
+  coachRole: 'head_coach' | 'assistant_coach';
+  invitedByName: string | null;
+  /** The inviter's club role, in words ("the club’s owner", "a club admin"); null to leave it out. */
+  invitedByRoleWords: string | null;
+  inviteUrl: string;
+}) {
+  const club = escapeEmailHtml(p.clubName);
+  const team = escapeEmailHtml(p.teamName);
+  const isHead = p.coachRole === 'head_coach';
+  const heading = isHead
+    ? `${club} named you head coach of ${team}`
+    : `${club} invited you to help coach ${team}`;
+  const inviter = p.invitedByName
+    ? `<strong>${escapeEmailHtml(p.invitedByName)}</strong>${p.invitedByRoleWords ? `, ${escapeEmailHtml(p.invitedByRoleWords)},` : ''} invited you`
+    : `<strong>${club}</strong> invited you`;
+  const line = isHead
+    ? `${inviter} on <strong>FieldLogicHQ</strong>. You’ll run the team in its Coaches Portal: roster, schedule, practices, tryouts, money and your own staff. The club manages the team’s seasons.`
+    : `${inviter} on <strong>FieldLogicHQ</strong> as <strong>an assistant coach</strong>. ${STAFF_KIND_COPY.assistant.emailWhat}`;
+  return wrap(`
+    <h2 style="color:#fff;font-size:1.4rem;margin:0 0 1rem;">${heading}</h2>
+    <p>${line}</p>
+    <a href="${p.inviteUrl}" style="display:inline-block;background:#D9F99D;color:#0b0f14;padding:0.75rem 1.75rem;border-radius:2px;text-decoration:none;font-weight:800;font-size:0.82rem;letter-spacing:0.06em;margin:1.25rem 0;">Accept and set up your account &rarr;</a>
+    <p style="color:rgba(241,245,249,0.35);font-size:0.82rem;">This link works for 7 days. If you weren't expecting this, you can safely ignore this email.</p>
   `);
 }
 

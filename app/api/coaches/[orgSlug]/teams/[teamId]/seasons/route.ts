@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
-import { getRepTeam, getActiveRepProgramYear, getLatestClosedRepProgramYear } from '@/lib/db';
+import { getRepTeam, getActiveRepProgramYear } from '@/lib/db';
 import {
   getEntitledTeamMembership,
   resolveMembershipCapabilities,
@@ -8,11 +8,13 @@ import {
 } from '@/lib/coach-membership';
 import { canViewMoney } from '@/lib/coach-capabilities';
 import { loadSeasonSettlement } from '@/lib/coach-season-settlement';
-import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
-import { startNextRepSeason, SeasonRolloverError, type SeasonCarryChoice } from '@/lib/rep-season-rollover';
+import { unsettledFamilyCounts } from '@/lib/season-close-warning';
+import { mayManageSeasons } from '@/lib/season-doors';
+import {
+  closeOpenSeason, reopenLatestClosedSeason, startNextRepSeason, SeasonRolloverError, type SeasonCarryChoice,
+} from '@/lib/rep-season-rollover';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
-import type { Organization } from '@/lib/types';
 
 async function resolveCoachContext(orgSlug: string, teamId: string) {
   const ctx = await getAuthContext({ orgSlug, requireOrgSlug: true });
@@ -49,23 +51,16 @@ async function resolveCoachContext(orgSlug: string, teamId: string) {
   };
 }
 
-/**
+/*
  * ⚠ **WHO MAY END A SEASON — ONE ANSWER, THREE DOORS.** Starting the next season, closing this one
  * and reopening a closed one are the same power wearing three labels, so they resolve through one
  * predicate rather than three hand-copied conjunctions. A club-owned team gets none of them: its
- * club manages seasons, and the screens say so in their own words.
+ * club manages seasons (its own route, `app/api/admin/rep-teams/teams/[teamId]/seasons`), and the
+ * screens say so in their own words.
+ *
+ * The predicate moved to the pure `lib/season-doors.ts` (Club Tier S2-01) so the closed-season
+ * page asks the SAME function — it had its own looser copy and offered doors this route refused.
  */
-function mayManageSeasons(
-  org: Pick<Organization, 'accountKind' | 'planId' | 'teamWorkspaceStatus'>,
-  coachRole: 'head_coach' | 'assistant_coach',
-): boolean {
-  const isStandalone =
-    isTeamWorkspaceOrg(org) &&
-    org.teamWorkspaceStatus !== 'org_owned' &&
-    org.teamWorkspaceStatus !== 'archived';
-  return isStandalone && coachRole === 'head_coach';
-}
-
 const NOT_YOURS_TO_MANAGE = {
   error: 'Only the head coach of a standalone Premium team can manage seasons. For org-owned teams, '
     + 'your club admin manages seasons.',
@@ -109,11 +104,8 @@ export const GET = withObservability(async (_req: Request,
   if (isLive && canViewMoney(capabilities)) {
     try {
       const sheet = await loadSeasonSettlement({ programYear, capabilities });
-      const owingFamilies = new Set(
-        sheet.rows.filter(r => r.leftToSend > 0.005).map(r => r.familyKey),
-      );
       money = {
-        familiesOwing: owingFamilies.size,
+        familiesOwing: unsettledFamilyCounts(sheet.rows).familiesOwing,
         duesOutstanding: sheet.pot.expectedIn > 0.005 ? sheet.pot.expectedIn : 0,
         waitingToReturn: sheet.totals.payable > 0.005 ? sheet.totals.payable : 0,
       };
@@ -168,78 +160,62 @@ export const PATCH = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Unknown action.' }, { status: 400 });
   }
 
-  if (action === 'close') {
-    /**
-     * ⚠ The LIVE season, resolved fresh — never `programYear` above, which falls back to the newest
-     * finished one for a team between seasons. Closing a season that has already ended is a no-op
-     * dressed as an action.
-     */
-    const live = await getActiveRepProgramYear(teamId);
-    if (!live) {
-      return NextResponse.json(
-        { error: 'This team has no season running, so there is nothing to close.' },
-        { status: 409 },
-      );
+  try {
+    if (action === 'close') {
+      /**
+       * ⚠ The LIVE season, resolved fresh — never `programYear` above, which falls back to the newest
+       * finished one for a team between seasons. Closing a season that has already ended is a no-op
+       * dressed as an action.
+       */
+      const live = await getActiveRepProgramYear(teamId);
+      if (!live) {
+        return NextResponse.json(
+          { error: 'This team has no season running, so there is nothing to close.' },
+          { status: 409 },
+        );
+      }
+      const closed = await closeOpenSeason(teamId, live.id);
+      if (!closed) {
+        return NextResponse.json(
+          { error: 'This season has already finished — refresh to see where the team is now.' },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json({ season: closed, action: 'close' });
     }
-    const { data, error } = await supabaseAdmin
-      .from('rep_program_years')
-      .update({ status: 'completed', updated_at: new Date().toISOString() })
-      .eq('id', live.id)
-      .eq('team_id', teamId)
-      .in('status', ['draft', 'active'])
-      .select('id, name, year')
-      .maybeSingle();
-    if (error) {
-      console.error('[seasons PATCH close] failed:', error);
-      return NextResponse.json({ error: 'Could not close the season. Please try again.' }, { status: 500 });
-    }
-    if (!data) {
-      return NextResponse.json(
-        { error: 'This season has already finished — refresh to see where the team is now.' },
-        { status: 409 },
-      );
-    }
-    return NextResponse.json({ season: data, action: 'close' });
-  }
 
-  /**
-   * REOPEN — the safe half only. Refused the moment the team holds a live season, because giving
-   * the old one back would then mean deleting the new one (plan §3.4, logged and not built).
-   */
-  const live = await getActiveRepProgramYear(teamId);
-  if (live) {
+    /**
+     * REOPEN — the safe half only. Refused the moment the team holds a live season, because giving
+     * the old one back would then mean deleting the new one (plan §3.4, logged and not built). The
+     * shared function also re-seats the team's CURRENT staff on the reopened season.
+     */
+    const outcome = await reopenLatestClosedSeason(teamId, ctx.org.id);
+    if (!outcome.ok) {
+      if (outcome.reason === 'live_season_exists') {
+        return NextResponse.json(
+          {
+            error: `${outcome.liveSeasonName} has already started, so the season before it cannot be reopened here. `
+              + 'Ask support if you need last season back.',
+            code: 'live_season_exists',
+          },
+          { status: 409 },
+        );
+      }
+      return NextResponse.json(
+        { error: outcome.reason === 'nothing_to_reopen'
+          ? 'There is no closed season to reopen.'
+          : 'This season is no longer closed — refresh to see where the team is now.' },
+        { status: 409 },
+      );
+    }
+    return NextResponse.json({ season: outcome.season, action: 'reopen' });
+  } catch (e) {
+    console.error(`[seasons PATCH ${action}] failed:`, e);
     return NextResponse.json(
-      {
-        error: `${live.name} has already started, so the season before it cannot be reopened here. `
-          + 'Ask support if you need last season back.',
-        code: 'live_season_exists',
-      },
-      { status: 409 },
+      { error: action === 'close' ? 'Could not close the season. Please try again.' : 'Could not reopen the season. Please try again.' },
+      { status: 500 },
     );
   }
-  const closed = await getLatestClosedRepProgramYear(teamId);
-  if (!closed || closed.status !== 'completed') {
-    return NextResponse.json({ error: 'There is no closed season to reopen.' }, { status: 409 });
-  }
-  const { data, error } = await supabaseAdmin
-    .from('rep_program_years')
-    .update({ status: 'active', updated_at: new Date().toISOString() })
-    .eq('id', closed.id)
-    .eq('team_id', teamId)
-    .eq('status', 'completed')
-    .select('id, name, year')
-    .maybeSingle();
-  if (error) {
-    console.error('[seasons PATCH reopen] failed:', error);
-    return NextResponse.json({ error: 'Could not reopen the season. Please try again.' }, { status: 500 });
-  }
-  if (!data) {
-    return NextResponse.json(
-      { error: 'This season is no longer closed — refresh to see where the team is now.' },
-      { status: 409 },
-    );
-  }
-  return NextResponse.json({ season: data, action: 'reopen' });
 }, { route: '/api/coaches/[orgSlug]/teams/[teamId]/seasons' });
 
 // POST /api/coaches/[orgSlug]/teams/[teamId]/seasons — coach starts the team's next season
@@ -307,6 +283,8 @@ export const POST = withObservability(async (req: Request,
 
   try {
     const summary = await startNextRepSeason({
+      managedBy: 'coach',
+      teamName: resolved.team.name,
       orgId: ctx.org.id,
       teamId,
       workspaceId: (workspace?.id as string | undefined) ?? null,

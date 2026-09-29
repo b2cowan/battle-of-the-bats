@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { Archive, ChevronRight } from 'lucide-react';
 import { useOrg } from '@/lib/org-context';
 import { hasCapability } from '@/lib/roles';
-import { countsTowardRecord } from '@/lib/season-wrapped';
+import { hasDecidedGames, rosterCountOf, seasonRecordOf } from '@/lib/team-season-figures';
 import { SCRIMMAGE_LABEL } from '@/lib/coach-schedule-vocab';
 import AdminPageHeader from '@/components/admin/AdminPageHeader';
 import { useKitStyle } from '@/components/admin/AdminKitProvider';
@@ -131,12 +131,11 @@ export default function PastYearDetailPage({
     );
   }
 
-  // The CANONICAL record rule (lib/season-wrapped.ts `countsTowardRecord`) — same predicate as
-  // getRepTeamHistory, so this detail view can never disagree with the history list one click away.
-  const gameEvents = events.filter(countsTowardRecord);
-  const wins = gameEvents.filter(e => e.result === 'win').length;
-  const losses = gameEvents.filter(e => e.result === 'loss').length;
-  const ties = gameEvents.filter(e => e.result === 'tie').length;
+  // THE RECORD RULE (lib/team-season-figures.ts, Club Tier B08) — the same function the history
+  // list, the board and the schedule read. This page used `countsTowardRecord` alone, so a CANCELLED
+  // game that still carried a score counted here and not one click away on the list.
+  const { w: wins, l: losses, t: ties } = seasonRecordOf(events);
+  const hasRecord = hasDecidedGames({ w: wins, l: losses, t: ties });
 
   // The faint inks this page repeats — on the kit the tertiary ink (the dark ramp's 40% misses AA there).
   const statLabel = kx({ fontSize: '0.75rem', color: 'var(--white-40)' }, KIT_INK.tertiary);
@@ -209,14 +208,14 @@ export default function PastYearDetailPage({
       {/* Quick stats */}
       <div style={{ display: 'flex', gap: '1.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
         <div>
-          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{roster.length}</div>
+          <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{rosterCountOf(roster)}</div>
           <div style={statLabel}>Players</div>
         </div>
         <div>
           <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>{coaches.length}</div>
           <div style={statLabel}>Coaches</div>
         </div>
-        {gameEvents.length > 0 && (
+        {hasRecord && (
           <div>
             <div style={{ fontSize: '1.4rem', fontWeight: 700 }}>
               {wins}W – {losses}L – {ties}T

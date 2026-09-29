@@ -11,6 +11,8 @@ import {
   inviteTeamOwnershipTransfer,
 } from '@/lib/team-ownership-transfer';
 import { withObservability } from '@/lib/observability';
+import { hasModuleEntitlement } from '@/lib/module-entitlements';
+import { hasCapability } from '@/lib/roles';
 
 export const GET = withObservability(async (req: NextRequest) => {
   const orgSlug = req.nextUrl.searchParams.get('orgSlug') ?? undefined;
@@ -18,6 +20,11 @@ export const GET = withObservability(async (req: NextRequest) => {
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
   if (isTeamWorkspaceOrg(ctx.org)) return forbidden();
+  // Bringing a coach's portal into the club is a Rep Teams act (Club Tier Stage 2, B12): the plan must
+  // carry Rep Teams and the member must hold it — a League or Tournament Plus org could link before.
+  if (!hasModuleEntitlement(ctx.org, 'module_rep_teams') || !hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams')) {
+    return forbidden();
+  }
 
   // Club Repackaging (2026-06-22): the per-team "$19/team" org-paid summary + the
   // "upgrade to save" nudge are retired — Club includes the whole coaching staff up to
@@ -32,6 +39,11 @@ export const POST = withObservability(async (req: NextRequest) => {
   if (!ctx) return unauthorized();
   if (ctx.role !== 'owner' && ctx.role !== 'admin') return forbidden();
   if (isTeamWorkspaceOrg(ctx.org)) return forbidden();
+  // Bringing a coach's portal into the club is a Rep Teams act (Club Tier Stage 2, B12): the plan must
+  // carry Rep Teams and the member must hold it — a League or Tournament Plus org could link before.
+  if (!hasModuleEntitlement(ctx.org, 'module_rep_teams') || !hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams')) {
+    return forbidden();
+  }
 
   let body: { linkId?: unknown; action?: unknown; target?: unknown; billingCycle?: unknown };
   try {

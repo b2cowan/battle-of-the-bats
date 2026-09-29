@@ -1,136 +1,32 @@
-import { notFound } from 'next/navigation';
-import Link from 'next/link';
-import { getOrganizationBySlug, getRepTeamBySlug, getRepProgramYear } from '@/lib/db';
+import { notFound, redirect } from 'next/navigation';
+import TryoutRegisterView from '@/components/rep-teams/TryoutRegisterView';
 import { getOrgPrivacyPolicyHref } from '@/lib/privacy-policy';
-import TryoutRegisterForm from '@/components/rep-teams/TryoutRegisterForm';
+import { resolvePublicTryout, publicTryoutHref, publicTryoutRegisterHref } from '@/lib/public-tryout';
 
 export const dynamic = 'force-dynamic';
 
+/** The OLD season-numbered application address (Club Tier Stage 2, B07): redirects to the
+ *  team-named one while its season is live, otherwise the team isn't taking sign-ups here. */
 export default async function TryoutRegisterPage({
   params,
 }: {
   params: Promise<{ orgSlug: string; teamSlug: string; yearId: string }>;
 }) {
   const { orgSlug, teamSlug, yearId } = await params;
-
-  const org = await getOrganizationBySlug(orgSlug);
-  if (!org) notFound();
-
-  const team = await getRepTeamBySlug(org.id, teamSlug);
-  if (!team) notFound();
-
-  const programYear = await getRepProgramYear(yearId);
-  if (!programYear || programYear.teamId !== team.id || programYear.orgId !== org.id) notFound();
-
+  const resolved = await resolvePublicTryout(orgSlug, teamSlug);
+  if (!resolved) notFound();
+  const { org, team, seasons, live } = resolved;
+  if (!seasons.some(s => s.id === yearId)) notFound();
+  if (live?.id === yearId) redirect(publicTryoutRegisterHref(orgSlug, teamSlug));
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        background: 'var(--pitch-black)',
-        fontFamily: 'var(--font-sans, Inter, sans-serif)',
-        color: 'var(--fl-text)',
-      }}
-    >
-      <div
-        style={{
-          maxWidth: '640px',
-          margin: '0 auto',
-          padding: 'calc(var(--nav-height) + 2rem) 1.5rem 5rem',
-        }}
-      >
-        <Link
-          href={`/${orgSlug}/teams/${teamSlug}/tryouts/${yearId}`}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.35rem',
-            fontSize: '0.8rem',
-            color: 'rgba(255,255,255,0.4)',
-            textDecoration: 'none',
-            marginBottom: '1.5rem',
-          }}
-        >
-          ← Back to {programYear.name}
-        </Link>
-
-        <div style={{ marginBottom: '2rem' }}>
-          <div
-            style={{
-              fontSize: '0.68rem',
-              textTransform: 'uppercase',
-              letterSpacing: '0.1em',
-              color: 'rgba(255,255,255,0.4)',
-              marginBottom: '0.4rem',
-            }}
-          >
-            {org.name} · {team.name}
-          </div>
-          <h1
-            style={{
-              fontSize: '1.75rem',
-              fontWeight: 900,
-              color: '#f0f0f0',
-              fontFamily: 'var(--font-display, sans-serif)',
-              margin: '0 0 0.4rem',
-              lineHeight: 1.1,
-            }}
-          >
-            Tryout Application — {programYear.name}
-          </h1>
-          {team.division && (
-            <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>
-              {team.division}
-            </div>
-          )}
-        </div>
-
-        {!programYear.tryoutOpen ? (
-          <div
-            style={{
-              padding: '3rem 2rem',
-              textAlign: 'center',
-              border: '1px solid rgba(255,255,255,0.08)',
-              borderRadius: '12px',
-              background: 'rgba(255,255,255,0.02)',
-            }}
-          >
-            <h2
-              style={{
-                fontSize: '1.1rem',
-                fontWeight: 700,
-                color: 'rgba(255,255,255,0.7)',
-                margin: '0 0 0.5rem',
-              }}
-            >
-              Registration is not currently open
-            </h2>
-            <p style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.4)', margin: '0 0 1rem' }}>
-              Tryout registration for {team.name} — {programYear.name} is not accepting applications at this time.
-            </p>
-            {org.contactEmail && (
-              <p style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
-                Questions?{' '}
-                <a
-                  href={`mailto:${org.contactEmail}`}
-                  style={{ color: 'rgba(255,255,255,0.6)', textDecoration: 'underline' }}
-                >
-                  Contact us
-                </a>
-              </p>
-            )}
-          </div>
-        ) : (
-          <TryoutRegisterForm
-            orgSlug={orgSlug}
-            teamSlug={teamSlug}
-            yearId={yearId}
-            teamName={team.name}
-            yearName={programYear.name}
-            orgName={org.name}
-            privacyPolicyHref={getOrgPrivacyPolicyHref(org)}
-          />
-        )}
-      </div>
-    </div>
+    <TryoutRegisterView
+      orgSlug={orgSlug}
+      teamSlug={teamSlug}
+      org={org}
+      team={team}
+      season={null}
+      backHref={publicTryoutHref(orgSlug, teamSlug)}
+      privacyPolicyHref={getOrgPrivacyPolicyHref(org)}
+    />
   );
 }

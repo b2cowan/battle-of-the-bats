@@ -10,12 +10,12 @@ import {
   setRepTeamShareClubBook,
 } from '@/lib/db';
 import { getEntitledTeamMembership, resolveMembershipCapabilities } from '@/lib/coach-membership';
-import { isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
+import { mayManageSeasons, orgManagesOwnSeasons } from '@/lib/season-doors';
 import { normalizeLineupSettings } from '@/lib/lineup-caps';
 import { normalizeArrivalDefault } from '@/lib/coach-arrival';
 import type { Organization } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
-import { denyUnless, canWriteScoutingSummary, canViewMoney, canManageSchedule } from '@/lib/coach-capabilities';
+import { denyUnless, canViewMoney, canManageSchedule } from '@/lib/coach-capabilities';
 import { resolveClubBookAccessFor } from '@/lib/coach-club-book';
 import {
   SCHEDULE_VISIBILITIES, isFamilyLayerEnabled, setScheduleVisibility, type ScheduleVisibility,
@@ -68,15 +68,14 @@ function computeScope(
   org: Pick<Organization, 'accountKind' | 'planId' | 'teamWorkspaceStatus'>,
   coachRole: 'head_coach' | 'assistant_coach',
 ) {
-  const isStandalone =
-    isTeamWorkspaceOrg(org) &&
-    org.teamWorkspaceStatus !== 'org_owned' &&
-    org.teamWorkspaceStatus !== 'archived';
+  // The seasons route's and the closed-season page's own predicate (Club Tier S2-01) — three
+  // hand-copied conjunctions of one rule became one function in `lib/season-doors.ts`.
+  const isStandalone = orgManagesOwnSeasons(org);
   const isHeadCoach = coachRole === 'head_coach';
   return {
     isStandalone,
     isHeadCoach,
-    canManageSeasons: isStandalone && isHeadCoach,
+    canManageSeasons: mayManageSeasons(org, coachRole),
     canEditDivision: isStandalone && isHeadCoach,
   };
 }
@@ -110,7 +109,10 @@ export const GET = withObservability(async (_req: Request,
     clubBook: {
       showSwitch: clubAccess.showTeamSwitch,
       sharing: clubAccess.teamSharing,
-      canEdit: canWriteScoutingSummary(assignment.capabilities),
+      // HEAD COACH ONLY, as ruled (Club Shared Book §8 Q1: "each head coach opts their own team in";
+      // Club Tier B13 — it had been gated on the notes grant, so an assistant with notes could opt
+      // the whole team's book in).
+      canEdit: assignment.capabilities.isHeadCoach,
     },
     /**
      * Schedule visibility — who outside the coaching staff may see games and practices. It sat
@@ -187,16 +189,17 @@ export const PATCH = withObservability(async (req: Request,
 
   /**
    * Club Shared Book — "Share our book with the club" (owner ruling §8 Q1: the club admin
-   * enables, each head coach opts their own team in). `notes`-gated, the same grant that owns
-   * the book line, because this decides whose words become club-readable.
+   * enables, each head coach opts their own team in). HEAD COACH ONLY (Club Tier B13): it was
+   * gated on the `notes` grant, which let an assistant who writes notes decide that the whole
+   * team's book — every coach's words — became club-readable. That is the head coach's call.
    *
    * ⚠ The org-level switch is re-checked HERE and not merely on the GET: a stale tab, or a
    * hand-rolled request, must not be able to turn on sharing in an org that never allowed it.
    */
   if ('shareClubBook' in body) {
     const denied = denyUnless(
-      canWriteScoutingSummary(assignment.capabilities),
-      'Only coaches with notes access can change book sharing.',
+      assignment.capabilities.isHeadCoach,
+      'Only the head coach can change book sharing.',
     );
     if (denied) return denied;
     const access = resolveClubBookAccessFor(ctx.org, team);

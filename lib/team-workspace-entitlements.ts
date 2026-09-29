@@ -1,5 +1,4 @@
 import { supabaseAdmin } from './supabase-admin';
-import type { Organization } from './types';
 
 export type TeamWorkspaceState = 'independent' | 'linked' | 'org_owned' | 'archived';
 export type TeamWorkspaceBillingMode =
@@ -136,9 +135,9 @@ function mapTeamEntitlement(row: TeamEntitlementRow): TeamEntitlement {
   };
 }
 
-export function isTeamWorkspaceOrg(org: Pick<Organization, 'accountKind' | 'planId'> | null | undefined): boolean {
-  return org?.accountKind === 'team_workspace' || org?.planId === 'team';
-}
+/* The one definition lives in the pure `lib/team-workspace-kind.ts` so a client component can ask
+   it too (Club Tier S2-01); re-exported here so every existing importer keeps working. */
+export { isTeamWorkspaceOrg } from './team-workspace-kind';
 
 const LIVE_TEAM_WORKSPACE_SUB_STATUSES: TeamWorkspaceSubscriptionStatus[] = ['active', 'trialing', 'past_due'];
 
@@ -260,21 +259,16 @@ export async function getTeamScopedRepTeamAccess(params: {
   if (params.requireCoach) {
     if (!params.userId) return { allowed: false, reason: 'not_team_coach' };
 
-    const { data: coaches, error: coachError } = await supabaseAdmin
-      .from('rep_team_coaches')
-      .select('id, org_id, rep_program_years!program_year_id(status)')
-      .eq('org_id', params.orgId)
-      .eq('team_id', params.repTeamId)
-      .eq('user_id', params.userId);
-
-    if (coachError) throw coachError;
-    const hasCurrentAssignment = (coaches ?? []).some(row => {
-      const programYear = Array.isArray(row.rep_program_years)
-        ? row.rep_program_years[0]
-        : row.rep_program_years;
-      return programYear?.status === 'draft' || programYear?.status === 'active';
-    });
-    if (!hasCurrentAssignment) return { allowed: false, reason: 'not_team_coach' };
+    /* ⚠ TEAM MEMBERSHIP, NOT A SEASON ROW (Club Tier Stage 2, B10 — the M1 access model). This read
+       the caller's `rep_team_coaches` rows and required one on a draft/active season, so a coach on
+       the team's staff was DENIED between seasons by the four routes that ask it (tournament
+       history, tournament games, hosted tournaments, team links) while every other door admitted
+       them. Staff belong to the team; a removed coach holds no active membership. */
+    // Through the one membership module (a dynamic import: coach-membership imports this file, so
+    // a static import would cycle). It throws on a query error rather than reading "not a coach".
+    const { getActiveTeamMembership } = await import('./coach-membership');
+    const membership = await getActiveTeamMembership(params.orgId, params.repTeamId, params.userId);
+    if (!membership) return { allowed: false, reason: 'not_team_coach' };
   }
 
   return { allowed: true, entitlement };

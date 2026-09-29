@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireDevToolPlatformAdmin } from '@/lib/platform-auth';
+import { addStaffMember } from '@/lib/coach-membership';
 
 // Fallback chain — first match wins; ordered by most-featured plan first
 const DEV_ORG_SLUGS = ['dev-club-org', 'dev-league-org', 'dev-tplus-org', 'dev-tournament-org', 'dev-test-org'];
@@ -93,7 +94,9 @@ export async function POST(request: Request) {
     { first: 'Morgan', last: 'Seed',  num: '24' },
   ];
 
-  await supabaseAdmin.from('rep_roster_players').insert(
+  // ⚠ `source` must be one the CHECK allows ('tryout' | 'admin_manual'). This wrote 'admin', which
+  // the database refuses — so the seed's roster never landed and nobody noticed (Club Tier B13).
+  const { error: rosterErr } = await supabaseAdmin.from('rep_roster_players').insert(
     players.map(p => ({
       program_year_id:    year.id,
       team_id:            team!.id,
@@ -105,22 +108,20 @@ export async function POST(request: Request) {
       guardian_last_name:  p.last,
       guardian_email:     `parent.${p.last.toLowerCase()}@dev.local`,
       status:             'active',
-      source:             'admin',
+      source:             'admin_manual',
     }))
   );
+  if (rosterErr) return NextResponse.json({ error: rosterErr.message, log }, { status: 500 });
   log.push(`Created ${players.length} roster players`);
 
   // Coach — link coach@dev.local if they exist
   const { data: userList } = await supabaseAdmin.auth.admin.listUsers();
   const coachAuth = userList?.users.find(u => u.email === 'coach@dev.local');
   if (coachAuth) {
-    await supabaseAdmin.from('rep_team_coaches').insert({
-      program_year_id: year.id,
-      team_id:         team.id,
-      org_id:          org.id,
-      user_id:         coachAuth.id,
-      coach_role:      'head_coach',
-    });
+    // ⚠ Through the TEAM MEMBERSHIP (the access truth since M1), which also writes the live season's
+    // row. A bare `rep_team_coaches` row with no membership left the seeded coach refused by every
+    // gated route (Club Tier B13).
+    await addStaffMember({ orgId: org.id, teamId: team.id, userId: coachAuth.id, coachRole: 'head_coach' });
     log.push('Linked coach@dev.local as head coach');
   } else {
     log.push('coach@dev.local not found — seed User Set to add a coach');

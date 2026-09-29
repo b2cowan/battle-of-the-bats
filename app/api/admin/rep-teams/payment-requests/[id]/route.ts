@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
 import { canOpenRepMoney } from '@/lib/member-access';
 import {
   getRepTeam,
@@ -55,6 +55,15 @@ export const PATCH = withObservability(async (req: Request,
   }
   if (request.status !== 'pending') {
     return NextResponse.json({ error: 'Only pending requests can be reviewed' }, { status: 409 });
+  }
+
+  // ⚠ The member's team-group limit (Club Tier Stage 2, B11). Unreachable TODAY — only an owner,
+  // admin or treasurer may act here, and those roles never carry a group limit — so this is the
+  // guard for the day a limited role is given the power, not a fix for a live hole.
+  if (ctx!.repGroupIds) {
+    const scopedTeam = await getRepTeam(request.team_id);
+    const scoped = repGroupScopeGuard(ctx!, scopedTeam?.groupId ?? null);
+    if (scoped) return scoped;
   }
 
   const now = new Date().toISOString();

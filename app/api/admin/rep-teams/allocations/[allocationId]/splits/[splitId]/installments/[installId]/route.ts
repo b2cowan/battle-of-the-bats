@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
+import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
 import { canOpenRepMoney } from '@/lib/member-access';
 import {
   getRepAllocationInstallment,
@@ -48,6 +48,11 @@ export const PATCH = withObservability(async (_req: Request,
   // Ensure ledgers exist for both sides of the transfer
   const team = await getRepTeam(split.teamId);
   if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
+  // ⚠ The member's team-group limit (Club Tier Stage 2, B11). Unreachable TODAY — only an owner,
+  // admin or treasurer may act here, and those roles never carry a group limit — so this is the
+  // guard for the day a limited role is given the power, not a fix for a live hole.
+  const scoped = repGroupScopeGuard(ctx!, team.groupId);
+  if (scoped) return scoped;
 
   const [teamLedger, orgLedger] = await Promise.all([
     getOrCreateRepTeamLedger(ctx!.org.id, team.id, team.name),

@@ -5,7 +5,7 @@ import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import {
   getOrgAssistantCoaches, getRepTeam, getRepTeamCoachById,
 } from '@/lib/db';
-import { removeStaffMember, getActiveTeamMembership, listActiveStaffKindsForOrg } from '@/lib/coach-membership';
+import { removeStaffMember, getActiveTeamMembership, getTeamStaffMembershipById, listActiveStaffKindsForOrg } from '@/lib/coach-membership';
 import {
   listOpenAssistantInvitesForOrg, getAssistantInviteById, approveAssistantInvite, revokeAssistantInvite,
   orgRequiresAssistantApproval, sendAssistantInviteEmail,
@@ -35,9 +35,9 @@ export const GET = withObservability(async (req: Request) => {
   const err = gate(ctx);
   if (err) return err;
 
-  // The oversight list names people by their live-season row; the KIND (mig 288) lives on the
-  // team membership, which the season row does not carry (it records head/assistant only). One
-  // org-wide read of the memberships supplies the word per (team, user).
+  // The oversight list is read from the team MEMBERSHIPS (Club Tier Stage 2, B10 — it used to name
+  // people by their live-season row, so between seasons the club's assistants vanished from it).
+  // The KIND (mig 288) comes from the same memberships, one org-wide read.
   const [assistantsRaw, invitesRaw, requireApproval, kinds] = await Promise.all([
     getOrgAssistantCoaches(ctx!.org.id),
     listOpenAssistantInvitesForOrg(ctx!.org.id),
@@ -126,10 +126,14 @@ export const POST = withObservability(async (req: Request): Promise<Response> =>
   if (action === 'remove') {
     const coachId = typeof body.coachId === 'string' ? body.coachId : '';
     if (!coachId) return NextResponse.json({ error: 'Missing coachId.' }, { status: 400 });
-    // The row id is only how the oversight list NAMES the person — it translates to
-    // (team, user) and nothing more. Role and tenancy are re-asserted against the MEMBERSHIP,
-    // the access truth, never trusted from a season row (adversarial review 2026-08-16).
-    const target = await getRepTeamCoachById(coachId);
+    // The id is only how the oversight list NAMES the person — it translates to (team, user) and
+    // nothing more. Since Club Tier Stage 2 (B10) the list carries MEMBERSHIP ids; a season row's
+    // id (a list loaded before that) still resolves. Role and tenancy are re-asserted against the
+    // MEMBERSHIP, the access truth, never trusted from a season row (adversarial review 2026-08-16).
+    const byMembership = await getTeamStaffMembershipById(coachId);
+    const target = byMembership
+      ? { orgId: byMembership.orgId, teamId: byMembership.teamId, userId: byMembership.userId }
+      : await getRepTeamCoachById(coachId);
     if (!target || target.orgId !== ctx!.org.id) return NextResponse.json({ error: 'Assistant not found' }, { status: 404 });
     const scopeErr = await teamScopeError(target.teamId);
     if (scopeErr) return scopeErr;

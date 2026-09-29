@@ -18,6 +18,9 @@ import { useKitStyle, useKitAsterisk } from '@/components/admin/AdminKitProvider
 import { KIT_INK } from '@/components/admin/kit/kit-inline';
 import styles from '../../../../../rep-teams.module.css';
 import type { RepTryoutRegistration, RepTryoutRegistrationStatus } from '@/lib/types';
+// The TEAM-named sign-up link (Club Tier Stage 2, B07): the season-numbered one stopped working at the
+// next season, which is exactly when a club re-shares it.
+import { publicTryoutRegisterHref } from '@/lib/public-tryout-links';
 
 type Tab = 'pending_review' | 'offered' | 'waitlisted' | 'accepted' | 'declined_withdrawn' | 'all';
 
@@ -322,7 +325,7 @@ export default function TryoutsPage({
 
   function handleCopyUrl() {
     if (!info?.team) return;
-    const url = `${window.location.origin}/${params.orgSlug}/teams/${info.team.slug}/tryouts/${params.yearId}/register`;
+    const url = `${window.location.origin}${publicTryoutRegisterHref(params.orgSlug, info.team.slug)}`;
     navigator.clipboard.writeText(url).then(() => {
       setCopiedUrl(true);
       setTimeout(() => setCopiedUrl(false), 2000);
@@ -553,7 +556,7 @@ export default function TryoutsPage({
                       type="text"
                       readOnly
                       value={typeof window !== 'undefined'
-                        ? `${window.location.origin}/${params.orgSlug}/teams/${info.team.slug}/tryouts/${params.yearId}/register`
+                        ? `${window.location.origin}${publicTryoutRegisterHref(params.orgSlug, info.team.slug)}`
                         : ''}
                       onClick={e => (e.target as HTMLInputElement).select()}
                     />

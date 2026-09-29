@@ -1,3 +1,4 @@
+import { refuseWithoutLiveSeat } from '@/lib/coach-season-refusal';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
@@ -39,7 +40,7 @@ export const GET = withObservability(async (_req: Request,
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return forbidden();
+  if (!assignment) return refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId);
 
   const programYear = await getActiveRepProgramYear(teamId);
   if (!programYear) {

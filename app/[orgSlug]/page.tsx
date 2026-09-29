@@ -58,7 +58,7 @@ function OpenTryoutsSection({ orgSlug, tryouts }: { orgSlug: string; tryouts: Op
           {tryouts.map(t => (
             <Link
               key={t.programYearId}
-              href={`/${orgSlug}/teams/${t.teamSlug}/tryouts/${t.programYearId}`}
+              href={`/${orgSlug}/teams/${t.teamSlug}/tryouts`}
               className={`card ${styles.archivesCta}`}
             >
               <div>

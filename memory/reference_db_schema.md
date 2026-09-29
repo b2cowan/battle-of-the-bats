@@ -603,7 +603,7 @@ id (uuid), email_key NOT NULL, subject NOT NULL, recipient_org_id (uuid) → org
 ## Module: Other
 
 ### assistant_invite_tokens
-id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id NOT NULL, invited_by_user_id (uuid) NOT NULL, invited_email NOT NULL, token_hash NOT NULL, status, initial_capabilities (jsonb), invited_by_name, team_name, expires_at, accepted_at, created_at, staff_kind
+id (uuid), org_id (uuid) → organizations.id NOT NULL, team_id (uuid) → rep_teams.id NOT NULL, program_year_id (uuid) → rep_program_years.id, invited_by_user_id (uuid) NOT NULL, invited_email NOT NULL, token_hash NOT NULL, status, initial_capabilities (jsonb), invited_by_name, team_name, expires_at, accepted_at, created_at, staff_kind, coach_role, sent_by
 - Indexes: assistant_invite_tokens_email_idx, assistant_invite_tokens_org_id_idx, assistant_invite_tokens_program_year_id_idx, assistant_invite_tokens_team_idx, assistant_invite_tokens_token_hash_uq
 
 ### basic_coach_team_announcements

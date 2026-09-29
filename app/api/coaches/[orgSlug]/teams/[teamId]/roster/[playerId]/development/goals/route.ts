@@ -1,3 +1,4 @@
+import { refuseWithoutLiveSeat } from '@/lib/coach-season-refusal';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
@@ -24,7 +25,7 @@ async function resolveContext(orgSlug: string, teamId: string, playerId: string)
     getRepRosterPlayer(playerId),
   ]);
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
+  if (!assignment) return { error: await refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId) };
   if (!player || player.teamId !== teamId || player.orgId !== ctx.org.id) {
     return { error: NextResponse.json({ error: 'Player not found' }, { status: 404 }) };
   }

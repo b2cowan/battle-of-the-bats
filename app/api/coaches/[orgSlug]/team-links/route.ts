@@ -14,7 +14,7 @@ import {
   requestTeamOwnershipTransfer,
   respondToTeamOwnershipTransferInvite,
 } from '@/lib/team-ownership-transfer';
-import { getCoachingAssignmentsForUser } from '@/lib/db';
+import { getActiveTeamMembership } from '@/lib/coach-membership';
 import { denyUnless } from '@/lib/coach-capabilities';
 import { withObservability } from '@/lib/observability';
 
@@ -43,9 +43,11 @@ async function resolveTeamCoachContext(orgSlug: string) {
   });
   if (!access.allowed) return { error: forbidden() };
 
-  // Org linking + ownership transfer are franchise-boundary actions — head-coach only.
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const isHeadCoach = assignments.find(a => a.teamId === workspace.repTeamId)?.capabilities.isHeadCoach ?? false;
+  // Org linking + ownership transfer are franchise-boundary actions — head-coach only. ⚠ Read from
+  // the TEAM MEMBERSHIP (Club Tier Stage 2, B10): the live-season assignment this read denied a head
+  // coach between seasons — exactly when a coach decides to bring their team into a club.
+  const membership = await getActiveTeamMembership(ctx.org.id, workspace.repTeamId, ctx.user.id);
+  const isHeadCoach = membership?.coachRole === 'head_coach';
 
   return { ctx, workspace, isHeadCoach };
 }

@@ -1,6 +1,7 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from './api-auth';
+import { refuseWithoutLiveSeat, seasonNotLiveResponse } from './coach-season-refusal';
 import {
   getCoachingAssignmentsForUser,
   getRepTeam,
@@ -35,10 +36,8 @@ export async function resolvePracticePlanRouteContext(orgSlug: string, teamId: s
     getActiveRepProgramYear(teamId),
   ]);
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
-  if (!programYear) {
-    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  }
+  if (!assignment) return { error: await refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId) };
+  if (!programYear) return { error: await seasonNotLiveResponse(ctx.org, teamId) };
 
   const event = await getRepTeamEventById(eventId);
   if (!event || event.programYearId !== programYear.id) {

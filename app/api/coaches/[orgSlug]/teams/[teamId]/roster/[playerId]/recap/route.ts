@@ -1,3 +1,4 @@
+import { refuseWithoutLiveSeat } from '@/lib/coach-season-refusal';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
@@ -40,7 +41,7 @@ export const GET = withObservability(async (_req: Request,
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return forbidden();
+  if (!assignment) return refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId);
 
   // A1 (2026-08-03): was `canViewRoster && canViewDevelopmentGoals`. Coaching notes are the
   // sensitive half and imply record access, so the roster clause was always redundant once names

@@ -13,6 +13,7 @@ import type { RepTeamEvent, RepEventType } from '@/lib/types';
 // legacy look (the detail pill appends an alpha to it) until the release slice folds this in.
 import { SCRIMMAGE_LABEL, EVENT_COLORS as EVENT_TOKENS } from '@/lib/coach-schedule-vocab';
 import { tournamentToday } from '@/lib/timezone';
+import { hasDecidedGames, seasonRecordOf } from '@/lib/team-season-figures';
 
 // ── Constants ──────────────────────────────────────────────────────────────────
 
@@ -101,14 +102,11 @@ function EventChip({ event, onClick }: { event: RepTeamEvent; onClick: () => voi
 }
 
 function WLTWidget({ events }: { events: RepTeamEvent[] }) {
-  // The record rule: a Game that is not a scrimmage (the box, mig 306) with a result. Tournament
-  // games are counted by the coach's own record too, but this widget predates them and keeps its
-  // league-only read — a wider change than this project's.
-  const games = events.filter(e => e.eventType === 'league_game' && !e.isScrimmage && e.result && e.status !== 'cancelled');
-  const w = games.filter(e => e.result === 'win').length;
-  const l = games.filter(e => e.result === 'loss').length;
-  const t = games.filter(e => e.result === 'tie').length;
-  if (!games.length) return null;
+  // THE RECORD RULE (lib/team-season-figures.ts, Club Tier B08): league AND tournament games, never
+  // a scrimmage, finalized. This widget counted league games only, so the club's schedule showed a
+  // different record from the coach's, the history and the board.
+  const { w, l, t } = seasonRecordOf(events);
+  if (!hasDecidedGames({ w, l, t })) return null;
   return (
     <div className={styles.wltWidget}>
       <span className={styles.wltLabel}>Season Record</span>

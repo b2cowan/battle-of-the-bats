@@ -1,33 +1,18 @@
 import { NextResponse } from 'next/server';
-import { getAuthContextWithRole, unauthorized, forbidden, repGroupScopeGuard } from '@/lib/api-auth';
-import { hasCapability } from '@/lib/roles';
-import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { getRepTeam, getRepProgramYears, createRepProgramYear } from '@/lib/db';
+import { getRepProgramYears, createRepProgramYear } from '@/lib/db';
 import { projectMembershipsOntoProgramYear } from '@/lib/coach-membership';
+import { tellClubTeamStaff } from '@/lib/club-season-notify';
+import { resolveClubTeam } from '@/lib/club-team-route';
+import { isLiveSeasonStatus } from '@/lib/season-live';
 import { withObservability } from '@/lib/observability';
-
-function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
-  if (!ctx) return unauthorized();
-  if (!hasCapability(ctx.role, ctx.capabilities, 'module_rep_teams')) return forbidden();
-  if (!hasModuleEntitlement(ctx.org, 'module_rep_teams')) return forbidden();
-  return null;
-}
 
 export const GET = withObservability(async (_req: Request,
   { params }: { params: Promise<{ teamId: string }> },) => {
-  const orgSlug = new URL(_req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
-
   const { teamId } = await params;
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx!.org.id) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-  const groupErrG = repGroupScopeGuard(ctx!, team.groupId);
-  if (groupErrG) return groupErrG;
+  const resolved = await resolveClubTeam(_req, teamId, { write: false });
+  if ('error' in resolved) return resolved.error;
+  const { team } = resolved;
 
   const programYears = await getRepProgramYears(team.id);
   return NextResponse.json({ programYears });
@@ -35,20 +20,10 @@ export const GET = withObservability(async (_req: Request,
 
 export const POST = withObservability(async (req: Request,
   { params }: { params: Promise<{ teamId: string }> },) => {
-  const orgSlug = new URL(req.url).searchParams.get('orgSlug') ?? undefined;
-  const ctx = await getAuthContextWithRole({ orgSlug, requireOrgSlug: true });
-  const err = gate(ctx);
-  if (err) return err;
-
-  if (ctx!.role !== 'owner' && ctx!.role !== 'admin') return forbidden();
-
   const { teamId } = await params;
-  const team = await getRepTeam(teamId);
-  if (!team || team.orgId !== ctx!.org.id) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-  const groupErrP = repGroupScopeGuard(ctx!, team.groupId);
-  if (groupErrP) return groupErrP;
+  const resolved = await resolveClubTeam(req, teamId, { write: true });
+  if ('error' in resolved) return resolved.error;
+  const { ctx, team } = resolved;
 
   const body = await req.json();
   const name = typeof body.name === 'string' ? body.name.trim() : '';
@@ -61,20 +36,32 @@ export const POST = withObservability(async (req: Request,
     return NextResponse.json({ error: 'year must be a valid calendar year' }, { status: 400 });
   }
 
-  // Guard: only one active program year per team at a time
+  /**
+   * ⚖ THE FIRST SEASON ONLY (Club Tier Stage 2, Ask 1 (a), owner 2026-09-28). This door made a
+   * BLANK year beside a live one — no roster, budget plan, fee plan, opening balance or player
+   * history links — and a Draft made this way became the coach's live season mid-year, emptying
+   * their portal. Once a team has any season, the next one comes from Start next season (the roll,
+   * `app/api/admin/rep-teams/teams/[teamId]/seasons`), which carries all five.
+   */
   const existing = await getRepProgramYears(team.id);
-  const hasActive = existing.some(py => py.status === 'active');
-  if (hasActive) {
+  if (existing.length > 0) {
     return NextResponse.json(
-      { error: 'This team already has an active program year. Complete or archive it before creating a new one.' },
+      {
+        error: `${team.name} already has a season. Start the next one from the team’s current season, `
+          + 'so its roster, budget plan, fee plan and opening balance come with it.',
+        code: 'season_exists',
+      },
       { status: 409 },
     );
   }
 
   try {
+    // ⚠ LIVE FROM THE START: a season is live when it is draft or active, and "Draft" is no longer a
+    // preparation state anywhere a club reads (Ask 1). The first season is created active.
     const programYear = await createRepProgramYear(team.id, ctx!.org.id, {
       name,
       year,
+      status: 'active',
       tryoutOpen: body.tryoutOpen === true,
       tryoutDescription: body.tryoutDescription?.trim() || null,
     });
@@ -98,6 +85,30 @@ export const POST = withObservability(async (req: Request,
         { status: 500 },
       );
     }
+    /* ⚠ THE SECOND CHECK (review 2026-09-28). "No season yet" was read before the insert, so two
+       submits at once (a double click, two tabs, two admins) can each create a "first" season in a
+       different year — the unique (team, year) key catches only the same year. After the insert the
+       team is read again: if an EARLIER-created open season exists, this one withdraws (the later of
+       the two always loses, so exactly one survives in every interleaving). */
+    try {
+      const earlier = (await getRepProgramYears(team.id)).filter(s =>
+        s.id !== programYear.id && isLiveSeasonStatus(s.status)
+        && (s.createdAt < programYear.createdAt || (s.createdAt === programYear.createdAt && s.id < programYear.id)));
+      if (earlier.length > 0) {
+        await supabaseAdmin.from('rep_program_years').delete().eq('id', programYear.id);
+        return NextResponse.json(
+          { error: `${team.name} already has the ${earlier[0].name}. Refresh to see where the team is now.`, code: 'season_exists' },
+          { status: 409 },
+        );
+      }
+    } catch (e) {
+      console.error('[program-years POST] first-season re-check failed (season kept):', e);
+    }
+
+    // The coach is told (a coach invited before the team's first season is already on its staff).
+    await tellClubTeamStaff({
+      org: ctx!.org, team, actorUserId: ctx!.user.id, action: 'started', seasonName: programYear.name,
+    });
     return NextResponse.json({ programYear }, { status: 201 });
   } catch (e: any) {
     if (e?.code === '23505') {

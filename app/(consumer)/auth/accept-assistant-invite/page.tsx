@@ -16,6 +16,9 @@ interface InviteInfo {
   expired: boolean;
   /** The kind the invite offers (mig 288); null on an older invite, which offered an assistant seat. */
   staffKind: StaffKind | null;
+  /** The seat and the door (mig 312). Only the club's "Invite a coach" offers the head seat. */
+  coachRole?: 'head_coach' | 'assistant_coach';
+  sentBy?: 'portal' | 'club';
 }
 
 function AcceptForm() {
@@ -132,7 +135,7 @@ function AcceptForm() {
     return (
       <div className={styles.card}>
         <div className={styles.header}><h1 className={styles.title}>Invite expired</h1>
-          <p className={styles.sub}>This invite is no longer available. Ask the head coach to send a new one.</p></div>
+          <p className={styles.sub}>This invite is no longer available. Ask {invite.sentBy === 'club' ? 'the club' : 'the head coach'} to send a new one.</p></div>
       </div>
     );
   }
@@ -141,7 +144,10 @@ function AcceptForm() {
   const byLabel = invite.invitedByName ? `${invite.invitedByName} invited you` : 'You’ve been invited';
   // "to help coach … as an assistant coach" was the one sentence for every invite; a treasurer or
   // a helper reading it would go looking for the lineup. The verb and the seat follow the kind.
-  const kind = STAFF_KIND_COPY[invite.staffKind ?? 'assistant'];
+  // ⚠ A head-coach seat has no kind (mig 312) — never let it fall through to "as an assistant coach".
+  const kind = invite.coachRole === 'head_coach'
+    ? { inviteVerb: 'to coach', asA: 'head coach' }
+    : STAFF_KIND_COPY[invite.staffKind ?? 'assistant'];
   const verb = kind.inviteVerb;
 
   const loginHref = `/auth/login?next=${encodeURIComponent(`/auth/accept-assistant-invite?token=${token}`)}&email=${encodeURIComponent(invite.invitedEmail)}`;

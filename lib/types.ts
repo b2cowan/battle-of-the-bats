@@ -3248,7 +3248,17 @@ export type NotificationEventType =
   // time-sensitive: read this before 6:00 p.m.); the pipeline's email channel stays off — the
   // coach's own email is a separate, explicit act (`lib/practice-plan-email.ts`). TS-union change
   // only (no DB CHECK on event_type).
-  | 'practice_plan_sent';
+  | 'practice_plan_sent'
+  // Club Tier Stage 2 (2026-09-28) — the club closed, started or reopened a team's season. Reaches
+  // the team's ACTIVE staff (memberships), never the person who pressed the button. A targeted
+  // lifecycle bell like 'assistant_coach_joined': it explains why the coach's screens changed, so it
+  // has no toggle row. Push ON by default (rare, and it changes what the coach can do). Verified
+  // 2026-09-28 that neither database constrains event_type (pg_constraint on dev and prod), so a
+  // TS-union change only.
+  | 'club_season_changed'
+  // Club Tier Stage 2 — a coach the club invited from a team's Coaches page accepted (mig 312).
+  // Reaches the person at the club who sent the invitation. Targeted lifecycle bell; TS-union only.
+  | 'club_coach_joined';
 
 export interface AppNotification {
   id: string;

@@ -2,9 +2,10 @@ import { NextResponse } from 'next/server';
 import {
   getOrganizationBySlug,
   getRepTeamBySlug,
-  getRepProgramYear,
+  getRepProgramYears,
   createRepTryoutRegistration,
 } from '@/lib/db';
+import { publicTryoutSeasonOf } from '@/lib/season-live';
 import { tryoutRegistrationConfirmationHtml } from '@/lib/email';
 import { isOrgBillingSuspended } from '@/lib/org-billing-access';
 import { sendTransactionalEmail } from '@/lib/platform-email-templates';
@@ -48,14 +49,19 @@ export const POST = withObservability(async (req: Request,
   const team = await getRepTeamBySlug(org.id, teamSlug);
   if (!team) return NextResponse.json({ error: 'Team not found' }, { status: 404 });
 
-  const programYear = await getRepProgramYear(yearId);
-  if (!programYear || programYear.teamId !== team.id || programYear.orgId !== org.id) {
+  const seasons = await getRepProgramYears(team.id);
+  const programYear = seasons.find(s => s.id === yearId);
+  if (!programYear || programYear.orgId !== org.id) {
     return NextResponse.json({ error: 'Program year not found' }, { status: 404 });
   }
 
-  if (!programYear.tryoutOpen) {
+  // THE ONE PUBLIC TRYOUT RULE (Club Tier B07): only the team's LIVE season with tryouts open, and
+  // never an archived team. This accepted ANY season with the switch on — a finished season's or a
+  // draft's form, reachable by a copied link — while the team page advertised only an active one.
+  const open = publicTryoutSeasonOf(team, seasons);
+  if (!open || open.id !== programYear.id) {
     return NextResponse.json(
-      { error: 'Tryout registration is not currently open for this program year' },
+      { error: `${team.name} isn’t taking tryout sign-ups right now.`, code: 'tryouts_not_open' },
       { status: 409 },
     );
   }

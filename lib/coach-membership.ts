@@ -293,6 +293,46 @@ export async function listTeamsWithActiveHeadCoach(orgId: string): Promise<Set<s
   return new Set((data ?? []).map((r: { team_id: string }) => r.team_id));
 }
 
+/**
+ * The user ids of a team's ACTIVE staff (optionally its head coaches only) — the one read behind
+ * every "tell the team's staff" bell. ⚠ Memberships, never a season's record rows: the old accept
+ * notice read `rep_team_coaches` on the live season and so told NOBODY between seasons (Club Tier
+ * Stage 2, the B10 class).
+ */
+export async function listActiveStaffUserIds(
+  teamId: string,
+  opts?: { headCoachesOnly?: boolean },
+): Promise<string[]> {
+  let q = supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('user_id')
+    .eq('team_id', teamId)
+    .eq('status', 'active');
+  if (opts?.headCoachesOnly) q = q.eq('coach_role', 'head_coach');
+  const { data, error } = await q;
+  if (error) throw error;
+  return (data ?? []).map((r: { user_id: string }) => r.user_id);
+}
+
+/**
+ * The ACTIVE head coaches of many teams at once, oldest first — the club's Rep Teams board reads a
+ * whole club's head coaches in one query (Club Tier Stage 2, Ask 5).
+ */
+export async function listActiveHeadCoachesForTeams(
+  teamIds: readonly string[],
+): Promise<Array<{ teamId: string; userId: string }>> {
+  if (teamIds.length === 0) return [];
+  const { data, error } = await supabaseAdmin
+    .from('rep_team_staff_memberships')
+    .select('team_id, user_id, created_at')
+    .in('team_id', [...teamIds])
+    .eq('status', 'active')
+    .eq('coach_role', 'head_coach')
+    .order('created_at', { ascending: true });
+  if (error) throw error;
+  return (data ?? []).map((r: { team_id: string; user_id: string }) => ({ teamId: r.team_id, userId: r.user_id }));
+}
+
 /** Every ACTIVE member of a team's staff (head coach first, then assistants oldest-first). */
 async function getTeamStaffMembershipList(teamId: string): Promise<TeamStaffMembership[]> {
   const { data, error } = await supabaseAdmin

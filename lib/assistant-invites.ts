@@ -1,11 +1,11 @@
 import { supabaseAdmin } from './supabase-admin';
 import { generateAssistantInviteToken, hashAssistantInviteToken } from './assistant-invite-token';
-import { addStaffMember, getActiveTeamMembership } from './coach-membership';
+import { addStaffMember, getActiveTeamMembership, setStaffMemberRole } from './coach-membership';
 import {
   sanitizeAssistantGrants, sanitizeStaffKind, STAFF_KIND_COPY,
   type AssistantCapabilityGrants, type StaffKind,
 } from './coach-capabilities';
-import { sendEmail, assistantCoachInviteHtml } from './email';
+import { sendEmail, assistantCoachInviteHtml, clubCoachInviteHtml, clubCoachInviteSubject } from './email';
 import { notify } from './notify';
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? 'https://www.fieldlogichq.ca';
@@ -31,6 +31,31 @@ export async function sendAssistantInviteEmail(p: {
     p.email,
     STAFF_KIND_COPY[kind].emailSubject(p.teamName),
     assistantCoachInviteHtml({ teamName: p.teamName, invitedByName: p.invitedByName, inviteUrl, staffKind: kind, isTeamWorkspace: p.isTeamWorkspace }),
+  );
+}
+
+/**
+ * THE CLUB'S INVITE EMAIL (Club Tier Stage 2, D10 + S2-02) — sent by the team's Coaches page for a
+ * head coach or an assistant, and by that page's Resend. Its own words (`clubCoachInviteHtml`): it
+ * names the club and the person who sent it, and never says "The head coach invited you".
+ */
+export async function sendClubCoachInviteEmail(p: {
+  email: string;
+  clubName: string;
+  teamName: string;
+  coachRole: InviteCoachRole;
+  invitedByName: string | null;
+  invitedByRoleWords: string | null;
+  rawToken: string;
+}): Promise<void> {
+  const inviteUrl = `${APP_URL}/auth/accept-assistant-invite?token=${p.rawToken}`;
+  await sendEmail(
+    p.email,
+    clubCoachInviteSubject({ clubName: p.clubName, teamName: p.teamName, coachRole: p.coachRole }),
+    clubCoachInviteHtml({
+      clubName: p.clubName, teamName: p.teamName, coachRole: p.coachRole,
+      invitedByName: p.invitedByName, invitedByRoleWords: p.invitedByRoleWords, inviteUrl,
+    }),
   );
 }
 
@@ -84,11 +109,26 @@ export async function orgRequiresAssistantApproval(orgId: string): Promise<boole
 }
 
 // ── Invites ───────────────────────────────────────────────────────────────
+/** The seat an invite offers (mig 312). Only the club's door offers `head_coach`. */
+export type InviteCoachRole = 'head_coach' | 'assistant_coach';
+/** Which door sent an invite (mig 312): the portal's staff page, or the club's Coaches page. */
+export type InviteSentBy = 'portal' | 'club';
+
+/**
+ * Which door is ASKING. The portal's staff verbs never see, resend, rewrite or cancel a head-coach
+ * invitation — that seat is the club's to fill (Club Tier Stage 2) — while the club's Coaches page
+ * sees every open invitation on the team.
+ */
+export type InviteDoor = 'portal' | 'club';
+
 interface AssistantInviteRow {
   id: string;
   org_id: string;
   team_id: string;
-  program_year_id: string;
+  /** Provenance only; NULL when the team had no season yet (mig 312). */
+  program_year_id: string | null;
+  coach_role: InviteCoachRole;
+  sent_by: InviteSentBy;
   invited_by_user_id: string;
   invited_email: string;
   status: 'pending_approval' | 'pending' | 'accepted' | 'expired' | 'revoked';
@@ -105,7 +145,12 @@ interface AssistantInviteRow {
 export interface CreateAssistantInviteInput {
   orgId: string;
   teamId: string;
-  programYearId: string;
+  /** The team's working season, for provenance; null when the team has none yet (mig 312). */
+  programYearId: string | null;
+  /** The seat offered — absent = an assistant, which is every portal invite (mig 312). */
+  coachRole?: InviteCoachRole;
+  /** Which door sent it — absent = the portal (mig 312). */
+  sentBy?: InviteSentBy;
   invitedByUserId: string;
   invitedByName: string | null;
   invitedEmail: string;
@@ -122,6 +167,9 @@ export interface OpenAssistantInvite {
   teamId: string;
   invitedEmail: string;
   status: 'pending' | 'pending_approval';
+  coachRole: InviteCoachRole;
+  sentBy: InviteSentBy;
+  invitedByName: string | null;
   staffKind: StaffKind | null;
   initialCapabilities: AssistantCapabilityGrants | null;
   expiresAt: string;
@@ -134,6 +182,9 @@ function mapOpenInvite(r: AssistantInviteRow): OpenAssistantInvite {
     teamId: r.team_id,
     invitedEmail: r.invited_email,
     status: r.status as 'pending' | 'pending_approval',
+    coachRole: r.coach_role === 'head_coach' ? 'head_coach' : 'assistant_coach',
+    sentBy: r.sent_by === 'club' ? 'club' : 'portal',
+    invitedByName: r.invited_by_name,
     staffKind: sanitizeStaffKind(r.staff_kind),
     initialCapabilities: r.initial_capabilities,
     expiresAt: r.expires_at,
@@ -170,12 +221,16 @@ export async function createAssistantInvite(
       org_id: input.orgId,
       team_id: input.teamId,
       program_year_id: input.programYearId,
+      coach_role: input.coachRole ?? 'assistant_coach',
+      sent_by: input.sentBy ?? 'portal',
       invited_by_user_id: input.invitedByUserId,
       invited_email: input.invitedEmail.trim().toLowerCase(),
       token_hash: tokenHash,
       status,
-      initial_capabilities: input.initialCapabilities ?? null,
-      staff_kind: input.staffKind,
+      // A head coach carries no grants and no kind (their role IS everything) — the CHECK added
+      // by mig 312 refuses a kind on a head-coach invite, and grants would be dead weight.
+      initial_capabilities: input.coachRole === 'head_coach' ? null : (input.initialCapabilities ?? null),
+      staff_kind: input.coachRole === 'head_coach' ? null : input.staffKind,
       invited_by_name: input.invitedByName,
       team_name: input.teamName,
     })
@@ -200,26 +255,37 @@ export async function createAssistantInvite(
   return { inviteId: data.id, rawToken, status, invite: mapOpenInvite(data) };
 }
 
-/** The team's outstanding invites, newest first — the head coach's pending rows (R3). */
-export async function listOpenAssistantInvitesForTeam(teamId: string): Promise<OpenAssistantInvite[]> {
-  const { data, error } = await supabaseAdmin
+/**
+ * Narrow a query to what `door` may see: the portal never sees a head-coach invitation (that seat
+ * is the club's to fill, Club Tier Stage 2); the club sees every open invitation on the team.
+ */
+function forDoor<Q extends { eq: (col: string, val: string) => Q }>(q: Q, door: InviteDoor): Q {
+  return door === 'portal' ? q.eq('coach_role', 'assistant_coach') : q;
+}
+
+/** The team's outstanding invites, newest first — the head coach's pending rows (R3), or the
+ *  club's Coaches page (`door: 'club'`, head-coach invitations included). */
+export async function listOpenAssistantInvitesForTeam(teamId: string, door: InviteDoor = 'portal'): Promise<OpenAssistantInvite[]> {
+  const { data, error } = await forDoor(supabaseAdmin
     .from('assistant_invite_tokens')
     .select('*')
     .eq('team_id', teamId)
-    .in('status', ['pending', 'pending_approval'])
+    .in('status', ['pending', 'pending_approval']), door)
     .order('created_at', { ascending: false });
   if (error) throw error;
   return (data ?? []).map(r => mapOpenInvite(r as AssistantInviteRow));
 }
 
 /** One outstanding invite, TEAM-SCOPED: an id from another team is null, never a row. */
-export async function getOpenAssistantInviteForTeam(inviteId: string, teamId: string): Promise<OpenAssistantInvite | null> {
-  const { data, error } = await supabaseAdmin
+export async function getOpenAssistantInviteForTeam(
+  inviteId: string, teamId: string, door: InviteDoor = 'portal',
+): Promise<OpenAssistantInvite | null> {
+  const { data, error } = await forDoor(supabaseAdmin
     .from('assistant_invite_tokens')
     .select('*')
     .eq('id', inviteId)
     .eq('team_id', teamId)
-    .in('status', ['pending', 'pending_approval'])
+    .in('status', ['pending', 'pending_approval']), door)
     .maybeSingle<AssistantInviteRow>();
   if (error) throw error;
   return data ? mapOpenInvite(data) : null;
@@ -240,11 +306,14 @@ export async function updateAssistantInviteAccess(
   if (patch.staffKind) update.staff_kind = patch.staffKind;
   if (patch.initialCapabilities) update.initial_capabilities = patch.initialCapabilities;
   if (Object.keys(update).length === 0) return getOpenAssistantInviteForTeam(inviteId, teamId);
+  // ⚠ Never a head-coach invitation (mig 312): it carries no kind or grants by rule, and it is the
+  // club's seat — the portal's editor is the only caller.
   const { data, error } = await supabaseAdmin
     .from('assistant_invite_tokens')
     .update(update)
     .eq('id', inviteId)
     .eq('team_id', teamId)
+    .eq('coach_role', 'assistant_coach')
     .in('status', ['pending', 'pending_approval'])
     .select('*')
     .maybeSingle<AssistantInviteRow>();
@@ -267,14 +336,14 @@ export async function updateAssistantInviteAccess(
 export async function resendAssistantInvite(
   inviteId: string,
   teamId: string,
-  opts: { requireApproval: boolean },
+  opts: { requireApproval: boolean; door?: InviteDoor },
 ): Promise<{ invite: OpenAssistantInvite; rawToken: string | null; invitedByName: string | null; teamName: string | null } | null> {
-  const { data: row, error } = await supabaseAdmin
+  const { data: row, error } = await forDoor(supabaseAdmin
     .from('assistant_invite_tokens')
     .select('*')
     .eq('id', inviteId)
     .eq('team_id', teamId)
-    .eq('status', 'pending')
+    .eq('status', 'pending'), opts.door ?? 'portal')
     .maybeSingle<AssistantInviteRow>();
   if (error) throw error;
   if (!row) return null;
@@ -282,6 +351,9 @@ export async function resendAssistantInvite(
     orgId: row.org_id,
     teamId: row.team_id,
     programYearId: row.program_year_id,
+    // The same seat, from the same door — a resend changes the link and the seven days, nothing else.
+    coachRole: row.coach_role,
+    sentBy: row.sent_by,
     invitedByUserId: row.invited_by_user_id,
     invitedByName: row.invited_by_name,
     invitedEmail: row.invited_email,
@@ -316,18 +388,21 @@ export async function approveAssistantInvite(
   return { rawToken, invite: updated };
 }
 
-/** Cancel an open invite. Pass `teamId` wherever the caller resolved one — the WHERE then re-asserts it. */
-export async function revokeAssistantInvite(inviteId: string, teamId?: string): Promise<void> {
-  let q = supabaseAdmin
+/** Cancel an open invite. Pass `teamId` wherever the caller resolved one — the WHERE then re-asserts it.
+ *  The portal's doors (the default) can never cancel the club's head-coach invitation. */
+export async function revokeAssistantInvite(inviteId: string, teamId?: string, door: InviteDoor = 'portal'): Promise<void> {
+  let q = forDoor(supabaseAdmin
     .from('assistant_invite_tokens')
     .update({ status: 'revoked' })
     .eq('id', inviteId)
-    .in('status', ['pending', 'pending_approval']);
+    .in('status', ['pending', 'pending_approval']), door);
   if (teamId) q = q.eq('team_id', teamId);
   await q;
 }
 
-/** Outstanding invites across a whole org (admin oversight), joined to team name + group for scoping. */
+/** Outstanding ASSISTANT-seat invites across a whole org (the Assistant coaches oversight page),
+ *  joined to team name + group for scoping. A head-coach invitation (mig 312) lives on its team's
+ *  Coaches page, not here — this page approves and removes assistants. */
 export async function listOpenAssistantInvitesForOrg(
   orgId: string,
 ): Promise<{ id: string; teamId: string; teamName: string | null; teamGroupId: string | null; invitedEmail: string; status: string; staffKind: StaffKind | null; expiresAt: string; createdAt: string }[]> {
@@ -335,6 +410,7 @@ export async function listOpenAssistantInvitesForOrg(
     .from('assistant_invite_tokens')
     .select('id, team_id, invited_email, status, staff_kind, expires_at, created_at, rep_teams!team_id ( name, group_id )')
     .eq('org_id', orgId)
+    .eq('coach_role', 'assistant_coach')
     .in('status', ['pending', 'pending_approval'])
     .order('created_at', { ascending: false });
   return (data ?? []).map((r: any) => ({
@@ -361,6 +437,8 @@ export async function getAssistantInviteById(
 export async function getAssistantInviteByToken(rawToken: string): Promise<{
   status: string; teamName: string | null; orgName: string | null; invitedByName: string | null;
   invitedEmail: string; expired: boolean; staffKind: StaffKind | null;
+  /** The seat offered and who sent it (mig 312) — so the accept page never calls a head coach an assistant. */
+  coachRole: InviteCoachRole; sentBy: InviteSentBy;
 } | null> {
   const { data: row } = await supabaseAdmin
     .from('assistant_invite_tokens')
@@ -381,16 +459,25 @@ export async function getAssistantInviteByToken(rawToken: string): Promise<{
     invitedEmail: isPending ? row.invited_email : '',
     expired: new Date(row.expires_at).getTime() < Date.now(),
     staffKind: sanitizeStaffKind(row.staff_kind),
+    coachRole: row.coach_role === 'head_coach' ? 'head_coach' : 'assistant_coach',
+    sentBy: row.sent_by === 'club' ? 'club' : 'portal',
   };
 }
 
-/** Claim an invite for a signed-in user: create the minimal guest membership + assistant-coach row.
- *  DELIBERATELY does NOT call the one-org guard — an assistant is a team guest (cross-club OK). */
+/** Claim an invite for a signed-in user: create the minimal guest membership + the team membership
+ *  in the seat the invite offers (an assistant, or — from the club's door, mig 312 — the head coach).
+ *  DELIBERATELY does NOT call the one-org guard — coaching staff are team guests (cross-club OK). */
 export async function acceptAssistantInvite(
   rawToken: string,
   userId: string,
   userEmail: string,
-): Promise<{ ok: true; orgSlug: string; teamId: string; staffKind: StaffKind | null } | { ok: false; error: string; status: number }> {
+): Promise<
+  | {
+      ok: true; orgSlug: string; teamId: string; staffKind: StaffKind | null;
+      coachRole: InviteCoachRole; sentBy: InviteSentBy; invitedByUserId: string; teamName: string | null;
+    }
+  | { ok: false; error: string; status: number }
+> {
   const tokenHash = hashAssistantInviteToken(rawToken);
   const { data: row } = await supabaseAdmin
     .from('assistant_invite_tokens')
@@ -403,7 +490,14 @@ export async function acceptAssistantInvite(
   if (row.status !== 'pending') return { ok: false, error: 'This invite is no longer available.', status: 409 };
   if (new Date(row.expires_at).getTime() < Date.now()) {
     await supabaseAdmin.from('assistant_invite_tokens').update({ status: 'expired' }).eq('id', row.id);
-    return { ok: false, error: 'This invite has expired. Ask the head coach to send a new one.', status: 410 };
+    return {
+      ok: false,
+      // The club sent it, so the club sends the next one (Club Tier Stage 2).
+      error: row.sent_by === 'club'
+        ? 'This invite has expired. Ask the club to send a new one.'
+        : 'This invite has expired. Ask the head coach to send a new one.',
+      status: 410,
+    };
   }
 
   // The invite is addressed to a specific email — only that person may accept it. Possession of the
@@ -468,22 +562,38 @@ export async function acceptAssistantInvite(
   //    invite carries none, but the ROLE is always the invite's. (Flagged by /simplify's
   //    altitude pass 2026-08-16; recorded as intended behavior, not an oversight.)
   const existing = await getActiveTeamMembership(row.org_id, row.team_id, userId);
+  const coachRole: InviteCoachRole = row.coach_role === 'head_coach' ? 'head_coach' : 'assistant_coach';
   // The word that actually applies: an existing member keeps theirs (the invite changed nothing —
   // the invite route refuses to re-invite active staff, so this is the head coach accepting their
-  // own invite, or a race); everyone else lands with the invite's.
-  const staffKind = existing ? existing.staffKind : sanitizeStaffKind(row.staff_kind);
+  // own invite, or a race); everyone else lands with the invite's. A head coach carries no kind.
+  let staffKind = existing ? existing.staffKind : (coachRole === 'head_coach' ? null : sanitizeStaffKind(row.staff_kind));
+  /** The seat they ACTUALLY hold after this — what the notices say (never the invite's hope). */
+  let seated: InviteCoachRole = existing ? existing.coachRole : coachRole;
   if (!existing) {
-    const grants = row.initial_capabilities ? sanitizeAssistantGrants(row.initial_capabilities) : null;
+    const grants = coachRole === 'assistant_coach' && row.initial_capabilities
+      ? sanitizeAssistantGrants(row.initial_capabilities) : null;
     await addStaffMember({
       orgId: row.org_id,
       teamId: row.team_id,
       userId,
-      coachRole: 'assistant_coach',
+      coachRole,
       capabilities: grants && Object.keys(grants).length > 0 ? grants : null,
       // The word the head coach chose lands with the grants it chose (mig 288).
       staffKind,
     });
+  } else if (coachRole === 'head_coach' && existing.coachRole !== 'head_coach') {
+    // The club named an existing assistant as head coach (a race: the club's invite route refuses
+    // someone already on the staff). The invite names the SEAT, so the seat is honoured — the
+    // promotion runs through the one role-change write, which keeps the projection in step.
+    const promoted = await setStaffMemberRole(existing.id, row.team_id, 'head_coach');
+    // A lost race (they were removed in the same instant) leaves them as they were — and the club is
+    // then NOT told "the team has its head coach" (review 2026-09-28).
+    if (promoted.ok) { staffKind = null; seated = 'head_coach'; }
   }
 
-  return { ok: true, orgSlug: org.data.slug, teamId: row.team_id, staffKind };
+  return {
+    ok: true, orgSlug: org.data.slug, teamId: row.team_id, staffKind,
+    coachRole: seated, sentBy: row.sent_by === 'club' ? 'club' : 'portal',
+    invitedByUserId: row.invited_by_user_id, teamName: row.team_name,
+  };
 }

@@ -1,3 +1,4 @@
+import { refuseWithoutLiveSeat } from '@/lib/coach-season-refusal';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import { getCoachingAssignmentsForUser, updateRepTeamDrill } from '@/lib/db';
@@ -27,7 +28,7 @@ export const PATCH = withObservability(async (req: Request,
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return forbidden();
+  if (!assignment) return refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId);
 
   const denied = denyUnless(canWritePracticePlans(assignment.capabilities), 'Managing drills needs Schedule: View + edit. Ask your head coach.');
   if (denied) return denied;

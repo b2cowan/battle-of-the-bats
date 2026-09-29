@@ -35,6 +35,9 @@ export const NOTIFICATION_EVENT_LABELS: Record<NotificationEventType, string> = 
   tournament_announcement:           'Tournament announcement',
   coach_insights_digest:             'Weekly team insights',
   practice_plan_sent:                'Practice plan sent',
+  // Club Tier Stage 2 — targeted lifecycle bells (no preferences row, like assistant_coach_joined).
+  club_season_changed:               'Season changed by your club',
+  club_coach_joined:                 'Coach joined from your invitation',
 };
 
 export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, string> = {
@@ -61,6 +64,8 @@ export const NOTIFICATION_EVENT_DESCRIPTIONS: Record<NotificationEventType, stri
   tournament_announcement:           'An organizer posts a day-of announcement (like a rain delay or schedule shift) with the notify option on.',
   coach_insights_digest:             'Your team’s Sunday week-in-review — the top Insights findings, only when something stood out.',
   practice_plan_sent:                'A coach sent you the practice plan to read before practice — with the stations you’re running.',
+  club_season_changed:               'Your club closed, started or reopened your team’s season.',
+  club_coach_joined:                 'A coach you invited from a team’s Coaches page accepted and joined the team.',
 };
 
 // ── Section groups (org-level preferences page) ────────────────────────────────
@@ -164,6 +169,9 @@ export const PUSH_DEFAULT_ON_EVENTS: ReadonlySet<NotificationEventType> = new Se
   // coach pressed Send to staff. (The coach's own EMAIL is a separate explicit act outside this
   // pipeline — lib/practice-plan-email.ts — so the email channel here stays off.)
   'practice_plan_sent',
+  // Rare, and it changes what the coach can do today (their screens close or reopen).
+  'club_season_changed',
+  'club_coach_joined',
 ]);
 
 /**
@@ -227,6 +235,9 @@ export const NOTIFICATION_CATEGORY: Record<NotificationEventType, NotificationCa
   coach_insights_digest:              'know',
   // A coach sent the practice plan — a read, not a decision to make.
   practice_plan_sent:                 'know',
+  // The club changed the season / a club-invited coach joined — news, not a decision to make.
+  club_season_changed:                'know',
+  club_coach_joined:                  'know',
   // A family's own team news — informational, never a decision to make.
   family_game_update:                 'know',
   // Talk — conversation (moves to the Chat tab in P3)

@@ -7,16 +7,22 @@ import {
   createRepRosterPlayer,
   getRepTeamCoachForUserYear,
   suggestContinuityLinksBulk,
+  getActiveRepProgramYear,
+  getLatestClosedRepProgramYear,
 } from './db';
 import { addStaffMember, projectMembershipsOntoProgramYear } from './coach-membership';
 import { seasonClosingCashCents } from './coach-register-book';
 import { openingBalanceFor, carriesProvenance, type SeasonCarryChoice } from './season-carry';
 import { carryBudgetPlan, shiftDateYears } from './rep-budget-carry';
 import { createRepPlayerDuesSchedule, replaceRepDuesInstallments } from './db';
+import { decideStrayOpenSeasons, isLiveSeasonStatus, twoOpenSeasonsMessage } from './season-live';
 import type { RepProgramYear } from './types';
 
 /**
  * Coach Premium — Phase 5: "Start next season" for a standalone Premium coach.
+ * ⚖ Club Tier Stage 2 (Ask 1 (a), owner 2026-09-28): the SAME roll is also the club's door for a
+ * club-owned team, called by the club's owner or admin — `managedBy` says which, and the two
+ * differ in exactly two places (the stray-open-season rule and the no-staff fallback).
  *
  * Rolls a team into a NEW rep_program_years season WITHOUT an org admin (today admin-only).
  * Per the locked owner decisions (docs/projects/active/COACH_PREMIUM_PHASE5_SEASON_DIVISION_PLAN.md):
@@ -63,11 +69,14 @@ export type { SeasonCarryChoice } from './season-carry';
 export class SeasonRolloverError extends Error {
   code: string;
   status: number;
-  constructor(code: string, status: number, message: string) {
+  /** Structured detail a screen can draw from (the two open seasons, for `two_open_seasons`). */
+  details?: Record<string, unknown>;
+  constructor(code: string, status: number, message: string, details?: Record<string, unknown>) {
     super(message);
     this.name = 'SeasonRolloverError';
     this.code = code;
     this.status = status;
+    this.details = details;
   }
 }
 
@@ -99,8 +108,17 @@ export async function startNextRepSeason(params: {
   /** What to do with the money the closing season is holding (mig 262). Absent ⇒ carry nothing,
    *  which is what every roll did before this existed. */
   carryCash?: SeasonCarryChoice;
+  /**
+   * WHO HOLDS THIS TEAM'S SEASON DOORS (Club Tier Stage 2, Ask 1 (a)) — required, so neither caller
+   * can inherit the other's rules by omission. `'coach'`: a standalone portal's head coach (the
+   * self-heal below completes a stray open season). `'club'`: a club owner or admin (it refuses
+   * instead, and never mints the initiator onto the team's staff).
+   */
+  managedBy: 'coach' | 'club';
+  /** For the two-open-seasons refusal's sentence. */
+  teamName?: string;
 }): Promise<RepSeasonRolloverSummary> {
-  const { orgId, teamId, workspaceId, currentSeason, initiatorUserId, newName, newYear, carryBudget, carryFees } = params;
+  const { orgId, teamId, workspaceId, currentSeason, initiatorUserId, newName, newYear, carryBudget, carryFees, managedBy } = params;
   const carryCash: SeasonCarryChoice = params.carryCash ?? { mode: 'none' };
 
   const summary: RepSeasonRolloverSummary = {
@@ -124,18 +142,26 @@ export async function startNextRepSeason(params: {
   if (existing.some(y => y.year === newYear)) {
     throw new SeasonRolloverError('year_exists', 409, `A ${newYear} season already exists for this team. Pick a different year.`);
   }
-  // Self-heal a prior partial roll: complete any open season that isn't the current one. A standalone
-  // team has no other legitimate open season, so a leftover 'active'/'draft' row is the residue of an
-  // earlier attempt that failed on its last step — completing it restores the single-open invariant
-  // and prevents a transient failure from permanently blocking future rolls.
-  const staleOpen = existing.filter(
-    y => (y.status === 'draft' || y.status === 'active') && y.id !== currentSeason.id,
-  );
-  for (const stale of staleOpen) {
-    try {
-      await updateRepProgramYear(stale.id, { status: 'completed' });
-    } catch (e) {
-      console.error('[rep-season-rollover] could not auto-complete a stale open season:', e);
+  // A SECOND open season. For a standalone team it is the residue of an earlier roll that failed on
+  // its last step, and completing it restores the single-open invariant (a transient failure must
+  // not block every future roll). ⚠ For a CLUB team it may be a season somebody made on purpose, so
+  // the roll refuses and names both — the rule and its reasons live in `decideStrayOpenSeasons`
+  // (pure, unit-tested both ways) rather than in this database-bound module.
+  const stray = decideStrayOpenSeasons(existing, currentSeason.id, managedBy);
+  if (stray.action === 'refuse') {
+    throw new SeasonRolloverError(
+      'two_open_seasons', 409,
+      twoOpenSeasonsMessage(params.teamName ?? 'This team', stray.open),
+      { openSeasons: stray.open },
+    );
+  }
+  if (stray.action === 'complete') {
+    for (const staleId of stray.seasonIds) {
+      try {
+        await updateRepProgramYear(staleId, { status: 'completed' });
+      } catch (e) {
+        console.error('[rep-season-rollover] could not auto-complete a stale open season:', e);
+      }
     }
   }
 
@@ -221,7 +247,11 @@ export async function startNextRepSeason(params: {
     // capabilities) and it means a member added between seasons is not skipped. Access itself
     // never derives from these rows any more; they are the record + what the write routes read.
     let memberIds = await projectMembershipsOntoProgramYear(teamId, orgId, newSeason.id);
-    if (memberIds.length === 0) {
+    // ⚠ STANDALONE ONLY. There the initiator IS the team's head coach, so a membership-less team is
+    // a pre-M1 data gap to repair. A club's initiator is an owner or admin, NOT a coach — minting
+    // them as head coach would put the club's board on the team's staff. A club team with no staff
+    // simply starts its season with none, and the club's board says "No head coach".
+    if (memberIds.length === 0 && managedBy === 'coach') {
       // The initiator reached this code as the team's head coach; a team with zero memberships is
       // a data gap (pre-M1 stragglers), and the roll must not strand them — mint theirs now.
       // addStaffMember also projects onto the live year, which IS the just-created active season,
@@ -418,8 +448,13 @@ export async function startNextRepSeason(params: {
   }
 
   // ── Finalize: complete the previous season so it becomes read-only history ──
+  // ⚠ Only a LIVE one. Rolling from a team's newest CLOSED season (the between-seasons door) used to
+  // write 'completed' over it too — harmless on a completed season, but it silently un-archived an
+  // archived one (Club Tier Stage 2: the club's door rolls from closed seasons as often as live ones).
   try {
-    await updateRepProgramYear(currentSeason.id, { status: 'completed' });
+    if (isLiveSeasonStatus(currentSeason.status)) {
+      await updateRepProgramYear(currentSeason.id, { status: 'completed' });
+    }
   } catch (e) {
     summary.warnings.push('The previous season could not be marked complete — it may still show as active. Refresh, or contact support if it persists.');
     console.error('[rep-season-rollover] complete previous season failed:', e);
@@ -434,4 +469,98 @@ export async function startNextRepSeason(params: {
     summary.fees.failed === 0;
 
   return summary;
+}
+
+// ── Close and reopen — the other two season doors, one copy for both callers ─────────────────
+//
+// ⚠ ONE HOME, like the roll above (Club Tier Stage 2 /simplify): the portal's seasons route and the
+// club's seasons route both close and reopen through these, so the race-safe WHERE and the staff
+// re-seat cannot drift between the two doors. Each route keeps its own gate and its own words.
+
+export interface SeasonRowSummary { id: string; name: string; year: number; status: string }
+
+/**
+ * Close one OPEN season. ⚠ NOTHING IS CREATED, MOVED OR DELETED — a status flip on one row, with
+ * every condition re-asserted in the WHERE: two people (or a close and a roll) acting in the same
+ * second must not close a season that has already moved on. Null when it was no longer open (the
+ * losing side of a race); throws on a database error.
+ */
+export async function closeOpenSeason(teamId: string, seasonId: string): Promise<SeasonRowSummary | null> {
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .update({ status: 'completed', updated_at: new Date().toISOString() })
+    .eq('id', seasonId)
+    .eq('team_id', teamId)
+    .in('status', ['draft', 'active'])
+    .select('id, name, year, status')
+    .maybeSingle<SeasonRowSummary>();
+  if (error) throw error;
+  return data ?? null;
+}
+
+export type ReopenOutcome =
+  | { ok: true; season: SeasonRowSummary }
+  /** A newer season is live — giving the old one back would mean deleting it (plan §3.4, unbuilt). */
+  | { ok: false; reason: 'live_season_exists'; liveSeasonName: string }
+  /** No completed season to reopen (an ARCHIVED one is never reopened). */
+  | { ok: false; reason: 'nothing_to_reopen' }
+  /** It stopped being closed between the read and the write. */
+  | { ok: false; reason: 'no_longer_closed' };
+
+/**
+ * Reopen the team's NEWEST closed season — the safe half only: refused while any season is live.
+ * Throws on a database error.
+ *
+ * ⚠ RE-SEATS THE CURRENT STAFF on the reopened season (found building Club Tier Stage 2). Staff
+ * belong to the team, but a season's write routes admit people through that season's record rows —
+ * and a coach added, promoted or re-granted while the team sat between seasons has no row (or a
+ * stale one) on a season that closed before they arrived. Without this, reopening locks out exactly
+ * the people the team gained since it closed. The projection is collision-tolerant and converges
+ * existing rows to each membership; a removed coach is not a member, so their record row stays a
+ * record. Best-effort: the reopen has landed.
+ */
+export async function reopenLatestClosedSeason(teamId: string, orgId: string): Promise<ReopenOutcome> {
+  const live = await getActiveRepProgramYear(teamId);
+  if (live) return { ok: false, reason: 'live_season_exists', liveSeasonName: live.name };
+  const closed = await getLatestClosedRepProgramYear(teamId);
+  if (!closed || closed.status !== 'completed') return { ok: false, reason: 'nothing_to_reopen' };
+  const { data, error } = await supabaseAdmin
+    .from('rep_program_years')
+    .update({ status: 'active', updated_at: new Date().toISOString() })
+    .eq('id', closed.id)
+    .eq('team_id', teamId)
+    .eq('status', 'completed')
+    .select('id, name, year, status')
+    .maybeSingle<SeasonRowSummary>();
+  if (error) throw error;
+  if (!data) return { ok: false, reason: 'no_longer_closed' };
+
+  /* ⚠ THE SECOND CHECK — the one that holds (review 2026-09-28). The WHERE above re-asserts THIS row,
+     but "no season is live" is a fact about the whole team: a roll (or a first season) landing in
+     the same instant leaves two live seasons, the state a club must never reach silently. So the
+     team is read again AFTER the flip and, if another season is now live, this one is put back —
+     the convergence `setStaffMemberRole` uses for its own count-then-act. A failed re-read keeps the
+     reopen (the old behaviour) rather than turning a landed reopen into an error. */
+  try {
+    const otherLive = (await getRepProgramYears(teamId))
+      .filter(s => isLiveSeasonStatus(s.status) && s.id !== data.id);
+    if (otherLive.length > 0) {
+      await supabaseAdmin
+        .from('rep_program_years')
+        .update({ status: 'completed', updated_at: new Date().toISOString() })
+        .eq('id', data.id)
+        .eq('team_id', teamId)
+        .eq('status', 'active');
+      return { ok: false, reason: 'live_season_exists', liveSeasonName: otherLive[0].name };
+    }
+  } catch (e) {
+    console.error('[rep-season-rollover] reopen re-check failed (kept the reopen):', e);
+  }
+
+  try {
+    await projectMembershipsOntoProgramYear(teamId, orgId, data.id);
+  } catch (e) {
+    console.error('[rep-season-rollover] staff re-seat on reopen failed (season reopened):', e);
+  }
+  return { ok: true, season: data };
 }

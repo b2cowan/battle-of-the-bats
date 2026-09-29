@@ -4,6 +4,7 @@ import { getAuthContext, unauthorized, forbidden, type AuthContext } from './api
 import {
   getRepTeam, getCoachingAssignmentsForUser, getActiveRepProgramYear, type CoachingAssignment,
 } from './db';
+import { refuseWithoutLiveSeat, seasonNotLiveResponse } from './coach-season-refusal';
 import type { RepTeam, RepProgramYear } from './types';
 
 /**
@@ -58,7 +59,7 @@ export async function resolveCoachTeamAssignment(
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
+  if (!assignment) return { error: await refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId) };
 
   return { ctx, team, assignment };
 }
@@ -76,9 +77,8 @@ export async function resolveLiveCoachTeamContext(
   if ('error' in resolved) return resolved;
 
   const programYear = await getActiveRepProgramYear(teamId);
-  if (!programYear) {
-    return { error: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
-  }
+  // The season closed between the assignment read and this one — the same coded answer.
+  if (!programYear) return { error: await seasonNotLiveResponse(resolved.ctx.org, teamId) };
 
   return { ...resolved, programYear };
 }

@@ -1,3 +1,4 @@
+import { refuseWithoutLiveSeat } from '@/lib/coach-season-refusal';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from '@/lib/api-auth';
 import {
@@ -47,7 +48,7 @@ async function resolveCoach(orgSlug: string, teamId: string): Promise<Resolved> 
   ]);
   if (!team || team.orgId !== ctx.org.id) return { ok: false, res: NextResponse.json({ error: 'Not found' }, { status: 404 }) };
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { ok: false, res: forbidden() };
+  if (!assignment) return { ok: false, res: await refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId) };
   if (!programYear) return { ok: false, res: NextResponse.json({ error: 'No active program year for this team' }, { status: 404 }) };
   return { ok: true, orgId: ctx.org.id, userId: ctx.user.id, teamId, programYear, assignment };
 }

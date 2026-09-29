@@ -1,4 +1,6 @@
 import { seasonDuesBand, type DuesCreditKind } from './coach-dues-actual';
+import { LIVE_SEASON_STATUSES, liveSeasonOf, publicTryoutSeasonOf } from './season-live';
+import { countsOnRoster, rosterCountOf, seasonRecordOf } from './team-season-figures';
 import { supabase } from './supabase';
 import { supabaseAdmin } from './supabase-admin';
 import type { MeasurableTypeCreateFields } from './development-input';
@@ -3374,21 +3376,42 @@ export interface OpenTryout {
   programYearName: string;
 }
 
+/**
+ * The club homepage's "Tryouts are open" list — THE ONE PUBLIC TRYOUT RULE (`publicTryoutSeasonOf`,
+ * Club Tier B07): per team, its LIVE season (the newest draft or active one), when that season's
+ * tryouts are open and the team is not archived. This list used to have its own third rule (any
+ * ACTIVE season with the switch on), so it could advertise a season the team page did not.
+ */
 export async function getOpenTryoutsByOrg(orgId: string): Promise<OpenTryout[]> {
   const { data, error } = await supabaseAdmin
     .from('rep_program_years')
-    .select('id, name, team_id, rep_teams!team_id(name, slug)')
+    .select('id, name, team_id, status, created_at, tryout_open, rep_teams!team_id(name, slug, is_archived)')
     .eq('org_id', orgId)
-    .eq('status', 'active')
-    .eq('tryout_open', true);
+    .in('status', [...LIVE_SEASON_STATUSES]);
   if (error) throw error;
-  return (data ?? []).map((r: any) => ({
-    teamId: r.team_id,
-    teamName: r.rep_teams?.name ?? '',
-    teamSlug: r.rep_teams?.slug ?? '',
-    programYearId: r.id,
-    programYearName: r.name,
-  }));
+  const byTeam = new Map<string, any[]>();
+  for (const r of (data ?? []) as any[]) {
+    const list = byTeam.get(r.team_id) ?? [];
+    list.push(r);
+    byTeam.set(r.team_id, list);
+  }
+  const out: OpenTryout[] = [];
+  for (const rows of byTeam.values()) {
+    const team = rows[0].rep_teams;
+    const open = publicTryoutSeasonOf(
+      { isArchived: !!team?.is_archived },
+      rows.map(r => ({ ...r, createdAt: r.created_at as string, tryoutOpen: !!r.tryout_open })),
+    );
+    if (!open) continue;
+    out.push({
+      teamId: open.team_id,
+      teamName: team?.name ?? '',
+      teamSlug: team?.slug ?? '',
+      programYearId: open.id,
+      programYearName: open.name,
+    });
+  }
+  return out;
 }
 
 export async function getRepTeam(teamId: string): Promise<RepTeam | null> {
@@ -3456,6 +3479,8 @@ export async function updateRepTeam(teamId: string, fields: {
   description?: string | null;
   color?: string | null;
   isArchived?: boolean;
+  /** The team's group (the caller has checked it is one of the org's), or null for Ungrouped. */
+  groupId?: string | null;
   /** Minutes from `ARRIVAL_PRESET_MINUTES` or null; the CHECK on the column refuses anything else. */
   arrivalBeforeGameMin?: number | null;
   arrivalBeforePracticeMin?: number | null;
@@ -3469,6 +3494,7 @@ export async function updateRepTeam(teamId: string, fields: {
   if (fields.description !== undefined) patch.description = fields.description;
   if (fields.color !== undefined) patch.color = fields.color;
   if (fields.isArchived !== undefined) patch.is_archived = fields.isArchived;
+  if (fields.groupId !== undefined) patch.group_id = fields.groupId;
   const { data, error } = await supabaseAdmin
     .from('rep_teams')
     .update(patch)
@@ -3603,6 +3629,8 @@ export async function createRepProgramYear(teamId: string, orgId: string, fields
   year: number;
   tryoutOpen?: boolean;
   tryoutDescription?: string | null;
+  /** Absent = the column default ('draft'). The club's first-season door passes 'active' (Stage 2). */
+  status?: RepProgramYearStatus;
 }): Promise<RepProgramYear> {
   const { data, error } = await supabaseAdmin
     .from('rep_program_years')
@@ -3611,6 +3639,7 @@ export async function createRepProgramYear(teamId: string, orgId: string, fields
       org_id: orgId,
       name: fields.name,
       year: fields.year,
+      ...(fields.status ? { status: fields.status } : {}),
       tryout_open: fields.tryoutOpen ?? false,
       tryout_description: fields.tryoutDescription ?? null,
     })
@@ -3968,7 +3997,8 @@ export interface OrgAssistantCoach {
   teamId: string;
   teamName: string;
   teamGroupId: string | null;
-  programYearId: string;
+  /** The team's LIVE season, when it has one — null between seasons (the person is still staff). */
+  programYearId: string | null;
   programYearName: string;
   userId: string;
   displayName: string | null;
@@ -3976,25 +4006,44 @@ export interface OrgAssistantCoach {
   capabilities: AssistantCapabilityGrants | null;
 }
 
-/** Every ASSISTANT coach across an org's draft/active seasons — the admin oversight list.
- *  Enriched with team + name/email + their capability grants. Head coaches are excluded. */
+/**
+ * Every ASSISTANT on an org's teams — the admin oversight list. Enriched with team + name/email +
+ * their CURRENT capability grants. Head coaches are excluded.
+ *
+ * ⚠ READ FROM TEAM MEMBERSHIP (Club Tier Stage 2, B10). This read the live seasons' record rows, so
+ * between seasons a club's assistants vanished from the list while they still held the team, and it
+ * showed the grants a season row was minted with rather than the ones the person holds now. `coachId`
+ * is now the MEMBERSHIP id (the oversight route's remove resolves it; a season row's id still works).
+ */
 export async function getOrgAssistantCoaches(orgId: string): Promise<OrgAssistantCoach[]> {
   const { data, error } = await supabaseAdmin
-    .from('rep_team_coaches')
+    .from('rep_team_staff_memberships')
     .select(`
-      id, team_id, program_year_id, user_id, capabilities,
-      rep_teams!team_id ( name, group_id ),
-      rep_program_years!program_year_id ( name, status )
+      id, team_id, user_id, capabilities,
+      rep_teams!team_id ( name, group_id )
     `)
     .eq('org_id', orgId)
+    .eq('status', 'active')
     .eq('coach_role', 'assistant_coach');
   if (error) throw error;
 
-  const rows = (data ?? []).filter((r: any) => {
-    const s = r.rep_program_years?.status;
-    return s === 'draft' || s === 'active';
-  });
+  const rows = (data ?? []) as any[];
   if (rows.length === 0) return [];
+
+  const teamIds = [...new Set(rows.map(r => r.team_id as string))];
+  const { data: openYears, error: yErr } = await supabaseAdmin
+    .from('rep_program_years')
+    .select('id, team_id, name, status, created_at')
+    .in('team_id', teamIds)
+    .in('status', [...LIVE_SEASON_STATUSES]);
+  if (yErr) throw yErr;
+  const liveByTeam = new Map<string, { id: string; name: string }>();
+  for (const teamId of teamIds) {
+    const live = liveSeasonOf(((openYears ?? []) as any[])
+      .filter(y => y.team_id === teamId)
+      .map(y => ({ id: y.id as string, name: y.name as string, status: y.status as string, createdAt: y.created_at as string })));
+    if (live) liveByTeam.set(teamId, live);
+  }
 
   const userIds = [...new Set(rows.map((r: any) => r.user_id as string))];
   const { data: memberRows } = await supabaseAdmin
@@ -4020,8 +4069,8 @@ export async function getOrgAssistantCoaches(orgId: string): Promise<OrgAssistan
     teamId: r.team_id as string,
     teamName: (r.rep_teams?.name as string | null) ?? '',
     teamGroupId: (r.rep_teams?.group_id as string | null) ?? null,
-    programYearId: r.program_year_id as string,
-    programYearName: (r.rep_program_years?.name as string | null) ?? '',
+    programYearId: liveByTeam.get(r.team_id)?.id ?? null,
+    programYearName: liveByTeam.get(r.team_id)?.name ?? '',
     userId: r.user_id as string,
     displayName: nameByUser.get(r.user_id) ?? null,
     email: emailByUser.get(r.user_id) ?? null,
@@ -4621,11 +4670,14 @@ export interface TryoutAcceptDues {
 
 /** Typed accept failures the routes translate to 404/409/400 (rather than a bare 500). */
 export class TryoutAcceptError extends Error {
-  code: 'not_found' | 'not_offered' | 'dues_invalid';
-  constructor(code: 'not_found' | 'not_offered' | 'dues_invalid', message: string) {
+  code: 'not_found' | 'not_offered' | 'dues_invalid' | 'season_not_live';
+  /** The HTTP status every caller answers with — one mapping, not one per route. */
+  httpStatus: number;
+  constructor(code: 'not_found' | 'not_offered' | 'dues_invalid' | 'season_not_live', message: string) {
     super(message);
     this.name = 'TryoutAcceptError';
     this.code = code;
+    this.httpStatus = code === 'not_found' ? 404 : code === 'dues_invalid' ? 400 : 409;
   }
 }
 
@@ -4664,6 +4716,27 @@ export async function acceptTryoutAndAddToRoster(
   regId: string,
   opts?: { roster?: TryoutAcceptRosterFields; dues?: TryoutAcceptDues | null },
 ): Promise<{ registration: RepTryoutRegistration; player: RepRosterPlayer }> {
+  /* ⚠ ONLY ONTO THE TEAM'S LIVE SEASON (Club Tier B07, Stage 2). The club's tryout page acted on the
+     URL's season and never checked its state, so an admin could accept a player onto a FINISHED
+     season's roster — a record. Checked here, where both the club's and the coach's accept arrive,
+     so neither door can skip it. ⚠ A check-then-act: a season closed in the same instant as an
+     accept can still take the player (the database step is unchanged, and closing the gap needs the
+     RPC itself to re-check — recorded in the plan, not built). */
+  const { data: regRow, error: regErr } = await supabaseAdmin
+    .from('rep_tryout_registrations')
+    .select('team_id, program_year_id')
+    .eq('id', regId)
+    .maybeSingle<{ team_id: string; program_year_id: string }>();
+  if (regErr) throw regErr;
+  if (!regRow) throw new TryoutAcceptError('not_found', 'Tryout registration not found');
+  const liveYear = await getActiveRepProgramYear(regRow.team_id);
+  if (!liveYear || liveYear.id !== regRow.program_year_id) {
+    throw new TryoutAcceptError(
+      'season_not_live',
+      'This application belongs to a season that isn’t running, so the player can’t be added to its roster.',
+    );
+  }
+
   const pRoster = opts?.roster
     ? {
         playerNumber: opts.roster.playerNumber ?? null,
@@ -10592,10 +10665,12 @@ export async function createRepDocumentTemplate(fields: {
 
 export async function updateRepDocumentTemplate(
   templateId: string,
-  fields: { isActive?: boolean },
+  fields: { isActive?: boolean; teamId?: string | null },
 ): Promise<RepDocumentTemplate> {
   const patch: Record<string, unknown> = {};
   if (fields.isActive !== undefined) patch.is_active = fields.isActive;
+  // Which team it applies to (null = every team). The caller has checked the team is the org's.
+  if (fields.teamId !== undefined) patch.team_id = fields.teamId;
   const { data, error } = await supabaseAdmin
     .from('rep_document_templates')
     .update(patch)
@@ -14603,11 +14678,14 @@ export async function getRepPastProgramYears(orgId: string, scopeTeamIds?: strin
   const yearIds = years.map((y: any) => y.id);
   const { data: rosterCounts, error: rErr } = await supabaseAdmin
     .from('rep_roster_players')
-    .select('program_year_id')
+    .select('program_year_id, status')
     .in('program_year_id', yearIds);
   if (rErr) throw rErr;
+  // THE ROSTER RULE (lib/team-season-figures.ts, Club Tier B08): this counted inactive players and
+  // call-ups too, so a past season read more players than it ever had on the team.
   const countMap: Record<string, number> = {};
   for (const r of rosterCounts ?? []) {
+    if (!countsOnRoster(r)) continue;
     countMap[r.program_year_id] = (countMap[r.program_year_id] ?? 0) + 1;
   }
 
@@ -14649,10 +14727,10 @@ export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryY
   const yearIds = years.map((y: any) => y.id);
 
   const [rosterRes, eventRes, tryoutRes] = await Promise.all([
-    supabaseAdmin.from('rep_roster_players').select('program_year_id').in('program_year_id', yearIds),
+    supabaseAdmin.from('rep_roster_players').select('program_year_id, status').in('program_year_id', yearIds),
     supabaseAdmin
       .from('rep_team_events')
-      .select('program_year_id, result, status')
+      .select('program_year_id, event_type, is_scrimmage, result, status')
       .in('program_year_id', yearIds)
       // The CANONICAL record rule (lib/season-wrapped.ts `countsTowardRecord`): league + tournament
       // + legacy external_tournament, and NOT a scrimmage — which since mig 306 is a Game with the
@@ -14675,19 +14753,27 @@ export async function getRepTeamHistory(teamId: string): Promise<RepTeamHistoryY
   if (eventRes.error) throw eventRes.error;
   if (tryoutRes.error) throw tryoutRes.error;
 
+  // THE TWO RULES (lib/team-season-figures.ts, Club Tier B08): the roster counts players ACTIVE on
+  // the season (this counted inactive players and call-ups too); the record counts finalized games
+  // that count. The SQL above only narrows the rows — the rules decide.
   const rosterCount: Record<string, number> = {};
   for (const r of rosterRes.data ?? []) {
+    if (!countsOnRoster(r)) continue;
     rosterCount[r.program_year_id] = (rosterCount[r.program_year_id] ?? 0) + 1;
   }
 
+  const gamesByYear = new Map<string, { eventType: string; isScrimmage: boolean; result: string | null; status: string }[]>();
+  for (const e of eventRes.data ?? []) {
+    const list = gamesByYear.get(e.program_year_id) ?? [];
+    list.push({ eventType: e.event_type, isScrimmage: !!e.is_scrimmage, result: e.result, status: e.status });
+    gamesByYear.set(e.program_year_id, list);
+  }
   const wins: Record<string, number> = {};
   const losses: Record<string, number> = {};
   const ties: Record<string, number> = {};
-  for (const e of eventRes.data ?? []) {
-    if (e.status === 'cancelled') continue;
-    if (e.result === 'win') wins[e.program_year_id] = (wins[e.program_year_id] ?? 0) + 1;
-    else if (e.result === 'loss') losses[e.program_year_id] = (losses[e.program_year_id] ?? 0) + 1;
-    else if (e.result === 'tie') ties[e.program_year_id] = (ties[e.program_year_id] ?? 0) + 1;
+  for (const [yearId, games] of gamesByYear) {
+    const tally = seasonRecordOf(games);
+    wins[yearId] = tally.w; losses[yearId] = tally.l; ties[yearId] = tally.t;
   }
 
   const tryoutTotal: Record<string, number> = {};
@@ -14742,10 +14828,10 @@ export async function getRepCurrentSeasonSummary(teamId: string): Promise<RepCur
   if (!py) return null;
 
   const [rosterRes, eventRes, tryoutRes] = await Promise.all([
-    supabaseAdmin.from('rep_roster_players').select('id').eq('program_year_id', py.id),
+    supabaseAdmin.from('rep_roster_players').select('id, status').eq('program_year_id', py.id),
     supabaseAdmin
       .from('rep_team_events')
-      .select('result, status')
+      .select('event_type, is_scrimmage, result, status')
       .eq('program_year_id', py.id)
       // Same canonical record rule as getRepTeamHistory/Wrapped (lib/season-wrapped.ts) —
       // including dropping CANCELLED games that still carry a score (see the sibling above).
@@ -14758,13 +14844,10 @@ export async function getRepCurrentSeasonSummary(teamId: string): Promise<RepCur
   if (eventRes.error) throw eventRes.error;
   if (tryoutRes.error) throw tryoutRes.error;
 
-  let wins = 0, losses = 0, ties = 0;
-  for (const e of eventRes.data ?? []) {
-    if (e.status === 'cancelled') continue;
-    if (e.result === 'win') wins++;
-    else if (e.result === 'loss') losses++;
-    else if (e.result === 'tie') ties++;
-  }
+  // The two rules (lib/team-season-figures.ts) — the same ones the history above and the club read.
+  const { w: wins, l: losses, t: ties } = seasonRecordOf((eventRes.data ?? []).map((e: any) => ({
+    eventType: e.event_type, isScrimmage: !!e.is_scrimmage, result: e.result, status: e.status,
+  })));
 
   const tryoutRows = tryoutRes.data ?? [];
   const tryoutAccepted = tryoutRows.filter((t: any) => t.status === 'accepted').length;
@@ -14775,7 +14858,7 @@ export async function getRepCurrentSeasonSummary(teamId: string): Promise<RepCur
     name: py.name,
     year: py.year,
     status: py.status,
-    rosterCount: (rosterRes.data ?? []).length,
+    rosterCount: rosterCountOf(rosterRes.data ?? []),
     wins,
     losses,
     ties,

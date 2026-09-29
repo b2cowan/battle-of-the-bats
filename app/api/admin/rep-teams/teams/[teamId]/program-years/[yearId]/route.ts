@@ -6,6 +6,8 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { getRepTeam, getRepProgramYear, getRepProgramYears, updateRepProgramYear } from '@/lib/db';
 import type { RepProgramYearStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { refuseUnlessLiveSeason } from '@/lib/club-team-route';
+import { loadRosterCounts } from '@/lib/club-team-board';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -42,14 +44,13 @@ export const GET = withObservability(async (_req: Request,
   }
 
   const [
-    { count: rosterCount },
+    rosterCounts,
     { count: pendingTryouts },
     { count: coachCount },
     { count: upcomingEvents },
   ] = await Promise.all([
-    supabaseAdmin.from('rep_roster_players')
-      .select('id', { count: 'exact', head: true })
-      .eq('program_year_id', programYear.id).eq('status', 'active'),
+    // THE ROSTER RULE (lib/team-season-figures.ts, Club Tier B08) — one function for every club read.
+    loadRosterCounts([programYear.id]),
     supabaseAdmin.from('rep_tryout_registrations')
       .select('id', { count: 'exact', head: true })
       .eq('program_year_id', programYear.id).eq('status', 'pending_review'),
@@ -66,7 +67,7 @@ export const GET = withObservability(async (_req: Request,
     team,
     programYear,
     summary: {
-      rosterCount: rosterCount ?? 0,
+      rosterCount: rosterCounts.get(programYear.id) ?? 0,
       pendingTryouts: pendingTryouts ?? 0,
       coachCount: coachCount ?? 0,
       upcomingEvents: upcomingEvents ?? 0,
@@ -100,9 +101,19 @@ export const PATCH = withObservability(async (req: Request,
   const fields: Parameters<typeof updateRepProgramYear>[1] = {};
 
   if (typeof body.name === 'string') fields.name = body.name.trim();
-  if (typeof body.tryoutOpen === 'boolean') fields.tryoutOpen = body.tryoutOpen;
+  if (typeof body.tryoutOpen === 'boolean') {
+    // The tryouts-open switch belongs to the team's LIVE season (Club Tier B07) — it used to open
+    // sign-ups on a finished season, which the public form then accepted.
+    const notLive = await refuseUnlessLiveSeason(team, programYear, 'its tryouts can’t open or close');
+    if (notLive) return notLive;
+    fields.tryoutOpen = body.tryoutOpen;
+  }
   if ('tryoutDescription' in body) fields.tryoutDescription = body.tryoutDescription?.trim() || null;
 
+  /* ⚠ THE STATUS PATH STAYS until session 3 replaces the season page (Club Tier Stage 2 call list):
+     Activate and Archive still fire on one click here (S2-04). Session 3 then REFUSES status changes
+     on this PATCH — seasons change only through the club's season doors
+     (`app/api/admin/rep-teams/teams/[teamId]/seasons`), which tell the coach and never self-heal. */
   if (body.status !== undefined) {
     const newStatus = body.status as RepProgramYearStatus;
     const allowed = VALID_TRANSITIONS[programYear.status];

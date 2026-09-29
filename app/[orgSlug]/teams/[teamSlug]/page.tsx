@@ -12,6 +12,8 @@ import RepTeamPublicSchedule from '@/components/public/RepTeamPublicSchedule';
 import { isFamilyLayerEnabled, isPubliclyVisible } from '@/lib/family-access';
 import { getFamilyTeamView } from '@/lib/family-view';
 import publicStyles from '@/components/public/RepTeamPublicSchedule.module.css';
+import { publicTryoutSeasonOf } from '@/lib/season-live';
+import { publicTryoutRegisterHref } from '@/lib/public-tryout';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,9 +59,10 @@ export default async function TeamPublicPage({
     ? await getFamilyTeamView({ repTeamId: team.id, requireVisibility: 'public_link' })
     : null;
 
-  const openYear = !team.isArchived
-    ? (programYears.find(y => y.status === 'active' && y.tryoutOpen) ?? null)
-    : null;
+  // THE ONE PUBLIC TRYOUT RULE (Club Tier B07): the team's LIVE season with tryouts open, never
+  // an archived team. This page used to accept only an ACTIVE season while the sign-up form
+  // accepted any — so the two could disagree about which season a family was applying to.
+  const openYear = publicTryoutSeasonOf(team, programYears);
   const pastYears = programYears.filter(y => y.status === 'completed' || y.status === 'archived');
 
   return (
@@ -227,7 +230,7 @@ export default async function TeamPublicPage({
               </div>
             </div>
             <Link
-              href={`/${orgSlug}/teams/${team.slug}/tryouts/${openYear.id}/register`}
+              href={publicTryoutRegisterHref(orgSlug, team.slug)}
               style={{
                 display: 'inline-block',
                 padding: '0.65rem 1.5rem',

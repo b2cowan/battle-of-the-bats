@@ -13,6 +13,7 @@ import {
 } from '@/lib/db';
 import type { RepTryoutRegistrationStatus } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { refuseUnlessLiveSeason } from '@/lib/club-team-route';
 
 function gate(ctx: Awaited<ReturnType<typeof getAuthContextWithRole>>) {
   if (!ctx) return unauthorized();
@@ -87,6 +88,11 @@ export const PATCH = withObservability(async (req: Request,
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
+  // Tryouts run on the team's LIVE season only (Club Tier B07): a finished season's applications
+  // are a record — no status change, no accept onto its roster, no note.
+  const notLive = await refuseUnlessLiveSeason(team, programYear, 'its tryouts can’t change');
+  if (notLive) return notLive;
+
   const body = await req.json();
 
   // Notes-only update (no status change)
@@ -119,8 +125,7 @@ export const PATCH = withObservability(async (req: Request,
       return NextResponse.json({ registration, player });
     } catch (e) {
       if (e instanceof TryoutAcceptError) {
-        const status = e.code === 'not_found' ? 404 : e.code === 'not_offered' ? 409 : 400;
-        return NextResponse.json({ error: e.message }, { status });
+        return NextResponse.json({ error: e.message, code: e.code }, { status: e.httpStatus });
       }
       throw e;
     }

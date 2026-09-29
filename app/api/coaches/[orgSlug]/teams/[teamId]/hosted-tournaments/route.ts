@@ -5,7 +5,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { hasCapability } from '@/lib/roles';
 import { hasModuleEntitlement } from '@/lib/module-entitlements';
 import { getTeamScopedRepTeamAccess, isTeamWorkspaceOrg } from '@/lib/team-workspace-entitlements';
-import { getCoachingAssignmentsForUser } from '@/lib/db';
+import { getEntitledTeamMembership, resolveMembershipCapabilities } from '@/lib/coach-membership';
 import { canConfigureTeam, denyUnless } from '@/lib/coach-capabilities';
 import { TOURNAMENT_GRANT_KEY } from '@/lib/coach-tournament-grant';
 import { withObservability } from '@/lib/observability';
@@ -48,8 +48,10 @@ export const GET = withObservability(async (_req: Request,
   });
   if (!access.allowed) return forbidden();
 
-  const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
-  const assignment = assignments.find(a => a.teamId === teamId);
+  // ⚠ TEAM MEMBERSHIP (Club Tier Stage 2, B10): the same standing the gate above checked, with the
+  // member's CURRENT grants — the live-season assignment this read denied a coach between seasons.
+  const membership = await getEntitledTeamMembership(ctx.org, teamId, ctx.user.id);
+  const assignment = membership ? { teamId, capabilities: resolveMembershipCapabilities(membership) } : null;
   const denied = denyUnless(
     !!assignment && canConfigureTeam(assignment.capabilities),
     'Tournaments aren’t turned on for you. Ask the head coach to grant schedule editing.',

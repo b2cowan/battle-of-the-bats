@@ -19,6 +19,7 @@ import { countsTowardRecord, type Competition } from '@/lib/season-wrapped';
 import { EventTypeMark } from '@/components/coaches/eventTypeMark';
 import type { RepEventType } from '@/lib/types';
 import CoachLoading from '@/components/coaches/CoachLoading';
+import { mayManageSeasons, orgManagesOwnSeasons } from '@/lib/season-doors';
 import styles from '../../../coaches.module.css';
 
 /**
@@ -577,12 +578,16 @@ export default function SeasonEndPage({
     );
   }
 
-  const isTeamWorkspace = currentOrg?.accountKind === 'team_workspace' || currentOrg?.planId === 'team';
+  /* ⚠ THE SERVER'S OWN PREDICATE (Club Tier S2-01). This page decided from the account kind alone
+     and offered Start next season / Reopen to a head coach whose portal a club had ADOPTED — two
+     buttons the seasons route refuses — while never telling them the club manages their seasons.
+     Both the doors and the "managed by" note now ask `lib/season-doors.ts`, as the route does. */
+  const managesOwnSeasons = orgManagesOwnSeasons(currentOrg);
   const orgName = currentOrg?.name ?? 'your club';
   // The forward path only renders in the CLOSED-ONLY state; a coach browsing a past season of a
   // rolled-forward team already has their active season.
   const coachRole = active?.coachRole ?? closed?.coachRole ?? 'assistant_coach';
-  const showStartNext = !active && !!closed && isTeamWorkspace && coachRole === 'head_coach';
+  const showStartNext = !active && !!closed && mayManageSeasons(currentOrg, coachRole);
   /**
    * ⚠ **REOPEN IS THE SAFE HALF ONLY** (plan §3.4). Offered on exactly the same condition as
    * "Start next season" — the team has no live season — because with a newer season started, giving
@@ -1063,7 +1068,7 @@ export default function SeasonEndPage({
               and you lose its whole portal, not one year of it. The old sentence quietly implied a
               coach might be dropped between seasons and have to be re-added, which is neither how
               it works nor a comfortable thing to imply to someone whose season has just ended. */}
-          {!active && !isTeamWorkspace && (
+          {!active && !managesOwnSeasons && (
             <section className={styles.setupPanel}>
               <p className={styles.seasonEndNote}>
                 Seasons are managed by <strong>{orgName}</strong>. When they start the next one, this

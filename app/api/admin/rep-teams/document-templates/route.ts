@@ -6,6 +6,7 @@ import { getRepDocumentTemplates, createRepDocumentTemplate } from '@/lib/db';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import type { RepDocumentType } from '@/lib/types';
 import { withObservability } from '@/lib/observability';
+import { refuseTeamOutsideClub, teamIdsInScope } from '@/lib/club-team-route';
 
 const ALLOWED_TYPES = [
   'application/pdf',
@@ -29,8 +30,12 @@ export const GET = withObservability(async (_req: Request,) => {
   const err = gate(ctx);
   if (err) return err;
 
-  const templates = await getRepDocumentTemplates(ctx!.org.id);
-  const withoutPaths = templates.map(({ storagePath: _sp, ...rest }) => rest);
+  // A member limited to team groups sees the club-wide templates and those of the teams in their
+  // groups — never another group's team forms (Club Tier Stage 2, B11).
+  const [templates, inScope] = await Promise.all([getRepDocumentTemplates(ctx!.org.id), teamIdsInScope(ctx!)]);
+  const withoutPaths = templates
+    .filter(t => !inScope || !t.teamId || inScope.has(t.teamId))
+    .map(({ storagePath: _sp, ...rest }) => rest);
   return NextResponse.json({ templates: withoutPaths });
 }, { route: '/api/admin/rep-teams/document-templates' });
 
@@ -64,6 +69,15 @@ export const POST = withObservability(async (req: Request,) => {
   }
   if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: 'File exceeds 10 MB limit' }, { status: 400 });
+  }
+  // The team it applies to must be ONE OF THIS CLUB'S (Club Tier B11 / J4-009) — this wrote any id it
+  // was handed, another club's team included. A group-limited member (should one ever hold this
+  // power) may name only a team in their groups, and never publish club-wide.
+  if (teamId) {
+    const refused = await refuseTeamOutsideClub(ctx!, teamId);
+    if (refused) return refused;
+  } else if (ctx!.repGroupIds) {
+    return forbidden();
   }
 
   const bytes = await file.arrayBuffer();

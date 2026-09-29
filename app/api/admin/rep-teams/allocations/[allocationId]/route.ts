@@ -2,8 +2,8 @@ import { NextResponse } from 'next/server';
 import { getAuthContextWithRole, unauthorized, forbidden } from '@/lib/api-auth';
 import { canOpenRepMoney } from '@/lib/member-access';
 import { getRepCostAllocationDetail, updateRepCostAllocationDescription } from '@/lib/db';
-import { supabaseAdmin } from '@/lib/supabase-admin';
 import { withObservability } from '@/lib/observability';
+import { teamIdsInScope } from '@/lib/club-team-route';
 
 // The club ↔ team money loop: Rep Teams OR Accounting, on an org that runs rep teams (D8 + Ask 1 —
 // a treasurer reaches it from Accounting). The write handlers below keep their own role checks.
@@ -24,13 +24,8 @@ export const GET = withObservability(async (_req: Request,
   let detail = await getRepCostAllocationDetail(allocationId, ctx!.org.id);
   if (!detail) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
-  if (ctx!.repGroupIds) {
-    const { data: scopedTeams } = await supabaseAdmin
-      .from('rep_teams')
-      .select('id')
-      .eq('org_id', ctx!.org.id)
-      .in('group_id', ctx!.repGroupIds);
-    const scopedSet = new Set((scopedTeams ?? []).map((t: any) => t.id as string));
+  const scopedSet = await teamIdsInScope(ctx!);
+  if (scopedSet) {
     const visibleSplits = detail.splits.filter(s => scopedSet.has(s.teamId));
     if (visibleSplits.length === 0) return forbidden();
     detail = { ...detail, splits: visibleSplits };
@@ -54,6 +49,16 @@ export const PATCH = withObservability(async (req: Request,
 
   if (!description?.trim()) {
     return NextResponse.json({ error: 'description is required' }, { status: 400 });
+  }
+
+  // ⚠ The member's team-group limit — EVERY team the allocation splits to must be theirs (Club Tier Stage 2, B11). Unreachable TODAY — only an owner,
+  // admin or treasurer may act here, and those roles never carry a group limit — so this is the
+  // guard for the day a limited role is given the power, not a fix for a live hole.
+  const inScope = await teamIdsInScope(ctx!);
+  if (inScope) {
+    const detail = await getRepCostAllocationDetail(allocationId, ctx!.org.id);
+    if (!detail) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (detail.splits.some(s => !inScope.has(s.teamId))) return forbidden();
   }
 
   const allocation = await updateRepCostAllocationDescription(

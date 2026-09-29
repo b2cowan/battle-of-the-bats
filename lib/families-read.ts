@@ -1,4 +1,5 @@
 import 'server-only';
+import { formOnFile, templatesForTeam as templatesForTeamRule } from './forms-coverage';
 import { supabaseAdmin } from './supabase-admin';
 import { attachPeopleForOrg } from './org-people';
 
@@ -228,8 +229,8 @@ async function loadFormsData(orgId: string, rosterIds: string[]) {
     set.add(d.document_type); docTypesByPlayer.set(d.player_id, set);
   }
   return {
-    templatesForTeam: (teamId: string) =>
-      ((templates.data ?? []) as any[]).filter(t => t.team_id === null || t.team_id === teamId),
+    // The applies-to rule is shared with the club's Rep Teams board (lib/forms-coverage.ts).
+    templatesForTeam: (teamId: string) => templatesForTeamRule((templates.data ?? []) as any[], teamId),
     docTypesByPlayer,
   };
 }
@@ -297,7 +298,7 @@ export async function buildWorklist(orgId: string, orgSlug: string): Promise<Wor
     for (const r of myCurrentRoster) {
       const have = docTypesByPlayer.get(r.id) ?? new Set();
       for (const t of templatesForTeam(r.team_id)) {
-        if (!have.has(t.document_type)) missingFormsCount++;
+        if (!formOnFile(have, t)) missingFormsCount++;
       }
     }
 
@@ -454,7 +455,7 @@ export async function buildFamilyPage(orgId: string, personId: string): Promise<
       forms.push({
         childName: fullName(r.player_first_name, r.player_last_name),
         templateName: t.name, documentType: t.document_type,
-        status: have.has(t.document_type) ? 'on_file' : 'missing',
+        status: formOnFile(have, t) ? 'on_file' : 'missing',
       });
     }
   }

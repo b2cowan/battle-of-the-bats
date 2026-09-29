@@ -1,6 +1,7 @@
 import 'server-only';
 import { NextResponse } from 'next/server';
 import { getAuthContext, unauthorized, forbidden } from './api-auth';
+import { refuseWithoutLiveSeat } from './coach-season-refusal';
 import { getCoachingAssignmentsForUser, getRepTeam } from './db';
 import { isFamilyLayerEnabled } from './family-access';
 import type { CoachCapabilities } from './coach-capabilities';
@@ -51,7 +52,7 @@ export async function resolveFamilyCoachContext(
 
   const assignments = await getCoachingAssignmentsForUser(ctx.org.id, ctx.user.id);
   const assignment = assignments.find(a => a.teamId === teamId);
-  if (!assignment) return { error: forbidden() };
+  if (!assignment) return { error: await refuseWithoutLiveSeat(ctx.org, ctx.user.id, teamId) };
 
   // Premium gate (2026-08-01 strategy entry). A coach whose team is not entitled gets a 404,
   // not a paywall: this route does not exist for them.
